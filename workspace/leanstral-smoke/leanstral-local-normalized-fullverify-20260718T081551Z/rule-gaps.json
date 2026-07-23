@@ -1,0 +1,232 @@
+{
+  "accepted_supporting_audit_count": 1,
+  "conflicting_audit_count": 0,
+  "gaps": [
+    {
+      "action": "repair_flogic_ontology_constraints",
+      "affected_ir_families": [
+        "frame_logic"
+      ],
+      "conflicting_evidence": [],
+      "gap_id": "leanstral-gap-e4ba4a11194a6a00",
+      "missing_semantic_rule": {
+        "description": "missing deterministic compiler or decompiler rule"
+      },
+      "normalized_rule_key": "missing_deterministic_compiler_or_decompiler_rule",
+      "priority": 0.38,
+      "status": "accepted",
+      "supporting_evidence": [
+        {
+          "affected_ir_families": [
+            "frame_logic"
+          ],
+          "classification": "missing_semantic_rule",
+          "confidence": 0.0,
+          "evidence_id": "leanstral-evidence-2b385b41a7f50c75",
+          "examples": [
+            {
+              "compiler_decompiler_metrics": {
+                "compiler_guidance_applied": false,
+                "cosine_similarity": 0.200969612,
+                "cross_entropy_excess_loss": 1.122954298,
+                "cross_entropy_loss": 1.122954298,
+                "metric_sample_id": "us-code-18-431-af60aa26fe7ef458:metric-prefix:e870efc445a1",
+                "metric_text_length": 275,
+                "metric_text_policy": "truncate",
+                "metric_text_truncated": true,
+                "sample_id": "us-code-18-431-af60aa26fe7ef458",
+                "source_copy_loss": 0.0,
+                "source_copy_reward_hack_penalty": 0.0,
+                "source_decompiled_text_embedding_cosine_loss": 0.799030388,
+                "source_decompiled_text_embedding_cosine_similarity": 0.200969612,
+                "source_decompiled_text_token_loss": 0.486726,
+                "source_decompiled_text_token_similarity": 0.513274,
+                "structural_text_reconstruction_loss": 0.486726,
+                "text_reconstruction_loss": 0.0
+              },
+              "evidence_id": "lir-disagree-06131857657840c7cdfa",
+              "example_hash": "7cae1e9dfb8a72f1b69b18dacbd83072242c1b6fbe37f7ca3d103e79440a0915",
+              "example_id": "us-code-18-431-af60aa26fe7ef458",
+              "example_role": "request_reference",
+              "expected_modal_ir_hash": "e7cb12eaccbd03cbefebe3a6350eed2d610306de4a081e7dd311b89554afaaa7",
+              "sample_id": "us-code-18-431-af60aa26fe7ef458",
+              "source_span_hash_format": "introspection_packet_v1",
+              "source_span_hashes": {
+                "us-code-18-431-af60aa26fe7ef458:f0001": "a3443e54117c5cecac0624e80f67927fc638e53d1236021209cba75dc153e3b3",
+                "us-code-18-431-af60aa26fe7ef458:f0002": "71733452ad58e0e4ab8c122d2d1c4a8106b58bd3a82fe8877ae60073656e46b1",
+                "us-code-18-431-af60aa26fe7ef458:f0003": "236acb9d41a4caf0593d3d55b5ec113de2ae51a1859e9ac6b84dbbbb96c8b1a2",
+                "us-code-18-431-af60aa26fe7ef458:f0004": "66e7984d67d9a1e8dbeaa5c736d3884b10d140484c9e6894c6875db39aaaf029"
+              },
+              "source_text_hash": "6a5df86419f0a03bb94d7eb62ade2720cb94706beeefc76e65b6971298d245b9"
+            },
+            {
+              "evidence_id": "lir-disagree-06131857657840c7cdfa",
+              "example_hash": "a5da90c17832faeb2fd8bf2a0910b7894d80f2834a597125069fb591ec172e36",
+              "example_role": "counterexample",
+              "expected": "legal semantics should be preserved",
+              "observed": "compiler loses or distorts this semantic signal"
+            }
+          ],
+          "metric_attribution": {
+            "evidence_ids": [
+              "lir-disagree-06131857657840c7cdfa"
+            ],
+            "metric_deltas": {},
+            "post_patch_metrics": {},
+            "pre_patch_metrics": {
+              "compiler_guidance_applied": 0.0,
+              "cosine_similarity": 0.200969612,
+              "cross_entropy_excess_loss": 1.122954298,
+              "cross_entropy_loss": 1.122954298,
+              "metric_text_length": 275.0,
+              "metric_text_truncated": 1.0,
+              "source_copy_loss": 0.0,
+              "source_copy_reward_hack_penalty": 0.0,
+              "source_decompiled_text_embedding_cosine_loss": 0.799030388,
+              "source_decompiled_text_embedding_cosine_similarity": 0.200969612,
+              "source_decompiled_text_token_loss": 0.486726,
+              "source_decompiled_text_token_similarity": 0.513274,
+              "structural_text_reconstruction_loss": 0.486726,
+              "text_reconstruction_loss": 0.0
+            },
+            "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+            "source": "leanstral_audit_evidence",
+            "status": "pre_patch_observed"
+          },
+          "proof_obligation_ids": [
+            "PO-async-frame-logic-9de349f60855"
+          ],
+          "reasons": [],
+          "request_id": "leanstral-audit-013e33d01d75236a",
+          "response_hash": "db67ca34a03e8606905debc042189fae6f09cec9655dd2b49715765637791070",
+          "role": "supporting",
+          "verification_outcome": "accepted",
+          "verified_by": [
+            "lean"
+          ]
+        }
+      ],
+      "target_component": "modal.frame_logic",
+      "target_surface": {
+        "action": "repair_flogic_ontology_constraints",
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "component": "modal.frame_logic",
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "target_file_lane": "frame_logic",
+        "target_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "theorem_templates": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ]
+      },
+      "title": "missing deterministic compiler or decompiler rule (modal.frame_logic)",
+      "validation_set": {
+        "affected_ir_families": [
+          "frame_logic"
+        ],
+        "allowed_paths": [
+          "ipfs_datasets_py/logic/modal/kg_bridge.py"
+        ],
+        "formal_validity_checks": [
+          "source_provenance_preserved",
+          "frame_terms_preserved"
+        ],
+        "held_out_compiler_ir_metrics": [
+          "flogic_similarity_loss",
+          "legal_ir_view_cross_entropy_loss"
+        ],
+        "metric_attribution": {
+          "evidence_ids": [
+            "lir-disagree-06131857657840c7cdfa"
+          ],
+          "metric_deltas": {},
+          "post_patch_metrics": {},
+          "pre_patch_metrics": {
+            "compiler_guidance_applied": 0.0,
+            "cosine_similarity": 0.200969612,
+            "cross_entropy_excess_loss": 1.122954298,
+            "cross_entropy_loss": 1.122954298,
+            "metric_text_length": 275.0,
+            "metric_text_truncated": 1.0,
+            "source_copy_loss": 0.0,
+            "source_copy_reward_hack_penalty": 0.0,
+            "source_decompiled_text_embedding_cosine_loss": 0.799030388,
+            "source_decompiled_text_embedding_cosine_similarity": 0.200969612,
+            "source_decompiled_text_token_loss": 0.486726,
+            "source_decompiled_text_token_similarity": 0.513274,
+            "structural_text_reconstruction_loss": 0.486726,
+            "text_reconstruction_loss": 0.0
+          },
+          "schema_version": "legal-ir-leanstral-metric-attribution-v1",
+          "source": "leanstral_rule_gap_report",
+          "status": "pre_patch_observed"
+        },
+        "mutation_cases": [
+          "remove_frame_relation",
+          "alter_scope"
+        ],
+        "proof_obligation_ids": [
+          "PO-async-frame-logic-9de349f60855"
+        ],
+        "regression_examples": [
+          {
+            "compiler_decompiler_metrics": {
+              "compiler_guidance_applied": false,
+              "cosine_similarity": 0.200969612,
+              "cross_entropy_excess_loss": 1.122954298,
+              "cross_entropy_loss": 1.122954298,
+              "metric_sample_id": "us-code-18-431-af60aa26fe7ef458:metric-prefix:e870efc445a1",
+              "metric_text_length": 275,
+              "metric_text_policy": "truncate",
+              "metric_text_truncated": true,
+              "sample_id": "us-code-18-431-af60aa26fe7ef458",
+              "source_copy_loss": 0.0,
+              "source_copy_reward_hack_penalty": 0.0,
+              "source_decompiled_text_embedding_cosine_loss": 0.799030388,
+              "source_decompiled_text_embedding_cosine_similarity": 0.200969612,
+              "source_decompiled_text_token_loss": 0.486726,
+              "source_decompiled_text_token_similarity": 0.513274,
+              "structural_text_reconstruction_loss": 0.486726,
+              "text_reconstruction_loss": 0.0
+            },
+            "evidence_id": "lir-disagree-06131857657840c7cdfa",
+            "example_hash": "7cae1e9dfb8a72f1b69b18dacbd83072242c1b6fbe37f7ca3d103e79440a0915",
+            "example_id": "us-code-18-431-af60aa26fe7ef458",
+            "example_role": "request_reference",
+            "expected_modal_ir_hash": "e7cb12eaccbd03cbefebe3a6350eed2d610306de4a081e7dd311b89554afaaa7",
+            "sample_id": "us-code-18-431-af60aa26fe7ef458",
+            "source_span_hash_format": "introspection_packet_v1",
+            "source_span_hashes": {
+              "us-code-18-431-af60aa26fe7ef458:f0001": "a3443e54117c5cecac0624e80f67927fc638e53d1236021209cba75dc153e3b3",
+              "us-code-18-431-af60aa26fe7ef458:f0002": "71733452ad58e0e4ab8c122d2d1c4a8106b58bd3a82fe8877ae60073656e46b1",
+              "us-code-18-431-af60aa26fe7ef458:f0003": "236acb9d41a4caf0593d3d55b5ec113de2ae51a1859e9ac6b84dbbbb96c8b1a2",
+              "us-code-18-431-af60aa26fe7ef458:f0004": "66e7984d67d9a1e8dbeaa5c736d3884b10d140484c9e6894c6875db39aaaf029"
+            },
+            "source_text_hash": "6a5df86419f0a03bb94d7eb62ade2720cb94706beeefc76e65b6971298d245b9"
+          },
+          {
+            "evidence_id": "lir-disagree-06131857657840c7cdfa",
+            "example_hash": "a5da90c17832faeb2fd8bf2a0910b7894d80f2834a597125069fb591ec172e36",
+            "example_role": "counterexample",
+            "expected": "legal semantics should be preserved",
+            "observed": "compiler loses or distorts this semantic signal"
+          }
+        ],
+        "target_file_lane": "frame_logic"
+      }
+    }
+  ],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 1
+}

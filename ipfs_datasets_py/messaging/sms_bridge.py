@@ -1,0 +1,4795 @@
+"""DuckDB-backed SMS bridge for ipfs_datasets_py.
+
+The bridge is intentionally provider-agnostic. Google Voice does not expose a
+stable supported SMS/SIP automation API for production use, so this module
+targets supported provider surfaces such as Twilio or an internal webhook
+adapter instead.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import hashlib
+import html
+import io
+import json
+import os
+import re
+import smtplib
+import contextlib
+import asyncio
+import threading
+import time
+import uuid
+import wave
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from email.message import EmailMessage
+from email.utils import make_msgid
+from pathlib import Path
+from typing import Any, Mapping, Protocol, Sequence
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
+
+try:
+    from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import Response
+except Exception:  # pragma: no cover - optional dependency
+    FastAPI = None  # type: ignore[assignment]
+    HTTPException = None  # type: ignore[assignment]
+    Query = None  # type: ignore[assignment]
+    Request = None  # type: ignore[assignment]
+    Response = None  # type: ignore[assignment]
+    WebSocket = None  # type: ignore[assignment]
+    WebSocketDisconnect = Exception  # type: ignore[assignment]
+    CORSMiddleware = None  # type: ignore[assignment]
+
+from pydantic import BaseModel, Field
+
+try:
+    import uvicorn
+except Exception:  # pragma: no cover - optional dependency
+    uvicorn = None  # type: ignore[assignment]
+
+try:
+    import websockets
+except Exception:  # pragma: no cover - optional dependency
+    websockets = None  # type: ignore[assignment]
+
+try:
+    from ipfs_datasets_py.utils.secrets import resolve_secret
+except Exception:  # pragma: no cover - optional dependency
+    def resolve_secret(*names: str, explicit: str | None = None) -> str:
+        return str(explicit or "")
+
+
+_PHONE_DIGITS_RE = re.compile(r"\D")
+_TWILIO_EMPTY_RESPONSE = b'<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+_DEFAULT_VOICE_GREETING = "Hi, this is Abby voice with 211 AI. Tell me what you need help with after the tone."
+_DEFAULT_VOICE_NO_SPEECH_PROMPT = "I didn't catch that. Please tell me what you need help with."
+_DEFAULT_VOICE_FOLLOW_UP = "What else can I help with today?"
+_DEFAULT_VOICE_FAREWELL = "Thanks for calling 211 AI. Goodbye."
+_DEFAULT_VOICE_UNAVAILABLE_PROMPT = "I'm sorry, the AI voice service is unavailable right now. Please try again later or use the website chat."
+_VOICE_HANGUP_PATTERNS = re.compile(r"\b(?:bye|goodbye|that is all|hang up|stop now|end call|no thanks)\b", re.IGNORECASE)
+
+
+def _truthy(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _model_dump(model: BaseModel) -> dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return dict(model.model_dump())
+    return dict(model.dict())
+
+
+def _utcnow_iso() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _json_dumps(payload: Mapping[str, Any]) -> str:
+    return json.dumps(dict(payload), sort_keys=True)
+
+
+def _coerce_metadata(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
+    if metadata is None:
+        return {}
+    return dict(metadata)
+
+
+def _first_non_empty(*values: str | None) -> str:
+    for value in values:
+        normalized = str(value or "").strip()
+        if normalized:
+            return normalized
+    return ""
+
+
+def normalize_phone_number(phone: str, *, field_name: str = "phone") -> str:
+    raw = str(phone or "").strip()
+    if not raw:
+        raise ValueError(f"{field_name} is required")
+    digits = _PHONE_DIGITS_RE.sub("", raw)
+    if len(digits) < 10:
+        raise ValueError(f"{field_name} must include at least 10 digits")
+    if len(digits) == 10:
+        digits = f"1{digits}"
+    return f"+{digits}"
+
+
+def normalize_voice_party_address(value: str, *, field_name: str) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    if raw.lower().startswith("sip:"):
+        return raw
+    return normalize_phone_number(raw, field_name=field_name)
+
+
+def normalize_email_address(email: str, *, field_name: str = "email") -> str:
+    normalized = str(email or "").strip()
+    if not normalized:
+        raise ValueError(f"{field_name} is required")
+    if "@" not in normalized or normalized.startswith("@") or normalized.endswith("@"):
+        raise ValueError(f"{field_name} must be a valid email address")
+    return normalized
+
+
+def default_sms_bridge_db_path() -> str:
+    return os.environ.get(
+        "IPFS_DATASETS_SMS_BRIDGE_DB_PATH",
+        os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "sms_bridge.duckdb"),
+    )
+
+
+def default_sms_bridge_export_root() -> str:
+    return os.environ.get(
+        "IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ROOT",
+        os.path.join(os.path.dirname(default_sms_bridge_db_path()), "exports"),
+    )
+
+
+_SMS_BRIDGE_EXPORT_TABLES: tuple[str, ...] = (
+    "sms_messages",
+    "email_messages",
+    "phone_calls",
+    "voice_call_sessions",
+    "voice_call_turns",
+)
+
+
+def _perform_request(
+    url: str,
+    *,
+    body: bytes,
+    headers: Mapping[str, str],
+    timeout_seconds: float,
+) -> tuple[int, str, str]:
+    status_code, raw, content_type = _perform_request_raw(
+        url,
+        body=body,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+    )
+    return status_code, raw.decode("utf-8", errors="replace"), content_type
+
+
+def _perform_request_raw(
+    url: str,
+    *,
+    body: bytes,
+    headers: Mapping[str, str],
+    timeout_seconds: float,
+) -> tuple[int, bytes, str]:
+    request = urllib_request.Request(url, data=body, headers=dict(headers), method="POST")
+    try:
+        with urllib_request.urlopen(request, timeout=timeout_seconds) as response:
+            status_code = int(getattr(response, "status", getattr(response, "code", 200)))
+            content_type = str(getattr(response, "headers", {}).get("content-type", ""))
+            raw = response.read()
+            return status_code, raw, content_type
+    except urllib_error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP {exc.code} from {url}: {detail or exc.reason}") from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"failed to reach {url}: {exc.reason}") from exc
+
+
+def _parse_response_payload(raw: str, content_type: str) -> dict[str, Any]:
+    if not raw:
+        return {}
+    if "json" not in content_type.lower() and not raw.lstrip().startswith("{"):
+        return {}
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise ValueError("provider response must be a JSON object")
+    return parsed
+
+
+def _first_string(payload: Mapping[str, Any], keys: Sequence[str]) -> str:
+    for key in keys:
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _default_voice_media_root() -> str:
+    return os.environ.get(
+        "IPFS_DATASETS_VOICE_MEDIA_ROOT",
+        os.path.join(os.path.dirname(default_sms_bridge_db_path()), "voice_media"),
+    )
+
+
+def _create_silent_wav_bytes(duration_ms: int = 240, sample_rate: int = 16000) -> bytes:
+    sample_count = max(1, round((sample_rate * duration_ms) / 1000))
+    frames = b"\x00\x00" * sample_count
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(frames)
+    return buffer.getvalue()
+
+
+def _encode_multipart_form(
+    *,
+    fields: Mapping[str, str],
+    files: Sequence[tuple[str, str, str, bytes]],
+) -> tuple[bytes, str]:
+    boundary = f"----ipfsdatasets{uuid.uuid4().hex}"
+    body = bytearray()
+
+    for name, value in fields.items():
+        body.extend(f"--{boundary}\r\n".encode("utf-8"))
+        body.extend(f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode("utf-8"))
+        body.extend(str(value).encode("utf-8"))
+        body.extend(b"\r\n")
+
+    for field_name, filename, content_type, content in files:
+        body.extend(f"--{boundary}\r\n".encode("utf-8"))
+        body.extend(
+            f'Content-Disposition: form-data; name="{field_name}"; filename="{filename}"\r\n'.encode("utf-8")
+        )
+        body.extend(f"Content-Type: {content_type}\r\n\r\n".encode("utf-8"))
+        body.extend(content)
+        body.extend(b"\r\n")
+
+    body.extend(f"--{boundary}--\r\n".encode("utf-8"))
+    return bytes(body), f"multipart/form-data; boundary={boundary}"
+
+
+def _resolve_public_base_url(request: Request, configured_base_url: str) -> str:
+    normalized = str(configured_base_url or "").strip().rstrip("/")
+    if normalized:
+        return normalized
+    forwarded_proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    return f"{forwarded_proto}://{forwarded_host}".rstrip("/")
+
+
+def _join_public_url(base_url: str, path: str) -> str:
+    normalized_base = str(base_url or "").rstrip("/")
+    normalized_path = "/" + str(path or "").lstrip("/")
+    return f"{normalized_base}{normalized_path}"
+
+
+def _append_url_path(base_url: str | None, suffix: str) -> str:
+    normalized_base = str(base_url or "").strip().rstrip("/")
+    normalized_suffix = str(suffix or "").strip().lstrip("/")
+    if not normalized_base or not normalized_suffix:
+        return ""
+    return f"{normalized_base}/{normalized_suffix}"
+
+
+def _resolve_proxy_url(base_url: str, value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    if normalized.startswith(("http://", "https://")):
+        return normalized
+    return _append_url_path(base_url, normalized)
+
+
+def _xml_text(value: str) -> str:
+    return html.escape(str(value or ""), quote=True)
+
+
+def _twiml_response(*nodes: str) -> str:
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response>" + "".join(nodes) + "</Response>"
+
+
+def _twiml_say(text: str) -> str:
+    return f"<Say>{_xml_text(text)}</Say>"
+
+
+def _twiml_message(text: str) -> str:
+    return f"<Message>{_xml_text(text)}</Message>"
+
+
+def _twiml_play(url: str) -> str:
+    return f"<Play>{_xml_text(url)}</Play>"
+
+
+def _twiml_connect_stream(*, stream_url: str, parameters: Mapping[str, str] | None = None) -> str:
+    parameter_nodes = []
+    for name, value in dict(parameters or {}).items():
+        if value is None:
+            continue
+        parameter_nodes.append(f'<Parameter name="{_xml_text(name)}" value="{_xml_text(value)}"/>')
+    return f'<Connect><Stream url="{_xml_text(stream_url)}">{"".join(parameter_nodes)}</Stream></Connect>'
+
+
+def _inbound_sms_reply_text(message: str) -> str:
+    normalized = str(message or "").strip()
+    if not normalized:
+        return ""
+    lowered = normalized.lower()
+    if lowered in {"stop", "stopall", "unsubscribe", "cancel", "end", "quit"}:
+        return ""
+    configured = str(os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTO_REPLY_TEXT") or "").strip()
+    if configured:
+        return configured
+    return (
+        "Hi, this is Abby from 211 AI. I received your message. "
+        "Reply with your city and what you need help with, such as shelter, food, health care, benefits, or transportation."
+    )
+
+
+def _twiml_gather(*, action_url: str, prompt_text: str, language: str = "en-US") -> str:
+    timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_TIMEOUT_SECONDS") or "3").strip() or "3"
+    speech_timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_SPEECH_TIMEOUT") or "1").strip() or "1"
+    return (
+        f'<Gather input="speech" action="{_xml_text(action_url)}" method="POST" '
+        f'actionOnEmptyResult="true" timeout="{_xml_text(timeout)}" '
+        f'speechTimeout="{_xml_text(speech_timeout)}" language="{_xml_text(language)}">'
+        f"{_twiml_say(prompt_text)}"
+        "</Gather>"
+    )
+
+
+def _elapsed_ms(start: float) -> int:
+    return max(0, int((time.perf_counter() - start) * 1000))
+
+
+def _public_ws_url(public_base: str, path: str, params: Mapping[str, str] | None = None) -> str:
+    url = _join_public_url(public_base, path)
+    parsed = urllib_parse.urlsplit(url)
+    scheme = "wss" if parsed.scheme == "https" else "ws"
+    query = urllib_parse.urlencode(dict(params or {}))
+    return urllib_parse.urlunsplit((scheme, parsed.netloc, parsed.path, query, ""))
+
+
+def _openai_realtime_model() -> str:
+    return str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MODEL") or "gpt-realtime").strip() or "gpt-realtime"
+
+
+def _openai_realtime_voice() -> str:
+    return str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_VOICE") or "marin").strip() or "marin"
+
+
+def _openai_realtime_url() -> str:
+    configured = str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_WS_URL") or "").strip()
+    if configured:
+        return configured
+    return f"wss://api.openai.com/v1/realtime?{urllib_parse.urlencode({'model': _openai_realtime_model()})}"
+
+
+def _openai_realtime_api_key() -> str:
+    return (
+        resolve_secret(
+            "OPENAI_API_KEY",
+            "OPENAI_KEY",
+            "OPENAI_TOKEN",
+            "IPFS_DATASETS_PY_OPENAI_API_KEY",
+        )
+        or ""
+    ).strip()
+
+
+def _openai_realtime_instructions(profile: "VoiceAssistantProfile") -> str:
+    configured = str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_INSTRUCTIONS") or "").strip()
+    if configured:
+        return configured
+    lines = [
+        f"You are {profile.assistant_name}, a calm, concise voice assistant for {profile.service_name}.",
+        "Help callers navigate 211-style social services: shelter, food, health, benefits, crisis support, transportation, and local referrals.",
+        "Speak naturally for a phone call. Keep answers under 70 words unless the caller asks for detail.",
+        "Ask one short clarifying question when location, timing, household details, or eligibility facts are missing.",
+        "Do not read URLs, JSON, IDs, or internal metadata aloud.",
+        "If information is uncertain, say what you need next instead of inventing facts.",
+    ]
+    if profile.system_prompt_append.strip():
+        lines.append(profile.system_prompt_append.strip())
+    return " ".join(lines)
+
+
+def _openai_session_update_event(profile: "VoiceAssistantProfile") -> dict[str, Any]:
+    return {
+        "type": "session.update",
+        "session": {
+            "type": "realtime",
+            "model": _openai_realtime_model(),
+            "instructions": _openai_realtime_instructions(profile),
+            "output_modalities": ["audio"],
+            "audio": {
+                "input": {
+                    "format": {"type": "audio/pcmu"},
+                    "turn_detection": {
+                        "type": "server_vad",
+                        "create_response": True,
+                        "interrupt_response": True,
+                        "silence_duration_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_SILENCE_MS") or "450"),
+                        "prefix_padding_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_PREFIX_MS") or "300"),
+                    },
+                },
+                "output": {
+                    "format": {"type": "audio/pcmu"},
+                    "voice": _openai_realtime_voice(),
+                },
+            },
+            "max_output_tokens": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MAX_TOKENS") or "220"),
+        },
+    }
+
+
+def _normalize_turn_text(value: str, *, max_length: int = 480) -> str:
+    normalized = " ".join(str(value or "").split()).strip()
+    return normalized[:max_length]
+
+
+def _should_hangup_from_text(value: str) -> bool:
+    return bool(_VOICE_HANGUP_PATTERNS.search(str(value or "")))
+
+
+@dataclass(frozen=True)
+class SmsMessageRecord:
+    message_id: str
+    direction: str
+    provider: str
+    status: str
+    provider_message_id: str = ""
+    to_phone: str = ""
+    from_phone: str = ""
+    message: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "message_id": self.message_id,
+            "direction": self.direction,
+            "provider": self.provider,
+            "status": self.status,
+            "provider_message_id": self.provider_message_id,
+            "to_phone": self.to_phone,
+            "from_phone": self.from_phone,
+            "message": self.message,
+            "wallet_id": self.wallet_id,
+            "external_reference": self.external_reference,
+            "metadata": dict(self.metadata),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_row(cls, row: Sequence[Any]) -> "SmsMessageRecord":
+        (
+            message_id,
+            direction,
+            provider,
+            provider_message_id,
+            status,
+            to_phone,
+            from_phone,
+            message_text,
+            wallet_id,
+            external_reference,
+            metadata_json,
+            created_at,
+            updated_at,
+        ) = row
+        metadata: dict[str, Any] = {}
+        if isinstance(metadata_json, str) and metadata_json:
+            parsed = json.loads(metadata_json)
+            if isinstance(parsed, dict):
+                metadata = parsed
+        return cls(
+            message_id=str(message_id),
+            direction=str(direction),
+            provider=str(provider),
+            provider_message_id=str(provider_message_id or ""),
+            status=str(status),
+            to_phone=str(to_phone or ""),
+            from_phone=str(from_phone or ""),
+            message=str(message_text or ""),
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=metadata,
+            created_at=str(created_at or ""),
+            updated_at=str(updated_at or ""),
+        )
+
+
+@dataclass(frozen=True)
+class EmailDeliveryRecord:
+    email_id: str
+    provider: str
+    status: str
+    provider_message_id: str = ""
+    to_email: str = ""
+    from_email: str = ""
+    subject: str = ""
+    body: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "email_id": self.email_id,
+            "provider": self.provider,
+            "status": self.status,
+            "provider_message_id": self.provider_message_id,
+            "to_email": self.to_email,
+            "from_email": self.from_email,
+            "subject": self.subject,
+            "body": self.body,
+            "wallet_id": self.wallet_id,
+            "external_reference": self.external_reference,
+            "metadata": dict(self.metadata),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_row(cls, row: Sequence[Any]) -> "EmailDeliveryRecord":
+        (
+            email_id,
+            provider,
+            provider_message_id,
+            status,
+            to_email,
+            from_email,
+            subject,
+            body,
+            wallet_id,
+            external_reference,
+            metadata_json,
+            created_at,
+            updated_at,
+        ) = row
+        metadata: dict[str, Any] = {}
+        if isinstance(metadata_json, str) and metadata_json:
+            parsed = json.loads(metadata_json)
+            if isinstance(parsed, dict):
+                metadata = parsed
+        return cls(
+            email_id=str(email_id),
+            provider=str(provider),
+            provider_message_id=str(provider_message_id or ""),
+            status=str(status),
+            to_email=str(to_email or ""),
+            from_email=str(from_email or ""),
+            subject=str(subject or ""),
+            body=str(body or ""),
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=metadata,
+            created_at=str(created_at or ""),
+            updated_at=str(updated_at or ""),
+        )
+
+
+@dataclass(frozen=True)
+class PhoneCallRecord:
+    call_id: str
+    provider: str
+    status: str
+    provider_call_id: str = ""
+    to_phone: str = ""
+    from_phone: str = ""
+    script: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "call_id": self.call_id,
+            "provider": self.provider,
+            "status": self.status,
+            "provider_call_id": self.provider_call_id,
+            "to_phone": self.to_phone,
+            "from_phone": self.from_phone,
+            "script": self.script,
+            "wallet_id": self.wallet_id,
+            "external_reference": self.external_reference,
+            "metadata": dict(self.metadata),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_row(cls, row: Sequence[Any]) -> "PhoneCallRecord":
+        (
+            call_id,
+            provider,
+            provider_call_id,
+            status,
+            to_phone,
+            from_phone,
+            script,
+            wallet_id,
+            external_reference,
+            metadata_json,
+            created_at,
+            updated_at,
+        ) = row
+        metadata: dict[str, Any] = {}
+        if isinstance(metadata_json, str) and metadata_json:
+            parsed = json.loads(metadata_json)
+            if isinstance(parsed, dict):
+                metadata = parsed
+        return cls(
+            call_id=str(call_id),
+            provider=str(provider),
+            provider_call_id=str(provider_call_id or ""),
+            status=str(status),
+            to_phone=str(to_phone or ""),
+            from_phone=str(from_phone or ""),
+            script=str(script or ""),
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=metadata,
+            created_at=str(created_at or ""),
+            updated_at=str(updated_at or ""),
+        )
+
+
+@dataclass(frozen=True)
+class VoiceCallSessionRecord:
+    session_id: str
+    provider: str
+    provider_call_id: str
+    status: str
+    from_phone: str = ""
+    to_phone: str = ""
+    assistant_name: str = ""
+    service_name: str = ""
+    greeting: str = ""
+    last_user_text: str = ""
+    last_assistant_text: str = ""
+    turn_count: int = 0
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "session_id": self.session_id,
+            "provider": self.provider,
+            "provider_call_id": self.provider_call_id,
+            "status": self.status,
+            "from_phone": self.from_phone,
+            "to_phone": self.to_phone,
+            "assistant_name": self.assistant_name,
+            "service_name": self.service_name,
+            "greeting": self.greeting,
+            "last_user_text": self.last_user_text,
+            "last_assistant_text": self.last_assistant_text,
+            "turn_count": self.turn_count,
+            "metadata": dict(self.metadata),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_row(cls, row: Sequence[Any]) -> "VoiceCallSessionRecord":
+        (
+            session_id,
+            provider,
+            provider_call_id,
+            status,
+            from_phone,
+            to_phone,
+            assistant_name,
+            service_name,
+            greeting,
+            last_user_text,
+            last_assistant_text,
+            turn_count,
+            metadata_json,
+            created_at,
+            updated_at,
+        ) = row
+        metadata: dict[str, Any] = {}
+        if isinstance(metadata_json, str) and metadata_json:
+            parsed = json.loads(metadata_json)
+            if isinstance(parsed, dict):
+                metadata = parsed
+        return cls(
+            session_id=str(session_id),
+            provider=str(provider),
+            provider_call_id=str(provider_call_id or ""),
+            status=str(status),
+            from_phone=str(from_phone or ""),
+            to_phone=str(to_phone or ""),
+            assistant_name=str(assistant_name or ""),
+            service_name=str(service_name or ""),
+            greeting=str(greeting or ""),
+            last_user_text=str(last_user_text or ""),
+            last_assistant_text=str(last_assistant_text or ""),
+            turn_count=int(turn_count or 0),
+            metadata=metadata,
+            created_at=str(created_at or ""),
+            updated_at=str(updated_at or ""),
+        )
+
+
+@dataclass(frozen=True)
+class VoiceCallTurnRecord:
+    turn_id: str
+    session_id: str
+    role: str
+    text: str
+    audio_asset_id: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "turn_id": self.turn_id,
+            "session_id": self.session_id,
+            "role": self.role,
+            "text": self.text,
+            "audio_asset_id": self.audio_asset_id,
+            "metadata": dict(self.metadata),
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_row(cls, row: Sequence[Any]) -> "VoiceCallTurnRecord":
+        turn_id, session_id, role, text, audio_asset_id, metadata_json, created_at = row
+        metadata: dict[str, Any] = {}
+        if isinstance(metadata_json, str) and metadata_json:
+            parsed = json.loads(metadata_json)
+            if isinstance(parsed, dict):
+                metadata = parsed
+        return cls(
+            turn_id=str(turn_id),
+            session_id=str(session_id),
+            role=str(role),
+            text=str(text or ""),
+            audio_asset_id=str(audio_asset_id or ""),
+            metadata=metadata,
+            created_at=str(created_at or ""),
+        )
+
+
+@dataclass(frozen=True)
+class VoiceAssistantProfile:
+    assistant_name: str = "Abby"
+    service_name: str = "211 AI"
+    greeting: str = _DEFAULT_VOICE_GREETING
+    no_speech_prompt: str = _DEFAULT_VOICE_NO_SPEECH_PROMPT
+    follow_up_prompt: str = _DEFAULT_VOICE_FOLLOW_UP
+    farewell: str = _DEFAULT_VOICE_FAREWELL
+    unavailable_prompt: str = _DEFAULT_VOICE_UNAVAILABLE_PROMPT
+    website_url: str = "https://211-ai.com"
+    system_prompt_append: str = ""
+    max_turns: int = 8
+
+    def build_reply_prompt(
+        self,
+        *,
+        transcript: str,
+        session: VoiceCallSessionRecord,
+        turns: Sequence[VoiceCallTurnRecord],
+    ) -> dict[str, str]:
+        normalized_transcript = _normalize_turn_text(transcript, max_length=480) or "The caller asked for help."
+        recent_turns = [turn for turn in turns if turn.role in {"caller", "assistant"}][-6:]
+        history_lines = []
+        for turn in recent_turns:
+            prefix = "Caller" if turn.role == "caller" else "Assistant"
+            history_lines.append(f"{prefix}: {_normalize_turn_text(turn.text, max_length=280)}")
+        history_block = "\n".join(history_lines) if history_lines else "Caller has just joined the call."
+        system_lines = [
+            f"You are {self.assistant_name}, a helpful and empathetic voice assistant for {self.service_name}.",
+            "Help callers navigate shelter, food, health, benefits, crisis support, transportation, and other 211-style social services.",
+            "Answer in natural spoken language and keep each response concise, specific, and under 70 words unless the caller explicitly asks for more detail.",
+            "Do not read URLs, JSON, raw identifiers, citation IDs, or internal metadata aloud.",
+            "Ask one short clarifying question when the caller's need is ambiguous or missing location, timing, or household details.",
+            "If the service is uncertain, say what you need to know next instead of inventing facts.",
+            f"Website reference: {self.website_url}",
+        ]
+        if self.system_prompt_append.strip():
+            system_lines.append(self.system_prompt_append.strip())
+        system_lines.extend(["Conversation so far:", history_block])
+        system_prompt = "\n".join(system_lines)
+        user_prompt = normalized_transcript
+        full_prompt = "\n\n".join([system_prompt, f"Caller request: {normalized_transcript}"])
+        fallback_text = (
+            f"{self.assistant_name} here. I heard: {normalized_transcript}. "
+            "I can help with shelter, food, health, benefits, and other local services."
+        )
+        return {
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "full_prompt": full_prompt,
+            "fallback_text": fallback_text,
+        }
+
+
+@dataclass(frozen=True)
+class VoiceReplyResult:
+    provider: str
+    model_name: str
+    text: str = ""
+    audio_bytes: bytes = b""
+    mime_type: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+class SmsBridgeStore:
+    """Short-lived DuckDB repository for outbound telephony records."""
+
+    def __init__(self, path: str | None = None):
+        self.path = path or default_sms_bridge_db_path()
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        self._init_db()
+
+    def _connect(self):
+        try:
+            import duckdb  # type: ignore
+        except Exception as exc:  # pragma: no cover - import failure
+            raise RuntimeError("duckdb is required for the SMS bridge") from exc
+        return duckdb.connect(self.path)
+
+    def _init_db(self) -> None:
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sms_messages (
+                    message_id VARCHAR PRIMARY KEY,
+                    direction VARCHAR NOT NULL,
+                    provider VARCHAR NOT NULL,
+                    provider_message_id VARCHAR,
+                    status VARCHAR NOT NULL,
+                    to_phone VARCHAR,
+                    from_phone VARCHAR,
+                    message_text VARCHAR NOT NULL,
+                    wallet_id VARCHAR,
+                    external_reference VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sms_messages_direction_status ON sms_messages(direction, status)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sms_messages_created_at ON sms_messages(created_at)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sms_messages_provider_message_id ON sms_messages(provider_message_id)"
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS email_messages (
+                    email_id VARCHAR PRIMARY KEY,
+                    provider VARCHAR NOT NULL,
+                    provider_message_id VARCHAR,
+                    status VARCHAR NOT NULL,
+                    to_email VARCHAR NOT NULL,
+                    from_email VARCHAR,
+                    subject VARCHAR NOT NULL,
+                    body VARCHAR NOT NULL,
+                    wallet_id VARCHAR,
+                    external_reference VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_email_messages_status ON email_messages(status)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_email_messages_provider_message_id ON email_messages(provider_message_id)"
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS phone_calls (
+                    call_id VARCHAR PRIMARY KEY,
+                    provider VARCHAR NOT NULL,
+                    provider_call_id VARCHAR,
+                    status VARCHAR NOT NULL,
+                    to_phone VARCHAR NOT NULL,
+                    from_phone VARCHAR,
+                    script VARCHAR NOT NULL,
+                    wallet_id VARCHAR,
+                    external_reference VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_phone_calls_status ON phone_calls(status)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_phone_calls_provider_call_id ON phone_calls(provider_call_id)"
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS voice_call_sessions (
+                    session_id VARCHAR PRIMARY KEY,
+                    provider VARCHAR NOT NULL,
+                    provider_call_id VARCHAR,
+                    status VARCHAR NOT NULL,
+                    from_phone VARCHAR,
+                    to_phone VARCHAR,
+                    assistant_name VARCHAR,
+                    service_name VARCHAR,
+                    greeting VARCHAR,
+                    last_user_text VARCHAR,
+                    last_assistant_text VARCHAR,
+                    turn_count INTEGER NOT NULL,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_voice_call_sessions_provider_call_id ON voice_call_sessions(provider_call_id)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_voice_call_sessions_status ON voice_call_sessions(status)"
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS voice_call_turns (
+                    turn_id VARCHAR PRIMARY KEY,
+                    session_id VARCHAR NOT NULL,
+                    role VARCHAR NOT NULL,
+                    text VARCHAR NOT NULL,
+                    audio_asset_id VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_voice_call_turns_session_created ON voice_call_turns(session_id, created_at)"
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS bridge_exports (
+                    export_id VARCHAR PRIMARY KEY,
+                    status VARCHAR NOT NULL,
+                    parquet_dir VARCHAR NOT NULL,
+                    car_path VARCHAR,
+                    ipfs_cid VARCHAR,
+                    filecoin_request_id VARCHAR,
+                    error_message VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_bridge_exports_created_at ON bridge_exports(created_at)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_bridge_exports_status ON bridge_exports(status)"
+            )
+        finally:
+            connection.close()
+
+    def create_bridge_export(self, export_id: str, *, parquet_dir: str, metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        timestamp = _utcnow_iso()
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO bridge_exports(
+                    export_id,
+                    status,
+                    parquet_dir,
+                    car_path,
+                    ipfs_cid,
+                    filecoin_request_id,
+                    error_message,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    export_id,
+                    "running",
+                    str(parquet_dir or ""),
+                    "",
+                    "",
+                    "",
+                    "",
+                    _json_dumps(dict(metadata or {})),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+        finally:
+            connection.close()
+        return self.get_bridge_export(export_id) or {}
+
+    def update_bridge_export(
+        self,
+        export_id: str,
+        *,
+        status: str,
+        car_path: str | None = None,
+        ipfs_cid: str | None = None,
+        filecoin_request_id: str | None = None,
+        error_message: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        current = self.get_bridge_export(export_id)
+        if current is None:
+            return None
+        merged_metadata = dict(current.get("metadata") or {})
+        if metadata:
+            merged_metadata.update(dict(metadata))
+        updated_at = _utcnow_iso()
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                UPDATE bridge_exports
+                SET status = ?,
+                    car_path = ?,
+                    ipfs_cid = ?,
+                    filecoin_request_id = ?,
+                    error_message = ?,
+                    metadata_json = ?,
+                    updated_at = ?
+                WHERE export_id = ?
+                """,
+                (
+                    str(status or current.get("status") or "running"),
+                    str(car_path if car_path is not None else current.get("car_path") or ""),
+                    str(ipfs_cid if ipfs_cid is not None else current.get("ipfs_cid") or ""),
+                    str(filecoin_request_id if filecoin_request_id is not None else current.get("filecoin_request_id") or ""),
+                    str(error_message if error_message is not None else current.get("error_message") or ""),
+                    _json_dumps(merged_metadata),
+                    updated_at,
+                    export_id,
+                ),
+            )
+        finally:
+            connection.close()
+        return self.get_bridge_export(export_id)
+
+    def get_bridge_export(self, export_id: str) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                WHERE export_id = ?
+                """,
+                (export_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+        return _bridge_export_row_to_dict(row) if row is not None else None
+
+    def get_latest_bridge_export(self) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        finally:
+            connection.close()
+        return _bridge_export_row_to_dict(row) if row is not None else None
+
+    def list_bridge_exports(self, *, limit: int = 10) -> list[dict[str, Any]]:
+        normalized_limit = max(1, min(int(limit), 100))
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (normalized_limit,),
+            ).fetchall()
+        finally:
+            connection.close()
+        return [_bridge_export_row_to_dict(row) for row in rows]
+
+    def export_tables_to_parquet(
+        self,
+        output_dir: str | Path,
+        *,
+        table_names: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        requested_tables = tuple(table_names or _SMS_BRIDGE_EXPORT_TABLES)
+        invalid_tables = [table_name for table_name in requested_tables if table_name not in _SMS_BRIDGE_EXPORT_TABLES]
+        if invalid_tables:
+            raise ValueError(f"Unsupported bridge export tables: {', '.join(sorted(invalid_tables))}")
+
+        parquet_dir = Path(output_dir).expanduser().resolve()
+        parquet_dir.mkdir(parents=True, exist_ok=True)
+        connection = self._connect()
+        exported_files: dict[str, str] = {}
+        try:
+            for table_name in requested_tables:
+                target_path = parquet_dir / f"{table_name}.parquet"
+                connection.execute(f"COPY {table_name} TO ? (FORMAT PARQUET)", (str(target_path),))
+                exported_files[table_name] = str(target_path)
+        finally:
+            connection.close()
+
+        manifest = {
+            "db_path": self.path,
+            "generated_at": _utcnow_iso(),
+            "table_count": len(exported_files),
+            "tables": exported_files,
+        }
+        manifest_path = parquet_dir / "manifest.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+        return {"parquet_dir": str(parquet_dir), "tables": exported_files, "manifest_path": str(manifest_path)}
+
+    def _insert_message(
+        self,
+        *,
+        direction: str,
+        provider: str,
+        status: str,
+        to_phone: str,
+        from_phone: str,
+        message: str,
+        provider_message_id: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> SmsMessageRecord:
+        normalized_message = str(message or "")
+        if not normalized_message.strip():
+            raise ValueError("message is required")
+        timestamp = _utcnow_iso()
+        record = SmsMessageRecord(
+            message_id=f"sms-{uuid.uuid4().hex}",
+            direction=str(direction),
+            provider=str(provider or "unknown"),
+            status=str(status or "queued"),
+            provider_message_id=str(provider_message_id or ""),
+            to_phone=str(to_phone or ""),
+            from_phone=str(from_phone or ""),
+            message=normalized_message,
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=_coerce_metadata(metadata),
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO sms_messages(
+                    message_id,
+                    direction,
+                    provider,
+                    provider_message_id,
+                    status,
+                    to_phone,
+                    from_phone,
+                    message_text,
+                    wallet_id,
+                    external_reference,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.message_id,
+                    record.direction,
+                    record.provider,
+                    record.provider_message_id,
+                    record.status,
+                    record.to_phone,
+                    record.from_phone,
+                    record.message,
+                    record.wallet_id,
+                    record.external_reference,
+                    _json_dumps(record.metadata),
+                    record.created_at,
+                    record.updated_at,
+                ),
+            )
+        finally:
+            connection.close()
+        return record
+
+    def record_outbound(
+        self,
+        *,
+        provider: str,
+        status: str,
+        to_phone: str,
+        message: str,
+        provider_message_id: str = "",
+        from_phone: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> SmsMessageRecord:
+        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
+        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        return self._insert_message(
+            direction="outbound",
+            provider=provider,
+            status=status,
+            to_phone=normalized_to_phone,
+            from_phone=normalized_from_phone,
+            message=message,
+            provider_message_id=provider_message_id,
+            wallet_id=wallet_id,
+            external_reference=external_reference,
+            metadata=metadata,
+        )
+
+    def record_inbound(
+        self,
+        *,
+        provider: str,
+        from_phone: str,
+        message: str,
+        to_phone: str = "",
+        provider_message_id: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> SmsMessageRecord:
+        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone")
+        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone") if to_phone else ""
+        resolved_wallet_id = str(wallet_id or "").strip()
+        resolved_external_reference = str(external_reference or "").strip()
+        resolved_metadata = _coerce_metadata(metadata)
+
+        if not resolved_wallet_id or not resolved_external_reference:
+            correlated_outbound = self.find_recent_outbound_for_reply(
+                reply_from_phone=normalized_from_phone,
+                service_phone=normalized_to_phone,
+            )
+            if correlated_outbound is not None:
+                resolved_wallet_id = resolved_wallet_id or correlated_outbound.wallet_id
+                resolved_external_reference = resolved_external_reference or correlated_outbound.external_reference
+                if correlated_outbound.message_id and "reply_to_message_id" not in resolved_metadata:
+                    resolved_metadata["reply_to_message_id"] = correlated_outbound.message_id
+                if (
+                    correlated_outbound.provider_message_id
+                    and "reply_to_provider_message_id" not in resolved_metadata
+                ):
+                    resolved_metadata["reply_to_provider_message_id"] = correlated_outbound.provider_message_id
+        return self._insert_message(
+            direction="inbound",
+            provider=provider,
+            status="received",
+            to_phone=normalized_to_phone,
+            from_phone=normalized_from_phone,
+            message=message,
+            provider_message_id=provider_message_id,
+            wallet_id=resolved_wallet_id,
+            external_reference=resolved_external_reference,
+            metadata=resolved_metadata,
+        )
+
+    def find_recent_outbound_for_reply(
+        self,
+        *,
+        reply_from_phone: str,
+        service_phone: str = "",
+    ) -> SmsMessageRecord | None:
+        normalized_reply_phone = normalize_phone_number(reply_from_phone, field_name="from_phone")
+        normalized_service_phone = normalize_phone_number(service_phone, field_name="to_phone") if service_phone else ""
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                """
+                SELECT message_id, direction, provider, provider_message_id, status, to_phone, from_phone,
+                       message_text, wallet_id, external_reference, metadata_json, created_at, updated_at
+                FROM sms_messages
+                WHERE direction = 'outbound' AND to_phone = ? AND wallet_id <> ''
+                ORDER BY updated_at DESC, created_at DESC, message_id DESC
+                LIMIT 25
+                """,
+                (normalized_reply_phone,),
+            ).fetchall()
+        finally:
+            connection.close()
+
+        first_match: SmsMessageRecord | None = None
+        blank_from_phone_match: SmsMessageRecord | None = None
+        for row in rows:
+            record = SmsMessageRecord.from_row(row)
+            if first_match is None:
+                first_match = record
+            if normalized_service_phone and record.from_phone == normalized_service_phone:
+                return record
+            if not record.from_phone and blank_from_phone_match is None:
+                blank_from_phone_match = record
+        return blank_from_phone_match or first_match
+
+    def update_status_by_provider_message_id(
+        self,
+        *,
+        provider_message_id: str,
+        status: str,
+        metadata_update: Mapping[str, Any] | None = None,
+    ) -> SmsMessageRecord | None:
+        normalized_provider_message_id = str(provider_message_id or "").strip()
+        if not normalized_provider_message_id:
+            raise ValueError("provider_message_id is required")
+        normalized_status = str(status or "").strip()
+        if not normalized_status:
+            raise ValueError("status is required")
+
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    message_id,
+                    direction,
+                    provider,
+                    provider_message_id,
+                    status,
+                    to_phone,
+                    from_phone,
+                    message_text,
+                    wallet_id,
+                    external_reference,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                FROM sms_messages
+                WHERE provider_message_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (normalized_provider_message_id,),
+            ).fetchone()
+            if row is None:
+                return None
+
+            current_record = SmsMessageRecord.from_row(row)
+            merged_metadata = dict(current_record.metadata)
+            merged_metadata.update(_coerce_metadata(metadata_update))
+            updated_at = _utcnow_iso()
+            connection.execute(
+                """
+                UPDATE sms_messages
+                SET status = ?, metadata_json = ?, updated_at = ?
+                WHERE message_id = ?
+                """,
+                (
+                    normalized_status,
+                    _json_dumps(merged_metadata),
+                    updated_at,
+                    current_record.message_id,
+                ),
+            )
+            return SmsMessageRecord(
+                message_id=current_record.message_id,
+                direction=current_record.direction,
+                provider=current_record.provider,
+                status=normalized_status,
+                provider_message_id=current_record.provider_message_id,
+                to_phone=current_record.to_phone,
+                from_phone=current_record.from_phone,
+                message=current_record.message,
+                wallet_id=current_record.wallet_id,
+                external_reference=current_record.external_reference,
+                metadata=merged_metadata,
+                created_at=current_record.created_at,
+                updated_at=updated_at,
+            )
+        finally:
+            connection.close()
+
+    def list_messages(
+        self,
+        *,
+        limit: int = 100,
+        direction: str = "",
+        provider: str = "",
+        status: str = "",
+        phone: str = "",
+    ) -> list[SmsMessageRecord]:
+        normalized_limit = max(1, min(int(limit), 500))
+        filters: list[str] = []
+        params: list[Any] = []
+        if direction:
+            filters.append("direction = ?")
+            params.append(str(direction))
+        if provider:
+            filters.append("provider = ?")
+            params.append(str(provider))
+        if status:
+            filters.append("status = ?")
+            params.append(str(status))
+        if phone:
+            normalized_phone = normalize_phone_number(phone, field_name="phone")
+            filters.append("(to_phone = ? OR from_phone = ?)")
+            params.extend([normalized_phone, normalized_phone])
+
+        sql = (
+            "SELECT "
+            "message_id, direction, provider, provider_message_id, status, to_phone, from_phone, "
+            "message_text, wallet_id, external_reference, metadata_json, created_at, updated_at "
+            "FROM sms_messages"
+        )
+        if filters:
+            sql = f"{sql} WHERE {' AND '.join(filters)}"
+        sql = f"{sql} ORDER BY created_at DESC, message_id DESC LIMIT ?"
+        params.append(normalized_limit)
+
+        connection = self._connect()
+        try:
+            rows = connection.execute(sql, tuple(params)).fetchall()
+        finally:
+            connection.close()
+        return [SmsMessageRecord.from_row(row) for row in rows]
+
+    def record_outbound_email(
+        self,
+        *,
+        provider: str,
+        status: str,
+        to_email: str,
+        subject: str,
+        body: str,
+        provider_message_id: str = "",
+        from_email: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> EmailDeliveryRecord:
+        normalized_to_email = normalize_email_address(to_email, field_name="to_email")
+        normalized_from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        normalized_subject = str(subject or "").strip()
+        normalized_body = str(body or "")
+        if not normalized_subject:
+            raise ValueError("subject is required")
+        if not normalized_body.strip():
+            raise ValueError("body is required")
+        timestamp = _utcnow_iso()
+        record = EmailDeliveryRecord(
+            email_id=f"email-{uuid.uuid4().hex}",
+            provider=str(provider or "unknown"),
+            provider_message_id=str(provider_message_id or ""),
+            status=str(status or "queued"),
+            to_email=normalized_to_email,
+            from_email=normalized_from_email,
+            subject=normalized_subject,
+            body=normalized_body,
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=_coerce_metadata(metadata),
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO email_messages(
+                    email_id,
+                    provider,
+                    provider_message_id,
+                    status,
+                    to_email,
+                    from_email,
+                    subject,
+                    body,
+                    wallet_id,
+                    external_reference,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.email_id,
+                    record.provider,
+                    record.provider_message_id,
+                    record.status,
+                    record.to_email,
+                    record.from_email,
+                    record.subject,
+                    record.body,
+                    record.wallet_id,
+                    record.external_reference,
+                    _json_dumps(record.metadata),
+                    record.created_at,
+                    record.updated_at,
+                ),
+            )
+        finally:
+            connection.close()
+        return record
+
+    def list_email_messages(
+        self,
+        *,
+        limit: int = 100,
+        provider: str = "",
+        status: str = "",
+        to_email: str = "",
+    ) -> list[EmailDeliveryRecord]:
+        normalized_limit = max(1, min(int(limit), 500))
+        filters: list[str] = []
+        params: list[Any] = []
+        if provider:
+            filters.append("provider = ?")
+            params.append(str(provider))
+        if status:
+            filters.append("status = ?")
+            params.append(str(status))
+        if to_email:
+            filters.append("to_email = ?")
+            params.append(normalize_email_address(to_email, field_name="to_email"))
+
+        sql = (
+            "SELECT "
+            "email_id, provider, provider_message_id, status, to_email, from_email, subject, body, "
+            "wallet_id, external_reference, metadata_json, created_at, updated_at "
+            "FROM email_messages"
+        )
+        if filters:
+            sql = f"{sql} WHERE {' AND '.join(filters)}"
+        sql = f"{sql} ORDER BY created_at DESC, email_id DESC LIMIT ?"
+        params.append(normalized_limit)
+
+        connection = self._connect()
+        try:
+            rows = connection.execute(sql, tuple(params)).fetchall()
+        finally:
+            connection.close()
+        return [EmailDeliveryRecord.from_row(row) for row in rows]
+
+    def _insert_call(
+        self,
+        *,
+        provider: str,
+        status: str,
+        to_phone: str,
+        script: str,
+        provider_call_id: str = "",
+        from_phone: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> PhoneCallRecord:
+        normalized_script = str(script or "")
+        if not normalized_script.strip():
+            raise ValueError("script is required")
+        timestamp = _utcnow_iso()
+        record = PhoneCallRecord(
+            call_id=f"call-{uuid.uuid4().hex}",
+            provider=str(provider or "unknown"),
+            provider_call_id=str(provider_call_id or ""),
+            status=str(status or "queued"),
+            to_phone=str(to_phone or ""),
+            from_phone=str(from_phone or ""),
+            script=normalized_script,
+            wallet_id=str(wallet_id or ""),
+            external_reference=str(external_reference or ""),
+            metadata=_coerce_metadata(metadata),
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO phone_calls(
+                    call_id,
+                    provider,
+                    provider_call_id,
+                    status,
+                    to_phone,
+                    from_phone,
+                    script,
+                    wallet_id,
+                    external_reference,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.call_id,
+                    record.provider,
+                    record.provider_call_id,
+                    record.status,
+                    record.to_phone,
+                    record.from_phone,
+                    record.script,
+                    record.wallet_id,
+                    record.external_reference,
+                    _json_dumps(record.metadata),
+                    record.created_at,
+                    record.updated_at,
+                ),
+            )
+        finally:
+            connection.close()
+        return record
+
+    def record_outbound_call(
+        self,
+        *,
+        provider: str,
+        status: str,
+        to_phone: str,
+        script: str,
+        provider_call_id: str = "",
+        from_phone: str = "",
+        wallet_id: str = "",
+        external_reference: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> PhoneCallRecord:
+        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
+        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        return self._insert_call(
+            provider=provider,
+            status=status,
+            to_phone=normalized_to_phone,
+            from_phone=normalized_from_phone,
+            script=script,
+            provider_call_id=provider_call_id,
+            wallet_id=wallet_id,
+            external_reference=external_reference,
+            metadata=metadata,
+        )
+
+    def update_call_status_by_provider_call_id(
+        self,
+        *,
+        provider_call_id: str,
+        status: str,
+        metadata_update: Mapping[str, Any] | None = None,
+    ) -> PhoneCallRecord | None:
+        normalized_provider_call_id = str(provider_call_id or "").strip()
+        if not normalized_provider_call_id:
+            raise ValueError("provider_call_id is required")
+        normalized_status = str(status or "").strip()
+        if not normalized_status:
+            raise ValueError("status is required")
+
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    call_id,
+                    provider,
+                    provider_call_id,
+                    status,
+                    to_phone,
+                    from_phone,
+                    script,
+                    wallet_id,
+                    external_reference,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                FROM phone_calls
+                WHERE provider_call_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (normalized_provider_call_id,),
+            ).fetchone()
+            if row is None:
+                return None
+
+            current_record = PhoneCallRecord.from_row(row)
+            merged_metadata = dict(current_record.metadata)
+            merged_metadata.update(_coerce_metadata(metadata_update))
+            updated_at = _utcnow_iso()
+            connection.execute(
+                """
+                UPDATE phone_calls
+                SET status = ?, metadata_json = ?, updated_at = ?
+                WHERE call_id = ?
+                """,
+                (
+                    normalized_status,
+                    _json_dumps(merged_metadata),
+                    updated_at,
+                    current_record.call_id,
+                ),
+            )
+            return PhoneCallRecord(
+                call_id=current_record.call_id,
+                provider=current_record.provider,
+                provider_call_id=current_record.provider_call_id,
+                status=normalized_status,
+                to_phone=current_record.to_phone,
+                from_phone=current_record.from_phone,
+                script=current_record.script,
+                wallet_id=current_record.wallet_id,
+                external_reference=current_record.external_reference,
+                metadata=merged_metadata,
+                created_at=current_record.created_at,
+                updated_at=updated_at,
+            )
+        finally:
+            connection.close()
+
+    def list_calls(
+        self,
+        *,
+        limit: int = 100,
+        provider: str = "",
+        status: str = "",
+        phone: str = "",
+    ) -> list[PhoneCallRecord]:
+        normalized_limit = max(1, min(int(limit), 500))
+        filters: list[str] = []
+        params: list[Any] = []
+        if provider:
+            filters.append("provider = ?")
+            params.append(str(provider))
+        if status:
+            filters.append("status = ?")
+            params.append(str(status))
+        if phone:
+            normalized_phone = normalize_phone_number(phone, field_name="phone")
+            filters.append("(to_phone = ? OR from_phone = ?)")
+            params.extend([normalized_phone, normalized_phone])
+
+        sql = (
+            "SELECT "
+            "call_id, provider, provider_call_id, status, to_phone, from_phone, script, "
+            "wallet_id, external_reference, metadata_json, created_at, updated_at "
+            "FROM phone_calls"
+        )
+        if filters:
+            sql = f"{sql} WHERE {' AND '.join(filters)}"
+        sql = f"{sql} ORDER BY created_at DESC, call_id DESC LIMIT ?"
+        params.append(normalized_limit)
+
+        connection = self._connect()
+        try:
+            rows = connection.execute(sql, tuple(params)).fetchall()
+        finally:
+            connection.close()
+        return [PhoneCallRecord.from_row(row) for row in rows]
+
+    def create_voice_session(
+        self,
+        *,
+        provider: str,
+        provider_call_id: str,
+        from_phone: str,
+        to_phone: str,
+        assistant_name: str,
+        service_name: str,
+        greeting: str,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> VoiceCallSessionRecord:
+        normalized_from_phone = normalize_voice_party_address(from_phone, field_name="from_phone")
+        normalized_to_phone = normalize_voice_party_address(to_phone, field_name="to_phone")
+        timestamp = _utcnow_iso()
+        record = VoiceCallSessionRecord(
+            session_id=f"voice-{uuid.uuid4().hex}",
+            provider=str(provider or "unknown"),
+            provider_call_id=str(provider_call_id or ""),
+            status="active",
+            from_phone=normalized_from_phone,
+            to_phone=normalized_to_phone,
+            assistant_name=str(assistant_name or ""),
+            service_name=str(service_name or ""),
+            greeting=str(greeting or ""),
+            last_user_text="",
+            last_assistant_text="",
+            turn_count=0,
+            metadata=_coerce_metadata(metadata),
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO voice_call_sessions(
+                    session_id,
+                    provider,
+                    provider_call_id,
+                    status,
+                    from_phone,
+                    to_phone,
+                    assistant_name,
+                    service_name,
+                    greeting,
+                    last_user_text,
+                    last_assistant_text,
+                    turn_count,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.session_id,
+                    record.provider,
+                    record.provider_call_id,
+                    record.status,
+                    record.from_phone,
+                    record.to_phone,
+                    record.assistant_name,
+                    record.service_name,
+                    record.greeting,
+                    record.last_user_text,
+                    record.last_assistant_text,
+                    record.turn_count,
+                    _json_dumps(record.metadata),
+                    record.created_at,
+                    record.updated_at,
+                ),
+            )
+        finally:
+            connection.close()
+        return record
+
+    def get_voice_session(self, session_id: str) -> VoiceCallSessionRecord | None:
+        normalized_session_id = str(session_id or "").strip()
+        if not normalized_session_id:
+            return None
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    session_id,
+                    provider,
+                    provider_call_id,
+                    status,
+                    from_phone,
+                    to_phone,
+                    assistant_name,
+                    service_name,
+                    greeting,
+                    last_user_text,
+                    last_assistant_text,
+                    turn_count,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                FROM voice_call_sessions
+                WHERE session_id = ?
+                LIMIT 1
+                """,
+                (normalized_session_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+        return VoiceCallSessionRecord.from_row(row) if row is not None else None
+
+    def get_voice_session_by_provider_call_id(self, provider_call_id: str) -> VoiceCallSessionRecord | None:
+        normalized_provider_call_id = str(provider_call_id or "").strip()
+        if not normalized_provider_call_id:
+            return None
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    session_id,
+                    provider,
+                    provider_call_id,
+                    status,
+                    from_phone,
+                    to_phone,
+                    assistant_name,
+                    service_name,
+                    greeting,
+                    last_user_text,
+                    last_assistant_text,
+                    turn_count,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                FROM voice_call_sessions
+                WHERE provider_call_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (normalized_provider_call_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+        return VoiceCallSessionRecord.from_row(row) if row is not None else None
+
+    def append_voice_turn(
+        self,
+        session_id: str,
+        *,
+        role: str,
+        text: str,
+        audio_asset_id: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> VoiceCallTurnRecord:
+        current_session = self.get_voice_session(session_id)
+        if current_session is None:
+            raise ValueError("voice session not found")
+        normalized_text = _normalize_turn_text(text, max_length=1200)
+        if not normalized_text:
+            raise ValueError("text is required")
+        timestamp = _utcnow_iso()
+        record = VoiceCallTurnRecord(
+            turn_id=f"voice-turn-{uuid.uuid4().hex}",
+            session_id=current_session.session_id,
+            role=str(role or "assistant"),
+            text=normalized_text,
+            audio_asset_id=str(audio_asset_id or ""),
+            metadata=_coerce_metadata(metadata),
+            created_at=timestamp,
+        )
+        turn_count = int(current_session.turn_count or 0)
+        if record.role in {"caller", "assistant"}:
+            turn_count += 1
+        last_user_text = current_session.last_user_text
+        last_assistant_text = current_session.last_assistant_text
+        if record.role == "caller":
+            last_user_text = record.text
+        elif record.role == "assistant":
+            last_assistant_text = record.text
+
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO voice_call_turns(turn_id, session_id, role, text, audio_asset_id, metadata_json, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.turn_id,
+                    record.session_id,
+                    record.role,
+                    record.text,
+                    record.audio_asset_id,
+                    _json_dumps(record.metadata),
+                    record.created_at,
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE voice_call_sessions
+                SET last_user_text = ?, last_assistant_text = ?, turn_count = ?, updated_at = ?
+                WHERE session_id = ?
+                """,
+                (
+                    last_user_text,
+                    last_assistant_text,
+                    turn_count,
+                    timestamp,
+                    current_session.session_id,
+                ),
+            )
+        finally:
+            connection.close()
+        return record
+
+    def list_voice_turns(self, session_id: str) -> list[VoiceCallTurnRecord]:
+        normalized_session_id = str(session_id or "").strip()
+        if not normalized_session_id:
+            return []
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                """
+                SELECT turn_id, session_id, role, text, audio_asset_id, metadata_json, created_at
+                FROM voice_call_turns
+                WHERE session_id = ?
+                ORDER BY created_at ASC, turn_id ASC
+                """,
+                (normalized_session_id,),
+            ).fetchall()
+        finally:
+            connection.close()
+        return [VoiceCallTurnRecord.from_row(row) for row in rows]
+
+    def update_voice_session_status(
+        self,
+        session_id: str,
+        *,
+        status: str,
+        metadata_update: Mapping[str, Any] | None = None,
+    ) -> VoiceCallSessionRecord | None:
+        current_session = self.get_voice_session(session_id)
+        if current_session is None:
+            return None
+        normalized_status = str(status or "").strip()
+        if not normalized_status:
+            raise ValueError("status is required")
+        updated_at = _utcnow_iso()
+        merged_metadata = dict(current_session.metadata)
+        merged_metadata.update(_coerce_metadata(metadata_update))
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                UPDATE voice_call_sessions
+                SET status = ?, metadata_json = ?, updated_at = ?
+                WHERE session_id = ?
+                """,
+                (normalized_status, _json_dumps(merged_metadata), updated_at, current_session.session_id),
+            )
+        finally:
+            connection.close()
+        return VoiceCallSessionRecord(
+            session_id=current_session.session_id,
+            provider=current_session.provider,
+            provider_call_id=current_session.provider_call_id,
+            status=normalized_status,
+            from_phone=current_session.from_phone,
+            to_phone=current_session.to_phone,
+            assistant_name=current_session.assistant_name,
+            service_name=current_session.service_name,
+            greeting=current_session.greeting,
+            last_user_text=current_session.last_user_text,
+            last_assistant_text=current_session.last_assistant_text,
+            turn_count=current_session.turn_count,
+            metadata=merged_metadata,
+            created_at=current_session.created_at,
+            updated_at=updated_at,
+        )
+
+    def update_voice_session_status_by_provider_call_id(
+        self,
+        *,
+        provider_call_id: str,
+        status: str,
+        metadata_update: Mapping[str, Any] | None = None,
+    ) -> VoiceCallSessionRecord | None:
+        current_session = self.get_voice_session_by_provider_call_id(provider_call_id)
+        if current_session is None:
+            return None
+        return self.update_voice_session_status(
+            current_session.session_id,
+            status=status,
+            metadata_update=metadata_update,
+        )
+
+
+class SmsDeliveryProvider(Protocol):
+    provider_name: str
+
+    def send_sms(
+        self,
+        *,
+        to_phone: str,
+        message: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]: ...
+
+
+class EmailDeliveryProvider(Protocol):
+    provider_name: str
+
+    def send_email(
+        self,
+        *,
+        to_email: str,
+        subject: str,
+        body: str,
+        from_email: str = "",
+        attachment_base64: str = "",
+        attachment_filename: str = "",
+        attachment_mime_type: str = "application/octet-stream",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]: ...
+
+
+class CallDeliveryProvider(Protocol):
+    provider_name: str
+
+    def send_call(
+        self,
+        *,
+        to_phone: str,
+        script: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]: ...
+
+
+def _bridge_export_row_to_dict(row: Sequence[Any]) -> dict[str, Any]:
+    return {
+        "export_id": str(row[0] or ""),
+        "status": str(row[1] or ""),
+        "parquet_dir": str(row[2] or ""),
+        "car_path": str(row[3] or ""),
+        "ipfs_cid": str(row[4] or ""),
+        "filecoin_request_id": str(row[5] or ""),
+        "error_message": str(row[6] or ""),
+        "metadata": json.loads(str(row[7] or "{}")),
+        "created_at": str(row[8] or ""),
+        "updated_at": str(row[9] or ""),
+    }
+
+
+def _create_bridge_export_car(parquet_dir: Path, *, export_id: str) -> tuple[Path, str, dict[str, Any]]:
+    car_path = parquet_dir.parent / f"{export_id}.car"
+    from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
+
+    backend = get_ipfs_backend(use_cache=False)
+    root_cid = backend.add_path(str(parquet_dir), recursive=True, pin=True)
+    car_path.write_bytes(backend.dag_export(root_cid))
+    return car_path, root_cid, {"success": True, "root_cid": root_cid}
+
+
+def _bridge_filecoin_pin_request_headers(*, include_json_content_type: bool) -> dict[str, str]:
+    headers: dict[str, str] = {"accept": "application/json"}
+    if include_json_content_type:
+        headers["content-type"] = "application/json"
+    if bearer_token := str(os.getenv("WALLET_FILECOIN_PIN_BEARER_TOKEN") or "").strip():
+        headers["authorization"] = f"Bearer {bearer_token}"
+    if header_name := str(os.getenv("WALLET_FILECOIN_PIN_HTTP_HEADER_NAME") or "").strip():
+        header_value = str(os.getenv("WALLET_FILECOIN_PIN_HTTP_HEADER_VALUE") or "").strip()
+        if not header_value:
+            raise RuntimeError(
+                "WALLET_FILECOIN_PIN_HTTP_HEADER_VALUE is required when WALLET_FILECOIN_PIN_HTTP_HEADER_NAME is set"
+            )
+        headers[header_name] = header_value
+    return headers
+
+
+def _bridge_filecoin_pin_service_url() -> str:
+    return str(os.getenv("WALLET_FILECOIN_PIN_SERVICE_URL") or "").strip().rstrip("/")
+
+
+def _bridge_filecoin_pin_timeout_seconds() -> float:
+    timeout_seconds = float(str(os.getenv("WALLET_FILECOIN_PIN_TIMEOUT_SECONDS") or "30").strip())
+    if timeout_seconds <= 0:
+        raise RuntimeError("WALLET_FILECOIN_PIN_TIMEOUT_SECONDS must be positive")
+    return timeout_seconds
+
+
+def _bridge_mock_filecoin_status() -> str:
+    return str(os.getenv("WALLET_FILECOIN_PIN_MOCK_STATUS") or "pinned").strip() or "pinned"
+
+
+def _bridge_mock_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    normalized_method = str(method or "").strip().upper()
+    normalized_path = str(path or "").strip()
+    if normalized_method == "POST" and normalized_path == "/pins":
+        cid = str((payload or {}).get("cid") or "").strip()
+        if not cid:
+            raise RuntimeError("mock Filecoin Pin request requires a cid")
+        request_id = f"bridge-pin-{hashlib.sha256(cid.encode('utf-8')).hexdigest()[:12]}"
+        return {
+            "requestid": request_id,
+            "status": "queued",
+            "info": {"provider": "mock-filecoin-pin", "cid": cid, "mock": True},
+        }
+    if normalized_method == "GET" and normalized_path.startswith("/pins/"):
+        request_id = normalized_path.rsplit("/", 1)[-1].strip()
+        return {
+            "requestid": request_id,
+            "status": _bridge_mock_filecoin_status(),
+            "info": {"provider": "mock-filecoin-pin", "mock": True},
+        }
+    raise RuntimeError(f"mock Filecoin Pin does not support {normalized_method} {normalized_path}")
+
+
+def _bridge_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    service_url = _bridge_filecoin_pin_service_url()
+    if not service_url:
+        return {}
+    if service_url == "mock":
+        return _bridge_mock_filecoin_pin_request(method, path, payload=payload)
+
+    endpoint = f"{service_url}{path}"
+    body = json.dumps(payload, sort_keys=True).encode("utf-8") if payload is not None else None
+    req = urllib_request.Request(
+        endpoint,
+        data=body,
+        headers=_bridge_filecoin_pin_request_headers(include_json_content_type=payload is not None),
+        method=method,
+    )
+    try:
+        with urllib_request.urlopen(req, timeout=_bridge_filecoin_pin_timeout_seconds()) as response:
+            raw = response.read().decode("utf-8")
+            content_type = str(getattr(response, "headers", {}).get("content-type", ""))
+    except urllib_error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(error_body or f"Filecoin Pin sidecar rejected the request with HTTP {exc.code}") from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"Unable to reach Filecoin Pin sidecar at {endpoint}: {exc.reason}") from exc
+    if not raw:
+        return {}
+    if "json" not in content_type.lower() and not raw.lstrip().startswith("{"):
+        raise RuntimeError("Filecoin Pin sidecar returned a non-JSON response")
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise RuntimeError("Filecoin Pin sidecar returned a non-object response")
+    return parsed
+
+
+def _submit_bridge_export_cid_to_filecoin_pin(
+    cid: str,
+    *,
+    export_id: str,
+    file_name: str,
+    parquet_tables: Sequence[str],
+) -> dict[str, Any] | None:
+    service_url = _bridge_filecoin_pin_service_url()
+    if not service_url:
+        return None
+    origins = [
+        origin.strip()
+        for origin in str(os.getenv("WALLET_FILECOIN_PIN_ORIGINS") or "").split(",")
+        if origin.strip()
+    ]
+    payload: dict[str, Any] = {
+        "cid": cid,
+        "name": file_name,
+        "meta": {
+            "source": "sms-bridge-parquet-export",
+            "exportId": export_id,
+            "fileName": file_name,
+            "mimeType": "application/vnd.ipld.car",
+            "tableCount": str(len(parquet_tables)),
+            "tables": ",".join(sorted(parquet_tables)),
+        },
+    }
+    if origins:
+        payload["origins"] = origins
+    return _bridge_filecoin_pin_request("POST", "/pins", payload=payload)
+
+
+class SmsBridgeArchiveExporter:
+    def __init__(
+        self,
+        *,
+        repository: SmsBridgeStore,
+        export_root: str | None = None,
+        interval_seconds: float = 3600.0,
+        enabled: bool = False,
+    ):
+        self.repository = repository
+        self.export_root = Path(export_root or default_sms_bridge_export_root()).expanduser().resolve()
+        self.interval_seconds = max(1.0, float(interval_seconds))
+        self.enabled = bool(enabled)
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    @classmethod
+    def from_env(cls, *, repository: SmsBridgeStore) -> "SmsBridgeArchiveExporter":
+        return cls(
+            repository=repository,
+            export_root=os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ROOT", ""),
+            interval_seconds=float(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_INTERVAL_SECONDS", "3600") or "3600"),
+            enabled=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ENABLED")),
+        )
+
+    def start(self) -> None:
+        if not self.enabled:
+            return
+        if self._thread is not None and self._thread.is_alive():
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run_loop, name="sms-bridge-archive-exporter", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
+
+    def _run_loop(self) -> None:
+        self.run_once()
+        while not self._stop_event.wait(self.interval_seconds):
+            self.run_once()
+
+    def run_once(self) -> dict[str, Any]:
+        export_id = f"bridge-export-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+        export_base_dir = self.export_root / export_id
+        parquet_dir = export_base_dir / "parquet"
+        export_base_dir.mkdir(parents=True, exist_ok=True)
+        export_record = self.repository.create_bridge_export(
+            export_id,
+            parquet_dir=str(parquet_dir),
+            metadata={
+                "db_path": self.repository.path,
+                "interval_seconds": self.interval_seconds,
+            },
+        )
+        try:
+            parquet_result = self.repository.export_tables_to_parquet(parquet_dir)
+            car_path, root_cid, car_result = _create_bridge_export_car(parquet_dir, export_id=export_id)
+            filecoin_result = _submit_bridge_export_cid_to_filecoin_pin(
+                root_cid,
+                export_id=export_id,
+                file_name=car_path.name,
+                parquet_tables=tuple(parquet_result["tables"].keys()),
+            )
+            filecoin_request_id = str(
+                (filecoin_result or {}).get("requestid") or (filecoin_result or {}).get("requestId") or ""
+            ).strip()
+            final_status = str((filecoin_result or {}).get("status") or "stored").strip() or "stored"
+            export_record = self.repository.update_bridge_export(
+                export_id,
+                status=final_status,
+                car_path=str(car_path),
+                ipfs_cid=root_cid,
+                filecoin_request_id=filecoin_request_id,
+                metadata={
+                    "parquet": parquet_result,
+                    "car": {"path": str(car_path), **car_result},
+                    "filecoin": filecoin_result or {},
+                },
+            ) or export_record
+        except Exception as exc:
+            export_record = self.repository.update_bridge_export(
+                export_id,
+                status="failed",
+                error_message=str(exc),
+            ) or export_record
+        return export_record
+
+
+class VoiceReplyProvider(Protocol):
+    provider_name: str
+
+    def generate_reply(
+        self,
+        *,
+        transcript: str,
+        session: VoiceCallSessionRecord,
+        turns: Sequence[VoiceCallTurnRecord],
+    ) -> VoiceReplyResult: ...
+
+
+class MockSmsProvider:
+    """Deterministic local SMS provider for development without external APIs."""
+
+    provider_name = "mock"
+
+    def __init__(self, *, from_phone: str = "", provider_name: str = "mock"):
+        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.provider_name = str(provider_name or "mock")
+
+    def send_sms(
+        self,
+        *,
+        to_phone: str,
+        message: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalize_phone_number(to_phone, field_name="to_phone")
+        resolved_message = str(message or "")
+        if not resolved_message.strip():
+            raise ValueError("message is required")
+        if from_phone:
+            normalize_phone_number(from_phone, field_name="from_phone")
+        _coerce_metadata(metadata)
+        return {
+            "provider": self.provider_name,
+            "provider_status": "queued",
+            "provider_message_id": f"mock-sms-{uuid.uuid4().hex}",
+        }
+
+
+class MockEmailProvider:
+    """Deterministic local email provider for development without SMTP or webhooks."""
+
+    provider_name = "mock"
+
+    def __init__(self, *, from_email: str = "", provider_name: str = "mock"):
+        self.from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        self.provider_name = str(provider_name or "mock")
+
+    def send_email(
+        self,
+        *,
+        to_email: str,
+        subject: str,
+        body: str,
+        from_email: str = "",
+        attachment_base64: str = "",
+        attachment_filename: str = "",
+        attachment_mime_type: str = "application/octet-stream",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalize_email_address(to_email, field_name="to_email")
+        if from_email:
+            normalize_email_address(from_email, field_name="from_email")
+        if not str(subject or "").strip():
+            raise ValueError("subject is required")
+        if not str(body or "").strip():
+            raise ValueError("body is required")
+        if attachment_base64:
+            base64.b64decode(str(attachment_base64).split(",")[-1], validate=True)
+        str(attachment_filename or "").strip()
+        str(attachment_mime_type or "application/octet-stream").strip()
+        _coerce_metadata(metadata)
+        return {
+            "provider": self.provider_name,
+            "provider_status": "queued",
+            "provider_message_id": f"mock-email-{uuid.uuid4().hex}",
+        }
+
+
+class MockCallProvider:
+    """Deterministic local call provider for development without telephony APIs."""
+
+    provider_name = "mock"
+
+    def __init__(self, *, from_phone: str = "", provider_name: str = "mock"):
+        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.provider_name = str(provider_name or "mock")
+
+    def send_call(
+        self,
+        *,
+        to_phone: str,
+        script: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalize_phone_number(to_phone, field_name="to_phone")
+        resolved_script = str(script or "")
+        if not resolved_script.strip():
+            raise ValueError("script is required")
+        if from_phone:
+            normalize_phone_number(from_phone, field_name="from_phone")
+        _coerce_metadata(metadata)
+        return {
+            "provider": self.provider_name,
+            "provider_status": "queued",
+            "provider_call_id": f"mock-call-{uuid.uuid4().hex}",
+        }
+
+
+class MockVoiceReplyProvider:
+    """Deterministic local voice reply provider for development without model APIs."""
+
+    provider_name = "mock-voice"
+
+    def __init__(
+        self,
+        *,
+        reply_text: str = "",
+        assistant_profile: VoiceAssistantProfile | None = None,
+        provider_name: str = "mock-voice",
+    ):
+        self.provider_name = str(provider_name or "mock-voice")
+        self.reply_text = str(reply_text or "").strip()
+        self.assistant_profile = assistant_profile or VoiceAssistantProfile()
+
+    def generate_reply(
+        self,
+        *,
+        transcript: str,
+        session: VoiceCallSessionRecord,
+        turns: Sequence[VoiceCallTurnRecord],
+    ) -> VoiceReplyResult:
+        normalized_transcript = _normalize_turn_text(transcript, max_length=120)
+        prompt_text = self.reply_text or (
+            f"This is a local mock reply from {self.assistant_profile.assistant_name}. "
+            f"I heard: {normalized_transcript or 'silence'}. "
+            "Configure a real voice backend when provider credentials are ready."
+        )
+        return VoiceReplyResult(
+            provider=self.provider_name,
+            model_name=self.provider_name,
+            text=prompt_text,
+        )
+
+
+class WebhookSmsProvider:
+    """POST JSON to an outbound SMS worker or provider-specific adapter."""
+
+    provider_name = "webhook"
+
+    def __init__(
+        self,
+        *,
+        webhook_url: str,
+        bearer_token: str = "",
+        header_name: str = "",
+        header_value: str = "",
+        timeout_seconds: float = 15.0,
+        provider_name: str = "webhook",
+    ):
+        self.webhook_url = str(webhook_url or "").strip()
+        if not self.webhook_url:
+            raise ValueError("webhook_url is required")
+        self.bearer_token = str(bearer_token or "").strip()
+        self.header_name = str(header_name or "").strip()
+        self.header_value = str(header_value or "").strip()
+        if self.header_name and not self.header_value:
+            raise ValueError("header_value is required when header_name is set")
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        self.provider_name = str(provider_name or "webhook")
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"content-type": "application/json"}
+        if self.bearer_token:
+            headers["authorization"] = f"Bearer {self.bearer_token}"
+        if self.header_name:
+            headers[self.header_name] = self.header_value
+        return headers
+
+    def send_sms(
+        self,
+        *,
+        to_phone: str,
+        message: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "to_phone": normalize_phone_number(to_phone, field_name="to_phone"),
+            "message": str(message or ""),
+        }
+        if from_phone:
+            payload["from_phone"] = normalize_phone_number(from_phone, field_name="from_phone")
+        if metadata:
+            payload["metadata"] = _coerce_metadata(metadata)
+
+        status_code, raw, content_type = _perform_request(
+            self.webhook_url,
+            body=json.dumps(payload, sort_keys=True).encode("utf-8"),
+            headers=self._headers(),
+            timeout_seconds=self.timeout_seconds,
+        )
+        response_payload = _parse_response_payload(raw, content_type)
+        provider_message_id = str(
+            response_payload.get("message_id")
+            or response_payload.get("provider_message_id")
+            or response_payload.get("sid")
+            or response_payload.get("id")
+            or ""
+        )
+        return {
+            "provider": str(response_payload.get("provider") or self.provider_name),
+            "provider_status": str(response_payload.get("status") or status_code),
+            "provider_message_id": provider_message_id,
+        }
+
+
+class WebhookEmailProvider:
+    """POST JSON to an outbound email worker or provider-specific adapter."""
+
+    provider_name = "webhook"
+
+    def __init__(
+        self,
+        *,
+        webhook_url: str,
+        bearer_token: str = "",
+        header_name: str = "",
+        header_value: str = "",
+        timeout_seconds: float = 20.0,
+        provider_name: str = "webhook",
+    ):
+        self.webhook_url = str(webhook_url or "").strip()
+        if not self.webhook_url:
+            raise ValueError("webhook_url is required")
+        self.bearer_token = str(bearer_token or "").strip()
+        self.header_name = str(header_name or "").strip()
+        self.header_value = str(header_value or "").strip()
+        if self.header_name and not self.header_value:
+            raise ValueError("header_value is required when header_name is set")
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        self.provider_name = str(provider_name or "webhook")
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"content-type": "application/json"}
+        if self.bearer_token:
+            headers["authorization"] = f"Bearer {self.bearer_token}"
+        if self.header_name:
+            headers[self.header_name] = self.header_value
+        return headers
+
+    def send_email(
+        self,
+        *,
+        to_email: str,
+        subject: str,
+        body: str,
+        from_email: str = "",
+        attachment_base64: str = "",
+        attachment_filename: str = "",
+        attachment_mime_type: str = "application/octet-stream",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "to_email": normalize_email_address(to_email, field_name="to_email"),
+            "subject": str(subject or "").strip(),
+            "body": str(body or ""),
+        }
+        if not payload["subject"]:
+            raise ValueError("subject is required")
+        if not payload["body"].strip():
+            raise ValueError("body is required")
+        if from_email:
+            payload["from_email"] = normalize_email_address(from_email, field_name="from_email")
+        if attachment_base64:
+            payload["attachment_base64"] = str(attachment_base64)
+            payload["attachment_filename"] = str(attachment_filename or "attachment.bin")
+            payload["attachment_mime_type"] = str(attachment_mime_type or "application/octet-stream")
+        if metadata:
+            payload["metadata"] = _coerce_metadata(metadata)
+
+        status_code, raw, content_type = _perform_request(
+            self.webhook_url,
+            body=json.dumps(payload, sort_keys=True).encode("utf-8"),
+            headers=self._headers(),
+            timeout_seconds=self.timeout_seconds,
+        )
+        response_payload = _parse_response_payload(raw, content_type)
+        provider_message_id = str(
+            response_payload.get("provider_message_id")
+            or response_payload.get("message_id")
+            or response_payload.get("email_id")
+            or response_payload.get("id")
+            or ""
+        )
+        return {
+            "provider": str(response_payload.get("provider") or self.provider_name),
+            "provider_status": str(response_payload.get("status") or status_code),
+            "provider_message_id": provider_message_id,
+        }
+
+
+class SmtpEmailProvider:
+    provider_name = "smtp"
+
+    def __init__(
+        self,
+        *,
+        smtp_host: str,
+        smtp_port: int = 587,
+        smtp_use_ssl: bool = False,
+        smtp_starttls: bool = True,
+        smtp_username: str = "",
+        smtp_password: str = "",
+        from_email: str = "",
+        timeout_seconds: float = 20.0,
+    ):
+        self.smtp_host = str(smtp_host or "").strip()
+        if not self.smtp_host:
+            raise ValueError("smtp_host is required")
+        self.smtp_port = int(smtp_port)
+        self.smtp_use_ssl = bool(smtp_use_ssl)
+        self.smtp_starttls = bool(smtp_starttls)
+        self.smtp_username = str(smtp_username or "").strip()
+        self.smtp_password = str(smtp_password or "")
+        self.from_email = normalize_email_address(from_email, field_name="from_email") if from_email else ""
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+
+    def send_email(
+        self,
+        *,
+        to_email: str,
+        subject: str,
+        body: str,
+        from_email: str = "",
+        attachment_base64: str = "",
+        attachment_filename: str = "",
+        attachment_mime_type: str = "application/octet-stream",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        del metadata
+        normalized_to_email = normalize_email_address(to_email, field_name="to_email")
+        normalized_from_email = normalize_email_address(from_email, field_name="from_email") if from_email else self.from_email
+        if not normalized_from_email:
+            raise ValueError("from_email is required")
+        normalized_subject = str(subject or "").strip()
+        normalized_body = str(body or "")
+        if not normalized_subject:
+            raise ValueError("subject is required")
+        if not normalized_body.strip():
+            raise ValueError("body is required")
+
+        message = EmailMessage()
+        message["From"] = normalized_from_email
+        message["To"] = normalized_to_email
+        message["Subject"] = normalized_subject
+        sender_domain = normalized_from_email.rsplit("@", 1)[-1].strip() if "@" in normalized_from_email else ""
+        message["Message-Id"] = make_msgid(domain=sender_domain or None)
+        message.set_content(normalized_body)
+        if attachment_base64:
+            attachment_bytes = base64.b64decode(str(attachment_base64))
+            mime_type = str(attachment_mime_type or "application/octet-stream").strip().lower()
+            maintype, _, subtype = mime_type.partition("/")
+            if not maintype or not subtype:
+                maintype, subtype = "application", "octet-stream"
+            message.add_attachment(
+                attachment_bytes,
+                maintype=maintype,
+                subtype=subtype,
+                filename=str(attachment_filename or "attachment.bin"),
+            )
+
+        smtp_factory = smtplib.SMTP_SSL if self.smtp_use_ssl else smtplib.SMTP
+        with smtp_factory(self.smtp_host, self.smtp_port, timeout=self.timeout_seconds) as smtp:
+            if not self.smtp_use_ssl and self.smtp_starttls:
+                smtp.starttls()
+            if self.smtp_username:
+                smtp.login(self.smtp_username, self.smtp_password)
+            rejected = smtp.send_message(message)
+        if rejected:
+            raise RuntimeError(f"email delivery rejected recipients: {sorted(rejected)}")
+        return {
+            "provider": self.provider_name,
+            "provider_status": "sent",
+            "provider_message_id": str(message.get("Message-Id") or ""),
+        }
+
+
+class TwilioSmsProvider:
+    """Outbound adapter for the supported Twilio REST API."""
+
+    provider_name = "twilio"
+
+    def __init__(
+        self,
+        *,
+        account_sid: str,
+        auth_token: str,
+        from_phone: str = "",
+        messaging_service_sid: str = "",
+        status_callback_url: str = "",
+        timeout_seconds: float = 15.0,
+    ):
+        self.account_sid = str(account_sid or "").strip()
+        self.auth_token = str(auth_token or "").strip()
+        if not self.account_sid or not self.auth_token:
+            raise ValueError("Twilio account_sid and auth_token are required")
+        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
+        self.messaging_service_sid = str(messaging_service_sid or "").strip()
+        self.status_callback_url = str(status_callback_url or "").strip()
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+
+    def send_sms(
+        self,
+        *,
+        to_phone: str,
+        message: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
+        normalized_message = str(message or "")
+        if not normalized_message.strip():
+            raise ValueError("message is required")
+
+        resolved_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else self.from_phone
+        form_payload = {
+            "To": normalized_to_phone,
+            "Body": normalized_message,
+        }
+        if self.messaging_service_sid:
+            form_payload["MessagingServiceSid"] = self.messaging_service_sid
+        elif resolved_from_phone:
+            form_payload["From"] = resolved_from_phone
+        else:
+            raise ValueError("Twilio requires from_phone or messaging_service_sid")
+        if self.status_callback_url:
+            form_payload["StatusCallback"] = self.status_callback_url
+        if metadata:
+            for key, value in _coerce_metadata(metadata).items():
+                if value is None:
+                    continue
+                form_payload[f"Metadata[{key}]"] = str(value)
+
+        credentials = f"{self.account_sid}:{self.auth_token}".encode("utf-8")
+        headers = {
+            "authorization": f"Basic {base64.b64encode(credentials).decode('ascii')}",
+            "content-type": "application/x-www-form-urlencoded",
+        }
+        endpoint = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Messages.json"
+        status_code, raw, content_type = _perform_request(
+            endpoint,
+            body=urllib_parse.urlencode(form_payload).encode("utf-8"),
+            headers=headers,
+            timeout_seconds=self.timeout_seconds,
+        )
+        response_payload = _parse_response_payload(raw, content_type)
+        return {
+            "provider": self.provider_name,
+            "provider_status": str(response_payload.get("status") or status_code),
+            "provider_message_id": str(response_payload.get("sid") or response_payload.get("message_id") or ""),
+        }
+
+
+class WebhookEventForwarder:
+    """Forward normalized inbound events to another HTTP endpoint."""
+
+    def __init__(
+        self,
+        *,
+        webhook_url: str,
+        bearer_token: str = "",
+        header_name: str = "",
+        header_value: str = "",
+        timeout_seconds: float = 15.0,
+    ):
+        self.webhook_url = str(webhook_url or "").strip()
+        if not self.webhook_url:
+            raise ValueError("webhook_url is required")
+        self.bearer_token = str(bearer_token or "").strip()
+        self.header_name = str(header_name or "").strip()
+        self.header_value = str(header_value or "").strip()
+        if self.header_name and not self.header_value:
+            raise ValueError("header_value is required when header_name is set")
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"content-type": "application/json"}
+        if self.bearer_token:
+            headers["authorization"] = f"Bearer {self.bearer_token}"
+        if self.header_name:
+            headers[self.header_name] = self.header_value
+        return headers
+
+    def forward(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        status_code, raw, content_type = _perform_request(
+            self.webhook_url,
+            body=json.dumps(dict(payload), sort_keys=True).encode("utf-8"),
+            headers=self._headers(),
+            timeout_seconds=self.timeout_seconds,
+        )
+        result: dict[str, Any] = {"status_code": status_code}
+        response_payload = _parse_response_payload(raw, content_type)
+        if response_payload:
+            result["response"] = response_payload
+        return result
+
+
+class WebhookCallProvider:
+    """POST JSON to an outbound phone-call worker or provider-specific adapter."""
+
+    provider_name = "webhook"
+
+    def __init__(
+        self,
+        *,
+        webhook_url: str,
+        bearer_token: str = "",
+        header_name: str = "",
+        header_value: str = "",
+        timeout_seconds: float = 20.0,
+        provider_name: str = "webhook",
+    ):
+        self.webhook_url = str(webhook_url or "").strip()
+        if not self.webhook_url:
+            raise ValueError("webhook_url is required")
+        self.bearer_token = str(bearer_token or "").strip()
+        self.header_name = str(header_name or "").strip()
+        self.header_value = str(header_value or "").strip()
+        if self.header_name and not self.header_value:
+            raise ValueError("header_value is required when header_name is set")
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        self.provider_name = str(provider_name or "webhook")
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"content-type": "application/json"}
+        if self.bearer_token:
+            headers["authorization"] = f"Bearer {self.bearer_token}"
+        if self.header_name:
+            headers[self.header_name] = self.header_value
+        return headers
+
+    def send_call(
+        self,
+        *,
+        to_phone: str,
+        script: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "to_phone": normalize_phone_number(to_phone, field_name="to_phone"),
+            "script": str(script or ""),
+        }
+        if not payload["script"].strip():
+            raise ValueError("script is required")
+        if from_phone:
+            payload["from_phone"] = normalize_phone_number(from_phone, field_name="from_phone")
+        if metadata:
+            payload["metadata"] = _coerce_metadata(metadata)
+
+        status_code, raw, content_type = _perform_request(
+            self.webhook_url,
+            body=json.dumps(payload, sort_keys=True).encode("utf-8"),
+            headers=self._headers(),
+            timeout_seconds=self.timeout_seconds,
+        )
+        response_payload = _parse_response_payload(raw, content_type)
+        provider_call_id = str(
+            response_payload.get("call_id")
+            or response_payload.get("provider_call_id")
+            or response_payload.get("provider_message_id")
+            or response_payload.get("sid")
+            or response_payload.get("id")
+            or ""
+        )
+        return {
+            "provider": str(response_payload.get("provider") or self.provider_name),
+            "provider_status": str(response_payload.get("status") or status_code),
+            "provider_call_id": provider_call_id,
+        }
+
+
+class TwilioCallProvider:
+    """Outbound adapter for the supported Twilio Voice REST API."""
+
+    provider_name = "twilio"
+
+    def __init__(
+        self,
+        *,
+        account_sid: str,
+        auth_token: str,
+        from_phone: str,
+        status_callback_url: str = "",
+        timeout_seconds: float = 20.0,
+    ):
+        self.account_sid = str(account_sid or "").strip()
+        self.auth_token = str(auth_token or "").strip()
+        if not self.account_sid or not self.auth_token:
+            raise ValueError("Twilio account_sid and auth_token are required")
+        self.from_phone = normalize_phone_number(from_phone, field_name="from_phone")
+        self.status_callback_url = str(status_callback_url or "").strip()
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+
+    def send_call(
+        self,
+        *,
+        to_phone: str,
+        script: str,
+        from_phone: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone")
+        normalized_script = str(script or "")
+        if not normalized_script.strip():
+            raise ValueError("script is required")
+
+        resolved_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else self.from_phone
+        form_payload = {
+            "To": normalized_to_phone,
+            "From": resolved_from_phone,
+            "Twiml": f"<Response><Say>{normalized_script}</Say></Response>",
+        }
+        if self.status_callback_url:
+            form_payload["StatusCallback"] = self.status_callback_url
+            form_payload["StatusCallbackMethod"] = "POST"
+        if metadata:
+            for key, value in _coerce_metadata(metadata).items():
+                if value is None:
+                    continue
+                form_payload[f"Metadata[{key}]"] = str(value)
+
+        credentials = f"{self.account_sid}:{self.auth_token}".encode("utf-8")
+        headers = {
+            "authorization": f"Basic {base64.b64encode(credentials).decode('ascii')}",
+            "content-type": "application/x-www-form-urlencoded",
+        }
+        endpoint = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Calls.json"
+        status_code, raw, content_type = _perform_request(
+            endpoint,
+            body=urllib_parse.urlencode(form_payload).encode("utf-8"),
+            headers=headers,
+            timeout_seconds=self.timeout_seconds,
+        )
+        response_payload = _parse_response_payload(raw, content_type)
+        return {
+            "provider": self.provider_name,
+            "provider_status": str(response_payload.get("status") or status_code),
+            "provider_call_id": str(response_payload.get("sid") or response_payload.get("call_id") or ""),
+        }
+
+
+class VoiceMediaAssetStore:
+    def __init__(self, root_path: str | None = None):
+        self.root_path = Path(root_path or _default_voice_media_root())
+        self.root_path.mkdir(parents=True, exist_ok=True)
+
+    def save(self, *, content: bytes, mime_type: str) -> dict[str, str]:
+        asset_id = f"voice-media-{uuid.uuid4().hex}"
+        normalized_mime_type = str(mime_type or "audio/wav").strip().lower() or "audio/wav"
+        suffix = ".wav"
+        if normalized_mime_type == "audio/mpeg":
+            suffix = ".mp3"
+        elif normalized_mime_type in {"audio/ogg", "application/ogg"}:
+            suffix = ".ogg"
+        asset_path = self.root_path / f"{asset_id}{suffix}"
+        meta_path = self.root_path / f"{asset_id}.json"
+        asset_path.write_bytes(content)
+        meta_path.write_text(
+            json.dumps({"mime_type": normalized_mime_type, "filename": asset_path.name}, sort_keys=True),
+            encoding="utf-8",
+        )
+        return {
+            "asset_id": asset_id,
+            "mime_type": normalized_mime_type,
+            "path": str(asset_path),
+            "filename": asset_path.name,
+        }
+
+    def load(self, asset_id: str) -> tuple[bytes, str] | None:
+        normalized_asset_id = str(asset_id or "").strip()
+        if not normalized_asset_id:
+            return None
+        meta_path = self.root_path / f"{normalized_asset_id}.json"
+        if not meta_path.exists():
+            return None
+        metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+        filename = str(metadata.get("filename") or "").strip()
+        mime_type = str(metadata.get("mime_type") or "audio/wav").strip()
+        if not filename:
+            return None
+        asset_path = self.root_path / filename
+        if not asset_path.exists():
+            return None
+        return asset_path.read_bytes(), mime_type
+
+
+class RemoteVoiceProxyProvider:
+    provider_name = "remote-voice-proxy"
+
+    def __init__(
+        self,
+        *,
+        infer_url: str,
+        tts_url: str = "",
+        timeout_seconds: float = 45.0,
+        assistant_profile: VoiceAssistantProfile | None = None,
+    ):
+        self.infer_url = str(infer_url or "").strip()
+        self.tts_url = str(tts_url or "").strip()
+        if not self.infer_url:
+            raise ValueError("infer_url is required")
+        self.timeout_seconds = float(timeout_seconds)
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        self.assistant_profile = assistant_profile or VoiceAssistantProfile()
+
+    def generate_reply(
+        self,
+        *,
+        transcript: str,
+        session: VoiceCallSessionRecord,
+        turns: Sequence[VoiceCallTurnRecord],
+    ) -> VoiceReplyResult:
+        total_start = time.perf_counter()
+        timings: dict[str, int] = {}
+        stage_start = time.perf_counter()
+        prompt = self.assistant_profile.build_reply_prompt(transcript=transcript, session=session, turns=turns)
+        timings["prompt_build_ms"] = _elapsed_ms(stage_start)
+        body, content_type = _encode_multipart_form(
+            fields={
+                "mode": "voice-reply",
+                "text": prompt["full_prompt"],
+                "systemPrompt": prompt["system_prompt"],
+                "system_prompt": prompt["system_prompt"],
+                "userPrompt": prompt["user_prompt"],
+                "user_prompt": prompt["user_prompt"],
+                "fallbackText": prompt["fallback_text"],
+                "fallback_text": prompt["fallback_text"],
+            },
+            files=[],
+        )
+        stage_start = time.perf_counter()
+        _, raw_bytes, response_content_type = _perform_request_raw(
+            self.infer_url,
+            body=body,
+            headers={
+                "accept": "audio/wav, audio/*, application/json",
+                "content-type": content_type,
+            },
+            timeout_seconds=self.timeout_seconds,
+        )
+        timings["infer_request_ms"] = _elapsed_ms(stage_start)
+        if response_content_type.lower().startswith("audio/"):
+            timings["total_ms"] = _elapsed_ms(total_start)
+            return VoiceReplyResult(
+                provider=self.provider_name,
+                model_name=self.provider_name,
+                text=prompt["fallback_text"],
+                audio_bytes=raw_bytes,
+                mime_type=response_content_type or "audio/wav",
+                metadata={"latency": timings},
+            )
+
+        payload = _parse_response_payload(raw_bytes.decode("utf-8", errors="replace"), response_content_type)
+        audio_base64 = _first_string(payload, ["audioBase64", "audio_base64", "audio", "wavBase64", "wav_base64"])
+        generated_text = _first_string(payload, ["text", "outputText", "output_text"])
+        model_name = _first_string(payload, ["model", "modelName", "model_name"]) or self.provider_name
+        remote_latency = payload.get("latency") if isinstance(payload.get("latency"), Mapping) else None
+        if audio_base64:
+            mime_type = _first_string(payload, ["mimeType", "mime_type"]) or "audio/wav"
+            stage_start = time.perf_counter()
+            audio_bytes = base64.b64decode(audio_base64.split(",")[-1])
+            timings["audio_decode_ms"] = _elapsed_ms(stage_start)
+            timings["total_ms"] = _elapsed_ms(total_start)
+            return VoiceReplyResult(
+                provider=self.provider_name,
+                model_name=model_name,
+                text=generated_text or prompt["fallback_text"],
+                audio_bytes=audio_bytes,
+                mime_type=mime_type,
+                metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
+            )
+        if generated_text and self.tts_url:
+            stage_start = time.perf_counter()
+            _, tts_audio, tts_content_type = _perform_request_raw(
+                self.tts_url,
+                body=urllib_parse.urlencode({"text": generated_text}).encode("utf-8"),
+                headers={
+                    "accept": "audio/wav, audio/*, application/json",
+                    "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+                },
+                timeout_seconds=self.timeout_seconds,
+            )
+            timings["tts_request_ms"] = _elapsed_ms(stage_start)
+            if tts_content_type.lower().startswith("audio/"):
+                timings["total_ms"] = _elapsed_ms(total_start)
+                return VoiceReplyResult(
+                    provider=self.provider_name,
+                    model_name=model_name,
+                    text=generated_text,
+                    audio_bytes=tts_audio,
+                    mime_type=tts_content_type or "audio/wav",
+                    metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
+                )
+        if generated_text:
+            timings["total_ms"] = _elapsed_ms(total_start)
+            return VoiceReplyResult(
+                provider=self.provider_name,
+                model_name=model_name,
+                text=generated_text,
+                metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
+            )
+        raise RuntimeError("voice proxy returned neither audio nor text")
+
+
+class OutboundSmsRequest(BaseModel):
+    to_phone: str
+    message: str
+    from_phone: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class MagicLinkSmsRequest(BaseModel):
+    to_phone: str
+    magic_link: str
+    one_time_pad: str
+    portal: str = "client"
+    expires_in_minutes: int = 10
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class OutboundEmailRequest(BaseModel):
+    to_email: str
+    subject: str
+    body: str
+    from_email: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    attachment_base64: str = ""
+    attachment_filename: str = ""
+    attachment_mime_type: str = "application/octet-stream"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class InboundSmsWebhookRequest(BaseModel):
+    from_phone: str
+    message: str
+    to_phone: str = ""
+    provider: str = "webhook"
+    provider_message_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class OutboundCallRequest(BaseModel):
+    to_phone: str
+    script: str
+    from_phone: str = ""
+    wallet_id: str = ""
+    external_reference: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+def build_email_provider(
+    *,
+    provider_kind: str | None = None,
+    webhook_url: str | None = None,
+    bearer_token: str | None = None,
+    header_name: str | None = None,
+    header_value: str | None = None,
+    smtp_host: str | None = None,
+    smtp_port: int | None = None,
+    smtp_use_ssl: bool | None = None,
+    smtp_starttls: bool | None = None,
+    smtp_username: str | None = None,
+    smtp_password: str | None = None,
+    from_email: str | None = None,
+    timeout_seconds: float | None = None,
+) -> EmailDeliveryProvider | None:
+    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_WEBHOOK_URL"))
+    resolved_smtp_host = _first_non_empty(
+        smtp_host,
+        os.getenv("IPFS_DATASETS_EMAIL_SMTP_HOST"),
+        os.getenv("WALLET_DEAD_DROP_SMTP_HOST"),
+    )
+    resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_KIND"))
+    if not resolved_kind:
+        if resolved_webhook_url:
+            resolved_kind = "webhook"
+        elif resolved_smtp_host:
+            resolved_kind = "smtp"
+        else:
+            return None
+
+    resolved_timeout = timeout_seconds
+    if resolved_timeout is None:
+        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_TIMEOUT_SECONDS"), "20"))
+
+    normalized_kind = resolved_kind.lower()
+    if normalized_kind == "mock":
+        return MockEmailProvider(
+            from_email=_first_non_empty(
+                from_email,
+                os.getenv("IPFS_DATASETS_EMAIL_FROM_EMAIL"),
+                os.getenv("WALLET_DEAD_DROP_FROM_EMAIL"),
+                "no-reply@211-ai.org",
+            )
+        )
+    if normalized_kind == "webhook":
+        return WebhookEmailProvider(
+            webhook_url=resolved_webhook_url,
+            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_BEARER_TOKEN")),
+            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_NAME")),
+            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_EMAIL_PROVIDER_HTTP_HEADER_VALUE")),
+            timeout_seconds=resolved_timeout,
+        )
+    if normalized_kind == "smtp":
+        resolved_smtp_port = smtp_port
+        if resolved_smtp_port is None:
+            resolved_smtp_port = int(
+                _first_non_empty(
+                    os.getenv("IPFS_DATASETS_EMAIL_SMTP_PORT"),
+                    os.getenv("WALLET_DEAD_DROP_SMTP_PORT"),
+                    "587",
+                )
+            )
+        resolved_smtp_use_ssl = smtp_use_ssl
+        if resolved_smtp_use_ssl is None:
+            resolved_smtp_use_ssl = _truthy(
+                _first_non_empty(
+                    os.getenv("IPFS_DATASETS_EMAIL_SMTP_USE_SSL"),
+                    os.getenv("WALLET_DEAD_DROP_SMTP_USE_SSL"),
+                )
+            )
+        resolved_smtp_starttls = smtp_starttls
+        if resolved_smtp_starttls is None:
+            resolved_smtp_starttls = _truthy(
+                _first_non_empty(
+                    os.getenv("IPFS_DATASETS_EMAIL_SMTP_STARTTLS"),
+                    os.getenv("WALLET_DEAD_DROP_SMTP_STARTTLS"),
+                    "true",
+                )
+            )
+        return SmtpEmailProvider(
+            smtp_host=resolved_smtp_host,
+            smtp_port=resolved_smtp_port,
+            smtp_use_ssl=resolved_smtp_use_ssl,
+            smtp_starttls=resolved_smtp_starttls,
+            smtp_username=_first_non_empty(
+                smtp_username,
+                os.getenv("IPFS_DATASETS_EMAIL_SMTP_USERNAME"),
+                os.getenv("WALLET_DEAD_DROP_SMTP_USERNAME"),
+            ),
+            smtp_password=_first_non_empty(
+                smtp_password,
+                os.getenv("IPFS_DATASETS_EMAIL_SMTP_PASSWORD"),
+                os.getenv("WALLET_DEAD_DROP_SMTP_PASSWORD"),
+            ),
+            from_email=_first_non_empty(
+                from_email,
+                os.getenv("IPFS_DATASETS_EMAIL_FROM_EMAIL"),
+                os.getenv("WALLET_DEAD_DROP_FROM_EMAIL"),
+                "no-reply@211-ai.org",
+            ),
+            timeout_seconds=resolved_timeout,
+        )
+    raise ValueError(f"unsupported email provider kind: {resolved_kind}")
+
+
+def build_sms_provider(
+    *,
+    provider_kind: str | None = None,
+    webhook_url: str | None = None,
+    bearer_token: str | None = None,
+    header_name: str | None = None,
+    header_value: str | None = None,
+    account_sid: str | None = None,
+    auth_token: str | None = None,
+    from_phone: str | None = None,
+    messaging_service_sid: str | None = None,
+    status_callback_url: str | None = None,
+    timeout_seconds: float | None = None,
+) -> SmsDeliveryProvider | None:
+    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL"))
+    resolved_account_sid = _first_non_empty(account_sid, os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID"))
+    resolved_auth_token = _first_non_empty(auth_token, os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN"))
+    resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_SMS_PROVIDER_KIND"))
+    if not resolved_kind:
+        if resolved_webhook_url:
+            resolved_kind = "webhook"
+        elif resolved_account_sid and resolved_auth_token:
+            resolved_kind = "twilio"
+        else:
+            return None
+
+    resolved_timeout = timeout_seconds
+    if resolved_timeout is None:
+        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS"), "15"))
+
+    normalized_kind = resolved_kind.lower()
+    if normalized_kind == "mock":
+        return MockSmsProvider(
+            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")),
+        )
+    if normalized_kind == "webhook":
+        return WebhookSmsProvider(
+            webhook_url=resolved_webhook_url,
+            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN")),
+            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME")),
+            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE")),
+            timeout_seconds=resolved_timeout,
+        )
+    if normalized_kind == "twilio":
+        return TwilioSmsProvider(
+            account_sid=resolved_account_sid,
+            auth_token=resolved_auth_token,
+            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE")),
+            messaging_service_sid=_first_non_empty(
+                messaging_service_sid,
+                os.getenv("IPFS_DATASETS_SMS_TWILIO_MESSAGING_SERVICE_SID"),
+            ),
+            status_callback_url=_first_non_empty(
+                status_callback_url,
+                os.getenv("IPFS_DATASETS_SMS_TWILIO_STATUS_CALLBACK_URL"),
+            ),
+            timeout_seconds=resolved_timeout,
+        )
+    raise ValueError(f"unsupported SMS provider kind: {resolved_kind}")
+
+
+def build_inbound_forwarder(
+    *,
+    webhook_url: str | None = None,
+    bearer_token: str | None = None,
+    header_name: str | None = None,
+    header_value: str | None = None,
+    timeout_seconds: float | None = None,
+) -> WebhookEventForwarder | None:
+    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL"))
+    if not resolved_webhook_url:
+        return None
+    resolved_timeout = timeout_seconds
+    if resolved_timeout is None:
+        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS"), "15"))
+    return WebhookEventForwarder(
+        webhook_url=resolved_webhook_url,
+        bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN")),
+        header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME")),
+        header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE")),
+        timeout_seconds=resolved_timeout,
+    )
+
+
+def build_call_provider(
+    *,
+    provider_kind: str | None = None,
+    webhook_url: str | None = None,
+    bearer_token: str | None = None,
+    header_name: str | None = None,
+    header_value: str | None = None,
+    account_sid: str | None = None,
+    auth_token: str | None = None,
+    from_phone: str | None = None,
+    status_callback_url: str | None = None,
+    timeout_seconds: float | None = None,
+) -> CallDeliveryProvider | None:
+    resolved_webhook_url = _first_non_empty(webhook_url, os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL"))
+    resolved_account_sid = _first_non_empty(account_sid, os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID"))
+    resolved_auth_token = _first_non_empty(auth_token, os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN"))
+    resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_CALL_PROVIDER_KIND"))
+    if not resolved_kind:
+        if resolved_webhook_url:
+            resolved_kind = "webhook"
+        elif resolved_account_sid and resolved_auth_token:
+            resolved_kind = "twilio"
+        else:
+            return None
+
+    resolved_timeout = timeout_seconds
+    if resolved_timeout is None:
+        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS"), "20"))
+
+    normalized_kind = resolved_kind.lower()
+    if normalized_kind == "mock":
+        return MockCallProvider(
+            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")),
+        )
+    if normalized_kind == "webhook":
+        return WebhookCallProvider(
+            webhook_url=resolved_webhook_url,
+            bearer_token=_first_non_empty(bearer_token, os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN")),
+            header_name=_first_non_empty(header_name, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME")),
+            header_value=_first_non_empty(header_value, os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE")),
+            timeout_seconds=resolved_timeout,
+        )
+    if normalized_kind == "twilio":
+        return TwilioCallProvider(
+            account_sid=resolved_account_sid,
+            auth_token=resolved_auth_token,
+            from_phone=_first_non_empty(from_phone, os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE")),
+            status_callback_url=_first_non_empty(
+                status_callback_url,
+                os.getenv("IPFS_DATASETS_CALL_TWILIO_STATUS_CALLBACK_URL"),
+            ),
+            timeout_seconds=resolved_timeout,
+        )
+    raise ValueError(f"unsupported call provider kind: {resolved_kind}")
+
+
+def build_voice_assistant_profile(
+    *,
+    assistant_name: str | None = None,
+    service_name: str | None = None,
+    greeting: str | None = None,
+    no_speech_prompt: str | None = None,
+    follow_up_prompt: str | None = None,
+    farewell: str | None = None,
+    unavailable_prompt: str | None = None,
+    website_url: str | None = None,
+    system_prompt_append: str | None = None,
+    max_turns: int | None = None,
+) -> VoiceAssistantProfile:
+    resolved_max_turns = max_turns
+    if resolved_max_turns is None:
+        resolved_max_turns = int(_first_non_empty(os.getenv("IPFS_DATASETS_VOICE_MAX_TURNS"), "8"))
+    return VoiceAssistantProfile(
+        assistant_name=_first_non_empty(assistant_name, os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME")) or "Abby",
+        service_name=_first_non_empty(service_name, os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME")) or "211 AI",
+        greeting=_first_non_empty(greeting, os.getenv("IPFS_DATASETS_VOICE_GREETING")) or _DEFAULT_VOICE_GREETING,
+        no_speech_prompt=_first_non_empty(no_speech_prompt, os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT"))
+        or _DEFAULT_VOICE_NO_SPEECH_PROMPT,
+        follow_up_prompt=_first_non_empty(follow_up_prompt, os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT"))
+        or _DEFAULT_VOICE_FOLLOW_UP,
+        farewell=_first_non_empty(farewell, os.getenv("IPFS_DATASETS_VOICE_FAREWELL")) or _DEFAULT_VOICE_FAREWELL,
+        unavailable_prompt=_first_non_empty(
+            unavailable_prompt,
+            os.getenv("IPFS_DATASETS_VOICE_UNAVAILABLE_PROMPT"),
+        )
+        or _DEFAULT_VOICE_UNAVAILABLE_PROMPT,
+        website_url=_first_non_empty(website_url, os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL")) or "https://211-ai.com",
+        system_prompt_append=_first_non_empty(
+            system_prompt_append,
+            os.getenv("IPFS_DATASETS_VOICE_SYSTEM_PROMPT_APPEND"),
+        ),
+        max_turns=max(1, int(resolved_max_turns)),
+    )
+
+
+def build_voice_reply_provider(
+    *,
+    provider_kind: str | None = None,
+    base_url: str | None = None,
+    infer_url: str | None = None,
+    tts_url: str | None = None,
+    timeout_seconds: float | None = None,
+    mock_reply_text: str | None = None,
+    assistant_profile: VoiceAssistantProfile | None = None,
+) -> VoiceReplyProvider | None:
+    resolved_kind = _first_non_empty(provider_kind, os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND"))
+    resolved_base_url = _first_non_empty(base_url, os.getenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL"))
+    resolved_infer_url = _first_non_empty(
+        infer_url,
+        os.getenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL"),
+        _append_url_path(resolved_base_url, "infer"),
+    )
+    resolved_infer_url = _resolve_proxy_url(resolved_base_url, resolved_infer_url)
+    resolved_profile = assistant_profile or build_voice_assistant_profile()
+    if resolved_kind and resolved_kind.lower() == "mock":
+        return MockVoiceReplyProvider(
+            reply_text=_first_non_empty(mock_reply_text, os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT")),
+            assistant_profile=resolved_profile,
+        )
+    if not resolved_infer_url:
+        return None
+    resolved_timeout = timeout_seconds
+    if resolved_timeout is None:
+        resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS"), "45"))
+    return RemoteVoiceProxyProvider(
+        infer_url=resolved_infer_url,
+        tts_url=_resolve_proxy_url(
+            resolved_base_url,
+            _first_non_empty(
+                tts_url,
+                os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL"),
+                _append_url_path(resolved_base_url, "tts"),
+            ),
+        ),
+        timeout_seconds=resolved_timeout,
+        assistant_profile=resolved_profile,
+    )
+
+
+def _parse_form_body(body: bytes) -> dict[str, str]:
+    parsed = urllib_parse.parse_qs(body.decode("utf-8", errors="replace"), keep_blank_values=True)
+    return {key: values[-1] if values else "" for key, values in parsed.items()}
+
+
+async def _parse_request_form(request: Request) -> dict[str, str]:
+    try:
+        form = await request.form()
+    except Exception:
+        return _parse_form_body(await request.body())
+
+    normalized: dict[str, str] = {}
+    for key, value in form.multi_items():
+        if hasattr(value, "filename"):
+            continue
+        normalized[str(key)] = str(value)
+    return normalized
+
+
+def _forward_inbound_message(
+    forwarder: WebhookEventForwarder | None,
+    record: SmsMessageRecord,
+) -> dict[str, Any] | None:
+    if forwarder is None:
+        return None
+    return forwarder.forward(record.to_dict())
+
+
+def _sms_bridge_cors_origins() -> list[str]:
+    raw = str(os.getenv("IPFS_DATASETS_SMS_BRIDGE_CORS_ORIGINS") or "").strip()
+    if not raw:
+        return [
+            "https://211-ai.com",
+            "https://www.211-ai.com",
+            "https://211-ai.github.io",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+        ]
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def _allowed_magic_link_hosts() -> set[str]:
+    raw = str(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_ALLOWED_HOSTS") or "").strip()
+    values = raw.split(",") if raw else ["211-ai.com", "www.211-ai.com", "211-ai.github.io", "localhost", "127.0.0.1"]
+    return {value.strip().lower() for value in values if value.strip()}
+
+
+def _validate_magic_login_link(value: str) -> str:
+    link = str(value or "").strip()
+    parsed = urllib_parse.urlparse(link)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("magic_link must be an absolute http(s) URL")
+    hostname = str(parsed.hostname or "").lower()
+    if hostname not in _allowed_magic_link_hosts():
+        raise ValueError("magic_link host is not allowed")
+    if len(link) > 1800:
+        raise ValueError("magic_link is too long")
+    return link
+
+
+def _format_magic_link_sms(payload: Mapping[str, Any]) -> str:
+    one_time_pad = str(payload.get("one_time_pad") or "").strip()
+    if not re.fullmatch(r"\d{6}", one_time_pad):
+        raise ValueError("one_time_pad must be a 6 digit code")
+    magic_link = _validate_magic_login_link(str(payload.get("magic_link") or ""))
+    expires_in_minutes = int(payload.get("expires_in_minutes") or 10)
+    if expires_in_minutes < 1 or expires_in_minutes > 60:
+        raise ValueError("expires_in_minutes must be between 1 and 60")
+    return (
+        f"211 AI / Abby login: use code {one_time_pad} or open {magic_link} "
+        f"This link expires in {expires_in_minutes} minutes. Reply HELP for help or STOP to opt out."
+    )
+
+
+def create_sms_bridge_app(
+    *,
+    repository: SmsBridgeStore | None = None,
+    provider: SmsDeliveryProvider | None = None,
+    email_provider: EmailDeliveryProvider | None = None,
+    inbound_forwarder: WebhookEventForwarder | None = None,
+    call_provider: CallDeliveryProvider | None = None,
+    voice_reply_provider: VoiceReplyProvider | None = None,
+    voice_media_store: VoiceMediaAssetStore | None = None,
+    voice_profile: VoiceAssistantProfile | None = None,
+    public_base_url: str = "",
+):
+    if FastAPI is None or HTTPException is None or Request is None or Response is None:  # pragma: no cover
+        raise RuntimeError("FastAPI is required to create the SMS bridge app")
+
+    sms_store = repository or SmsBridgeStore()
+    delivery_provider = provider if provider is not None else build_sms_provider()
+    outbound_email_provider = email_provider if email_provider is not None else build_email_provider()
+    forwarder = inbound_forwarder if inbound_forwarder is not None else build_inbound_forwarder()
+    outbound_call_provider = call_provider if call_provider is not None else build_call_provider()
+    resolved_voice_profile = voice_profile or build_voice_assistant_profile()
+    resolved_voice_reply_provider = (
+        voice_reply_provider
+        if voice_reply_provider is not None
+        else build_voice_reply_provider(assistant_profile=resolved_voice_profile)
+    )
+    media_store = voice_media_store or VoiceMediaAssetStore()
+    archive_exporter = SmsBridgeArchiveExporter.from_env(repository=sms_store)
+    configured_public_base_url = str(public_base_url or os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL") or "").strip()
+
+    app = FastAPI(title="IPFS Datasets Messaging Bridge", version="0.1.0")
+    if CORSMiddleware is not None:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_sms_bridge_cors_origins(),
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["content-type", "authorization"],
+        )
+    magic_link_sms_attempts: dict[str, list[float]] = {}
+
+    @app.on_event("startup")
+    async def _startup_archive_exporter() -> None:
+        archive_exporter.start()
+
+    @app.on_event("shutdown")
+    async def _shutdown_archive_exporter() -> None:
+        archive_exporter.stop()
+
+    @app.get("/health")
+    def health() -> dict[str, Any]:
+        return {
+            "status": "ok",
+            "provider": getattr(delivery_provider, "provider_name", "") or "",
+            "provider_configured": delivery_provider is not None,
+            "email_provider": getattr(outbound_email_provider, "provider_name", "") or "",
+            "email_provider_configured": outbound_email_provider is not None,
+            "call_provider": getattr(outbound_call_provider, "provider_name", "") or "",
+            "call_provider_configured": outbound_call_provider is not None,
+            "voice_reply_provider": getattr(resolved_voice_reply_provider, "provider_name", "") or "",
+            "voice_reply_provider_configured": resolved_voice_reply_provider is not None,
+            "inbound_forwarding_configured": forwarder is not None,
+            "db_path": sms_store.path,
+            "archive_export_enabled": archive_exporter.enabled,
+            "archive_export_interval_seconds": archive_exporter.interval_seconds if archive_exporter.enabled else 0,
+            "latest_archive_export": sms_store.get_latest_bridge_export(),
+        }
+
+    @app.get("/exports/archive")
+    def list_archive_exports(limit: int = 10) -> dict[str, Any]:
+        return {"exports": sms_store.list_bridge_exports(limit=limit)}
+
+    @app.post("/exports/archive/run")
+    def run_archive_export() -> dict[str, Any]:
+        return archive_exporter.run_once()
+
+    @app.post("/messages/email/outbound")
+    def send_outbound_email(request: OutboundEmailRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        attachment_metadata: dict[str, Any] = {}
+        if payload.get("attachment_filename"):
+            attachment_metadata["attachment_filename"] = str(payload.get("attachment_filename") or "")
+        if payload.get("attachment_mime_type"):
+            attachment_metadata["attachment_mime_type"] = str(payload.get("attachment_mime_type") or "")
+        if payload.get("attachment_base64"):
+            try:
+                attachment_metadata["attachment_bytes"] = len(base64.b64decode(str(payload.get("attachment_base64") or "")))
+            except Exception:
+                attachment_metadata["attachment_invalid_base64"] = True
+        record_metadata = {**dict(payload.get("metadata") or {}), **attachment_metadata}
+        if outbound_email_provider is None:
+            failed_record = sms_store.record_outbound_email(
+                provider="unconfigured",
+                status="failed",
+                to_email=payload["to_email"],
+                subject=payload["subject"],
+                body=payload["body"],
+                from_email=payload.get("from_email", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**record_metadata, "error": "Email provider not configured"},
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={"message": "Email provider not configured", "record": failed_record.to_dict()},
+            )
+        try:
+            delivery = outbound_email_provider.send_email(
+                to_email=payload["to_email"],
+                subject=payload["subject"],
+                body=payload["body"],
+                from_email=payload.get("from_email", ""),
+                attachment_base64=payload.get("attachment_base64", ""),
+                attachment_filename=payload.get("attachment_filename", ""),
+                attachment_mime_type=payload.get("attachment_mime_type", "application/octet-stream"),
+                metadata=payload.get("metadata") or {},
+            )
+            record = sms_store.record_outbound_email(
+                provider=str(delivery.get("provider") or getattr(outbound_email_provider, "provider_name", "unknown")),
+                status=str(delivery.get("provider_status") or "sent"),
+                provider_message_id=str(delivery.get("provider_message_id") or ""),
+                to_email=payload["to_email"],
+                subject=payload["subject"],
+                body=payload["body"],
+                from_email=payload.get("from_email", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata=record_metadata,
+            )
+            return {
+                "status": "ok",
+                "email": record.to_dict(),
+                "provider_message_id": str(delivery.get("provider_message_id") or ""),
+                **delivery,
+            }
+        except ValueError as exc:
+            failed_record = sms_store.record_outbound_email(
+                provider=getattr(outbound_email_provider, "provider_name", "unknown"),
+                status="failed",
+                to_email=payload["to_email"],
+                subject=payload["subject"],
+                body=payload["body"],
+                from_email=payload.get("from_email", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**record_metadata, "error": str(exc)},
+            )
+            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+        except RuntimeError as exc:
+            failed_record = sms_store.record_outbound_email(
+                provider=getattr(outbound_email_provider, "provider_name", "unknown"),
+                status="failed",
+                to_email=payload["to_email"],
+                subject=payload["subject"],
+                body=payload["body"],
+                from_email=payload.get("from_email", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**record_metadata, "error": str(exc)},
+            )
+            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+
+    @app.get("/messages/email")
+    def list_email_messages(
+        limit: int = Query(default=100, ge=1, le=500),
+        provider: str = "",
+        status: str = "",
+        to_email: str = "",
+    ) -> dict[str, Any]:
+        try:
+            messages = sms_store.list_email_messages(limit=limit, provider=provider, status=status, to_email=to_email)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"count": len(messages), "messages": [message.to_dict() for message in messages]}
+
+    @app.post("/messages/sms/outbound")
+    def send_outbound_sms(request: OutboundSmsRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        if delivery_provider is None:
+            failed_record = sms_store.record_outbound(
+                provider="unconfigured",
+                status="failed",
+                to_phone=payload["to_phone"],
+                message=payload["message"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": "SMS provider not configured"},
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={"message": "SMS provider not configured", "record": failed_record.to_dict()},
+            )
+        try:
+            delivery = delivery_provider.send_sms(
+                to_phone=payload["to_phone"],
+                message=payload["message"],
+                from_phone=payload.get("from_phone", ""),
+                metadata=payload.get("metadata") or {},
+            )
+            record = sms_store.record_outbound(
+                provider=str(delivery.get("provider") or getattr(delivery_provider, "provider_name", "unknown")),
+                status=str(delivery.get("provider_status") or "sent"),
+                provider_message_id=str(delivery.get("provider_message_id") or ""),
+                to_phone=payload["to_phone"],
+                message=payload["message"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata=payload.get("metadata") or {},
+            )
+            return {
+                "status": "ok",
+                "message": record.to_dict(),
+                **delivery,
+            }
+        except ValueError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=payload["to_phone"],
+                message=payload["message"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
+            )
+            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+        except RuntimeError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=payload["to_phone"],
+                message=payload["message"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
+            )
+            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+
+    @app.post("/auth/magic-link/sms")
+    def send_magic_link_sms(request: MagicLinkSmsRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        try:
+            normalized_to_phone = normalize_phone_number(payload["to_phone"], field_name="to_phone")
+            message = _format_magic_link_sms(payload)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        now = time.monotonic()
+        window_seconds = float(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_WINDOW_SECONDS", "900") or "900")
+        max_attempts = int(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_LIMIT", "3") or "3")
+        recent_attempts = [timestamp for timestamp in magic_link_sms_attempts.get(normalized_to_phone, []) if now - timestamp < window_seconds]
+        if len(recent_attempts) >= max_attempts:
+            raise HTTPException(status_code=429, detail="too many magic-link SMS requests for this phone number")
+        recent_attempts.append(now)
+        magic_link_sms_attempts[normalized_to_phone] = recent_attempts
+
+        metadata = {
+            **dict(payload.get("metadata") or {}),
+            "message_type": "magic_login",
+            "portal": str(payload.get("portal") or "client"),
+        }
+        if delivery_provider is None:
+            failed_record = sms_store.record_outbound(
+                provider="unconfigured",
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": "SMS provider not configured"},
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={"message": "SMS provider not configured", "record": failed_record.to_dict()},
+            )
+        try:
+            delivery = delivery_provider.send_sms(
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata=metadata,
+            )
+            record = sms_store.record_outbound(
+                provider=str(delivery.get("provider") or getattr(delivery_provider, "provider_name", "unknown")),
+                status=str(delivery.get("provider_status") or "sent"),
+                provider_message_id=str(delivery.get("provider_message_id") or ""),
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata=metadata,
+            )
+            return {
+                "status": "ok",
+                "message": record.to_dict(),
+                **delivery,
+            }
+        except ValueError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": str(exc)},
+            )
+            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+        except RuntimeError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": str(exc)},
+            )
+            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+
+    @app.get("/messages/sms")
+    def list_sms_messages(
+        limit: int = Query(default=100, ge=1, le=500),
+        direction: str = "",
+        provider: str = "",
+        status: str = "",
+        phone: str = "",
+    ) -> dict[str, Any]:
+        try:
+            messages = sms_store.list_messages(
+                limit=limit,
+                direction=direction,
+                provider=provider,
+                status=status,
+                phone=phone,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"count": len(messages), "messages": [message.to_dict() for message in messages]}
+
+    @app.post("/messages/calls/outbound")
+    def send_outbound_call(request: OutboundCallRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        if outbound_call_provider is None:
+            failed_record = sms_store.record_outbound_call(
+                provider="unconfigured",
+                status="failed",
+                to_phone=payload["to_phone"],
+                script=payload["script"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": "Call provider not configured"},
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={"message": "Call provider not configured", "record": failed_record.to_dict()},
+            )
+        try:
+            delivery = outbound_call_provider.send_call(
+                to_phone=payload["to_phone"],
+                script=payload["script"],
+                from_phone=payload.get("from_phone", ""),
+                metadata=payload.get("metadata") or {},
+            )
+            provider_call_id = str(delivery.get("provider_call_id") or delivery.get("provider_message_id") or "")
+            record = sms_store.record_outbound_call(
+                provider=str(delivery.get("provider") or getattr(outbound_call_provider, "provider_name", "unknown")),
+                status=str(delivery.get("provider_status") or "queued"),
+                provider_call_id=provider_call_id,
+                to_phone=payload["to_phone"],
+                script=payload["script"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata=payload.get("metadata") or {},
+            )
+            return {
+                "status": "ok",
+                "call": record.to_dict(),
+                "provider_message_id": provider_call_id,
+                "provider_call_id": provider_call_id,
+                **delivery,
+            }
+        except ValueError as exc:
+            failed_record = sms_store.record_outbound_call(
+                provider=getattr(outbound_call_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=payload["to_phone"],
+                script=payload["script"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
+            )
+            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+        except RuntimeError as exc:
+            failed_record = sms_store.record_outbound_call(
+                provider=getattr(outbound_call_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=payload["to_phone"],
+                script=payload["script"],
+                from_phone=payload.get("from_phone", ""),
+                wallet_id=payload.get("wallet_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
+            )
+            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+
+    @app.get("/messages/calls")
+    def list_phone_calls(
+        limit: int = Query(default=100, ge=1, le=500),
+        provider: str = "",
+        status: str = "",
+        phone: str = "",
+    ) -> dict[str, Any]:
+        try:
+            calls = sms_store.list_calls(limit=limit, provider=provider, status=status, phone=phone)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"count": len(calls), "calls": [call.to_dict() for call in calls]}
+
+    @app.post("/providers/webhook/inbound")
+    def receive_webhook_inbound_sms(request: InboundSmsWebhookRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        try:
+            record = sms_store.record_inbound(
+                provider=str(payload.get("provider") or "webhook"),
+                from_phone=payload["from_phone"],
+                to_phone=payload.get("to_phone", ""),
+                message=payload["message"],
+                provider_message_id=payload.get("provider_message_id", ""),
+                external_reference=payload.get("external_reference", ""),
+                metadata=payload.get("metadata") or {},
+            )
+            forward_result = _forward_inbound_message(forwarder, record)
+            response = {"status": "ok", "message": record.to_dict()}
+            if forward_result is not None:
+                response["forward_result"] = forward_result
+            return response
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    @app.post("/providers/twilio/inbound")
+    async def receive_twilio_inbound_sms(request: Request) -> Response:
+        form = _parse_form_body(await request.body())
+        metadata = {
+            "account_sid": str(form.get("AccountSid") or ""),
+            "num_media": str(form.get("NumMedia") or "0"),
+            "sms_status": str(form.get("SmsStatus") or "received"),
+        }
+        record = sms_store.record_inbound(
+            provider="twilio",
+            from_phone=str(form.get("From") or ""),
+            to_phone=str(form.get("To") or ""),
+            message=str(form.get("Body") or ""),
+            provider_message_id=str(form.get("MessageSid") or form.get("SmsSid") or ""),
+            metadata=metadata,
+        )
+        _forward_inbound_message(forwarder, record)
+        reply_text = _inbound_sms_reply_text(record.message)
+        if not reply_text:
+            return Response(content=_TWILIO_EMPTY_RESPONSE, media_type="application/xml")
+        sms_store.record_outbound(
+            provider="twilio-twiml",
+            status="queued",
+            to_phone=record.from_phone,
+            from_phone=record.to_phone,
+            message=reply_text,
+            wallet_id=record.wallet_id,
+            external_reference=record.external_reference,
+            metadata={
+                "reply_to_message_id": record.message_id,
+                "reply_to_provider_message_id": record.provider_message_id,
+                "delivery": "twiml",
+            },
+        )
+        return Response(content=_twiml_response(_twiml_message(reply_text)), media_type="application/xml")
+
+    @app.post("/providers/twilio/status")
+    async def receive_twilio_status_callback(request: Request) -> dict[str, Any]:
+        form = _parse_form_body(await request.body())
+        try:
+            updated = sms_store.update_status_by_provider_message_id(
+                provider_message_id=str(form.get("MessageSid") or form.get("SmsSid") or ""),
+                status=str(form.get("MessageStatus") or form.get("SmsStatus") or ""),
+                metadata_update={
+                    "error_code": str(form.get("ErrorCode") or ""),
+                    "error_message": str(form.get("ErrorMessage") or ""),
+                    "raw_status": str(form.get("SmsStatus") or form.get("MessageStatus") or ""),
+                },
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {
+            "status": "ok",
+            "updated": updated is not None,
+            "message": updated.to_dict() if updated is not None else None,
+        }
+
+    @app.post("/providers/twilio/voice/status")
+    async def receive_twilio_voice_status_callback(request: Request) -> dict[str, Any]:
+        form = _parse_form_body(await request.body())
+        metadata_update = {
+            "account_sid": str(form.get("AccountSid") or ""),
+            "call_duration": str(form.get("CallDuration") or ""),
+            "answered_by": str(form.get("AnsweredBy") or ""),
+            "direction": str(form.get("Direction") or ""),
+            "to": str(form.get("To") or ""),
+            "from": str(form.get("From") or ""),
+        }
+        try:
+            updated = sms_store.update_call_status_by_provider_call_id(
+                provider_call_id=str(form.get("CallSid") or ""),
+                status=str(form.get("CallStatus") or ""),
+                metadata_update=metadata_update,
+            )
+            voice_session = sms_store.update_voice_session_status_by_provider_call_id(
+                provider_call_id=str(form.get("CallSid") or ""),
+                status=str(form.get("CallStatus") or ""),
+                metadata_update=metadata_update,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        return {
+            "status": "ok",
+            "updated": updated is not None or voice_session is not None,
+            "call": updated.to_dict() if updated is not None else None,
+            "voice_session": voice_session.to_dict() if voice_session is not None else None,
+            "voice_session_updated": voice_session is not None,
+        }
+
+    async def _create_or_load_voice_session(request: Request, *, provider_name: str, entrypoint: str) -> tuple[VoiceCallSessionRecord, str]:
+        form = _parse_form_body(await request.body())
+        provider_call_id = str(form.get("CallSid") or form.get("call_sid") or "").strip()
+        session = sms_store.get_voice_session_by_provider_call_id(provider_call_id) if provider_call_id else None
+        if session is None:
+            session = sms_store.create_voice_session(
+                provider=provider_name,
+                provider_call_id=provider_call_id,
+                from_phone=str(form.get("From") or ""),
+                to_phone=str(form.get("To") or ""),
+                assistant_name=resolved_voice_profile.assistant_name,
+                service_name=resolved_voice_profile.service_name,
+                greeting=resolved_voice_profile.greeting,
+                metadata={
+                    "entrypoint": entrypoint,
+                    "account_sid": str(form.get("AccountSid") or ""),
+                },
+            )
+        return session, _resolve_public_base_url(request, configured_public_base_url)
+
+    def _voice_turn_action_url(public_base: str, session_id: str) -> str:
+        return _join_public_url(
+            public_base,
+            f"/providers/twilio/voice/assistant-turn?{urllib_parse.urlencode({'session_id': session_id})}",
+        )
+
+    def _openai_realtime_stream_url(public_base: str, session_id: str) -> str:
+        return _public_ws_url(
+            public_base,
+            "/providers/twilio/voice/openai-realtime-stream",
+            {"session_id": session_id},
+        )
+
+    def _openai_realtime_twiml(public_base: str, session: VoiceCallSessionRecord) -> str:
+        return _twiml_response(
+            _twiml_connect_stream(
+                stream_url=_openai_realtime_stream_url(public_base, session.session_id),
+                parameters={
+                    "session_id": session.session_id,
+                    "assistant": resolved_voice_profile.assistant_name,
+                },
+            )
+        )
+
+    def _voice_media_url(public_base: str, asset_id: str) -> str:
+        return _join_public_url(public_base, f"/voice/media/{asset_id}")
+
+    def _mock_voice_proxy_enabled() -> bool:
+        return str(getattr(resolved_voice_reply_provider, "provider_name", "") or "").strip() == "mock-voice"
+
+    def _mock_voice_proxy_session() -> VoiceCallSessionRecord:
+        timestamp = _utcnow_iso()
+        return VoiceCallSessionRecord(
+            session_id="voice-proxy-mock-session",
+            provider="mock-voice-proxy",
+            provider_call_id="",
+            status="active",
+            assistant_name=resolved_voice_profile.assistant_name,
+            service_name=resolved_voice_profile.service_name,
+            greeting=resolved_voice_profile.greeting,
+            metadata={"entrypoint": "browser-voice-proxy"},
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+    @app.post("/voice/tts")
+    async def mock_voice_tts(request: Request) -> dict[str, Any]:
+        if not _mock_voice_proxy_enabled():
+            raise HTTPException(status_code=503, detail="mock browser voice proxy is not enabled")
+        form = await _parse_request_form(request)
+        text = _normalize_turn_text(str(form.get("text") or ""), max_length=480)
+        if not text:
+            raise HTTPException(status_code=400, detail="text is required")
+        return {
+            "provider": "mock-voice-proxy",
+            "model": getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
+            "text": text,
+        }
+
+    @app.post("/voice/infer")
+    async def mock_voice_infer(request: Request) -> dict[str, Any]:
+        if not _mock_voice_proxy_enabled() or resolved_voice_reply_provider is None:
+            raise HTTPException(status_code=503, detail="mock browser voice proxy is not enabled")
+        form = await _parse_request_form(request)
+        transcript = _normalize_turn_text(
+            _first_non_empty(
+                str(form.get("userPrompt") or ""),
+                str(form.get("user_prompt") or ""),
+                str(form.get("text") or ""),
+                str(form.get("fallbackText") or ""),
+                str(form.get("fallback_text") or ""),
+            ),
+            max_length=480,
+        )
+        if not transcript:
+            raise HTTPException(status_code=400, detail="text is required")
+        reply = resolved_voice_reply_provider.generate_reply(
+            transcript=transcript,
+            session=_mock_voice_proxy_session(),
+            turns=[],
+        )
+        if not reply.text:
+            raise HTTPException(status_code=502, detail="mock voice provider returned no text")
+        return {
+            "provider": "mock-voice-proxy",
+            "model": reply.model_name or getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
+            "text": reply.text,
+        }
+
+    @app.post("/providers/twilio/voice/inbound")
+    async def receive_twilio_voice_inbound(request: Request) -> Response:
+        session, public_base = await _create_or_load_voice_session(request, provider_name="twilio", entrypoint="voice")
+        if _truthy(os.getenv("IPFS_DATASETS_TWILIO_VOICE_OPENAI_REALTIME")):
+            return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
+        xml = _twiml_response(
+            _twiml_gather(
+                action_url=_voice_turn_action_url(public_base, session.session_id),
+                prompt_text=session.greeting,
+            )
+        )
+        return Response(content=xml, media_type="application/xml")
+
+    @app.post("/providers/twilio/voice/openai-realtime/inbound")
+    async def receive_twilio_voice_openai_realtime_inbound(request: Request) -> Response:
+        session, public_base = await _create_or_load_voice_session(
+            request,
+            provider_name="twilio-openai-realtime",
+            entrypoint="voice-openai-realtime",
+        )
+        return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
+
+    @app.websocket("/providers/twilio/voice/openai-realtime-stream")
+    async def twilio_voice_openai_realtime_stream(websocket: WebSocket, session_id: str = "") -> None:
+        await websocket.accept()
+        if websockets is None:
+            await websocket.close(code=1011, reason="websockets dependency is unavailable")
+            return
+        api_key = _openai_realtime_api_key()
+        if not api_key:
+            await websocket.close(code=1011, reason="OPENAI_API_KEY is not configured")
+            return
+        session = sms_store.get_voice_session(session_id) if session_id else None
+        if session is None:
+            await websocket.close(code=1008, reason="voice session not found")
+            return
+
+        stream_sid = ""
+        call_sid = session.provider_call_id
+        started_at = time.perf_counter()
+        openai_event_counts: dict[str, int] = {}
+        transcript_parts: list[str] = []
+        assistant_transcript_parts: list[str] = []
+
+        try:
+            async with websockets.connect(
+                _openai_realtime_url(),
+                additional_headers=[
+                    ("Authorization", f"Bearer {api_key}"),
+                    ("OpenAI-Safety-Identifier", hashlib.sha256(session.session_id.encode("utf-8")).hexdigest()),
+                ],
+                ping_interval=20,
+                ping_timeout=20,
+                max_size=8 * 1024 * 1024,
+            ) as openai_ws:
+                await openai_ws.send(json.dumps(_openai_session_update_event(resolved_voice_profile)))
+
+                async def from_twilio() -> None:
+                    nonlocal stream_sid, call_sid
+                    while True:
+                        try:
+                            raw = await websocket.receive_text()
+                        except WebSocketDisconnect:
+                            break
+                        payload = json.loads(raw)
+                        event_type = str(payload.get("event") or "")
+                        if event_type == "start":
+                            start_payload = payload.get("start") if isinstance(payload.get("start"), Mapping) else {}
+                            stream_sid = str(start_payload.get("streamSid") or payload.get("streamSid") or "")
+                            call_sid = str(start_payload.get("callSid") or call_sid or "")
+                            await openai_ws.send(
+                                json.dumps(
+                                    {
+                                        "type": "response.create",
+                                        "response": {
+                                            "output_modalities": ["audio"],
+                                            "audio": {
+                                                "output": {
+                                                    "format": {"type": "audio/pcmu"},
+                                                    "voice": _openai_realtime_voice(),
+                                                }
+                                            },
+                                            "instructions": session.greeting,
+                                        },
+                                    }
+                                )
+                            )
+                        elif event_type == "media":
+                            media = payload.get("media") if isinstance(payload.get("media"), Mapping) else {}
+                            audio = str(media.get("payload") or "")
+                            if audio:
+                                await openai_ws.send(json.dumps({"type": "input_audio_buffer.append", "audio": audio}))
+                        elif event_type == "stop":
+                            break
+                    with contextlib.suppress(Exception):
+                        await openai_ws.close()
+
+                async def from_openai() -> None:
+                    async for raw in openai_ws:
+                        payload = json.loads(raw)
+                        event_type = str(payload.get("type") or "")
+                        openai_event_counts[event_type] = openai_event_counts.get(event_type, 0) + 1
+                        if event_type in {"response.output_audio.delta", "response.audio.delta"}:
+                            delta = str(payload.get("delta") or "")
+                            if delta and stream_sid:
+                                await websocket.send_json(
+                                    {
+                                        "event": "media",
+                                        "streamSid": stream_sid,
+                                        "media": {"payload": delta},
+                                    }
+                                )
+                        elif event_type == "input_audio_buffer.speech_started" and stream_sid:
+                            with contextlib.suppress(Exception):
+                                await websocket.send_json({"event": "clear", "streamSid": stream_sid})
+                        elif event_type in {
+                            "conversation.item.input_audio_transcription.completed",
+                            "conversation.item.input_audio_transcription.segment",
+                        }:
+                            text = str(payload.get("transcript") or payload.get("text") or "").strip()
+                            if text:
+                                transcript_parts.append(text)
+                        elif event_type == "response.output_audio_transcript.delta":
+                            text = str(payload.get("delta") or "")
+                            if text:
+                                assistant_transcript_parts.append(text)
+                        elif event_type == "error":
+                            print(
+                                json.dumps(
+                                    {
+                                        "event": "openai_realtime_error",
+                                        "session_id": session.session_id,
+                                        "error": payload.get("error") or payload,
+                                    },
+                                    sort_keys=True,
+                                ),
+                                flush=True,
+                            )
+
+                done, pending = await asyncio.wait(
+                    {asyncio.create_task(from_twilio()), asyncio.create_task(from_openai())},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await task
+                for task in done:
+                    task.result()
+        except Exception as exc:
+            print(
+                json.dumps(
+                    {
+                        "event": "openai_realtime_bridge_error",
+                        "session_id": session.session_id,
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+        finally:
+            user_text = " ".join(part.strip() for part in transcript_parts if part.strip()).strip()
+            assistant_text = " ".join(part.strip() for part in assistant_transcript_parts if part.strip()).strip()
+            if user_text:
+                sms_store.append_voice_turn(
+                    session.session_id,
+                    role="caller",
+                    text=user_text,
+                    metadata={"provider_call_id": call_sid, "provider": "twilio-media-stream"},
+                )
+            if assistant_text:
+                sms_store.append_voice_turn(
+                    session.session_id,
+                    role="assistant",
+                    text=assistant_text,
+                    metadata={"provider": "openai-realtime", "model_name": _openai_realtime_model()},
+                )
+            sms_store.update_voice_session_status(
+                session.session_id,
+                status="completed",
+                metadata_update={
+                    "openai_realtime": {
+                        "model": _openai_realtime_model(),
+                        "voice": _openai_realtime_voice(),
+                        "stream_sid": stream_sid,
+                        "event_counts": openai_event_counts,
+                        "duration_ms": _elapsed_ms(started_at),
+                    }
+                },
+            )
+            with contextlib.suppress(Exception):
+                await websocket.close()
+
+    @app.post("/providers/twilio/sip/inbound")
+    async def receive_twilio_sip_inbound(request: Request) -> Response:
+        session, public_base = await _create_or_load_voice_session(request, provider_name="twilio-sip", entrypoint="sip")
+        xml = _twiml_response(
+            _twiml_gather(
+                action_url=_voice_turn_action_url(public_base, session.session_id),
+                prompt_text=session.greeting,
+            )
+        )
+        return Response(content=xml, media_type="application/xml")
+
+    @app.post("/providers/twilio/voice/assistant-turn")
+    async def receive_twilio_voice_assistant_turn(request: Request, session_id: str) -> Response:
+        turn_start = time.perf_counter()
+        latency: dict[str, int] = {}
+        session = sms_store.get_voice_session(session_id)
+        latency["session_lookup_ms"] = _elapsed_ms(turn_start)
+        if session is None:
+            xml = _twiml_response(_twiml_say("This call session is no longer available."), "<Hangup/>")
+            return Response(content=xml, media_type="application/xml", status_code=404)
+
+        stage_start = time.perf_counter()
+        form = _parse_form_body(await request.body())
+        latency["parse_form_ms"] = _elapsed_ms(stage_start)
+        transcript = _normalize_turn_text(str(form.get("SpeechResult") or form.get("speech_result") or ""), max_length=480)
+        public_base = _resolve_public_base_url(request, configured_public_base_url)
+        action_url = _voice_turn_action_url(public_base, session.session_id)
+        if not transcript:
+            xml = _twiml_response(_twiml_gather(action_url=action_url, prompt_text=resolved_voice_profile.no_speech_prompt))
+            return Response(content=xml, media_type="application/xml")
+
+        sms_store.append_voice_turn(
+            session.session_id,
+            role="caller",
+            text=transcript,
+            metadata={
+                "confidence": str(form.get("Confidence") or ""),
+                "provider_call_id": str(form.get("CallSid") or ""),
+                "latency": {"twilio_stt_completed_before_webhook": True},
+            },
+        )
+        stage_start = time.perf_counter()
+        turns = sms_store.list_voice_turns(session.session_id)
+        latency["load_turns_ms"] = _elapsed_ms(stage_start)
+
+        if _should_hangup_from_text(transcript) or len(turns) >= max(1, resolved_voice_profile.max_turns * 2):
+            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.farewell)
+            sms_store.update_voice_session_status(session.session_id, status="completed")
+            xml = _twiml_response(_twiml_say(resolved_voice_profile.farewell), "<Hangup/>")
+            return Response(content=xml, media_type="application/xml")
+
+        if resolved_voice_reply_provider is None:
+            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt)
+            xml = _twiml_response(_twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>")
+            return Response(content=xml, media_type="application/xml")
+
+        try:
+            stage_start = time.perf_counter()
+            reply = resolved_voice_reply_provider.generate_reply(transcript=transcript, session=session, turns=turns)
+            latency["reply_provider_ms"] = _elapsed_ms(stage_start)
+        except Exception as exc:
+            latency["reply_provider_ms"] = _elapsed_ms(stage_start)
+            latency["total_ms"] = _elapsed_ms(turn_start)
+            sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt)
+            print(
+                json.dumps(
+                    {
+                        "event": "voice_turn_latency",
+                        "session_id": session.session_id,
+                        "provider": getattr(resolved_voice_reply_provider, "provider_name", ""),
+                        "status": "reply_error",
+                        "error": str(exc),
+                        "latency": latency,
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+            xml = _twiml_response(_twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>")
+            return Response(content=xml, media_type="application/xml")
+
+        twiml_nodes: list[str] = []
+        asset_id = ""
+        if reply.audio_bytes:
+            stage_start = time.perf_counter()
+            saved_asset = media_store.save(content=reply.audio_bytes, mime_type=reply.mime_type or "audio/wav")
+            latency["media_save_ms"] = _elapsed_ms(stage_start)
+            asset_id = saved_asset["asset_id"]
+            twiml_nodes.append(_twiml_play(_voice_media_url(public_base, asset_id)))
+        elif reply.text:
+            twiml_nodes.append(_twiml_say(reply.text))
+        else:
+            twiml_nodes.append(_twiml_say(resolved_voice_profile.unavailable_prompt))
+
+        latency["total_ms"] = _elapsed_ms(turn_start)
+        sms_store.append_voice_turn(
+            session.session_id,
+            role="assistant",
+            text=reply.text or resolved_voice_profile.follow_up_prompt,
+            audio_asset_id=asset_id,
+            metadata={
+                "provider": reply.provider,
+                "model_name": reply.model_name,
+                "latency": latency,
+                "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
+                "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+            },
+        )
+        print(
+            json.dumps(
+                {
+                    "event": "voice_turn_latency",
+                    "session_id": session.session_id,
+                    "provider": reply.provider,
+                    "model_name": reply.model_name,
+                    "audio": bool(asset_id),
+                    "latency": latency,
+                    "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
+                    "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+        twiml_nodes.append(_twiml_gather(action_url=action_url, prompt_text=resolved_voice_profile.follow_up_prompt))
+        xml = _twiml_response(*twiml_nodes)
+        return Response(content=xml, media_type="application/xml")
+
+    @app.get("/voice/media/{asset_id}")
+    def get_voice_media(asset_id: str) -> Response:
+        payload = media_store.load(asset_id)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="voice media asset not found")
+        content, mime_type = payload
+        return Response(content=content, media_type=mime_type)
+
+    @app.get("/voice/sessions/{session_id}")
+    def get_voice_session(session_id: str) -> dict[str, Any]:
+        session = sms_store.get_voice_session(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="voice session not found")
+        turns = sms_store.list_voice_turns(session_id)
+        return {
+            "session": session.to_dict(),
+            "assistant_profile": {
+                "assistant_name": resolved_voice_profile.assistant_name,
+                "service_name": resolved_voice_profile.service_name,
+                "website_url": resolved_voice_profile.website_url,
+                "max_turns": resolved_voice_profile.max_turns,
+            },
+            "turn_count": len(turns),
+            "turns": [turn.to_dict() for turn in turns],
+        }
+
+    return app
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="ipfs-datasets-sms-bridge")
+    parser.add_argument("--db-path", default=default_sms_bridge_db_path())
+    parser.add_argument("--host", default=os.getenv("IPFS_DATASETS_SMS_BRIDGE_HOST", "0.0.0.0"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("IPFS_DATASETS_SMS_BRIDGE_PORT", "8061")))
+    parser.add_argument("--reload", action="store_true", default=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_RELOAD")))
+    parser.add_argument("--provider", choices=["mock", "webhook", "twilio"], default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_KIND"))
+    parser.add_argument("--provider-webhook-url", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_WEBHOOK_URL", ""))
+    parser.add_argument("--provider-bearer-token", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_BEARER_TOKEN", ""))
+    parser.add_argument("--provider-header-name", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_NAME", ""))
+    parser.add_argument("--provider-header-value", default=os.getenv("IPFS_DATASETS_SMS_PROVIDER_HTTP_HEADER_VALUE", ""))
+    parser.add_argument("--provider-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_SMS_PROVIDER_TIMEOUT_SECONDS", "15")))
+    parser.add_argument("--twilio-account-sid", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_ACCOUNT_SID", ""))
+    parser.add_argument("--twilio-auth-token", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTH_TOKEN", ""))
+    parser.add_argument("--twilio-from-phone", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_FROM_PHONE", ""))
+    parser.add_argument("--twilio-messaging-service-sid", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_MESSAGING_SERVICE_SID", ""))
+    parser.add_argument("--twilio-status-callback-url", default=os.getenv("IPFS_DATASETS_SMS_TWILIO_STATUS_CALLBACK_URL", ""))
+    parser.add_argument("--call-provider", choices=["mock", "webhook", "twilio"], default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_KIND"))
+    parser.add_argument("--call-provider-webhook-url", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_WEBHOOK_URL", ""))
+    parser.add_argument("--call-provider-bearer-token", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_BEARER_TOKEN", ""))
+    parser.add_argument("--call-provider-header-name", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_NAME", ""))
+    parser.add_argument("--call-provider-header-value", default=os.getenv("IPFS_DATASETS_CALL_PROVIDER_HTTP_HEADER_VALUE", ""))
+    parser.add_argument("--call-provider-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_CALL_PROVIDER_TIMEOUT_SECONDS", "20")))
+    parser.add_argument("--call-twilio-account-sid", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_ACCOUNT_SID", ""))
+    parser.add_argument("--call-twilio-auth-token", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_AUTH_TOKEN", ""))
+    parser.add_argument("--call-twilio-from-phone", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_FROM_PHONE", ""))
+    parser.add_argument("--call-twilio-status-callback-url", default=os.getenv("IPFS_DATASETS_CALL_TWILIO_STATUS_CALLBACK_URL", ""))
+    parser.add_argument("--voice-public-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL", ""))
+    parser.add_argument("--voice-provider", choices=["mock", "remote-proxy"], default=os.getenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND"))
+    parser.add_argument("--voice-proxy-base-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL", ""))
+    parser.add_argument("--voice-proxy-infer-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL", ""))
+    parser.add_argument("--voice-proxy-tts-url", default=os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL", ""))
+    parser.add_argument("--voice-proxy-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS", "45")))
+    parser.add_argument("--voice-mock-reply-text", default=os.getenv("IPFS_DATASETS_VOICE_MOCK_REPLY_TEXT", ""))
+    parser.add_argument("--voice-agent-name", default=os.getenv("IPFS_DATASETS_VOICE_AGENT_NAME", "Abby"))
+    parser.add_argument("--voice-service-name", default=os.getenv("IPFS_DATASETS_VOICE_SERVICE_NAME", "211 AI"))
+    parser.add_argument("--voice-greeting", default=os.getenv("IPFS_DATASETS_VOICE_GREETING", _DEFAULT_VOICE_GREETING))
+    parser.add_argument("--voice-no-speech-prompt", default=os.getenv("IPFS_DATASETS_VOICE_NO_SPEECH_PROMPT", _DEFAULT_VOICE_NO_SPEECH_PROMPT))
+    parser.add_argument("--voice-follow-up-prompt", default=os.getenv("IPFS_DATASETS_VOICE_FOLLOW_UP_PROMPT", _DEFAULT_VOICE_FOLLOW_UP))
+    parser.add_argument("--voice-farewell", default=os.getenv("IPFS_DATASETS_VOICE_FAREWELL", _DEFAULT_VOICE_FAREWELL))
+    parser.add_argument("--voice-unavailable-prompt", default=os.getenv("IPFS_DATASETS_VOICE_UNAVAILABLE_PROMPT", _DEFAULT_VOICE_UNAVAILABLE_PROMPT))
+    parser.add_argument("--voice-website-url", default=os.getenv("IPFS_DATASETS_VOICE_WEBSITE_URL", "https://211-ai.com"))
+    parser.add_argument("--voice-system-prompt-append", default=os.getenv("IPFS_DATASETS_VOICE_SYSTEM_PROMPT_APPEND", ""))
+    parser.add_argument("--voice-max-turns", type=int, default=int(os.getenv("IPFS_DATASETS_VOICE_MAX_TURNS", "8")))
+    parser.add_argument("--inbound-forward-url", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_URL", ""))
+    parser.add_argument("--inbound-forward-bearer-token", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_BEARER_TOKEN", ""))
+    parser.add_argument("--inbound-forward-header-name", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_NAME", ""))
+    parser.add_argument("--inbound-forward-header-value", default=os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_HTTP_HEADER_VALUE", ""))
+    parser.add_argument("--inbound-forward-timeout-seconds", type=float, default=float(os.getenv("IPFS_DATASETS_SMS_INBOUND_FORWARD_TIMEOUT_SECONDS", "15")))
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    if uvicorn is None:  # pragma: no cover - optional dependency
+        raise RuntimeError("uvicorn is required to run the SMS bridge")
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    provider = build_sms_provider(
+        provider_kind=args.provider,
+        webhook_url=args.provider_webhook_url,
+        bearer_token=args.provider_bearer_token,
+        header_name=args.provider_header_name,
+        header_value=args.provider_header_value,
+        account_sid=args.twilio_account_sid,
+        auth_token=args.twilio_auth_token,
+        from_phone=args.twilio_from_phone,
+        messaging_service_sid=args.twilio_messaging_service_sid,
+        status_callback_url=args.twilio_status_callback_url,
+        timeout_seconds=args.provider_timeout_seconds,
+    )
+    call_provider = build_call_provider(
+        provider_kind=args.call_provider,
+        webhook_url=args.call_provider_webhook_url,
+        bearer_token=args.call_provider_bearer_token,
+        header_name=args.call_provider_header_name,
+        header_value=args.call_provider_header_value,
+        account_sid=args.call_twilio_account_sid,
+        auth_token=args.call_twilio_auth_token,
+        from_phone=args.call_twilio_from_phone,
+        status_callback_url=args.call_twilio_status_callback_url,
+        timeout_seconds=args.call_provider_timeout_seconds,
+    )
+    voice_profile = build_voice_assistant_profile(
+        assistant_name=args.voice_agent_name,
+        service_name=args.voice_service_name,
+        greeting=args.voice_greeting,
+        no_speech_prompt=args.voice_no_speech_prompt,
+        follow_up_prompt=args.voice_follow_up_prompt,
+        farewell=args.voice_farewell,
+        unavailable_prompt=args.voice_unavailable_prompt,
+        website_url=args.voice_website_url,
+        system_prompt_append=args.voice_system_prompt_append,
+        max_turns=args.voice_max_turns,
+    )
+    voice_reply_provider = build_voice_reply_provider(
+        provider_kind=args.voice_provider,
+        base_url=args.voice_proxy_base_url,
+        infer_url=args.voice_proxy_infer_url,
+        tts_url=args.voice_proxy_tts_url,
+        timeout_seconds=args.voice_proxy_timeout_seconds,
+        mock_reply_text=args.voice_mock_reply_text,
+        assistant_profile=voice_profile,
+    )
+    forwarder = build_inbound_forwarder(
+        webhook_url=args.inbound_forward_url,
+        bearer_token=args.inbound_forward_bearer_token,
+        header_name=args.inbound_forward_header_name,
+        header_value=args.inbound_forward_header_value,
+        timeout_seconds=args.inbound_forward_timeout_seconds,
+    )
+    app = create_sms_bridge_app(
+        repository=SmsBridgeStore(args.db_path),
+        provider=provider,
+        inbound_forwarder=forwarder,
+        call_provider=call_provider,
+        voice_reply_provider=voice_reply_provider,
+        voice_profile=voice_profile,
+        public_base_url=args.voice_public_base_url,
+    )
+    uvicorn.run(app, host=args.host, port=args.port, reload=bool(args.reload))
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

@@ -1,0 +1,146 @@
+{
+  "blocker_count": 0,
+  "blockers": [],
+  "generated_at_utc": "2026-07-19T06:55:01Z",
+  "overall_status": "ready",
+  "production_blocker_policy": {
+    "incomplete_production_blockers": [
+      "PORTAL-CXTP-077",
+      "PORTAL-CXTP-078",
+      "PORTAL-CXTP-079",
+      "PORTAL-CXTP-080",
+      "PORTAL-CXTP-081",
+      "PORTAL-CXTP-082",
+      "PORTAL-CXTP-083",
+      "PORTAL-CXTP-084"
+    ],
+    "production_reports": [
+      {
+        "exists": true,
+        "overall_status": "blocked",
+        "path": "security_ir_artifacts/production/evidence-bundle-report.json",
+        "production_release_blocked": true,
+        "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+      },
+      {
+        "exists": true,
+        "overall_status": "blocked",
+        "path": "security_ir_artifacts/production/blocker-status-update-report.json",
+        "production_release_blocked": true,
+        "security_decision": "BLOCK_PRODUCTION_BLOCKER_STATUS_UPDATE"
+      }
+    ],
+    "required_blocker_tasks": [
+      "PORTAL-CXTP-077",
+      "PORTAL-CXTP-078",
+      "PORTAL-CXTP-079",
+      "PORTAL-CXTP-080",
+      "PORTAL-CXTP-081",
+      "PORTAL-CXTP-082",
+      "PORTAL-CXTP-083",
+      "PORTAL-CXTP-084"
+    ]
+  },
+  "schema_version": "crypto-exchange-taskboard-preflight/v1",
+  "security_decision": "TASKBOARD_PREFLIGHT_READY",
+  "supervisor_state": {
+    "active_task_id": "",
+    "exists": true,
+    "path": "data/crypto_exchange_theorem_prover/state/cxtp_task_state.json",
+    "task_count": 120
+  },
+  "task_id": "PORTAL-CXTP-087",
+  "taskboard": {
+    "exists": true,
+    "path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
+    "status_counts": {
+      "blocked": 20,
+      "completed": 91,
+      "waiting": 9
+    },
+    "task_count": 120
+  },
+  "warning_count": 20,
+  "warnings": [
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-056"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-057"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-058"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-088"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-059"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-062"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-069"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-075"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-076"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-143"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-144"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-145"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-146"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-147"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-148"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-149"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-150"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-151"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-152"
+    },
+    {
+      "code": "COMPLETED_TASK_MISSING_COMPLETION_EVIDENCE",
+      "task_id": "PORTAL-CXTP-175"
+    }
+  ]
+}

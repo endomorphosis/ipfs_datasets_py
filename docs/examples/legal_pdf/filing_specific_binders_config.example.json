@@ -1,0 +1,12 @@
+{
+  "compiled_dir": "../../../../workspace/exhibit-binder-court-ready/compiled",
+  "front_name": "0000_Exhibit_Binder_Front_Sheet.pdf",
+  "table_name": "0001_Table_Of_Exhibits.pdf",
+  "exhibit_packet_template": "Exhibit_{code}_packet.pdf",
+  "output_template": "{name}.pdf",
+  "include_front_and_table": true,
+  "sets": {
+    "Eviction_Set": ["B", "G", "V", "Y", "Z", "AA", "M", "O", "P", "W", "X"],
+    "Show_Cause_Set": ["G", "T", "V", "Y", "Z", "AA"]
+  }
+}

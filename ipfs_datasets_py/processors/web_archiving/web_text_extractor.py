@@ -9,38 +9,54 @@ import os
 import sys
 import logging
 import time
+import importlib
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any, Tuple
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlparse
 import tempfile
 
-# Import with fallbacks
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
-
-try:
-    from bs4 import BeautifulSoup
-    BS4_AVAILABLE = True
-except ImportError:
-    BS4_AVAILABLE = False
-
-try:
-    import newspaper
-    NEWSPAPER_AVAILABLE = True
-except ImportError:
-    NEWSPAPER_AVAILABLE = False
-
-try:
-    from readability import Document
-    READABILITY_AVAILABLE = True
-except ImportError:
-    READABILITY_AVAILABLE = False
-
 logger = logging.getLogger(__name__)
+
+
+def _auto_install_enabled() -> bool:
+    try:
+        from ipfs_datasets_py.auto_installer import get_installer
+
+        return bool(get_installer().auto_install)
+    except Exception:
+        return False
+
+
+def _import_optional_module(module_name: str, package_name: str):
+    try:
+        return importlib.import_module(module_name)
+    except ImportError:
+        if not _auto_install_enabled():
+            return None
+        try:
+            from ipfs_datasets_py.auto_installer import ensure_module
+
+            return ensure_module(module_name, package_name)
+        except Exception as exc:
+            logger.debug("Could not auto-install %s: %s", module_name, exc)
+            return None
+
+
+# Import with optional self-healing when the runtime installer is enabled.
+requests = _import_optional_module("requests", "requests")
+REQUESTS_AVAILABLE = requests is not None
+
+_bs4 = _import_optional_module("bs4", "beautifulsoup4")
+BS4_AVAILABLE = _bs4 is not None
+BeautifulSoup = getattr(_bs4, "BeautifulSoup", None)
+
+newspaper = _import_optional_module("newspaper", "newspaper3k")
+NEWSPAPER_AVAILABLE = newspaper is not None
+
+_readability = _import_optional_module("readability", "readability-lxml")
+READABILITY_AVAILABLE = _readability is not None and hasattr(_readability, "Document")
+Document = getattr(_readability, "Document", None)
 
 
 @dataclass
@@ -362,6 +378,8 @@ def _ensure_web_dependencies():
     try:
         from ipfs_datasets_py.auto_installer import get_installer
         installer = get_installer()
+        if not installer.auto_install:
+            return
         
         # Install web scraping dependencies
         dependencies = [
@@ -380,7 +398,7 @@ def _ensure_web_dependencies():
 
 
 # Initialize web dependencies if auto-install is enabled
-if os.getenv('IPFS_AUTO_INSTALL', 'true').lower() == 'true':
+if _auto_install_enabled():
     _ensure_web_dependencies()
 
 

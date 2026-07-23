@@ -1,0 +1,53 @@
+{
+  "artifact_cid": "bafkreigtyz64cpjzyarknmbzmst2cdsvng6ps3hscwajoy7pypgq6gkgxi",
+  "avd": {
+    "abi": "x86_64",
+    "config_sha256": "611e71792b4008d19a036f2c462f18bfe5786a4b4402253de992a67044939881",
+    "cpu_arch": "x86_64",
+    "listed_by_emulator": true,
+    "name": "xaman-testnet-api34",
+    "play_store_enabled": false,
+    "tag": "google_apis",
+    "target": "android-34"
+  },
+  "capability": {
+    "android_fault_injection_host_prepared": true,
+    "emulator_started_by_this_check": false,
+    "independent_review_required_before_capture": true,
+    "ios_xctest_host_verified_by_this_check": false,
+    "runtime_capture_recorded": false,
+    "xaman_build_or_test_started_by_this_check": false
+  },
+  "generated_at_utc": "2026-07-19T01:29:01Z",
+  "host_paths_redacted": true,
+  "remaining_blockers": [
+    "PORTAL-CXTP-156 independent review decision",
+    "separate macOS/Xcode iOS XCTest host",
+    "reviewed verifier-only Android and iOS fault-injection execution"
+  ],
+  "schema_version": "xaman-native-vault-android-host-preflight/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "security_decision": "ANDROID_NATIVE_VAULT_HOST_PREPARED_PENDING_REVIEW_AND_IOS",
+  "task_id": "PORTAL-CXTP-166",
+  "toolchain": {
+    "adb": {
+      "executable": true,
+      "sha256": "00108217733707a40debfc92c86d4232fd6e68870be5966515d74c071193ea90",
+      "version": "Android Debug Bridge version 1.0.41"
+    },
+    "emulator": {
+      "executable": true,
+      "sha256": "616ac6f45fdc9273b31213be897d1a5d0b95ffb06d54ea3c573c0afdcd458697",
+      "version": "Android emulator version 36.6.11.0 (build_id 15507667) (CL:N/A)"
+    },
+    "sdkmanager": {
+      "executable": true,
+      "sha256": "3483c9772c2dc09100b0e395a7983b8266a325d99260a429cb907f174aa798e0",
+      "version": "19.0"
+    }
+  }
+}

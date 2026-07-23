@@ -29,25 +29,37 @@ logger = logging.getLogger(__name__)
 # Fallback imports when SymbolicAI is not available
 try:
     from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
-
     ensure_symai_config_for_import()
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
-except (ImportError, SystemExit):
-    SYMBOLIC_AI_AVAILABLE = False
-    logger.warning("SymbolicAI not available. Modal logic features will be limited.")
+except (ImportError, SystemExit, PermissionError):
+    try:
+        from ipfs_datasets_py.auto_installer import get_installer
+        from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+        installer = get_installer()
+        if installer.auto_install and installer.install_python_dependency("symbolicai>=1.14.0,<2.0.0"):
+            ensure_symai_config_for_import()
+            from symai import Symbol, Expression
+
+            SYMBOLIC_AI_AVAILABLE = True
+        else:
+            raise ImportError("SymbolicAI auto-install disabled")
+    except (ImportError, SystemExit, PermissionError, Exception):
+        SYMBOLIC_AI_AVAILABLE = False
+        logger.warning("SymbolicAI not available. Modal logic features will be limited.")
     
-    # Create mock classes for development/testing without SymbolicAI
-    class Symbol:
-        def __init__(self, value: str, semantic: bool = False):
-            self.value = value
-            self._semantic = semantic
-            
-        def query(self, prompt: str) -> str:
-            return f"Mock response for: {prompt}"
-    
-    class Expression:
-        pass
+        # Create mock classes for development/testing without SymbolicAI
+        class Symbol:
+            def __init__(self, value: str, semantic: bool = False):
+                self.value = value
+                self._semantic = semantic
+
+            def query(self, prompt: str) -> str:
+                return f"Mock response for: {prompt}"
+
+        class Expression:
+            pass
 
 
 @dataclass

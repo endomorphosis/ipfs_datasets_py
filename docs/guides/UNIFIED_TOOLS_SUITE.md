@@ -98,6 +98,8 @@ The Software Engineering Dashboard now integrates **all development tools** from
 - **Claude CLI**: Claude API access
 - **Gemini CLI**: Gemini API access
 - **VSCode CLI**: VSCode automation
+- **Docket CLI**: Docket dataset import, packaging, and citation auditing (including EU/member-state citations)
+- **Workspace CLI**: Workspace dataset import, search, and packaging (single-bundle + chain-loadable artifacts)
 - Status checking and installation for all CLIs
 
 ### 15. **Code Analysis**

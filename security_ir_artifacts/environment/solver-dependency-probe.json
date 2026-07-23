@@ -1,0 +1,487 @@
+{
+  "blocking_evidence": [],
+  "cpu": {
+    "architecture": [
+      "64bit",
+      "ELF"
+    ],
+    "linux_cpuinfo": {
+      "model_name": "13th Gen Intel(R) Core(TM) i7-13850HX",
+      "observed_core_id_count": 20,
+      "physical_package_count": 1,
+      "selected_flags": [
+        "aes",
+        "avx",
+        "avx2",
+        "sha_ni",
+        "sse4_2",
+        "vmx"
+      ]
+    },
+    "logical_cpu_count": 28,
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "dependencies": [
+    {
+      "blocking": false,
+      "capability": "Run security verification scripts and pytest-based proof gates.",
+      "capability_gap": false,
+      "category": "runtime",
+      "command": [
+        "/home/barberb/miniforge3/bin/python",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Python 3.12.12",
+        "timed_out": false
+      },
+      "display_name": "Python",
+      "executable": "/home/barberb/miniforge3/bin/python",
+      "minimum_version": "3.10",
+      "name": "python",
+      "required": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "/home/barberb/miniforge3/bin/python"
+      ],
+      "status": "present",
+      "version": "3.12.12",
+      "version_raw": "Python 3.12.12"
+    },
+    {
+      "blocking": false,
+      "capability": "Compile and validate TypeScript proof-consumer schemas.",
+      "capability_gap": false,
+      "category": "runtime",
+      "command": [
+        "/home/barberb/.local/bin/node",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "v22.23.1",
+        "timed_out": false
+      },
+      "display_name": "Node.js",
+      "executable": "/home/barberb/.local/bin/node",
+      "minimum_version": null,
+      "name": "node",
+      "required": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "node"
+      ],
+      "status": "present",
+      "version": "22.23.1",
+      "version_raw": "v22.23.1"
+    },
+    {
+      "blocking": false,
+      "capability": "Resolve JavaScript/TypeScript proof-consumer tooling.",
+      "capability_gap": false,
+      "category": "runtime",
+      "command": [
+        "/home/barberb/.local/bin/npm",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "10.9.8",
+        "timed_out": false
+      },
+      "display_name": "npm",
+      "executable": "/home/barberb/.local/bin/npm",
+      "minimum_version": null,
+      "name": "npm",
+      "required": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "npm"
+      ],
+      "status": "present",
+      "version": "10.9.8",
+      "version_raw": "10.9.8"
+    },
+    {
+      "blocking": false,
+      "capability": "Type-check emitted security proof schemas consumed by downstream clients.",
+      "capability_gap": false,
+      "category": "runtime",
+      "command": [
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Version 5.5.4",
+        "timed_out": false
+      },
+      "display_name": "TypeScript compiler",
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "minimum_version": null,
+      "name": "typescript",
+      "required": true,
+      "resolved_by_env_var": "repo_relative_path",
+      "searched_names": [
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc"
+      ],
+      "status": "present",
+      "version": "5.5.4",
+      "version_raw": "Version 5.5.4"
+    },
+    {
+      "blocking": false,
+      "capability": "Primary SMT proof and disproof backend for crypto_exchange claims.",
+      "capability_gap": false,
+      "category": "smt_solver",
+      "command": [
+        "/home/barberb/miniforge3/bin/z3",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Z3 version 4.16.0 - 64 bit",
+        "timed_out": false
+      },
+      "display_name": "Z3",
+      "executable": "/home/barberb/miniforge3/bin/z3",
+      "minimum_version": null,
+      "name": "z3",
+      "required": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "z3"
+      ],
+      "status": "present",
+      "version": "4.16.0",
+      "version_raw": "Z3 version 4.16.0 - 64 bit"
+    },
+    {
+      "blocking": false,
+      "capability": "Required independent SMT differential backend for proof promotion.",
+      "capability_gap": false,
+      "category": "smt_solver",
+      "command": [
+        "/home/barberb/.local/bin/cvc5",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+        "timed_out": false
+      },
+      "display_name": "CVC5",
+      "executable": "/home/barberb/.local/bin/cvc5",
+      "minimum_version": null,
+      "name": "cvc5",
+      "required": true,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "cvc5"
+      ],
+      "status": "present",
+      "version": "1.3.2",
+      "version_raw": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]"
+    },
+    {
+      "blocking": false,
+      "capability": "Optional TLA+ workflow and interleaving model-checking coverage.",
+      "capability_gap": false,
+      "category": "model_checker",
+      "command": [
+        "/home/barberb/.local/bin/apalache-mc",
+        "version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "0.58.3",
+        "timed_out": false
+      },
+      "display_name": "Apalache",
+      "executable": "/home/barberb/.local/bin/apalache-mc",
+      "minimum_version": null,
+      "name": "apalache",
+      "required": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "apalache-mc"
+      ],
+      "status": "present",
+      "version": "0.58.3",
+      "version_raw": "0.58.3"
+    },
+    {
+      "blocking": false,
+      "capability": "Optional protocol proof coverage for key custody and signing authority.",
+      "capability_gap": false,
+      "category": "protocol_prover",
+      "command": [
+        "/home/barberb/.local/bin/tamarin-prover",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": "maude tool: 'maude'",
+        "stdout_first_line": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023",
+        "timed_out": false
+      },
+      "display_name": "Tamarin Prover",
+      "executable": "/home/barberb/.local/bin/tamarin-prover",
+      "minimum_version": null,
+      "name": "tamarin",
+      "required": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "tamarin-prover"
+      ],
+      "status": "present",
+      "version": "1.12.0",
+      "version_raw": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+    },
+    {
+      "blocking": false,
+      "capability": "Optional protocol proof coverage for replay and secrecy properties.",
+      "capability_gap": true,
+      "category": "protocol_prover",
+      "command": [
+        "/home/barberb/.local/bin/proverif",
+        "-version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 2,
+        "stderr_first_line": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'.",
+        "stdout_first_line": null,
+        "timed_out": false
+      },
+      "display_name": "ProVerif",
+      "executable": "/home/barberb/.local/bin/proverif",
+      "minimum_version": null,
+      "name": "proverif",
+      "required": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "proverif"
+      ],
+      "status": "error",
+      "version": "2.05",
+      "version_raw": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'."
+    },
+    {
+      "blocking": false,
+      "capability": "Optional proof-consumer invariant checking in Lean.",
+      "capability_gap": false,
+      "category": "proof_assistant",
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+        "timed_out": false
+      },
+      "display_name": "Lean",
+      "executable": "/home/barberb/.elan/bin/lean",
+      "minimum_version": null,
+      "name": "lean",
+      "required": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "lean"
+      ],
+      "status": "present",
+      "version": "4.31.0",
+      "version_raw": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
+    },
+    {
+      "blocking": false,
+      "capability": "Optional proof-consumer invariant checking in Coq.",
+      "capability_gap": false,
+      "category": "proof_assistant",
+      "command": [
+        "/home/barberb/.local/bin/coqc",
+        "--version"
+      ],
+      "command_result": {
+        "error": null,
+        "exit_code": 0,
+        "stderr_first_line": null,
+        "stdout_first_line": "The Rocq Prover, version 9.1.1",
+        "timed_out": false
+      },
+      "display_name": "Coq",
+      "executable": "/home/barberb/.local/bin/coqc",
+      "minimum_version": null,
+      "name": "coq",
+      "required": false,
+      "resolved_by_env_var": null,
+      "searched_names": [
+        "coqc"
+      ],
+      "status": "present",
+      "version": "9.1.1",
+      "version_raw": "The Rocq Prover, version 9.1.1"
+    }
+  ],
+  "environment_variables": [
+    {
+      "entry_count": 22,
+      "length": 631,
+      "name": "PATH",
+      "present": true,
+      "purpose": "Executable discovery path for Python, Node, SMT solvers, and proof assistants.",
+      "required": true,
+      "status": "present",
+      "value_sha256": "6f589229f5bdbb8fa3b22e43c1def8e9c75419cc0f499ce6e7b0f571d035384e"
+    },
+    {
+      "entry_count": 1,
+      "length": 1,
+      "name": "PYTHONPATH",
+      "present": true,
+      "purpose": "Repository import path used by the security verification validation commands.",
+      "required": true,
+      "status": "present",
+      "value_sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8"
+    },
+    {
+      "name": "JAVA_HOME",
+      "present": false,
+      "purpose": "JVM root used by Apalache and related model-checking tools when installed.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "Z3_EXE",
+      "present": false,
+      "purpose": "Explicit Z3 executable override for reproducible proof runners.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "CVC5_EXE",
+      "present": false,
+      "purpose": "Explicit CVC5 executable override for differential SMT runners.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "TSC_EXE",
+      "present": false,
+      "purpose": "Explicit TypeScript compiler executable override for reproducible repo-scoped toolchains provisioned by PORTAL-CXTP-089.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "APALACHE_EXE",
+      "present": false,
+      "purpose": "Explicit Apalache executable override for TLA+ model checking.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "TAMARIN_EXE",
+      "present": false,
+      "purpose": "Explicit Tamarin executable override for protocol proofs.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "PROVERIF_EXE",
+      "present": false,
+      "purpose": "Explicit ProVerif executable override for protocol proofs.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "LEAN_EXE",
+      "present": false,
+      "purpose": "Explicit Lean executable override for proof-assistant checks.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "COQC_EXE",
+      "present": false,
+      "purpose": "Explicit Coq compiler override for proof-assistant checks.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "COQPATH",
+      "present": false,
+      "purpose": "Additional Coq library search path for proof-consumer checks.",
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "LEAN_PATH",
+      "present": false,
+      "purpose": "Additional Lean library search path for proof-consumer checks.",
+      "required": false,
+      "status": "missing"
+    }
+  ],
+  "generated_at_utc": "2026-07-19T06:41:47Z",
+  "optional_capability_gaps": [
+    {
+      "capability": "Optional protocol proof coverage for replay and secrecy properties.",
+      "category": "protocol_prover",
+      "code": "OPTIONAL_DEPENDENCY_UNUSABLE",
+      "component": "proverif",
+      "display_name": "ProVerif",
+      "impact": "Capability unavailable; do not claim this prover coverage for release evidence.",
+      "status": "error"
+    }
+  ],
+  "os": {
+    "libc": [
+      "glibc",
+      "2.39"
+    ],
+    "machine": "x86_64",
+    "node": "barberb-HP-ZBook-Fury-16-G11-Mobile-Workstation-PC",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "release": "6.17.0-35-generic",
+    "system": "Linux",
+    "version": "#35~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Tue May 26 19:30:42 UTC 2"
+  },
+  "overall_status": "ready",
+  "policy_document": "docs/security_verification/solver_dependency_bootstrap.md",
+  "probe_script": "scripts/ops/security_verification/probe_theorem_prover_environment.py",
+  "proof_acceptance_blocked": false,
+  "repo_root": "ipfs_datasets",
+  "schema_version": "crypto-exchange-solver-dependency-probe/v1",
+  "security_decision": "SOLVER_DEPENDENCY_ENVIRONMENT_READY_WITH_CAPABILITY_GAPS",
+  "summary": {
+    "blocking_evidence_count": 0,
+    "dependency_count": 11,
+    "env_var_count": 13,
+    "optional_capability_gap_count": 1,
+    "present_required_dependency_count": 6,
+    "required_dependency_count": 6,
+    "required_env_var_count": 2
+  },
+  "task_id": "PORTAL-CXTP-058"
+}

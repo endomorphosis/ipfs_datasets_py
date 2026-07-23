@@ -81,9 +81,9 @@ class ProofExecutionEngine:
 
         self._refresh_prover_state()
 
-        # NOTE: setup.py hooks are not guaranteed to run for all install modes (e.g. wheels/PEP517).
-        # To make auto-install actually work in practice, we also attempt installation here when
-        # the engine is constructed.
+        # Keep construction side-effect free. A setup owner can pre-install via
+        # IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1; execution-specific security
+        # runners use the lazy installer when a native solver is actually needed.
         self._maybe_auto_install_provers()
         self._refresh_prover_state()
 
@@ -104,7 +104,7 @@ class ProofExecutionEngine:
         return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _maybe_auto_install_provers(self) -> None:
-        if not self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "1"):
+        if not self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "0"):
             return
 
         # Prevent recursion / repeated nested installs.
@@ -168,7 +168,14 @@ class ProofExecutionEngine:
     def _common_bin_dirs(self) -> List[Path]:
         dirs: List[Path] = []
         try:
-            dirs.append(Path.home() / ".local" / "bin")
+            home = Path.home()
+            dirs.extend(
+                [
+                    home / ".local" / "bin",
+                    home / ".elan" / "bin",
+                    home / ".opam" / "default" / "bin",
+                ]
+            )
         except (OSError, RuntimeError) as e:
             # Path.home() can fail if HOME not set or permission issues
             logger.debug(f"Could not determine home directory: {e}")
@@ -200,13 +207,13 @@ class ProofExecutionEngine:
     def _prover_cmd(self, prover: str) -> str:
         # Map internal name -> executable.
         if prover == "coq":
-            return self.prover_binaries.get("coq") or "coqc"
+            return self.prover_binaries.get("coq") or self._find_executable("coqc") or "coqc"
         if prover == "lean":
-            return self.prover_binaries.get("lean") or "lean"
+            return self.prover_binaries.get("lean") or self._find_executable("lean") or "lean"
         if prover == "z3":
-            return self.prover_binaries.get("z3") or "z3"
+            return self.prover_binaries.get("z3") or self._find_executable("z3") or "z3"
         if prover == "cvc5":
-            return self.prover_binaries.get("cvc5") or "cvc5"
+            return self.prover_binaries.get("cvc5") or self._find_executable("cvc5") or "cvc5"
         return prover
         
     def _test_command(self, cmd: List[str], *, timeout_s: int = 10) -> bool:
@@ -214,7 +221,7 @@ class ProofExecutionEngine:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=int(timeout_s))
             return result.returncode == 0
-        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError, OSError):
             return False
     
     def prove_deontic_formula(

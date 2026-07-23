@@ -212,7 +212,7 @@ class TestCopilotCLICaching:
 
             assert cli.cache is not None
             assert cli.cache.maxsize == 75
-            assert cli.cache.ttl == 180
+            assert cli.cache.default_ttl == 180
 
     def test_copilot_cli_cache_disabled(self):
         """
@@ -247,8 +247,11 @@ class TestCopilotCLICaching:
 
         with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
             mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_installed') as mock_check:
+            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
+                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
+            ) as mock_extension:
                 mock_check.return_value = True
+                mock_extension.return_value = True
 
                 cli = CopilotCLI(enable_cache=True)
 
@@ -286,8 +289,11 @@ class TestCopilotCLICaching:
 
         with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
             mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_installed') as mock_check:
+            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
+                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
+            ) as mock_extension:
                 mock_check.return_value = True
+                mock_extension.return_value = True
 
                 cli = CopilotCLI(enable_cache=True)
 
@@ -323,8 +329,11 @@ class TestCopilotCLICaching:
 
         with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._find_gh_cli') as mock_find:
             mock_find.return_value = Path('/usr/bin/gh')
-            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_installed') as mock_check:
+            with patch('ipfs_datasets_py.utils.copilot_cli.CopilotCLI._verify_installation') as mock_check, patch(
+                'ipfs_datasets_py.utils.copilot_cli.CopilotCLI._check_copilot_extension'
+            ) as mock_extension:
                 mock_check.return_value = True
+                mock_extension.return_value = True
 
                 cli = CopilotCLI(enable_cache=True)
 

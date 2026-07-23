@@ -1,5 +1,7 @@
 import pytest
 
+pytestmark = pytest.mark.anyio
+
 
 @pytest.mark.asyncio
 async def test_ipfs_storage_manager_router_add_bytes_supports_pin_kwarg(monkeypatch, tmp_path):

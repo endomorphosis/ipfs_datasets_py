@@ -1,0 +1,21 @@
+{
+  "all_required_checks_passed": true,
+  "artifact_cid": "bafkreied5ncimmolecaxkle2qolfjytixkijcbbhltqv57lkrmb372o764",
+  "assurance_boundary": {
+    "production_security_result": false,
+    "vendor_backend_assumptions_cleared": false,
+    "vendor_release_equivalent": false
+  },
+  "decision": "pass",
+  "expires_at_utc": "2027-07-18T22:00:00Z",
+  "overall_status": "independent_review_passed",
+  "production_release_blocked": true,
+  "review_accepted_for_verifier_runtime_capture": true,
+  "review_artifact_cid": "bafkreid4tuhuiaktgna3xcscbz2t22uh4aorxb7ydsyomgidyoaq7jvfum",
+  "review_packet_cid": "bafkreibg3zvjoh5fzuns2dvu2v26ugnb4yoleenix6wlvu5vp36iji36ku",
+  "reviewed_at_utc": "2026-07-18T22:00:00Z",
+  "reviewer_id_sha256": "57b2630ee721b908175c96960f74c1ecd0dbc3b25180c05069440d0e90e9b777",
+  "schema_version": "xaman-self-hosted-independent-review-verification/v1",
+  "security_decision": "ALLOW_VERIFIER_ONLY_RUNTIME_CAPTURE",
+  "task_id": "PORTAL-CXTP-161"
+}

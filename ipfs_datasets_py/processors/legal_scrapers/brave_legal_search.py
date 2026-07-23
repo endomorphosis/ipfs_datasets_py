@@ -105,10 +105,7 @@ class BraveLegalSearch:
             self.api_key = api_key or os.environ.get("BRAVE_API_KEY") or os.environ.get("BRAVE_SEARCH_API_KEY")
             if self.api_key:
                 try:
-                    self.brave_client = BraveSearchClient(
-                        api_key=self.api_key,
-                        cache_enabled=cache_enabled
-                    )
+                    self.brave_client = BraveSearchClient(api_key=self.api_key)
                     logger.info("Brave Search client initialized")
                 except Exception as e:
                     logger.warning(f"Failed to initialize Brave Search client: {e}")
@@ -201,12 +198,17 @@ class BraveLegalSearch:
                         query=term,
                         count=max_results,
                         country=country,
-                        search_lang=lang
                     )
                     
                     # Extract and deduplicate results
-                    if 'web' in search_results and 'results' in search_results['web']:
-                        for item in search_results['web']['results']:
+                    if isinstance(search_results, list):
+                        result_items = [item for item in search_results if isinstance(item, dict)]
+                    elif isinstance(search_results, dict):
+                        result_items = list((search_results.get('web') or {}).get('results') or [])
+                    else:
+                        result_items = []
+
+                    for item in result_items:
                             url = item.get('url', '')
                             if url and url not in seen_urls:
                                 all_results.append({

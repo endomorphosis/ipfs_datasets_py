@@ -259,3 +259,31 @@ class TestOptimizerDriftGate:
         # THEN all required fields are present
         for field in ("applied", "rejected", "rejected_reason_codes", "failure_count", "decision_id"):
             assert field in opt, f"Missing field: {field}"
+
+
+class TestProverTemporalMetadata:
+    def test_run_v2_pipeline_attaches_temporal_metadata_to_prover_certificates(self):
+        # GIVEN chronology-aware theorem export metadata and a registry-backed prover hook
+        result = run_v2_pipeline(
+            "Contractor shall submit the report",
+            prover_hook=RegistryProverHookV2(),
+            claim_support_temporal_handoff={
+                "claim_type": "retaliation",
+                "claim_element_id": "element-1",
+                "unresolved_temporal_issue_count": 1,
+                "chronology_task_count": 2,
+                "temporal_issue_ids": ["timeline-gap-001"],
+                "temporal_proof_bundle_ids": ["bundle-42"],
+            },
+        )
+
+        # THEN both normalized prover certificates carry the same chronology contract
+        prover_report = result["prover_report"]
+        assert prover_report["applied"] is True
+        assert prover_report["theorem_export_metadata"]["chronology_blocked"] is True
+        assert prover_report["claim_support_temporal_handoff"]["claim_element_id"] == "element-1"
+
+        dcec_payload = prover_report["dcec"]["certificate"]["payload"]
+        tdfol_payload = prover_report["tdfol"]["certificate"]["payload"]
+        assert dcec_payload["theorem_export_metadata"] == prover_report["theorem_export_metadata"]
+        assert tdfol_payload["claim_support_temporal_handoff"] == prover_report["claim_support_temporal_handoff"]

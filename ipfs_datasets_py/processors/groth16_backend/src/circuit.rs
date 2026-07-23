@@ -2,15 +2,131 @@
 // MVP Groth16 Circuit Implementation with Real Constraints
 
 use ark_ff::PrimeField;
+use ark_crypto_primitives::crh::sha256::constraints::Sha256Gadget;
 use ark_r1cs_std::fields::fp::FpVar;
+use ark_r1cs_std::{boolean::Boolean, uint8::UInt8};
 use ark_r1cs_std::prelude::*;
-use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use ark_relations::gr1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use sha2::{Digest, Sha256};
 
 pub(crate) const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
 pub(crate) const TDFOL_V1_V2_MAX_STEPS: usize = 16;
 pub(crate) const TDFOL_V1_V2_ALPHA: u64 = 7;
 pub(crate) const TDFOL_V1_V2_BETA: u64 = 13;
+pub(crate) const EVENT_DAG_V3_MAX_EVENTS: usize = 4;
+
+/// Profile F Event-DAG compaction circuit.
+///
+/// The public statement contains a SHA-256 Merkle root and the number of
+/// active leaves.  The per-event 32-byte digests remain private.  All inactive
+/// slots are constrained to zero and active slots form a prefix, so the public
+/// count is bound to the committed tree.  The native archive verifier derives
+/// each event digest as SHA-256(UTF-8(event_cid)) before recomputing this root.
+#[derive(Clone)]
+pub struct EventDagCompactionCircuitV3<F: PrimeField> {
+    pub event_digests: Option<Vec<[u8; 32]>>,
+    pub active: Option<Vec<bool>>,
+    pub merkle_root: Option<[u8; 32]>,
+    pub event_count: Option<u32>,
+    pub _field: std::marker::PhantomData<F>,
+}
+
+impl<F: PrimeField> ConstraintSynthesizer<F> for EventDagCompactionCircuitV3<F> {
+    fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
+        let digests = self.event_digests.ok_or(SynthesisError::AssignmentMissing)?;
+        let active = self.active.ok_or(SynthesisError::AssignmentMissing)?;
+        let merkle_root = self.merkle_root.ok_or(SynthesisError::AssignmentMissing)?;
+        let event_count = self.event_count.ok_or(SynthesisError::AssignmentMissing)?;
+        if digests.len() != EVENT_DAG_V3_MAX_EVENTS || active.len() != EVENT_DAG_V3_MAX_EVENTS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if event_count == 0 || event_count as usize > EVENT_DAG_V3_MAX_EVENTS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+
+        // Groth16 public inputs are field elements. Bind the complete 32-byte
+        // SHA-256 root by reducing its big-endian integer into Fr; archive
+        // verification separately compares the full root bytes to the CID
+        // batch, so a proof cannot be detached from its archive statement.
+        let root_input = FpVar::<F>::new_input(cs.clone(), || Ok(F::from_be_bytes_mod_order(&merkle_root)))?;
+        let count_input = FpVar::<F>::new_input(cs.clone(), || Ok(F::from(event_count as u64)))?;
+        let zero = FpVar::<F>::Constant(F::ZERO);
+        let one = FpVar::<F>::Constant(F::ONE);
+
+        let mut leaves = Vec::with_capacity(EVENT_DAG_V3_MAX_EVENTS);
+        let mut active_vars = Vec::with_capacity(EVENT_DAG_V3_MAX_EVENTS);
+        for index in 0..EVENT_DAG_V3_MAX_EVENTS {
+            let digest = UInt8::new_witness_vec(cs.clone(), &digests[index])?;
+            let active_var = Boolean::new_witness(cs.clone(), || Ok(active[index]))?;
+            let active_as_field = FpVar::<F>::from(active_var.clone());
+            active_vars.push(active_var.clone());
+
+            // An inactive leaf must be all-zero before it is hashed. This
+            // makes the public count part of the commitment rather than a
+            // descriptive field supplied alongside it.
+            let inactive = !active_var;
+            for byte in &digest {
+                Boolean::kary_and(&[
+                    inactive.clone(),
+                    !byte.is_eq(&UInt8::constant(0))?,
+                ])?
+                    .enforce_equal(&Boolean::FALSE)?;
+            }
+            leaves.push((digest, active_as_field));
+        }
+
+        let count_sum = leaves.iter().fold(zero, |sum, (_, active)| sum + active);
+        count_input.enforce_equal(&count_sum)?;
+        for index in 1..EVENT_DAG_V3_MAX_EVENTS {
+            // active[i] => active[i - 1], which fixes active leaves to a prefix.
+            Boolean::kary_and(&[
+                active_vars[index].clone(),
+                !active_vars[index - 1].clone(),
+            ])?
+                .enforce_equal(&Boolean::FALSE)?;
+        }
+        // Keep a direct non-zero count constraint in the R1CS, even though the
+        // native witness validation already enforces it.
+        let count_inverse = FpVar::<F>::new_witness(cs.clone(), || {
+            Ok(F::from(event_count as u64).inverse().unwrap_or(F::ZERO))
+        })?;
+        count_input.mul_equals(&count_inverse, &one)?;
+
+        let mut layer: Vec<Vec<UInt8<F>>> = leaves
+            .iter()
+            .map(|(digest, _)| Sha256Gadget::digest(digest).map(|digest| digest.0))
+            .collect::<Result<_, _>>()?;
+        while layer.len() > 1 {
+            let mut next = Vec::with_capacity(layer.len() / 2);
+            for pair in layer.chunks(2) {
+                let mut bytes = pair[0].clone();
+                bytes.extend_from_slice(&pair[1]);
+                next.push(Sha256Gadget::digest(&bytes)?.0);
+            }
+            layer = next;
+        }
+        if layer.len() != 1 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        let mut computed_root = FpVar::<F>::Constant(F::ZERO);
+        let mut place = F::ONE;
+        // Digest bytes are big-endian, so construct the field-reduced integer
+        // from the least-significant byte upward.
+        for byte in layer[0].iter().rev() {
+            let bits = byte.to_bits_le()?;
+            let mut byte_value = FpVar::<F>::Constant(F::ZERO);
+            let mut bit_place = F::ONE;
+            for bit in bits {
+                byte_value += FpVar::<F>::from(bit) * FpVar::<F>::Constant(bit_place);
+                bit_place *= F::from(2u64);
+            }
+            computed_root += byte_value * FpVar::<F>::Constant(place);
+            place *= F::from(256u64);
+        }
+        computed_root.enforce_equal(&root_input)?;
+        Ok(())
+    }
+}
 
 /// MVP Circuit for zero-knowledge proofs
 ///
@@ -183,8 +299,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let cons_is_zero = cons.is_eq(&zero)?;
             let ant_is_zero = ant.is_eq(&zero)?;
             // cons == 0 => ant == 0
-            cons_is_zero
-                .and(&ant_is_zero.not())?
+            Boolean::kary_and(&[cons_is_zero, !ant_is_zero])?
                 .enforce_equal(&Boolean::FALSE)?;
 
             let term = cons + (ant * &alpha);
@@ -201,15 +316,17 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         for i in 0..TDFOL_V1_V2_MAX_STEPS {
             let is_zero = trace_var[i].is_eq(&zero)?;
             step_zero_bits.push(is_zero.clone());
-            step_nonzero_bits.push(is_zero.not());
+            step_nonzero_bits.push(!is_zero);
         }
 
         Boolean::kary_or(&step_nonzero_bits)?.enforce_equal(&Boolean::TRUE)?;
 
         for i in 0..(TDFOL_V1_V2_MAX_STEPS - 1) {
             // trace[i] == 0 => trace[i+1] == 0
-            step_zero_bits[i]
-                .and(&step_zero_bits[i + 1].not())?
+            Boolean::kary_and(&[
+                step_zero_bits[i].clone(),
+                !step_zero_bits[i + 1].clone(),
+            ])?
                 .enforce_equal(&Boolean::FALSE)?;
         }
 
@@ -217,8 +334,11 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         for i in 0..TDFOL_V1_V2_MAX_STEPS {
             for j in (i + 1)..TDFOL_V1_V2_MAX_STEPS {
                 let eq = trace_var[i].is_eq(&trace_var[j])?;
-                let both_nz = step_nonzero_bits[i].and(&step_nonzero_bits[j])?;
-                both_nz.and(&eq)?.enforce_equal(&Boolean::FALSE)?;
+                let both_nz = Boolean::kary_and(&[
+                    step_nonzero_bits[i].clone(),
+                    step_nonzero_bits[j].clone(),
+                ])?;
+                Boolean::kary_and(&[both_nz, eq])?.enforce_equal(&Boolean::FALSE)?;
             }
         }
 
@@ -227,10 +347,10 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let mut matches: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
             for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
                 let ant_is_zero = axiom_ants_var[i].is_eq(&zero)?;
-                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
-                let is_fact = ant_is_zero.and(&cons_is_nonzero)?;
+                let cons_is_nonzero = !axiom_cons_var[i].is_eq(&zero)?;
+                let is_fact = Boolean::kary_and(&[ant_is_zero, cons_is_nonzero])?;
                 let eq = axiom_cons_var[i].is_eq(x)?;
-                matches.push(is_fact.and(&eq)?);
+                matches.push(Boolean::kary_and(&[is_fact, eq])?);
             }
             Boolean::kary_or(&matches)
         };
@@ -242,7 +362,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let mut matches: Vec<Boolean<F>> = Vec::with_capacity(k);
             for j in 0..k {
                 let eq = trace_var[j].is_eq(x)?;
-                matches.push(step_nonzero_bits[j].and(&eq)?);
+                matches.push(Boolean::kary_and(&[step_nonzero_bits[j].clone(), eq])?);
             }
             Boolean::kary_or(&matches)
         };
@@ -250,7 +370,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         let known_membership = |x: &FpVar<F>, k: usize| -> Result<Boolean<F>, SynthesisError> {
             let in_facts = fact_membership(x)?;
             let in_prev = prev_membership(x, k)?;
-            in_facts.or(&in_prev)
+            Boolean::kary_or(&[in_facts, in_prev])
         };
 
         // Validate each trace step.
@@ -259,22 +379,21 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
             let step_nonzero = step_nonzero_bits[k].clone();
 
             let step_known = known_membership(step, k)?;
-            let need_just = step_nonzero.and(&step_known.not())?;
+            let need_just = Boolean::kary_and(&[step_nonzero, !step_known])?;
 
             // exists implication (P -> step) with P known
             let mut just_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
             for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
-                let ant_is_nonzero = axiom_ants_var[i].is_eq(&zero)?.not();
-                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
-                let is_impl = ant_is_nonzero.and(&cons_is_nonzero)?;
+                let ant_is_nonzero = !axiom_ants_var[i].is_eq(&zero)?;
+                let cons_is_nonzero = !axiom_cons_var[i].is_eq(&zero)?;
+                let is_impl = Boolean::kary_and(&[ant_is_nonzero, cons_is_nonzero])?;
                 let cons_match = axiom_cons_var[i].is_eq(step)?;
                 let ant_known = known_membership(&axiom_ants_var[i], k)?;
-                just_bits.push(is_impl.and(&cons_match)?.and(&ant_known)?);
+                just_bits.push(Boolean::kary_and(&[is_impl, cons_match, ant_known])?);
             }
             let exists_just = Boolean::kary_or(&just_bits)?;
 
-            need_just
-                .and(&exists_just.not())?
+            Boolean::kary_and(&[need_just, !exists_just])?
                 .enforce_equal(&Boolean::FALSE)?;
         }
 
@@ -283,11 +402,10 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
         let mut theorem_step_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
         for k in 0..TDFOL_V1_V2_MAX_STEPS {
             let eq = trace_var[k].is_eq(&theorem_hash_input)?;
-            theorem_step_bits.push(step_nonzero_bits[k].and(&eq)?);
+            theorem_step_bits.push(Boolean::kary_and(&[step_nonzero_bits[k].clone(), eq])?);
         }
         let theorem_in_trace = Boolean::kary_or(&theorem_step_bits)?;
-        theorem_in_facts
-            .or(&theorem_in_trace)?
+        Boolean::kary_or(&[theorem_in_facts, theorem_in_trace])?
             .enforce_equal(&Boolean::TRUE)?;
 
         Ok(())
@@ -396,7 +514,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
 mod tests {
     use super::*;
     use ark_bn254::Fr;
-    use ark_relations::r1cs::ConstraintSystem;
+    use ark_relations::gr1cs::ConstraintSystem;
 
     #[test]
     fn test_circuit_creation() {

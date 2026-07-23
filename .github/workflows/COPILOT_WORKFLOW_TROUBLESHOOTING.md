@@ -32,20 +32,20 @@ gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment
 gh: unknown command "agent-task" for "gh"
 ```
 
-**Solution**: The `gh agent-task` command is a preview feature available in gh CLI v2.40.0+. To use it:
+**Solution**: Your current `gh` build does not expose `agent-task` in this environment. To troubleshoot:
 
 1. Verify gh CLI version:
    ```bash
    gh --version
    ```
 
-2. Update if needed:
+2. Update if needed or install a `gh` build that includes the hosted task surface:
    ```bash
    # Ubuntu/Debian
    sudo apt update && sudo apt install gh
    ```
 
-**Note**: `gh agent-task` is built into gh CLI v2.40.0+ as a preview feature. The `gh-copilot` extension is separate and provides different functionality (code suggestions, explain commands).
+**Note**: `gh agent-task` and the `gh-copilot` extension are different features. The `gh-copilot` extension provides suggestion/explain commands and does not by itself make `gh agent-task` available. For existing PR automation in this repo, use the maintained PR-comment flow even when `gh agent-task` is unavailable.
 
 ### 3. Copilot Not Responding to PR Comments
 

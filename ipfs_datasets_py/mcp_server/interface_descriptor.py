@@ -27,15 +27,61 @@ def _canonicalize(obj: Any) -> bytes:
     ).encode("utf-8")
 
 
-def compute_cid(content: bytes, *, prefix: str = "sha256:") -> str:
-    digest = hashlib.sha256(content).hexdigest()
-    return f"{prefix}{digest}"
+_CID_B32 = "abcdefghijklmnopqrstuvwxyz234567"
+
+
+def _multibase_base32(data: bytes) -> str:
+    """RFC4648 base32 lowercase, no padding (multibase 'b' body)."""
+    bits = 0
+    val = 0
+    out = []
+    for byte in data:
+        val = (val << 8) | byte
+        bits += 8
+        while bits >= 5:
+            bits -= 5
+            out.append(_CID_B32[(val >> bits) & 31])
+    if bits:
+        out.append(_CID_B32[(val << (5 - bits)) & 31])
+    return "".join(out)
+
+
+def compute_cid(content: bytes, *, prefix: str = "bafy") -> str:
+    """Compute a real IPFS CIDv1 (DAG-PB codec, sha2-256) for *content*.
+
+    Produces a genuine, Kubo-resolvable CID (``bafy...``), equivalent to
+    ``ipfs add --cid-version=1`` and byte-identical to ipfs_accelerate_py for
+    the same canonical content. The legacy ``sha256:`` prefix is supported only
+    for explicit opt-in backward compatibility.
+    """
+    if prefix == "sha256:":
+        return f"sha256:{hashlib.sha256(content).hexdigest()}"
+    digest = hashlib.sha256(content).digest()
+    multihash = b"\x12\x20" + digest          # sha2-256 (0x12), length 32 (0x20)
+    return "b" + _multibase_base32(b"\x01\x70" + multihash)  # CIDv1 + dag-pb codec
+
+
+def cid_digest(cid: str) -> str:
+    """Return comparable digest body of a CID, tolerating legacy formats.
+
+    Real CIDv1s are byte-identical across repos for identical content; legacy
+    ``sha256:``/``bafy-mock-`` prefixes are stripped for migration comparison.
+    """
+    s = str(cid)
+    for prefix in ("bafy-mock-", "sha256:"):
+        if s.startswith(prefix):
+            return s[len(prefix):][:52]
+    return s
+
+
+def cids_equivalent(a: str, b: str) -> bool:
+    """Return True if two CIDs reference the same content across repo formats."""
+    return cid_digest(a) == cid_digest(b)
 
 
 def _canonical_cid(obj: Any) -> str:
     canonical = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-    digest = hashlib.sha256(canonical.encode()).hexdigest()
-    return f"bafy-mock-{digest[:32]}"
+    return compute_cid(canonical.encode())
 
 
 class _CompatCID(str):

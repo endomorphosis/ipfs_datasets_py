@@ -34,11 +34,11 @@ Usage:
 
 try:
     from .server import start_server, start_stdio_server, IPFSDatasetsMCPServer
-except ImportError:
+except (ImportError, AttributeError):
     # Fallback to simplified implementation if modelcontextprotocol is not available
     try:
         from .simple_server import start_simple_server as start_server
-    except ImportError:
+    except (ImportError, AttributeError):
         # If neither server is available, provide placeholder
         def start_server(*args, **kwargs):
             raise ImportError(
@@ -50,7 +50,7 @@ except ImportError:
 
 try:
     from .client import IPFSDatasetsMCPClient
-except ImportError:
+except (ImportError, AttributeError):
     # Client also depends on modelcontextprotocol
     IPFSDatasetsMCPClient = None
 
@@ -58,11 +58,14 @@ except ImportError:
 from .configs import Configs, configs, load_config_from_yaml
 try:
     from .simple_server import SimpleIPFSDatasetsMCPServer
-except ImportError:
+except (ImportError, AttributeError):
     SimpleIPFSDatasetsMCPServer = None
 
-# MCP++ integration is always importable (with graceful fallback)
-from . import mcplusplus
+# MCP++ integration is optional; keep import side effects from taking down the package.
+try:
+    from . import mcplusplus
+except Exception:
+    mcplusplus = None
 
 __version__ = "0.1.0"
 __all__ = [

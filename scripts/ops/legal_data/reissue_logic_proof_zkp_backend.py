@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""Reissue ZKP certificates for existing Portland logic-proof artifacts."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import pyarrow as pa  # noqa: E402
+import pyarrow.parquet as pq  # noqa: E402
+
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier  # noqa: E402
+from scripts.ops.legal_data.build_portland_logic_proof_artifacts import cid_for_obj  # noqa: E402
+
+
+def _compact(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _json_dumps(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _load_existing(path: Path) -> List[Dict[str, Any]]:
+    return pq.read_table(path).to_pylist()
+
+
+def _write_parquet(path: Path, rows: List[Dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(pa.Table.from_pylist(rows), path, compression="zstd")
+
+
+def _write_manifest(path: Path, manifest: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+
+
+def _private_axioms(row: Dict[str, Any]) -> List[str]:
+    frame_logic_id = ""
+    try:
+        frame_logic_id = str(json.loads(_compact(row.get("frame_logic_json"))).get("object_id") or "")
+    except Exception:
+        frame_logic_id = ""
+    return [
+        f"source_text_cid={_compact(row.get('text_cid'))}",
+        f"fol={_compact(row.get('fol_json'))[:8000]}",
+        f"tdfol={_compact(row.get('deontic_temporal_fol'))}",
+        f"dcec={_compact(row.get('deontic_cognitive_event_calculus'))}",
+        f"flogic={frame_logic_id}",
+    ]
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Reissue existing logic-proof parquet ZKP certificates with another backend.")
+    parser.add_argument("--input", required=True, help="Existing logic-proof parquet.")
+    parser.add_argument("--output-root", required=True, help="Output directory.")
+    parser.add_argument("--zkp-backend", default="groth16", choices=["groth16", "simulated"], help="ZKP backend.")
+    parser.add_argument("--zkp-circuit-version", type=int, default=1, help="ZKP circuit version.")
+    parser.add_argument("--checkpoint-every", type=int, default=25, help="Write checkpoints every N rows.")
+    parser.add_argument("--limit", type=int, default=0, help="Optional row limit.")
+    parser.add_argument("--no-resume", action="store_true", help="Ignore existing output parquet.")
+    parser.add_argument("--json", action="store_true", help="Print final manifest JSON.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    input_path = Path(args.input).expanduser().resolve()
+    output_root = Path(args.output_root).expanduser().resolve()
+    output_root.mkdir(parents=True, exist_ok=True)
+    output_path = output_root / input_path.name
+    manifest_path = output_root / "manifest.json"
+
+    source_rows = _load_existing(input_path)
+    if args.limit and args.limit > 0:
+        source_rows = source_rows[: int(args.limit)]
+
+    out_rows: List[Dict[str, Any]] = []
+    completed: set[str] = set()
+    if output_path.exists() and not args.no_resume:
+        out_rows = _load_existing(output_path)
+        completed = {_compact(row.get("ipfs_cid")) for row in out_rows if _compact(row.get("ipfs_cid"))}
+
+    backend = str(args.zkp_backend or "groth16").lower()
+    circuit_version = int(args.zkp_circuit_version or 1)
+    prover = ZKPProver(backend=backend, enable_caching=True)
+    verifier = ZKPVerifier(backend=backend)
+    backend_instance = prover.get_backend_instance()
+    if backend == "groth16" and hasattr(backend_instance, "ensure_setup"):
+        backend_instance.ensure_setup(version=circuit_version)
+
+    failures: List[Dict[str, str]] = []
+    started_at = datetime.now(timezone.utc).isoformat()
+
+    def manifest(status: str) -> Dict[str, Any]:
+        return {
+            "schema_version": "portland-logic-proof-artifacts-v1",
+            "source_logic_proof_artifacts": str(input_path),
+            "logic_proof_artifacts": str(output_path),
+            "source_row_count": len(source_rows),
+            "artifact_row_count": len(out_rows),
+            "completed_row_count": len(completed),
+            "remaining_row_count": max(0, len(source_rows) - len(completed)),
+            "failure_count": len(failures),
+            "failures": failures[:50],
+            "zkp_backend": backend,
+            "zkp_circuit_version": circuit_version,
+            "zkp_verified_count": sum(1 for row in out_rows if row.get("zkp_verified")),
+            "zkp_security_note": (
+                "Groth16 BN254 proofs generated by bundled Rust backend"
+                if backend == "groth16"
+                else "simulated educational certificates; not cryptographically secure"
+            ),
+            "status": status,
+            "started_at": started_at,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    checkpoint_every = max(1, int(args.checkpoint_every or 1))
+    _write_manifest(manifest_path, manifest("running"))
+    since_checkpoint = 0
+    for index, row in enumerate(source_rows):
+        source_cid = _compact(row.get("ipfs_cid"))
+        if source_cid and source_cid in completed:
+            continue
+        try:
+            logic_bundle_cid = _compact(row.get("logic_bundle_cid"))
+            theorem = f"FormalizationBundle({source_cid},{logic_bundle_cid})"
+            proof = prover.generate_proof(
+                theorem=theorem,
+                private_axioms=_private_axioms(row),
+                metadata={
+                    "ruleset_id": "portland-city-code-formalization-v1",
+                    "circuit_version": circuit_version,
+                    "certificate_scope": "conversion_attestation_not_legal_validity",
+                    "source_ipfs_cid": source_cid,
+                    "logic_bundle_cid": logic_bundle_cid,
+                },
+            )
+            proof_dict = proof.to_dict()
+            updated = dict(row)
+            updated["zkp_backend"] = backend
+            updated["zkp_security_note"] = (
+                "Groth16 BN254 proof generated by bundled Rust backend"
+                if backend == "groth16"
+                else "simulated educational certificate; not cryptographically secure"
+            )
+            updated["zkp_certificate_cid"] = cid_for_obj(proof_dict)
+            updated["zkp_certificate_json"] = _json_dumps(proof_dict)
+            updated["zkp_verified"] = bool(verifier.verify_proof(proof))
+            out_rows.append(updated)
+            if source_cid:
+                completed.add(source_cid)
+        except Exception as exc:
+            failures.append(
+                {
+                    "index": str(index),
+                    "ipfs_cid": source_cid,
+                    "identifier": _compact(row.get("identifier")),
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
+        since_checkpoint += 1
+        if since_checkpoint >= checkpoint_every:
+            _write_parquet(output_path, out_rows)
+            _write_manifest(manifest_path, manifest("running"))
+            since_checkpoint = 0
+
+    _write_parquet(output_path, out_rows)
+    final_manifest = manifest("complete" if not failures and len(completed) == len(source_rows) else "partial")
+    _write_manifest(manifest_path, final_manifest)
+    if args.json:
+        print(json.dumps(final_manifest, indent=2))
+    return 0 if final_manifest["status"] == "complete" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

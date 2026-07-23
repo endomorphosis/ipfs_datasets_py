@@ -34,8 +34,10 @@ single optional CLI isn't available.
 __all__ = [
     "cached_github_cli",
     "discord_cli",
+    "docket_cli",
     "email_cli",
     "finance_cli",
+    "history_index_cli",
     "github_cli_init",
     "scraper_cli",
     "execute_workflow",

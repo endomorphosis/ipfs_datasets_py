@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 import logging
 import io
+import importlib
 from typing import Dict, List, Any
 from cachetools import cached
 
@@ -489,10 +490,22 @@ class SuryaOCR(OCREngine):
         """
         self.name = "surya"
         try:
-            # Load models
+            if surya is None:
+                raise ImportError("surya not available")
+
+            # Newer surya builds expose predictors from submodules rather than the top-level package.
+            detection_module = importlib.import_module("surya.detection")
+            foundation_module = importlib.import_module("surya.foundation")
+            recognition_module = importlib.import_module("surya.recognition")
+
+            detection_predictor_cls = getattr(detection_module, "DetectionPredictor")
+            foundation_predictor_cls = getattr(foundation_module, "FoundationPredictor")
+            recognition_predictor_cls = getattr(recognition_module, "RecognitionPredictor")
+
             self.surya = surya
-            self.detection_predictor = self.surya.detection.DetectionPredictor()
-            self.recognition_predictor = self.surya.recognition.RecognitionPredictor()
+            self.detection_predictor = detection_predictor_cls()
+            self.foundation_predictor = foundation_predictor_cls()
+            self.recognition_predictor = recognition_predictor_cls(self.foundation_predictor)
 
             self.available = True
             self.logger.info("Surya OCR engine initialized successfully")
@@ -816,7 +829,6 @@ class TesseractOCR(OCREngine):
             
             # Get confidence data
             data = self.pytesseract.image_to_data(image, output_type=self.pytesseract.Output.DICT)
-            print(f"pytesseract data:\n{data}")
             
             # Extract confidences from data
             confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]

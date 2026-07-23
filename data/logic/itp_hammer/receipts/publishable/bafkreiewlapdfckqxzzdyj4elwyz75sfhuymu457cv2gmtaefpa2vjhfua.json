@@ -1,0 +1,118 @@
+{
+  "created_at": "2026-07-19T14:51:32.681721+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: counterexample"
+  ],
+  "publishable_digest": "bafkreies7uv7gqb2uilz3hrq4mf4ca7qvuoamfmfyg5mygn3oltddg3tzi",
+  "receipt_id": "bafkreiewlapdfckqxzzdyj4elwyz75sfhuymu457cv2gmtaefpa2vjhfua",
+  "reconstruction_evidence": null,
+  "redaction_notes": [
+    "private-theorem-goal",
+    "private-theorem-translation"
+  ],
+  "result": {
+    "completed_at": "2026-01-01T00:00:05+00:00",
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "environment_lock": null,
+    "errors": [],
+    "notes": [
+      "solver reported a countermodel; never trusted as a disproof on its own"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      },
+      {
+        "content_digest": "bafkreifmsx7rjexmds2a3ikidh65cioocz2h6r4oigvidr27garyhwxbau",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_comm",
+        "rank": 1,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a"
+      }
+    ],
+    "proof_candidate": null,
+    "reconstruction": null,
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=27 digest=bafkreieldojkcuywqeymrctudfcseaqd63itaeck5ky4zl44wjb4cwukna>",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [
+          "vampire"
+        ],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-counterexample-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_counterexample"
+    },
+    "result_id": "golden-counterexample-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [
+      {
+        "attempt_id": "golden-counterexample-1:golden-counterexample-1:goal:tptp:0:vampire:0",
+        "exit_code": 0,
+        "finished_at": "2026-01-01T00:00:05+00:00",
+        "network_used": false,
+        "raw_output_digest": "bafkreidi3mub2lu6o42chfjzompn3ww2tswpeth3gjue4et2byfyifdm5u",
+        "request_id": "golden-counterexample-1",
+        "resource_usage": {},
+        "schema_version": "1.0.0",
+        "solver_name": "vampire",
+        "solver_version": "fixture-1.0",
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "target": "tptp",
+        "timeout_seconds": 20.0,
+        "translation_id": "golden-counterexample-1:goal:tptp:0",
+        "verdict": "disproved",
+        "wall_time_seconds": 1.0
+      }
+    ],
+    "status": "counterexample",
+    "translations": [
+      {
+        "content_digest": "bafkreihh4d5tumj2r63qvki2msgl7gskucelvc2ggefdc5id2vdogup6ta",
+        "obligations": [],
+        "request_id": "golden-counterexample-1",
+        "schema_version": "1.0.0",
+        "source_construct": "goal",
+        "status": "supported",
+        "target": "tptp",
+        "translated_text": "<redacted:private-theorem-translation length=119 digest=bafkreiabvgkjp7iuzchg4eatrhjcxwsmn6fm5p7hxzl427bvsccpa3js4a>",
+        "translation_id": "golden-counterexample-1:goal:tptp:0",
+        "unsupported_reason": null
+      }
+    ]
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

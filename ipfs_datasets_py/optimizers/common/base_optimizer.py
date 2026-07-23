@@ -381,24 +381,24 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
 
             # Optimization loop
             for iteration in range(self.config.max_iterations):
-                iterations = iteration + 1
-
                 # Check termination conditions
                 if score >= self.config.target_score:
+                    iterations = max(iterations, iteration + 1)
                     break
 
-                if self.config.early_stopping:
+                if self.config.early_stopping and iteration > 0:
                     improvement = score - prev_score
                     if improvement < self.config.convergence_threshold:
                         break
 
                 # Optimize
+                prev_score = score
                 artifact = self.optimize(artifact, score, feedback, context)
+                iterations = iteration + 1
                 try:
                     self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
                 except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
                     _logger.debug("on_optimize_complete hook failed: %s", exc)
-                prev_score = score
                 score, feedback = self.critique(artifact, context)
                 try:
                     self.on_critique_complete(artifact, score, feedback, context)

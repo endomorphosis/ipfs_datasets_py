@@ -14,7 +14,9 @@ import gzip
 import importlib
 import logging
 import os
+import re
 import ssl
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -23,6 +25,73 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int = 0) -> int:
+    value = str(os.getenv(name) or "").strip()
+    if not value:
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
+
+
+_WAYBACK_URL_RE = re.compile(
+    r"/web/\d+(?:[a-z_]+)?/(https?:/.+)$",
+    flags=re.IGNORECASE,
+)
+
+
+def _normalize_wayback_snapshot_url(url: str) -> str:
+    text = str(url or "").strip()
+    if not text:
+        return text
+    if "web.archive.org/web/" not in text.lower():
+        return text
+    normalized = re.sub(
+        r"(web\.archive\.org/web/\d+(?:[a-z_]+)?/https?):/([^/])",
+        r"\1://\2",
+        text,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"(web\.archive\.org/web/\d+(?:[a-z_]+)?/http):/([^/])",
+        r"\1://\2",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"^http://web\.archive\.org/",
+        "https://web.archive.org/",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    return normalized
+
+
+def _extract_original_url_from_wayback(url: str) -> str:
+    text = str(url or "").strip()
+    if not text:
+        return ""
+    match = _WAYBACK_URL_RE.search(text)
+    if not match:
+        return ""
+    original = str(match.group(1) or "").strip()
+    if not original:
+        return ""
+    if original.startswith("http:/") and not original.startswith("http://"):
+        original = "http://" + original[len("http:/") :]
+    if original.startswith("https:/") and not original.startswith("https://"):
+        original = "https://" + original[len("https:/") :]
+    return original
 
 
 @dataclass
@@ -45,6 +114,8 @@ class _HttpResponse:
 class ArchivalFetchClient:
     """Fetch URLs with web-archive fallback support."""
 
+    _stage_backoff_until: Dict[str, float] = {}
+
     def __init__(
         self,
         *,
@@ -59,6 +130,45 @@ class ArchivalFetchClient:
         self.request_timeout_seconds = request_timeout_seconds
         self.delay_seconds = delay_seconds
         self.user_agent = user_agent
+
+    def _stage_backoff_seconds(self, stage: str, *, reason: str = "") -> int:
+        reason_l = str(reason or "").strip().lower()
+        if stage == "wayback":
+            seconds = max(0, _env_int("LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS", default=120))
+            if any(token in reason_l for token in ("connection refused", "timed out", "timeout", "max retries exceeded")):
+                seconds = min(seconds, 60)
+            return seconds
+        if stage == "archive_is":
+            return max(0, _env_int("LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS", default=900))
+        return max(0, _env_int("LEGAL_SCRAPER_ARCHIVAL_STAGE_BACKOFF_SECONDS", default=600))
+
+    def _stage_backoff_key(self, stage: str, *, url: str = "") -> str:
+        host = str(urlparse(str(url or "")).netloc or "").strip().lower()
+        if host:
+            return f"{stage}:{host}"
+        return stage
+
+    def _is_stage_backed_off(self, stage: str, *, url: str = "") -> bool:
+        now = time.time()
+        stage_key = self._stage_backoff_key(stage, url=url)
+        host_until = float(self._stage_backoff_until.get(stage_key, 0.0) or 0.0)
+        global_until = float(self._stage_backoff_until.get(stage, 0.0) or 0.0)
+        return max(host_until, global_until) > now
+
+    def _mark_stage_backoff(self, stage: str, *, reason: str, url: str = "") -> None:
+        seconds = self._stage_backoff_seconds(stage, reason=reason)
+        if seconds <= 0:
+            return
+        until = time.time() + float(seconds)
+        stage_key = self._stage_backoff_key(stage, url=url)
+        self._stage_backoff_until[stage_key] = until
+        logger.warning(
+            "archival_fetch stage=%s scope=%s backed_off_for_seconds=%s reason=%s",
+            stage,
+            stage_key,
+            seconds,
+            reason[:200],
+        )
 
     def _request_with_retries(
         self,
@@ -85,6 +195,27 @@ class ArchivalFetchClient:
         if last_ssl_error is not None:
             raise last_ssl_error
         return None
+
+    @staticmethod
+    def _direct_candidate_urls(url: str) -> List[str]:
+        normalized = _normalize_wayback_snapshot_url(url)
+        original = _extract_original_url_from_wayback(normalized)
+        candidates: List[str] = []
+        seen: set[str] = set()
+
+        def _add(candidate: str) -> None:
+            value = str(candidate or "").strip()
+            if not value or value in seen:
+                return
+            seen.add(value)
+            candidates.append(value)
+
+        # Prefer live official URL when a seed is a Wayback replay URL so the
+        # scraper can progress even when web.archive.org is unavailable.
+        _add(original)
+        _add(normalized)
+        _add(url)
+        return candidates
 
     def _http_get(
         self,
@@ -113,58 +244,96 @@ class ArchivalFetchClient:
             return _HttpResponse(status_code=int(getattr(exc, "code", 0) or 0), content=payload)
 
     async def fetch_with_fallback(self, url: str) -> FetchResult:
-        common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
-        if common_crawl is not None:
-            return common_crawl
+        if _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=False):
+            logger.info("archival_fetch stage=common_crawl start url=%s", url)
+            common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
+            if common_crawl is not None:
+                logger.info("archival_fetch stage=common_crawl done source=%s url=%s", common_crawl.source, url)
+                return common_crawl
+            logger.info("archival_fetch stage=common_crawl miss url=%s", url)
+        else:
+            logger.info(
+                "archival_fetch stage=common_crawl skipped env=LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL url=%s",
+                url,
+            )
 
-        direct = await asyncio.to_thread(self._fetch_direct, url)
-        if direct is not None:
-            return direct
+        direct_candidates = self._direct_candidate_urls(url)
+        direct: Optional[FetchResult] = None
+        for candidate in direct_candidates:
+            logger.info("archival_fetch stage=direct start url=%s", candidate)
+            direct = await asyncio.to_thread(self._fetch_direct, candidate)
+            if direct is not None:
+                # Preserve the original requested URL for callers while still
+                # recording where the bytes were sourced.
+                direct.url = url
+                logger.info(
+                    "archival_fetch stage=direct done source=%s requested_url=%s fetched_url=%s",
+                    direct.source,
+                    url,
+                    candidate,
+                )
+                return direct
+            logger.info("archival_fetch stage=direct miss url=%s", candidate)
 
-        wayback = await self._fetch_from_wayback(url)
-        if wayback is not None:
-            return wayback
+        disable_wayback = _env_flag("LEGAL_SCRAPER_DISABLE_WAYBACK", default=False)
+        if disable_wayback:
+            logger.info("archival_fetch stage=wayback skipped env=LEGAL_SCRAPER_DISABLE_WAYBACK url=%s", url)
+        elif self._is_stage_backed_off("wayback", url=url):
+            logger.info("archival_fetch stage=wayback skipped backoff_active url=%s", url)
+        else:
+            logger.info("archival_fetch stage=wayback start url=%s", url)
+            wayback = await self._fetch_from_wayback(url)
+            if wayback is not None:
+                logger.info("archival_fetch stage=wayback done source=%s url=%s", wayback.source, url)
+                return wayback
+            logger.info("archival_fetch stage=wayback miss url=%s", url)
 
-        archive_is = await self._fetch_from_archive_is(url)
-        if archive_is is not None:
-            return archive_is
+        disable_archive_is = _env_flag("LEGAL_SCRAPER_DISABLE_ARCHIVE_IS", default=False)
+        if disable_archive_is:
+            logger.info("archival_fetch stage=archive_is skipped env=LEGAL_SCRAPER_DISABLE_ARCHIVE_IS url=%s", url)
+        elif self._is_stage_backed_off("archive_is", url=url):
+            logger.info("archival_fetch stage=archive_is skipped backoff_active url=%s", url)
+        else:
+            logger.info("archival_fetch stage=archive_is start url=%s", url)
+            archive_is = await self._fetch_from_archive_is(url)
+            if archive_is is not None:
+                logger.info("archival_fetch stage=archive_is done source=%s url=%s", archive_is.source, url)
+                return archive_is
+            logger.info("archival_fetch stage=archive_is miss url=%s", url)
 
         raise RuntimeError(f"Unable to fetch URL via direct or archival fallback: {url}")
 
     def _fetch_direct(self, url: str) -> Optional[FetchResult]:
-        try:
-            response = self._request_with_retries(url, timeout=self.request_timeout_seconds, verify=True)
+        attempts: List[tuple[bool, str]] = [(True, "direct")]
+        if str(url or "").lower().startswith("https://"):
+            # Some state sites expose certificate-chain issues from this host.
+            # If verified TLS fails to produce a response, retry insecurely.
+            attempts.append((False, "direct_insecure_tls"))
+
+        for verify, source in attempts:
+            try:
+                response = self._request_with_retries(
+                    url,
+                    timeout=self.request_timeout_seconds,
+                    verify=verify,
+                )
+            except ssl.SSLError:
+                continue
+            except Exception:
+                continue
             if response is None:
-                return None
+                continue
             if response.status_code == 200 and self._looks_like_html(response.content):
                 return FetchResult(
                     url=url,
                     content=response.content,
-                    source="direct",
+                    source=source,
                     fetched_at=datetime.now(timezone.utc).isoformat(),
                     status_code=response.status_code,
                 )
+            # Explicit non-200 responses should not be retried with altered TLS.
             return None
-        except ssl.SSLError:
-            # Some state sites present a broken chain from this host; fall back to
-            # insecure TLS only as a last resort so archives can still be queried.
-            try:
-                response = self._request_with_retries(url, timeout=self.request_timeout_seconds, verify=False)
-                if response is None:
-                    return None
-                if response.status_code == 200 and self._looks_like_html(response.content):
-                    return FetchResult(
-                        url=url,
-                        content=response.content,
-                        source="direct_insecure_tls",
-                        fetched_at=datetime.now(timezone.utc).isoformat(),
-                        status_code=response.status_code,
-                    )
-            except Exception:
-                return None
-            return None
-        except Exception:
-            return None
+        return None
 
     def _fetch_from_common_crawl(self, url: str) -> Optional[FetchResult]:
         parsed = urlparse(url)
@@ -253,7 +422,7 @@ class ArchivalFetchClient:
                 archive_url=candidate_url,
                 archive_timestamp=str(record.get("timestamp") or "") or None,
             )
-        except SSLError:
+        except ssl.SSLError:
             try:
                 response = self._request_with_retries(candidate_url, timeout=self.request_timeout_seconds, verify=False)
                 if response is None or int(response.status_code) != 200:
@@ -355,22 +524,45 @@ class ArchivalFetchClient:
         except Exception:
             return None
 
+        lookup_url = _extract_original_url_from_wayback(url) or url
         try:
             search_result = await search_wayback_machine(
-                url=url,
+                url=lookup_url,
                 limit=6,
                 collapse="timestamp:8",
                 output_format="json",
             )
-        except Exception:
+        except Exception as exc:
+            self._mark_stage_backoff("wayback", reason=str(exc), url=lookup_url)
             search_result = {"status": "error", "results": []}
 
         captures = search_result.get("results", []) if isinstance(search_result, dict) else []
+        if not captures and isinstance(search_result, dict):
+            status = str(search_result.get("status") or "").strip().lower()
+            error_text = str(search_result.get("error") or "").strip().lower()
+            combined = f"{status} {error_text}".strip()
+            if any(
+                token in combined
+                for token in (
+                    "connection refused",
+                    "max retries exceeded",
+                    "timed out",
+                    "timeout",
+                    "429",
+                    "rate",
+                    "quota",
+                )
+            ):
+                self._mark_stage_backoff(
+                    "wayback",
+                    reason=combined or "wayback_transport_failure",
+                    url=lookup_url,
+                )
 
         for capture in captures:
             timestamp = capture.get("timestamp")
             try:
-                content_result = await get_wayback_content(url=url, timestamp=timestamp, closest=True)
+                content_result = await get_wayback_content(url=lookup_url, timestamp=timestamp, closest=True)
                 if content_result.get("status") != "success":
                     continue
 
@@ -389,7 +581,10 @@ class ArchivalFetchClient:
                     archive_url=content_result.get("wayback_url") or capture.get("wayback_url"),
                     archive_timestamp=content_result.get("capture_timestamp") or timestamp,
                 )
-            except Exception:
+            except Exception as exc:
+                err = str(exc).lower()
+                if "timed out" in err or "max retries exceeded" in err or "connection" in err:
+                    self._mark_stage_backoff("wayback", reason=str(exc), url=lookup_url)
                 continue
 
         return None
@@ -408,10 +603,28 @@ class ArchivalFetchClient:
             submit_result = await archive_to_archive_is(url, wait_for_completion=False)
             archive_url = submit_result.get("archive_url") if isinstance(submit_result, dict) else None
             if not archive_url:
+                status_text = str((submit_result or {}).get("status") if isinstance(submit_result, dict) else "")
+                error_text = str((submit_result or {}).get("error") if isinstance(submit_result, dict) else "")
+                combined = f"{status_text} {error_text}".lower()
+                if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
+                    self._mark_stage_backoff(
+                        "archive_is",
+                        reason=combined or "archive_is_submit_rate_limited",
+                        url=url,
+                    )
                 return None
 
             content_result = await get_archive_is_content(archive_url)
             if content_result.get("status") != "success":
+                status_text = str(content_result.get("status") or "")
+                error_text = str(content_result.get("error") or "")
+                combined = f"{status_text} {error_text}".lower()
+                if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
+                    self._mark_stage_backoff(
+                        "archive_is",
+                        reason=combined or "archive_is_content_rate_limited",
+                        url=url,
+                    )
                 return None
 
             content = content_result.get("content", b"")
@@ -428,7 +641,10 @@ class ArchivalFetchClient:
                 fetched_at=datetime.now(timezone.utc).isoformat(),
                 archive_url=archive_url,
             )
-        except Exception:
+        except Exception as exc:
+            err = str(exc).lower()
+            if "429" in err or "too many" in err or "rate" in err or "quota" in err:
+                self._mark_stage_backoff("archive_is", reason=str(exc), url=url)
             return None
 
     @staticmethod

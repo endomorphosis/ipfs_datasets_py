@@ -376,7 +376,7 @@ class DelegationEvaluator:
     4. At least one delegation in the chain has the requested capability.
     """
 
-    def __init__(self, max_chain_depth: int = 0) -> None:
+    def __init__(self, max_chain_depth: int = 0, *, require_signatures: bool = False) -> None:
         """Initialise a :class:`DelegationEvaluator`.
 
         Args:
@@ -384,10 +384,13 @@ class DelegationEvaluator:
                 (number of hops from root to leaf, inclusive).  ``0`` means
                 unlimited.  When a chain exceeds this limit,
                 :meth:`build_chain` raises ``ValueError``.
+            require_signatures: If True, reject delegations from external
+                issuers (did:key:*) that lack a valid signature.
         """
         self._store: Dict[str, Delegation] = {}
         self._tokens_by_cid: Dict[str, Union[DelegationToken, Delegation]] = {}
         self._max_chain_depth: int = max_chain_depth
+        self._require_signatures: bool = require_signatures
 
     # ------------------------------------------------------------------
     # Store management
@@ -558,6 +561,15 @@ class DelegationEvaluator:
             if d.is_expired(now=t):
                 return False, f"Delegation '{d.cid}' has expired"
 
+        # Signature verification — if delegation is a DIDSignedDelegation, verify it
+        for d in chain:
+            if hasattr(d, '_signed') and d._signed is not None:
+                if not verify_delegation_signature(d._signed):
+                    return False, f"Delegation '{d.cid}' has invalid signature"
+            elif self._require_signatures and d.issuer.startswith("did:key:"):
+                # External DID-based delegations MUST be signed in strict mode
+                return False, f"Delegation '{d.cid}' from DID issuer lacks required signature"
+
         # Capability check — at least one delegation must cover the request
         for d in chain:
             if d.has_capability(resource, ability):
@@ -573,19 +585,38 @@ class DelegationEvaluator:
 # ---------------------------------------------------------------------------
 
 _GLOBAL_EVALUATOR: Optional[DelegationEvaluator] = None
+_GLOBAL_EVALUATOR_LOCK = __import__("threading").Lock()
+
+# Max delegation chain depth to prevent memory DoS via deep chains
+_MAX_CHAIN_DEPTH = int(__import__("os").environ.get("MCPPP_MAX_CHAIN_DEPTH", "10"))
 
 
 def get_delegation_evaluator() -> DelegationEvaluator:
-    """Return the global :class:`DelegationEvaluator` singleton."""
+    """Return the global :class:`DelegationEvaluator` singleton (thread-safe)."""
     global _GLOBAL_EVALUATOR
     if _GLOBAL_EVALUATOR is None:
-        _GLOBAL_EVALUATOR = DelegationEvaluator()
+        with _GLOBAL_EVALUATOR_LOCK:
+            if _GLOBAL_EVALUATOR is None:
+                _GLOBAL_EVALUATOR = DelegationEvaluator(
+                    max_chain_depth=_MAX_CHAIN_DEPTH
+                )
     return _GLOBAL_EVALUATOR
 
 
-def add_delegation(delegation: Delegation) -> None:
-    """Add *delegation* to the global evaluator store."""
-    get_delegation_evaluator().add(delegation)
+def add_delegation(cid_or_delegation: Any, delegation: Optional[Delegation] = None) -> None:
+    """Add *delegation* to the global evaluator store.
+    
+    Supports two call signatures:
+    - add_delegation(delegation) — adds delegation using its .cid
+    - add_delegation(proof_cid, delegation) — adds with explicit CID
+    """
+    if delegation is None:
+        # Single arg: it's the delegation itself
+        get_delegation_evaluator().add(cid_or_delegation)
+    else:
+        # Two args: cid + delegation
+        delegation.cid = str(cid_or_delegation)
+        get_delegation_evaluator().add(delegation)
 
 
 def get_delegation(cid: str) -> Optional[Delegation]:
@@ -1426,7 +1457,7 @@ class DelegationManager:
             a temporary-directory path.
     """
 
-    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 0) -> None:
+    def __init__(self, path: Optional[str] = None, max_chain_depth: int = 10) -> None:
         _default_path = _tempfile.gettempdir() + "/mcp_delegations.json"
         self._store = DelegationStore(path or _default_path)
         self._revocation = RevocationList()

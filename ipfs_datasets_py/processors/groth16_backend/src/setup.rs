@@ -1,9 +1,9 @@
 // src/setup.rs
 // Trusted setup (circuit-specific parameters) for Groth16 MVP circuit
 
-use crate::circuit::{MVPCircuit, TDFOLv1DerivationCircuitV2};
+use crate::circuit::{EventDagCompactionCircuitV3, MVPCircuit, TDFOLv1DerivationCircuitV2, EVENT_DAG_V3_MAX_EVENTS};
 use ark_bn254::{Bn254, Fr};
-use ark_ff::{Field, PrimeField};
+use ark_ff::{AdditiveGroup, Field, PrimeField};
 use ark_groth16::Groth16;
 use ark_serialize::CanonicalSerialize;
 use ark_snark::SNARK;
@@ -97,6 +97,20 @@ fn build_tdfol_v1_v2_setup_circuit() -> TDFOLv1DerivationCircuitV2<Fr> {
     }
 }
 
+fn build_event_dag_v3_setup_circuit() -> EventDagCompactionCircuitV3<Fr> {
+    let mut digests = vec![[0u8; 32]; EVENT_DAG_V3_MAX_EVENTS];
+    digests[0] = sha256_bytes(b"MCP++ Profile F setup event one");
+    digests[1] = sha256_bytes(b"MCP++ Profile F setup event two");
+    let root = crate::prover::event_dag_v3_merkle_root(&digests);
+    EventDagCompactionCircuitV3 {
+        event_digests: Some(digests),
+        active: Some(vec![true, true, false, false]),
+        merkle_root: Some(root),
+        event_count: Some(2),
+        _field: std::marker::PhantomData,
+    }
+}
+
 pub fn setup_to_dir(version: u32, out_dir: &Path, seed: Option<u64>) -> anyhow::Result<SetupManifestV1> {
     if version > 255 {
         anyhow::bail!("circuit_version must be <= 255 for MVP circuit");
@@ -131,7 +145,20 @@ pub fn setup_to_dir(version: u32, out_dir: &Path, seed: Option<u64>) -> anyhow::
                 }
             }
         }
-        _ => anyhow::bail!("unsupported circuit version: {version} (supported: 1, 2)"),
+        3 => {
+            let circuit = build_event_dag_v3_setup_circuit();
+            match seed {
+                Some(seed) => {
+                    let mut rng = StdRng::seed_from_u64(seed);
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+                None => {
+                    let mut rng = OsRng;
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+            }
+        }
+        _ => anyhow::bail!("unsupported circuit version: {version} (supported: 1, 2, 3)"),
     };
 
     let pk_path: PathBuf = out_dir.join("proving_key.bin");

@@ -79,7 +79,12 @@ async def multi_engine_legal_search(
         >>> print(f"Found {result['total_results']} results from {result['engines_used']}")
     """
     try:
-        from ipfs_datasets_py.processors.legal_scrapers import MultiEngineLegalSearch
+        from ipfs_datasets_py.processors.web_archiving.search_engines import (
+            MultiEngineOrchestrator,
+            OrchestratorConfig,
+            SearchEngineConfig,
+            SearchEngineError,
+        )
         
         # Validate input
         if not query or not isinstance(query, str):
@@ -117,35 +122,68 @@ async def multi_engine_legal_search(
                 "message": "result_aggregation must be 'merge', 'best', or 'round_robin'"
             }
         
-        # Initialize multi-engine searcher
-        searcher = MultiEngineLegalSearch(
-            engines=engines,
-            parallel_enabled=parallel_enabled,
-            fallback_enabled=fallback_enabled,
-            result_aggregation=result_aggregation,
-            deduplication_enabled=deduplication_enabled,
-            brave_api_key=brave_api_key,
-            google_api_key=google_api_key,
-            google_cse_id=google_cse_id
+        engine_configs: Dict[str, SearchEngineConfig] = {}
+        if "brave" in engines:
+            engine_configs["brave"] = SearchEngineConfig(
+                engine_type="brave",
+                api_key=brave_api_key,
+            )
+        if "google_cse" in engines:
+            engine_configs["google_cse"] = SearchEngineConfig(
+                engine_type="google_cse",
+                api_key=google_api_key,
+                extra_params={"cse_id": google_cse_id},
+            )
+
+        orchestrator = MultiEngineOrchestrator(
+            OrchestratorConfig(
+                engines=engines,
+                engine_configs=engine_configs,
+                parallel_enabled=parallel_enabled,
+                fallback_enabled=fallback_enabled,
+                result_aggregation=result_aggregation,
+                deduplication_enabled=deduplication_enabled,
+            )
         )
-        
-        # Execute search
-        result = searcher.search(
+
+        response = orchestrator.search(
             query=query,
             max_results=max_results,
             country=country,
             lang=lang
         )
-        
-        # Add MCP-specific metadata
-        result["mcp_tool"] = "multi_engine_legal_search"
-        result["engines_requested"] = engines
-        result["parallel_enabled"] = parallel_enabled
-        result["fallback_enabled"] = fallback_enabled
-        
-        return result
-        
-    except ImportError as e:
+
+        results = [
+            {
+                "title": item.title,
+                "url": item.url,
+                "snippet": item.snippet,
+                "engine": str(item.engine),
+                "score": item.score,
+                "published_date": item.published_date,
+                "domain": item.domain,
+                "metadata": item.metadata,
+            }
+            for item in list(response.results or [])
+        ]
+        engines_used = list(response.metadata.get("engines_used") or [])
+
+        return {
+            "status": "success",
+            "query": query,
+            "results": results,
+            "metadata": dict(response.metadata or {}),
+            "search_terms": [query],
+            "entities_matched": [],
+            "engines_used": engines_used,
+            "total_results": len(results),
+            "mcp_tool": "multi_engine_legal_search",
+            "engines_requested": engines,
+            "parallel_enabled": parallel_enabled,
+            "fallback_enabled": fallback_enabled,
+        }
+
+    except (ImportError, SearchEngineError) as e:
         logger.error(f"Import error in multi_engine_legal_search: {e}")
         return {
             "status": "error",
@@ -174,12 +212,18 @@ async def get_multi_engine_stats() -> Dict[str, Any]:
         Dictionary containing statistics for each configured engine
     """
     try:
-        from ipfs_datasets_py.processors.legal_scrapers import MultiEngineLegalSearch
-        
-        # Create a temporary searcher to access stats
-        # This will use default engines without requiring API keys
-        searcher = MultiEngineLegalSearch(engines=["duckduckgo"])
-        stats = searcher.get_engine_stats()
+        from ipfs_datasets_py.processors.web_archiving.search_engines import (
+            MultiEngineOrchestrator,
+            OrchestratorConfig,
+        )
+
+        orchestrator = MultiEngineOrchestrator(
+            OrchestratorConfig(engines=["duckduckgo"])
+        )
+        stats = {
+            engine_name: engine.get_stats()
+            for engine_name, engine in orchestrator.engines.items()
+        }
         
         return {
             "status": "success",

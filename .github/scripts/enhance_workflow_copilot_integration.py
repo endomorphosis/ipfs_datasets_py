@@ -2,11 +2,11 @@
 """
 Enhanced Workflow Copilot Integration Script
 
-This script enhances GitHub Actions workflows to use GitHub CLI and Copilot CLI tools
+This script enhances GitHub Actions workflows to use GitHub CLI and gh copilot tools
 for automated code analysis, suggestions, and workflow fixing.
 
 Features:
-- Validates GitHub CLI and Copilot CLI availability
+- Validates GitHub CLI and gh copilot extension availability
 - Provides workflow analysis and suggestions
 - Integrates with existing auto-healing system
 - Uses MCP tools for Copilot integration
@@ -27,7 +27,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 class WorkflowCopilotIntegration:
     """
-    Manages integration of GitHub Copilot CLI with GitHub Actions workflows
+    Manages integration of the gh copilot extension with GitHub Actions workflows
     """
     
     def __init__(self, workflows_dir: Optional[str] = None):
@@ -307,7 +307,7 @@ class WorkflowCopilotIntegration:
             print("✅ Installed and available")
         else:
             print("❌ Not installed or not accessible")
-            print("   Install with: gh extension install github/gh-copilot")
+            print("   Install the gh copilot extension with: gh extension install github/gh-copilot")
         print()
         
         # Workflow summary
@@ -346,7 +346,7 @@ class WorkflowCopilotIntegration:
         
         if not report['copilot_extension']['installed']:
             suggestions.append(
-                "Install gh-copilot extension: gh extension install github/gh-copilot"
+                "Install the gh copilot extension for gh copilot suggest/explain flows: gh extension install github/gh-copilot"
             )
         
         if report['workflows']['using_gh_cli'] > 0:
@@ -357,7 +357,7 @@ class WorkflowCopilotIntegration:
         
         if report['workflows']['using_copilot'] == 0:
             suggestions.append(
-                "Consider integrating Copilot CLI for automated code suggestions "
+                "Consider integrating gh copilot suggest/explain flows for automated assistance "
                 "in workflows"
             )
         

@@ -10,6 +10,7 @@ import platform
 import subprocess
 import importlib
 import logging
+import json
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Tuple, Set
 import warnings
@@ -17,13 +18,81 @@ import warnings
 logger = logging.getLogger(__name__)
 
 
+def _truthy_env_value(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _runtime_installer_check_enabled() -> bool:
+    configured = os.getenv("IPFS_DATASETS_ENSURE_INSTALLER")
+    if configured is None:
+        return _truthy_env_value(os.getenv("IPFS_DATASETS_AUTO_INSTALL")) or _truthy_env_value(
+            os.getenv("IPFS_AUTO_INSTALL")
+        )
+    return _truthy_env_value(configured)
+
+
+def _runtime_installer_marker_path() -> Path:
+    repo_root = Path(__file__).resolve().parents[1]
+    return repo_root / "state" / "runtime_installer_state.json"
+
+
+def _current_repo_revision() -> str:
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            value = (result.stdout or "").strip()
+            if value:
+                return value
+    except Exception:
+        pass
+
+    fallback_paths = [
+        repo_root / "setup.py",
+        repo_root / "scripts" / "setup" / "install.py",
+        repo_root / "ipfs_datasets_py" / "__init__.py",
+    ]
+    stamp_parts: List[str] = []
+    for path in fallback_paths:
+        try:
+            stat = path.stat()
+            stamp_parts.append(f"{path.name}:{int(stat.st_mtime)}:{stat.st_size}")
+        except Exception:
+            continue
+    return "|".join(stamp_parts) or "unknown"
+
+
+def _load_runtime_installer_state() -> Dict[str, object]:
+    marker_path = _runtime_installer_marker_path()
+    if not marker_path.exists():
+        return {}
+    try:
+        data = json.loads(marker_path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_runtime_installer_state(payload: Dict[str, object]) -> None:
+    marker_path = _runtime_installer_marker_path()
+    marker_path.parent.mkdir(parents=True, exist_ok=True)
+    marker_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 class DependencyInstaller:
     """Cross-platform dependency installer that replaces mock implementations"""
     
     def __init__(self, auto_install: bool = None, verbose: bool = False):
-        # Check environment variable first, then parameter, default to False
         if auto_install is None:
-            auto_install = os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
+            auto_install = _truthy_env_value(os.getenv('IPFS_DATASETS_AUTO_INSTALL')) or _truthy_env_value(
+                os.getenv('IPFS_AUTO_INSTALL')
+            )
         self.auto_install = auto_install
         self.verbose = verbose
         self.system = platform.system().lower()
@@ -139,6 +208,7 @@ class DependencyInstaller:
             # LLM APIs
             'openai': ['openai>=1.0.0,<2.0.0'],
             'anthropic': ['anthropic>=0.50.0,<1.0.0'],
+            'tiktoken': ['tiktoken>=0.6.0'],
             
             # Web and API
             'fastapi': ['fastapi>=0.100.0,<1.0.0'],
@@ -169,9 +239,17 @@ class DependencyInstaller:
             'beautifulsoup4': ['beautifulsoup4>=4.10.0,<5.0.0'],
             'newspaper3k': ['newspaper3k>=0.2.8,<1.0.0'],
             'readability-lxml': ['readability-lxml>=0.8.0,<1.0.0'],
+            'lxml_html_clean': ['lxml_html_clean>=0.4.0'],
             
             # Development
             'pytest': ['pytest>=8.0.0,<9.0.0'],
+            'pytest-asyncio': ['pytest-asyncio>=0.21.0'],
+            'pytest-cov': ['pytest-cov>=4.1.0'],
+            'pytest-timeout': ['pytest-timeout>=2.0.2'],
+            'pytest-xdist': ['pytest-xdist>=3.8.0'],
+            'pytest-benchmark': ['pytest-benchmark>=4.0.0'],
+            'pytest-mock': ['pytest-mock>=3.12.0'],
+            'hypothesis': ['hypothesis>=6.0.0'],
             'anyio': ['anyio>=4.0.0,<5.0.0'],
             'coverage': ['coverage>=7.0.0,<8.0.0'],
 
@@ -182,6 +260,13 @@ class DependencyInstaller:
             'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
             # Copilot SDK
             'github-copilot-sdk': ['github-copilot-sdk>=0.1.0'],
+        }
+
+        self.python_package_companions = {
+            # newspaper3k imports lxml.html.clean at runtime, which modern lxml
+            # exposes through this separate package.
+            'newspaper3k': ['lxml_html_clean'],
+            'readability-lxml': ['lxml_html_clean'],
         }
 
         # Node CLI packages used by the SyMAI router (npm install -g)
@@ -901,6 +986,14 @@ exec "$BIN" "$@"
         
         for package_spec in packages_to_try:
             if self._pip_install(package_spec):
+                for companion_package in self.python_package_companions.get(package_name, []):
+                    if not self.install_python_dependency(companion_package, force_reinstall=force_reinstall):
+                        logger.error(
+                            "Failed to install companion dependency %s for %s",
+                            companion_package,
+                            package_name,
+                        )
+                        return False
                 self.installed_packages.add(package_name)
                 return True
                 
@@ -1199,14 +1292,103 @@ exec "$BIN" "$@"
 # Global installer instance
 _installer = None
 
+
+def _load_setup_install_module():
+    """Best-effort load of scripts/setup/install.py as a module."""
+    try:
+        import importlib.util
+
+        repo_root = Path(__file__).resolve().parents[1]
+        install_path = repo_root / "scripts" / "setup" / "install.py"
+        if not install_path.exists():
+            return None
+        spec = importlib.util.spec_from_file_location("ipfs_datasets_setup_install", install_path)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        return None
+
+
+def ensure_main_ipfs_kit_py() -> bool:
+    """Best-effort install/bootstrap of ``ipfs_kit_py`` from the repo setup helper."""
+    module = _load_setup_install_module()
+    if module is None:
+        return False
+    helper = getattr(module, "ensure_main_ipfs_kit_py", None)
+    if not callable(helper):
+        return False
+    try:
+        os.environ.setdefault("IPFS_KIT_PY_USE_GIT", "true")
+        os.environ["IPFS_DATASETS_PY_ENABLE_IPFS_KIT"] = "1"
+        helper()
+        importlib.import_module("ipfs_kit_py.ipfs_kit")
+        return True
+    except Exception:
+        return False
+
+
+def ensure_repo_installer_current(force: bool = False) -> bool:
+    """Ensure installer bootstrap has run for the current checkout revision.
+
+    This keeps runtime behavior aligned with the currently checked-out repo
+    version instead of relying on a one-time manual setup.
+    """
+    if not _runtime_installer_check_enabled() and not force:
+        return False
+
+    current_revision = _current_repo_revision()
+    state = _load_runtime_installer_state()
+    if (
+        not force
+        and state.get("status") == "success"
+        and str(state.get("repo_revision") or "") == current_revision
+    ):
+        return False
+
+    module = _load_setup_install_module()
+    if module is None:
+        return False
+
+    helper_names = [
+        "ensure_main_ipfs_kit_py",
+        "ensure_libp2p_main",
+        "ensure_ipfs_accelerate_py",
+    ]
+    completed: List[str] = []
+    failures: List[str] = []
+
+    for helper_name in helper_names:
+        helper = getattr(module, helper_name, None)
+        if not callable(helper):
+            continue
+        try:
+            helper()
+            completed.append(helper_name)
+        except Exception as exc:
+            failures.append(f"{helper_name}: {exc}")
+
+    status = "success" if not failures else "partial"
+    _save_runtime_installer_state(
+        {
+            "completed_helpers": completed,
+            "failures": failures,
+            "repo_revision": current_revision,
+            "status": status,
+        }
+    )
+    return True
+
 def get_installer() -> DependencyInstaller:
     """Get global installer instance"""
     global _installer
     if _installer is None:
-        # Check environment variables for configuration - use consistent variable names
-        auto_install = os.getenv('IPFS_DATASETS_AUTO_INSTALL', 
-                               os.getenv('IPFS_AUTO_INSTALL', 'false')).lower() == 'true'
-        verbose = os.getenv('IPFS_INSTALL_VERBOSE', 'false').lower() == 'true'
+        auto_install = _truthy_env_value(os.getenv('IPFS_DATASETS_AUTO_INSTALL')) or _truthy_env_value(
+            os.getenv('IPFS_AUTO_INSTALL')
+        )
+        verbose = _truthy_env_value(os.getenv('IPFS_INSTALL_VERBOSE'))
         _installer = DependencyInstaller(auto_install=auto_install, verbose=verbose)
     return _installer
 
@@ -1277,6 +1459,16 @@ def install_for_component(component: str) -> bool:
             ('qdrant_client', 'qdrant-client'),
             ('elasticsearch', 'elasticsearch'),
         ]
+    elif component == 'ipfs':
+        return ensure_main_ipfs_kit_py()
+    elif component == 'ipld':
+        dependencies = [
+            ('libipld', 'libipld>=3.3.2'),
+            ('ipld_car', 'ipld-car>=0.0.1'),
+            ('ipld_dag_pb', 'ipld-dag-pb>=0.0.1'),
+            ('dag_cbor', 'dag-cbor>=0.3.3'),
+            ('multiformats', 'multiformats>=0.3.0'),
+        ]
     elif component == 'theorem_provers':
         # Install theorem provers and SAT/SMT solvers
         return installer.install_theorem_provers()
@@ -1306,6 +1498,11 @@ def install_for_component(component: str) -> bool:
             ('cvc5', 'cvc5', ['cvc5']),
             ('pysmt', 'pysmt'),
         ]
+    elif component in {'logic', 'symbolicai'}:
+        dependencies = [
+            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
+            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
+        ]
     elif component == 'web':
         dependencies = [
             ('requests', 'requests'),
@@ -1313,8 +1510,21 @@ def install_for_component(component: str) -> bool:
             ('newspaper', 'newspaper3k'),
             ('readability', 'readability-lxml'),
         ]
+    elif component == 'test':
+        dependencies = [
+            ('pytest', 'pytest'),
+            ('pytest_asyncio', 'pytest-asyncio'),
+            ('pytest_cov', 'pytest-cov'),
+            ('pytest_timeout', 'pytest-timeout'),
+            ('xdist', 'pytest-xdist'),
+            ('pytest_benchmark', 'pytest-benchmark'),
+            ('pytest_mock', 'pytest-mock'),
+            ('hypothesis', 'hypothesis'),
+        ]
     elif component == 'symai_router':
         dependencies = [
+            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
+            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
             ('copilot', 'github-copilot-sdk'),
         ]
         if not installer.ensure_nodejs(min_major=20):

@@ -67,7 +67,7 @@ This document tracks all fixes applied to GitHub Actions workflows. The latest u
 # Check Copilot CLI status
 .github/scripts/workflow_fix_helper.sh copilot-status
 
-# Install Copilot CLI (requires GH_TOKEN)
+# Install the gh copilot extension for suggest/explain helpers (requires GH_TOKEN)
 gh extension install github/gh-copilot
 ```
 

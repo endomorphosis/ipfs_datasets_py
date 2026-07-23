@@ -1,0 +1,9 @@
+{
+  "description": "Repo-scoped TypeScript compiler toolchain provisioned for PORTAL-CXTP-089 so crypto_exchange proof-consumer schemas can be type-checked without a machine-wide TypeScript install.",
+  "devDependencies": {
+    "typescript": "5.6.3"
+  },
+  "name": "crypto-exchange-typescript-toolchain",
+  "private": true,
+  "version": "1.0.0"
+}

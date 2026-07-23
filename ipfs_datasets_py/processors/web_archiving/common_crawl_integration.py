@@ -17,10 +17,180 @@ import subprocess
 import json
 import base64
 import re
+import hashlib
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Literal
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+
+STATE_HOST_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "DC", "PR",
+}
+
+EXPLICIT_FEDERAL_GOV_HOSTS = (
+    "congress.gov",
+    "gpo.gov",
+    "federalregister.gov",
+    "supremecourt.gov",
+    "uscourts.gov",
+    "whitehouse.gov",
+    "va.gov",
+    "state.gov",
+    "justice.gov",
+    "treasury.gov",
+    "commerce.gov",
+    "energy.gov",
+    "transportation.gov",
+    "usda.gov",
+    "hhs.gov",
+    "hud.gov",
+    "doi.gov",
+    "dol.gov",
+    "dhs.gov",
+    "defense.gov",
+    "fbi.gov",
+    "cia.gov",
+    "census.gov",
+    "gsa.gov",
+    "ssa.gov",
+    "epa.gov",
+    "irs.gov",
+    "usa.gov",
+)
+
+try:
+    from ipfs_datasets_py.processors.legal_scrapers.huggingface_api_search import (
+        HuggingFaceAPISearch,
+    )
+    HAVE_HF_CC_FALLBACK = True
+except Exception:
+    HuggingFaceAPISearch = None
+    HAVE_HF_CC_FALLBACK = False
+
+
+def _env_path(name: str) -> Optional[Path]:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser().resolve()
+
+
+def _default_parquet_root() -> Path:
+    return _env_path("CCINDEX_PARQUET_ROOT") or Path("/storage/ccindex_parquet")
+
+
+def _default_master_db_path() -> Path:
+    return _env_path("CCINDEX_MASTER_DB") or Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")
+
+
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return bool(default)
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _default_hf_meta_index_dataset() -> str:
+    return (
+        os.getenv("COMMON_CRAWL_HF_META_INDEX_DATASET")
+        or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_META_INDEX_DATASET")
+        or "Publicus/common_crawl_pointer_indices"
+    )
+
+
+def _default_hf_pointer_dataset() -> str:
+    return (
+        os.getenv("COMMON_CRAWL_HF_POINTER_DATASET")
+        or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_POINTER_DATASET")
+        or "Publicus/common_crawl_pointers_by_collection"
+    )
+
+
+def _default_hf_remote_meta_cache_dir() -> Path:
+    return (
+        _env_path("COMMON_CRAWL_HF_REMOTE_META_CACHE_DIR")
+        or _env_path("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META_CACHE_DIR")
+        or Path.home() / ".cache" / "ipfs_datasets_py" / "common_crawl_hf_remote_meta"
+    )
+
+
+def _hf_remote_meta_cache_ttl_seconds() -> float:
+    try:
+        return float(
+            os.getenv("COMMON_CRAWL_HF_REMOTE_META_CACHE_TTL_SECONDS")
+            or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META_CACHE_TTL_SECONDS")
+            or "86400"
+        )
+    except ValueError:
+        return 86400.0
+
+
+def _json_cache_key(payload: Dict[str, Any]) -> str:
+    raw = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _read_json_cache(path: Path, *, ttl_seconds: float) -> Optional[List[Dict[str, Any]]]:
+    if ttl_seconds <= 0 or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        created_at = float(payload.get("created_at") or 0)
+        if created_at <= 0 or time.time() - created_at > ttl_seconds:
+            return None
+        records = payload.get("records")
+        return records if isinstance(records, list) else None
+    except Exception:
+        return None
+
+
+def _write_json_cache(path: Path, records: List[Dict[str, Any]]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"created_at": time.time(), "records": records}, sort_keys=True, default=str),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.debug("Failed to write Common Crawl HF remote-meta cache %s: %s", path, exc)
+
+
+def _ensure_common_crawl_source_checkout() -> Optional[Path]:
+    if not _env_flag("COMMON_CRAWL_AUTO_CLONE_SOURCE", default=True):
+        return None
+
+    target = Path(__file__).resolve().parent / "common_crawl_search_engine"
+    init_file = target / "__init__.py"
+    if init_file.exists():
+        return target.parent
+    if target.exists() and any(target.iterdir()):
+        return None
+
+    repo_url = os.getenv(
+        "COMMON_CRAWL_SEARCH_ENGINE_REPO",
+        "https://github.com/endomorphosis/common_crawl_search_engine.git",
+    )
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, str(target)],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=float(os.getenv("COMMON_CRAWL_AUTO_CLONE_TIMEOUT_SECONDS", "60")),
+        )
+        return target.parent if init_file.exists() else None
+    except Exception as exc:
+        logger.warning("Failed to auto-clone common_crawl_search_engine from %s: %s", repo_url, exc)
+        return None
+
 
 def _discover_common_crawl_import_roots() -> List[Path]:
     """Discover likely sys.path roots that contain `common_crawl_search_engine`."""
@@ -53,6 +223,10 @@ def _discover_common_crawl_import_roots() -> List[Path]:
 
 def _ensure_common_crawl_import_path() -> Optional[Path]:
     """Ensure a valid import root for `common_crawl_search_engine` is on sys.path."""
+    auto_root = _ensure_common_crawl_source_checkout()
+    if auto_root is not None and str(auto_root) not in sys.path:
+        sys.path.insert(0, str(auto_root))
+
     for root in _discover_common_crawl_import_roots():
         root_str = str(root)
         if root_str not in sys.path:
@@ -63,6 +237,43 @@ def _ensure_common_crawl_import_path() -> Optional[Path]:
         except Exception:
             continue
     return None
+
+
+def _infer_state_code_from_domain(domain: str) -> Optional[str]:
+    host = str(urlparse(str(domain or "")).netloc or domain or "").lower().strip(".")
+    if not host:
+        return None
+
+    state_us_match = re.search(r"\.state\.([a-z]{2})\.us$", host)
+    if state_us_match:
+        code = state_us_match.group(1).upper()
+        return code if code in STATE_HOST_CODES else None
+
+    gov_match = re.search(r"(?:^|\.)([a-z]{2})[a-z0-9-]*\.gov$", host)
+    if gov_match:
+        code = gov_match.group(1).upper()
+        return code if code in STATE_HOST_CODES else None
+
+    return None
+
+
+def _is_explicit_federal_host(domain: str) -> bool:
+    host = str(urlparse(str(domain or "")).netloc or domain or "").lower().strip(".")
+    return any(host == federal_host or host.endswith(f".{federal_host}") for federal_host in EXPLICIT_FEDERAL_GOV_HOSTS)
+
+
+def _normalize_cc_jurisdiction(domain: str, jurisdiction: str, state_code: Optional[str]) -> tuple[str, Optional[str]]:
+    normalized = str(jurisdiction or "state").strip().lower() or "state"
+    normalized_state_code = str(state_code).strip().upper() if state_code else None
+
+    inferred_state_code = _infer_state_code_from_domain(domain)
+    if inferred_state_code and not normalized_state_code:
+        normalized_state_code = inferred_state_code
+
+    if inferred_state_code and normalized != "municipal" and not _is_explicit_federal_host(domain):
+        normalized = "state"
+
+    return normalized, normalized_state_code
 
 
 class CommonCrawlSearchEngine:
@@ -148,6 +359,8 @@ class CommonCrawlSearchEngine:
         self.mcp_timeout = mcp_timeout
         self.cli_command = cli_command
         self.ssh_host = ssh_host
+        self.hf_search = None
+        self._hf_fallback_enabled = False
         
         # Initialize based on mode
         if mode == "local":
@@ -167,6 +380,9 @@ class CommonCrawlSearchEngine:
         # Set environment variables for ccindex
         self._configure_environment()
         
+        parquet_root = _default_parquet_root()
+        master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
+
         # Import ccindex API (lazy import to avoid issues if submodule isn't initialized)
         try:
             import_root = _ensure_common_crawl_import_path()
@@ -175,11 +391,29 @@ class CommonCrawlSearchEngine:
             from common_crawl_search_engine.ccindex import api
             self.api = api
             self._available = True
+            if not parquet_root.exists() or not master_db.exists():
+                logger.warning(
+                    "Common Crawl local index assets missing; local mode will use HF remote meta "
+                    "pointer lookup when enabled (parquet_root=%s exists=%s, master_db=%s exists=%s)",
+                    parquet_root,
+                    parquet_root.exists(),
+                    master_db,
+                    master_db.exists(),
+                )
             logger.info("Common Crawl Search Engine initialized in local mode (root=%s)", import_root)
         except ImportError as e:
             logger.warning(f"Common Crawl Search Engine not available in local mode: {e}")
             logger.info("Make sure common_crawl_search_engine sources are available (e.g., in src/common_crawl_search_engine)")
             self.api = None
+            if HAVE_HF_CC_FALLBACK and _env_flag("COMMON_CRAWL_ENABLE_LEGACY_HF_STREAMING_FALLBACK", default=False):
+                try:
+                    self.hf_search = HuggingFaceAPISearch(use_streaming=True)
+                    self._hf_fallback_enabled = True
+                    self._available = True
+                    logger.info("Common Crawl local mode falling back to legacy HuggingFace streaming search")
+                    return
+                except Exception as exc:
+                    logger.warning("Failed to initialize legacy HuggingFace Common Crawl fallback: %s", exc)
             self._available = False
     
     def _init_remote_mode(self) -> None:
@@ -278,6 +512,8 @@ class CommonCrawlSearchEngine:
         
         try:
             if self.mode == "local":
+                if self._hf_fallback_enabled:
+                    return self._search_domain_hf(domain, max_matches, collection, **kwargs)
                 return self._search_domain_local(domain, max_matches, collection, **kwargs)
             elif self.mode == "remote":
                 return self._search_domain_remote(domain, max_matches, collection, **kwargs)
@@ -306,19 +542,66 @@ class CommonCrawlSearchEngine:
         collection_db = kwargs.get("collection_db")
         max_parquet_files = int(kwargs.get("max_parquet_files", 200) or 200)
         per_parquet_limit = int(kwargs.get("per_parquet_limit", 2000) or 2000)
+        master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
+        master_db_arg = Path(kwargs.get("master_db")) if kwargs.get("master_db") else master_db
+        year_db_arg = Path(year_db) if year_db else None
+        collection_db_arg = Path(collection_db) if collection_db else None
 
-        result = self.api.search_domain_via_meta_indexes(
-            domain,
-            parquet_root=Path(parquet_root) if parquet_root else Path("/storage/ccindex_parquet"),
-            master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
-            year_db=(Path(year_db) if year_db else None),
-            collection_db=(Path(collection_db) if collection_db else None),
-            year=(str(year) if year else None),
-            max_parquet_files=max_parquet_files,
-            max_matches=int(max_matches),
-            per_parquet_limit=per_parquet_limit,
+        has_local_meta = any(
+            path is not None and Path(path).exists()
+            for path in (master_db_arg, year_db_arg, collection_db_arg)
         )
-        return self._normalize_records(result.records)
+        hf_remote_meta = kwargs.get("hf_remote_meta")
+        if hf_remote_meta is None:
+            hf_remote_meta = _env_flag(
+                "COMMON_CRAWL_HF_REMOTE_META",
+                default=_env_flag("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META", default=True),
+            )
+        hf_remote_meta = bool(hf_remote_meta)
+
+        options: Dict[str, Any] = {
+            "parquet_root": Path(parquet_root) if parquet_root else _default_parquet_root(),
+            "master_db": master_db_arg,
+            "year_db": year_db_arg,
+            "collection_db": collection_db_arg,
+            "year": str(year) if year else None,
+            "max_parquet_files": max_parquet_files,
+            "max_matches": int(max_matches),
+            "per_parquet_limit": per_parquet_limit,
+        }
+        if hf_remote_meta and not has_local_meta:
+            options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                    "hf_meta_index_dataset": str(kwargs.get("hf_meta_index_dataset") or _default_hf_meta_index_dataset()),
+                    "hf_pointer_dataset": str(kwargs.get("hf_pointer_dataset") or _default_hf_pointer_dataset()),
+                    "hf_revision": str(kwargs.get("hf_revision") or os.getenv("COMMON_CRAWL_HF_REVISION") or "main"),
+                }
+            )
+        else:
+            options["hf_remote_meta"] = bool(kwargs.get("hf_remote_meta", False))
+
+        cache_path: Optional[Path] = None
+        use_cache = (
+            bool(options.get("hf_remote_meta"))
+            and _env_flag("COMMON_CRAWL_HF_REMOTE_META_CACHE", default=True)
+        )
+        if use_cache:
+            cache_dir = Path(kwargs.get("hf_remote_meta_cache_dir") or _default_hf_remote_meta_cache_dir())
+            cache_key = _json_cache_key({"domain": domain, "collection": collection, "options": options})
+            cache_path = cache_dir / f"{cache_key}.json"
+            cached = _read_json_cache(cache_path, ttl_seconds=_hf_remote_meta_cache_ttl_seconds())
+            if cached is not None:
+                return self._normalize_records(cached)[: int(max_matches)]
+
+        result = self.api.search_domain_via_meta_indexes(domain, **options)
+        records = self._normalize_records(result.records)
+        if cache_path is not None:
+            _write_json_cache(cache_path, records)
+        return records
     
     def _search_domain_remote(
         self,
@@ -418,6 +701,57 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"CLI search failed: {e}")
             raise
+
+    def _search_domain_hf(
+        self,
+        domain: str,
+        max_matches: int,
+        collection: Optional[str],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """Search via the HuggingFace-backed Common Crawl query fallback."""
+        if not self.hf_search:
+            return []
+
+        jurisdiction = str(kwargs.get("jurisdiction") or "state").strip().lower() or "state"
+        state_code = kwargs.get("state_code")
+        query = str(domain).strip()
+        if not query:
+            return []
+
+        if jurisdiction not in {"federal", "state", "municipal"}:
+            jurisdiction = "state"
+        jurisdiction, state_code = _normalize_cc_jurisdiction(query, jurisdiction, state_code)
+
+        try:
+            records = self.hf_search.search(
+                query=query,
+                jurisdiction=jurisdiction,
+                state_code=state_code,
+                max_results=int(max_matches),
+            )
+        except Exception as exc:
+            logger.error("HuggingFace Common Crawl fallback search failed: %s", exc)
+            return []
+
+        normalized: List[Dict[str, Any]] = []
+        lowered_domain = query.lower().removeprefix("https://").removeprefix("http://").strip("/")
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            candidate_url = str(
+                record.get("url")
+                or record.get("target_uri")
+                or record.get("source_url")
+                or record.get("link")
+                or ""
+            ).strip()
+            haystack = " ".join(str(record.get(k, "")) for k in ("url", "target_uri", "source_url", "domain", "host")).lower()
+            if lowered_domain and lowered_domain not in haystack and lowered_domain not in candidate_url.lower():
+                continue
+            normalized.append(dict(record))
+
+        return self._normalize_records(normalized[: int(max_matches)])
 
     @staticmethod
     def _normalize_records(records: Any) -> List[Dict[str, Any]]:
@@ -560,7 +894,7 @@ class CommonCrawlSearchEngine:
             if self.mode == "local":
                 year = kwargs.get("year")
                 refs = self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
+                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path()),
                     year=(str(year) if year else None),
                 )
                 return [str(r.collection) for r in refs if getattr(r, "collection", None)]
@@ -633,7 +967,7 @@ class CommonCrawlSearchEngine:
                     pass
 
                 for ref in self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb"))
+                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path())
                 ):
                     if str(getattr(ref, "collection", "")).strip() == collection_s:
                         return {

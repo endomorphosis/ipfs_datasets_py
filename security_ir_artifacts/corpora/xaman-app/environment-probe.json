@@ -1,0 +1,142 @@
+{
+  "artifact_cid": "sha256:281b0cee207a0db8ee29d712c0d72ba4f11d18d6908dff2524f1abc636028bc2",
+  "assumptions": {
+    "detox_e2e": {
+      "detox_config": true,
+      "e2e_directory": true,
+      "workflow": true
+    },
+    "native_android": {
+      "build_gradle": true,
+      "present": true,
+      "security_native_sources": 22
+    },
+    "native_ios": {
+      "podfile_lock": true,
+      "present": true,
+      "xctest_plan": true
+    },
+    "node_runtime": {
+      "executable": "/home/barberb/.local/bin/node",
+      "required_for": "React Native package and proof-consumer schema tooling",
+      "status": "present",
+      "version": "22.23.1"
+    },
+    "npm_runtime": {
+      "executable": "/home/barberb/.local/bin/npm",
+      "required_for": "package-lock based dependency resolution",
+      "status": "present",
+      "version": "10.9.8"
+    },
+    "react_native_config": {
+      "babel_config": true,
+      "metro_config": true,
+      "package_json": true,
+      "package_lock": true
+    },
+    "solver_paths": {
+      "apalache": {
+        "executable": "/home/barberb/.local/bin/apalache-mc",
+        "required": false,
+        "status": "present",
+        "version": "0.58.3"
+      },
+      "coq": {
+        "executable": "/home/barberb/.local/bin/coqc",
+        "required": false,
+        "status": "present",
+        "version": "9.1.1"
+      },
+      "cvc5": {
+        "executable": "/home/barberb/.local/bin/cvc5",
+        "required": true,
+        "status": "present",
+        "version": "1.3.2"
+      },
+      "lean": {
+        "executable": "/home/barberb/.elan/bin/lean",
+        "required": false,
+        "status": "present",
+        "version": "4.31.0"
+      },
+      "proverif": {
+        "executable": "/home/barberb/.local/bin/proverif",
+        "required": false,
+        "status": "error",
+        "version": "2.05"
+      },
+      "tamarin": {
+        "executable": "/home/barberb/.local/bin/tamarin-prover",
+        "required": false,
+        "status": "present",
+        "version": "1.12.0"
+      },
+      "z3": {
+        "executable": "/home/barberb/miniforge3/bin/z3",
+        "required": true,
+        "status": "present",
+        "version": "4.16.0"
+      }
+    },
+    "typescript_compiler": {
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "required_for": "TypeScript/TSX source parsing and proof-consumer schema checks",
+      "status": "present",
+      "version": "5.5.4"
+    },
+    "typescript_config": {
+      "tsconfig": true,
+      "tsconfig_jest": true
+    }
+  },
+  "blockers": [],
+  "corpus_manifest": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "dependency_lockfiles": [
+      "Gemfile.lock",
+      "ios/Podfile.lock",
+      "package-lock.json"
+    ],
+    "exists": true,
+    "file_count": 3444,
+    "license_files": [
+      "LICENSE"
+    ],
+    "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "repository_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "schema_version": "xaman-corpus-source-manifest/v1",
+    "security_disclosure_files": [
+      "RESPONSIBLE-DISCLOSURE.md",
+      "android/app/src/main/assets/security.txt",
+      "ios/security.txt"
+    ]
+  },
+  "generated_at_utc": "2026-07-19T06:41:48Z",
+  "overall_status": "ready",
+  "policy_document": "docs/security_verification/xaman_environment_assumptions.md",
+  "schema_version": "xaman-environment-probe/v1",
+  "security_decision": "XAMAN_ENVIRONMENT_PROBE_READY",
+  "solver_probe": {
+    "exists": true,
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+    "proof_acceptance_blocked": false
+  },
+  "summary": {
+    "blocker_count": 0,
+    "detox_e2e_present": true,
+    "file_count": 3444,
+    "lockfile_count": 3,
+    "native_android_present": true,
+    "native_ios_present": true,
+    "typescript_ready": true,
+    "warning_count": 1
+  },
+  "task_id": "PORTAL-CXTP-061",
+  "warnings": [
+    {
+      "code": "OPTIONAL_SOLVER_CAPABILITY_GAP",
+      "solver": "proverif"
+    }
+  ]
+}

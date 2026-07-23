@@ -1,0 +1,33 @@
+{
+  "schema_version": "xaman-vendor-evidence-review/v1",
+  "task_id": "PORTAL-CXTP-153",
+  "manifest_cid": "bafkreih2xqft37oso7apce6q6xpxynvtqtljky5ltragt2koim4qmtpt5e",
+  "reviewed_at_utc": "2026-07-19T00:00:00Z",
+  "expires_at_utc": "2026-07-25T00:00:00Z",
+  "decision": "needs_clarification",
+  "reviewer": {
+    "reviewer_id_sha256": "f9d7022d638ad1085bc91a6cdf644b021d4c23754c3258a212e8bb52ab47f0b3",
+    "independent_of_vendor_author": true,
+    "conflict_of_interest_declared": false
+  },
+  "scope": {
+    "vendor_release_equivalent": false,
+    "production_security_result": false,
+    "public_source_verifier_only": true
+  },
+  "category_reviews": [
+    {
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "category_ids": [
+        "backend_payload_semantics"
+      ]
+    },
+    {
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "category_ids": [
+        "native_vault_biometric_policy",
+        "test_device_trace_review"
+      ]
+    }
+  ]
+}

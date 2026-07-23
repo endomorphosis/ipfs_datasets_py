@@ -1,0 +1,37 @@
+{
+  "artifact_cid": "bafkreif5txnucqp7ujcolv4lbxr76bvytnoatuaq4ku3i5bxougjswu22e",
+  "fuzz_domain": "solver_result_tampering",
+  "legacy_task_id": "PORTAL-CXTP-138",
+  "minimal_counterexample": {
+    "fuzz_domain": "solver_result_tampering",
+    "mutation_keys": [
+      "ledger_finality_or_broadcast_proof_forged"
+    ],
+    "payload_sha256": "a79fc0de46b101facf2879961569568b1b9810d98aa89dadc8a870d6e1c7abba",
+    "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+  },
+  "minimization": {
+    "algorithm": "deterministic-one-domain-delta-minimizer/v1",
+    "fuzz_domain": "solver_result_tampering",
+    "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
+    "minimized_payload_sha256": "a79fc0de46b101facf2879961569568b1b9810d98aa89dadc8a870d6e1c7abba",
+    "raw_sensitive_material_recorded": false,
+    "removed_mutation_keys": [],
+    "retained_mutation_keys": [
+      "ledger_finality_or_broadcast_proof_forged"
+    ],
+    "status": "minimal"
+  },
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-forged-broadcast-finality",
+  "payload_sha256": "a79fc0de46b101facf2879961569568b1b9810d98aa89dadc8a870d6e1c7abba",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+  "task_id": "PORTAL-CXTP-148",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+  ]
+}

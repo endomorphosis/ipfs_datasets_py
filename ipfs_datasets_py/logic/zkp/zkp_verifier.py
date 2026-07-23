@@ -15,6 +15,7 @@ import warnings
 
 from . import ZKPProof, ZKPError
 from .backends import get_backend
+from .circuits import attestation_view_matches_proof
 from .statement import parse_circuit_ref_lenient
 
 logger = logging.getLogger(__name__)
@@ -138,6 +139,13 @@ class ZKPVerifier:
 
             if not self._validate_public_inputs(proof.public_inputs):
                 return False
+
+            if self._has_attestation_claim(proof) and not attestation_view_matches_proof(
+                proof_data=proof.proof_data,
+                public_inputs=proof.public_inputs,
+                metadata=proof.metadata,
+            ):
+                return False
             
             # Check proof size bounds.
             # Simulated backend proofs are ~160 bytes; real Groth16 proofs may be larger.
@@ -163,6 +171,21 @@ class ZKPVerifier:
             # Proof object doesn't have expected attributes or structure
             logger.warning(f"Invalid proof structure during validation: {e}")
             return False
+
+    @staticmethod
+    def _has_attestation_claim(proof: ZKPProof) -> bool:
+        public_inputs = getattr(proof, "public_inputs", None)
+        metadata = getattr(proof, "metadata", None)
+        return (
+            isinstance(public_inputs, dict)
+            and (
+                "attestation_ref" in public_inputs
+                or "attestation_view_version" in public_inputs
+            )
+        ) or (
+            isinstance(metadata, dict)
+            and isinstance(metadata.get("attestation_view"), dict)
+        )
 
     @staticmethod
     def _is_hex_32_bytes(value: object) -> bool:

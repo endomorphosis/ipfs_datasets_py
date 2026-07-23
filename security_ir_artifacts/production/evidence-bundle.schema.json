@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "bundle_id": {
+      "type": "string"
+    },
+    "environment_evidence": {
+      "items": {
+        "$ref": "#/$defs/environmentEvidenceItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "freshness_policy": {
+      "$ref": "#/$defs/freshnessPolicy"
+    },
+    "generated_at_utc": {
+      "type": "string"
+    },
+    "owner_signoff": {
+      "items": {
+        "$ref": "#/$defs/ownerSignoffItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "runtime_traces": {
+      "items": {
+        "$ref": "#/$defs/runtimeTraceItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "production-evidence-bundle/v1"
+    },
+    "solver_reports": {
+      "items": {
+        "$ref": "#/$defs/solverReportItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "source_snapshots": {
+      "items": {
+        "$ref": "#/$defs/sourceSnapshotItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "task_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "bundle_id",
+    "generated_at_utc",
+    "freshness_policy",
+    "source_snapshots",
+    "environment_evidence",
+    "runtime_traces",
+    "owner_signoff",
+    "solver_reports"
+  ],
+  "title": "Production Evidence Bundle",
+  "type": "object",
+  "$defs": {
+    "evidencePathFields": {
+      "properties": {
+        "collected_at_utc": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "review_status": {
+          "$ref": "#/$defs/reviewStatus"
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "collected_at_utc",
+        "owner",
+        "review_status"
+      ],
+      "type": "object"
+    },
+    "environmentEvidenceItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
+          "properties": {
+            "environment": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "environment"
+          ]
+        }
+      ]
+    },
+    "freshnessPolicy": {
+      "properties": {
+        "evaluated_at_utc": {
+          "type": "string"
+        },
+        "max_age_days": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_age_days"
+      ],
+      "type": "object"
+    },
+    "ownerSignoffItem": {
+      "properties": {
+        "decision": {
+          "enum": [
+            "approved",
+            "pending",
+            "rejected"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "signed_at_utc": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scope",
+        "owner",
+        "role",
+        "decision",
+        "signed_at_utc",
+        "statement"
+      ],
+      "type": "object"
+    },
+    "reviewStatus": {
+      "enum": [
+        "heuristic",
+        "machine_extracted",
+        "human_reviewed",
+        "trusted_fixture"
+      ],
+      "type": "string"
+    },
+    "runtimeTraceItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
+          "properties": {
+            "stream": {
+              "type": "string"
+            },
+            "window_end_utc": {
+              "type": "string"
+            },
+            "window_start_utc": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "stream",
+            "window_start_utc",
+            "window_end_utc"
+          ]
+        }
+      ]
+    },
+    "securityDecisionOutcome": {
+      "enum": [
+        "prove",
+        "disprove",
+        "unknown",
+        "not-modeled",
+        "stale-evidence",
+        "missing-solver",
+        "blocked-production"
+      ],
+      "type": "string"
+    },
+    "solverReportItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
+          "properties": {
+            "claim_id": {
+              "type": "string"
+            },
+            "outcome": {
+              "$ref": "#/$defs/securityDecisionOutcome"
+            },
+            "solver": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "claim_id",
+            "solver",
+            "outcome"
+          ]
+        }
+      ]
+    },
+    "sourceSnapshotItem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/evidencePathFields"
+        },
+        {
+          "properties": {
+            "commit": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "commit"
+          ]
+        }
+      ]
+    }
+  }
+}

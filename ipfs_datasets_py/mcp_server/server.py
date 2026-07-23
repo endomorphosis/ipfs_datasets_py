@@ -1035,8 +1035,7 @@ class IPFSDatasetsMCPServer:
                     logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 
     async def start(self, host: str = "0.0.0.0", port: int = 8000) -> None:
-        """
-        Start the MCP server in HTTP mode (legacy).
+        """Start the MCP server in HTTP mode using Hypercorn with Trio.
 
         Args:
             host: Host to bind the server to
@@ -1060,11 +1059,33 @@ class IPFSDatasetsMCPServer:
             except Exception as e:
                 logger.warning(f"Failed to start P2P service: {e}")
 
-        # Start the server - FastMCP doesn't support host/port parameters, use stdio mode
-        logger.warning("HTTP mode not supported by current FastMCP version, falling back to stdio mode")
+        # Start HTTP server using Hypercorn + Trio (preferred) or fallback to stdio
         try:
-            await self.mcp.run_stdio_async()
-            logger.info("MCP server started in stdio mode")
+            from hypercorn.trio import serve as hypercorn_serve
+            from hypercorn.config import Config as HypercornConfig
+            from .fastapi_service import app as fastapi_app
+
+            hconfig = HypercornConfig()
+            hconfig.bind = [f"{host}:{port}"]
+            hconfig.worker_class = "trio"
+
+            logger.info(f"Starting MCP HTTP server via Hypercorn+Trio at {host}:{port}")
+            await hypercorn_serve(fastapi_app, hconfig)
+
+        except ImportError as ie:
+            logger.warning(f"Hypercorn not available ({ie}), trying uvicorn fallback")
+            try:
+                import uvicorn
+                from .fastapi_service import app as fastapi_app
+
+                config = uvicorn.Config(fastapi_app, host=host, port=port)
+                server = uvicorn.Server(config)
+                logger.info(f"Starting MCP HTTP server via uvicorn at {host}:{port}")
+                await server.serve()
+            except ImportError:
+                logger.warning("Neither Hypercorn nor uvicorn available, falling back to stdio mode")
+                await self.mcp.run_stdio_async()
+
         except ServerStartupError as e:
             logger.error(f"Server startup failed: {e}")
             raise
@@ -1081,11 +1102,11 @@ class IPFSDatasetsMCPServer:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
             # Phase G: persist delegation state on clean exit
             if getattr(self, "_server_delegation_manager", None) is not None:
-                try:
-                    self._server_delegation_manager.save()
-                    logger.info("DelegationManager state persisted on shutdown (start)")
-                except Exception as _exc:
-                    logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
+               try:
+                   self._server_delegation_manager.save()
+                   logger.info("DelegationManager state persisted on shutdown (start)")
+               except Exception as _exc:
+                   logger.warning("DelegationManager.save() failed on shutdown: %s", _exc)
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None) -> None:
@@ -1139,7 +1160,7 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
     # Start server
     try:
         logger.info(f"Starting server at {host}:{port}")
-        anyio.run(server.start, host, port)
+        anyio.run(server.start, host, port, backend="trio")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except ServerStartupError as e:
@@ -1203,7 +1224,7 @@ def main() -> None:
         # Create server with custom configuration
         server = IPFSDatasetsMCPServer(custom_configs)
         try:
-            anyio.run(server.start, host, port)
+            anyio.run(server.start, host, port, backend="trio")
         except KeyboardInterrupt:
             logger.info("Server stopped by user")
         except ServerStartupError as e:

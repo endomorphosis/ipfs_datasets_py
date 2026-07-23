@@ -1,4 +1,14 @@
-"""Logic optimizer public API exports."""
+"""Legacy compatibility facade for logic optimizer exports.
+
+New code should prefer canonical import paths:
+
+- ``ipfs_datasets_py.logic.flogic_optimizer`` for the F-logic semantic optimizer
+- ``ipfs_datasets_py.optimizers.logic_theorem_optimizer`` for theorem/logic
+  optimization workflows
+
+This module remains importable for backward compatibility while older
+``ipfs_datasets_py.optimizers.logic`` imports are drained from the codebase.
+"""
 
 from .exceptions import (
     LogicError,
@@ -22,6 +32,42 @@ __all__ = [
     "FLogicOptimizerConfig",
     "FLogicOptimizerResult",
     "OntologyViolation",
+    "AdaptiveModalAutoencoder",
+    "AutoencoderFeatureContribution",
+    "AutoencoderIntrospection",
+    "DecodedModalPhrase",
+    "DecodedModalText",
+    "DeterministicModalCompiler",
+    "DeterministicModalLogicCodec",
+    "ModalCompilationAmbiguity",
+    "ModalCompilationResult",
+    "ModalCompilerConfig",
+    "ModalAutoencoderTrainingState",
+    "ModalLogicCodecConfig",
+    "ModalLogicCodecResult",
+    "ModalProgramSynthesisHint",
+    "ModalOptimizerPolicy",
+    "ModalProgramSynthesisTodoGenerator",
+    "ModalTodoSupervisor",
+    "build_uscode_modal_daemon_arg_parser",
+    "decode_modal_ir_document",
+    "decode_modal_ir_text",
+    "decoded_modal_phrase_slot_text_map",
+    "flogic_ontology_to_dict",
+    "flogic_triples_to_graph_data",
+    "flogic_triples_to_ontology",
+    "import_graph_data_to_graph_engine",
+    "import_modal_ir_to_graph_engine",
+    "modal_formula_to_text",
+    "modal_text_token_similarity",
+    "modal_ir_to_flogic_triples",
+    "modal_ir_to_neo4j_graph_data",
+    "run_guarded_uscode_modal_daemon",
+    "sample_train_validation_rows",
+    "synthesis_hints_from_autoencoder_introspection",
+    "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
+    "target_family_for_modal_ir",
 ]
 
 _FLOGIC_EXPORTS = {
@@ -31,10 +77,49 @@ _FLOGIC_EXPORTS = {
     "OntologyViolation",
 }
 
+_MODAL_DAEMON_EXPORTS = {
+    "AdaptiveModalAutoencoder",
+    "AutoencoderFeatureContribution",
+    "AutoencoderIntrospection",
+    "DecodedModalPhrase",
+    "DecodedModalText",
+    "DeterministicModalCompiler",
+    "DeterministicModalLogicCodec",
+    "ModalCompilationAmbiguity",
+    "ModalCompilationResult",
+    "ModalCompilerConfig",
+    "ModalAutoencoderTrainingState",
+    "ModalLogicCodecConfig",
+    "ModalLogicCodecResult",
+    "ModalProgramSynthesisHint",
+    "ModalOptimizerPolicy",
+    "ModalProgramSynthesisTodoGenerator",
+    "ModalTodoSupervisor",
+    "build_uscode_modal_daemon_arg_parser",
+    "decode_modal_ir_document",
+    "decode_modal_ir_text",
+    "decoded_modal_phrase_slot_text_map",
+    "flogic_ontology_to_dict",
+    "flogic_triples_to_graph_data",
+    "flogic_triples_to_ontology",
+    "import_graph_data_to_graph_engine",
+    "import_modal_ir_to_graph_engine",
+    "modal_formula_to_text",
+    "modal_text_token_similarity",
+    "modal_ir_to_flogic_triples",
+    "modal_ir_to_neo4j_graph_data",
+    "run_guarded_uscode_modal_daemon",
+    "sample_train_validation_rows",
+    "synthesis_hints_from_autoencoder_introspection",
+    "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
+    "target_family_for_modal_ir",
+}
+
 
 def __getattr__(name: str):
     if name in _FLOGIC_EXPORTS:
-        from .flogic_optimizer import (  # noqa: PLC0415
+        from ipfs_datasets_py.logic.flogic_optimizer import (  # noqa: PLC0415
             FLogicSemanticOptimizer,
             FLogicOptimizerConfig,
             FLogicOptimizerResult,
@@ -45,6 +130,89 @@ def __getattr__(name: str):
             "FLogicOptimizerConfig": FLogicOptimizerConfig,
             "FLogicOptimizerResult": FLogicOptimizerResult,
             "OntologyViolation": OntologyViolation,
+        }
+        value = _locals[name]
+        globals()[name] = value
+        return value
+    if name in _MODAL_DAEMON_EXPORTS:
+        from ipfs_datasets_py.logic.modal import (  # noqa: PLC0415
+            DecodedModalPhrase,
+            DecodedModalText,
+            DeterministicModalCompiler,
+            DeterministicModalLogicCodec,
+            ModalCompilationAmbiguity,
+            ModalCompilationResult,
+            ModalCompilerConfig,
+            ModalLogicCodecConfig,
+            ModalLogicCodecResult,
+            ModalProgramSynthesisHint,
+            decode_modal_ir_document,
+            decode_modal_ir_text,
+            decoded_modal_phrase_slot_text_map,
+            flogic_ontology_to_dict,
+            flogic_triples_to_graph_data,
+            flogic_triples_to_ontology,
+            import_graph_data_to_graph_engine,
+            import_modal_ir_to_graph_engine,
+            modal_formula_to_text,
+            modal_text_token_similarity,
+            modal_ir_to_flogic_triples,
+            modal_ir_to_neo4j_graph_data,
+            synthesis_hints_from_autoencoder_introspection,
+            synthesis_hints_from_autoencoder_introspections,
+            target_family_distribution_for_modal_ir,
+            target_family_for_modal_ir,
+        )
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (  # noqa: PLC0415
+            AdaptiveModalAutoencoder,
+            AutoencoderFeatureContribution,
+            AutoencoderIntrospection,
+            ModalAutoencoderTrainingState,
+            ModalOptimizerPolicy,
+            ModalProgramSynthesisTodoGenerator,
+            ModalTodoSupervisor,
+            build_uscode_modal_daemon_arg_parser,
+            run_guarded_uscode_modal_daemon,
+            sample_train_validation_rows,
+        )
+
+        _locals = {
+            "AdaptiveModalAutoencoder": AdaptiveModalAutoencoder,
+            "AutoencoderFeatureContribution": AutoencoderFeatureContribution,
+            "AutoencoderIntrospection": AutoencoderIntrospection,
+            "DecodedModalPhrase": DecodedModalPhrase,
+            "DecodedModalText": DecodedModalText,
+            "DeterministicModalCompiler": DeterministicModalCompiler,
+            "DeterministicModalLogicCodec": DeterministicModalLogicCodec,
+            "ModalCompilationAmbiguity": ModalCompilationAmbiguity,
+            "ModalCompilationResult": ModalCompilationResult,
+            "ModalCompilerConfig": ModalCompilerConfig,
+            "ModalAutoencoderTrainingState": ModalAutoencoderTrainingState,
+            "ModalLogicCodecConfig": ModalLogicCodecConfig,
+            "ModalLogicCodecResult": ModalLogicCodecResult,
+            "ModalProgramSynthesisHint": ModalProgramSynthesisHint,
+            "ModalOptimizerPolicy": ModalOptimizerPolicy,
+            "ModalProgramSynthesisTodoGenerator": ModalProgramSynthesisTodoGenerator,
+            "ModalTodoSupervisor": ModalTodoSupervisor,
+            "build_uscode_modal_daemon_arg_parser": build_uscode_modal_daemon_arg_parser,
+            "decode_modal_ir_document": decode_modal_ir_document,
+            "decode_modal_ir_text": decode_modal_ir_text,
+            "decoded_modal_phrase_slot_text_map": decoded_modal_phrase_slot_text_map,
+            "flogic_ontology_to_dict": flogic_ontology_to_dict,
+            "flogic_triples_to_graph_data": flogic_triples_to_graph_data,
+            "flogic_triples_to_ontology": flogic_triples_to_ontology,
+            "import_graph_data_to_graph_engine": import_graph_data_to_graph_engine,
+            "import_modal_ir_to_graph_engine": import_modal_ir_to_graph_engine,
+            "modal_formula_to_text": modal_formula_to_text,
+            "modal_text_token_similarity": modal_text_token_similarity,
+            "modal_ir_to_flogic_triples": modal_ir_to_flogic_triples,
+            "modal_ir_to_neo4j_graph_data": modal_ir_to_neo4j_graph_data,
+            "run_guarded_uscode_modal_daemon": run_guarded_uscode_modal_daemon,
+            "sample_train_validation_rows": sample_train_validation_rows,
+            "synthesis_hints_from_autoencoder_introspection": synthesis_hints_from_autoencoder_introspection,
+            "synthesis_hints_from_autoencoder_introspections": synthesis_hints_from_autoencoder_introspections,
+            "target_family_distribution_for_modal_ir": target_family_distribution_for_modal_ir,
+            "target_family_for_modal_ir": target_family_for_modal_ir,
         }
         value = _locals[name]
         globals()[name] = value

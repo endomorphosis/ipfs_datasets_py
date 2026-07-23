@@ -499,7 +499,7 @@ class FormulaAnalyzer:
                 vars_set.add(formula.variable.name)
                 self._collect_variables(formula.formula, vars_set)
             elif isinstance(formula, Predicate):
-                for arg in formula.args:
+                for arg in getattr(formula, "arguments", getattr(formula, "args", ())) or ():
                     if isinstance(arg, Variable):
                         vars_set.add(arg.name)
             elif hasattr(formula, 'left') and hasattr(formula, 'right'):

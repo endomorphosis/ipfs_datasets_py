@@ -494,8 +494,8 @@ jobs:
           echo "⏱️  Rate limiting: Waiting 2 seconds before API calls..."
           sleep 2
           
-          # Monitor by checking for active Copilot workflow runs
-          # NOTE: gh agent-task does NOT exist - using workflow monitoring instead
+          # Monitor by checking for active Copilot workflow runs.
+          # This repo uses workflow monitoring here instead of assuming the runner exposes gh agent-task.
           # See COPILOT_INVOCATION_GUIDE.md for details
           echo "📊 Checking Copilot workflow runs..."
           if gh run list --workflow "Copilot coding agent" --limit 20 --json status,displayTitle,createdAt 2>/dev/null; then

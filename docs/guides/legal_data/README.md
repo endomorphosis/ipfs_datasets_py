@@ -14,6 +14,7 @@ Included documents:
 - `HYBRID_LEGAL_REASONING_TODO.md`
 - `HYBRID_LEGAL_REASONING_EXECUTION_PLAYBOOK.md`
 - `HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md`
+- `DOCKET_SOURCE_TEMPLATE_GUIDE.md` (public parser-template references plus the currently supported PACER HTML, wrapped JSON, and Tyler portal-shape docket inputs)
 
 Templates:
 - `templates/reasoner_query_testset_template.json`
@@ -23,3 +24,8 @@ Templates:
 WS11 automation:
 - `scripts/ops/legal_data/create_ws11_github_issues.py`
 - `scripts/ops/legal_data/create_ws11_github_issues.sh`
+
+Workspace dataset bundles:
+- `scripts/ops/legal_data/README.md` includes the workspace dataset bundle export and packaging workflows.
+- `ipfs_datasets_py/docs/guides/CLI_TOOL_MERGE.md` documents `ipfs-datasets workspace` CLI usage for exports and packaged bundles.
+- `WORKSPACE_DATASET_BUNDLES.md` describes the workspace dataset bundle lifecycle end-to-end.

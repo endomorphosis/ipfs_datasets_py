@@ -1,0 +1,119 @@
+{
+  "artifact_cid": "bafkreih2xqft37oso7apce6q6xpxynvtqtljky5ltragt2koim4qmtpt5e",
+  "category_evidence": [
+    {
+      "category_id": "backend_payload_semantics",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "native_vault_biometric_policy",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "release_provenance",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "responsible_disclosure_routing",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "signed_build_attestation",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "test_device_trace_review",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    },
+    {
+      "category_id": "xrpl_rpc_trust_assumptions",
+      "evidence_received": false,
+      "evidence_references": [],
+      "owner_signoff": {
+        "authorized_channel": "pending_vendor_authorization",
+        "owner_name": "pending_vendor_owner",
+        "owner_role": "vendor release evidence owner",
+        "signed_at_utc": "2026-07-19T00:00:00Z"
+      },
+      "redaction_review_passed": false,
+      "status": "pending_submission"
+    }
+  ],
+  "claim_bindings": [
+    {
+      "category_ids": [
+        "backend_payload_semantics",
+        "test_device_trace_review"
+      ],
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved"
+    },
+    {
+      "category_ids": [
+        "test_device_trace_review",
+        "native_vault_biometric_policy"
+      ],
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces"
+    }
+  ],
+  "corpus": "xaman-app",
+  "expires_at_utc": "2026-08-10T00:00:00Z",
+  "generated_at_utc": "2026-07-19T00:00:00Z",
+  "intake_template_path": "security_ir_artifacts/corpora/xaman-app/vendor-evidence-intake-template.json",
+  "manifest_status": "WAITING_FOR_REVIEW",
+  "schema_version": "xaman-vendor-evidence-manifest/v1",
+  "task_id": "PORTAL-CXTP-153"
+}

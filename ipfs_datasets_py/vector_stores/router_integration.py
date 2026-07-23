@@ -7,6 +7,7 @@ and ipfs_backend_router for automatic embedding generation and IPFS storage.
 import logging
 from typing import List, Dict, Any, Optional, Union
 import anyio
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -97,19 +98,31 @@ class RouterIntegration:
             texts = [texts]
         
         try:
-            # Use the generate_embeddings function from embeddings_router
+            # Preferred compatibility path for current embeddings_router API.
+            if hasattr(embeddings_module, 'embed_texts'):
+                results = await anyio.to_thread.run_sync(
+                    partial(
+                        embeddings_module.embed_texts,
+                        texts,
+                        provider=self.embeddings_provider or kwargs.pop('provider', None),
+                        model_name=model,
+                        **kwargs,
+                    )
+                )
+                return results
+            # Older router API.
             if hasattr(embeddings_module, 'generate_embeddings'):
                 results = await anyio.to_thread.run_sync(
-                    embeddings_module.generate_embeddings,
-                    texts,
-                    provider=self.embeddings_provider or kwargs.pop('provider', None),
-                    model=model,
-                    **kwargs
+                    partial(
+                        embeddings_module.generate_embeddings,
+                        texts,
+                        provider=self.embeddings_provider or kwargs.pop('provider', None),
+                        model=model,
+                        **kwargs,
+                    )
                 )
                 return results
             else:
-                # Fallback to simpler interface if available
-                logger.warning("generate_embeddings not found, attempting fallback")
                 raise RuntimeError("Embeddings generation interface not available")
                 
         except Exception as e:

@@ -1,0 +1,8046 @@
+"""Regression tests for positional citation/source-id decompiler slots."""
+
+from ipfs_datasets_py.logic.modal.codec import modal_ir_to_flogic_triples
+from ipfs_datasets_py.logic.modal.decompiler import (
+    decode_modal_ir_document,
+    decoded_modal_phrase_slot_text_map,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+    ModalIRDocument,
+    ModalIRFrameLogic,
+    ModalIRFormula,
+    ModalIROperator,
+    ModalIRPredicate,
+    ModalIRProvenance,
+)
+
+
+def _sample_document() -> ModalIRDocument:
+    source_id = "us-code-21-360bbb-0-98e14cf1a6e12d46"
+    formula = ModalIRFormula(
+        formula_id="f-1",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_drug_approval"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="21 U.S.C. 360bbb-0",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="21 U.S.C. 360bbb-0 temporary approval applies.",
+        formulas=[formula],
+    )
+
+
+def _provenance_alignment_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-20-1131d-2a8fb06a45e3babe"
+    formula = ModalIRFormula(
+        formula_id="f-alignment-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_education_program_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="20 U.S.C. 1131e",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="20 U.S.C. 1131d compliance requirement.",
+        formulas=[formula],
+    )
+
+
+def _provenance_alignment_trailing_punct_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-10318.-fce306c016fdd990"
+    formula = ModalIRFormula(
+        formula_id="f-alignment-trailing-punct-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_maritime_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="46 U.S.C. 10318",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="46 U.S.C. 10318 maritime notice requirement.",
+        formulas=[formula],
+    )
+
+
+def _range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-45-228a to 228c-0123456789abcdef"
+    formula = ModalIRFormula(
+        formula_id="f-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_child_support_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=22,
+            citation="45 U.S.C. 228a to 228c",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="45 U.S.C. 228a to 228c child support enforcement.",
+        formulas=[formula],
+    )
+
+
+def _numeric_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-1381 to 1398.-83310e751ed0d7a2"
+    formula = ModalIRFormula(
+        formula_id="f-numeric-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_homeland_security_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=24,
+            citation="50 U.S.C. 1381 to 1398.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="50 U.S.C. 1381 to 1398. Homeland security records are retained.",
+        formulas=[formula],
+    )
+
+
+def _range_connector_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-4605 to 4610.-d52505ec5c91561e"
+    formula = ModalIRFormula(
+        formula_id="f-range-connector-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_emergency_preparedness_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=27,
+            citation="50 U.S.C. 4605 through 4610.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "50 U.S.C. 4605 through 4610. Emergency preparedness records are retained."
+        ),
+        formulas=[formula],
+    )
+
+
+def _long_alpha_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-616tttt to 616yyyy.-1e019a04fbdab0cb"
+    formula = ModalIRFormula(
+        formula_id="f-long-alpha-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_land_management_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=29,
+            citation="43 U.S.C. 616tttt to 616yyyy.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "43 U.S.C. 616tttt to 616yyyy. Land management records are retained."
+        ),
+        formulas=[formula],
+    )
+
+
+def _section_marker_sample_document() -> ModalIRDocument:
+    source_id = "us-code-2-190l-01dd1648c5b1588c"
+    formula = ModalIRFormula(
+        formula_id="f-section-marker",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_library_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="2 U.S.C. §190l",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="2 U.S.C. 190l preservation requirement.",
+        formulas=[formula],
+    )
+
+
+def _plural_section_marker_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-45-228a to 228c-0123456789abcdef"
+    formula = ModalIRFormula(
+        formula_id="f-plural-section-marker-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_child_support_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=24,
+            citation="45 U.S.C. §§ 228a to 228c.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="45 U.S.C. 228a to 228c child support enforcement.",
+        formulas=[formula],
+    )
+
+
+def _single_component_sample_document() -> ModalIRDocument:
+    source_id = "us-code-2-190l-01dd1648c5b1588c"
+    formula = ModalIRFormula(
+        formula_id="f-single",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_library_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="2 U.S.C. 190l",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="2 U.S.C. 190l preservation requirement.",
+        formulas=[formula],
+    )
+
+
+def _trailing_punct_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-60101.-6bea2346c1c5229c"
+    formula = ModalIRFormula(
+        formula_id="f-trailing-punct",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="board_arriving_vessels_before_inspection"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=29,
+            citation="46 U.S.C. 60101.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="46 U.S.C. 60101. Boarding arriving vessels before inspection.",
+        formulas=[formula],
+    )
+
+
+def _dot_delimited_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1396.1-8fb22f17ff2a43cd"
+    formula = ModalIRFormula(
+        formula_id="f-dot-delimited",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_healthcare_rule_update"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 1396.1",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="42 U.S.C. 1396.1 publication rule update applies.",
+        formulas=[formula],
+    )
+
+
+def _roman_suffix_hyphen_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-460iii-4-aa834016adcc86bf"
+    formula = ModalIRFormula(
+        formula_id="f-roman-suffix",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_national_park_access"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=23,
+            citation="16 U.S.C. 460iii-4",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="16 U.S.C. 460iii-4 national park access requirement.",
+        formulas=[formula],
+    )
+
+
+def _compound_alpha_suffix_hyphen_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-460eee-2-151f071e709ab648"
+    formula = ModalIRFormula(
+        formula_id="f-compound-alpha-suffix",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_federal_land_withdrawal_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=23,
+            citation="16 U.S.C. 460eee-2",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="16 U.S.C. 460eee-2 federal land withdrawal notice requirement.",
+        formulas=[formula],
+    )
+
+
+def _noncanonical_romanlike_suffix_sample_document() -> ModalIRDocument:
+    source_id = "us-code-21-360ll-11684335ce2f2caa"
+    formula = ModalIRFormula(
+        formula_id="f-noncanonical-romanlike",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_drug_device_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="21 U.S.C. 360ll",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="21 U.S.C. 360ll recordkeeping requirement.",
+        formulas=[formula],
+    )
+
+
+def _repeat_roman_token_suffix_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-3797cc-445d9bb6c7d68792"
+    formula = ModalIRFormula(
+        formula_id="f-repeat-roman-token",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_federal_program_reporting"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 3797cc",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="42 U.S.C. 3797cc reporting requirements apply.",
+        formulas=[formula],
+    )
+
+
+def _zero_formula_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-3091.-8130665c952dd22a"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="This section is transferred.",
+        formulas=[],
+        metadata={
+            "citation": "50 U.S.C. 3091.",
+        },
+    )
+
+
+def _zero_formula_source_id_only_sample_document() -> ModalIRDocument:
+    source_id = "us-code-22-7636-27b6423bb5340be0"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="State Department reporting requirement.",
+        formulas=[],
+    )
+
+
+def _formula_missing_citation_sample_document() -> ModalIRDocument:
+    source_id = "us-code-18-1719-6841cc7ab2076858"
+    formula = ModalIRFormula(
+        formula_id="f-missing-citation",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_mailing_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation=None,
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="18 U.S.C. 1719 mailing records requirement.",
+        formulas=[formula],
+    )
+
+
+def _coarse_heading_tail_sample_document() -> ModalIRDocument:
+    source_id = "us-code-20-741-d9743e9c6ae8213e"
+    formula = ModalIRFormula(
+        formula_id="f-coarse-heading-tail",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=8,
+            citation="20 U.S.C. 741",
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_coarse_v1"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="Sec. 741. Student aid program improvements.",
+        formulas=[formula],
+    )
+
+
+def _procedural_keyword_fallback_sample_document() -> ModalIRDocument:
+    source_id = "us-code-10-1095c-95cb9940fa4690f6"
+    formula = ModalIRFormula(
+        formula_id="f-procedural-keyword",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_procedural_clause_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=82,
+            citation="10 U.S.C. 1095c",
+        ),
+        metadata={
+            "cue": "__uscode_procedural_clause_fallback__",
+            "fallback_rule": "uscode_procedural_clause_v1",
+            "procedural_keyword": "review",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "Administrative review procedures are established for health care "
+            "collection actions."
+        ),
+        formulas=[formula],
+    )
+
+
+def _status_heading_section_label_sample_document() -> ModalIRDocument:
+    source_id = "us-code-48-49.-93d3b52bb4a91e5f"
+    normalized_text = "Section, transferred."
+    formula = ModalIRFormula(
+        formula_id="f-status-heading-section-label",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_transferred_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="48 U.S.C. 49.",
+        ),
+        metadata={
+            "cue": "__uscode_transferred_heading_fallback__",
+            "fallback_rule": "uscode_transferred_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _low_information_fallback_surface_sample_document() -> ModalIRDocument:
+    source_id = "us-code-19-134-644ca84f03e20dcc"
+    normalized_text = "Sec. Repealed."
+    formula = ModalIRFormula(
+        formula_id="f-low-information-fallback-surface",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_repealed_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=4,
+            citation="19 U.S.C. 134",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _omitted_codification_status_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1491-to-1497-b5119192b68c51b6"
+    normalized_text = (
+        "§§1491 to 1497. Omitted Editorial Notes Codification Sections were "
+        "omitted pursuant to section 5316 of this title which terminated the "
+        "authority to make grants or loans under this chapter after Jan. 1, 1975."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-omitted-codification-status-clause",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_omitted_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 1491 to 1497.",
+        ),
+        metadata={
+            "cue": "__uscode_editorial_status_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+            "status_keyword": "omitted",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _repealed_public_law_status_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1411d.-7fb0bfc1d76721e5"
+    normalized_text = (
+        "§1411d. Repealed. Pub. L. 93-383, title II, §204, Aug. 22, "
+        "1974, 88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title "
+        "VIII, §815, 68 Stat. 647, required submission of specifications "
+        "by applicants prior to award of any contract for construction."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-repealed-public-law-status-clause",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_repealed_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="42 U.S.C. 1411d.",
+        ),
+        metadata={
+            "cue": "__uscode_editorial_status_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+            "status_keyword": "repealed",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _single_letter_low_information_fallback_surface_sample_document() -> ModalIRDocument:
+    source_id = "us-code-19-134-9f14e2dcbf0f4b1a"
+    normalized_text = "S. Repealed."
+    formula = ModalIRFormula(
+        formula_id="f-single-letter-low-information-fallback-surface",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_repealed_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=2,
+            citation="19 U.S.C. 134",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_editorial_status_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _compilation_preamble_fallback_surface_sample_document() -> ModalIRDocument:
+    source_id = "us-code-25-1300h-3-259e36c7e802ffdb"
+    normalized_text = (
+        "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+        "Title 25 - INDIANS Sec. 1300h-3. Administrative notice and hearing. "
+        "From the U.S. Government Publishing Office, www.gpo.gov"
+    )
+    formula = ModalIRFormula(
+        formula_id="f-compilation-preamble-fallback-surface",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="25 U.S.C. 1300h-3",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _fallback_surface_contextual_modal_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-6-314-0123abcd4567ef89"
+    normalized_text = (
+        "Sec. 314 - Subject to annual review, effective date requirements apply."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-fallback-surface-contextual-modal-cues",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="6 U.S.C. 314",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _frame_fallback_refined_cross_family_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-32916-fallback-aa11bb22cc33dd44"
+    normalized_text = (
+        "Sec. 32916. Reports shall be submitted not later than January 15."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-fallback-refined-cross-family-cues",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="49 U.S.C. 32916",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _temporal_fallback_surface_context_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-5108-context-bridge-1afec22bc1119aa0"
+    normalized_text = (
+        "Sec. 5108. Authorization of appropriations. The Secretary shall allocate "
+        "funds not later than fiscal year 2027."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-temporal-fallback-surface-context-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="16 U.S.C. 5108",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _frame_fallback_structural_chapter_temporal_sample_document() -> ModalIRDocument:
+    source_id = "us-code-22-286e-5a-fallback-778899aabbccddee"
+    normalized_text = (
+        "Sec. 286e-5a. Chapter 7 fiscal year 2024 coordination requirements."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-fallback-structural-chapter-temporal",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="22 U.S.C. 286e-5a",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _non_frame_structural_title_noise_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-32916-title-noise-1122334455667788"
+    normalized_text = "Not later than January 15, title updates are published."
+    formula = ModalIRFormula(
+        formula_id="f-non-frame-structural-title-noise",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="X",
+            label="next",
+        ),
+        predicate=ModalIRPredicate(
+            name="publish_reports",
+            arguments=["title"],
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="49 U.S.C. 32916",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _temporal_year_context_refined_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-15-3112-temporal-year-bridge-5091a94d3679ed3b"
+    normalized_text = "Coverage remains in effect from 1978 through 1992 revisions."
+    formula = ModalIRFormula(
+        formula_id="f-temporal-year-context-refined-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="coverage_effect_window"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="15 U.S.C. 3112",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _typed_clause_scope_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-6409-502d7cea35400f08"
+    normalized_text = (
+        "Provided that the applicant submits annual reports, assistance is "
+        "available, except as otherwise provided in subsection (b)."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-typed-clause-scope",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_assistance"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="7 U.S.C. 6409",
+        ),
+        conditions=["provided that the applicant submits annual reports"],
+        exceptions=["except as otherwise provided in subsection (b)"],
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _temporal_for_purposes_bridge_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1395rr-fd726267510ffffe"
+    normalized_text = (
+        "For purposes of this section, benefits are available during fiscal years 2025 "
+        "through 2027."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-temporal-for-purposes-bridge",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="authorize_benefits"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="42 U.S.C. 1395rr",
+        ),
+        conditions=["for purposes of this section"],
+        metadata={"cue": "fiscal years"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _exception_only_condition_proxy_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1395c.-da5383050c7a2c5e"
+    normalized_text = (
+        "A plan may provide coverage except as such a determination applies."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-exception-only-condition-proxy",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O|",
+            label="conditionally obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_coverage"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="42 U.S.C. 1395c.",
+        ),
+        exceptions=["except as such a determination applies"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _cue_signature_temporal_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-10-864-47dfb7b7e13861a9"
+    sentence_one = "The applicant shall submit a report if requested."
+    sentence_two = "By March 1 the agency shall publish findings after review."
+    normalized_text = f"{sentence_one} {sentence_two}"
+    deontic_formula = ModalIRFormula(
+        formula_id="f-cue-1",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="submit_report"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(sentence_one),
+            citation="10 U.S.C. 864",
+        ),
+        conditions=["if requested"],
+        metadata={"cue": "shall"},
+    )
+    temporal_start = len(sentence_one) + 1
+    temporal_formula = ModalIRFormula(
+        formula_id="f-cue-2",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_findings"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=temporal_start,
+            end_char=len(normalized_text),
+            citation="10 U.S.C. 864",
+        ),
+        conditions=[
+            "after the agency receives notice",
+            "by march 1",
+        ],
+        metadata={"cue": "by"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[deontic_formula, temporal_formula],
+    )
+
+
+def _temporal_until_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-8123-1b66f2d0a8c10984"
+    normalized_text = "The agency shall maintain records until final review is complete."
+    formula = ModalIRFormula(
+        formula_id="f-temporal-until",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="maintain_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="5 U.S.C. 8123",
+        ),
+        conditions=["until final review is complete"],
+        metadata={"cue": "until"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
+def _zero_digit_signature_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-1470.-845d9dceb9d264ab"
+    formula = ModalIRFormula(
+        formula_id="f-zero-digit-signature",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_land_patent_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="43 U.S.C. 1470.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="43 U.S.C. 1470. Land patent adjustment applies.",
+        formulas=[formula],
+    )
+
+
+def _upper_alpha_suffix_sample_document() -> ModalIRDocument:
+    source_id = "us-code-26-1400L-f8d163d7baa2349b"
+    formula = ModalIRFormula(
+        formula_id="f-upper-alpha-suffix",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_economic_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="26 U.S.C. 1400L",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="26 U.S.C. 1400L recordkeeping requirement.",
+        formulas=[formula],
+    )
+
+
+def _citation_suffix_kind_residual_samples() -> list[ModalIRDocument]:
+    cases = [
+        (
+            "us-code-16-198a-69c109aec60f214a",
+            "16 U.S.C. 198a",
+            "maintain_national_memorial_records",
+        ),
+        (
+            "us-code-22-1642e-0a4a6e0aa906f829",
+            "22 U.S.C. 1642e",
+            "maintain_foreign_relations_records",
+        ),
+        (
+            "us-code-25-450a-1-b25ed1d7e3a8d3a7",
+            "25 U.S.C. 450a-1",
+            "maintain_tribal_contract_records",
+        ),
+        (
+            "us-code-46-12107.-ac993296d58346dd",
+            "46 U.S.C. 12107.",
+            "maintain_vessel_documentation_records",
+        ),
+    ]
+    documents: list[ModalIRDocument] = []
+    for source_id, citation, predicate_name in cases:
+        documents.append(
+            ModalIRDocument(
+                document_id=source_id,
+                source="us_code",
+                normalized_text=f"{citation} records requirement.",
+                formulas=[
+                    ModalIRFormula(
+                        formula_id=f"f-{source_id}",
+                        operator=ModalIROperator(
+                            family="deontic",
+                            system="kd",
+                            symbol="O",
+                            label="obligatory",
+                        ),
+                        predicate=ModalIRPredicate(name=predicate_name),
+                        provenance=ModalIRProvenance(
+                            source_id=source_id,
+                            start_char=0,
+                            end_char=len(citation),
+                            citation=citation,
+                        ),
+                    )
+                ],
+            )
+        )
+    return documents
+
+
+def _span_metrics_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-12782.-01f3026e32e90a63"
+    source_text = "ABCDEFGHIJKLMNOPQRST"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-span-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="first_span"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=6,
+                    citation="42 U.S.C. 12782.",
+                ),
+            ),
+            ModalIRFormula(
+                formula_id="f-span-2",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="second_span"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=9,
+                    end_char=14,
+                    citation="42 U.S.C. 12782.",
+                ),
+            ),
+        ],
+    )
+
+
+def _string_offset_span_metrics_sample_document() -> ModalIRDocument:
+    source_id = "us-code-38-3325-dd8d4281cf491ad3"
+    source_text = "A" * 200
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-span-string-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="residual_span_clause"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char="120",  # type: ignore[arg-type]
+                    end_char="128",  # type: ignore[arg-type]
+                    citation="38 U.S.C. 3325",
+                ),
+                metadata={
+                    "cue": "__uscode_residual_span_fallback__",
+                    "fallback_rule": "uscode_residual_span_coverage_v1",
+                },
+            ),
+            ModalIRFormula(
+                formula_id="f-span-string-2",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="frame",
+                    symbol="Frame",
+                    label="framed as",
+                ),
+                predicate=ModalIRPredicate(name="status_clause"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char="46",  # type: ignore[arg-type]
+                    end_char="59",  # type: ignore[arg-type]
+                    citation="38 U.S.C. 3325",
+                ),
+            ),
+        ],
+    )
+
+
+def _whitespace_preserving_span_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-552-whitespace-span-38f5f8b9e5d2fd4a"
+    source_text = "alpha  beta\nmust  comply  now"
+    modal_span_start = source_text.index("must")
+    modal_span_end = modal_span_start + len("must  comply")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-whitespace-span-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="must_comply"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=modal_span_start,
+                    end_char=modal_span_end,
+                    citation="5 U.S.C. 552",
+                ),
+            )
+        ],
+    )
+
+
+def _single_formula_temporal_family_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-8758-6c50bb2c1676bbf9"
+    formula = ModalIRFormula(
+        formula_id="f-temporal-family-only",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=22,
+            citation="7 U.S.C. 8758",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="7 U.S.C. 8758 notice publication requirement.",
+        formulas=[formula],
+    )
+
+
+def _fallback_frame_authority_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-2104.-968c80c773abaeae"
+    formula = ModalIRFormula(
+        formula_id="f-fallback-frame-authority-cue",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="authorities_personnel_relating"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=42,
+            citation="46 U.S.C. 2104.",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="Authorities and personnel relating to vessel documentation.",
+        formulas=[formula],
+    )
+
+
+def _metadata_only_frame_terms_sample_document() -> ModalIRDocument:
+    source_id = "us-code-26-646-0cfbbfe0c86b90ae"
+    formula = ModalIRFormula(
+        formula_id="f-frame-metadata-only",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_deadline_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=38,
+            citation="26 U.S.C. 646",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="26 U.S.C. 646 agency notice and deadline appeal process.",
+        formulas=[formula],
+        frame_logic=ModalIRFrameLogic(selected_frame="administrative_notice_hearing"),
+        metadata={
+            "frame_ontology_terms": {
+                "administrative_notice_hearing": [
+                    "administrative",
+                    "administrative_notice_hearing",
+                    "agency",
+                    "appeal",
+                    "deadline",
+                ],
+                "criminal_penalty_enforcement": [
+                    "criminal",
+                    "enforcement",
+                    "penalty",
+                ],
+                "housing_voucher_benefits": [
+                    "accommodation",
+                    "housing",
+                    "voucher",
+                ],
+            }
+        },
+    )
+
+
+def _metadata_only_frame_terms_without_selected_frame_sample_document() -> ModalIRDocument:
+    base = _metadata_only_frame_terms_sample_document()
+    return ModalIRDocument(
+        document_id=base.document_id,
+        source=base.source,
+        normalized_text=base.normalized_text,
+        formulas=list(base.formulas),
+        frame_candidates=[],
+        metadata=dict(base.metadata),
+    )
+
+
+def _source_anchor_connective_noise_sample_document() -> ModalIRDocument:
+    source_id = "us-code-15-717k-anchor-noise-cf08f62ff321ca14"
+    source_text = (
+        "§717k. Officials dealing in securities It shall be unlawful for any "
+        "officer or director to receive compensation."
+    )
+    cue_start = source_text.index("shall")
+    cue_end = cue_start + len("shall")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-source-anchor-connective-noise",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(
+                    name="be_unlawful_for_any_officer_or",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=len(source_text),
+                    citation="15 U.S.C. 717k",
+                ),
+                metadata={
+                    "cue": "shall",
+                    "cue_start_char": cue_start,
+                    "cue_end_char": cue_end,
+                },
+            ),
+        ],
+    )
+
+
+def _inferred_condition_gpo_fragment_sample_document() -> ModalIRDocument:
+    source_id = "us-code-12-1960-gpo-fragment-cc2b0e5fd97410af"
+    source_text = (
+        "Sec. 1960 - Safe harbor with respect to keep open directives "
+        "From the U.S. Government Publishing Office, www.gpo.gov"
+    )
+    span_start = source_text.index("Safe harbor")
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-inferred-condition-gpo-fragment",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="kd",
+                    symbol="O|",
+                    label="conditional obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="keep_open_directives_from_the_u",
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=span_start,
+                    end_char=len(source_text),
+                    citation="12 U.S.C. 1960",
+                ),
+                metadata={
+                    "cue": "with respect to",
+                },
+            ),
+        ],
+    )
+
+
+def test_decode_modal_ir_document_filters_connective_anchor_tokens() -> None:
+    decoded = decode_modal_ir_document(_source_anchor_connective_noise_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "officer" in slot_map["source_object_anchor"]
+    assert "for" not in slot_map["source_object_anchor"]
+    assert "any" not in slot_map["source_object_anchor"]
+    assert "officer:deontic" in slot_map["source_object_family"]
+    assert "for:deontic" not in slot_map["source_object_family"]
+
+
+def test_modal_ir_to_flogic_triples_filters_connective_anchor_tokens() -> None:
+    triples = modal_ir_to_flogic_triples(_source_anchor_connective_noise_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "officer" in objects("source_object_anchor")
+    assert "for" not in objects("source_object_anchor")
+    assert "any" not in objects("source_object_anchor")
+    assert "officer:deontic" in objects("source_object_family")
+    assert "for:deontic" not in objects("source_object_family")
+
+
+def test_decode_modal_ir_document_trims_gpo_fragment_from_inferred_conditions() -> None:
+    decoded = decode_modal_ir_document(_inferred_condition_gpo_fragment_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["with respect to keep open directives"]
+    assert slot_map["condition_scope"] == ["keep open directives"]
+    assert "from the u" not in slot_map["condition"][0].lower()
+
+
+def test_modal_ir_to_flogic_triples_trim_gpo_fragment_from_inferred_conditions() -> None:
+    triples = modal_ir_to_flogic_triples(_inferred_condition_gpo_fragment_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["with respect to keep open directives"]
+    assert objects("condition_scope") == ["keep open directives"]
+    assert "from the u" not in objects("condition")[0].lower()
+
+
+def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
+    decoded = decode_modal_ir_document(_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_title_number"] == ["21"]
+    assert slot_map["citation_title_token_count"] == ["1"]
+    assert slot_map["citation_title_stem"] == ["21"]
+    assert slot_map["citation_section_has_mixed_token"] == ["true"]
+    assert slot_map["citation_section_mixed_token_count"] == ["1"]
+    assert slot_map["citation_section_alnum_segment_count"] == ["3"]
+    assert slot_map["citation_section_alnum_segment_prefix"] == ["360"]
+    assert slot_map["citation_section_alnum_segment_suffix"] == ["0"]
+    assert slot_map["citation_section_alnum_segment_positioned"] == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert slot_map["citation_section_alnum_segment_kind_positioned"] == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
+    assert slot_map["citation_section_component_positioned"] == ["1:360bbb", "2:0"]
+    assert slot_map["citation_section_number_positioned"] == ["1:360", "2:0"]
+    assert slot_map["citation_section_number_digit_count"] == ["3", "1"]
+    assert slot_map["citation_section_number_digit_count_positioned"] == ["1:3", "2:1"]
+    assert slot_map["citation_section_suffix_positioned"] == ["1:bbb"]
+    assert slot_map["citation_section_suffix_char_count"] == ["3"]
+    assert slot_map["citation_section_suffix_char_count_positioned"] == ["1:3"]
+    assert slot_map["citation_section_suffix_profile"] == ["repeat"]
+    assert slot_map["citation_section_suffix_profile_positioned"] == ["1:repeat"]
+    assert slot_map["citation_section_suffix_normalized"] == ["bbb"]
+    assert slot_map["citation_section_suffix_case"] == ["lower"]
+    assert slot_map["citation_section_suffix_case_positioned"] == ["1:lower"]
+    assert slot_map["citation_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:numeric",
+    ]
+    assert slot_map["citation_section_primary_number"] == ["360"]
+    assert slot_map["citation_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_primary_suffix"] == ["bbb"]
+    assert slot_map["citation_section_primary_suffix_char_count"] == ["3"]
+    assert slot_map["citation_section_primary_suffix_profile"] == ["repeat"]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
+    assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_terminal_number"] == ["0"]
+    assert slot_map["citation_section_terminal_number_digit_count"] == ["1"]
+    assert slot_map["citation_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["citation_section_has_delimiter"] == ["true"]
+    assert slot_map["citation_section_delimiter"] == ["hyphen"]
+    assert slot_map["citation_section_delimiter_positioned"] == ["1:hyphen"]
+    assert slot_map["citation_section_delimiter_token"] == ["-"]
+    assert slot_map["citation_section_delimiter_token_positioned"] == ["1:-"]
+    assert slot_map["citation_section_delimiter_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["citation_section_delimiter_pattern"] == ["hyphen"]
+    assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
+    assert slot_map["citation_section_is_range"] == ["false"]
+    assert slot_map["citation_section_has_trailing_punct"] == ["false"]
+    assert slot_map["citation_section_trailing_punct_count"] == ["0"]
+    assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
+    assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
+    assert slot_map["citation_title_section_primary_number_relation"] == ["ascending"]
+    assert slot_map["citation_title_section_primary_number_span"] == ["339"]
+    assert slot_map["citation_title_section_terminal_number_relation"] == ["descending"]
+    assert slot_map["citation_title_section_terminal_number_span"] == ["21"]
+
+    assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
+    assert slot_map["source_id_section_has_mixed_token"] == ["true"]
+    assert slot_map["source_id_section_mixed_token_count"] == ["1"]
+    assert slot_map["source_id_section_alnum_segment_count"] == ["3"]
+    assert slot_map["source_id_section_alnum_segment_prefix"] == ["360"]
+    assert slot_map["source_id_section_alnum_segment_suffix"] == ["0"]
+    assert slot_map["source_id_section_alnum_segment_positioned"] == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert slot_map["source_id_section_alnum_segment_kind_positioned"] == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
+    assert slot_map["source_id_section_number_positioned"] == ["1:360", "2:0"]
+    assert slot_map["source_id_section_number_digit_count"] == ["3", "1"]
+    assert slot_map["source_id_section_number_digit_count_positioned"] == ["1:3", "2:1"]
+    assert slot_map["source_id_section_suffix_positioned"] == ["1:bbb"]
+    assert slot_map["source_id_section_suffix_char_count"] == ["3"]
+    assert slot_map["source_id_section_suffix_char_count_positioned"] == ["1:3"]
+    assert slot_map["source_id_section_suffix_profile"] == ["repeat"]
+    assert slot_map["source_id_section_suffix_profile_positioned"] == ["1:repeat"]
+    assert slot_map["source_id_section_suffix_normalized"] == ["bbb"]
+    assert slot_map["source_id_section_suffix_case"] == ["lower"]
+    assert slot_map["source_id_section_suffix_case_positioned"] == ["1:lower"]
+    assert slot_map["source_id_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:numeric",
+    ]
+    assert slot_map["source_id_section_primary_number"] == ["360"]
+    assert slot_map["source_id_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_primary_suffix"] == ["bbb"]
+    assert slot_map["source_id_section_primary_suffix_char_count"] == ["3"]
+    assert slot_map["source_id_section_primary_suffix_profile"] == ["repeat"]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
+    assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_terminal_number"] == ["0"]
+    assert slot_map["source_id_section_terminal_number_digit_count"] == ["1"]
+    assert slot_map["source_id_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["source_id_section_has_delimiter"] == ["true"]
+    assert slot_map["source_id_section_delimiter"] == ["hyphen"]
+    assert slot_map["source_id_section_delimiter_positioned"] == ["1:hyphen"]
+    assert slot_map["source_id_section_delimiter_token"] == ["-"]
+    assert slot_map["source_id_section_delimiter_token_positioned"] == ["1:-"]
+    assert slot_map["source_id_section_delimiter_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["source_id_section_delimiter_pattern"] == ["hyphen"]
+    assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
+    assert slot_map["source_id_section_is_range"] == ["false"]
+    assert slot_map["source_id_section_has_trailing_punct"] == ["false"]
+    assert slot_map["source_id_section_trailing_punct_count"] == ["0"]
+    assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
+    assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
+    assert slot_map["source_id_title_section_primary_number_relation"] == ["ascending"]
+    assert slot_map["source_id_title_section_primary_number_span"] == ["339"]
+    assert slot_map["source_id_title_section_terminal_number_relation"] == ["descending"]
+    assert slot_map["source_id_title_section_terminal_number_span"] == ["21"]
+
+
+def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> None:
+    triples = modal_ir_to_flogic_triples(_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_title_number") == ["21"]
+    assert objects("citation_title_token_count") == ["1"]
+    assert objects("citation_title_stem") == ["21"]
+    assert objects("citation_section_has_mixed_token") == ["true"]
+    assert objects("citation_section_mixed_token_count") == ["1"]
+    assert objects("citation_section_alnum_segment_count") == ["3"]
+    assert objects("citation_section_alnum_segment_prefix") == ["360"]
+    assert objects("citation_section_alnum_segment_suffix") == ["0"]
+    assert objects("citation_section_alnum_segment_positioned") == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert objects("citation_section_alnum_segment_kind_positioned") == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
+    assert objects("citation_section_component_positioned") == ["1:360bbb", "2:0"]
+    assert objects("citation_section_number_positioned") == ["1:360", "2:0"]
+    assert objects("citation_section_number_digit_count") == ["3", "1"]
+    assert objects("citation_section_number_digit_count_positioned") == ["1:3", "2:1"]
+    assert objects("citation_section_suffix_positioned") == ["1:bbb"]
+    assert objects("citation_section_suffix_char_count") == ["3"]
+    assert objects("citation_section_suffix_char_count_positioned") == ["1:3"]
+    assert objects("citation_section_suffix_profile") == ["repeat"]
+    assert objects("citation_section_suffix_profile_positioned") == ["1:repeat"]
+    assert objects("citation_section_suffix_normalized") == ["bbb"]
+    assert objects("citation_section_suffix_case") == ["lower"]
+    assert objects("citation_section_suffix_case_positioned") == ["1:lower"]
+    assert objects("citation_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:numeric",
+    ]
+    assert objects("citation_section_primary_number") == ["360"]
+    assert objects("citation_section_primary_number_digit_count") == ["3"]
+    assert objects("citation_section_primary_suffix") == ["bbb"]
+    assert objects("citation_section_primary_suffix_char_count") == ["3"]
+    assert objects("citation_section_primary_suffix_profile") == ["repeat"]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
+    assert objects("citation_section_terminal_has_suffix") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
+    assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_terminal_number") == ["0"]
+    assert objects("citation_section_terminal_number_digit_count") == ["1"]
+    assert objects("citation_section_terminal_component_kind") == ["numeric"]
+    assert objects("citation_section_has_delimiter") == ["true"]
+    assert objects("citation_section_delimiter") == ["hyphen"]
+    assert objects("citation_section_delimiter_positioned") == ["1:hyphen"]
+    assert objects("citation_section_delimiter_token") == ["-"]
+    assert objects("citation_section_delimiter_token_positioned") == ["1:-"]
+    assert objects("citation_section_delimiter_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("citation_section_delimiter_pattern") == ["hyphen"]
+    assert objects("citation_section_delimiter_distinct_count") == ["1"]
+    assert objects("citation_section_is_range") == ["false"]
+    assert objects("citation_section_has_trailing_punct") == ["false"]
+    assert objects("citation_section_trailing_punct_count") == ["0"]
+    assert objects("citation_title_section_key") == ["21:360bbb-0"]
+    assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
+    assert objects("citation_title_section_primary_number_relation") == ["ascending"]
+    assert objects("citation_title_section_primary_number_span") == ["339"]
+    assert objects("citation_title_section_terminal_number_relation") == ["descending"]
+    assert objects("citation_title_section_terminal_number_span") == ["21"]
+
+    assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
+    assert objects("source_id_section_has_mixed_token") == ["true"]
+    assert objects("source_id_section_mixed_token_count") == ["1"]
+    assert objects("source_id_section_alnum_segment_count") == ["3"]
+    assert objects("source_id_section_alnum_segment_prefix") == ["360"]
+    assert objects("source_id_section_alnum_segment_suffix") == ["0"]
+    assert objects("source_id_section_alnum_segment_positioned") == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert objects("source_id_section_alnum_segment_kind_positioned") == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
+    assert objects("source_id_section_number_positioned") == ["1:360", "2:0"]
+    assert objects("source_id_section_number_digit_count") == ["3", "1"]
+    assert objects("source_id_section_number_digit_count_positioned") == ["1:3", "2:1"]
+    assert objects("source_id_section_suffix_positioned") == ["1:bbb"]
+    assert objects("source_id_section_suffix_char_count") == ["3"]
+    assert objects("source_id_section_suffix_char_count_positioned") == ["1:3"]
+    assert objects("source_id_section_suffix_profile") == ["repeat"]
+    assert objects("source_id_section_suffix_profile_positioned") == ["1:repeat"]
+    assert objects("source_id_section_suffix_normalized") == ["bbb"]
+    assert objects("source_id_section_suffix_case") == ["lower"]
+    assert objects("source_id_section_suffix_case_positioned") == ["1:lower"]
+    assert objects("source_id_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:numeric",
+    ]
+    assert objects("source_id_section_primary_number") == ["360"]
+    assert objects("source_id_section_primary_number_digit_count") == ["3"]
+    assert objects("source_id_section_primary_suffix") == ["bbb"]
+    assert objects("source_id_section_primary_suffix_char_count") == ["3"]
+    assert objects("source_id_section_primary_suffix_profile") == ["repeat"]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_terminal_has_suffix") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
+    assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_terminal_number") == ["0"]
+    assert objects("source_id_section_terminal_number_digit_count") == ["1"]
+    assert objects("source_id_section_terminal_component_kind") == ["numeric"]
+    assert objects("source_id_section_has_delimiter") == ["true"]
+    assert objects("source_id_section_delimiter") == ["hyphen"]
+    assert objects("source_id_section_delimiter_positioned") == ["1:hyphen"]
+    assert objects("source_id_section_delimiter_token") == ["-"]
+    assert objects("source_id_section_delimiter_token_positioned") == ["1:-"]
+    assert objects("source_id_section_delimiter_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("source_id_section_delimiter_pattern") == ["hyphen"]
+    assert objects("source_id_section_delimiter_distinct_count") == ["1"]
+    assert objects("source_id_section_is_range") == ["false"]
+    assert objects("source_id_section_has_trailing_punct") == ["false"]
+    assert objects("source_id_section_trailing_punct_count") == ["0"]
+    assert objects("source_id_title_section_key") == ["21:360bbb-0"]
+    assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
+    assert objects("source_id_title_section_primary_number_relation") == ["ascending"]
+    assert objects("source_id_title_section_primary_number_span") == ["339"]
+    assert objects("source_id_title_section_terminal_number_relation") == ["descending"]
+    assert objects("source_id_title_section_terminal_number_span") == ["21"]
+
+
+def test_decode_modal_ir_document_emits_single_component_section_role_slots() -> None:
+    decoded = decode_modal_ir_document(_single_component_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_terminal"] == ["190l"]
+    assert slot_map["citation_section_primary_equals_terminal"] == ["true"]
+    assert slot_map["citation_section_primary_terminal_pair"] == ["190l|190l"]
+    assert slot_map["citation_section_primary_number"] == ["190"]
+    assert slot_map["citation_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_terminal_number"] == ["190"]
+    assert slot_map["citation_section_terminal_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_primary_suffix"] == ["l"]
+    assert slot_map["citation_section_suffix_char_count"] == ["1"]
+    assert slot_map["citation_section_primary_suffix_char_count"] == ["1"]
+    assert slot_map["citation_section_terminal_suffix_char_count"] == ["1"]
+    assert slot_map["citation_section_suffix_profile"] == ["single"]
+    assert slot_map["citation_section_primary_suffix_profile"] == ["single"]
+    assert slot_map["citation_section_terminal_suffix_profile"] == ["single"]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_suffix"] == ["l"]
+    assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_kind_match"] == ["true"]
+
+    assert slot_map["source_id_section_terminal"] == ["190l"]
+    assert slot_map["source_id_section_primary_equals_terminal"] == ["true"]
+    assert slot_map["source_id_section_primary_terminal_pair"] == ["190l|190l"]
+    assert slot_map["source_id_section_primary_number"] == ["190"]
+    assert slot_map["source_id_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_terminal_number"] == ["190"]
+    assert slot_map["source_id_section_terminal_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_primary_suffix"] == ["l"]
+    assert slot_map["source_id_section_suffix_char_count"] == ["1"]
+    assert slot_map["source_id_section_primary_suffix_char_count"] == ["1"]
+    assert slot_map["source_id_section_terminal_suffix_char_count"] == ["1"]
+    assert slot_map["source_id_section_suffix_profile"] == ["single"]
+    assert slot_map["source_id_section_primary_suffix_profile"] == ["single"]
+    assert slot_map["source_id_section_terminal_suffix_profile"] == ["single"]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_suffix"] == ["l"]
+    assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_terminal_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_kind_match"] == ["true"]
+
+
+def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_terminal") == ["190l"]
+    assert objects("citation_section_primary_equals_terminal") == ["true"]
+    assert objects("citation_section_primary_terminal_pair") == ["190l|190l"]
+    assert objects("citation_section_primary_number") == ["190"]
+    assert objects("citation_section_primary_number_digit_count") == ["3"]
+    assert objects("citation_section_terminal_number") == ["190"]
+    assert objects("citation_section_terminal_number_digit_count") == ["3"]
+    assert objects("citation_section_primary_suffix") == ["l"]
+    assert objects("citation_section_suffix_char_count") == ["1"]
+    assert objects("citation_section_primary_suffix_char_count") == ["1"]
+    assert objects("citation_section_terminal_suffix_char_count") == ["1"]
+    assert objects("citation_section_suffix_profile") == ["single"]
+    assert objects("citation_section_primary_suffix_profile") == ["single"]
+    assert objects("citation_section_terminal_suffix_profile") == ["single"]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_suffix") == ["l"]
+    assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_primary_terminal_component_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects("citation_section_primary_terminal_component_signature_match") == [
+        "true"
+    ]
+    assert objects("citation_section_primary_terminal_component_kind_pair") == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert objects("citation_section_primary_terminal_component_kind_match") == ["true"]
+
+    assert objects("source_id_section_terminal") == ["190l"]
+    assert objects("source_id_section_primary_equals_terminal") == ["true"]
+    assert objects("source_id_section_primary_terminal_pair") == ["190l|190l"]
+    assert objects("source_id_section_primary_number") == ["190"]
+    assert objects("source_id_section_primary_number_digit_count") == ["3"]
+    assert objects("source_id_section_terminal_number") == ["190"]
+    assert objects("source_id_section_terminal_number_digit_count") == ["3"]
+    assert objects("source_id_section_primary_suffix") == ["l"]
+    assert objects("source_id_section_suffix_char_count") == ["1"]
+    assert objects("source_id_section_primary_suffix_char_count") == ["1"]
+    assert objects("source_id_section_terminal_suffix_char_count") == ["1"]
+    assert objects("source_id_section_suffix_profile") == ["single"]
+    assert objects("source_id_section_primary_suffix_profile") == ["single"]
+    assert objects("source_id_section_terminal_suffix_profile") == ["single"]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_suffix") == ["l"]
+    assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_primary_terminal_component_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects("source_id_section_primary_terminal_component_signature_match") == [
+        "true"
+    ]
+    assert objects("source_id_section_primary_terminal_component_kind_pair") == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert objects("source_id_section_primary_terminal_component_kind_match") == ["true"]
+
+
+def test_decode_modal_ir_document_emits_roman_suffix_slots() -> None:
+    decoded = decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["roman"]
+    assert slot_map["citation_section_suffix_kind_positioned"] == ["1:roman"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["roman"]
+    assert "citation_section_terminal_suffix_kind" not in slot_map
+    assert slot_map["citation_section_has_roman_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["true"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["1"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["roman"]
+    assert slot_map["source_id_section_suffix_kind_positioned"] == ["1:roman"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["roman"]
+    assert "source_id_section_terminal_suffix_kind" not in slot_map
+    assert slot_map["source_id_section_has_roman_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["true"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_roman_suffix_hyphen_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["roman"]
+    assert objects("citation_section_suffix_kind_positioned") == ["1:roman"]
+    assert objects("citation_section_primary_suffix_kind") == ["roman"]
+    assert objects("citation_section_terminal_suffix_kind") == []
+    assert objects("citation_section_has_roman_suffix") == ["true"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["true"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["1"]
+
+    assert objects("source_id_section_suffix_kind") == ["roman"]
+    assert objects("source_id_section_suffix_kind_positioned") == ["1:roman"]
+    assert objects("source_id_section_primary_suffix_kind") == ["roman"]
+    assert objects("source_id_section_terminal_suffix_kind") == []
+    assert objects("source_id_section_has_roman_suffix") == ["true"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["true"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["1"]
+
+
+def test_decode_modal_ir_document_emits_section_component_signature_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert mixed_slot_map["citation_section_component_signature"] == ["N3A3", "N1"]
+    assert mixed_slot_map["citation_section_component_signature_positioned"] == [
+        "1:N3A3",
+        "2:N1",
+    ]
+    assert mixed_slot_map["citation_section_primary_component_signature"] == ["N3A3"]
+    assert mixed_slot_map["citation_section_terminal_component_signature"] == ["N1"]
+    assert mixed_slot_map["citation_section_signature"] == ["N3A3-N1"]
+    assert mixed_slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N3A3|N1"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "false"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|numeric"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_kind_match"] == [
+        "false"
+    ]
+    assert mixed_slot_map["source_id_section_signature"] == ["N3A3-N1"]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N3A3|N1"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "false"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|numeric"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
+        "false"
+    ]
+
+    roman_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
+    )
+    assert roman_slot_map["citation_section_signature"] == ["N3R3-N1"]
+    assert roman_slot_map["source_id_section_signature"] == ["N3R3-N1"]
+
+    todo_cluster_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_compound_alpha_suffix_hyphen_sample_document())
+    )
+    assert todo_cluster_slot_map["citation_section_signature"] == ["N3A3-N1"]
+    assert todo_cluster_slot_map["source_id_section_signature"] == ["N3A3-N1"]
+
+    numeric_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+    assert numeric_slot_map["citation_section_signature"] == ["N5"]
+    assert numeric_slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N5|N5"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "numeric|numeric"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_kind_match"] == [
+        "true"
+    ]
+    assert numeric_slot_map["source_id_section_signature"] == ["N5"]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N5|N5"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "numeric|numeric"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
+        "true"
+    ]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(_sample_document())
+    roman_triples = modal_ir_to_flogic_triples(_roman_suffix_hyphen_sample_document())
+    todo_cluster_triples = modal_ir_to_flogic_triples(
+        _compound_alpha_suffix_hyphen_sample_document()
+    )
+    numeric_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(mixed_triples, "citation_section_component_signature") == ["N3A3", "N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_component_signature_positioned",
+    ) == ["1:N3A3", "2:N1"]
+    assert objects(mixed_triples, "citation_section_primary_component_signature") == [
+        "N3A3"
+    ]
+    assert objects(mixed_triples, "citation_section_terminal_component_signature") == [
+        "N1"
+    ]
+    assert objects(mixed_triples, "citation_section_signature") == ["N3A3-N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_signature_pair",
+    ) == ["N3A3|N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_signature_match",
+    ) == ["false"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_kind_pair",
+    ) == ["alphanumeric|numeric"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_kind_match",
+    ) == ["false"]
+    assert objects(mixed_triples, "source_id_section_signature") == ["N3A3-N1"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_signature_pair",
+    ) == ["N3A3|N1"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_signature_match",
+    ) == ["false"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_kind_pair",
+    ) == ["alphanumeric|numeric"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_kind_match",
+    ) == ["false"]
+
+    assert objects(roman_triples, "citation_section_signature") == ["N3R3-N1"]
+    assert objects(roman_triples, "source_id_section_signature") == ["N3R3-N1"]
+
+    assert objects(todo_cluster_triples, "citation_section_signature") == ["N3A3-N1"]
+    assert objects(todo_cluster_triples, "source_id_section_signature") == ["N3A3-N1"]
+
+    assert objects(numeric_triples, "citation_section_signature") == ["N5"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_signature_pair",
+    ) == ["N5|N5"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_kind_pair",
+    ) == ["numeric|numeric"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_kind_match",
+    ) == ["true"]
+    assert objects(numeric_triples, "source_id_section_signature") == ["N5"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_signature_pair",
+    ) == ["N5|N5"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_kind_pair",
+    ) == ["numeric|numeric"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_kind_match",
+    ) == ["true"]
+
+
+def test_decode_modal_ir_document_emits_suffix_alpha_signature_slots() -> None:
+    sample_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert sample_slot_map["citation_section_suffix_initial"] == ["b"]
+    assert sample_slot_map["citation_section_suffix_terminal"] == ["b"]
+    assert sample_slot_map["citation_section_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_suffix_terminal_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_suffix_vowel_count"] == ["0"]
+    assert sample_slot_map["citation_section_suffix_consonant_count"] == ["3"]
+    assert sample_slot_map["citation_section_suffix_has_vowel"] == ["false"]
+    assert sample_slot_map["citation_section_suffix_has_consonant"] == ["true"]
+    assert sample_slot_map["citation_section_suffix_unique_char_count"] == ["1"]
+    assert sample_slot_map["citation_section_primary_suffix_initial"] == ["b"]
+    assert sample_slot_map["citation_section_primary_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_primary_suffix_has_consonant"] == ["true"]
+
+    assert sample_slot_map["source_id_section_suffix_initial"] == ["b"]
+    assert sample_slot_map["source_id_section_suffix_terminal"] == ["b"]
+    assert sample_slot_map["source_id_section_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_suffix_terminal_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_suffix_vowel_count"] == ["0"]
+    assert sample_slot_map["source_id_section_suffix_consonant_count"] == ["3"]
+    assert sample_slot_map["source_id_section_suffix_has_vowel"] == ["false"]
+    assert sample_slot_map["source_id_section_suffix_has_consonant"] == ["true"]
+    assert sample_slot_map["source_id_section_suffix_unique_char_count"] == ["1"]
+    assert sample_slot_map["source_id_section_primary_suffix_initial"] == ["b"]
+    assert sample_slot_map["source_id_section_primary_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_primary_suffix_has_consonant"] == ["true"]
+
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    assert range_slot_map["citation_section_suffix_initial_positioned"] == [
+        "1:a",
+        "2:c",
+    ]
+    assert range_slot_map["citation_section_suffix_initial_ordinal_positioned"] == [
+        "1:1",
+        "2:3",
+    ]
+    assert range_slot_map["citation_section_suffix_has_vowel_positioned"] == [
+        "1:true",
+        "2:false",
+    ]
+    assert range_slot_map["citation_section_suffix_has_consonant_positioned"] == [
+        "1:false",
+        "2:true",
+    ]
+    assert range_slot_map["citation_section_primary_suffix_has_vowel"] == ["true"]
+    assert range_slot_map["citation_section_terminal_suffix_has_vowel"] == ["false"]
+
+    assert range_slot_map["source_id_section_suffix_initial_positioned"] == [
+        "1:a",
+        "2:c",
+    ]
+    assert range_slot_map["source_id_section_suffix_initial_ordinal_positioned"] == [
+        "1:1",
+        "2:3",
+    ]
+    assert range_slot_map["source_id_section_suffix_has_vowel_positioned"] == [
+        "1:true",
+        "2:false",
+    ]
+    assert range_slot_map["source_id_section_suffix_has_consonant_positioned"] == [
+        "1:false",
+        "2:true",
+    ]
+    assert range_slot_map["source_id_section_primary_suffix_has_vowel"] == ["true"]
+    assert range_slot_map["source_id_section_terminal_suffix_has_vowel"] == ["false"]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None:
+    sample_triples = modal_ir_to_flogic_triples(_sample_document())
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(sample_triples, "citation_section_suffix_initial") == ["b"]
+    assert objects(sample_triples, "citation_section_suffix_terminal") == ["b"]
+    assert objects(sample_triples, "citation_section_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_suffix_terminal_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_suffix_vowel_count") == ["0"]
+    assert objects(sample_triples, "citation_section_suffix_consonant_count") == ["3"]
+    assert objects(sample_triples, "citation_section_suffix_has_vowel") == ["false"]
+    assert objects(sample_triples, "citation_section_suffix_has_consonant") == ["true"]
+    assert objects(sample_triples, "citation_section_suffix_unique_char_count") == ["1"]
+    assert objects(sample_triples, "citation_section_primary_suffix_initial") == ["b"]
+    assert objects(sample_triples, "citation_section_primary_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_primary_suffix_has_consonant") == [
+        "true"
+    ]
+
+    assert objects(sample_triples, "source_id_section_suffix_initial") == ["b"]
+    assert objects(sample_triples, "source_id_section_suffix_terminal") == ["b"]
+    assert objects(sample_triples, "source_id_section_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "source_id_section_suffix_terminal_ordinal") == ["2"]
+    assert objects(sample_triples, "source_id_section_suffix_vowel_count") == ["0"]
+    assert objects(sample_triples, "source_id_section_suffix_consonant_count") == ["3"]
+    assert objects(sample_triples, "source_id_section_suffix_has_vowel") == ["false"]
+    assert objects(sample_triples, "source_id_section_suffix_has_consonant") == ["true"]
+    assert objects(sample_triples, "source_id_section_suffix_unique_char_count") == ["1"]
+    assert objects(sample_triples, "source_id_section_primary_suffix_initial") == ["b"]
+    assert objects(sample_triples, "source_id_section_primary_suffix_initial_ordinal") == [
+        "2"
+    ]
+    assert objects(
+        sample_triples,
+        "source_id_section_primary_suffix_has_consonant",
+    ) == ["true"]
+
+    assert objects(range_triples, "citation_section_suffix_initial_positioned") == [
+        "1:a",
+        "2:c",
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_suffix_initial_ordinal_positioned",
+    ) == ["1:1", "2:3"]
+    assert objects(range_triples, "citation_section_suffix_has_vowel_positioned") == [
+        "1:true",
+        "2:false",
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_suffix_has_consonant_positioned",
+    ) == ["1:false", "2:true"]
+    assert objects(range_triples, "citation_section_primary_suffix_has_vowel") == ["true"]
+    assert objects(range_triples, "citation_section_terminal_suffix_has_vowel") == [
+        "false"
+    ]
+
+    assert objects(range_triples, "source_id_section_suffix_initial_positioned") == [
+        "1:a",
+        "2:c",
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_suffix_initial_ordinal_positioned",
+    ) == ["1:1", "2:3"]
+    assert objects(range_triples, "source_id_section_suffix_has_vowel_positioned") == [
+        "1:true",
+        "2:false",
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_suffix_has_consonant_positioned",
+    ) == ["1:false", "2:true"]
+    assert objects(range_triples, "source_id_section_primary_suffix_has_vowel") == [
+        "true"
+    ]
+    assert objects(range_triples, "source_id_section_terminal_suffix_has_vowel") == [
+        "false"
+    ]
+
+
+def test_decode_modal_ir_document_does_not_misclassify_noncanonical_roman_suffix() -> None:
+    decoded = decode_modal_ir_document(_noncanonical_romanlike_suffix_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_does_not_misclassify_noncanonical_roman_suffix() -> None:
+    triples = modal_ir_to_flogic_triples(_noncanonical_romanlike_suffix_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["alpha"]
+    assert objects("citation_section_primary_suffix_kind") == ["alpha"]
+    assert objects("citation_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
+
+    assert objects("source_id_section_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_primary_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
+
+
+def test_decode_modal_ir_document_treats_repeat_roman_tokens_as_alpha_suffixes() -> None:
+    decoded = decode_modal_ir_document(_repeat_roman_token_suffix_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_treats_repeat_roman_tokens_as_alpha_suffixes() -> None:
+    triples = modal_ir_to_flogic_triples(_repeat_roman_token_suffix_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["alpha"]
+    assert objects("citation_section_primary_suffix_kind") == ["alpha"]
+    assert objects("citation_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
+
+    assert objects("source_id_section_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_primary_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
+
+
+def test_decode_modal_ir_document_emits_section_range_slots() -> None:
+    decoded = decode_modal_ir_document(_range_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_terminal"] == ["228c"]
+    assert slot_map["citation_section_primary_equals_terminal"] == ["false"]
+    assert slot_map["citation_section_primary_terminal_pair"] == ["228a|228c"]
+    assert slot_map["citation_section_range"] == ["228a to 228c"]
+    assert slot_map["citation_section_range_start"] == ["228a"]
+    assert slot_map["citation_section_range_end"] == ["228c"]
+    assert slot_map["citation_section_range_connector"] == ["to"]
+    assert slot_map["citation_section_is_range"] == ["true"]
+    assert slot_map["citation_section_range_has_suffix"] == ["true"]
+    assert slot_map["citation_section_range_number_relation"] == ["equal"]
+    assert slot_map["citation_section_range_number_span"] == ["0"]
+    assert slot_map["citation_section_component_positioned"] == ["1:228a", "2:228c"]
+    assert slot_map["citation_section_number_positioned"] == ["1:228", "2:228"]
+    assert slot_map["citation_section_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_number_digit_count_positioned"] == ["1:3", "2:3"]
+    assert slot_map["citation_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_terminal_number_digit_count"] == ["3"]
+    assert slot_map["citation_section_suffix_positioned"] == ["1:a", "2:c"]
+    assert slot_map["citation_section_suffix_char_count"] == ["1"]
+    assert slot_map["citation_section_suffix_char_count_positioned"] == ["1:1", "2:1"]
+    assert slot_map["citation_section_suffix_profile"] == ["single"]
+    assert slot_map["citation_section_suffix_profile_positioned"] == [
+        "1:single",
+        "2:single",
+    ]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["true"]
+    assert slot_map["citation_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+    assert slot_map["citation_section_has_delimiter"] == ["false"]
+    assert slot_map["citation_section_delimiter_count"] == ["0"]
+    assert slot_map["citation_title_section_key"] == ["45:228a to 228c"]
+    assert slot_map["citation_title_section_key_normalized"] == ["45:228a to 228c"]
+
+    assert slot_map["source_id_section_terminal"] == ["228c"]
+    assert slot_map["source_id_section_primary_equals_terminal"] == ["false"]
+    assert slot_map["source_id_section_primary_terminal_pair"] == ["228a|228c"]
+    assert slot_map["source_id_section_range"] == ["228a to 228c"]
+    assert slot_map["source_id_section_range_start"] == ["228a"]
+    assert slot_map["source_id_section_range_end"] == ["228c"]
+    assert slot_map["source_id_section_range_connector"] == ["to"]
+    assert slot_map["source_id_section_is_range"] == ["true"]
+    assert slot_map["source_id_section_range_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_range_number_relation"] == ["equal"]
+    assert slot_map["source_id_section_range_number_span"] == ["0"]
+    assert slot_map["source_id_section_component_positioned"] == ["1:228a", "2:228c"]
+    assert slot_map["source_id_section_number_positioned"] == ["1:228", "2:228"]
+    assert slot_map["source_id_section_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_number_digit_count_positioned"] == ["1:3", "2:3"]
+    assert slot_map["source_id_section_primary_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_terminal_number_digit_count"] == ["3"]
+    assert slot_map["source_id_section_suffix_positioned"] == ["1:a", "2:c"]
+    assert slot_map["source_id_section_suffix_char_count"] == ["1"]
+    assert slot_map["source_id_section_suffix_char_count_positioned"] == ["1:1", "2:1"]
+    assert slot_map["source_id_section_suffix_profile"] == ["single"]
+    assert slot_map["source_id_section_suffix_profile_positioned"] == [
+        "1:single",
+        "2:single",
+    ]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+    assert slot_map["source_id_section_has_delimiter"] == ["false"]
+    assert slot_map["source_id_section_delimiter_count"] == ["0"]
+    assert slot_map["source_id_title_section_key"] == ["45:228a to 228c"]
+    assert slot_map["source_id_title_section_key_normalized"] == ["45:228a to 228c"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_terminal") == ["228c"]
+    assert objects("citation_section_primary_equals_terminal") == ["false"]
+    assert objects("citation_section_primary_terminal_pair") == ["228a|228c"]
+    assert objects("citation_section_range") == ["228a to 228c"]
+    assert objects("citation_section_range_start") == ["228a"]
+    assert objects("citation_section_range_end") == ["228c"]
+    assert objects("citation_section_range_connector") == ["to"]
+    assert objects("citation_section_is_range") == ["true"]
+    assert objects("citation_section_range_has_suffix") == ["true"]
+    assert objects("citation_section_range_number_relation") == ["equal"]
+    assert objects("citation_section_range_number_span") == ["0"]
+    assert objects("citation_section_component_positioned") == ["1:228a", "2:228c"]
+    assert objects("citation_section_number_positioned") == ["1:228", "2:228"]
+    assert objects("citation_section_number_digit_count") == ["3"]
+    assert objects("citation_section_number_digit_count_positioned") == ["1:3", "2:3"]
+    assert objects("citation_section_primary_number_digit_count") == ["3"]
+    assert objects("citation_section_terminal_number_digit_count") == ["3"]
+    assert objects("citation_section_suffix_positioned") == ["1:a", "2:c"]
+    assert objects("citation_section_suffix_char_count") == ["1"]
+    assert objects("citation_section_suffix_char_count_positioned") == ["1:1", "2:1"]
+    assert objects("citation_section_suffix_profile") == ["single"]
+    assert objects("citation_section_suffix_profile_positioned") == [
+        "1:single",
+        "2:single",
+    ]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_has_suffix") == ["true"]
+    assert objects("citation_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+    assert objects("citation_section_has_delimiter") == ["false"]
+    assert objects("citation_section_delimiter_count") == ["0"]
+    assert objects("citation_title_section_key") == ["45:228a to 228c"]
+    assert objects("citation_title_section_key_normalized") == ["45:228a to 228c"]
+
+    assert objects("source_id_section_terminal") == ["228c"]
+    assert objects("source_id_section_primary_equals_terminal") == ["false"]
+    assert objects("source_id_section_primary_terminal_pair") == ["228a|228c"]
+    assert objects("source_id_section_range") == ["228a to 228c"]
+    assert objects("source_id_section_range_start") == ["228a"]
+    assert objects("source_id_section_range_end") == ["228c"]
+    assert objects("source_id_section_range_connector") == ["to"]
+    assert objects("source_id_section_is_range") == ["true"]
+    assert objects("source_id_section_range_has_suffix") == ["true"]
+    assert objects("source_id_section_range_number_relation") == ["equal"]
+    assert objects("source_id_section_range_number_span") == ["0"]
+    assert objects("source_id_section_component_positioned") == ["1:228a", "2:228c"]
+    assert objects("source_id_section_number_positioned") == ["1:228", "2:228"]
+    assert objects("source_id_section_number_digit_count") == ["3"]
+    assert objects("source_id_section_number_digit_count_positioned") == ["1:3", "2:3"]
+    assert objects("source_id_section_primary_number_digit_count") == ["3"]
+    assert objects("source_id_section_terminal_number_digit_count") == ["3"]
+    assert objects("source_id_section_suffix_positioned") == ["1:a", "2:c"]
+    assert objects("source_id_section_suffix_char_count") == ["1"]
+    assert objects("source_id_section_suffix_char_count_positioned") == ["1:1", "2:1"]
+    assert objects("source_id_section_suffix_profile") == ["single"]
+    assert objects("source_id_section_suffix_profile_positioned") == [
+        "1:single",
+        "2:single",
+    ]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_has_suffix") == ["true"]
+    assert objects("source_id_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+    assert objects("source_id_section_has_delimiter") == ["false"]
+    assert objects("source_id_section_delimiter_count") == ["0"]
+    assert objects("source_id_title_section_key") == ["45:228a to 228c"]
+    assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
+
+
+def test_decode_modal_ir_document_emits_suffix_relation_slots() -> None:
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    long_alpha_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_long_alpha_range_sample_document())
+    )
+
+    assert range_slot_map["citation_section_primary_terminal_suffix_pair"] == ["a|c"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_match"] == ["false"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_length_span"] == ["0"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == ["2"]
+    assert range_slot_map["citation_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["citation_section_range_suffix_alpha_span"] == ["2"]
+
+    assert range_slot_map["source_id_section_primary_terminal_suffix_pair"] == ["a|c"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_match"] == ["false"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_length_span"] == ["0"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == ["2"]
+    assert range_slot_map["source_id_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["source_id_section_range_suffix_alpha_span"] == ["2"]
+
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_pair"] == [
+        "tttt|yyyy"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_match"] == [
+        "false"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert (
+        long_alpha_slot_map["citation_section_primary_terminal_suffix_length_relation"]
+        == ["equal"]
+    )
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_length_span"] == [
+        "0"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == [
+        "91395"
+    ]
+    assert long_alpha_slot_map["citation_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["citation_section_range_suffix_alpha_span"] == ["91395"]
+
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_pair"] == [
+        "tttt|yyyy"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_match"] == [
+        "false"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert (
+        long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_relation"]
+        == ["equal"]
+    )
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_span"] == [
+        "0"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == [
+        "91395"
+    ]
+    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_span"] == ["91395"]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_relation_slots() -> None:
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+    long_alpha_triples = modal_ir_to_flogic_triples(_long_alpha_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_pair") == [
+        "a|c"
+    ]
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_match") == [
+        "false"
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_alpha_span",
+    ) == ["2"]
+    assert objects(range_triples, "citation_section_range_suffix_alpha_relation") == [
+        "ascending"
+    ]
+    assert objects(range_triples, "citation_section_range_suffix_alpha_span") == ["2"]
+
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_pair") == [
+        "a|c"
+    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_match") == [
+        "false"
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_alpha_span",
+    ) == ["2"]
+    assert objects(range_triples, "source_id_section_range_suffix_alpha_relation") == [
+        "ascending"
+    ]
+    assert objects(range_triples, "source_id_section_range_suffix_alpha_span") == ["2"]
+
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_pair",
+    ) == ["tttt|yyyy"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_match",
+    ) == ["false"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_alpha_span",
+    ) == ["91395"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_range_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_range_suffix_alpha_span",
+    ) == ["91395"]
+
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_pair",
+    ) == ["tttt|yyyy"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_match",
+    ) == ["false"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_alpha_span",
+    ) == ["91395"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_range_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_range_suffix_alpha_span",
+    ) == ["91395"]
+
+
+def test_decode_modal_ir_document_emits_numeric_section_range_relation_slots() -> None:
+    decoded = decode_modal_ir_document(_numeric_range_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_range"] == ["1381 to 1398"]
+    assert slot_map["citation_section_is_range"] == ["true"]
+    assert slot_map["citation_section_range_has_suffix"] == ["false"]
+    assert slot_map["citation_section_range_number_relation"] == ["ascending"]
+    assert slot_map["citation_section_range_number_span"] == ["17"]
+    assert slot_map["source_id_section_range"] == ["1381 to 1398"]
+    assert slot_map["source_id_section_is_range"] == ["true"]
+    assert slot_map["source_id_section_range_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_range_number_relation"] == ["ascending"]
+    assert slot_map["source_id_section_range_number_span"] == ["17"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_section_range_relation_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_numeric_range_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_range") == ["1381 to 1398"]
+    assert objects("citation_section_is_range") == ["true"]
+    assert objects("citation_section_range_has_suffix") == ["false"]
+    assert objects("citation_section_range_number_relation") == ["ascending"]
+    assert objects("citation_section_range_number_span") == ["17"]
+    assert objects("source_id_section_range") == ["1381 to 1398"]
+    assert objects("source_id_section_is_range") == ["true"]
+    assert objects("source_id_section_range_has_suffix") == ["false"]
+    assert objects("source_id_section_range_number_relation") == ["ascending"]
+    assert objects("source_id_section_range_number_span") == ["17"]
+
+
+def test_decode_modal_ir_document_emits_dot_delimiter_slots() -> None:
+    decoded = decode_modal_ir_document(_dot_delimited_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_has_delimiter"] == ["true"]
+    assert slot_map["citation_section_delimiter"] == ["dot"]
+    assert slot_map["citation_section_delimiter_positioned"] == ["1:dot"]
+    assert slot_map["citation_section_delimiter_token"] == ["."]
+    assert slot_map["citation_section_delimiter_token_positioned"] == ["1:."]
+    assert slot_map["citation_section_delimiter_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["citation_section_delimiter_pattern"] == ["dot"]
+    assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
+
+    assert slot_map["source_id_section_has_delimiter"] == ["true"]
+    assert slot_map["source_id_section_delimiter"] == ["dot"]
+    assert slot_map["source_id_section_delimiter_positioned"] == ["1:dot"]
+    assert slot_map["source_id_section_delimiter_token"] == ["."]
+    assert slot_map["source_id_section_delimiter_token_positioned"] == ["1:."]
+    assert slot_map["source_id_section_delimiter_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["source_id_section_delimiter_pattern"] == ["dot"]
+    assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_dot_delimiter_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_has_delimiter") == ["true"]
+    assert objects("citation_section_delimiter") == ["dot"]
+    assert objects("citation_section_delimiter_positioned") == ["1:dot"]
+    assert objects("citation_section_delimiter_token") == ["."]
+    assert objects("citation_section_delimiter_token_positioned") == ["1:."]
+    assert objects("citation_section_delimiter_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("citation_section_delimiter_pattern") == ["dot"]
+    assert objects("citation_section_delimiter_distinct_count") == ["1"]
+
+    assert objects("source_id_section_has_delimiter") == ["true"]
+    assert objects("source_id_section_delimiter") == ["dot"]
+    assert objects("source_id_section_delimiter_positioned") == ["1:dot"]
+    assert objects("source_id_section_delimiter_token") == ["."]
+    assert objects("source_id_section_delimiter_token_positioned") == ["1:."]
+    assert objects("source_id_section_delimiter_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("source_id_section_delimiter_pattern") == ["dot"]
+    assert objects("source_id_section_delimiter_distinct_count") == ["1"]
+
+
+def test_decode_modal_ir_document_emits_trailing_punct_presence_slots() -> None:
+    decoded = decode_modal_ir_document(_trailing_punct_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_trailing_punct"] == ["."]
+    assert slot_map["citation_section_has_trailing_punct"] == ["true"]
+    assert slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert slot_map["citation_section_trailing_punct_kind"] == ["dot"]
+    assert slot_map["citation_section_has_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["false"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_trailing_punct"] == ["."]
+    assert slot_map["source_id_section_has_trailing_punct"] == ["true"]
+    assert slot_map["source_id_section_trailing_punct_count"] == ["1"]
+    assert slot_map["source_id_section_trailing_punct_kind"] == ["dot"]
+    assert slot_map["source_id_section_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
+
+
+def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_trailing_punct") == ["."]
+    assert objects("citation_section_has_trailing_punct") == ["true"]
+    assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("citation_section_trailing_punct_kind") == ["dot"]
+    assert objects("citation_section_has_suffix") == ["false"]
+    assert objects("citation_section_primary_has_suffix") == ["false"]
+    assert objects("citation_section_terminal_has_suffix") == ["false"]
+    assert objects("source_id_section_trailing_punct") == ["."]
+    assert objects("source_id_section_has_trailing_punct") == ["true"]
+    assert objects("source_id_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section_trailing_punct_kind") == ["dot"]
+    assert objects("source_id_section_has_suffix") == ["false"]
+    assert objects("source_id_section_primary_has_suffix") == ["false"]
+    assert objects("source_id_section_terminal_has_suffix") == ["false"]
+
+
+def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert mixed_slot_map["citation_section_number_suffix_pair"] == ["360|bbb", "0|none"]
+    assert mixed_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert mixed_slot_map["citation_section_primary_number_suffix_pair"] == ["360|bbb"]
+    assert mixed_slot_map["citation_section_terminal_number_suffix_pair"] == ["0|none"]
+    assert mixed_slot_map["source_id_section_number_suffix_pair"] == ["360|bbb", "0|none"]
+    assert mixed_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert mixed_slot_map["source_id_section_primary_number_suffix_pair"] == ["360|bbb"]
+    assert mixed_slot_map["source_id_section_terminal_number_suffix_pair"] == ["0|none"]
+    assert mixed_slot_map["citation_section_component_profile"] == ["compound_mixed"]
+    assert mixed_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "descending"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_number_span"] == ["360"]
+    assert mixed_slot_map["source_id_section_component_profile"] == ["compound_mixed"]
+    assert mixed_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "descending"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_number_span"] == ["360"]
+    assert mixed_slot_map["citation_section_has_hyphen_subsection"] == ["true"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_primary_number"] == ["360"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_primary_suffix"] == ["bbb"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_terminal_number"] == ["0"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_signature"] == ["360bbb-0"]
+    assert mixed_slot_map["source_id_section_has_hyphen_subsection"] == ["true"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_primary_number"] == ["360"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_primary_suffix"] == ["bbb"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_terminal_number"] == ["0"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_signature"] == ["360bbb-0"]
+
+    single_alnum_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_single_component_sample_document())
+    )
+    assert single_alnum_slot_map["citation_section_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:190|l"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["citation_section_terminal_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_terminal_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["citation_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
+    assert single_alnum_slot_map["source_id_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_span"] == [
+        "0"
+    ]
+    assert single_alnum_slot_map["citation_section_has_hyphen_subsection"] == ["false"]
+    assert single_alnum_slot_map["source_id_section_has_hyphen_subsection"] == ["false"]
+
+    single_numeric_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+    assert single_numeric_slot_map["citation_section_number_suffix_pair"] == ["60101|none"]
+    assert single_numeric_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:60101|none"
+    ]
+    assert single_numeric_slot_map["citation_section_primary_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["citation_section_terminal_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_number_suffix_pair"] == ["60101|none"]
+    assert single_numeric_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_primary_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_terminal_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["citation_section_component_profile"] == [
+        "single_numeric"
+    ]
+    assert single_numeric_slot_map["source_id_section_component_profile"] == [
+        "single_numeric"
+    ]
+    assert single_numeric_slot_map["citation_section_has_hyphen_subsection"] == [
+        "false"
+    ]
+    assert single_numeric_slot_map["source_id_section_has_hyphen_subsection"] == [
+        "false"
+    ]
+
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    assert range_slot_map["citation_section_number_suffix_pair"] == ["228|a", "228|c"]
+    assert range_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert range_slot_map["citation_section_primary_number_suffix_pair"] == ["228|a"]
+    assert range_slot_map["citation_section_terminal_number_suffix_pair"] == ["228|c"]
+    assert range_slot_map["source_id_section_number_suffix_pair"] == ["228|a", "228|c"]
+    assert range_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert range_slot_map["source_id_section_primary_number_suffix_pair"] == ["228|a"]
+    assert range_slot_map["source_id_section_terminal_number_suffix_pair"] == ["228|c"]
+    assert range_slot_map["citation_section_component_profile"] == ["range"]
+    assert range_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
+    assert range_slot_map["source_id_section_component_profile"] == ["range"]
+    assert range_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_number_span"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(_sample_document())
+    single_alnum_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+    single_numeric_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(mixed_triples, "citation_section_component_profile") == [
+        "compound_mixed"
+    ]
+    assert objects(mixed_triples, "citation_section_number_suffix_pair") == [
+        "360|bbb",
+        "0|none",
+    ]
+    assert objects(mixed_triples, "citation_section_number_suffix_pair_positioned") == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert objects(mixed_triples, "citation_section_primary_number_suffix_pair") == [
+        "360|bbb"
+    ]
+    assert objects(mixed_triples, "citation_section_terminal_number_suffix_pair") == [
+        "0|none"
+    ]
+    assert objects(mixed_triples, "source_id_section_number_suffix_pair") == [
+        "360|bbb",
+        "0|none",
+    ]
+    assert objects(mixed_triples, "source_id_section_number_suffix_pair_positioned") == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_number_suffix_pair") == [
+        "360|bbb"
+    ]
+    assert objects(mixed_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "0|none"
+    ]
+    assert objects(mixed_triples, "citation_section_primary_terminal_number_relation") == [
+        "descending"
+    ]
+    assert objects(mixed_triples, "citation_section_primary_terminal_number_span") == [
+        "360"
+    ]
+    assert objects(mixed_triples, "source_id_section_component_profile") == [
+        "compound_mixed"
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_terminal_number_relation") == [
+        "descending"
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_terminal_number_span") == [
+        "360"
+    ]
+    assert objects(mixed_triples, "citation_section_has_hyphen_subsection") == ["true"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_primary_number",
+    ) == ["360"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_primary_suffix",
+    ) == ["bbb"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_terminal_number",
+    ) == ["0"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_signature",
+    ) == ["360bbb-0"]
+    assert objects(mixed_triples, "source_id_section_has_hyphen_subsection") == ["true"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_primary_number",
+    ) == ["360"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_primary_suffix",
+    ) == ["bbb"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_terminal_number",
+    ) == ["0"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_signature",
+    ) == ["360bbb-0"]
+
+    assert objects(single_alnum_triples, "citation_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(single_alnum_triples, "citation_section_number_suffix_pair") == ["190|l"]
+    assert objects(
+        single_alnum_triples,
+        "citation_section_number_suffix_pair_positioned",
+    ) == ["1:190|l"]
+    assert objects(single_alnum_triples, "citation_section_primary_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "citation_section_terminal_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_number_suffix_pair") == ["190|l"]
+    assert objects(
+        single_alnum_triples,
+        "source_id_section_number_suffix_pair_positioned",
+    ) == ["1:190|l"]
+    assert objects(single_alnum_triples, "source_id_section_primary_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_span") == [
+        "0"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_span") == [
+        "0"
+    ]
+    assert objects(single_alnum_triples, "citation_section_has_hyphen_subsection") == [
+        "false"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_has_hyphen_subsection") == [
+        "false"
+    ]
+
+    assert objects(single_numeric_triples, "citation_section_component_profile") == [
+        "single_numeric"
+    ]
+    assert objects(single_numeric_triples, "citation_section_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(
+        single_numeric_triples,
+        "citation_section_number_suffix_pair_positioned",
+    ) == ["1:60101|none"]
+    assert objects(single_numeric_triples, "citation_section_primary_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "citation_section_terminal_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(
+        single_numeric_triples,
+        "source_id_section_number_suffix_pair_positioned",
+    ) == ["1:60101|none"]
+    assert objects(single_numeric_triples, "source_id_section_primary_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_component_profile") == [
+        "single_numeric"
+    ]
+    assert objects(single_numeric_triples, "citation_section_has_hyphen_subsection") == [
+        "false"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_has_hyphen_subsection") == [
+        "false"
+    ]
+
+    assert objects(range_triples, "citation_section_component_profile") == ["range"]
+    assert objects(range_triples, "citation_section_number_suffix_pair") == [
+        "228|a",
+        "228|c",
+    ]
+    assert objects(range_triples, "citation_section_number_suffix_pair_positioned") == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert objects(range_triples, "citation_section_primary_number_suffix_pair") == ["228|a"]
+    assert objects(range_triples, "citation_section_terminal_number_suffix_pair") == ["228|c"]
+    assert objects(range_triples, "source_id_section_number_suffix_pair") == [
+        "228|a",
+        "228|c",
+    ]
+    assert objects(range_triples, "source_id_section_number_suffix_pair_positioned") == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert objects(range_triples, "source_id_section_primary_number_suffix_pair") == ["228|a"]
+    assert objects(range_triples, "source_id_section_terminal_number_suffix_pair") == ["228|c"]
+    assert objects(range_triples, "citation_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(range_triples, "citation_section_primary_terminal_number_span") == [
+        "0"
+    ]
+    assert objects(range_triples, "source_id_section_component_profile") == ["range"]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_span") == [
+        "0"
+    ]
+
+
+def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:
+    sample = _sample_document()
+    document = ModalIRDocument(
+        document_id=sample.document_id,
+        source=sample.source,
+        normalized_text=sample.normalized_text,
+        formulas=list(sample.formulas),
+        metadata={
+            "modal_family_counts": {
+                "deontic": 2,
+                "temporal": 1,
+            }
+        },
+    )
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_family_count"] == ["deontic:2", "temporal:1"]
+    assert slot_map["modal_family_count_ranked"] == [
+        "1:deontic:2",
+        "2:temporal:1",
+    ]
+    assert slot_map["modal_family_count_family"] == ["deontic", "temporal"]
+    assert slot_map["modal_family_count_value"] == ["2", "1"]
+    assert slot_map["modal_family_count_value_parity"] == ["even", "odd"]
+    assert slot_map["modal_family_count_value_digit_count_bucket"] == ["1_digit"]
+    assert slot_map["modal_family_count_value_has_zero_digit"] == ["false"]
+    assert slot_map["modal_family_count_deontic"] == ["2"]
+    assert slot_map["modal_family_count_deontic_parity"] == ["even"]
+    assert slot_map["modal_family_count_temporal"] == ["1"]
+    assert slot_map["modal_family_count_temporal_parity"] == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() -> None:
+    sample = _sample_document()
+    document = ModalIRDocument(
+        document_id=sample.document_id,
+        source=sample.source,
+        normalized_text=sample.normalized_text,
+        formulas=list(sample.formulas),
+        metadata={
+            "modal_family_counts": {
+                "deontic": 2,
+                "temporal": 1,
+            }
+        },
+    )
+    triples = modal_ir_to_flogic_triples(document)
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_family_count") == ["deontic:2", "temporal:1"]
+    assert objects("modal_family_count_ranked") == [
+        "1:deontic:2",
+        "2:temporal:1",
+    ]
+    assert objects("modal_family_count_family") == ["deontic", "temporal"]
+    assert objects("modal_family_count_value") == ["2", "1"]
+    assert objects("modal_family_count_value_parity") == ["even", "odd"]
+    assert objects("modal_family_count_value_digit_count_bucket") == ["1_digit"]
+    assert objects("modal_family_count_value_has_zero_digit") == ["false"]
+    assert objects("modal_family_count_deontic") == ["2"]
+    assert objects("modal_family_count_deontic_parity") == ["even"]
+    assert objects("modal_family_count_temporal") == ["1"]
+    assert objects("modal_family_count_temporal_parity") == ["odd"]
+
+
+def test_decode_modal_ir_document_derives_modal_family_count_slots_from_formulas() -> None:
+    decoded = decode_modal_ir_document(_single_formula_temporal_family_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_family_count"] == ["temporal:1"]
+    assert slot_map["modal_family_count_ranked"] == ["1:temporal:1"]
+    assert slot_map["modal_family_count_family"] == ["temporal"]
+    assert slot_map["modal_family_count_value"] == ["1"]
+    assert slot_map["modal_family_count_value_parity"] == ["odd"]
+    assert slot_map["modal_family_count_temporal_parity"] == ["odd"]
+    assert slot_map["modal_family_count_temporal"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_derives_modal_family_count_slots_from_formulas() -> None:
+    triples = modal_ir_to_flogic_triples(_single_formula_temporal_family_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_family_count") == ["temporal:1"]
+    assert objects("modal_family_count_ranked") == ["1:temporal:1"]
+    assert objects("modal_family_count_family") == ["temporal"]
+    assert objects("modal_family_count_value") == ["1"]
+    assert objects("modal_family_count_value_parity") == ["odd"]
+    assert objects("modal_family_count_temporal_parity") == ["odd"]
+    assert objects("modal_family_count_temporal") == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_metadata() -> None:
+    triples = modal_ir_to_flogic_triples(_metadata_only_frame_terms_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
+    assert objects("candidate_ontology_frame") == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "housing_voucher_benefits",
+    ]
+    assert objects("candidate_ontology_frame_rank") == ["1", "2", "3"]
+    assert objects("candidate_ontology_frame_ranked") == [
+        "1:administrative_notice_hearing",
+        "2:criminal_penalty_enforcement",
+        "3:housing_voucher_benefits",
+    ]
+    assert objects("candidate_ontology_frame_rank_parity") == ["odd", "even", "odd"]
+    assert objects("candidate_ontology_frame_rank_digit_count_bucket") == [
+        "1_digit",
+        "1_digit",
+        "1_digit",
+    ]
+    assert objects("candidate_ontology_frame_ranked_token_prefix") == [
+        "1:administrative",
+        "2:criminal",
+        "3:housing",
+    ]
+    assert objects("candidate_ontology_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "criminal",
+        "enforcement",
+        "penalty",
+        "accommodation",
+        "housing",
+        "voucher",
+    ]
+    assert objects("selected_ontology_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "26_646",
+    ]
+    assert objects("interpreted_in_frame") == ["administrative_notice_hearing"]
+    assert objects("interpreted_in_frame_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "26_646",
+    ]
+    assert objects("frame_grounding_profile") == [
+        "administrative_notice_hearing|rank:1|terms:6|candidates:3"
+    ]
+    assert objects("frame_grounding_selected_frame") == [
+        "administrative_notice_hearing"
+    ]
+    assert objects("frame_grounding_selected_rank") == ["1"]
+    assert objects("frame_grounding_selected_term_count") == ["6"]
+    assert objects("frame_grounding_candidate_count") == ["3"]
+    assert objects("frame_grounding_selected_term_ranked") == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+        "6:26_646",
+    ]
+    assert objects("frame_grounding_modal_family") == ["temporal"]
+    assert objects("frame_grounding_modal_family_count") == ["temporal:1"]
+    assert objects("frame_grounding_family_profile") == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:6"
+    ]
+
+
+def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() -> None:
+    decoded = decode_modal_ir_document(_metadata_only_frame_terms_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["selected_ontology_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["interpreted_in_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["candidate_ontology_frame"] == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "housing_voucher_benefits",
+    ]
+    assert slot_map["candidate_ontology_frame_rank"] == ["1", "2", "3"]
+    assert slot_map["candidate_ontology_frame_ranked"] == [
+        "1:administrative_notice_hearing",
+        "2:criminal_penalty_enforcement",
+        "3:housing_voucher_benefits",
+    ]
+    assert slot_map["candidate_ontology_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "criminal",
+        "enforcement",
+        "penalty",
+        "accommodation",
+        "housing",
+        "voucher",
+    ]
+    assert slot_map["selected_ontology_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
+    assert slot_map["interpreted_in_frame_term"] == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
+    assert slot_map["frame_grounding_profile"] == [
+        "administrative_notice_hearing|rank:1|terms:5|candidates:3"
+    ]
+    assert slot_map["frame_grounding_selected_frame"] == [
+        "administrative_notice_hearing"
+    ]
+    assert slot_map["frame_grounding_selected_rank"] == ["1"]
+    assert slot_map["frame_grounding_selected_term_count"] == ["5"]
+    assert slot_map["frame_grounding_candidate_count"] == ["3"]
+    assert slot_map["frame_grounding_selected_term_ranked"] == [
+        "1:administrative",
+        "2:administrative_notice_hearing",
+        "3:agency",
+        "4:appeal",
+        "5:deadline",
+    ]
+    assert slot_map["frame_grounding_modal_family"] == ["temporal"]
+    assert slot_map["frame_grounding_modal_family_count"] == ["temporal:1"]
+    assert slot_map["frame_grounding_family_profile"] == [
+        "administrative_notice_hearing|family:temporal|count:1|rank:1|terms:5"
+    ]
+
+
+def test_decode_modal_ir_document_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+    decoded = decode_modal_ir_document(
+        _metadata_only_frame_terms_without_selected_frame_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["selected_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["selected_ontology_frame"] == ["administrative_notice_hearing"]
+    assert slot_map["selected_frame_modal_family"] == ["temporal"]
+    assert slot_map["selected_frame_modal_family_count_value"] == ["1"]
+    assert slot_map["selected_frame_modal_family_temporal_parity"] == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _metadata_only_frame_terms_without_selected_frame_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
+    assert objects("selected_frame_modal_family") == ["temporal"]
+    assert objects("selected_frame_modal_family_count_value") == ["1"]
+    assert objects("selected_frame_modal_family_temporal_parity") == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formulas() -> None:
+    triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["50 U.S.C. 3091."]
+    assert objects("citation_canonical") == ["50 U.S.C. 3091"]
+    assert objects("citation_section") == ["3091"]
+    assert objects("citation_section_trailing_punct") == ["."]
+    assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section") == ["3091."]
+    assert objects("source_id_section_normalized") == ["3091"]
+    assert objects("source_id_section_trailing_punct") == ["."]
+    assert objects("source_id_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_citation_canonical") == ["50 U.S.C. 3091"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_title_match") == ["true"]
+    assert objects("citation_source_id_section_match") == ["true"]
+    assert objects("citation_source_id_title_section_key_match") == ["true"]
+    assert objects("citation_source_id_canonical_match") == ["true"]
+    assert objects("citation_source_id_section_raw_match") == ["true"]
+    assert objects("citation_source_id_section_raw_pair") == ["3091.|3091."]
+    assert objects("citation_source_id_section_trailing_punct_presence_match") == ["true"]
+    assert objects("citation_source_id_section_trailing_punct_match") == ["true"]
+    assert objects("citation_source_id_section_trailing_punct_pair") == [".|."]
+
+
+def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_slots_when_no_formulas() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_title_match"] == ["true"]
+    assert slot_map["citation_source_id_section_match"] == ["true"]
+    assert slot_map["citation_source_id_title_section_key_match"] == ["true"]
+    assert slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert slot_map["citation_source_id_section_raw_match"] == ["true"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["3091.|3091."]
+    assert slot_map["citation_source_id_section_trailing_punct_presence_match"] == ["true"]
+    assert slot_map["citation_source_id_section_trailing_punct_match"] == ["true"]
+    assert slot_map["citation_source_id_section_trailing_punct_pair"] == [".|."]
+
+
+def test_decode_modal_ir_document_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_source_id_only_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation"] == ["22 U.S.C. 7636"]
+    assert slot_map["citation_derivation"] == ["source_id_inferred"]
+    assert slot_map["citation_canonical"] == ["22 U.S.C. 7636"]
+    assert slot_map["citation_section"] == ["7636"]
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["7636|7636"]
+
+
+def test_modal_ir_to_flogic_triples_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+    triples = modal_ir_to_flogic_triples(_zero_formula_source_id_only_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["22 U.S.C. 7636"]
+    assert objects("citation_derivation") == ["source_id_inferred"]
+    assert objects("citation_canonical") == ["22 U.S.C. 7636"]
+    assert objects("citation_section") == ["7636"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_section_raw_pair") == ["7636|7636"]
+
+
+def test_decode_modal_ir_document_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+    decoded = decode_modal_ir_document(_formula_missing_citation_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation"] == ["18 U.S.C. 1719"]
+    assert slot_map["citation_derivation"] == ["source_id_inferred"]
+    assert slot_map["citation_canonical"] == ["18 U.S.C. 1719"]
+    assert slot_map["citation_section"] == ["1719"]
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["1719|1719"]
+
+
+def test_modal_ir_to_flogic_triples_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+    triples = modal_ir_to_flogic_triples(_formula_missing_citation_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["18 U.S.C. 1719"]
+    assert objects("citation_derivation") == ["source_id_inferred"]
+    assert objects("citation_canonical") == ["18 U.S.C. 1719"]
+    assert objects("citation_section") == ["1719"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_section_raw_pair") == ["1719|1719"]
+
+
+def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_dot_delimited_sample_document())
+    )
+
+    assert slot_map["citation_title_number_parity"] == ["even"]
+    assert slot_map["citation_title_number_leading_digit"] == ["4"]
+    assert slot_map["citation_title_number_trailing_two_digits"] == ["42"]
+    assert slot_map["citation_title_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_title_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_title_number_trailing_zero_count"] == ["0"]
+    assert slot_map["source_id_title_number_parity"] == ["even"]
+    assert slot_map["source_id_title_number_leading_digit"] == ["4"]
+    assert slot_map["source_id_title_number_trailing_two_digits"] == ["42"]
+    assert slot_map["source_id_title_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_title_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_title_number_trailing_zero_count"] == ["0"]
+
+    assert slot_map["citation_section_number_parity"] == ["even", "odd"]
+    assert slot_map["citation_section_number_parity_positioned"] == ["1:even", "2:odd"]
+    assert slot_map["citation_section_number_leading_digit_positioned"] == ["1:1", "2:1"]
+    assert slot_map["citation_section_number_trailing_two_digits_positioned"] == [
+        "1:96",
+        "2:1",
+    ]
+    assert slot_map["citation_section_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_number_zero_digit_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["citation_section_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_number_has_zero_digit_positioned"] == [
+        "1:false",
+        "2:false",
+    ]
+    assert slot_map["citation_section_number_trailing_zero_count"] == ["0"]
+    assert slot_map["citation_section_number_trailing_zero_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["citation_section_primary_number_parity"] == ["even"]
+    assert slot_map["citation_section_primary_number_leading_digit"] == ["1"]
+    assert slot_map["citation_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["citation_section_primary_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_primary_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_primary_number_trailing_zero_count"] == ["0"]
+    assert slot_map["citation_section_terminal_number_parity"] == ["odd"]
+    assert slot_map["citation_section_terminal_number_leading_digit"] == ["1"]
+    assert slot_map["citation_section_terminal_number_trailing_two_digits"] == ["1"]
+    assert slot_map["citation_section_terminal_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_terminal_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_terminal_number_trailing_zero_count"] == ["0"]
+
+    assert slot_map["source_id_section_number_parity"] == ["even", "odd"]
+    assert slot_map["source_id_section_number_parity_positioned"] == ["1:even", "2:odd"]
+    assert slot_map["source_id_section_number_leading_digit_positioned"] == [
+        "1:1",
+        "2:1",
+    ]
+    assert slot_map["source_id_section_number_trailing_two_digits_positioned"] == [
+        "1:96",
+        "2:1",
+    ]
+    assert slot_map["source_id_section_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_number_zero_digit_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["source_id_section_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_number_has_zero_digit_positioned"] == [
+        "1:false",
+        "2:false",
+    ]
+    assert slot_map["source_id_section_number_trailing_zero_count"] == ["0"]
+    assert slot_map["source_id_section_number_trailing_zero_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["source_id_section_primary_number_parity"] == ["even"]
+    assert slot_map["source_id_section_primary_number_leading_digit"] == ["1"]
+    assert slot_map["source_id_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["source_id_section_primary_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_primary_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_primary_number_trailing_zero_count"] == ["0"]
+    assert slot_map["source_id_section_terminal_number_parity"] == ["odd"]
+    assert slot_map["source_id_section_terminal_number_leading_digit"] == ["1"]
+    assert slot_map["source_id_section_terminal_number_trailing_two_digits"] == ["1"]
+    assert slot_map["source_id_section_terminal_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_terminal_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_terminal_number_trailing_zero_count"] == ["0"]
+
+    zero_digit_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_zero_digit_signature_sample_document())
+    )
+    assert zero_digit_slot_map["citation_title_number_zero_digit_count"] == ["0"]
+    assert zero_digit_slot_map["citation_title_number_has_zero_digit"] == ["false"]
+    assert zero_digit_slot_map["citation_title_number_trailing_zero_count"] == ["0"]
+    assert zero_digit_slot_map["citation_section_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["citation_section_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["citation_section_number_trailing_zero_count"] == ["1"]
+    assert zero_digit_slot_map["citation_section_number_zero_digit_count_positioned"] == [
+        "1:1"
+    ]
+    assert zero_digit_slot_map["citation_section_number_has_zero_digit_positioned"] == [
+        "1:true"
+    ]
+    assert zero_digit_slot_map[
+        "citation_section_number_trailing_zero_count_positioned"
+    ] == ["1:1"]
+    assert zero_digit_slot_map["citation_section_primary_number_zero_digit_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["citation_section_primary_number_has_zero_digit"] == [
+        "true"
+    ]
+    assert zero_digit_slot_map["citation_section_primary_number_trailing_zero_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["source_id_section_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["source_id_section_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["source_id_section_number_trailing_zero_count"] == ["1"]
+    assert zero_digit_slot_map["source_id_section_primary_number_zero_digit_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["source_id_section_primary_number_has_zero_digit"] == [
+        "true"
+    ]
+    assert zero_digit_slot_map["source_id_section_primary_number_trailing_zero_count"] == [
+        "1"
+    ]
+
+    odd_title_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert odd_title_slot_map["citation_title_number_parity"] == ["odd"]
+    assert odd_title_slot_map["source_id_title_number_parity"] == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_title_number_parity") == ["even"]
+    assert objects("citation_title_number_leading_digit") == ["4"]
+    assert objects("citation_title_number_trailing_two_digits") == ["42"]
+    assert objects("citation_title_number_zero_digit_count") == ["0"]
+    assert objects("citation_title_number_has_zero_digit") == ["false"]
+    assert objects("citation_title_number_trailing_zero_count") == ["0"]
+    assert objects("source_id_title_number_parity") == ["even"]
+    assert objects("source_id_title_number_leading_digit") == ["4"]
+    assert objects("source_id_title_number_trailing_two_digits") == ["42"]
+    assert objects("source_id_title_number_zero_digit_count") == ["0"]
+    assert objects("source_id_title_number_has_zero_digit") == ["false"]
+    assert objects("source_id_title_number_trailing_zero_count") == ["0"]
+
+    assert objects("citation_section_number_parity") == ["even", "odd"]
+    assert objects("citation_section_number_parity_positioned") == ["1:even", "2:odd"]
+    assert objects("citation_section_number_leading_digit_positioned") == ["1:1", "2:1"]
+    assert objects("citation_section_number_trailing_two_digits_positioned") == [
+        "1:96",
+        "2:1",
+    ]
+    assert objects("citation_section_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_number_zero_digit_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("citation_section_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_number_has_zero_digit_positioned") == [
+        "1:false",
+        "2:false",
+    ]
+    assert objects("citation_section_number_trailing_zero_count") == ["0"]
+    assert objects("citation_section_number_trailing_zero_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("citation_section_primary_number_parity") == ["even"]
+    assert objects("citation_section_primary_number_leading_digit") == ["1"]
+    assert objects("citation_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("citation_section_primary_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_primary_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_primary_number_trailing_zero_count") == ["0"]
+    assert objects("citation_section_terminal_number_parity") == ["odd"]
+    assert objects("citation_section_terminal_number_leading_digit") == ["1"]
+    assert objects("citation_section_terminal_number_trailing_two_digits") == ["1"]
+    assert objects("citation_section_terminal_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_terminal_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_terminal_number_trailing_zero_count") == ["0"]
+
+    assert objects("source_id_section_number_parity") == ["even", "odd"]
+    assert objects("source_id_section_number_parity_positioned") == ["1:even", "2:odd"]
+    assert objects("source_id_section_number_leading_digit_positioned") == ["1:1", "2:1"]
+    assert objects("source_id_section_number_trailing_two_digits_positioned") == [
+        "1:96",
+        "2:1",
+    ]
+    assert objects("source_id_section_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_number_zero_digit_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("source_id_section_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_number_has_zero_digit_positioned") == [
+        "1:false",
+        "2:false",
+    ]
+    assert objects("source_id_section_number_trailing_zero_count") == ["0"]
+    assert objects("source_id_section_number_trailing_zero_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("source_id_section_primary_number_parity") == ["even"]
+    assert objects("source_id_section_primary_number_leading_digit") == ["1"]
+    assert objects("source_id_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("source_id_section_primary_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_primary_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_primary_number_trailing_zero_count") == ["0"]
+    assert objects("source_id_section_terminal_number_parity") == ["odd"]
+    assert objects("source_id_section_terminal_number_leading_digit") == ["1"]
+    assert objects("source_id_section_terminal_number_trailing_two_digits") == ["1"]
+    assert objects("source_id_section_terminal_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_terminal_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_terminal_number_trailing_zero_count") == ["0"]
+
+    zero_digit_triples = modal_ir_to_flogic_triples(_zero_digit_signature_sample_document())
+
+    def zero_digit_objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in zero_digit_triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert zero_digit_objects("citation_title_number_zero_digit_count") == ["0"]
+    assert zero_digit_objects("citation_title_number_has_zero_digit") == ["false"]
+    assert zero_digit_objects("citation_title_number_trailing_zero_count") == ["0"]
+    assert zero_digit_objects("citation_section_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("citation_section_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("citation_section_number_trailing_zero_count") == ["1"]
+    assert zero_digit_objects("citation_section_number_zero_digit_count_positioned") == [
+        "1:1"
+    ]
+    assert zero_digit_objects("citation_section_number_has_zero_digit_positioned") == [
+        "1:true"
+    ]
+    assert zero_digit_objects("citation_section_number_trailing_zero_count_positioned") == [
+        "1:1"
+    ]
+    assert zero_digit_objects("citation_section_primary_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("citation_section_primary_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("citation_section_primary_number_trailing_zero_count") == [
+        "1"
+    ]
+    assert zero_digit_objects("source_id_section_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("source_id_section_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("source_id_section_number_trailing_zero_count") == ["1"]
+    assert zero_digit_objects("source_id_section_primary_number_zero_digit_count") == [
+        "1"
+    ]
+    assert zero_digit_objects("source_id_section_primary_number_has_zero_digit") == [
+        "true"
+    ]
+    assert zero_digit_objects("source_id_section_primary_number_trailing_zero_count") == [
+        "1"
+    ]
+
+    odd_title_triples = modal_ir_to_flogic_triples(_sample_document())
+
+    def odd_title_objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in odd_title_triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert odd_title_objects("citation_title_number_parity") == ["odd"]
+    assert odd_title_objects("source_id_title_number_parity") == ["odd"]
+
+
+def test_decode_modal_ir_document_emits_usc_section_marker_variant_slots() -> None:
+    section_marker_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_section_marker_sample_document())
+    )
+    assert section_marker_slot_map["citation"] == ["2 U.S.C. §190l"]
+    assert section_marker_slot_map["citation_canonical"] == ["2 U.S.C. 190l"]
+    assert section_marker_slot_map["citation_section"] == ["190l"]
+    assert section_marker_slot_map["citation_section_primary"] == ["190l"]
+    assert section_marker_slot_map["citation_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert section_marker_slot_map["citation_section_has_delimiter"] == ["false"]
+    assert section_marker_slot_map["citation_section_delimiter_count"] == ["0"]
+    assert section_marker_slot_map["citation_section_primary_suffix"] == ["l"]
+    assert section_marker_slot_map["citation_section_suffix_kind"] == ["alpha"]
+
+    plural_marker_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_plural_section_marker_range_sample_document())
+    )
+    assert plural_marker_slot_map["citation"] == ["45 U.S.C. §§ 228a to 228c."]
+    assert plural_marker_slot_map["citation_canonical"] == ["45 U.S.C. 228a to 228c"]
+    assert plural_marker_slot_map["citation_section"] == ["228a to 228c"]
+    assert plural_marker_slot_map["citation_section_range"] == ["228a to 228c"]
+    assert plural_marker_slot_map["citation_section_range_start"] == ["228a"]
+    assert plural_marker_slot_map["citation_section_range_end"] == ["228c"]
+    assert plural_marker_slot_map["citation_section_range_connector"] == ["to"]
+    assert plural_marker_slot_map["citation_section_trailing_punct"] == ["."]
+    assert plural_marker_slot_map["citation_section_has_trailing_punct"] == ["true"]
+    assert plural_marker_slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert plural_marker_slot_map["citation_section_trailing_punct_kind"] == ["dot"]
+
+
+def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> None:
+    section_marker_triples = modal_ir_to_flogic_triples(_section_marker_sample_document())
+    plural_marker_triples = modal_ir_to_flogic_triples(
+        _plural_section_marker_range_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(section_marker_triples, "citation") == ["2 U.S.C. §190l"]
+    assert objects(section_marker_triples, "citation_canonical") == ["2 U.S.C. 190l"]
+    assert objects(section_marker_triples, "citation_section") == ["190l"]
+    assert objects(section_marker_triples, "citation_section_primary") == ["190l"]
+    assert objects(section_marker_triples, "citation_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(section_marker_triples, "citation_section_has_delimiter") == ["false"]
+    assert objects(section_marker_triples, "citation_section_delimiter_count") == ["0"]
+    assert objects(section_marker_triples, "citation_section_primary_suffix") == ["l"]
+    assert objects(section_marker_triples, "citation_section_suffix_kind") == ["alpha"]
+
+    assert objects(plural_marker_triples, "citation") == ["45 U.S.C. §§ 228a to 228c."]
+    assert objects(plural_marker_triples, "citation_canonical") == [
+        "45 U.S.C. 228a to 228c"
+    ]
+    assert objects(plural_marker_triples, "citation_section") == ["228a to 228c"]
+    assert objects(plural_marker_triples, "citation_section_range") == ["228a to 228c"]
+    assert objects(plural_marker_triples, "citation_section_range_start") == ["228a"]
+    assert objects(plural_marker_triples, "citation_section_range_end") == ["228c"]
+    assert objects(plural_marker_triples, "citation_section_range_connector") == ["to"]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct") == ["."]
+    assert objects(plural_marker_triples, "citation_section_has_trailing_punct") == [
+        "true"
+    ]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == [
+        "1"
+    ]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_kind") == [
+        "dot"
+    ]
+
+
+def test_decode_modal_ir_document_emits_section_heading_tail_for_coarse_fallback() -> None:
+    decoded = decode_modal_ir_document(_coarse_heading_tail_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_rule"] == ["uscode_section_heading_coarse_v1"]
+    assert slot_map["section_heading_tail"] == ["Student aid program improvements"]
+    assert slot_map["fallback_surface_text"] == ["Student aid program improvements"]
+    assert slot_map["section_heading_tail_token_count"] == ["4"]
+    assert slot_map["section_heading_tail_token_suffix"] == ["improvements"]
+    assert slot_map["fallback_surface_text_token_count"] == ["4"]
+    assert slot_map["fallback_surface_text_token_suffix"] == ["improvements"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallback() -> None:
+    triples = modal_ir_to_flogic_triples(_coarse_heading_tail_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_rule") == ["uscode_section_heading_coarse_v1"]
+    assert objects("section_heading_tail") == ["Student aid program improvements"]
+    assert objects("fallback_surface_text") == ["Student aid program improvements"]
+    assert objects("section_heading_tail_token_count") == ["4"]
+    assert objects("section_heading_tail_token_suffix") == ["improvements"]
+    assert objects("fallback_surface_text_token_count") == ["4"]
+    assert objects("fallback_surface_text_token_suffix") == ["improvements"]
+
+
+def test_decode_modal_ir_document_normalizes_status_heading_section_label() -> None:
+    decoded = decode_modal_ir_document(_status_heading_section_label_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_rule"] == ["uscode_transferred_heading_v1"]
+    assert slot_map["status_keyword"] == ["transferred"]
+    assert slot_map["fallback_surface_text"] == ["transferred"]
+    assert slot_map["fallback_surface_text_token"] == ["transferred"]
+    assert slot_map["fallback_surface_text_alnum_segment_count"] == ["1"]
+    assert slot_map["fallback_surface_text_alnum_segment_kind_positioned"] == [
+        "1:alpha"
+    ]
+    assert slot_map["fallback_surface_text_modal_signature"] == [
+        "frame:Frame:transferred"
+    ]
+    assert slot_map["fallback_surface_text_modal_bridge_signature"] == [
+        "dynamic:[a]:transferred"
+    ]
+    assert slot_map["fallback_surface_text_modal_bridge_family"] == ["dynamic"]
+    assert slot_map["fallback_surface_text_modal_bridge_operator"] == ["[a]"]
+
+
+def test_modal_ir_to_flogic_triples_normalizes_status_heading_section_label() -> None:
+    triples = modal_ir_to_flogic_triples(_status_heading_section_label_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_rule") == ["uscode_transferred_heading_v1"]
+    assert objects("status_keyword") == ["transferred"]
+    assert objects("fallback_surface_text") == ["transferred"]
+    assert objects("fallback_surface_text_token") == ["transferred"]
+    assert objects("fallback_surface_text_alnum_segment_count") == ["1"]
+    assert objects("fallback_surface_text_alnum_segment_kind_positioned") == [
+        "1:alpha"
+    ]
+    assert objects("fallback_surface_text_modal_signature") == [
+        "frame:Frame:transferred"
+    ]
+    assert objects("fallback_surface_text_modal_bridge_signature") == [
+        "dynamic:[a]:transferred"
+    ]
+    assert objects("fallback_surface_text_modal_bridge_family") == ["dynamic"]
+    assert objects("fallback_surface_text_modal_bridge_operator") == ["[a]"]
+
+
+def test_decode_modal_ir_document_emits_canonical_operator_label_slot() -> None:
+    decoded = decode_modal_ir_document(_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_operator_label"] == ["obligatory"]
+    assert slot_map["modal_operator_label_canonical"] == ["obligation"]
+    assert slot_map["modal_operator_label_canonical_token"] == ["obligation"]
+    assert slot_map["modal_operator_label_canonical_stem"] == ["obligation"]
+
+
+def test_modal_ir_to_flogic_triples_emit_canonical_operator_label_slot() -> None:
+    triples = modal_ir_to_flogic_triples(_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_operator_label") == ["obligatory"]
+    assert objects("modal_operator_label_canonical") == ["obligation"]
+    assert objects("modal_operator_label_canonical_token") == ["obligation"]
+    assert objects("modal_operator_label_canonical_stem") == ["obligation"]
+
+
+def test_decode_modal_ir_document_avoids_low_information_fallback_surface_text() -> None:
+    decoded = decode_modal_ir_document(_low_information_fallback_surface_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["status_keyword"] == ["repealed"]
+    assert slot_map["fallback_surface_text"] == ["repealed"]
+    assert slot_map["fallback_surface_text_token"] == ["repealed"]
+    assert "sec" not in slot_map["fallback_surface_text_token"]
+
+
+def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text() -> None:
+    triples = modal_ir_to_flogic_triples(_low_information_fallback_surface_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("status_keyword") == ["repealed"]
+    assert objects("fallback_surface_text") == ["repealed"]
+    assert objects("fallback_surface_text_token") == ["repealed"]
+    assert "sec" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() -> None:
+    decoded = decode_modal_ir_document(
+        _omitted_codification_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert slot_map["source_status_clause"] == [expected_clause]
+    assert "terminated" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert "omitted" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert any(
+        expected_clause in text
+        for text in slot_map["typed_ir_surface_reconstruction"]
+    )
+    assert "frame->conditional_normative" in slot_map[
+        "typed_decompiler_family_pair"
+    ]
+
+
+def test_decode_modal_ir_document_extends_short_repealed_public_law_status_clause() -> None:
+    decoded = decode_modal_ir_document(
+        _repealed_public_law_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Repealed Pub. L. 93-383, title II, §204, Aug. 22, 1974, "
+        "88 Stat. 668 Section, act Aug. 2, 1954, ch. 649, title VIII, "
+        "§815, 68 Stat. 647, required submission of specifications by "
+        "applicants prior to award of any contract for construction"
+    )
+    assert slot_map["source_status_clause"] == [expected_clause]
+    assert "repealed" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert "obligation" in slot_map["source_status_clause_legal_semantic_atom"]
+    assert expected_clause in slot_map["typed_ir_surface_reconstruction"]
+
+
+def test_decode_modal_ir_document_keeps_status_surface_audit_only() -> None:
+    decoded = decode_modal_ir_document(
+        _omitted_codification_status_clause_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert slot_map["typed_ir_surface_reconstruction"] == [expected_clause]
+    assert decoded.text.count(expected_clause) == 1
+
+
+def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _omitted_codification_status_clause_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    expected_clause = (
+        "Sections were omitted pursuant to section 5316 of this title which "
+        "terminated the authority to make grants or loans under this chapter "
+        "after Jan. 1, 1975"
+    )
+    assert objects("source_status_clause") == [expected_clause]
+    assert "terminated" in objects("source_status_clause_legal_semantic_atom")
+    assert "omitted" in objects("source_status_clause_legal_semantic_atom")
+
+
+def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> None:
+    decoded = decode_modal_ir_document(
+        _single_letter_low_information_fallback_surface_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["status_keyword"] == ["repealed"]
+    assert slot_map["fallback_surface_text"] == ["repealed"]
+    assert slot_map["fallback_surface_text_token"] == ["repealed"]
+    assert "s" not in slot_map["fallback_surface_text_token"]
+
+
+def test_modal_ir_to_flogic_triples_avoid_single_letter_low_information_fallback_surface_text() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _single_letter_low_information_fallback_surface_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("status_keyword") == ["repealed"]
+    assert objects("fallback_surface_text") == ["repealed"]
+    assert objects("fallback_surface_text_token") == ["repealed"]
+    assert "s" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_emits_refined_editorial_status_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_low_information_fallback_surface_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "repealed" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->frame" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert (
+        "frame:Frame:repealed"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+    assert (
+        "deontic:F:repealed"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_refined_editorial_status_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_low_information_fallback_surface_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "repealed" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->frame" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame:Frame:repealed" in objects(
+        "fallback_surface_text_refined_modal_bridge_signature"
+    )
+    assert "deontic:F:repealed" in objects(
+        "fallback_surface_text_refined_modal_bridge_signature"
+    )
+
+
+def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _compilation_preamble_fallback_surface_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_surface_text"] == ["Administrative notice and hearing"]
+    assert slot_map["fallback_surface_text_token_prefix"] == ["administrative"]
+    assert slot_map["fallback_surface_text_token_suffix"] == ["hearing"]
+    assert "united" not in slot_map["fallback_surface_text_token"]
+    assert "states" not in slot_map["fallback_surface_text_token"]
+    assert "edition" not in slot_map["fallback_surface_text_token"]
+
+
+def test_modal_ir_to_flogic_triples_trim_compilation_preamble_from_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _compilation_preamble_fallback_surface_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_surface_text") == ["Administrative notice and hearing"]
+    assert objects("fallback_surface_text_token_prefix") == ["administrative"]
+    assert objects("fallback_surface_text_token_suffix") == ["hearing"]
+    assert "united" not in objects("fallback_surface_text_token")
+    assert "states" not in objects("fallback_surface_text_token")
+    assert "edition" not in objects("fallback_surface_text_token")
+
+
+def test_decode_modal_ir_document_emits_contextual_modal_cues_for_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _fallback_surface_contextual_modal_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert set(slot_map["fallback_surface_text_cue"]) == {
+        "effective_date",
+        "subject_to",
+    }
+    assert set(slot_map["fallback_surface_text_modal_signature"]) == {
+        "deontic:O:effective_date",
+        "deontic:O:subject_to",
+    }
+    assert {
+        "temporal:F:effective_date",
+        "conditional_normative:O|:subject_to",
+        "frame:Frame:subject_to",
+    }.issubset(set(slot_map["fallback_surface_text_modal_bridge_signature"]))
+
+
+def test_modal_ir_to_flogic_triples_emit_contextual_modal_cues_for_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _fallback_surface_contextual_modal_cue_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert set(objects("fallback_surface_text_cue")) == {
+        "effective_date",
+        "subject_to",
+    }
+    assert set(objects("fallback_surface_text_modal_signature")) == {
+        "deontic:O:effective_date",
+        "deontic:O:subject_to",
+    }
+    assert {
+        "temporal:F:effective_date",
+        "conditional_normative:O|:subject_to",
+        "frame:Frame:subject_to",
+    }.issubset(set(objects("fallback_surface_text_modal_bridge_signature")))
+
+
+def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fallback_surface() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "shall" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "not_later_than" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "frame->temporal" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "deontic:O:shall" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    assert (
+        "temporal:F:not_later_than"
+        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    )
+
+
+def test_decode_modal_ir_document_preserves_frame_semantic_reconstruction_targets() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert {
+        "conditional_normative",
+        "deontic",
+        "frame",
+        "temporal",
+    }.issubset(
+        set(slot_map["frame_typed_decompiler_semantic_reconstruction_target"])
+    )
+    assert {
+        "frame->conditional_normative",
+        "frame->deontic",
+        "frame->frame",
+        "frame->temporal",
+    }.issubset(
+        set(slot_map["typed_decompiler_semantic_reconstruction_family_pair"])
+    )
+    assert (
+        "frame->deontic:shall:uscode:obligation:mandatory"
+        in slot_map["typed_decompiler_semantic_reconstruction_signature"]
+    )
+    assert (
+        "frame->temporal:not_later_than:uscode:obligation:conditional"
+        in slot_map["typed_decompiler_semantic_reconstruction_signature"]
+    )
+    assert any(
+        "slot:typed-decompiler-semantic-reconstruction:"
+        "frame->temporal:not_later_than:uscode:obligation:conditional||"
+        in value
+        for value in slot_map["semantic_slot_legal_ir_view_prototype"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fallback_surface() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _frame_fallback_refined_cross_family_cue_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "shall" in objects("fallback_surface_text_refined_modal_cue")
+    assert "not_later_than" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "frame->temporal" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "deontic:O:shall" in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert (
+        "temporal:F:not_later_than"
+        in objects("fallback_surface_text_refined_modal_bridge_signature")
+    )
+
+
+def test_decode_modal_ir_document_emits_fallback_surface_context_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _temporal_fallback_surface_context_bridge_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_surface_text"] == ["Authorization of appropriations"]
+    assert slot_map["fallback_surface_context"] == [
+        "The Secretary shall allocate funds not later than fiscal year 2027"
+    ]
+    assert "temporal->deontic" in slot_map["fallback_surface_context_refined_modal_family_pair"]
+    assert "deontic:O:shall" in slot_map["fallback_surface_context_refined_modal_bridge_signature"]
+
+
+def test_modal_ir_to_flogic_triples_emit_fallback_surface_context_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _temporal_fallback_surface_context_bridge_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_surface_text") == ["Authorization of appropriations"]
+    assert objects("fallback_surface_context") == [
+        "The Secretary shall allocate funds not later than fiscal year 2027"
+    ]
+    assert "temporal->deontic" in objects("fallback_surface_context_refined_modal_family_pair")
+    assert "deontic:O:shall" in objects("fallback_surface_context_refined_modal_bridge_signature")
+
+
+def test_decode_modal_ir_document_emits_frame_structural_deontic_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _frame_fallback_structural_chapter_temporal_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "chapter" in slot_map["fallback_surface_text_refined_modal_cue"]
+    assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
+    assert "deontic:O:chapter" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+    assert "frame->temporal" in slot_map["fallback_surface_text_refined_temporal_bridge_family_pair"]
+
+
+def test_modal_ir_to_flogic_triples_emit_frame_structural_deontic_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(
+        _frame_fallback_structural_chapter_temporal_sample_document()
+    )
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "chapter" in objects("fallback_surface_text_refined_modal_cue")
+    assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
+    assert "deontic:O:chapter" in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert "frame->temporal" in objects(
+        "fallback_surface_text_refined_temporal_bridge_family_pair"
+    )
+
+
+def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_frame_formula() -> None:
+    decoded = decode_modal_ir_document(_non_frame_structural_title_noise_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "title" not in slot_map.get("argument_refined_modal_cue", [])
+    assert "temporal:X:title" not in slot_map.get("argument_refined_modal_signature", [])
+
+
+def test_modal_ir_to_flogic_triples_ignore_structural_title_refined_cue_for_non_frame_formula() -> None:
+    triples = modal_ir_to_flogic_triples(_non_frame_structural_title_noise_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert "title" not in objects("argument_refined_modal_cue")
+    assert "temporal:X:title" not in objects("argument_refined_modal_signature")
+
+
+def test_decode_modal_ir_document_emits_temporal_year_refined_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_year_context_refined_bridge_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "year" in slot_map["modal_source_span_refined_modal_cue"]
+    assert (
+        "temporal->temporal"
+        in slot_map["modal_source_span_refined_temporal_bridge_family_pair"]
+    )
+    assert (
+        "temporal:F:year"
+        in slot_map["modal_source_span_refined_temporal_bridge_signature"]
+    )
+    assert "year" in slot_map["modal_source_span_refined_temporal_bridge_context"]
+
+
+def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
+    decoded = decode_modal_ir_document(_procedural_keyword_fallback_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["procedural_keyword"] == ["review"]
+    assert slot_map["procedural_keyword_token_count"] == ["1"]
+    assert slot_map["procedural_keyword_token_prefix"] == ["review"]
+    assert slot_map["procedural_keyword_token_suffix"] == ["review"]
+    assert slot_map["procedural_keyword_stem"] == ["review"]
+
+
+def test_modal_ir_to_flogic_triples_emits_procedural_keyword_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_procedural_keyword_fallback_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("procedural_keyword") == ["review"]
+    assert objects("procedural_keyword_token_count") == ["1"]
+    assert objects("procedural_keyword_token_prefix") == ["review"]
+    assert objects("procedural_keyword_token_suffix") == ["review"]
+    assert objects("procedural_keyword_stem") == ["review"]
+
+
+def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> None:
+    decoded = decode_modal_ir_document(_typed_clause_scope_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["provided that the applicant submits annual reports"]
+    assert slot_map["condition_token_count"] == ["7"]
+    assert slot_map["condition_prefix"] == ["provided that"]
+    assert slot_map["condition_prefix_key"] == ["provided_that"]
+    assert slot_map["condition_modal_signature"] == ["deontic:O:provided_that"]
+    assert slot_map["condition_modal_family"] == ["deontic"]
+    assert slot_map["condition_modal_operator"] == ["O"]
+    assert slot_map["condition_modal_lexeme"] == ["provided_that"]
+    assert slot_map["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:provided_that",
+        "frame:Frame:provided_that",
+    ]
+    assert slot_map["condition_modal_bridge_family"] == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert slot_map["condition_provided_that"] == ["the applicant submits annual reports"]
+    assert slot_map["condition_scope"] == ["the applicant submits annual reports"]
+    assert slot_map["condition_scope_content"] == ["applicant submits annual reports"]
+    assert slot_map["condition_scope_content_token_prefix"] == ["applicant"]
+    assert slot_map["condition_scope_token_suffix"] == ["reports"]
+    assert slot_map["exception"] == ["except as otherwise provided in subsection (b)"]
+    assert slot_map["exception_token_count"] == ["7"]
+    assert slot_map["exception_prefix"] == ["except as otherwise provided"]
+    assert slot_map["exception_prefix_key"] == ["except_as_otherwise_provided"]
+    assert slot_map["exception_modal_signature"] == [
+        "deontic:O:except_as_otherwise_provided"
+    ]
+    assert slot_map["exception_modal_family"] == ["deontic"]
+    assert slot_map["exception_modal_operator"] == ["O"]
+    assert slot_map["exception_modal_lexeme"] == ["except_as_otherwise_provided"]
+    assert slot_map["exception_except_as_otherwise_provided"] == ["in subsection (b)"]
+    assert slot_map["exception_scope"] == ["in subsection (b)"]
+    assert slot_map["exception_scope_token_count"] == ["3"]
+    assert slot_map["exception_scope_token_suffix"] == ["(b)"]
+
+
+def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_typed_clause_scope_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["provided that the applicant submits annual reports"]
+    assert objects("condition_token_count") == ["7"]
+    assert objects("condition_prefix") == ["provided that"]
+    assert objects("condition_prefix_key") == ["provided_that"]
+    assert objects("condition_modal_signature") == ["deontic:O:provided_that"]
+    assert objects("condition_modal_family") == ["deontic"]
+    assert objects("condition_modal_operator") == ["O"]
+    assert objects("condition_modal_lexeme") == ["provided_that"]
+    assert objects("condition_modal_bridge_signature") == [
+        "conditional_normative:O|:provided_that",
+        "frame:Frame:provided_that",
+    ]
+    assert objects("condition_modal_bridge_family") == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert objects("condition_provided_that") == ["the applicant submits annual reports"]
+    assert objects("condition_scope") == ["the applicant submits annual reports"]
+    assert objects("condition_scope_content") == ["applicant submits annual reports"]
+    assert objects("condition_scope_content_token_prefix") == ["applicant"]
+    assert objects("condition_scope_token_suffix") == ["reports"]
+    assert objects("exception") == ["except as otherwise provided in subsection (b)"]
+    assert objects("exception_token_count") == ["7"]
+    assert objects("exception_prefix") == ["except as otherwise provided"]
+    assert objects("exception_prefix_key") == ["except_as_otherwise_provided"]
+    assert objects("exception_modal_signature") == [
+        "deontic:O:except_as_otherwise_provided"
+    ]
+    assert objects("exception_modal_family") == ["deontic"]
+    assert objects("exception_modal_operator") == ["O"]
+    assert objects("exception_modal_lexeme") == ["except_as_otherwise_provided"]
+    assert objects("exception_except_as_otherwise_provided") == ["in subsection (b)"]
+    assert objects("exception_scope") == ["in subsection (b)"]
+    assert objects("exception_scope_token_count") == ["3"]
+    assert objects("exception_scope_token_suffix") == ["(b)"]
+
+
+def test_decode_modal_ir_document_emits_temporal_for_purposes_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_for_purposes_bridge_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_modal_signature"] == ["temporal:F:for_purposes_of"]
+    assert slot_map["condition_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert slot_map["condition_modal_bridge_family"] == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert slot_map["condition_modal_bridge_operator"] == ["O|", "Frame"]
+    assert "for_purposes_of" in slot_map["bridge_cue"]
+    assert slot_map["bridge_modal_bridge_signature"] == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+
+
+def test_modal_ir_to_flogic_triples_emit_temporal_for_purposes_bridge_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_temporal_for_purposes_bridge_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_modal_signature") == ["temporal:F:for_purposes_of"]
+    assert objects("condition_modal_bridge_signature") == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+    assert objects("condition_modal_bridge_family") == [
+        "conditional_normative",
+        "frame",
+    ]
+    assert objects("condition_modal_bridge_operator") == ["O|", "Frame"]
+    assert "for_purposes_of" in objects("bridge_cue")
+    assert objects("bridge_modal_bridge_signature") == [
+        "conditional_normative:O|:for_purposes_of",
+        "frame:Frame:for_purposes_of",
+    ]
+
+
+def test_decode_modal_ir_document_emits_condition_proxy_slots_for_exception_only_formula() -> None:
+    decoded = decode_modal_ir_document(_exception_only_condition_proxy_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["except as such a determination applies"]
+    assert slot_map["condition_prefix"] == ["except as"]
+    assert slot_map["condition_prefix_key"] == ["except_as"]
+    assert slot_map["condition_modal_signature"] == ["deontic:O|:except_as"]
+    assert slot_map["condition_scope"] == ["such a determination applies"]
+    assert slot_map["condition_scope_alnum_segment"] == [
+        "such",
+        "a",
+        "determination",
+        "applies",
+    ]
+    assert slot_map["condition_scope_alnum_segment_count"] == ["4"]
+    assert slot_map["cue_modal_conditional_normative"] == ["O|:may"]
+    assert slot_map["cue_conditional_normative"] == ["O|:may"]
+    assert slot_map["modal_cue_conditional_normative"] == ["O|:may"]
+    assert slot_map["condition_modal_conditional_normative"] == ["O|:except_as"]
+    assert slot_map["condition_conditional_normative"] == ["O|:except_as"]
+
+
+def test_modal_ir_to_flogic_triples_emits_condition_proxy_slots_for_exception_only_formula() -> None:
+    triples = modal_ir_to_flogic_triples(_exception_only_condition_proxy_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["except as such a determination applies"]
+    assert objects("condition_prefix") == ["except as"]
+    assert objects("condition_prefix_key") == ["except_as"]
+    assert objects("condition_modal_signature") == ["deontic:O|:except_as"]
+    assert objects("condition_scope") == ["such a determination applies"]
+    assert objects("condition_scope_alnum_segment") == [
+        "such",
+        "a",
+        "determination",
+        "applies",
+    ]
+    assert objects("condition_scope_alnum_segment_count") == ["4"]
+    assert objects("cue_modal_conditional_normative") == ["O|:may"]
+    assert objects("cue_conditional_normative") == ["O|:may"]
+    assert objects("modal_cue_conditional_normative") == ["O|:may"]
+    assert objects("condition_modal_conditional_normative") == ["O|:except_as"]
+    assert objects("condition_conditional_normative") == ["O|:except_as"]
+
+
+def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_slots() -> None:
+    decoded = decode_modal_ir_document(_cue_signature_temporal_clause_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["cue_modal_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
+    assert slot_map["cue_modal_canonical_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:X:after",
+    ]
+    assert slot_map["cue_modal_family"] == ["deontic", "temporal"]
+    assert slot_map["cue_modal_operator"] == ["O", "F"]
+    assert slot_map["cue_modal_canonical_operator"] == ["O", "F", "X"]
+    assert slot_map["cue_modal_lexeme"] == ["shall", "by", "after"]
+    assert slot_map["cue_modal_operator_alignment"] == ["aligned", "divergent"]
+    assert slot_map["cue_modal_temporal_relation"] == ["deadline", "after"]
+    assert slot_map["modal_cue"] == ["shall", "by", "after"]
+    assert slot_map["modal_cue_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
+    assert slot_map["modal_cue_canonical_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:X:after",
+    ]
+    assert slot_map["modal_cue_family"] == ["deontic", "temporal"]
+    assert slot_map["modal_cue_operator"] == ["O", "F"]
+    assert slot_map["modal_cue_canonical_operator"] == ["O", "F", "X"]
+    assert slot_map["modal_cue_lexeme"] == ["shall", "by", "after"]
+    assert slot_map["modal_cue_operator_alignment"] == ["aligned", "divergent"]
+    assert slot_map["modal_cue_temporal_relation"] == ["deadline", "after"]
+    assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
+    assert slot_map["condition_modal_signature"] == [
+        "deontic:O:if",
+        "temporal:F:after",
+        "temporal:F:by",
+    ]
+    assert slot_map["condition_modal_canonical_signature"] == [
+        "temporal:X:after",
+        "temporal:F:by",
+    ]
+    assert slot_map["condition_modal_family"] == ["deontic", "temporal"]
+    assert slot_map["condition_modal_operator"] == ["O", "F"]
+    assert slot_map["condition_modal_canonical_operator"] == ["X", "F"]
+    assert slot_map["condition_modal_lexeme"] == ["if", "after", "by"]
+    assert slot_map["condition_modal_operator_alignment"] == ["divergent", "aligned"]
+    assert slot_map["condition_modal_temporal_relation"] == ["after", "deadline"]
+    assert slot_map["condition_after"] == ["the agency receives notice"]
+    assert slot_map["condition_by"] == ["march 1"]
+    assert slot_map["condition_prefix_family"] == ["temporal"]
+    assert slot_map["condition_prefix_temporal_relation"] == ["after", "deadline"]
+
+
+def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefix_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_cue_signature_temporal_clause_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("cue_modal_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
+    assert objects("cue_modal_canonical_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:X:after",
+    ]
+    assert objects("cue_modal_family") == ["deontic", "temporal"]
+    assert objects("cue_modal_operator") == ["O", "F"]
+    assert objects("cue_modal_canonical_operator") == ["O", "F", "X"]
+    assert objects("cue_modal_lexeme") == ["shall", "by", "after"]
+    assert objects("cue_modal_operator_alignment") == [
+        "aligned",
+        "aligned",
+        "divergent",
+    ]
+    assert objects("cue_modal_temporal_relation") == ["deadline", "after"]
+    assert objects("modal_cue") == ["shall", "by", "after"]
+    assert objects("modal_cue_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
+    assert objects("modal_cue_canonical_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:X:after",
+    ]
+    assert objects("modal_cue_family") == ["deontic", "temporal"]
+    assert objects("modal_cue_operator") == ["O", "F"]
+    assert objects("modal_cue_canonical_operator") == ["O", "F", "X"]
+    assert objects("modal_cue_lexeme") == ["shall", "by", "after"]
+    assert objects("modal_cue_operator_alignment") == [
+        "aligned",
+        "aligned",
+        "divergent",
+    ]
+    assert objects("modal_cue_temporal_relation") == ["deadline", "after"]
+    assert objects("condition_prefix_key") == ["if", "after", "by"]
+    assert objects("condition_modal_signature") == [
+        "deontic:O:if",
+        "temporal:F:after",
+        "temporal:F:by",
+    ]
+    assert objects("condition_modal_canonical_signature") == [
+        "temporal:X:after",
+        "temporal:F:by",
+    ]
+    assert objects("condition_modal_family") == ["deontic", "temporal"]
+    assert objects("condition_modal_operator") == ["O", "F"]
+    assert objects("condition_modal_canonical_operator") == ["X", "F"]
+    assert objects("condition_modal_lexeme") == ["if", "after", "by"]
+    assert objects("condition_modal_operator_alignment") == ["divergent", "aligned"]
+    assert objects("condition_modal_temporal_relation") == ["after", "deadline"]
+    assert objects("condition_after") == ["the agency receives notice"]
+    assert objects("condition_by") == ["march 1"]
+    assert objects("condition_prefix_family") == ["temporal"]
+    assert objects("condition_prefix_temporal_relation") == ["after", "deadline"]
+
+
+def test_decode_modal_ir_document_emits_temporal_until_canonical_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_until_clause_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_prefix_key"] == ["until"]
+    assert slot_map["condition_prefix_temporal_relation"] == ["until"]
+    assert slot_map["condition_modal_signature"] == ["temporal:F:until"]
+    assert slot_map["condition_modal_canonical_signature"] == ["temporal:G:until"]
+    assert slot_map["condition_modal_operator"] == ["F"]
+    assert slot_map["condition_modal_canonical_operator"] == ["G"]
+    assert slot_map["condition_modal_operator_alignment"] == ["divergent"]
+    assert slot_map["cue_modal_signature"] == ["temporal:F:until"]
+    assert slot_map["cue_modal_canonical_signature"] == ["temporal:G:until"]
+    assert slot_map["cue_modal_operator"] == ["F"]
+    assert slot_map["cue_modal_canonical_operator"] == ["G"]
+    assert slot_map["cue_modal_operator_alignment"] == ["divergent"]
+
+
+def test_modal_ir_to_flogic_triples_emits_temporal_until_canonical_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_temporal_until_clause_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_prefix_key") == ["until"]
+    assert objects("condition_prefix_temporal_relation") == ["until"]
+    assert objects("condition_modal_signature") == ["temporal:F:until"]
+    assert objects("condition_modal_canonical_signature") == ["temporal:G:until"]
+    assert objects("condition_modal_operator") == ["F"]
+    assert objects("condition_modal_canonical_operator") == ["G"]
+    assert objects("condition_modal_operator_alignment") == ["divergent"]
+    assert objects("cue_modal_signature") == ["temporal:F:until"]
+    assert objects("cue_modal_canonical_signature") == ["temporal:G:until"]
+    assert objects("cue_modal_operator") == ["F"]
+    assert objects("cue_modal_canonical_operator") == ["G"]
+    assert objects("cue_modal_operator_alignment") == ["divergent"]
+
+
+def test_decode_modal_ir_document_emits_source_anchor_family_pair_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_cue_signature_temporal_clause_sample_document())
+    )
+
+    assert {
+        "deontic->deontic",
+        "deontic->temporal",
+        "temporal->epistemic",
+        "temporal->temporal",
+    }.issubset(set(mixed_slot_map["source_action_family_pair"]))
+    assert any(
+        value.endswith(":deontic->temporal")
+        for value in mixed_slot_map["source_action_family_pair_anchor"]
+    )
+    assert any(
+        value.endswith(":temporal->temporal")
+        for value in mixed_slot_map["source_action_family_pair_anchor"]
+    )
+
+    frame_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_fallback_frame_authority_cue_sample_document())
+    )
+    assert frame_slot_map["source_action_family_pair"] == ["frame->frame"]
+    assert any(
+        value.endswith(":frame->frame")
+        for value in frame_slot_map["source_action_family_pair_anchor"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(
+        _cue_signature_temporal_clause_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    mixed_pairs = objects(mixed_triples, "source_action_family_pair")
+    assert {
+        "deontic->deontic",
+        "deontic->temporal",
+        "temporal->epistemic",
+        "temporal->temporal",
+    }.issubset(
+        set(mixed_pairs)
+    )
+    mixed_pair_anchors = objects(mixed_triples, "source_action_family_pair_anchor")
+    assert any(value.endswith(":deontic->temporal") for value in mixed_pair_anchors)
+    assert any(value.endswith(":temporal->temporal") for value in mixed_pair_anchors)
+
+    frame_triples = modal_ir_to_flogic_triples(
+        _fallback_frame_authority_cue_sample_document()
+    )
+    assert objects(frame_triples, "source_action_family_pair") == ["frame->frame"]
+    assert any(
+        value.endswith(":frame->frame")
+        for value in objects(frame_triples, "source_action_family_pair_anchor")
+    )
+
+
+def test_decode_modal_ir_document_emits_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(sample_document)
+    )
+    source_action_pairs = set(slot_map["source_action_family_pair"])
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = slot_map["source_action_family_pair_anchor"]
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
+
+
+def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_family_pairs() -> None:
+    source_id = "us-code-11-77-a11e77a11e77a11e"
+    sample_document = ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="The Secretary may, when necessary, issue guidance.",
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-anchor",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="□",
+                    label="necessary",
+                ),
+                predicate=ModalIRPredicate(name="issue_guidance"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=53,
+                    citation="11 U.S.C. 77",
+                ),
+            )
+        ],
+    )
+    triples = modal_ir_to_flogic_triples(sample_document)
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    source_action_pairs = set(objects("source_action_family_pair"))
+    assert {
+        "alethic->alethic",
+        "alethic->conditional_normative",
+        "alethic->deontic",
+        "alethic->temporal",
+    }.issubset(source_action_pairs)
+    source_action_pair_anchors = objects("source_action_family_pair_anchor")
+    assert any(
+        value.endswith(":alethic->conditional_normative")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->deontic")
+        for value in source_action_pair_anchors
+    )
+    assert any(
+        value.endswith(":alethic->temporal")
+        for value in source_action_pair_anchors
+    )
+
+
+def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
+    decoded = decode_modal_ir_document(_fallback_frame_authority_cue_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["cue"] == ["__uscode_section_heading_fallback__", "authority"]
+    assert slot_map["modal_cue"] == ["__uscode_section_heading_fallback__", "authority"]
+    assert slot_map["modal_cue_signature"] == [
+        "frame:Frame:__uscode_section_heading_fallback__",
+        "frame:Frame:authority",
+    ]
+    assert slot_map["modal_cue_lexeme"] == ["__uscode_section_heading_fallback__", "authority"]
+
+
+def test_modal_ir_to_flogic_triples_derives_modal_cue_from_fallback_frame_predicate() -> None:
+    triples = modal_ir_to_flogic_triples(_fallback_frame_authority_cue_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_cue") == ["__uscode_section_heading_fallback__", "authority"]
+    assert objects("modal_cue_signature") == [
+        "frame:Frame:__uscode_section_heading_fallback__",
+        "frame:Frame:authority",
+    ]
+    assert objects("modal_cue_lexeme") == ["__uscode_section_heading_fallback__", "authority"]
+
+
+def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:
+    aligned_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_provenance_alignment_mismatch_sample_document())
+    )
+    punct_mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(
+            _provenance_alignment_trailing_punct_mismatch_sample_document()
+        )
+    )
+    range_aligned_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_numeric_range_sample_document())
+    )
+    range_connector_mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_connector_mismatch_sample_document())
+    )
+
+    assert aligned_slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert aligned_slot_map["citation_source_id_title_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_title_section_key_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_title_pair"] == ["21|21"]
+    assert aligned_slot_map["citation_source_id_section_pair"] == ["360bbb-0|360bbb-0"]
+    assert aligned_slot_map["citation_source_id_title_section_key_pair"] == [
+        "21:360bbb-0|21:360bbb-0"
+    ]
+    assert aligned_slot_map["citation_source_id_canonical_pair"] == [
+        "21 U.S.C. 360bbb-0|21 U.S.C. 360bbb-0"
+    ]
+    assert aligned_slot_map["citation_source_id_title_number_relation"] == ["equal"]
+    assert aligned_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        aligned_slot_map[
+            "citation_source_id_title_number_signature_leading_digit_pair"
+        ]
+        == ["2|2"]
+    )
+    assert (
+        aligned_slot_map[
+            "citation_source_id_title_number_signature_leading_digit_match"
+        ]
+        == ["true"]
+    )
+    assert aligned_slot_map["citation_source_id_section_primary_number_relation"] == [
+        "equal"
+    ]
+    assert aligned_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert (
+        aligned_slot_map[
+            "citation_source_id_section_primary_number_signature_zero_digit_count_pair"
+        ]
+        == ["1|1"]
+    )
+    assert (
+        aligned_slot_map[
+            "citation_source_id_section_primary_number_signature_zero_digit_count_match"
+        ]
+        == ["true"]
+    )
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "bbb|bbb"
+    ]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_match"] == ["true"]
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_suffix_presence_match"]
+        == ["true"]
+    )
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_component_signature_match"]
+        == ["true"]
+    )
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_component_signature_pair"]
+        == ["N3A3|N3A3"]
+    )
+    assert aligned_slot_map["citation_source_id_section_raw_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_raw_pair"] == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert (
+        aligned_slot_map["citation_source_id_section_trailing_punct_presence_match"]
+        == ["true"]
+    )
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        "none|none"
+    ]
+    assert aligned_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_style'][0]}|"
+            f"{aligned_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{aligned_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_punctuation_style'][0]}|"
+            f"{aligned_slot_map['citation_section_punctuation_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map[
+        "citation_source_id_section_punctuation_style_presence_match"
+    ] == ["true"]
+
+    assert mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
+    assert mismatch_slot_map["citation_source_id_title_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_title_section_key_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_canonical_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_title_pair"] == ["20|20"]
+    assert mismatch_slot_map["citation_source_id_section_pair"] == ["1131d|1131e"]
+    assert mismatch_slot_map["citation_source_id_title_section_key_pair"] == [
+        "20:1131d|20:1131e"
+    ]
+    assert mismatch_slot_map["citation_source_id_canonical_pair"] == [
+        "20 U.S.C. 1131d|20 U.S.C. 1131e"
+    ]
+    assert mismatch_slot_map["citation_source_id_title_number_relation"] == ["equal"]
+    assert mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_title_number_signature_parity_pair"
+        ]
+        == ["even|even"]
+    )
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_title_number_signature_parity_match"
+        ]
+        == ["true"]
+    )
+    assert mismatch_slot_map["citation_source_id_section_primary_number_relation"] == [
+        "equal"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_has_zero_digit_pair"
+        ]
+        == ["false|false"]
+    )
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_has_zero_digit_match"
+        ]
+        == ["true"]
+    )
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "d|e"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
+        "false"
+    ]
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_suffix_presence_match"]
+        == ["true"]
+    )
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_component_signature_match"]
+        == ["true"]
+    )
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_component_signature_pair"]
+        == ["N4A1|N4A1"]
+    )
+    assert mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_section_raw_pair"] == ["1131d|1131e"]
+    assert (
+        mismatch_slot_map["citation_source_id_section_trailing_punct_presence_match"]
+        == ["true"]
+    )
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        "none|none"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_punctuation_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map[
+        "citation_source_id_section_punctuation_style_presence_match"
+    ] == ["true"]
+
+    assert punct_mismatch_slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert punct_mismatch_slot_map["citation_source_id_title_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_section_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_title_section_key_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_title_pair"] == ["46|46"]
+    assert punct_mismatch_slot_map["citation_source_id_section_pair"] == ["10318|10318"]
+    assert punct_mismatch_slot_map["citation_source_id_title_section_key_pair"] == [
+        "46:10318|46:10318"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_canonical_pair"] == [
+        "46 U.S.C. 10318|46 U.S.C. 10318"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_title_number_relation"] == [
+        "equal"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_primary_number_relation"]
+        == ["equal"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_number_span"] == [
+        "0"
+    ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_magnitude_bucket_pair"
+        ]
+        == ["10k_to_99k|10k_to_99k"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_magnitude_bucket_match"
+        ]
+        == ["true"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "none|none"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
+        "true"
+    ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_suffix_presence_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_component_signature_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_component_signature_pair"
+        ]
+        == ["N5|N5"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
+    assert punct_mismatch_slot_map["citation_source_id_section_raw_pair"] == [
+        "10318.|10318"
+    ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_trailing_punct_presence_match"
+        ]
+        == ["false"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "false"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        ".|none"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{punct_mismatch_slot_map['source_id_section_style'][0]}|"
+            f"{punct_mismatch_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_match"] == [
+        "false"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{punct_mismatch_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{punct_mismatch_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_pair"]
+        == [
+            (
+                f"{punct_mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
+                f"{punct_mismatch_slot_map['citation_section_punctuation_style'][0]}"
+            )
+        ]
+    )
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_match"]
+        == ["false"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_punctuation_style_presence_match"
+        ]
+        == ["true"]
+    )
+
+    assert range_aligned_slot_map["citation_source_id_section_is_range_pair"] == [
+        "true|true"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_is_range_match"] == [
+        "true"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_pair"] == [
+        "1381|1381"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_range_start_presence_match"]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_range_end_pair"] == [
+        "1398|1398"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_end_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_range_end_presence_match"]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_pair"] == [
+        "to|to"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map[
+            "citation_source_id_section_range_connector_presence_match"
+        ]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_suffix_style_match"]
+        == ["true"]
+    )
+    assert (
+        range_aligned_slot_map["citation_source_id_section_punctuation_style_match"]
+        == ["true"]
+    )
+
+    assert range_connector_mismatch_slot_map["citation_source_id_alignment"] == [
+        "title_only_match"
+    ]
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_start_pair"
+        ]
+        == ["4605|4605"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_start_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_end_pair"
+        ]
+        == ["4610|4610"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_end_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_pair"
+        ]
+        == ["to|through"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_match"
+        ]
+        == ["false"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_presence_match"
+        ]
+        == ["true"]
+    )
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_style_match"
+    ] == ["true"]
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_suffix_style_match"
+    ] == ["true"]
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_punctuation_style_match"
+    ] == ["true"]
+
+
+def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
+    aligned_triples = modal_ir_to_flogic_triples(_sample_document())
+    mismatch_triples = modal_ir_to_flogic_triples(
+        _provenance_alignment_mismatch_sample_document()
+    )
+    punct_mismatch_triples = modal_ir_to_flogic_triples(
+        _provenance_alignment_trailing_punct_mismatch_sample_document()
+    )
+    range_aligned_triples = modal_ir_to_flogic_triples(_numeric_range_sample_document())
+    range_connector_mismatch_triples = modal_ir_to_flogic_triples(
+        _range_connector_mismatch_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(aligned_triples, "citation_source_id_alignment") == ["exact_match"]
+    assert objects(aligned_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_title_section_key_match") == [
+        "true"
+    ]
+    assert objects(aligned_triples, "citation_source_id_canonical_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_title_pair") == ["21|21"]
+    assert objects(aligned_triples, "citation_source_id_section_pair") == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_section_key_pair") == [
+        "21:360bbb-0|21:360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_canonical_pair") == [
+        "21 U.S.C. 360bbb-0|21 U.S.C. 360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_number_relation") == [
+        "equal"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_number_span") == ["0"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_title_number_signature_leading_digit_pair",
+    ) == ["2|2"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_title_number_signature_leading_digit_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(aligned_triples, "citation_source_id_section_primary_number_span") == [
+        "0"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_signature_zero_digit_count_pair",
+    ) == ["1|1"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_signature_zero_digit_count_match",
+    ) == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_pair") == [
+        "bbb|bbb"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_match") == [
+        "true"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N3A3|N3A3"]
+    assert objects(aligned_triples, "citation_source_id_section_raw_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_raw_pair") == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_match") == [
+        "true"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_pair") == [
+        "none|none"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_style_match") == [
+        "true"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
+
+    assert objects(mismatch_triples, "citation_source_id_alignment") == [
+        "title_only_match"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(mismatch_triples, "citation_source_id_section_match") == ["false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_section_key_match",
+    ) == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_canonical_match") == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_title_pair") == ["20|20"]
+    assert objects(mismatch_triples, "citation_source_id_section_pair") == [
+        "1131d|1131e"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_section_key_pair",
+    ) == ["20:1131d|20:1131e"]
+    assert objects(mismatch_triples, "citation_source_id_canonical_pair") == [
+        "20 U.S.C. 1131d|20 U.S.C. 1131e"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_number_relation") == [
+        "equal"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_number_span") == ["0"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_number_signature_parity_pair",
+    ) == ["even|even"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_number_signature_parity_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_span",
+    ) == ["0"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_signature_has_zero_digit_pair",
+    ) == ["false|false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_signature_has_zero_digit_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_pair",
+    ) == ["d|e"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_match",
+    ) == ["false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N4A1|N4A1"]
+    assert objects(mismatch_triples, "citation_source_id_section_raw_match") == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_section_raw_pair") == [
+        "1131d|1131e"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_pair",
+    ) == ["none|none"]
+    assert objects(mismatch_triples, "citation_source_id_section_style_match") == [
+        "true"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
+
+    assert objects(punct_mismatch_triples, "citation_source_id_alignment") == [
+        "exact_match"
+    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(punct_mismatch_triples, "citation_source_id_section_match") == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_section_key_match",
+    ) == ["true"]
+    assert objects(punct_mismatch_triples, "citation_source_id_canonical_match") == [
+        "true"
+    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_pair") == ["46|46"]
+    assert objects(punct_mismatch_triples, "citation_source_id_section_pair") == [
+        "10318|10318"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_section_key_pair",
+    ) == ["46:10318|46:10318"]
+    assert objects(punct_mismatch_triples, "citation_source_id_canonical_pair") == [
+        "46 U.S.C. 10318|46 U.S.C. 10318"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_number_relation",
+    ) == ["equal"]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_number_span") == [
+        "0"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_span",
+    ) == ["0"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_pair",
+    ) == ["10k_to_99k|10k_to_99k"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_pair",
+    ) == ["none|none"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N5|N5"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_raw_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_raw_pair",
+    ) == ["10318.|10318"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_pair",
+    ) == [".|none"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_style_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
+
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_is_range_pair",
+    ) == ["true|true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_is_range_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_pair",
+    ) == ["1381|1381"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_pair",
+    ) == ["1398|1398"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_pair",
+    ) == ["to|to"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_style_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_alignment",
+    ) == ["title_only_match"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_start_pair",
+    ) == ["4605|4605"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_start_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_end_pair",
+    ) == ["4610|4610"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_end_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_pair",
+    ) == ["to|through"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_match",
+    ) == ["false"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_style_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+
+
+def test_decode_modal_ir_document_emits_section_structure_composite_slots() -> None:
+    single_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_single_component_sample_document())
+    )
+    assert single_slot_map["citation_section_profile_signature"] == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert single_slot_map["citation_section_profile_signature_normalized"] == [
+        "single_alphanumeric:n3a1"
+    ]
+    assert single_slot_map["citation_title_section_signature"] == ["2:N3A1"]
+    assert single_slot_map["citation_title_section_signature_normalized"] == ["2:n3a1"]
+    assert single_slot_map["citation_title_section_profile"] == [
+        "2:single_alphanumeric"
+    ]
+    assert single_slot_map["citation_section_profile_signature_token_count"] == ["3"]
+    assert single_slot_map["citation_section_profile_signature_token_prefix"] == [
+        "single"
+    ]
+    assert single_slot_map["citation_title_section_signature_token_count"] == ["2"]
+    assert single_slot_map["citation_title_section_signature_has_mixed_token"] == [
+        "true"
+    ]
+    assert single_slot_map["citation_title_section_profile_token_suffix"] == [
+        "alphanumeric"
+    ]
+    assert single_slot_map["source_id_section_profile_signature"] == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert single_slot_map["source_id_title_section_signature"] == ["2:N3A1"]
+    assert single_slot_map["source_id_title_section_profile"] == [
+        "2:single_alphanumeric"
+    ]
+    assert single_slot_map["source_id_section_profile_signature_token_count"] == ["3"]
+    assert single_slot_map["source_id_title_section_signature_token_count"] == ["2"]
+    assert single_slot_map["source_id_title_section_profile_token_suffix"] == [
+        "alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_section_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert single_slot_map["citation_source_id_section_signature_match"] == ["true"]
+    assert single_slot_map["citation_source_id_section_profile_pair"] == [
+        "single_alphanumeric|single_alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_section_profile_match"] == ["true"]
+    assert single_slot_map["citation_source_id_title_section_signature_pair"] == [
+        "2:n3a1|2:n3a1"
+    ]
+    assert single_slot_map["citation_source_id_title_section_signature_match"] == [
+        "true"
+    ]
+    assert single_slot_map["citation_source_id_title_section_profile_pair"] == [
+        "2:single_alphanumeric|2:single_alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_title_section_profile_match"] == [
+        "true"
+    ]
+
+    compound_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_compound_alpha_suffix_hyphen_sample_document())
+    )
+    assert compound_slot_map["citation_section_profile_signature"] == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert compound_slot_map["citation_title_section_signature"] == ["16:N3A3-N1"]
+    assert compound_slot_map["citation_title_section_profile"] == ["16:compound_mixed"]
+    assert compound_slot_map["citation_title_section_signature_token_count"] == ["3"]
+    assert compound_slot_map["citation_title_section_signature_token_suffix"] == [
+        "n1"
+    ]
+    assert compound_slot_map["citation_title_section_profile_token_suffix"] == [
+        "mixed"
+    ]
+    assert compound_slot_map["source_id_section_profile_signature"] == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert compound_slot_map["source_id_title_section_signature"] == ["16:N3A3-N1"]
+    assert compound_slot_map["source_id_title_section_profile"] == ["16:compound_mixed"]
+    assert compound_slot_map["source_id_title_section_signature_token_count"] == ["3"]
+    assert compound_slot_map["source_id_title_section_profile_token_suffix"] == [
+        "mixed"
+    ]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() -> None:
+    single_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+    compound_triples = modal_ir_to_flogic_triples(
+        _compound_alpha_suffix_hyphen_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
+
+    assert objects(single_triples, "citation_section_profile_signature") == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert objects(single_triples, "citation_section_profile_signature_normalized") == [
+        "single_alphanumeric:n3a1"
+    ]
+    assert objects(single_triples, "citation_title_section_signature") == ["2:N3A1"]
+    assert objects(single_triples, "citation_title_section_signature_normalized") == [
+        "2:n3a1"
+    ]
+    assert objects(single_triples, "citation_title_section_profile") == [
+        "2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_section_profile_signature_token_count") == [
+        "3"
+    ]
+    assert objects(single_triples, "citation_section_profile_signature_token_prefix") == [
+        "single"
+    ]
+    assert objects(single_triples, "citation_title_section_signature_token_count") == [
+        "2"
+    ]
+    assert objects(single_triples, "citation_title_section_signature_has_mixed_token") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_title_section_profile_token_suffix") == [
+        "alphanumeric"
+    ]
+    assert objects(single_triples, "source_id_section_profile_signature") == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert objects(single_triples, "source_id_title_section_signature") == ["2:N3A1"]
+    assert objects(single_triples, "source_id_title_section_profile") == [
+        "2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "source_id_section_profile_signature_token_count") == [
+        "3"
+    ]
+    assert objects(single_triples, "source_id_title_section_signature_token_count") == [
+        "2"
+    ]
+    assert objects(single_triples, "source_id_title_section_profile_token_suffix") == [
+        "alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_section_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects(single_triples, "citation_source_id_section_signature_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_section_profile_pair") == [
+        "single_alphanumeric|single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_section_profile_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_signature_pair") == [
+        "2:n3a1|2:n3a1"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_signature_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_profile_pair") == [
+        "2:single_alphanumeric|2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_profile_match") == [
+        "true"
+    ]
+
+    assert objects(compound_triples, "citation_section_profile_signature") == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert objects(compound_triples, "citation_title_section_signature") == ["16:N3A3-N1"]
+    assert objects(compound_triples, "citation_title_section_profile") == [
+        "16:compound_mixed"
+    ]
+    assert objects(compound_triples, "citation_title_section_signature_token_count") == [
+        "3"
+    ]
+    assert objects(compound_triples, "citation_title_section_signature_token_suffix") == [
+        "n1"
+    ]
+    assert objects(compound_triples, "citation_title_section_profile_token_suffix") == [
+        "mixed"
+    ]
+    assert objects(compound_triples, "source_id_section_profile_signature") == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert objects(compound_triples, "source_id_title_section_signature") == [
+        "16:N3A3-N1"
+    ]
+    assert objects(compound_triples, "source_id_title_section_profile") == [
+        "16:compound_mixed"
+    ]
+    assert objects(compound_triples, "source_id_title_section_signature_token_count") == [
+        "3"
+    ]
+    assert objects(compound_triples, "source_id_title_section_profile_token_suffix") == [
+        "mixed"
+    ]
+
+
+def test_decode_modal_ir_document_emits_section_style_slots() -> None:
+    lower_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_single_component_sample_document())
+    )
+    upper_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_upper_alpha_suffix_sample_document())
+    )
+    punct_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+
+    assert lower_slot_map["citation_section_style"] == [
+        "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["citation_title_section_style"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["citation_title_section_style_canonical"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["citation_section_suffix_style"] == ["alpha_lower"]
+    assert lower_slot_map["citation_section_punctuation_style"] == ["clean"]
+    assert lower_slot_map["source_id_section_style"] == [
+        "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["source_id_title_section_style"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["source_id_title_section_style_canonical"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["source_id_section_suffix_style"] == ["alpha_lower"]
+    assert lower_slot_map["source_id_section_punctuation_style"] == ["clean"]
+
+    assert upper_slot_map["citation_section_style"] == [
+        "single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["citation_title_section_style"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["citation_title_section_style_canonical"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["citation_section_suffix_style"] == ["alpha_upper"]
+    assert upper_slot_map["citation_section_punctuation_style"] == ["clean"]
+    assert upper_slot_map["source_id_section_style"] == [
+        "single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["source_id_title_section_style"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["source_id_title_section_style_canonical"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["source_id_section_suffix_style"] == ["alpha_upper"]
+    assert upper_slot_map["source_id_section_punctuation_style"] == ["clean"]
+
+    assert punct_slot_map["citation_section_style"] == ["single_numeric_trailing_punct"]
+    assert punct_slot_map["citation_title_section_style"] == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert punct_slot_map["citation_title_section_style_canonical"] == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
+    assert punct_slot_map["citation_section_suffix_style"] == ["none"]
+    assert punct_slot_map["citation_section_punctuation_style"] == ["trailing_punct"]
+    assert punct_slot_map["source_id_section_style"] == ["single_numeric_trailing_punct"]
+    assert punct_slot_map["source_id_title_section_style"] == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert punct_slot_map["source_id_title_section_style_canonical"] == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
+    assert punct_slot_map["source_id_section_suffix_style"] == ["none"]
+    assert punct_slot_map["source_id_section_punctuation_style"] == ["trailing_punct"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
+    lower_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+    upper_triples = modal_ir_to_flogic_triples(_upper_alpha_suffix_sample_document())
+    punct_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(lower_triples, "citation_section_style") == [
+        "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "citation_title_section_style") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "citation_title_section_style_canonical") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "citation_section_suffix_style") == ["alpha_lower"]
+    assert objects(lower_triples, "citation_section_punctuation_style") == ["clean"]
+    assert objects(lower_triples, "source_id_section_style") == [
+        "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "source_id_title_section_style") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "source_id_title_section_style_canonical") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "source_id_section_suffix_style") == ["alpha_lower"]
+    assert objects(lower_triples, "source_id_section_punctuation_style") == ["clean"]
+
+    assert objects(upper_triples, "citation_section_style") == [
+        "single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "citation_title_section_style") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "citation_title_section_style_canonical") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "citation_section_suffix_style") == ["alpha_upper"]
+    assert objects(upper_triples, "citation_section_punctuation_style") == ["clean"]
+    assert objects(upper_triples, "source_id_section_style") == [
+        "single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "source_id_title_section_style") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "source_id_title_section_style_canonical") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "source_id_section_suffix_style") == ["alpha_upper"]
+    assert objects(upper_triples, "source_id_section_punctuation_style") == ["clean"]
+
+    assert objects(punct_triples, "citation_section_style") == [
+        "single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "citation_title_section_style") == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "citation_title_section_style_canonical") == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
+    assert objects(punct_triples, "citation_section_suffix_style") == ["none"]
+    assert objects(punct_triples, "citation_section_punctuation_style") == [
+        "trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_section_style") == [
+        "single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_title_section_style") == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_title_section_style_canonical") == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_section_suffix_style") == ["none"]
+    assert objects(punct_triples, "source_id_section_punctuation_style") == [
+        "trailing_punct"
+    ]
+
+
+def test_decode_modal_ir_document_emits_suffix_kind_coarse_and_alignment_slots() -> None:
+    expected = {
+        "us-code-16-198a-69c109aec60f214a": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-22-1642e-0a4a6e0aa906f829": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-25-450a-1-b25ed1d7e3a8d3a7": {
+            "section_pair": "alpha|none",
+            "section_match": "false",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "none|none",
+        },
+        "us-code-46-12107.-ac993296d58346dd": {
+            "section_pair": "none|none",
+            "section_match": "true",
+            "primary_alignment_pair": "none|none",
+            "terminal_alignment_pair": "none|none",
+        },
+    }
+
+    for document in _citation_suffix_kind_residual_samples():
+        slot_map = decoded_modal_phrase_slot_text_map(
+            decode_modal_ir_document(document)
+        )
+        doc_expected = expected[document.document_id]
+        section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
+
+        assert slot_map["citation_section_primary_suffix_kind_coarse"] == [section_primary_kind]
+        assert slot_map["citation_section_terminal_suffix_kind_coarse"] == [section_terminal_kind]
+        assert slot_map["citation_section_primary_terminal_suffix_kind_pair"] == [
+            doc_expected["section_pair"]
+        ]
+        assert slot_map["citation_section_primary_terminal_suffix_kind_match"] == [
+            doc_expected["section_match"]
+        ]
+
+        assert slot_map["source_id_section_primary_suffix_kind_coarse"] == [section_primary_kind]
+        assert slot_map["source_id_section_terminal_suffix_kind_coarse"] == [section_terminal_kind]
+        assert slot_map["source_id_section_primary_terminal_suffix_kind_pair"] == [
+            doc_expected["section_pair"]
+        ]
+        assert slot_map["source_id_section_primary_terminal_suffix_kind_match"] == [
+            doc_expected["section_match"]
+        ]
+
+        assert slot_map["citation_source_id_section_primary_suffix_kind_pair"] == [
+            doc_expected["primary_alignment_pair"]
+        ]
+        assert slot_map["citation_source_id_section_primary_suffix_kind_match"] == ["true"]
+        assert slot_map["citation_source_id_section_primary_suffix_kind_presence_match"] == [
+            "true"
+        ]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_pair"] == [
+            doc_expected["terminal_alignment_pair"]
+        ]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_match"] == ["true"]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_presence_match"] == [
+            "true"
+        ]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_kind_coarse_and_alignment_slots() -> None:
+    expected = {
+        "us-code-16-198a-69c109aec60f214a": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-22-1642e-0a4a6e0aa906f829": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-25-450a-1-b25ed1d7e3a8d3a7": {
+            "section_pair": "alpha|none",
+            "section_match": "false",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "none|none",
+        },
+        "us-code-46-12107.-ac993296d58346dd": {
+            "section_pair": "none|none",
+            "section_match": "true",
+            "primary_alignment_pair": "none|none",
+            "terminal_alignment_pair": "none|none",
+        },
+    }
+
+    for document in _citation_suffix_kind_residual_samples():
+        triples = modal_ir_to_flogic_triples(document)
+        doc_expected = expected[document.document_id]
+        section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
+
+        def objects(predicate: str) -> list[str]:
+            return [
+                triple["object"]
+                for triple in triples
+                if triple.get("predicate") == predicate
+            ]
+
+        assert objects("citation_section_primary_suffix_kind_coarse") == [section_primary_kind]
+        assert objects("citation_section_terminal_suffix_kind_coarse") == [section_terminal_kind]
+        assert objects("citation_section_primary_terminal_suffix_kind_pair") == [
+            doc_expected["section_pair"]
+        ]
+        assert objects("citation_section_primary_terminal_suffix_kind_match") == [
+            doc_expected["section_match"]
+        ]
+
+        assert objects("source_id_section_primary_suffix_kind_coarse") == [section_primary_kind]
+        assert objects("source_id_section_terminal_suffix_kind_coarse") == [section_terminal_kind]
+        assert objects("source_id_section_primary_terminal_suffix_kind_pair") == [
+            doc_expected["section_pair"]
+        ]
+        assert objects("source_id_section_primary_terminal_suffix_kind_match") == [
+            doc_expected["section_match"]
+        ]
+
+        assert objects("citation_source_id_section_primary_suffix_kind_pair") == [
+            doc_expected["primary_alignment_pair"]
+        ]
+        assert objects("citation_source_id_section_primary_suffix_kind_match") == ["true"]
+        assert objects("citation_source_id_section_primary_suffix_kind_presence_match") == [
+            "true"
+        ]
+        assert objects("citation_source_id_section_terminal_suffix_kind_pair") == [
+            doc_expected["terminal_alignment_pair"]
+        ]
+        assert objects("citation_source_id_section_terminal_suffix_kind_match") == ["true"]
+        assert objects("citation_source_id_section_terminal_suffix_kind_presence_match") == [
+            "true"
+        ]
+
+
+def test_decode_modal_ir_document_emits_number_distance_profile_slots() -> None:
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+
+    assert slot_map["citation_title_section_primary_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["citation_title_section_terminal_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["source_id_title_section_primary_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["source_id_title_section_terminal_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["citation_source_id_title_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_section_primary_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_section_terminal_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_title_number_span_digit_count_bucket"] == [
+        "1_digit"
+    ]
+    assert (
+        slot_map["citation_source_id_section_primary_number_span_digit_count_bucket"]
+        == ["1_digit"]
+    )
+    assert (
+        slot_map["citation_source_id_section_terminal_number_span_digit_count_bucket"]
+        == ["1_digit"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emits_number_distance_profile_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_title_section_primary_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("citation_title_section_terminal_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("source_id_title_section_primary_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("source_id_title_section_terminal_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("citation_source_id_title_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_section_primary_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_section_terminal_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_title_number_span_digit_count_bucket") == [
+        "1_digit"
+    ]
+    assert objects(
+        "citation_source_id_section_primary_number_span_digit_count_bucket"
+    ) == ["1_digit"]
+    assert objects(
+        "citation_source_id_section_terminal_number_span_digit_count_bucket"
+    ) == ["1_digit"]
+
+
+def test_decode_modal_ir_document_emits_span_metric_slots() -> None:
+    decoded = decode_modal_ir_document(_span_metrics_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_formula_count"] == ["2"]
+    assert slot_map["source_text_char_count"] == ["20"]
+    assert slot_map["modal_span_count"] == ["2"]
+    assert slot_map["modal_span_char_count"] == ["11"]
+    assert slot_map["source_context_span_count"] == ["2"]
+    assert slot_map["source_context_span_char_count"] == ["9"]
+    assert slot_map["support_span_start_char"] == ["0"]
+    assert slot_map["support_span_end_char"] == ["14"]
+    assert slot_map["support_span_width"] == ["14"]
+    assert slot_map["modal_span_coverage_percent"] == ["55"]
+    assert slot_map["modal_span_coverage_bucket"] == ["majority_coverage"]
+    assert slot_map["modal_span_char_count_digit_count_bucket"] == ["2_digit"]
+    assert slot_map["modal_span_coverage_percent_prefix_two_digits"] == ["55"]
+    assert slot_map["source_context_span_count_parity"] == ["even"]
+
+
+def test_modal_ir_to_flogic_triples_emits_span_metric_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_span_metrics_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_formula_count") == ["2"]
+    assert objects("source_text_char_count") == ["20"]
+    assert objects("modal_span_count") == ["2"]
+    assert objects("modal_span_char_count") == ["11"]
+    assert objects("source_context_span_count") == ["2"]
+    assert objects("source_context_span_char_count") == ["9"]
+    assert objects("support_span_start_char") == ["0"]
+    assert objects("support_span_end_char") == ["14"]
+    assert objects("support_span_width") == ["14"]
+    assert objects("modal_span_coverage_percent") == ["55"]
+    assert objects("modal_span_coverage_bucket") == ["majority_coverage"]
+    assert objects("modal_span_char_count_digit_count_bucket") == ["2_digit"]
+    assert objects("modal_span_coverage_percent_prefix_two_digits") == ["55"]
+    assert objects("source_context_span_count_parity") == ["even"]
+
+
+def test_decode_modal_ir_document_uses_raw_source_offsets_for_whitespace_preserving_spans() -> None:
+    decoded = decode_modal_ir_document(_whitespace_preserving_span_sample_document())
+    semantic_slot_map = decoded_modal_phrase_slot_text_map(
+        decoded,
+        include_provenance_only=False,
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert semantic_slot_map["modal_source_span"] == ["must comply"]
+    assert semantic_slot_map["source_context_span"] == ["alpha beta", "now"]
+    assert slot_map["source_text_char_count"] == ["29"]
+    assert slot_map["modal_span_count"] == ["1"]
+    assert slot_map["modal_span_char_count"] == ["12"]
+    assert slot_map["source_context_span_count"] == ["2"]
+    assert slot_map["source_context_span_char_count"] == ["17"]
+    assert slot_map["support_span_start_char"] == ["12"]
+    assert slot_map["support_span_end_char"] == ["24"]
+    assert slot_map["support_span_width"] == ["12"]
+    assert slot_map["modal_span_coverage_percent"] == ["41"]
+    assert slot_map["modal_span_coverage_bucket"] == ["partial_coverage"]
+
+
+def test_modal_ir_to_flogic_triples_uses_raw_source_offsets_for_whitespace_preserving_spans() -> None:
+    triples = modal_ir_to_flogic_triples(_whitespace_preserving_span_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("source_text_char_count") == ["29"]
+    assert objects("modal_span_count") == ["1"]
+    assert objects("modal_span_char_count") == ["12"]
+    assert objects("source_context_span_count") == ["2"]
+    assert objects("source_context_span_char_count") == ["17"]
+    assert objects("support_span_start_char") == ["12"]
+    assert objects("support_span_end_char") == ["24"]
+    assert objects("support_span_width") == ["12"]
+    assert objects("modal_span_coverage_percent") == ["41"]
+    assert objects("modal_span_coverage_bucket") == ["partial_coverage"]
+
+
+def test_decode_modal_ir_document_emits_numeric_support_span_slots_for_string_offsets() -> None:
+    decoded = decode_modal_ir_document(_string_offset_span_metrics_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["support_span_start_char"] == ["46"]
+    assert slot_map["support_span_start_char_trailing_two_digits"] == ["46"]
+    assert slot_map["support_span_end_char"] == ["128"]
+    assert slot_map["support_span_end_char_trailing_two_digits"] == ["28"]
+    assert slot_map["support_span_width"] == ["82"]
+    assert slot_map["support_span_width_trailing_two_digits"] == ["82"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_support_span_slots_for_string_offsets() -> None:
+    triples = modal_ir_to_flogic_triples(_string_offset_span_metrics_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("support_span_start_char") == ["46"]
+    assert objects("support_span_start_char_trailing_two_digits") == ["46"]
+    assert objects("support_span_end_char") == ["128"]
+    assert objects("support_span_end_char_trailing_two_digits") == ["28"]
+    assert objects("support_span_width") == ["82"]
+    assert objects("support_span_width_trailing_two_digits") == ["82"]
+
+
+def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert slot_map["modal_formula_count"] == ["0"]
+    assert slot_map["modal_span_count"] == ["0"]
+    assert slot_map["source_context_span_count"] == ["1"]
+    assert slot_map["modal_span_coverage_percent"] == ["0"]
+    assert slot_map["modal_span_coverage_bucket"] == ["no_modal_span"]
+
+    assert objects("modal_formula_count") == ["0"]
+    assert objects("modal_span_count") == ["0"]
+    assert objects("source_context_span_count") == ["1"]
+    assert objects("modal_span_coverage_percent") == ["0"]
+    assert objects("modal_span_coverage_bucket") == ["no_modal_span"]
+
+
+def _frame_unnamed_predicate_cue_force_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-10902-frame-unnamed-cue-force-0a81cc9526fcb917"
+    source_text = (
+        "Subject to subsection (b), the Board may approve the application."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-unnamed-cue-force",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="49 U.S.C. 10902",
+        ),
+        conditions=["subject to subsection (b)"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_emits_unnamed_predicate_cue_force_bridge_slots() -> None:
+    decoded = decode_modal_ir_document(_frame_unnamed_predicate_cue_force_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "may:permission" in slot_map["typed_decompiler_cue_force"]
+    assert (
+        "cue-force:may:permission"
+        in slot_map["normative_polarity"]
+    )
+    assert (
+        "may:permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_cue_force_polarity_family_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "permission:enabling:frame->conditional_normative"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+    assert (
+        "source-predicate-head:frame:unnamed|typed-decompiler-force-polarity:"
+        "obligation:conditional:frame->deontic"
+        in slot_map["typed_decompiler_source_predicate_force_pair"]
+    )
+
+
+def _under_scope_deontic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-552-under-scope-deontic-2dd3178ce4b6af11"
+    source_text = (
+        "Under section 552(a)(1), the Secretary shall submit to Congress a report."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-under-scope-deontic",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="submit_report_to_congress",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["under section 552(a)(1)"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def _under_scope_temporal_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-8735-under-scope-temporal-40ad4e5f031131be"
+    source_text = "Benefits remain available under section 8735."
+    formula = ModalIRFormula(
+        formula_id="f-under-scope-temporal",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(
+            name="remain_available_benefits",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="7 U.S.C. 8735",
+        ),
+        conditions=["under section 8735"],
+        metadata={"cue": "fiscal_year"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_treats_under_scope_as_typed_condition_and_skips_under_anchor() -> None:
+    decoded = decode_modal_ir_document(_under_scope_deontic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_prefix_key"] == ["under"]
+    assert "conditional_normative:O|:under" in slot_map["condition_modal_bridge_signature"]
+    assert "frame:Frame:under" in slot_map["condition_modal_bridge_signature"]
+    assert "deontic->conditional_normative" in slot_map["condition_modal_bridge_family_pair"]
+    assert "deontic->frame" in slot_map["condition_modal_bridge_family_pair"]
+    assert slot_map["source_subject_anchor"] == ["secretary"]
+    assert slot_map["source_action_anchor"] == ["submit"]
+    assert slot_map["source_object_anchor"] == ["congress"]
+    assert "under" not in slot_map["source_subject_anchor"]
+
+
+def test_modal_ir_to_flogic_triples_surface_under_scope_temporal_cross_family_bridge_pairs() -> None:
+    triples = modal_ir_to_flogic_triples(_under_scope_temporal_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_prefix_key") == ["under"]
+    assert "temporal->conditional_normative" in objects("condition_modal_bridge_family_pair")
+    assert "temporal->deontic" in objects("condition_modal_bridge_family_pair")
+    assert "temporal->frame" in objects("condition_modal_bridge_family_pair")
+    assert "F->O|" in objects("condition_modal_bridge_operator_pair")
+    assert "F->O" in objects("condition_modal_bridge_operator_pair")
+    assert "F->Frame" in objects("condition_modal_bridge_operator_pair")
+    assert "f_to_o_pipe" in objects("condition_modal_bridge_operator_pair_key")
+    assert "f_to_o" in objects("condition_modal_bridge_operator_pair_key")
+    assert "f_to_frame" in objects("condition_modal_bridge_operator_pair_key")
+
+
+def _frame_intent_doxastic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-18-1705-frame-intent-doxastic-828a5b629d033e04"
+    source_text = (
+        "Whoever willfully and maliciously, with intent to obstruct the "
+        "correspondence, destroys any letter box shall be fined."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-intent-doxastic",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="destroy_letter_box", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="18 U.S.C. 1705",
+        ),
+        metadata={"cue": "with_intent_to"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_bridges_frame_intent_text_to_doxastic_slots() -> None:
+    decoded = decode_modal_ir_document(_frame_intent_doxastic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "frame->doxastic" in slot_map["typed_decompiler_family_pair"]
+    assert (
+        "frame->doxastic:with_intent_to"
+        in slot_map["typed_decompiler_family_pair_cue"]
+    )
+    assert (
+        "frame->doxastic"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert (
+        "frame->doxastic"
+        in slot_map["typed_ir_cross_family_semantic_support"]
+    )
+    assert "belief intent knowledge state" in slot_map["typed_ir_reconstruction"][0]
+
+
+def _frame_repealed_status_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-2486j.-frame-repealed-fee27fac375a53cb"
+    source_text = (
+        "§2486j. Repealed. Pub. L. 105-362, title XI, §1101(a), "
+        "Nov. 10, 1998, 112 Stat. 3292."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-repealed-status",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="repealed_section", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 2486j",
+        ),
+        metadata={"status_keyword": "repealed"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_frame_status_atoms_to_normative_targets() -> None:
+    decoded = decode_modal_ir_document(_frame_repealed_status_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["status_keyword"] == ["repealed"]
+    assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->deontic" in slot_map["typed_ir_cross_family_semantic_support"]
+
+
+def _publication_depository_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-44-1911-publications-9996c33b70179dc3"
+    source_text = (
+        "Depository libraries shall make Government publications available "
+        "for the free use of the general public, and may dispose of them "
+        "after retention."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-publication-depository-frame",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="government_publications_available"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="44 U.S.C. 1911",
+        ),
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_publication_depository_atoms_to_deontic_frame_views() -> None:
+    decoded = decode_modal_ir_document(
+        _publication_depository_frame_sample_document()
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "government_publication_depository_access"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "publication_disposal_authority"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _frame_reporting_contents_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-4207-reporting-7841fcb215fbf21c"
+    source_text = (
+        "Reporting requirement. Not later than June 30 of each year, the "
+        "Secretary shall submit to Congress a report to Congress; contents "
+        "shall include actions taken under this chapter."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-frame-reporting-contents",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="report_contents", role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="7 U.S.C. 4207",
+        ),
+        conditions=["not later than June 30 of each year"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_reporting_contents_frame_to_duty_targets() -> None:
+    decoded = decode_modal_ir_document(_frame_reporting_contents_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "report_contents" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->deontic:reporting"
+        in slot_map["typed-decompiler-family-pair-predicate"]
+    )
+    assert (
+        "frame->deontic:duty"
+        in slot_map["typed-decompiler-family-pair-predicate"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def _homestead_temporal_deontic_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-890-homestead-f2c18b546ee3f4aa"
+    source_text = (
+        "Homestead entries on railroad lands prior to withdrawal or after "
+        "restoration to market are confirmed."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-homestead-temporal",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="P",
+            label="permitted",
+        ),
+        predicate=ModalIRPredicate(name="confirm_homestead_entries"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="43 U.S.C. 890",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_homestead_entry_surface_to_temporal_frame_slots() -> None:
+    decoded = decode_modal_ir_document(_homestead_temporal_deontic_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "homestead_entry_confirmation"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "land_withdrawal_restoration_scope"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def _housing_transfer_certification_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1589c-transfer-647f9efc99dc6755"
+    source_text = (
+        "Upon a certification by the Secretary of the Interior that any "
+        "surplus housing is classified as demountable, the housing may be "
+        "transferred to Indians."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-housing-transfer-certification",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="transfer_surplus_housing"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 1589c",
+        ),
+        conditions=["upon a certification by the Secretary of the Interior"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_surfaces_housing_transfer_certification_targets() -> None:
+    decoded = decode_modal_ir_document(_housing_transfer_certification_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "agency_certification_determination"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert (
+        "housing_transfer_authority"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
+
+
+def _repealed_naval_management_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-7156a.-naval-management-2a04b5b7c42f2880"
+    source_text = (
+        "§7156a. Repealed. Pub. L. 105-85, div. C, title XXXIV, "
+        "§3403, Nov. 18, 1997, 111 Stat. 2059. Section related to "
+        "assignment of naval officers to key management positions."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-repealed-naval-management",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="repealed_naval_management_assignment"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 7156a",
+        ),
+        metadata={"status_keyword": "repealed"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_repealed_naval_management_slots() -> None:
+    decoded = decode_modal_ir_document(_repealed_naval_management_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "naval_officer_management_assignment"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+
+
+def _national_seashore_deontic_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-459i-1-seashore-441224bf1e72b168"
+    source_text = (
+        "National seashore recreational areas shall be administered for "
+        "public outdoor recreation under this subchapter."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-national-seashore",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="administer_national_seashore"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="16 U.S.C. 459i-1",
+        ),
+        conditions=["under this subchapter"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_seashore_surface_to_frame_views() -> None:
+    decoded = decode_modal_ir_document(_national_seashore_deontic_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert (
+        "national_seashore_recreation_area"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->conditional_normative" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _air_transportation_workforce_frame_sample_document() -> ModalIRDocument:
+    source_id = "us-code-49-41702.-air-transport-fba028d6ff1426eb"
+    source_text = (
+        "An air carrier shall provide safe and adequate interstate air "
+        "transportation except as provided by the Secretary."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-air-transportation-duty",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="air_carrier_service_duty"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="49 U.S.C. 41702",
+        ),
+        exceptions=["except as provided by the Secretary"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_air_transportation_frame_to_deontic() -> None:
+    decoded = decode_modal_ir_document(_air_transportation_workforce_frame_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "air_carrier_service_duty" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "air_transportation_service_duty" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def _program_activity_reconstruction_document() -> ModalIRDocument:
+    source_id = "us-code-42-19059-program-activity-91665c522bc27130"
+    source_text = (
+        "In accordance with section 9303 of title 15, the Director shall "
+        "carry out activities in support of sustainable chemistry, including "
+        "establishing a program to make awards on a competitive basis."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-program-activity-reconstruction",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="carry_out_sustainable_chemistry_program"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="42 U.S.C. 19059",
+        ),
+        conditions=["in accordance with section 9303 of title 15"],
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_program_activity_slots() -> None:
+    decoded = decode_modal_ir_document(_program_activity_reconstruction_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "program_activity_implementation" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "sustainable_chemistry_activity_support" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "competitive_award_program" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _education_assistance_program_document() -> ModalIRDocument:
+    source_id = "us-code-20-1132-3-education-assistance-80f3f53cc302786f"
+    source_text = (
+        "Higher education resources and student assistance. International "
+        "education programs shall include an educational assistance program."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-education-assistance-reconstruction",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="international_education_program"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="20 U.S.C. 1132-3",
+        ),
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_education_program_views() -> None:
+    decoded = decode_modal_ir_document(_education_assistance_program_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "higher_education_student_assistance" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "international_education_program" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "education_assistance_benefit" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _administration_enforcement_reconstruction_document() -> ModalIRDocument:
+    source_id = "us-code-19-541-admin-enforcement-c6c57595b336e4ef"
+    source_text = (
+        "Customs duties. Tariff and related provisions. Customs "
+        "administration enforcement provisions require customs officers "
+        "to comply with the regulations."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-admin-enforcement-reconstruction",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="customs_enforcement_compliance"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="19 U.S.C. 541",
+        ),
+        metadata={"cue": "require"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_administration_enforcement_slots() -> None:
+    decoded = decode_modal_ir_document(_administration_enforcement_reconstruction_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "customs_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "customs_enforcement_provision" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "tariff_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->deontic" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+
+
+def _effective_date_transition_document() -> ModalIRDocument:
+    source_id = "us-code-26-7810-effective-date-4903dbc02721b3eb"
+    source_text = (
+        "Procedure and administration. Application of internal revenue laws "
+        "shall take effect on the effective date."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-effective-date-reconstruction",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="apply_internal_revenue_laws"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="26 U.S.C. 7810",
+        ),
+        metadata={"cue": "shall"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_effective_date_tax_slots() -> None:
+    decoded = decode_modal_ir_document(_effective_date_transition_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "internal_revenue_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "tax_procedure_administration" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "effective_date_transition" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def _reserved_land_lease_revenue_document() -> ModalIRDocument:
+    source_id = "us-code-43-617u-reserved-land-lease-ccc23533fe0bd328"
+    source_text = (
+        "The Secretary of the Interior is authorized and empowered, under "
+        "such rules and regulations as he may prescribe, to establish rental "
+        "rates for the lease of reserved lands in Boulder City, Nevada, and "
+        "to provide for the disposition of revenues."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-reserved-land-lease",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="frame",
+        ),
+        predicate=ModalIRPredicate(name="lease_reserved_lands"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation="43 U.S.C. 617u",
+        ),
+        conditions=["under such rules and regulations"],
+        metadata={"cue": "authorized"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_reserved_land_lease_revenue_slots() -> None:
+    decoded = decode_modal_ir_document(_reserved_land_lease_revenue_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "reserved_land_lease_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "rental_rate_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "revenue_disposition" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
+
+
+def _packet_000158_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str,
+    symbol: str,
+    predicate: str,
+    cue: str,
+) -> ModalIRDocument:
+    formula = ModalIRFormula(
+        formula_id=f"f-{predicate}",
+        operator=ModalIROperator(
+            family=family,
+            system=family,
+            symbol=symbol,
+            label=family,
+        ),
+        predicate=ModalIRPredicate(name=predicate, role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=citation,
+        ),
+        metadata={"cue": cue},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_reconstructs_packet_000158_veterans_assistance_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_000158_document(
+            source_id="us-code-38-1731-7736f9e2e50472ec",
+            citation="38 U.S.C. 1731",
+            source_text=(
+                "The President is authorized to assist the Republic of the "
+                "Philippines in fulfilling its responsibility in providing "
+                "medical care and treatment for Commonwealth Army veterans "
+                "and new Philippine Scouts in need of such care and treatment."
+            ),
+            family="frame",
+            symbol="Frame",
+            predicate="assist_republic_philippines_medical_care",
+            cue="authorized",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "philippines_medical_assistance_authority" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "veterans_medical_care" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert (
+        "frame->conditional_normative"
+        in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
+    assert "CEC.native" in slot_map["legal_ir_view_prototype"]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_reconstructs_packet_000158_temporal_budget_frame_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_000158_document(
+            source_id="us-code-10-2263-571407a5044f94b2",
+            citation="10 U.S.C. 2263",
+            source_text=(
+                "The total amount contributed by the Secretary of Defense in "
+                "any fiscal year for the common-funded budgets of NATO may "
+                "be an amount in excess of the maximum amount that would "
+                "otherwise be applicable to those contributions in such "
+                "fiscal year under the fiscal year 1998 baseline limitation."
+            ),
+            family="temporal",
+            symbol="F",
+            predicate="nato_common_funded_budget_contribution",
+            cue="may",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "nato_common_funded_budget_contribution" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "fiscal_year_budget_limitation" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "temporal->frame" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "temporal->frame" in slot_map["typed_ir_cross_family_semantic_support"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def _packet_005202_document(
+    *,
+    source_id: str,
+    citation: str,
+    source_text: str,
+    family: str = "deontic",
+    symbol: str = "O",
+    label: str = "obligatory",
+    predicate: str = "report_duty",
+    cue: str = "shall",
+    conditions: list[str] | None = None,
+) -> ModalIRDocument:
+    formula = ModalIRFormula(
+        formula_id=f"f-{predicate}",
+        operator=ModalIROperator(
+            family=family,
+            system=family,
+            symbol=symbol,
+            label=label,
+        ),
+        predicate=ModalIRPredicate(name=predicate, role="clause"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(source_text),
+            citation=citation,
+        ),
+        conditions=conditions or [],
+        metadata={"cue": cue},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[formula],
+    )
+
+
+def test_decode_modal_ir_document_routes_packet_005202_studies_reports_to_frame_and_temporal() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-31-6508-8d4680d70c29f16d",
+            citation="31 U.S.C. 6508",
+            source_text=(
+                "Studies and reports. The Secretary may make studies and "
+                "reports under this chapter on intergovernmental cooperation."
+            ),
+            symbol="P",
+            label="permitted",
+            predicate="make_studies_and_reports",
+            cue="may",
+            conditions=["under this chapter"],
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "study_report_duty" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
+    assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_reconstructs_packet_005202_uranium_inventory_deadline_slots() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-42-2296b-ff510ff401bf04bc",
+            citation="42 U.S.C. 2296b-5",
+            source_text=(
+                "Uranium inventory study. Within 1 year after October 24, "
+                "1992, the Secretary shall submit to the Congress a study "
+                "and report that includes a comprehensive inventory of all "
+                "Government owned uranium or uranium equivalents."
+            ),
+            predicate="submit_uranium_inventory_study",
+            conditions=["within 1 year after October 24, 1992"],
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "uranium_inventory_study" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "inventory_study_report" in slot_map[
+        "typed-decompiler-target-semantic-atom"
+    ]
+    assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "deontic->temporal" in slot_map[
+        "typed-decompiler-target-reconstruction-pair"
+    ]
+    assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
+
+
+def test_decode_modal_ir_document_surfaces_packet_005202_editorial_status_profiles() -> None:
+    decoded = decode_modal_ir_document(
+        _packet_005202_document(
+            source_id="us-code-50-4622-9528cfa09faafb9f",
+            citation="50 U.S.C. 4622",
+            source_text=(
+                "Editorial Notes Codification. Section 4622 was editorially "
+                "reclassified as section 3806 of this title."
+            ),
+            predicate="editorial_reclassification",
+            cue="reclassified",
+        )
+    )
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "reclassified" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert (
+        "editorial_status_surface:deontic->temporal"
+        in slot_map["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert (
+        "editorial_target_reference:deontic->temporal"
+        in slot_map["typed-decompiler-target-reconstruction-surface-profile"]
+    )
+    assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]

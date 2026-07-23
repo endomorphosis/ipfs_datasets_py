@@ -1,0 +1,1744 @@
+"""Syntax-only validation records for deterministic legal norm exports.
+
+This module is deliberately local and conservative. It does not attempt full
+theorem proving; it checks that the IR-derived formula can be rendered into the
+local prover target dialects with balanced, non-empty syntax and source-grounded
+metadata. Full target parser integration can replace these validators target by
+target without changing the report shape.
+"""
+
+from __future__ import annotations
+
+import re
+import hashlib
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List, Mapping, Sequence
+
+from .formula_builder import (
+    build_deontic_formula_from_ir,
+    build_deontic_formula_record_from_ir,
+)
+from .ir import (
+    LegalNormIR,
+    canonical_modality_operator,
+    legal_norm_ir_slot_provenance,
+)
+from .decoder import decode_legal_norm_ir
+
+
+LOCAL_PROVER_TARGETS = (
+    "frame_logic",
+    "deontic_cec",
+    "fol",
+    "deontic_fol",
+    "deontic_temporal_fol",
+)
+
+PROVER_IR_AUDIT_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+    "mental_state",
+    "recipient",
+    "conditions",
+    "exceptions",
+    "temporal_constraints",
+    "cross_references",
+)
+
+
+@dataclass(frozen=True)
+class ProverTargetSyntaxRecord:
+    """Syntax validation result for one local prover target."""
+
+    source_id: str
+    target: str
+    target_version: str
+    formula: str
+    exported_formula: str
+    target_formula_role: str
+    target_formula_fingerprint: str
+    ir_semantic_fingerprint: str
+    decoded_text: str
+    decoded_slots: List[str]
+    decoded_slot_fingerprint: str
+    grounded_decoded_slots: List[str]
+    ungrounded_decoded_slots: List[str]
+    missing_decoded_slots: List[str]
+    grounded_ir_slots: List[str]
+    ungrounded_ir_slots: List[str]
+    missing_ir_slots: List[str]
+    ir_slot_grounding: List[Dict[str, Any]]
+    ir_slot_grounding_fingerprint: str
+    formula_slots: List[str]
+    omitted_formula_slots: Dict[str, Any]
+    omitted_formula_slot_names: List[str]
+    decoded_omitted_formula_slots: List[str]
+    grounded_omitted_formula_slots: List[str]
+    ungrounded_omitted_formula_slots: List[str]
+    decoded_ir_slot_alignment: Dict[str, Any]
+    slot_alignment_fingerprint: str
+    source_formula_symbols: List[str]
+    exported_formula_symbols: List[str]
+    target_symbol_alignment: Dict[str, Any]
+    target_symbol_alignment_fingerprint: str
+    target_dialect_profile: Dict[str, Any]
+    target_dialect_profile_fingerprint: str
+    target_parse_profile: Dict[str, Any]
+    target_parse_profile_fingerprint: str
+    reconstruction_token_profile: Dict[str, Any]
+    reconstruction_token_profile_fingerprint: str
+    target_components: Dict[str, Any]
+    target_quality_gate: Dict[str, Any]
+    target_quality_gate_fingerprint: str
+    bridge_validation_status: str
+    bridge_validation_basis: Dict[str, Any]
+    syntax_valid: bool
+    skipped: bool
+    diagnostics: List[Dict[str, Any]]
+    proof_ready: bool
+    requires_validation: bool
+    schema_version: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ProverSyntaxReport:
+    """Syntax validation report for all requested local targets."""
+
+    source_id: str
+    syntax_valid: bool
+    target_count: int
+    valid_target_count: int
+    skipped_target_count: int
+    targets: List[ProverTargetSyntaxRecord]
+    proof_ready: bool
+    requires_validation: bool
+    schema_version: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        data["targets"] = [target.to_dict() for target in self.targets]
+        return data
+
+
+def validate_ir_with_provers(
+    norm: LegalNormIR,
+    targets: Iterable[str] | None = None,
+) -> ProverSyntaxReport:
+    """Return syntax-only validation records for local prover targets."""
+
+    requested_targets = _normalize_targets(targets)
+    formula = build_deontic_formula_from_ir(norm)
+    formula_record = build_deontic_formula_record_from_ir(norm)
+    records = [
+        _validate_target_formula(norm, target, formula, formula_record)
+        for target in requested_targets
+    ]
+    valid_count = sum(1 for record in records if record.syntax_valid)
+    skipped_count = sum(1 for record in records if record.skipped)
+    requires_validation = any(record.requires_validation for record in records)
+
+    return ProverSyntaxReport(
+        source_id=norm.source_id,
+        syntax_valid=valid_count == len(records),
+        target_count=len(records),
+        valid_target_count=valid_count,
+        skipped_target_count=skipped_count,
+        targets=records,
+        proof_ready=bool(records and all(record.proof_ready for record in records)),
+        requires_validation=requires_validation,
+        schema_version=norm.schema_version,
+    )
+
+
+def build_prover_syntax_records_from_ir(
+    norm: LegalNormIR,
+    targets: Iterable[str] | None = None,
+) -> List[Dict[str, Any]]:
+    """Build export-friendly prover syntax rows from one typed IR norm."""
+
+    return [record.to_dict() for record in validate_ir_with_provers(norm, targets).targets]
+
+
+def _normalize_targets(targets: Iterable[str] | None) -> List[str]:
+    if targets is None:
+        return list(LOCAL_PROVER_TARGETS)
+
+    normalized: List[str] = []
+    for target in targets:
+        value = str(target or "").strip().lower().replace("-", "_")
+        if not value or value in normalized:
+            continue
+        normalized.append(value)
+    return normalized
+
+
+def _validate_target_formula(
+    norm: LegalNormIR,
+    target: str,
+    formula: str,
+    formula_record: Dict[str, Any],
+) -> ProverTargetSyntaxRecord:
+    exported_formula = _render_target_formula(norm, target, formula)
+    decoded = decode_legal_norm_ir(norm)
+    decoded_slot_summary = _decoded_slot_summary(decoded)
+    ir_slot_summary = _ir_slot_grounding_summary(norm)
+    alignment_summary = _decoded_ir_slot_alignment(
+        decoded_slot_summary,
+        ir_slot_summary,
+        formula_record,
+    )
+    symbol_alignment = _target_symbol_alignment(
+        target,
+        formula,
+        exported_formula,
+    )
+    target_dialect_profile = _target_dialect_profile(
+        target,
+        formula,
+        exported_formula,
+        norm,
+    )
+    target_parse_profile = _target_parse_profile(target, exported_formula)
+    reconstruction_token_profile = _reconstruction_token_profile(
+        target,
+        norm,
+        decoded,
+    )
+    target_components = _target_components(
+        target,
+        exported_formula,
+        norm,
+        ir_slot_summary,
+        alignment_summary,
+        symbol_alignment,
+        target_dialect_profile,
+        target_parse_profile,
+        reconstruction_token_profile,
+    )
+    diagnostics = _syntax_diagnostics(target, exported_formula)
+    syntax_valid = not diagnostics
+    target_quality_gate = _target_quality_gate(
+        norm,
+        target,
+        formula_record,
+        diagnostics,
+        alignment_summary,
+        symbol_alignment,
+        target_dialect_profile,
+        target_parse_profile,
+        reconstruction_token_profile,
+    )
+    bridge_validation_basis = _bridge_validation_basis_for_target(
+        target,
+        target_quality_gate,
+        syntax_valid=syntax_valid,
+    )
+
+    return ProverTargetSyntaxRecord(
+        source_id=norm.source_id,
+        target=target,
+        target_version="syntax_v1",
+        formula=formula,
+        exported_formula=exported_formula,
+        target_formula_role=_target_formula_role(target),
+        target_formula_fingerprint=_stable_fingerprint(target, exported_formula),
+        ir_semantic_fingerprint=_ir_semantic_fingerprint(
+            norm,
+            formula,
+            decoded_slot_summary["decoded_slots"],
+            ir_slot_summary["grounded_ir_slots"],
+        ),
+        decoded_text=decoded.text,
+        decoded_slots=decoded_slot_summary["decoded_slots"],
+        decoded_slot_fingerprint=_stable_fingerprint(
+            norm.source_id,
+            "|".join(decoded_slot_summary["decoded_slots"]),
+            decoded.text,
+        ),
+        grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
+        ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
+        missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
+        grounded_ir_slots=ir_slot_summary["grounded_ir_slots"],
+        ungrounded_ir_slots=ir_slot_summary["ungrounded_ir_slots"],
+        missing_ir_slots=ir_slot_summary["missing_ir_slots"],
+        ir_slot_grounding=ir_slot_summary["ir_slot_grounding"],
+        ir_slot_grounding_fingerprint=ir_slot_summary["ir_slot_grounding_fingerprint"],
+        formula_slots=alignment_summary["formula_slots"],
+        omitted_formula_slots=alignment_summary["omitted_formula_slots"],
+        omitted_formula_slot_names=alignment_summary["omitted_formula_slot_names"],
+        decoded_omitted_formula_slots=alignment_summary[
+            "decoded_omitted_formula_slots"
+        ],
+        grounded_omitted_formula_slots=alignment_summary[
+            "grounded_omitted_formula_slots"
+        ],
+        ungrounded_omitted_formula_slots=alignment_summary[
+            "ungrounded_omitted_formula_slots"
+        ],
+        decoded_ir_slot_alignment=alignment_summary,
+        slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
+        source_formula_symbols=symbol_alignment["source_formula_symbols"],
+        exported_formula_symbols=symbol_alignment["exported_formula_symbols"],
+        target_symbol_alignment=symbol_alignment,
+        target_symbol_alignment_fingerprint=symbol_alignment[
+            "target_symbol_alignment_fingerprint"
+        ],
+        target_dialect_profile=target_dialect_profile,
+        target_dialect_profile_fingerprint=target_dialect_profile[
+            "target_dialect_profile_fingerprint"
+        ],
+        target_parse_profile=target_parse_profile,
+        target_parse_profile_fingerprint=target_parse_profile[
+            "target_parse_profile_fingerprint"
+        ],
+        reconstruction_token_profile=reconstruction_token_profile,
+        reconstruction_token_profile_fingerprint=reconstruction_token_profile[
+            "reconstruction_token_profile_fingerprint"
+        ],
+        target_components=target_components,
+        target_quality_gate=target_quality_gate,
+        target_quality_gate_fingerprint=target_quality_gate[
+            "target_quality_gate_fingerprint"
+        ],
+        bridge_validation_status=bridge_validation_basis["status"],
+        bridge_validation_basis=bridge_validation_basis,
+        syntax_valid=syntax_valid,
+        skipped=False,
+        diagnostics=diagnostics,
+        proof_ready=bool(formula_record.get("proof_ready") is True and syntax_valid),
+        requires_validation=bool(formula_record.get("requires_validation") is not False or diagnostics),
+        schema_version=norm.schema_version,
+    )
+
+
+def _bridge_validation_basis_for_target(
+    target: str,
+    target_quality_gate: Dict[str, Any],
+    *,
+    syntax_valid: bool,
+) -> Dict[str, Any]:
+    """Expose target-level local validation as an explicit bridge report signal."""
+
+    formal_complete = bool(
+        target_quality_gate.get("formal_validation_complete") is True
+    )
+    return {
+        "status": "validated" if formal_complete else "requires_validation",
+        "validator": "deontic.local_prover_quality_gate",
+        "validation_scope": "local_target_bridge_report",
+        "target": target,
+        "syntax_valid": bool(syntax_valid),
+        "formal_validation_complete": formal_complete,
+        "structural_checks_complete": bool(
+            target_quality_gate.get("structural_checks_complete") is True
+        ),
+        "failed_quality_checks": list(
+            target_quality_gate.get("failed_quality_checks") or []
+        ),
+    }
+
+
+def _render_target_formula(norm: LegalNormIR, target: str, formula: str) -> str:
+    source_symbol = _source_symbol(norm.source_id)
+    fol_formula = _to_ascii_logic(_strip_deontic_wrapper(formula))
+    deontic_formula = _to_ascii_deontic_formula(formula)
+    if target == "frame_logic":
+        actor = _predicate_symbol(norm.actor or "Actor")
+        action = _predicate_symbol(norm.action or "Action")
+        frame_formula = _to_frame_logic_atom(formula)
+        return f"legal_norm({source_symbol})[actor->{actor}; action->{action}; formula->{frame_formula}]"
+    if target == "deontic_cec":
+        return f"Happens(legal_norm({source_symbol}), t) => HoldsAt({deontic_formula}, t)"
+    if target == "fol":
+        return fol_formula
+    if target == "deontic_fol":
+        return deontic_formula
+    if target == "deontic_temporal_fol":
+        return f"always({deontic_formula})"
+    return formula
+
+
+def _syntax_diagnostics(target: str, exported_formula: str) -> List[Dict[str, Any]]:
+    diagnostics: List[Dict[str, Any]] = []
+    if target not in LOCAL_PROVER_TARGETS:
+        diagnostics.append({"code": "unknown_target", "message": f"unsupported local prover target: {target}"})
+    if not exported_formula.strip():
+        diagnostics.append({"code": "empty_formula", "message": "exported formula is empty"})
+    if not _balanced_delimiters(exported_formula):
+        diagnostics.append({"code": "unbalanced_delimiters", "message": "formula delimiters are unbalanced"})
+    if re.search(r"\bNone\b|\?\?", exported_formula):
+        diagnostics.append({"code": "placeholder_token", "message": "formula contains a placeholder token"})
+    if target in {"deontic_cec", "fol", "deontic_fol", "deontic_temporal_fol"} and re.search(r"[∀∧→¬]", exported_formula):
+        diagnostics.append({"code": "display_connective", "message": "target formula contains display-only logic connectives"})
+    if (
+        target in {"fol", "deontic_fol", "deontic_temporal_fol"}
+        and "forall x." not in exported_formula
+        and not _is_frame_style_formula(exported_formula)
+        and not _contains_frame_style_formula(exported_formula)
+    ):
+        diagnostics.append({"code": "missing_quantifier", "message": "FOL target lacks a quantifier or accepted frame atom"})
+    diagnostics.extend(_target_shape_diagnostics(target, exported_formula))
+    return diagnostics
+
+
+def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
+    decoded_slots: List[str] = []
+    grounded_slots: List[str] = []
+    ungrounded_slots: List[str] = []
+
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if getattr(phrase, "fixed", False):
+            continue
+        slot = str(getattr(phrase, "slot", "") or "").strip()
+        if not slot or slot in decoded_slots:
+            continue
+        decoded_slots.append(slot)
+        if getattr(phrase, "spans", []) or []:
+            grounded_slots.append(slot)
+        else:
+            ungrounded_slots.append(slot)
+
+    missing_slots = [
+        str(slot)
+        for slot in getattr(decoded, "missing_slots", []) or []
+        if str(slot).strip()
+    ]
+    return {
+        "decoded_slots": decoded_slots,
+        "grounded_decoded_slots": grounded_slots,
+        "ungrounded_decoded_slots": ungrounded_slots,
+        "missing_decoded_slots": missing_slots,
+    }
+
+
+def _target_formula_role(target: str) -> str:
+    return {
+        "frame_logic": "frame_record",
+        "deontic_cec": "event_calculus_state",
+        "fol": "first_order_formula",
+        "deontic_fol": "deontic_first_order_formula",
+        "deontic_temporal_fol": "temporal_deontic_first_order_formula",
+    }.get(target, "unknown")
+
+
+def _ir_slot_grounding_summary(norm: LegalNormIR) -> Dict[str, Any]:
+    audit = legal_norm_ir_slot_provenance(norm, PROVER_IR_AUDIT_SLOTS)
+    grounded_slots = list(audit["grounded_slots"])
+    ungrounded_slots = list(audit["ungrounded_slots"])
+    missing_slots = list(audit["missing_slots"])
+    return {
+        "grounded_ir_slots": grounded_slots,
+        "ungrounded_ir_slots": ungrounded_slots,
+        "missing_ir_slots": missing_slots,
+        "ir_slot_grounding": list(audit["slot_grounding"]),
+        "ir_slot_grounding_fingerprint": _stable_fingerprint(
+            norm.source_id,
+            "|".join(grounded_slots),
+            "|".join(ungrounded_slots),
+            "|".join(missing_slots),
+        ),
+    }
+
+
+def _decoded_ir_slot_alignment(
+    decoded_slot_summary: Dict[str, List[str]],
+    ir_slot_summary: Dict[str, Any],
+    formula_record: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Compare decoded slots, grounded IR slots, and formula-included slots."""
+
+    decoded_slots = _ordered_unique(decoded_slot_summary.get("decoded_slots") or [])
+    grounded_ir_slots = _ordered_unique(ir_slot_summary.get("grounded_ir_slots") or [])
+    formula_slots = _ordered_unique(formula_record.get("included_formula_slots") or [])
+    omitted_formula_slots = dict(formula_record.get("omitted_formula_slots") or {})
+    omitted_formula_slot_names = sorted(
+        str(slot) for slot in omitted_formula_slots.keys() if str(slot).strip()
+    )
+
+    decoded_set = set(decoded_slots)
+    grounded_ir_set = set(grounded_ir_slots)
+    formula_set = set(formula_slots)
+    missing_decoded = [
+        slot for slot in grounded_ir_slots if slot not in decoded_set
+    ]
+    ungrounded_decoded = [
+        slot for slot in decoded_slots if slot not in grounded_ir_set
+    ]
+    formula_missing_decoded = [
+        slot for slot in formula_slots if slot not in decoded_set
+    ]
+    formula_ungrounded = [
+        slot for slot in formula_slots if slot not in grounded_ir_set
+    ]
+    decoded_formula_overlap = [
+        slot for slot in decoded_slots if slot in formula_set
+    ]
+    grounded_formula_overlap = [
+        slot for slot in grounded_ir_slots if slot in formula_set
+    ]
+    decoded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, decoded_slots)
+    ]
+    grounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if _slot_name_matches_any(slot, grounded_ir_slots)
+    ]
+    ungrounded_omitted_slots = [
+        slot
+        for slot in omitted_formula_slot_names
+        if slot not in grounded_omitted_slots
+    ]
+    omitted_alignment_complete = not ungrounded_omitted_slots
+    complete = (
+        not missing_decoded
+        and not ungrounded_decoded
+        and not formula_missing_decoded
+        and not formula_ungrounded
+        and omitted_alignment_complete
+    )
+
+    fingerprint = _stable_fingerprint(
+        "|".join(decoded_slots),
+        "|".join(grounded_ir_slots),
+        "|".join(formula_slots),
+        "|".join(omitted_formula_slot_names),
+        "|".join(grounded_omitted_slots),
+        "|".join(ungrounded_omitted_slots),
+        str(complete),
+    )
+    return {
+        "decoded_slots": decoded_slots,
+        "grounded_ir_slots": grounded_ir_slots,
+        "formula_slots": formula_slots,
+        "omitted_formula_slots": omitted_formula_slots,
+        "omitted_formula_slot_names": omitted_formula_slot_names,
+        "decoded_omitted_formula_slots": decoded_omitted_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_slots,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "omitted_formula_slot_alignment_complete": omitted_alignment_complete,
+        "decoded_formula_overlap": decoded_formula_overlap,
+        "grounded_formula_overlap": grounded_formula_overlap,
+        "decoded_missing_grounded_ir_slots": missing_decoded,
+        "ungrounded_decoded_slots": ungrounded_decoded,
+        "formula_missing_decoded_slots": formula_missing_decoded,
+        "formula_ungrounded_slots": formula_ungrounded,
+        "alignment_complete": complete,
+        "slot_alignment_fingerprint": fingerprint,
+    }
+
+
+def _ordered_unique(values: Iterable[Any]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _slot_name_matches_any(slot: str, candidates: Sequence[Any]) -> bool:
+    aliases = _slot_name_aliases(slot)
+    return any(str(candidate or "").strip() in aliases for candidate in candidates)
+
+
+def _slot_name_aliases(slot: str) -> set[str]:
+    value = str(slot or "").strip()
+    aliases = {value}
+    if value.endswith("s"):
+        aliases.add(value[:-1])
+    aliases.update({
+        "recipients": "recipient",
+        "recipient": "recipients",
+        "overrides": "override",
+        "override": "overrides",
+    }.get(value, "").split())
+    aliases.discard("")
+    return aliases
+
+
+def _target_components(
+    target: str,
+    exported_formula: str,
+    norm: LegalNormIR | None = None,
+    ir_slot_summary: Dict[str, Any] | None = None,
+    alignment_summary: Dict[str, Any] | None = None,
+    symbol_alignment: Dict[str, Any] | None = None,
+    target_dialect_profile: Dict[str, Any] | None = None,
+    target_parse_profile: Dict[str, Any] | None = None,
+    reconstruction_token_profile: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    text = str(exported_formula or "").strip()
+    ir_slot_summary = ir_slot_summary or {}
+    alignment_summary = alignment_summary or {}
+    symbol_alignment = symbol_alignment or {}
+    target_dialect_profile = target_dialect_profile or {}
+    target_parse_profile = target_parse_profile or {}
+    reconstruction_token_profile = reconstruction_token_profile or {}
+    grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
+    ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
+    missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
+    formula_slots = list(alignment_summary.get("formula_slots") or [])
+    omitted_formula_slot_names = list(
+        alignment_summary.get("omitted_formula_slot_names") or []
+    )
+    decoded_omitted_formula_slots = list(
+        alignment_summary.get("decoded_omitted_formula_slots") or []
+    )
+    grounded_omitted_formula_slots = list(
+        alignment_summary.get("grounded_omitted_formula_slots") or []
+    )
+    ungrounded_omitted_formula_slots = list(
+        alignment_summary.get("ungrounded_omitted_formula_slots") or []
+    )
+    missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
+    source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
+    exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
+    semantic_predicate = _semantic_formula_predicate(source_symbols, exported_symbols)
+    semantic_family = _semantic_formula_family_for_norm(norm, semantic_predicate)
+    return {
+        "target": target,
+        "formula_role": _target_formula_role(target),
+        "semantic_formula_predicate": semantic_predicate,
+        "semantic_formula_family": semantic_family,
+        "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
+        "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
+        "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
+        "uses_temporal_wrapper": text.startswith("always("),
+        "uses_first_order_quantifier": "forall x." in text,
+        "contains_display_connectives": bool(re.search(r"[∀∧→¬]", text)),
+        "grounded_ir_slots": grounded_ir_slots,
+        "ungrounded_ir_slots": ungrounded_ir_slots,
+        "missing_ir_slots": missing_ir_slots,
+        "grounded_ir_slot_count": len(grounded_ir_slots),
+        "ungrounded_ir_slot_count": len(ungrounded_ir_slots),
+        "missing_ir_slot_count": len(missing_ir_slots),
+        "formula_slots": formula_slots,
+        "formula_slot_count": len(formula_slots),
+        "omitted_formula_slot_names": omitted_formula_slot_names,
+        "omitted_formula_slot_count": len(omitted_formula_slot_names),
+        "decoded_omitted_formula_slots": decoded_omitted_formula_slots,
+        "grounded_omitted_formula_slots": grounded_omitted_formula_slots,
+        "ungrounded_omitted_formula_slots": ungrounded_omitted_formula_slots,
+        "omitted_formula_slot_alignment_complete": bool(
+            alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+        ),
+        "slot_alignment_complete": bool(
+            alignment_summary.get("alignment_complete") is True
+        ),
+        "decoded_missing_grounded_ir_slots": list(
+            alignment_summary.get("decoded_missing_grounded_ir_slots") or []
+        ),
+        "formula_missing_decoded_slots": list(
+            alignment_summary.get("formula_missing_decoded_slots") or []
+        ),
+        "formula_ungrounded_slots": list(
+            alignment_summary.get("formula_ungrounded_slots") or []
+        ),
+        "source_formula_symbols": source_symbols,
+        "exported_formula_symbols": exported_symbols,
+        "source_formula_symbol_count": len(source_symbols),
+        "exported_formula_symbol_count": len(exported_symbols),
+        "missing_exported_formula_symbols": missing_symbols,
+        "target_symbol_alignment_complete": bool(
+            symbol_alignment.get("target_symbol_alignment_complete") is True
+        ),
+        "dialect_family": target_dialect_profile.get("dialect_family", "unknown"),
+        "connective_style": target_dialect_profile.get("connective_style", "unknown"),
+        "quantifier_policy": target_dialect_profile.get("quantifier_policy", "unknown"),
+        "required_wrappers_present": bool(
+            target_dialect_profile.get("required_wrappers_present") is True
+        ),
+        "forbidden_wrappers_absent": bool(
+            target_dialect_profile.get("forbidden_wrappers_absent") is True
+        ),
+        "target_dialect_profile_complete": bool(
+            target_dialect_profile.get("target_dialect_profile_complete") is True
+        ),
+        "target_parse_profile_complete": bool(
+            target_parse_profile.get("target_parse_profile_complete") is True
+        ),
+        "reconstruction_token_profile_complete": bool(
+            reconstruction_token_profile.get("reconstruction_token_profile_complete")
+            is True
+        ),
+        "source_salient_token_count": int(
+            reconstruction_token_profile.get("source_salient_token_count") or 0
+        ),
+        "decoded_salient_token_count": int(
+            reconstruction_token_profile.get("decoded_salient_token_count") or 0
+        ),
+        "matched_salient_token_count": int(
+            reconstruction_token_profile.get("matched_salient_token_count") or 0
+        ),
+        "unreconstructed_source_tokens": list(
+            reconstruction_token_profile.get("unreconstructed_source_tokens") or []
+        ),
+        "added_decoded_tokens": list(
+            reconstruction_token_profile.get("added_decoded_tokens") or []
+        ),
+        "salient_token_coverage_rate": float(
+            reconstruction_token_profile.get("salient_token_coverage_rate") or 0.0
+        ),
+        "decoded_token_precision_rate": float(
+            reconstruction_token_profile.get("decoded_token_precision_rate") or 0.0
+        ),
+        "top_level_symbol": target_parse_profile.get("top_level_symbol", ""),
+        "parse_wrappers": list(target_parse_profile.get("wrapper_sequence") or []),
+        "parse_atom_symbols": list(target_parse_profile.get("atom_symbols") or []),
+        "parse_connectives": list(target_parse_profile.get("connectives") or []),
+        "parse_quantifier_variables": list(
+            target_parse_profile.get("quantifier_variables") or []
+        ),
+        "parse_frame_slots": list(target_parse_profile.get("frame_slots") or []),
+        "parse_event_predicates": list(
+            target_parse_profile.get("event_predicates") or []
+        ),
+    }
+
+
+def _semantic_formula_predicate(
+    source_symbols: Sequence[Any],
+    exported_symbols: Sequence[Any],
+) -> str:
+    for symbols in (source_symbols, exported_symbols):
+        values = [str(symbol or "").strip() for symbol in symbols if str(symbol or "").strip()]
+        if len(values) >= 2:
+            return values[-1]
+        if len(values) == 1:
+            return values[0]
+    return ""
+
+
+def _semantic_formula_family(action_predicate: str) -> str:
+    predicate = str(action_predicate or "").strip()
+    if not predicate:
+        return "ordinary_duty"
+
+    ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("Purpose",), "purpose"),
+        (("Repealed", "Omitted", "Reserved", "Transferred", "Lifecycle", "ValidFor", "ExpiresAfter"), "instrument_lifecycle"),
+        (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
+        (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
+        (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
+        (("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"), "consent_release_instrument_duty"),
+        (("Accommodate", "ProvideAuxiliaryAid", "ProvideAccessible", "ModifyAccessibility", "PlanLanguageAccess", "FormatAccessibly", "InterpretSignLanguage"), "accessibility_accommodation_duty"),
+        (("ProvideAccess", "ProvideRecordsInspection", "PermitInspection", "ProvideCopy", "ProvidePublicAccess"), "public_access_records_duty"),
+        (("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"), "document_authentication_duty"),
+        (("Mediate", "Arbitrate", "Settle", "Conciliate", "Negotiate"), "dispute_resolution_duty"),
+        (("Anonymize", "Decrypt", "Deidentify", "Destroy", "Detokenize", "Encrypt", "Erase", "Expunge", "Hash", "Mask", "Pseudonymize", "Redact", "Seal", "Tokenize", "Unseal"), "data_protection_duty"),
+        (("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"), "legal_recordkeeping_duty"),
+        (("Train", "Orient", "Instruct"), "training_orientation_duty"),
+        (("ReviewAccess", "RotateCredentials", "ResetPassword", "ScanVulnerabilities", "MonitorIntrusions"), "cybersecurity_access_control_duty"),
+        (("ImplementCorrectiveActionPlan", "SubmitCompliancePlan", "AssessRisk", "MaintainComplianceProgram", "PlanEmergencyResponse", "AnalyzeSafety"), "compliance_planning_duty"),
+        (("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"), "data_quality_processing_duty"),
+        (("Report", "FileReturn", "DeclareCompliance"), "regulatory_reporting_duty"),
+        (("Map", "Geocode", "Georeference", "Survey"), "geospatial_records_duty"),
+        (("Evacuate", "Shelter", "Rescue", "Drill"), "emergency_operations_duty"),
+        (("Revise", "Annotate", "Supplement"), "code_maintenance_duty"),
+        (("Catalog", "Index", "Interpret", "Summarize", "Transcribe", "Translate", "Abstract", "Excerpt", "Caption", "Tag"), "records_information_processing_duty"),
+        (("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"), "administrative_relief_duty"),
+        (("DepositSecurity", "ProvideProofInsurance", "MaintainLiabilityInsurance", "PostBond", "EstablishEscrow", "ReleaseBond"), "financial_assurance_duty"),
+        (("Notice", "Notify", "Disclose"), "public_information_duty"),
+    )
+    for prefixes, family in ordered_prefixes:
+        if predicate.startswith(tuple(prefixes)):
+            return family
+    return "ordinary_duty"
+
+
+def _semantic_formula_family_for_norm(
+    norm: LegalNormIR | None,
+    action_predicate: str,
+) -> str:
+    """Classify prover formulas from typed deontic IR before predicate fallback."""
+
+    if norm is None:
+        return _semantic_formula_family(action_predicate)
+
+    norm_type = str(norm.norm_type or "").strip().lower()
+    modality = canonical_modality_operator(norm.modality, norm.norm_type)
+
+    if norm_type == "definition":
+        return "definition"
+    if norm_type == "purpose":
+        return "purpose"
+    if norm_type == "applicability":
+        return "applicability_rule"
+    if norm_type == "exemption":
+        return "exemption_rule"
+    if norm_type == "instrument_lifecycle":
+        return "instrument_lifecycle"
+
+    if _has_temporal_semantic_anchor(norm):
+        return "temporal_deontic_duty"
+    if norm.semantic_family == "conditional_normative":
+        return "conditional_normative"
+
+    predicate_family = _semantic_formula_family(action_predicate)
+    if predicate_family != "ordinary_duty":
+        return predicate_family
+
+    if norm_type == "penalty" or norm.penalty:
+        return "sanction_clause"
+    if modality == "P":
+        return "permission"
+    if modality == "F" or norm_type == "prohibition":
+        return "prohibition"
+    if modality == "O" or norm_type in {"obligation", "duty"}:
+        return "ordinary_duty"
+    return norm_type or modality or "ordinary_duty"
+
+
+def _has_temporal_semantic_anchor(norm: LegalNormIR) -> bool:
+    if norm.temporal_constraints:
+        return True
+    for record in norm.conditions or []:
+        if isinstance(record, Mapping):
+            condition_type = str(record.get("type") or "").strip().lower()
+            value = str(
+                record.get("value")
+                or record.get("normalized_text")
+                or record.get("text")
+                or ""
+            ).strip().lower()
+            if condition_type in {"temporal", "deadline", "duration"}:
+                return True
+            if value.startswith(
+                ("within ", "before ", "after ", "until ", "not later than ", "no later than ")
+            ):
+                return True
+    return False
+
+
+def _target_quality_gate(
+    norm: LegalNormIR,
+    target: str,
+    formula_record: Dict[str, Any],
+    diagnostics: Sequence[Dict[str, Any]],
+    alignment_summary: Dict[str, Any],
+    symbol_alignment: Dict[str, Any],
+    target_dialect_profile: Dict[str, Any],
+    target_parse_profile: Dict[str, Any],
+    reconstruction_token_profile: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return a compact Phase 8 quality gate for one target formula.
+
+    Syntax validity is necessary but not enough for a proof/export quality
+    report. This record joins syntax, formula readiness, target dialect shape,
+    symbol preservation, decoder alignment, and reconstruction token coverage
+    without changing parser proof-readiness or repair gates.
+    """
+
+    diagnostic_codes = [
+        str(item.get("code") or "").strip()
+        for item in diagnostics
+        if isinstance(item, dict) and str(item.get("code") or "").strip()
+    ]
+    syntax_valid = not diagnostic_codes
+    formula_proof_ready = bool(formula_record.get("proof_ready") is True)
+    formula_requires_validation = bool(
+        formula_record.get("requires_validation") is not False
+    )
+    slot_alignment_complete = bool(
+        alignment_summary.get("alignment_complete") is True
+    )
+    symbol_alignment_complete = bool(
+        symbol_alignment.get("target_symbol_alignment_complete") is True
+    )
+    dialect_complete = bool(
+        target_dialect_profile.get("target_dialect_profile_complete") is True
+    )
+    parse_complete = bool(
+        target_parse_profile.get("target_parse_profile_complete") is True
+    )
+    token_complete = bool(
+        reconstruction_token_profile.get("reconstruction_token_profile_complete")
+        is True
+    )
+    omitted_slot_alignment_complete = bool(
+        alignment_summary.get("omitted_formula_slot_alignment_complete") is True
+    )
+    known_local_target = target in LOCAL_PROVER_TARGETS
+    structural_checks_complete = all(
+        (
+            symbol_alignment_complete,
+            dialect_complete,
+            parse_complete,
+            token_complete,
+            known_local_target,
+        )
+    )
+    formal_validation_complete = bool(
+        syntax_valid
+        and formula_proof_ready
+        and not formula_requires_validation
+        and structural_checks_complete
+    )
+    parser_theorem_promotable = bool(norm.proof_ready and formal_validation_complete)
+
+    failed_checks: List[str] = []
+    if not syntax_valid:
+        failed_checks.append("syntax")
+    if not formula_proof_ready:
+        failed_checks.append("formula_proof_ready")
+    if formula_requires_validation:
+        failed_checks.append("formula_requires_validation")
+    if not symbol_alignment_complete:
+        failed_checks.append("symbol_alignment")
+    if not dialect_complete:
+        failed_checks.append("target_dialect")
+    if not parse_complete:
+        failed_checks.append("target_parse")
+    if not token_complete:
+        failed_checks.append("reconstruction_tokens")
+    if not known_local_target:
+        failed_checks.append("known_local_target")
+
+    fingerprint = _stable_fingerprint(
+        norm.source_id,
+        target,
+        str(syntax_valid),
+        str(formula_proof_ready),
+        str(formula_requires_validation),
+        str(structural_checks_complete),
+        str(formal_validation_complete),
+        str(parser_theorem_promotable),
+        str(omitted_slot_alignment_complete),
+        "|".join(alignment_summary.get("omitted_formula_slot_names") or []),
+        "|".join(alignment_summary.get("grounded_omitted_formula_slots") or []),
+        "|".join(alignment_summary.get("ungrounded_omitted_formula_slots") or []),
+        "|".join(failed_checks),
+        "|".join(diagnostic_codes),
+    )
+    return {
+        "target": target,
+        "known_local_target": known_local_target,
+        "syntax_valid": syntax_valid,
+        "diagnostic_codes": diagnostic_codes,
+        "formula_proof_ready": formula_proof_ready,
+        "formula_requires_validation": formula_requires_validation,
+        "parser_proof_ready": bool(norm.proof_ready),
+        "slot_alignment_complete": slot_alignment_complete,
+        "omitted_formula_slot_alignment_complete": omitted_slot_alignment_complete,
+        "omitted_formula_slot_names": list(
+            alignment_summary.get("omitted_formula_slot_names") or []
+        ),
+        "decoded_omitted_formula_slots": list(
+            alignment_summary.get("decoded_omitted_formula_slots") or []
+        ),
+        "grounded_omitted_formula_slots": list(
+            alignment_summary.get("grounded_omitted_formula_slots") or []
+        ),
+        "ungrounded_omitted_formula_slots": list(
+            alignment_summary.get("ungrounded_omitted_formula_slots") or []
+        ),
+        "target_symbol_alignment_complete": symbol_alignment_complete,
+        "target_dialect_profile_complete": dialect_complete,
+        "target_parse_profile_complete": parse_complete,
+        "reconstruction_token_profile_complete": token_complete,
+        "structural_checks_complete": structural_checks_complete,
+        "formal_validation_complete": formal_validation_complete,
+        "parser_theorem_promotable": parser_theorem_promotable,
+        "failed_quality_checks": failed_checks,
+        "target_quality_gate_fingerprint": fingerprint,
+    }
+
+
+_RECONSTRUCTION_TOKEN_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "it",
+    "must",
+    "not",
+    "of",
+    "provided",
+    "shall",
+    "that",
+    "the",
+    "to",
+}
+
+_RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE = {
+    "cross_reference_requires_resolution",
+    "enumerated_clause_requires_item_level_review",
+    "exception_requires_scope_review",
+    "overlong_action_span",
+}
+
+_RECONSTRUCTION_TOKEN_EQUIVALENTS = {
+    "allow": {"allowed", "authorized", "authorize", "authorization", "may", "permitted"},
+    "allowed": {"allow", "authorized", "authorize", "authorization", "may", "permitted"},
+    "authorization": {"authorized", "authorize", "may", "permitted"},
+    "authorize": {"authorized", "authorization", "may", "permitted"},
+    "authorized": {"authorization", "authorize", "may", "permitted"},
+    "entitled": {"entitlement", "may", "permitted"},
+    "entitlement": {"entitled", "may", "permitted"},
+    "except": {"exception", "exempt", "other", "than", "unless"},
+    "exception": {"except", "exempt", "other", "than", "unless"},
+    "exempt": {"except", "exception", "other", "than", "unless"},
+    "may": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "permitted"},
+    "other": {"except", "exception", "exempt", "than", "unless"},
+    "permitted": {"allow", "allowed", "authorized", "authorize", "authorization", "entitled", "entitlement", "may"},
+    "than": {"except", "exception", "exempt", "other", "unless"},
+    "unless": {"except", "exception", "exempt", "other", "than"},
+}
+
+
+def _reconstruction_token_profile(
+    target: str,
+    norm: LegalNormIR,
+    decoded: Any,
+) -> Dict[str, Any]:
+    """Compare source and decoded salient legal tokens for Phase 8 audits."""
+
+    decoded_text = str(getattr(decoded, "text", "") or "").strip()
+    source_text = str(norm.source_text or "").strip()
+    support_text = str(norm.support_text or "").strip()
+    source_tokens = _salient_reconstruction_tokens(source_text or support_text)
+    support_tokens = _salient_reconstruction_tokens(support_text)
+    if not support_tokens:
+        support_tokens = list(source_tokens)
+    slot_basis_tokens = _decoded_slot_basis_tokens(decoded)
+    fixed_connector_tokens = _decoded_fixed_connector_tokens(decoded)
+    decoded_tokens = _salient_reconstruction_tokens(decoded_text)
+    source_set = set(source_tokens)
+    decoded_set = set(decoded_tokens)
+    warning_bundle = {
+        str(warning).strip()
+        for warning in (norm.quality.parser_warnings or [])
+        if str(warning).strip()
+    }
+    reconstruction_neutral_warning_bundle = bool(warning_bundle) and warning_bundle.issubset(
+        _RECONSTRUCTION_NEUTRAL_WARNING_BUNDLE
+    )
+    use_slot_basis = bool(slot_basis_tokens)
+    use_support_basis = (not use_slot_basis) and bool(support_tokens) and (
+        (
+            bool(source_tokens)
+            and len(source_tokens) > (3 * len(support_tokens))
+        )
+        or reconstruction_neutral_warning_bundle
+    )
+    if use_slot_basis:
+        basis_tokens = _source_ordered_token_basis(
+            source_tokens,
+            slot_basis_tokens + fixed_connector_tokens,
+        )
+        source_text_basis = "decoded_slot_basis"
+    else:
+        basis_tokens = support_tokens if use_support_basis else source_tokens
+        source_text_basis = (
+            "support_text"
+            if use_support_basis
+            else "source_text"
+            if source_text
+            else "support_text"
+        )
+    basis_set = set(basis_tokens)
+    reference_source_set = set(source_set or basis_set)
+    reference_source_set.update(basis_set)
+    reference_source_set.update(fixed_connector_tokens)
+    if not reference_source_set:
+        reference_source_set.update(basis_set)
+    matched_tokens = [
+        token
+        for token in basis_tokens
+        if _token_matches_with_equivalents(token, decoded_set)
+    ]
+    unreconstructed_tokens = [
+        token
+        for token in basis_tokens
+        if not _token_matches_with_equivalents(token, decoded_set)
+    ]
+    added_tokens = [token for token in decoded_tokens if token not in basis_set]
+    out_of_source_tokens = [
+        token
+        for token in decoded_tokens
+        if not _token_matches_with_equivalents(token, reference_source_set)
+    ]
+    coverage_rate = round(len(matched_tokens) / len(basis_tokens), 6) if basis_tokens else 1.0
+    precision_rate = round(
+        sum(1 for token in decoded_tokens if token in reference_source_set) / len(decoded_tokens),
+        6,
+    ) if decoded_tokens else 1.0
+    complete = not unreconstructed_tokens and not out_of_source_tokens
+    fingerprint = _stable_fingerprint(
+        target,
+        norm.source_id,
+        source_text_basis,
+        "|".join(basis_tokens),
+        "|".join(decoded_tokens),
+        "|".join(unreconstructed_tokens),
+        "|".join(added_tokens),
+        "|".join(out_of_source_tokens),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_text_basis": source_text_basis,
+        "source_salient_tokens": basis_tokens,
+        "decoded_salient_tokens": decoded_tokens,
+        "matched_salient_tokens": matched_tokens,
+        "unreconstructed_source_tokens": unreconstructed_tokens,
+        "added_decoded_tokens": added_tokens,
+        "decoded_out_of_source_tokens": out_of_source_tokens,
+        "source_salient_token_count": len(basis_tokens),
+        "decoded_salient_token_count": len(decoded_tokens),
+        "matched_salient_token_count": len(matched_tokens),
+        "salient_token_coverage_rate": coverage_rate,
+        "decoded_token_precision_rate": precision_rate,
+        "reconstruction_token_profile_complete": complete,
+        "reconstruction_token_profile_fingerprint": fingerprint,
+    }
+
+
+def _source_ordered_token_basis(
+    source_tokens: Sequence[str],
+    basis_tokens: Sequence[str],
+) -> List[str]:
+    """Return basis tokens in source order while preserving fallback extras."""
+
+    basis_set = {
+        str(token or "").strip()
+        for token in basis_tokens
+        if str(token or "").strip()
+    }
+    ordered = [
+        token
+        for token in source_tokens
+        if token in basis_set
+    ]
+    for token in basis_tokens:
+        value = str(token or "").strip()
+        if value and value not in ordered:
+            ordered.append(value)
+    return ordered
+
+
+def _decoded_slot_basis_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens from semantic decoded slots only.
+
+    Fixed connectives and provenance-only rows are excluded from this basis.
+    They are validated separately as allowed connective/source additions.
+    """
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if getattr(phrase, "fixed", False):
+            continue
+        if getattr(phrase, "provenance_only", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
+
+
+def _decoded_fixed_connector_tokens(decoded: Any) -> List[str]:
+    """Return ordered tokens that come from fixed decoder connectives."""
+
+    tokens: List[str] = []
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if not getattr(phrase, "fixed", False):
+            continue
+        text = str(getattr(phrase, "text", "") or "").strip()
+        if not text:
+            continue
+        for token in _salient_reconstruction_tokens(text):
+            if token not in tokens:
+                tokens.append(token)
+    return tokens
+
+
+def _salient_reconstruction_tokens(text: str) -> List[str]:
+    tokens: List[str] = []
+    for token in re.findall(r"[A-Za-z0-9]+", str(text or "").lower()):
+        if token in _RECONSTRUCTION_TOKEN_STOPWORDS:
+            continue
+        if token not in tokens:
+            tokens.append(token)
+    return tokens
+
+
+def _token_matches_with_equivalents(token: str, candidates: set[str]) -> bool:
+    token_value = str(token or "").strip().lower()
+    if not token_value:
+        return False
+    if token_value in candidates:
+        return True
+    for equivalent in _RECONSTRUCTION_TOKEN_EQUIVALENTS.get(token_value, set()):
+        if equivalent in candidates:
+            return True
+    return False
+
+
+def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
+    """Return a compact deterministic parse profile for the rendered dialect.
+
+    This is intentionally syntax-only. It exposes the target-visible structure
+    that the local validators inspected so Phase 8 reports can distinguish a
+    valid string from the kind of formula accepted by a target adapter.
+    """
+
+    text = str(exported_formula or "").strip()
+    top_level_symbol = _top_level_symbol(text)
+    wrapper_sequence = _wrapper_sequence(text)
+    atom_symbols = _formula_symbols(text)
+    connectives = _target_connectives(text)
+    quantifier_variables = _quantifier_variables(text)
+    frame_slots = _frame_slots(text) if target == "frame_logic" else []
+    event_predicates = _event_predicates(text) if target == "deontic_cec" else []
+    complete = bool(
+        text
+        and top_level_symbol
+        and _target_parse_profile_shape_complete(
+            target,
+            top_level_symbol,
+            wrapper_sequence,
+            frame_slots,
+            event_predicates,
+        )
+    )
+    fingerprint = _stable_fingerprint(
+        target,
+        top_level_symbol,
+        "|".join(wrapper_sequence),
+        "|".join(atom_symbols),
+        "|".join(connectives),
+        "|".join(quantifier_variables),
+        "|".join(frame_slots),
+        "|".join(event_predicates),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "top_level_symbol": top_level_symbol,
+        "wrapper_sequence": wrapper_sequence,
+        "atom_symbols": atom_symbols,
+        "connectives": connectives,
+        "quantifier_variables": quantifier_variables,
+        "frame_slots": frame_slots,
+        "event_predicates": event_predicates,
+        "contains_quantifier": bool(quantifier_variables),
+        "target_parse_profile_complete": complete,
+        "target_parse_profile_fingerprint": fingerprint,
+    }
+
+
+def _top_level_symbol(text: str) -> str:
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text)
+    if match:
+        return match.group(1)
+    if re.match(r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\.", text):
+        return "forall"
+    return ""
+
+
+def _wrapper_sequence(text: str) -> List[str]:
+    wrappers: List[str] = []
+    for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text):
+        wrapper = match.group(1)
+        if wrapper in {"legal_norm", "Happens", "HoldsAt", "always", "O", "P", "F"}:
+            wrappers.append(wrapper)
+    return wrappers
+
+
+def _target_connectives(text: str) -> List[str]:
+    connectives: List[str] = []
+    for symbol, pattern in (
+        ("forall", r"\bforall\s+[A-Za-z][A-Za-z0-9_]*\."),
+        ("and", r"\band\b"),
+        ("or", r"\bor\b"),
+        ("not", r"\bnot\b"),
+        ("implies", r"(?:->|=>)"),
+    ):
+        if re.search(pattern, text):
+            connectives.append(symbol)
+    return connectives
+
+
+def _quantifier_variables(text: str) -> List[str]:
+    variables: List[str] = []
+    for variable in re.findall(r"\bforall\s+([A-Za-z][A-Za-z0-9_]*)\.", text):
+        if variable not in variables:
+            variables.append(variable)
+    return variables
+
+
+def _frame_slots(text: str) -> List[str]:
+    match = re.match(r"^legal_norm\([^)]+\)\[(.+)\]$", text)
+    if not match:
+        return []
+    slots: List[str] = []
+    for slot in re.findall(r"([A-Za-z][A-Za-z0-9_]*)->", match.group(1)):
+        if slot not in slots:
+            slots.append(slot)
+    return slots
+
+
+def _event_predicates(text: str) -> List[str]:
+    predicates: List[str] = []
+    for predicate in re.findall(r"\b(Happens|HoldsAt)\s*\(", text):
+        if predicate not in predicates:
+            predicates.append(predicate)
+    return predicates
+
+
+def _target_parse_profile_shape_complete(
+    target: str,
+    top_level_symbol: str,
+    wrapper_sequence: Sequence[str],
+    frame_slots: Sequence[str],
+    event_predicates: Sequence[str],
+) -> bool:
+    wrappers = list(wrapper_sequence)
+    if target == "frame_logic":
+        return top_level_symbol == "legal_norm" and list(frame_slots) == [
+            "actor",
+            "action",
+            "formula",
+        ]
+    if target == "deontic_cec":
+        return top_level_symbol == "Happens" and list(event_predicates) == [
+            "Happens",
+            "HoldsAt",
+        ]
+    if target == "fol":
+        return top_level_symbol in {
+            "forall",
+            "AppliesTo",
+            "Definition",
+            "ExemptFrom",
+            "Purpose",
+            "ValidFor",
+            "ExpiresAfter",
+            "Lifecycle",
+            "Repealed",
+            "Omitted",
+            "Reserved",
+            "Transferred",
+        }
+    if target == "deontic_fol":
+        return (
+            bool(top_level_symbol)
+            and "always" not in wrappers
+            and "Happens" not in wrappers
+        )
+    if target == "deontic_temporal_fol":
+        return top_level_symbol == "always" and "always" in wrappers
+    return False
+
+
+def _target_dialect_profile(
+    target: str,
+    formula: str,
+    exported_formula: str,
+    norm: LegalNormIR,
+) -> Dict[str, Any]:
+    """Describe target-specific syntax obligations for audit records.
+
+    The syntax validator should expose not only whether a target string parsed,
+    but why that string belongs to the requested local dialect. This profile is
+    deterministic metadata derived from the target name and rendered formula.
+    """
+
+    text = str(exported_formula or "").strip()
+    source_operator = _source_deontic_operator(formula, norm)
+    policy = _target_dialect_policy(target)
+    required_wrappers = list(policy["required_wrappers"])
+    forbidden_wrappers = list(policy["forbidden_wrappers"])
+    present_wrappers = _present_target_wrappers(text)
+    required_present = all(wrapper in present_wrappers for wrapper in required_wrappers)
+    forbidden_absent = all(wrapper not in present_wrappers for wrapper in forbidden_wrappers)
+    display_connectives_absent = not bool(re.search(r"[∀∧∨→¬]", text))
+    quantifier_present = "forall x." in text
+    quantifier_policy = str(policy["quantifier_policy"])
+    quantifier_ok = (
+        quantifier_present
+        if quantifier_policy == "required"
+        else not quantifier_present
+        if quantifier_policy == "forbidden"
+        else True
+    )
+    deontic_operator_preserved = (
+        source_operator == ""
+        or source_operator not in {"O", "P", "F"}
+        or source_operator in present_wrappers
+        or target == "fol"
+    )
+    complete = (
+        required_present
+        and forbidden_absent
+        and display_connectives_absent
+        and quantifier_ok
+        and deontic_operator_preserved
+    )
+    fingerprint = _stable_fingerprint(
+        target,
+        policy["dialect_family"],
+        "|".join(required_wrappers),
+        "|".join(forbidden_wrappers),
+        "|".join(present_wrappers),
+        quantifier_policy,
+        str(complete),
+    )
+    return {
+        "target": target,
+        "dialect_family": policy["dialect_family"],
+        "formula_role": _target_formula_role(target),
+        "connective_style": "ascii",
+        "source_deontic_operator": source_operator,
+        "required_wrappers": required_wrappers,
+        "forbidden_wrappers": forbidden_wrappers,
+        "present_wrappers": present_wrappers,
+        "required_wrappers_present": required_present,
+        "forbidden_wrappers_absent": forbidden_absent,
+        "display_connectives_absent": display_connectives_absent,
+        "quantifier_policy": quantifier_policy,
+        "quantifier_present": quantifier_present,
+        "quantifier_policy_satisfied": quantifier_ok,
+        "deontic_operator_preserved": deontic_operator_preserved,
+        "target_dialect_profile_complete": complete,
+        "target_dialect_profile_fingerprint": fingerprint,
+    }
+
+
+def _target_dialect_policy(target: str) -> Dict[str, Any]:
+    policies: Dict[str, Dict[str, Any]] = {
+        "frame_logic": {
+            "dialect_family": "frame_logic",
+            "required_wrappers": ("legal_norm",),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_cec": {
+            "dialect_family": "event_calculus",
+            "required_wrappers": ("Happens", "HoldsAt"),
+            "forbidden_wrappers": ("always",),
+            "quantifier_policy": "optional",
+        },
+        "fol": {
+            "dialect_family": "first_order",
+            "required_wrappers": (),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always", "O", "P", "F"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_fol": {
+            "dialect_family": "deontic_first_order",
+            "required_wrappers": (),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_temporal_fol": {
+            "dialect_family": "deontic_temporal_first_order",
+            "required_wrappers": ("always",),
+            "forbidden_wrappers": ("Happens", "HoldsAt"),
+            "quantifier_policy": "optional",
+        },
+    }
+    return policies.get(
+        target,
+        {
+            "dialect_family": "unknown",
+            "required_wrappers": (),
+            "forbidden_wrappers": (),
+            "quantifier_policy": "optional",
+        },
+    )
+
+
+def _present_target_wrappers(exported_formula: str) -> List[str]:
+    text = str(exported_formula or "")
+    wrappers: List[str] = []
+    for wrapper in ("legal_norm", "Happens", "HoldsAt", "always", "O", "P", "F"):
+        if re.search(r"\b" + re.escape(wrapper) + r"\s*\(", text):
+            wrappers.append(wrapper)
+    return wrappers
+
+
+def _source_deontic_operator(formula: str, norm: LegalNormIR) -> str:
+    text = str(formula or "").strip()
+    if len(text) > 2 and text[0] in {"O", "P", "F"} and text[1] == "(":
+        return text[0]
+    modality = canonical_modality_operator(norm.modality, norm.norm_type)
+    return modality if modality in {"O", "P", "F"} else ""
+
+
+def _target_symbol_alignment(
+    target: str,
+    formula: str,
+    exported_formula: str,
+) -> Dict[str, Any]:
+    """Audit whether target rendering preserved formal formula symbols.
+
+    Syntax checks catch malformed target strings, while slot alignment checks
+    that decoded legal slots and formula slots agree. This audit focuses on the
+    rendered target formula itself: every predicate or frame symbol in the
+    source formula must still be visible in the target dialect.
+    """
+
+    source_symbols = _formula_symbols(formula)
+    exported_symbols = _formula_symbols(exported_formula)
+    exported_symbol_set = set(exported_symbols)
+    missing_symbols = [
+        symbol for symbol in source_symbols if symbol not in exported_symbol_set
+    ]
+    extra_symbols = [
+        symbol for symbol in exported_symbols if symbol not in set(source_symbols)
+    ]
+    complete = not missing_symbols
+    fingerprint = _stable_fingerprint(
+        target,
+        "|".join(source_symbols),
+        "|".join(exported_symbols),
+        "|".join(missing_symbols),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_formula_symbols": source_symbols,
+        "exported_formula_symbols": exported_symbols,
+        "missing_exported_formula_symbols": missing_symbols,
+        "extra_exported_formula_symbols": extra_symbols,
+        "source_formula_symbol_count": len(source_symbols),
+        "exported_formula_symbol_count": len(exported_symbols),
+        "target_symbol_alignment_complete": complete,
+        "target_symbol_alignment_fingerprint": fingerprint,
+    }
+
+
+_FORMULA_SYMBOL_STOPWORDS = {
+    "O",
+    "P",
+    "F",
+    "DEF",
+    "APP",
+    "EXEMPT",
+    "LIFE",
+    "forall",
+    "exists",
+    "and",
+    "or",
+    "not",
+    "always",
+    "Happens",
+    "HoldsAt",
+    "legal_norm",
+    "actor",
+    "action",
+    "formula",
+    "source",
+    "unknown",
+    "ForallX",
+    "t",
+    "x",
+}
+
+
+def _formula_symbols(formula: str) -> List[str]:
+    text = _to_ascii_logic(str(formula or ""))
+    symbols: List[str] = []
+    for token in re.findall(r"[A-Za-z][A-Za-z0-9_]*", text):
+        if token in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if token.lower() in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if token.startswith("deontic_"):
+            continue
+        normalized = _canonical_formula_symbol(token)
+        if normalized in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if normalized.lower() in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if normalized and normalized not in symbols:
+            symbols.append(normalized)
+    return symbols
+
+
+def _canonical_formula_symbol(symbol: str) -> str:
+    value = str(symbol or "").strip("_")
+    if not value:
+        return ""
+    for prefix in ("And", "Or", "Not"):
+        if value.startswith(prefix) and len(value) > len(prefix):
+            remainder = value[len(prefix) :]
+            if remainder[:1].isupper():
+                value = remainder
+                break
+    if "_" not in value:
+        return value
+    parts = [
+        part
+        for part in value.split("_")
+        if part and part.lower() not in _FORMULA_SYMBOL_STOPWORDS
+    ]
+    if not parts:
+        return ""
+    return "".join(part[:1].upper() + part[1:] for part in parts)
+
+
+def _ir_semantic_fingerprint(
+    norm: LegalNormIR,
+    formula: str,
+    decoded_slots: Sequence[str],
+    grounded_ir_slots: Sequence[str] = (),
+) -> str:
+    modality = canonical_modality_operator(norm.modality, norm.norm_type) or str(
+        norm.modality or ""
+    )
+    return _stable_fingerprint(
+        norm.schema_version,
+        norm.source_id,
+        norm.norm_type,
+        modality,
+        norm.actor,
+        norm.action,
+        formula,
+        "|".join(decoded_slots),
+        "|".join(grounded_ir_slots),
+    )
+
+
+def _stable_fingerprint(*parts: Any) -> str:
+    payload = "\x1f".join(str(part or "") for part in parts)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
+
+
+def _target_shape_diagnostics(target: str, exported_formula: str) -> List[Dict[str, Any]]:
+    text = str(exported_formula or "").strip()
+    diagnostics: List[Dict[str, Any]] = []
+    if not text or target not in LOCAL_PROVER_TARGETS:
+        return diagnostics
+
+    if target == "frame_logic" and not re.match(
+        r"^legal_norm\([A-Za-z0-9_]+\)\[actor->[A-Za-z][A-Za-z0-9_]*; action->[A-Za-z][A-Za-z0-9_]*; formula->[A-Za-z0-9_().,\->=]+\]$",
+        text,
+    ):
+        diagnostics.append({
+            "code": "frame_logic_shape",
+            "message": "frame logic target must render a legal_norm frame with actor, action, and formula slots",
+        })
+    elif target == "deontic_cec" and not re.match(
+        r"^Happens\(legal_norm\([A-Za-z0-9_]+\), t\) => HoldsAt\(.+, t\)$",
+        text,
+    ):
+        diagnostics.append({
+            "code": "deontic_cec_shape",
+            "message": "deontic CEC target must render Happens(..., t) => HoldsAt(..., t)",
+        })
+    elif target == "deontic_temporal_fol" and not (
+        text.startswith("always(") and text.endswith(")")
+    ):
+        diagnostics.append({
+            "code": "temporal_wrapper",
+            "message": "deontic temporal FOL target must wrap the target formula in always(...)",
+        })
+    elif target == "deontic_fol" and re.match(r"^(?:always|Happens|HoldsAt)\(", text):
+        diagnostics.append({
+            "code": "deontic_fol_shape",
+            "message": "deontic FOL target must not include event-calculus or temporal wrappers",
+        })
+    elif target == "fol" and re.match(r"^(?:O|P|F|always|Happens|HoldsAt)\(", text):
+        diagnostics.append({
+            "code": "fol_shape",
+            "message": "FOL target must not include deontic, temporal, or event-calculus wrappers",
+        })
+    return diagnostics
+
+
+def _balanced_delimiters(text: str) -> bool:
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    closing = set(pairs.values())
+    stack: List[str] = []
+    for char in text:
+        if char in pairs:
+            stack.append(pairs[char])
+        elif char in closing:
+            if not stack or stack.pop() != char:
+                return False
+    return not stack
+
+
+def _strip_deontic_wrapper(formula: str) -> str:
+    text = str(formula or "").strip()
+    if len(text) > 3 and text[1] == "(" and text[0] in {"O", "P", "F"} and text.endswith(")"):
+        return text[2:-1].strip()
+    return text
+
+
+def _to_ascii_deontic_formula(formula: str) -> str:
+    text = str(formula or "").strip()
+    if len(text) > 3 and text[1] == "(" and text[0] in {"O", "P", "F"} and text.endswith(")"):
+        return f"{text[0]}({_to_ascii_logic(text[2:-1])})"
+    return _to_ascii_logic(text)
+
+
+def _to_ascii_logic(formula: str) -> str:
+    text = str(formula or "").strip()
+    if not text:
+        return ""
+    text = re.sub(r"∀\s*([A-Za-z][A-Za-z0-9_]*)\s*", r"forall \1. ", text)
+    replacements = {
+        "∧": "and",
+        "∨": "or",
+        "→": "->",
+        "¬": "not ",
+        "≤": "<=",
+        "≥": ">=",
+    }
+    for source, replacement in replacements.items():
+        text = text.replace(source, replacement)
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"not\s+", "not ", text)
+    return text.strip()
+
+
+def _to_frame_logic_atom(formula: str) -> str:
+    text = _to_ascii_logic(formula)
+    text = re.sub(r"\s+", "_", text)
+    text = re.sub(r"[^0-9A-Za-z_().,\->=]+", "_", text)
+    return text.strip("_") or "formula"
+
+
+def _is_frame_style_formula(formula: str) -> bool:
+    return bool(re.match(r"^[A-Za-z][A-Za-z0-9_]*\(.+\)$", formula.strip()))
+
+
+def _contains_frame_style_formula(formula: str) -> bool:
+    return bool(re.search(r"[A-Za-z][A-Za-z0-9_]*\([^()]+\)", formula.strip()))
+
+
+def _source_symbol(source_id: str) -> str:
+    value = re.sub(r"[^0-9A-Za-z_]+", "_", str(source_id or "unknown")).strip("_")
+    return value or "unknown"
+
+
+def _predicate_symbol(value: str) -> str:
+    words = re.findall(r"[0-9A-Za-z]+", str(value or ""))
+    predicate = "".join(word[:1].upper() + word[1:] for word in words) if words else "Unknown"
+    if predicate and not predicate[0].isalpha():
+        predicate = f"N{predicate}"
+    return predicate

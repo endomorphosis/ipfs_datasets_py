@@ -71,6 +71,10 @@ from .tdfol_core import (
     create_universal,
     create_until,
 )
+from .compiler_repairs import (
+    TDFOL_COMPILER_REPAIR_SCHEMA_VERSION,
+    compile_temporal_deadline,
+)
 
 # Keep package imports quiet/deterministic: do not import optional/heavy submodules
 # (parsers, DCEC integration, prover, cache, rule loaders) at import time.
@@ -142,6 +146,8 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
+    "TDFOL_COMPILER_REPAIR_SCHEMA_VERSION",
+    "compile_temporal_deadline",
     # Enumerations
     "DeonticOperator",
     "LogicOperator",

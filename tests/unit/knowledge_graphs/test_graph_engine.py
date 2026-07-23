@@ -15,6 +15,11 @@ except ImportError:
     HAVE_PYTEST = False
     
 from ipfs_datasets_py.knowledge_graphs.core import GraphEngine, QueryExecutor
+from ipfs_datasets_py.knowledge_graphs.migration.formats import (
+    GraphData,
+    NodeData,
+    RelationshipData,
+)
 from ipfs_datasets_py.knowledge_graphs.neo4j_compat import Node, Relationship
 from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend, LRUCache
 
@@ -194,6 +199,43 @@ class TestGraphEngineBasics:
         # Find with limit
         results = engine.find_nodes(labels=["Person"], limit=5)
         assert len(results) == 5
+
+    def test_import_graph_data_preserves_ids_for_neo4j_compatible_ir(self):
+        """Test importing migration GraphData into the Neo4j-compatible engine."""
+        engine = GraphEngine()
+        graph_data = GraphData(
+            nodes=[
+                NodeData(
+                    id="doc-1",
+                    labels=["LegalModalDocument"],
+                    properties={"name": "doc-1"},
+                ),
+                NodeData(
+                    id="formula-1",
+                    labels=["ModalFormula"],
+                    properties={"name": "formula-1"},
+                ),
+            ],
+            relationships=[
+                RelationshipData(
+                    id="rel-1",
+                    type="BELONGS_TO_DOCUMENT",
+                    start_node="formula-1",
+                    end_node="doc-1",
+                    properties={"flogic_predicate": "belongs_to_document"},
+                )
+            ],
+        )
+
+        report = engine.import_graph_data(graph_data)
+
+        assert report["nodes_imported"] == 2
+        assert report["relationships_imported"] == 1
+        assert engine.get_node("doc-1").get("name") == "doc-1"
+        assert engine.find_nodes(labels=["LegalModalDocument"], properties={"name": "doc-1"})
+        relationships = engine.get_relationships("formula-1", rel_type="BELONGS_TO_DOCUMENT")
+        assert len(relationships) == 1
+        assert relationships[0].end_node == "doc-1"
 
 
 class TestGraphEnginePersistence:

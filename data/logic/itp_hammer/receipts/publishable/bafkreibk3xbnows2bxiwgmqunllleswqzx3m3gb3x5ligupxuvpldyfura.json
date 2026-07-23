@@ -1,0 +1,107 @@
+{
+  "created_at": "2026-07-19T14:51:32.691705+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: timeout"
+  ],
+  "publishable_digest": "bafkreicqpw25njuxiensrlez4j2torscdswi2kq7vbyeoseipiy2koj27y",
+  "receipt_id": "bafkreibk3xbnows2bxiwgmqunllleswqzx3m3gb3x5ligupxuvpldyfura",
+  "reconstruction_evidence": null,
+  "redaction_notes": [
+    "private-theorem-goal",
+    "private-theorem-translation"
+  ],
+  "result": {
+    "completed_at": "2026-01-01T00:00:05+00:00",
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "environment_lock": null,
+    "errors": [],
+    "notes": [
+      "every attempted solver exhausted its bounded timeout"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      }
+    ],
+    "proof_candidate": null,
+    "reconstruction": null,
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=22 digest=bafkreie6pgl3ijwjmd7qtyqiapu3preqctgbsrygz2xjm2xhnctollgxrq>",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [
+          "vampire"
+        ],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 5.0
+      },
+      "request_id": "golden-timeout-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_timeout"
+    },
+    "result_id": "golden-timeout-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [
+      {
+        "attempt_id": "golden-timeout-1:golden-timeout-1:goal:tptp:0:vampire:0",
+        "exit_code": null,
+        "finished_at": "2026-01-01T00:00:05+00:00",
+        "network_used": false,
+        "raw_output_digest": "bafkreigppqcw7izoyo4u6v62tftrdo5yil2ewnrqb7pozhtyuyfgxpy2dm",
+        "request_id": "golden-timeout-1",
+        "resource_usage": {},
+        "schema_version": "1.0.0",
+        "solver_name": "vampire",
+        "solver_version": "fixture-1.0",
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "target": "tptp",
+        "timeout_seconds": 5.0,
+        "translation_id": "golden-timeout-1:goal:tptp:0",
+        "verdict": "timeout",
+        "wall_time_seconds": 5.0
+      }
+    ],
+    "status": "timeout",
+    "translations": [
+      {
+        "content_digest": "bafkreigvjflweenctgeleijmujsqhauf7i5ntprfnk4tn3ahsd4tci2jfu",
+        "obligations": [],
+        "request_id": "golden-timeout-1",
+        "schema_version": "1.0.0",
+        "source_construct": "goal",
+        "status": "supported",
+        "target": "tptp",
+        "translated_text": "<redacted:private-theorem-translation length=116 digest=bafkreifcxqpeuz2m7d32d5wxm6quiez7vj4eq7kxugxmpuk435zmuppq5e>",
+        "translation_id": "golden-timeout-1:goal:tptp:0",
+        "unsupported_reason": null
+      }
+    ]
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

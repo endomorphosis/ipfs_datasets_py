@@ -1,0 +1,15 @@
+recursive-include ipfs_datasets_py/processors/groth16_backend/bin *groth16*
+recursive-include ipfs_datasets_py/processors/groth16_backend/artifacts *.bin
+recursive-include ipfs_datasets_py/processors/groth16_backend/src *.rs
+recursive-include ipfs_datasets_py/processors/groth16_backend/schemas *.json
+recursive-include ipfs_datasets_py/processors/groth16_backend/contracts *.sol
+include ipfs_datasets_py/processors/groth16_backend/Cargo.toml
+include ipfs_datasets_py/processors/groth16_backend/Cargo.lock
+include ipfs_datasets_py/processors/groth16_backend/build.sh
+include ipfs_datasets_py/processors/provekit_backend/README.md
+include ipfs_datasets_py/processors/provekit_backend/build.sh
+recursive-include ipfs_datasets_py/logic/zkp/provekit/circuits Nargo.toml *.nr
+recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits target *
+recursive-exclude ipfs_datasets_py/logic/zkp/provekit/circuits *.pkp *.pkv *.np Prover.toml
+prune ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/test
+prune ipfs_datasets_py/processors/multimedia/convert_to_txt_based_on_mime_type/test

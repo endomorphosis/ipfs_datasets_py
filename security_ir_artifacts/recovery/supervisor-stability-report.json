@@ -1,0 +1,648 @@
+{
+  "artifact_fingerprints": [
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_additional_claims.py",
+      "sha256": "13ba1768983fce3e5b9be2f4719168e932d776a3af38515f0270282751260921",
+      "size_bytes": 7254
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_assumption_registry.py",
+      "sha256": "0eccf8c8f3fab13905d97cc9bbd8053498449c0a7aab942e93f4981408b6769e",
+      "size_bytes": 2734
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_assurance_baseline_ops_script.py",
+      "sha256": "902038f604ebe28c47a1fb2a599f8f1516c60cd5749d2378a3e966c1f3954616",
+      "size_bytes": 5573
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_canonicalization.py",
+      "sha256": "c22bf1570534b39de1c4aa8d9b99d71e12de4555f0562090111f5d647ec4df5f",
+      "size_bytes": 1231
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_capability_claims.py",
+      "sha256": "e609073ea4d48ca7136d0e9f674d3d3844f3194eead501d44329721765d3fae6",
+      "size_bytes": 3102
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_cid_stability.py",
+      "sha256": "831b0d990682cd45ff4549ea3481531231b277c00e4b9d80c81c7ebad5a2b9b3",
+      "size_bytes": 3823
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_code_to_ir_coverage.py",
+      "sha256": "d4d0a8fed2717baf300f232dbdffe634655052dacfea1ef9e72e087e669a7ae3",
+      "size_bytes": 5610
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_counterexample_vectors.py",
+      "sha256": "db93e3be494c97c82f6f2c9732c52c00f2f519b32b612e0c11157434e66e2a21",
+      "size_bytes": 2737
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_crypto_exchange_artifact_retention.py",
+      "sha256": "68d9dfc0a8e7748a2197dd0db0825f19d657763e02f20809a61c01bb37c7ee7f",
+      "size_bytes": 6379
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_cvc5_differential.py",
+      "sha256": "7e5dc3edd262a8d8cfb6f694cf7f9107a706d483daf06a4d48df48c3ae48853d",
+      "size_bytes": 7190
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_cvc5_runner.py",
+      "sha256": "7fc68111010b6e6768c61f36892bbedd02ef4086eeaabf9c4e921c3e04d9c673",
+      "size_bytes": 2935
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_disproof_ops_script.py",
+      "sha256": "432b0367465817e1d64fef30f6ef71fc65aff24494c6c2a6c5eed7a734393a07",
+      "size_bytes": 4733
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_evidence_promotion_workflow.py",
+      "sha256": "75953fc4dfe169b1a59db62e3cb1b67782f2e9cc4d433e875df47e0a293136f3",
+      "size_bytes": 7528
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_feature_loop_projection.py",
+      "sha256": "d46f56074bf9b9791cf67018f761fa765d89681ed340ef9ccdaba959465b0598",
+      "size_bytes": 2134
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_hidden_unicode.py",
+      "sha256": "65566b87fb818860386a62f3f386b7b81c748454b53cfd0cb4f4daa801b37d52",
+      "size_bytes": 5179
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_ir_deep_validation.py",
+      "sha256": "a8ded867afc2b1a8016dfd88c6e741fc82a8236f0130bad0785848deaf11244c",
+      "size_bytes": 4210
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_ir_schema.py",
+      "sha256": "3bea5f86d99e8bc1b9b8b47367c5bfc418994b38e9151c51f652061d7ebdd710",
+      "size_bytes": 3710
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_ledger_resource_claims.py",
+      "sha256": "df793a3010de6f740889698ae6cc311559d937ffc44be4fb9aefa32b46ff9e8b",
+      "size_bytes": 1850
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_proof_report.py",
+      "sha256": "bce1d3bbb3f483f4a89d1a171783bb05f70060306a6d8fcbc7ab7950b2ac13fc",
+      "size_bytes": 9541
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_prove_all_cli.py",
+      "sha256": "186dd6ba835fa2e021b42f2b2ac7c9ca746124d1c9cc575d82893629aec2c7e9",
+      "size_bytes": 13365
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_python_ast_extractor.py",
+      "sha256": "225f32f8471ebd179768f4ea88e0f324dbce9cd566f3a9d0ed45a9d381dbe5b1",
+      "size_bytes": 3912
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_release_policy.py",
+      "sha256": "43f22c9938902be18f95755491896e240b87c3989b9415dbd2ee8bcd69bab053",
+      "size_bytes": 4321
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_runtime_mtl.py",
+      "sha256": "6eb48e30290e2a2af36fa6f3479575dc857855591b8795430f259c45fd2adf8e",
+      "size_bytes": 2991
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_security_artifact_e2e.py",
+      "sha256": "71ae499873966cfc88200128255b594c28eae83ee073ee0b95b00374da64f692",
+      "size_bytes": 3904
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_security_logic_workflow_yaml.py",
+      "sha256": "e39419097b4c170aa5db512dce846c155480f23443717e5fec2f12803208aeda",
+      "size_bytes": 3359
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_smtlib_compiler.py",
+      "sha256": "c3234fa28d93e4309f14fb1f06329a62d2e42b7e7ffe8965855e0a7376051c9e",
+      "size_bytes": 7902
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_solver_dependency_probe.py",
+      "sha256": "8c449cd6ccafd91a4902e9edfe67fdc174c2fcb20a132e95e34fd444275e22b2",
+      "size_bytes": 6722
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_source_code_extractor.py",
+      "sha256": "83491352f9d8ef30c779aefe2969b6b527910bc09ff42b0ea984eff274e23092",
+      "size_bytes": 7102
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_supervisor_recovery_stability.py",
+      "sha256": "7b281aa84d27fa85a9645f9cd8f0669d370c75429b4cecc8ec7d265bb2e7e056",
+      "size_bytes": 5563
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_typescript_schema_compiles.py",
+      "sha256": "ba6f6f8f8dee40cf306544fee207b1733e8505f184a928c26c670731f88305cc",
+      "size_bytes": 7913
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_typescript_schema_emitter.py",
+      "sha256": "47a4c2ff07d5b71e8003c582d6603fb90236191d0855b9a2d129331fee280683",
+      "size_bytes": 2229
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_xaman_corpus_manifest.py",
+      "sha256": "a839e6e84cc754a326bd003b81029b564ca17a7cf68383d5a18b28cad9b2f5c7",
+      "size_bytes": 9885
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_xaman_payload_lifecycle.py",
+      "sha256": "e2fa445ea403614a0ebc6f956ad1632b090da0038304227b2f31073a9cf576c5",
+      "size_bytes": 12587
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_xaman_source_extractor.py",
+      "sha256": "f62d10c604cdaa3af368f4fafbc22f113fc0fb6bd163e7c10a46f0f9d88adef0",
+      "size_bytes": 9736
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_xaman_wallet_auth_model.py",
+      "sha256": "01dda708048727240931107d237951ab244bb418bd0a0d0ff98698890f59dacc",
+      "size_bytes": 9473
+    },
+    {
+      "group": "downstream_tests",
+      "path": "tests/logic/security_models/crypto_exchange/test_z3_withdrawal_claims.py",
+      "sha256": "a3936d1e7b0c05dcd8ff837e858f399c78379e7b7588f740afc4926f18b370fd",
+      "size_bytes": 1016
+    },
+    {
+      "group": "retention_baseline",
+      "path": "docs/security_verification/taskboard_artifact_retention_policy.md",
+      "sha256": "6394f66692ef171732444263e5d1a0a5de18050c440e3e800e1d4d74fec4442a",
+      "size_bytes": 4434
+    },
+    {
+      "group": "retention_baseline",
+      "path": "scripts/ops/security_verification/check_crypto_exchange_artifact_retention.py",
+      "sha256": "778985876e0de1be38dbea44ca16c7e723f6efec8f4a33f01ea3c10ba70aed8b",
+      "size_bytes": 16672
+    },
+    {
+      "group": "retention_baseline",
+      "path": "security_ir_artifacts/recovery/artifact-retention-baseline.json",
+      "sha256": "0bf210fa6dd8ba6e5e7510c79f8fd8b0188bc8e3143a30ef94fd4a6afea9e621",
+      "size_bytes": 36053
+    },
+    {
+      "group": "solver_probe",
+      "path": "docs/security_verification/solver_dependency_bootstrap.md",
+      "sha256": "4f19c24801ec75f4f90931b9fc06207bc48513979fff9c3d51c11aa61584e60d",
+      "size_bytes": 12055
+    },
+    {
+      "group": "solver_probe",
+      "path": "scripts/ops/security_verification/probe_theorem_prover_environment.py",
+      "sha256": "062f5a4ec86600c04782e1c7d93f9d663e82f31207fcafc1ca8c2329f8076928",
+      "size_bytes": 22244
+    },
+    {
+      "group": "solver_probe",
+      "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+      "sha256": "64483e2e1e75157afa53e833c970927c41783ab06c46741e6ac7cba491655830",
+      "size_bytes": 14642
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/__init__.py",
+      "sha256": "ac8f9f3f60f95946e9857975ae2b9349c2902db9acb8438de917bf3e7e4f43a4",
+      "size_bytes": 1386
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/assumption_registry.py",
+      "sha256": "1e42a212d1ea178b4bd9c73a8c58dabc9e613456dbf1cf0bde4a83853be54550",
+      "size_bytes": 6279
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/__init__.py",
+      "sha256": "53fc94b00b776212f607c4f6ddde7b5de06390fce29e233a70e667d2611a2b89",
+      "size_bytes": 1357
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/base.py",
+      "sha256": "778b1c1d66713eb53f9f886cb2d5238d45a91fecf9e931c5759d2e550d08629e",
+      "size_bytes": 2325
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/capability.py",
+      "sha256": "2c3acf47d878338404049f17136b0892d6a2d55cf910ed840137e0d4cdda6892",
+      "size_bytes": 10003
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/deposit.py",
+      "sha256": "debfbfd00d50952daaba81b25fcca292dda82361ed71a614c820d47a640958a8",
+      "size_bytes": 5448
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/hsm.py",
+      "sha256": "4b88ae27a56eb7b9d2931b4798ea6f8658363bee54f2918042cd4137365db10b",
+      "size_bytes": 4575
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/ledger.py",
+      "sha256": "9e447e811dcedda0744beb401ae9f421a322aec6ebf7765a20d16a446e6fc945",
+      "size_bytes": 12865
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/claims/withdrawal.py",
+      "sha256": "d1c0bb69f62f65a8b4743daf9bb70b06bad7253c63d893b40592268581756287",
+      "size_bytes": 7863
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/__init__.py",
+      "sha256": "7f263d82aca78d7533e1546de1d0e97144907eed60f0bd20705edf5aa8df88f5",
+      "size_bytes": 460
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_smtlib.py",
+      "sha256": "c88e0694e450bacc7788eaeb89f2ff58b2855a7c6d60381aa4087d390e5b00e8",
+      "size_bytes": 9980
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/compilers/to_z3.py",
+      "sha256": "17c4e82bc27c57bf58906abda41229dd2591325e757c0de4b98582d8f5ea1d10",
+      "size_bytes": 2064
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/evidence_promotion.py",
+      "sha256": "93a90f496efc77e3bb7bb6d4cdeab88a6258b574f4ce54c864a003fbc33c4d54",
+      "size_bytes": 15276
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/__init__.py",
+      "sha256": "038323285a5b4dc5dbe9ee6f11ff1984373efcf2ef8d4e18f49b5bee8ee4920d",
+      "size_bytes": 740
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/feature_loop.py",
+      "sha256": "6c680b46885fc1b131bfec5ea5236b13442550044eecef96ee4b0283511105cd",
+      "size_bytes": 6027
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/log_trace_extractor.py",
+      "sha256": "ed5be43c27daf6f3eb86f992802484418e38b4e60537c155cdd56d3bc66d4f81",
+      "size_bytes": 358
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/openapi_extractor.py",
+      "sha256": "12ffc797dc9aa6fd185fd49cdf4ca341970cc3ee702c7be3f84cd9cf521661f2",
+      "size_bytes": 616
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/python_ast_extractor.py",
+      "sha256": "788c95fd11c79cdc0af84e7b9e278fac802e063e59d0e4689a688abad33d8a3a",
+      "size_bytes": 18168
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/source_code_extractor.py",
+      "sha256": "901583f1452de47aaaf1001d6fe6d61150f82342ba5888ac8da75376c2653c8f",
+      "size_bytes": 18932
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/typescript_schema.py",
+      "sha256": "747f9593b4be66abdce86912f315b144c45d8f5e8768983ef0a676a7703006f8",
+      "size_bytes": 14152
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/ucan_policy_extractor.py",
+      "sha256": "02098eb782099893350de52d958d0812ced0e6a4723ab516fa1398767d336b08",
+      "size_bytes": 406
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/xaman_source_extractor.py",
+      "sha256": "8c643ea765ccce9c71bcb34cef1a1cac5e59bd82eacc5bcf4be1d9e93ffa5837",
+      "size_bytes": 28188
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/__init__.py",
+      "sha256": "229bb7dc9b0184fde646a24db9ecbf2c3c5128ec1866271832b83fc1ebd215f1",
+      "size_bytes": 521
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/canonicalize.py",
+      "sha256": "6851c03ad1467d04822f7c1d995cfcf405a976438539d214e5c7b65a00bdb7e7",
+      "size_bytes": 1038
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/cid.py",
+      "sha256": "b790f2cfb4d318bc28bd81338b37c945f671d4ccf2851c1885e9aca5f7e4fcb2",
+      "size_bytes": 1699
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+      "sha256": "4fc6cf0525e7210a4cbef7d62edf9b6d635eb6b1a0374072ac96a8be34cb403b",
+      "size_bytes": 14642
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/schema.py",
+      "sha256": "38334ea4528684d277a960f01952664f98f3bebc411ce8da514b506be81fbac8",
+      "size_bytes": 33427
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/monitors/__init__.py",
+      "sha256": "c0facf21eb410c44ab31ca7f4834ffce48db7d37fc2184a7580a2e704ce52a1b",
+      "size_bytes": 190
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/monitors/runtime_mtl.py",
+      "sha256": "d78ff74425768b6e038410640b8a4400de664d95029fd9399414907d28d48574",
+      "size_bytes": 8193
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/prove_all.py",
+      "sha256": "932e5f90cd06138e43c946a23ad26f27509c978e8d870c39aa520c21796ad2ed",
+      "size_bytes": 23524
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/release_policy.py",
+      "sha256": "22b4d9aa8e7b28ea52f7d24536f624de08aedf209f5dd42c5c2899ed9e3064de",
+      "size_bytes": 9653
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/reports/__init__.py",
+      "sha256": "37b856e82924a941e0e2be38881ddd9f7bcd8e8932c70153b08731f5c06c9557",
+      "size_bytes": 251
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/reports/counterexample_report.py",
+      "sha256": "391dd755a5cde267cf5ca868a5a9b9b1ca508f9f9cf58d5eda4f91b385c510aa",
+      "size_bytes": 1321
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/reports/proof_receipt.py",
+      "sha256": "1ec0b12d8ea69c3c2e878c7582c3fcc8357ad1e8adbd851a1e7a6ae621bcfba8",
+      "size_bytes": 8072
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/reports/proof_report.py",
+      "sha256": "1480af0129f93e1e9621d2b38d951e6dd96ef717bbe8f6a0cabd514bd1df0490",
+      "size_bytes": 11568
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/__init__.py",
+      "sha256": "7d49a1e929578b505c0368e03de15f8633f2bd4fce44421636c917b5cdb6e9fe",
+      "size_bytes": 234
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/base.py",
+      "sha256": "eaefb511e2b887376f5fd3d5faf4035959e882a305792828507b89d3414f4cba",
+      "size_bytes": 1322
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/cvc5_runner.py",
+      "sha256": "428b2cb4ed737c1dcd3265bf33c0e917fca0e79dc68420d072866079f9e0eaf6",
+      "size_bytes": 12202
+    },
+    {
+      "group": "source_files",
+      "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/runners/z3_runner.py",
+      "sha256": "63b29df18ea7e00fd6a33da8eeb4ca03ade23b066c930163b54ab86721019780",
+      "size_bytes": 12423
+    },
+    {
+      "group": "stability_controls",
+      "path": "docs/security_verification/supervisor_recovery_stability_runbook.md",
+      "sha256": "59eecbca97be53578eabbcd6e9e96c70a924ded3e74cfa2e1313e17b89a62f56",
+      "size_bytes": 5287
+    },
+    {
+      "group": "stability_controls",
+      "path": "scripts/ops/security_verification/restore_crypto_exchange_security_tree.py",
+      "sha256": "e2259de1198936ddf00b2203a98acbf4615f756fb6fbd76aad6f5a7a48b21577",
+      "size_bytes": 23097
+    },
+    {
+      "group": "taskboard",
+      "path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md",
+      "sha256": "420944189d3fd2b891fcbd404321cdbe3335a55cfff49eea94ddde27039b468e",
+      "size_bytes": 33649
+    },
+    {
+      "group": "xaman_artifacts",
+      "path": "docs/security_verification/xaman_corpus_profile.md",
+      "sha256": "056b65044f80933f360b0aa03ee0f2e4b60fc9a9ec4225c53357f09329e77f3c",
+      "size_bytes": 3890
+    },
+    {
+      "group": "xaman_artifacts",
+      "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "sha256": "e73f508e3c9ce2f22c5bae658a9ec7fe05bfbfb47639faf45acb40d9b24ee5f7",
+      "size_bytes": 45408
+    },
+    {
+      "group": "xaman_artifacts",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+      "sha256": "a3e7cc820d831e26e03a77504de7713d85b83e9bc04f94af848b6fc6897da5c2",
+      "size_bytes": 1278470
+    },
+    {
+      "group": "xaman_artifacts",
+      "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+      "sha256": "a269b91c526132771a8c931dfe94ef57a78c0cf2f0acf4c9a439437ce8795ec3",
+      "size_bytes": 1099322
+    },
+    {
+      "group": "xaman_artifacts",
+      "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "sha256": "5f378a7a5f9d8496c977a8304042ccf48a9ca30d9a4c16ad1dc057ee58466292",
+      "size_bytes": 44921
+    }
+  ],
+  "blockers": [],
+  "checked_at_utc": "2026-07-08T18:33:01Z",
+  "downstream_preflight_contract": {
+    "failure_mode": "fail_closed",
+    "required_before_any_downstream_task": [
+      "taskboard",
+      "source_files",
+      "xaman_artifacts",
+      "retention_baseline",
+      "solver_probe"
+    ],
+    "runbook": "docs/security_verification/supervisor_recovery_stability_runbook.md"
+  },
+  "downstream_task_gate": "allowed",
+  "durable_ref_status": [
+    {
+      "available": true,
+      "ref": "HEAD"
+    },
+    {
+      "available": true,
+      "ref": "5a9ce484a"
+    }
+  ],
+  "durable_refs": [
+    "HEAD",
+    "5a9ce484a"
+  ],
+  "groups": [
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "downstream_tests",
+      "present_count": 36,
+      "required_count": 36,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "retention_baseline",
+      "present_count": 3,
+      "required_count": 3,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "solver_probe",
+      "present_count": 3,
+      "required_count": 3,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "source_files",
+      "present_count": 39,
+      "required_count": 39,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "stability_controls",
+      "present_count": 2,
+      "required_count": 2,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "taskboard",
+      "present_count": 1,
+      "required_count": 1,
+      "restored_count": 0,
+      "status": "pass"
+    },
+    {
+      "invalid_count": 0,
+      "missing_count": 0,
+      "name": "xaman_artifacts",
+      "present_count": 5,
+      "required_count": 5,
+      "restored_count": 0,
+      "status": "pass"
+    }
+  ],
+  "mode": "verify_only",
+  "overall_status": "pass",
+  "proof_acceptance_blocked": false,
+  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
+  "restoration_instructions": [],
+  "restored_artifacts": [],
+  "schema_version": "crypto-exchange-supervisor-recovery-stability/v1",
+  "security_decision": "CRYPTO_EXCHANGE_SECURITY_TREE_STABLE",
+  "source_recovery_ref": "5a9ce484a",
+  "summary": {
+    "blocker_count": 0,
+    "group_count": 7,
+    "present_artifact_count": 89,
+    "required_artifact_count": 89,
+    "restored_artifact_count": 0
+  },
+  "task_id": "PORTAL-CXTP-088"
+}

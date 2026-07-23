@@ -15,6 +15,8 @@ from fastapi.openapi.utils import get_openapi
 
 import anyio
 import logging
+import os
+import threading
 import time
 import uuid
 from typing import Dict, List, Any, Optional, Union
@@ -41,6 +43,12 @@ except ImportError:  # pragma: no cover - optional dependency
     CryptContext = None
 from pydantic import BaseModel, Field
 try:
+    from hypercorn.config import Config as HypercornConfig
+    from hypercorn.trio import serve as hypercorn_serve
+    HAVE_HYPERCORN = True
+except ImportError:  # pragma: no cover - optional dependency
+    HAVE_HYPERCORN = False
+try:
     import uvicorn
     HAVE_UVICORN = True
 except ImportError:  # pragma: no cover - optional dependency
@@ -48,6 +56,7 @@ except ImportError:  # pragma: no cover - optional dependency
     HAVE_UVICORN = False
 
 logger = logging.getLogger(__name__)
+wallet_router = None
 
 # Import our modules
 try:
@@ -56,7 +65,7 @@ try:
     from .vector_stores.base import BaseVectorStore
     from .vector_stores.qdrant_store import QdrantVectorStore
     from .vector_stores.faiss_store import FAISSVectorStore
-    from .mcp_server.server import IPFSDatasetsMCPServer
+    from .server import IPFSDatasetsMCPServer
     from .fastapi_config import FastAPISettings
 except ImportError:
     # Fallback imports for development
@@ -125,6 +134,26 @@ except ImportError:
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
 
+try:
+    from ..wallet.api import router as wallet_router
+except ImportError:
+    try:
+        from wallet.api import router as wallet_router
+    except ImportError:
+        wallet_router = None
+
+# Ensure the REAL MCP server loads even when optional vector-store/embedding
+# dependencies are missing (otherwise the combined import above falls back to a
+# tool-less mock, breaking MCP-protocol backwards compatibility / tools/list).
+try:
+    from .server import IPFSDatasetsMCPServer  # type: ignore[no-redef]
+except Exception:  # pragma: no cover - defensive
+    try:
+        from mcp_server.server import IPFSDatasetsMCPServer  # type: ignore[no-redef]
+    except Exception as _srv_err:
+        logger.warning("Real IPFSDatasetsMCPServer unavailable, MCP tools disabled: %s", _srv_err)
+
+
 # Load configuration (SECRET_KEY may be absent in test environments)
 try:
     settings = FastAPISettings()
@@ -133,10 +162,20 @@ try:
     ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 except ValueError as _cfg_err:
     import os as _os
-    logger.warning(f"FastAPISettings could not be fully initialised: {_cfg_err}. "
-                   "Using fallback values — set SECRET_KEY env var for production.")
+    _env = _os.environ.get("ENVIRONMENT", "development")
+    SECRET_KEY = _os.environ.get("SECRET_KEY", "")
+    if not SECRET_KEY:
+        if _env == "production":
+            raise RuntimeError(
+                "FATAL: SECRET_KEY environment variable is required in production. "
+                "Set: export SECRET_KEY='<strong-random-value>'"
+            ) from _cfg_err
+        SECRET_KEY = "dev-fallback-key-NOT-for-production"
+        logger.warning(
+            "FastAPISettings could not be initialised: %s. "
+            "Using INSECURE fallback SECRET_KEY — set SECRET_KEY env var for production.", _cfg_err
+        )
     settings = None
-    SECRET_KEY = _os.environ.get("SECRET_KEY", "dev-fallback-key-NOT-for-production")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -168,6 +207,19 @@ RATE_LIMITS = {
 
 # Global rate limiting storage (in production, use Redis)
 rate_limit_storage: Dict[str, Dict[str, Any]] = {}
+_rate_limit_last_cleanup: float = time.time()
+_RATE_LIMIT_MAX_ENTRIES = 50000
+_rate_limit_lock = None
+_rate_limit_lock_init = threading.Lock()
+
+def _get_rate_limit_lock():
+    """Lazy init of rate limit lock (double-checked locking for thread safety)."""
+    global _rate_limit_lock
+    if _rate_limit_lock is None:
+        with _rate_limit_lock_init:
+            if _rate_limit_lock is None:
+                _rate_limit_lock = anyio.Lock()
+    return _rate_limit_lock
 
 # Pydantic models for API
 class TokenResponse(BaseModel):
@@ -248,6 +300,218 @@ class VectorIndexRequest(BaseModel):
 # Phase C2: track server start time for uptime reporting in health endpoints.
 _SERVER_START_TIME: float = time.time()
 
+import inspect as _inspect
+
+_PY_TYPE_TO_JSON = {
+    str: "string",
+    int: "integer",
+    float: "number",
+    bool: "boolean",
+    dict: "object",
+    list: "array",
+}
+
+
+def _callable_input_schema(fn) -> Dict[str, Any]:
+    """Best-effort JSON Schema for a tool callable derived from its signature."""
+    props: Dict[str, Any] = {}
+    required: List[str] = []
+    try:
+        sig = _inspect.signature(fn)
+    except (TypeError, ValueError):
+        return {"type": "object", "properties": {}, "additionalProperties": True}
+    for name, param in sig.parameters.items():
+        if name in ("self", "cls"):
+            continue
+        if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+            continue
+        json_type = "string"
+        for py_t, js_t in _PY_TYPE_TO_JSON.items():
+            if param.annotation is py_t:
+                json_type = js_t
+                break
+        prop: Dict[str, Any] = {"type": json_type}
+        if param.default is _inspect.Parameter.empty:
+            required.append(name)
+        elif param.default is not None:
+            prop["default"] = param.default
+        props[name] = prop
+    schema: Dict[str, Any] = {"type": "object", "properties": props}
+    if required:
+        schema["required"] = required
+    return schema
+
+
+# Cached flat descriptors / index for the full hierarchical tool surface.
+_FLAT_TOOL_DESCRIPTORS_CACHE: Optional[List[Dict[str, Any]]] = None
+_FLAT_TOOL_INDEX_CACHE: Optional[set] = None
+
+
+def _hierarchical_flat_descriptors() -> List[Dict[str, Any]]:
+    """Cheaply enumerate the full hierarchical tool surface as flat MCP descriptors.
+
+    The datasets server exposes ~350 tools behind a hierarchical ``tools_dispatch``
+    facade, so a bare ``tools/list`` used to advertise only the 4 meta-tools and
+    external MCP clients (and the hallucinate_app tool explorer) under-reported the
+    real tool count. Here we enumerate every dispatchable tool as a flat
+    ``<category>.<tool>`` descriptor.
+
+    Crucially the tool modules are **not imported** — names come from the tool
+    filenames on disk (each tool file's stem is its dispatchable function name),
+    so ``tools/list`` stays fast and never pays the import cost of the whole tool
+    surface. Real input schemas are resolved lazily via ``tools_get_schema`` and
+    execution imports only the target category on first dispatch.
+    """
+    global _FLAT_TOOL_DESCRIPTORS_CACHE, _FLAT_TOOL_INDEX_CACHE
+    if _FLAT_TOOL_DESCRIPTORS_CACHE is not None:
+        return _FLAT_TOOL_DESCRIPTORS_CACHE
+
+    from pathlib import Path as _Path
+
+    descriptors: List[Dict[str, Any]] = []
+    index: set = set()
+    try:
+        from .hierarchical_tool_manager import get_tool_manager
+        manager = get_tool_manager()
+        if not getattr(manager, "_discovered_categories", False):
+            manager.discover_categories()
+
+        items = []
+        categories = getattr(manager, "categories", {}) or {}
+        if categories:
+            items = [(c.name, getattr(c, "path", None)) for c in categories.values()]
+        else:
+            tools_root = getattr(manager, "tools_root", None)
+            if tools_root is not None:
+                items = [(p.name, p) for p in _Path(tools_root).iterdir() if p.is_dir()]
+
+        for cat_name, cat_path in items:
+            if not cat_name or cat_path is None:
+                continue
+            try:
+                for tool_file in sorted(_Path(cat_path).glob("*.py")):
+                    stem = tool_file.stem
+                    if stem.startswith("_") or stem == "__init__":
+                        continue
+                    flat = f"{cat_name}.{stem}"
+                    if flat in index:
+                        continue
+                    index.add(flat)
+                    descriptors.append({
+                        "name": flat,
+                        "description": f"{stem} (category: {cat_name})",
+                        # Lazy: full schema is served by tools_get_schema / dispatch
+                        # so we don't import the tool module at list time.
+                        "inputSchema": {"type": "object"},
+                    })
+            except Exception:
+                continue
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Flat hierarchical descriptor enumeration failed: %s", exc)
+        return []
+
+    _FLAT_TOOL_DESCRIPTORS_CACHE = descriptors
+    _FLAT_TOOL_INDEX_CACHE = index
+    return descriptors
+
+
+async def _dispatch_hierarchical_flat_tool(tool_name: str, arguments: Dict[str, Any]):
+    """Dispatch a flat ``<category>.<tool>`` name through the hierarchical manager.
+
+    Returns ``(handled, result)``. ``handled`` is False when ``tool_name`` is not a
+    known flat hierarchical tool so callers fall through to their own error path.
+    Only the target category is imported (lazily, on first dispatch).
+    """
+    if not tool_name or "." not in tool_name:
+        return False, None
+    _hierarchical_flat_descriptors()  # ensure the flat index is populated
+    index = _FLAT_TOOL_INDEX_CACHE or set()
+    if tool_name not in index:
+        return False, None
+    category, _, tool = tool_name.partition(".")
+    if not category or not tool:
+        return False, None
+    from .hierarchical_tool_manager import tools_dispatch
+    result = await tools_dispatch(category=category, tool=tool, params=arguments or {})
+    return True, result
+
+
+def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
+    """Build MCP-conformant tool descriptors from a server's ``.tools`` registry.
+
+    Returns the hierarchical meta-tools (from ``mcp_server.tools``) **and** the
+    full flat ``<category>.<tool>`` surface so stock MCP clients discover every
+    dispatchable tool and the reported tool count reflects reality.
+    """
+    descriptors: List[Dict[str, Any]] = []
+    tools = getattr(mcp_server, "tools", {}) or {}
+    for name, fn in tools.items():
+        doc = (getattr(fn, "__doc__", None) or "").strip()
+        description = doc.split("\n", 1)[0].strip() if doc else name
+        descriptors.append({
+            "name": name,
+            "description": description,
+            "inputSchema": _callable_input_schema(fn),
+        })
+    descriptors.extend(_hierarchical_flat_descriptors())
+    return descriptors
+
+
+def _mcp_tool_result(result) -> Dict[str, Any]:
+    """Wrap a raw tool return value in the MCP ``tools/call`` content shape."""
+    import json as _json
+    if isinstance(result, dict):
+        structured = result
+        text = _json.dumps(result, default=str)
+    elif isinstance(result, list):
+        structured = {"result": result}
+        text = _json.dumps(result, default=str)
+    else:
+        structured = {"result": result}
+        text = "" if result is None else str(result)
+    return {
+        "content": [{"type": "text", "text": text}],
+        "structuredContent": structured,
+        "isError": False,
+    }
+
+
+def _ensure_dataset_meta_tools(mcp_server) -> None:
+    """Ensure the hierarchical meta-tools are present in ``mcp_server.tools``.
+
+    ``register_tools()`` requires FastMCP. For the HTTP / JSON-RPC transport we
+    register the FastMCP-independent hierarchical meta-tools directly so that
+    stock MCP clients always receive a non-empty ``tools/list`` and can reach
+    the full 373-tool surface through ``tools_dispatch``.
+    """
+    if mcp_server is None:
+        return
+    tools = getattr(mcp_server, "tools", None)
+    if tools is None:
+        tools = {}
+        try:
+            mcp_server.tools = tools
+        except Exception:
+            return
+    try:
+        from .hierarchical_tool_manager import (
+            tools_list_categories,
+            tools_list_tools,
+            tools_get_schema,
+            tools_dispatch,
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Hierarchical meta-tools unavailable: %s", exc)
+        return
+    for _name, _fn in (
+        ("tools_list_categories", tools_list_categories),
+        ("tools_list_tools", tools_list_tools),
+        ("tools_get_schema", tools_get_schema),
+        ("tools_dispatch", tools_dispatch),
+    ):
+        tools.setdefault(_name, _fn)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -256,6 +520,16 @@ async def lifespan(app: FastAPI):
     
     # Initialize MCP server
     app.state.mcp_server = IPFSDatasetsMCPServer()
+
+    # Populate the hierarchical meta-tools so the HTTP / JSON-RPC MCP surface
+    # exposes a non-empty, dispatchable tool list to stock MCP clients even when
+    # FastMCP (register_tools) is unavailable in the runtime environment.
+    try:
+        if hasattr(app.state.mcp_server, "register_tools"):
+            await app.state.mcp_server.register_tools()
+    except Exception as _reg_exc:
+        logger.warning("register_tools() unavailable, using meta-tool fallback: %s", _reg_exc)
+    _ensure_dataset_meta_tools(app.state.mcp_server)
     
     # Initialize vector stores
     app.state.vector_stores = {}
@@ -266,9 +540,35 @@ async def lifespan(app: FastAPI):
     logger.info("✅ FastAPI service initialized successfully")
     
     yield
-    
-    # Shutdown
+
+    # Shutdown — persist state and clean up resources
     logger.info("🛑 Shutting down FastAPI service...")
+    try:
+        # Persist EventDAG state
+        from .event_dag import get_event_dag
+        dag = get_event_dag()
+        dag_state = dag.to_dict(include_events=True)
+        if dag_state.get("total_events", 0) > 0:
+            import json as _json
+            state_dir = os.path.join(
+                os.environ.get("MCPPP_STORAGE_DIR", os.path.expanduser("~/.ipfs_datasets/state"))
+            )
+            os.makedirs(state_dir, exist_ok=True)
+            dag_path = os.path.join(state_dir, "event_dag.json")
+            with open(dag_path, "w") as f:
+                _json.dump(dag_state, f)
+            logger.info("EventDAG persisted: %d events", dag_state["total_events"])
+    except Exception as e:
+        logger.warning("EventDAG persistence failed on shutdown: %s", e)
+
+    try:
+        # Persist P2P peer state
+        from .p2p_libp2p_transport import get_p2p_node
+        node = get_p2p_node()
+        if node._started:
+            await node.stop()
+    except Exception as e:
+        logger.debug("P2P shutdown: %s", e)
 
 app = FastAPI(
     title="IPFS Datasets API",
@@ -279,19 +579,41 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+if wallet_router is not None:
+    app.include_router(wallet_router)
+
 # Middleware configuration
+_cors_origins = os.environ.get("MCP_CORS_ORIGINS", "").strip()
+_allowed_origins = _cors_origins.split(",") if _cors_origins else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_credentials=(_allowed_origins != ["*"]),
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
 )
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"]  # Configure appropriately for production
+    allowed_hosts=os.environ.get("MCP_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
 )
+
+# Request body size limit middleware
+_MAX_BODY_BYTES = int(os.environ.get("MCPPP_MAX_BODY_BYTES", str(10 * 1024 * 1024)))
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class _BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > _MAX_BODY_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"error": "Request body too large", "max_bytes": _MAX_BODY_BYTES},
+            )
+        return await call_next(request)
+
+app.add_middleware(_BodySizeLimitMiddleware)
 
 # Authentication functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -373,6 +695,20 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
     
     # Check rate limit
     key = f"{client_ip}:{endpoint}"
+    
+    # Periodic cleanup to prevent unbounded memory growth
+    global _rate_limit_last_cleanup
+    lock = _get_rate_limit_lock()
+    if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES or (current_time - _rate_limit_last_cleanup > 300):
+        async with lock:
+            stale = [k for k, v in rate_limit_storage.items()
+                     if current_time - v.get("window_start", 0) > 7200]
+            for k in stale:
+                del rate_limit_storage[k]
+            if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES:
+                rate_limit_storage.clear()
+            _rate_limit_last_cleanup = current_time
+    
     if key not in rate_limit_storage:
         rate_limit_storage[key] = {"requests": 0, "window_start": current_time}
     
@@ -830,6 +1166,9 @@ async def list_available_tools(
         # Get tools from MCP server
         mcp_server = app.state.mcp_server
         tools = list(mcp_server.tools.keys()) if hasattr(mcp_server, 'tools') else []
+        # Include the full flat hierarchical surface so the reported count reflects
+        # every dispatchable tool, not just the 4 hierarchical meta-tools.
+        tools = tools + [d["name"] for d in _hierarchical_flat_descriptors()]
         
         return {
             "tools": tools,
@@ -862,6 +1201,10 @@ async def execute_tool(
         mcp_server = app.state.mcp_server
         
         if not hasattr(mcp_server, 'tools') or tool_name not in mcp_server.tools:
+            # Fall back to the hierarchical surface for flat <category>.<tool> names.
+            handled, dispatch_result = await _dispatch_hierarchical_flat_tool(tool_name, parameters or {})
+            if handled:
+                return {"tool": tool_name, "status": "success", "result": dispatch_result}
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
         
         # Execute the tool
@@ -1040,18 +1383,29 @@ app.openapi = custom_openapi
 
 # Development server with configuration
 def run_development_server():
-    """Run development server with configuration."""
-    try:
-        # Configure logging
-        logging.basicConfig(
-            level=logging.INFO if not settings.debug else logging.DEBUG,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        
-        logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
-        logger.info(f"Environment: {settings.environment}")
-        logger.info(f"Debug mode: {settings.debug}")
-        
+    """Run development server with Hypercorn+Trio (preferred) or uvicorn fallback."""
+    import trio
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO if not settings.debug else logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
+    logger.info(f"Environment: {settings.environment}")
+    logger.info(f"Debug mode: {settings.debug}")
+
+    if HAVE_HYPERCORN:
+        config = HypercornConfig()
+        config.bind = [f"{settings.host}:{settings.port}"]
+        config.worker_class = "trio"
+        config.loglevel = "DEBUG" if settings.debug else "INFO"
+        config.accesslog = "-"
+        logger.info("Using Hypercorn+Trio runtime")
+        trio.run(hypercorn_serve, app, config)
+    elif HAVE_UVICORN:
+        logger.warning("Hypercorn not available — falling back to uvicorn (non-Trio)")
         uvicorn.run(
             "ipfs_datasets_py.fastapi_service:app",
             host=settings.host,
@@ -1060,45 +1414,42 @@ def run_development_server():
             log_level="debug" if settings.debug else "info",
             access_log=True
         )
-    except ConfigurationError as e:
-        logger.error(f"Server configuration error: {e}")
-        raise
-    except ServerStartupError as e:
-        logger.error(f"Failed to start server: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error starting server: {e}", exc_info=True)
-        raise
+    else:
+        raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
 
 def run_production_server():
-    """Run production server with optimized settings."""
-    try:
-        # Configure production logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        
-        logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version} (Production)")
-        
+    """Run production server with Hypercorn+Trio."""
+    import trio
+
+    # Configure production logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version} (Production)")
+
+    if HAVE_HYPERCORN:
+        config = HypercornConfig()
+        config.bind = [f"{settings.host}:{settings.port}"]
+        config.worker_class = "trio"
+        config.loglevel = "INFO"
+        config.accesslog = "-"
+        config.workers = int(os.environ.get("MCP_WORKERS", "4"))
+        logger.info("Using Hypercorn+Trio runtime (%d workers)", config.workers)
+        trio.run(hypercorn_serve, app, config)
+    elif HAVE_UVICORN:
+        logger.warning("Hypercorn not available — falling back to uvicorn")
         uvicorn.run(
             "ipfs_datasets_py.fastapi_service:app",
             host=settings.host,
             port=settings.port,
-            workers=4,  # Multiple workers for production
+            workers=4,
             log_level="info",
             access_log=True,
-            loop="uvloop"  # Use uvloop for better performance
         )
-    except ConfigurationError as e:
-        logger.error(f"Production server configuration error: {e}")
-        raise
-    except ServerStartupError as e:
-        logger.error(f"Failed to start production server: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error starting production server: {e}", exc_info=True)
-        raise
+    else:
+        raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
 
 # Dataset Management Endpoints
 @app.post("/datasets/load")
@@ -1555,3 +1906,1002 @@ async def clear_cache(
     except Exception as e:
         logger.error(f"Unexpected error clearing cache: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
+
+
+# =============================================================================
+# MCP++ Protocol Endpoints (Profiles A-E)
+# =============================================================================
+
+# --- Profile A: MCP-IDL Interface Discovery ---
+
+@app.get("/mcp/interfaces")
+async def list_mcp_interfaces():
+    """List all registered MCP++ interface descriptors (Profile A)."""
+    try:
+        from .interface_descriptor import get_interface_repository
+        repo = get_interface_repository()
+        descriptors = repo.list()
+        return {
+            "interfaces": [
+                {
+                    "name": d.name,
+                    "namespace": d.namespace,
+                    "version": d.version,
+                    "interface_cid": str(d.interface_cid) if hasattr(d, 'interface_cid') else "",
+                    "methods": [{"name": m.name, "input_schema_cid": str(getattr(m, 'input_schema_cid', '')), "output_schema_cid": str(getattr(m, 'output_schema_cid', ''))} for m in (d.methods if hasattr(d, 'methods') else [])],
+                    "semantic_tags": list(d.semantic_tags) if hasattr(d, 'semantic_tags') else [],
+                }
+                for d in descriptors
+            ],
+            "count": len(descriptors),
+        }
+    except ImportError:
+        return {"interfaces": [], "count": 0, "error": "interface_descriptor module not available"}
+    except Exception as e:
+        logger.error(f"Failed to list interfaces: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list interfaces: {e}")
+
+
+@app.get("/mcp/interfaces/{interface_cid}")
+async def get_mcp_interface(interface_cid: str):
+    """Get a specific interface descriptor by CID (Profile A)."""
+    try:
+        from .interface_descriptor import get_interface_repository
+        repo = get_interface_repository()
+        descriptor = repo.get(interface_cid)
+        if descriptor is None:
+            raise HTTPException(status_code=404, detail=f"Interface not found: {interface_cid}")
+        return {
+            "name": descriptor.name,
+            "namespace": descriptor.namespace,
+            "version": descriptor.version,
+            "interface_cid": str(descriptor.interface_cid) if hasattr(descriptor, 'interface_cid') else interface_cid,
+            "methods": [{"name": m.name} for m in (descriptor.methods if hasattr(descriptor, 'methods') else [])],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get interface: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile B: CID-Native Execution with Envelope ---
+
+@app.post("/mcp/execute")
+async def mcp_execute_with_envelope(request: Request):
+    """Execute a tool call with CID-native envelope (Profile B)."""
+    try:
+        from .cid_artifacts import IntentObject, artifact_cid, EventNode
+        body = await request.json()
+        # Accept both naming conventions for frontend compatibility:
+        # ipfs_accelerate style: {"method": "...", "params": {...}}
+        # ipfs_datasets style: {"tool": "...", "arguments": {...}}
+        tool_name = body.get("method") or body.get("tool", "")
+        arguments = body.get("params") or body.get("arguments", {})
+        proof_cid = body.get("proof_cid") or body.get("delegation_cid")
+        policy_cid = body.get("policy_cid")
+
+        # Create intent
+        intent = IntentObject(
+            interface_cid=body.get("interface_cid", ""),
+            tool=tool_name,
+            input_cid=str(artifact_cid(arguments)),
+            correlation_id=str(uuid.uuid4()),
+        )
+        intent_cid = str(artifact_cid({"tool": tool_name, "input": arguments}))
+
+        # Evaluate policy if available (fail-closed: deny on error)
+        decision = "allow" if not policy_cid else "deny"
+        if policy_cid:
+            try:
+                from .temporal_policy import get_policy_evaluator
+                evaluator = get_policy_evaluator()
+                decision_obj = evaluator.evaluate(intent, policy_cid)
+                decision = decision_obj.decision if hasattr(decision_obj, 'decision') else decision_obj.get("decision", "deny")
+            except ImportError as e:
+                logger.warning(f"Policy module unavailable (fail-closed): {e}")
+                decision = "deny"
+            except Exception as e:
+                logger.error(f"Policy evaluation error (fail-closed): {e}", exc_info=True)
+                decision = "deny"
+
+        if decision == "deny":
+            return {
+                "envelope_cid": str(artifact_cid({"intent": intent_cid, "decision": "deny"})),
+                "decision": "deny",
+                "justification": "Denied by temporal deontic policy",
+            }
+
+        # Execute the tool with timeout (anyio-compatible for Trio/asyncio)
+        import time as _time
+        start = _time.time()
+        output = None
+        error_msg = None
+        exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
+        try:
+            mcp_server = app.state.mcp_server if hasattr(app.state, 'mcp_server') else None
+            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+                tool_fn = mcp_server.tools[tool_name]
+                if callable(tool_fn):
+                    try:
+                        import inspect
+                        async with anyio.fail_after(exec_timeout):
+                            if inspect.iscoroutinefunction(tool_fn):
+                                output = await tool_fn(**arguments)
+                            else:
+                                # Run sync tools in a thread so timeout can cancel them
+                                output = await anyio.to_thread.run_sync(
+                                    lambda: tool_fn(**arguments), cancellable=True
+                                )
+                    except TimeoutError:
+                        error_msg = f"Execution timeout after {exec_timeout}s"
+                else:
+                    output = None
+            else:
+                error_msg = f"Tool not found: {tool_name}"
+        except TimeoutError:
+            error_msg = f"Execution timeout after {exec_timeout}s"
+        except Exception as e:
+            error_msg = f"{type(e).__name__}: {e}"
+        duration_ms = int((_time.time() - start) * 1000)
+
+        # Build envelope
+        output_cid = str(artifact_cid(output or {}))
+        receipt_cid = str(artifact_cid({"intent": intent_cid, "output": output_cid, "duration": duration_ms}))
+        event_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid}))
+        envelope_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid, "event": event_cid}))
+
+        # Append to Event DAG
+        try:
+            from .event_dag import EventDAG
+            dag = getattr(app.state, '_event_dag', None)
+            if dag is None:
+                dag = EventDAG(strict=False)
+                app.state._event_dag = dag
+            node = EventNode(
+                parents=[n.event_cid for n in dag.frontier()] if hasattr(dag, 'frontier') else [],
+                intent_cid=intent_cid,
+                decision_cid=str(artifact_cid({"decision": decision})),
+                receipt_cid=receipt_cid,
+            )
+            dag.append(node)
+        except (ImportError, Exception) as e:
+            logger.debug(f"Event DAG append skipped: {e}")
+
+        return {
+            "envelope_cid": envelope_cid,
+            "event_cid": event_cid,
+            "decision": decision,
+            "receipt": {
+                "receipt_cid": receipt_cid,
+                "duration_ms": duration_ms,
+                "success": error_msg is None,
+                "error": error_msg,
+                "output_cid": output_cid,
+            },
+            "output": output,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"MCP++ execute failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Execution failed: {e}")
+
+
+# --- Event DAG Endpoints ---
+
+@app.get("/mcp/dag/frontier")
+async def get_dag_frontier():
+    """Get the current Event DAG frontier (leaf nodes)."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"frontier": []}
+        frontier_nodes = dag.frontier()
+        return {"frontier": [str(n.event_cid) if hasattr(n, 'event_cid') else str(n) for n in frontier_nodes]}
+    except Exception as e:
+        logger.error(f"DAG frontier error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/mcp/dag/history")
+async def get_dag_history(limit: int = 50):
+    """Get Event DAG history (most recent events)."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"events": [], "count": 0}
+        # Walk the DAG
+        all_nodes = list(dag._nodes.values()) if hasattr(dag, '_nodes') else []
+        recent = all_nodes[-limit:] if len(all_nodes) > limit else all_nodes
+        return {
+            "events": [
+                {
+                    "event_cid": str(n.event_cid),
+                    "event_type": "envelope",
+                    "parents": [str(p) for p in (n.parents or [])],
+                    "timestamp": getattr(n, "timestamp_created", ""),
+                    "payload": {
+                        "intent_cid": str(getattr(n, 'intent_cid', '')),
+                        "decision_cid": str(getattr(n, 'decision_cid', '')),
+                        "output_cid": str(getattr(n, 'output_cid', '')),
+                        "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                    },
+                    "intent_cid": str(getattr(n, 'intent_cid', '')),
+                    "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                }
+                for n in recent
+            ],
+            "count": len(all_nodes),
+        }
+    except Exception as e:
+        logger.error(f"DAG history error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/mcp/dag/provenance/{event_cid}")
+async def trace_dag_provenance(event_cid: str):
+    """Trace provenance chain from an event CID back to roots."""
+    try:
+        from .event_dag import EventDAG
+        dag = getattr(app.state, '_event_dag', None)
+        if dag is None:
+            return {"chain": []}
+        chain = dag.walk(event_cid) if hasattr(dag, 'walk') else []
+        return {
+            "chain": [
+                {"event_cid": str(n.event_cid), "parents": [str(p) for p in (n.parents or [])]}
+                for n in chain
+            ]
+        }
+    except Exception as e:
+        logger.error(f"DAG provenance error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile C: UCAN Delegation Endpoints ---
+
+@app.post("/mcp/ucan/delegate")
+async def create_ucan_delegation(request: Request):
+    """Create a UCAN capability delegation (Profile C)."""
+    try:
+        from .ucan_delegation import Capability, Delegation, add_delegation
+        body = await request.json()
+        audience = body.get("audience", "")
+        capabilities = body.get("capabilities", [])
+        expiration_hours = body.get("expiration_hours", 24)
+
+        if not audience:
+            raise HTTPException(status_code=400, detail="audience DID required")
+
+        caps = [
+            Capability(resource=c.get("resource", "*"), ability=c.get("ability", "*"))
+            for c in capabilities
+        ]
+
+        import time as _time
+        from .cid_artifacts import artifact_cid
+        now = int(_time.time())
+
+        # Compute CID for the delegation first
+        proof_cid = str(artifact_cid({
+            "issuer": "did:key:z6MkIPFSDatasetsMCPServer",
+            "audience": audience,
+            "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+            "expiry": now + (expiration_hours * 3600),
+        }))
+
+        delegation = Delegation(
+            cid=proof_cid,
+            issuer="did:key:z6MkIPFSDatasetsMCPServer",
+            audience=audience,
+            capabilities=caps,
+            expiry=now + (expiration_hours * 3600),
+        )
+
+        # Store delegation
+        add_delegation(proof_cid, delegation)
+
+        return {
+            "proof_cid": proof_cid,
+            "delegation": {
+                "issuer": delegation.issuer,
+                "audience": delegation.audience,
+                "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+                "expiry": delegation.expiry,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"UCAN delegation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/mcp/ucan/validate")
+async def validate_ucan_delegation(request: Request):
+    """Validate a UCAN proof chain (Profile C)."""
+    try:
+        from .ucan_delegation import get_delegation, DelegationEvaluator, get_delegation_evaluator
+        body = await request.json()
+        proof_cid = body.get("proof_cid", "")
+
+        if not proof_cid:
+            raise HTTPException(status_code=400, detail="proof_cid required")
+
+        delegation = get_delegation(proof_cid)
+        if delegation is None:
+            return {"valid": False, "error": "Delegation not found", "chain": []}
+
+        # Validate time bounds
+        import time as _time
+        now = int(_time.time())
+        valid = True
+        reasons = []
+
+        if hasattr(delegation, 'expiry') and delegation.expiry < now:
+            valid = False
+            reasons.append("expired")
+        if hasattr(delegation, 'not_before') and delegation.not_before > now:
+            valid = False
+            reasons.append("not yet valid")
+
+        return {
+            "valid": valid,
+            "reasons": reasons,
+            "chain": [{
+                "issuer": getattr(delegation, 'issuer', ''),
+                "audience": getattr(delegation, 'audience', ''),
+                "expiry": getattr(delegation, 'expiry', 0),
+            }],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"UCAN validation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile D: Policy Evaluation ---
+
+def _evaluate_profile_d_request(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Use the canonical, fail-closed Profile D logic package export."""
+    from ipfs_datasets_py.logic.profile_d_policy import evaluate_execution_policy
+
+    policy = payload.get("policy")
+    return evaluate_execution_policy(
+        actor=payload.get("actor", ""),
+        action=payload.get("action", ""),
+        resource=payload.get("resource"),
+        policy=policy if isinstance(policy, dict) else None,
+        policy_text=payload.get("policy_text"),
+        evaluated_at=payload.get("evaluated_at"),
+        intent_cid=payload.get("intent_cid"),
+        request_zkp_certificate=bool(payload.get("request_zkp_certificate", False)),
+    )
+
+@app.post("/mcp/policy/evaluate")
+async def evaluate_deontic_policy(request: Request):
+    """Evaluate temporal deontic policy for an intent (Profile D)."""
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="Profile D request must be an object")
+        return _evaluate_profile_d_request(body)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as e:
+        logger.error(f"Policy evaluation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Profile E: P2P Peer Discovery ---
+
+@app.get("/mcp/p2p/peers")
+async def discover_p2p_peers():
+    """Discover available P2P peers (Profile E) — filtered for security."""
+    try:
+        from .p2p_libp2p_transport import get_p2p_node, MCP_P2P_PROTOCOL
+        node = get_p2p_node()
+        full = node.to_dict()
+        # Filter sensitive multiaddrs (contain internal IPs)
+        safe_peers = []
+        for peer in full.get("peers", []):
+            safe_peers.append({
+                "peer_id": peer.get("peer_id", ""),
+                "protocols": peer.get("protocols", []),
+                "last_seen": peer.get("last_seen", 0),
+                "latency_ms": peer.get("latency_ms", 0),
+            })
+        full["peers"] = safe_peers
+        return full
+    except ImportError:
+        return {"protocol": "/mcp+p2p/1.0.0", "peers": [], "count": 0, "started": False}
+    except Exception as e:
+        logger.error(f"P2P peer discovery failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/mcp/p2p/call")
+async def p2p_call_remote_tool(request: Request):
+    """Call a tool on a remote peer via libp2p /mcp+p2p/1.0.0 (Profile E)."""
+    try:
+        from .p2p_libp2p_transport import get_p2p_node
+        body = await request.json()
+        node = get_p2p_node()
+        if not node._started:
+            raise HTTPException(status_code=503, detail="P2P node not started")
+        peer_id = body.get("peer_id", "")
+        # Validate peer is known (prevent SSRF relay to arbitrary hosts)
+        if peer_id not in node._peers:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown peer: {peer_id[:16]}... Use /mcp/p2p/peers to discover available peers"
+            )
+        result = await node.call_tool(
+            peer_id=peer_id,
+            method=body.get("method", ""),
+            params=body.get("params", {}),
+            timeout=min(max(float(body.get("timeout", 30.0)), 1.0), 120.0),
+        )
+        return {"result": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# --- MCP++ Capability Negotiation (JSON-RPC) ---
+
+@app.get("/mcp/discover")
+async def mcp_discover():
+    """Discovery endpoint: returns server capabilities, version, available tools.
+
+    Frontend (Electron/SwissKnife) connects here first to discover what's available.
+    """
+    import os as _os
+
+    tools = []
+    try:
+        from .dispatch_pipeline import _TOOL_REGISTRY
+        tools = list(_TOOL_REGISTRY.keys()) if _TOOL_REGISTRY else []
+    except Exception:
+        pass
+
+    profiles = {
+        "A": "MCP-IDL (Interface Descriptors)",
+        "B": "CID-Native Execution (Intent/Decision/Receipt)",
+        "C": "UCAN Authorization (Delegation Chains)",
+        "D": "Temporal Deontic Policy (Permission/Prohibition/Obligation)",
+        "E": "mcp+p2p (libp2p Transport)",
+    }
+
+    p2p_status = "disabled"
+    peer_id = None
+    try:
+        from .p2p_libp2p_transport import get_p2p_node
+        node = get_p2p_node()
+        if node._started:
+            p2p_status = "active"
+            peer_id = node.peer_id
+    except Exception:
+        pass
+
+    return {
+        "server": "ipfs-datasets-mcp",
+        "version": "0.1.0",
+        "protocol": "mcp++",
+        "profiles": profiles,
+        "tools": tools,
+        "interfaces": len(tools),
+        "p2p": {"status": p2p_status, "peer_id": peer_id},
+        "endpoints": {
+            "jsonrpc": "/mcp",
+            "execute": "/mcp/execute",
+            "interfaces": "/mcp/interfaces",
+            "ucan_delegate": "/mcp/ucan/delegate",
+            "policy_evaluate": "/mcp/policy/evaluate",
+            "p2p_call": "/mcp/p2p/call",
+            "events": "/mcp/events/stream",
+            "health": "/health",
+            "tools_list": "/tools/list",
+        },
+        "auth": {
+            "ucan_required": not bool(_os.environ.get("MCPPP_ALLOW_UNSIGNED_DELEGATIONS")),
+        },
+    }
+
+
+# SSE connection limiter
+_sse_connections = 0
+_sse_lock = __import__("threading").Lock()
+_MAX_SSE_CONNECTIONS = int(os.environ.get("MCPPP_MAX_SSE_CONNECTIONS", "50"))
+
+@app.get("/mcp/events/stream")
+async def mcp_event_stream(request: Request):
+    """SSE endpoint: streams EventDAG changes and server events in real-time.
+
+    Frontend connects here for live updates (tool executions, peer events, etc).
+    Uses Server-Sent Events (SSE) for broad compatibility with Electron/browsers.
+    """
+    global _sse_connections
+    import json as _json
+    from starlette.responses import StreamingResponse
+
+    # Enforce connection limit
+    with _sse_lock:
+        if _sse_connections >= _MAX_SSE_CONNECTIONS:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Too many SSE connections", "max": _MAX_SSE_CONNECTIONS},
+            )
+        _sse_connections += 1
+
+    try:
+        from .event_dag import get_event_dag
+        dag = get_event_dag()
+    except Exception:
+        dag = None
+
+    async def _generate_events():
+        global _sse_connections
+        try:
+            last_count = len(dag._events) if dag else 0
+            yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
+
+            while True:
+                await anyio.sleep(1.0)
+                if await request.is_disconnected():
+                    break
+                if dag is None:
+                    yield ": keepalive\n\n"
+                    continue
+                current_count = len(dag._events)
+                if current_count > last_count:
+                    new_events = list(dag._events.values())[last_count:current_count]
+                    for event in new_events:
+                        event_data = _json.dumps({
+                            "cid": event.cid,
+                            "type": event.event_type,
+                            "timestamp": event.timestamp,
+                            "parents": event.parent_cids,
+                        })
+                        yield f"event: dag_event\ndata: {event_data}\n\n"
+                    last_count = current_count
+                else:
+                    yield ": keepalive\n\n"
+        except (GeneratorExit, BaseException):
+            pass
+        finally:
+            with _sse_lock:
+                _sse_connections -= 1
+
+    return StreamingResponse(
+        _generate_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+def _profile_g_rest_result(method: str, params: Dict[str, Any]):
+    """Dispatch Profile G REST with the same result/error semantics as JSON-RPC."""
+    from ipfs_datasets_py.logic.profile_g import ProfileGError
+    from .profile_g_service import get_profile_g_service, profile_g_jsonrpc_error
+
+    try:
+        return get_profile_g_service().dispatch(method, params)
+    except ProfileGError as error:
+        status = {
+            "G_INVALID_ARTIFACT": 400, "G_CID_MISMATCH": 422,
+            "G_AUTHORITY_DENIED": 403, "G_POLICY_DENIED": 403,
+            "G_NOT_READY": 409, "G_IDEMPOTENCY_CONFLICT": 409,
+            "G_CLAIM_CONFLICT": 409, "G_LEASE_EXPIRED": 409,
+            "G_LIMIT_EXCEEDED": 413, "G_EVIDENCE_INVALID": 422,
+            "G_REDACTED": 403,
+        }.get(error.code, 503)
+        return JSONResponse(status_code=status, content=profile_g_jsonrpc_error(None, error)["error"])
+
+
+async def _profile_g_request_params(request: Request) -> Dict[str, Any]:
+    """Decode a REST body without leaking JSON/parser exceptions as HTTP 500."""
+    try:
+        value = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Profile G request body must be JSON")
+    if not isinstance(value, dict):
+        raise HTTPException(status_code=400, detail="Profile G request body must be an object")
+    return value
+
+
+@app.get("/mcp/risk/profile")
+async def profile_g_metadata():
+    return _profile_g_rest_result("mcp++/risk/profile", {})
+
+
+@app.post("/mcp/goals")
+async def profile_g_create_goal(request: Request):
+    return _profile_g_rest_result("mcp++/goals/create", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/goals")
+async def profile_g_list_goals(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/goals/list", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/goals/{goal_cid}")
+async def profile_g_get_goal(goal_cid: str):
+    return _profile_g_rest_result("mcp++/goals/get", {"goal_cid": goal_cid})
+
+
+@app.post("/mcp/goals/{goal_cid}/decompose")
+async def profile_g_decompose(goal_cid: str, request: Request):
+    params = await _profile_g_request_params(request)
+    params["goal_cid"] = goal_cid
+    return _profile_g_rest_result("mcp++/goals/decompose", params)
+
+
+@app.post("/mcp/goals/{goal_cid}/select")
+async def profile_g_select(goal_cid: str, request: Request):
+    params = await _profile_g_request_params(request)
+    params["goal_cid"] = goal_cid
+    return _profile_g_rest_result("mcp++/goals/select", params)
+
+
+@app.post("/mcp/tasks")
+async def profile_g_create_task(request: Request):
+    return _profile_g_rest_result("mcp++/tasks/create", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/tasks")
+async def profile_g_list_tasks(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/tasks/list", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/tasks/ready")
+async def profile_g_ready_tasks(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/tasks/ready", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/tasks/{task_cid}")
+async def profile_g_get_task(task_cid: str):
+    return _profile_g_rest_result("mcp++/tasks/get", {"task_cid": task_cid})
+
+
+@app.post("/mcp/risk/assess")
+async def profile_g_assess_risk(request: Request):
+    return _profile_g_rest_result("mcp++/risk/assess", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/risk/evidence")
+async def profile_g_evidence(subject_cid: str, limit: int = 100):
+    return _profile_g_rest_result("mcp++/risk/evidence", {"subject_cid": subject_cid, "limit": limit})
+
+
+@app.get("/mcp/risk/history")
+async def profile_g_history(subject_cid: str, limit: int = 100):
+    return _profile_g_rest_result("mcp++/risk/history", {"subject_cid": subject_cid, "limit": limit})
+
+
+@app.post("/mcp/neighborhood/query")
+async def profile_g_query_neighborhood(request: Request):
+    return _profile_g_rest_result("mcp++/neighborhood/query", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/neighborhood/attest")
+async def profile_g_attest_neighborhood(request: Request):
+    return _profile_g_rest_result("mcp++/neighborhood/attest", await _profile_g_request_params(request))
+
+
+@app.get("/mcp/schedule/frontier")
+async def profile_g_schedule_frontier(limit: int = 100, cursor: Optional[str] = None):
+    return _profile_g_rest_result("mcp++/schedule/frontier", {"limit": limit, "cursor": cursor})
+
+
+@app.get("/mcp/schedule/status/{task_cid}")
+async def profile_g_schedule_status(task_cid: str):
+    return _profile_g_rest_result("mcp++/schedule/status", {"task_cid": task_cid})
+
+
+@app.post("/mcp/schedule/proposals")
+async def profile_g_schedule_propose(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/propose", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/claims")
+async def profile_g_schedule_claim(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/claim", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/claims/{claim_cid}/{operation}")
+async def profile_g_schedule_claim_operation(claim_cid: str, operation: str, request: Request):
+    if operation not in {"renew", "release"}:
+        raise HTTPException(status_code=404, detail="unknown claim operation")
+    params = await _profile_g_request_params(request)
+    params["claim_cid"] = claim_cid
+    return _profile_g_rest_result(f"mcp++/schedule/{operation}", params)
+
+
+@app.post("/mcp/schedule/resolutions")
+async def profile_g_schedule_resolve(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/resolve", await _profile_g_request_params(request))
+
+
+@app.post("/mcp/schedule/reconcile")
+async def profile_g_schedule_reconcile(request: Request):
+    return _profile_g_rest_result("mcp++/schedule/reconcile", await _profile_g_request_params(request))
+
+
+@app.post("/mcp")
+async def mcp_jsonrpc_handler(request: Request):
+    """Handle MCP JSON-RPC requests including MCP++ profile negotiation."""
+    try:
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse(status_code=400, content={
+                "jsonrpc": "2.0", "id": None,
+                "error": {"code": -32700, "message": "Parse error"},
+            })
+        if not isinstance(body, dict):
+            return JSONResponse(status_code=400, content={
+                "jsonrpc": "2.0", "id": None,
+                "error": {"code": -32600, "message": "Invalid Request"},
+            })
+        method = body.get("method", "")
+        params = body.get("params", {})
+        req_id = body.get("id", 1)
+
+        # JSON-RPC 2.0: id must be string, number, or null
+        if req_id is not None and not isinstance(req_id, (str, int, float)):
+            return JSONResponse(
+                status_code=400,
+                content={"jsonrpc": "2.0", "id": None,
+                         "error": {"code": -32600, "message": "Invalid request: id must be string, number, or null"}}
+            )
+
+        if method == "initialize":
+            client_caps = params.get("capabilities", {}).get("experimental", {})
+            server_caps = {}
+            if client_caps.get("mcp++/mcp-idl"):
+                server_caps["mcp++/mcp-idl"] = True
+            if client_caps.get("mcp++/cid-envelope"):
+                server_caps["mcp++/cid-envelope"] = True
+            if client_caps.get("mcp++/ucan"):
+                server_caps["mcp++/ucan"] = True
+            if client_caps.get("mcp++/deontic-policy"):
+                server_caps["mcp++/deontic-policy"] = True
+            if client_caps.get("mcp++/event-dag"):
+                server_caps["mcp++/event-dag"] = True
+            if client_caps.get("mcp++/p2p-transport"):
+                server_caps["mcp++/p2p-transport"] = True
+            if client_caps.get("mcp++/risk-scheduling"):
+                from .profile_g_service import get_profile_g_service
+                server_caps["mcp++/risk-scheduling"] = get_profile_g_service().profile
+
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {"listChanged": True},
+                        "mcpPlusPlusProfiles": [
+                            "mcp++/mcp-idl", "mcp++/cid-envelope", "mcp++/ucan",
+                            "mcp++/deontic-policy", "mcp++/event-dag",
+                            "mcp++/p2p-transport", "mcp++/risk-scheduling",
+                        ],
+                        "experimental": server_caps,
+                    },
+                    "serverInfo": {"name": "ipfs-datasets-mcppp", "version": "1.0.0"},
+                },
+            }
+
+        elif method == "ping":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {}}
+
+        elif method == "notifications/initialized" or method.startswith("notifications/"):
+            # JSON-RPC notification: the client expects no result payload.
+            return JSONResponse(status_code=202, content={"jsonrpc": "2.0", "result": None, "id": req_id})
+
+        elif method == "tools/call":
+            tool_name = params.get("name", "")
+            arguments = params.get("arguments", {}) or {}
+            mcp_server = getattr(app.state, 'mcp_server', None)
+            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+                tool_fn = mcp_server.tools[tool_name]
+                import inspect
+                exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
+                if callable(tool_fn):
+                    try:
+                        with anyio.fail_after(exec_timeout):
+                            if inspect.iscoroutinefunction(tool_fn):
+                                result = await tool_fn(**arguments)
+                            else:
+                                result = await anyio.to_thread.run_sync(
+                                    lambda: tool_fn(**arguments), cancellable=True
+                                )
+                    except TimeoutError:
+                        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
+                else:
+                    result = None
+                return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
+            handled, result = await _dispatch_hierarchical_flat_tool(tool_name, arguments)
+            if handled:
+                return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
+
+        elif method == "tools/list":
+            mcp_server = getattr(app.state, 'mcp_server', None)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
+
+        elif method == "mcp++/execute":
+            # Delegate to the envelope execution endpoint
+            from starlette.testclient import TestClient
+            # Inline call
+            return await mcp_execute_with_envelope(request)
+
+        elif method == "mcp++/ucan/validate":
+            proof_cid = params.get("proof_cid", "")
+            from .ucan_delegation import get_delegation
+            delegation = get_delegation(proof_cid)
+            import time as _time
+            now = int(_time.time())
+            valid = delegation is not None and (not hasattr(delegation, 'expiry') or delegation.expiry >= now)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
+
+        elif method == "mcp++/policy/evaluate":
+            try:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": _evaluate_profile_d_request(params),
+                }
+            except ValueError as error:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": -32602, "message": str(error)},
+                }
+
+        elif method.startswith(("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")):
+            from ipfs_datasets_py.logic.profile_g import ProfileGError
+            from .profile_g_service import get_profile_g_service, profile_g_jsonrpc_error
+            try:
+                result = get_profile_g_service().dispatch(method, params)
+                return {"jsonrpc": "2.0", "id": req_id, "result": result}
+            except ProfileGError as error:
+                return profile_g_jsonrpc_error(req_id, error)
+
+        elif method == "mcp++/dag/zk/status":
+            from .event_dag_zkp import availability
+            return {"jsonrpc": "2.0", "id": req_id, "result": availability()}
+
+        elif method == "mcp++/dag/zk/prove":
+            from .event_dag_zkp import prove_event_dag_compaction
+            event_cids = params.get("event_cids", [])
+            if not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array"}}
+            certificate = await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"certificate": certificate}}
+
+        elif method == "mcp++/dag/zk/verify":
+            from .event_dag_zkp import verify_event_dag_compaction
+            certificate = params.get("certificate")
+            if not isinstance(certificate, dict):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "certificate must be an object"}}
+            event_cids = params.get("event_cids")
+            if event_cids is not None and not isinstance(event_cids, list):
+                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array when supplied"}}
+            result = await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
+            return {"jsonrpc": "2.0", "id": req_id, "result": result}
+
+        elif method == "mcp++/p2p/peers":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
+
+        elif method == "shutdown":
+            return {"jsonrpc": "2.0", "id": req_id, "result": None}
+
+        else:
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
+
+    except Exception as e:
+        logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
+        return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}
+
+
+@app.get("/mcp/dag/zk/status")
+async def event_dag_zk_status():
+    """Advertise the local verifier-backed Profile F proving capability."""
+    from .event_dag_zkp import availability
+    return availability()
+
+
+@app.post("/mcp/dag/zk/prove")
+async def event_dag_zk_prove(request: Request):
+    """Issue a bounded Profile F Groth16 certificate, or fail closed."""
+    body = await request.json()
+    event_cids = body.get("event_cids", [])
+    if not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array")
+    from .event_dag_zkp import prove_event_dag_compaction
+    return {"certificate": await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)}
+
+
+@app.post("/mcp/dag/zk/verify")
+async def event_dag_zk_verify(request: Request):
+    """Verify a Profile F certificate and optionally bind it to archived CIDs."""
+    body = await request.json()
+    certificate = body.get("certificate")
+    if not isinstance(certificate, dict):
+        raise HTTPException(status_code=422, detail="certificate must be an object")
+    event_cids = body.get("event_cids")
+    if event_cids is not None and not isinstance(event_cids, list):
+        raise HTTPException(status_code=422, detail="event_cids must be an array when supplied")
+    from .event_dag_zkp import verify_event_dag_compaction
+    return await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
+
+
+@app.get("/mcp/tools/list")
+@app.post("/mcp/tools/list")
+async def mcp_tools_list_rest():
+    """REST alias for ``tools/list``.
+
+    hallucinate_app's unified tool explorer (and other simple HTTP clients)
+    discover tools via ``GET /mcp/tools/list`` rather than a JSON-RPC ``POST
+    /mcp``. Serve the same descriptor list in the same ``{jsonrpc, result:
+    {tools}}`` envelope the JSON-RPC path and ipfs-kit return.
+    """
+    mcp_server = getattr(app.state, 'mcp_server', None)
+    return {"jsonrpc": "2.0", "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
+
+
+@app.post("/mcp/tools/call")
+async def mcp_tools_call_rest(request: Request):
+    """REST alias for ``tools/call`` used by the hallucinate_app tool explorer."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    params = body.get("params") if isinstance(body.get("params"), dict) else {}
+    tool_name = body.get("name") or body.get("tool") or params.get("name") or ""
+    arguments = body.get("arguments")
+    if arguments is None:
+        arguments = params.get("arguments")
+    arguments = arguments or {}
+    if not tool_name:
+        return JSONResponse(
+            status_code=400,
+            content={"jsonrpc": "2.0", "error": {"code": -32602, "message": "Missing tool name"}},
+        )
+    mcp_server = getattr(app.state, 'mcp_server', None)
+    if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+        tool_fn = mcp_server.tools[tool_name]
+        import inspect
+        exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
+        if callable(tool_fn):
+            try:
+                with anyio.fail_after(exec_timeout):
+                    if inspect.iscoroutinefunction(tool_fn):
+                        result = await tool_fn(**arguments)
+                    else:
+                        result = await anyio.to_thread.run_sync(
+                            lambda: tool_fn(**arguments), cancellable=True
+                        )
+            except TimeoutError:
+                return {"jsonrpc": "2.0", "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
+        else:
+            result = None
+        return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
+    handled, result = await _dispatch_hierarchical_flat_tool(tool_name, arguments)
+    if handled:
+        return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
+    return JSONResponse(
+        status_code=404,
+        content={"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}},
+    )

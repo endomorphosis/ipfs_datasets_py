@@ -216,6 +216,43 @@ class FakeScraperGeorgiaRelocation:
         raise AssertionError(f"Unexpected URL fetched: {url}")
 
 
+class InMemorySharedFetchCache:
+    def __init__(self) -> None:
+        self.entries: dict[tuple[str, str], dict] = {}
+
+    def load(self, *, namespace: str, url: str):
+        return self.entries.get((namespace, url))
+
+    def save(self, *, namespace: str, url: str, payload: dict, payload_name: str):
+        self.entries[(namespace, url)] = dict(payload)
+        return {"payload_name": payload_name}
+
+
+class FakeOrchestratorBlockedRelocation:
+    def __init__(self):
+        self.queries = []
+
+    def search(self, query, max_results, offset, engines):
+        self.queries.append(query)
+        return SimpleNamespace(
+            results=[
+                SimpleNamespace(
+                    title="Off-target page",
+                    url="https://offtarget.example.net/noise",
+                    snippet="Bad relocation candidate",
+                    engine="duckduckgo",
+                    score=0.99,
+                    metadata={"rank": 1},
+                )
+            ],
+            took_ms=15.0,
+            metadata={"engines_used": list(engines)},
+        )
+
+    def get_stats(self):
+        return {"engines": {}}
+
+
 def test_unified_api_search_success_maps_results() -> None:
     api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
     request = UnifiedSearchRequest(
@@ -310,6 +347,42 @@ def test_unified_api_health_snapshot_contains_metrics() -> None:
     assert "orchestrator" in health
     assert "metrics_5m" in health
     assert "brave:search" in health["metrics_5m"]
+
+
+def test_unified_api_build_engine_config_uses_conservative_defaults(monkeypatch) -> None:
+    for key in [
+        "IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE",
+        "LEGAL_SCRAPER_SEARCH_RATE_LIMIT_PER_MINUTE",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
+    config = api._build_engine_config("duckduckgo")
+
+    assert config.engine_type == "duckduckgo"
+    assert config.rate_limit_per_minute == 25
+    assert config.retry_attempts == 2
+    assert config.retry_delay_seconds == 2.0
+
+
+def test_unified_api_build_engine_config_prefers_engine_specific_env(monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE", "18")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE", "11")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS", "4")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS", "3.5")
+
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
+    config = api._build_engine_config("duckduckgo")
+
+    assert config.rate_limit_per_minute == 11
+    assert config.retry_attempts == 4
+    assert config.retry_delay_seconds == 3.5
 
 
 def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
@@ -428,6 +501,26 @@ def test_unified_api_fetch_filters_irrelevant_relocation_hits() -> None:
     assert response.document.metadata.get("relocated_via_search") is True
 
 
+def test_unified_api_fetch_relocation_respects_discovery_constraints() -> None:
+    orchestrator = FakeOrchestratorBlockedRelocation()
+    api = UnifiedWebArchivingAPI(orchestrator=orchestrator, scraper=FakeScraperRelocation())
+
+    response = api.fetch(
+        "https://old.example.com/code",
+        domain="legal",
+        metadata={
+            "allowed_hosts": ["old.example.com"],
+            "blocked_url_patterns": [r"offtarget\\.example\\.net"],
+        },
+    )
+
+    assert response.success is False
+    assert response.document is None
+    assert len(response.errors) == 1
+    assert response.errors[0].code == "fetch_failed"
+    assert orchestrator.queries
+
+
 def test_unified_api_fetch_normalizes_domain_alias_and_migration_meta() -> None:
     api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
 
@@ -444,6 +537,23 @@ def test_unified_api_fetch_normalizes_domain_alias_and_migration_meta() -> None:
     assert response.document.metadata.get("requested_domain") == "legal"
     assert response.document.metadata.get("schema_migration_applied") in {True, False}
     assert response.metadata.get("requested_domain") == "legal"
+
+
+def test_unified_api_fetch_cache_keeps_general_and_legal_domains_separate() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+    api._shared_fetch_cache = InMemorySharedFetchCache()
+
+    general_response = api.fetch("https://example.com/law")
+    legal_response = api.fetch("https://example.com/law", domain="legal")
+
+    assert general_response.success is True
+    assert legal_response.success is True
+    assert general_response.document is not None
+    assert legal_response.document is not None
+    assert general_response.document.metadata.get("domain") == "general"
+    assert general_response.document.metadata.get("structured_fields_version") == "general_v1"
+    assert legal_response.document.metadata.get("domain") == "legal"
+    assert legal_response.document.metadata.get("structured_fields_version") == "legal_v1"
 
 
 def test_unified_api_search_and_fetch_returns_document_envelope() -> None:
@@ -516,3 +626,24 @@ def test_unified_api_agentic_discover_and_fetch_uses_search_for_relocated_url() 
     assert "https://old.example.com/code" in visited_urls
     assert "https://new.example.org/indiana/code" in visited_urls
     assert any("old.example.com" in query or "indiana" in query for query in orchestrator.queries)
+
+
+def test_unified_api_agentic_discover_and_fetch_honors_constraints() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    result = api.agentic_discover_and_fetch(
+        seed_urls=[
+            "https://allowed.example.com/code",
+            "https://web.archive.org/web/20200101000000/https://law.justia.com/codes/example",
+        ],
+        target_terms=["code"],
+        max_hops=0,
+        max_pages=5,
+        allowed_hosts=["allowed.example.com"],
+        blocked_url_patterns=[r"law\.justia\.com/"],
+    )
+
+    visited_urls = [item["url"] for item in result["results"]]
+
+    assert result["status"] == "success"
+    assert visited_urls == ["https://allowed.example.com/code"]

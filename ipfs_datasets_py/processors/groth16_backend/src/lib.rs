@@ -24,6 +24,21 @@ pub struct WitnessInput {
     pub circuit_version: u32,
     pub ruleset_id: String,
 
+    /// Profile F circuit v3 witness. Each value is a 32-byte event digest
+    /// encoded as lowercase hexadecimal; it is private to the Groth16 proof.
+    #[serde(default)]
+    pub event_digests_hex: Vec<String>,
+
+    /// Explicit public count for Profile F circuit v3. The circuit binds it to
+    /// the active private witness leaves.
+    #[serde(default)]
+    pub event_count: Option<u32>,
+
+    /// Public Profile F SHA-256 Merkle root. The prover recomputes it from the
+    /// private event digests and rejects a mismatch before proving.
+    #[serde(default)]
+    pub event_dag_merkle_root_hex: Option<String>,
+
     // Optional fields used by the Python side; intentionally accepted to keep
     // the wire format forward-compatible.
     #[serde(default)]

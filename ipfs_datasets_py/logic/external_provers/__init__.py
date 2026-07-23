@@ -28,7 +28,31 @@ Usage:
 
 from typing import List, Optional
 
+from .deterministic_router import (
+    DETERMINISTIC_PROVER_ROUTE_SCHEMA_VERSION,
+    select_deterministic_prover_route,
+)
+
 __version__ = "1.0.0"
+
+try:
+    from .lazy_installer import (
+        ProverInstallEvent,
+        ProgressCallback,
+        ensure_prover_executable,
+        find_executable,
+        lazy_install_prover,
+        lazy_installs_enabled,
+        prover_lazy_install_enabled,
+    )
+except ImportError:
+    ProverInstallEvent = None
+    ProgressCallback = None
+    ensure_prover_executable = None
+    find_executable = None
+    lazy_install_prover = None
+    lazy_installs_enabled = None
+    prover_lazy_install_enabled = None
 
 # Try to import SMT solvers (optional dependencies)
 try:
@@ -158,4 +182,13 @@ __all__ = [
     # Utility functions
     "get_available_provers",
     "check_prover_availability",
+    "find_executable",
+    "ensure_prover_executable",
+    "lazy_install_prover",
+    "lazy_installs_enabled",
+    "prover_lazy_install_enabled",
+    "ProverInstallEvent",
+    "ProgressCallback",
+    "DETERMINISTIC_PROVER_ROUTE_SCHEMA_VERSION",
+    "select_deterministic_prover_route",
 ]

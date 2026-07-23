@@ -8,6 +8,7 @@ from ipfs_datasets_py.processors.web_archiving.metrics.registry import MetricsRe
 from ipfs_datasets_py.processors.web_archiving.orchestration.executor import SearchExecutor
 from ipfs_datasets_py.processors.web_archiving.orchestration.planner import SearchPlanner
 from ipfs_datasets_py.processors.web_archiving.orchestration.scoring import ProviderScorer
+from ipfs_datasets_py.processors.web_archiving.search_engines.base import SearchEngineRateLimitError
 
 
 class FakeOrchestrator:
@@ -120,3 +121,39 @@ def test_search_executor_falls_back_when_first_provider_fails() -> None:
     assert result.providers_attempted == ["brave", "duckduckgo"]
     assert result.provider_selected == "duckduckgo"
     assert result.fallback_count == 1
+
+
+def test_search_executor_does_not_retry_rate_limited_provider() -> None:
+    class RateLimitThenFallbackOrchestrator:
+        def __init__(self):
+            self.calls = []
+
+        def search(self, query, max_results, offset, engines):
+            self.calls.append(list(engines))
+            if engines == ["brave"]:
+                raise SearchEngineRateLimitError("Brave search temporarily rate limited; retry after 60.0s")
+            return SimpleNamespace(
+                results=[],
+                took_ms=12.0,
+                metadata={"engines_used": list(engines)},
+            )
+
+    orchestrator = RateLimitThenFallbackOrchestrator()
+    executor = SearchExecutor(orchestrator)
+    registry = MetricsRegistry(default_windows_seconds=(300,))
+    planner = SearchPlanner(
+        scorer=ProviderScorer(metrics_registry=registry),
+        default_search_engines=["brave", "duckduckgo"],
+    )
+    plan = planner.plan(
+        UnifiedSearchRequest(
+            query="indiana code",
+            provider_allowlist=["brave", "duckduckgo"],
+        )
+    )
+
+    result = executor.execute(plan)
+
+    assert orchestrator.calls == [["brave"], ["duckduckgo"]]
+    assert result.providers_attempted == ["brave", "duckduckgo"]
+    assert result.provider_selected == "duckduckgo"

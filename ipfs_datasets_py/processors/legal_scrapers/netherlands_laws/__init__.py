@@ -1,0 +1,39 @@
+"""Netherlands laws assets, packaging helpers, and dataset builders.
+
+This submodule keeps Netherlands-law-specific scrape outputs and downstream
+packaging/index artifacts inside the legal scrapers package rather than under
+repo-root standalone folders.
+"""
+
+from .paths import (
+    DEFAULT_HF_REPO_IDS,
+    DEFAULT_BWBR_CATALOG_PATH,
+    DEFAULT_COVERAGE_REPORT_PATH,
+    NETHERLANDS_LAWS_DIR,
+    OPERATIONS_DATA_DIR,
+    PACKAGE_RAW_OUTPUT_DIR,
+    RAW_DATA_DIR,
+    UNIFIED_WETWIJZER_DATASET_NAME,
+    HF_DATA_DIR,
+    LEGACY_HF_READY_DIR,
+    LEGACY_NL_OUTPUT_DIR,
+    LEGACY_NL_OUTPUT_DOCS_DIR,
+)
+from .jurisdiction import get_jurisdiction, register_netherlands_jurisdiction
+
+__all__ = [
+    "DEFAULT_HF_REPO_IDS",
+    "DEFAULT_BWBR_CATALOG_PATH",
+    "DEFAULT_COVERAGE_REPORT_PATH",
+    "NETHERLANDS_LAWS_DIR",
+    "OPERATIONS_DATA_DIR",
+    "PACKAGE_RAW_OUTPUT_DIR",
+    "RAW_DATA_DIR",
+    "UNIFIED_WETWIJZER_DATASET_NAME",
+    "HF_DATA_DIR",
+    "LEGACY_HF_READY_DIR",
+    "LEGACY_NL_OUTPUT_DIR",
+    "LEGACY_NL_OUTPUT_DOCS_DIR",
+    "get_jurisdiction",
+    "register_netherlands_jurisdiction",
+]

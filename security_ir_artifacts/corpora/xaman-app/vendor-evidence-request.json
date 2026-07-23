@@ -1,0 +1,369 @@
+{
+  "accountable_owners": [
+    {
+      "category_id": "release_provenance",
+      "internal_reviewer_role": "internal release-security reviewer",
+      "required_vendor_owner_role": "vendor release engineering owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "native_vault_biometric_policy",
+      "internal_reviewer_role": "internal mobile-model reviewer",
+      "required_vendor_owner_role": "vendor mobile security owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "backend_payload_semantics",
+      "internal_reviewer_role": "internal payload-model reviewer",
+      "required_vendor_owner_role": "vendor backend/API owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "signed_build_attestation",
+      "internal_reviewer_role": "internal release-security reviewer",
+      "required_vendor_owner_role": "vendor build/release owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "test_device_trace_review",
+      "internal_reviewer_role": "internal runtime-evidence reviewer",
+      "required_vendor_owner_role": "vendor QA/security validation owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "xrpl_rpc_trust_assumptions",
+      "internal_reviewer_role": "internal XRPL-model reviewer",
+      "required_vendor_owner_role": "vendor ledger-infrastructure owner",
+      "signoff_required": true
+    },
+    {
+      "category_id": "responsible_disclosure_routing",
+      "internal_reviewer_role": "internal security lead and legal/vendor-relations approver",
+      "required_vendor_owner_role": "vendor security-response owner",
+      "signoff_required": true
+    }
+  ],
+  "authorization": {
+    "allowed_handling": [
+      "redacted_policy_excerpt",
+      "redacted_trace_summary",
+      "signed_digest_or_attestation",
+      "owner_statement",
+      "test_summary",
+      "screenshot_with_secrets_removed"
+    ],
+    "authorized_channel_required": true,
+    "prepared_not_sent": true,
+    "prohibited_material": [
+      "seed_material",
+      "private_keys",
+      "passcodes",
+      "biometric_templates",
+      "production_credentials",
+      "raw_payload_bodies",
+      "raw_transaction_blobs",
+      "unredacted_user_data",
+      "private_backend_endpoints",
+      "signing_keystore_material",
+      "ci_or_store_upload_secrets"
+    ],
+    "required_approvals_before_transmission": [
+      "project_security_lead",
+      "legal_or_vendor_relations",
+      "verified_vendor_approved_channel"
+    ],
+    "status": "prepared_not_sent_authorization_required"
+  },
+  "corpus": "xaman-app",
+  "created_at_utc": "2026-07-11T00:00:00Z",
+  "disclosure_routing": {
+    "counterexample_detail_allowed_before_route_approval": false,
+    "initial_contact_payload": "scope summary, requested evidence categories, redaction policy, authorization request, and non-claim boundary",
+    "route_verification_required": true,
+    "routing_options": [
+      "vendor-published security contact verified at send time",
+      "vendor-approved private evidence exchange channel",
+      "legal/vendor-relations mediated contact"
+    ],
+    "vulnerability_detail_requires_written_authorization": true
+  },
+  "evidence_request_categories": [
+    {
+      "acceptance_mapping": [
+        "release provenance",
+        "accountable owners",
+        "expiry",
+        "review criteria"
+      ],
+      "category_id": "release_provenance",
+      "claim_boundary": "Requested provenance is not evidence until vendor-authorized artifacts or attestations are received and reviewed.",
+      "description": "Release artifact identity, version lineage, source/build input binding, dependency locks, CI release path, store package digest where shareable, signing certificate digest, and approval owner.",
+      "minimum_review_criteria": [
+        "artifact family and version are identified without exposing secrets",
+        "source revision or internal build label is bound to the release scope",
+        "dependency lock inputs and build timestamp are recorded",
+        "signing certificate digest or store attestation digest is supplied where shareable",
+        "vendor release owner signoff is present"
+      ],
+      "redaction_required": [
+        "signing keys",
+        "keystore passwords",
+        "ci secrets",
+        "private repository URLs",
+        "unpublished source contents"
+      ],
+      "requested_items": [
+        "release version and platform package identifiers",
+        "source revision or internal build label",
+        "dependency lock digests",
+        "CI job identity or release pipeline attestation",
+        "release approval owner",
+        "signing certificate digest",
+        "store package digest when shareable"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "native vault/biometric policy",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "native_vault_biometric_policy",
+      "claim_boundary": "Requested native and biometric policy material is not treated as true until reviewed against redaction and owner signoff criteria.",
+      "description": "Android/iOS vault, keystore/keychain, biometric prompt, enrollment-change, fallback, hardware-backed, and migration policy evidence for the native signing boundary.",
+      "minimum_review_criteria": [
+        "Android and iOS native vault paths are covered or explicitly scoped out",
+        "keystore/keychain accessibility and hardware-backed settings are described",
+        "biometric enrollment-change and fallback behavior are tested or attested",
+        "migration and backup/restore behavior is described",
+        "no seed, key, passcode, or biometric material is included"
+      ],
+      "redaction_required": [
+        "seed material",
+        "private keys",
+        "passcodes",
+        "biometric samples or templates",
+        "device unlock credentials",
+        "secure enclave raw material"
+      ],
+      "requested_items": [
+        "native VaultManager implementation policy",
+        "Android Keystore and iOS Keychain accessibility settings",
+        "hardware-backed key policy",
+        "biometric prompt and enrollment-change behavior",
+        "passcode/biometric fallback test summary",
+        "vault migration and key rotation behavior"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "backend payload single-use/conflict/expiry semantics",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "backend_payload_semantics",
+      "claim_boundary": "Backend behavior is not accepted as evidence until authorized API contracts, tests, traces, or owner attestations are reviewed.",
+      "description": "Payload API authorization, one-time resolution, conflict handling, expiry, cancellation, replay rejection, and concurrent race semantics.",
+      "minimum_review_criteria": [
+        "authorization rules for payload creation, fetch, patch, reject, and submit are stated",
+        "single-use resolution is atomic or the residual race is explicitly modeled",
+        "duplicate PATCH and conflicting submit/reject attempts are covered",
+        "expiry is enforced server-side and client-side behavior is distinguished",
+        "test or trace summaries cover replay and concurrent race attempts"
+      ],
+      "redaction_required": [
+        "production bearer tokens",
+        "raw payload bodies",
+        "account addresses",
+        "user identifiers",
+        "private API hostnames",
+        "database rows"
+      ],
+      "requested_items": [
+        "payload API contract or equivalent policy",
+        "server-side single-use and resolved_at semantics",
+        "PATCH conflict and duplicate resolution behavior",
+        "expiry enforcement behavior",
+        "cancellation and decline semantics",
+        "race/replay test summary"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "signed-build attestation",
+        "release provenance",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "signed_build_attestation",
+      "claim_boundary": "A signed-build attestation request does not establish byte equivalence, production release approval, or possession of vendor signing material until authorized attestation evidence is reviewed.",
+      "description": "Owner-approved or cryptographically signed statement binding release artifacts to source/build inputs, native modules, dependency locks, CI environment, signing certificate digest, and store upload.",
+      "minimum_review_criteria": [
+        "attestation signer or approving owner is identified by role",
+        "artifact digests and signing certificate digests are present where shareable",
+        "build environment and dependency locks are linked to release scope",
+        "public Testnet verifier build is not classified as vendor-release equivalent",
+        "signing secrets and CI credentials are absent"
+      ],
+      "redaction_required": [
+        "private signing material",
+        "keystore passwords",
+        "service-account credentials",
+        "internal CI logs with secrets",
+        "store upload tokens"
+      ],
+      "requested_items": [
+        "signed release attestation or owner-approved equivalent",
+        "artifact digest set",
+        "signing certificate digest",
+        "build input and dependency lock digest set",
+        "CI environment attestation",
+        "store upload or release approval evidence"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "test-device trace review",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "test_device_trace_review",
+      "claim_boundary": "Requested trace summaries are not runtime proof until redacted, reviewed, mapped to model events, and approved by accountable owners.",
+      "description": "Vendor-reviewed device trace summaries for authentication, vault, review, signing, backend patch, submit, cancellation, expiry, replay, reconnect, and network-change paths.",
+      "minimum_review_criteria": [
+        "fresh test device or declared device baseline is recorded",
+        "trace categories map to model events without raw secrets",
+        "negative paths for cancellation, expiry, replay, reconnect, and network change are covered",
+        "trace reviewer records scope and date",
+        "raw seeds, payloads, account addresses, and transaction blobs are absent"
+      ],
+      "redaction_required": [
+        "seeds",
+        "addresses",
+        "payload UUIDs",
+        "transaction blobs",
+        "raw endpoint URLs",
+        "push tokens",
+        "crash identifiers",
+        "user data"
+      ],
+      "requested_items": [
+        "authentication trace summary",
+        "vault-open and signing-decision trace summary",
+        "payload review and backend patch trace summary",
+        "submit result and ledger outcome trace summary",
+        "cancellation, expiry, replay, reconnect, and network-change trace summaries",
+        "trace-to-model event map"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "XRPL/RPC trust assumptions",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "xrpl_rpc_trust_assumptions",
+      "claim_boundary": "XRPL/RPC statements are not facts until reviewed and explicitly modeled or accepted as residual trust.",
+      "description": "Trusted XRPL node/RPC endpoint assumptions, network identity checks, ledger finality interpretation, endpoint compromise impact, fallback behavior, and quorum behavior if any.",
+      "minimum_review_criteria": [
+        "trusted endpoint set or endpoint selection policy is stated",
+        "network identity and wrong-network rejection behavior are described",
+        "ledger finality and submit-result interpretation are scoped",
+        "fallback, quorum, or single-endpoint behavior is explicit",
+        "endpoint compromise impact is mapped to model assumptions"
+      ],
+      "redaction_required": [
+        "private endpoint credentials",
+        "internal node access tokens",
+        "customer-specific ledger activity",
+        "private infrastructure hostnames"
+      ],
+      "requested_items": [
+        "trusted XRPL/RPC endpoint policy",
+        "network identity validation evidence",
+        "ledger finality interpretation",
+        "fallback and quorum behavior",
+        "endpoint compromise model",
+        "owner-approved residual trust statement"
+      ]
+    },
+    {
+      "acceptance_mapping": [
+        "responsible-disclosure routing",
+        "accountable owners",
+        "review criteria"
+      ],
+      "category_id": "responsible_disclosure_routing",
+      "claim_boundary": "Vulnerability detail, exploit steps, or counterexample payloads must not be sent until the vendor-approved route is verified and authorization is recorded.",
+      "description": "Vendor-approved security contact, escalation path, embargo expectations, evidence-handling channel, and authorization rules for counterexamples or vulnerability details.",
+      "minimum_review_criteria": [
+        "route is verified at send time",
+        "authorized recipient role is recorded",
+        "embargo and handling expectations are documented",
+        "counterexample detail sharing rules are explicit",
+        "internal security lead and legal/vendor-relations approval are recorded"
+      ],
+      "redaction_required": [
+        "exploit reproduction detail before authorization",
+        "payloads that identify users or accounts",
+        "private communication tokens",
+        "unapproved vulnerability proof material"
+      ],
+      "requested_items": [
+        "vendor-approved security contact or channel",
+        "escalation route",
+        "embargo expectations",
+        "allowed evidence exchange mechanism",
+        "authorization policy for counterexamples",
+        "retention and redaction expectations"
+      ]
+    }
+  ],
+  "expiry": {
+    "expires_at_utc": "2026-08-10T00:00:00Z",
+    "freshness_days": 30,
+    "on_expiry": "do_not_send_without_reapproval_and_date_refresh"
+  },
+  "non_claims": {
+    "backend_service_validated": false,
+    "native_vault_or_biometric_validated": false,
+    "production_release_approved": false,
+    "vendor_evidence_access_claimed": false,
+    "vendor_evidence_truth_claimed": false,
+    "vendor_release_reproduced": false
+  },
+  "request_id": "PORTAL-CXTP-176-vendor-evidence-request",
+  "request_status": "prepared_pending_authorized_transmit",
+  "review_criteria": {
+    "allowed_review_outcomes": [
+      "accepted",
+      "needs_clarification",
+      "rejected"
+    ],
+    "fail_closed_conditions": [
+      "missing_authorization",
+      "expired_request",
+      "unverified_route",
+      "missing_accountable_owner",
+      "unredacted_secret_or_personal_data",
+      "claim_not_bound_to_evidence",
+      "public_testnet_build_used_as_vendor_release_equivalence",
+      "responsible_disclosure_route_not_approved_for_sensitive_detail"
+    ],
+    "promotion_rule": "Only PORTAL-CXTP-153 may promote received vendor-authorized evidence into a manifest or review artifact after redaction, digest binding, owner signoff, and reviewer acceptance.",
+    "required_before_acceptance": [
+      "verified_vendor_authorized_channel",
+      "category_owner_signoff",
+      "redaction_review_passed",
+      "scope_and_date_recorded",
+      "claim_binding_recorded",
+      "retention_allowed_or_alternative_handling_recorded"
+    ]
+  },
+  "schema_version": "xaman-vendor-evidence-intake-template/v1",
+  "source_dependencies": [
+    "PORTAL-CXTP-143",
+    "PORTAL-CXTP-145"
+  ],
+  "task_id": "PORTAL-CXTP-152"
+}

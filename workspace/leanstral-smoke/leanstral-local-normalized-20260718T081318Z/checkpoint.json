@@ -1,0 +1,37 @@
+{
+  "completed_work_keys": [
+    "ae776b85eb17e870df0348c73f75bdb85b3d51ee27e01b5a3e820307aa3b978f"
+  ],
+  "results": {
+    "ae776b85eb17e870df0348c73f75bdb85b3d51ee27e01b5a3e820307aa3b978f": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "013e33d01d75236ab0876ee23e669ee15a231bdb8ff4d6ba30a5e4aa3ae15029",
+      "elapsed_seconds": 46.103202,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "filled_request_cache_key_from_request_context",
+        "filled_affected_ir_families_from_request_cluster"
+      ],
+      "request_id": "leanstral-audit-013e33d01d75236a",
+      "response_hash": "db67ca34a03e8606905debc042189fae6f09cec9655dd2b49715765637791070",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "013e33d01d75236ab0876ee23e669ee15a231bdb8ff4d6ba30a5e4aa3ae15029",
+        "reasons": [],
+        "response_hash": "db67ca34a03e8606905debc042189fae6f09cec9655dd2b49715765637791070",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v1"
+        ]
+      },
+      "work_key": "ae776b85eb17e870df0348c73f75bdb85b3d51ee27e01b5a3e820307aa3b978f"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "fcd132011251ed4267c6e93b203da3f9b094b61ffd05a3a4108ddddaf8f6ced2",
+  "updated_at": 1784362446.431336
+}

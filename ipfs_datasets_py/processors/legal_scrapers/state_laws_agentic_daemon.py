@@ -20,9 +20,11 @@ import random
 import re
 import shlex
 import shutil
+import signal
 import sys
 import threading
-from contextlib import contextmanager
+import traceback
+from contextlib import contextmanager, suppress
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,6 +42,7 @@ from .state_laws_scraper import (
 )
 from .state_procedure_rules_scraper import scrape_state_procedure_rules
 from .state_laws_verifier import _build_operational_diagnostics
+from .url_archive_cache import URLArchiveCache
 
 logger = logging.getLogger(__name__)
 
@@ -369,18 +372,22 @@ class StateLawsAgenticDaemonConfig:
     document_artifact_state_limit: int = 4
     document_artifact_urls_per_state: int = 2
     document_artifact_max_total: int = 8
-    per_state_timeout_seconds: float = 480.0
+    per_state_timeout_seconds: float = 86400.0
     scrape_timeout_seconds: float = 0.0
-    admin_agentic_max_candidates_per_state: Optional[int] = None
-    admin_agentic_max_fetch_per_state: Optional[int] = None
-    admin_agentic_max_results_per_domain: Optional[int] = None
-    admin_agentic_max_hops: Optional[int] = None
-    admin_agentic_max_pages: Optional[int] = None
+    scrape_heartbeat_seconds: float = 60.0
+    admin_agentic_max_candidates_per_state: Optional[int] = 0
+    admin_agentic_max_fetch_per_state: Optional[int] = 0
+    admin_agentic_max_results_per_domain: Optional[int] = 0
+    admin_agentic_max_hops: Optional[int] = 0
+    admin_agentic_max_pages: Optional[int] = 0
     admin_agentic_fetch_concurrency: Optional[int] = None
     admin_parallel_assist_enabled: bool = True
     admin_parallel_assist_state_limit: int = 6
     admin_parallel_assist_max_urls_per_domain: int = 20
-    admin_parallel_assist_timeout_seconds: float = 180.0
+    admin_parallel_assist_timeout_seconds: float = 86400.0
+    stop_after_recovered_rows: bool = False
+    search_engines_override: Optional[List[str]] = None
+    forced_tactic_name: Optional[str] = None
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
@@ -416,11 +423,26 @@ class StateLawsAgenticDaemon:
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
         self.document_artifacts_dir = self.output_dir / "document_artifacts"
         self.document_artifacts_dir.mkdir(parents=True, exist_ok=True)
+        self.recovered_rows_dir = self.output_dir / "recovered_rows"
+        self.recovered_rows_dir.mkdir(parents=True, exist_ok=True)
         self.state_file = self.output_dir / "daemon_state.json"
         self.latest_file = self.output_dir / "latest_summary.json"
         self.pending_retry_file = self.output_dir / "latest_pending_retry.json"
+        self.url_archive_cache = URLArchiveCache(
+            metadata_dir=str(self.output_dir / "url_archive_cache"),
+            persist_to_ipfs=True,
+        )
         self._rand = random.Random(self.config.random_seed)
         self._state = self._load_state()
+
+    def _effective_tactic_payload(self, tactic: ScraperTacticProfile) -> Dict[str, Any]:
+        payload = asdict(tactic)
+        if self.corpus.key == "state_admin_rules":
+            payload["rate_limit_delay"] = 0.2
+            payload["strict_full_text"] = False
+            payload["min_full_text_chars"] = 200
+            payload["parallel_workers"] = 1
+        return payload
 
     async def run(self) -> Dict[str, Any]:
         """Run the daemon until it reaches max cycles or target score."""
@@ -477,6 +499,133 @@ class StateLawsAgenticDaemon:
             "critic_score": score,
         }
 
+    def preview_runtime_readiness(self) -> Dict[str, Any]:
+        """Summarize whether this host is ready for a real daemon run."""
+        cloudflare = self._cloudflare_browser_rendering_availability()
+        router = self._router_availability_snapshot()
+        tactic_profiles = list(self.config.tactic_profiles.keys())
+        recommended = [
+            name
+            for name in ("cloudflare_explore", "router_assisted", "document_first", "archival_first")
+            if name in self.config.tactic_profiles
+        ]
+        return {
+            "status": "ready" if bool(router.get("llm_router")) and bool(router.get("embeddings_router")) else "partial",
+            "preview": True,
+            "corpus": self.corpus.key,
+            "output_dir": str(self.output_dir),
+            "states": list(self.states),
+            "state_count": len(self.states),
+            "cloudflare_browser_rendering": cloudflare,
+            "router": router,
+            "tactic_profiles": tactic_profiles,
+            "recommended_boot_tactics": recommended,
+        }
+
+    async def probe_cloudflare_browser_rendering(
+        self,
+        *,
+        url: str = "https://example.com",
+        limit: int = 1,
+        depth: int = 0,
+        render: bool = False,
+        timeout_seconds: int = 45,
+    ) -> Dict[str, Any]:
+        """Run a lightweight live Browser Rendering probe without a full daemon cycle."""
+        availability = self._cloudflare_browser_rendering_availability()
+        if not bool(availability.get("available")):
+            return {
+                "status": "missing_credentials",
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+            }
+
+        try:
+            import requests
+            from ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine import (
+                cancel_cloudflare_browser_rendering_crawl,
+                start_cloudflare_browser_rendering_crawl,
+                _resolve_credentials,
+            )
+
+            account_id, api_token = _resolve_credentials()
+            headers = {
+                "Authorization": f"Bearer {api_token}",
+                "Content-Type": "application/json",
+            }
+
+            verify_response = requests.get(
+                "https://api.cloudflare.com/client/v4/user/tokens/verify",
+                headers=headers,
+                timeout=max(5, int(timeout_seconds)),
+            )
+            verify_payload = verify_response.json()
+
+            accounts_response = requests.get(
+                "https://api.cloudflare.com/client/v4/accounts",
+                headers=headers,
+                timeout=max(5, int(timeout_seconds)),
+            )
+            accounts_payload = accounts_response.json()
+
+            markdown_response = requests.post(
+                f"https://api.cloudflare.com/client/v4/accounts/{account_id}/browser-rendering/markdown",
+                headers=headers,
+                json={"url": url},
+                timeout=max(5, int(timeout_seconds)),
+            )
+            markdown_payload = markdown_response.json()
+
+            started = await start_cloudflare_browser_rendering_crawl(
+                url,
+                account_id=account_id,
+                api_token=api_token,
+                limit=max(1, int(limit)),
+                depth=max(0, int(depth)),
+                formats=["markdown"],
+                render=bool(render),
+                request_timeout_seconds=max(5, int(timeout_seconds)),
+                max_rate_limit_wait_seconds=max(5.0, float(timeout_seconds)),
+            )
+            result = {
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+                "probe_mode": "start_only",
+                "token_verify": {
+                    "http_status": int(verify_response.status_code),
+                    "success": bool(verify_payload.get("success")),
+                    "errors": list(verify_payload.get("errors") or []),
+                },
+                "accounts_probe": {
+                    "http_status": int(accounts_response.status_code),
+                    "success": bool(accounts_payload.get("success")),
+                    "errors": list(accounts_payload.get("errors") or []),
+                    "result_count": len(list(accounts_payload.get("result") or [])),
+                },
+                "markdown_probe": {
+                    "http_status": int(markdown_response.status_code),
+                    "success": bool(markdown_payload.get("success")),
+                    "errors": list(markdown_payload.get("errors") or []),
+                },
+            }
+            result.update(started)
+            if started.get("status") == "success" and str(started.get("job_id") or "").strip():
+                result["cancel_after_probe"] = await cancel_cloudflare_browser_rendering_crawl(
+                    str(started.get("job_id")),
+                    request_timeout_seconds=max(5, int(timeout_seconds)),
+                )
+            return result
+        except Exception as exc:
+            return {
+                "status": "error",
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+                "error": str(exc),
+            }
+
     async def run_cycle(self) -> Dict[str, Any]:
         """Run one scrape-review-criticize-optimize cycle."""
         cycle_index = int(self._state.get("cycle_count", 0) or 0) + 1
@@ -491,13 +640,22 @@ class StateLawsAgenticDaemon:
             "cycle_state_order": cycle_states,
             "status": "running",
             "stage": "scrape",
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "tactic_selection": tactic_selection["details"],
         }
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
-        scrape_result = await self._run_scrape_with_tactic(tactic, states=cycle_states)
+        scrape_result = await self._run_scrape_with_tactic(
+            tactic,
+            states=cycle_states,
+            cycle_index=cycle_index,
+            checkpoint_payload=checkpoint_payload,
+        )
 
         metadata = scrape_result.get("metadata") or {}
+        recovered_row_artifacts = self._write_recovered_row_artifacts(
+            cycle_index=cycle_index,
+            scrape_result=scrape_result,
+        )
         deferred_retry = self._build_deferred_retry_plan(scrape_result)
         if deferred_retry:
             cycle_payload = self._build_deferred_retry_cycle_payload(
@@ -517,11 +675,13 @@ class StateLawsAgenticDaemon:
                     "critic": cycle_payload["critic"],
                     "metadata": metadata,
                     "deferred_retry": deferred_retry,
+                    "recovered_row_artifacts": recovered_row_artifacts,
                     "tactic_selection": tactic_selection["details"],
                 }
             )
             self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
             cycle_payload["tactic_selection"] = tactic_selection["details"]
+            cycle_payload["recovered_row_artifacts"] = recovered_row_artifacts
             self._update_state(tactic=tactic, cycle_payload=cycle_payload)
             cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
             cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
@@ -530,6 +690,9 @@ class StateLawsAgenticDaemon:
             return cycle_payload
 
         diagnostics = self._build_diagnostics(scrape_result)
+        if isinstance(recovered_row_artifacts, dict) and isinstance(diagnostics.get("documents"), dict):
+            diagnostics["documents"] = dict(diagnostics["documents"])
+            diagnostics["documents"]["recovered_row_artifacts"] = recovered_row_artifacts
         diagnostics = self._annotate_document_recovery_gate(diagnostics)
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, critic_score)
@@ -543,10 +706,61 @@ class StateLawsAgenticDaemon:
                 "passed": passed,
                 "critic": critic,
                 "metadata": metadata,
+                "recovered_row_artifacts": recovered_row_artifacts,
                 "tactic_selection": tactic_selection["details"],
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+        if bool(self.config.stop_after_recovered_rows):
+            router_assist = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            parallel_admin_assist = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            archive_warmup = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            document_gap_report = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            document_gap_report_path = None
+            document_artifacts = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            post_cycle_release = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            checkpoint_payload.update(
+                {
+                    "stage": "finalize_after_recovered_rows",
+                    "router_assist": router_assist,
+                    "parallel_admin_assist": parallel_admin_assist,
+                    "archive_warmup": archive_warmup,
+                    "document_gap_report": document_gap_report,
+                    "document_artifacts": document_artifacts,
+                    "post_cycle_release": post_cycle_release,
+                }
+            )
+            self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+            cycle_payload = {
+                "cycle": cycle_index,
+                "timestamp": datetime.now().isoformat(),
+                "corpus": self.corpus.key,
+                "states": list(self.states),
+                "cycle_state_order": cycle_states,
+                "status": str(scrape_result.get("status") or "unknown"),
+                "tactic": self._effective_tactic_payload(tactic),
+                "tactic_selection": tactic_selection["details"],
+                "critic_score": critic_score,
+                "passed": passed,
+                "diagnostics": diagnostics,
+                "critic": critic,
+                "router_assist": router_assist,
+                "parallel_admin_assist": parallel_admin_assist,
+                "archive_warmup": archive_warmup,
+                "document_gap_report": document_gap_report,
+                "document_gap_report_path": document_gap_report_path,
+                "document_artifacts": document_artifacts,
+                "recovered_row_artifacts": recovered_row_artifacts,
+                "post_cycle_release": post_cycle_release,
+                "metadata": metadata,
+                "stop_after_recovered_rows": True,
+            }
+            self._update_state(tactic=tactic, cycle_payload=cycle_payload)
+            cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
+            cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self._clear_cycle_checkpoint(cycle_index=cycle_index)
+            return cycle_payload
         checkpoint_payload.update({"stage": "router_review"})
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         router_assist = await self._build_router_assist_report(
@@ -603,10 +817,40 @@ class StateLawsAgenticDaemon:
             tactic=tactic,
             document_gap_report=document_gap_report,
         )
+        document_artifact_blocks = self._state_admin_blocks_from_document_artifacts(document_artifacts)
+        if document_artifact_blocks:
+            scrape_result = dict(scrape_result)
+            scrape_result["data"] = self._merge_recovered_data_blocks(
+                list(scrape_result.get("data") or []),
+                document_artifact_blocks,
+            )
+            recovered_row_artifacts = self._write_recovered_row_artifacts(
+                cycle_index=cycle_index,
+                scrape_result=scrape_result,
+            )
+            diagnostics = self._build_diagnostics(scrape_result)
+        diagnostics = self._merge_document_artifacts_into_diagnostics(
+            diagnostics=diagnostics,
+            document_artifacts=document_artifacts,
+        )
+        if isinstance(recovered_row_artifacts, dict) and isinstance(diagnostics.get("documents"), dict):
+            diagnostics["documents"] = dict(diagnostics["documents"])
+            diagnostics["documents"]["recovered_row_artifacts"] = recovered_row_artifacts
+        diagnostics = self._annotate_document_recovery_gate(diagnostics)
+        critic_score = self._critic_score(diagnostics)
+        passed = self._is_success(diagnostics, score=critic_score)
+        critic = self._criticize_cycle(diagnostics)
+        critic = self._merge_router_assist_into_critic(critic=critic, router_assist=router_assist)
+        critic = self._merge_parallel_admin_assist_into_critic(critic=critic, parallel_admin_assist=parallel_admin_assist)
         checkpoint_payload.update(
             {
                 "stage": "post_cycle_release",
+                "diagnostics": diagnostics,
+                "critic_score": critic_score,
+                "passed": passed,
+                "critic": critic,
                 "document_artifacts": document_artifacts,
+                "recovered_row_artifacts": recovered_row_artifacts,
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -630,7 +874,7 @@ class StateLawsAgenticDaemon:
             "states": list(self.states),
             "cycle_state_order": cycle_states,
             "status": str(scrape_result.get("status") or "unknown"),
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "tactic_selection": tactic_selection["details"],
             "critic_score": critic_score,
             "passed": passed,
@@ -642,6 +886,7 @@ class StateLawsAgenticDaemon:
             "document_gap_report": document_gap_report,
             "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
             "document_artifacts": document_artifacts,
+            "recovered_row_artifacts": recovered_row_artifacts,
             "post_cycle_release": post_cycle_release,
             "metadata": metadata,
         }
@@ -850,7 +1095,7 @@ class StateLawsAgenticDaemon:
             "corpus": self.corpus.key,
             "states": list(self.states),
             "status": str(scrape_result.get("status") or "unknown"),
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "critic_score": 0.0,
             "passed": False,
             "diagnostics": diagnostics,
@@ -952,6 +1197,87 @@ class StateLawsAgenticDaemon:
                 )
         return targets
 
+    def _preferred_methods_for_document_target(
+        self,
+        *,
+        base_methods: Sequence[Any],
+        directives: Dict[str, Any],
+    ) -> List[Any]:
+        ordered: List[Any] = []
+        seen: set[Any] = set()
+
+        def _append(method: Any) -> None:
+            if method is None or method in seen:
+                return
+            seen.add(method)
+            ordered.append(method)
+
+        try:
+            from ..web_archiving.unified_web_scraper import ScraperMethod
+        except Exception:
+            return list(base_methods)
+
+        directive_map = {
+            "playwright_download": [ScraperMethod.PLAYWRIGHT],
+            "page_fetch": [ScraperMethod.REQUESTS_ONLY, ScraperMethod.BEAUTIFULSOUP],
+            "direct_fetch": [ScraperMethod.REQUESTS_ONLY, ScraperMethod.BEAUTIFULSOUP],
+            "cloudflare_browser_rendering": [ScraperMethod.CLOUDFLARE_BROWSER_RENDERING, ScraperMethod.PLAYWRIGHT],
+            "archival_replay": [
+                ScraperMethod.COMMON_CRAWL,
+                ScraperMethod.WAYBACK_MACHINE,
+                ScraperMethod.ARCHIVE_IS,
+            ],
+        }
+        for name in list((directives or {}).get("download_methods") or []):
+            for method in directive_map.get(str(name).strip(), []):
+                _append(method)
+
+        for method in list(base_methods or []):
+            _append(method)
+        return ordered
+
+    async def _extract_document_text_from_raw_bytes(
+        self,
+        *,
+        url: str,
+        raw_bytes: bytes,
+        content_type: str,
+    ) -> Dict[str, Any]:
+        lowered_url = str(url or "").strip().lower()
+        normalized_content_type = str(content_type or "").strip().lower()
+        if not raw_bytes:
+            return {"text": "", "method": None}
+
+        try:
+            from ..web_archiving.unified_web_scraper import UnifiedWebScraper
+        except Exception as exc:
+            return {"text": "", "method": None, "error": str(exc)}
+
+        if (
+            lowered_url.endswith(".pdf")
+            or ".pdf?" in lowered_url
+            or "application/pdf" in normalized_content_type
+        ):
+            try:
+                text = str(await UnifiedWebScraper._extract_pdf_text(raw_bytes) or "").strip()
+            except Exception as exc:
+                return {"text": "", "method": "pdf_processor", "error": str(exc)}
+            return {"text": text, "method": "pdf_processor"}
+
+        if (
+            lowered_url.endswith(".rtf")
+            or ".rtf?" in lowered_url
+            or "application/rtf" in normalized_content_type
+            or "text/rtf" in normalized_content_type
+        ):
+            try:
+                text = str(await UnifiedWebScraper._extract_rtf_text(raw_bytes) or "").strip()
+            except Exception as exc:
+                return {"text": "", "method": "rtf_processor", "error": str(exc)}
+            return {"text": text, "method": "rtf_processor"}
+
+        return {"text": "", "method": None}
+
     async def _capture_document_artifacts(
         self,
         *,
@@ -991,7 +1317,6 @@ class StateLawsAgenticDaemon:
             archive_is_submit_on_miss=bool(tactic.archive_is_submit_on_miss),
             rate_limit_delay=max(0.0, float(tactic.rate_limit_delay or 0.0)),
         )
-        scraper = UnifiedWebScraper(config)
         cycle_dir = self.document_artifacts_dir / f"cycle_{cycle_index:04d}"
         cycle_dir.mkdir(parents=True, exist_ok=True)
         manifest_entries: List[Dict[str, Any]] = []
@@ -1008,6 +1333,19 @@ class StateLawsAgenticDaemon:
             url = str(target.get("url") or "").strip()
             if not url:
                 continue
+            directives = dict(target.get("directives") or {})
+            target_methods = self._preferred_methods_for_document_target(
+                base_methods=preferred_methods,
+                directives=directives,
+            )
+            target_config = ScraperConfig(
+                timeout=config.timeout,
+                preferred_methods=target_methods,
+                fallback_enabled=config.fallback_enabled,
+                archive_is_submit_on_miss=config.archive_is_submit_on_miss,
+                rate_limit_delay=config.rate_limit_delay,
+            )
+            scraper = UnifiedWebScraper(target_config)
             result = await scraper.scrape(url)
             metadata = dict(getattr(result, "metadata", {}) or {})
             raw_bytes = metadata.pop("raw_bytes", None)
@@ -1017,6 +1355,8 @@ class StateLawsAgenticDaemon:
             saved_files: List[str] = []
             sha256 = None
             content_type = str(metadata.get("content_type") or "").strip()
+            document_processor_method = None
+            document_processor_error = None
 
             if isinstance(raw_bytes, (bytes, bytearray)) and raw_bytes:
                 extension = Path(suggested_name).suffix or self._content_type_extension(content_type)
@@ -1026,6 +1366,17 @@ class StateLawsAgenticDaemon:
                 sha256 = hashlib.sha256(bytes(raw_bytes)).hexdigest()
 
             extracted_text = str(getattr(result, "text", "") or "").strip()
+            if isinstance(raw_bytes, (bytes, bytearray)) and raw_bytes:
+                processed_document = await self._extract_document_text_from_raw_bytes(
+                    url=url,
+                    raw_bytes=bytes(raw_bytes),
+                    content_type=content_type,
+                )
+                recovered_text = str(processed_document.get("text") or "").strip()
+                document_processor_method = processed_document.get("method")
+                document_processor_error = processed_document.get("error")
+                if recovered_text and len(recovered_text) > len(extracted_text):
+                    extracted_text = recovered_text
             if extracted_text:
                 text_path = cycle_dir / f"{base_name}.txt"
                 text_path.write_text(extracted_text, encoding="utf-8")
@@ -1048,15 +1399,18 @@ class StateLawsAgenticDaemon:
                     "binary_document": bool(metadata.get("binary_document", False)),
                     "sha256": sha256,
                     "saved_files": saved_files,
+                    "preferred_methods": [method.value for method in target_methods],
                     "title": str(getattr(result, "title", "") or "").strip() or None,
                     "error_count": len(list(getattr(result, "errors", []) or [])),
                     "errors": [str(item) for item in list(getattr(result, "errors", []) or []) if str(item).strip()][:4],
+                    "document_processor_method": document_processor_method,
+                    "document_processor_error": document_processor_error,
                     "metadata": {
                         key: value
                         for key, value in metadata.items()
                         if not isinstance(value, (bytes, bytearray))
                     },
-                    "recovery_directives": dict(target.get("directives") or {}),
+                    "recovery_directives": directives,
                 }
             )
             if bool(getattr(result, "success", False)):
@@ -1086,6 +1440,274 @@ class StateLawsAgenticDaemon:
             "entries": manifest_entries,
         }
 
+    def _document_artifact_summary(self, document_artifacts: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(document_artifacts, dict) or str(document_artifacts.get("status") or "") != "completed":
+            return {
+                "successful_document_urls": 0,
+                "recovered_states": [],
+                "by_state": {},
+                "by_format": {"pdf": 0, "rtf": 0, "html": 0},
+                "by_processor": {},
+            }
+
+        seen_document_urls: set[str] = set()
+        recovered_states: set[str] = set()
+        by_state: Dict[str, Dict[str, int]] = {}
+        by_format: Dict[str, int] = {"pdf": 0, "rtf": 0, "html": 0}
+        by_processor: Dict[str, int] = {}
+
+        for entry in list(document_artifacts.get("entries") or []):
+            if not isinstance(entry, dict) or not bool(entry.get("success")):
+                continue
+            state_code = str(entry.get("state") or "").upper().strip()
+            url = str(entry.get("url") or "").strip()
+            doc_format = self._document_format_from_url(url)
+            if doc_format not in {"pdf", "rtf", "html"}:
+                doc_format = "html"
+            if url and doc_format in {"pdf", "rtf"}:
+                seen_document_urls.add(url)
+                if state_code:
+                    recovered_states.add(state_code)
+            by_format[doc_format] = int(by_format.get(doc_format, 0) or 0) + 1
+            if state_code:
+                state_counts = by_state.setdefault(state_code, {"pdf": 0, "rtf": 0, "html": 0, "successful": 0})
+                state_counts[doc_format] = int(state_counts.get(doc_format, 0) or 0) + 1
+                state_counts["successful"] = int(state_counts.get("successful", 0) or 0) + 1
+            processor_method = str(entry.get("document_processor_method") or "").strip()
+            if processor_method:
+                by_processor[processor_method] = int(by_processor.get(processor_method, 0) or 0) + 1
+
+        return {
+            "successful_document_urls": len(seen_document_urls),
+            "recovered_states": sorted(recovered_states),
+            "by_state": by_state,
+            "by_format": by_format,
+            "by_processor": by_processor,
+        }
+
+    def _merge_document_artifacts_into_diagnostics(
+        self,
+        *,
+        diagnostics: Dict[str, Any],
+        document_artifacts: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        if not isinstance(diagnostics, dict):
+            return diagnostics
+        documents = diagnostics.get("documents") or {}
+        if not isinstance(documents, dict):
+            return diagnostics
+
+        artifact_summary = self._document_artifact_summary(document_artifacts)
+        if int(artifact_summary.get("successful_document_urls", 0) or 0) <= 0:
+            documents = dict(documents)
+            documents["artifact_recovery"] = artifact_summary
+            diagnostics["documents"] = documents
+            return diagnostics
+
+        updated_documents = dict(documents)
+        per_state = {
+            str(state).upper(): dict(counts or {})
+            for state, counts in dict(updated_documents.get("per_state") or {}).items()
+            if str(state).strip()
+        }
+        states_with_document_rules = {
+            str(item).upper().strip()
+            for item in list(updated_documents.get("states_with_document_rules") or [])
+            if str(item).strip()
+        }
+        gap_states = {
+            str(item).upper().strip()
+            for item in list(updated_documents.get("states_with_candidate_document_gaps") or [])
+            if str(item).strip()
+        }
+        per_state_recovery = {
+            str(state).upper(): dict(payload or {})
+            for state, payload in dict(updated_documents.get("per_state_recovery") or {}).items()
+            if str(state).strip()
+        }
+
+        by_state = artifact_summary.get("by_state") or {}
+        for state_code, counts in by_state.items():
+            normalized_state = str(state_code).upper().strip()
+            if not normalized_state:
+                continue
+            state_counts = dict(per_state.get(normalized_state) or {"html": 0, "pdf": 0, "rtf": 0})
+            for name in ("html", "pdf", "rtf"):
+                state_counts[name] = int(state_counts.get(name, 0) or 0) + int(counts.get(name, 0) or 0)
+            per_state[normalized_state] = state_counts
+            if int(state_counts.get("pdf", 0) or 0) + int(state_counts.get("rtf", 0) or 0) > 0:
+                states_with_document_rules.add(normalized_state)
+                gap_states.discard(normalized_state)
+
+            recovery_entry = dict(per_state_recovery.get(normalized_state) or {})
+            recovery_entry["artifact_recovery_successes"] = int(
+                recovery_entry.get("artifact_recovery_successes", 0) or 0
+            ) + int(counts.get("successful", 0) or 0)
+            artifact_formats = {
+                "pdf": int(counts.get("pdf", 0) or 0),
+                "rtf": int(counts.get("rtf", 0) or 0),
+                "html": int(counts.get("html", 0) or 0),
+            }
+            recovery_entry["artifact_recovery_formats"] = artifact_formats
+            per_state_recovery[normalized_state] = recovery_entry
+
+        updated_documents["per_state"] = per_state
+        updated_documents["per_state_recovery"] = per_state_recovery
+        updated_documents["processed_document_urls"] = int(updated_documents.get("processed_document_urls", 0) or 0) + int(
+            artifact_summary.get("successful_document_urls", 0) or 0
+        )
+        updated_documents["states_with_document_rules"] = sorted(states_with_document_rules)
+        updated_documents["states_with_candidate_document_gaps"] = sorted(gap_states)
+        updated_documents["artifact_recovery"] = artifact_summary
+        diagnostics["documents"] = updated_documents
+        return diagnostics
+
+    def _state_admin_blocks_from_document_artifacts(self, document_artifacts: Dict[str, Any]) -> List[Dict[str, Any]]:
+        if self.corpus.key != "state_admin_rules":
+            return []
+        if not isinstance(document_artifacts, dict) or str(document_artifacts.get("status") or "") != "completed":
+            return []
+
+        by_state: Dict[str, List[Dict[str, Any]]] = {}
+        counters: Dict[str, int] = {}
+        for entry in list(document_artifacts.get("entries") or []):
+            if not isinstance(entry, dict) or not bool(entry.get("success")):
+                continue
+            state_code = str(entry.get("state") or "").upper().strip()
+            url = str(entry.get("url") or "").strip()
+            if not state_code or not url:
+                continue
+            text = self._document_artifact_text(entry)
+            if len(text) < 200:
+                continue
+
+            counters[state_code] = int(counters.get(state_code, 0) or 0) + 1
+            section_number = f"A{counters[state_code]}"
+            title = str(entry.get("title") or "").strip() or self._title_from_text(text)
+            state_name = US_STATES.get(state_code, state_code)
+            method_used = str(entry.get("document_processor_method") or entry.get("method_used") or "").strip()
+            statute = {
+                "state_code": state_code,
+                "state_name": state_name,
+                "statute_id": f"{state_code}-DOCUMENT-ARTIFACT-{counters[state_code]:04d}",
+                "code_name": f"{state_name} Administrative Rules (Document Artifact Recovery)",
+                "section_number": section_number,
+                "section_name": title,
+                "short_title": title,
+                "full_text": text,
+                "summary": text[:500],
+                "legal_area": "administrative",
+                "source_url": url,
+                "official_cite": f"{state_code} Admin Rule {section_number}",
+                "structured_data": {
+                    "type": "regulation",
+                    "agentic_discovery": True,
+                    "document_artifact_recovery": True,
+                    "method_used": method_used or None,
+                    "content_type": entry.get("content_type"),
+                    "sha256": entry.get("sha256"),
+                },
+            }
+            by_state.setdefault(state_code, []).append(statute)
+
+        blocks: List[Dict[str, Any]] = []
+        for state_code, statutes in sorted(by_state.items()):
+            state_name = US_STATES.get(state_code, state_code)
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Document artifact recovery",
+                    "source_url": statutes[0].get("source_url") if statutes else None,
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    "statutes": statutes,
+                    "rules_count": len(statutes),
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            )
+        return blocks
+
+    @staticmethod
+    def _document_artifact_text(entry: Dict[str, Any]) -> str:
+        for value in list(entry.get("saved_files") or []):
+            path = Path(str(value or ""))
+            if path.suffix.lower() != ".txt":
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace").strip()
+            except Exception:
+                continue
+            if text:
+                return text
+        return ""
+
+    @staticmethod
+    def _title_from_text(text: str) -> str:
+        for line in str(text or "").splitlines():
+            candidate = line.strip()
+            if candidate:
+                return candidate[:180]
+        return "Recovered Administrative Rule"
+
+    @staticmethod
+    def _merge_recovered_data_blocks(
+        existing_blocks: Sequence[Dict[str, Any]],
+        recovered_blocks: Sequence[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        merged: List[Dict[str, Any]] = []
+        index_by_state: Dict[str, int] = {}
+        for block in list(existing_blocks or []):
+            if not isinstance(block, dict):
+                continue
+            copied = dict(block)
+            statutes = copied.get("statutes")
+            copied["statutes"] = list(statutes) if isinstance(statutes, list) else []
+            state_code = str(copied.get("state_code") or copied.get("state") or "").upper().strip()
+            if state_code and state_code not in index_by_state:
+                index_by_state[state_code] = len(merged)
+            merged.append(copied)
+
+        for recovered in list(recovered_blocks or []):
+            if not isinstance(recovered, dict):
+                continue
+            state_code = str(recovered.get("state_code") or recovered.get("state") or "").upper().strip()
+            recovered_statutes = [
+                dict(item)
+                for item in list(recovered.get("statutes") or [])
+                if isinstance(item, dict)
+            ]
+            if not state_code or not recovered_statutes:
+                continue
+            if state_code not in index_by_state:
+                copied_recovered = dict(recovered)
+                copied_recovered["statutes"] = recovered_statutes
+                copied_recovered["rules_count"] = len(recovered_statutes)
+                index_by_state[state_code] = len(merged)
+                merged.append(copied_recovered)
+                continue
+
+            target = merged[index_by_state[state_code]]
+            target_statutes = [
+                item for item in list(target.get("statutes") or []) if isinstance(item, dict)
+            ]
+            seen_urls = {
+                str(item.get("source_url") or item.get("url") or "").strip()
+                for item in target_statutes
+                if str(item.get("source_url") or item.get("url") or "").strip()
+            }
+            for statute in recovered_statutes:
+                source_url = str(statute.get("source_url") or statute.get("url") or "").strip()
+                if source_url and source_url in seen_urls:
+                    continue
+                target_statutes.append(statute)
+                if source_url:
+                    seen_urls.add(source_url)
+            target["statutes"] = target_statutes
+            target["rules_count"] = len(target_statutes)
+        return merged
+
     def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
         if not isinstance(payload, dict) or not payload:
             return None
@@ -1104,11 +1726,41 @@ class StateLawsAgenticDaemon:
             except Exception:
                 pass
 
+    def promote_latest_checkpoint_to_summary(self, *, reason: str) -> Optional[Path]:
+        latest_checkpoint_path = self.output_dir / "latest_in_progress.json"
+        if not latest_checkpoint_path.exists():
+            return None
+
+        try:
+            payload = json.loads(latest_checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+        if not isinstance(payload, dict) or not payload:
+            return None
+
+        payload = dict(payload)
+        payload["checkpoint_promoted"] = True
+        payload["checkpoint_promotion_reason"] = str(reason or "terminated")
+        payload["checkpoint_promoted_at"] = datetime.now(timezone.utc).isoformat()
+
+        cycle_index = int(payload.get("cycle", 0) or 0)
+        cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.recovered.json" if cycle_index > 0 else None
+        try:
+            self.latest_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            if cycle_path is not None:
+                cycle_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception:
+            return None
+        return self.latest_file
+
     async def _run_scrape_with_tactic(
         self,
         tactic: ScraperTacticProfile,
         *,
         states: Optional[Sequence[str]] = None,
+        cycle_index: Optional[int] = None,
+        checkpoint_payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         cycle_states = self._normalize_cycle_states(states)
         kwargs: Dict[str, Any] = {
@@ -1131,6 +1783,12 @@ class StateLawsAgenticDaemon:
         if self.corpus.key == "state_laws":
             kwargs["use_state_specific_scrapers"] = True
         elif self.corpus.key == "state_admin_rules":
+            kwargs["rate_limit_delay"] = 0.2
+            kwargs["strict_full_text"] = False
+            kwargs["min_full_text_chars"] = 200
+            kwargs["parallel_workers"] = 1
+            kwargs["output_dir"] = str(self.output_dir)
+            kwargs["agentic_checkpoint_interval"] = max(1, min(10, int(self.config.max_statutes or 10) or 10))
             admin_budget_kwargs = {
                 "agentic_max_candidates_per_state": self.config.admin_agentic_max_candidates_per_state,
                 "agentic_max_fetch_per_state": self.config.admin_agentic_max_fetch_per_state,
@@ -1145,13 +1803,17 @@ class StateLawsAgenticDaemon:
                 kwargs[key] = max(0, int(value)) if key != "agentic_fetch_concurrency" else max(1, int(value))
 
         with self._tactic_env(tactic):
-            scrape_coro = self.corpus.scrape_func(**kwargs)
             scrape_timeout_seconds = max(0.0, float(self.config.scrape_timeout_seconds or 0.0))
-            if scrape_timeout_seconds <= 0:
-                return await scrape_coro
+            heartbeat_seconds = max(0.0, float(self.config.scrape_heartbeat_seconds or 0.0))
 
             try:
-                return await asyncio.wait_for(scrape_coro, timeout=scrape_timeout_seconds)
+                return await self._await_scrape_with_checkpoint_heartbeat(
+                    lambda: self.corpus.scrape_func(**kwargs),
+                    cycle_index=cycle_index,
+                    checkpoint_payload=checkpoint_payload,
+                    heartbeat_seconds=heartbeat_seconds,
+                    scrape_timeout_seconds=scrape_timeout_seconds,
+                )
             except asyncio.TimeoutError:
                 timeout_metadata: Dict[str, Any] = {
                     "scrape_timeout_seconds": scrape_timeout_seconds,
@@ -1159,6 +1821,12 @@ class StateLawsAgenticDaemon:
                 }
                 if self.corpus.key == "state_admin_rules":
                     timeout_metadata["cloudflare_browser_rendering"] = self._cloudflare_browser_rendering_availability()
+                    salvaged_result = self._state_admin_scrape_result_from_agentic_checkpoints(
+                        metadata=timeout_metadata,
+                        error=f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
+                    )
+                    if salvaged_result is not None:
+                        return salvaged_result
                 return {
                     "status": "error",
                     "error": f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
@@ -1166,21 +1834,190 @@ class StateLawsAgenticDaemon:
                     "metadata": timeout_metadata,
                 }
 
+    async def _await_scrape_with_checkpoint_heartbeat(
+        self,
+        scrape_factory: Callable[[], Awaitable[Dict[str, Any]]],
+        *,
+        cycle_index: Optional[int],
+        checkpoint_payload: Optional[Dict[str, Any]],
+        heartbeat_seconds: float,
+        scrape_timeout_seconds: float,
+    ) -> Dict[str, Any]:
+        heartbeat_task: Optional[asyncio.Task[None]] = None
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+
+        def _publish_result(result: Dict[str, Any]) -> None:
+            if not result_future.done():
+                result_future.set_result(result)
+
+        def _publish_exception(exc: BaseException) -> None:
+            if not result_future.done():
+                result_future.set_exception(exc)
+
+        def _worker() -> None:
+            try:
+                result = asyncio.run(scrape_factory())
+            except BaseException as exc:
+                try:
+                    loop.call_soon_threadsafe(_publish_exception, exc)
+                except RuntimeError:
+                    pass
+                return
+            try:
+                loop.call_soon_threadsafe(_publish_result, result)
+            except RuntimeError:
+                pass
+
+        worker = threading.Thread(
+            target=_worker,
+            name="agentic-daemon-scrape-worker",
+            daemon=True,
+        )
+        worker.start()
+
+        if (
+            cycle_index is not None
+            and checkpoint_payload is not None
+            and heartbeat_seconds > 0
+        ):
+            started_at = asyncio.get_running_loop().time()
+
+            async def _heartbeat_loop() -> None:
+                heartbeat_count = 0
+                while not result_future.done():
+                    await asyncio.sleep(heartbeat_seconds)
+                    if result_future.done():
+                        break
+                    heartbeat_count += 1
+                    heartbeat_payload = dict(checkpoint_payload)
+                    heartbeat_payload["timestamp"] = datetime.now().isoformat()
+                    heartbeat_payload["stage"] = "scrape"
+                    heartbeat_payload["scrape_heartbeat"] = {
+                        "heartbeat_count": heartbeat_count,
+                        "elapsed_seconds": round(asyncio.get_running_loop().time() - started_at, 3),
+                    }
+                    self._write_cycle_checkpoint(cycle_index=cycle_index, payload=heartbeat_payload)
+
+            heartbeat_task = asyncio.create_task(_heartbeat_loop())
+
+        try:
+            if scrape_timeout_seconds > 0:
+                return await asyncio.wait_for(asyncio.shield(result_future), timeout=scrape_timeout_seconds)
+            return await result_future
+        finally:
+            if heartbeat_task is not None:
+                heartbeat_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await heartbeat_task
+
     @staticmethod
     def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
         account_env_keys = [
             "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
             "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
             "CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_AGENT_ACCOUNT_ID",
         ]
         token_env_keys = [
             "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
             "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
             "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_AGENT_API_KEY",
         ]
 
-        account_source = next((key for key in account_env_keys if str(os.getenv(key) or "").strip()), None)
-        token_source = next((key for key in token_env_keys if str(os.getenv(key) or "").strip()), None)
+        def _resolve_source(names: List[str], *, provider: str) -> Optional[str]:
+            if provider == "env":
+                return next((key for key in names if str(os.getenv(key) or "").strip()), None)
+            if provider == "vault":
+                try:
+                    from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                    vault = get_secrets_vault()
+                    return next((key for key in names if str(vault.get(key) or "").strip()), None)
+                except Exception:
+                    return None
+            if provider == "keyring":
+                try:
+                    import keyring  # type: ignore
+
+                    timeout_seconds = max(
+                        0.1,
+                        float(os.getenv("IPFS_DATASETS_KEYRING_LOOKUP_TIMEOUT_SECONDS", "1.5") or "1.5"),
+                    )
+
+                    class _KeyringLookupTimeout(TimeoutError):
+                        pass
+
+                    def _handle_timeout(_signum: int, _frame: Any) -> None:
+                        raise _KeyringLookupTimeout()
+
+                    for key in names:
+                        if threading.current_thread() is not threading.main_thread():
+                            return None
+                        previous_handler = signal.getsignal(signal.SIGALRM)
+                        try:
+                            signal.signal(signal.SIGALRM, _handle_timeout)
+                            signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                            value = str(keyring.get_password("ipfs_datasets_py", key) or "").strip()
+                        except _KeyringLookupTimeout:
+                            return None
+                        finally:
+                            signal.setitimer(signal.ITIMER_REAL, 0.0)
+                            signal.signal(signal.SIGALRM, previous_handler)
+                        if value:
+                            return key
+                    return None
+                except Exception:
+                    return None
+            if provider == "shared_file":
+                candidates = [
+                    str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+                    str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+                    "/etc/github-runner-secrets/secrets.json",
+                    "/var/lib/github-runner/secrets.json",
+                ]
+                seen: set[str] = set()
+                for candidate in candidates:
+                    if not candidate or candidate in seen:
+                        continue
+                    seen.add(candidate)
+                    try:
+                        payload = json.loads(Path(candidate).expanduser().read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    if not isinstance(payload, dict):
+                        continue
+                    for key in names:
+                        if str(payload.get(key) or "").strip():
+                            return key
+                return None
+            return None
+
+        account_source = _resolve_source(account_env_keys, provider="env")
+        account_source_kind = "env" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="vault")
+            account_source_kind = "vault" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="shared_file")
+            account_source_kind = "shared_file" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="keyring")
+            account_source_kind = "keyring" if account_source else None
+
+        token_source = _resolve_source(token_env_keys, provider="env")
+        token_source_kind = "env" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="vault")
+            token_source_kind = "vault" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="shared_file")
+            token_source_kind = "shared_file" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="keyring")
+            token_source_kind = "keyring" if token_source else None
+
         missing_credentials: List[str] = []
         if not account_source:
             missing_credentials.append("account_id")
@@ -1194,7 +2031,98 @@ class StateLawsAgenticDaemon:
             "provider": "cloudflare_browser_rendering",
             "account_id_env": account_source,
             "api_token_env": token_source,
+            "account_id_source_kind": account_source_kind,
+            "api_token_source_kind": token_source_kind,
             "missing_credentials": missing_credentials,
+        }
+
+    @staticmethod
+    def _resolve_cloudflare_credential_values() -> Dict[str, Optional[str]]:
+        account_names = [
+            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_AGENT_ACCOUNT_ID",
+        ]
+        token_names = [
+            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_AGENT_API_KEY",
+        ]
+
+        def _resolve_value(names: List[str]) -> Optional[str]:
+            for name in names:
+                value = str(os.getenv(name) or "").strip()
+                if value:
+                    return value
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                vault = get_secrets_vault()
+                for name in names:
+                    value = str(vault.get(name) or "").strip()
+                    if value:
+                        return value
+            except Exception:
+                pass
+            candidates = [
+                str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+                str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+                "/etc/github-runner-secrets/secrets.json",
+                "/var/lib/github-runner/secrets.json",
+            ]
+            seen: set[str] = set()
+            for candidate in candidates:
+                if not candidate or candidate in seen:
+                    continue
+                seen.add(candidate)
+                try:
+                    payload = json.loads(Path(candidate).expanduser().read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                if not isinstance(payload, dict):
+                    continue
+                for name in names:
+                    value = str(payload.get(name) or "").strip()
+                    if value:
+                        return value
+            try:
+                import keyring  # type: ignore
+
+                timeout_seconds = max(
+                    0.1,
+                    float(os.getenv("IPFS_DATASETS_KEYRING_LOOKUP_TIMEOUT_SECONDS", "1.5") or "1.5"),
+                )
+
+                class _KeyringLookupTimeout(TimeoutError):
+                    pass
+
+                def _handle_timeout(_signum: int, _frame: Any) -> None:
+                    raise _KeyringLookupTimeout()
+
+                for name in names:
+                    if threading.current_thread() is not threading.main_thread():
+                        return None
+                    previous_handler = signal.getsignal(signal.SIGALRM)
+                    try:
+                        signal.signal(signal.SIGALRM, _handle_timeout)
+                        signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                        value = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+                    except _KeyringLookupTimeout:
+                        return None
+                    finally:
+                        signal.setitimer(signal.ITIMER_REAL, 0.0)
+                        signal.signal(signal.SIGALRM, previous_handler)
+                    if value:
+                        return value
+            except Exception:
+                pass
+            return None
+
+        return {
+            "account_id": _resolve_value(account_names),
+            "api_token": _resolve_value(token_names),
         }
 
     def _build_diagnostics(self, scrape_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -1471,6 +2399,227 @@ class StateLawsAgenticDaemon:
             "per_state": per_state,
             "per_state_recovery": per_state_recovery,
             "cloudflare_browser_rendering": dict(metadata.get("cloudflare_browser_rendering") or {}),
+        }
+
+    def _write_recovered_row_artifacts(
+        self,
+        *,
+        cycle_index: int,
+        scrape_result: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Persist recovered rows outside cycle JSON so merge jobs can consume them."""
+        data = [block for block in list(scrape_result.get("data") or []) if isinstance(block, dict)]
+        cycle_dir = self.recovered_rows_dir / f"cycle_{cycle_index:04d}"
+        cycle_dir.mkdir(parents=True, exist_ok=True)
+
+        blocks_path = cycle_dir / f"{self.corpus.key}_blocks.json"
+        rows_path = cycle_dir / f"{self.corpus.key}_statutes.jsonl"
+        manifest_path = cycle_dir / f"{self.corpus.key}_manifest.json"
+        parquet_path = cycle_dir / f"{self.corpus.key}_statutes.parquet"
+
+        rows = self._flatten_recovered_statute_rows(data)
+        state_counts: Dict[str, int] = {}
+        for row in rows:
+            state_code = str(row.get("state_code") or "").upper().strip()
+            if not state_code:
+                continue
+            state_counts[state_code] = int(state_counts.get(state_code, 0) or 0) + 1
+
+        target = self._recovered_row_hf_target_manifest(sorted(state_counts))
+        summary: Dict[str, Any] = {
+            "status": "success" if rows else "empty",
+            "cycle": int(cycle_index),
+            "corpus": self.corpus.key,
+            "row_count": len(rows),
+            "state_counts": state_counts,
+            "blocks_json_path": str(blocks_path),
+            "statutes_jsonl_path": str(rows_path),
+            "statutes_parquet_path": None,
+            "manifest_path": str(manifest_path),
+            "target_hf_dataset_id": target.get("hf_dataset_id"),
+            "target_combined_parquet_path": target.get("combined_parquet_path"),
+            "target_parquet_paths_by_state": target.get("parquet_paths_by_state"),
+        }
+
+        try:
+            blocks_path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+            with rows_path.open("w", encoding="utf-8") as handle:
+                for row in rows:
+                    handle.write(json.dumps(row, sort_keys=True) + "\n")
+        except Exception as exc:
+            summary["status"] = "error"
+            summary["error"] = str(exc)
+            with suppress(Exception):
+                manifest_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+            return summary
+
+        if self.corpus.key == "state_admin_rules":
+            parquet_error = self._write_recovered_rows_parquet(rows=rows, parquet_path=parquet_path)
+            if parquet_error is None and parquet_path.exists():
+                summary["statutes_parquet_path"] = str(parquet_path)
+            elif parquet_error:
+                summary["parquet_error"] = parquet_error
+        else:
+            summary["parquet_status"] = "skipped"
+            summary["parquet_skip_reason"] = "parquet row artifacts are currently emitted for state_admin_rules recovery"
+
+        manifest_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        return summary
+
+    def _state_admin_scrape_result_from_agentic_checkpoints(
+        self,
+        *,
+        metadata: Dict[str, Any],
+        error: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Build a scrape result from partial admin-rule checkpoints after timeout."""
+        if self.corpus.key != "state_admin_rules":
+            return None
+
+        checkpoint_dir = self.output_dir / "agentic_checkpoints"
+        if not checkpoint_dir.exists():
+            return None
+
+        blocks: List[Dict[str, Any]] = []
+        total_rows = 0
+        for statutes_path in sorted(checkpoint_dir.glob("STATE-*_statutes.jsonl")):
+            match = re.match(r"STATE-([A-Z]{2})_statutes\.jsonl$", statutes_path.name)
+            if not match:
+                continue
+            state_code = match.group(1)
+            statutes: List[Dict[str, Any]] = []
+            try:
+                with statutes_path.open("r", encoding="utf-8", errors="ignore") as handle:
+                    for line in handle:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            row = json.loads(line)
+                        except Exception:
+                            continue
+                        if not isinstance(row, dict):
+                            continue
+                        row.setdefault("state_code", state_code)
+                        statutes.append(self._json_safe_row(row))
+            except Exception:
+                continue
+            if not statutes:
+                continue
+
+            total_rows += len(statutes)
+            state_name = US_STATES.get(state_code, state_code)
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Agentic checkpoint recovery",
+                    "source_url": statutes[0].get("source_url"),
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    "statutes": statutes,
+                    "rules_count": len(statutes),
+                    "schema_version": "1.0",
+                    "normalized": True,
+                    "checkpoint_recovered": True,
+                    "checkpoint_path": str(statutes_path),
+                }
+            )
+
+        if not blocks:
+            return None
+
+        checkpoint_metadata = dict(metadata)
+        checkpoint_metadata.update(
+            {
+                "checkpoint_recovered": True,
+                "checkpoint_recovered_rows": total_rows,
+                "checkpoint_recovered_states": [block["state_code"] for block in blocks],
+                "agentic_checkpoint_dir": str(checkpoint_dir),
+                "rules_count": total_rows,
+            }
+        )
+        return {
+            "status": "partial_success",
+            "error": error,
+            "data": blocks,
+            "metadata": checkpoint_metadata,
+        }
+
+    def _flatten_recovered_statute_rows(self, data: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        for block in data:
+            state_code = str(block.get("state_code") or block.get("state") or "").upper().strip()
+            statutes = block.get("statutes")
+            if not isinstance(statutes, list):
+                continue
+            for index, statute in enumerate(statutes):
+                if not isinstance(statute, dict):
+                    continue
+                row = dict(statute)
+                row.setdefault("state_code", state_code)
+                row.setdefault("corpus_key", self.corpus.key)
+                row.setdefault("recovered_by", "state_laws_agentic_daemon")
+                row.setdefault("recovered_at", datetime.now(timezone.utc).isoformat())
+                row.setdefault("source_block_index", index)
+                rows.append(self._json_safe_row(row))
+        return rows
+
+    @staticmethod
+    def _json_safe_row(row: Dict[str, Any]) -> Dict[str, Any]:
+        safe: Dict[str, Any] = {}
+        for key, value in row.items():
+            key_text = str(key)
+            try:
+                json.dumps(value)
+                safe[key_text] = value
+            except TypeError:
+                safe[key_text] = str(value)
+        return safe
+
+    def _write_recovered_rows_parquet(self, *, rows: Sequence[Dict[str, Any]], parquet_path: Path) -> Optional[str]:
+        if not rows:
+            return "no rows to write"
+        try:
+            import pyarrow as pa  # type: ignore
+            import pyarrow.parquet as pq  # type: ignore
+        except Exception as exc:
+            return f"pyarrow unavailable: {exc}"
+
+        try:
+            normalized_rows = [
+                {
+                    key: (json.dumps(value, sort_keys=True) if isinstance(value, (dict, list)) else value)
+                    for key, value in row.items()
+                }
+                for row in rows
+            ]
+            table = pa.Table.from_pylist(normalized_rows)
+            pq.write_table(table, parquet_path)
+        except Exception as exc:
+            return str(exc)
+        return None
+
+    def _recovered_row_hf_target_manifest(self, states: Sequence[str]) -> Dict[str, Any]:
+        try:
+            canonical = get_canonical_legal_corpus(self.corpus.key)
+        except Exception:
+            return {
+                "hf_dataset_id": None,
+                "combined_parquet_path": None,
+                "parquet_paths_by_state": {},
+            }
+
+        prefix = canonical.parquet_dir_name.strip("/")
+        parquet_paths_by_state = {
+            str(state).upper(): f"{prefix}/{canonical.state_parquet_filename(str(state))}" if prefix else canonical.state_parquet_filename(str(state))
+            for state in states
+            if str(state).strip()
+        }
+        return {
+            "hf_dataset_id": canonical.hf_dataset_id,
+            "combined_parquet_path": canonical.combined_parquet_path(),
+            "parquet_paths_by_state": parquet_paths_by_state,
         }
 
     @staticmethod
@@ -1954,6 +3103,19 @@ class StateLawsAgenticDaemon:
                 cmd_text = str(command or os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")).strip() or "ipfs"
                 executable = shlex.split(cmd_text)[0] if cmd_text else "ipfs"
                 if shutil.which(executable) is None:
+                    auto_bootstrap = str(
+                        os.getenv("LEGAL_DAEMON_ROUTER_IPFS_AUTO_BOOTSTRAP")
+                        or os.getenv("IPFS_DATASETS_ROUTER_IPFS_AUTO_BOOTSTRAP")
+                        or "0"
+                    ).strip().lower() in {"1", "true", "yes", "on"}
+                    if not auto_bootstrap:
+                        return {
+                            "available": False,
+                            "reason": "ipfs-cli-missing",
+                            "backend": backend_name,
+                            "command": cmd_text,
+                            "install_attempted": False,
+                        }
                     install_attempt = self._attempt_router_ipfs_kit_bootstrap()
                     if bool(install_attempt.get("available", False)):
                         return install_attempt
@@ -2214,6 +3376,17 @@ class StateLawsAgenticDaemon:
         issue_summary = str(critic.get("summary") or "").strip()
         if not issue_summary:
             return None
+        configured_provider = (
+            str(tactic.embeddings_provider or "").strip()
+            or str(os.getenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_PROVIDER") or "").strip()
+            or str(os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_PROVIDER") or "").strip()
+        )
+        allow_unpinned = str(
+            os.getenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_ALLOW_UNPINNED")
+            or "0"
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        if not configured_provider and not allow_unpinned:
+            return None
         tactic_names = list(self.config.tactic_profiles.keys())
         texts = [issue_summary] + [
             f"{name}: {self.config.tactic_profiles[name].description}" for name in tactic_names
@@ -2222,7 +3395,7 @@ class StateLawsAgenticDaemon:
             embeddings = embeddings_router.embed_texts_batched(
                 texts,
                 batch_size=max(2, len(texts)),
-                provider=tactic.embeddings_provider,
+                provider=configured_provider or tactic.embeddings_provider,
             )
         except Exception:
             return None
@@ -2333,15 +3506,52 @@ class StateLawsAgenticDaemon:
         corpus_key: str,
     ) -> Optional[Dict[str, Any]]:
         timeout_seconds = max(0.0, float(self.config.router_ipfs_timeout_seconds or 0.0))
-        persist_task = self._persist_router_assist_to_ipfs(
-            cycle_index=cycle_index,
-            report=report,
-            corpus_key=corpus_key,
-        )
         if timeout_seconds <= 0.0:
-            return await persist_task
+            return await self._persist_router_assist_to_ipfs(
+                cycle_index=cycle_index,
+                report=report,
+                corpus_key=corpus_key,
+            )
+
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[Optional[Dict[str, Any]]] = loop.create_future()
+
+        def _publish_result(result: Optional[Dict[str, Any]]) -> None:
+            if not result_future.done():
+                result_future.set_result(result)
+
+        def _publish_exception(exc: BaseException) -> None:
+            if not result_future.done():
+                result_future.set_exception(exc)
+
+        def _worker() -> None:
+            try:
+                result = asyncio.run(
+                    self._persist_router_assist_to_ipfs(
+                        cycle_index=cycle_index,
+                        report=report,
+                        corpus_key=corpus_key,
+                    )
+                )
+            except BaseException as exc:
+                try:
+                    loop.call_soon_threadsafe(_publish_exception, exc)
+                except RuntimeError:
+                    pass
+                return
+            try:
+                loop.call_soon_threadsafe(_publish_result, result)
+            except RuntimeError:
+                pass
+
+        threading.Thread(
+            target=_worker,
+            name="agentic-daemon-router-ipfs-worker",
+            daemon=True,
+        ).start()
+
         try:
-            return await asyncio.wait_for(persist_task, timeout=timeout_seconds)
+            return await asyncio.wait_for(asyncio.shield(result_future), timeout=timeout_seconds)
         except asyncio.TimeoutError:
             return {"status": "error", "error": f"timed out after {timeout_seconds:.1f} seconds"}
 
@@ -2454,14 +3664,18 @@ class StateLawsAgenticDaemon:
             max_state_workers=max(1, min(len(target_states), int(self.config.admin_parallel_assist_state_limit or 1))),
             max_domain_workers_per_state=max(1, int(self.config.admin_agentic_fetch_concurrency or 4)),
             max_urls_per_domain=max(4, int(self.config.admin_parallel_assist_max_urls_per_domain or 4)),
-            max_fetch_per_state=max(1, int(self.config.admin_agentic_max_fetch_per_state or 4)),
-            max_candidates_per_state=max(4, int(self.config.admin_agentic_max_candidates_per_state or 12)),
-            state_timeout=max(15.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0)),
-            url_fetch_timeout=min(30.0, max(5.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 6.0)),
-            domain_timeout=min(60.0, max(10.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 3.0)),
+            max_fetch_per_state=max(1, int(self.config.admin_agentic_max_fetch_per_state or 1000)),
+            max_candidates_per_state=max(4, int(self.config.admin_agentic_max_candidates_per_state or 1000)),
+            state_timeout=max(15.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0)),
+            url_fetch_timeout=min(300.0, max(5.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0) / 6.0)),
+            domain_timeout=min(600.0, max(10.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0) / 3.0)),
             min_rule_text_chars=max(120, int(tactic.min_full_text_chars or 120)),
             enable_pdf_processing=True,
             enable_gap_analysis=True,
+            cache_dir=str(self.output_dir / "url_archive_cache" / "parallel_admin_assist"),
+            cache_read_enabled=True,
+            cache_write_enabled=True,
+            cache_to_ipfs=True,
         )
 
         orchestrator = ParallelStateAdminOrchestrator(config=config)
@@ -2738,6 +3952,7 @@ class StateLawsAgenticDaemon:
             "clean_output_dir": str(clean_output_dir),
             "jsonld_dir": str(jsonld_dir),
             "parquet_dir": str(parquet_dir),
+            "daemon_output_dir": str(self.output_dir),
             "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
             "combined_embeddings": str(parquet_dir / canonical.combined_embeddings_filename),
             "corpus_key": self.corpus.key,
@@ -2771,6 +3986,7 @@ class StateLawsAgenticDaemon:
             "artifacts": {
                 "merge_output_dir": str(merge_output_dir),
                 "clean_output_dir": str(clean_output_dir) if self.corpus.key == "state_admin_rules" else None,
+                "daemon_output_dir": str(self.output_dir),
                 "jsonld_dir": str(jsonld_dir),
                 "parquet_dir": str(parquet_dir),
                 "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
@@ -2806,20 +4022,9 @@ class StateLawsAgenticDaemon:
         if self.corpus.key == "state_admin_rules":
             return [
                 (
-                    "merge",
+                    "merge_recovered_rows",
                     base_prefix
-                    + " scripts/ops/legal_data/merge_state_admin_runs.py"
-                    + f' --input-root {shlex.quote(canonical_local_root)} --input-root artifacts/state_admin_rules --output-dir "{{merge_output_dir}}" --include-corpus-jsonl {{merge_state_args}}',
-                ),
-                (
-                    "clean",
-                    base_prefix
-                    + ' scripts/ops/legal_data/clean_state_admin_canonical.py --input-dir "{merge_output_dir}" --output-dir "{clean_output_dir}"',
-                ),
-                (
-                    "parquet",
-                    base_prefix
-                    + ' scripts/ops/legal_data/convert_state_admin_jsonld_to_parquet_with_cid.py --input-dir "{jsonld_dir}" --output-dir "{parquet_dir}" --combined-filename "state_admin_rules_all_states.parquet"',
+                    + ' scripts/ops/legal_data/merge_state_admin_recovered_rows.py "{daemon_output_dir}" --output-dir "{clean_output_dir}" --parquet-dir "{parquet_dir}"',
                 ),
                 (
                     "embeddings",
@@ -2902,6 +4107,27 @@ class StateLawsAgenticDaemon:
 
     def _select_tactic_with_context(self) -> Dict[str, Any]:
         profiles = self.config.tactic_profiles
+        forced_tactic_name = str(self.config.forced_tactic_name or "").strip()
+        if forced_tactic_name and forced_tactic_name in profiles:
+            recent_issue_counts = self._recent_issue_counts()
+            return {
+                "profile": profiles[forced_tactic_name],
+                "details": {
+                    "mode": "forced",
+                    "selected_tactic": forced_tactic_name,
+                    "priority_recommended_tactics": self._priority_recommended_tactics(profiles),
+                    "recommended_tactics": [
+                        name for name in list(self._state.get("recommended_tactics") or []) if name in profiles
+                    ],
+                    "priority_states": list(self._state.get("priority_states") or []),
+                    "recent_issue_counts": recent_issue_counts,
+                    "score_breakdown": {
+                        forced_tactic_name: {
+                            "forced": True,
+                        }
+                    },
+                },
+            }
         recommended = [name for name in list(self._state.get("recommended_tactics") or []) if name in profiles]
         priority_recommended = self._priority_recommended_tactics(profiles)
         ordered_names = priority_recommended + recommended + [name for name in profiles if name not in priority_recommended and name not in recommended]
@@ -3309,7 +4535,30 @@ class StateLawsAgenticDaemon:
 
         try:
             archiver = ParallelWebArchiver(max_concurrent=max(1, int(self.config.archive_warmup_concurrency or 1)))
-            results = await archiver.archive_urls_parallel(urls)
+            cached_hits = []
+            uncached_urls = []
+            for url in urls:
+                cached = self.url_archive_cache.get(url)
+                if cached and cached.content:
+                    cached_hits.append(
+                        {
+                            "url": cached.url,
+                            "success": True,
+                            "source": f"{cached.source}:cache",
+                        }
+                    )
+                else:
+                    uncached_urls.append(url)
+            fetched_results = await archiver.archive_urls_parallel(uncached_urls) if uncached_urls else []
+            for result in fetched_results:
+                if bool(getattr(result, "success", False)) and str(getattr(result, "content", "") or "").strip():
+                    await self.url_archive_cache.put(
+                        url=str(getattr(result, "url", "") or ""),
+                        content=str(getattr(result, "content", "") or ""),
+                        source=str(getattr(result, "source", "") or "archive_warmup"),
+                        metadata={"corpus": self.corpus.key, "warmup": True},
+                    )
+            results = cached_hits + fetched_results
         except Exception as exc:
             return {
                 "status": "error",
@@ -3793,9 +5042,10 @@ class StateLawsAgenticDaemon:
             "IPFS_DATASETS_SCRAPER_METHOD_ORDER",
             "LEGAL_SCRAPER_METHOD_ORDER",
         ]
+        search_engines = list(self.config.search_engines_override or tactic.search_engines)
         overrides = {
-            "IPFS_DATASETS_SEARCH_ENGINES": ",".join(tactic.search_engines),
-            "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(tactic.search_engines),
+            "IPFS_DATASETS_SEARCH_ENGINES": ",".join(search_engines),
+            "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(search_engines),
             "IPFS_DATASETS_SCRAPER_FALLBACK_ENABLED": "1",
             "LEGAL_SCRAPER_FALLBACK_ENABLED": "1",
             "IPFS_DATASETS_SEARCH_PARALLEL_ENABLED": "1" if tactic.search_parallel_enabled else "0",
@@ -3852,6 +5102,15 @@ class StateLawsAgenticDaemon:
             if serialized_formats:
                 overrides["IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
                 overrides["LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
+        cloudflare_credentials = self._resolve_cloudflare_credential_values()
+        if cloudflare_credentials.get("account_id"):
+            overrides["IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+            overrides["LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+            overrides["CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+        if cloudflare_credentials.get("api_token"):
+            overrides["IPFS_DATASETS_CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
+            overrides["LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
+            overrides["CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
         state_query_hints = self._state.get("state_query_hints") or {}
         if isinstance(state_query_hints, dict) and state_query_hints:
             try:
@@ -3886,11 +5145,12 @@ async def run_state_laws_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -3919,6 +5179,7 @@ async def run_state_laws_agentic_daemon(
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             min_document_recovery_ratio=min_document_recovery_ratio,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -3946,21 +5207,22 @@ async def run_state_admin_rules_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
-    admin_agentic_max_candidates_per_state: Optional[int] = None,
-    admin_agentic_max_fetch_per_state: Optional[int] = None,
-    admin_agentic_max_results_per_domain: Optional[int] = None,
-    admin_agentic_max_hops: Optional[int] = None,
-    admin_agentic_max_pages: Optional[int] = None,
+    admin_agentic_max_candidates_per_state: Optional[int] = 1000,
+    admin_agentic_max_fetch_per_state: Optional[int] = 1000,
+    admin_agentic_max_results_per_domain: Optional[int] = 1000,
+    admin_agentic_max_hops: Optional[int] = 4,
+    admin_agentic_max_pages: Optional[int] = 1000,
     admin_agentic_fetch_concurrency: Optional[int] = None,
     admin_parallel_assist_enabled: bool = True,
     admin_parallel_assist_state_limit: int = 6,
     admin_parallel_assist_max_urls_per_domain: int = 20,
-    admin_parallel_assist_timeout_seconds: float = 180.0,
+    admin_parallel_assist_timeout_seconds: float = 86400.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -3998,6 +5260,7 @@ async def run_state_admin_rules_agentic_daemon(
             admin_parallel_assist_state_limit=admin_parallel_assist_state_limit,
             admin_parallel_assist_max_urls_per_domain=admin_parallel_assist_max_urls_per_domain,
             admin_parallel_assist_timeout_seconds=admin_parallel_assist_timeout_seconds,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -4025,11 +5288,12 @@ async def run_state_court_rules_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -4057,6 +5321,7 @@ async def run_state_court_rules_agentic_daemon(
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             min_document_recovery_ratio=min_document_recovery_ratio,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -4090,22 +5355,25 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-statutes", type=int, default=0, help="Optional per-run statute cap for debug cycles.")
     parser.add_argument("--explore-probability", type=float, default=0.30, help="Exploration probability for tactic selection.")
     parser.add_argument("--archive-warmup-urls", type=int, default=25, help="Number of weak-state URLs to archive after each cycle.")
-    parser.add_argument("--per-state-timeout-seconds", type=float, default=480.0, help="Timeout budget for each individual state scrape.")
+    parser.add_argument("--per-state-timeout-seconds", type=float, default=86400.0, help="Timeout budget for each individual state scrape.")
     parser.add_argument("--scrape-timeout-seconds", type=float, default=0.0, help="Optional timeout budget for the full corpus scrape stage. 0 disables the outer scrape timeout.")
     parser.add_argument("--router-llm-timeout-seconds", type=float, default=20.0, help="Timeout budget for router-backed LLM review during each cycle.")
     parser.add_argument("--router-embeddings-timeout-seconds", type=float, default=10.0, help="Timeout budget for router-backed embeddings ranking during each cycle.")
     parser.add_argument("--router-ipfs-timeout-seconds", type=float, default=10.0, help="Timeout budget for persisting router-assist artifacts to IPFS.")
     parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed/(candidate PDF+RTF URLs) ratio required for pass criteria when candidate document URLs are present.")
-    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=None, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=None, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=None, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-hops", type=int, default=None, help="Optional state-admin-rules traversal hop limit passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-pages", type=int, default=None, help="Optional state-admin-rules page limit passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=1000, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=1000, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=1000, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-hops", type=int, default=4, help="Optional state-admin-rules traversal hop limit passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-pages", type=int, default=1000, help="Optional state-admin-rules page limit passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-fetch-concurrency", type=int, default=None, help="Optional state-admin-rules fetch concurrency passed through to the agentic fallback.")
     parser.add_argument("--admin-parallel-assist-enabled", action=argparse.BooleanOptionalAction, default=True, help="Enable the state-admin parallel supplemental discovery pass for weak states during each daemon cycle.")
     parser.add_argument("--admin-parallel-assist-state-limit", type=int, default=6, help="Maximum number of weak state-admin targets to send through the parallel assist pass each cycle.")
     parser.add_argument("--admin-parallel-assist-max-urls-per-domain", type=int, default=20, help="Maximum URLs per domain evaluated by the parallel state-admin assist pass.")
-    parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=180.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
+    parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=86400.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
+    parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize the daemon cycle immediately after recovered row artifacts are written.")
+    parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
+    parser.add_argument("--tactic", default=None, help="Force one tactic profile for every daemon cycle, e.g. document_first.")
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold for convergence.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop once the daemon reaches the target critic score.")
     parser.add_argument("--random-seed", type=int, default=None, help="Optional deterministic seed for tactic selection.")
@@ -4120,6 +5388,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-cycle-release-publish-command", default=None, help="Optional publish command template appended after merge/parquet/embed.")
     parser.add_argument("--post-cycle-release-preview-score", type=float, default=None, help="Critic score to stamp into a scrape-free release plan preview.")
     parser.add_argument("--post-cycle-release-preview-cycle", type=int, default=1, help="Cycle number to stamp into a scrape-free release plan preview.")
+    parser.add_argument("--print-runtime-readiness", action="store_true", help="Print Cloudflare/router/IPFS readiness without running a scrape cycle.")
+    parser.add_argument("--probe-cloudflare-browser-rendering", action="store_true", help="Run a live Cloudflare Browser Rendering auth probe without starting the daemon.")
+    parser.add_argument("--probe-cloudflare-url", default="https://example.com", help="URL submitted during the live Cloudflare Browser Rendering probe.")
     return parser
 
 
@@ -4133,55 +5404,116 @@ def _parse_states_arg(value: str) -> List[str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
-    states = _parse_states_arg(args.states)
-    daemon = StateLawsAgenticDaemon(
-        StateLawsAgenticDaemonConfig(
-            corpus_key=str(args.corpus),
-            states=states,
-            output_dir=args.output_dir,
-            cycle_interval_seconds=float(args.cycle_interval_seconds),
-            max_cycles=int(args.max_cycles),
-            max_statutes=int(args.max_statutes),
-            explore_probability=float(args.explore_probability),
-            archive_warmup_urls=int(args.archive_warmup_urls),
-            per_state_timeout_seconds=float(args.per_state_timeout_seconds),
-            scrape_timeout_seconds=float(args.scrape_timeout_seconds),
-            router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
-            router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
-            router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
-            min_document_recovery_ratio=float(args.min_document_recovery_ratio),
-            admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
-            admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
-            admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,
-            admin_agentic_max_hops=args.admin_agentic_max_hops,
-            admin_agentic_max_pages=args.admin_agentic_max_pages,
-            admin_agentic_fetch_concurrency=args.admin_agentic_fetch_concurrency,
-            admin_parallel_assist_enabled=bool(args.admin_parallel_assist_enabled),
-            admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
-            admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
-            admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
-            target_score=float(args.target_score),
-            stop_on_target_score=bool(args.stop_on_target_score),
-            random_seed=args.random_seed,
-            post_cycle_release=PostCycleReleaseConfig(
-                enabled=bool(args.post_cycle_release),
-                dry_run=bool(args.post_cycle_release_dry_run),
-                min_score=args.post_cycle_release_min_score,
-                require_passed=not bool(args.post_cycle_release_ignore_pass),
-                timeout_seconds=int(args.post_cycle_release_timeout_seconds),
-                workspace_root=args.post_cycle_release_workspace_root,
-                python_bin=args.post_cycle_release_python_bin,
-                publish_command=args.post_cycle_release_publish_command,
-            ),
+    daemon: Optional[StateLawsAgenticDaemon] = None
+    previous_handlers: Dict[int, Any] = {}
+
+    def _restore_signal_handlers() -> None:
+        for sig, previous in previous_handlers.items():
+            try:
+                signal.signal(sig, previous)
+            except Exception:
+                pass
+
+    try:
+        states = _parse_states_arg(args.states)
+        daemon = StateLawsAgenticDaemon(
+            StateLawsAgenticDaemonConfig(
+                corpus_key=str(args.corpus),
+                states=states,
+                output_dir=args.output_dir,
+                cycle_interval_seconds=float(args.cycle_interval_seconds),
+                max_cycles=int(args.max_cycles),
+                max_statutes=int(args.max_statutes),
+                explore_probability=float(args.explore_probability),
+                archive_warmup_urls=int(args.archive_warmup_urls),
+                per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+                scrape_timeout_seconds=float(args.scrape_timeout_seconds),
+                router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
+                router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
+                router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
+                min_document_recovery_ratio=float(args.min_document_recovery_ratio),
+                admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
+                admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
+                admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,
+                admin_agentic_max_hops=args.admin_agentic_max_hops,
+                admin_agentic_max_pages=args.admin_agentic_max_pages,
+                admin_agentic_fetch_concurrency=args.admin_agentic_fetch_concurrency,
+                admin_parallel_assist_enabled=bool(args.admin_parallel_assist_enabled),
+                admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
+                admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
+                admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
+                stop_after_recovered_rows=bool(args.stop_after_recovered_rows),
+                search_engines_override=[
+                    item.strip()
+                    for item in str(args.search_engines or "").split(",")
+                    if item.strip()
+                ]
+                or None,
+                forced_tactic_name=args.tactic,
+                target_score=float(args.target_score),
+                stop_on_target_score=bool(args.stop_on_target_score),
+                random_seed=args.random_seed,
+                post_cycle_release=PostCycleReleaseConfig(
+                    enabled=bool(args.post_cycle_release),
+                    dry_run=bool(args.post_cycle_release_dry_run),
+                    min_score=args.post_cycle_release_min_score,
+                    require_passed=not bool(args.post_cycle_release_ignore_pass),
+                    timeout_seconds=int(args.post_cycle_release_timeout_seconds),
+                    workspace_root=args.post_cycle_release_workspace_root,
+                    python_bin=args.post_cycle_release_python_bin,
+                    publish_command=args.post_cycle_release_publish_command,
+                ),
+            )
         )
-    )
-    if bool(args.print_post_cycle_release_plan):
-        result = daemon.preview_post_cycle_release_plan(
-            cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
-            critic_score=args.post_cycle_release_preview_score,
-        )
-    else:
-        result = asyncio.run(daemon.run())
+
+        def _handle_termination(signum: int, _frame: Any) -> None:
+            signal_name = getattr(signal.Signals(signum), "name", str(signum))
+            if daemon is not None:
+                daemon.promote_latest_checkpoint_to_summary(reason=f"signal:{signal_name}")
+            raise SystemExit(128 + int(signum))
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            previous_handlers[sig] = signal.getsignal(sig)
+            signal.signal(sig, _handle_termination)
+
+        if bool(args.print_runtime_readiness):
+            result = daemon.preview_runtime_readiness()
+        elif bool(args.probe_cloudflare_browser_rendering):
+            result = asyncio.run(
+                daemon.probe_cloudflare_browser_rendering(
+                    url=str(args.probe_cloudflare_url or "https://example.com").strip() or "https://example.com"
+                )
+            )
+        elif bool(args.print_post_cycle_release_plan):
+            result = daemon.preview_post_cycle_release_plan(
+                cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
+                critic_score=args.post_cycle_release_preview_score,
+            )
+        else:
+            result = asyncio.run(daemon.run())
+        _restore_signal_handlers()
+    except KeyboardInterrupt:
+        if daemon is not None:
+            daemon.promote_latest_checkpoint_to_summary(reason="keyboard_interrupt")
+        _restore_signal_handlers()
+        return 130
+    except SystemExit as exc:
+        if daemon is not None:
+            code = exc.code if isinstance(exc.code, int) else 1
+            if code not in (0, None):
+                daemon.promote_latest_checkpoint_to_summary(reason=f"system_exit:{code}")
+        _restore_signal_handlers()
+        raise
+    except Exception as exc:
+        _restore_signal_handlers()
+        result = {
+            "status": "error",
+            "error": str(exc),
+            "exception_type": type(exc).__name__,
+            "traceback": traceback.format_exc(),
+        }
+        print(json.dumps(result, indent=2), file=sys.stderr)
+        return 1
     print(json.dumps(result, indent=2))
     return 0
 

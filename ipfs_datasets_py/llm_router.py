@@ -16,6 +16,21 @@ Environment variables:
 - `IPFS_DATASETS_PY_LLM_MODEL`: default HF model name for local fallback
 
 Additional optional providers (opt-in by selecting provider):
+- `p2p_task_queue`: submit text-generation work to a local/remote TaskQueue
+    worker and wait for completion
+    - `IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR` /
+      `IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR` for explicit remote peers
+    - `IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID` /
+      `IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID` when the multiaddr does not
+      include a peer id
+    - `IPFS_DATASETS_PY_TASK_QUEUE_PATH` / `IPFS_ACCELERATE_PY_TASK_QUEUE_PATH`
+      for local DuckDB queue fallback
+    - `IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S` /
+      `IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S` for default wait timeout
+- `openai`: OpenAI chat completions
+    - `OPENAI_API_KEY` / `OPENAI_KEY` / `OPENAI_TOKEN`
+    - `IPFS_DATASETS_PY_OPENAI_MODEL` / `OPENAI_MODEL`
+    - `IPFS_DATASETS_PY_OPENAI_BASE_URL` (default: https://api.openai.com/v1)
 - `openrouter`: OpenRouter chat completions
     - `OPENROUTER_API_KEY` or `IPFS_DATASETS_PY_OPENROUTER_API_KEY`
     - `IPFS_DATASETS_PY_OPENROUTER_MODEL` (default model)
@@ -39,6 +54,9 @@ Additional optional providers (opt-in by selecting provider):
     - `IPFS_DATASETS_PY_CODEX_CLI_MODEL` / `IPFS_DATASETS_PY_CODEX_MODEL`
 - `copilot_cli`: GitHub Copilot CLI via command template
     - `IPFS_DATASETS_PY_COPILOT_CLI_CMD` (supports `{prompt}` placeholder)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_MODEL` (default model for local Copilot CLI calls)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_ALLOW_ALL_PATHS` (optional; pass `--allow-all-paths`)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_ADD_DIRS` (optional os.pathsep-separated list for repeated `--add-dir`)
 - `copilot_sdk`: Python `copilot` SDK (if installed)
     - `IPFS_DATASETS_PY_COPILOT_SDK_MODEL`, `IPFS_DATASETS_PY_COPILOT_SDK_TIMEOUT`
 - `gemini_cli`: Gemini CLI via `npx @google/gemini-cli`
@@ -56,10 +74,13 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import tempfile
+import threading
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -67,7 +88,11 @@ from html import unescape
 import hashlib
 import importlib
 import importlib.util
+import base64
+import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
+
+from .utils.cli_tools.copilot import build_standalone_copilot_command_template, find_standalone_copilot_cli
 
 from .router_deps import RouterDeps, get_default_router_deps
 from .optimizers.common.backend_selection import canonicalize_provider
@@ -84,16 +109,18 @@ class LLMRouterError(RuntimeError):
 _P2P_TASK_PREFIX = "p2p://"
 _HF_ARCH_ROUTER_MODEL_ID = "katanemo/Arch-Router-1.5B"
 _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
-    "openrouter",
-    "hf_inference_api",
     "codex_cli",
     "copilot_cli",
+    "openai",
+    "hf_inference_api",
+    "openrouter",
     "gemini_cli",
     "claude_code",
     "claude_py",
     "gemini_py",
     "copilot_sdk",
 ]
+_LAST_GENERATION_TRACE = threading.local()
 
 
 def _truthy_env(name: str, *, default: bool) -> bool:
@@ -226,7 +253,10 @@ def submit_task(
     except Exception as exc:
         raise LLMRouterError("Task delegation helpers not available") from exc
 
-    payload: Dict[str, object] = {"prompt": str(prompt or "")}
+    explicit_payload = kwargs.pop("payload", None)
+    payload: Dict[str, object] = dict(explicit_payload) if isinstance(explicit_payload, dict) else {"prompt": str(prompt or "")}
+    if "prompt" not in payload:
+        payload["prompt"] = str(prompt or "")
     for k in ("max_new_tokens", "max_tokens", "temperature"):
         if k in kwargs:
             payload[k] = kwargs[k]
@@ -754,6 +784,27 @@ def _extract_last_agent_message_from_codex_jsonl(text: str) -> Optional[str]:
     return last.strip() if isinstance(last, str) and last.strip() else None
 
 
+def _looks_like_empty_codex_jsonl(text: str) -> bool:
+    """Return True when Codex --json emitted lifecycle events but no assistant text."""
+
+    if not isinstance(text, str) or not text.strip():
+        return False
+    if _extract_last_agent_message_from_codex_jsonl(text):
+        return False
+
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or not (line.startswith("{") and line.endswith("}")):
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(obj, dict) and isinstance(obj.get("type"), str):
+            return True
+    return False
+
+
 def get_accelerate_manager(
     *,
     deps: Optional[RouterDeps] = None,
@@ -801,6 +852,102 @@ def get_accelerate_status() -> dict:
         backend_available = False
 
     return {"available": backend_available, "enabled": True, "env_disabled": False, "env_var": env_value}
+
+
+def _extract_generated_text_from_task_result(result: object) -> Optional[str]:
+    """Best-effort extraction of generated text from queue worker payloads."""
+
+    if isinstance(result, str) and result.strip():
+        return result
+    if isinstance(result, dict):
+        for key in ("text", "generated_text", "output_text", "completion", "content"):
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+        for key in ("result", "data", "output", "response", "payload"):
+            nested = _extract_generated_text_from_task_result(result.get(key))
+            if nested:
+                return nested
+        choices = result.get("choices")
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message")
+                if isinstance(message, dict):
+                    content = message.get("content")
+                    if isinstance(content, str) and content.strip():
+                        return content
+                text = first.get("text")
+                if isinstance(text, str) and text.strip():
+                    return text
+    if isinstance(result, list):
+        for item in result:
+            nested = _extract_generated_text_from_task_result(item)
+            if nested:
+                return nested
+    return None
+
+
+def _default_task_queue_wait_timeout_s() -> float:
+    raw = (
+        os.getenv("IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_DATASETS_PY_TASK_P2P_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_P2P_WAIT_TIMEOUT_S")
+        or "120"
+    )
+    try:
+        return max(0.1, float(str(raw).strip()))
+    except Exception:
+        return 120.0
+
+
+def _default_task_queue_path() -> str:
+    return (
+        os.getenv("IPFS_DATASETS_PY_TASK_QUEUE_PATH")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_QUEUE_PATH")
+        or ""
+    ).strip()
+
+
+def _image_path_to_data_url(path: object) -> str:
+    from pathlib import Path
+
+    image_path = Path(str(path))
+    raw = image_path.read_bytes()
+    mime_type, _ = mimetypes.guess_type(str(image_path))
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:{mime_type or 'application/octet-stream'};base64,{encoded}"
+
+
+def _coerce_text_sequence(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, (list, tuple, set)):
+        return [str(item) for item in value if str(item or "").strip()]
+    return [str(value)]
+
+
+def _render_multimodal_prompt_for_text_provider(
+    *,
+    prompt: str,
+    image_paths: Sequence[str] | None = None,
+    image_urls: Sequence[str] | None = None,
+    system_prompt: Optional[str] = None,
+    additional_text_blocks: Sequence[str] | None = None,
+) -> str:
+    sections: list[str] = []
+    if system_prompt and str(system_prompt).strip():
+        sections.append(str(system_prompt).strip())
+    sections.append(str(prompt or "").strip())
+    sections.extend(_coerce_text_sequence(additional_text_blocks))
+    for path in image_paths or ():
+        sections.append(f"[image attachment: {path}]")
+    for url in image_urls or ():
+        sections.append(f"[image: {url}]")
+    return "\n\n".join(section for section in sections if section)
 
 
 def _resolve_transformers_module(*, deps: Optional[RouterDeps] = None, module_override: object | None = None) -> object | None:
@@ -899,7 +1046,7 @@ def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs
     if pk in {"codex", "codex_cli"}:
         return (
             _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL")
-            or "gpt-5.1-codex-mini"
+            or "gpt-5.3-codex"
         ).strip()
     if pk == "copilot_sdk":
         return (os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "") or "").strip()
@@ -942,6 +1089,44 @@ def _response_cache_key(*, provider: Optional[str], model_name: Optional[str], p
 @runtime_checkable
 class LLMProvider(Protocol):
     def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str: ...
+
+
+@runtime_checkable
+class BatchLLMProvider(Protocol):
+    def generate_batch(
+        self,
+        prompts: Sequence[str],
+        *,
+        model_name: Optional[str] = None,
+        **kwargs: object,
+    ) -> Sequence[str]: ...
+
+
+@runtime_checkable
+class TextBatchLLMProvider(Protocol):
+    def generate_text_batch(
+        self,
+        prompts: Sequence[str],
+        *,
+        model_name: Optional[str] = None,
+        **kwargs: object,
+    ) -> Sequence[str]: ...
+
+
+@runtime_checkable
+class NativeMultimodalProvider(Protocol):
+    def generate_multimodal(
+        self,
+        prompt: str,
+        *,
+        model_name: Optional[str] = None,
+        image_paths: Sequence[str] | None = None,
+        image_urls: Sequence[str] | None = None,
+        system_prompt: Optional[str] = None,
+        additional_text_blocks: Sequence[str] | None = None,
+        messages: Sequence[dict] | None = None,
+        **kwargs: object,
+    ) -> str: ...
 
 
 class ChatMessage(TypedDict):
@@ -1029,6 +1214,43 @@ def _resolve_hf_api_token() -> str:
         return token
 
     try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in (
+            "IPFS_DATASETS_PY_HF_API_TOKEN",
+            "HUGGINGFACEHUB_API_TOKEN",
+            "HUGGINGFACE_HUB_TOKEN",
+            "HUGGINGFACE_API_TOKEN",
+            "HUGGINGFACE_API_KEY",
+            "HF_TOKEN",
+            "HF_API_TOKEN",
+        ):
+            resolved = str(vault.get(name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        import keyring  # type: ignore
+
+        for name in (
+            "IPFS_DATASETS_PY_HF_API_TOKEN",
+            "HUGGINGFACEHUB_API_TOKEN",
+            "HUGGINGFACE_HUB_TOKEN",
+            "HUGGINGFACE_API_TOKEN",
+            "HUGGINGFACE_API_KEY",
+            "HF_TOKEN",
+            "HF_API_TOKEN",
+        ):
+            resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
         hub = importlib.import_module("huggingface_hub")
         getter = getattr(hub, "get_token", None)
         resolved = getter() if callable(getter) else ""
@@ -1036,6 +1258,44 @@ def _resolve_hf_api_token() -> str:
             return str(resolved).strip()
     except Exception:
         return ""
+    return ""
+
+
+def _resolve_openai_api_key() -> str:
+    token = _coalesce_env("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN")
+    if token:
+        return token
+
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in ("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN"):
+            resolved = str(vault.get(name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        import keyring  # type: ignore
+
+        for name in ("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN"):
+            resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        from ipfs_datasets_py.utils.engine_env import _openai_key_from_common_files
+
+        resolved = str(_openai_key_from_common_files() or "").strip()
+        if resolved:
+            return resolved
+    except Exception:
+        pass
+
     return ""
 
 
@@ -1053,6 +1313,7 @@ def _resolve_hf_bill_to(*, kwargs: Optional[dict[str, object]] = None) -> str:
             if value is not None and str(value).strip():
                 return str(value).strip()
     return _coalesce_env(
+        "OPENROUTER_HF_BILL_TO",
         "IPFS_DATASETS_PY_HF_BILL_TO",
         "HUGGINGFACE_BILL_TO",
         "HF_BILL_TO",
@@ -1556,6 +1817,75 @@ def _clean_gemini_output(text: str) -> str:
     return _clean_codex_output(text)
 
 
+def _clean_mistral_vibe_output(text: str) -> str:
+    return _clean_codex_output(text)
+
+
+def _trace_sidecar_path(primary_path: str, suffix: str) -> str:
+    text = str(primary_path or "").strip()
+    if not text:
+        return ""
+    if text.endswith(".jsonl"):
+        return text[: -len(".jsonl")] + suffix
+    return text + suffix
+
+
+def _codex_image_diagnostics(image_paths: Sequence[str] | None) -> list[dict[str, object]]:
+    diagnostics: list[dict[str, object]] = []
+    for raw_path in image_paths or ():
+        candidate = str(raw_path or "").strip()
+        if not candidate:
+            continue
+        entry: dict[str, object] = {"path": candidate}
+        try:
+            stat_result = os.stat(candidate)
+            entry["exists"] = True
+            entry["size_bytes"] = int(stat_result.st_size)
+        except OSError:
+            entry["exists"] = False
+        diagnostics.append(entry)
+    return diagnostics
+
+
+def _persist_codex_cli_diagnostics(
+    *,
+    trace_jsonl_path: str,
+    trace_stderr_path: str,
+    trace_metadata_path: str,
+    stdout_text: str,
+    stderr_text: str,
+    metadata: dict[str, object],
+) -> None:
+    if isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
+            with open(trace_jsonl_path.strip(), "w", encoding="utf-8") as handle:
+                handle.write(stdout_text or "")
+                if stdout_text and not stdout_text.endswith("\n"):
+                    handle.write("\n")
+        except OSError:
+            pass
+
+    if isinstance(trace_stderr_path, str) and trace_stderr_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_stderr_path.strip()) or ".", exist_ok=True)
+            with open(trace_stderr_path.strip(), "w", encoding="utf-8") as handle:
+                handle.write(stderr_text or "")
+                if stderr_text and not stderr_text.endswith("\n"):
+                    handle.write("\n")
+        except OSError:
+            pass
+
+    if isinstance(trace_metadata_path, str) and trace_metadata_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_metadata_path.strip()) or ".", exist_ok=True)
+            with open(trace_metadata_path.strip(), "w", encoding="utf-8") as handle:
+                json.dump(metadata, handle, indent=2, sort_keys=True, ensure_ascii=False)
+                handle.write("\n")
+        except OSError:
+            pass
+
+
 def _cli_available(command: str) -> bool:
     if not command:
         return False
@@ -1567,6 +1897,31 @@ def _cli_available(command: str) -> bool:
     return shutil.which(parts[0]) is not None
 
 
+@lru_cache(maxsize=8)
+def _cli_help_text(command: str) -> str:
+    if not command:
+        return ""
+    try:
+        proc = subprocess.run(
+            shlex.split(command) + ["--help"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=20,
+            env=os.environ.copy(),
+        )
+    except Exception:
+        return ""
+    return f"{proc.stdout or ''}\n{proc.stderr or ''}".strip()
+
+
+def _copilot_cli_supports_image_inputs(command: str) -> bool:
+    help_text = _cli_help_text(command).lower()
+    if not help_text:
+        return False
+    return "--image" in help_text or "image input" in help_text or "attach image" in help_text
+
+
 def _run_cli_command(
     command: str,
     prompt: str,
@@ -1574,6 +1929,7 @@ def _run_cli_command(
     timeout_seconds: float = 120.0,
     template_vars: Optional[Dict[str, str]] = None,
     label: Optional[str] = None,
+    extra_env: Optional[Dict[str, Optional[str]]] = None,
 ) -> str:
     if not command:
         raise RuntimeError("CLI command not configured")
@@ -1584,14 +1940,26 @@ def _run_cli_command(
             rendered = rendered.replace("{" + str(key) + "}", str(value))
 
     if "{prompt}" in rendered:
-        rendered = rendered.replace("{prompt}", prompt)
-        cmd = shlex.split(rendered)
+        prompt_token = "__IPFS_DATASETS_PY_PROMPT__"
+        while prompt_token in rendered or prompt_token in prompt:
+            prompt_token = f"_{prompt_token}_"
+        rendered = rendered.replace("{prompt}", prompt_token)
+        cmd = [prompt if part == prompt_token else part for part in shlex.split(rendered)]
         input_text: str | None = None
     else:
         cmd = shlex.split(rendered)
         input_text = prompt
 
     try:
+        env = os.environ.copy()
+        if extra_env:
+            for key, value in extra_env.items():
+                if not key:
+                    continue
+                if value is None:
+                    env.pop(str(key), None)
+                elif str(value).strip():
+                    env[str(key)] = str(value)
         proc = subprocess.run(
             cmd,
             input=input_text,
@@ -1599,7 +1967,7 @@ def _run_cli_command(
             capture_output=True,
             check=False,
             timeout=timeout_seconds,
-            env=os.environ.copy(),
+            env=env,
         )
     except FileNotFoundError as exc:
         name = (label or "CLI").strip() or "CLI"
@@ -1610,6 +1978,153 @@ def _run_cli_command(
     return (proc.stdout or "").strip()
 
 
+def _normalize_copilot_add_dirs(raw: object) -> list[str]:
+    if raw is None:
+        return []
+
+    candidates: list[object]
+    if isinstance(raw, str):
+        candidates = [part.strip() for part in raw.split(os.pathsep)]
+    elif isinstance(raw, Sequence) and not isinstance(raw, (bytes, bytearray, str)):
+        candidates = list(raw)
+    else:
+        candidates = [raw]
+
+    resolved: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        text = str(candidate or "").strip()
+        if not text:
+            continue
+        normalized = os.path.abspath(os.path.expanduser(text))
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        resolved.append(normalized)
+    return resolved
+
+
+def _copilot_cli_add_dirs_from_env() -> list[str]:
+    raw = os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_ADD_DIRS", "").strip()
+    if not raw:
+        return []
+    return _normalize_copilot_add_dirs(raw)
+
+
+def _copilot_allow_all_paths_default() -> bool:
+    return _truthy_env("IPFS_DATASETS_PY_COPILOT_CLI_ALLOW_ALL_PATHS", default=False)
+
+
+def _get_p2p_task_queue_provider() -> LLMProvider:
+    def _queue_options(call_options: dict[str, object]) -> tuple[str, float]:
+        queue_path = str(
+            call_options.pop("queue_path", None)
+            or call_options.pop("task_queue_path", None)
+            or _default_task_queue_path()
+            or ""
+        ).strip()
+        wait_timeout_s = call_options.pop("wait_timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("task_timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("timeout", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = _default_task_queue_wait_timeout_s()
+        return queue_path, float(wait_timeout_s)
+
+    def _wait_for_text(task_id: str, *, queue_path: str, wait_timeout_s: float) -> str:
+        task = wait_task(str(task_id), queue_path=queue_path or None, timeout_s=float(wait_timeout_s))
+        if not isinstance(task, dict):
+            raise LLMRouterError(f"TaskQueue task did not complete before timeout: {task_id}")
+
+        status = str(task.get("status") or "").strip().lower()
+        if status != "completed":
+            error = str(task.get("error") or task.get("message") or status or "unknown error")
+            raise LLMRouterError(f"TaskQueue task failed: {error}")
+
+        text = _extract_generated_text_from_task_result(task.get("result"))
+        if isinstance(text, str) and text.strip():
+            return text
+        raise LLMRouterError("TaskQueue task completed without generated text")
+
+    class _P2PTaskQueueProvider:
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            call_options = dict(kwargs)
+            queue_path, wait_timeout_s = _queue_options(call_options)
+
+            task_type = str(call_options.pop("task_type", None) or "text-generation").strip() or "text-generation"
+            task_id = submit_task(
+                prompt=str(prompt or ""),
+                model_name=model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2"),
+                task_type=task_type,
+                queue_path=queue_path or None,
+                **call_options,
+            )
+            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            call_options = dict(kwargs)
+            queue_path, wait_timeout_s = _queue_options(call_options)
+
+            payload: dict[str, object] = {
+                "prompt": str(prompt or ""),
+                "image_urls": [str(url) for url in image_urls or () if str(url or "").strip()],
+                "image_data_urls": [_image_path_to_data_url(path) for path in image_paths or ()],
+                "system_prompt": system_prompt,
+                "additional_text_blocks": _coerce_text_sequence(additional_text_blocks),
+            }
+            if messages is not None:
+                payload["messages"] = list(messages)
+
+            remote_provider = (
+                call_options.pop("remote_provider", None)
+                or call_options.pop("multimodal_provider", None)
+                or call_options.pop("target_provider", None)
+            )
+            if remote_provider is not None:
+                payload["provider"] = str(remote_provider)
+
+            for key in (
+                "max_tokens",
+                "max_new_tokens",
+                "temperature",
+                "top_p",
+                "timeout",
+                "image_detail",
+            ):
+                if key in call_options:
+                    payload[key] = call_options.pop(key)
+
+            # Preserve small JSON-safe knobs for worker-side multimodal providers.
+            for key, value in list(call_options.items()):
+                if isinstance(value, (str, int, float, bool)) or value is None:
+                    payload[str(key)] = value
+
+            task_id = submit_task(
+                prompt=str(prompt or ""),
+                model_name=model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                task_type="multimodal-generation",
+                queue_path=queue_path or None,
+                payload=payload,
+            )
+            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+
+    return _P2PTaskQueueProvider()
+
+
 def _get_openrouter_provider() -> Optional[LLMProvider]:
     api_key = _coalesce_env("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "OPENROUTER_API_KEY")
     if not api_key:
@@ -1617,7 +2132,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
 
     base_url = os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
 
-    def _request(payload: dict, *, timeout: float) -> dict:
+    def _request(payload: dict, *, timeout: float, bill_to: str = "") -> dict:
         req = urllib.request.Request(
             f"{base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -1628,6 +2143,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
                 "Accept": "application/json",
                 **({"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")} if os.getenv("OPENROUTER_HTTP_REFERER") else {}),
                 **({"X-Title": os.getenv("OPENROUTER_APP_TITLE")} if os.getenv("OPENROUTER_APP_TITLE") else {}),
+                **({"X-HF-Bill-To": bill_to} if bill_to else {}),
             },
         )
 
@@ -1665,6 +2181,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
 
             max_tokens = kwargs.get("max_tokens", kwargs.get("max_new_tokens", 256))
             temperature = kwargs.get("temperature", 0.2)
+            bill_to = _resolve_hf_bill_to(kwargs=dict(kwargs))
 
             payload: dict = {
                 "model": model,
@@ -1674,6 +2191,103 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
             }
 
             # Optional OpenAI-compatible fields.
+            if "logprobs" in kwargs:
+                payload["logprobs"] = bool(kwargs.get("logprobs"))
+            if "top_logprobs" in kwargs and kwargs.get("top_logprobs") is not None:
+                payload["top_logprobs"] = int(kwargs.get("top_logprobs"))
+            if "response_format" in kwargs and kwargs.get("response_format") is not None:
+                payload["response_format"] = kwargs.get("response_format")
+            if "seed" in kwargs and kwargs.get("seed") is not None:
+                payload["seed"] = int(kwargs.get("seed"))
+
+            timeout = float(kwargs.get("timeout", 120))
+            return _request(payload, timeout=timeout, bill_to=bill_to)
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            data = self.chat_completions(
+                [{"role": "user", "content": prompt}],
+                model_name=model_name,
+                **kwargs,
+            )
+
+            choices = data.get("choices")
+            if isinstance(choices, list) and choices:
+                msg = choices[0].get("message") if isinstance(choices[0], dict) else None
+                if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                    return msg["content"].strip()
+                delta = choices[0].get("delta") if isinstance(choices[0], dict) else None
+                if isinstance(delta, dict) and isinstance(delta.get("content"), str):
+                    return delta["content"].strip()
+                text = choices[0].get("text") if isinstance(choices[0], dict) else None
+                if isinstance(text, str):
+                    return text.strip()
+            raise RuntimeError("OpenRouter response missing choices")
+
+    return _OpenRouterProvider()
+
+
+def _get_openai_provider() -> Optional[LLMProvider]:
+    api_key = _resolve_openai_api_key()
+    if not api_key:
+        return None
+
+    base_url = os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+
+    def _request(payload: dict, *, timeout: float) -> dict:
+        req = urllib.request.Request(
+            f"{base_url}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+            raise RuntimeError(f"OpenAI HTTP {exc.code}: {detail or exc.reason}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"OpenAI request failed: {exc}") from exc
+
+        try:
+            data = json.loads(raw)
+        except Exception as exc:
+            raise RuntimeError("OpenAI returned invalid JSON") from exc
+        if not isinstance(data, dict):
+            raise RuntimeError("OpenAI returned invalid JSON")
+        return data
+
+    class _OpenAIProvider:
+        def chat_completions(
+            self,
+            messages: Sequence[ChatMessage],
+            *,
+            model_name: Optional[str] = None,
+            **kwargs: object,
+        ) -> dict:
+            model = (
+                model_name
+                or os.getenv("IPFS_DATASETS_PY_OPENAI_MODEL")
+                or os.getenv("OPENAI_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+                or "gpt-4.1-mini"
+            )
+
+            max_tokens = kwargs.get("max_tokens", kwargs.get("max_new_tokens", 256))
+            temperature = kwargs.get("temperature", 0.2)
+
+            payload: dict = {
+                "model": model,
+                "messages": list(messages),
+                "max_tokens": int(max_tokens),
+                "temperature": float(temperature),
+            }
+
             if "logprobs" in kwargs:
                 payload["logprobs"] = bool(kwargs.get("logprobs"))
             if "top_logprobs" in kwargs and kwargs.get("top_logprobs") is not None:
@@ -1698,15 +2312,12 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
                 msg = choices[0].get("message") if isinstance(choices[0], dict) else None
                 if isinstance(msg, dict) and isinstance(msg.get("content"), str):
                     return msg["content"].strip()
-                delta = choices[0].get("delta") if isinstance(choices[0], dict) else None
-                if isinstance(delta, dict) and isinstance(delta.get("content"), str):
-                    return delta["content"].strip()
                 text = choices[0].get("text") if isinstance(choices[0], dict) else None
                 if isinstance(text, str):
                     return text.strip()
-            raise RuntimeError("OpenRouter response missing choices")
+            raise RuntimeError("OpenAI response missing choices")
 
-    return _OpenRouterProvider()
+    return _OpenAIProvider()
 
 
 def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
@@ -1954,26 +2565,50 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
 
 
 def _get_codex_cli_provider() -> Optional[LLMProvider]:
-    if not shutil.which("codex"):
+    codex_bin = os.getenv("IPFS_DATASETS_PY_CODEX_CLI_BIN", "codex").strip() or "codex"
+    codex_executable = shutil.which(codex_bin) or (codex_bin if os.path.exists(codex_bin) else "")
+    if not codex_executable:
         return None
 
     class _CodexCLIProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-            model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.1-codex-mini").strip()
+        def _run_codex(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str],
+            image_paths: Sequence[str] | None = None,
+            **kwargs: object,
+        ) -> str:
+            model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.3-codex").strip()
             sandbox = (os.getenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "auto") or "auto").strip()
             skip_git_repo_check = os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
             timeout = float(kwargs.get("timeout", 180))
 
             trace_jsonl_path = kwargs.pop("trace_jsonl_path", None)
             trace_dir = kwargs.pop("trace_dir", None)
+            trace_stderr_path = kwargs.pop("trace_stderr_path", None)
+            trace_metadata_path = kwargs.pop("trace_metadata_path", None)
             trace_enabled = bool(kwargs.pop("trace", False) or trace_jsonl_path or trace_dir)
 
-            json_mode = bool(trace_enabled or kwargs.pop("json", False))
+            if trace_enabled and not trace_jsonl_path and isinstance(trace_dir, str) and trace_dir.strip():
+                os.makedirs(trace_dir.strip(), exist_ok=True)
+                trace_jsonl_path = os.path.join(
+                    trace_dir.strip(),
+                    f"codex_exec_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{os.getpid()}.jsonl",
+                )
+            if trace_enabled and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+                if not (isinstance(trace_stderr_path, str) and trace_stderr_path.strip()):
+                    trace_stderr_path = _trace_sidecar_path(trace_jsonl_path, ".stderr.log")
+                if not (isinstance(trace_metadata_path, str) and trace_metadata_path.strip()):
+                    trace_metadata_path = _trace_sidecar_path(trace_jsonl_path, ".metadata.json")
 
-            with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as last_msg:
-                last_msg_path = last_msg.name
+            # Always prefer JSONL stdout extraction instead of allocating a fresh
+            # output file for each request. This keeps the router usable on
+            # inode-constrained systems where NamedTemporaryFile can fail even
+            # when plenty of bytes remain free.
+            json_mode = True
 
-            cmd: list[str] = ["codex", "exec"]
+            cmd: list[str] = [codex_executable, "exec"]
             if skip_git_repo_check:
                 cmd.append("--skip-git-repo-check")
             # Some Codex CLI builds do not accept '--sandbox auto'.
@@ -1983,68 +2618,207 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 cmd.extend(["--sandbox", sandbox])
             if model:
                 cmd.extend(["-m", model])
-            cmd.extend(["--output-last-message", last_msg_path])
+            for image_path in image_paths or ():
+                candidate = str(image_path or "").strip()
+                if candidate:
+                    cmd.extend(["--image", candidate])
+            cmd.append("--ephemeral")
             if json_mode:
                 cmd.append("--json")
             cmd.append("-")
 
             try:
-                proc = subprocess.run(
+                proc = subprocess.Popen(
                     cmd,
-                    input=str(prompt),
                     text=True,
-                    capture_output=True,
-                    check=False,
-                    timeout=timeout,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
                 )
+                try:
+                    stdout, stderr = proc.communicate(input=str(prompt), timeout=timeout)
+                except subprocess.TimeoutExpired as exc:
+                    partial_stdout = str(exc.stdout or "")
+                    partial_stderr = str(exc.stderr or "")
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    except Exception:
+                        proc.kill()
+                    try:
+                        proc.wait(timeout=5)
+                    except Exception:
+                        pass
+                    if trace_enabled:
+                        _persist_codex_cli_diagnostics(
+                            trace_jsonl_path=str(trace_jsonl_path or ""),
+                            trace_stderr_path=str(trace_stderr_path or ""),
+                            trace_metadata_path=str(trace_metadata_path or ""),
+                            stdout_text=partial_stdout,
+                            stderr_text=partial_stderr,
+                            metadata={
+                                "ts": datetime.now(timezone.utc).isoformat(),
+                                "provider": "codex_cli",
+                                "model": model,
+                                "cmd": cmd,
+                                "timeout_seconds": timeout,
+                                "timed_out": True,
+                                "returncode": None,
+                                "prompt_chars": len(str(prompt or "")),
+                                "image_count": len(list(image_paths or ())),
+                                "images": _codex_image_diagnostics(image_paths),
+                                "stdout_chars": len(partial_stdout),
+                                "stderr_chars": len(partial_stderr),
+                                "state_db_warning_count": partial_stderr.count("state_5.sqlite"),
+                                "file_watch_limit_warning_count": partial_stderr.count("OS file watch limit reached"),
+                                "thread_started": '"type":"thread.started"' in partial_stdout,
+                                "turn_started": '"type":"turn.started"' in partial_stdout,
+                                "turn_completed": '"type":"turn.completed"' in partial_stdout,
+                                "item_completed": '"type":"item.completed"' in partial_stdout,
+                                "last_agent_message_chars": len(
+                                    _extract_last_agent_message_from_codex_jsonl(partial_stdout) or ""
+                                ),
+                            },
+                        )
+                    raise LLMRouterError(
+                        f"codex exec timed out after {timeout:.0f}s for model {model or 'default'}"
+                    ) from exc
             except FileNotFoundError as exc:
                 raise LLMRouterError("codex CLI not found on PATH") from exc
 
-            try:
-                with open(last_msg_path, "r", encoding="utf-8", errors="replace") as handle:
-                    text_out = handle.read().strip()
-            except Exception:
-                text_out = ""
-            finally:
-                try:
-                    os.unlink(last_msg_path)
-                except Exception:
-                    pass
+            text_out = ""
+            if json_mode and stdout:
+                extracted = _extract_last_agent_message_from_codex_jsonl(stdout)
+                if extracted:
+                    text_out = extracted
 
-            if proc.returncode == 0 or text_out:
-                if json_mode and proc.stdout:
-                    extracted = _extract_last_agent_message_from_codex_jsonl(proc.stdout)
-                    if extracted:
-                        return _clean_codex_output(extracted)
-                return _clean_codex_output(text_out)
+            extracted_message = _extract_last_agent_message_from_codex_jsonl(stdout or "") if json_mode and stdout else ""
+            diagnostics_metadata = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "provider": "codex_cli",
+                "model": model,
+                "cmd": cmd,
+                "timeout_seconds": timeout,
+                "timed_out": False,
+                "returncode": proc.returncode,
+                "prompt_chars": len(str(prompt or "")),
+                "image_count": len(list(image_paths or ())),
+                "images": _codex_image_diagnostics(image_paths),
+                "stdout_chars": len(stdout or ""),
+                "stderr_chars": len(stderr or ""),
+                "state_db_warning_count": (stderr or "").count("state_5.sqlite"),
+                "file_watch_limit_warning_count": (stderr or "").count("OS file watch limit reached"),
+                "thread_started": '"type":"thread.started"' in (stdout or ""),
+                "turn_started": '"type":"turn.started"' in (stdout or ""),
+                "turn_completed": '"type":"turn.completed"' in (stdout or ""),
+                "item_completed": '"type":"item.completed"' in (stdout or ""),
+                "last_message_chars": len(text_out or ""),
+                "last_agent_message_chars": len(extracted_message or ""),
+            }
+            if trace_enabled:
+                _persist_codex_cli_diagnostics(
+                    trace_jsonl_path=str(trace_jsonl_path or ""),
+                    trace_stderr_path=str(trace_stderr_path or ""),
+                    trace_metadata_path=str(trace_metadata_path or ""),
+                    stdout_text=str(stdout or ""),
+                    stderr_text=str(stderr or ""),
+                    metadata=diagnostics_metadata,
+                )
 
-            if trace_enabled and proc.stdout and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
-                try:
-                    os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
-                    with open(trace_jsonl_path.strip(), "a", encoding="utf-8") as handle:
-                        handle.write(proc.stdout)
-                        if not proc.stdout.endswith("\n"):
-                            handle.write("\n")
-                except OSError:
-                    pass
+            if proc.returncode != 0 and not text_out:
+                kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
+                resets = _extract_resets_in_seconds_from_codex_jsonl(stdout or "")
+                if kind == "quota_exceeded":
+                    raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
+                if kind == "usage_limit":
+                    suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
+                    raise LLMRouterError(f"Codex usage limit reached{suffix}")
+                raise LLMRouterError((stderr or "").strip() or "codex exec failed")
 
-            kind = _classify_codex_error_kind(stdout=proc.stdout or "", stderr=proc.stderr or "")
-            resets = _extract_resets_in_seconds_from_codex_jsonl(proc.stdout or "")
+            if json_mode and not text_out and _looks_like_empty_codex_jsonl(stdout or ""):
+                raise LLMRouterError(
+                    "codex exec returned JSONL lifecycle events without an assistant proposal"
+                )
+
+            if proc.returncode == 0 or text_out or (stdout and stdout.strip()):
+                if text_out:
+                    return _clean_codex_output(text_out)
+                return _clean_codex_output(stdout)
+
+            kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
+            resets = _extract_resets_in_seconds_from_codex_jsonl(stdout or "")
             if kind == "quota_exceeded":
                 raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
             if kind == "usage_limit":
                 suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
                 raise LLMRouterError(f"Codex usage limit reached{suffix}")
-            raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
+            raise LLMRouterError((stderr or "").strip() or "codex exec failed")
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            return self._run_codex(prompt, model_name=model_name, **kwargs)
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            if image_urls:
+                raise LLMRouterError("codex_cli multimodal path requires local image_paths; image_urls are not supported")
+
+            prompt_sections: list[str] = []
+            if system_prompt and str(system_prompt).strip():
+                prompt_sections.append(str(system_prompt).strip())
+            if messages:
+                for message in messages:
+                    if not isinstance(message, dict):
+                        continue
+                    role = str(message.get("role") or "user").strip()
+                    content = message.get("content")
+                    if isinstance(content, list):
+                        rendered_parts: list[str] = []
+                        for part in content:
+                            if not isinstance(part, dict):
+                                continue
+                            if str(part.get("type") or "").strip() == "text":
+                                text = str(part.get("text") or "").strip()
+                                if text:
+                                    rendered_parts.append(text)
+                        rendered = "\n".join(rendered_parts).strip()
+                    else:
+                        rendered = str(content or "").strip()
+                    if rendered:
+                        prompt_sections.append(f"{role}: {rendered}")
+            else:
+                prompt_sections.append(str(prompt or "").strip())
+                for block in additional_text_blocks or ():
+                    text = str(block or "").strip()
+                    if text:
+                        prompt_sections.append(text)
+
+            resolved_prompt = "\n\n".join(section for section in prompt_sections if section).strip()
+            return self._run_codex(
+                resolved_prompt,
+                model_name=model_name,
+                image_paths=image_paths,
+                **kwargs,
+            )
 
     return _CodexCLIProvider()
 
 
 def _get_copilot_cli_provider() -> Optional[LLMProvider]:
-    default_command = "npx --yes @github/copilot -p {prompt}"
+    default_command = build_standalone_copilot_command_template()
     command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", default_command)
     if not _cli_available(command):
         return None
+    supports_image_inputs = _copilot_cli_supports_image_inputs(command)
 
     class _CopilotCLIProvider:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
@@ -2052,7 +2826,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 (model_name or "").strip()
                 or os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_MODEL", "").strip()
                 or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "").strip()
-                or "gpt-5-mini"
+                or "gpt-5.4"
             )
             timeout = float(kwargs.get("timeout", 180))
 
@@ -2064,6 +2838,14 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
             copilot_log_dir = kwargs.pop("copilot_log_dir", None)
             resume_session_id = kwargs.pop("resume_session_id", None)
             continue_session = bool(kwargs.pop("continue_session", False))
+            copilot_add_dirs = _normalize_copilot_add_dirs(kwargs.pop("copilot_add_dirs", None))
+            if not copilot_add_dirs:
+                copilot_add_dirs = _copilot_cli_add_dirs_from_env()
+            copilot_allow_all_paths_raw = kwargs.pop("copilot_allow_all_paths", None)
+            if copilot_allow_all_paths_raw is None:
+                copilot_allow_all_paths = _copilot_allow_all_paths_default()
+            else:
+                copilot_allow_all_paths = bool(copilot_allow_all_paths_raw)
 
             needs_native = bool(
                 trace_enabled
@@ -2071,6 +2853,8 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 or copilot_log_dir
                 or resume_session_id
                 or continue_session
+                or copilot_add_dirs
+                or copilot_allow_all_paths
             )
 
             if not needs_native:
@@ -2084,7 +2868,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     )
                 )
 
-            if shutil.which("copilot") is None:
+            if find_standalone_copilot_cli() is None:
                 raise RuntimeError(
                     "copilot CLI binary not found on PATH (required for session/tracing flags). "
                     "Install the GitHub Copilot CLI, or unset session args to use the command-template mode."
@@ -2108,15 +2892,23 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     )
 
             cmd: list[str] = [
-                "copilot",
-                "-s",
+                find_standalone_copilot_cli() or "copilot",
+                "--silent",
                 "--stream",
                 "off",
+                "--allow-all-tools",
+                "--no-ask-user",
                 "--model",
                 model,
-                "-p",
+                "--prompt",
                 str(prompt),
             ]
+
+            if copilot_allow_all_paths:
+                cmd.insert(5, "--allow-all-paths")
+
+            for add_dir in copilot_add_dirs:
+                cmd.extend(["--add-dir", add_dir])
 
             if isinstance(copilot_config_dir, str) and copilot_config_dir.strip():
                 cmd.extend(["--config-dir", copilot_config_dir.strip()])
@@ -2191,6 +2983,121 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     pass
 
             return cleaned
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            if not supports_image_inputs:
+                raise LLMRouterError(
+                    "copilot_cli multimodal path unavailable: installed Copilot CLI does not advertise image input support"
+                )
+            if image_urls:
+                raise LLMRouterError("copilot_cli multimodal path requires local image_paths; image_urls are not supported")
+
+            model = (
+                (model_name or "").strip()
+                or os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_MODEL", "").strip()
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "").strip()
+                or "gpt-5-mini"
+            )
+            timeout = float(kwargs.get("timeout", 180))
+            copilot_add_dirs = _normalize_copilot_add_dirs(kwargs.pop("copilot_add_dirs", None))
+            if not copilot_add_dirs:
+                copilot_add_dirs = _copilot_cli_add_dirs_from_env()
+            copilot_allow_all_paths_raw = kwargs.pop("copilot_allow_all_paths", None)
+            if copilot_allow_all_paths_raw is None:
+                copilot_allow_all_paths = _copilot_allow_all_paths_default()
+            else:
+                copilot_allow_all_paths = bool(copilot_allow_all_paths_raw)
+
+            prompt_sections: list[str] = []
+            if system_prompt and str(system_prompt).strip():
+                prompt_sections.append(str(system_prompt).strip())
+            if messages:
+                for message in messages:
+                    if not isinstance(message, dict):
+                        continue
+                    role = str(message.get("role") or "user").strip()
+                    content = message.get("content")
+                    if isinstance(content, list):
+                        rendered_parts: list[str] = []
+                        for part in content:
+                            if not isinstance(part, dict):
+                                continue
+                            if str(part.get("type") or "").strip() == "text":
+                                text = str(part.get("text") or "").strip()
+                                if text:
+                                    rendered_parts.append(text)
+                        rendered = "\n".join(rendered_parts).strip()
+                    else:
+                        rendered = str(content or "").strip()
+                    if rendered:
+                        prompt_sections.append(f"{role}: {rendered}")
+            else:
+                prompt_sections.append(str(prompt or "").strip())
+                for block in additional_text_blocks or ():
+                    text = str(block or "").strip()
+                    if text:
+                        prompt_sections.append(text)
+
+            copilot_cli = find_standalone_copilot_cli()
+            if copilot_cli is None:
+                raise LLMRouterError("Copilot CLI not found on PATH")
+
+            cmd: list[str] = [
+                copilot_cli,
+                "--silent",
+                "--stream",
+                "off",
+                "--allow-all-tools",
+                "--no-ask-user",
+                "--model",
+                model,
+                "--prompt",
+            ]
+
+            if copilot_allow_all_paths:
+                cmd.insert(5, "--allow-all-paths")
+
+            image_dirs: list[str] = []
+            for image_path in image_paths or ():
+                candidate = str(image_path or "").strip()
+                if candidate:
+                    image_dir = os.path.abspath(os.path.dirname(candidate) or ".")
+                    if image_dir not in image_dirs:
+                        image_dirs.append(image_dir)
+                    cmd.extend(["--image", candidate])
+
+            for add_dir in [*copilot_add_dirs, *image_dirs]:
+                if add_dir:
+                    cmd.extend(["--add-dir", add_dir])
+            cmd.append("\n\n".join(section for section in prompt_sections if section).strip())
+
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=timeout,
+                    env=os.environ.copy(),
+                )
+            except FileNotFoundError as exc:
+                raise LLMRouterError("Copilot CLI not found on PATH") from exc
+
+            if proc.returncode != 0:
+                raise LLMRouterError((proc.stderr or "").strip() or "copilot CLI failed")
+
+            return _clean_copilot_output(proc.stdout or "")
 
     return _CopilotCLIProvider()
 
@@ -2347,48 +3254,111 @@ def _get_claude_py_provider() -> Optional[LLMProvider]:
 
     return _ClaudePyProvider()
 
+def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMProvider]:
+    """Return the Mistral Vibe CLI provider without requiring an SDK dependency."""
+
+    configured_command = os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", "").strip()
+    command = configured_command or "vibe --prompt {prompt} --output text --max-turns 1"
+    if not _cli_available(command):
+        if configured_command or not auto_install:
+            return None
+        try:
+            from ipfs_accelerate_py.utils.mistral_vibe import ensure_mistral_vibe
+
+            install_result = ensure_mistral_vibe(auto_install=True)
+        except Exception as exc:
+            raise LLMRouterError(f"Mistral Vibe auto-install failed: {exc}") from exc
+        if not install_result.available:
+            detail = install_result.reason or "installation did not produce a vibe executable"
+            raise LLMRouterError(f"Mistral Vibe provider unavailable: {detail}")
+        command = (
+            f"{shlex.quote(install_result.executable)} "
+            "--prompt {prompt} --output text --max-turns 1"
+        )
+
+    def _mistral_auth_available() -> bool:
+        if _coalesce_env("MISTRAL_API_KEY", "IPFS_DATASETS_PY_MISTRAL_API_KEY"):
+            return True
+        env_file = os.path.join(os.path.expanduser("~"), ".vibe", ".env")
+        try:
+            if not os.path.exists(env_file):
+                return False
+            with open(env_file, "r", encoding="utf-8", errors="replace") as handle:
+                return "MISTRAL_API_KEY=" in handle.read()
+        except OSError:
+            return False
+
+    class _MistralVibeProvider:
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            model = (
+                model_name
+                or os.environ.get("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "")
+            ).strip()
+            timeout = float(kwargs.get("timeout", 240))
+            agent = str(kwargs.pop("mistral_vibe_agent", "") or "").strip()
+            is_leanstral = model.casefold() in {"leanstral", "labs-leanstral-1-5"}
+            if is_leanstral and not agent:
+                agent = "lean"
+            if agent and not re.fullmatch(r"[A-Za-z0-9_-]+", agent):
+                raise ValueError("mistral_vibe_agent must contain only letters, digits, underscores, or hyphens")
+            # The installed lean profile owns its versioned Leanstral model.
+            # Avoid a base-config override that Vibe warns about before it
+            # applies the agent profile.
+            vibe_active_model = "" if agent.casefold() == "lean" else model
+            command_for_call = command
+            if agent and "{agent}" not in command_for_call:
+                command_for_call = f"{command_for_call} --agent {{agent}}"
+            per_call_key = kwargs.pop("mistral_api_key", None)
+            mistral_api_key = (
+                str(per_call_key).strip()
+                if per_call_key is not None and str(per_call_key).strip()
+                else _coalesce_env("IPFS_DATASETS_PY_MISTRAL_API_KEY", "MISTRAL_API_KEY")
+            )
+            try:
+                raw = _run_cli_command(
+                    command_for_call,
+                    prompt,
+                    timeout_seconds=timeout,
+                    template_vars={"agent": agent, "model": model},
+                    label="Mistral Vibe CLI",
+                    extra_env={
+                        **({"MISTRAL_API_KEY": mistral_api_key} if mistral_api_key else {}),
+                        "VIBE_ACTIVE_MODEL": vibe_active_model or None,
+                    }
+                )
+            except LLMRouterError as exc:
+                if not mistral_api_key and not _mistral_auth_available():
+                    raise LLMRouterError(
+                        "Mistral Vibe call failed and no local auth markers were found. "
+                        "Set MISTRAL_API_KEY (or IPFS_DATASETS_PY_MISTRAL_API_KEY) "
+                        "or run 'vibe --setup'."
+                    ) from exc
+                raise
+            return _clean_mistral_vibe_output(raw)
+
+    return _MistralVibeProvider()
+
 
 def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     enable_value = os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")
     if enable_value is not None and enable_value.strip() and not _truthy(enable_value):
         return None
 
-    # If ipfs_accelerate_py isn't installed, skip without initializing anything.
+    # Prefer the local AccelerateManager (always available in this repo) over
+    # importing the external ipfs_accelerate_py package, which may not be installed
+    # or may lack the llm_router module in some configurations.
     try:
-        # Best-effort support for vendored submodule layouts.
-        # In this repo, ipfs_accelerate_py lives at:
-        #   <submodule_root>/ipfs_accelerate_py/ipfs_accelerate_py/
-        # so we need to add <submodule_root>/ipfs_accelerate_py to sys.path.
-        from pathlib import Path
-        import sys
+        from ipfs_datasets_py.ml.accelerate_integration.manager import AccelerateManager as _LocalAccelerateManager
 
-        submodule_root = Path(__file__).resolve().parents[1]
-        candidate = submodule_root / "ipfs_accelerate_py"
-        if candidate.is_dir():
-            candidate_str = str(candidate)
-            if candidate_str not in sys.path:
-                sys.path.insert(0, candidate_str)
-
-        import importlib.util
-
-        if importlib.util.find_spec("ipfs_accelerate_py") is None:
-            return None
-    except Exception:
-        return None
-
-    try:
-        manager = deps.get_accelerate_manager(
-            purpose="llm_router",
-            enable_distributed=True,
-            resources={"purpose": "llm_router"},
-        )
-        if manager is None:
-            return None
+        manager: object = _LocalAccelerateManager()
 
         def _extract_generated_text(result: object) -> Optional[str]:
             if isinstance(result, str) and result.strip():
                 return result
             if isinstance(result, dict):
+                # Skip progress/heartbeat dicts — no real text content.
+                if "heartbeat_ts" in result or ("phase" in result and "worker_id" in result):
+                    return None
                 for key in ("text", "generated_text", "output_text", "completion", "content"):
                     value = result.get(key)
                     if isinstance(value, str) and value.strip():
@@ -2418,13 +3388,15 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
 
         class _AccelerateLLMProvider:
             def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-                # Best-effort hook: if accelerate cannot produce an answer, raise so
-                # the router can fall back.
+                # AccelerateManager routes through: ipfs_accelerate_py → p2p_task_queue
+                # (codex_cli/copilot_cli/hf) → http peers.  Any of those may succeed.
+                # Do NOT pass task_type here — AccelerateManager auto-detects llm.generate
+                # vs text-generation based on whether model_name is an LLM provider name.
+                effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
                 payload = {"prompt": prompt, **kwargs}
-                result = manager.run_inference(
-                    model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                result = manager.run_inference(  # type: ignore[union-attr]
+                    effective_model,
                     payload,
-                    task_type="text-generation",
                 )
                 text = _extract_generated_text(result)
                 if isinstance(text, str) and text:
@@ -2433,9 +3405,179 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                     message = result.get("message")
                     if isinstance(message, str) and message.strip():
                         raise RuntimeError(message.strip())
-                raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
+                raise RuntimeError("AccelerateManager provider did not return generated text")
+
+            def generate_multimodal(
+                self,
+                prompt: str,
+                *,
+                model_name: Optional[str] = None,
+                image_paths: Sequence[str] | None = None,
+                image_urls: Sequence[str] | None = None,
+                system_prompt: Optional[str] = None,
+                additional_text_blocks: Sequence[str] | None = None,
+                messages: Sequence[dict] | None = None,
+                **kwargs: object,
+            ) -> str:
+                effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
+                call_options = dict(kwargs)
+                payload: dict[str, object] = {
+                    "prompt": str(prompt or ""),
+                    "image_urls": [str(url) for url in image_urls or () if str(url or "").strip()],
+                    "image_data_urls": [_image_path_to_data_url(path) for path in image_paths or ()],
+                    "system_prompt": system_prompt,
+                    "additional_text_blocks": _coerce_text_sequence(additional_text_blocks),
+                }
+                if messages is not None:
+                    payload["messages"] = list(messages)
+
+                remote_provider = (
+                    call_options.pop("remote_provider", None)
+                    or call_options.pop("multimodal_provider", None)
+                    or call_options.pop("target_provider", None)
+                )
+                if remote_provider is not None:
+                    payload["provider"] = str(remote_provider)
+
+                for key in (
+                    "max_tokens",
+                    "max_new_tokens",
+                    "temperature",
+                    "top_p",
+                    "top_k",
+                    "timeout",
+                    "image_detail",
+                ):
+                    if key in call_options:
+                        payload[key] = call_options.pop(key)
+
+                def _try_direct_multimodal_provider(provider_name: str) -> Optional[str]:
+                    candidate = _builtin_provider_by_name(provider_name)
+                    if candidate is None or candidate is self:
+                        return None
+                    if isinstance(candidate, NativeMultimodalProvider):
+                        return candidate.generate_multimodal(
+                            prompt,
+                            model_name=None,
+                            image_paths=image_paths,
+                            image_urls=image_urls,
+                            system_prompt=system_prompt,
+                            additional_text_blocks=additional_text_blocks,
+                            messages=messages,
+                            **call_options,
+                        )
+                    return candidate.generate(
+                        _render_multimodal_prompt_for_text_provider(
+                            prompt=prompt,
+                            image_paths=image_paths,
+                            image_urls=image_urls,
+                            system_prompt=system_prompt,
+                            additional_text_blocks=additional_text_blocks,
+                        ),
+                        model_name=None,
+                        **call_options,
+                    )
+
+                manager_error: Exception | None = None
+                try:
+                    result = manager.run_inference(  # type: ignore[union-attr]
+                        effective_model,
+                        payload,
+                        task_type="multimodal-generation",
+                        **call_options,
+                    )
+                    text = _extract_generated_text(result)
+                    if isinstance(text, str) and text:
+                        return text
+                    if isinstance(result, dict):
+                        message = result.get("message")
+                        if isinstance(message, str) and message.strip():
+                            raise RuntimeError(message.strip())
+                    raise RuntimeError("AccelerateManager multimodal provider did not return generated text")
+                except Exception as exc:
+                    manager_error = exc
+
+                provider_candidates: list[str] = []
+                if effective_model.strip().lower() in {
+                    "codex_cli", "copilot_cli", "copilot_sdk", "openai", "hf_inference_api",
+                    "openrouter", "gemini_cli", "gemini_py", "claude_code", "claude_py",
+                }:
+                    provider_candidates.append(effective_model.strip().lower())
+                if remote_provider is not None:
+                    provider_candidates.append(str(remote_provider).strip().lower())
+                provider_candidates.extend(name for name, _ in _iter_unpinned_optional_providers())
+
+                seen: set[str] = set()
+                provider_errors: list[str] = []
+                for provider_name in provider_candidates:
+                    if not provider_name or provider_name in seen:
+                        continue
+                    seen.add(provider_name)
+                    try:
+                        text = _try_direct_multimodal_provider(provider_name)
+                        if isinstance(text, str) and text.strip():
+                            return text
+                    except Exception as exc:
+                        provider_errors.append(f"{provider_name}: {exc}")
+
+                details = "; ".join(provider_errors)
+                raise RuntimeError(
+                    "AccelerateManager multimodal provider failed and no direct provider fallback succeeded. "
+                    f"AccelerateManager error: {manager_error}. "
+                    f"Provider errors: {details or 'none'}"
+                )
 
         return _AccelerateLLMProvider()
+    except Exception:
+        pass
+
+    # Fallback: try the external ipfs_accelerate_py package (may be installed separately).
+    try:
+        from pathlib import Path as _Path
+        import sys as _sys
+
+        submodule_root = _Path(__file__).resolve().parents[1]
+        candidate = submodule_root / "ipfs_accelerate_py"
+        if candidate.is_dir():
+            candidate_str = str(candidate)
+            if candidate_str not in _sys.path:
+                _sys.path.insert(0, candidate_str)
+
+        if importlib.util.find_spec("ipfs_accelerate_py") is None:
+            return None
+    except Exception:
+        return None
+
+    try:
+        manager = deps.get_accelerate_manager(
+            purpose="llm_router",
+            enable_distributed=True,
+            resources={"purpose": "llm_router"},
+        )
+        if manager is None:
+            return None
+
+        class _ExternalAccelerateLLMProvider:
+            def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+                payload = {"prompt": prompt, **kwargs}
+                result = manager.run_inference(
+                    model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                    payload,
+                    task_type="text-generation",
+                )
+                if isinstance(result, str) and result.strip():
+                    return result
+                if isinstance(result, dict):
+                    for key in ("text", "generated_text", "output_text", "completion", "content"):
+                        value = result.get(key)
+                        if isinstance(value, str) and value.strip():
+                            return value
+                    message = result.get("message")
+                    if isinstance(message, str) and message.strip():
+                        raise RuntimeError(message.strip())
+                raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
+
+        return _ExternalAccelerateLLMProvider()
     except Exception:
         return None
 
@@ -2466,6 +3608,32 @@ def _provider_cache_key() -> tuple:
         os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "").strip(),
         os.getenv("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_MISTRAL_VIBE_MODEL", "").strip(),
+        os.getenv("IPFS_DATASETS_PY_MISTRAL_API_KEY", "").strip(),
+        os.getenv("MISTRAL_API_KEY", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL_REF", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_HF_FILE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_PREFETCH_MODEL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTO_INSTALL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_AUTO_UPDATE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_HOST", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_PORT", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_THREADS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_MODEL_PATH", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_MODEL_PATH", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_MODEL_REF", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_HF_FILE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_CONTEXT_SIZE", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_THREADS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_GPU_LAYERS", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_AUTO_INSTALL", "").strip(),
+        os.getenv("IPFS_ACCELERATE_LLAMA_CPP_NATIVE_PACKAGE", "").strip(),
     )
 
 
@@ -2481,6 +3649,70 @@ def _resolve_provider_cached(preferred: Optional[str], cache_key: tuple) -> LLMP
     return _resolve_provider_uncached(preferred, deps=get_default_router_deps())
 
 
+_LLAMA_CPP_SERVER_PROVIDER_ALIASES = {
+    "llama_cpp",
+    "llamacpp",
+    "llama.cpp",
+    "openai_compatible",
+    "local_openai",
+    "leanstral_local",
+}
+
+_LLAMA_CPP_NATIVE_PROVIDER_ALIASES = {
+    "llama_cpp_native",
+    "llamacpp_native",
+    "native_llama_cpp",
+    "llama.cpp_native",
+}
+
+
+def _get_accelerate_llama_cpp_provider(
+    *,
+    auto_install: bool = False,
+    provider_name: str = "llama_cpp",
+) -> Optional[LLMProvider]:
+    """Delegate local llama.cpp serving to ipfs_accelerate_py.llm_router."""
+
+    try:
+        from ipfs_accelerate_py import llm_router as accelerate_llm_router
+    except Exception:
+        return None
+
+    provider = accelerate_llm_router._builtin_provider_by_name(  # type: ignore[attr-defined]
+        provider_name,
+        auto_install=auto_install,
+    )
+    if provider is None:
+        return None
+
+    class _AccelerateLlamaCppProvider:
+        def chat_completions(
+            self,
+            messages: Sequence[ChatMessage],
+            *,
+            model_name: Optional[str] = None,
+            **kwargs: object,
+        ) -> dict:
+            chat = getattr(provider, "chat_completions", None)
+            if not callable(chat):
+                prompt = _messages_to_prompt(messages)
+                return {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": provider.generate(prompt, model_name=model_name, **kwargs)
+                            }
+                        }
+                    ]
+                }
+            return chat(messages, model_name=model_name, **kwargs)
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            return provider.generate(prompt, model_name=model_name, **kwargs)
+
+    return _AccelerateLlamaCppProvider()
+
+
 def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLMProvider]:
     transformers = _resolve_transformers_module(deps=deps)
     if transformers is None:
@@ -2494,6 +3726,84 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
         def __init__(self) -> None:
             self._pipelines: Dict[str, object] = {}
 
+        def _prepare_prompt(
+            self,
+            *,
+            pipe: object,
+            prompt: str,
+            max_new_tokens: int,
+        ) -> tuple[str, int]:
+            tokenizer = getattr(pipe, "tokenizer", None)
+            if tokenizer is None:
+                safe_max_new_tokens = max(1, min(max_new_tokens, 256))
+                if len(prompt) > 8000:
+                    return prompt[-8000:], safe_max_new_tokens
+                return prompt, safe_max_new_tokens
+
+            model_max_length = getattr(tokenizer, "model_max_length", None)
+            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+                model_max_length = 1024
+
+            safe_max_new_tokens = max(
+                1,
+                min(
+                    max_new_tokens,
+                    max(8, model_max_length // 4),
+                    max(1, model_max_length // 2),
+                ),
+            )
+            available_prompt_tokens = max(1, model_max_length - safe_max_new_tokens)
+            try:
+                encoded = tokenizer(
+                    prompt,
+                    truncation=True,
+                    max_length=available_prompt_tokens,
+                    return_tensors=None,
+                )
+                input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
+                if input_ids:
+                    return tokenizer.decode(input_ids, skip_special_tokens=False), safe_max_new_tokens
+            except Exception:
+                pass
+
+            approx_chars = max(512, available_prompt_tokens * 4)
+            return prompt[-approx_chars:], safe_max_new_tokens
+
+        def _retry_after_context_error(
+            self,
+            *,
+            pipe: object,
+            prompt: str,
+            max_new_tokens: int,
+        ) -> tuple[str, int]:
+            # Some tiny local fallback models still throw indexing errors even
+            # after the normal prompt-length preparation step. Retry once with
+            # a much smaller budget so call sites can keep moving.
+            tokenizer = getattr(pipe, "tokenizer", None)
+            model_max_length = getattr(tokenizer, "model_max_length", None)
+            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+                model_max_length = 1024
+
+            retry_max_new_tokens = max(1, min(max_new_tokens, 32, max(1, model_max_length // 8)))
+            retry_prompt_budget = max(1, min(128, max(1, model_max_length // 4)))
+
+            if tokenizer is not None:
+                try:
+                    encoded = tokenizer(
+                        prompt,
+                        truncation=True,
+                        max_length=retry_prompt_budget,
+                        return_tensors=None,
+                    )
+                    input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
+                    if input_ids:
+                        return tokenizer.decode(input_ids, skip_special_tokens=False), retry_max_new_tokens
+                except Exception:
+                    pass
+
+            approx_chars = max(256, retry_prompt_budget * 4)
+            return prompt[-approx_chars:], retry_max_new_tokens
+
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2")
             pipe = self._pipelines.get(model)
@@ -2502,7 +3812,22 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                 self._pipelines[model] = pipe
 
             max_new_tokens = int(kwargs.pop("max_new_tokens", kwargs.pop("max_tokens", 128)))
-            out = pipe(prompt, max_new_tokens=max_new_tokens)
+            prepared_prompt, safe_max_new_tokens = self._prepare_prompt(
+                pipe=pipe,
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+            )
+            try:
+                out = pipe(prepared_prompt, max_new_tokens=safe_max_new_tokens)
+            except (IndexError, RuntimeError) as exc:
+                if "index out of range" not in str(exc).lower():
+                    raise
+                retry_prompt, retry_max_new_tokens = self._retry_after_context_error(
+                    pipe=pipe,
+                    prompt=prompt,
+                    max_new_tokens=safe_max_new_tokens,
+                )
+                out = pipe(retry_prompt, max_new_tokens=retry_max_new_tokens)
             if isinstance(out, list) and out:
                 item = out[0]
                 if isinstance(item, dict) and isinstance(item.get("generated_text"), str):
@@ -2512,14 +3837,25 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
     return _LocalHFProvider()
 
 
-def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
+def _builtin_provider_by_name(name: str, *, auto_install: bool = False) -> Optional[LLMProvider]:
     key = (name or "").strip().lower()
     if not key:
         return None
     if key in {"mock", "dry_run", "dry-run"}:
         return _get_mock_provider()
+    if key in {"p2p", "p2p_task", "p2p_task_queue", "remote_queue", "task_queue"}:
+        return _get_p2p_task_queue_provider()
+    if key in {"openai", "openai_api"}:
+        return _get_openai_provider()
     if key == "openrouter":
         return _get_openrouter_provider()
+    if key in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+        return _get_accelerate_llama_cpp_provider(auto_install=auto_install)
+    if key in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+        return _get_accelerate_llama_cpp_provider(
+            auto_install=auto_install,
+            provider_name="llama_cpp_native",
+        )
     if key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
         return _get_hf_inference_api_provider()
     if key in {"codex", "codex_cli"}:
@@ -2536,9 +3872,32 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
         return _get_claude_code_provider()
     if key in {"claude", "claude_py"}:
         return _get_claude_py_provider()
+    if key in {"mistral_vibe", "mistral-vibe", "vibe"}:
+        return _get_mistral_vibe_provider(auto_install=auto_install)
     if key in {"hf", "huggingface", "local_hf"}:
         return _get_local_hf_provider(deps=get_default_router_deps())
     return None
+
+
+def _set_last_generation_trace(*, provider_name: str, model_name: Optional[str]) -> None:
+    _LAST_GENERATION_TRACE.payload = {
+        "effective_provider_name": str(provider_name or "").strip(),
+        "effective_model_name": str(model_name or "").strip(),
+    }
+
+
+def _clear_last_generation_trace() -> None:
+    _LAST_GENERATION_TRACE.payload = {
+        "effective_provider_name": "",
+        "effective_model_name": "",
+    }
+
+
+def get_last_generation_trace() -> dict[str, str]:
+    payload = getattr(_LAST_GENERATION_TRACE, "payload", None)
+    if isinstance(payload, dict):
+        return dict(payload)
+    return {}
 
 
 def _iter_unpinned_optional_providers() -> list[tuple[str, LLMProvider]]:
@@ -2559,11 +3918,12 @@ def _generate_with_provider_fallbacks(
     kwargs: dict[str, object],
 ) -> str:
     effective_provider_name = (provider_name or "").strip().lower()
+    disable_model_retry = bool(kwargs.pop("disable_model_retry", False))
 
     try:
         return backend.generate(prompt, model_name=model_name, **kwargs)
     except Exception as initial_exc:
-        if model_name is not None:
+        if model_name is not None and not disable_model_retry:
             try:
                 return backend.generate(prompt, model_name=None, **kwargs)
             except Exception:
@@ -2749,7 +4109,19 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = _builtin_provider_by_name(name)
+        if name in {"mistral_vibe", "mistral-vibe", "vibe"}:
+            builtin = _get_mistral_vibe_provider(auto_install=True)
+        elif name in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(auto_install=True)
+        elif name in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(
+                auto_install=True,
+                provider_name="llama_cpp_native",
+            )
+            if builtin is None:
+                raise LLMRouterError("llama-cpp-python not installed for llama_cpp_native provider.")
+        else:
+            builtin = _builtin_provider_by_name(name)
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {preferred_value}")
@@ -2776,7 +4148,19 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
                 raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
             return builtin
 
-        builtin = _builtin_provider_by_name(forced_name)
+        if forced_name in {"mistral_vibe", "mistral-vibe", "vibe"}:
+            builtin = _get_mistral_vibe_provider(auto_install=True)
+        elif forced_name in _LLAMA_CPP_SERVER_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(auto_install=True)
+        elif forced_name in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+            builtin = _get_accelerate_llama_cpp_provider(
+                auto_install=True,
+                provider_name="llama_cpp_native",
+            )
+            if builtin is None:
+                raise LLMRouterError("llama-cpp-python not installed for llama_cpp_native provider.")
+        else:
+            builtin = _builtin_provider_by_name(forced_name)
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {forced}")
@@ -2845,6 +4229,7 @@ def generate_text(
     """Generate text from an LLM."""
 
     resolved_deps = deps or get_default_router_deps()
+    _clear_last_generation_trace()
     if _response_cache_enabled():
         try:
             cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
@@ -2879,13 +4264,18 @@ def generate_text(
             model_name=model_name,
             kwargs=dict(kwargs),
         )
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
         _cache_result(str(result), used_model_name=model_name)
         return result
     except Exception as initial_exc:
-        # When provider selection is automatic, a failed accelerate attempt should
-        # still fall through to the existing remote-provider order before giving up
-        # or considering heavyweight local fallback.
-        if provider is None:
+        # When provider selection is automatic, OR when an explicitly-pinned optional
+        # provider fails (e.g. codex credits exhausted), fall through to other providers
+        # in priority order before giving up.
+        _pinned_optional = (
+            provider is not None
+            and provider.strip().lower() in {p.lower() for p in _UNPINNED_OPTIONAL_PROVIDER_ORDER}
+        )
+        if provider is None or _pinned_optional:
             for fallback_name, fallback_provider in _iter_unpinned_optional_providers():
                 if fallback_provider is backend:
                     continue
@@ -2897,25 +4287,305 @@ def generate_text(
                         model_name=model_name,
                         kwargs=dict(kwargs),
                     )
+                    _set_last_generation_trace(provider_name=fallback_name, model_name=model_name)
                     _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
                     pass
 
+        # If a pinned optional provider (and its siblings above) all failed, also try AccelerateManager.
+        if _pinned_optional:
+            try:
+                accelerate_provider = _get_accelerate_provider(resolved_deps)
+                if accelerate_provider is not None and accelerate_provider is not backend:
+                    result = _generate_with_provider_fallbacks(
+                        "ipfs_accelerate_py",
+                        accelerate_provider,
+                        prompt,
+                        model_name=model_name,
+                        kwargs=dict(kwargs),
+                    )
+                    _set_last_generation_trace(provider_name="ipfs_accelerate_py", model_name=model_name)
+                    _cache_result(str(result), used_model_name=model_name)
+                    return result
+            except Exception:
+                pass
+
         # Fall back to local HF provider if optional provider fails.
-        if allow_local_fallback and provider is None:
+        if allow_local_fallback and (provider is None or _pinned_optional):
             local_hf = _get_local_hf_provider(deps=resolved_deps)
             if local_hf is not None and backend is not local_hf:
                 try:
                     result = local_hf.generate(prompt, model_name=model_name, **kwargs)
+                    _set_last_generation_trace(provider_name="local_hf", model_name=model_name)
                     _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
                     if model_name is not None:
                         result = local_hf.generate(prompt, model_name=None, **kwargs)
+                        _set_last_generation_trace(provider_name="local_hf", model_name=None)
                         _cache_result(str(result), used_model_name=None)
                         return result
         raise
+
+
+def _batch_worker_count(
+    *,
+    size: int,
+    max_workers: Optional[int],
+    provider: Optional[str],
+    default_cap: int = 4,
+) -> int:
+    if size <= 1:
+        return 1
+    if max_workers is not None:
+        try:
+            return max(1, min(int(max_workers), size))
+        except (TypeError, ValueError):
+            return 1
+
+    raw = (
+        os.getenv("IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS", "").strip()
+        or os.getenv("IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS", "").strip()
+        or os.getenv("IPFS_ACCELERATE_PY_LLM_ROUTER_BATCH_WORKERS", "").strip()
+    )
+    if raw:
+        try:
+            return max(1, min(int(raw), size))
+        except (TypeError, ValueError):
+            pass
+
+    provider_key = str(provider or "").strip().lower()
+    if provider_key in _LLAMA_CPP_NATIVE_PROVIDER_ALIASES:
+        return 1
+    return max(1, min(int(default_cap), size))
+
+
+def _provider_supports_accelerate_batch(provider: Optional[str], *, use_mesh: bool) -> bool:
+    if use_mesh:
+        return True
+    provider_key = str(provider or "").strip().lower()
+    if not provider_key:
+        return False
+    return provider_key in {
+        "ipfs_accelerate_py",
+        "accelerate",
+        "p2p_task_queue",
+        "mistral_vibe",
+        "mistral-vibe",
+        "vibe",
+        *_LLAMA_CPP_SERVER_PROVIDER_ALIASES,
+        *_LLAMA_CPP_NATIVE_PROVIDER_ALIASES,
+    }
+
+
+def _normalize_text_batch_result(value: object, *, expected_count: int) -> list[str]:
+    if isinstance(value, str):
+        if expected_count == 1:
+            return [value]
+        raise RuntimeError("Batch LLM provider returned a single string for multiple prompts")
+    try:
+        values = list(value)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise RuntimeError("Batch LLM provider returned a non-iterable result") from exc
+    if len(values) != expected_count:
+        raise RuntimeError(
+            "Batch LLM provider returned "
+            f"{len(values)} results for {expected_count} prompts"
+        )
+    return [str(item or "") for item in values]
+
+
+def generate_text_batch(
+    prompts: Sequence[str],
+    *,
+    model_name: Optional[str] = None,
+    provider: Optional[str] = None,
+    provider_instance: Optional[LLMProvider] = None,
+    deps: Optional[RouterDeps] = None,
+    allow_local_fallback: bool = True,
+    max_workers: Optional[int] = None,
+    use_mesh: bool = False,
+    **kwargs: object,
+) -> list[str]:
+    """Generate an ordered batch of prompt responses.
+
+    The function prefers native batch-capable providers, then delegates explicit
+    accelerate/llama/mesh requests to ``ipfs_accelerate_py``, and finally falls
+    back to bounded parallel calls to :func:`generate_text`.
+    """
+
+    prompt_list = [str(prompt or "") for prompt in list(prompts or [])]
+    if not prompt_list:
+        return []
+
+    resolved_deps = deps or get_default_router_deps()
+    _clear_last_generation_trace()
+    effective_provider_name = _effective_llm_provider_name(provider)
+    results: list[Optional[str]] = [None] * len(prompt_list)
+    misses: list[tuple[int, str]] = []
+
+    if _response_cache_enabled():
+        for idx, prompt in enumerate(prompt_list):
+            try:
+                cache_key = _response_cache_key(
+                    provider=provider,
+                    model_name=model_name,
+                    prompt=prompt,
+                    kwargs=dict(kwargs),
+                )
+                getter = getattr(resolved_deps, "get_cached_or_remote", None)
+                cached = getter(cache_key) if callable(getter) else resolved_deps.get_cached(cache_key)
+                if isinstance(cached, str):
+                    results[idx] = cached
+                    continue
+            except Exception:
+                pass
+            misses.append((idx, prompt))
+    else:
+        misses = list(enumerate(prompt_list))
+
+    if not misses:
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    miss_indices = [idx for idx, _prompt in misses]
+    miss_prompts = [prompt for _idx, prompt in misses]
+
+    def _cache_batch_outputs(outputs: Sequence[str], *, used_model_name: Optional[str]) -> None:
+        if not _response_cache_enabled():
+            return
+        for idx, value in zip(miss_indices, outputs):
+            try:
+                cache_key = _response_cache_key(
+                    provider=provider,
+                    model_name=used_model_name,
+                    prompt=prompt_list[idx],
+                    kwargs=dict(kwargs),
+                )
+                setter = getattr(resolved_deps, "set_cached_and_remote", None)
+                if callable(setter):
+                    setter(cache_key, str(value))
+                else:
+                    resolved_deps.set_cached(cache_key, str(value))
+            except Exception:
+                pass
+
+    backend = provider_instance
+    if backend is not None:
+        text_batch = getattr(backend, "generate_text_batch", None)
+        if callable(text_batch):
+            outputs = _normalize_text_batch_result(
+                text_batch(miss_prompts, model_name=model_name, **kwargs),
+                expected_count=len(miss_prompts),
+            )
+            _cache_batch_outputs(outputs, used_model_name=model_name)
+            for idx, value in zip(miss_indices, outputs):
+                results[idx] = value
+            _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+            return [str(result or "") for result in results]
+        generic_batch = getattr(backend, "generate_batch", None)
+        if callable(generic_batch):
+            outputs = _normalize_text_batch_result(
+                generic_batch(miss_prompts, model_name=model_name, **kwargs),
+                expected_count=len(miss_prompts),
+            )
+            _cache_batch_outputs(outputs, used_model_name=model_name)
+            for idx, value in zip(miss_indices, outputs):
+                results[idx] = value
+            _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+            return [str(result or "") for result in results]
+
+    if backend is None and _provider_supports_accelerate_batch(provider, use_mesh=use_mesh):
+        try:
+            from ipfs_accelerate_py import llm_router as accelerate_llm_router
+
+            batch_generate = getattr(accelerate_llm_router, "generate_text_batch", None)
+            if callable(batch_generate):
+                outputs = _normalize_text_batch_result(
+                    batch_generate(
+                        miss_prompts,
+                        model_name=model_name,
+                        provider=provider,
+                        deps=deps,
+                        max_workers=max_workers,
+                        use_mesh=use_mesh,
+                        **kwargs,
+                    ),
+                    expected_count=len(miss_prompts),
+                )
+                _cache_batch_outputs(outputs, used_model_name=model_name)
+                for idx, value in zip(miss_indices, outputs):
+                    results[idx] = value
+                _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+                return [str(result or "") for result in results]
+        except Exception:
+            if bool(kwargs.get("require_mesh") or kwargs.get("mesh_required")):
+                raise
+
+    backend = backend or get_llm_provider(provider, deps=resolved_deps)
+
+    text_batch = getattr(backend, "generate_text_batch", None)
+    if callable(text_batch):
+        outputs = _normalize_text_batch_result(
+            text_batch(miss_prompts, model_name=model_name, **kwargs),
+            expected_count=len(miss_prompts),
+        )
+        _cache_batch_outputs(outputs, used_model_name=model_name)
+        for idx, value in zip(miss_indices, outputs):
+            results[idx] = value
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    generic_batch = getattr(backend, "generate_batch", None)
+    if callable(generic_batch):
+        outputs = _normalize_text_batch_result(
+            generic_batch(miss_prompts, model_name=model_name, **kwargs),
+            expected_count=len(miss_prompts),
+        )
+        _cache_batch_outputs(outputs, used_model_name=model_name)
+        for idx, value in zip(miss_indices, outputs):
+            results[idx] = value
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        return [str(result or "") for result in results]
+
+    def _generate_one(prompt: str) -> str:
+        return str(
+            generate_text(
+                prompt,
+                model_name=model_name,
+                provider=provider,
+                provider_instance=backend,
+                deps=resolved_deps,
+                allow_local_fallback=allow_local_fallback,
+                **kwargs,
+            )
+        )
+
+    workers = _batch_worker_count(
+        size=len(miss_prompts),
+        max_workers=max_workers,
+        provider=provider,
+        default_cap=4,
+    )
+    if workers <= 1:
+        outputs = [_generate_one(prompt) for prompt in miss_prompts]
+    else:
+        outputs_by_miss: list[Optional[str]] = [None] * len(miss_prompts)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(_generate_one, prompt): miss_idx
+                for miss_idx, prompt in enumerate(miss_prompts)
+            }
+            for future in as_completed(futures):
+                outputs_by_miss[futures[future]] = future.result()
+        outputs = [str(value or "") for value in outputs_by_miss]
+
+    _cache_batch_outputs(outputs, used_model_name=model_name)
+    for idx, value in zip(miss_indices, outputs):
+        results[idx] = value
+    _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+    return [str(result or "") for result in results]
 
 
 def clear_llm_router_caches() -> None:

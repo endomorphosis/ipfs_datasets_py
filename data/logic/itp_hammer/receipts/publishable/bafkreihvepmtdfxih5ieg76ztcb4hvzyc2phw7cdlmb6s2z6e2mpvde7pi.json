@@ -1,0 +1,146 @@
+{
+  "created_at": "2026-07-19T13:04:57.489650+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: verified_coq"
+  ],
+  "publishable_digest": "bafkreibbut6yfwklbe65mfeoga5m6cxwqguwwza6mnfkgmead2i6yxwo7e",
+  "receipt_id": "bafkreihvepmtdfxih5ieg76ztcb4hvzyc2phw7cdlmb6s2z6e2mpvde7pi",
+  "reconstruction_evidence": {
+    "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+    "checked_source": "<redacted:private-theorem-checked-source length=248 digest=bafkreighorzdonjelv6afki3mrmvutt6t63n5vqjra5vrw54rl3smtlfzm>",
+    "checked_source_digest": "bafkreibpmbu3c4qwtpsbkv2rnzhr2au7wqt6h4atvux5f3rlpala4ddnqm",
+    "command": [
+      "/home/barberb/.local/bin/coqtop",
+      "-batch",
+      "-load-vernac-source",
+      "/tmp/hammer-coq-recon-tf_67pqy/Reconstruction.v"
+    ],
+    "itp": "coq",
+    "raw_output_digest": "bafkreibxgpa4dqykjvgyeo7cm5tquuquva55s2xc7onqphzypllb7pq7ym",
+    "reconstructed_proof_text": "<redacted:private-theorem-proof-text length=93 digest=bafkreibrzvjv35ansmtbtuvlg25btcaqmasrelride2mrqmuf2rrv5456e>",
+    "reconstruction_id": "bafkreigtfoc65agd3q4wl7qfkt4fqavbwwlbm2fdejorq3ng664madnlu4",
+    "request_id": "golden-verified-coq-1",
+    "returncode": 0,
+    "schema_version": "1.0.0",
+    "stderr": "<redacted:kernel-stderr length=318 digest=bafkreig3qf6ro4b7irzv44dgcuontpkhcjovnminmm6dpr4los2nejflyy>",
+    "stdout": "<redacted:kernel-stdout length=32 digest=bafkreiftgx25gok2nqdxwbhpwj4pzjyfsjaqqeihcb3hmjhey7q4l6vtxu>",
+    "timed_out": false,
+    "wall_time_seconds": 0.4867446900025243
+  },
+  "redaction_notes": [
+    "kernel-stderr",
+    "kernel-stdout",
+    "private-theorem-checked-source",
+    "private-theorem-goal",
+    "private-theorem-proof-text"
+  ],
+  "result": {
+    "completed_at": null,
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-07-19T13:04:57.489465+00:00",
+    "environment_lock": {
+      "container_digest": null,
+      "executable_paths": {
+        "coqc": "/home/barberb/.local/bin/coqc",
+        "coqtop": "/home/barberb/.local/bin/coqtop"
+      },
+      "itp": "coq",
+      "itp_version": "The Rocq Prover, version 9.1.1",
+      "kernel_command_template": "{coqtop} -batch -load-vernac-source {source_file}",
+      "lock_id": "bafkreigkztpmurrzahbmoc3zlad37lj2qmrclrnvrcgjekv6cldabzfysa",
+      "os_info": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+      "pinned_at": "2026-07-19T13:04:56.996642+00:00",
+      "policy_digest": "bafkreibz7po4d24j4w72tav3jr2hwuy4li3eopo3lhweh3fifl4uop3pdy",
+      "schema_version": "1.0.0",
+      "solver_versions": {}
+    },
+    "errors": [],
+    "notes": [
+      "kernel-checked via CoqReconstructor (HAMMER-010)"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      },
+      {
+        "content_digest": "bafkreifmsx7rjexmds2a3ikidh65cioocz2h6r4oigvidr27garyhwxbau",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_comm",
+        "rank": 1,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a"
+      }
+    ],
+    "proof_candidate": {
+      "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+      "certificate": null,
+      "certificate_format": null,
+      "premise_ids": [
+        "h"
+      ],
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "solver_attempt_id": "native-kernel-direct"
+    },
+    "reconstruction": {
+      "candidate_id": "bafkreidpkzqyvoeiqo3whp532mkfebe3d75pbjhntwde5jsdrcxmana4l4",
+      "environment_lock_id": "bafkreigkztpmurrzahbmoc3zlad37lj2qmrclrnvrcgjekv6cldabzfysa",
+      "failure_reason": null,
+      "finished_at": "2026-07-19T13:04:57.485711+00:00",
+      "kernel_accepted": true,
+      "kernel_command": "/home/barberb/.local/bin/coqtop -batch -load-vernac-source /tmp/hammer-coq-recon-tf_67pqy/Reconstruction.v",
+      "kernel_output_digest": "bafkreibxgpa4dqykjvgyeo7cm5tquuquva55s2xc7onqphzypllb7pq7ym",
+      "reconstruction_id": "bafkreigtfoc65agd3q4wl7qfkt4fqavbwwlbm2fdejorq3ng664madnlu4",
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "started_at": "2026-07-19T13:04:56.997591+00:00",
+      "target_itp": "coq"
+    },
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T13:04:56.981375+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=5 digest=bafkreiecskqsnfl34kyirmf2qt4hvejp7nvtk7ufrnojcyqjzg6y2q3eiy>",
+      "itp": "coq",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-verified-coq-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_verified_coq"
+    },
+    "result_id": "golden-verified-coq-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [],
+    "status": "verified",
+    "translations": []
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

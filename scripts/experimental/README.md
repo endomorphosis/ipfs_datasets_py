@@ -28,7 +28,7 @@ These scripts may:
 - References non-existent modules:
   - `NetworkProtocol` (from libp2p_kit)
   - `ShardMetadata` (from libp2p_kit)
-  - `INetStream` (from py_libp2p)
+  - `INetStream` stream annotations are local stubs; runtime streams come from the MCP++ libp2p transport.
 - Not production-ready
 
 **Future Work:**

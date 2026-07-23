@@ -21,20 +21,36 @@ making it resilient to various failure scenarios.
 """
 
 import logging
+import asyncio
 import anyio
 import glob
+import html
+import json
+import multiprocessing
 import os
+import queue
 import re
+import subprocess
+import sys
 import time
 from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from html.parser import HTMLParser
 from urllib.parse import urlparse, urljoin
 import hashlib
+
+from ..playwright_limiter import acquire_playwright_slot
+from ..legal_scrapers.shared_fetch_cache import (
+    SharedFetchCache,
+    decode_cache_json_value,
+    encode_cache_json_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +59,115 @@ _BROWSER_CHALLENGE_TEXT_RE = re.compile(
     r"you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app",
     re.IGNORECASE,
 )
+
+
+def _common_crawl_search_process_worker(
+    out_queue: Any,
+    *,
+    url: str,
+    search_options: Dict[str, Any],
+    meta_mode: str,
+    hf_remote_enabled: bool,
+    retry_attempts: int,
+    retry_backoff_seconds: float,
+) -> None:
+    """Run a Common Crawl search in a killable subprocess."""
+    try:
+        try:
+            from .common_crawl_integration import _ensure_common_crawl_import_path
+
+            _ensure_common_crawl_import_path()
+        except Exception:
+            pass
+        from common_crawl_search_engine.ccindex import api as ccapi
+
+        def _run(options: Dict[str, Any]):
+            return ccapi.search_domain_via_meta_indexes(url, **options)
+
+        def _is_hf_rate_limit_error(exc: Exception) -> bool:
+            msg = str(exc).lower()
+            return (
+                " 429" in msg
+                or "http 429" in msg
+                or "too many requests" in msg
+                or "rate limit" in msg
+            )
+
+        def _run_remote_with_backoff(options: Dict[str, Any]):
+            attempts = max(1, int(retry_attempts))
+            backoff = max(0.0, float(retry_backoff_seconds))
+            last_exc: Optional[Exception] = None
+            for attempt in range(1, attempts + 1):
+                try:
+                    return _run(options)
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt >= attempts or not _is_hf_rate_limit_error(exc):
+                        raise
+                    time.sleep(backoff * attempt)
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError("HF remote search retry loop exited unexpectedly")
+
+        if bool(search_options.get("hf_remote_meta")):
+            remote_options = dict(search_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            try:
+                remote_result = _run_remote_with_backoff(remote_options)
+                remote_records = list(getattr(remote_result, "records", []) or [])
+                if remote_records or meta_mode == "none":
+                    out_queue.put({"ok": True, "records": remote_records, "used_hf_remote": True})
+                    return
+            except Exception:
+                if meta_mode == "none":
+                    raise
+
+        local_options = dict(search_options)
+        local_options.update({"hf_remote_meta": False})
+
+        try:
+            result = _run(local_options)
+        except (FileNotFoundError, ValueError):
+            if not hf_remote_enabled:
+                raise
+            remote_options = dict(local_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            remote_result = _run_remote_with_backoff(remote_options)
+            out_queue.put({"ok": True, "records": list(getattr(remote_result, "records", []) or []), "used_hf_remote": True})
+            return
+
+        records = list(getattr(result, "records", []) or [])
+        if meta_mode == "collection" and hf_remote_enabled and not records:
+            remote_options = dict(local_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            remote_result = _run_remote_with_backoff(remote_options)
+            out_queue.put({"ok": True, "records": list(getattr(remote_result, "records", []) or []), "used_hf_remote": True})
+            return
+
+        out_queue.put({"ok": True, "records": records, "used_hf_remote": bool(search_options.get("hf_remote_meta"))})
+    except Exception as exc:
+        out_queue.put({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
 
 
 class ScraperMethod(Enum):
@@ -79,6 +204,59 @@ class ScraperResult:
 def _looks_like_browser_challenge_text(*, title: str, text: str, html: str) -> bool:
     hay = "\n".join([str(title or ""), str(text or ""), str(html or "")[:2000]])
     return bool(_BROWSER_CHALLENGE_TEXT_RE.search(hay))
+
+
+class _BasicAnchorExtractor(HTMLParser):
+    def __init__(self, *, base_url: str):
+        super().__init__(convert_charrefs=True)
+        self.base_url = base_url
+        self.links: List[Dict[str, str]] = []
+        self._current_href: Optional[str] = None
+        self._current_text: List[str] = []
+
+    def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
+        if tag.lower() != "a":
+            return
+        href = ""
+        for key, value in attrs:
+            if key.lower() == "href" and value:
+                href = value.strip()
+                break
+        if not href:
+            return
+        self._current_href = href
+        self._current_text = []
+
+    def handle_data(self, data: str) -> None:
+        if self._current_href is not None and data:
+            self._current_text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() != "a" or self._current_href is None:
+            return
+        normalized_href = self._normalize_href(self._current_href)
+        if normalized_href:
+            self.links.append(
+                {
+                    "url": normalized_href,
+                    "text": " ".join("".join(self._current_text).split()),
+                }
+            )
+        self._current_href = None
+        self._current_text = []
+
+    def _normalize_href(self, href: str) -> str:
+        lowered = href.lower()
+        if lowered.startswith(("javascript:", "mailto:", "tel:", "#")):
+            return ""
+        return urljoin(self.base_url, html.unescape(href))
+
+
+def _extract_basic_links(html_text: str, *, base_url: str) -> List[Dict[str, str]]:
+    parser = _BasicAnchorExtractor(base_url=base_url)
+    parser.feed(html_text)
+    parser.close()
+    return parser.links
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -148,6 +326,7 @@ class ScraperConfig:
     common_crawl_hf_revision: Optional[str] = None
     common_crawl_hf_retry_attempts: int = 3
     common_crawl_hf_retry_backoff_seconds: float = 2.0
+    common_crawl_search_timeout_seconds: float = 20.0
     common_crawl_max_matches: int = 25
     common_crawl_max_parquet_files: int = 200
     common_crawl_per_parquet_limit: int = 2000
@@ -195,9 +374,84 @@ class UnifiedWebScraper:
         Initialize the unified scraper.
         """
         self.config = config or ScraperConfig()
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
         self._apply_env_overrides()
         self._check_dependencies()
         self._init_session()
+
+    @staticmethod
+    def _serialize_scraper_result(result: ScraperResult) -> Dict[str, Any]:
+        return encode_cache_json_value({
+            "url": result.url,
+            "content": result.content,
+            "html": result.html,
+            "title": result.title,
+            "text": result.text,
+            "links": list(result.links or []),
+            "metadata": dict(result.metadata or {}),
+            "method_used": result.method_used.value if result.method_used else None,
+            "success": bool(result.success),
+            "errors": list(result.errors or []),
+            "timestamp": result.timestamp,
+            "extraction_time": float(result.extraction_time or 0.0),
+        })
+
+    @staticmethod
+    def _deserialize_scraper_result(payload: Dict[str, Any]) -> ScraperResult:
+        payload = decode_cache_json_value(payload)
+        method_value = str(payload.get("method_used") or "").strip()
+        method_used = None
+        if method_value:
+            try:
+                method_used = ScraperMethod(method_value)
+            except ValueError:
+                method_used = None
+
+        metadata = dict(payload.get("metadata") or {})
+        cache_meta = dict(payload.get("_cache") or {})
+        if cache_meta:
+            metadata["cache"] = cache_meta
+            metadata["cache_hit"] = True
+
+        return ScraperResult(
+            url=str(payload.get("url") or ""),
+            content=str(payload.get("content") or ""),
+            html=str(payload.get("html") or ""),
+            title=str(payload.get("title") or ""),
+            text=str(payload.get("text") or ""),
+            links=list(payload.get("links") or []),
+            metadata=metadata,
+            method_used=method_used,
+            success=bool(payload.get("success", False)),
+            errors=list(payload.get("errors") or []),
+            timestamp=str(payload.get("timestamp") or datetime.now().isoformat()),
+            extraction_time=float(payload.get("extraction_time") or 0.0),
+        )
+
+    def _load_shared_cache_result(self, *, url: str, method: Optional[ScraperMethod]) -> Optional[ScraperResult]:
+        if self._shared_fetch_cache is None or method is not None:
+            return None
+        payload = self._shared_fetch_cache.load(namespace="unified_web_scraper", url=url)
+        if not isinstance(payload, dict):
+            return None
+        try:
+            return self._deserialize_scraper_result(payload)
+        except Exception as exc:
+            logger.warning("Ignoring invalid unified scraper cache entry for %s: %s", url, exc)
+            return None
+
+    def _store_shared_cache_result(self, *, url: str, result: ScraperResult, method: Optional[ScraperMethod]) -> None:
+        if self._shared_fetch_cache is None or method is not None or not result.success:
+            return
+        try:
+            self._shared_fetch_cache.save(
+                namespace="unified_web_scraper",
+                url=url,
+                payload=self._serialize_scraper_result(result),
+                payload_name=f"unified_web_scraper_{hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write unified scraper cache entry for %s: %s", url, exc)
     
     def _check_dependencies(self):
         """Check which scraping libraries are available."""
@@ -231,6 +485,12 @@ class UnifiedWebScraper:
         # Check Common Crawl
         try:
             # Prefer local common_crawl_search_engine integration when available.
+            try:
+                from .common_crawl_integration import _ensure_common_crawl_import_path
+
+                _ensure_common_crawl_import_path()
+            except Exception:
+                pass
             from common_crawl_search_engine.ccindex import api as _ccapi  # noqa: F401
             self.available_methods[ScraperMethod.COMMON_CRAWL] = True
         except ImportError:
@@ -268,19 +528,36 @@ class UnifiedWebScraper:
         
         # Check Newspaper
         try:
-            import newspaper
+            import newspaper  # noqa: F401
             self.available_methods[ScraperMethod.NEWSPAPER] = True
         except ImportError:
-            self.available_methods[ScraperMethod.NEWSPAPER] = False
-            logger.debug("Newspaper3k not available")
+            try:
+                from ipfs_datasets_py.auto_installer import ensure_module
+
+                self.available_methods[ScraperMethod.NEWSPAPER] = (
+                    ensure_module("newspaper", "newspaper3k") is not None
+                )
+            except Exception as exc:
+                self.available_methods[ScraperMethod.NEWSPAPER] = False
+                logger.debug("Newspaper3k not available: %s", exc)
         
         # Check Readability
         try:
-            from readability import Document
+            from readability import Document  # noqa: F401
             self.available_methods[ScraperMethod.READABILITY] = True
         except ImportError:
-            self.available_methods[ScraperMethod.READABILITY] = False
-            logger.debug("Readability not available")
+            try:
+                from ipfs_datasets_py.auto_installer import ensure_module
+
+                if ensure_module("readability", "readability-lxml") is not None:
+                    from readability import Document  # noqa: F401
+
+                    self.available_methods[ScraperMethod.READABILITY] = True
+                else:
+                    self.available_methods[ScraperMethod.READABILITY] = False
+            except Exception as exc:
+                self.available_methods[ScraperMethod.READABILITY] = False
+                logger.debug("Readability not available: %s", exc)
         
         # Requests-only is always available if requests is available
         try:
@@ -487,22 +764,117 @@ class UnifiedWebScraper:
             self.config.cloudflare_include_subdomains = cloudflare_include_subdomains
 
     def _resolve_cloudflare_credentials(self) -> tuple[Optional[str], Optional[str]]:
+        account_names = (
+            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_AGENT_ACCOUNT_ID",
+        )
+        token_names = (
+            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_AGENT_API_KEY",
+        )
+
+        def _vault_value(*names: str) -> Optional[str]:
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                vault = get_secrets_vault()
+                for name in names:
+                    resolved = str(vault.get(name) or "").strip()
+                    if resolved:
+                        return resolved
+            except Exception:
+                return None
+            return None
+
+        def _shared_secret_value(*names: str) -> Optional[str]:
+            candidates = [
+                str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+                str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+                "/etc/github-runner-secrets/secrets.json",
+                "/var/lib/github-runner/secrets.json",
+            ]
+            seen: set[str] = set()
+            for candidate in candidates:
+                if not candidate or candidate in seen:
+                    continue
+                seen.add(candidate)
+                try:
+                    payload = json.loads(Path(candidate).expanduser().read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                if not isinstance(payload, dict):
+                    continue
+                for name in names:
+                    resolved = str(payload.get(name) or "").strip()
+                    if resolved:
+                        return resolved
+            return None
+
+        def _keyring_value(*names: str) -> Optional[str]:
+            timeout_seconds = 1.0
+            try:
+                timeout_seconds = float(
+                    os.getenv("IPFS_DATASETS_PY_KEYRING_TIMEOUT_SECONDS", "1") or "1"
+                )
+            except Exception:
+                timeout_seconds = 1.0
+            if timeout_seconds <= 0:
+                return None
+            code = (
+                "import json, keyring; "
+                f"names = {tuple(str(name) for name in names)!r}; "
+                "value = ''; "
+                "\nfor name in names:\n"
+                "    try:\n"
+                "        candidate = str(keyring.get_password('ipfs_datasets_py', name) or '').strip()\n"
+                "    except Exception:\n"
+                "        candidate = ''\n"
+                "    if candidate:\n"
+                "        value = candidate\n"
+                "        break\n"
+                "print(json.dumps({'value': value}))\n"
+            )
+            try:
+                completed = subprocess.run(
+                    [sys.executable, "-c", code],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=max(0.1, timeout_seconds),
+                )
+            except Exception:
+                return None
+            if completed.returncode != 0:
+                return None
+            try:
+                payload = json.loads(str(completed.stdout or "{}"))
+            except Exception:
+                return None
+            value = str((payload or {}).get("value") or "").strip()
+            return value or None
+
         account_id = (
             self.config.cloudflare_account_id
             or self._env_str(
-                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
-                "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
-                "CLOUDFLARE_ACCOUNT_ID",
+                *account_names
             )
+            or _vault_value(*account_names)
+            or _shared_secret_value(*account_names)
+            or _keyring_value(*account_names)
             or ""
         ).strip() or None
         api_token = (
             self.config.cloudflare_api_token
             or self._env_str(
-                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
-                "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
-                "CLOUDFLARE_API_TOKEN",
+                *token_names
             )
+            or _vault_value(*token_names)
+            or _shared_secret_value(*token_names)
+            or _keyring_value(*token_names)
             or ""
         ).strip() or None
         return account_id, api_token
@@ -725,6 +1097,88 @@ class UnifiedWebScraper:
 
         return result, bool(search_options.get("hf_remote_meta"))
 
+    async def _search_common_crawl_records_bounded(self, ccapi: Any, url: str, *, max_matches: int):
+        """Run Common Crawl lookup without letting stuck IO pin the daemon."""
+        timeout_seconds = max(0.01, float(self.config.common_crawl_search_timeout_seconds))
+        try:
+            ctx = multiprocessing.get_context("fork")
+        except ValueError:
+            task = asyncio.create_task(
+                asyncio.to_thread(
+                    self._search_common_crawl_records,
+                    ccapi,
+                    url,
+                    max_matches=max_matches,
+                )
+            )
+            done, _pending = await asyncio.wait({task}, timeout=timeout_seconds)
+            if task not in done:
+                task.cancel()
+                raise TimeoutError(f"Common Crawl search timed out after {timeout_seconds:.1f}s")
+            return task.result()
+
+        search_options, meta_mode, hf_remote_enabled = self._resolve_common_crawl_search_options(
+            max_matches=max_matches
+        )
+        out_queue = ctx.Queue(maxsize=1)
+        proc = ctx.Process(
+            target=_common_crawl_search_process_worker,
+            kwargs={
+                "out_queue": out_queue,
+                "url": url,
+                "search_options": search_options,
+                "meta_mode": meta_mode,
+                "hf_remote_enabled": hf_remote_enabled,
+                "retry_attempts": int(self.config.common_crawl_hf_retry_attempts),
+                "retry_backoff_seconds": float(self.config.common_crawl_hf_retry_backoff_seconds),
+            },
+        )
+        proc.start()
+        try:
+            proc.join(timeout_seconds)
+            if proc.is_alive():
+                proc.terminate()
+                proc.join(2.0)
+                if proc.is_alive():
+                    proc.kill()
+                    proc.join(2.0)
+                raise TimeoutError(f"Common Crawl search timed out after {timeout_seconds:.1f}s")
+            try:
+                payload = out_queue.get_nowait()
+            except queue.Empty:
+                raise RuntimeError(f"Common Crawl search exited with code {proc.exitcode} and no result")
+            if not isinstance(payload, dict) or not payload.get("ok"):
+                raise RuntimeError(str((payload or {}).get("error") or "Common Crawl search failed"))
+            return SimpleNamespace(records=list(payload.get("records") or [])), bool(payload.get("used_hf_remote"))
+        finally:
+            try:
+                out_queue.close()
+            except Exception:
+                pass
+
+    @staticmethod
+    def _common_crawl_record_url_matches(requested_url: str, record_url: str) -> bool:
+        """Return true when a Common Crawl record is the requested URL."""
+        requested = str(requested_url or "").strip()
+        candidate = str(record_url or "").strip()
+        if not requested or not candidate:
+            return False
+        if requested == candidate:
+            return True
+
+        requested_parts = urlparse(requested)
+        candidate_parts = urlparse(candidate)
+        if requested_parts.netloc.lower() != candidate_parts.netloc.lower():
+            return False
+
+        requested_path = requested_parts.path.rstrip("/") or "/"
+        candidate_path = candidate_parts.path.rstrip("/") or "/"
+        return (
+            requested_path == candidate_path
+            and requested_parts.params == candidate_parts.params
+            and requested_parts.query == candidate_parts.query
+        )
+
     @staticmethod
     def _ssl_retry_allowed(exc: Exception) -> bool:
         message = str(exc).lower()
@@ -838,6 +1292,24 @@ class UnifiedWebScraper:
     async def _extract_pdf_text(pdf_bytes: bytes) -> str:
         if not pdf_bytes:
             return ""
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(pdf_bytes))
+            page_texts = []
+            for page in reader.pages:
+                try:
+                    page_text = str(page.extract_text() or "").strip()
+                except Exception:
+                    page_text = ""
+                if page_text:
+                    page_texts.append(page_text)
+            extracted = "\n\n".join(page_texts).strip()
+            if extracted:
+                return extracted
+        except Exception:
+            pass
+
         temp_path: Optional[Path] = None
         try:
             from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
@@ -953,6 +1425,10 @@ class UnifiedWebScraper:
             ScraperResult with scraped content and metadata
         """
         start_time = time.time()
+        cached = self._load_shared_cache_result(url=url, method=method)
+        if cached is not None:
+            cached.extraction_time = time.time() - start_time
+            return cached
         
         if method:
             # Use specific method
@@ -966,6 +1442,7 @@ class UnifiedWebScraper:
             result = await self._scrape_with_method(url, preferred, **kwargs)
         
         result.extraction_time = time.time() - start_time
+        self._store_shared_cache_result(url=url, result=result, method=method)
         return result
     
     async def _scrape_with_fallback(self, url: str, **kwargs) -> ScraperResult:
@@ -1117,131 +1594,181 @@ class UnifiedWebScraper:
                     })
             return body_text, dom_links
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=self.config.playwright_headless)
-            context = await browser.new_context(
-                user_agent=browser_user_agent,
-                locale="en-US",
-                viewport={"width": 1440, "height": 900},
-            )
-            page = await context.new_page()
+        async with acquire_playwright_slot():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=self.config.playwright_headless)
+                context = await browser.new_context(
+                    accept_downloads=True,
+                    user_agent=browser_user_agent,
+                    locale="en-US",
+                    viewport={"width": 1440, "height": 900},
+                )
+                page = await context.new_page()
 
-            # For binary document URLs (PDF, RTF, etc.) use playwright's fetch API
-            # to retrieve raw bytes — page.goto() won't render binary content.
-            url_lower_pw = url.lower()
-            _binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
-            if any(url_lower_pw.endswith(ext) for ext in _binary_exts):
                 try:
-                    api_resp = await context.request.get(
-                        url,
-                        timeout=self.config.timeout * 1000,
-                    )
-                    if api_resp.ok:
-                        raw_bytes = await api_resp.body()
-                        content_type = api_resp.headers.get("content-type", "")
-                        content_disposition = api_resp.headers.get("content-disposition", "")
-                        filename = self._response_filename(url, content_disposition)
-                        text = ""
-                        if self._content_type_matches(content_type, "application/pdf") or url_lower_pw.endswith(".pdf"):
-                            text = await self._extract_pdf_text(raw_bytes)
-                        elif self._content_type_matches(content_type, "application/rtf", "text/rtf") or url_lower_pw.endswith(".rtf"):
-                            text = await self._extract_rtf_text(raw_bytes)
-                        return ScraperResult(
-                            url=url,
-                            title=filename,
-                            text=text,
-                            content=text,
-                            method_used=ScraperMethod.PLAYWRIGHT,
-                            success=bool(raw_bytes),
-                            metadata={
-                                "method": "playwright_binary_fetch",
-                                "content_type": content_type,
-                                "content_length": len(raw_bytes),
-                                "raw_bytes": raw_bytes,
-                                "binary_document": True,
-                                "ssl_verification_relaxed": False,
-                            },
+                    # For binary document URLs (PDF, RTF, etc.) use Playwright's fetch API
+                    # to retrieve raw bytes; page.goto() will not render binary content.
+                    url_lower_pw = url.lower()
+                    binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
+                    if any(url_lower_pw.endswith(ext) for ext in binary_exts):
+                        try:
+                            api_resp = await context.request.get(
+                                url,
+                                timeout=self.config.timeout * 1000,
+                            )
+                            if api_resp.ok:
+                                raw_bytes = await api_resp.body()
+                                content_type = api_resp.headers.get("content-type", "")
+                                content_disposition = api_resp.headers.get("content-disposition", "")
+                                filename = self._response_filename(url, content_disposition)
+                                text = ""
+                                if self._content_type_matches(content_type, "application/pdf") or url_lower_pw.endswith(".pdf"):
+                                    text = await self._extract_pdf_text(raw_bytes)
+                                elif self._content_type_matches(content_type, "application/rtf", "text/rtf") or url_lower_pw.endswith(".rtf"):
+                                    text = await self._extract_rtf_text(raw_bytes)
+                                return ScraperResult(
+                                    url=url,
+                                    title=filename,
+                                    text=text,
+                                    content=text,
+                                    method_used=ScraperMethod.PLAYWRIGHT,
+                                    success=bool(raw_bytes),
+                                    metadata={
+                                        "method": "playwright_binary_fetch",
+                                        "content_type": content_type,
+                                        "content_length": len(raw_bytes),
+                                        "raw_bytes": raw_bytes,
+                                        "binary_document": True,
+                                        "ssl_verification_relaxed": False,
+                                    },
+                                )
+                        except Exception:
+                            pass
+                        try:
+                            download = None
+                            async with page.expect_download(timeout=self.config.timeout * 1000) as download_info:
+                                try:
+                                    await page.goto(
+                                        url,
+                                        wait_until="domcontentloaded",
+                                        timeout=self.config.timeout * 1000,
+                                    )
+                                except Exception as exc:
+                                    if "download is starting" not in str(exc).lower():
+                                        raise
+                            download = await download_info.value
+                            download_path = await download.path()
+                            if download_path:
+                                raw_bytes = Path(download_path).read_bytes()
+                                suggested_filename = str(getattr(download, "suggested_filename", "") or "")
+                                content_type = "application/octet-stream"
+                                lowered_name = suggested_filename.lower() or url_lower_pw
+                                if lowered_name.endswith(".pdf"):
+                                    content_type = "application/pdf"
+                                elif lowered_name.endswith(".rtf"):
+                                    content_type = "application/rtf"
+                                text = ""
+                                if content_type == "application/pdf":
+                                    text = await self._extract_pdf_text(raw_bytes)
+                                elif content_type == "application/rtf":
+                                    text = await self._extract_rtf_text(raw_bytes)
+                                return ScraperResult(
+                                    url=url,
+                                    title=suggested_filename or self._response_filename(url, ""),
+                                    text=text,
+                                    content=text,
+                                    method_used=ScraperMethod.PLAYWRIGHT,
+                                    success=bool(raw_bytes),
+                                    metadata={
+                                        "method": "playwright_download",
+                                        "content_type": content_type,
+                                        "content_length": len(raw_bytes),
+                                        "raw_bytes": raw_bytes,
+                                        "binary_document": True,
+                                        "ssl_verification_relaxed": False,
+                                    },
+                                )
+                        except Exception:
+                            pass
+
+                    # SPAs on state code hosts often return an initial shell before client-side
+                    # hydration fills in the real body text and links.
+                    await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
+                    try:
+                        await page.wait_for_load_state(
+                            self.config.playwright_wait_for,
+                            timeout=min(5000, self.config.timeout * 1000),
                         )
-                except Exception:
-                    pass  # Fall through to normal DOM scraping
-            
-            try:
-                # SPAs on state code hosts often return an initial shell before client-side
-                # hydration fills in the real body text and links.
-                await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
-                try:
-                    await page.wait_for_load_state(self.config.playwright_wait_for, timeout=min(5000, self.config.timeout * 1000))
-                except Exception:
-                    pass
-                if self.config.playwright_hydration_wait_ms > 0:
-                    await page.wait_for_timeout(self.config.playwright_hydration_wait_ms)
+                    except Exception:
+                        pass
+                    if self.config.playwright_hydration_wait_ms > 0:
+                        await page.wait_for_timeout(self.config.playwright_hydration_wait_ms)
 
-                text, links = await _read_live_dom(page)
-                shell_like = (
-                    (not text.strip())
-                    or "you need to enable javascript to run this app" in text.lower()
-                    or (self.config.extract_links and not links)
-                )
-                if shell_like and self.config.playwright_shell_retry_wait_ms > 0:
-                    await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
                     text, links = await _read_live_dom(page)
-                
-                # Get content
-                html = await page.content()
-                title = await page.title()
-                
-                # Parse with BeautifulSoup
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                # Extract text
-                parsed_text = ""
-                if self.config.extract_text:
-                    for script in soup(["script", "style"]):
-                        script.decompose()
-                    parsed_text = soup.get_text(separator='\n', strip=True)
-                if not text:
-                    text = parsed_text
-                
-                # Extract links
-                if self.config.extract_links and not links:
-                    links = []
-                    for link in soup.find_all('a', href=True):
-                        href = link['href']
-                        if href.startswith('/'):
-                            href = urljoin(url, href)
-                        links.append({
-                            'url': href,
-                            'text': link.get_text(strip=True)
-                        })
-                
-                return ScraperResult(
-                    url=url,
-                    html=html,
-                    title=title,
-                    text=text,
-                    content=text,
-                    links=links,
-                    method_used=ScraperMethod.PLAYWRIGHT,
-                    success=True,
-                    metadata={
-                        'method': 'playwright',
-                        'content_length': len(html)
-                    }
-                )
-            
-            finally:
-                await context.close()
-                await browser.close()
-    
+                    shell_like = (
+                        (not text.strip())
+                        or "you need to enable javascript to run this app" in text.lower()
+                        or (self.config.extract_links and not links)
+                    )
+                    if shell_like and self.config.playwright_shell_retry_wait_ms > 0:
+                        await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
+                        text, links = await _read_live_dom(page)
+
+                    html = await page.content()
+                    title = await page.title()
+                    soup = BeautifulSoup(html, 'html.parser')
+
+                    parsed_text = ""
+                    if self.config.extract_text:
+                        for script in soup(["script", "style"]):
+                            script.decompose()
+                        parsed_text = soup.get_text(separator='\n', strip=True)
+                    if not text:
+                        text = parsed_text
+
+                    extracted_links: List[Dict[str, str]] = []
+                    if self.config.extract_links:
+                        if links:
+                            extracted_links = links
+                        else:
+                            for link in soup.find_all('a', href=True):
+                                href = link['href']
+                                if href.startswith('/'):
+                                    href = urljoin(url, href)
+                                extracted_links.append({
+                                    'url': href,
+                                    'text': link.get_text(strip=True)
+                                })
+
+                    return ScraperResult(
+                        url=url,
+                        title=title,
+                        content=html,
+                        html=html,
+                        text=text,
+                        links=extracted_links,
+                        method_used=ScraperMethod.PLAYWRIGHT,
+                        success=True,
+                        metadata={
+                            'content_type': 'text/html',
+                            'ssl_verification_relaxed': False,
+                        },
+                    )
+                finally:
+                    try:
+                        await page.close()
+                    except Exception:
+                        pass
+                    try:
+                        await context.close()
+                    finally:
+                        await browser.close()
+
     async def _scrape_beautifulsoup(self, url: str, **kwargs) -> ScraperResult:
-        """Scrape using BeautifulSoup + requests."""
+        """Scrape using requests plus BeautifulSoup."""
         from bs4 import BeautifulSoup
-        
-        response, ssl_relaxed = self._request_with_ssl_fallback(
-            url,
-            timeout=self.config.timeout,
-            allow_redirects=self.config.follow_redirects
-        )
+
+        response, ssl_relaxed = self._request_with_ssl_fallback(url, timeout=self.config.timeout)
         response.raise_for_status()
 
         content_type = response.headers.get('Content-Type', '')
@@ -1257,22 +1784,19 @@ class UnifiedWebScraper:
                 method=ScraperMethod.BEAUTIFULSOUP,
                 ssl_verification_relaxed=ssl_relaxed,
             )
-        
+
         soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Extract title
+
         title_tag = soup.find('title')
         title = title_tag.get_text() if title_tag else ""
-        
-        # Extract text
+
         text = ""
         if self.config.extract_text:
             for script in soup(["script", "style"]):
                 script.decompose()
             text = soup.get_text(separator='\n', strip=True)
-        
-        # Extract links
-        links = []
+
+        links: List[Dict[str, str]] = []
         if self.config.extract_links:
             for link in soup.find_all('a', href=True):
                 href = link['href']
@@ -1282,7 +1806,7 @@ class UnifiedWebScraper:
                     'url': href,
                     'text': link.get_text(strip=True)
                 })
-        
+
         return ScraperResult(
             url=url,
             html=response.text,
@@ -1295,7 +1819,7 @@ class UnifiedWebScraper:
             metadata={
                 'method': 'beautifulsoup',
                 'status_code': response.status_code,
-                'content_type': response.headers.get('Content-Type', ''),
+                'content_type': content_type,
                 'content_length': len(response.content),
                 'ssl_verification_relaxed': ssl_relaxed,
             }
@@ -1357,6 +1881,12 @@ class UnifiedWebScraper:
         # Preferred path: use local common_crawl_search_engine for both pointer discovery
         # and record fetching + HTTP extraction.
         try:
+            try:
+                from .common_crawl_integration import _ensure_common_crawl_import_path
+
+                _ensure_common_crawl_import_path()
+            except Exception:
+                pass
             from common_crawl_search_engine.ccindex import api as ccapi
             have_cc_engine = True
         except Exception:
@@ -1364,7 +1894,7 @@ class UnifiedWebScraper:
 
         if have_cc_engine:
             try:
-                res, _used_hf_remote = self._search_common_crawl_records(
+                res, _used_hf_remote = await self._search_common_crawl_records_bounded(
                     ccapi,
                     url,
                     max_matches=int(self.config.common_crawl_max_matches),
@@ -1377,9 +1907,20 @@ class UnifiedWebScraper:
                 chosen = None
                 if self.config.common_crawl_prefer_exact_url:
                     for r in records:
-                        if str(r.get("url") or "") == str(url):
+                        if self._common_crawl_record_url_matches(url, str(r.get("url") or "")):
                             chosen = r
                             break
+                    if chosen is None:
+                        return ScraperResult(
+                            url=url,
+                            success=False,
+                            errors=["No exact Common Crawl record for requested URL"],
+                            method_used=ScraperMethod.COMMON_CRAWL,
+                            metadata={
+                                "method": "common_crawl_search_engine",
+                                "candidate_urls": [str(r.get("url") or "") for r in records[:10]],
+                            },
+                        )
                 if chosen is None:
                     chosen = records[0]
 
@@ -1422,12 +1963,23 @@ class UnifiedWebScraper:
                     gz_bytes,
                     max_body_bytes=int(self.config.common_crawl_fetch_max_bytes),
                     max_preview_chars=200_000,
+                    include_body_base64=True,
                 )
 
                 html = http.body_text_preview or ""
                 title = ""
                 text = ""
                 links = []
+                content_disposition = str((http.http_headers or {}).get("content-disposition") or "")
+                is_binary_document = (
+                    bool(getattr(http, "body_base64", None))
+                    and not bool(http.body_is_html)
+                    and self._is_binary_document_response(
+                        url=url,
+                        content_type=str(http.body_mime or ""),
+                        content_disposition=content_disposition,
+                    )
+                )
                 if html and (http.body_is_html or (http.body_mime or "").startswith("text/html")):
                     try:
                         from bs4 import BeautifulSoup
@@ -1470,6 +2022,9 @@ class UnifiedWebScraper:
                         "http_charset": http.body_charset,
                         "ok": http.ok,
                         "error": http.error,
+                        "content_disposition": content_disposition,
+                        "body_base64": http.body_base64 if is_binary_document else None,
+                        "body_bytes_base64": len(http.body_base64 or "") if is_binary_document else 0,
                     },
                 )
             except Exception as e:
@@ -1863,6 +2418,10 @@ class UnifiedWebScraper:
         # Extract title
         title_match = re.search(r'<title[^>]*>([^<]+)</title>', response.text, re.IGNORECASE)
         title = title_match.group(1) if title_match else ""
+
+        links: List[Dict[str, str]] = []
+        if self.config.extract_links:
+            links = _extract_basic_links(response.text, base_url=url)
         
         return ScraperResult(
             url=url,
@@ -1870,6 +2429,7 @@ class UnifiedWebScraper:
             html=response.text,
             text=text,
             content=text,
+            links=links,
             method_used=ScraperMethod.REQUESTS_ONLY,
             success=True,
             metadata={
@@ -1932,7 +2492,7 @@ class UnifiedWebScraper:
             import base64
             from bs4 import BeautifulSoup
 
-            res, _used_hf_remote = self._search_common_crawl_records(
+            res, _used_hf_remote = await self._search_common_crawl_records_bounded(
                 ccapi,
                 url,
                 max_matches=max_pages_i,
@@ -2102,12 +2662,23 @@ class UnifiedWebScraper:
                     gz_bytes,
                     max_body_bytes=int(self.config.common_crawl_fetch_max_bytes),
                     max_preview_chars=200_000,
+                    include_body_base64=True,
                 )
 
                 html = http.body_text_preview or ""
                 title = ""
                 text = ""
                 links: List[Dict[str, str]] = []
+                content_disposition = str((http.http_headers or {}).get("content-disposition") or "")
+                is_binary_document = (
+                    bool(getattr(http, "body_base64", None))
+                    and not bool(http.body_is_html)
+                    and self._is_binary_document_response(
+                        url=page_url,
+                        content_type=str(http.body_mime or ""),
+                        content_disposition=content_disposition,
+                    )
+                )
                 if html and (http.body_is_html or (http.body_mime or "").startswith("text/html")):
                     try:
                         soup = BeautifulSoup(html, "html.parser")
@@ -2137,7 +2708,7 @@ class UnifiedWebScraper:
                         content=text or html,
                         links=links,
                         method_used=ScraperMethod.COMMON_CRAWL,
-                        success=bool(html or text),
+                        success=bool(html or text or is_binary_document),
                         metadata={
                             "method": "common_crawl_search_engine",
                             "cc_record": r,
@@ -2148,6 +2719,9 @@ class UnifiedWebScraper:
                             "http_charset": http.body_charset,
                             "ok": http.ok,
                             "error": http.error,
+                            "content_disposition": content_disposition,
+                            "body_base64": http.body_base64 if is_binary_document else None,
+                            "body_bytes_base64": len(http.body_base64 or "") if is_binary_document else 0,
                         },
                     )
                 )

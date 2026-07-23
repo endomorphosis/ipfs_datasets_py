@@ -1,0 +1,112 @@
+{
+  "coverage_gaps": [
+    {
+      "action": "decline",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "314a4abaab2d00c11cc1d563acbd39bd7c470504f007aaa7760705e6ba20943b"
+    },
+    {
+      "action": "cancel",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "eb00ed3e1e2b20504a0e9ed7bac7e634d236188371d6633d83249d77ffb64680"
+    },
+    {
+      "action": "expiry",
+      "reason_code": "not_exercised_in_reviewed_trial",
+      "reviewer_note_sha256": "3d4702552580ee2cf5372f4f73df605d74767d51078fd77e119284ee5154c1f1"
+    }
+  ],
+  "evidence_type": "reviewed_operator_trial",
+  "fresh_account_boundary": {
+    "account_material_recorded": false,
+    "fresh_account_created": true,
+    "imported_account": false,
+    "production_account": false
+  },
+  "fresh_emulator_profile": true,
+  "lifecycle_events": [
+    {
+      "action": "payload_intake",
+      "category": "payload_intake",
+      "ordinal": 1,
+      "outcome": "accepted",
+      "raw_material_recorded": false,
+      "redaction_sha256": "96116668f11401072b8489485259abcb2e56466a7705d41e15e95b5408c5ca8b",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "fbca32456147129349901d0cbe8a3d9c3160d96b5261a4d4b34d4df2054c78be"
+    },
+    {
+      "action": "review",
+      "category": "payload_review",
+      "ordinal": 2,
+      "outcome": "reviewed",
+      "raw_material_recorded": false,
+      "redaction_sha256": "70651242c2e8b8588411fe35a71beb63a10aedcacdf6c972f79d3e0f02b1e610",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "984e8306a11b4e9fccd1cbc1816bcce6b8d02bb16c396bab6c0a6c5f2d78b8c4"
+    },
+    {
+      "action": "auth_decision",
+      "category": "auth_decision",
+      "ordinal": 3,
+      "outcome": "authorized",
+      "raw_material_recorded": false,
+      "redaction_sha256": "4005b055b666f4f296fdab466d2c71b96be420d1401271b72675b63e2a3e6927",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "29c9e094bc0d997e539918cb3c65927a213eb382404a8872cba4d8af85f7cc8e"
+    },
+    {
+      "action": "signing_decision",
+      "category": "signing_decision",
+      "ordinal": 4,
+      "outcome": "signed",
+      "raw_material_recorded": false,
+      "redaction_sha256": "480b1622ba935f6b49feab2f92b9caa5a10868c14c8420780896ccb22f1642f5",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "f6d5656a0c83728b06fdc96e138b169115a9cc97ed607f970824bb019e340e66"
+    },
+    {
+      "action": "submit_attempt",
+      "category": "submit_attempt",
+      "ordinal": 5,
+      "outcome": "submitted",
+      "raw_material_recorded": false,
+      "redaction_sha256": "223765be8420ebaca78009f4c1ef4aba4749c2db7c53fe67b11840b745bb1368",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "e0f3362055b2e4aa0dceaf1781d45bd3b4af5a8b731bd8c4eddf7879774477c4"
+    },
+    {
+      "action": "submit_result",
+      "category": "submit_result",
+      "ordinal": 6,
+      "outcome": "succeeded",
+      "raw_material_recorded": false,
+      "redaction_sha256": "4068f7fe654e7901b0a3bb7ad05d960206276d0efcf7cfdfb30755afc02f343b",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "93ab4d1852d7b8242ae6fc6b30463dc2858c515d71d1a744f5aa58725a1d313f"
+    },
+    {
+      "action": "reconnect",
+      "category": "reconnect",
+      "ordinal": 7,
+      "outcome": "reconnected",
+      "raw_material_recorded": false,
+      "redaction_sha256": "e4430c84025a6f297c1fdf81c2e35804e52efbd0c12110f0b9ae3193c3868331",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "7f4d1f75434f3d52f0afef2cd3bc64d998713abc27db055f9a3ef86a2664a086"
+    },
+    {
+      "action": "network_switch",
+      "category": "network_switch",
+      "ordinal": 8,
+      "outcome": "switched_to_testnet",
+      "raw_material_recorded": false,
+      "redaction_sha256": "6e1137d504a93d5f242ca1dae9802aced9c81bb87e7957d16a29d3398d68925a",
+      "source_kind": "reviewed_ui",
+      "source_sha256": "6c7e93add2a617b4c29678631f1628ba0f0a2445b069a91b26f00215306800eb"
+    }
+  ],
+  "network_key": "TESTNET",
+  "reviewed_at_utc": "2026-07-10T23:00:00Z",
+  "schema_version": "xaman-testnet-transaction-lifecycle-evidence/v1"
+}

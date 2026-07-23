@@ -2,18 +2,18 @@
 
 ## TL;DR
 
-✅ **Correct**: `gh agent-task create` → Copilot creates PR and works autonomously
-⚠️ **Works but deprecated**: `@copilot` comment on issue → Copilot creates PR
-❌ **Wrong**: Create PR → `@copilot` comment → Copilot creates child PR (PR sprawl)
+✅ **Use for new hosted tasks when supported**: `gh agent-task create`
+✅ **Use for this repo's existing-PR automation**: draft PR or existing PR + Copilot comment flow
+⚠️ **Do not assume these are interchangeable**: hosted agent-task creation and PR-comment automation are different surfaces
 
 ## The Discovery (Updated November 6, 2025)
 
-After extensive testing, we discovered the **official method**:
+After extensive testing, we settled on two separate patterns:
 
-1. **Use `gh agent-task create` command** (requires GitHub CLI v2.80.0+)
-2. **Copilot automatically creates a PR and works directly in it**
-3. **Concurrency limit: 3 active agents maximum**
-4. **Queue management: Check active count before creating new tasks**
+1. **Use `gh agent-task create` only when your local or runner `gh` build actually supports it and you want Copilot to create a new PR**
+2. **Use the PR-comment flow for this repo's draft-PR and existing-PR automation**
+3. **Keep queue management separate from local CLI assumptions**
+4. **Validate the available Copilot surface in the environment before relying on it**
 
 ## Why This Matters
 
@@ -33,10 +33,10 @@ After extensive testing, we discovered the **official method**:
 
 ## How To Invoke Copilot Correctly
 
-### Method 1: Using `gh agent-task create` (Official Method, Recommended)
+### Method 1: Using `gh agent-task create` for New Hosted Tasks
 
 **Requirements:**
-- GitHub CLI v2.80.0 or later
+- A `gh` build that actually exposes `agent-task` in the current environment
 - Authenticated with `gh auth login`
 
 **Command:**
@@ -79,11 +79,11 @@ gh issue comment 772 --repo endomorphosis/ipfs_datasets_py --body "@copilot
 Please analyze this workflow failure and create a pull request with fixes."
 ```
 
-**Note:** This method still works but is not the official CLI method. Use `gh agent-task create` for better control and visibility.
+**Note:** This is a different Copilot surface from `gh agent-task create`. In this repo it remains the maintained path for draft-PR and existing-PR automation.
 
 ### Method 3: Automated via Workflow
 
-The `.github/workflows/copilot-issue-assignment.yml` workflow now uses `gh agent-task create`:
+The `.github/workflows/copilot-issue-assignment.yml` workflow demonstrates a hosted new-task path when `gh agent-task` is available:
 
 - **Triggers**: Issues with "Fix:" prefix or "copilot-fix" label
 - **Checks concurrency**: Ensures max 3 active agents
@@ -195,12 +195,11 @@ Visit: https://github.com/copilot/agents
 
 ## Lessons Learned
 
-1. **`gh agent-task create`** is the official GitHub CLI method (v2.80.0+)
-2. **Concurrency limit is 3 agents** - check before creating new tasks
-3. **@copilot comments** work but are not the official CLI method
-4. **Commenting @copilot on existing PRs** creates child PRs (by design, for preserving original work)
-5. **Queue management** is essential to avoid hitting concurrency limits
-6. **Session URLs** provide real-time progress tracking
+1. **`gh agent-task create` and PR-comment automation are different Copilot surfaces**
+2. **Use `gh agent-task create` only for new hosted tasks and only when the local environment supports it**
+3. **Use the repo's maintained draft-PR/comment flow for existing PR automation**
+4. **Queue management** is essential regardless of the invocation surface
+5. **Session URLs and PR activity are the real progress indicators, not the invocation method label alone**
 
 ## Old vs New Flow
 
@@ -217,13 +216,13 @@ Copilot creates Child PR  ← PR SPRAWL
 Child PR needs review
 ```
 
-### New Flow (Current - November 6, 2025)
+### New Hosted-Task Flow (When Supported)
 ```
 Workflow Fails
     ↓
 Create Issue
     ↓
-gh agent-task create  ← OFFICIAL METHOD
+gh agent-task create  ← CONDITIONAL HOSTED METHOD
     ↓
 Check concurrency (max 3 agents)
     ↓
@@ -233,7 +232,7 @@ Single PR needs review
 ```
 
 **Benefits:**
-- Official GitHub CLI command
+- Clean new-task creation when supported by the environment
 - Built-in concurrency awareness
 - Session URL for progress tracking
 - Clean PR structure (no child PRs)

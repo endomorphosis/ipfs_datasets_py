@@ -6,7 +6,8 @@ This module provides a Python-native grammar system that replaces the GF
 semantics, parse tree construction, and bidirectional NL↔DCEC conversion.
 """
 
-from typing import List, Dict, Optional, Any, Tuple, Callable
+from collections.abc import Callable
+from typing import Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
@@ -14,7 +15,7 @@ import logging
 try:
     from beartype import beartype
 except ImportError:
-    from typing import TypeVar, Callable, Any
+    from typing import TypeVar
     F = TypeVar('F', bound=Callable[..., Any])
     def beartype(func: F) -> F:
         return func
@@ -69,17 +70,17 @@ class GrammarRule:
     """
     name: str
     category: Category
-    constituents: List[Category]
-    semantic_fn: Callable[[List[Any]], Any]
+    constituents: list[Category]
+    semantic_fn: Callable[[list[Any]], Any]
     linearize_fn: Optional[Callable[[Any], str]] = None
     
-    def can_apply(self, categories: List[Category]) -> bool:
+    def can_apply(self, categories: list[Category]) -> bool:
         """Check if this rule can apply to the given categories."""
         if len(categories) != len(self.constituents):
             return False
         return all(c1 == c2 for c1, c2 in zip(categories, self.constituents))
     
-    def apply_semantics(self, semantic_values: List[Any]) -> Any:
+    def apply_semantics(self, semantic_values: list[Any]) -> Any:
         """Apply the semantic function to constituent values."""
         return self.semantic_fn(semantic_values)
     
@@ -103,7 +104,7 @@ class LexicalEntry:
     word: str
     category: Category
     semantics: Any
-    features: Dict[str, Any] = field(default_factory=dict)
+    features: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -119,9 +120,9 @@ class ParseNode:
     """
     category: Category
     rule: Optional[GrammarRule]
-    children: List['ParseNode']
+    children: list['ParseNode']
     semantics: Any
-    span: Tuple[int, int]
+    span: tuple[int, int]
     
     def is_lexical(self) -> bool:
         """Check if this is a lexical (leaf) node."""
@@ -149,8 +150,8 @@ class GrammarEngine:
     
     def __init__(self) -> None:
         """Initialize the grammar engine."""
-        self.rules: List[GrammarRule] = []
-        self.lexicon: Dict[str, List[LexicalEntry]] = {}
+        self.rules: list[GrammarRule] = []
+        self.lexicon: dict[str, list[LexicalEntry]] = {}
         self.start_category = Category.UTTERANCE
         
     @beartype  # type: ignore[untyped-decorator]
@@ -176,7 +177,7 @@ class GrammarEngine:
         logger.debug(f"Added lexical entry: {entry.word} → {entry.category.value}")
     
     @beartype  # type: ignore[untyped-decorator]
-    def parse(self, text: str) -> List[ParseNode]:
+    def parse(self, text: str) -> list[ParseNode]:
         """Parse natural language text into parse trees.
         
         Uses bottom-up chart parsing with compositional semantics.
@@ -192,7 +193,7 @@ class GrammarEngine:
         n = len(tokens)
         
         # Initialize chart: chart[i][j] contains parses for span [i, j)
-        chart: List[List[List[ParseNode]]] = [[[] for _ in range(n + 1)] for _ in range(n + 1)]
+        chart: list[list[list[ParseNode]]] = [[[] for _ in range(n + 1)] for _ in range(n + 1)]
         
         # Fill lexical entries
         for i, token in enumerate(tokens):
@@ -277,7 +278,7 @@ class GrammarEngine:
         # Default: string conversion
         return str(semantic_value)
     
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """Tokenize input text.
         
         Simple whitespace tokenization for now. Can be enhanced.
@@ -293,7 +294,7 @@ class GrammarEngine:
         return tokens
     
     @beartype  # type: ignore[untyped-decorator]
-    def resolve_ambiguity(self, parses: List[ParseNode], strategy: str = "first") -> Optional[ParseNode]:
+    def resolve_ambiguity(self, parses: list[ParseNode], strategy: str = "first") -> Optional[ParseNode]:
         """Resolve ambiguous parses using a strategy.
         
         Args:
@@ -345,13 +346,13 @@ class CompositeGrammar:
     Useful for modular grammar development and testing.
     """
     name: str
-    engines: List[GrammarEngine] = field(default_factory=list)
+    engines: list[GrammarEngine] = field(default_factory=list)
     
     def add_engine(self, engine: GrammarEngine) -> None:
         """Add a grammar engine to this composite."""
         self.engines.append(engine)
     
-    def parse(self, text: str) -> List[ParseNode]:
+    def parse(self, text: str) -> list[ParseNode]:
         """Parse using all engines and merge results."""
         all_parses = []
         for engine in self.engines:
@@ -392,7 +393,7 @@ def make_binary_rule(
     Returns:
         Grammar rule
     """
-    def wrapper_semantic_fn(constituents: List[Any]) -> Any:
+    def wrapper_semantic_fn(constituents: list[Any]) -> Any:
         return semantic_fn(constituents[0], constituents[1])
     
     return GrammarRule(
@@ -424,7 +425,7 @@ def make_unary_rule(
     Returns:
         Grammar rule
     """
-    def wrapper_semantic_fn(constituents: List[Any]) -> Any:
+    def wrapper_semantic_fn(constituents: list[Any]) -> Any:
         return semantic_fn(constituents[0])
     
     return GrammarRule(

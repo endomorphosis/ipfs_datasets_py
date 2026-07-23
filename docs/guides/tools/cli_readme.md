@@ -29,6 +29,7 @@ python ipfs_datasets_cli.py [command] [options]
 - `vector` - Vector indexing and search
 - `graph` - Knowledge graph operations
 - `cli` - Command execution (limited for security)
+- `docket` - Docket dataset import, packaging, and citation auditing
 
 ### 2. Enhanced CLI Tool (`scripts/cli/enhanced_cli.py`) - Deprecated
 
@@ -128,6 +129,44 @@ python scripts/cli/enhanced_cli.py analysis_tools analysis_tools
 # System monitoring
 python scripts/cli/enhanced_cli.py bespoke_tools system_status
 python scripts/cli/enhanced_cli.py bespoke_tools system_health
+```
+
+### Docket Dataset Audit
+
+```bash
+# Import a docket JSON and emit citation audit (including EU/member-state citations)
+./ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Tune EU/member-state citation audit extraction
+./ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
+  --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
+```
+
+See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
+
+### Workspace Dataset Bundles
+
+```bash
+# Export a single-parquet workspace bundle
+./ipfs-datasets workspace --action export --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --json
+
+# Package a multi-piece workspace bundle (Parquet + optional CAR)
+./ipfs-datasets workspace --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json
+
+# Inspect packaged bundle summary
+./ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
+```
+
+### Email Authority Enrichment
+
+```bash
+# Build legal authority enrichment from an email timeline handoff
+./ipfs-datasets email authority-enrichment /path/to/email_timeline_handoff.json
+
+# Override topic hints/seed authority catalog
+./ipfs-datasets email authority-enrichment /path/to/email_timeline_handoff.json \
+  --catalog-path /path/to/email_authority_enrichment_catalog.json \
+  --output-dir /tmp/authority_enrichment
 ```
 
 ## Tool Categories Available

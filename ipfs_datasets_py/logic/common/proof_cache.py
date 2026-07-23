@@ -73,6 +73,14 @@ from threading import RLock
 import time
 import logging
 import json
+import os
+import tempfile
+from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - non-POSIX compatibility
+    fcntl = None
 
 try:
     from cachetools import TTLCache
@@ -94,17 +102,52 @@ except ImportError:
         json_str = json.dumps(obj, sort_keys=True)
         return hashlib.sha256(json_str.encode()).hexdigest()
 
-# Import IPFS backend support (optional - Phase 1 Task 1.3)
-try:
-    from ipfs_datasets_py.caching.router_remote_cache import IPFSBackedRemoteCache
-    from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
-    IPFS_BACKEND_AVAILABLE = True
-except ImportError:
-    IPFS_BACKEND_AVAILABLE = False
-    IPFSBackedRemoteCache = None  # type: ignore
-    get_ipfs_backend = None  # type: ignore
+# IPFS backend imports are deferred to ProofCache.__init__ to keep this module
+# lightweight at import time (avoids pulling in ipfs_kit_py / lotus_kit eagerly).
+IPFS_BACKEND_AVAILABLE: bool | None = None  # None = not yet probed
+IPFSBackedRemoteCache = None  # type: ignore
+get_ipfs_backend = None  # type: ignore
+
+
+def _probe_ipfs_backend() -> bool:
+    """Lazily probe whether the IPFS backend dependencies are importable."""
+    global IPFS_BACKEND_AVAILABLE, IPFSBackedRemoteCache, get_ipfs_backend
+    if IPFS_BACKEND_AVAILABLE is not None:
+        return IPFS_BACKEND_AVAILABLE
+    try:
+        import warnings as _cache_warnings
+        with _cache_warnings.catch_warnings():
+            _cache_warnings.simplefilter("ignore")
+            from ipfs_datasets_py.caching.router_remote_cache import (  # noqa: PLC0415
+                IPFSBackedRemoteCache as _IRC,
+            )
+            from ipfs_datasets_py.ipfs_backend_router import (  # noqa: PLC0415
+                get_ipfs_backend as _GIB,
+            )
+        IPFSBackedRemoteCache = _IRC  # type: ignore
+        get_ipfs_backend = _GIB  # type: ignore
+        IPFS_BACKEND_AVAILABLE = True
+    except Exception:
+        IPFS_BACKEND_AVAILABLE = False
+    return IPFS_BACKEND_AVAILABLE
 
 logger = logging.getLogger(__name__)
+_CID_FALLBACK_LOGGED = False
+_PERSISTENCE_SCHEMA_VERSION = "proof-cache-v1"
+
+
+def _safe_timestamp(value: Any) -> float:
+    """Return a finite cache timestamp or zero for malformed persisted data."""
+
+    try:
+        timestamp = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    finite = timestamp == timestamp and timestamp not in (
+        float("inf"),
+        float("-inf"),
+    )
+    return timestamp if finite else 0.0
 
 
 @dataclass
@@ -220,13 +263,20 @@ class ProofCache:
             'ipfs_hits': 0,
             'ipfs_sets': 0,
             'ipfs_errors': 0,
+            'persistence_loads': 0,
+            'persistence_writes': 0,
+            'persistence_errors': 0,
+            'persistence_skipped_results': 0,
         }
+
+        if self.enable_persistence:
+            self._load_persistent_cache()
         
         # Initialize IPFS backend if requested (Phase 1 Task 1.3)
         self.ipfs_backend = None
         self.ipfs_cache = None
         if enable_ipfs_backend:
-            if not IPFS_BACKEND_AVAILABLE:
+            if not _probe_ipfs_backend():
                 logger.warning(
                     "IPFS backend requested but ipfs_backend_router not available. "
                     "Falling back to local-only caching."
@@ -257,6 +307,209 @@ class ProofCache:
         
         logger.info(f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s, "
                    f"ipfs_backend={enable_ipfs_backend}")
+
+    def _entry_expired(
+        self,
+        entry: CachedProofResult,
+        *,
+        now: Optional[float] = None,
+    ) -> bool:
+        """Return whether an entry has exceeded its wall-clock persistence TTL."""
+
+        if self.ttl is None or self.ttl <= 0:
+            return False
+        return (now if now is not None else time.time()) - entry.timestamp >= self.ttl
+
+    def _load_persistent_cache(self) -> None:
+        """Load JSON-safe CID entries from disk, ignoring stale or corrupt data."""
+
+        if not self.persistence_path:
+            logger.warning("Proof cache persistence enabled without a persistence_path")
+            return
+        path = Path(self.persistence_path)
+        if not path.exists():
+            return
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("proof cache payload must be an object")
+            if payload.get("schema_version") != _PERSISTENCE_SCHEMA_VERSION:
+                logger.warning("Ignoring unsupported proof cache persistence schema")
+                return
+            raw_entries = payload.get("entries")
+            if not isinstance(raw_entries, list):
+                raise ValueError("proof cache entries must be a list")
+            now = time.time()
+            loaded = 0
+            entries = sorted(
+                (entry for entry in raw_entries if isinstance(entry, dict)),
+                key=lambda entry: _safe_timestamp(entry.get("timestamp")),
+                reverse=True,
+            )[: self.maxsize]
+            with self.lock:
+                for raw in reversed(entries):
+                    entry = CachedProofResult(
+                        result=raw["result"],
+                        cid=str(raw["cid"]),
+                        prover_name=str(raw.get("prover_name") or "unknown"),
+                        formula_str=str(raw.get("formula_str") or ""),
+                        timestamp=_safe_timestamp(raw.get("timestamp")),
+                        hit_count=max(0, int(raw.get("hit_count") or 0)),
+                    )
+                    if self._entry_expired(entry, now=now):
+                        continue
+                    self.cache[entry.cid] = entry
+                    loaded += 1
+                self.stats["persistence_loads"] += loaded
+        except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError) as exc:
+            self.stats["persistence_errors"] += 1
+            logger.warning(
+                "Ignoring unreadable proof cache persistence file %s: %s",
+                path,
+                exc,
+            )
+
+    def _persistent_payload(self) -> Dict[str, Any]:
+        """Build a deterministic JSON-safe snapshot of the CID cache."""
+
+        entries: List[Dict[str, Any]] = []
+        now = time.time()
+        for cached in list(self.cache.values()):
+            if not isinstance(cached, CachedProofResult) or self._entry_expired(
+                cached,
+                now=now,
+            ):
+                continue
+            try:
+                result = json.loads(
+                    json.dumps(
+                        cached.result,
+                        ensure_ascii=True,
+                        allow_nan=False,
+                        sort_keys=True,
+                    )
+                )
+            except (TypeError, ValueError):
+                self.stats["persistence_skipped_results"] += 1
+                continue
+            entries.append(
+                {
+                    "cid": cached.cid,
+                    "formula_str": cached.formula_str,
+                    "hit_count": cached.hit_count,
+                    "prover_name": cached.prover_name,
+                    "result": result,
+                    "timestamp": cached.timestamp,
+                }
+            )
+        entries.sort(key=lambda entry: entry["cid"])
+        return {
+            "entries": entries,
+            "schema_version": _PERSISTENCE_SCHEMA_VERSION,
+            "written_at": now,
+        }
+
+    def _merge_persistent_payload(
+        self,
+        path: Path,
+        payload: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Merge another process's accepted entries into this snapshot."""
+
+        if not path.exists():
+            return payload
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return payload
+        if (
+            not isinstance(existing, dict)
+            or existing.get("schema_version") != _PERSISTENCE_SCHEMA_VERSION
+            or not isinstance(existing.get("entries"), list)
+        ):
+            return payload
+        entries = {
+            str(entry.get("cid")): entry
+            for entry in existing["entries"]
+            if isinstance(entry, dict) and entry.get("cid")
+        }
+        entries.update(
+            {
+                str(entry["cid"]): entry
+                for entry in payload["entries"]
+                if isinstance(entry, dict) and entry.get("cid")
+            }
+        )
+        now = time.time()
+        retained = [
+            entry
+            for entry in entries.values()
+            if self.ttl <= 0
+            or now - _safe_timestamp(entry.get("timestamp")) < self.ttl
+        ]
+        retained.sort(
+            key=lambda entry: _safe_timestamp(entry.get("timestamp")),
+            reverse=True,
+        )
+        payload["entries"] = sorted(
+            retained[: self.maxsize],
+            key=lambda entry: str(entry["cid"]),
+        )
+        return payload
+
+    def _persist_cache(self, *, replace_existing: bool = False) -> None:
+        """Atomically checkpoint JSON-safe CID entries to disk."""
+
+        if not self.enable_persistence or not self.persistence_path:
+            return
+        path = Path(self.persistence_path)
+        temporary_path: Optional[Path] = None
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            lock_path = path.with_name(f".{path.name}.lock")
+            with lock_path.open("a", encoding="utf-8") as lock_handle:
+                if fcntl is not None:
+                    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+                with self.lock:
+                    payload = self._persistent_payload()
+                if not replace_existing:
+                    payload = self._merge_persistent_payload(path, payload)
+                with tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    dir=str(path.parent),
+                    prefix=f".{path.name}.",
+                    suffix=".tmp",
+                    delete=False,
+                ) as handle:
+                    temporary_path = Path(handle.name)
+                    json.dump(payload, handle, ensure_ascii=True, sort_keys=True)
+                    handle.write("\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temporary_path, path)
+                temporary_path = None
+                try:
+                    directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+                except (AttributeError, OSError):
+                    directory_fd = None
+                if directory_fd is not None:
+                    try:
+                        os.fsync(directory_fd)
+                    finally:
+                        os.close(directory_fd)
+                with self.lock:
+                    self.stats["persistence_writes"] += 1
+        except (OSError, TypeError, ValueError) as exc:
+            with self.lock:
+                self.stats["persistence_errors"] += 1
+            logger.warning("Failed to persist proof cache to %s: %s", path, exc)
+        finally:
+            if temporary_path is not None:
+                try:
+                    temporary_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
     
     def _compute_cid(
         self,
@@ -297,7 +550,10 @@ class ProofCache:
             cid = cid_for_obj(query_obj)
             return cid
         except Exception as e:
-            logger.warning(f"CID computation failed, using fallback: {e}")
+            global _CID_FALLBACK_LOGGED
+            if not _CID_FALLBACK_LOGGED:
+                logger.warning(f"CID computation failed, using fallback: {e}")
+                _CID_FALLBACK_LOGGED = True
             # Fallback to simple hash
             import hashlib
             json_str = json.dumps(query_obj, sort_keys=True, default=str)
@@ -371,11 +627,14 @@ class ProofCache:
         with self.lock:
             if cid in self.cache:
                 cached = self.cache[cid]
-                if hasattr(cached, 'hit_count'):
-                    cached.hit_count += 1
-                self.stats['hits'] += 1
-                logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
-                return cached.result if hasattr(cached, 'result') else cached
+                if isinstance(cached, CachedProofResult) and self._entry_expired(cached):
+                    del self.cache[cid]
+                else:
+                    if hasattr(cached, 'hit_count'):
+                        cached.hit_count += 1
+                    self.stats['hits'] += 1
+                    logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
+                    return cached.result if hasattr(cached, 'result') else cached
 
         # If not in local cache and IPFS backend enabled, try IPFS
         if self.ipfs_cache is not None:
@@ -452,6 +711,8 @@ class ProofCache:
             self.cache[cid] = cached_result
             self.stats['sets'] += 1
             logger.debug(f"Cached result in local cache with CID {cid[:16]}... (prover: {prover_name})")
+
+        self._persist_cache()
         
         # Also store in IPFS backend if enabled
         if self.ipfs_cache is not None:
@@ -509,7 +770,8 @@ class ProofCache:
             self.cache.clear()
             self._cache.clear()
             logger.info("Cache cleared")
-            return count
+        self._persist_cache(replace_existing=True)
+        return count
     
     def get_stats(self) -> Dict:
         """Get cache statistics.

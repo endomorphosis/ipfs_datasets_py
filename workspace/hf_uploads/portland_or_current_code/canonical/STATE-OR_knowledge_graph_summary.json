@@ -1,0 +1,49 @@
+{
+  "corpus_quality": {
+    "corpus_key": "municipal_laws",
+    "identified_row_count": 3052,
+    "identified_row_ratio": 1.0,
+    "issues": [],
+    "navigation_like_ratio": 0.14875491480996067,
+    "navigation_like_row_count": 454,
+    "row_count": 3052,
+    "sample_rows": [
+      {
+        "classification": "navigation_like",
+        "identifier": "Portland City Code 1.01.035",
+        "source_id": "portland-code-1-01-035",
+        "title": "1.01.035 Auditor to Specify the Form and Style of Code Provisions."
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "Portland City Code 1.05.040",
+        "source_id": "portland-code-1-5-040",
+        "title": "1.05.040 Notice Requirements."
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "Portland City Code 1.05.090",
+        "source_id": "portland-code-1-5-090",
+        "title": "1.05.090 Temporary and Emergency Administrative Rules."
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "Portland City Code 10.70.070",
+        "source_id": "portland-code-10-70-070",
+        "title": "10.70.070 Administrative Review."
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "Portland City Code 10.80.030",
+        "source_id": "portland-code-10-80-030",
+        "title": "10.80.030 Financial Responsibility."
+      }
+    ],
+    "section_like_identifier_count": 2791,
+    "section_like_identifier_ratio": 0.9144823066841415,
+    "status": "healthy"
+  },
+  "document_count": 3052,
+  "entity_count": 12211,
+  "relationship_count": 9158
+}

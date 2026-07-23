@@ -1,0 +1,61 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreigblm6erwiawqzui6es5hmvwyv4nh2lelh3dwek3xjzljk5kogfpu",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:redacted-categorical-evidence-only",
+    "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence"
+  ],
+  "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "audit",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "reviewer signoff and replacement evidence bundle",
+      "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+      "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "reviewer signoff and replacement evidence bundle",
+      "assumption_id": "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence",
+      "description": "The Testnet verifier APK and emulator trial are public-Testnet evidence only and cannot approve production release behavior.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreidscw7pxknz4mqwwngd2psojjaloirhbh6n2d3bemxkhprsuh63ky",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_audit-redaction-boundary-is-preserved.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

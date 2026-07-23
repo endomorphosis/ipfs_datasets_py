@@ -309,7 +309,7 @@ class LazyLLMBackend:
                 except (CircuitBreakerOpen, CircuitBreakerOpenError) as e:
                     logger.warning("Circuit-breaker is open during %s call: %s", name, e)
                     raise RuntimeError(
-                        f"LLM backend temporarily unavailable during {name}: {e}"
+						f"LLM backend temporarily unavailable during {name}; error: {e}"
                     ) from e
                 except RetryableBackendError as e:
                     details = e.details if isinstance(e.details, dict) else {}

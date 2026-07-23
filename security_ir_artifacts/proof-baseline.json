@@ -1,0 +1,1017 @@
+{
+  "assumption_registry": {
+    "as_of": "2026-07-19T03:20:42Z",
+    "assumptions": [
+      {
+        "accepted": true,
+        "assumption_id": "A1",
+        "current": true,
+        "description": "cryptographic primitives are unbroken",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "security-architecture",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A3",
+        "current": true,
+        "description": "signing code signs only approved canonical transaction bytes",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "wallet-transaction-signing",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A4",
+        "current": true,
+        "description": "database commits are serializable",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "exchange-ledger-database",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A5",
+        "current": true,
+        "description": "nonce reservation is atomic",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "withdrawal-nonce-service",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A6",
+        "current": true,
+        "description": "blockchain finality threshold k is sufficient",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "chain-risk-management",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A7",
+        "current": true,
+        "description": "admin identities are not all compromised",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "security-governance",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A8",
+        "current": true,
+        "description": "HSM/key manager obeys its interface contract",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "custody-platform",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A9",
+        "current": true,
+        "description": "external RPC providers may lie/delay/censor within modeled bounds",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "blockchain-infrastructure",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      },
+      {
+        "accepted": true,
+        "assumption_id": "A10",
+        "current": true,
+        "description": "audit logs are append-only or tamper-evident",
+        "evidence_expires_at": "2027-01-01T00:00:00Z",
+        "evidenced": true,
+        "last_reviewed_at": "2026-07-07T00:00:00Z",
+        "owned": true,
+        "owner": "audit-compliance",
+        "present": true,
+        "reasons": [],
+        "review_statuses": [
+          "trusted_fixture"
+        ],
+        "stale": false
+      }
+    ],
+    "attention": [],
+    "failures": [],
+    "release_ready": true,
+    "require_current": true,
+    "require_evidence": true,
+    "require_owner": true,
+    "summary": {
+      "accepted": 9,
+      "current": 9,
+      "evidenced": 9,
+      "owned": 9,
+      "present": 9,
+      "stale": 0,
+      "total": 9
+    }
+  },
+  "coverage": {
+    "blocking_claims": 3,
+    "blocking_modeled": 3,
+    "blocking_not_modeled": 0,
+    "blocking_proved": 3,
+    "blocking_unknown": 0,
+    "disproved": 0,
+    "domain_summary": {
+      "audit": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "audit_event_exists_for_critical_transition": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "capabilities": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "capability_delegation_no_authority_increase": "PROVED",
+          "revoked_capability_no_future_authorization": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "deposits": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_deposit_before_finality": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "hsm": {
+        "blocking_claims": 0,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 0,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_signing_request_after_wallet_freeze": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      },
+      "ledger": {
+        "blocking_claims": 2,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 2,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "global_asset_conservation": "PROVED",
+          "no_over_reserved_internal_account": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 2
+      },
+      "withdrawals": {
+        "blocking_claims": 1,
+        "blocking_not_modeled": 0,
+        "blocking_proved": 1,
+        "blocking_unknown": 0,
+        "claim_statuses": {
+          "no_unauthorized_withdrawal": "PROVED"
+        },
+        "modeled": true,
+        "total_claims": 1
+      }
+    },
+    "domains_modeled": {
+      "audit": true,
+      "capabilities": true,
+      "deposits": true,
+      "hsm": true,
+      "ledger": true,
+      "withdrawals": true
+    },
+    "not_modeled": 0,
+    "proved": 8,
+    "total_claims": 8,
+    "unknown": 0
+  },
+  "model_id": "minimal-btc-exchange",
+  "release_gate": {
+    "attention": [],
+    "failures": [],
+    "gates": {
+      "blocking": {
+        "accepted": 3,
+        "attention": 0,
+        "failed": 0,
+        "total": 3
+      },
+      "high": {
+        "accepted": 4,
+        "attention": 0,
+        "failed": 0,
+        "total": 4
+      },
+      "informational": {
+        "accepted": 0,
+        "attention": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "medium": {
+        "accepted": 1,
+        "attention": 0,
+        "failed": 0,
+        "total": 1
+      }
+    },
+    "policy": [
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_unauthorized_withdrawal",
+        "domain": "withdrawals",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A broadcast withdrawal without request, approval, nonce, reservation, and live wallet checks is a direct funds-loss condition.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A3",
+          "A4",
+          "A5",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_over_reserved_internal_account",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Over-reservation means internal available balance can be spent more than once.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A5"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "global_asset_conservation",
+        "domain": "ledger",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Customer liabilities exceeding custody plus pending settlement is a solvency failure.",
+        "release_gate": "blocking",
+        "required_assumptions": [
+          "A4",
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_deposit_before_finality",
+        "domain": "deposits",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Crediting deposits before finality exposes the exchange to reorg and false-credit losses.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A6",
+          "A9"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "no_signing_request_after_wallet_freeze",
+        "domain": "hsm",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "A frozen wallet that can still request signatures defeats incident response controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A3",
+          "A8"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "capability_delegation_no_authority_increase",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Delegation that amplifies authority can bypass administrative and custody controls.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A1",
+          "A7"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "revoked_capability_no_future_authorization",
+        "domain": "capabilities",
+        "fail_closed_statuses": [
+          "DISPROVED",
+          "NOT_MODELED",
+          "UNKNOWN"
+        ],
+        "rationale": "Revoked capabilities authorizing later privileged actions breaks emergency revocation.",
+        "release_gate": "high",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": true
+      },
+      {
+        "accepted_statuses": [
+          "PROVED"
+        ],
+        "claim_id": "audit_event_exists_for_critical_transition",
+        "domain": "audit",
+        "fail_closed_statuses": [
+          "DISPROVED"
+        ],
+        "rationale": "Missing audit linkage is a release risk; a concrete disproof blocks release, while UNKNOWN or NOT_MODELED requires manual triage.",
+        "release_gate": "medium",
+        "required_assumptions": [
+          "A10"
+        ],
+        "requires_reviewed_evidence": false
+      }
+    ],
+    "release_ready": true,
+    "require_reviewed_evidence": true,
+    "reviewed_evidence_statuses": [
+      "human_reviewed",
+      "trusted_fixture"
+    ],
+    "unknown_policy_reports": []
+  },
+  "reports": [
+    {
+      "assertion_count": 8,
+      "assumptions": [
+        "A3",
+        "A4",
+        "A5",
+        "A8"
+      ],
+      "claim_id": "no_unauthorized_withdrawal",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreicbv5beq7ny7s57lbipzqypiwhoeeehw3hozqodefxxubb4wdvzqa",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreia3nm7c6zuqesp2j2ho4quiuag2yo7tvmcuxv47zs3whhfgpp7foa",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture authorization policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture nonce freshness policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture balance policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture wallet freeze policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal approval trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal broadcast trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreidlxirsp5iugjdgzmcigrx7j4w6szkjy6r3bbvqcwefgrhu53cmry",
+      "proof_or_trace_cid": "bafkreiftnbzhedublmyedl7qzuvertxo5lp7rwkutfb4v2vu7igf3oq55m",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 3,
+      "assumptions": [
+        "A4",
+        "A5"
+      ],
+      "claim_id": "no_over_reserved_internal_account",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiaje7257cj35pktizyx7sadjklvjgil7tfszgk4kewzgevvbusoiy",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreie6p7egalcpunfk2oj2wctrgubofuqsbipyt4jhbt6rxlwmgfdvte",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture atomic reservation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 129,
+          "line_start": 8,
+          "notes": "Fixture account balance and reservations.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreihshqxhkwpdowwczhnahuihxjmes52dtgbyk7a5vjc2vdnzjoar2a",
+      "proof_or_trace_cid": "bafkreicoupeymiho2lqx3x7o3rdqysszr3eqywdaiiqnql3rrrbo2inpta",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 4,
+      "assumptions": [
+        "A4",
+        "A10"
+      ],
+      "claim_id": "global_asset_conservation",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreifrkxyregy4ycgj5cthivxgzib2zky2eeqqlht6cvwpd7jil7yxc4",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreic3prn5jx4h645lwv5sjpthlgt6h4jo6qfnlpkkbbgqxtdg4ptqbe",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 129,
+          "line_start": 8,
+          "notes": "Fixture account balance and reservations.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 150,
+          "line_start": 132,
+          "notes": "Fixture ledger totals for global conservation.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreic3dme2friyshuygo3asgcemyceeyypronlavoupr5qjajkbddfoy",
+      "proof_or_trace_cid": "bafkreigfqp6zqit2nxihwo2hnmxlnk6n5lw3fl7uydb5ln6g5xwtzbduia",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "blocking",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 6,
+      "assumptions": [
+        "A6",
+        "A9"
+      ],
+      "claim_id": "no_deposit_before_finality",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreib676kpvtfbnt5675ihws7tecq7oa2ou3wgrr5k2a63pos4rox62a",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreign7uvdgbtwipzzxv2jcaztqzfxd7hs7nhsytrxdcydt2y3ex7oau",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture deposit finality policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit credited trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit observed trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit finalized trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreie4nnbgowdvpmwc65rwqhrq6d4jjlkdvkcrauqn7g3a3ddkeenzhi",
+      "proof_or_trace_cid": "bafkreifmszbijlrw7htc65jotoglqg6mpdwwjizyi35eubnecii2vbve5e",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 3,
+      "assumptions": [
+        "A3",
+        "A8"
+      ],
+      "claim_id": "no_signing_request_after_wallet_freeze",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiex724y52kgrmxj64z2qaab2gtdnxlwgjrahfcghnnlvl6igp4wem",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreigbkdpivldvdtjigwy55xevjivm6pc22p5nazh6d5jo7sjaynnaaq",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture wallet freeze policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture wallet freeze trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreic7hcu22vpqv6ptckmb2wk4uwz4465ew6ia22zjbx6kqqff3vu4hq",
+      "proof_or_trace_cid": "bafkreigr6qghtekiwrx7hcv2c5rfemdgtiapvhdmnvavlp3rqsnswruss4",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 7,
+      "assumptions": [
+        "A1",
+        "A7"
+      ],
+      "claim_id": "capability_delegation_no_authority_increase",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiazyraphzvs76kvto7tmli22yxorz2fo7lgghkxtptu4n3bb57bsi",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreiaf7d5ysu3eoev7xhrykxetsp2r25brmvgduddhy3uyxowsqyu4mi",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture delegation monotonicity policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 54,
+          "line_start": 45,
+          "notes": "Fixture capability chain.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreia4xj74g7pccvicklv5dazgo3hrcos4r4foq57gcxhoc2snknec34",
+      "proof_or_trace_cid": "bafkreie2giccgvhpr62hssgqcwacn6m7xshbpe3f7ji7jglbtu4cltfyo4",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 1,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "revoked_capability_no_future_authorization",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreiejak3xmoazuivo5ar5szfonxaxxut56owzbwm3cu6loireynlx3i",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreic24jfez3ir5q4nycbnapho4juifuiowrlqdqvrrrvm4tocl5oqu4",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture capability revocation policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture privileged action trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture capability revocation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 54,
+          "line_start": 45,
+          "notes": "Fixture capability chain.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreigy4yol7yjf2luvjc5a7jxfxhlts4tbyftgkmlhhejhl2l42vgnd4",
+      "proof_or_trace_cid": "bafkreicvtxs525criye5pm2zgggmrtrm47e3ho4tjqsqtzs4r5ajxb5edu",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "high",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    },
+    {
+      "assertion_count": 1,
+      "assumptions": [
+        "A10"
+      ],
+      "claim_id": "audit_event_exists_for_critical_transition",
+      "claim_version": "1.0",
+      "compiler_cid": "bafkreih57y7raaprhzjxhexcgimfz2j7vutwwmhposig5n265nq7cgysqq",
+      "counterexample": null,
+      "created_at": "2026-07-19T03:20:41+00:00",
+      "deterministic_payload_cid": "bafkreiefijv44gm3jo6i2a5zdxk4bd2z5623kdl377wgrgublbrsjo7n4q",
+      "evidence_refs": [
+        {
+          "kind": "test_fixture",
+          "line_end": 65,
+          "line_start": 55,
+          "notes": "Fixture audit policy.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal approval trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture nonce reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture balance reservation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture withdrawal broadcast trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit observed trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit finalized trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture deposit credited trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture signing request trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture wallet freeze trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture privileged action trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture capability revocation trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        },
+        {
+          "kind": "test_fixture",
+          "line_end": 77,
+          "line_start": 66,
+          "notes": "Fixture audit trail trace.",
+          "path": "ipfs_datasets_py/logic/security_models/crypto_exchange/ir/examples.py",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "generated_at": "2026-07-19T03:20:41+00:00",
+      "model_cid": "bafkreiafonaltqp2bblwknylqdulz5tx5p2ko75k6rbi5jrktqpdu7dzum",
+      "model_schema_version": "security-model-ir/v1",
+      "nondeterministic_report_cid": "bafkreiczzz4bsokgbz2jt7zafhl7z66qhi273it72opcdgqtswp2y6tcnu",
+      "proof_or_trace_cid": "bafkreieyaogdoxkqtpdd7webk7sozjfmxmhv6ehwzqauqexlvpmtwknrki",
+      "prover": "z3",
+      "reason_unknown": null,
+      "risk": "medium",
+      "schema_version": "proof-report/v1",
+      "signatures": [],
+      "solver_name": "z3",
+      "solver_result": "unsat",
+      "solver_version": "4.16.0.0",
+      "soundness_notes": [],
+      "status": "PROVED",
+      "timeout_ms": 5000,
+      "unsat_core": null
+    }
+  ]
+}

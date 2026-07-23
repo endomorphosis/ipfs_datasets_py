@@ -1,0 +1,62 @@
+{
+  "artifact_cid": "sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+  "container_name": "ipfs-datasets-portal-cxtp-155-rippled",
+  "egress_probe": {
+    "dns_hostname_resolution_may_succeed": true,
+    "dns_resolution_note": "Docker embedded DNS may resolve public hostnames from the host namespace even though the isolated network denies the resulting TCP data-plane connection; this is a known, disclosed boundary, not a data-plane egress path.",
+    "egress_denied_by_category": {
+      "public_ip_literal": true,
+      "public_vendor_testnet_dns_host": true
+    },
+    "probe_targets_categories": [
+      "public_ip_literal",
+      "public_vendor_testnet_dns_host"
+    ],
+    "public_egress_denied": true
+  },
+  "mode": "activated",
+  "network_isolation": {
+    "assigned_subnet_count": 1,
+    "container_count": 1,
+    "docker_internal_flag": false,
+    "driver": "bridge",
+    "ip_masquerade_enabled": false
+  },
+  "network_name": "ipfs-datasets-portal-cxtp-155-isolated-net",
+  "overall_status": "bridge_isolated_loopback_only_no_public_ingress_or_egress",
+  "port_publication": {
+    "admin_ports_published_to_host": false,
+    "any_non_loopback_publish_found": false,
+    "no_public_ingress": true,
+    "published_port_count": 1,
+    "published_ports": [
+      {
+        "container_port": "6005/tcp",
+        "host_bound_to_loopback_only": true,
+        "host_port": "51235"
+      }
+    ],
+    "reviewed_ledger_bridge_published_loopback_only": true
+  },
+  "prohibited_claims": [
+    "vendor_release_equivalence",
+    "production_security_approval",
+    "public_testnet_connectivity",
+    "wallet_security_proved"
+  ],
+  "required_before_runtime_evidence": [
+    "independent_review_of_docker_network_and_bridge_configuration",
+    "independent_review_binding_pinned_source_commit_to_daemon_digest",
+    "redacted_runtime_trace_via_reviewed_candidate_and_local_network"
+  ],
+  "reviewed_loopback_listener": {
+    "host": "127.0.0.1",
+    "port": 51235,
+    "role": "ANDROID_EMULATOR_LOCAL_LEDGER_BRIDGE"
+  },
+  "schema_version": "xaman-self-hosted-testnet-bridge-isolation-report/v1",
+  "security_decision": "SELF_HOSTED_BRIDGE_ISOLATED_PENDING_INDEPENDENT_REVIEW",
+  "self_hosted_network_id": 777777,
+  "task_id": "PORTAL-CXTP-155",
+  "teardown_or_retention_state": "torn_down_after_evidence_capture"
+}

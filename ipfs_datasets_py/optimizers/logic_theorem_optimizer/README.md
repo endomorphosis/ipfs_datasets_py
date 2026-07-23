@@ -2,6 +2,11 @@
 
 A stochastic gradient descent (SGD) based system for generating and optimizing logical theorems from arbitrary data types.
 
+> **Namespace note**: This package is the production home for theorem/logic
+> optimization workflows. The F-logic semantic optimizer is maintained
+> separately at `ipfs_datasets_py.logic.flogic_optimizer`, while
+> `ipfs_datasets_py.optimizers.logic` is now a legacy compatibility facade.
+
 ## Quick Start (Recommended)
 
 **Use the unified `LogicTheoremOptimizer` for new code** - it provides the same functionality through a standardized interface:
@@ -774,6 +779,7 @@ print(f"Average score: {avg_score}")
 
 ## See Also
 
+- [Deterministic Modal Legal Parser Improvement Plan](../../../docs/optimizers/logic_theorem_optimizer/MODAL_LEGAL_PARSER_IMPROVEMENT_PLAN.md) - Roadmap for modal-family parsing, BM25 frame selection, and U.S. Code encoder/decoder training
 - [complaint-generator](https://github.com/endomorphosis/complaint-generator) - Original adversarial harness inspiration
 - [Logic Integration](/ipfs_datasets_py/logic/README.md) - Existing logic frameworks
 - [GraphRAG Integration](/ipfs_datasets_py/rag/README.md) - Knowledge graph integration

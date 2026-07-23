@@ -1,0 +1,172 @@
+{
+  "assistant_lock": {
+    "assistant_id": "xaman-testnet-leanstral-untrusted-assistant",
+    "lock_cid": "bafkreielymldcxjkzw7aivahbwgmknacqia5oroakbqr6irl27kndsr554",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/leanstral-assistant-lock.json",
+    "trust_boundary": "untrusted-proof-assistant"
+  },
+  "audit_cid": "bafkreif3k2jku7k36o7e2yrnh7lgfnz5s6meoh3o27oaiir7cy43iija3q",
+  "blockers_to_promotion": [
+    {
+      "code": "NO_LEANSTRAL_CANDIDATE_SUBMITTED",
+      "effect": "nothing available for independent checker acceptance"
+    },
+    {
+      "code": "NO_INDEPENDENT_CHECKER_ACCEPTANCE_FOR_LEANSTRAL_CANDIDATE",
+      "effect": "no proof term, model edit, or counterexample hypothesis may change a security decision"
+    },
+    {
+      "code": "TESTNET_ASSURANCE_ALREADY_BLOCKED_BY_FORMAL_SCOPE",
+      "effect": "Lean scope limits, unresolved assumptions, and missing independent Coq coverage remain in force"
+    }
+  ],
+  "candidate_intake_records": [
+    {
+      "candidate_artifact_cid": null,
+      "candidate_artifact_path": null,
+      "checker_acceptance_status": "not-submitted",
+      "checker_report_path": null,
+      "independent_checker": null,
+      "promotion_status": "not-promoted",
+      "prompt_id": "leanstral-testnet:lean-proof-term-review",
+      "proposal_type": "lean_proof_term",
+      "required_acceptance_authority": [
+        "Lean",
+        "Coq"
+      ],
+      "security_decision_changed": false,
+      "submitted_candidate_present": false,
+      "target_path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/XamanTestnet.lean"
+    },
+    {
+      "candidate_artifact_cid": null,
+      "candidate_artifact_path": null,
+      "checker_acceptance_status": "not-submitted",
+      "checker_report_path": null,
+      "independent_checker": null,
+      "promotion_status": "not-promoted",
+      "prompt_id": "leanstral-testnet:model-edit-hypothesis",
+      "proposal_type": "security_model_edit",
+      "required_acceptance_authority": [
+        "Z3",
+        "CVC5",
+        "Apalache",
+        "Tamarin",
+        "ProVerif",
+        "Lean",
+        "Coq"
+      ],
+      "security_decision_changed": false,
+      "submitted_candidate_present": false,
+      "target_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    },
+    {
+      "candidate_artifact_cid": null,
+      "candidate_artifact_path": null,
+      "checker_acceptance_status": "not-submitted",
+      "checker_report_path": null,
+      "independent_checker": null,
+      "promotion_status": "not-promoted",
+      "prompt_id": "leanstral-testnet:counterexample-hypothesis",
+      "proposal_type": "counterexample_hypothesis",
+      "required_acceptance_authority": [
+        "Z3",
+        "CVC5",
+        "Apalache",
+        "Tamarin",
+        "ProVerif",
+        "reviewed runtime trace",
+        "registered fuzz harness"
+      ],
+      "security_decision_changed": false,
+      "submitted_candidate_present": false,
+      "target_path": "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/"
+    }
+  ],
+  "checker_evidence_review": {
+    "accepted_checker_reports_for_leanstral_candidates": [],
+    "coq_scope": {
+      "missing_coq_declared_coverage_gap": false,
+      "overall_status": "independent_kernel_checked",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED"
+    },
+    "existing_security_decisions": [
+      {
+        "overall_status": "checked_with_scope_limits",
+        "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
+        "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json"
+      },
+      {
+        "overall_status": "non_secure_with_counterexamples",
+        "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+        "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
+      },
+      {
+        "overall_status": "independent_kernel_checked",
+        "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
+        "source": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json"
+      }
+    ],
+    "lean_scope": {
+      "covered_claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only",
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+        "xaman-testnet-claim:review-auth-sequence-observed",
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+      ],
+      "formalized_invariant_only": true,
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
+      "rejected_scope_claim_ids": [
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:refusal-path-is-not-modeled",
+        "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ],
+      "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY"
+    },
+    "smt_scope": {
+      "overall_status": "non_secure_with_counterexamples",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+      "solver_disagreement_blocks": true
+    }
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "overall_status": "no_candidate_promoted",
+  "policy_document": "docs/security_verification/xaman_testnet_leanstral_policy.md",
+  "production_release_blocked": true,
+  "promotion_audit": {
+    "all_candidates_remain_untrusted_until_checker_acceptance": true,
+    "candidate_changed_security_decision": false,
+    "candidate_count": 0,
+    "current_decision_change_allowed": false,
+    "independent_checker_accepted_candidate_count": 0,
+    "promoted_candidate_count": 0,
+    "reason": "No Leanstral candidate has been submitted with an independent Lean, SMT, Coq, or other approved-checker acceptance report.",
+    "security_decision_change_count": 0,
+    "submitted_candidate_count": 0
+  },
+  "schema_version": "xaman-testnet-leanstral-candidate-audit/v1",
+  "security_decision": "UNCHANGED_BY_LEANSTRAL_UNTRUSTED_LANE",
+  "summary": {
+    "approved_checker_acceptance_count": 0,
+    "candidate_count": 0,
+    "promoted_candidate_count": 0,
+    "prompt_count": 3,
+    "security_decision_change_count": 0
+  },
+  "task_id": "PORTAL-CXTP-137",
+  "testnet_assurance_blocked": true
+}

@@ -287,30 +287,72 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
     @core.interpret / @core.logic still work and cover lines 49-53 / 57-61.
     """
 
-    def _primitives(self, text: str):
-        """Create a LogicPrimitives instance (using fallback Symbol).
+    def setUp(self):
+        self._interpret_patcher = patch.object(slp_mod.core, 'interpret', new=self._mock_interpret)
+        self._logic_patcher = patch.object(slp_mod.core, 'logic', new=self._mock_logic)
+        self._interpret_patcher.start()
+        self._logic_patcher.start()
+        self.addCleanup(self._logic_patcher.stop)
+        self.addCleanup(self._interpret_patcher.stop)
 
-        In the fallback case Primitive is `class Primitive: pass` so
-        LogicPrimitives takes no constructor arguments.  Attributes are set
-        manually to match what the methods expect.  A _to_type shim is added
-        so that both the SymbolicAI path and _fallback_* helpers can return a
-        Symbol-like object without AttributeError.
-        """
+    @staticmethod
+    def _mock_interpret(prompt: str):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                values = [getattr(arg, 'value', str(arg)) for arg in args]
+                return ' | '.join(values) if values else prompt.strip()[:32]
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def _mock_logic(operator: str):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                values = [getattr(arg, 'value', str(arg)) for arg in args]
+                if len(values) >= 2:
+                    joiner = {
+                        'and': ' ∧ ',
+                        'or': ' ∨ ',
+                    }.get(operator, f' {operator} ')
+                    return joiner.join(values[:2])
+                return operator
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def _attach_fallback_methods(symbol):
         from ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives import (
             LogicPrimitives,
         )
-        lp = LogicPrimitives.__new__(LogicPrimitives)
-        lp.value = text
-        lp._semantic = True
 
-        def _fake_to_type(result):
-            class _FakeSym:
-                def __init__(self, v):
-                    self.value = v
-            return _FakeSym(str(result))
+        primitives = LogicPrimitives()
+        for method_name in dir(LogicPrimitives):
+            if callable(getattr(LogicPrimitives, method_name, None)) and (
+                method_name.startswith('_fallback_') or method_name.startswith('_analyze_')
+            ):
+                method = getattr(primitives, method_name)
 
-        lp._to_type = _fake_to_type
-        return lp
+                def make_bound_method(bound_method, current_symbol):
+                    return lambda *args, **kwargs: bound_method.__func__(current_symbol, *args, **kwargs)
+
+                setattr(symbol, method_name, make_bound_method(method, symbol))
+
+        return symbol
+
+    def _primitives(self, text: str):
+        """Create a Symbol instance with logic primitive methods available.
+
+        The runtime environment now loads the real SymbolicAI Symbol class,
+        so tests need a real Symbol-compatible instance to satisfy beartype
+        annotations on the logic primitive methods.
+        """
+        symbol = slp_mod.create_logic_symbol(text, semantic=True)
+        symbol._semantic = True
+        return self._attach_fallback_methods(symbol)
 
     @staticmethod
     def _once_raising_to_type():
@@ -327,10 +369,9 @@ class TestSymbolicLogicPrimitivesSymbolicAIPathsSession25(unittest.TestCase):
             if call_count[0] == 1:
                 raise RuntimeError("_to_type forced failure")
 
-            class _FakeSym:
-                def __init__(self, v):
-                    self.value = v
-            return _FakeSym(str(result))
+            symbol = slp_mod.create_logic_symbol(str(result), semantic=True)
+            symbol._semantic = True
+            return TestSymbolicLogicPrimitivesSymbolicAIPathsSession25._attach_fallback_methods(symbol)
 
         return _impl
 
@@ -824,19 +865,26 @@ class TestLegalReasoningEngineSymbolicAIPathsSession25(unittest.TestCase):
 class TestSymbolicContractsFallbackStubsSession25(unittest.TestCase):
     """Cover fallback stub method bodies in symbolic_contracts.py (lines 82, 85, 88-90)."""
 
+    def _reload_fallback_module(self):
+        with patch.dict(sys.modules, {'symai': None, 'symai.strategy': None}):
+            importlib.reload(sc_mod)
+        self.addCleanup(importlib.reload, sc_mod)
+        return sc_mod
+
     def test_fallback_expression_init_body(self):
         """GIVEN SYMBOLIC_AI_AVAILABLE=False (fallback Expression class)
         WHEN Expression() is instantiated
         THEN line 82 (pass in __init__) is covered."""
-        # Expression class at module level is the fallback (symai not installed)
-        expr = sc_mod.Expression()
+        fallback_mod = self._reload_fallback_module()
+        expr = fallback_mod.Expression()
         self.assertIsNotNone(expr)
 
     def test_fallback_expression_call_body(self):
         """GIVEN SYMBOLIC_AI_AVAILABLE=False (fallback Expression class)
         WHEN Expression()() is called
         THEN line 85 (return {...}) is covered."""
-        expr = sc_mod.Expression()
+        fallback_mod = self._reload_fallback_module()
+        expr = fallback_mod.Expression()
         result = expr()
         self.assertIsInstance(result, dict)
         self.assertEqual(result["status"], "success")
@@ -845,8 +893,8 @@ class TestSymbolicContractsFallbackStubsSession25(unittest.TestCase):
         """GIVEN SYMBOLIC_AI_AVAILABLE=False (fallback contract decorator)
         WHEN contract(...)(SomeClass) is called
         THEN lines 88-90 (decorator body: return cls) are covered."""
-        # contract is the fallback function, not the symai version
-        decorator = sc_mod.contract(pre_remedy=True, post_remedy=True)
+        fallback_mod = self._reload_fallback_module()
+        decorator = fallback_mod.contract(pre_remedy=True, post_remedy=True)
         self.assertIsNotNone(decorator)
 
         class MyClass:
@@ -878,9 +926,9 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
         extra_modules = {
             'symai': mock_symai,
             'symai.functional': MagicMock(),
-            'ipfs_datasets_py.logic.integration.utils': MagicMock(),
-            'ipfs_datasets_py.logic.integration.utils.engine_env': mock_engine_env,
-            'ipfs_datasets_py.logic.integration.utils.symai_config': mock_symai_config,
+            'ipfs_datasets_py.utils': MagicMock(),
+            'ipfs_datasets_py.utils.engine_env': mock_engine_env,
+            'ipfs_datasets_py.utils.symai_config': mock_symai_config,
             'ipfs_datasets_py.utils': MagicMock(),
             'ipfs_datasets_py.utils.symai_ipfs_engine': mock_ipfs_engine,
         }
@@ -921,9 +969,9 @@ class TestLegalSymbolicAnalyzerInitializerSession25(unittest.TestCase):
         extra_modules = {
             'symai': mock_symai,
             'symai.functional': MagicMock(),
-            'ipfs_datasets_py.logic.integration.utils': MagicMock(),
-            'ipfs_datasets_py.logic.integration.utils.engine_env': mock_engine_env,
-            'ipfs_datasets_py.logic.integration.utils.symai_config': mock_symai_config,
+            'ipfs_datasets_py.utils': MagicMock(),
+            'ipfs_datasets_py.utils.engine_env': mock_engine_env,
+            'ipfs_datasets_py.utils.symai_config': mock_symai_config,
             'ipfs_datasets_py.utils': MagicMock(),
             'ipfs_datasets_py.utils.symai_ipfs_engine': mock_ipfs_engine,
         }

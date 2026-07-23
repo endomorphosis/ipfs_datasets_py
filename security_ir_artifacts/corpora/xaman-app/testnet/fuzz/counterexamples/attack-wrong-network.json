@@ -1,0 +1,39 @@
+{
+  "artifact_cid": "bafkreid6bivjid35bcpnr6pjb2h3iuyln6se46ijdw3zlubiyq34m577ri",
+  "fuzz_domain": "wrong_network",
+  "legacy_task_id": "PORTAL-CXTP-138",
+  "minimal_counterexample": {
+    "fuzz_domain": "wrong_network",
+    "mutation_keys": [
+      "network_id",
+      "network_key"
+    ],
+    "payload_sha256": "4862c28b854ec87db4a5e052b6008b1a40a775538b8b78abeaa823aa880a1d83",
+    "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only"
+  },
+  "minimization": {
+    "algorithm": "deterministic-one-domain-delta-minimizer/v1",
+    "fuzz_domain": "wrong_network",
+    "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
+    "minimized_payload_sha256": "4862c28b854ec87db4a5e052b6008b1a40a775538b8b78abeaa823aa880a1d83",
+    "raw_sensitive_material_recorded": false,
+    "removed_mutation_keys": [],
+    "retained_mutation_keys": [
+      "network_id",
+      "network_key"
+    ],
+    "status": "minimal"
+  },
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-wrong-network",
+  "payload_sha256": "4862c28b854ec87db4a5e052b6008b1a40a775538b8b78abeaa823aa880a1d83",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+  "task_id": "PORTAL-CXTP-148",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:network-binding-is-testnet-only"
+  ]
+}

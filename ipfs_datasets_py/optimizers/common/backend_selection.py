@@ -10,6 +10,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional
 
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
+
 
 _PROVIDER_ALIASES: Dict[str, str] = {
     "gpt4": "openai",
@@ -18,7 +20,9 @@ _PROVIDER_ALIASES: Dict[str, str] = {
     "openrouter": "openrouter",
     "claude": "anthropic",
     "anthropic": "anthropic",
-    "codex": "codex",
+    "codex": "codex_cli",
+    "codex_cli": "codex_cli",
+    "codex-cli": "codex_cli",
     "copilot": "copilot",
     "gemini": "gemini",
     "hf_api": "hf_inference_api",
@@ -28,6 +32,21 @@ _PROVIDER_ALIASES: Dict[str, str] = {
     "local": "local",
     "accelerate": "accelerate",
     "ipfs_accelerate": "accelerate",
+    "p2p": "p2p_task_queue",
+    "p2p_task": "p2p_task_queue",
+    "p2p_task_queue": "p2p_task_queue",
+    "remote_queue": "p2p_task_queue",
+    "task_queue": "p2p_task_queue",
+    "llama_cpp": "llama_cpp",
+    "llama_cpp_native": "llama_cpp_native",
+    "llamacpp": "llama_cpp",
+    "llamacpp_native": "llama_cpp_native",
+    "llama.cpp": "llama_cpp",
+    "llama.cpp_native": "llama_cpp_native",
+    "native_llama_cpp": "llama_cpp_native",
+    "openai_compatible": "llama_cpp",
+    "local_openai": "llama_cpp",
+    "leanstral_local": "llama_cpp",
     "auto": "auto",
 }
 
@@ -39,8 +58,11 @@ _DEFAULT_MODEL_BY_PROVIDER: Dict[str, str] = {
     "openrouter": "openai/gpt-4o-mini",
     "hf_inference_api": "gpt2",
     "local": "local-default",
-    "codex": "codex",
+    "codex": DEFAULT_CODEX_MODEL,
+    "codex_cli": DEFAULT_CODEX_MODEL,
     "copilot": "copilot",
+    "p2p_task_queue": "gpt2",
+    "llama_cpp": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
 }
 
 

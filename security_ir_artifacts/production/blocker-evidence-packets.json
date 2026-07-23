@@ -1,0 +1,553 @@
+{
+  "artifact_cid": "sha256:c43cad75c6adfe4a4056afc9497bed3bd1dcf2cd373968a93a0b35aaf09502bf",
+  "generated_at": "2026-07-19T04:59:28Z",
+  "missing_evidence_packet_count": 8,
+  "overall_status": "blocked_missing_production_evidence",
+  "packet_count": 8,
+  "packets": [
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_environment_profile.md",
+        "security_ir_artifacts/production/environment-profile.json"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 6,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-077",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "deployment target identifiers, versions, chain/network targets, and build provenance",
+        "wallet vault/native runtime configuration and trust boundaries",
+        "backend payload API, signing, and broadcast service endpoints with owners",
+        "proof-consumer deployment mode and trust-anchor or canonical-CID policy"
+      ],
+      "runtime": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-077",
+      "title": "Collect production environment evidence",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_source_inventory.md",
+        "security_ir_artifacts/production/source-inventory.json"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 6,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-078",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "reviewed production repositories, commits, packages, and generated artifacts",
+        "wallet, exchange, API, policy, HSM/vault, and runtime monitor source ownership",
+        "line-level mappings from source to each blocking/high production claim",
+        "explicit out-of-scope rationale for any Xaman-only artifact not deployed in production"
+      ],
+      "runtime": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-078",
+      "title": "Inventory deployed wallet, exchange, API, and policy sources",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/security-model-ir.json",
+        "security_ir_artifacts/production/security-model-ir.cid",
+        "docs/security_verification/production_security_model_ir.md"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 7,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-079",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "production environment profile from PORTAL-CXTP-077",
+        "production source inventory from PORTAL-CXTP-078",
+        "reviewed assumption registry with owner, evidence, expiry, and acceptance status",
+        "production claim set mapped into SecurityModelIR domains and proof obligations"
+      ],
+      "runtime": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-079",
+      "title": "Generate reviewed production SecurityModelIR candidate",
+      "unblocks": [
+        "PORTAL-CXTP-080",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_claim_gate.md",
+        "security_ir_artifacts/production/claim-gate-report.json"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 5,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-080",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "minimum required wallet, custody, payload, ledger, runtime, and proof-consumer domains",
+        "claim completeness gate for every blocking/high production claim",
+        "fail-closed report for missing domains, missing assumptions, or unreviewed evidence"
+      ],
+      "runtime": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-080",
+      "title": "Enforce required production domains and claim minimums",
+      "unblocks": [
+        "PORTAL-CXTP-081",
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/proof-reports/baseline.json",
+        "docs/security_verification/production_proof_baseline.md"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 5,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-081",
+      "related_xaman_blockers": [
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "Z3/CVC5 production baseline for every blocking/high claim",
+        "solver unavailability recorded as UNKNOWN or blocked, never accepted",
+        "proof-consumer policy applied to reject non-PROVED and uncleared-assumption reports"
+      ],
+      "runtime": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-081",
+      "title": "Run production fail-closed proof baseline",
+      "unblocks": [
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/disproof-report.json",
+        "docs/security_verification/production_disproof_suite.md"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 5,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-082",
+      "related_xaman_blockers": [
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "production counterexample suite for known-bad wallet, payload, ledger, runtime, and proof-consumer cases",
+        "mutation checks proving gates fail closed when source or assumptions are weakened",
+        "all expected bad cases produce DISPROVED, UNKNOWN, NOT_MODELED, or blocked as appropriate"
+      ],
+      "runtime": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-082",
+      "title": "Run production disproof and mutation suite",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/runtime_event_mapping.md",
+        "security_ir_artifacts/production/runtime-trace-report.json"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 5,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-083",
+      "related_xaman_blockers": [
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "UNRESOLVED_XAMAN_ASSUMPTIONS"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "real-device trace bundle for payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast outcomes",
+        "runtime event mapping from production monitor names to SecurityModelIR events",
+        "trace review status, collection environment, device/build provenance, and expiry metadata"
+      ],
+      "runtime": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": false,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-083",
+      "title": "Wire production runtime trace evidence",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_security_handoff_checklist.md",
+        "security_ir_artifacts/production/release-blockers.json"
+      ],
+      "blocking_codes": [
+        "OWNER_MISSING",
+        "FRESHNESS_MISSING",
+        "HUMAN_REVIEW_MISSING",
+        "PRODUCTION_REFERENCES_MISSING",
+        "ACCEPTANCE_FILES_MISSING"
+      ],
+      "environment": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "freshness": {
+        "collected_at": null,
+        "expires_at": null,
+        "required": true,
+        "status": "missing"
+      },
+      "human_review": {
+        "required": true,
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "status": "missing"
+      },
+      "missing_requirement_count": 5,
+      "owner": "TBD",
+      "packet_id": "production-evidence:portal-cxtp-084",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "release_acceptable": false,
+      "required_evidence": [
+        "all PORTAL-CXTP-077 through PORTAL-CXTP-083 outputs present and internally consistent",
+        "release-blockers report preserving every unresolved blocker",
+        "handoff checklist showing owner, evidence, next action, and acceptance policy for each blocker"
+      ],
+      "runtime": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "solver": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "source": {
+        "references": [],
+        "required": true,
+        "status": "missing"
+      },
+      "status": "missing_production_evidence",
+      "task_id": "PORTAL-CXTP-084",
+      "title": "Refresh production blockers and handoff checklist",
+      "unblocks": []
+    }
+  ],
+  "production_release_blocked": true,
+  "release_acceptable_packet_count": 0,
+  "schema_version": "crypto-exchange-production-blocker-evidence-packets/v1",
+  "security_decision": "PRODUCTION_EVIDENCE_PACKETS_REQUIRE_REVIEWED_INPUTS",
+  "source_bridge": {
+    "artifact_cid": "sha256:ce76d6b651018c8a264b807ab4010df154011e3c067f93752bbf12da489042bb",
+    "path": "security_ir_artifacts/corpora/xaman-app/production-blocker-bridge.json",
+    "security_decision": "PRODUCTION_BLOCKERS_MAPPED_RELEASE_REMAINS_BLOCKED",
+    "sha256": "sha256:6eed30b1187220e5b1ead74cc07f64b03525c4fbd38abee4c9232e7cb67986b0"
+  },
+  "task_id": "PORTAL-CXTP-094"
+}

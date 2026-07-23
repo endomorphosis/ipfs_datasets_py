@@ -1,0 +1,37 @@
+{
+  "artifact_cid": "bafkreihwsmphrmowcltmce2dcuap3gt3x3g3y2fhmu4c5i2g3wkp3mqexu",
+  "fuzz_domain": "replayed_payload",
+  "legacy_task_id": "PORTAL-CXTP-138",
+  "minimal_counterexample": {
+    "fuzz_domain": "replayed_payload",
+    "mutation_keys": [
+      "duplicate_submit_result"
+    ],
+    "payload_sha256": "fdc003d34cc64afc3d80a0b82fb45a1ec095d41dfc571b005e05864e40e75ede",
+    "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled"
+  },
+  "minimization": {
+    "algorithm": "deterministic-one-domain-delta-minimizer/v1",
+    "fuzz_domain": "replayed_payload",
+    "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
+    "minimized_payload_sha256": "fdc003d34cc64afc3d80a0b82fb45a1ec095d41dfc571b005e05864e40e75ede",
+    "raw_sensitive_material_recorded": false,
+    "removed_mutation_keys": [],
+    "retained_mutation_keys": [
+      "duplicate_submit_result"
+    ],
+    "status": "minimal"
+  },
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-replay-duplicate-submit-result",
+  "payload_sha256": "fdc003d34cc64afc3d80a0b82fb45a1ec095d41dfc571b005e05864e40e75ede",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+  "task_id": "PORTAL-CXTP-148",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:replay-controls-are-not-modeled"
+  ]
+}

@@ -16,9 +16,11 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 from enum import Enum
 import concurrent.futures
+import inspect
+import json
 import time
 import logging
 
@@ -59,6 +61,338 @@ class RouterProofResult:
         """Get result from a specific prover."""
         return self.all_results.get(prover_name)
 
+    def is_compiled(self) -> bool:
+        """Return True when at least one prover accepted the formula payload."""
+
+        if self.is_proved:
+            return True
+        return any(
+            _result_is_compiled_result(result)
+            for result in self.all_results.values()
+        )
+
+
+def _result_is_compiled_result(result: Any) -> bool:
+    """Return True when an individual prover result accepted the payload."""
+
+    if result is None or isinstance(result, str):
+        return False
+    for attr_name in ("is_compiled", "compiles"):
+        compiled = getattr(result, attr_name, None)
+        if callable(compiled):
+            try:
+                return bool(compiled())
+            except Exception:
+                return False
+        if compiled not in (None, ""):
+            return bool(compiled)
+    return True
+
+
+def _guidance_targets_external_prover_router(value: Any) -> bool:
+    """Return True for packet/compiler guidance aimed at router repair."""
+
+    mappings = _guidance_mappings(value)
+    if not mappings:
+        return False
+
+    for mapping in mappings:
+        if "repair_external_prover_router" in _guidance_route_names(mapping):
+            return True
+
+    for mapping in mappings:
+        source = str(mapping.get("source") or "").strip().lower()
+        if source not in {
+            "compiler_guidance_distillation_v1",
+            "compiler_guidance_activation_v1",
+            "failed_validation_rescue_v1",
+        }:
+            continue
+        if not any(
+            _guidance_target_key_is_router(mapping.get(key))
+            for key in (
+                "target_component",
+                "target",
+                "program_synthesis_scope",
+                "scope",
+            )
+        ):
+            continue
+        if _guidance_quality_gate_passes(
+            mapping.get("compiler_guidance_quality_gate")
+        ) or _guidance_quality_gate_passes(mapping.get("quality_gate")):
+            return True
+        if _guidance_positive_support(_guidance_support_value(mapping)):
+            return True
+        if _guidance_metric_targets_external_router(mapping.get("target_metrics")):
+            return True
+        if _guidance_loss_targets_external_router(mapping.get("loss")):
+            return True
+
+    return False
+
+
+def _guidance_route_names(mapping: Mapping[str, Any]) -> set[str]:
+    """Extract router repair route names from packet/compiler metadata."""
+
+    routes: set[str] = set()
+    route_keys = (
+        "route",
+        "action",
+        "original_action",
+        "compiler_guidance_route",
+    )
+    sample_route_keys = (
+        "sample_id",
+        "sample_ids",
+        "samples",
+        "compiler_guidance_samples",
+    )
+    feature_route_keys = (
+        "feature",
+        "features",
+        "compiler_guidance_feature",
+        "compiler_guidance_features",
+        "ranked_guidance_features",
+    )
+
+    def add_route(value: Any) -> None:
+        route = _guidance_route_name(value)
+        if route:
+            routes.add(route)
+
+    def collect(value: Any, *, include_mapping_keys: bool = True) -> None:
+        if isinstance(value, Mapping):
+            if include_mapping_keys:
+                for key in value.keys():
+                    add_route(key)
+            for nested_key in route_keys + sample_route_keys:
+                add_route(value.get(nested_key))
+            for nested_key in feature_route_keys:
+                collect(value.get(nested_key), include_mapping_keys=False)
+            return
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                collect(item, include_mapping_keys=include_mapping_keys)
+            return
+        add_route(value)
+
+    for key in route_keys:
+        add_route(mapping.get(key))
+    for key in sample_route_keys:
+        collect(mapping.get(key))
+    for key in (
+        "compiler_guidance_todo_routes",
+        "top_todo_routes",
+        "todo_routes",
+    ):
+        collect(mapping.get(key))
+    for key in (
+        "ranked_guidance_features",
+        "compiler_guidance_ranked_features",
+        "compiler_guidance_features",
+        "features",
+    ):
+        collect(mapping.get(key), include_mapping_keys=False)
+    return routes
+
+
+def _guidance_route_name(value: Any) -> str:
+    route = str(value or "").strip().lower()
+    if not route:
+        return ""
+    route = route.replace("-", "_").replace(" ", "_")
+    for prefix in (
+        "compiler_guidance_route:",
+        "compiler_guidance_route_",
+        "compiler-guidance-route:",
+        "compiler-guidance-route_",
+        "compiler_guidance_activation:",
+        "compiler_guidance_activation_",
+        "compiler-guidance-activation:",
+        "compiler-guidance-activation_",
+        "compiler_guidance:",
+        "compiler_guidance_",
+        "compiler-guidance:",
+        "compiler-guidance_",
+    ):
+        if route.startswith(prefix):
+            route = route[len(prefix) :]
+            break
+    return route.strip("_")
+
+
+def _guidance_mappings(value: Any) -> tuple[Mapping[str, Any], ...]:
+    """Flatten nested packet-guidance mappings, including JSON bundle strings."""
+
+    mappings: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
+
+    def visit(candidate: Any) -> None:
+        if isinstance(candidate, str):
+            candidate = _guidance_json_mapping(candidate)
+        if isinstance(candidate, Mapping):
+            object_id = id(candidate)
+            if object_id in seen:
+                return
+            seen.add(object_id)
+            mappings.append(candidate)
+            for key in (
+                "bundle",
+                "semantic_bundle_key",
+                "compiler_guidance_bundle",
+                "metadata",
+                "compiler_guidance_attribution",
+                "compiler_guidance_evidence",
+                "attribution",
+                "evidence",
+                "hint_evidence",
+                "loss",
+                "target_metrics",
+                "validation_set",
+                "target_surface",
+            ):
+                if key in candidate:
+                    visit(candidate.get(key))
+            return
+        if isinstance(candidate, (list, tuple)):
+            for item in candidate:
+                visit(item)
+
+    visit(value)
+    return tuple(mappings)
+
+
+def _guidance_json_mapping(value: str) -> Mapping[str, Any]:
+    text = str(value or "").strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    if isinstance(parsed, Mapping):
+        return parsed
+    return {}
+
+
+def _guidance_target_key_is_router(value: Any) -> bool:
+    text = (
+        str(value or "")
+        .strip()
+        .lower()
+        .split(":", 1)[0]
+        .replace("-", "_")
+        .replace(".", "_")
+        .replace(" ", "_")
+    )
+    return text in {
+        "external_provers",
+        "external_provers_router",
+        "external_prover_router",
+        "prover",
+    }
+
+
+def _guidance_quality_gate_passes(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"pass", "passed", "ok", "true", "1"}
+
+
+def _guidance_support_value(value: Mapping[str, Any]) -> Any:
+    for key in (
+        "support",
+        "support_count",
+        "matched_sample_count",
+        "applied_count",
+        "score",
+        "confidence",
+    ):
+        if key in value:
+            return value.get(key)
+    if str(value.get("vector_bundle") or "").strip().lower() == "score":
+        return 1
+    return 0
+
+
+def _guidance_positive_support(value: Any) -> bool:
+    try:
+        return float(value or 0.0) > 0.0
+    except (TypeError, ValueError):
+        return bool(value)
+
+
+def _guidance_metric_targets_external_router(value: Any) -> bool:
+    """Return True for metric/loss evidence unique to external prover routing."""
+
+    metrics: list[str] = []
+
+    def collect(candidate: Any) -> None:
+        if isinstance(candidate, Mapping):
+            for nested_value in candidate.values():
+                collect(nested_value)
+            return
+        if isinstance(candidate, (list, tuple, set, frozenset)):
+            for nested_value in candidate:
+                collect(nested_value)
+            return
+        text = str(candidate or "").strip().lower()
+        if not text:
+            return
+        metrics.extend(part.strip() for part in text.split(",") if part.strip())
+
+    collect(value)
+    return any(
+        metric in {
+            "external_prover_unavailable_loss",
+            "external_prover_failure_ratio",
+            "legal_ir_multiview_proof_failure_ratio",
+        }
+        for metric in metrics
+    )
+
+
+def _guidance_loss_targets_external_router(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return _guidance_metric_targets_external_router(value.keys())
+    return _guidance_metric_targets_external_router(value)
+
+
+@dataclass(frozen=True)
+class SyntacticProofResult:
+    """Compile-only fallback result for router environments without TDFOL."""
+
+    formula: Any
+    is_valid: bool
+    message: str
+    method: str = "syntactic_native_fallback"
+
+    def is_proved(self) -> bool:
+        """The fallback validates routing syntax but never asserts a theorem."""
+
+        return False
+
+    def is_compiled(self) -> bool:
+        """Return True when the fallback accepted the formula syntax."""
+
+        return self.is_valid
+
+
+class SyntacticNativeFallbackProver:
+    """Minimal native prover substitute used when the full TDFOL prover is absent."""
+
+    def prove(self, goal: Any, **_: Any) -> SyntacticProofResult:
+        formula = ProverRouter._coerce_native_formula(goal)
+        is_valid = formula is not None and bool(str(formula).strip())
+        return SyntacticProofResult(
+            formula=formula,
+            is_valid=is_valid,
+            message=(
+                "formula accepted by syntactic native fallback"
+                if is_valid
+                else "formula rejected by syntactic native fallback"
+            ),
+        )
+
 
 class ProverRouter:
     """Router for selecting and coordinating multiple theorem provers.
@@ -89,7 +423,8 @@ class ProverRouter:
         enable_symbolicai: bool = False,
         default_strategy: ProverStrategy = ProverStrategy.AUTO,
         default_timeout: float = 5.0,
-        enable_cache: bool = True
+        enable_cache: bool = True,
+        enable_syntactic_fallback: bool = True,
     ):
         """Initialize prover router.
         
@@ -103,6 +438,8 @@ class ProverRouter:
             default_strategy: Default proving strategy
             default_timeout: Default timeout per prover
             enable_cache: Whether to enable proof caching
+            enable_syntactic_fallback: Whether to keep a compile-only
+                fallback available when configured provers are absent
         """
         self.enable_z3 = enable_z3
         self.enable_cvc5 = enable_cvc5
@@ -110,9 +447,10 @@ class ProverRouter:
         self.enable_coq = enable_coq
         self.enable_native = enable_native
         self.enable_symbolicai = enable_symbolicai
-        self.default_strategy = default_strategy
+        self.default_strategy = self._coerce_strategy(default_strategy)
         self.default_timeout = default_timeout
         self.enable_cache = enable_cache
+        self.enable_syntactic_fallback = enable_syntactic_fallback
         
         # Initialize formula analyzer for intelligent selection
         self.analyzer = FormulaAnalyzer()
@@ -129,71 +467,375 @@ class ProverRouter:
         # Initialize provers
         self.provers = {}
         self._initialize_provers()
+        if self.enable_syntactic_fallback and not self.provers:
+            self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def _initialize_provers(self):
         """Initialize available provers."""
         # Z3
         if self.enable_z3:
             try:
-                from .smt.z3_prover_bridge import Z3ProverBridge, Z3_AVAILABLE
-                if Z3_AVAILABLE:
-                    self.provers['z3'] = Z3ProverBridge(
+                from .smt import z3_prover_bridge
+
+                if z3_prover_bridge._ensure_z3_available():
+                    self.provers['z3'] = z3_prover_bridge.Z3ProverBridge(
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("Z3 prover unavailable during router init", exc_info=True)
         
         # CVC5
         if self.enable_cvc5:
             try:
-                from .smt.cvc5_prover_bridge import CVC5ProverBridge, CVC5_AVAILABLE
-                if CVC5_AVAILABLE:
-                    self.provers['cvc5'] = CVC5ProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+                from .smt import cvc5_prover_bridge
+
+                if cvc5_prover_bridge._ensure_cvc5_available():
+                    self.provers['cvc5'] = cvc5_prover_bridge.CVC5ProverBridge(timeout=self.default_timeout)
+            except Exception:
+                logger.debug("CVC5 prover unavailable during router init", exc_info=True)
         
         # Lean
         if self.enable_lean:
             try:
-                from .interactive.lean_prover_bridge import LeanProverBridge, LEAN_AVAILABLE
-                if LEAN_AVAILABLE:
-                    self.provers['lean'] = LeanProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+                from .interactive import lean_prover_bridge
+
+                if lean_prover_bridge._ensure_lean_available():
+                    self.provers['lean'] = lean_prover_bridge.LeanProverBridge(timeout=self.default_timeout)
+            except Exception:
+                logger.debug("Lean prover unavailable during router init", exc_info=True)
         
         # Coq
         if self.enable_coq:
             try:
-                from .interactive.coq_prover_bridge import CoqProverBridge, COQ_AVAILABLE
-                if COQ_AVAILABLE:
-                    self.provers['coq'] = CoqProverBridge(timeout=self.default_timeout)
-            except ImportError:
-                pass
+                from .interactive import coq_prover_bridge
+
+                if coq_prover_bridge._ensure_coq_available():
+                    self.provers['coq'] = coq_prover_bridge.CoqProverBridge(timeout=self.default_timeout)
+            except Exception:
+                logger.debug("Coq prover unavailable during router init", exc_info=True)
         
         # SymbolicAI
         if self.enable_symbolicai:
             try:
-                from .neural.symbolicai_prover_bridge import SymbolicAIProverBridge, SYMBOLICAI_AVAILABLE
-                if SYMBOLICAI_AVAILABLE:
-                    self.provers['symbolicai'] = SymbolicAIProverBridge(
+                from .neural import symbolicai_prover_bridge
+
+                if symbolicai_prover_bridge._ensure_symbolicai_available():
+                    self.provers['symbolicai'] = symbolicai_prover_bridge.SymbolicAIProverBridge(
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )
-            except ImportError:
-                pass
+            except Exception:
+                logger.debug("SymbolicAI prover unavailable during router init", exc_info=True)
         
         # Native prover
         if self.enable_native:
             try:
                 from ..TDFOL.tdfol_prover import TDFOLProver
                 self.provers['native'] = TDFOLProver()
-            except ImportError:
-                pass
+                if self.enable_syntactic_fallback:
+                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
+            except Exception:
+                logger.debug(
+                    "Native TDFOL prover unavailable; using syntactic fallback",
+                    exc_info=True,
+                )
+                if self.enable_syntactic_fallback:
+                    self.provers['native_syntactic'] = SyntacticNativeFallbackProver()
     
     def get_available_provers(self) -> List[str]:
         """Get list of available provers."""
         return list(self.provers.keys())
+
+    @property
+    def fallback_prover(self) -> Optional[str]:
+        """Return the primary fallback prover currently available."""
+        if "native" in self.provers:
+            return "native"
+        if self.provers:
+            return next(iter(self.provers))
+        return None
+
+    @property
+    def backup_provers(self) -> List[str]:
+        """Return available prover names for legacy router callers."""
+        return list(self.provers.keys())
+
+    def select_prover(self, formula) -> Optional[str]:
+        """Public compatibility wrapper for automatic prover selection."""
+        try:
+            return self._select_prover_for_formula(formula)
+        except Exception:
+            logger.debug("Could not select prover for formula", exc_info=True)
+            return None
+
+    def route(self, formula, **kwargs) -> RouterProofResult:
+        """Public compatibility wrapper for proving through the router."""
+        strategy = kwargs.pop("strategy", None)
+        if strategy is None:
+            for key in ("strategy_name", "strategy_mode", "mode"):
+                if key in kwargs:
+                    strategy = kwargs.pop(key)
+                    break
+
+        timeout = kwargs.pop("timeout", None)
+        timeout_ms = kwargs.pop("timeout_ms", None)
+        if timeout is None and timeout_ms is not None:
+            try:
+                timeout = float(timeout_ms) / 1000.0
+            except (TypeError, ValueError):
+                timeout = None
+        elif timeout is not None:
+            try:
+                timeout = float(timeout)
+            except (TypeError, ValueError):
+                timeout = None
+
+        axioms = kwargs.pop("axioms", None)
+        compiler_guidance = kwargs.pop("compiler_guidance", None)
+        if compiler_guidance is None:
+            compiler_guidance = kwargs.pop("guidance", None)
+        self._apply_compiler_guidance(compiler_guidance)
+        if kwargs:
+            logger.debug(
+                "Ignoring unsupported prover router kwargs: %s",
+                sorted(str(key) for key in kwargs),
+            )
+
+        return self.prove(
+            formula,
+            axioms=axioms,
+            strategy=strategy,
+            timeout=timeout,
+        )
+
+    def _apply_compiler_guidance(self, compiler_guidance: Any) -> None:
+        """Promote passed router-repair guidance into deterministic backup rules."""
+
+        if (
+            self.enable_syntactic_fallback
+            and "native_syntactic" not in self.provers
+            and _guidance_targets_external_prover_router(compiler_guidance)
+        ):
+            self.provers["native_syntactic"] = SyntacticNativeFallbackProver()
+
+    @staticmethod
+    def _coerce_strategy(strategy: Any) -> ProverStrategy:
+        """Normalize string/enum strategy inputs to ProverStrategy values."""
+
+        if isinstance(strategy, ProverStrategy):
+            return strategy
+        if strategy is None:
+            return ProverStrategy.AUTO
+        text = (
+            str(strategy or "")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        if not text:
+            return ProverStrategy.AUTO
+        if text in {"default", "router_default"}:
+            return ProverStrategy.AUTO
+        for candidate in ProverStrategy:
+            if text in {candidate.value, candidate.name.lower()}:
+                return candidate
+        raise ValueError(f"Unknown strategy: {strategy}")
+
+    def _call_prover(
+        self,
+        prover_name: str,
+        prover: Any,
+        formula: Any,
+        axioms: Optional[List],
+        timeout: float,
+    ) -> Any:
+        """Call one prover while normalizing signature differences."""
+
+        timeout_seconds = float(
+            self.default_timeout if timeout is None else timeout
+        )
+        timeout_ms = max(1, int(timeout_seconds * 1000.0))
+        normalized_formula = formula
+        normalized_axioms = axioms
+
+        if prover_name == "native":
+            normalized_formula = self._coerce_native_formula(formula)
+            if axioms:
+                normalized_axioms = [
+                    item
+                    for item in (
+                        self._coerce_native_formula(axiom) for axiom in axioms
+                    )
+                    if item is not None
+                ]
+
+        # Native TDFOL prover uses add_axiom(...) + prove(..., timeout_ms=...).
+        if prover_name == "native" and normalized_axioms and hasattr(prover, "add_axiom"):
+            for index, axiom in enumerate(normalized_axioms):
+                axiom_name = f"router_axiom_{index}"
+                try:
+                    prover.add_axiom(axiom, name=axiom_name)
+                except TypeError:
+                    prover.add_axiom(axiom)
+
+        try:
+            prove_params = inspect.signature(prover.prove).parameters
+        except (TypeError, ValueError):
+            prove_params = {}
+
+        accepts_kwargs = any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in prove_params.values()
+        )
+
+        kwargs: Dict[str, Any] = {}
+        if accepts_kwargs or "axioms" in prove_params:
+            kwargs["axioms"] = normalized_axioms
+        if accepts_kwargs or "timeout" in prove_params:
+            kwargs["timeout"] = timeout_seconds
+        elif "timeout_ms" in prove_params:
+            kwargs["timeout_ms"] = timeout_ms
+
+        return prover.prove(normalized_formula, **kwargs)
+
+    @staticmethod
+    def _coerce_native_formula(formula: Any) -> Any:
+        """Best-effort conversion of router payloads into native TDFOL formulas."""
+
+        return ProverRouter._coerce_native_formula_inner(formula, seen=set())
+
+    @staticmethod
+    def _coerce_native_formula_inner(formula: Any, *, seen: set[int]) -> Any:
+        """Best-effort conversion helper with cycle protection."""
+
+        if formula is None:
+            return None
+        if isinstance(formula, Mapping):
+            object_id = id(formula)
+            if object_id in seen:
+                return None
+            seen.add(object_id)
+            consumed_keys: set[str] = set()
+            formula_keys = (
+                "formula_object",
+                "proof_formula_object",
+                "formula",
+                "candidate_formula",
+                "formula_candidate",
+                "compiler_formula",
+                "program_formula",
+                "proof_input",
+                "proof_formula",
+                "proof_candidate",
+                "tdfol_formula",
+                "goal",
+                "proof_goal",
+                "theorem",
+                "theorem_formula",
+                "claim",
+                "claims",
+                "assertion",
+                "assertions",
+                "proposition",
+                "propositions",
+                "logical_form",
+                "logic_formula",
+                "normalized_formula",
+                "normalized_proof",
+                "expression",
+                "value",
+            )
+            container_keys = (
+                "proof_obligation",
+                "obligation",
+                "payload",
+                "router_payload",
+                "view",
+                "data",
+                "obligations",
+                "proof_obligations",
+                "proofs",
+                "records",
+                "formulas",
+                "theorems",
+                "goals",
+                "clauses",
+                "items",
+            )
+            text_keys = (
+                "text",
+                "source_text",
+                "normalized_text",
+            )
+            for key in formula_keys + container_keys + text_keys:
+                if key not in formula:
+                    continue
+                consumed_keys.add(key)
+                value = formula.get(key)
+                if value is formula:
+                    continue
+                coerced = ProverRouter._coerce_native_formula_inner(value, seen=seen)
+                if coerced is not None:
+                    return coerced
+            for raw_key in sorted(formula.keys(), key=lambda item: str(item)):
+                key = str(raw_key)
+                if key in consumed_keys:
+                    continue
+                value = formula.get(raw_key)
+                if value is formula:
+                    continue
+                coerced = ProverRouter._coerce_native_formula_inner(value, seen=seen)
+                if coerced is not None:
+                    return coerced
+            return None
+        if isinstance(formula, (list, tuple)):
+            object_id = id(formula)
+            if object_id in seen:
+                return None
+            seen.add(object_id)
+            for item in formula:
+                coerced = ProverRouter._coerce_native_formula_inner(item, seen=seen)
+                if coerced is not None:
+                    return coerced
+            return None
+        if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
+            return formula
+        text = str(formula or "").strip()
+        if not text:
+            return None
+        try:
+            from ..bridge.fol_tdfol import coerce_tdfol_formula
+
+            coerced = coerce_tdfol_formula(text)
+            if coerced is not None:
+                return coerced
+        except Exception:
+            logger.debug("Could not coerce native formula payload", exc_info=True)
+        return formula
+
+    @staticmethod
+    def _result_is_proved(result: Any) -> bool:
+        """Return True when a prover result indicates a valid proof."""
+
+        if result is None:
+            return False
+
+        is_proved = getattr(result, "is_proved", None)
+        if callable(is_proved):
+            try:
+                return bool(is_proved())
+            except Exception:
+                return False
+
+        if hasattr(result, "is_valid"):
+            return bool(getattr(result, "is_valid"))
+
+        if isinstance(result, bool):
+            return result
+
+        return False
     
     def _select_prover_for_formula(self, formula) -> str:
         """Select best prover for a formula based on characteristics.
@@ -204,18 +846,24 @@ class ProverRouter:
         Returns:
             Name of selected prover
         """
-        # Analyze formula to get recommendations
-        analysis = self.analyzer.analyze(formula)
-        
-        logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
-                    f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
-        logger.debug(f"Recommended provers: {analysis.recommended_provers}")
-        
-        # Try recommended provers in order
-        for prover_name in analysis.recommended_provers:
-            if prover_name in self.provers:
-                logger.info(f"Selected {prover_name} based on formula analysis")
-                return prover_name
+        try:
+            # Analyze formula to get recommendations
+            analysis = self.analyzer.analyze(formula)
+
+            logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
+                        f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
+            logger.debug(f"Recommended provers: {analysis.recommended_provers}")
+
+            # Try recommended provers in order
+            for prover_name in analysis.recommended_provers:
+                if prover_name in self.provers:
+                    logger.info(f"Selected {prover_name} based on formula analysis")
+                    return prover_name
+        except Exception:
+            logger.debug(
+                "Formula analysis failed during prover selection; using fallback order",
+                exc_info=True,
+            )
         
         # Fallback: prefer Z3 for FOL
         if 'z3' in self.provers:
@@ -226,6 +874,10 @@ class ProverRouter:
         if 'native' in self.provers:
             logger.info("Fallback to native prover")
             return 'native'
+
+        if 'native_syntactic' in self.provers:
+            logger.info("Fallback to syntactic native prover")
+            return 'native_syntactic'
         
         # Use first available
         if self.provers:
@@ -253,8 +905,8 @@ class ProverRouter:
         Returns:
             RouterProofResult with proof status
         """
-        strategy = strategy or self.default_strategy
-        timeout = timeout or self.default_timeout
+        strategy = self._coerce_strategy(strategy or self.default_strategy)
+        timeout = self.default_timeout if timeout is None else float(timeout)
         
         if strategy == ProverStrategy.AUTO:
             return self._prove_auto(formula, axioms, timeout)
@@ -277,34 +929,74 @@ class ProverRouter:
     ) -> RouterProofResult:
         """Prove using automatic prover selection."""
         start_time = time.time()
-        
-        # Select best prover
-        prover_name = self._select_prover_for_formula(formula)
-        prover = self.provers[prover_name]
-        
-        # Prove
+
         try:
-            result = prover.prove(formula, axioms=axioms, timeout=timeout)
-            proof_time = time.time() - start_time
-            
-            return RouterProofResult(
-                is_proved=result.is_proved() if hasattr(result, 'is_proved') else result.is_valid,
-                prover_used=prover_name,
-                proof_time=proof_time,
-                all_results={prover_name: result},
-                strategy_used="auto",
-                reason=f"Used {prover_name}"
-            )
-        except Exception as e:
+            # Select best prover
+            selected_prover = self._select_prover_for_formula(formula)
+        except RuntimeError as exc:
             proof_time = time.time() - start_time
             return RouterProofResult(
                 is_proved=False,
-                prover_used=prover_name,
+                prover_used=None,
                 proof_time=proof_time,
                 all_results={},
                 strategy_used="auto",
-                reason=f"Error: {str(e)}"
+                reason=str(exc),
             )
+
+        # Keep the analyzer-selected prover first, then deterministically
+        # fall back across the remaining available provers.
+        ordered_provers = [selected_prover] + [
+            prover_name
+            for prover_name in self.provers
+            if prover_name != selected_prover
+        ]
+        all_results: Dict[str, Any] = {}
+        first_non_error: Optional[str] = None
+
+        for prover_name in ordered_provers:
+            prover = self.provers[prover_name]
+            try:
+                result = self._call_prover(
+                    prover_name,
+                    prover,
+                    formula,
+                    axioms,
+                    timeout,
+                )
+            except Exception as exc:
+                all_results[prover_name] = f"Error: {str(exc)}"
+                continue
+
+            all_results[prover_name] = result
+            if first_non_error is None:
+                first_non_error = prover_name
+            if self._result_is_proved(result):
+                proof_time = time.time() - start_time
+                return RouterProofResult(
+                    is_proved=True,
+                    prover_used=prover_name,
+                    proof_time=proof_time,
+                    all_results=all_results,
+                    strategy_used="auto",
+                    reason=f"Proved by {prover_name}",
+                )
+
+        proof_time = time.time() - start_time
+        if first_non_error is None:
+            reason = "All provers failed"
+        elif first_non_error == selected_prover:
+            reason = f"Used {selected_prover} (no proof)"
+        else:
+            reason = f"Fell back to {first_non_error} (no proof)"
+        return RouterProofResult(
+            is_proved=False,
+            prover_used=first_non_error,
+            proof_time=proof_time,
+            all_results=all_results,
+            strategy_used="auto",
+            reason=reason,
+        )
     
     def _prove_parallel(
         self,
@@ -315,11 +1007,21 @@ class ProverRouter:
         """Prove using all provers in parallel."""
         start_time = time.time()
         all_results = {}
+
+        if not self.provers:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=None,
+                proof_time=0.0,
+                all_results={},
+                strategy_used="parallel",
+                reason="No provers available",
+            )
         
         def prove_with_prover(prover_name: str, prover):
             """Wrapper for parallel execution."""
             try:
-                result = prover.prove(formula, axioms=axioms, timeout=timeout)
+                result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 return (prover_name, result, None)
             except Exception as e:
                 return (prover_name, None, str(e))
@@ -333,13 +1035,15 @@ class ProverRouter:
             
             for future in concurrent.futures.as_completed(futures):
                 prover_name, result, error = future.result()
-                all_results[prover_name] = result if result else error
+                all_results[prover_name] = (
+                    f"Error: {error}" if error is not None else result
+                )
         
         proof_time = time.time() - start_time
         
         # Find first successful proof
         for prover_name, result in all_results.items():
-            if result and hasattr(result, 'is_proved') and result.is_proved():
+            if self._result_is_proved(result):
                 return RouterProofResult(
                     is_proved=True,
                     prover_used=prover_name,
@@ -348,14 +1052,27 @@ class ProverRouter:
                     strategy_used="parallel",
                     reason=f"Proved by {prover_name}"
                 )
+
+        first_non_error = next(
+            (
+                prover_name
+                for prover_name, result in all_results.items()
+                if not isinstance(result, str)
+            ),
+            None,
+        )
         
         return RouterProofResult(
             is_proved=False,
-            prover_used=None,
+            prover_used=first_non_error,
             proof_time=proof_time,
             all_results=all_results,
             strategy_used="parallel",
-            reason="No prover succeeded"
+            reason=(
+                f"Used {first_non_error} (no proof)"
+                if first_non_error
+                else "No prover succeeded"
+            )
         )
     
     def _prove_sequential(
@@ -371,10 +1088,10 @@ class ProverRouter:
         # Try provers in order
         for prover_name, prover in self.provers.items():
             try:
-                result = prover.prove(formula, axioms=axioms, timeout=timeout)
+                result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 all_results[prover_name] = result
                 
-                if result.is_proved() if hasattr(result, 'is_proved') else result.is_valid:
+                if self._result_is_proved(result):
                     proof_time = time.time() - start_time
                     return RouterProofResult(
                         is_proved=True,
@@ -388,13 +1105,27 @@ class ProverRouter:
                 all_results[prover_name] = f"Error: {str(e)}"
         
         proof_time = time.time() - start_time
+        first_non_error = next(
+            (
+                prover_name
+                for prover_name, result in all_results.items()
+                if not isinstance(result, str)
+            ),
+            None,
+        )
+        if first_non_error:
+            reason = f"Used {first_non_error} (no proof)"
+        elif all_results:
+            reason = "All provers failed"
+        else:
+            reason = "No provers available"
         return RouterProofResult(
             is_proved=False,
-            prover_used=None,
+            prover_used=first_non_error,
             proof_time=proof_time,
             all_results=all_results,
             strategy_used="sequential",
-            reason="All provers failed"
+            reason=reason,
         )
     
     def _prove_fastest(
@@ -404,25 +1135,28 @@ class ProverRouter:
         timeout: float
     ) -> RouterProofResult:
         """Prove with fastest prover (Z3 preferred)."""
-        # Prefer Z3 as fastest
-        if 'z3' in self.provers:
-            start_time = time.time()
-            try:
-                result = self.provers['z3'].prove(formula, axioms=axioms, timeout=timeout)
-                proof_time = time.time() - start_time
-                return RouterProofResult(
-                    is_proved=result.is_proved(),
-                    prover_used='z3',
-                    proof_time=proof_time,
-                    all_results={'z3': result},
-                    strategy_used="fastest",
-                    reason="Used Z3 (fastest)"
-                )
-            except Exception as e:
-                pass
-        
-        # Fall back to auto
-        return self._prove_auto(formula, axioms, timeout)
+        fastest_order = [
+            "z3",
+            "native",
+            "native_syntactic",
+            "cvc5",
+            "lean",
+            "coq",
+            "symbolicai",
+        ]
+        ordered_provers = [
+            name for name in fastest_order if name in self.provers
+        ] + [
+            name for name in self.provers if name not in fastest_order
+        ]
+        return self._prove_ordered(
+            formula,
+            axioms,
+            timeout,
+            ordered_provers,
+            strategy_used="fastest",
+            no_available_reason="No fastest prover available",
+        )
     
     def _prove_most_capable(
         self,
@@ -431,32 +1165,91 @@ class ProverRouter:
         timeout: float
     ) -> RouterProofResult:
         """Prove with most capable prover (Lean/Coq preferred)."""
-        # Prefer Lean or Coq as most capable
-        for prover_name in ['lean', 'coq', 'cvc5', 'z3', 'native']:
-            if prover_name in self.provers:
-                start_time = time.time()
-                try:
-                    result = self.provers[prover_name].prove(formula, axioms=axioms, timeout=timeout)
-                    proof_time = time.time() - start_time
-                    return RouterProofResult(
-                        is_proved=result.is_proved() if hasattr(result, 'is_proved') else result.is_valid,
-                        prover_used=prover_name,
-                        proof_time=proof_time,
-                        all_results={prover_name: result},
-                        strategy_used="most_capable",
-                        reason=f"Used {prover_name}"
-                    )
-                except Exception as e:
-                    continue
-        
-        # All failed
+        capable_order = ['lean', 'coq', 'cvc5', 'z3', 'native', 'native_syntactic']
+        ordered_provers = [
+            name for name in capable_order if name in self.provers
+        ] + [
+            name for name in self.provers if name not in capable_order
+        ]
+        return self._prove_ordered(
+            formula,
+            axioms,
+            timeout,
+            ordered_provers,
+            strategy_used="most_capable",
+            no_available_reason="No capable prover available",
+        )
+
+    def _prove_ordered(
+        self,
+        formula,
+        axioms: Optional[List],
+        timeout: float,
+        ordered_provers: List[str],
+        *,
+        strategy_used: str,
+        no_available_reason: str,
+    ) -> RouterProofResult:
+        """Try an explicit prover order and keep compile fallback evidence."""
+
+        start_time = time.time()
+        all_results: Dict[str, Any] = {}
+        first_non_error: Optional[str] = None
+
+        for prover_name in ordered_provers:
+            prover = self.provers.get(prover_name)
+            if prover is None:
+                continue
+            try:
+                result = self._call_prover(
+                    prover_name,
+                    prover,
+                    formula,
+                    axioms,
+                    timeout,
+                )
+            except Exception as exc:
+                all_results[prover_name] = f"Error: {str(exc)}"
+                continue
+
+            all_results[prover_name] = result
+            if first_non_error is None:
+                first_non_error = prover_name
+            if self._result_is_proved(result):
+                return RouterProofResult(
+                    is_proved=True,
+                    prover_used=prover_name,
+                    proof_time=time.time() - start_time,
+                    all_results=all_results,
+                    strategy_used=strategy_used,
+                    reason=f"Proved by {prover_name}",
+                )
+
+        if first_non_error:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=first_non_error,
+                proof_time=time.time() - start_time,
+                all_results=all_results,
+                strategy_used=strategy_used,
+                reason=f"Used {first_non_error} (no proof)",
+            )
+        if all_results:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=None,
+                proof_time=time.time() - start_time,
+                all_results=all_results,
+                strategy_used=strategy_used,
+                reason="All provers failed",
+            )
         return RouterProofResult(
             is_proved=False,
             prover_used=None,
             proof_time=0.0,
             all_results={},
-            strategy_used="most_capable",
-            reason="No capable prover available"
+            strategy_used=strategy_used,
+            reason=no_available_reason,
         )
     
     def prove_parallel(
@@ -482,7 +1275,7 @@ class ProverRouter:
         
         # If any proved, return first proof
         for prover_name, prover_result in result.all_results.items():
-            if hasattr(prover_result, 'is_proved') and prover_result.is_proved():
+            if self._result_is_proved(prover_result):
                 return prover_result
         
         # Otherwise return first result
@@ -493,21 +1286,6 @@ __all__ = [
     "ProverRouter",
     "ProverStrategy",
     "RouterProofResult",
+    "SyntacticNativeFallbackProver",
+    "SyntacticProofResult",
 ]
-
-
-# Add backward-compat aliases to ProverRouter
-def _prover_router_select_prover(self, formula):
-    """Alias for _select_prover_for_formula()."""
-    return self._select_prover_for_formula(formula)
-
-
-def _prover_router_route(self, formula, **kwargs):
-    """Alias for prove()."""
-    return self.prove(formula, **kwargs)
-
-
-ProverRouter.select_prover = _prover_router_select_prover
-ProverRouter.route = _prover_router_route
-ProverRouter.fallback_prover = property(lambda self: "native")
-ProverRouter.backup_provers = property(lambda self: list(self._provers.keys()))

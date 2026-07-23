@@ -65,6 +65,48 @@ else:
     print(f"Validation errors: {errors}")
 ```
 
+## Deterministic Modal Legal Parser
+
+Use the deterministic parser path for legal modal extraction when you want
+reproducible IR, BM25 frame candidates, and loss metrics without default LLM
+calls.
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    BM25FrameSelector,
+    DEFAULT_LEGAL_FRAME_FIXTURE,
+    LegalModalParser,
+    ModalAutoencoderBaseline,
+    ModalProverRouter,
+    ModalSystem,
+    build_modal_parser_report,
+    build_us_code_sample,
+)
+
+text = "The agency must provide notice and a hearing before a final order."
+
+parser = LegalModalParser()
+modal_ir = parser.parse(text, document_id="sample-5-552", source="us_code", citation="5 U.S.C. 552")
+
+selector = BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
+frames = selector.rank(text, top_k=3)
+
+sample = build_us_code_sample(title="5", section="552", citation="5 U.S.C. 552", text=text)
+losses = ModalAutoencoderBaseline().evaluate([sample])
+prover_route = ModalProverRouter().route(formula=None, system=ModalSystem.S5)
+
+report = build_modal_parser_report(
+    samples=[sample],
+    autoencoder=losses,
+    prover_results=[prover_route],
+    expected_frames={sample.sample_id: sample.selected_frame or ""},
+)
+
+print(modal_ir.canonical_hash())
+print(frames[0].to_dict())
+print(report.to_markdown())
+```
+
 ## CLI Usage
 
 ```bash
@@ -148,6 +190,115 @@ for t in theorems:
     valid = result['valid']
     
     print(f"{t['rule']}: {'✓' if valid else '✗'}")
+```
+
+## Daemon-Driven Modal Optimization
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    AdaptiveModalAutoencoder,
+    ModalTodoSupervisor,
+    SpaCyLegalEncoder,
+    SpaCyModalCodec,
+    build_us_code_sample,
+)
+
+samples = [
+    build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice and a hearing before a final order.",
+    )
+]
+
+autoencoder = AdaptiveModalAutoencoder(
+    feature_codec=SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="en_core_web_sm")
+    )
+)
+supervisor = ModalTodoSupervisor()
+
+before = autoencoder.evaluate(samples)
+run = supervisor.optimize(
+    samples,
+    autoencoder=autoencoder,
+    max_iterations=3,
+    max_items=4,
+    learning_rate=0.5,
+)
+after = run.final_evaluation
+
+print(before.cross_entropy_loss, after.cross_entropy_loss)
+print(before.embedding_cosine_similarity, after.embedding_cosine_similarity)
+print(supervisor.queue.status_counts())
+```
+
+The supervisor generates loss-targeted TODOs, claims a batch, applies deterministic encoder/decoder updates, re-evaluates, and marks TODOs complete only when validation shows the loss moved in the right direction.
+
+The spaCy codec keeps this path local: it compiles text into token features,
+modal cue spans, IR formulas, family logits, and deterministic feature vectors
+without LLM inference. If `en_core_web_sm` is not installed, it falls back to
+`spacy.blank("en")` plus a sentencizer.
+
+You can also request the spaCy path through the normal extractor API:
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    ExtractionMode,
+    LogicExtractionContext,
+    LogicExtractor,
+)
+
+result = LogicExtractor(use_ipfs_accelerate=False).extract(
+    LogicExtractionContext(
+        data="The agency must make records promptly available.",
+        domain="legal",
+        config={"extraction_mode": ExtractionMode.MODAL.value, "modal_profile": "spacy"},
+    )
+)
+print(result.metrics["llm_call_count"])
+```
+
+## U.S. Code Parquet Dataset
+
+The daemon can optimize over schema-compatible parquet rows from
+`justicedao/ipfs_uscode`, including `uscode_parquet/laws.parquet` and optional
+embeddings from `uscode_parquet/laws_embeddings.parquet`.
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    AdaptiveModalAutoencoder,
+    ModalTodoSupervisor,
+    SpaCyLegalEncoder,
+    SpaCyModalCodec,
+    load_uscode_samples_from_parquet,
+)
+
+samples = load_uscode_samples_from_parquet(
+    "uscode_parquet/laws.parquet",
+    embeddings_parquet="uscode_parquet/laws_embeddings.parquet",
+    limit=25,
+)
+
+run = ModalTodoSupervisor().optimize(
+    samples,
+    autoencoder=AdaptiveModalAutoencoder(
+        feature_codec=SpaCyModalCodec(
+            encoder=SpaCyLegalEncoder(model_name="en_core_web_sm")
+        )
+    ),
+    max_iterations=3,
+    max_items=8,
+)
+print(run.final_evaluation.to_dict())
+```
+
+Default tests use a tiny local parquet fixture with the same columns. The live
+Hub smoke test is opt-in:
+
+```bash
+IPFS_DATASETS_PY_RUN_HF_USCODE_LIVE=1 \
+  pytest tests/unit/optimizers/logic_theorem_optimizer/test_uscode_dataset.py::test_hf_uscode_live_dataset_smoke -q
 ```
 
 ## Configuration

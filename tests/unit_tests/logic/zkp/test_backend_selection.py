@@ -105,17 +105,25 @@ class TestGroth16BackendGating:
             # Error should mention py_ecc requirement
             assert "py_ecc" in str(e).lower() or "not yet implemented" in str(e).lower()
     
-    def test_groth16_fails_closed_with_message(self):
-        """Groth16 backend operations should fail closed with helpful message."""
+    def test_groth16_available_or_fails_closed_with_message(self):
+        """Groth16 should work when bundled binary exists, otherwise fail closed clearly."""
         try:
             backend = get_backend("groth16")
-            # If backend loaded, try to generate proof
-            with pytest.raises(ZKPError):
-                backend.generate_proof(
+            try:
+                proof = backend.generate_proof(
                     theorem="P",
                     private_axioms=["P"],
                     metadata={}
                 )
+                assert proof.metadata.get("backend") == "groth16"
+            except ZKPError as e:
+                error_msg = str(e).lower()
+                assert any(x in error_msg for x in [
+                    "groth16",
+                    "binary",
+                    "install",
+                    "build",
+                ])
         except ZKPError as e:
             # If backend selection fails, message should be helpful
             error_msg = str(e).lower()

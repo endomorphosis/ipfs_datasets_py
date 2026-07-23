@@ -1,0 +1,1051 @@
+{
+  "acceptance_gates": {
+    "expected_attack_mutation_targets": "pass",
+    "fuzzer_crash": "pass",
+    "malformed_security_ir_parser": "pass",
+    "redaction_breach": "pass"
+  },
+  "adversarial_acceptance_gates": {
+    "counterexample_minimization": "pass",
+    "registered_fuzz_domain_coverage": "pass",
+    "unregistered_fuzz_domain_rejection": "pass"
+  },
+  "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
+  "attack_mutations": [
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
+      "fuzz_domain": "malformed_payload",
+      "mutation_id": "attack-raw-payload-material",
+      "payload_sha256": "2d58995749d3d73104f6f4e23a2daee461a42c10fee4194fea244fc7af49e1ea",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Raw payload material is introduced into the payload boundary",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-malformed-payload-shape.json",
+      "fuzz_domain": "malformed_payload",
+      "mutation_id": "attack-malformed-payload-shape",
+      "payload_sha256": "74e5eb3966567f75a21f4808a7928ec4b10697e7602cbe82f1cae1da8af2d8e7",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Malformed payload structure is accepted as modeled categorical intake",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+      "fuzz_domain": "malformed_payload",
+      "mutation_id": "attack-raw-signature-blob",
+      "payload_sha256": "6eef294c82a227f88f9d2a7600974de7035cb5099508f4d7dedf2309cc5744a1",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "title": "Raw signature or transaction blob material is introduced",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+        "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+      "fuzz_domain": "auth_review_bypass",
+      "mutation_id": "attack-signing-before-auth",
+      "payload_sha256": "50cfc9c86187649324550d038f0314421d0a7e1b49419408b09bee862b4fed4b",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "title": "Signing is allowed before auth decision",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-review-bypass.json",
+      "fuzz_domain": "auth_review_bypass",
+      "mutation_id": "attack-review-bypass",
+      "payload_sha256": "2eb7a99b91305c3025248cbc09bec60f3dc77341eae3a46576e2607bced2b59a",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "title": "Review decision is removed before authorization and signing",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json",
+      "fuzz_domain": "wrong_network",
+      "mutation_id": "attack-wrong-network",
+      "payload_sha256": "4862c28b854ec87db4a5e052b6008b1a40a775538b8b78abeaa823aa880a1d83",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "title": "Payload is rebound to non-Testnet network metadata",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-imported-production-account.json",
+      "fuzz_domain": "account_import",
+      "mutation_id": "attack-imported-production-account",
+      "payload_sha256": "6caa985f3eb347b4031d893ea11f62ced9ed8c8cbf7f679cec1c9378e5370005",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "title": "Imported production account provenance is introduced",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:account-provenance-is-fresh-testnet-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+      "fuzz_domain": "replayed_payload",
+      "mutation_id": "attack-replay-duplicate-resolution",
+      "payload_sha256": "f8aad5182fa002a6697c5d4083b80c490d3e0824cac6cce9b6181973631c72e9",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "title": "Duplicate payload resolution is accepted",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:replay-controls-are-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-submit-result.json",
+      "fuzz_domain": "replayed_payload",
+      "mutation_id": "attack-replay-duplicate-submit-result",
+      "payload_sha256": "fdc003d34cc64afc3d80a0b82fb45a1ec095d41dfc571b005e05864e40e75ede",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "title": "Duplicate submit-result observation is accepted",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:replay-controls-are-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json",
+      "fuzz_domain": "stale_downgraded_evidence",
+      "mutation_id": "attack-stale-evidence-digest",
+      "payload_sha256": "2a5801cfb97f5d1d969a89f55d19faa60f4bdcf48a32138a6090dbfd460fda31",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "title": "Stale evidence digest is accepted for a reviewed Testnet observation",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
+      "fuzz_domain": "stale_downgraded_evidence",
+      "mutation_id": "attack-downgraded-evidence-review",
+      "payload_sha256": "d9277a410a74a8eb841d7a5f8aa7fd042b5f05be402682963d9b8f0856afbca4",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "title": "Human-reviewed evidence is downgraded to unreviewed without blocking proof consumption",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-decline-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-decline-gap-promoted",
+      "payload_sha256": "51a969ff8eeb7a82d8408386f64f7705b19e07afe0b8c46d6237dd64618f26a5",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "title": "Decline coverage gap is promoted to modeled runtime path",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:refusal-path-is-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-cancel-gap-promoted",
+      "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "title": "Cancellation coverage gap is promoted to modeled runtime path",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:cancellation-path-is-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-expiry-gap-promoted",
+      "payload_sha256": "447cf7e459074328fc06449ed4f60dc7c302dec9b47869d82957139af59718cd",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "title": "Expiry coverage gap is promoted to modeled runtime path",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:expiry-path-is-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-cancel-after-submit-race",
+      "payload_sha256": "152e968f5d8465a84fe9d3027347b9fda91125ecedf569b6ab3419d9f64c428f",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "title": "Cancellation wins a race after submit attempt without a modeled cancellation path",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-expiry-after-auth-race",
+      "payload_sha256": "b7d5ed5972d6a1998547013c3b31bf40f0f9e2878f09ef107323905df75337f9",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "title": "Expiry wins a race after auth but before signing/submission is resolved",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:review-auth-sequence-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-reconnect-before-submit-result-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-reconnect-before-submit-result-race",
+      "payload_sha256": "34b05df3905bf7ccacb8d3e62cdf69da0300639a4475c21da92dbe285322d6ba",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "title": "Reconnect is accepted before submit result observation is restored",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "mutation_id": "attack-trustset-transaction-type",
+      "payload_sha256": "4f6f6bea7318b15c5cfc27672878bb56d9f876cc7b6048702849ffe9f0772889",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Unsupported TrustSet semantics are accepted as proof-eligible Testnet payload semantics",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "mutation_id": "attack-offercreate-transaction-type",
+      "payload_sha256": "1852c7c6598f1aeb4df284ce30906ae52044a444cc4ef2eb1b905d7d06216e94",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Unsupported OfferCreate semantics are accepted as proof-eligible Testnet payload semantics",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "mutation_id": "attack-signerlistset-transaction-type",
+      "payload_sha256": "49f26b4853d9f32e87cd348417cda773dd1f56e83ddf710635b0848c15dc1a2b",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Unsupported SignerListSet semantics are accepted as proof-eligible Testnet payload semantics",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-path-payment-semantics-skipped.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "mutation_id": "attack-path-payment-semantics-skipped",
+      "payload_sha256": "5a6fa5068d778998e3d5c3e433a38a9c00e59abdaa836b12392bf9bb2ca01797",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "title": "Path payment semantics are skipped while retaining a modeled-payment proof decision",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:payload-intake-is-categorical-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
+      "fuzz_domain": "solver_result_tampering",
+      "mutation_id": "attack-forged-broadcast-finality",
+      "payload_sha256": "a79fc0de46b101facf2879961569568b1b9810d98aa89dadc8a870d6e1c7abba",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "title": "Forged broadcast/finality proof is accepted as modeled evidence",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-solver-result-upgrade.json",
+      "fuzz_domain": "solver_result_tampering",
+      "mutation_id": "attack-solver-result-upgrade",
+      "payload_sha256": "2e4d2f609c82567558fa6ead4397c29175695ffefe49c7ef1309fddd4e1edf9b",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "title": "Unknown solver result is tampered into a proved result",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:network-binding-is-testnet-only"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-proof-obligation-status-forged.json",
+      "fuzz_domain": "solver_result_tampering",
+      "mutation_id": "attack-proof-obligation-status-forged",
+      "payload_sha256": "64b2bd9ebc90c1a0ad0689cf8cfbdc59ace666817c9158fd1ee9f449641d0d3f",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "title": "Unknown proof obligation status is forged into a proof result",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ]
+    },
+    {
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "mutation_id": "attack-submit-result-removed",
+      "payload_sha256": "ed14508696267fe9fdf2385cc65786866eee51a80d1ea69772c388b90746356d",
+      "result": "target_claim_triggered",
+      "status": "passed",
+      "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "title": "Submit result observation is removed from the trace",
+      "triggered_claim_ids": [
+        "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+      ]
+    }
+  ],
+  "campaigns": [
+    {
+      "accepted_case_count": 1,
+      "actual_rejection_count": 10,
+      "campaign_id": "trace-mutation-campaign",
+      "cases": [
+        {
+          "case_id": "trace-seed-reviewed-valid",
+          "crash": null,
+          "expected": "accepted",
+          "payload_sha256": "96c73fd9d1c65b0d975434d74cc3456c235d4afc88c0e5baed3e3427628ab78d",
+          "rejection_reason": null,
+          "result": "accepted",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Reviewed Testnet lifecycle trace remains accepted",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-duplicate-action",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "e31f0d592a58078a6c8f5b39e691334f56374e13ad49cd5baf98e5c61cde60d4",
+          "rejection_reason": "duplicate trace action: payload_intake",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Duplicate action creates ambiguous reviewed trace mapping",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-duplicate-ordinal",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "6b7dc7bf7d5501d22240ad1eff881ddbae6a6d78fde41bdc9642c0e9ca201933",
+          "rejection_reason": "duplicate trace ordinal: 1",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Duplicate ordinal creates ambiguous reviewed trace mapping",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-signing-before-auth",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "52d944e11b6b991a3083f29331a1ac9f07a512078b0f20acda07f23bcb8b9ae0",
+          "rejection_reason": "trace event count changed",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Signing event is reordered before auth decision",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-unreviewed-source-kind",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "a85c3c1bf3b1aa6554f0ec1f55539373c8736081f16f3d3fb16fbc90d14f8856",
+          "rejection_reason": "action payload_intake is not reviewed UI evidence",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+          "title": "Unreviewed source-derived event tries to enter the model",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-raw-material-recorded",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "74fa00804efc16bb453b21b74e483177384e2ea3b6ad782ce68c7939087c0922",
+          "rejection_reason": "action payload_intake retained raw material",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+          "title": "Trace event records raw material flag",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-redaction-breach-field",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "307abe6fcc541b71bf4b4cbfdae5cd035e86bcaf6fa4ae096276d17372edc2c0",
+          "rejection_reason": "redaction breach rejected at $.events[0].<sensitive-redacted-field>",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+          "title": "Trace event attempts to retain a sensitive raw payload field",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-missing-cancel-gap",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "b20c3a3ad96b041be84cd03c9305a6dac10d428ad946f0805767a2ba98833bd5",
+          "rejection_reason": "coverage gaps must remain exactly decline, cancel, and expiry",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+          "title": "Cancellation coverage gap is silently dropped",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-wrong-network",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "7ba8a458d37a6558a1f8a3cde11d52ba5f9f61ead6cc5be42371c9650341bf48",
+          "rejection_reason": "network binding must remain XRPL Testnet key TESTNET with network_id 1",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+          "title": "Trace is rebound away from XRPL Testnet",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-imported-production-account",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "0b8624f27c58a1c1ed7cc004ae75bed3ec07a6e69496b4b82b4d5db03422659b",
+          "rejection_reason": "imported or production account boundary rejected",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+          "title": "Trace imports a production account boundary",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "trace-submit-result-outcome-changed",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "4379b1ffdd2fb7f99c3f1ea38645737570b9d2d5e19bb15ddd146c3f58639a35",
+          "rejection_reason": "action submit_result category or outcome changed",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+          "title": "Submit result categorical outcome is changed",
+          "triggered_claim_ids": []
+        }
+      ],
+      "crash_count": 0,
+      "expected_rejection_count": 10,
+      "generated_case_count": 11,
+      "status": "passed",
+      "target_claim_trigger_count": 0,
+      "unexpected_acceptance_count": 0
+    },
+    {
+      "accepted_case_count": 1,
+      "actual_rejection_count": 10,
+      "campaign_id": "malformed-security-ir-parser-campaign",
+      "cases": [
+        {
+          "case_id": "ir-seed-valid",
+          "crash": null,
+          "expected": "accepted",
+          "payload_sha256": "4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+          "rejection_reason": null,
+          "result": "accepted",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Reviewed Testnet SecurityModelIR parses as trusted baseline",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-unknown-top-level",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "497cea732826f2f0a1836b127b41ed8e7ff255eb3a284573e408c59b3299a716",
+          "rejection_reason": "Unknown top-level SecurityModelIR field(s): forged",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Unknown top-level field is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-missing-model-id",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "112877e510d91be385df22bfe515a663d3664a2f05ad109196d32d8a4111a526",
+          "rejection_reason": "Missing required top-level SecurityModelIR field(s): model_id",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Missing model_id is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-events-not-list",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "ec842002f442928f546c3a0b8060855c84cfd92069b87acfa0c86f655e0f0efa",
+          "rejection_reason": "events must be a list in SecurityModelIR payload",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Non-list events field is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-event-entry-not-mapping",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "ccb63df49f5375eb19869086bac3879f1e1f945171736126e8e1ba4e3a16a8f2",
+          "rejection_reason": "events[0] must be a dict in SecurityModelIR payload",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Non-mapping event entry is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-duplicate-claim-id",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "c7b1c2885781f18d41dfad87ab138a160de2249a9694a14f00a057e624bb07d8",
+          "rejection_reason": "Duplicate claim id: xaman-testnet-claim:network-binding-is-testnet-only",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Duplicate claim id is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-unknown-claim-domain",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "1ba2af7f826e0bdc0b477cf12e149de9361f08da604e686dcbb46da2ff58e323",
+          "rejection_reason": "claim xaman-testnet-claim:network-binding-is-testnet-only references unknown security domain 'unknown_domain'; mark it custom=True to model a domain outside PRODUCTION_SECURITY_DOMAINS/XAMAN_SECURITY_DOMAINS",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Unknown claim domain without custom flag is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-invalid-proof-status",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "29be493b6b21a995dfb201aafd74336a1f81c4e19709bf354c463781242d949f",
+          "rejection_reason": "proof_obligation xaman-testnet-obligation:network-binding-is-testnet-only has unsupported status: PROVEN_BY_ASSERTION",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Invalid proof obligation status is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-invalid-solver-result",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "e5139fa28ca7c5de6b0aec4c050dcb88a98fbdf92e33ea152898c890f589d642",
+          "rejection_reason": "solver_result xaman-testnet-solver-result:network-binding-is-testnet-only has unsupported result value: proved",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Invalid solver result is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-unsupported-prover-target",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "797f55b7d92f3301d674c5d055e9439d0b9e62fe96cc42b24e5ee6259e2a7bdb",
+          "rejection_reason": "Unsupported prover targets: magic-solver",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Unsupported prover target is rejected",
+          "triggered_claim_ids": []
+        },
+        {
+          "case_id": "ir-runtime-trace-unknown-event",
+          "crash": null,
+          "expected": "rejected",
+          "payload_sha256": "30f90e1f8c3cd99f67eeab70dcc73cda3e4f4ce1ce512004f0481784210dcb83",
+          "rejection_reason": "runtime_trace xaman-testnet-runtime-trace:transaction-lifecycle-reviewed references unknown event id: missing-event",
+          "result": "rejected",
+          "status": "passed",
+          "target_claim_id": null,
+          "title": "Runtime trace referencing unknown event is rejected",
+          "triggered_claim_ids": []
+        }
+      ],
+      "crash_count": 0,
+      "expected_rejection_count": 10,
+      "generated_case_count": 11,
+      "status": "passed",
+      "target_claim_trigger_count": 0,
+      "unexpected_acceptance_count": 0
+    },
+    {
+      "accepted_case_count": 0,
+      "actual_rejection_count": 0,
+      "campaign_id": "expected-attack-mutation-campaign",
+      "cases": [
+        {
+          "case_id": "attack-raw-payload-material",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "2d58995749d3d73104f6f4e23a2daee461a42c10fee4194fea244fc7af49e1ea",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Raw payload material is introduced into the payload boundary",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-malformed-payload-shape",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "74e5eb3966567f75a21f4808a7928ec4b10697e7602cbe82f1cae1da8af2d8e7",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Malformed payload structure is accepted as modeled categorical intake",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-raw-signature-blob",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "6eef294c82a227f88f9d2a7600974de7035cb5099508f4d7dedf2309cc5744a1",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+          "title": "Raw signature or transaction blob material is introduced",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+            "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-signing-before-auth",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "50cfc9c86187649324550d038f0314421d0a7e1b49419408b09bee862b4fed4b",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Signing is allowed before auth decision",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:review-auth-sequence-observed"
+          ]
+        },
+        {
+          "case_id": "attack-review-bypass",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "2eb7a99b91305c3025248cbc09bec60f3dc77341eae3a46576e2607bced2b59a",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Review decision is removed before authorization and signing",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:review-auth-sequence-observed"
+          ]
+        },
+        {
+          "case_id": "attack-wrong-network",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "4862c28b854ec87db4a5e052b6008b1a40a775538b8b78abeaa823aa880a1d83",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+          "title": "Payload is rebound to non-Testnet network metadata",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:network-binding-is-testnet-only"
+          ]
+        },
+        {
+          "case_id": "attack-imported-production-account",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "6caa985f3eb347b4031d893ea11f62ced9ed8c8cbf7f679cec1c9378e5370005",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+          "title": "Imported production account provenance is introduced",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:account-provenance-is-fresh-testnet-only"
+          ]
+        },
+        {
+          "case_id": "attack-replay-duplicate-resolution",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "f8aad5182fa002a6697c5d4083b80c490d3e0824cac6cce9b6181973631c72e9",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+          "title": "Duplicate payload resolution is accepted",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:replay-controls-are-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-replay-duplicate-submit-result",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "fdc003d34cc64afc3d80a0b82fb45a1ec095d41dfc571b005e05864e40e75ede",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+          "title": "Duplicate submit-result observation is accepted",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:replay-controls-are-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-stale-evidence-digest",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "2a5801cfb97f5d1d969a89f55d19faa60f4bdcf48a32138a6090dbfd460fda31",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+          "title": "Stale evidence digest is accepted for a reviewed Testnet observation",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+            "xaman-testnet-claim:review-auth-sequence-observed"
+          ]
+        },
+        {
+          "case_id": "attack-downgraded-evidence-review",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "d9277a410a74a8eb841d7a5f8aa7fd042b5f05be402682963d9b8f0856afbca4",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+          "title": "Human-reviewed evidence is downgraded to unreviewed without blocking proof consumption",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+            "xaman-testnet-claim:review-auth-sequence-observed"
+          ]
+        },
+        {
+          "case_id": "attack-decline-gap-promoted",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "51a969ff8eeb7a82d8408386f64f7705b19e07afe0b8c46d6237dd64618f26a5",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+          "title": "Decline coverage gap is promoted to modeled runtime path",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:refusal-path-is-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-cancel-gap-promoted",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "4aa931a8b10a37a00cef9dd2b9d24fcc47b35125a1c0294a5b707d8047721724",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+          "title": "Cancellation coverage gap is promoted to modeled runtime path",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:cancellation-path-is-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-expiry-gap-promoted",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "447cf7e459074328fc06449ed4f60dc7c302dec9b47869d82957139af59718cd",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+          "title": "Expiry coverage gap is promoted to modeled runtime path",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:expiry-path-is-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-cancel-after-submit-race",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "152e968f5d8465a84fe9d3027347b9fda91125ecedf569b6ab3419d9f64c428f",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+          "title": "Cancellation wins a race after submit attempt without a modeled cancellation path",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:cancellation-path-is-not-modeled",
+            "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+          ]
+        },
+        {
+          "case_id": "attack-expiry-after-auth-race",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "b7d5ed5972d6a1998547013c3b31bf40f0f9e2878f09ef107323905df75337f9",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+          "title": "Expiry wins a race after auth but before signing/submission is resolved",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:expiry-path-is-not-modeled",
+            "xaman-testnet-claim:review-auth-sequence-observed"
+          ]
+        },
+        {
+          "case_id": "attack-reconnect-before-submit-result-race",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "34b05df3905bf7ccacb8d3e62cdf69da0300639a4475c21da92dbe285322d6ba",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+          "title": "Reconnect is accepted before submit result observation is restored",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+          ]
+        },
+        {
+          "case_id": "attack-trustset-transaction-type",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "4f6f6bea7318b15c5cfc27672878bb56d9f876cc7b6048702849ffe9f0772889",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Unsupported TrustSet semantics are accepted as proof-eligible Testnet payload semantics",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-offercreate-transaction-type",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "1852c7c6598f1aeb4df284ce30906ae52044a444cc4ef2eb1b905d7d06216e94",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Unsupported OfferCreate semantics are accepted as proof-eligible Testnet payload semantics",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-signerlistset-transaction-type",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "49f26b4853d9f32e87cd348417cda773dd1f56e83ddf710635b0848c15dc1a2b",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Unsupported SignerListSet semantics are accepted as proof-eligible Testnet payload semantics",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-path-payment-semantics-skipped",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "5a6fa5068d778998e3d5c3e433a38a9c00e59abdaa836b12392bf9bb2ca01797",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+          "title": "Path payment semantics are skipped while retaining a modeled-payment proof decision",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:payload-intake-is-categorical-only"
+          ]
+        },
+        {
+          "case_id": "attack-forged-broadcast-finality",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "a79fc0de46b101facf2879961569568b1b9810d98aa89dadc8a870d6e1c7abba",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+          "title": "Forged broadcast/finality proof is accepted as modeled evidence",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-solver-result-upgrade",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "2e4d2f609c82567558fa6ead4397c29175695ffefe49c7ef1309fddd4e1edf9b",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+          "title": "Unknown solver result is tampered into a proved result",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:network-binding-is-testnet-only"
+          ]
+        },
+        {
+          "case_id": "attack-proof-obligation-status-forged",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "64b2bd9ebc90c1a0ad0689cf8cfbdc59ace666817c9158fd1ee9f449641d0d3f",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+          "title": "Unknown proof obligation status is forged into a proof result",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+          ]
+        },
+        {
+          "case_id": "attack-submit-result-removed",
+          "crash": null,
+          "expected": "target_claim_triggered",
+          "payload_sha256": "ed14508696267fe9fdf2385cc65786866eee51a80d1ea69772c388b90746356d",
+          "rejection_reason": null,
+          "result": "target_claim_triggered",
+          "status": "passed",
+          "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+          "title": "Submit result observation is removed from the trace",
+          "triggered_claim_ids": [
+            "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+          ]
+        }
+      ],
+      "crash_count": 0,
+      "expected_rejection_count": 0,
+      "generated_case_count": 25,
+      "status": "passed",
+      "target_claim_trigger_count": 25,
+      "unexpected_acceptance_count": 0
+    }
+  ],
+  "coverage_statement": {
+    "description": "The campaign covers deterministic generated mutations over the reviewed XRPL Testnet trace and selected categorical wallet input classes. It is not a claim over all possible wallet inputs or production runtime behavior.",
+    "not_exhaustive_wallet_input_space": true,
+    "scope": "bounded_generated_testnet_trace_and_input_mutations"
+  },
+  "fuzzer": {
+    "campaign_material_sha256": "22ccd9ee3d7cea14f640955d2327af42036ecdebbdf64517ac59d7f449d44297",
+    "engine": "deterministic-structural-mutator",
+    "randomness": "none",
+    "total_case_count": 47
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model": {
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "sha256": "4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43"
+  },
+  "schema_version": "xaman-testnet-fuzz-report/v1",
+  "summary": {
+    "counterexample_count": 25,
+    "failed_case_count": 0,
+    "fuzzer_crash_count": 0,
+    "malformed_ir_acceptance_count": 0,
+    "missing_registered_fuzz_domain_count": 0,
+    "missing_target_claim_trigger_count": 0,
+    "overall_status": "passed",
+    "redaction_breach_acceptance_count": 0,
+    "registered_fuzz_domain_count": 9,
+    "security_decision": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE",
+    "total_case_count": 47
+  },
+  "task_id": "PORTAL-CXTP-138",
+  "trace_map": {
+    "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+    "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
+  }
+}

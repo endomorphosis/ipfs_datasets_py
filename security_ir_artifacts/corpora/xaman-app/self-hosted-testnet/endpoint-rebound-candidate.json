@@ -1,0 +1,63 @@
+{
+  "artifact_cid": "sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+  "candidate_controls": {
+    "android_http_vendor_host_fallback_removed": true,
+    "api_route": "ANDROID_EMULATOR_LOCAL_API_BRIDGE",
+    "custom_node_vendor_proxy_bypassed": true,
+    "ledger_route": "ANDROID_EMULATOR_LOCAL_LEDGER_BRIDGE",
+    "network_id": 777777,
+    "non_local_network_selection_rejected": true
+  },
+  "changed_files": [
+    {
+      "candidate_sha256": "85c4c3716961cec3ca1c43ef4839c1c9bf4bb2360ce4d62ebb3f6017cbc0b645",
+      "path": "android/app/src/main/java/libs/common/HTTPClientFactory.java",
+      "source_sha256": "eb25eceaad599b25f34729ccfdd830f931964eb245844ff187ea7333d68622d5"
+    },
+    {
+      "candidate_sha256": "d462d90c053a07a518f62c37a23c79bd8fd3d6b803f90996151a1cfb58abe0e0",
+      "path": "src/common/constants/endpoints.ts",
+      "source_sha256": "62518f6912af06cb6613a951a25e6c137ff4a4e4ab35cc2b8b455a8d02cd09d9"
+    },
+    {
+      "candidate_sha256": "8e7a9d76d6c354a3eabd3d4401126474eeacd31408509c06e0e7669f7a0096c0",
+      "path": "src/common/constants/network.ts",
+      "source_sha256": "b8d14c5fb6ced73a57ac038f31fb217c97885cf52613d288131ab0196adabe83"
+    },
+    {
+      "candidate_sha256": "97068498f39319b22a751b7d26661f3ac1a8da16571de81caefa4daf1294829d",
+      "path": "src/services/NetworkService.ts",
+      "source_sha256": "1a30eda14158243fcae78d4b3dacae6a97dbeee6918920c69c4e453d03ef9eda"
+    }
+  ],
+  "overall_status": "candidate_materialized_pending_independent_review",
+  "prohibited_claims": [
+    "vendor_release_equivalence",
+    "production_security_approval",
+    "vendor_or_public_testnet_contact",
+    "wallet_security_proved"
+  ],
+  "required_before_runtime_evidence": [
+    "independent_human_review_of_source_diff",
+    "reviewed_loopback_only_api_and_ledger_bridge",
+    "debug_build_identity_and_digest",
+    "redacted_runtime_trace_showing_local_network_selection",
+    "reviewed_mapping_from_trace_categories_to_security_model_claims"
+  ],
+  "schema_version": "xaman-self-hosted-endpoint-rebind-candidate/v1",
+  "scope": {
+    "production_usable": false,
+    "public_source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "public_source_origin": "https://github.com/XRPL-Labs/Xaman-App.git",
+    "upstream_checkout_modified": false,
+    "vendor_release_equivalent": false,
+    "verifier_only": true
+  },
+  "security_decision": "BLOCK_APP_RUNTIME_UNTIL_INDEPENDENT_REVIEW_AND_REDACTED_TRACE",
+  "source_boundary": {
+    "android_untrusted_host_falls_back_to_vendor_before_patch": true,
+    "custom_node_routing_uses_vendor_proxy_before_patch": true,
+    "debug_cleartext_transport_declared": true
+  },
+  "task_id": "PORTAL-CXTP-154"
+}

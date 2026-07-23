@@ -8,10 +8,12 @@ terminal status, and then fetch the crawl records.
 from __future__ import annotations
 
 import logging
+import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 import anyio
@@ -35,26 +37,95 @@ def _first_env(*names: str) -> Optional[str]:
     return None
 
 
+def _first_vault(*names: str) -> Optional[str]:
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in names:
+            value = str(vault.get(name) or "").strip()
+            if value:
+                return value
+    except Exception:
+        return None
+    return None
+
+
+def _shared_secret_paths() -> List[Path]:
+    candidates = [
+        str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+        str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+        "/etc/github-runner-secrets/secrets.json",
+        "/var/lib/github-runner/secrets.json",
+    ]
+    paths: List[Path] = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate).expanduser()
+        if path not in paths:
+            paths.append(path)
+    return paths
+
+
+def _first_shared_secret(*names: str) -> Optional[str]:
+    for path in _shared_secret_paths():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        for name in names:
+            value = str(payload.get(name) or "").strip()
+            if value:
+                return value
+    return None
+
+
+def _first_keyring(*names: str) -> Optional[str]:
+    try:
+        import keyring  # type: ignore
+
+        for name in names:
+            value = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+            if value:
+                return value
+    except Exception:
+        return None
+    return None
+
+
 def _resolve_credentials(
     account_id: Optional[str] = None,
     api_token: Optional[str] = None,
 ) -> tuple[str, str]:
+    account_id_names = (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_AGENT_ACCOUNT_ID",
+    )
+    api_token_names = (
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_AGENT_API_KEY",
+    )
     resolved_account_id = (
         account_id
-        or _first_env(
-            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
-            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
-            "CLOUDFLARE_ACCOUNT_ID",
-        )
+        or _first_env(*account_id_names)
+        or _first_vault(*account_id_names)
+        or _first_shared_secret(*account_id_names)
+        or _first_keyring(*account_id_names)
         or ""
     ).strip()
     resolved_api_token = (
         api_token
-        or _first_env(
-            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
-            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
-            "CLOUDFLARE_API_TOKEN",
-        )
+        or _first_env(*api_token_names)
+        or _first_vault(*api_token_names)
+        or _first_shared_secret(*api_token_names)
+        or _first_keyring(*api_token_names)
         or ""
     ).strip()
     if not resolved_account_id or not resolved_api_token:

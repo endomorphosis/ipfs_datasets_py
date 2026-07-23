@@ -47,7 +47,7 @@ class FakeRegistry:
 def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
     libp2p = pytest.importorskip("libp2p")
 
-    from ipfs_accelerate_py.github_cli.libp2p_compat import ensure_libp2p_compatible
+    from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import ensure_libp2p_compatible
 
     if not ensure_libp2p_compatible():
         pytest.skip("libp2p compatibility patches unavailable")

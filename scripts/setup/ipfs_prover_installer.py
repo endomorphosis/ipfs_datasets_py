@@ -1,4 +1,4 @@
-"""Lightweight, side-effect-free installer for external theorem provers (Lean/Coq).
+"""Compatibility installer for optional external theorem provers.
 
 This module intentionally does NOT import `ipfs_datasets_py` to avoid heavy import-time
 side effects during installation or CLI execution.
@@ -6,6 +6,10 @@ side effects during installation or CLI execution.
 Usage:
 - `python -m ipfs_prover_installer --yes --lean`
 - `python -m ipfs_prover_installer --yes --coq`
+
+For Apalache, Tamarin, Maude, ProVerif, and the CVC5 CLI this script delegates
+to the unified user-local installer in ``ipfs_datasets_py``. That import occurs
+only after the user explicitly selects one of those solver flags.
 
 See also: setup.py env vars:
 - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1
@@ -27,15 +31,34 @@ import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path
+from shlex import split as shell_split
 
 
 def _which(cmd: str) -> str | None:
-    return shutil.which(cmd)
-
-
-def _works(exe: str, args: list[str]) -> bool:
+    found = shutil.which(cmd)
+    if found:
+        return found
     try:
-        rc = subprocess.run([exe, *args], capture_output=True, text=True, timeout=10)
+        home = Path.home()
+    except (OSError, RuntimeError):
+        return None
+    for directory in (
+        home / ".local" / "bin",
+        home / ".elan" / "bin",
+        home / ".opam" / "default" / "bin",
+    ):
+        candidate = directory / cmd
+        try:
+            if candidate.exists() and os.access(str(candidate), os.X_OK):
+                return str(candidate)
+        except OSError:
+            continue
+    return None
+
+
+def _works(exe: str, args: list[str], *, timeout_s: int = 10) -> bool:
+    try:
+        rc = subprocess.run([exe, *args], capture_output=True, text=True, timeout=timeout_s)
         return rc.returncode == 0
     except Exception:
         return False
@@ -46,6 +69,52 @@ def _run(cmd: list[str], *, check: bool) -> int:
     if check and proc.returncode != 0:
         raise RuntimeError(f"Command failed ({proc.returncode}): {' '.join(cmd)}")
     return proc.returncode
+
+
+def _module_available(module_name: str) -> bool:
+    try:
+        __import__(module_name)
+        return True
+    except (Exception, SystemExit):
+        return False
+
+
+def _truthy(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _pip_install(requirement: str, *, strict: bool) -> bool:
+    base = [sys.executable, "-m", "pip", "install"]
+    extra_args = shell_split(os.environ.get("IPFS_DATASETS_PY_PIP_INSTALL_ARGS", ""))
+    commands = [base + extra_args + [requirement]]
+    in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+    if not in_venv:
+        commands.append(base + extra_args + ["--user", requirement])
+    if _truthy(os.environ.get("IPFS_DATASETS_PY_ALLOW_BREAK_SYSTEM_PACKAGES")):
+        commands.append(base + extra_args + ["--break-system-packages", requirement])
+
+    errors: list[str] = []
+    for cmd in commands:
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+        except Exception as exc:
+            errors.append(f"{' '.join(cmd)}: {exc}")
+            continue
+        if proc.returncode == 0:
+            return True
+        stderr = (proc.stderr or proc.stdout or "").strip()
+        errors.append(f"{' '.join(cmd)} -> {proc.returncode}: {stderr}")
+
+    message = (
+        f"Could not install Python dependency: {requirement}\n"
+        + "\n".join(errors[-2:])
+        + "\nUse a virtualenv, set IPFS_DATASETS_PY_PIP_INSTALL_ARGS, or set "
+        "IPFS_DATASETS_PY_ALLOW_BREAK_SYSTEM_PACKAGES=1 if you accept that risk."
+    )
+    if strict:
+        raise RuntimeError(message)
+    print(message)
+    return False
 
 
 def _http_get_json(url: str) -> dict:
@@ -136,7 +205,7 @@ def _install_executable_from_archive(
 
 def ensure_lean(*, yes: bool, strict: bool) -> bool:
     existing = _which("lean")
-    if existing and _works(existing, ["--version"]):
+    if existing and _works(existing, ["--version"], timeout_s=90):
         return True
 
     if not yes:
@@ -154,9 +223,11 @@ def ensure_lean(*, yes: bool, strict: bool) -> bool:
             script_path.chmod(0o755)
             _run(["sh", str(script_path), "-y"], check=strict)
 
+        lean_path = _which("lean")
         lean_home = Path.home() / ".elan" / "bin" / "lean"
-        if lean_home.exists():
-            print(f"Installed Lean via elan: {lean_home}")
+        if lean_path or lean_home.exists():
+            print(f"Installed Lean via elan: {lean_path or lean_home}")
+            print("If Lean is not on PATH, add ~/.elan/bin to PATH.")
             return True
 
         print("Attempted to install Lean via elan, but lean binary was not found afterwards.")
@@ -237,8 +308,7 @@ def ensure_z3(*, yes: bool, strict: bool) -> bool:
 
         # Fallback: Python package
         print("Attempting to install Python package z3-solver (fallback)...")
-        rc = _run([sys.executable, "-m", "pip", "install", "z3-solver"], check=False)
-        if rc == 0:
+        if _pip_install("z3-solver>=4.12.0,<5.0.0", strict=strict):
             try:
                 import z3  # type: ignore
 
@@ -398,9 +468,12 @@ def ensure_cvc5(*, yes: bool, strict: bool) -> bool:
                 raise
             print(f"cvc5 download install failed (best-effort): {exc}")
 
-        print(
-            "Unable to install cvc5 automatically. Install via your OS package manager or build from source."
-        )
+        print("Attempting to install Python package cvc5 (fallback)...")
+        if _pip_install("cvc5>=1.0.0,<2.0.0", strict=strict) and _module_available("cvc5"):
+            print("Installed cvc5 Python bindings.")
+            return True
+
+        print("Unable to install cvc5 automatically. Install via your OS package manager or build from source.")
         return False
 
     except Exception as exc:
@@ -497,12 +570,95 @@ def ensure_coq(*, yes: bool, strict: bool, allow_sudo: bool = False) -> bool:
         return False
 
 
+def _ensure_symai_config_for_import() -> None:
+    try:
+        home = Path.home()
+    except (OSError, RuntimeError):
+        home = Path(tempfile.gettempdir())
+    prefix = Path(os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX", home / ".local" / "share" / "ipfs_datasets_py" / "symai"))
+    config_dir = prefix / ".symai"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "symai.config.json"
+    if not config_path.exists():
+        config = {
+            "NEUROSYMBOLIC_ENGINE_API_KEY": os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs"),
+            "NEUROSYMBOLIC_ENGINE_MODEL": os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL", "ipfs:default"),
+            "SYMBOLIC_ENGINE_API_KEY": "",
+            "SYMBOLIC_ENGINE": "ipfs",
+            "FORMAL_ENGINE_API_KEY": "",
+            "FORMAL_ENGINE": "",
+            "EMBEDDING_ENGINE_API_KEY": "",
+            "EMBEDDING_ENGINE_MODEL": "ipfs:default",
+            "DRAWING_ENGINE_API_KEY": "",
+            "DRAWING_ENGINE_MODEL": "",
+            "VISION_ENGINE_MODEL": "",
+            "SEARCH_ENGINE_API_KEY": "",
+            "SEARCH_ENGINE_MODEL": "ipfs:default",
+            "OCR_ENGINE_API_KEY": "",
+            "OCR_ENGINE_MODEL": "ipfs:default",
+            "SPEECH_TO_TEXT_ENGINE_MODEL": "ipfs:default",
+            "SPEECH_TO_TEXT_API_KEY": "",
+            "TEXT_TO_SPEECH_ENGINE_API_KEY": "",
+            "TEXT_TO_SPEECH_ENGINE_MODEL": "ipfs:default",
+            "TEXT_TO_SPEECH_ENGINE_VOICE": "",
+            "INDEXING_ENGINE_API_KEY": "",
+            "INDEXING_ENGINE_ENVIRONMENT": "ipfs:default",
+            "CAPTION_ENGINE_MODEL": "ipfs:default",
+        }
+        config_path.write_text(json.dumps(config, indent=4), encoding="utf-8")
+
+    if "symai" not in sys.modules:
+        original_prefix = sys.prefix
+        try:
+            sys.prefix = str(prefix)
+            __import__("symai")
+        except Exception:
+            sys.modules.pop("symai", None)
+        finally:
+            sys.prefix = original_prefix
+
+
+def ensure_symbolicai(*, yes: bool, strict: bool) -> bool:
+    try:
+        _ensure_symai_config_for_import()
+        if _module_available("symai"):
+            return True
+    except Exception:
+        pass
+
+    if not yes:
+        print("SymbolicAI not found or not importable. Re-run with --yes to install symbolicai.")
+        return False
+
+    try:
+        if _pip_install("symbolicai>=1.14.0,<2.0.0", strict=strict):
+            _ensure_symai_config_for_import()
+            if _module_available("symai"):
+                print("Installed SymbolicAI.")
+                return True
+        print("Unable to install SymbolicAI automatically. Install with: pip install symbolicai")
+        return False
+    except Exception as exc:
+        print(f"Failed to install SymbolicAI: {exc}")
+        if strict:
+            raise
+        return False
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Best-effort installer for Z3/CVC5/Lean/Coq")
+    parser = argparse.ArgumentParser(description="Best-effort installer for optional theorem provers")
     parser.add_argument("--z3", action="store_true", help="Install/ensure Z3")
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean 4")
-    parser.add_argument("--coq", action="store_true", help="Install/ensure Coq")
+    parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
+    parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
+    parser.add_argument("--maude", action="store_true", help="Install/ensure Maude")
+    parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
+    parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 CLI")
+    parser.add_argument("--check-updates", action="store_true", help="Report managed solver version drift")
+    parser.add_argument("--update", action="store_true", help="Manually refresh selected managed solvers")
+    parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
     parser.add_argument("--yes", action="store_true", help="Non-interactive / accept defaults")
     parser.add_argument(
         "--allow-sudo",
@@ -517,15 +673,53 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    native_flags = {
+        "--apalache": args.apalache,
+        "--tamarin": args.tamarin,
+        "--maude": args.maude,
+        "--proverif": args.proverif,
+        "--cvc5-cli": args.cvc5_cli,
+    }
+    if any(native_flags.values()) or args.check_updates or args.update:
+        repo_root = Path(__file__).resolve().parents[2]
+        if str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        from ipfs_datasets_py.logic.integration.bridges.prover_installer import main as unified_main
+
+        delegated = [flag for flag, selected in native_flags.items() if selected]
+        if args.z3:
+            delegated.append("--z3")
+        if args.cvc5:
+            delegated.append("--cvc5")
+        if args.lean:
+            delegated.append("--lean")
+        if args.coq:
+            delegated.append("--coq")
+        if args.symbolicai:
+            delegated.append("--symbolicai")
+        if args.yes:
+            delegated.append("--yes")
+        if args.allow_sudo:
+            delegated.append("--allow-sudo")
+        if args.strict:
+            delegated.append("--strict")
+        if args.check_updates:
+            delegated.append("--check-updates")
+        if args.update:
+            delegated.append("--update")
+        return unified_main(delegated)
+
     want_z3 = bool(args.z3)
     want_cvc5 = bool(args.cvc5)
     want_lean = bool(args.lean)
     want_coq = bool(args.coq)
-    if not (want_z3 or want_cvc5 or want_lean or want_coq):
+    want_symbolicai = bool(args.symbolicai)
+    if not (want_z3 or want_cvc5 or want_lean or want_coq or want_symbolicai):
         want_z3 = True
         want_cvc5 = True
         want_lean = True
         want_coq = True
+        want_symbolicai = True
 
     ok = True
     if want_z3:
@@ -536,6 +730,8 @@ def main(argv: list[str] | None = None) -> int:
         ok = ensure_lean(yes=args.yes, strict=args.strict) and ok
     if want_coq:
         ok = ensure_coq(yes=args.yes, strict=args.strict, allow_sudo=bool(args.allow_sudo)) and ok
+    if want_symbolicai:
+        ok = ensure_symbolicai(yes=args.yes, strict=args.strict) and ok
 
     if ok:
         return 0

@@ -285,6 +285,10 @@ Commands:
       install    Install or update GitHub CLI
       auth       Manage GitHub authentication
       execute    Execute GitHub CLI command
+
+    legal-pdf    Legal PDF rendering helpers
+      render     Render state-court filings and exhibit binder components
+      merge      Merge PDF bundles and count pages
       
     copilot      GitHub Copilot CLI management
       status     Show Copilot CLI installation status
@@ -338,9 +342,10 @@ Commands:
       index      Create an index
       constraint Add a constraint
 
-        legal        Legal dataset search shortcuts
+        legal        Legal dataset shortcuts
             search-court-rules  Search federal/state court rules via legal dataset tools
             search-federal-register Search Federal Register corpus via legal dataset tools
+            scrape-netherlands-laws Scrape Netherlands laws from official Dutch government sources
       
     finance      Financial analysis and data pipelines
       stock      Fetch stock market data
@@ -371,6 +376,54 @@ Commands:
       fetch      Fetch emails (no export)
       analyze    Analyze an email export file
       search     Search emails in an export file
+      google-voice Parse Google Voice Takeout exports
+      google-voice-vault Parse Google Workspace Vault Voice exports
+      google-voice-data-export Parse Google Workspace Data Export Voice bundles and gs:// sources
+      google-voice-watch Watch a local folder and auto-hydrate Voice exports
+      google-voice-takeout-url Build a custom consumer Google Takeout URL for Voice exports
+      google-voice-takeout-open Open the custom Takeout URL in Playwright
+      google-voice-takeout-capture Open the custom Takeout URL and wait for an archive download
+      google-voice-takeout-source Save Takeout page source HTML for data-id inference
+      google-voice-takeout-poll Poll a local download directory for a completed Takeout archive
+      google-voice-takeout-drive Poll Google Drive for a Takeout artifact and optionally download it
+      google-voice-takeout-status Summarize a saved Takeout acquisition manifest
+      google-voice-takeout-doctor Diagnose a saved Takeout acquisition manifest and suggest the next step
+      google-voice-takeout-history List archived snapshot history for a Takeout acquisition manifest
+      google-voice-takeout-prune Prune old archived snapshot history for a Takeout acquisition manifest
+      google-voice-takeout-case-summary Show a concise summary for a Takeout case/download directory or manifest
+      google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
+      google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
+
+    workspace    Inspect, search, export, and package workspace dataset bundles
+            --action summary            Read a lightweight workspace bundle summary
+            --action inspect            Read bundle sections and artifact counts
+            --action load               Load the full dataset-shaped bundle payload
+            --action report             Render a human-readable markdown/text bundle report
+            --action search-bm25        Search a workspace bundle with grouped BM25 results
+            --action search-vector      Search a workspace bundle with grouped vector results
+            --action export             Export a workspace bundle from generic or source-specific inputs
+            --action package            Package a workspace bundle into chain-loadable artifacts
+            --action package-search-bm25 Search a packaged workspace bundle with grouped BM25 results
+            --action package-search-vector Search a packaged workspace bundle with grouped vector results
+
+    wallet       Encrypted data wallet
+      generate-key Generate a local 256-bit wallet key
+      create       Create a wallet manifest
+      add          Encrypt and add a document
+      grant        Grant document access
+      request-approval Request threshold approval
+      approve-approval Approve threshold request
+      analyze      Run a permitted derived analysis
+      decrypt      Decrypt a document to a local file
+      revoke       Revoke a grant
+      audit        Show wallet audit status
+
+    history-index Search persisted DuckDB history/GraphRAG index
+    docket       Import a docket into a reusable dataset artifact
+      chunks      Search chunk text and metadata
+      documents   Search indexed documents
+      entities    Search extracted entities
+      relationships Search extracted relationships
     
     detect-type  File type detection for GraphRAG
       detect     Detect single file type
@@ -412,6 +465,7 @@ Examples:
     ipfs-datasets legal search-court-rules --collection_name court_rules --query_vector "[0.1,0.2,0.3]" --jurisdiction both
     ipfs-datasets legal search-court-rules --collection_name court_rules --query_text "rules for filing motions" --jurisdiction federal
     ipfs-datasets legal search-federal-register --collection_name federal_register_docs --query_text "EPA emissions reporting rule"
+    ipfs-datasets legal scrape-netherlands-laws --document_urls '["https://wetten.overheid.nl/BWBR0001854/"]'
     
 For detailed help on a specific command:
     ipfs-datasets [command] --help
@@ -516,6 +570,14 @@ def execute_heavy_command(args):
             if json_output:
                 wa_args = ["--json", *wa_args]
             sys.exit(wa_main(wa_args))
+
+        if command == "wallet":
+            from ipfs_datasets_py.wallet.cli import main as wallet_main
+
+            wallet_args = list(args[1:])
+            if json_output and "--json" not in wallet_args:
+                wallet_args = ["--json", *wallet_args]
+            sys.exit(wallet_main(wallet_args))
 
         if command == "search":
             from ipfs_datasets_py.search.cli import main as search_main
@@ -669,8 +731,46 @@ def execute_heavy_command(args):
                         print(json.dumps(err, indent=2))
                 return
 
+            if subcommand in (
+                "scrape-netherlands-laws",
+                "netherlands-laws-scrape",
+                "scrape_netherlands_laws",
+            ):
+                tool_args = args[2:]
+                parameters = parse_tool_args(tool_args)
+                parameters = {str(k).replace("-", "_"): v for k, v in parameters.items()}
+
+                if (
+                    not parameters.get("document_urls")
+                    and not parameters.get("seed_urls")
+                    and not parameters.get("use_default_seeds")
+                ):
+                    print(
+                        "Usage: ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true) [--output_dir PATH] [--max_documents N] [--max_seed_pages N] [--crawl_depth N] [--rate_limit_delay SECONDS] [--skip_existing true]"
+                    )
+                    return
+
+                try:
+                    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+                        scrape_netherlands_laws_from_parameters,
+                    )
+
+                    result = anyio.run(scrape_netherlands_laws_from_parameters, parameters)
+                    if json_output:
+                        print(json.dumps(result))
+                    else:
+                        print(json.dumps(result, indent=2))
+                except Exception as e:
+                    err = {"status": "error", "error": str(e)}
+                    if json_output:
+                        print(json.dumps(err))
+                    else:
+                        print(json.dumps(err, indent=2))
+                return
+
             print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
             print("       ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')")
+            print("       ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true)")
             return
         
         if command == "tools":
@@ -1714,12 +1814,99 @@ def execute_heavy_command(args):
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
-                        print("GitHub Copilot CLI Status:")
+                        print("GitHub Copilot Extension Status:")
                         print(f"  Installed: {status['installed']}")
                         print(f"  GitHub CLI Available: {status['github_cli_available']}")
                         print(f"  GitHub CLI Path: {status['github_cli_path'] or 'Not found'}")
+                        print(f"  Copilot Extension Installed: {status.get('copilot_extension_installed', False)}")
+                        print(f"  Agent Task Available: {status.get('agent_task_available', False)}")
                         if status.get('version_info'):
                             print(f"  Version: {status['version_info']}")
+                    return
+
+                elif subcommand == "local-status":
+                    extra = args[2:]
+                    copilot_cli_path = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--copilot-cli-path", "-c") and i + 1 < len(extra):
+                            copilot_cli_path = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+
+                    from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
+
+                    cli = StandaloneCopilot(copilot_cli_path=copilot_cli_path)
+                    status = cli.get_status()
+
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("Standalone Copilot CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Copilot CLI Path: {status['copilot_cli_path'] or 'Not found'}")
+                        if status.get('version_info'):
+                            print(f"  Version: {status['version_info']}")
+                        if status.get('command_template'):
+                            print(f"  Default Command Template: {status['command_template']}")
+                    return
+
+                elif subcommand == "prompt":
+                    extra = args[2:]
+                    copilot_cli_path = None
+                    model = None
+                    prompt = None
+                    timeout = 180
+                    allow_all_paths = False
+                    autopilot = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--copilot-cli-path", "-c") and i + 1 < len(extra):
+                            copilot_cli_path = extra[i + 1]
+                            i += 2
+                        elif token in ("--model", "-m") and i + 1 < len(extra):
+                            model = extra[i + 1]
+                            i += 2
+                        elif token == "--timeout" and i + 1 < len(extra):
+                            timeout = int(extra[i + 1])
+                            i += 2
+                        elif token == "--allow-all-paths":
+                            allow_all_paths = True
+                            i += 1
+                        elif token == "--autopilot":
+                            autopilot = True
+                            i += 1
+                        else:
+                            if prompt is None:
+                                prompt = ' '.join(extra[i:])
+                                break
+                            i += 1
+
+                    if not prompt:
+                        print("Usage: ipfs-datasets copilot prompt <prompt> [--model MODEL] [--timeout SECONDS] [--allow-all-paths] [--autopilot] [--copilot-cli-path PATH]")
+                        return
+
+                    from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
+
+                    cli = StandaloneCopilot(copilot_cli_path=copilot_cli_path)
+                    result = cli.prompt(
+                        prompt,
+                        model=model,
+                        allow_all_paths=allow_all_paths,
+                        autopilot=autopilot,
+                        timeout=timeout,
+                    )
+
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['response'])
+                        else:
+                            print(f"Failed to execute standalone Copilot prompt: {result.get('error')}")
                     return
                 
                 elif subcommand == "install":
@@ -1740,7 +1927,7 @@ def execute_heavy_command(args):
                             i += 1
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
-                    print("Installing GitHub Copilot CLI extension...")
+                    print("Installing GitHub Copilot gh extension...")
                     result = copilot.install(force=force)
                     
                     if json_output:
@@ -1788,7 +1975,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.explain_code(code, language=language)
@@ -1830,7 +2017,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.suggest_command(description, shell=shell)
@@ -1868,7 +2055,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.suggest_git_command(description)
@@ -1884,7 +2071,7 @@ def execute_heavy_command(args):
                 
                 else:
                     print(f"Unknown copilot subcommand: {subcommand}")
-                    print("Available subcommands: status, install, explain, suggest, git")
+                    print("Available subcommands: status, local-status, install, explain, suggest, git, prompt")
                     return
                     
             except ImportError as e:
@@ -2935,6 +3122,23 @@ Subcommands:
   fetch      Fetch emails (no export)
   analyze    Analyze an email export file
   search     Search emails in an export file
+  google-voice Parse Google Voice Takeout exports
+  google-voice-vault Parse Google Workspace Vault Voice exports
+  google-voice-data-export Parse Google Workspace Data Export Voice bundles / gs:// URIs
+  google-voice-watch Watch a local folder and auto-hydrate new Voice exports
+  google-voice-takeout-url Build a custom consumer Google Takeout URL for Voice exports
+  google-voice-takeout-open Open the custom Takeout URL in Playwright
+  google-voice-takeout-capture Open the custom Takeout URL and wait for an archive download
+  google-voice-takeout-source Save Takeout page source HTML for data-id inference
+  google-voice-takeout-poll Poll a local download directory for a completed Takeout archive
+  google-voice-takeout-drive Poll Google Drive for a Takeout artifact and optionally download it
+  google-voice-takeout-status Summarize a saved Takeout acquisition manifest
+  google-voice-takeout-doctor Diagnose a saved Takeout acquisition manifest and suggest the next step
+  google-voice-takeout-history List archived snapshot history for a Takeout acquisition manifest
+  google-voice-takeout-prune Prune old archived snapshot history for a Takeout acquisition manifest
+  google-voice-takeout-case-summary Show a concise summary for a Takeout case/download directory or manifest
+  google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
+  google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
 Environment:
   EMAIL_USER   Email account username (recommended)
@@ -2948,14 +3152,40 @@ Examples:
   ipfs-datasets email fetch --server imap.gmail.com --limit 10
   ipfs-datasets email analyze inbox_export.json
   ipfs-datasets email search inbox_export.json "meeting" --field subject
+  ipfs-datasets email google-voice ./Takeout/Voice --summary-only
+  ipfs-datasets email google-voice ./Takeout/Voice --materialize --output-dir ./voice-bundles
+  ipfs-datasets email google-voice-takeout-url --product-id voice --dest drive
+  ipfs-datasets email google-voice-takeout-open --page-source ./takeout_page.html --dest drive
+  ipfs-datasets email google-voice-takeout-capture --page-source ./takeout_page.html --dest drive --downloads-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-source --output ./takeout_page.html
+  ipfs-datasets email google-voice-takeout-poll --downloads-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-drive --client-secrets ./google-client-secret.json --account-hint user@gmail.com --download-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-status ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-doctor ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-history ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-prune ./takeout_acquisition_manifest.json --keep 20
+  ipfs-datasets email google-voice-takeout-case-summary ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-case-report ./takeout_acquisition_manifest.json --format markdown --output ./takeout-report.md
+  ipfs-datasets email google-voice-takeout-case-bundle ./takeout_acquisition_manifest.json --output-dir ./takeout-bundles
+  ipfs-datasets email google-voice-vault ./vault-voice-export.zip --summary-only
+  ipfs-datasets email google-voice-data-export gs://workspace-export/voice --materialize --output-dir ./voice-bundles --staging-dir ./gcs-stage
+  ipfs-datasets email google-voice-watch ./dropbox --output-dir ./hydrated-voice --source-kind takeout --once
 
 For detailed help: ipfs-datasets email <subcommand> --help
 """)
                 return
             
             try:
-                # Import and delegate to email_cli module
-                from ipfs_datasets_py.email_cli import main as email_main
+                import importlib.util
+                from pathlib import Path
+
+                email_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "email_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_email_cli", email_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load email CLI from {email_cli_path}")
+                email_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(email_cli_module)
+                email_main = email_cli_module.main
                 
                 # Pass remaining args to email CLI
                 email_args = args[1:]
@@ -2968,6 +3198,261 @@ For detailed help: ipfs-datasets email <subcommand> --help
                 return
             except Exception as e:
                 print(f"Error executing email command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "history-index":
+            """Handle DuckDB history index search commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets history-index - Search the persisted DuckDB history index
+
+Usage: ipfs-datasets history-index <query> [options]
+       ipfs-datasets history-index --table entities <query> [options]
+
+Options:
+  --table {chunks,documents,entities,relationships}
+  --index-path PATH
+  --top-k N
+  --source-like TEXT
+  --json
+
+Examples:
+  ipfs-datasets history-index "inspection notice"
+  ipfs-datasets history-index --table entities tenant
+  ipfs-datasets history-index --table documents --source-like google_voice voice
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                history_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "history_index_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_history_index_cli", history_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load history index CLI from {history_cli_path}")
+                history_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(history_cli_module)
+                history_index_main = history_cli_module.main
+
+                history_args = list(args[1:])
+                if json_output and '--json' not in history_args:
+                    history_args = ['--json', *history_args]
+                exit_code = history_index_main(history_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: history-index CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing history-index command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "docket":
+            """Handle docket dataset import commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets docket - Import, search, inspect, and package docket datasets
+
+Usage: ipfs-datasets docket --input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged} --input-path PATH [options]
+
+Options:
+    --input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}
+    --input-path PATH
+    --output PATH
+    --source-type-hint {json,directory,courtlistener,pacer,tyler_host,packaged}
+    --search-backend {bm25,vector}
+    --query TEXT
+    --top-k N
+    --docket-id TEXT
+    --case-name TEXT
+    --court TEXT
+    --glob PATTERN
+    --skip-knowledge-graph
+    --skip-bm25
+    --skip-vector-index
+    --vector-dimension N
+    --packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}
+    --citation-source-audit
+    --json
+
+Examples:
+    ipfs-datasets docket --input-type auto --input-path ./docket_dir --output ./docket_dataset.json
+    ipfs-datasets docket --input-type auto --input-path ./normalized_export.json --source-type-hint pacer --json
+    ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
+    ipfs-datasets docket --input-type pacer --input-path ./pacer_export_dir --case-name "Doe v. Example" --json
+    ipfs-datasets docket --input-type tyler_host --input-path ./tyler_export.json --court "State Court" --json
+    ipfs-datasets docket --input-type json --input-path ./docket.json --search-backend bm25 --query injunction --top-k 5 --json
+    ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --search-backend vector --query response --top-k 5 --json
+    ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --packaged-action summary --json
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                docket_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "docket_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_docket_cli", docket_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load docket CLI from {docket_cli_path}")
+                docket_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(docket_cli_module)
+                docket_main = docket_cli_module.main
+
+                docket_args = list(args[1:])
+                if json_output and '--json' not in docket_args:
+                    docket_args = ['--json', *docket_args]
+                exit_code = docket_main(docket_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: docket CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing docket command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "workspace":
+            """Handle workspace dataset bundle inspection commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets workspace - Inspect, search, export, and package workspace dataset bundles
+
+Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,search-bm25,search-vector,export,package,package-summary,package-inspect,package-load,package-report,package-search-bm25,package-search-vector,chain,components}] [options]
+
+Options:
+    --input-path PATH
+    --input-json PATH
+    --input-directory PATH
+    --input-type {workspace-json,directory,google-voice-manifest,discord-export,email-export,imap-snippet-summary}
+                --action {summary,inspect,load,report,search-bm25,search-vector,export,package,package-summary,package-inspect,package-load,package-report,package-search-bm25,package-search-vector,chain,components}
+    --output-parquet PATH
+        --output-dir PATH
+        --query TEXT
+        --top-k N
+  --fields FIELD1,FIELD2
+    --report-format {markdown,text,json}
+    --strict-evidence-mode
+  --json
+
+Examples:
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action summary --json
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action inspect --fields workspace_id,row_count,sections
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action load --json
+    ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action search-bm25 --query inspection --top-k 5
+    ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action report --report-format markdown
+        ipfs-datasets workspace --action export --input-path ./email_export.json --output-parquet ./email_bundle.parquet --json
+        ipfs-datasets workspace --action package --input-path ./discord_export.json --output-dir ./workspace_package --package-name workspace_package --json
+                ipfs-datasets workspace --input-path ./workspace_package/bundle_manifest.json --action package-search-bm25 --query inspection --top-k 5 --json
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                workspace_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "workspace_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_workspace_cli", workspace_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load workspace CLI from {workspace_cli_path}")
+                workspace_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(workspace_cli_module)
+                workspace_main = workspace_cli_module.main
+
+                workspace_args = list(args[1:])
+                if json_output and '--json' not in workspace_args:
+                    workspace_args = ['--json', *workspace_args]
+                exit_code = workspace_main(workspace_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: workspace CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing workspace command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "legal-pdf":
+            """Handle legal PDF rendering commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets legal-pdf - Render legal PDF artifacts from shared package helpers
+
+Usage: ipfs-datasets legal-pdf --action ACTION [options]
+
+Actions:
+  validate-manifest
+  render-state-court
+  render-state-court-batch
+  build-court-filing-packet
+  build-court-filing-packet-from-manifest
+  build-exhibit-binder-from-manifest
+  render-exhibit-tab
+  render-exhibit-cover
+  render-binder-title
+  render-family-divider
+  convert-source
+  convert-markdown
+  merge-pdfs
+  count-pages
+  build-exhibit-binder
+
+Examples:
+  ipfs-datasets legal-pdf --action validate-manifest --manifest-path ./court_packet_manifest.json --json
+  ipfs-datasets legal-pdf --action count-pages --input-path ./packet.pdf --json
+  ipfs-datasets legal-pdf --action build-court-filing-packet --input-paths a.md b.md --output-dir ./pdfs --packet-output-path ./packet.pdf --contact-block "..." --court-name "IN THE ..." --state-name "STATE OF OREGON" --caption-left "Plaintiff v. Defendant"
+  ipfs-datasets legal-pdf --action build-court-filing-packet-from-manifest --manifest-path ./court_packet_manifest.json --json
+  ipfs-datasets legal-pdf --action build-exhibit-binder-from-manifest --manifest-path ./exhibit_binder_manifest.json --json
+  ipfs-datasets legal-pdf --action merge-pdfs --input-paths a.pdf b.pdf --output-path merged.pdf
+  ipfs-datasets legal-pdf --action render-binder-title --output-path title.pdf --lean-mode
+  ipfs-datasets legal-pdf --action build-exhibit-binder --front-pdf front.pdf --table-pdf table.pdf --packet-pdfs pkt1.pdf pkt2.pdf --output-path binder.pdf
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                legal_pdf_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "legal_pdf_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_legal_pdf_cli", legal_pdf_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load legal PDF CLI from {legal_pdf_cli_path}")
+                legal_pdf_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(legal_pdf_cli_module)
+                legal_pdf_main = legal_pdf_cli_module.main
+
+                legal_pdf_args = list(args[1:])
+                if json_output and '--json' not in legal_pdf_args:
+                    legal_pdf_args = ['--json', *legal_pdf_args]
+                exit_code = legal_pdf_main(legal_pdf_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: legal PDF CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing legal-pdf command: {e}")
                 import traceback
                 traceback.print_exc()
                 return
@@ -3729,7 +4214,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'legal-pdf', 'workflow-automation', 'wallet', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

@@ -33,6 +33,18 @@ if BeartypeDecorHintPep585DeprecationWarning is not None:
 
 from typing import Any, Optional
 
+# Lightweight topology/introspection helpers
+from .submodule_registry import (
+	LogicSubmoduleSpec,
+	logic_integration_manifest,
+	logic_optimizer_scope_for_component,
+	logic_optimizer_target_file_hints,
+	logic_submodule_import_report,
+	logic_submodule_names,
+	logic_submodule_spec,
+	logic_submodule_specs,
+)
+
 # Core converters
 from .fol import FOLConverter, convert_text_to_fol
 from .deontic import DeonticConverter, convert_legal_text_to_deontic
@@ -66,8 +78,10 @@ from .common import (
 	get_global_cache,
 )
 
-# Shared types
-from .types import (
+# Shared types. Import leaf modules directly so the stable API surface does not
+# trigger compatibility shims in ``logic.types.__init__`` that load the heavier
+# integration namespace.
+from .types.deontic_types import (
 	DeonticOperator,
 	DeonticFormula,
 	DeonticRuleSet,
@@ -75,22 +89,30 @@ from .types import (
 	LegalContext,
 	TemporalCondition,
 	TemporalOperator,
+)
+from .types.proof_types import (
 	ProofStatus,
 	ProofResult,
 	ProofStep,
+)
+from .types.translation_types import (
 	LogicTranslationTarget,
 	TranslationResult,
 	AbstractLogicFormula,
+)
+from .TDFOL.tdfol_core import (
 	Formula,
 	Predicate,
 	Variable,
 	Constant,
-	And,
-	Or,
-	Not,
-	Implies,
-	Forall,
-	Exists,
+	create_conjunction,
+	create_disjunction,
+	create_existential,
+	create_implication,
+	create_negation,
+	create_universal,
+)
+from .types.common_types import (
 	LogicOperator,
 	Quantifier,
 	FormulaType,
@@ -99,16 +121,61 @@ from .types import (
 	ComplexityMetrics,
 	Prover,
 	Converter,
+)
+from .types.bridge_types import (
 	BridgeCapability,
 	BridgeMetadata,
 	BridgeConfig,
 	ProverRecommendation,
+)
+from .bridge import (
+	BridgeEvaluationReport,
+	GraphProjectionResult,
+	LegalIRDocument,
+	LegalIRTrainingTarget,
+	LogicBridgeSpec,
+	LogicIRView,
+	MultiViewLegalIRReport,
+	ProofGateResult,
+	RoundTripMetrics,
+	bridge_name_for_component,
+	evaluate_legal_ir_multiview,
+	load_logic_bridge_adapter,
+	logic_bridge_manifest,
+	logic_bridge_spec,
+	logic_bridge_specs,
+)
+from .types.fol_types import (
 	FOLOutputFormat,
 	PredicateCategory,
 	FOLFormula,
 	FOLConversionResult,
 	PredicateExtraction,
 )
+
+
+def And(left: Formula, right: Formula) -> Formula:
+	return create_conjunction(left, right)
+
+
+def Or(left: Formula, right: Formula) -> Formula:
+	return create_disjunction(left, right)
+
+
+def Not(formula: Formula) -> Formula:
+	return create_negation(formula)
+
+
+def Implies(antecedent: Formula, consequent: Formula) -> Formula:
+	return create_implication(antecedent, consequent)
+
+
+def Forall(variable: Variable, formula: Formula) -> Formula:
+	return create_universal(variable, formula)
+
+
+def Exists(variable: Variable, formula: Formula) -> Formula:
+	return create_existential(variable, formula)
 
 # ── NL→UCAN deontic policy pipeline (lazy imports, no hard dependency) ────────
 # These are available when the CEC/nl and integration sub-packages are present.
@@ -175,52 +242,68 @@ compile_nl_to_policy = _api_compile_nl_to_policy
 evaluate_nl_policy = _api_evaluate_nl_policy
 build_signed_delegation = _api_build_signed_delegation
 
-# Populate NL-UCAN names into module namespace (best-effort)
-_nl_ucan_ns = _lazy_nl_ucan()
-if _nl_ucan_ns:
-	NLToDCECCompiler = _nl_ucan_ns["NLToDCECCompiler"]
-	DCECToUCANBridge = _nl_ucan_ns["DCECToUCANBridge"]
-	GrammarNLPolicyCompiler = _nl_ucan_ns["GrammarNLPolicyCompiler"]
-	NLUCANPolicyCompiler = _nl_ucan_ns["NLUCANPolicyCompiler"]
-	UCANPolicyBridge = _nl_ucan_ns["UCANPolicyBridge"]
-	SignedPolicyResult = _nl_ucan_ns["SignedPolicyResult"]
-	BridgeCompileResult = _nl_ucan_ns["BridgeCompileResult"]
-	BridgeEvaluationResult = _nl_ucan_ns["BridgeEvaluationResult"]
+_NL_UCAN_EXPORT_NAMES = {
+	"NLToDCECCompiler",
+	"DCECToUCANBridge",
+	"GrammarNLPolicyCompiler",
+	"NLUCANPolicyCompiler",
+	"UCANPolicyBridge",
+	"SignedPolicyResult",
+	"BridgeCompileResult",
+	"BridgeEvaluationResult",
+}
 
 # BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
-_BW133_DELEGATION_AVAILABLE = False
-_BW133_CONFLICT_AVAILABLE = False
-_CD140_I18N_AVAILABLE = False  # CD140
-try:
-	from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
-		DelegationManager,
-		get_delegation_manager,
-	)
-	_BW133_DELEGATION_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-	pass  # optional – mcp_server may be absent
+# These are imported lazily (via __getattr__) to keep logic.api lightweight.
+_BW133_DELEGATION_AVAILABLE = None  # None = not yet probed
+_BW133_CONFLICT_AVAILABLE = None    # None = not yet probed
+_CD140_I18N_AVAILABLE = None        # None = not yet probed
 
-try:
-	from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
-		NLPolicyConflictDetector,
-		PolicyConflict,
-		detect_conflicts,
-		detect_i18n_conflicts,  # CB138
-		I18NConflictResult,  # CB138
-	)
-	_BW133_CONFLICT_AVAILABLE = True
-	_CD140_I18N_AVAILABLE = True  # CD140
-except (ImportError, ModuleNotFoundError):
-	pass  # optional
+def _probe_bw133_delegation():
+    global _BW133_DELEGATION_AVAILABLE, DelegationManager, get_delegation_manager  # noqa: PLW0603
+    if _BW133_DELEGATION_AVAILABLE is not None:
+        return _BW133_DELEGATION_AVAILABLE
+    try:
+        import warnings as _dw
+        with _dw.catch_warnings():
+            _dw.simplefilter("ignore")
+            from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
+                DelegationManager as _DM,
+                get_delegation_manager as _GDM,
+            )
+        globals()["DelegationManager"] = _DM
+        globals()["get_delegation_manager"] = _GDM
+        _BW133_DELEGATION_AVAILABLE = True
+    except Exception:
+        _BW133_DELEGATION_AVAILABLE = False
+    return _BW133_DELEGATION_AVAILABLE
 
-try:
-	from .integration.ucan_policy_bridge import (  # type: ignore[import-not-found]
-		UCANPolicyBridge as _UCANPolicyBridge_check,  # already imported above
-	)
-	# evaluate_with_manager is a method, not a standalone symbol
-except (ImportError, ModuleNotFoundError):
-	pass
-
+def _probe_bw133_conflict():
+    global _BW133_CONFLICT_AVAILABLE, _CD140_I18N_AVAILABLE  # noqa: PLW0603
+    if _BW133_CONFLICT_AVAILABLE is not None:
+        return _BW133_CONFLICT_AVAILABLE
+    try:
+        import warnings as _cw
+        with _cw.catch_warnings():
+            _cw.simplefilter("ignore")
+            from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
+                NLPolicyConflictDetector as _NLPCD,
+                PolicyConflict as _PC,
+                detect_conflicts as _DC,
+                detect_i18n_conflicts as _DIC,  # CB138
+                I18NConflictResult as _ICR,     # CB138
+            )
+        globals()["NLPolicyConflictDetector"] = _NLPCD
+        globals()["PolicyConflict"] = _PC
+        globals()["detect_conflicts"] = _DC
+        globals()["detect_i18n_conflicts"] = _DIC
+        globals()["I18NConflictResult"] = _ICR
+        _BW133_CONFLICT_AVAILABLE = True
+        _CD140_I18N_AVAILABLE = True  # CD140
+    except Exception:
+        _BW133_CONFLICT_AVAILABLE = False
+        _CD140_I18N_AVAILABLE = False
+    return _BW133_CONFLICT_AVAILABLE
 
 __all__ = [
 	# FOL
@@ -294,11 +377,35 @@ __all__ = [
 	"BridgeMetadata",
 	"BridgeConfig",
 	"ProverRecommendation",
+	"BridgeEvaluationReport",
+	"GraphProjectionResult",
+	"LegalIRDocument",
+	"LegalIRTrainingTarget",
+	"LogicBridgeSpec",
+	"LogicIRView",
+	"MultiViewLegalIRReport",
+	"ProofGateResult",
+	"RoundTripMetrics",
+	"bridge_name_for_component",
+	"evaluate_legal_ir_multiview",
+	"load_logic_bridge_adapter",
+	"logic_bridge_manifest",
+	"logic_bridge_spec",
+	"logic_bridge_specs",
 	"FOLOutputFormat",
 	"PredicateCategory",
 	"FOLFormula",
 	"FOLConversionResult",
 	"PredicateExtraction",
+	# Logic submodule topology
+	"LogicSubmoduleSpec",
+	"logic_integration_manifest",
+	"logic_optimizer_scope_for_component",
+	"logic_optimizer_target_file_hints",
+	"logic_submodule_import_report",
+	"logic_submodule_names",
+	"logic_submodule_spec",
+	"logic_submodule_specs",
 	# NL→UCAN policy pipeline (Phase 1-3)
 	"compile_nl_to_policy",
 	"evaluate_nl_policy",
@@ -377,19 +484,9 @@ def evaluate_with_manager(
         return None
 
 
-# CN150: conditionally extend __all__
-_CN150_BRIDGE_AVAILABLE = False
-try:
-    from ipfs_datasets_py.logic.integration.ucan_policy_bridge import (  # noqa: F811
-        UCANPolicyBridge as _UCANPolicyBridge,
-    )
-    _CN150_BRIDGE_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-    pass
-
-# CN150: extend __all__ only if symbols are loadable
-if _CN150_BRIDGE_AVAILABLE:
-    __all__ += ["evaluate_with_manager"]
+# CN150: expose the wrapper without importing the integration bridge at module
+# import time. The wrapper handles bridge unavailability when it is called.
+__all__ += ["evaluate_with_manager"]
 # CJ146: detect_i18n_clauses
 try:
     from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
@@ -575,38 +672,52 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
 # CT156: extend __all__
 __all__ += ["I18NConflictReport", "detect_all_languages"]
 
-# DW185: compile_explain_iter re-export
-_DW185_COMPILER_AVAILABLE = False
-try:
+# DW185: compile_explain_iter re-export. Import the compiler only when called
+# so importing ``logic.api`` stays lightweight.
+def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
+    """Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`."""
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (  # type: ignore[import-not-found]
         NLUCANPolicyCompiler as _NLUCANPolicyCompiler_dw185,
     )
-    # compile_explain_iter is an instance method; expose a module-level wrapper
-    def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
-        """DW185: Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`.
 
-        Creates a fresh :class:`NLUCANPolicyCompiler` and delegates to its
-        ``compile_explain_iter`` method.  Returns a generator of explanation lines.
+    compiler = _NLUCANPolicyCompiler_dw185()
+    yield from compiler.compile_explain_iter(sentences, policy_id=policy_id, max_lines=max_lines)
 
-        Parameters
-        ----------
-        sentences:
-            Plain-English policy statements.
-        policy_id:
-            Optional policy identifier override.
-        max_lines:
-            Optional limit on lines yielded (``None`` = all lines).
 
-        Yields
-        ------
-        str
-            Explanation lines.
-        """
-        compiler = _NLUCANPolicyCompiler_dw185()
-        yield from compiler.compile_explain_iter(sentences, policy_id=policy_id, max_lines=max_lines)
-    _DW185_COMPILER_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-    pass
+__all__ += ["compile_explain_iter"]
 
-if _DW185_COMPILER_AVAILABLE:
-    __all__ += ["compile_explain_iter"]
+
+_BW133_LAZY_NAMES = {"DelegationManager", "get_delegation_manager"}
+_BW133_CONFLICT_LAZY_NAMES = {
+    "NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts",
+    "detect_i18n_conflicts", "I18NConflictResult",
+}
+
+def __getattr__(name: str) -> Any:
+    """Lazily expose optional API classes without import-time side effects."""
+    if name in _BW133_LAZY_NAMES:
+        _probe_bw133_delegation()
+        val = globals().get(name)
+        if val is not None:
+            return val
+        raise AttributeError(
+            f"{name} is not available because mcp_server.ucan_delegation could not be imported"
+        )
+    if name in _BW133_CONFLICT_LAZY_NAMES:
+        _probe_bw133_conflict()
+        val = globals().get(name)
+        if val is not None:
+            return val
+        raise AttributeError(
+            f"{name} is not available because the NL policy conflict detector could not be imported"
+        )
+    if name in _NL_UCAN_EXPORT_NAMES:
+        ns = _lazy_nl_ucan()
+        if ns is not None and name in ns:
+            value = ns[name]
+            globals()[name] = value
+            return value
+        raise AttributeError(
+            f"{name} is not available because the NL→UCAN pipeline could not be imported"
+        )
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

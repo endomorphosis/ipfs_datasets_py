@@ -21,6 +21,10 @@ def test_canonicalize_provider_aliases() -> None:
     assert canonicalize_provider("ipfs_accelerate") == "accelerate"
     assert canonicalize_provider("hf_api") == "hf_inference_api"
     assert canonicalize_provider("hf_inference") == "hf_inference_api"
+    assert canonicalize_provider("leanstral_local") == "llama_cpp"
+    assert canonicalize_provider("openai_compatible") == "llama_cpp"
+    assert canonicalize_provider("llama_cpp_native") == "llama_cpp_native"
+    assert canonicalize_provider("native_llama_cpp") == "llama_cpp_native"
 
 
 def test_detect_provider_from_environment_var(monkeypatch) -> None:

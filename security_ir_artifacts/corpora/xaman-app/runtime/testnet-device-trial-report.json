@@ -1,0 +1,396 @@
+{
+  "approved_non_production_wallet_flow": {
+    "fresh_testnet_credentials": {
+      "account_material_recorded": false,
+      "boundary": "testnet_only_no_imported_or_persisted_account_material",
+      "fresh_account_created": true,
+      "imported_account": false,
+      "production_account": false
+    },
+    "network_selection": {
+      "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "endpoint_allow_list_decision": {
+        "allow_list_version": "xrpl-public-testnet-2026-07-10",
+        "allowed": true,
+        "matched_endpoint_key": "ripple_altnet_testnet",
+        "matched_endpoint_sha256": "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca"
+      },
+      "event_categories": [
+        "deterministic_testnet_local_state",
+        "fresh_emulator_profile",
+        "fresh_testnet_account_boundary",
+        "fresh_testnet_account_created",
+        "xaman_network_selected",
+        "xrpl_server_info_observed"
+      ],
+      "fresh_account_boundary": {
+        "account_material_recorded": false,
+        "boundary": "testnet_only_no_imported_or_persisted_account_material",
+        "fresh_account_created": true,
+        "imported_account": false,
+        "production_account": false
+      },
+      "overall_status": "verified",
+      "record": {
+        "artifact_cid": "sha256:601c466c62b85221e158007d0667125889fe0b7e2f27818914b40c9131352dbd",
+        "expected_schema_version": "xaman-testnet-network-selection/v1",
+        "expected_task_id": "PORTAL-CXTP-125",
+        "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/runtime/testnet-network-selection-report.json",
+        "present": true,
+        "schema_matches_expected": true,
+        "schema_version": "xaman-testnet-network-selection/v1",
+        "sha256": "dad91f0a1e0b02bf698ef557e460d6f188ef3a4f4e3eb856fb7a84cfe2fbaba0",
+        "size_bytes": 5333,
+        "task_id": "PORTAL-CXTP-125",
+        "task_matches_expected": true
+      },
+      "run_id": "xaman-testnet-network-selection-20260710",
+      "security_decision": "TESTNET_NETWORK_SELECTION_VERIFIED_NOT_PRODUCTION_EVIDENCE",
+      "selected_network_key": "TESTNET",
+      "selection_evidence_type": "deterministic_local_state",
+      "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+      "xrpl_server_info_binding": {
+        "network_id": 1,
+        "network_id_verified": true,
+        "raw_request_body_recorded": false,
+        "raw_response_recorded": false,
+        "request_category": "xrpl_server_info",
+        "request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+        "response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9"
+      }
+    },
+    "transaction_lifecycle_trace": {
+      "follow_on_task": "PORTAL-CXTP-130",
+      "status": "not_captured_in_this_trial"
+    },
+    "xrpl_request_trace": {
+      "network_id": 1,
+      "network_id_verified": true,
+      "raw_request_body_recorded": false,
+      "raw_response_recorded": false,
+      "request_category": "xrpl_server_info",
+      "request_sha256": "6a1a5cf3644551cf735838bfa1ada32fe420c979bac41dd497fbc13f229070c3",
+      "response_sha256": "bfc4e47cbb178e827319d943dd7f6d7eb3d6093b02b2f38ff42058abb5d76ef9"
+    }
+  },
+  "artifact_cid": "sha256:30cfd9e40195fb837a646a45f4bce600928a417e7278c6232ed6396f5d52c5c3",
+  "blocking_gaps": [],
+  "device_profile": {
+    "install_evidence": {
+      "adb_install_transcript_recorded": false,
+      "review_boundary": "requires human review before production or runtime-equivalence acceptance",
+      "status": "derived_from_local_device_capture_artifacts"
+    },
+    "isolated_android_emulator": {
+      "isolated_profile_evidence": "local_external_verifier_avd_profile",
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/avd/ipfs_xaman_api34_testnet.avd",
+      "present": true,
+      "profile_name": "ipfs_xaman_api34_testnet.avd",
+      "selected_file_records": {
+        "bootcompleted.ini": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/avd/ipfs_xaman_api34_testnet.avd/bootcompleted.ini",
+          "present": true,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "config.ini": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/avd/ipfs_xaman_api34_testnet.avd/config.ini",
+          "present": true,
+          "sha256": "a21ffbb4c7334afaae6220efc68a3ce605acda6ce53636b970021cfbdd6f2b12",
+          "size_bytes": 3834
+        },
+        "emu-launch-params.txt": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/avd/ipfs_xaman_api34_testnet.avd/emu-launch-params.txt",
+          "present": true,
+          "sha256": "fc17aec5444cd4a0cbfb1a9849c2fbfadb18d3e7e368e7f3fb6e31dcdc2ac180",
+          "size_bytes": 274
+        },
+        "hardware-qemu.ini": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/avd/ipfs_xaman_api34_testnet.avd/hardware-qemu.ini",
+          "present": true,
+          "sha256": "7312f8bd8529de9d79dbb104e89b8315cdc363c4465c3747af1bbc4ede91e6c0",
+          "size_bytes": 4508
+        }
+      }
+    },
+    "screenshots": [
+      {
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-testnet-launch.png",
+        "present": true,
+        "sha256": "4e9456da084ab130ce8ea72276e3b652d654c91682d8c2e81f68a3beb9f9e9e5",
+        "size_bytes": 336093
+      },
+      {
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-testnet-bundled.png",
+        "present": true,
+        "sha256": "8b6bbdf26025cf62d87d89ac057631d7b31a83ee87f462da9a9ac3010c313084",
+        "size_bytes": 336426
+      },
+      {
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-testnet-firebase-disabled.png",
+        "present": true,
+        "sha256": "86b79ace7ac132fd5744ba197f17516a08624afc27d04cb7ab9af7993858e988",
+        "size_bytes": 335356
+      }
+    ]
+  },
+  "firebase_boundary": {
+    "build_and_js_stub_evidence": {
+      "artifact_cid": "sha256:b036f7221ee476c16a1b817cb1bb26c5c6de71d1ea4e040f875a9b9889422544",
+      "firebase_mode": "disabled_by_external_gradle_and_metro_overrides",
+      "ledger_network": "testnet_required",
+      "record": {
+        "artifact_cid": "sha256:b036f7221ee476c16a1b817cb1bb26c5c6de71d1ea4e040f875a9b9889422544",
+        "expected_schema_version": "xaman-firebase-disabled-testnet-build/v1",
+        "expected_task_id": "PORTAL-CXTP-119",
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/firebase-disabled-testnet-kit/testnet-build-manifest.json",
+        "present": true,
+        "schema_matches_expected": true,
+        "schema_version": "xaman-firebase-disabled-testnet-build/v1",
+        "sha256": "638c63ad73d0dc7756e058c49bf425c52add7588961dc4e85b4802bab359002f",
+        "size_bytes": 2538,
+        "task_id": "PORTAL-CXTP-119",
+        "task_matches_expected": true
+      },
+      "runtime_constraints": {
+        "android_build_variant": "debug",
+        "ci_required": true,
+        "firebase_gradle_tasks_disabled": true,
+        "firebase_js_modules_stubbed": [
+          "@react-native-firebase/analytics",
+          "@react-native-firebase/crashlytics",
+          "@react-native-firebase/messaging"
+        ],
+        "metro_watchman_disabled": true,
+        "production_usable": false,
+        "react_native_navigation_compatibility_overlay": true
+      },
+      "xaman_root_sha256": "5b9881a9e9e69129654bbe5876f5b1e47ddc4a3e90823c4eb605b697b509285a"
+    },
+    "classification": "firebase_js_stubbed_only",
+    "native_boundary_report": {
+      "blocker_codes": [
+        "NATIVE_FIREBASE_MANIFEST_COMPONENTS_PRESENT",
+        "NATIVE_FIREBASE_APK_BINARY_MANIFEST_INDICATORS_PRESENT",
+        "FIREBASE_COMPONENT_REGISTRARS_PRESENT",
+        "FIREBASE_DEX_CLASSES_PRESENT",
+        "CRASHLYTICS_NATIVE_LIBRARIES_PRESENT",
+        "FIREBASE_PACKAGED_RESOURCES_PRESENT"
+      ],
+      "device_trial_label_allowed": "firebase_js_stubbed_only",
+      "native_firebase_evidence_present": true,
+      "native_firebase_fully_disabled": false,
+      "native_packaging_present": true,
+      "native_startup_indicators_present": false,
+      "overall_status": "blocked",
+      "record": {
+        "artifact_cid": "sha256:dce3d70731109f4ad0d9b3e9dd75116ad73bdd9b09fb683dec75eed01aac9345",
+        "expected_schema_version": "xaman-native-firebase-boundary/v1",
+        "expected_task_id": "PORTAL-CXTP-126",
+        "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/runtime/native-firebase-boundary-report.json",
+        "present": true,
+        "schema_matches_expected": true,
+        "schema_version": "xaman-native-firebase-boundary/v1",
+        "sha256": "d5726635e104d8b3bf63d8d737d7f5fd2c8032ac25fefed8443a2c42be374731",
+        "size_bytes": 19322,
+        "task_id": "PORTAL-CXTP-126",
+        "task_matches_expected": true
+      },
+      "run_id": "xaman-native-firebase-boundary-20260710",
+      "security_decision": "BLOCK_TESTNET_FULL_FIREBASE_DISABLED_LABEL_NATIVE_FIREBASE_PACKAGED",
+      "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    },
+    "native_firebase_fully_disabled": false
+  },
+  "generated_at_utc": "2026-07-10T22:00:00Z",
+  "overall_status": "executed_with_boundaries",
+  "redaction_boundary": {
+    "account_addresses_recorded": false,
+    "credentials_recorded": false,
+    "payloads_recorded": false,
+    "raw_request_bodies_recorded": false,
+    "raw_server_info_response_recorded": false,
+    "raw_xrpl_endpoint_recorded": false,
+    "seeds_recorded": false,
+    "stored_values": [
+      "event_categories",
+      "network_key",
+      "endpoint_key",
+      "file_sha256",
+      "request_response_sha256",
+      "aggregate_counts",
+      "non_secret_local_paths"
+    ],
+    "transaction_blobs_recorded": false
+  },
+  "residual_boundaries": [
+    {
+      "code": "PRODUCTION_ACCEPTANCE_BLOCKED",
+      "reason": "This is public-Testnet verifier evidence only and cannot approve production release behavior."
+    },
+    {
+      "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+      "reason": "The debug verifier artifact and emulator capture do not prove equivalence to a production runtime."
+    },
+    {
+      "active": true,
+      "code": "FULL_FIREBASE_DISABLED_LABEL_BLOCKED",
+      "reason": "Native Firebase packaging remains present in the inspected APK."
+    },
+    {
+      "code": "TRANSACTION_LIFECYCLE_TRACE_NOT_CAPTURED",
+      "reason": "Payload review, signing, submit, decline, cancel, expiry, and reconnect flows are deferred to PORTAL-CXTP-130."
+    }
+  ],
+  "run_id": "xaman-testnet-device-trial-20260710",
+  "schema_version": "xaman-testnet-device-trial/v1",
+  "security_decision": "TESTNET_DEVICE_TRIAL_EXECUTED_JS_FIREBASE_STUBBED_NOT_PRODUCTION_EVIDENCE",
+  "task_id": "PORTAL-CXTP-121",
+  "telemetry": {
+    "duckdb": {
+      "event_count": 4,
+      "inspection_status": "read_only_verified",
+      "missing_required_tables": [],
+      "observed_events": [
+        {
+          "category": "firebase_disabled",
+          "event_name": "messaging_operation",
+          "outcome": "stubbed"
+        },
+        {
+          "category": "firebase_disabled",
+          "event_name": "firebase_analytics_operation",
+          "outcome": "stubbed"
+        },
+        {
+          "category": "firebase_disabled",
+          "event_name": "messaging_has_permission",
+          "outcome": "stubbed"
+        },
+        {
+          "category": "firebase_disabled",
+          "event_name": "firebase_analytics_operation",
+          "outcome": "stubbed"
+        }
+      ],
+      "record": {
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/testnet-telemetry.duckdb",
+        "present": true,
+        "sha256": "dd2dca907d230cb42d5cbea483469bfb542d84c1f27ebc7db5265561bbd9efcb",
+        "size_bytes": 1323008
+      },
+      "rejection_count": 0,
+      "required_tables_present": [
+        "xaman_testnet_events",
+        "xaman_testnet_rejections",
+        "xaman_testnet_runs"
+      ],
+      "run": {
+        "accepted_event_count": 4,
+        "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+        "event_log_sha256": "356dccc4ed111ecb763df9c77e6e019822964719f6d7756c5d3b43a22c3b3de8",
+        "firebase_mode": "disabled",
+        "ledger_endpoint_sha256": "a81289bc29208d10634e2b0c40a94ec0c664f0c3bb1574d742ce8054b7f9abca",
+        "ledger_network": "testnet",
+        "rejected_event_count": 0,
+        "run_id": "xaman-firebase-disabled-startup-20260710",
+        "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+      },
+      "tables": [
+        "xaman_testnet_events",
+        "xaman_testnet_rejections",
+        "xaman_testnet_runs"
+      ]
+    },
+    "redacted_local_telemetry_only": true,
+    "report": {
+      "accepted_event_count": 4,
+      "build_provenance_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "duckdb_sha256": "dd2dca907d230cb42d5cbea483469bfb542d84c1f27ebc7db5265561bbd9efcb",
+      "firebase_mode": "disabled",
+      "record": {
+        "artifact_cid": "sha256:ee11d41c8f6c2d6ca2de0d623ece01d08fcb58fda09d051182c4403908238f1d",
+        "expected_schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+        "expected_task_id": "PORTAL-CXTP-120",
+        "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/runtime/testnet-telemetry-report.json",
+        "present": true,
+        "schema_matches_expected": true,
+        "schema_version": "xaman-firebase-disabled-testnet-telemetry/v1",
+        "sha256": "c43c46cf610b1eea65a4319385c510343a3bf9673a702a28909ab0b8c2ce2fb8",
+        "size_bytes": 1754,
+        "task_id": "PORTAL-CXTP-120",
+        "task_matches_expected": true
+      },
+      "rejected_event_count": 0,
+      "run_id": "xaman-firebase-disabled-startup-20260710",
+      "security_decision": "TESTNET_FIREBASE_DISABLED_TELEMETRY_CAPTURED_NOT_PRODUCTION_EVIDENCE",
+      "telemetry_sink": "duckdb",
+      "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+    }
+  },
+  "trial_scope": {
+    "account_policy": "fresh_testnet_only_no_import_or_persistence_of_account_material",
+    "device_trial_label": "firebase_js_stubbed_only",
+    "full_firebase_disabled_label_blocked": true,
+    "network": "XRPL_TESTNET",
+    "network_id": 1,
+    "production_usable": false,
+    "real_assets_allowed": false
+  },
+  "verifier_artifact": {
+    "apk": {
+      "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/apk/debug/app-x86_64-debug.apk",
+      "present": true,
+      "sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+      "size_bytes": 233121825
+    },
+    "digest_matches_telemetry_report": true,
+    "expected_apk_sha256": "c22cd33b580dd0ecd8b8c5529b42169dccb79676ac396cda8af448d31810a41d",
+    "signing": {
+      "debug_keystore": {
+        "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/debug.keystore",
+        "present": true,
+        "sha256": "221e0a3106aa4c3ccc154e0a418b55020b3f9ea6e84f92e8749cd9e2f39f5e58",
+        "size_bytes": 2257
+      },
+      "debug_named_apk": true,
+      "debug_signed_evidence_present": true,
+      "debug_variant": true,
+      "output_metadata": {
+        "application_id_sha256": "4592502d33152a210dd1339ed87c0a05e0fe76eee27c18492105c48042889b4e",
+        "matched_output": {
+          "filters": [
+            {
+              "filterType": "ABI",
+              "value": "x86_64"
+            }
+          ],
+          "output_file": "app-x86_64-debug.apk",
+          "type": "ONE_OF_MANY",
+          "version_code": 4224427,
+          "version_name": "4.2.1"
+        },
+        "record": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/outputs/apk/debug/output-metadata.json",
+          "present": true,
+          "sha256": "b749b66e42fdfacf7e44461494fbcc263be676e0eae4e27049c4aae8f328c8c1",
+          "size_bytes": 1500
+        },
+        "variant_name": "debug"
+      },
+      "signing_config_versions": {
+        "enable_v1_signing": false,
+        "enable_v2_signing": true,
+        "enable_v3_signing": false,
+        "enable_v4_signing": false,
+        "record": {
+          "path": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app/android/app/build/intermediates/signing_config_versions/debug/signing-config-versions.json",
+          "present": true,
+          "sha256": "d31e2c0c006d0991d24ed5c92b3c0bf3a8d1c06869f419f2676c81b0b38f2ffa",
+          "size_bytes": 96
+        }
+      }
+    }
+  },
+  "xaman_commit": "942f43876265a7af44f233288ad2b1d00841d5fa"
+}

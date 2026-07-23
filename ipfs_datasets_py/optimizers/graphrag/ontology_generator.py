@@ -3729,7 +3729,10 @@ class OntologyGenerator:
         relationships = []
         text = str(data) if data is not None else ""
         text_lower = text.lower()
-        sentence_window = getattr(context.extraction_config, "sentence_window", 0)
+        extraction_config = getattr(context, "extraction_config", None) or getattr(context, "config", None)
+        sentence_window = getattr(extraction_config, "sentence_window", 0)
+        if not isinstance(sentence_window, (int, float)):
+            sentence_window = 0
         sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
         entity_sentence_index: Dict[str, int] = {}
 
@@ -3893,6 +3896,7 @@ class OntologyGenerator:
         self,
         batch: List[tuple],
         entities: List[Any],
+        context: Any,
         text: str,
         text_lower: str,
         linked: set,
@@ -4078,6 +4082,7 @@ class OntologyGenerator:
                     self._process_entity_pairs_batch,
                     batch,
                     entity_list,
+                    context,
                     text,
                     text_lower,
                     linked,
@@ -4792,6 +4797,21 @@ class OntologyGenerator:
         extraction_result = self.extract_entities(data, context)
         
         # Build ontology structure
+        flattened_metadata: Dict[str, Any] = {}
+        for key, value in dict(extraction_result.metadata or {}).items():
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                flattened_metadata[key] = value
+                continue
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    flat_key = f"{key}_{nested_key}"
+                    if isinstance(nested_value, (str, int, float, bool)) or nested_value is None:
+                        flattened_metadata[flat_key] = nested_value
+                    else:
+                        flattened_metadata[flat_key] = json.dumps(nested_value, sort_keys=True)
+                continue
+            flattened_metadata[key] = json.dumps(value, sort_keys=True) if isinstance(value, (list, tuple)) else str(value)
+
         ontology = {
             'entities': [self._entity_to_dict(e) for e in extraction_result.entities],
             'relationships': [
@@ -4803,7 +4823,7 @@ class OntologyGenerator:
                 'domain': context.domain,
                 'extraction_strategy': context.extraction_strategy.value,
                 'confidence': extraction_result.confidence,
-                **extraction_result.metadata
+                **flattened_metadata
             },
             'domain': context.domain,
             'version': '1.0'

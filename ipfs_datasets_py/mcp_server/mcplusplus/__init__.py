@@ -40,14 +40,20 @@ def _ensure_ipfs_accelerate_on_path() -> None:
     which is not on sys.path by default.
     """
     try:
-        # This file lives at: <root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/mcplusplus/
-        # The submodule root is: <root>/ipfs_accelerate_py
-        repo_root = Path(__file__).resolve().parents[4]
-        candidate = repo_root / "ipfs_accelerate_py"
-
-        if candidate.exists() and str(candidate) not in sys.path:
-            sys.path.insert(0, str(candidate))
-            logger.debug(f"Added ipfs_accelerate_py to sys.path: {candidate}")
+        # This file normally lives at:
+        #   <repo>/ipfs_datasets_py/mcp_server/mcplusplus/__init__.py
+        # and the vendored sister checkout normally lives at:
+        #   <repo>/../ipfs_accelerate_py/
+        #
+        # Search the parent chain instead of assuming a fixed depth; editable
+        # installs, source trees, and nested workspaces can each shift it.
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / "ipfs_accelerate_py"
+            if (candidate / "ipfs_accelerate_py" / "mcplusplus_module").exists():
+                if str(candidate) not in sys.path:
+                    sys.path.insert(0, str(candidate))
+                    logger.debug(f"Added ipfs_accelerate_py to sys.path: {candidate}")
+                return
     except Exception as e:
         logger.debug(f"Could not add ipfs_accelerate_py to sys.path: {e}")
 

@@ -1,0 +1,38 @@
+{
+  "artifact_cid": "sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+  "container_started": true,
+  "daemon_health": {
+    "network_id_matches_self_hosted": true,
+    "network_id_reported": 777777,
+    "peer_count_zero": true,
+    "polling_attempts": 2,
+    "rpc_reachable": true,
+    "rpc_status": "success",
+    "server_state": "full",
+    "server_state_category": "HEALTHY_STANDALONE_FULL",
+    "standalone_mode_confirmed": true,
+    "uptime_positive": true,
+    "validated_ledger_present": true,
+    "validated_ledger_sequence_positive": true
+  },
+  "evidence_boundary": {
+    "account_addresses_retained": false,
+    "raw_endpoints_retained": false,
+    "raw_rpc_response_retained": false,
+    "seeds_retained": false,
+    "transaction_blobs_retained": false
+  },
+  "mode": "activated",
+  "overall_status": "daemon_healthy_standalone_full",
+  "pinned_image_reference": "xrpllabsofficial/xrpld@sha256:035813a8980d7fe571027b168c48ae896e3f20e361b529904235290ccdb8babf",
+  "prohibited_claims": [
+    "vendor_release_equivalence",
+    "production_security_approval",
+    "wallet_security_proved",
+    "transaction_finality_proved"
+  ],
+  "schema_version": "xaman-self-hosted-testnet-daemon-health/v1",
+  "security_decision": "SELF_HOSTED_BRIDGE_HEALTHY_PENDING_INDEPENDENT_REVIEW",
+  "self_hosted_network_id": 777777,
+  "task_id": "PORTAL-CXTP-155"
+}

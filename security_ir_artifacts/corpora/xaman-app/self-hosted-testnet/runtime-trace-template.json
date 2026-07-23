@@ -1,0 +1,51 @@
+{
+  "acceptance_boundary": "A completed trace is verifier-only evidence and cannot claim vendor-release equivalence or production wallet security.",
+  "dependency_requirements": [
+    "endpoint_rebound_candidate",
+    "bridge_isolation_report",
+    "daemon_health",
+    "security_model"
+  ],
+  "redaction_requirements": {
+    "prohibited_material": [
+      "seeds",
+      "account identifiers",
+      "payloads",
+      "transaction blobs",
+      "credentials",
+      "raw endpoints",
+      "raw request or response bodies"
+    ],
+    "raw_sensitive_material_retained": false
+  },
+  "required_actions": [
+    "onboarding",
+    "local_network_selection",
+    "review",
+    "signature_decision",
+    "submit_result",
+    "cancellation",
+    "expiry",
+    "replay",
+    "reconnect",
+    "network_change"
+  ],
+  "review_gate_requirements": {
+    "independent_review_required": true,
+    "status": "passed",
+    "unexpired_review_required": true
+  },
+  "schema_version": "xaman-self-hosted-runtime-trace-template/v1",
+  "scope_requirements": {
+    "external_egress_observed": false,
+    "fresh_debug_emulator": true,
+    "network_id": 777777,
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "source_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "vendor_fallback_observed": false,
+    "vendor_release_equivalent": false
+  },
+  "task_id": "PORTAL-CXTP-158",
+  "template_status": "NOT_RUNTIME_EVIDENCE"
+}

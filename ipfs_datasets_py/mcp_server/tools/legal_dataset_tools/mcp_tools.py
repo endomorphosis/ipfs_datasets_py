@@ -7,12 +7,41 @@ Business logic is in ipfs_datasets_py.processors.legal_scrapers.legal_dataset_ap
 """
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, List, Optional
+from pathlib import Path
+
+from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data import (
+    load_packaged_docket_dataset,
+    load_packaged_workspace_dataset,
+    load_workspace_dataset_single_parquet,
+    search_docket_dataset_bm25,
+    search_docket_dataset_vector,
+    search_workspace_dataset_bm25,
+    search_workspace_dataset_vector,
+)
+from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+    DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
+    DEFAULT_CAP_HF_DATASET_ID,
+    DEFAULT_CAP_HF_PARQUET_FILE,
+    DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID,
+    DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID,
+    DEFAULT_STATE_LAWS_HF_DATASET_ID,
+    DEFAULT_COURT_RULES_HF_DATASET_ID,
+    DEFAULT_USCODE_HF_DATASET_ID,
+    DEFAULT_USCODE_HF_PARQUET_PREFIX,
+)
 
 logger = logging.getLogger(__name__)
 
 _TOOL_VERSION = "1.0.0"
+_STATE_LAWS_CORPUS = get_canonical_legal_corpus("state_laws")
+_STATE_ADMIN_RULES_CORPUS = get_canonical_legal_corpus("state_admin_rules")
+_STATE_COURT_RULES_CORPUS = get_canonical_legal_corpus("state_court_rules")
+_FEDERAL_REGISTER_CORPUS = get_canonical_legal_corpus("federal_register")
+_NETHERLANDS_CORPUS = get_canonical_legal_corpus("netherlands_laws")
 
 
 async def scrape_recap_archive(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -69,6 +98,14 @@ async def scrape_federal_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
         scrape_federal_laws_from_parameters,
     )
     return await scrape_federal_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def scrape_netherlands_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Scrape Netherlands laws from official Dutch government law sources."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        scrape_netherlands_laws_from_parameters,
+    )
+    return await scrape_netherlands_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
 async def scrape_municipal_codes(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -146,6 +183,200 @@ async def search_federal_register_corpus(parameters: Dict[str, Any]) -> Dict[str
         search_federal_register_corpus_from_parameters,
     )
     return await search_federal_register_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search Netherlands law corpus vectors with metadata enrichment."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_netherlands_law_corpus_from_parameters,
+    )
+    return await search_netherlands_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def search_workspace_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search a workspace dataset bundle or packaged manifest using BM25 or vector retrieval."""
+    input_path = str(parameters.get("input_path") or "").strip()
+    query = str(parameters.get("query") or "").strip()
+    backend = str(parameters.get("backend") or "bm25").strip().lower() or "bm25"
+    input_kind = str(parameters.get("input_kind") or "auto").strip().lower() or "auto"
+    top_k = int(parameters.get("top_k") or 10)
+
+    if not input_path:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": "input_path is required",
+        }
+    if not query:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": "query is required",
+        }
+    if backend not in {"bm25", "vector"}:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": f"Unsupported backend: {backend}",
+        }
+    if input_kind not in {"auto", "single", "packaged"}:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": f"Unsupported input_kind: {input_kind}",
+        }
+
+    bundle_path = Path(input_path)
+    resolved_input_kind = input_kind
+    if resolved_input_kind == "auto":
+        if bundle_path.suffix.lower() == ".parquet":
+            resolved_input_kind = "single"
+        else:
+            resolved_input_kind = "packaged"
+
+    dataset = (
+        load_workspace_dataset_single_parquet(bundle_path)
+        if resolved_input_kind == "single"
+        else load_packaged_workspace_dataset(bundle_path)
+    )
+    result = (
+        search_workspace_dataset_bm25(dataset, query, top_k=top_k)
+        if backend == "bm25"
+        else search_workspace_dataset_vector(dataset, query, top_k=top_k)
+    )
+    return {
+        "status": "success",
+        "operation": "search_workspace_dataset",
+        "tool_version": _TOOL_VERSION,
+        "input_path": input_path,
+        "input_kind": resolved_input_kind,
+        "backend": backend,
+        **result,
+    }
+
+
+async def search_docket_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search a docket dataset JSON artifact or packaged manifest using BM25 or vector retrieval."""
+    input_path = str(parameters.get("input_path") or "").strip()
+    query = str(parameters.get("query") or "").strip()
+    backend = str(parameters.get("backend") or "bm25").strip().lower() or "bm25"
+    input_kind = str(parameters.get("input_kind") or "auto").strip().lower() or "auto"
+    top_k = int(parameters.get("top_k") or 10)
+    vector_dimension = int(parameters.get("vector_dimension") or 32)
+
+    if not input_path:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": "input_path is required",
+        }
+    if not query:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": "query is required",
+        }
+    if backend not in {"bm25", "vector"}:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": f"Unsupported backend: {backend}",
+        }
+    if input_kind not in {"auto", "dataset", "packaged"}:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": f"Unsupported input_kind: {input_kind}",
+        }
+
+    resolved_input_path = Path(input_path)
+    resolved_input_kind = input_kind
+    if resolved_input_kind == "auto":
+        resolved_input_kind = "packaged" if resolved_input_path.name == "bundle_manifest.json" else "dataset"
+
+    dataset = (
+        json.loads(resolved_input_path.read_text(encoding="utf-8"))
+        if resolved_input_kind == "dataset"
+        else load_packaged_docket_dataset(resolved_input_path)
+    )
+    result = (
+        search_docket_dataset_bm25(dataset, query, top_k=top_k)
+        if backend == "bm25"
+        else search_docket_dataset_vector(dataset, query, top_k=top_k, vector_dimension=vector_dimension)
+    )
+    return {
+        "status": "success",
+        "operation": "search_docket_dataset",
+        "tool_version": _TOOL_VERSION,
+        "input_path": input_path,
+        "input_kind": resolved_input_kind,
+        "backend": backend,
+        **result,
+    }
+
+
+async def recover_missing_legal_citation_source(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover candidate official sources for an unresolved legal citation and optionally publish the manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        recover_missing_legal_citation_source_from_parameters,
+    )
+    return await recover_missing_legal_citation_source_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def promote_recovery_manifest_to_canonical_bundle(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Promote a saved recovery manifest into a structured canonical row bundle."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        promote_recovery_manifest_to_canonical_bundle_from_parameters,
+    )
+    return await promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def preview_recovery_manifest_release_plan(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Preview the promote-and-merge release plan for a saved recovery manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        preview_recovery_manifest_release_plan_from_parameters,
+    )
+    return await preview_recovery_manifest_release_plan_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def merge_recovery_manifest_into_canonical_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge promoted recovery rows into the target canonical parquet dataset."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        merge_recovery_manifest_into_canonical_dataset_from_parameters,
+    )
+    return await merge_recovery_manifest_into_canonical_dataset_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def collect_packaged_docket_citation_recovery_candidates(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Collect unresolved citation recovery candidates from a packaged docket manifest without executing recovery."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        collect_packaged_docket_citation_recovery_candidates_from_parameters,
+    )
+    return await collect_packaged_docket_citation_recovery_candidates_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def recover_packaged_docket_missing_authorities(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Run missing-authority recovery across unresolved citations in a packaged docket manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        recover_packaged_docket_missing_authorities_from_parameters,
+    )
+    return await recover_packaged_docket_missing_authorities_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def plan_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover unresolved packaged-docket citations and emit downstream follow-up work items."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        plan_packaged_docket_missing_authority_follow_up_from_parameters,
+    )
+    return await plan_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def execute_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover unresolved packaged-docket citations and execute promote/merge follow-up work items."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        execute_packaged_docket_missing_authority_follow_up_from_parameters,
+    )
+    return await execute_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
 async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -365,6 +596,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     list_scraping_jobs,
     scrape_us_code,
     scrape_federal_laws,
+    scrape_netherlands_laws,
     scrape_municipal_codes,
     setup_legal_tools_venv,
     ingest_caselaw_access_vectors,
@@ -374,6 +606,10 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_state_law_corpus,
     search_court_rules_corpus,
     search_federal_register_corpus,
+    search_netherlands_law_corpus,
+    recover_missing_legal_citation_source,
+    collect_packaged_docket_citation_recovery_candidates,
+    recover_packaged_docket_missing_authorities,
     search_federal_register_hf_index,
     legal_search_brave,
     legal_search_brave_terms,
@@ -390,6 +626,27 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
 
 
 CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
+    {
+        "name": "scrape_netherlands_laws",
+        "description": "Scrape Netherlands laws from official Dutch government law pages.",
+        "function": scrape_netherlands_laws,
+        "parameters": {
+            "document_urls": {"type": "array", "required": False},
+            "seed_urls": {"type": "array", "required": False},
+            "output_format": {"type": "string", "default": "json"},
+            "output_dir": {"type": "string", "required": False},
+            "rate_limit_delay": {"type": "number", "default": 0.4},
+            "max_documents": {"type": "integer", "required": False},
+            "max_seed_pages": {"type": "integer", "default": 25},
+            "crawl_depth": {"type": "integer", "default": 2},
+            "use_default_seeds": {"type": "boolean", "default": False},
+            "skip_existing": {"type": "boolean", "default": False},
+            "resume": {"type": "boolean", "default": False},
+            "include_metadata": {"type": "boolean", "default": True},
+            "custom_sources": {"type": "array", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
     {
         "name": "setup_legal_tools_venv",
         "description": "Create/update .venv and install legal vector dependencies.",
@@ -468,16 +725,16 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
-            "hf_parquet_file": {"type": "string", "default": "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_CAP_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": DEFAULT_CAP_HF_PARQUET_FILE},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
             "text_field_candidates": {"type": "array", "required": False},
             "snippet_chars": {"type": "integer", "default": 320},
             "local_case_parquet_file": {"type": "string", "required": False},
             "chunk_lookup_enabled": {"type": "boolean", "default": True},
-            "chunk_hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
-            "chunk_hf_parquet_file": {"type": "string", "default": "embeddings/sparse_chunks.parquet"},
+            "chunk_hf_dataset_id": {"type": "string", "default": DEFAULT_CAP_HF_DATASET_ID},
+            "chunk_hf_parquet_file": {"type": "string", "default": DEFAULT_CAP_CHUNK_HF_PARQUET_FILE},
             "local_chunk_parquet_file": {"type": "string", "required": False},
             "chunk_snippet_chars": {"type": "integer", "default": 1000},
             "auto_setup_venv": {"type": "boolean", "default": True},
@@ -493,8 +750,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_uscode"},
-            "hf_parquet_prefix": {"type": "string", "default": "uscode_parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_USCODE_HF_DATASET_ID},
+            "hf_parquet_prefix": {"type": "string", "default": DEFAULT_USCODE_HF_PARQUET_PREFIX},
             "hf_parquet_file": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
@@ -508,7 +765,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_state_law_corpus",
-        "description": "Search state-law vector corpus (vector-first) with optional metadata enrichment; defaults combine justicedao/ipfs_state_laws and justicedao/ipfs_state_admin_rules under <STATE>/parsed/parquet.",
+        "description": f"Search state-law vector corpus (vector-first) with optional metadata enrichment; defaults combine {_STATE_LAWS_CORPUS.hf_dataset_id} and {_STATE_ADMIN_RULES_CORPUS.hf_dataset_id} under <STATE>/parsed/parquet.",
         "function": search_state_law_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -517,7 +774,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "enrich_with_cases": {"type": "boolean", "default": False},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_state_laws"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_STATE_LAWS_HF_DATASET_ID},
             "hf_dataset_ids": {"type": "array", "required": False},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
@@ -536,7 +793,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_court_rules_corpus",
-        "description": "Search court-rules vector corpus with federal/state jurisdiction filtering from justicedao/ipfs_court_rules.",
+        "description": f"Search court-rules vector corpus with federal/state jurisdiction filtering from {_STATE_COURT_RULES_CORPUS.hf_dataset_id}.",
         "function": search_court_rules_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -546,7 +803,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "enrich_with_cases": {"type": "boolean", "default": True},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_court_rules"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_COURT_RULES_HF_DATASET_ID},
             "hf_dataset_ids": {"type": "array", "required": False},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
@@ -572,8 +829,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
-            "hf_parquet_file": {"type": "string", "default": "laws.parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": _FEDERAL_REGISTER_CORPUS.combined_parquet_filename},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
             "cid_column": {"type": "string", "default": "ipfs_cid"},
@@ -588,13 +845,181 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_netherlands_law_corpus",
+        "description": "Search Netherlands law vector corpus and enrich matches with metadata/snippets.",
+        "function": search_netherlands_law_corpus,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "query_text": {"type": "string", "required": False},
+            "citation_query": {"type": "string", "required": False},
+            "context_mode": {"type": "string", "default": "exact"},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": _NETHERLANDS_CORPUS.combined_parquet_filename},
+            "hf_parquet_prefix": {"type": "string", "required": False},
+            "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
+            "cid_column": {"type": "string", "default": "ipfs_cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "preferred_case_parquet_names": {"type": "array", "required": False},
+            "max_case_parquet_files": {"type": "integer", "default": 0},
+            "chunk_lookup_enabled": {"type": "boolean", "default": False},
+            "prefer_current_versions": {"type": "boolean", "default": True},
+            "include_historical_versions": {"type": "boolean", "default": True},
+            "as_of_date": {"type": "string", "required": False},
+            "effective_date": {"type": "string", "required": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "search_workspace_dataset",
+        "description": "Search a workspace dataset single bundle or packaged manifest and return grouped bundle-aware results.",
+        "function": search_workspace_dataset,
+        "parameters": {
+            "input_path": {"type": "string", "required": True},
+            "query": {"type": "string", "required": True},
+            "backend": {"type": "string", "default": "bm25"},
+            "input_kind": {"type": "string", "default": "auto"},
+            "top_k": {"type": "integer", "default": 10},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "search_docket_dataset",
+        "description": "Search a docket dataset JSON artifact or packaged manifest with BM25 or vector retrieval.",
+        "function": search_docket_dataset,
+        "parameters": {
+            "input_path": {"type": "string", "required": True},
+            "query": {"type": "string", "required": True},
+            "backend": {"type": "string", "default": "bm25"},
+            "input_kind": {"type": "string", "default": "auto"},
+            "top_k": {"type": "integer", "default": 10},
+            "vector_dimension": {"type": "integer", "default": 32},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "recover_missing_legal_citation_source",
+        "description": "Recover candidate official sources for an unresolved legal citation using search, archive, candidate-file fetch artifacts, scraper patch scaffolds, and optional HF publish steps.",
+        "function": recover_missing_legal_citation_source,
+        "parameters": {
+            "citation_text": {"type": "string", "required": True},
+            "normalized_citation": {"type": "string", "required": False},
+            "corpus_key": {"type": "string", "required": False},
+            "state": {"type": "string", "required": False},
+            "state_code": {"type": "string", "required": False},
+            "candidate_corpora": {"type": "array", "required": False},
+            "metadata": {"type": "object", "required": False},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "promote_recovery_manifest_to_canonical_bundle",
+        "description": "Build a structured JSON/parquet promotion bundle from a saved recovery manifest.",
+        "function": promote_recovery_manifest_to_canonical_bundle,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "write_parquet": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "preview_recovery_manifest_release_plan",
+        "description": "Preview the promotion release plan for a saved recovery manifest.",
+        "function": preview_recovery_manifest_release_plan,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "workspace_root": {"type": "string", "required": False},
+            "python_bin": {"type": "string", "default": "python3"},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "merge_recovery_manifest_into_canonical_dataset",
+        "description": "Merge promoted recovery rows into the target canonical parquet dataset, optionally hydrating the current target parquet from Hugging Face first.",
+        "function": merge_recovery_manifest_into_canonical_dataset,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "target_local_parquet_path": {"type": "string", "required": False},
+            "write_promotion_parquet": {"type": "boolean", "default": True},
+            "hydrate_from_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+            "hf_revision": {"type": "string", "required": False},
+            "hf_cache_dir": {"type": "string", "required": False},
+            "force_hf_download": {"type": "boolean", "default": False},
+            "publish_merged_to_hf": {"type": "boolean", "default": False},
+            "hf_commit_message": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "collect_packaged_docket_citation_recovery_candidates",
+        "description": "Collect unresolved citation recovery candidates from a packaged docket manifest.",
+        "function": collect_packaged_docket_citation_recovery_candidates,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "recover_packaged_docket_missing_authorities",
+        "description": "Run unresolved citation recovery across a packaged docket manifest and optionally publish saved manifests.",
+        "function": recover_packaged_docket_missing_authorities,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "plan_packaged_docket_missing_authority_follow_up",
+        "description": "Recover unresolved packaged-docket citations and build corpus-aware downstream follow-up work items.",
+        "function": plan_packaged_docket_missing_authority_follow_up,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "execute_packaged_docket_missing_authority_follow_up",
+        "description": "Recover unresolved packaged-docket citations and execute promote and merge follow-up work items.",
+        "function": execute_packaged_docket_missing_authority_follow_up,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+            "execute_publish": {"type": "boolean", "default": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_federal_register_hf_index",
         "description": "Search Federal Register directly from HF-hosted FAISS index + metadata using query text.",
         "function": search_federal_register_hf_index,
         "parameters": {
             "query_text": {"type": "string", "required": True},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
             "hf_index_file": {"type": "string", "default": "federal_register_gte_small.faiss"},
             "hf_metadata_file": {"type": "string", "default": "federal_register_gte_small_metadata.parquet"},
             "model_name": {"type": "string", "default": "thenlper/gte-small"},
@@ -748,6 +1173,7 @@ __all__ = [
     "list_scraping_jobs",
     "scrape_us_code",
     "scrape_federal_laws",
+    "scrape_netherlands_laws",
     "scrape_municipal_codes",
     "setup_legal_tools_venv",
     "ingest_caselaw_access_vectors",
@@ -757,6 +1183,17 @@ __all__ = [
     "search_state_law_corpus",
     "search_court_rules_corpus",
     "search_federal_register_corpus",
+    "search_netherlands_law_corpus",
+    "search_workspace_dataset",
+    "search_docket_dataset",
+    "recover_missing_legal_citation_source",
+    "promote_recovery_manifest_to_canonical_bundle",
+    "preview_recovery_manifest_release_plan",
+    "merge_recovery_manifest_into_canonical_dataset",
+    "collect_packaged_docket_citation_recovery_candidates",
+    "recover_packaged_docket_missing_authorities",
+    "plan_packaged_docket_missing_authority_follow_up",
+    "execute_packaged_docket_missing_authority_follow_up",
     "search_federal_register_hf_index",
     "legal_search_brave",
     "legal_search_brave_terms",

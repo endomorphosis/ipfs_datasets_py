@@ -467,6 +467,18 @@ TOOL_MAPPINGS = {
                 "description": "Scrape federal procedural rules and local court rules",
                 "tags": ["legal", "federal_rules", "civil_procedure", "criminal_procedure", "local_rules"]
             },
+            "scrape_netherlands_laws": {
+                "name": "scrape_netherlands_laws",
+                "category": "legal_datasets",
+                "description": "Scrape Netherlands laws from official Dutch government law pages",
+                "tags": ["legal", "netherlands", "eu", "international", "scraping"]
+            },
+            "search_netherlands_law_corpus": {
+                "name": "search_netherlands_law_corpus",
+                "category": "legal_datasets",
+                "description": "Search Netherlands law vector corpus with metadata enrichment",
+                "tags": ["legal", "netherlands", "eu", "international", "search", "vectors"]
+            },
             "get_us_code_titles": {
                 "name": "get_us_code_titles",
                 "category": "legal_datasets",
@@ -590,8 +602,68 @@ TOOL_MAPPINGS = {
             "search_court_rules_corpus": {
                 "name": "search_court_rules_corpus",
                 "category": "legal_datasets",
-                "description": "Search federal and state court-rules corpus with jurisdiction filtering from justicedao/ipfs_court_rules",
+                "description": "Search federal and state court-rules corpus with jurisdiction filtering from the canonical JusticeDAO court-rules dataset",
                 "tags": ["legal", "court_rules", "federal_rules", "state_rules", "vector-search", "cid", "retrieval"]
+            },
+            "search_workspace_dataset": {
+                "name": "search_workspace_dataset",
+                "category": "legal_datasets",
+                "description": "Search a workspace dataset bundle or packaged manifest with grouped BM25 or vector results",
+                "tags": ["legal", "workspace", "bm25", "vector-search", "grouped-results", "retrieval"]
+            },
+            "search_docket_dataset": {
+                "name": "search_docket_dataset",
+                "category": "legal_datasets",
+                "description": "Search a docket dataset JSON artifact or packaged manifest with BM25 or vector retrieval",
+                "tags": ["legal", "docket", "bm25", "vector-search", "retrieval"]
+            },
+            "recover_missing_legal_citation_source": {
+                "name": "recover_missing_legal_citation_source",
+                "category": "legal_datasets",
+                "description": "Recover missing legal citation sources via search, archive, candidate-file fetch artifacts, scraper patch scaffolds, and optional JusticeDAO HF publish planning",
+                "tags": ["legal", "citations", "recovery", "archive", "hf", "retrieval"]
+            },
+            "promote_recovery_manifest_to_canonical_bundle": {
+                "name": "promote_recovery_manifest_to_canonical_bundle",
+                "category": "legal_datasets",
+                "description": "Promote a saved recovery manifest into a structured canonical row bundle",
+                "tags": ["legal", "citations", "recovery", "promotion", "parquet", "hf"]
+            },
+            "preview_recovery_manifest_release_plan": {
+                "name": "preview_recovery_manifest_release_plan",
+                "category": "legal_datasets",
+                "description": "Preview the promotion release plan for a saved recovery manifest",
+                "tags": ["legal", "citations", "recovery", "promotion", "planning", "hf"]
+            },
+            "merge_recovery_manifest_into_canonical_dataset": {
+                "name": "merge_recovery_manifest_into_canonical_dataset",
+                "category": "legal_datasets",
+                "description": "Merge promoted recovery rows into the target canonical parquet dataset, optionally hydrating the current target parquet from Hugging Face first",
+                "tags": ["legal", "citations", "recovery", "promotion", "merge", "parquet"]
+            },
+            "collect_packaged_docket_citation_recovery_candidates": {
+                "name": "collect_packaged_docket_citation_recovery_candidates",
+                "category": "legal_datasets",
+                "description": "Collect unresolved citation recovery candidates from a packaged docket manifest",
+                "tags": ["legal", "docket", "citations", "recovery", "manifest"]
+            },
+            "recover_packaged_docket_missing_authorities": {
+                "name": "recover_packaged_docket_missing_authorities",
+                "category": "legal_datasets",
+                "description": "Run missing-authority recovery across unresolved citations in a packaged docket manifest",
+                "tags": ["legal", "docket", "citations", "recovery", "archive", "hf"]
+            },
+                "execute_packaged_docket_missing_authority_follow_up": {
+                    "name": "execute_packaged_docket_missing_authority_follow_up",
+                    "category": "legal_datasets",
+                    "description": "Recover unresolved packaged-docket citations and execute promote and merge follow-up work items",
+                    "tags": ["legal", "docket", "citations", "recovery", "execution", "parquet"]
+                },
+            "plan_packaged_docket_missing_authority_follow_up": {
+                "name": "plan_packaged_docket_missing_authority_follow_up",
+                "category": "legal_datasets",
+                "description": "Recover unresolved citations in a packaged docket manifest and emit downstream follow-up work items",
+                "tags": ["legal", "docket", "citations", "recovery", "planning", "hf"]
             },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",

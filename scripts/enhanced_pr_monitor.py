@@ -4,8 +4,9 @@
 
 Enhanced PR Monitoring and Copilot Assignment System
 
-**DEPRECATION NOTICE**: This script uses `gh agent-task create` which does NOT exist
-in GitHub CLI. It has NEVER worked. Use `invoke_copilot_on_pr.py` instead.
+**DEPRECATION NOTICE**: This script targets `gh agent-task create`, which is not
+available in this environment and is not the maintained path for this repo's
+existing-PR automation. Use `invoke_copilot_on_pr.py` instead.
 
 **Working Method**: Draft PR + @copilot trigger (100% success rate)
 See COPILOT_INVOCATION_GUIDE.md for correct invocation method.
@@ -29,9 +30,8 @@ Features:
 - Human notification for stale PRs
 - Integration with auto-healing system
 
-⚠️  IMPORTANT: The method below does NOT work:
-❌ gh agent-task create - This command does NOT exist in GitHub CLI v2.45.0
-❌ @copilot mentions alone - Don't trigger agent without draft PR
+⚠️  IMPORTANT: The maintained repo path for existing PRs is the draft-PR/comment
+flow, not direct `gh agent-task` usage.
 
 ✅ WORKING method (use invoke_copilot_on_pr.py instead):
    - Creates draft PR with task description
@@ -53,7 +53,7 @@ from datetime import datetime, timedelta
 print("=" * 80)
 print("⚠️  WARNING: This script is DEPRECATED")
 print("=" * 80)
-print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+print("This script targets 'gh agent-task create', which is not available here.")
 print("The command has NEVER worked. Use the verified working method instead:")
 print("")
 print("  ✅ Use: python scripts/invoke_copilot_on_pr.py --pr <number>")
@@ -577,7 +577,7 @@ provide a detailed explanation of blockers and recommend next steps. Human inter
             # Check if gh agent-task is not available
             if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
                 self.logger.error("gh agent-task command not available on this system")
-                self.logger.error("💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
+                self.logger.error("💡 Use scripts/invoke_copilot_on_pr.py for existing PR automation in this repo")
             
             return False
     

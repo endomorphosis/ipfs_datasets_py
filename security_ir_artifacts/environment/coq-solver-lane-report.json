@@ -1,0 +1,57 @@
+{
+  "artifact_cid": "sha256:fefbddcce9b6868c8bb061ca75e6be9940d637ba3b86188f39f2d4d80caafe84",
+  "blockers": [],
+  "coq": {
+    "coqc_executable": "/home/barberb/.local/bin/coqc",
+    "coqc_present": true,
+    "coqc_version": "The Rocq Prover, version 9.1.1",
+    "coqtop_executable": "/home/barberb/.local/bin/coqtop",
+    "coqtop_present": true,
+    "coqtop_version": "The Rocq Prover, version 9.1.1",
+    "opam_executable": "/home/barberb/.local/bin/opam",
+    "opam_present": true,
+    "opam_version": "2.5.2"
+  },
+  "coq_kernel": {
+    "exists": true,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v",
+    "sha256": "sha256:02d0e32eeaa028fc7f2a762c5988c13ef16241e9832798de809518bfabca8fa4"
+  },
+  "coq_kernel_check": {
+    "command": [
+      "/home/barberb/.local/bin/coqc",
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v"
+    ],
+    "returncode": 0,
+    "status": "passed",
+    "stderr": "File \"/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v\", line 5, characters 0-34:\nWarning: \"From Coq\" has been replaced by \"From Stdlib\".\n[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]\n",
+    "stdout": ""
+  },
+  "generated_at": "2026-07-19T06:34:59Z",
+  "install_plan": {
+    "apt": "sudo apt-get update && sudo apt-get install -y coq",
+    "opam": "opam init --disable-sandboxing && opam switch create coq-8.20 ocaml-base-compiler.5.2.0 && opam install coq",
+    "policy": "Run installation outside the proof task; rerun this probe and commit exact coqc version evidence."
+  },
+  "lean_kernel_context": {
+    "exists": true,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "proof_consumer_report_exists": true,
+    "proof_consumer_report_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+    "proof_consumer_security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS",
+    "sha256": "sha256:fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f"
+  },
+  "overall_status": "ready",
+  "production_release_blocked_by_coq_lane": false,
+  "schema_version": "crypto-exchange-coq-solver-lane-report/v1",
+  "security_decision": "COQ_SOLVER_LANE_READY",
+  "summary": {
+    "blocker_count": 0,
+    "coq_kernel_checked": true,
+    "coq_kernel_present": true,
+    "coqc_present": true,
+    "warning_count": 0
+  },
+  "task_id": "PORTAL-CXTP-093",
+  "warnings": []
+}

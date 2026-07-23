@@ -5,7 +5,7 @@ Fix GitHub Actions Workflow Issues
 This script automatically fixes common issues in GitHub Actions workflows:
 - Adds missing GH_TOKEN environment variables
 - Adds container isolation for self-hosted runners
-- Enhances Copilot CLI integration
+- Enhances gh copilot integration
 - Validates workflow syntax
 """
 
@@ -175,7 +175,7 @@ class WorkflowFixer:
     
     def enhance_copilot_integration(self, workflow_file: Path) -> int:
         """
-        Enhance Copilot CLI integration in auto-fix/auto-healing workflows
+        Enhance gh copilot integration in auto-fix/auto-healing workflows
         
         Returns:
             Number of enhancements made
@@ -197,7 +197,7 @@ class WorkflowFixer:
         if 'gh copilot' in content or 'gh-copilot' in content:
             return 0  # Already has copilot integration
         
-        # Add a suggestion to use copilot CLI
+        # Add a suggestion to use gh copilot
         self.changes_made.append({
             'file': workflow_file.name,
             'type': 'copilot_suggestion',

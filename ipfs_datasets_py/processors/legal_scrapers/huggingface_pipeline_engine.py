@@ -314,6 +314,7 @@ class UploadToHuggingFaceInParallel:
         target_dir_name: str = "data",
         max_concurrency: int = 5,
         retry_limit: int = 3,
+        force_reupload: bool = False,
     ) -> dict:
         """Upload parquet files from *output_dir* to HuggingFace in parallel.
 
@@ -322,6 +323,8 @@ class UploadToHuggingFaceInParallel:
             target_dir_name: Name of the target directory in the HF repository.
             max_concurrency: Maximum number of concurrent uploads.
             retry_limit: Maximum number of retries per failed upload.
+            force_reupload: When True, upload all folders even if matching file
+                names already exist in the remote repository.
 
         Returns:
             Dict with keys ``uploaded``, ``failed``, ``retried``.
@@ -335,7 +338,11 @@ class UploadToHuggingFaceInParallel:
             logger.error("Failed to retrieve file info from repo: %s", e)
             return {"uploaded": 0, "failed": 1, "retried": 0}
 
-        folders_to_upload = self._get_folders_to_upload(output_dir, file_info_set)
+        folders_to_upload = (
+            [dir_path for dir_path in output_dir.iterdir() if dir_path.is_dir()]
+            if force_reupload
+            else self._get_folders_to_upload(output_dir, file_info_set)
+        )
         if not folders_to_upload:
             logger.info("All folders already uploaded to %s.", self.repo_id)
             return {"uploaded": 0, "failed": 0, "retried": 0}

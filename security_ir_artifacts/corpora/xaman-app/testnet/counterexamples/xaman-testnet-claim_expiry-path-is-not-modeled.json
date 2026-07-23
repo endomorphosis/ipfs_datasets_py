@@ -1,0 +1,65 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreia6nmjz5hpyohi3adwtdddhuzrtivaaephxs7k2gviifipjzi6cq4",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+    "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+  ],
+  "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "payload",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "reviewed decline trace; reviewed cancel trace; reviewed expiry trace",
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "duplicate-submit negative trace; backend atomic single-use evidence; expiration enforcement trace",
+      "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "description": "Replay, backend atomic single-use, duplicate submission, expiration enforcement, and conflict handling were not exercised by the reviewed trial.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "payload-backend-verification",
+      "required_evidence_to_clear": [
+        "duplicate-submit negative trace",
+        "backend atomic single-use evidence",
+        "expiration enforcement trace"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreibbzhwce7vb3nfqqfmwgoue42kctn2cyrjgmpmojz3ftevqogrqmu",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_expiry-path-is-not-modeled.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

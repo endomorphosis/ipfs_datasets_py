@@ -412,10 +412,12 @@ class PolicyEvaluator:
                     }
                 )
 
-        # Build verdict
+        # Build verdict — prohibitions override permissions and clear obligations
         if denial_reasons:
             verdict = "deny"
             justification = "; ".join(denial_reasons)
+            # Clear obligations for prohibited actions (they cannot be fulfilled)
+            obligations = []
         elif has_permission and obligations:
             verdict = "allow_with_obligations"
             justification = f"Permitted with {len(obligations)} obligation(s)"

@@ -18,6 +18,7 @@ The prover supports:
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING, Callable
@@ -75,6 +76,21 @@ HAVE_MODAL_TABLEAUX = False
 
 _CEC_IMPORT_ATTEMPTED = False
 _MODAL_TABLEAUX_IMPORT_ATTEMPTED = False
+_TDFOL_RULES_CACHE: Optional[Tuple[Any, ...]] = None
+_TDFOL_RULES_CACHE_LOCK = threading.Lock()
+
+
+def _get_cached_tdfol_rules() -> List[Any]:
+    """Return the static TDFOL rule set without rebuilding it per prover."""
+
+    global _TDFOL_RULES_CACHE
+    with _TDFOL_RULES_CACHE_LOCK:
+        if _TDFOL_RULES_CACHE is None:
+            from .inference_rules import get_all_tdfol_rules
+
+            _TDFOL_RULES_CACHE = tuple(get_all_tdfol_rules())
+            logger.info(f"Loaded {len(_TDFOL_RULES_CACHE)} TDFOL inference rules")
+        return list(_TDFOL_RULES_CACHE)
 
 
 def _try_load_cec_prover() -> bool:
@@ -337,8 +353,8 @@ class TDFOLProver:
         # Initialize proof cache if enabled
         if self.enable_cache:
             try:
-                from .tdfol_proof_cache import get_global_proof_cache
-                self.proof_cache = get_global_proof_cache()
+                from ..common.proof_cache import get_global_cache
+                self.proof_cache = get_global_cache()
                 logger.info("TDFOL proof cache enabled")
             except Exception as e:
                 logger.warning(f"Failed to initialize proof cache: {e}")
@@ -346,11 +362,11 @@ class TDFOLProver:
         else:
             self.proof_cache = None
         
-        # Import and initialize all TDFOL rules (40 rules) for backward compatibility
+        # Import and initialize all TDFOL rules for backward compatibility.
+        # The rule objects are static, so the module-level cache avoids repeated
+        # setup in bridge/prover metric loops while keeping prover KB state local.
         try:
-            from .inference_rules import get_all_tdfol_rules
-            self.tdfol_rules = get_all_tdfol_rules()
-            logger.info(f"Loaded {len(self.tdfol_rules)} TDFOL inference rules")
+            self.tdfol_rules = _get_cached_tdfol_rules()
         except Exception as e:
             logger.warning(f"Failed to load TDFOL rules: {e}")
             self.tdfol_rules = []
@@ -502,8 +518,12 @@ class TDFOLProver:
                 strategy = self.selector.select_strategy(goal, self.kb)
                 logger.debug(f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})")
             
+            # Reserve a small wrapper budget so wall-clock runtime stays within
+            # the caller-visible timeout, not just the delegated strategy budget.
+            strategy_timeout_ms = max(int(timeout_ms) - 5, 1)
+
             # Prove using strategy
-            result = strategy.prove(goal, self.kb, timeout_ms)
+            result = strategy.prove(goal, self.kb, strategy_timeout_ms)
             
             # Cache successful proof
             if result.is_proved() and self.proof_cache is not None:

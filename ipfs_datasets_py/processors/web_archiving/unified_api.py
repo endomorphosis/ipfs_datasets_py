@@ -11,9 +11,10 @@ import re
 import time
 import uuid
 import os
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 from urllib.parse import urlparse
 
 from .contracts import (
@@ -33,11 +34,40 @@ from .metrics.registry import MetricsRegistry
 from .orchestration.executor import SearchExecutor
 from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
-from .structured_schema_compat import normalize_structured_fields
+from .structured_schema_compat import normalize_domain, normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
+from .search_engines.base import SearchEngineConfig
+from ..legal_scrapers.shared_fetch_cache import (
+    SharedFetchCache,
+    decode_cache_json_value,
+    encode_cache_json_value,
+)
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_SEARCH_ENGINES = ["brave", "duckduckgo", "google_cse"]
+DEFAULT_ENGINE_SEARCH_CONFIGS: Dict[str, Dict[str, Any]] = {
+    "brave": {
+        "rate_limit_per_minute": 20,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 2.0,
+        "timeout_seconds": 30,
+    },
+    "duckduckgo": {
+        "rate_limit_per_minute": 25,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 2.0,
+        "timeout_seconds": 30,
+    },
+    "google_cse": {
+        "rate_limit_per_minute": 20,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 1.5,
+        "timeout_seconds": 30,
+        "max_results_per_request": 10,
+    },
+}
 
 STATE_ABBREVIATION_TERMS: Dict[str, List[str]] = {
     "al": ["alabama"],
@@ -130,6 +160,199 @@ class UnifiedWebArchivingAPI:
         self.search_executor = search_executor or SearchExecutor(orchestrator=self.orchestrator)
         self.scraper = scraper
         self.agentic_optimizer = agentic_optimizer or AgenticScrapeOptimizer()
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
+
+    @staticmethod
+    def _trace_to_payload(trace: Optional[ExecutionTrace]) -> Optional[Dict[str, Any]]:
+        if trace is None:
+            return None
+        return {
+            "request_id": trace.request_id,
+            "operation": trace.operation,
+            "mode": trace.mode.value,
+            "providers_attempted": list(trace.providers_attempted or []),
+            "provider_selected": trace.provider_selected,
+            "fallback_count": int(trace.fallback_count or 0),
+            "total_latency_ms": float(trace.total_latency_ms or 0.0),
+            "retries": int(trace.retries or 0),
+            "started_at": trace.started_at,
+            "finished_at": trace.finished_at,
+        }
+
+    @staticmethod
+    def _error_to_payload(error: UnifiedError) -> Dict[str, Any]:
+        return {
+            "code": error.code,
+            "message": error.message,
+            "provider": error.provider,
+            "retryable": bool(error.retryable),
+            "severity": error.severity.value,
+            "context": dict(error.context or {}),
+        }
+
+    @classmethod
+    def _response_to_cache_payload(cls, response: UnifiedFetchResponse) -> Dict[str, Any]:
+        document_payload = None
+        if response.document is not None:
+            document_payload = {
+                "url": response.document.url,
+                "title": response.document.title,
+                "text": response.document.text,
+                "html": response.document.html,
+                "content_type": response.document.content_type,
+                "metadata": dict(response.document.metadata or {}),
+                "extraction_provenance": dict(response.document.extraction_provenance or {}),
+            }
+        return encode_cache_json_value({
+            "url": response.url,
+            "document": document_payload,
+            "trace": cls._trace_to_payload(response.trace),
+            "errors": [cls._error_to_payload(item) for item in list(response.errors or [])],
+            "success": bool(response.success),
+            "quality_score": float(response.quality_score or 0.0),
+            "metadata": dict(response.metadata or {}),
+        })
+
+    def _cache_payload_to_response(self, payload: Dict[str, Any]) -> UnifiedFetchResponse:
+        payload = decode_cache_json_value(payload)
+        trace_payload = payload.get("trace")
+        trace = None
+        if isinstance(trace_payload, dict):
+            mode_value = trace_payload.get("mode", OperationMode.BALANCED.value)
+            trace = ExecutionTrace(
+                request_id=str(trace_payload.get("request_id") or str(uuid.uuid4())),
+                operation=str(trace_payload.get("operation") or "fetch"),
+                mode=OperationMode(str(mode_value)),
+                providers_attempted=list(trace_payload.get("providers_attempted") or []),
+                provider_selected=trace_payload.get("provider_selected"),
+                fallback_count=int(trace_payload.get("fallback_count") or 0),
+                total_latency_ms=float(trace_payload.get("total_latency_ms") or 0.0),
+                retries=int(trace_payload.get("retries") or 0),
+                started_at=str(trace_payload.get("started_at") or datetime.utcnow().isoformat()),
+                finished_at=trace_payload.get("finished_at"),
+            )
+
+        document_payload = payload.get("document")
+        document = None
+        if isinstance(document_payload, dict):
+            metadata = dict(document_payload.get("metadata") or {})
+            cache_meta = dict(payload.get("_cache") or {})
+            if cache_meta:
+                metadata["cache"] = cache_meta
+                metadata["cache_hit"] = True
+            document = UnifiedDocument(
+                url=str(document_payload.get("url") or payload.get("url") or ""),
+                title=str(document_payload.get("title") or ""),
+                text=str(document_payload.get("text") or ""),
+                html=str(document_payload.get("html") or ""),
+                content_type=str(document_payload.get("content_type") or ""),
+                metadata=metadata,
+                extraction_provenance=dict(document_payload.get("extraction_provenance") or {}),
+            )
+
+        errors = [
+            UnifiedError(
+                code=str(item.get("code") or "cache_error"),
+                message=str(item.get("message") or "cache error"),
+                provider=item.get("provider"),
+                retryable=bool(item.get("retryable", False)),
+                severity=ErrorSeverity(str(item.get("severity") or ErrorSeverity.ERROR.value)),
+                context=dict(item.get("context") or {}),
+            )
+            for item in list(payload.get("errors") or [])
+            if isinstance(item, dict)
+        ]
+
+        metadata = dict(payload.get("metadata") or {})
+        cache_meta = dict(payload.get("_cache") or {})
+        if cache_meta:
+            metadata["cache"] = cache_meta
+            metadata["cache_hit"] = True
+
+        return UnifiedFetchResponse(
+            url=str(payload.get("url") or ""),
+            document=document,
+            trace=trace,
+            errors=errors,
+            success=bool(payload.get("success", False)),
+            quality_score=float(payload.get("quality_score") or 0.0),
+            metadata=metadata,
+        )
+
+    def _load_cached_fetch_response(self, *, url: str, domain: str) -> Optional[UnifiedFetchResponse]:
+        if self._shared_fetch_cache is None:
+            return None
+        cache_lookup_url = self._fetch_cache_lookup_url(url=url, domain=domain)
+        payload = self._shared_fetch_cache.load(namespace="unified_fetch", url=cache_lookup_url)
+        if not isinstance(payload, dict):
+            return None
+        expected_domain = normalize_domain(domain or "general")
+        payload_metadata = dict(payload.get("metadata") or {})
+        document_payload = payload.get("document") or {}
+        document_metadata = dict(document_payload.get("metadata") or {}) if isinstance(document_payload, dict) else {}
+        cached_domain = normalize_domain(
+            str(
+                payload_metadata.get("requested_domain")
+                or document_metadata.get("domain")
+                or "general"
+            )
+        )
+        if cached_domain != expected_domain:
+            logger.info(
+                "Ignoring unified fetch cache entry for %s because cached domain %s does not match requested %s",
+                url,
+                cached_domain,
+                expected_domain,
+            )
+            return None
+        document_url = str(document_payload.get("url") or payload.get("url") or "") if isinstance(document_payload, dict) else ""
+        quality_score = float(payload.get("quality_score") or 0.0)
+        title = str(document_payload.get("title") or "") if isinstance(document_payload, dict) else ""
+        text = str(document_payload.get("text") or "") if isinstance(document_payload, dict) else ""
+        html = str(document_payload.get("html") or "") if isinstance(document_payload, dict) else ""
+        if (
+            bool(payload.get("success", False))
+            and document_url == url
+            and not bool(document_metadata.get("relocated_via_search"))
+            and quality_score < 0.5
+            and len(title.strip()) < 8
+            and len(text.strip()) < 80
+            and len(html.strip()) < 400
+        ):
+            logger.info(
+                "Ignoring thin unified fetch cache entry for %s so relocation search can rebuild it",
+                url,
+            )
+            return None
+        try:
+            return self._cache_payload_to_response(payload)
+        except Exception as exc:
+            logger.warning("Ignoring invalid unified fetch cache entry for %s [%s]: %s", url, domain, exc)
+            return None
+
+    @staticmethod
+    def _fetch_cache_lookup_url(*, url: str, domain: str) -> str:
+        normalized_domain = normalize_domain(domain or "general")
+        return f"{url}#__unified_fetch_v2_domain={normalized_domain}"
+
+    @staticmethod
+    def _fetch_request_uses_discovery_constraints(fetch_request: UnifiedFetchRequest) -> bool:
+        metadata = dict(fetch_request.metadata or {})
+        return bool(metadata.get("allowed_hosts") or metadata.get("blocked_url_patterns"))
+
+    def _store_cached_fetch_response(self, *, url: str, domain: str, response: UnifiedFetchResponse) -> None:
+        if self._shared_fetch_cache is None or not response.success:
+            return
+        try:
+            cache_lookup_url = self._fetch_cache_lookup_url(url=url, domain=domain)
+            self._shared_fetch_cache.save(
+                namespace="unified_fetch",
+                url=cache_lookup_url,
+                payload=self._response_to_cache_payload(response),
+                payload_name=f"unified_fetch_{uuid.uuid5(uuid.NAMESPACE_URL, cache_lookup_url).hex[:16]}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write unified fetch cache entry for %s [%s]: %s", url, domain, exc)
 
     @staticmethod
     def _env_bool(*names: str) -> Optional[bool]:
@@ -153,6 +376,106 @@ class UnifiedWebArchivingAPI:
             if values:
                 return values
         return []
+
+    @staticmethod
+    def _env_int(*names: str) -> Optional[int]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return int(raw)
+            except ValueError:
+                logger.warning("Ignoring non-integer environment value %s=%s", name, raw)
+        return None
+
+    @staticmethod
+    def _env_float(*names: str) -> Optional[float]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return float(raw)
+            except ValueError:
+                logger.warning("Ignoring non-float environment value %s=%s", name, raw)
+        return None
+
+    @staticmethod
+    def _engine_env_token(engine_name: str) -> str:
+        token = re.sub(r"[^A-Z0-9]+", "_", str(engine_name or "").upper()).strip("_")
+        return token or "GENERIC"
+
+    def _build_engine_config(self, engine_name: str) -> SearchEngineConfig:
+        engine_key = str(engine_name or "").strip().lower()
+        defaults = dict(DEFAULT_ENGINE_SEARCH_CONFIGS.get(engine_key) or {})
+        env_token = self._engine_env_token(engine_key)
+
+        rate_limit = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RATE_LIMIT_PER_MINUTE",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RATE_LIMIT_PER_MINUTE",
+            "IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE",
+            "LEGAL_SCRAPER_SEARCH_RATE_LIMIT_PER_MINUTE",
+        )
+        if rate_limit is None:
+            rate_limit = int(defaults.get("rate_limit_per_minute", 60) or 60)
+
+        timeout_seconds = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_TIMEOUT_SECONDS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_TIMEOUT_SECONDS",
+            "IPFS_DATASETS_SEARCH_TIMEOUT_SECONDS",
+            "LEGAL_SCRAPER_SEARCH_TIMEOUT_SECONDS",
+        )
+        if timeout_seconds is None:
+            timeout_seconds = int(defaults.get("timeout_seconds", 30) or 30)
+
+        retry_attempts = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RETRY_ATTEMPTS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RETRY_ATTEMPTS",
+            "IPFS_DATASETS_SEARCH_RETRY_ATTEMPTS",
+            "LEGAL_SCRAPER_SEARCH_RETRY_ATTEMPTS",
+        )
+        if retry_attempts is None:
+            retry_attempts = int(defaults.get("retry_attempts", 3) or 3)
+
+        retry_delay_seconds = self._env_float(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RETRY_DELAY_SECONDS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RETRY_DELAY_SECONDS",
+            "IPFS_DATASETS_SEARCH_RETRY_DELAY_SECONDS",
+            "LEGAL_SCRAPER_SEARCH_RETRY_DELAY_SECONDS",
+        )
+        if retry_delay_seconds is None:
+            retry_delay_seconds = float(defaults.get("retry_delay_seconds", 1.0) or 1.0)
+
+        max_results_per_request = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_MAX_RESULTS_PER_REQUEST",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_MAX_RESULTS_PER_REQUEST",
+            "IPFS_DATASETS_SEARCH_MAX_RESULTS_PER_REQUEST",
+            "LEGAL_SCRAPER_SEARCH_MAX_RESULTS_PER_REQUEST",
+        )
+        if max_results_per_request is None:
+            max_results_per_request = int(defaults.get("max_results_per_request", 20) or 20)
+
+        api_key: Optional[str] = None
+        extra_params: Dict[str, Any] = {}
+        if engine_key == "brave":
+            api_key = str(os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or "").strip() or None
+        elif engine_key == "google_cse":
+            api_key = str(os.getenv("GOOGLE_API_KEY") or os.getenv("GOOGLE_SEARCH_API_KEY") or "").strip() or None
+            cse_id = str(os.getenv("GOOGLE_CSE_ID") or "").strip()
+            if cse_id:
+                extra_params["cse_id"] = cse_id
+
+        return SearchEngineConfig(
+            engine_type=engine_key,
+            api_key=api_key,
+            rate_limit_per_minute=max(0, int(rate_limit)),
+            timeout_seconds=max(1, int(timeout_seconds)),
+            max_results_per_request=max(1, int(max_results_per_request)),
+            retry_attempts=max(1, int(retry_attempts)),
+            retry_delay_seconds=max(0.0, float(retry_delay_seconds)),
+            extra_params=extra_params,
+        )
 
     def _apply_env_overrides_to_config(self) -> None:
         search_engines = self._env_list(
@@ -178,8 +501,13 @@ class UnifiedWebArchivingAPI:
             self.config.parallel_enabled = parallel_enabled
 
     def _build_orchestrator(self) -> MultiEngineOrchestrator:
+        engine_configs = {
+            engine_name: self._build_engine_config(engine_name)
+            for engine_name in list(self.config.default_search_engines)
+        }
         orchestrator_config = OrchestratorConfig(
             engines=list(self.config.default_search_engines),
+            engine_configs=engine_configs,
             parallel_enabled=bool(self.config.parallel_enabled),
             fallback_enabled=bool(self.config.fallback_enabled),
             timeout_seconds=int(self.config.orchestrator_timeout_seconds),
@@ -339,6 +667,15 @@ class UnifiedWebArchivingAPI:
         else:
             fetch_request = request
 
+        cache_allowed = not self._fetch_request_uses_discovery_constraints(fetch_request)
+        if cache_allowed:
+            cached_response = self._load_cached_fetch_response(
+                url=fetch_request.url,
+                domain=fetch_request.domain,
+            )
+            if cached_response is not None:
+                return cached_response
+
         start_time = time.time()
         request_id = str(uuid.uuid4())
         provider = "unified_scraper"
@@ -394,6 +731,12 @@ class UnifiedWebArchivingAPI:
                             items_processed=0,
                             error_type="relocation_fetch_failed",
                         )
+                    if cache_allowed and relocated_response.success:
+                        self._store_cached_fetch_response(
+                            url=fetch_request.url,
+                            domain=fetch_request.domain,
+                            response=relocated_response,
+                        )
                     return relocated_response
 
             trace.total_latency_ms = (time.time() - start_time) * 1000.0
@@ -425,7 +768,7 @@ class UnifiedWebArchivingAPI:
                 items_processed=1,
                 quality_score=quality_score,
             )
-            return UnifiedFetchResponse(
+            response = UnifiedFetchResponse(
                 url=fetch_request.url,
                 document=doc,
                 trace=trace,
@@ -437,6 +780,13 @@ class UnifiedWebArchivingAPI:
                     "requested_domain": fetch_request.domain,
                 },
             )
+            if cache_allowed:
+                self._store_cached_fetch_response(
+                    url=fetch_request.url,
+                    domain=fetch_request.domain,
+                    response=response,
+                )
+            return response
 
         except BaseException as exc:
             elapsed_ms = (time.time() - start_time) * 1000.0
@@ -636,6 +986,12 @@ class UnifiedWebArchivingAPI:
             trace.fallback_count += 1
 
         title_hint = str((fetch_request.metadata or {}).get("title_hint") or "")
+        relocation_allowed_hosts = self._normalize_allowed_hosts(
+            (fetch_request.metadata or {}).get("allowed_hosts")
+        )
+        relocation_blocked_patterns = self._normalize_blocked_url_patterns(
+            (fetch_request.metadata or {}).get("blocked_url_patterns")
+        )
         target_terms = self._relocation_target_terms(
             source_url=fetch_request.url,
             target_terms=[],
@@ -647,6 +1003,8 @@ class UnifiedWebArchivingAPI:
             mode=fetch_request.mode,
             title_hint=title_hint,
             domain=fetch_request.domain,
+            allowed_hosts=relocation_allowed_hosts,
+            blocked_url_patterns=relocation_blocked_patterns,
         )
         if not candidates:
             return None
@@ -737,6 +1095,8 @@ class UnifiedWebArchivingAPI:
         max_hops: int = 2,
         max_pages: int = 10,
         mode: OperationMode = OperationMode.BALANCED,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[str]] = None,
     ) -> Dict[str, Any]:
         """Agentically discover and fetch pages when data location is unknown.
 
@@ -748,6 +1108,8 @@ class UnifiedWebArchivingAPI:
         collected: List[Dict[str, Any]] = []
         relocation_searches = 0
         relocation_candidates_added = 0
+        normalized_allowed_hosts = self._normalize_allowed_hosts(allowed_hosts)
+        normalized_blocked_patterns = self._normalize_blocked_url_patterns(blocked_url_patterns)
 
         for _hop in range(max(0, int(max_hops)) + 1):
             if not frontier or len(visited) >= max_pages:
@@ -757,9 +1119,24 @@ class UnifiedWebArchivingAPI:
             for url in frontier:
                 if url in visited or len(visited) >= max_pages:
                     continue
+                if not self._url_matches_discovery_constraints(
+                    url,
+                    allowed_hosts=normalized_allowed_hosts,
+                    blocked_url_patterns=normalized_blocked_patterns,
+                ):
+                    continue
                 visited.add(url)
 
-                response = self.fetch(UnifiedFetchRequest(url=url, mode=mode))
+                response = self.fetch(
+                    UnifiedFetchRequest(
+                        url=url,
+                        mode=mode,
+                        metadata=self._build_discovery_fetch_metadata(
+                            allowed_hosts=normalized_allowed_hosts,
+                            blocked_url_patterns=normalized_blocked_patterns,
+                        ),
+                    )
+                )
                 collected.append(response.to_dict())
 
                 ranked_same_host: List[Dict[str, Any]] = []
@@ -770,6 +1147,8 @@ class UnifiedWebArchivingAPI:
                         target_terms=target_terms,
                         visited=visited,
                         mode=mode,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
                     )
                     if relocation_added:
                         relocation_searches += 1
@@ -790,6 +1169,12 @@ class UnifiedWebArchivingAPI:
 
                 for item in ranked_same_host[:5]:
                     link_url = str(item.get("url") or "")
+                    if not self._url_matches_discovery_constraints(
+                        link_url,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
+                    ):
+                        continue
                     if link_url not in next_frontier:
                         next_frontier.append(link_url)
 
@@ -805,6 +1190,8 @@ class UnifiedWebArchivingAPI:
                         visited=visited,
                         mode=mode,
                         response=response,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
                     )
                     if relocation_added:
                         relocation_searches += 1
@@ -829,6 +1216,8 @@ class UnifiedWebArchivingAPI:
         visited: set[str],
         mode: OperationMode,
         response: Optional[UnifiedFetchResponse] = None,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
     ) -> int:
         """Search for likely relocated URLs and queue strong candidates."""
         added = 0
@@ -838,6 +1227,8 @@ class UnifiedWebArchivingAPI:
             mode=mode,
             response=response,
             domain="general",
+            allowed_hosts=allowed_hosts,
+            blocked_url_patterns=blocked_url_patterns,
         )
         for candidate in candidates:
             if candidate in visited or candidate in next_frontier:
@@ -855,6 +1246,8 @@ class UnifiedWebArchivingAPI:
         response: Optional[UnifiedFetchResponse] = None,
         title_hint: str = "",
         domain: str = "general",
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
     ) -> List[str]:
         """Use configured search engines to find pages that likely replaced a dead URL."""
         candidates: List[str] = []
@@ -897,6 +1290,12 @@ class UnifiedWebArchivingAPI:
                 candidate_text = str(item.get("text") or "")
                 score = float(item.get("score", 0) or 0)
                 if not self._is_http_url(candidate_url):
+                    continue
+                if not self._url_matches_discovery_constraints(
+                    candidate_url,
+                    allowed_hosts=allowed_hosts,
+                    blocked_url_patterns=blocked_url_patterns,
+                ):
                     continue
                 if candidate_url == source_url or candidate_url in seen_urls:
                     continue
@@ -1050,6 +1449,70 @@ class UnifiedWebArchivingAPI:
         generic = {"www", "gov", "com", "org", "net", "edu", "legis", "law", "laws", "rule", "rules"}
         tokens = {token.lower() for token in re.findall(r"[A-Za-z0-9]+", host or "") if token}
         return {token for token in tokens if token not in generic}
+
+    @staticmethod
+    def _normalize_allowed_hosts(allowed_hosts: Optional[Sequence[str]]) -> List[str]:
+        normalized: List[str] = []
+        for host in list(allowed_hosts or []):
+            value = str(host or "").strip().lower().strip(".")
+            if value and value not in normalized:
+                normalized.append(value)
+        return normalized
+
+    @staticmethod
+    def _normalize_blocked_url_patterns(blocked_url_patterns: Optional[Sequence[str]]) -> List[re.Pattern[str]]:
+        compiled: List[re.Pattern[str]] = []
+        for pattern in list(blocked_url_patterns or []):
+            value = str(pattern or "").strip()
+            if not value:
+                continue
+            try:
+                compiled.append(re.compile(value, re.IGNORECASE))
+            except re.error:
+                logger.debug("Ignoring invalid discovery block pattern: %s", value)
+        return compiled
+
+    @staticmethod
+    def _build_discovery_fetch_metadata(
+        *,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
+    ) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = {}
+        normalized_allowed_hosts = UnifiedWebArchivingAPI._normalize_allowed_hosts(allowed_hosts)
+        normalized_blocked_patterns = list(blocked_url_patterns or [])
+        if normalized_allowed_hosts:
+            metadata["allowed_hosts"] = normalized_allowed_hosts
+        if normalized_blocked_patterns:
+            metadata["blocked_url_patterns"] = [pattern.pattern for pattern in normalized_blocked_patterns]
+        return metadata
+
+    def _url_matches_discovery_constraints(
+        self,
+        url: str,
+        *,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
+    ) -> bool:
+        if not self._is_http_url(url):
+            return False
+        value = str(url or "").strip()
+        host = urlparse(value).netloc.lower().strip(".")
+        if not host:
+            return False
+
+        normalized_allowed_hosts = self._normalize_allowed_hosts(allowed_hosts)
+        if normalized_allowed_hosts and not any(
+            host == allowed or host.endswith(f".{allowed}")
+            for allowed in normalized_allowed_hosts
+        ):
+            return False
+
+        for pattern in list(blocked_url_patterns or []):
+            if pattern.search(value):
+                return False
+
+        return True
 
     def _get_scraper(self) -> Any:
         if self.scraper is not None:

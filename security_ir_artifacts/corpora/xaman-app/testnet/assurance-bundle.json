@@ -1,0 +1,552 @@
+{
+  "artifact_cid": "bafkreielylyvjq4er5ettt6cxty6rwa6fgbthk6pry3xs7hx2wrxo6bx3i",
+  "blockers": [
+    {
+      "code": "SMT_COUNTEREXAMPLES_FOUND",
+      "count": 12,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json"
+    },
+    {
+      "code": "BLOCKING_TESTNET_ASSUMPTIONS",
+      "count": 14,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "code": "UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+      "count": 2,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json"
+    },
+    {
+      "claim_ids": [
+        "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "xaman-testnet-claim:refusal-path-is-not-modeled",
+        "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+      ],
+      "code": "NOT_MODELED_TESTNET_CLAIMS",
+      "count": 6,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    },
+    {
+      "code": "PRODUCTION_SECURITY_RESULT_EXCLUDED",
+      "message": "The Testnet evidence cannot approve production Xaman wallet security.",
+      "severity": "scope",
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    }
+  ],
+  "blocking_assumptions": [
+    {
+      "description": "The Testnet verifier APK and emulator trial are public-Testnet evidence only and cannot approve production release behavior.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Network binding is limited to the reviewed Testnet verifier run, endpoint digest, server_info digest, and network_id 1 observation.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "production runtime network trace",
+        "endpoint authenticity model",
+        "fresh server_info evidence"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Fresh account provenance is accepted only as reviewed categorical verifier evidence; no account address, seed, or credential material is retained.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+      "owner": "wallet-verification",
+      "required_evidence_to_clear": [
+        "reviewed wallet provenance trace with allowed account identifiers redacted by policy"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Lifecycle action order is based on the reviewed operator UI trial, not on raw device automation logs or production telemetry.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Raw payload JSON, request bodies, payload semantics, and digest-to-signed-byte reconstruction are outside this reviewed evidence set.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:raw-payload-material-excluded",
+      "owner": "payload-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Native vault, biometric/passcode, keychain, and signing cryptography behavior is not proved by the reviewed Testnet lifecycle evidence.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+      "owner": "wallet-key-management",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Raw signatures, signed transaction blobs, and account identifiers are redacted and cannot be reconstructed from this model.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+      "owner": "wallet-transaction-signing",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "XRPL submission is modeled as UI submit categories only; node honesty, broadcast request material, mempool, queue, inclusion, and finality are not proved.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "raw-broadcast-safe digest evidence",
+        "XRPL validated-ledger inclusion proof",
+        "finality model"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Replay, backend atomic single-use, duplicate submission, expiration enforcement, and conflict handling were not exercised by the reviewed trial.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "owner": "payload-backend-verification",
+      "required_evidence_to_clear": [
+        "duplicate-submit negative trace",
+        "backend atomic single-use evidence",
+        "expiration enforcement trace"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "The verifier APK and emulator trace do not prove deployed production runtime equivalence.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+      "owner": "release-security",
+      "required_evidence_to_clear": [
+        "production build provenance",
+        "real-device trace bundle",
+        "runtime equivalence review"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "Native Firebase packaging remains present; the trial may be described only as JavaScript-stubbed Firebase evidence, not fully Firebase-disabled runtime evidence.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:native-firebase-packaging-boundary",
+      "owner": "mobile-build-security",
+      "required_evidence_to_clear": [
+        "native Firebase-free APK proof or corrected label"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "description": "No source-derived fact is admitted into this Testnet model unless it is bound to a reviewed source, trial, or dependency artifact location.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "id": "xaman-testnet-assumption:source-derived-facts-must-be-reviewed",
+      "owner": "formalization-review",
+      "required_evidence_to_clear": [
+        "reviewed source-to-model trace map for every source-derived fact"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "claim_summary": {
+    "blocking_not_modeled_boundary_claim_ids": [
+      "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+    ],
+    "claim_count": 12,
+    "model_status_counts": {
+      "MODELED_WITH_BLOCKING_NOT_MODELED_BOUNDARY": 2,
+      "MODELED_WITH_TESTNET_SCOPE": 4,
+      "NOT_MODELED": 6
+    },
+    "not_modeled_claim_ids": [
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+    ],
+    "protocol_not_modeled_claim_ids": [
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled"
+    ],
+    "smt_counterexample_claim_ids": [
+      "xaman-testnet-claim:network-binding-is-testnet-only",
+      "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "xaman-testnet-claim:review-auth-sequence-observed",
+      "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+    ],
+    "smt_result_counts": {
+      "COUNTEREXAMPLE": 12
+    },
+    "smt_worker_classification_counts": {
+      "blocked_assumption": 12
+    }
+  },
+  "corpus": "xaman-app",
+  "decision_vocabulary": [
+    "TESTNET_SCOPE_ASSURED",
+    "TESTNET_SCOPE_NOT_SECURE",
+    "TESTNET_SCOPE_INCONCLUSIVE"
+  ],
+  "evidence_artifacts": [
+    {
+      "artifact_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "kind": "testnet_security_model_ir",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+      "schema_version": "security-model-ir/xaman/v1",
+      "task_id": null
+    },
+    {
+      "artifact_cid": "sha256:8c8a821eb8970a0b0635714a23eda7a9420711de7875010a909df2de0a99ec52",
+      "kind": "testnet_assumptions",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json",
+      "schema_version": "xaman-testnet-assumptions/v1",
+      "task_id": "PORTAL-CXTP-131"
+    },
+    {
+      "artifact_cid": "sha256:b286dfd3d62fff34aa33f5f49ddcda332476a025c6dc099d2e792af3fc4d636d",
+      "kind": "claim_trace_map",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json",
+      "schema_version": "xaman-testnet-claim-trace-map/v1",
+      "task_id": "PORTAL-CXTP-131"
+    },
+    {
+      "artifact_cid": "bafkreigkihwu5t2cbwaz5vmdxruo7hu5mmsg6pea3e53y7rqmw2cwbbdxy",
+      "kind": "smt_z3_cvc5_differential",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "non_secure_with_counterexamples",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+      "schema_version": "xaman-testnet-z3-cvc5-differential-report/v1",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+      "task_id": "PORTAL-CXTP-133",
+      "testnet_assurance_blocked": true
+    },
+    {
+      "artifact_cid": "bafkreicsmp6lcpcfn4c54aqstv5ssgheiungvgfcyefpvteh6x376aw4qi",
+      "kind": "tla_apalache",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "checked_with_unresolved_threat_model_gaps",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+      "schema_version": "xaman-testnet-apalache-report/v1",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+      "task_id": "PORTAL-CXTP-134",
+      "testnet_assurance_blocked": true
+    },
+    {
+      "artifact_cid": "bafkreicbkbuz5gqzgflhnbdjorjtkospwzhy7nqoinvhnyg4f3oibndr4q",
+      "kind": "protocol_tamarin_proverif",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "checked_with_unresolved_threat_model_gaps",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+      "schema_version": "xaman-testnet-protocol-report/v1",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
+      "task_id": "PORTAL-CXTP-135",
+      "testnet_assurance_blocked": true
+    },
+    {
+      "artifact_cid": "bafkreiezbm6jebxlrmzearbahrdwlil2wbayww7asbafiqak6dpvpuseyy",
+      "kind": "lean_kernel",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "checked_with_scope_limits",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
+      "schema_version": "xaman-testnet-lean-kernel-report/v1",
+      "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
+      "task_id": "PORTAL-CXTP-136",
+      "testnet_assurance_blocked": true
+    },
+    {
+      "artifact_cid": "bafkreigxojimvdkvk3fk65nful2o667jjuko6eckfjq7ktmpjzc264drlq",
+      "kind": "coq_coverage_decision",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "independent_kernel_checked",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+      "schema_version": "xaman-testnet-coq-coverage-decision/v1",
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
+      "task_id": "PORTAL-CXTP-136",
+      "testnet_assurance_blocked": false
+    },
+    {
+      "artifact_cid": "bafkreidt4mkdncexx7retpm7rvzoubpykndltvwidibcnivsutmsnlet2m",
+      "kind": "fuzz_campaign",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+      "schema_version": "xaman-testnet-fuzz-report/v1",
+      "task_id": "PORTAL-CXTP-138"
+    },
+    {
+      "artifact_cid": "bafkreifx67twlyhnz4dfp3xptdv6oxcqgpbbpnpqlvlj3sdifgi6zpwcbi",
+      "kind": "leanstral_candidate_audit",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "overall_status": "no_candidate_promoted",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/leanstral-candidate-audit.json",
+      "schema_version": "xaman-testnet-leanstral-candidate-audit/v1",
+      "security_decision": "UNCHANGED_BY_LEANSTRAL_UNTRUSTED_LANE",
+      "task_id": "PORTAL-CXTP-137",
+      "testnet_assurance_blocked": true
+    }
+  ],
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "lane_summary": {
+    "apalache": {
+      "checked_invariant_count": 7,
+      "overall_status": "checked_with_unresolved_threat_model_gaps",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/tla/apalache-report.json",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_CONCURRENCY_ASSUMPTIONS",
+      "testnet_assurance_blocked": true,
+      "unresolved_required_assumption_count": 2
+    },
+    "coq": {
+      "decision": "required_checked",
+      "overall_status": "independent_kernel_checked",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/coq-coverage-decision.json",
+      "required_by_reviewed_threat_model": true,
+      "security_decision": "COQ_INDEPENDENT_KERNEL_CHECKED",
+      "testnet_assurance_blocked": false
+    },
+    "fuzz": {
+      "acceptance_gates": {
+        "expected_attack_mutation_targets": "pass",
+        "fuzzer_crash": "pass",
+        "malformed_security_ir_parser": "pass",
+        "redaction_breach": "pass"
+      },
+      "counterexample_count": 25,
+      "failed_case_count": 0,
+      "fuzzer_crash_count": 0,
+      "overall_status": "passed",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/fuzz-report.json",
+      "security_decision": "TESTNET_FUZZ_CAMPAIGNS_PASSED_BOUNDED_GENERATED_COVERAGE"
+    },
+    "lean": {
+      "formalized_invariant_only": true,
+      "overall_status": "checked_with_scope_limits",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-kernel/lean-report.json",
+      "security_decision": "LEAN_TESTNET_KERNEL_CHECKED_FORMALIZED_INVARIANTS_ONLY",
+      "testnet_assurance_blocked": true
+    },
+    "protocol": {
+      "blocker_codes": [],
+      "not_modeled_claim_count": 6,
+      "overall_status": "checked_with_unresolved_threat_model_gaps",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/protocol/protocol-report.json",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_UNRESOLVED_PROTOCOL_ASSUMPTIONS",
+      "testnet_assurance_blocked": true
+    },
+    "smt_z3_cvc5": {
+      "counterexample_count": 12,
+      "overall_status": "non_secure_with_counterexamples",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/proof-reports/z3-cvc5-differential.json",
+      "security_decision": "BLOCK_TESTNET_ASSURANCE_COUNTEREXAMPLES",
+      "testnet_assurance_blocked": true
+    }
+  },
+  "model": {
+    "assumption_count": 14,
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "claim_count": 12,
+    "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "owner_actions_required_to_advance": [
+    {
+      "assumption_id": "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "production runtime network trace",
+        "endpoint authenticity model",
+        "fresh server_info evidence"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+      "owner": "wallet-verification",
+      "required_evidence_to_clear": [
+        "reviewed wallet provenance trace with allowed account identifiers redacted by policy"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-payload-material-excluded",
+      "owner": "payload-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+      "owner": "wallet-key-management",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded",
+      "owner": "wallet-transaction-signing",
+      "required_evidence_to_clear": [
+        "native vault audit",
+        "signature-byte binding trace",
+        "cryptographic signing proof"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+      "owner": "ledger-verification",
+      "required_evidence_to_clear": [
+        "raw-broadcast-safe digest evidence",
+        "XRPL validated-ledger inclusion proof",
+        "finality model"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:backend-replay-single-use-not-exercised",
+      "owner": "payload-backend-verification",
+      "required_evidence_to_clear": [
+        "duplicate-submit negative trace",
+        "backend atomic single-use evidence",
+        "expiration enforcement trace"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved",
+      "owner": "release-security",
+      "required_evidence_to_clear": [
+        "production build provenance",
+        "real-device trace bundle",
+        "runtime equivalence review"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:native-firebase-packaging-boundary",
+      "owner": "mobile-build-security",
+      "required_evidence_to_clear": [
+        "native Firebase-free APK proof or corrected label"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    {
+      "assumption_id": "xaman-testnet-assumption:source-derived-facts-must-be-reviewed",
+      "owner": "formalization-review",
+      "required_evidence_to_clear": [
+        "reviewed source-to-model trace map for every source-derived fact"
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    }
+  ],
+  "schema_version": "xaman-testnet-assurance-bundle/v1",
+  "scope": {
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "production_security_result": false,
+    "statement": "This bundle is limited to the reviewed XRPL Testnet verifier APK, emulator trial, formalized model, and pinned evidence artifacts. It is not a production-security result."
+  },
+  "task_id": "PORTAL-CXTP-139"
+}

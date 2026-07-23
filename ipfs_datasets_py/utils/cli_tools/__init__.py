@@ -5,7 +5,8 @@ interfaces, caching, and error handling.
 
 Public API:
 - BaseCLITool: Abstract base for CLI tool wrappers
-- Copilot: GitHub Copilot CLI wrapper
+- Copilot: ``gh copilot`` extension wrapper
+- StandaloneCopilot: standalone local ``copilot`` wrapper
 - Claude: Claude CLI wrapper
 - VSCode: VS Code CLI wrapper
 - Gemini: Google Gemini CLI wrapper
@@ -23,7 +24,7 @@ Example:
 from .base import BaseCLITool
 
 # Tool implementations
-from .copilot import Copilot, CopilotCLI
+from .copilot import Copilot, CopilotCLI, StandaloneCopilot
 
 # Placeholders for other tools (minimal stubs)
 class Claude(BaseCLITool):
@@ -59,6 +60,7 @@ __all__ = [
     
     # Implementations
     'Copilot',
+    'StandaloneCopilot',
     'Claude',
     'VSCode',
     'Gemini',

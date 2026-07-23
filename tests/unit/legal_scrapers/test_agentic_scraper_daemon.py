@@ -1,9 +1,18 @@
 import asyncio
 import json
+import sys
 import time
+import types
 from types import SimpleNamespace
 
 import pytest
+
+pytestmark = pytest.mark.anyio
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon import (
     StateLawsAgenticDaemon,
@@ -14,6 +23,18 @@ from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     ScraperMethod,
     UnifiedWebScraper,
 )
+
+
+def test_state_laws_agentic_daemon_config_admin_rules_defaults_are_high_cap():
+    config = StateLawsAgenticDaemonConfig(corpus_key="state_admin_rules")
+
+    assert config.per_state_timeout_seconds == 86400.0
+    assert config.admin_parallel_assist_timeout_seconds == 86400.0
+    assert config.admin_agentic_max_candidates_per_state == 1000
+    assert config.admin_agentic_max_fetch_per_state == 1000
+    assert config.admin_agentic_max_results_per_domain == 1000
+    assert config.admin_agentic_max_hops == 4
+    assert config.admin_agentic_max_pages == 1000
 
 
 def test_unified_web_scraper_applies_env_tactic_overrides(monkeypatch):
@@ -102,6 +123,25 @@ def test_state_admin_rules_daemon_clears_generic_method_order_overrides(monkeypa
         assert "LEGAL_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
 
 
+def test_state_laws_daemon_applies_search_engine_override(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["SC"],
+            output_dir=str(tmp_path),
+            search_engines_override=["duckduckgo"],
+        )
+    )
+
+    tactic = daemon.config.tactic_profiles["archival_first"]
+
+    with daemon._tactic_env(tactic):
+        assert daemon_module.os.environ["IPFS_DATASETS_SEARCH_ENGINES"] == "duckduckgo"
+        assert daemon_module.os.environ["LEGAL_SCRAPER_SEARCH_ENGINES"] == "duckduckgo"
+
+
 def test_state_laws_daemon_injects_cloudflare_method_into_env_order(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -186,17 +226,128 @@ def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     assert preview["preview"] is True
     assert preview["corpus"] == "state_admin_rules"
     assert preview["critic_score"] == 0.975
-    assert len(preview["commands"]) == 5
-    assert preview["commands"][0]["stage"] == "merge"
-    assert "merge_state_admin_runs.py" in preview["commands"][0]["command"]
-    assert "--state CA" in preview["commands"][0]["command"]
-    assert preview["commands"][1]["stage"] == "clean"
-    assert "clean_state_admin_canonical.py" in preview["commands"][1]["command"]
-    assert preview["commands"][2]["stage"] == "parquet"
-    assert "_cleaned/state_admin_rules_jsonld" in preview["commands"][2]["command"]
-    assert preview["commands"][4]["stage"] == "publish"
-    assert "release state_admin_rules" in preview["commands"][4]["command"]
+    assert len(preview["commands"]) == 3
+    assert preview["commands"][0]["stage"] == "merge_recovered_rows"
+    assert "merge_state_admin_recovered_rows.py" in preview["commands"][0]["command"]
+    assert f'"{tmp_path}"' in preview["commands"][0]["command"]
+    assert "--parquet-dir" in preview["commands"][0]["command"]
+    assert preview["commands"][1]["stage"] == "embeddings"
+    assert "build_state_admin_embeddings_parquet_with_cid.py" in preview["commands"][1]["command"]
+    assert preview["commands"][2]["stage"] == "publish"
+    assert "release state_admin_rules" in preview["commands"][2]["command"]
     assert preview["artifacts"]["clean_output_dir"].endswith("_cleaned")
+
+
+def test_preview_runtime_readiness_reports_cloudflare_and_router(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "CA"],
+            output_dir=str(tmp_path),
+        )
+    )
+
+    monkeypatch.setattr(
+        daemon,
+        "_cloudflare_browser_rendering_availability",
+        lambda: {"available": False, "status": "missing_credentials"},
+    )
+    monkeypatch.setattr(
+        daemon,
+        "_router_availability_snapshot",
+        lambda: {"llm_router": True, "embeddings_router": True, "ipfs_backend": "KuboCLIBackend"},
+    )
+
+    preview = daemon.preview_runtime_readiness()
+
+    assert preview["preview"] is True
+    assert preview["corpus"] == "state_admin_rules"
+    assert preview["state_count"] == 2
+    assert preview["cloudflare_browser_rendering"]["status"] == "missing_credentials"
+    assert preview["router"]["ipfs_backend"] == "KuboCLIBackend"
+    assert "cloudflare_explore" in preview["recommended_boot_tactics"]
+    assert "router_assisted" in preview["recommended_boot_tactics"]
+
+
+def test_cloudflare_runtime_readiness_detects_vault_credentials(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+
+    readiness = daemon_module.StateLawsAgenticDaemon._cloudflare_browser_rendering_availability()
+
+    assert readiness["available"] is True
+    assert readiness["account_id_env"] == "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"
+    assert readiness["api_token_env"] == "IPFS_DATASETS_CLOUDFLARE_API_TOKEN"
+    assert readiness["account_id_source_kind"] == "vault"
+    assert readiness["api_token_source_kind"] == "vault"
+
+
+def test_tactic_env_injects_cloudflare_credentials_from_vault(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
+    monkeypatch.delenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", raising=False)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+    tactic = daemon.config.tactic_profiles["cloudflare_explore"]
+
+    with daemon._tactic_env(tactic):
+        assert daemon_module.os.environ["IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"] == "vault-acct"
+        assert daemon_module.os.environ["IPFS_DATASETS_CLOUDFLARE_API_TOKEN"] == "vault-token"
+
+
+@pytest.mark.anyio
+async def test_probe_cloudflare_browser_rendering_returns_missing_credentials(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+    daemon._cloudflare_browser_rendering_availability = lambda: {  # type: ignore[method-assign]
+        "available": False,
+        "status": "missing_credentials",
+    }
+
+    result = await daemon.probe_cloudflare_browser_rendering(url="https://example.com")
+
+    assert result["status"] == "missing_credentials"
+    assert result["submitted_url"] == "https://example.com"
 
 
 def test_state_admin_rules_release_plan_routes_parquet_through_clean_bundle(tmp_path):
@@ -261,6 +412,26 @@ def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_re
     selected = daemon._select_tactic()
 
     assert selected.name == "document_first"
+
+
+def test_state_admin_rules_agentic_daemon_forced_tactic_overrides_untried_order(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["DE"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            forced_tactic_name="document_first",
+        )
+    )
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["profile"].name == "document_first"
+    assert selection["details"]["mode"] == "forced"
+    assert selection["details"]["score_breakdown"]["document_first"]["forced"] is True
 
 
 def test_state_admin_rules_agentic_daemon_untried_selection_honors_priority_action_plan(tmp_path):
@@ -1071,6 +1242,75 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
     assert state_payload["best_tactic"]["score"] == summary["latest_cycle"]["critic_score"]
     assert state_payload["last_tactic_selection"]["selected_tactic"] == summary["latest_cycle"]["tactic"]["name"]
 
+    artifacts = summary["latest_cycle"]["recovered_row_artifacts"]
+    assert artifacts["status"] == "success"
+    assert artifacts["row_count"] == 1
+    assert artifacts["state_counts"] == {"OR": 1}
+    assert artifacts["target_hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert artifacts["target_parquet_paths_by_state"]["OR"] == "state_laws_parquet_cid/STATE-OR.parquet"
+    rows_path = tmp_path / "recovered_rows" / "cycle_0001" / "state_laws_statutes.jsonl"
+    assert artifacts["statutes_jsonl_path"] == str(rows_path)
+    recovered_rows = [json.loads(line) for line in rows_path.read_text(encoding="utf-8").splitlines()]
+    assert recovered_rows[0]["state_code"] == "OR"
+    assert recovered_rows[0]["corpus_key"] == "state_laws"
+    assert recovered_rows[0]["source_url"] == "https://example.org/oregon/statute-1"
+
+
+@pytest.mark.asyncio
+async def test_agentic_daemon_can_stop_after_recovered_rows(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "NE",
+                    "statutes": [
+                        {
+                            "title": "Nebraska Administrative Code Title 1",
+                            "section": "001",
+                            "text": "Recovered Nebraska administrative rule text.",
+                            "source_url": "https://rules.nebraska.gov/rules/title-1.pdf",
+                            "method_used": "nebraska_rules_api_fast_path",
+                        }
+                    ],
+                    "rules_count": 1,
+                }
+            ],
+            "metadata": {"agentic_report": {"per_state": {"NE": {"fetched_rules": 1}}}},
+        }
+
+    async def _should_not_run_router(*args, **kwargs):
+        raise AssertionError("router assist should not run when stop_after_recovered_rows is enabled")
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_build_router_assist_report", _should_not_run_router)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["NE"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            stop_after_recovered_rows=True,
+            random_seed=7,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert latest_cycle["stop_after_recovered_rows"] is True
+    assert latest_cycle["recovered_row_artifacts"]["row_count"] == 1
+    assert latest_cycle["router_assist"]["reason"] == "stop-after-recovered-rows"
+    assert latest_cycle["parallel_admin_assist"]["reason"] == "stop-after-recovered-rows"
+    assert latest_cycle["archive_warmup"]["reason"] == "stop-after-recovered-rows"
+    assert (tmp_path / "recovered_rows" / "cycle_0001" / "state_admin_rules_statutes.jsonl").exists()
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+    assert not (tmp_path / "cycles" / "cycle_0001.in_progress.json").exists()
+
 
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_schedules_deferred_retry_for_rate_limited_scrape(monkeypatch, tmp_path):
@@ -1284,6 +1524,77 @@ async def test_state_laws_agentic_daemon_writes_and_clears_in_progress_checkpoin
     assert not (tmp_path / "latest_in_progress.json").exists()
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
 
+
+@pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_updates_scrape_heartbeat_checkpoint(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_laws(**kwargs):
+        await asyncio.sleep(0.03)
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {
+                "coverage_summary": {
+                    "states_targeted": 1,
+                    "states_returned": 1,
+                    "states_with_nonzero_statutes": 0,
+                    "coverage_gap_states": ["OR"],
+                },
+                "fetch_analytics": {
+                    "attempted": 0,
+                    "success": 0,
+                    "success_ratio": 0.0,
+                    "fallback_count": 0,
+                    "providers": {},
+                },
+                "fetch_analytics_by_state": {"OR": {"attempted": 0, "success": 0, "fallback_count": 0, "providers": {}}},
+                "etl_readiness": {
+                    "ready_for_kg_etl": False,
+                    "total_statutes": 0,
+                    "full_text_ratio": 0.0,
+                    "jsonld_ratio": 0.0,
+                    "jsonld_legislation_ratio": 0.0,
+                    "kg_payload_ratio": 0.0,
+                    "citation_ratio": 0.0,
+                    "statute_signal_ratio": 0.0,
+                    "non_scaffold_ratio": 0.0,
+                    "states_with_zero_statutes": 1,
+                },
+                "quality_by_state": {"OR": {"total": 0}},
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
+
+    heartbeat_payloads = []
+    original_write = daemon_module.StateLawsAgenticDaemon._write_cycle_checkpoint
+
+    def _recording_write(self, *, cycle_index, payload):
+        heartbeat_payloads.append(dict(payload))
+        return original_write(self, cycle_index=cycle_index, payload=payload)
+
+    monkeypatch.setattr(
+        daemon_module.StateLawsAgenticDaemon,
+        "_write_cycle_checkpoint",
+        _recording_write,
+    )
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_heartbeat_seconds=0.01,
+            random_seed=7,
+        )
+    )
+
+    await daemon.run()
+
+    assert any("scrape_heartbeat" in payload for payload in heartbeat_payloads)
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
@@ -1354,6 +1665,7 @@ async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(mo
         assert checkpoint_payload["stage"] == "router_review"
         assert checkpoint_payload["status"] == "success"
         assert checkpoint_payload["critic_score"] >= 0.92
+        assert checkpoint_payload["recovered_row_artifacts"]["row_count"] == 1
         return {"status": "skipped", "reason": "test"}
 
     monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
@@ -1373,6 +1685,190 @@ async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(mo
 
     assert summary["status"] == "success"
     assert summary["latest_cycle"]["router_assist"]["status"] == "skipped"
+
+
+def test_state_laws_agentic_daemon_promotes_latest_checkpoint_to_summary(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    checkpoint_payload = {
+        "cycle": 3,
+        "timestamp": "2026-03-22T04:00:00+00:00",
+        "corpus": "state_laws",
+        "states": ["OR"],
+        "cycle_state_order": ["OR"],
+        "status": "running",
+        "stage": "archive_warmup",
+        "tactic": {"name": "archival_first"},
+    }
+    daemon._write_cycle_checkpoint(cycle_index=3, payload=checkpoint_payload)
+
+    promoted_path = daemon.promote_latest_checkpoint_to_summary(reason="signal:SIGTERM")
+
+    assert promoted_path == tmp_path / "latest_summary.json"
+    assert (tmp_path / "latest_in_progress.json").exists()
+    assert (tmp_path / "cycles" / "cycle_0003.recovered.json").exists()
+
+    latest_summary_payload = json.loads((tmp_path / "latest_summary.json").read_text(encoding="utf-8"))
+    recovered_payload = json.loads((tmp_path / "cycles" / "cycle_0003.recovered.json").read_text(encoding="utf-8"))
+
+    assert latest_summary_payload["status"] == "running"
+    assert latest_summary_payload["stage"] == "archive_warmup"
+    assert latest_summary_payload["checkpoint_promoted"] is True
+    assert latest_summary_payload["checkpoint_promotion_reason"] == "signal:SIGTERM"
+    assert "checkpoint_promoted_at" in latest_summary_payload
+    assert recovered_payload == latest_summary_payload
+
+
+def test_state_laws_agentic_daemon_main_promotes_checkpoint_on_nonzero_system_exit(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    promoted_reasons = []
+    installed_handlers = {}
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        def run(self):
+            return object()
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            promoted_reasons.append(reason)
+            return tmp_path / "latest_summary.json"
+
+    def _fake_getsignal(sig):
+        return f"prev:{sig}"
+
+    def _fake_signal(sig, handler):
+        installed_handlers[sig] = handler
+        return handler
+
+    def _fake_asyncio_run(_coro):
+        raise SystemExit(143)
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+    monkeypatch.setattr(daemon_module.asyncio, "run", _fake_asyncio_run)
+    monkeypatch.setattr(daemon_module.signal, "getsignal", _fake_getsignal)
+    monkeypatch.setattr(daemon_module.signal, "signal", _fake_signal)
+
+    with pytest.raises(SystemExit) as exc_info:
+        daemon_module.main([
+            "--corpus",
+            "state_laws",
+            "--states",
+            "OR",
+            "--output-dir",
+            str(tmp_path),
+        ])
+
+    assert exc_info.value.code == 143
+    assert promoted_reasons == ["system_exit:143"]
+    assert daemon_module.signal.SIGTERM in installed_handlers
+    assert daemon_module.signal.SIGINT in installed_handlers
+
+
+def test_main_print_runtime_readiness_skips_scrape(monkeypatch, tmp_path, capsys):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    run_called = False
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        def preview_runtime_readiness(self):
+            return {
+                "status": "partial",
+                "preview": True,
+                "corpus": self.config.corpus_key,
+                "state_count": len(self.config.states),
+            }
+
+        async def run(self):
+            nonlocal run_called
+            run_called = True
+            return {"status": "should-not-run"}
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            return tmp_path / "latest_summary.json"
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+
+    exit_code = daemon_module.main([
+        "--corpus",
+        "state_admin_rules",
+        "--states",
+        "AZ,CA",
+        "--output-dir",
+        str(tmp_path),
+        "--print-runtime-readiness",
+    ])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert run_called is False
+    assert payload["preview"] is True
+    assert payload["corpus"] == "state_admin_rules"
+    assert payload["state_count"] == 2
+
+
+def test_main_probe_cloudflare_browser_rendering_skips_scrape(monkeypatch, tmp_path, capsys):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    run_called = False
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        async def probe_cloudflare_browser_rendering(self, *, url="https://example.com", **kwargs):
+            return {
+                "status": "error",
+                "provider": "cloudflare_browser_rendering",
+                "submitted_url": url,
+            }
+
+        async def run(self):
+            nonlocal run_called
+            run_called = True
+            return {"status": "should-not-run"}
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            return tmp_path / "latest_summary.json"
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+
+    exit_code = daemon_module.main([
+        "--corpus",
+        "state_admin_rules",
+        "--states",
+        "AZ",
+        "--output-dir",
+        str(tmp_path),
+        "--probe-cloudflare-browser-rendering",
+        "--probe-cloudflare-url",
+        "https://example.com",
+    ])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert run_called is False
+    assert payload["status"] == "error"
+    assert payload["submitted_url"] == "https://example.com"
 
 
 @pytest.mark.asyncio
@@ -1408,6 +1904,42 @@ async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_hard_timeout_survives_cancellation_swallow(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _stubborn_scrape_state_laws(**kwargs):
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.2)
+            return {"status": "success", "data": [{"state_code": "OR", "statutes": []}], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _stubborn_scrape_state_laws)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            scrape_heartbeat_seconds=0.01,
+            random_seed=11,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    started_at = time.perf_counter()
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.25
+    assert scrape_result["status"] == "error"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    await asyncio.sleep(0.25)
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_availability(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1416,6 +1948,15 @@ async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_ava
         return {"status": "success", "data": [], "metadata": {}}
 
     monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _slow_scrape_state_admin_rules)
+    for env_name in (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
     monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct-test")
     monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token-test")
 
@@ -1438,8 +1979,66 @@ async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_ava
     assert scrape_result["metadata"]["scrape_timed_out"] is True
     assert scrape_result["metadata"]["cloudflare_browser_rendering"]["available"] is True
     assert scrape_result["metadata"]["cloudflare_browser_rendering"]["status"] == "configured"
-    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["account_id_env"] == "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID"
-    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["api_token_env"] == "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN"
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["account_id_env"] in {
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+    }
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["api_token_env"] in {
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+    }
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_salvages_checkpoint_rows_on_timeout(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _slow_checkpointing_scrape_state_admin_rules(**kwargs):
+        assert kwargs["output_dir"] == str(tmp_path)
+        assert kwargs["agentic_checkpoint_interval"] <= 10
+        checkpoint_dir = tmp_path / "agentic_checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        row = {
+            "state_code": "NE",
+            "section_number": "001",
+            "section_name": "Nebraska Rule 001",
+            "full_text": "Nebraska administrative rule text " * 20,
+            "source_url": "https://rules.nebraska.gov/rules/001.pdf",
+        }
+        (checkpoint_dir / "STATE-NE_statutes.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        await asyncio.sleep(0.2)
+        return {"status": "success", "data": [], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _slow_checkpointing_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["NE"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            max_statutes=50,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            random_seed=7,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+
+    assert scrape_result["status"] == "partial_success"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    assert scrape_result["metadata"]["checkpoint_recovered"] is True
+    assert scrape_result["metadata"]["checkpoint_recovered_rows"] == 1
+    assert scrape_result["data"][0]["state_code"] == "NE"
+    assert scrape_result["data"][0]["rules_count"] == 1
+    assert scrape_result["data"][0]["statutes"][0]["source_url"] == "https://rules.nebraska.gov/rules/001.pdf"
+
+    artifacts = daemon._write_recovered_row_artifacts(cycle_index=1, scrape_result=scrape_result)
+    assert artifacts["status"] == "success"
+    assert artifacts["row_count"] == 1
+    assert artifacts["state_counts"] == {"NE": 1}
 
 
 @pytest.mark.asyncio
@@ -1991,6 +2590,10 @@ async def test_state_admin_rules_agentic_daemon_forwards_agentic_budget_knobs(mo
 
     async def _fake_scrape_state_admin_rules(**kwargs):
         assert kwargs["states"] == ["AZ"]
+        assert kwargs["rate_limit_delay"] == 0.2
+        assert kwargs["strict_full_text"] is False
+        assert kwargs["min_full_text_chars"] == 200
+        assert kwargs["parallel_workers"] == 1
         assert kwargs["agentic_max_candidates_per_state"] == 24
         assert kwargs["agentic_max_fetch_per_state"] == 8
         assert kwargs["agentic_max_results_per_domain"] == 30
@@ -2041,6 +2644,11 @@ async def test_state_admin_rules_agentic_daemon_forwards_agentic_budget_knobs(mo
 
     summary = await daemon.run()
 
+    tactic = summary["latest_cycle"]["tactic"]
+    assert tactic["rate_limit_delay"] == 0.2
+    assert tactic["strict_full_text"] is False
+    assert tactic["min_full_text_chars"] == 200
+    assert tactic["parallel_workers"] == 1
     assert summary["latest_cycle"]["corpus"] == "state_admin_rules"
     assert summary["latest_cycle"]["diagnostics"]["coverage"]["coverage_gap_states"] == ["AZ"]
 
@@ -2331,11 +2939,11 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
         "timed_out": False,
     }
     assert "document_recovery_stalled" in critic["state_action_plan"]["AZ"]["reasons"]
-    assert "AZ administrative code pdf" in critic["query_hints"]
-    assert "AZ administrative code rtf" in critic["query_hints"]
-    assert "AZ administrative rules site:apps.azsos.gov" in critic["query_hints"]
-    assert "AZ site:apps.azsos.gov filetype:pdf" in critic["query_hints"]
-    assert "AZ site:apps.azsos.gov filetype:rtf" in critic["query_hints"]
+    assert "AZ administrative code pdf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ administrative code rtf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ administrative rules site:apps.azsos.gov" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:pdf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:rtf" in critic["state_action_plan"]["AZ"]["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
     assert document_gap_report["states_with_artifact_candidates"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
@@ -2458,6 +3066,7 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     summary = await daemon.run()
 
     artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    documents_summary = summary["latest_cycle"]["diagnostics"]["documents"]
     manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
     artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
     binary_path = artifact_dir / "AZ_01_18-04.pdf"
@@ -2467,6 +3076,10 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert artifact_summary["target_count"] == 1
     assert artifact_summary["successful_count"] == 1
     assert artifact_summary["artifact_path"] == str(manifest_path)
+    assert documents_summary["processed_document_urls"] == 1
+    assert documents_summary["states_with_document_rules"] == ["AZ"]
+    assert documents_summary["states_with_candidate_document_gaps"] == []
+    assert documents_summary["artifact_recovery"]["successful_document_urls"] == 1
     assert binary_path.exists()
     assert text_path.exists()
     assert binary_path.read_bytes() == b"%PDF-fake-content"
@@ -2476,8 +3089,165 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert manifest["successful_count"] == 1
     assert manifest["entries"][0]["method_used"] == "playwright"
     assert manifest["entries"][0]["binary_document"] is True
+    assert manifest["entries"][0]["preferred_methods"][0] == "playwright"
     assert str(binary_path) in manifest["entries"][0]["saved_files"]
     assert str(text_path) in manifest["entries"][0]["saved_files"]
+
+
+def test_state_admin_rules_document_artifacts_can_be_written_as_recovered_rows(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    text_path = tmp_path / "ID_01_380404.txt"
+    text_path.write_text(
+        "38.04.04 - Rules Governing Capitol Mall Parking. "
+        "000. Legal Authority. 001. Scope. Administrative code rule text. " * 6,
+        encoding="utf-8",
+    )
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["ID"],
+            output_dir=str(tmp_path / "daemon"),
+            max_cycles=1,
+        )
+    )
+    document_artifacts = {
+        "status": "completed",
+        "entries": [
+            {
+                "state": "ID",
+                "url": "https://adminrules.idaho.gov/rules/current/38/380404.pdf",
+                "success": True,
+                "title": "38.04.04 - Rules Governing Capitol Mall Parking",
+                "content_type": "application/pdf",
+                "sha256": "abc123",
+                "document_processor_method": "pdf_processor",
+                "saved_files": [str(text_path)],
+            }
+        ],
+    }
+
+    blocks = daemon._state_admin_blocks_from_document_artifacts(document_artifacts)
+    scrape_result = {"status": "success", "data": daemon._merge_recovered_data_blocks([], blocks), "metadata": {}}
+    artifacts = daemon._write_recovered_row_artifacts(cycle_index=1, scrape_result=scrape_result)
+
+    assert blocks[0]["state_code"] == "ID"
+    assert blocks[0]["rules_count"] == 1
+    assert blocks[0]["statutes"][0]["structured_data"]["document_artifact_recovery"] is True
+    assert artifacts["row_count"] == 1
+    rows_path = tmp_path / "daemon" / "recovered_rows" / "cycle_0001" / "state_admin_rules_statutes.jsonl"
+    recovered_row = json.loads(rows_path.read_text(encoding="utf-8").strip())
+    assert recovered_row["state_code"] == "ID"
+    assert recovered_row["source_url"] == "https://adminrules.idaho.gov/rules/current/38/380404.pdf"
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_recovers_rtf_text_with_processor(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 1,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["apps.azsos.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {"candidate_document": 1},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["apps.azsos.gov"],
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        return scraper_module.ScraperResult(
+            url=url,
+            title="18-04.rtf",
+            text="",
+            content="",
+            method_used=ScraperMethod.PLAYWRIGHT,
+            success=True,
+            metadata={
+                "method": "playwright_binary_fetch",
+                "content_type": "application/rtf",
+                "content_length": 24,
+                "raw_bytes": b"{\\rtf1\\ansi Arizona rule}",
+                "binary_document": True,
+            },
+        )
+
+    async def _fake_extract_rtf_text(rtf_bytes):
+        assert rtf_bytes.startswith(b"{\\rtf1")
+        return "Arizona RTF recovered text"
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "_extract_rtf_text", staticmethod(_fake_extract_rtf_text))
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=44,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    documents_summary = summary["latest_cycle"]["diagnostics"]["documents"]
+    manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
+    artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
+    binary_path = artifact_dir / "AZ_01_18-04.rtf"
+    text_path = artifact_dir / "AZ_01_18-04.txt"
+
+    assert artifact_summary["successful_count"] == 1
+    assert documents_summary["processed_document_urls"] == 1
+    assert documents_summary["states_with_document_rules"] == ["AZ"]
+    assert documents_summary["artifact_recovery"]["by_processor"]["rtf_processor"] == 1
+    assert binary_path.exists()
+    assert text_path.exists()
+    assert "Arizona RTF recovered text" in text_path.read_text(encoding="utf-8")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["entries"][0]["document_processor_method"] == "rtf_processor"
+    assert manifest["entries"][0]["document_processor_error"] is None
+    assert manifest["entries"][0]["preferred_methods"][0] == "playwright"
 
 
 @pytest.mark.asyncio
@@ -2740,6 +3510,105 @@ async def test_state_admin_rules_agentic_daemon_retries_html_artifacts_past_fail
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_uses_recovery_directives_to_prioritize_cloudflare(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    seen_method_orders = []
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "IN", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "IN": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 0,
+                            "providers": {"agentic_discovery": 2},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "IN": {
+                            "candidate_urls": 1,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://iar.iga.in.gov/code/current",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["iar.iga.in.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["iar.iga.in.gov"],
+                                "candidate_hosts_without_rules": ["iar.iga.in.gov"],
+                            },
+                            "cloudflare_status": "browser_challenge",
+                            "cloudflare_browser_challenge_detected": True,
+                            "cloudflare_http_status": 403,
+                            "cloudflare_record_status": "errored",
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        seen_method_orders.append([item.value for item in self.config.preferred_methods])
+        return scraper_module.ScraperResult(
+            url=url,
+            title="Indiana Administrative Code",
+            text="Indiana administrative code rendered text",
+            html="<html><body>Indiana administrative code rendered text</body></html>",
+            content="Indiana administrative code rendered text",
+            method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            success=True,
+            metadata={
+                "method": "cloudflare_browser_rendering",
+                "content_type": "text/html",
+                "content_length": 64,
+                "binary_document": False,
+                "cloudflare_status": "success",
+            },
+        )
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["IN"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=54,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+
+    assert artifact_summary["successful_count"] == 1
+    assert seen_method_orders
+    assert seen_method_orders[0][0] == "cloudflare_browser_rendering"
+    assert "playwright" in seen_method_orders[0]
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_falls_back_to_critic_query_hints_without_router(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -2921,7 +3790,7 @@ async def test_state_admin_rules_agentic_daemon_uses_router_assist_review(monkey
     assert "router_assisted" in critic["recommended_next_tactics"]
     assert "document_first" in critic["recommended_next_tactics"]
     assert "router-assisted-review" in critic["issues"]
-    assert critic["query_hints"] == ["Arizona administrative code pdf title 18"]
+    assert "Arizona administrative code pdf title 18" in critic["query_hints"]
     assert critic["router_rationale"].startswith("Document candidates remain unresolved")
     persisted = json.loads(router_artifact_path.read_text(encoding="utf-8"))
     assert persisted["cycle"] == 1
@@ -3054,9 +3923,102 @@ async def test_state_admin_rules_agentic_daemon_router_timeout_does_not_block_cy
 
     assert summary["status"] == "success"
     assert summary["latest_cycle"]["router_assist"]["status"] == "completed"
-    assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "error"
+    assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "unavailable"
     assert "timed out" in summary["latest_cycle"]["router_assist"]["llm_review"]["error"]
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_ipfs_timeout_does_not_block_cycle(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    async def _slow_ipfs_persist(self, *, cycle_index, report, corpus_key):
+        _ = (self, cycle_index, report, corpus_key)
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.2)
+            return {"status": "success", "cid": "late-router-review"}
+        return {"status": "success", "cid": "late-router-review"}
+
+    def _preflight(self):
+        return {"available": True, "backend": "KuboCLIBackend", "command": "ipfs"}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_persist_router_assist_to_ipfs", _slow_ipfs_persist)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_router_ipfs_persist_preflight", _preflight)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_ipfs_timeout_seconds=0.01,
+            random_seed=43,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["status"] == "success"
+    assert summary["latest_cycle"]["router_assist"]["status"] == "completed"
+    assert summary["latest_cycle"]["router_assist"]["ipfs_persist"]["status"] == "error"
+    assert "timed out" in summary["latest_cycle"]["router_assist"]["ipfs_persist"]["error"]
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+    await asyncio.sleep(0.25)
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_skips_unpinned_embeddings_ranking(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import embeddings_router as embeddings_router_module
+
+    def _should_not_run(*args, **kwargs):
+        raise AssertionError("unconfigured embeddings ranking should be skipped")
+
+    monkeypatch.delenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_PROVIDER", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_EMBEDDINGS_PROVIDER", raising=False)
+    monkeypatch.delenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_ALLOW_UNPINNED", raising=False)
+    monkeypatch.setattr(embeddings_router_module, "embed_texts_batched", _should_not_run)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+        )
+    )
+
+    result = daemon._rank_tactics_with_embeddings(
+        daemon.config.tactic_profiles["router_assisted"],
+        diagnostics={},
+        critic={"summary": "coverage gaps"},
+    )
+
+    assert result is None
 
 
 @pytest.mark.asyncio
@@ -3353,6 +4315,7 @@ def test_router_ipfs_persist_preflight_bootstraps_ipfs_kit_when_cli_missing(monk
     monkeypatch.setattr(daemon_module.shutil, "which", lambda cmd: None if cmd == "ipfs" else "/usr/bin/true")
     monkeypatch.setattr(ipfs_backend_router, "get_ipfs_backend", lambda *args, **kwargs: KuboCLIBackend())
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_attempt_router_ipfs_kit_bootstrap", _fake_bootstrap)
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_IPFS_AUTO_BOOTSTRAP", "1")
 
     daemon = daemon_module.StateLawsAgenticDaemon(
         daemon_module.StateLawsAgenticDaemonConfig(

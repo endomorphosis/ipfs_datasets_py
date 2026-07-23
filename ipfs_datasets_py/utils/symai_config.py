@@ -1,4 +1,3 @@
-import importlib
 import json
 import os
 import sys
@@ -39,6 +38,32 @@ def _default_symai_config() -> Dict[str, Any]:
     }
 
 
+def _symai_prefix_path(config_root: Optional[Path] = None) -> Path:
+    configured_prefix = (
+        str(config_root)
+        if config_root is not None
+        else (
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX")
+            or os.environ.get("IPFS_DATASETS_PY_SYMAI_CONFIG_ROOT")
+            or ""
+        )
+    ).strip()
+    if configured_prefix:
+        return Path(configured_prefix).expanduser()
+
+    env_prefix = Path(sys.prefix)
+    try:
+        env_prefix.mkdir(parents=True, exist_ok=True)
+        test_dir = env_prefix / ".symai"
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_file = test_dir / ".write-test"
+        test_file.write_text("", encoding="utf-8")
+        test_file.unlink(missing_ok=True)
+        return env_prefix
+    except Exception:
+        return Path.home() / ".local" / "share" / "ipfs_datasets_py" / "symai"
+
+
 def ensure_symai_config(
     *,
     neurosymbolic_model: str,
@@ -49,10 +74,8 @@ def ensure_symai_config(
 ) -> Optional[Path]:
     """Ensure `symai` has a config file so `import symai` doesn't call sys.exit(1).
 
-    SymbolicAI (`symai`) normally reads configuration from
-    `${sys.prefix}/.symai/symai.config.json` (i.e. the active venv). A caller
-    may provide a writable fallback root for read-only system environments.
-    If the config is missing or incomplete, SymbolicAI runs a setup wizard.
+    SymbolicAI (`symai`) reads configuration from `${sys.prefix}/.symai/symai.config.json`
+    (i.e. the active venv). If missing or incomplete, it runs a setup wizard then exits.
 
     This helper writes a minimal, non-interactive config.
 
@@ -62,7 +85,8 @@ def ensure_symai_config(
     if not neurosymbolic_model:
         return None
 
-    config_dir = Path(config_root or sys.prefix) / ".symai"
+    prefix_path = _symai_prefix_path(config_root)
+    config_dir = prefix_path / ".symai"
     config_path = config_dir / "symai.config.json"
 
     try:
@@ -92,11 +116,13 @@ def ensure_symai_config(
                 config[key] = value
 
         set_if_empty("SYMBOLIC_ENGINE", "ipfs")
-        set_if_empty(
-            "NEUROSYMBOLIC_ENGINE_MODEL",
-            os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default"),
-        )
-        set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
+        if not neurosymbolic_model:
+            set_if_empty(
+                "NEUROSYMBOLIC_ENGINE_MODEL",
+                os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default"),
+            )
+        if not neurosymbolic_api_key:
+            set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
         set_if_empty("EMBEDDING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"))
         set_if_empty("SEARCH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"))
         set_if_empty("OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default"))
@@ -119,13 +145,26 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
     """Best-effort choice of a `symai` neurosymbolic engine.
 
     Preference order:
-    1) Real OpenAI API key present -> use OpenAI Responses engine.
-    2) If enabled and `codex` is available -> route via `codex exec`.
+    1) Explicit SyMAI model/api-key environment configuration.
+    2) Real OpenAI API key present -> use OpenAI Responses engine.
+    3) Codex-backed llm_router when Codex CLI is available.
 
     This returns a dict with keys: model, api_key.
     """
 
-    # 1) Real API key.
+    explicit_model = os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL", "").strip()
+    explicit_api_key = os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY", "").strip()
+    if explicit_model:
+        resolved_api_key = explicit_api_key
+        if explicit_model.startswith("codex:") and not resolved_api_key:
+            resolved_api_key = "codex"
+        if explicit_model.startswith(("llama", "huggingface")) or resolved_api_key:
+            return {
+                "model": explicit_model,
+                "api_key": resolved_api_key,
+            }
+
+    # 2) Real API key.
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if openai_api_key:
         return {
@@ -134,14 +173,16 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
             "api_key": openai_api_key,
         }
 
-    # 2) Codex CLI routing (explicit opt-in).
-    use_codex = os.environ.get("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+    # 3) Codex CLI routing via llm_router. This is the practical default in this
+    # workspace when Codex is available, but callers can disable it explicitly.
+    disable_codex = os.environ.get("IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", "").strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
     }
-    if not use_codex:
+    explicit_codex_pref = os.environ.get("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower()
+    if disable_codex or explicit_codex_pref in {"0", "false", "no", "off"}:
         return None
 
     try:
@@ -154,10 +195,8 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
     if not codex_path:
         return None
 
-    # Under many Codex (ChatGPT/OAuth) logins, only certain model IDs are supported.
-    # We have empirically validated `gpt-5.2-codex` works in this environment, while
-    # some `*-chat-latest` / `*-pro` variants can be rejected.
-    codex_model = os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL", "gpt-5.2-codex")
+    # Prefer the faster Spark variant by default and let callers override via env.
+    codex_model = os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL", "gpt-5.3-codex-spark")
     return {
         # We'll register a plugin engine that claims `neurosymbolic` when model starts with `codex:`
         "model": f"codex:{codex_model}",
@@ -167,75 +206,49 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
     }
 
 
-def _writable_symai_config_root() -> Optional[Path]:
-    """Return a writable root compatible with SymbolicAI's config manager.
-
-    System Python installations commonly expose a read-only ``sys.prefix``.
-    SymbolicAI nevertheless creates ``<prefix>/.symai`` during import, so use
-    the user's home as a deterministic fallback rather than failing imports
-    with ``PermissionError``.
-    """
-
-    configured_root = str(
-        os.environ.get("IPFS_DATASETS_PY_SYMAI_CONFIG_ROOT") or ""
-    ).strip()
-    candidates = [Path(configured_root)] if configured_root else []
-    candidates.extend((Path(sys.prefix), Path.home()))
-
-    seen: set[Path] = set()
-    for candidate in candidates:
-        candidate = candidate.expanduser()
-        if candidate in seen:
-            continue
-        seen.add(candidate)
-        try:
-            (candidate / ".symai").mkdir(parents=True, exist_ok=True)
-        except OSError:
-            continue
-        return candidate
-    return None
-
-
 def ensure_symai_config_for_import(*, force: bool = False) -> Optional[Path]:
-    """Prepare and, when necessary, safely initialize SymbolicAI.
+    """Create a non-interactive SyMAI config before importing `symai`.
 
-    ``symai`` creates its environment config directory before considering its
-    writable home-directory fallback.  When ``sys.prefix`` is read-only, load
-    it once under the selected writable root and immediately restore the real
-    interpreter prefix.  Subsequent imports reuse the initialized module and
-    do not mutate global interpreter paths.
+    SymbolicAI can create an empty config and then raise `SystemExit(1)` on first
+    import.  Logic modules import `symai` at module load time, so this helper gives
+    them a safe default config without requiring a user prompt or a real API key.
     """
-
-    config_root = _writable_symai_config_root()
-    if config_root is None:
-        return None
 
     chosen_engine = choose_symai_neurosymbolic_engine() or {}
+    model = str(
+        chosen_engine.get("model")
+        or os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL")
+        or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL")
+        or "ipfs:default"
+    )
+    api_key = str(
+        chosen_engine.get("api_key")
+        or os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY")
+        or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_API_KEY")
+        or "ipfs"
+    )
     config_path = ensure_symai_config(
-        neurosymbolic_model=str(
-            chosen_engine.get("model")
-            or os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL")
-            or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL")
-            or "ipfs:default"
-        ),
-        neurosymbolic_api_key=str(
-            chosen_engine.get("api_key")
-            or os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY")
-            or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_API_KEY")
-            or "ipfs"
-        ),
+        neurosymbolic_model=model,
+        neurosymbolic_api_key=api_key,
         force=force,
         apply_engine_router=True,
-        config_root=config_root,
     )
     if config_path is None:
         return None
 
-    original_prefix = sys.prefix
-    if config_root != Path(original_prefix) and "symai" not in sys.modules:
+    # SymbolicAI 1.14 creates `${sys.prefix}/.symai` unconditionally during
+    # import. System Python often has sys.prefix=/usr, which is not writable for
+    # normal users, so import it once with a managed writable prefix. After the
+    # module is loaded its config manager has concrete paths and sys.prefix can
+    # safely be restored for the rest of the process.
+    if "symai" not in sys.modules:
+        original_prefix = sys.prefix
         try:
-            sys.prefix = str(config_root)
-            importlib.import_module("symai")
+            sys.prefix = str(config_path.parent.parent)
+            __import__("symai")
+        except (Exception, SystemExit):
+            sys.modules.pop("symai", None)
         finally:
             sys.prefix = original_prefix
+
     return config_path

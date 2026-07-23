@@ -1,0 +1,47 @@
+{
+  "artifact_cid": "bafkreic3olc6u2lwlxywbn6wxoiochfzjnkeje54sd2mzs3pdj5uz5wz2a",
+  "covered_actions": [
+    "onboarding",
+    "local_network_selection",
+    "review",
+    "signature_decision",
+    "submit_result",
+    "cancellation",
+    "expiry",
+    "replay",
+    "reconnect",
+    "network_change"
+  ],
+  "dependency_cids": {
+    "bridge_isolation_report": "sha256:f4c6b70f93ec8821896a001fc94b6d8448f715968cbd9a94e36277212998a04d",
+    "daemon_health": "sha256:5d7fdd061bfa121e1028b755b49548afa1c320f4e706f2345b05e7aaedc6d36b",
+    "endpoint_rebound_candidate": "sha256:8ecdf83286a89d1b5d4862200ba5dab3c8ba85e6e6310e80ef1e6cbf1d8b9e88",
+    "security_model": "sha256:5cdb033c299f247ed458cb4550941108537f418fa5baa41486cc50532a8cae18"
+  },
+  "overall_status": "reviewed_self_hosted_verifier_trace",
+  "production_release_blocked": true,
+  "redaction_boundary": {
+    "raw_material_reintroduction_rejected": true,
+    "raw_sensitive_material_retained": false
+  },
+  "review_gate": {
+    "endpoint_rebind_review": "sha256:2d5c2ecc26ad57dffc6637c2212f0bbeca8506321665089d46b4bbae9ed2b01c",
+    "expires_at_utc": "2027-07-18T20:05:00Z",
+    "status": "passed"
+  },
+  "schema_version": "xaman-self-hosted-runtime-conformance-report/v1",
+  "scope": {
+    "network_id": 777777,
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "security_decision": "VERIFIER_ONLY_RUNTIME_TRACE_RECORDED",
+  "task_id": "PORTAL-CXTP-158",
+  "trace_artifact_cid": "bafkreigyua5yjzvcuq5ajzzuw4agxzvauey666tqx6nvs5i3n2tex5cpwa",
+  "verdict_policy": {
+    "production_security_assurance_allowed": false,
+    "trace_does_not_clear_vendor_or_backend_assumptions": true,
+    "vendor_release_assurance_allowed": false
+  }
+}

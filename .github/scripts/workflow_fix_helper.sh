@@ -15,8 +15,8 @@ show_usage() {
     echo "Commands:"
     echo "  health-check     - Check workflow health status"
     echo "  fix-workflows    - Fix missing GH_TOKEN in workflows"
-    echo "  copilot-status   - Check Copilot CLI status"
-    echo "  copilot-install  - Install gh-copilot extension"
+    echo "  copilot-status   - Check gh copilot extension status"
+    echo "  copilot-install  - Install gh copilot extension"
     echo "  analyze <file>   - Analyze a specific workflow with Copilot"
     echo "  help             - Show this help message"
     echo ""
@@ -48,14 +48,14 @@ case "$COMMAND" in
         ;;
     
     copilot-status)
-        echo "🤖 Checking Copilot CLI status..."
+        echo "🤖 Checking gh copilot extension status..."
         if command -v gh &> /dev/null; then
             echo "✅ GitHub CLI installed: $(gh --version | head -1)"
             if gh extension list 2>&1 | grep -q copilot; then
                 echo "✅ Copilot extension installed"
             else
                 echo "❌ Copilot extension not installed"
-                echo "   Install with: gh extension install github/gh-copilot"
+                echo "   Install the gh copilot extension with: gh extension install github/gh-copilot"
             fi
         else
             echo "❌ GitHub CLI not installed"
@@ -63,7 +63,7 @@ case "$COMMAND" in
         ;;
     
     copilot-install)
-        echo "📦 Installing gh-copilot extension..."
+        echo "📦 Installing gh copilot extension..."
         if ! command -v gh &> /dev/null; then
             echo "❌ GitHub CLI not installed. Install it first."
             exit 1

@@ -22,6 +22,13 @@ from ..common.converters import (
 from ..common.errors import ConversionError, ValidationError
 from ..types.deontic_types import DeonticFormula, DeonticOperator
 from ..types.common_types import ConfidenceScore
+from .ir import LegalNormIR
+from .formula_builder import build_deontic_formula_records_from_irs
+from .exports import (
+    build_deterministic_parser_capability_profile_records,
+    build_prover_syntax_target_coverage_records_from_irs,
+    parser_elements_with_ir_export_readiness,
+)
 
 # Import existing deontic utilities
 from .utils.deontic_parser import (
@@ -79,6 +86,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         document_type: str = "statute",
         extract_obligations: bool = True,
         include_exceptions: bool = True,
+        expand_enumerations: bool = False,
         confidence_threshold: float = 0.7,
         output_format: str = "json",
         cache_maxsize: int = 1000,
@@ -96,6 +104,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             document_type: Document type (statute, regulation, contract, policy, agreement)
             extract_obligations: Extract obligations from text (default: True)
             include_exceptions: Include exceptions in analysis (default: True)
+            expand_enumerations: Emit item-level parser elements for enumerated clauses (default: False)
             confidence_threshold: Minimum confidence for results (default: 0.7)
             output_format: Output format (json, prolog, tptp) (default: "json")
             cache_maxsize: Maximum cache entries (default: 1000, 0=unlimited)
@@ -115,6 +124,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         self.document_type = document_type if document_type in ["statute", "regulation", "contract", "policy", "agreement", "general"] else "general"
         self.extract_obligations = extract_obligations
         self.include_exceptions = include_exceptions
+        self.expand_enumerations = expand_enumerations
         self.confidence_threshold = confidence_threshold
         self.output_format = output_format
         
@@ -146,6 +156,92 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             "cache_hits": 0,
             "cache_misses": 0,
         }
+
+    def convert(
+        self,
+        input_data: str,
+        options: Optional[Dict[str, Any]] = None,
+        use_cache: bool = True,
+    ) -> ConversionResult[DeonticFormula]:
+        """Convert legal text and attach deterministic parser metadata.
+
+        The base converter returns only the formal output.  This override keeps
+        that behavior but also exposes the parser element and typed legal IR so
+        downstream CEC/TDFOL/proof exporters can consume structured slots
+        instead of reparsing the original legal text.
+        """
+
+        result = super().convert(input_data, options=options, use_cache=use_cache)
+        output = result.output
+        if output is None:
+            return result
+
+        parser_elements = getattr(output, "parser_elements", None)
+        parser_element = getattr(output, "parser_element", None)
+        legal_norm_ir = getattr(output, "legal_norm_ir", None)
+        legal_norm_irs: List[LegalNormIR] = []
+
+        if parser_elements is not None:
+            parser_elements = parser_elements_with_ir_export_readiness(parser_elements)
+            output.parser_elements = parser_elements  # type: ignore[attr-defined]
+            if parser_elements:
+                parser_element = parser_elements[0]
+                output.parser_element = parser_element  # type: ignore[attr-defined]
+            result.metadata.setdefault("parser_elements", parser_elements)
+            legal_norm_irs = [
+                LegalNormIR.from_parser_element(element)
+                for element in parser_elements
+                if isinstance(element, dict)
+            ]
+            result.metadata.setdefault("legal_norm_irs", [norm.to_dict() for norm in legal_norm_irs])
+            result.metadata.setdefault(
+                "legal_formula_records",
+                build_deontic_formula_records_from_irs(legal_norm_irs),
+            )
+            formula_records = result.metadata.get("legal_formula_records", [])
+            result.metadata.setdefault(
+                "legal_formula_record_proof_ready_count",
+                sum(1 for record in formula_records if record.get("proof_ready") is True),
+            )
+            result.metadata.setdefault(
+                "legal_parser_capability_profile_records",
+                build_deterministic_parser_capability_profile_records(legal_norm_irs),
+            )
+            prover_coverage_records = build_prover_syntax_target_coverage_records_from_irs(
+                legal_norm_irs
+            )
+            result.metadata.setdefault(
+                "legal_prover_syntax_target_coverage_records",
+                prover_coverage_records,
+            )
+            result.metadata.setdefault(
+                "legal_formal_syntax_valid_count",
+                sum(1 for record in prover_coverage_records if record.get("formal_syntax_valid") is True),
+            )
+            if legal_norm_irs:
+                legal_norm_ir = legal_norm_irs[0]
+                output.legal_norm_ir = legal_norm_ir  # type: ignore[attr-defined]
+        if parser_element is not None:
+            result.metadata.setdefault("parser_element", parser_element)
+        if legal_norm_ir is not None:
+            result.metadata.setdefault("legal_norm_ir", legal_norm_ir.to_dict())
+        result.metadata.setdefault(
+            "deterministic_parser",
+            {
+                "enabled": True,
+                "source": "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+                "element_count": len(parser_elements or []),
+                "ir_count": len(legal_norm_irs),
+                "formula_record_count": len(result.metadata.get("legal_formula_records", [])),
+                "formula_record_proof_ready_count": result.metadata.get("legal_formula_record_proof_ready_count", 0),
+                "parser_capability_profile_count": len(result.metadata.get("legal_parser_capability_profile_records", [])),
+                "prover_syntax_target_coverage_record_count": len(result.metadata.get("legal_prover_syntax_target_coverage_records", [])),
+                "formal_syntax_valid_count": result.metadata.get("legal_formal_syntax_valid_count", 0),
+                "proof_ready": bool(getattr(legal_norm_ir, "proof_ready", False)),
+                "blockers": list(getattr(legal_norm_ir, "blockers", [])),
+            },
+        )
+        return result
     
     def validate_input(self, text: str) -> ValidationResult:
         """
@@ -199,25 +295,35 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         
         try:
             # Extract normative elements using existing parser
-            elements = extract_normative_elements(text, self.document_type)
+            expand_enumerations = bool(options.get("expand_enumerations", self.expand_enumerations))
+            elements = extract_normative_elements(
+                text,
+                self.document_type,
+                expand_enumerations=expand_enumerations,
+            )
             
             if not elements:
-                # No normative elements found - create empty formula with minimal valid data
-                from ..integration.converters.deontic_logic_core import LegalAgent
+                # The deterministic parser did not find a norm.  Emit an
+                # explicit low-confidence scaffold rather than fabricating a
+                # normal obligation from arbitrary legal text.
                 formula = DeonticFormula(
                     operator=DeonticOperator.OBLIGATION,
-                    proposition="",
+                    proposition="UnparsedNonNormativeOrAmbiguousText",
                     agent=None,
                     beneficiary=None,
                     conditions=[],
-                    confidence=0.3,
+                    confidence=0.05,
                     source_text=text
                 )
+                formula.parser_elements = []  # type: ignore[attr-defined]
+                formula.parser_element = None  # type: ignore[attr-defined]
+                formula.legal_norm_ir = None  # type: ignore[attr-defined]
                 return formula
             
             # Use the first element for single formula conversion
             # (batch processing handles multiple elements)
             element = elements[0]
+            legal_norm_ir = LegalNormIR.from_parser_element(element)
             
             # Build deontic formula string (proposition)
             formula_string = build_deontic_formula(element)
@@ -227,8 +333,13 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "obligation": DeonticOperator.OBLIGATION,
                 "permission": DeonticOperator.PERMISSION,
                 "prohibition": DeonticOperator.PROHIBITION,
+                "definition": DeonticOperator.POWER,
+                "applicability": DeonticOperator.POWER,
+                "exemption": DeonticOperator.IMMUNITY,
+                "instrument_lifecycle": DeonticOperator.POWER,
             }
             operator = operator_map.get(element.get("norm_type"), DeonticOperator.OBLIGATION)
+            proposition = self._strip_outer_deontic_operator(formula_string, operator.value)
             
             # Extract agent from subject
             from ..integration.deontic_logic_core import LegalAgent
@@ -239,16 +350,25 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 agent = LegalAgent(
                     identifier=subject_name.lower().replace(" ", "_"),
                     name=subject_name,
-                    agent_type="person",  # Simplified
+                    agent_type=element.get("actor_type") or "legal_entity",
+                    properties={}
+                )
+            beneficiary = None
+            recipient_name = element.get("action_recipient")
+            if recipient_name:
+                beneficiary = LegalAgent(
+                    identifier=recipient_name.lower().replace(" ", "_"),
+                    name=recipient_name,
+                    agent_type="beneficiary",
                     properties={}
                 )
             
             # Create DeonticFormula object with correct constructor
             formula = DeonticFormula(
                 operator=operator,
-                proposition=formula_string,
+                proposition=proposition,
                 agent=agent,
-                beneficiary=None,
+                beneficiary=beneficiary,
                 conditions=element.get("conditions", []),
                 temporal_conditions=[],  # Would need to convert from element format
                 confidence=0.8,  # Will be recalculated below
@@ -259,6 +379,9 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             confidence = self._calculate_confidence(text, formula_string, element)
             # Update formula confidence (it's mutable)
             formula.confidence = confidence
+            formula.parser_elements = elements  # type: ignore[attr-defined]
+            formula.parser_element = element  # type: ignore[attr-defined]
+            formula.legal_norm_ir = legal_norm_ir  # type: ignore[attr-defined]
             
             # Track conversion time
             conversion_time = time.time() - start_time
@@ -284,6 +407,14 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                     error=str(e)
                 )
             raise ConversionError(f"Failed to convert legal text to deontic logic: {e}")
+
+    @staticmethod
+    def _strip_outer_deontic_operator(formula: str, operator_value: str) -> str:
+        text = str(formula or "").strip()
+        prefix = f"{operator_value}("
+        if text.startswith(prefix) and text.endswith(")"):
+            return text[len(prefix) : -1].strip()
+        return text
     
     def _calculate_confidence(self, text: str, formula: str, element: Dict[str, Any]) -> float:
         """
@@ -309,6 +440,8 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                     "has_subject": len(element.get("subject", [])) > 0,
                     "has_action": len(element.get("action", [])) > 0,
                     "has_conditions": len(element.get("conditions", [])) > 0,
+                    "scaffold_quality": element.get("scaffold_quality", 0),
+                    "parser_warning_count": len(element.get("parser_warnings", [])),
                     "norm_type": element.get("norm_type", "unknown"),
                 }
                 return self.ml_scorer.predict_confidence(features)
@@ -316,7 +449,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 logger.debug(f"ML confidence scoring failed, using heuristic: {e}")
         
         # Heuristic confidence calculation
-        confidence = 0.5  # Base confidence
+        confidence = float(element.get("confidence_floor") or 0.35)
         
         # Boost confidence based on element completeness
         if element.get("deontic_operator"):
@@ -327,6 +460,14 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             confidence += 0.15
         if len(formula) > 10:
             confidence += 0.05
+        confidence += min(float(element.get("scaffold_quality") or 0.0), 1.0) * 0.10
+        confidence -= min(len(element.get("parser_warnings", [])), 5) * 0.03
+        if element.get("promotable_to_theorem") is False:
+            confidence = min(confidence, 0.68)
+        if element.get("norm_type") == "definition":
+            confidence = min(confidence, 0.45)
+        if element.get("extraction_method", "").startswith("deterministic_"):
+            confidence = min(confidence, 0.82)
         
         return min(confidence, 1.0)
     
@@ -448,6 +589,15 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         """
         import re as _re
         text_lower = text.lower()
+        # Prohibition must be checked before bare "shall"/"must"/"may".
+        if _re.search(r'\b(must\s+not|shall\s+not|may\s+not|cannot|can\s+not|forbidden|prohibited)\b', text_lower):
+            action = _re.sub(
+                r'\b(must\s+not|shall\s+not|may\s+not|cannot|can\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from|are\s+prohibited\s+from)\b',
+                '',
+                text_lower,
+            ).strip()
+            action = action.replace(' ', '_')
+            return f"F({action})"
         # Obligation: "must", "shall", "obligatory", "required"
         if _re.search(r'\b(must|shall|obligator|obliged|required)\b', text_lower):
             action = _re.sub(r'\b(it\s+is\s+obligatory\s+that|must|shall|is\s+obliged\s+to|is\s+required\s+to)\b', '', text_lower).strip()
@@ -458,10 +608,5 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             action = _re.sub(r'\b(may|is\s+permitted\s+to|is\s+allowed\s+to|can)\b', '', text_lower).strip()
             action = action.replace(' ', '_')
             return f"P({action})"
-        # Prohibition: "must not", "shall not", "forbidden"
-        if _re.search(r'\b(must\s+not|shall\s+not|forbidden|prohibited)\b', text_lower):
-            action = _re.sub(r'\b(must\s+not|shall\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from)\b', '', text_lower).strip()
-            action = action.replace(' ', '_')
-            return f"F({action})"
         # Default: obligation
         return f"Obligation({text.replace(' ', '_')})"

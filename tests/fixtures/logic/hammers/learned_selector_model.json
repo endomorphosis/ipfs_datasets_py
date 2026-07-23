@@ -1,0 +1,30 @@
+{
+  "bias": -1.6,
+  "description": "Fixed, hand-authored linear combination of graph/lexical overlap features (not gradient-trained). Extends the HAMMER-004 deterministic baseline's symbol/type/import/graph Jaccard scores with candidate-size and one-hop-neighbor count features.",
+  "feature_names": [
+    "symbol_score",
+    "type_score",
+    "import_score",
+    "graph_score",
+    "goal_symbol_count",
+    "candidate_symbol_count",
+    "shared_symbol_count",
+    "candidate_import_count",
+    "one_hop_neighbor_count"
+  ],
+  "feature_version": "learned-selector-features-v1",
+  "model_digest": "sha256:ad48f4b45a454bc41b63bef17ed7b4c1695b8c21ab118c1ec16766f21a14aa75",
+  "model_id": "graph-selector-default-v1",
+  "schema_version": "1.0.0",
+  "weights": {
+    "candidate_import_count": 0.0,
+    "candidate_symbol_count": -0.01,
+    "goal_symbol_count": 0.0,
+    "graph_score": 0.8,
+    "import_score": 1.2,
+    "one_hop_neighbor_count": 0.05,
+    "shared_symbol_count": 0.15,
+    "symbol_score": 3.2,
+    "type_score": 1.0
+  }
+}

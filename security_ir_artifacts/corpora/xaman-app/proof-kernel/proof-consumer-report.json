@@ -1,0 +1,90 @@
+{
+  "blockers": [
+    "Coq kernel artifact is not present because coqc is unavailable.",
+    "The Lean kernel is not yet wired into a production proof-consumer runtime.",
+    "The Xaman proof-consumer claim still lists proof-consumer-kernel-validation as an assumption until integration evidence exists."
+  ],
+  "claim_assumptions": [
+    "xaman-assumption:proof-consumer-kernel-validation"
+  ],
+  "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+  "claim_status": "POLICY_DEFINED_NOT_YET_KERNEL_PROVED",
+  "coq": {
+    "executable": null,
+    "probe": {
+      "command": [
+        "coqc"
+      ],
+      "returncode": null,
+      "status": "unavailable",
+      "stderr": "coqc executable not found",
+      "stdout": ""
+    },
+    "release_policy": "do_not_claim_coq_checked_kernel_until_coqc_is_available_and_a_coq_artifact_is_added",
+    "status": "unavailable",
+    "version": ""
+  },
+  "corpus": "xaman-app",
+  "generated_at": "2026-07-10T07:04:56Z",
+  "invariant_policy": {
+    "accepted_assumptions_current_required": true,
+    "accepted_statuses": [
+      "PROVED"
+    ],
+    "assumptions_cleared_required": true,
+    "claim_id_match_required": true,
+    "evidence_review_required": true,
+    "model_cid_match_required": true,
+    "no_counterexample_required": true,
+    "rejected_statuses": [
+      "DISPROVED",
+      "UNKNOWN",
+      "NOT_MODELED"
+    ],
+    "report_cid_match_required": true,
+    "solver_agreement_required": true,
+    "supported_prover_required": true,
+    "trusted_signature_or_canonical_cid_required": true
+  },
+  "kernel": {
+    "artifact_cid": "sha256:fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f",
+    "contains_admit": false,
+    "contains_sorry": false,
+    "language": "Lean 4",
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "theorems": [
+      "reject_disproved_status",
+      "reject_unknown_status",
+      "reject_not_modeled_status",
+      "reject_uncleared_assumptions",
+      "reject_unreviewed_evidence",
+      "reject_solver_disagreement",
+      "reject_counterexample",
+      "reject_report_cid_mismatch",
+      "reject_missing_trust_anchor",
+      "reject_stale_assumptions",
+      "reject_unsupported_prover"
+    ]
+  },
+  "lean": {
+    "compile": {
+      "command": [
+        "/home/barberb/.elan/bin/lean",
+        "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": ""
+    },
+    "executable": "/home/barberb/.elan/bin/lean",
+    "status": "compiled",
+    "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
+  },
+  "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+  "overall_status": "ready_lean_checked_coq_unavailable",
+  "production_release_blocked": true,
+  "schema_version": "xaman-proof-consumer-report/v1",
+  "security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS",
+  "task_id": "PORTAL-CXTP-073"
+}

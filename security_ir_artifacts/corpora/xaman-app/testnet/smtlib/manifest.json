@@ -1,0 +1,201 @@
+{
+  "artifacts": [
+    {
+      "artifact_cid": "bafkreidfxxri74q5e2z2zc2ktn2g2gifhks4lneruipkevarchn6et574a",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:testnet-network-binding-is-verifier-only",
+        "xaman-testnet-assumption:deployed-runtime-equivalence-not-proved"
+      ],
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "claim_version": "1.0",
+      "domain": "ledger",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_network-binding-is-testnet-only.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "high"
+    },
+    {
+      "artifact_cid": "bafkreihpxuiz4dl47rwh3gt2kttdez42dbhbrs2oicbs2y5zfdakjole74",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "claim_version": "1.0",
+      "domain": "store",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_account-provenance-is-fresh-testnet-only.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreiahiodpgemzd7w52dh3ul2644ysklxgoutxpiluehe4j52u2kewva",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:reviewed-ui-event-is-operator-attested",
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved"
+      ],
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "claim_version": "1.0",
+      "domain": "auth_component",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_review-auth-sequence-observed.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreidh53fxyw6hisxqogrukoieabwijsea5mqpiyvsh5x37d3g5eywhy",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:native-vault-and-biometric-security-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "claim_version": "1.0",
+      "domain": "vault",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreief3ld3niawpknwk7va5bfeuzbawaqqsi4lyjmt4x6hqqegcjevai",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "claim_version": "1.0",
+      "domain": "ledger",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreieokmonrnmoy4ek6icfriterpzp3xkxnznobziwylvfmkwy46gbhy",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:raw-payload-material-excluded",
+        "xaman-testnet-assumption:redacted-categorical-evidence-only"
+      ],
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "claim_version": "1.0",
+      "domain": "payload",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_payload-intake-is-categorical-only.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreib7zc4bjor7crq5o24ff2qxqgghv4qcutqdwwixv6bsjoi3pdn5yi",
+      "assertion_count": 2,
+      "blocking_assumption_count": 1,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "claim_version": "1.0",
+      "domain": "e2e_flow",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_refusal-path-is-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreicojrijcynngqazugducuvex3pp6hfcvjpfqmtsij6c4mwnselqs4",
+      "assertion_count": 2,
+      "blocking_assumption_count": 1,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "claim_version": "1.0",
+      "domain": "payload",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_replay-controls-are-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreibbzhwce7vb3nfqqfmwgoue42kctn2cyrjgmpmojz3ftevqogrqmu",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+        "xaman-testnet-assumption:backend-replay-single-use-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "claim_version": "1.0",
+      "domain": "payload",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_expiry-path-is-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreifobppkmrx7mrmjzonlgja74yfidh3ppj2npv3g34jtyh42gs25jy",
+      "assertion_count": 2,
+      "blocking_assumption_count": 1,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+      ],
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "claim_version": "1.0",
+      "domain": "e2e_flow",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_cancellation-path-is-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreicj64ebb32ydy3r7uhulieifhaj3xincyuj5y32x7uv2olzxr2d5q",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:xrpl-broadcast-finality-not-proved",
+        "xaman-testnet-assumption:raw-signature-and-transaction-blob-excluded"
+      ],
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "claim_version": "1.0",
+      "domain": "ledger",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    },
+    {
+      "artifact_cid": "bafkreidscw7pxknz4mqwwngd2psojjaloirhbh6n2d3bemxkhprsuh63ky",
+      "assertion_count": 3,
+      "blocking_assumption_count": 2,
+      "blocking_assumption_ids": [
+        "xaman-testnet-assumption:redacted-categorical-evidence-only",
+        "xaman-testnet-assumption:testnet-verifier-evidence-is-not-production-evidence"
+      ],
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "claim_version": "1.0",
+      "domain": "audit",
+      "logic": "QF_LIA",
+      "path": "xaman-testnet-claim_audit-redaction-boundary-is-preserved.smt2",
+      "query_kind": "xaman_blocking_acceptance_satisfiability",
+      "severity": "blocking"
+    }
+  ],
+  "claim_count": 12,
+  "logic": "QF_LIA",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "model_id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+  "model_schema_version": "security-model-ir/xaman/v1",
+  "query_kind": "xaman_blocking_acceptance_satisfiability",
+  "schema_version": "xaman-testnet-smtlib-manifest/v1",
+  "task_id": "PORTAL-CXTP-132"
+}

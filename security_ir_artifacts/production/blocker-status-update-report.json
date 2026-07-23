@@ -1,0 +1,262 @@
+{
+  "artifact_cid": "sha256:39ed5469b1042efdaa296906217c47cdae5c1877428e45e8385dcfd3660befd9",
+  "blocked_task_ids_preserved": [
+    "PORTAL-CXTP-077",
+    "PORTAL-CXTP-078",
+    "PORTAL-CXTP-079",
+    "PORTAL-CXTP-080",
+    "PORTAL-CXTP-081",
+    "PORTAL-CXTP-082",
+    "PORTAL-CXTP-083",
+    "PORTAL-CXTP-084"
+  ],
+  "blockers": [
+    {
+      "code": "EVIDENCE_BUNDLE_FILE_MISSING",
+      "path": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/production/evidence-bundle.json"
+    }
+  ],
+  "generated_at_utc": "2026-07-19T04:59:29Z",
+  "inputs": {
+    "evidence_bundle": {
+      "bundle_id": null,
+      "exists": false,
+      "path": "security_ir_artifacts/production/evidence-bundle.json",
+      "sha256": null
+    },
+    "evidence_report": {
+      "exists": true,
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/production/evidence-bundle-report.json",
+      "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE",
+      "sha256": "139b736861d07eeae9d30fd13b887aaec0ac96c60aabc91ba00998dc4e7a0558"
+    },
+    "packets": {
+      "artifact_cid": "sha256:c43cad75c6adfe4a4056afc9497bed3bd1dcf2cd373968a93a0b35aaf09502bf",
+      "exists": true,
+      "path": "security_ir_artifacts/production/blocker-evidence-packets.json",
+      "schema_version": "crypto-exchange-production-blocker-evidence-packets/v1",
+      "sha256": "01f781fab4998fc0fc1140bd59c776047899cdfabd26a12ecefd1d776742e069"
+    }
+  },
+  "may_mark_production_secure": false,
+  "mode": "dry-run",
+  "operator_action": "Keep PORTAL-CXTP-077 through PORTAL-CXTP-084 blocked until a production evidence bundle exists, validates with no blockers, and every packet reports status_update_allowed=true.",
+  "overall_status": "blocked",
+  "policy_document": "docs/security_verification/production_blocker_status_updater.md",
+  "production_release_blocked": true,
+  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
+  "schema_version": "production-blocker-status-update/v1",
+  "security_decision": "BLOCK_PRODUCTION_BLOCKER_STATUS_UPDATE",
+  "status_updates": [
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    },
+    {
+      "apply_mode": "dry-run",
+      "blocked_claim_ids": [],
+      "blocker_id": "<missing>",
+      "blockers": [
+        {
+          "blocker_codes": [
+            "BUNDLE_FILE_MISSING"
+          ],
+          "code": "EVIDENCE_VALIDATION_REPORT_BLOCKED",
+          "evidence_overall_status": "blocked",
+          "security_decision": "BLOCK_PRODUCTION_EVIDENCE_INTAKE"
+        }
+      ],
+      "claim_results": [],
+      "current_status": null,
+      "domain_results": [],
+      "may_mark_production_secure": false,
+      "packet_id": "<missing>",
+      "production_release_effect": "blocked-production",
+      "proposed_status": "blocked_missing_production_evidence",
+      "required_domains": [],
+      "source_task_id": null,
+      "status_update_allowed": false
+    }
+  ],
+  "summary": {
+    "dry_run": true,
+    "input_blocker_count": 1,
+    "packet_blocker_count": 8,
+    "packet_count": 8,
+    "status_update_allowed_count": 0,
+    "status_update_blocked_count": 8
+  },
+  "task_id": "PORTAL-CXTP-095"
+}

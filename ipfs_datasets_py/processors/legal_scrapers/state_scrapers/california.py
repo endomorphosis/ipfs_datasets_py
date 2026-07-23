@@ -5,8 +5,10 @@ Scrapes laws from the California Legislative Information website
 """
 
 from typing import List, Dict, Optional
+import os
 import re
 from urllib.parse import urljoin, urlparse, parse_qs
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -91,7 +93,12 @@ class CaliforniaScraper(BaseStateScraper):
         
         return codes
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific California code.
         
         Args:
@@ -108,17 +115,18 @@ class CaliforniaScraper(BaseStateScraper):
             return []
         
         statutes = []
+        limit = self._effective_scrape_limit(max_statutes, default=250)
         code_type = self.CODE_TYPE_MAP.get(code_name)
         if not code_type:
             self.logger.warning(f"No code type mapping for {code_name}")
             return statutes
         
         try:
-            page_bytes = await self._fetch_page_content_with_archival_fallback(
-                code_url,
-                timeout_seconds=30,
-            )
+            fetch_timeout = max(5, int(float(os.getenv("CALIFORNIA_CODE_FETCH_TIMEOUT_SECONDS", "45") or 45)))
+            self.logger.info("California: fetching %s from %s with timeout=%ss", code_name, code_url, fetch_timeout)
+            page_bytes = await self._fetch_code_index_page(code_url, timeout_seconds=fetch_timeout)
             if not page_bytes:
+                self.logger.warning("California: empty response for %s", code_name)
                 return []
 
             soup = BeautifulSoup(page_bytes, 'html.parser')
@@ -179,18 +187,71 @@ class CaliforniaScraper(BaseStateScraper):
                     official_cite=f"Cal. {code_name} § {section_number}",
                     metadata=StatuteMetadata()
                 )
+                statute.structured_data = {
+                    "source_kind": "official_california_leginfo_index",
+                    "skip_hydrate": True,
+                }
                 
                 statutes.append(statute)
 
-                if len(statutes) >= 250:
+                if limit is not None and len(statutes) >= int(limit):
                     break
             
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
             
+        except TimeoutError:
+            self.logger.error("California: timed out fetching/parsing %s", code_name)
         except Exception as e:
             self.logger.error(f"Failed to scrape {code_name}: {e}")
         
         return statutes
+
+    async def _fetch_code_index_page(self, url: str, timeout_seconds: int = 45) -> bytes:
+        """Fetch California code index pages without the heavy recovery stack.
+
+        The generic archival/search fetch path can initialize multiple search
+        engines and has non-cancellable recovery branches. California code
+        index pages are first-party HTML, so a direct bounded request plus the
+        shared persistent cache is safer for long daemon runs.
+        """
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
+
+        timeout = max(5, int(timeout_seconds or 45))
+
+        def _request() -> bytes:
+            try:
+                import requests
+
+                response = requests.get(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-california-code-scraper/2.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                    timeout=(min(10, timeout), timeout),
+                )
+                if int(response.status_code or 0) != 200:
+                    return b""
+                return bytes(response.content or b"")
+            except Exception:
+                return b""
+
+        try:
+            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except TimeoutError:
+            self._record_fetch_event(provider="requests_direct", success=False, error="california_direct_timeout")
+            return b""
+
+        self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            return payload
+
+        # Keep the generic recovery hook available for tests and for real
+        # blocked/archived California pages; direct is merely the first try.
+        return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout)
 
 
 # Register the scraper

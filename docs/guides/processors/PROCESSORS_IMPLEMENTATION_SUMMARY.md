@@ -2,13 +2,20 @@
 
 **Date:** 2026-02-14  
 **Branch:** copilot/refactor-ipfs-datasets-processors  
-**Status:** Phase 1 Complete, Phase 2 In Progress  
+**Status:** Historical implementation snapshot  
 
 ---
 
 ## Executive Summary
 
 Successfully implemented Phase 1 of the comprehensive processors refactoring plan, creating a unified architecture with single entrypoint (`UniversalProcessor`) for all processing needs. Started Phase 2 with consolidation of GraphRAG implementations.
+
+> **Current-state note:** this document summarizes the refactoring work as it
+> stood in February 2026. The current repository still includes both root-level
+> processor modules and parallel core implementations such as
+> `core/registry.py` and `core/processor_registry.py`, so treat the examples
+> and file inventory below as historical context unless they match the live
+> package layout.
 
 **Key Achievement:** Created **100KB+ of new infrastructure code** that will enable elimination of **~2,100 lines of duplicate code** and provide a consistent, extensible architecture for future development.
 
@@ -585,4 +592,3 @@ The architecture is working as designed, with successful demos showing automatic
 1. Move multimedia to processors/ (Phase 3)
 2. Performance benchmarking (Phase 5)
 3. Final documentation updates
-

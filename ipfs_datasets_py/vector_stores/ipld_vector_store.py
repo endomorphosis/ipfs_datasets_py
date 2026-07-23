@@ -309,12 +309,14 @@ class IPLDVectorStore(BaseVectorStore):
         
         for emb in embeddings:
             # Get vector - might need to generate via router
-            if hasattr(emb, 'vector') and emb.vector:
-                vector = np.array(emb.vector, dtype=np.float32)
-            elif hasattr(emb, 'text') and emb.text and self.router and self.router.is_embeddings_available():
+            existing_vector = getattr(emb, "vector", None) or getattr(emb, "embedding", None)
+            existing_text = getattr(emb, "text", None) or getattr(emb, "content", None)
+            if existing_vector:
+                vector = np.array(existing_vector, dtype=np.float32)
+            elif existing_text and self.router and self.router.is_embeddings_available():
                 # Generate embedding via router
                 logger.debug(f"Generating embedding for text via router")
-                vecs = await self.router.generate_embeddings([emb.text])
+                vecs = await self.router.generate_embeddings([existing_text])
                 vector = np.array(vecs[0], dtype=np.float32)
             else:
                 raise VectorStoreError("Embedding has no vector and cannot generate one")
@@ -329,9 +331,9 @@ class IPLDVectorStore(BaseVectorStore):
             
             # Extract metadata
             meta = {
-                "text": getattr(emb, 'text', None),
+                "text": existing_text,
                 "metadata": getattr(emb, 'metadata', {}),
-                "id": getattr(emb, 'id', None) or str(uuid.uuid4())
+                "id": getattr(emb, 'id', None) or getattr(emb, 'chunk_id', None) or str(uuid.uuid4())
             }
             metadata_list.append(meta)
             ids.append(meta["id"])

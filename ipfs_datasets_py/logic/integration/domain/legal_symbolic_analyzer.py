@@ -34,11 +34,11 @@ def _initialize_symbolic_ai() -> bool:
     _SYMAI_INIT_ATTEMPTED = True
 
     try:
-        from ..utils.engine_env import autoconfigure_engine_env
+        from ....utils.engine_env import autoconfigure_engine_env
 
         autoconfigure_engine_env()
 
-        from ..utils.symai_config import choose_symai_neurosymbolic_engine, ensure_symai_config
+        from ....utils.symai_config import choose_symai_neurosymbolic_engine, ensure_symai_config
 
         chosen_engine = choose_symai_neurosymbolic_engine()
         if chosen_engine:

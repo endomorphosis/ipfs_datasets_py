@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-GitHub Copilot CLI Workflow Helper
+gh copilot Workflow Helper
 
-This script provides Copilot CLI integration for GitHub Actions workflows,
+This script provides gh copilot integration for GitHub Actions workflows,
 enabling automated code analysis, command suggestions, and workflow improvements.
 
 Usage:
@@ -25,7 +25,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 class CopilotWorkflowHelper:
     """
-    Helper for using GitHub Copilot CLI with workflows
+    Helper for using the gh copilot extension with workflows
     """
     
     def __init__(self):
@@ -49,7 +49,7 @@ class CopilotWorkflowHelper:
         return None
     
     def _check_copilot_available(self) -> bool:
-        """Check if Copilot CLI extension is available"""
+        """Check if the gh copilot extension is available."""
         if not self.gh_cli:
             return False
         
@@ -113,7 +113,7 @@ class CopilotWorkflowHelper:
             Explanation or None if failed
         """
         if not self.copilot_available:
-            print("⚠️  Copilot CLI not available")
+            print("⚠️  gh copilot extension not available")
             return None
         
         try:
@@ -147,7 +147,7 @@ class CopilotWorkflowHelper:
             Suggested command or None if failed
         """
         if not self.copilot_available:
-            print("⚠️  Copilot CLI not available")
+            print("⚠️  gh copilot extension not available")
             return None
         
         try:
@@ -180,7 +180,7 @@ class CopilotWorkflowHelper:
             Suggested Git command or None if failed
         """
         if not self.copilot_available:
-            print("⚠️  Copilot CLI not available")
+            print("⚠️  gh copilot extension not available")
             return None
         
         try:
@@ -236,7 +236,7 @@ class CopilotWorkflowHelper:
                 result['analysis'] = explanation
                 result['success'] = True
         else:
-            result['analysis'] = "Copilot CLI not available - install with: gh extension install github/gh-copilot"
+            result['analysis'] = "gh copilot extension not available - install with: gh extension install github/gh-copilot"
         
         return result
     
@@ -254,7 +254,7 @@ class CopilotWorkflowHelper:
         suggestions = []
         
         if not self.copilot_available:
-            suggestions.append("Install Copilot CLI: gh extension install github/gh-copilot")
+            suggestions.append("Install the gh copilot extension: gh extension install github/gh-copilot")
             return suggestions
         
         # Build a description of the issue
@@ -277,7 +277,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='GitHub Copilot CLI Workflow Helper'
+        description='gh copilot workflow helper'
     )
     
     subparsers = parser.add_subparsers(dest='command', help='Command to run')

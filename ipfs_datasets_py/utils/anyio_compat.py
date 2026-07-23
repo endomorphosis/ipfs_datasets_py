@@ -18,20 +18,97 @@ Keep this module dependency-light; `anyio` already depends on `sniffio`.
 
 from __future__ import annotations
 
+import asyncio as _stdlib_asyncio
+import os
 from collections.abc import Awaitable, Callable
+from functools import partial
 import inspect
+import threading
 from typing import Any, Optional, TypeVar
 
-import anyio
+try:
+    import anyio
+except ModuleNotFoundError:  # pragma: no cover - exercised in minimal environments
+    anyio = None
 
 
 T = TypeVar("T")
 TimeoutError = TimeoutError
-Semaphore = anyio.Semaphore
+_REAL_ANYIO_AVAILABLE = anyio is not None
+if anyio is not None:
+    Semaphore = anyio.Semaphore
+    Lock = anyio.Lock
+else:
+    Semaphore = _stdlib_asyncio.Semaphore
+    Lock = _stdlib_asyncio.Lock
 
 
 class AsyncContextError(RuntimeError):
     """Raised when attempting to start a new event loop inside an async context."""
+
+
+if anyio is None:
+    class _FallbackToThread:
+        @staticmethod
+        async def run_sync(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
+            return await _stdlib_asyncio.to_thread(func, *args, **kwargs)
+
+
+    class _FallbackTaskGroup:
+        def __init__(self) -> None:
+            self._tasks: list[_stdlib_asyncio.Task[Any]] = []
+
+        async def __aenter__(self) -> "_FallbackTaskGroup":
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb) -> None:
+            if self._tasks:
+                await _stdlib_asyncio.gather(*self._tasks, return_exceptions=True)
+
+        def start_soon(self, func: Callable[..., Awaitable[Any]], /, *args: Any) -> None:
+            self._tasks.append(_stdlib_asyncio.create_task(func(*args)))
+
+
+    class _FallbackAnyIO:
+        Event = _stdlib_asyncio.Event
+        Semaphore = _stdlib_asyncio.Semaphore
+        to_thread = _FallbackToThread()
+
+        @staticmethod
+        def get_current_task() -> _stdlib_asyncio.Task[Any]:
+            task = _stdlib_asyncio.current_task()
+            if task is None:
+                raise RuntimeError("No active asyncio task")
+            return task
+
+        @staticmethod
+        def run(func: Callable[[], Awaitable[T]]) -> T:
+            return _stdlib_asyncio.run(func())
+
+        @staticmethod
+        async def sleep(seconds: float) -> None:
+            await _stdlib_asyncio.sleep(seconds)
+
+        @staticmethod
+        def get_cancelled_exc_class() -> type[BaseException]:
+            return _stdlib_asyncio.CancelledError
+
+        @staticmethod
+        def fail_after(seconds: float):
+            del seconds
+            return _stdlib_asyncio.timeout(None)
+
+        @staticmethod
+        def move_on_after(seconds: float):
+            del seconds
+            return _stdlib_asyncio.timeout(None)
+
+        @staticmethod
+        def create_task_group() -> _FallbackTaskGroup:
+            return _FallbackTaskGroup()
+
+
+    anyio = _FallbackAnyIO()
 
 
 def in_async_context() -> bool:
@@ -60,6 +137,33 @@ def run(awaitable: Awaitable[T]) -> T:
     async def _runner() -> T:
         return await awaitable
 
+    backend = os.getenv("IPFS_DATASETS_PY_ANYIO_BACKEND", "").strip()
+    if backend and _REAL_ANYIO_AVAILABLE:
+        try:
+            return anyio.run(_runner, backend=backend)
+        except (LookupError, ModuleNotFoundError):
+            return anyio.run(_runner)
+    return anyio.run(_runner)
+
+
+def run_with_backend(awaitable: Awaitable[T], *, backend: str = "trio") -> T:
+    """Run an awaitable with a preferred AnyIO backend and safe fallback."""
+
+    if in_async_context():
+        raise AsyncContextError(
+            "Cannot call anyio_compat.run_with_backend() from within an async context. "
+            "Use `await` in async code instead."
+        )
+
+    async def _runner() -> T:
+        return await awaitable
+
+    backend_name = str(os.getenv("IPFS_DATASETS_PY_ANYIO_BACKEND", backend) or "").strip()
+    if backend_name and _REAL_ANYIO_AVAILABLE:
+        try:
+            return anyio.run(_runner, backend=backend_name)
+        except (LookupError, ModuleNotFoundError):
+            return anyio.run(_runner)
     return anyio.run(_runner)
 
 
@@ -139,17 +243,135 @@ async def wait_for(awaitable: Awaitable[T], timeout: float) -> T:
 
 
 async def to_thread(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
-    return await anyio.to_thread.run_sync(func, *args, **kwargs)
+    if kwargs:
+        func = partial(func, **kwargs)
+    try:
+        return await anyio.to_thread.run_sync(func, *args, abandon_on_cancel=True)
+    except TypeError:
+        return await anyio.to_thread.run_sync(func, *args)
+
+
+class _CompatFuture(Awaitable[T]):
+    """Small awaitable future for non-asyncio anyio backends."""
+
+    def __init__(self) -> None:
+        self._event = anyio.Event()
+        self._lock = threading.Lock()
+        self._done = False
+        self._result: Optional[T] = None
+        self._exception: Optional[BaseException] = None
+        self._callbacks: list[Callable[[Any], Any]] = []
+
+    def done(self) -> bool:
+        with self._lock:
+            return self._done
+
+    def cancelled(self) -> bool:
+        return False
+
+    def set_result(self, result: T) -> None:
+        callbacks: list[Callable[[Any], Any]] = []
+        with self._lock:
+            if self._done:
+                raise _stdlib_asyncio.InvalidStateError("Future already done")
+            self._done = True
+            self._result = result
+            callbacks = list(self._callbacks)
+            self._callbacks.clear()
+        self._event.set()
+        for callback in callbacks:
+            callback(self)
+
+    def set_exception(self, exc: BaseException) -> None:
+        callbacks: list[Callable[[Any], Any]] = []
+        with self._lock:
+            if self._done:
+                raise _stdlib_asyncio.InvalidStateError("Future already done")
+            self._done = True
+            self._exception = exc
+            callbacks = list(self._callbacks)
+            self._callbacks.clear()
+        self._event.set()
+        for callback in callbacks:
+            callback(self)
+
+    def result(self) -> T:
+        with self._lock:
+            if not self._done:
+                raise _stdlib_asyncio.InvalidStateError("Result is not ready")
+            if self._exception is not None:
+                raise self._exception
+            return self._result  # type: ignore[return-value]
+
+    def exception(self) -> Optional[BaseException]:
+        with self._lock:
+            if not self._done:
+                raise _stdlib_asyncio.InvalidStateError("Result is not ready")
+            return self._exception
+
+    def add_done_callback(self, callback: Callable[[Any], Any]) -> None:
+        call_now = False
+        with self._lock:
+            if self._done:
+                call_now = True
+            else:
+                self._callbacks.append(callback)
+        if call_now:
+            callback(self)
+
+    async def _wait(self) -> T:
+        await self._event.wait()
+        return self.result()
+
+    def __await__(self):
+        return self._wait().__await__()
+
+
+class _FutureMeta(type):
+    def __instancecheck__(cls, instance: Any) -> bool:
+        return isinstance(instance, (_stdlib_asyncio.Future, _CompatFuture))
+
+
+class Future(metaclass=_FutureMeta):
+    """Runtime-checkable Future facade for asyncio-compatible call sites."""
+
+    def __class_getitem__(cls, _item: Any) -> type[Future]:
+        return cls
 
 
 class _CompatLoop:
     """Minimal loop shim for legacy code paths expecting asyncio loop helpers."""
+
+    def __init__(self) -> None:
+        self._asyncio_loop: Optional[_stdlib_asyncio.AbstractEventLoop] = None
+        self._anyio_token: Any = None
+        if in_async_context():
+            try:
+                self._asyncio_loop = _stdlib_asyncio.get_running_loop()
+            except RuntimeError:
+                self._asyncio_loop = None
+            try:
+                self._anyio_token = anyio.lowlevel.current_token()
+            except Exception:
+                self._anyio_token = None
 
     def is_running(self) -> bool:
         return in_async_context()
 
     def run_until_complete(self, awaitable: Awaitable[T]) -> T:
         return run(awaitable)
+
+    def create_future(self) -> _stdlib_asyncio.Future[T] | _CompatFuture[T]:
+        if self._asyncio_loop is not None:
+            return self._asyncio_loop.create_future()
+        return _CompatFuture()
+
+    def call_soon_threadsafe(self, callback: Callable[..., Any], *args: Any) -> Any:
+        if self._asyncio_loop is not None:
+            return self._asyncio_loop.call_soon_threadsafe(callback, *args)
+        if self._anyio_token is None:
+            raise RuntimeError("no running event loop")
+        return anyio.from_thread.run_sync(lambda: callback(*args), token=self._anyio_token)
 
     async def run_in_executor(self, _executor: Any, func: Callable[..., T], *args: Any) -> T:
         return await anyio.to_thread.run_sync(func, *args)

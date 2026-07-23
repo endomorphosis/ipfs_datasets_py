@@ -1,0 +1,38 @@
+{
+  "artifact_cid": "bafkreidmalzvoe6fkja2xdp2vo5h7i3nzyuw74o5pu5au23cl5p2ax3fmq",
+  "fuzz_domain": "malformed_payload",
+  "legacy_task_id": "PORTAL-CXTP-138",
+  "minimal_counterexample": {
+    "fuzz_domain": "malformed_payload",
+    "mutation_keys": [
+      "signing_material_boundary_crossed"
+    ],
+    "payload_sha256": "6eef294c82a227f88f9d2a7600974de7035cb5099508f4d7dedf2309cc5744a1",
+    "target_claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled"
+  },
+  "minimization": {
+    "algorithm": "deterministic-one-domain-delta-minimizer/v1",
+    "fuzz_domain": "malformed_payload",
+    "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
+    "minimized_payload_sha256": "6eef294c82a227f88f9d2a7600974de7035cb5099508f4d7dedf2309cc5744a1",
+    "raw_sensitive_material_recorded": false,
+    "removed_mutation_keys": [],
+    "retained_mutation_keys": [
+      "signing_material_boundary_crossed"
+    ],
+    "status": "minimal"
+  },
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-raw-signature-blob",
+  "payload_sha256": "6eef294c82a227f88f9d2a7600974de7035cb5099508f4d7dedf2309cc5744a1",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+  "task_id": "PORTAL-CXTP-148",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+    "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled"
+  ]
+}

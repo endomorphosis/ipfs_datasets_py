@@ -1,0 +1,237 @@
+{
+  "artifact_cid": "sha256:55ba5921ce16627e0528cec032738985d943e188d57eb9a7d3ae558d29c2a602",
+  "blockers": [],
+  "depends_on": [
+    "PORTAL-CXTP-092"
+  ],
+  "executables": {
+    "coqc": {
+      "expected_target_path": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof/bin/coqc",
+      "matches_expected_target": true,
+      "name": "coqc",
+      "target_exists": true,
+      "target_path": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof/bin/coqc",
+      "target_sha256": "sha256:aefb746f3a70d0a71a9a669f84aee6204ada243045abfde655273a256da5397b",
+      "wrapper_exists": true,
+      "wrapper_path": "/home/barberb/.local/bin/coqc",
+      "wrapper_relative_path": "/home/barberb/.local/bin/coqc",
+      "wrapper_sha256": "sha256:b61226cedcef88da2861829e8e88e01d8810936d3b7860ec5595d410a033cd40"
+    },
+    "coqtop": {
+      "expected_target_path": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof/bin/coqtop",
+      "matches_expected_target": true,
+      "name": "coqtop",
+      "target_exists": true,
+      "target_path": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof/bin/coqtop",
+      "target_sha256": "sha256:8e59ede337d12b25ef64ea72069faf2d0985384bbaa51e572499a7d10553a819",
+      "wrapper_exists": true,
+      "wrapper_path": "/home/barberb/.local/bin/coqtop",
+      "wrapper_relative_path": "/home/barberb/.local/bin/coqtop",
+      "wrapper_sha256": "sha256:78f879d835f052c38eeb8fbce202e9f748d9f488d4508d9f3a958f11f10fa993"
+    },
+    "proverif": {
+      "expected_target_path": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif",
+      "matches_expected_target": true,
+      "name": "proverif",
+      "target_exists": true,
+      "target_path": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif",
+      "target_sha256": "sha256:8daabb7016a7d72f402e7c641cf28910fb1ec887dc1487d3d3203a057aae077e",
+      "wrapper_exists": true,
+      "wrapper_path": "/home/barberb/.local/bin/proverif",
+      "wrapper_relative_path": "/home/barberb/.local/bin/proverif",
+      "wrapper_sha256": "sha256:40a19827349da60fa1a44e8986058f1882b229c0f351dc4ab973981c3cf6e622"
+    }
+  },
+  "generated_at": "2026-07-11T07:22:16Z",
+  "minimal_checks": {
+    "coqc": {
+      "name": "xaman_opam_coq_smoke",
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/coqc",
+          "/tmp/xaman-opam-coq-ul_o18mg/xaman_opam_coq_smoke.v"
+        ],
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "",
+        "stdout": ""
+      },
+      "source": "Theorem xaman_opam_coq_smoke : True.\nProof. exact I. Qed.\n",
+      "source_sha256": "sha256:9eeea51bc98c0db7a83d8f304d3aacd079b8bc0787adfd4dd11d3f455b9ff59a",
+      "verified": true
+    },
+    "coqtop": {
+      "input": "Check True.\n",
+      "input_sha256": "sha256:9935b4acf301276db1c0a6a506da90797d7901137ca5bd0ad9257522e556900f",
+      "name": "xaman_opam_coqtop_smoke",
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/coqtop",
+          "-quiet"
+        ],
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "\nRocq < \nRocq < \n",
+        "stdout": "True\n     : Prop\n"
+      },
+      "verified": true
+    },
+    "proverif": {
+      "expected_result": "RESULT not attacker(xaman_secret[]) is true",
+      "name": "xaman_opam_proverif_smoke",
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/proverif",
+          "/tmp/xaman-opam-proverif-icmmqdzs/xaman_opam_proverif_smoke.pv"
+        ],
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "",
+        "stdout": "Process 0 (that is, the initial process):\n0\n\n-- Query not attacker(xaman_secret[]) in process 0.\nTranslating the process into Horn clauses...\nCompleting...\nStarting query not attacker(xaman_secret[])\nRESULT not attacker(xaman_secret[]) is true.\n\n--------------------------------------------------------------\nVerification summary:\n\nQuery not attacker(xaman_secret[]) is true.\n\n--------------------------------------------------------------\n\n"
+      },
+      "source": "free c: channel.\nfree xaman_secret: bitstring [private].\nquery attacker(xaman_secret).\nprocess 0\n",
+      "source_sha256": "sha256:902af34c51f7f85b98649804ddc656b7f59221a83e5c77987fab297d6d312e5a",
+      "verified": true
+    }
+  },
+  "opam": {
+    "executable": "/home/barberb/.local/bin/opam",
+    "executable_sha256": "sha256:edfca2630c373b44b7ee1c2f81cd8dcf67468d0db57d6c02158de553ac63dbd4",
+    "installed_packages": {
+      "base-bigarray": "base",
+      "base-threads": "base",
+      "base-unix": "base",
+      "camlp-streams": "5.0.1",
+      "conf-gmp": "5",
+      "conf-linux-libc-dev": "0",
+      "conf-pkg-config": "5",
+      "coq": "9.1.1",
+      "coq-core": "9.1.1",
+      "coq-stdlib": "9.0.0",
+      "coqide-server": "9.1.1",
+      "dune": "3.23.1",
+      "ocaml": "4.14.2",
+      "ocaml-base-compiler": "4.14.2",
+      "ocaml-config": "2",
+      "ocaml-options-vanilla": "1",
+      "ocamlfind": "1.9.8",
+      "rocq-core": "9.1.1",
+      "rocq-runtime": "9.1.1",
+      "rocq-stdlib": "9.0.0",
+      "zarith": "1.14"
+    },
+    "package_list_check": {
+      "command": [
+        "/home/barberb/.local/bin/opam",
+        "list",
+        "--switch=xaman-proof",
+        "--installed",
+        "--columns=name,version"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "# Packages matching: installed\n# Name                # Version\nbase-bigarray         base\nbase-threads          base\nbase-unix             base\ncamlp-streams         5.0.1\nconf-gmp              5\nconf-linux-libc-dev   0\nconf-pkg-config       5\ncoq                   9.1.1\ncoq-core              9.1.1\ncoq-stdlib            9.0.0\ncoqide-server         9.1.1\ndune                  3.23.1\nocaml                 4.14.2\nocaml-base-compiler   4.14.2\nocaml-config          2\nocaml-options-vanilla 1\nocamlfind             1.9.8\nrocq-core             9.1.1\nrocq-runtime          9.1.1\nrocq-stdlib           9.0.0\nzarith                1.14\n"
+    },
+    "root": "/home/barberb/.local/share/xaman-proof-solvers/opam-root",
+    "root_exists": true,
+    "switch": "xaman-proof",
+    "switch_bin": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof/bin",
+    "switch_list_check": {
+      "command": [
+        "/home/barberb/.local/bin/opam",
+        "switch",
+        "list",
+        "--short"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "xaman-proof\n"
+    },
+    "switch_listed": true,
+    "switch_prefix": "/home/barberb/.local/share/xaman-proof-solvers/opam-root/xaman-proof",
+    "switch_prefix_exists": true,
+    "version": "2.5.2",
+    "version_check": {
+      "command": [
+        "/home/barberb/.local/bin/opam",
+        "--version"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "2.5.2\n"
+    }
+  },
+  "overall_status": "ready",
+  "pinned_versions": {
+    "coq_compat_package": "9.1.1",
+    "ocaml_base_compiler": "4.14.2",
+    "proverif": "2.05",
+    "proverif_archive_sha256": "sha256:4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4",
+    "rocq_core": "9.1.1"
+  },
+  "proverif_source": {
+    "archive": {
+      "exists": true,
+      "path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/proverif2.05.tar.gz",
+      "relative_path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/proverif2.05.tar.gz",
+      "sha256": "sha256:4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4"
+    },
+    "installed_as_opam_package": false,
+    "opam_index": {
+      "run": {
+        "command": [
+          "/home/barberb/.local/bin/opam",
+          "info",
+          "proverif.2.05"
+        ],
+        "returncode": 0,
+        "status": "passed",
+        "stderr": "",
+        "stdout": "\n<><> proverif: information on all versions ><><><><><><><><><><><><><><><><><><>\nname         proverif\nall-versions 1.98  1.98pl1  2.00  2.01  2.02  2.02pl1  2.03  2.04  2.05\n\n<><> Version-specific details <><><><><><><><><><><><><><><><><><><><><><><><><>\nversion      2.05\nrepository   default\nurl.src      \"https://proverif.inria.fr/proverif2.05.tar.gz\"\nurl.checksum \"sha256=4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4\"\n             \"md5=7f44869213c887f6e0febc3f890ca064\"\nhomepage     \"http://proverif.inria.fr/\"\nbug-reports  \"proverif-dev@inria.fr\"\ndev-repo     \"git+https://gitlab.inria.fr/bblanche/proverif.git\"\nauthors      \"Bruno Blanchet <bruno.blanchet@inria.fr>, Vincent Cheval <vincent.cheval@inria.fr>, Marc Sylvestre\"\nmaintainer   \"Bruno Blanchet <bruno.blanchet@inria.fr>, Vincent Cheval <vincent.cheval@inria.fr>\"\nlicense      \"GPL-2.0-or-later\"\ndepends      \"ocaml\" {>= \"4.03\"}\n             \"ocamlfind\" {build}\n             \"lablgtk\"\n             \"proverifdoc\" {= version & post & with-doc}\nsynopsis     ProVerif: Cryptographic protocol verifier in the symbolic model\ndescription  ProVerif is an automatic cryptographic protocol verifier, in the symbolic model (so called Dolev-Yao model). This protocol verifier is based on a representation of the protocol by Horn clauses. Its main features are:\n             - It can handle many different cryptographic primitives, including shared- and public-key cryptography (encryption and signatures), hash functions, and Diffie-Hellman key agreements, specified both as rewrite rules or as equations.\n             - It can handle an unbounded number of sessions of the protocol (even in parallel) and an unbounded message space. This result has been obtained thanks to some well-chosen approximations. This means that the verifier can give false attacks, but if it claims that the protocol satisfies some property, then the property is actually satisfied.\n             ProVerif can prove the following properties:\n             - secrecy (the adversary cannot obtain the secret)\n             - authentication and more generally correspondence\n             - strong secrecy (the adversary does not see the difference when the value of the secret changes)\n             - equivalences between processes that differ only by terms\n             A survey of ProVerif with references to other papers is available at\n             Bruno Blanchet. Modeling and Verifying Security Protocols with the Applied Pi Calculus and ProVerif. Foundations and Trends in Privacy and Security, 1(1-2):1-135, October 2016. http://dx.doi.org/10.1561/3300000004\n"
+      },
+      "url_sha256": "sha256:4871f53c32ab4a04669a060c4886ba5d9080496963fb980a9a62d2c429ceabc4",
+      "url_src": "https://proverif.inria.fr/proverif2.05.tar.gz",
+      "version": "2.05"
+    },
+    "provenance": "upstream_source_archive_matching_opam_checksum"
+  },
+  "schema_version": "crypto-exchange-opam-proof-toolchain-report/v1",
+  "security_decision": "OPAM_PROOF_TOOLCHAIN_READY",
+  "summary": {
+    "blocker_count": 0,
+    "coq_version_pinned": true,
+    "coqc_minimal_check_passed": true,
+    "coqc_wrapper_ready": true,
+    "coqtop_minimal_check_passed": true,
+    "coqtop_wrapper_ready": true,
+    "ocaml_version_pinned": true,
+    "opam_switch_present": true,
+    "proverif_archive_matches_opam_index": true,
+    "proverif_minimal_check_passed": true,
+    "proverif_version_pinned": true,
+    "proverif_wrapper_ready": true,
+    "warning_count": 1
+  },
+  "task_id": "PORTAL-CXTP-142",
+  "testnet_protocol_or_independent_kernel_coverage_blocked": false,
+  "tool_versions": {
+    "coqc": "The Rocq Prover, version 9.1.1\ncompiled with OCaml 4.14.2",
+    "coqtop": "The Rocq Prover, version 9.1.1\ncompiled with OCaml 4.14.2",
+    "parsed": {
+      "coqc_release": "9.1.1",
+      "coqtop_release": "9.1.1",
+      "ocaml_release_from_coqc": "4.14.2",
+      "proverif_release": "2.05"
+    },
+    "proverif": "2.05"
+  },
+  "warnings": [
+    {
+      "code": "PROVERIF_NOT_INSTALLED_AS_OPAM_PACKAGE",
+      "message": "The ProVerif wrapper targets a pinned upstream 2.05 source build whose archive digest matches the OPAM index; the package is not installed in the switch package database."
+    }
+  ]
+}

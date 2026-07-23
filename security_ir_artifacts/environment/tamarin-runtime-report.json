@@ -1,0 +1,121 @@
+{
+  "artifact_cid": "sha256:d032d05b7487251155a672fac582c03b547e6629e8c50e3387129079a0bdfe86",
+  "blockers": [],
+  "depends_on": [
+    "PORTAL-CXTP-092"
+  ],
+  "executables": {
+    "maude": {
+      "exists": true,
+      "name": "maude",
+      "path": "/home/barberb/.local/bin/maude",
+      "relative_path": "/home/barberb/.local/bin/maude",
+      "resolved_binary": "/home/barberb/.local/share/xaman-proof-solvers/opt/maude-3.5.1/maude",
+      "resolved_binary_exists": true,
+      "resolved_binary_sha256": "sha256:9dd4044e693944aae97ad72086bc70275fa34bf635f9b377a5b2100bf3ed8655",
+      "sha256": "sha256:17f5d7abac2afb279aab9de23c343620dcbf4019614e808bc778e80217e44203"
+    },
+    "tamarin_prover": {
+      "exists": true,
+      "name": "tamarin-prover",
+      "path": "/home/barberb/.local/bin/tamarin-prover",
+      "relative_path": "/home/barberb/.local/bin/tamarin-prover",
+      "resolved_binary": "/home/barberb/.local/share/xaman-proof-solvers/opt/tamarin-prover",
+      "resolved_binary_exists": true,
+      "resolved_binary_sha256": "sha256:9d3fcbaa65aeea244cff5b8074338d129427161cc8b02e5aee72d30ee072acc9",
+      "sha256": "sha256:03c4e139a1385be0f76904274e4c9d4809dc9fc0baa595eeaa46766c15a16dd9"
+    }
+  },
+  "generated_at": "2026-07-19T06:35:02Z",
+  "minimal_theory": {
+    "name": "TamarinRuntimeSmoke",
+    "run": {
+      "command": [
+        "/home/barberb/.local/bin/tamarin-prover",
+        "--with-maude=/home/barberb/.local/bin/maude",
+        "--prove",
+        "/tmp/tamarin-runtime-ywlew8tq/runtime_smoke.spthy"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "maude tool: '/home/barberb/.local/bin/maude'\n checking version: 3.5.1. OK.\n checking installation: OK.\n[Theory TamarinRuntimeSmoke] Theory loaded\n[Theory TamarinRuntimeSmoke] Theory translated\n[Theory TamarinRuntimeSmoke] Derivation checks started\n[Theory TamarinRuntimeSmoke] Derivation checks ended\n[Theory TamarinRuntimeSmoke] Theory closed\n",
+      "stdout": "theory TamarinRuntimeSmoke\n\nbegin\n\n// Function signature and definition of the equational theory E\n\nfunctions: fst/1, h/1, pair/2, snd/1\nequations: fst(<x.1, x.2>) = x.1, snd(<x.1, x.2>) = x.2\n\nrule (modulo E) Runtime_Smoke:\n   [ Fr( ~x ) ] --[ RuntimeReady( ~x ) ]-> [ Out( h(~x) ) ]\n\n  /* has exactly the trivial AC variant */\n\nlemma runtime_smoke_exists:\n  exists-trace \"\u2203 x #i. RuntimeReady( x ) @ #i\"\n/*\nguarded formula characterizing all satisfying traces:\n\"\u2203 x #i. (RuntimeReady( x ) @ #i)\"\n*/\nsimplify\nSOLVED // trace found\n\n/* All wellformedness checks were successful. */\n\n/*\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n*/\n\nend\n\n==============================================================================\nsummary of summaries:\n\nanalyzed: /tmp/tamarin-runtime-ywlew8tq/runtime_smoke.spthy\n\n  processing time: 0.11s\n  \n  runtime_smoke_exists (exists-trace): verified (2 steps)\n\n==============================================================================\n"
+    },
+    "source": "theory TamarinRuntimeSmoke\nbegin\n\nbuiltins: hashing\n\nrule Runtime_Smoke:\n  [ Fr(~x) ]\n  --[ RuntimeReady(~x) ]->\n  [ Out(h(~x)) ]\n\nlemma runtime_smoke_exists:\n  exists-trace\n  \"Ex x #i. RuntimeReady(x) @ i\"\n\nend\n",
+    "source_sha256": "sha256:10f7fa91601b252da82c3ab87cbd07bb080b8b9e3181bdd2892c09ac036031d8",
+    "verified": true
+  },
+  "overall_status": "ready",
+  "pinned_runtime": {
+    "acceptance_policy": "Use Tamarin 1.12.0 only when its own --with-maude version check reports the selected Maude version as OK and installation OK.",
+    "rejected_maude_versions": [
+      "3.2"
+    ],
+    "tamarin_version": "1.12.0"
+  },
+  "runtime_artifacts": {
+    "maude_archive": {
+      "exists": true,
+      "path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/Maude-3.5.1-linux-x86_64.zip",
+      "relative_path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/Maude-3.5.1-linux-x86_64.zip",
+      "sha256": "sha256:72ed1ca87e3b3d0dfc6ee1436baf154bf04c45ff97d521bec040c5e8dfc8f92c"
+    },
+    "maude_runtime_dir": {
+      "exists": true,
+      "path": "/home/barberb/.local/share/xaman-proof-solvers/opt/maude-3.5.1"
+    },
+    "solver_root": "/home/barberb/.local/share/xaman-proof-solvers",
+    "tamarin_archive": {
+      "exists": true,
+      "path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/tamarin-prover-1.12.0-linux64-ubuntu.tar.gz",
+      "relative_path": "/home/barberb/.local/share/xaman-proof-solvers/downloads/tamarin-prover-1.12.0-linux64-ubuntu.tar.gz",
+      "sha256": "sha256:201be06f469e47cff554df6ca93db8366fc2c69d70c61fcbd1370a1074b469c6"
+    }
+  },
+  "schema_version": "crypto-exchange-tamarin-runtime-report/v1",
+  "security_decision": "TAMARIN_MAUDE_RUNTIME_READY",
+  "summary": {
+    "blocker_count": 0,
+    "maude_present": true,
+    "maude_version": "3.5.1",
+    "maude_version_rejected": false,
+    "minimal_theory_passed": true,
+    "tamarin_accepts_maude": true,
+    "tamarin_present": true,
+    "tamarin_version_pinned": true,
+    "warning_count": 0
+  },
+  "task_id": "PORTAL-CXTP-141",
+  "testnet_protocol_checking_blocked_by_tamarin_runtime": false,
+  "version_checks": {
+    "maude": {
+      "command": [
+        "/home/barberb/.local/bin/maude",
+        "--version"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "",
+      "stdout": "3.5.1\n"
+    },
+    "parsed": {
+      "maude_version": "3.5.1",
+      "maude_version_reported_by_tamarin": "3.5.1",
+      "tamarin_acceptance_marker": "3.5.1. OK.",
+      "tamarin_accepts_maude": true,
+      "tamarin_version": "1.12.0"
+    },
+    "tamarin_with_maude": {
+      "command": [
+        "/home/barberb/.local/bin/tamarin-prover",
+        "--with-maude=/home/barberb/.local/bin/maude",
+        "--version"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr": "maude tool: '/home/barberb/.local/bin/maude'\n checking version: 3.5.1. OK.\n checking installation: OK.\n",
+      "stdout": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023\n\nThis program comes with ABSOLUTELY NO WARRANTY. It is free software, and you\nare welcome to redistribute it according to its LICENSE, see\n'https://github.com/tamarin-prover/tamarin-prover/blob/master/LICENSE'.\n\nGenerated from:\nTamarin version 1.12.0\nMaude version 3.5.1\nGit revision: 82780bbaf3328a45f624ddb41e51bf75425f851c (with uncommited changes), branch: master\nCompiled at: 2026-03-07 14:22:39.174278293 UTC\n"
+    }
+  },
+  "warnings": []
+}

@@ -6,6 +6,8 @@ unified SearchEngineAdapter interface.
 """
 
 import logging
+import os
+import re
 import time
 from typing import Dict, Optional, Any
 from urllib.parse import urlparse
@@ -16,6 +18,8 @@ from .base import (
     SearchEngineResponse,
     SearchEngineResult,
     SearchEngineError,
+    SearchEngineQuotaExceededError,
+    SearchEngineRateLimitError,
     SearchEngineType,
 )
 
@@ -72,6 +76,19 @@ class BraveSearchEngine(SearchEngineAdapter):
         # Initialize Brave client
         api_key = config.api_key or None
         self.client = BraveSearchClient(api_key=api_key)
+        self._disabled_until: float = 0.0
+        self._quota_exhausted: bool = False
+        configured_backoff = config.extra_params.get("rate_limit_backoff_seconds")
+        env_backoff = (
+            os.getenv("IPFS_DATASETS_SEARCH_BRAVE_RATE_LIMIT_BACKOFF_SECONDS")
+            or os.getenv("LEGAL_SCRAPER_SEARCH_BRAVE_RATE_LIMIT_BACKOFF_SECONDS")
+            or ""
+        )
+        try:
+            backoff_value = float(configured_backoff if configured_backoff is not None else env_backoff or 300.0)
+        except Exception:
+            backoff_value = 300.0
+        self._rate_limit_backoff_seconds = max(5.0, backoff_value)
         
         logger.info("Brave search engine initialized")
     
@@ -96,6 +113,13 @@ class BraveSearchEngine(SearchEngineAdapter):
         Raises:
             SearchEngineError: On search failure
         """
+        now = time.time()
+        if self._quota_exhausted:
+            raise SearchEngineQuotaExceededError("Brave search quota already exhausted for this process")
+        if self._disabled_until > now:
+            retry_after = max(0.0, self._disabled_until - now)
+            raise SearchEngineRateLimitError(f"Brave search temporarily rate limited; retry after {retry_after:.1f}s")
+
         # Check cache first
         cache_key = self._get_cache_key(
             query,
@@ -116,12 +140,20 @@ class BraveSearchEngine(SearchEngineAdapter):
         start_time = time.time()
         
         try:
+            client_kwargs = {}
+            safesearch = kwargs.get("safesearch")
+            country = kwargs.get("country")
+            if safesearch is not None:
+                client_kwargs["safesearch"] = safesearch
+            if country is not None:
+                client_kwargs["country"] = country
+
             # Call Brave API
             brave_results = self.client.search(
                 query=query,
                 count=max_results,
                 offset=offset,
-                **kwargs
+                **client_kwargs,
             )
             
             # Normalize results
@@ -153,7 +185,15 @@ class BraveSearchEngine(SearchEngineAdapter):
             return response
             
         except Exception as e:
+            self._update_backoff_state(e)
             logger.error(f"Brave search failed: {e}")
+            if self._quota_exhausted:
+                raise SearchEngineQuotaExceededError(f"Brave search quota exhausted: {e}") from e
+            if self._disabled_until > time.time():
+                retry_after = max(0.0, self._disabled_until - time.time())
+                raise SearchEngineRateLimitError(
+                    f"Brave search rate limited: retry after {retry_after:.1f}s; {e}"
+                ) from e
             raise SearchEngineError(f"Brave search error: {e}") from e
     
     def test_connection(self) -> bool:
@@ -172,7 +212,7 @@ class BraveSearchEngine(SearchEngineAdapter):
     
     def _normalize_results(
         self,
-        brave_results: Dict[str, Any]
+        brave_results: Any
     ) -> list[SearchEngineResult]:
         """Normalize Brave API results to standard format.
         
@@ -183,11 +223,11 @@ class BraveSearchEngine(SearchEngineAdapter):
             List of normalized SearchEngineResult objects
         """
         results = []
-        
-        # Extract web results
-        web_results = brave_results.get("web", {}).get("results", [])
-        
+        web_results = self._extract_web_results(brave_results)
+
         for idx, result in enumerate(web_results):
+            if not isinstance(result, dict):
+                continue
             # Extract domain from URL
             try:
                 domain = urlparse(result.get("url", "")).netloc
@@ -213,3 +253,65 @@ class BraveSearchEngine(SearchEngineAdapter):
             results.append(normalized)
         
         return results
+
+    @staticmethod
+    def _extract_web_results(brave_results: Any) -> list[dict[str, Any]]:
+        """Extract result objects from the Brave client response.
+
+        The Brave client is not perfectly stable here: depending on code path,
+        it may return either a raw list of result dicts or a dict payload with
+        `web.results`.
+        """
+        if isinstance(brave_results, list):
+            return [item for item in brave_results if isinstance(item, dict)]
+
+        if not isinstance(brave_results, dict):
+            return []
+
+        web_payload = brave_results.get("web", {})
+        if isinstance(web_payload, dict):
+            nested_results = web_payload.get("results", [])
+            if isinstance(nested_results, list):
+                return [item for item in nested_results if isinstance(item, dict)]
+
+        if isinstance(web_payload, list):
+            return [item for item in web_payload if isinstance(item, dict)]
+
+        direct_results = brave_results.get("results", [])
+        if isinstance(direct_results, list):
+            return [item for item in direct_results if isinstance(item, dict)]
+
+        return []
+
+    def _update_backoff_state(self, error: Exception) -> None:
+        """Track quota/rate-limit failures so future calls fail fast."""
+        message = str(error)
+        upper_message = message.upper()
+        if "QUOTA_LIMITED" in upper_message or "QUOTA LIMIT" in upper_message:
+            self._quota_exhausted = True
+            self._disabled_until = float("inf")
+            return
+        if "RATE_LIMITED" in upper_message or "RATE LIMIT" in upper_message or "HTTP 429" in upper_message:
+            retry_after_seconds = self._extract_retry_after_seconds(message)
+            cooldown_seconds = (
+                max(5.0, float(retry_after_seconds))
+                if retry_after_seconds is not None
+                else float(self._rate_limit_backoff_seconds)
+            )
+            self._disabled_until = max(self._disabled_until, time.time() + cooldown_seconds)
+
+    @staticmethod
+    def _extract_retry_after_seconds(message: str) -> Optional[float]:
+        patterns = (
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b",
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\b",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, message or "", flags=re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                return max(0.0, float(match.group(1)))
+            except Exception:
+                continue
+        return None

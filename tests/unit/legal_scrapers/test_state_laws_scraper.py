@@ -1,9 +1,178 @@
 import asyncio
+import json
+import os
 import time
+from datetime import datetime, timezone
 
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers import state_laws_scraper as scraper_module
+
+
+def test_state_laws_scraper_builds_recovery_section_urls():
+    assert (
+        scraper_module.build_state_law_section_url("MN", "518.17", code_name="Statutes")
+        == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("OR", "801.545")
+        == "https://oregon.public.law/statutes/ors_801.545"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("CA", "3011", code_name="Fam. Code")
+        == "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("NY", "651", code_name="Fam. Ct. Act")
+        == "https://www.nysenate.gov/legislation/laws/FCT/651"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("TX", "153.002", code_name="Fam. Code")
+        == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("FL", "61.13", code_name="Fla. Stat.")
+        == "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("IL", "602.7", code_name="750 ILCS 5")
+        == "https://www.ilga.gov/documents/legislation/ilcs/documents/075000050K602.7.htm"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("PA", "5328", code_name="23 Pa.C.S.")
+        == "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("AZ", "13-1203", code_name="Ariz. Rev. Stat.")
+        == "https://www.azleg.gov/ars/13/01203.htm"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("IN", "35-42-2-1", code_name="Ind. Code")
+        == "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("KS", "21-5413", code_name="Kan. Stat.")
+        == "https://www.ksrevisor.gov/statutes/chapters/ch21/021_054_0013.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("ME", "17-A:207", code_name="Me. Rev. Stat.")
+        == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("MT", "45-5-201", code_name="Mont. Code")
+        == "https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0020/section_0010/0450-0050-0020-0010.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("NC", "14-33", code_name="N.C. Gen. Stat.")
+        == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("OH", "2903.13", code_name="Ohio Rev. Code")
+        == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("SC", "16-3-600", code_name="S.C. Code")
+        == "https://www.scstatehouse.gov/code/t16c003.php#16-3-600"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("VA", "18.2-57", code_name="Va. Code")
+        == "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("VT", "13-1023", code_name="Vt. Stat.")
+        == "https://legislature.vermont.gov/statutes/section/13/019/01023"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("WA", "9A.36.041", code_name="Wash. Rev. Code")
+        == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("MI", "750.81", code_name="Mich. Comp. Laws")
+        == "https://legislature.mi.gov/Laws/MCL?objectName=mcl-750-81"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("WI", "940.19", code_name="Wis. Stat.")
+        == "https://docs.legis.wisconsin.gov/statutes/statutes/940#940.19"
+    )
+
+
+def test_state_laws_scraper_recovery_section_url_edge_cases():
+    assert scraper_module.build_state_law_section_url("", "518.17") == ""
+    assert scraper_module.build_state_law_section_url("MN", "") == ""
+    assert scraper_module.build_state_law_section_url("ZZ", "1.2") == ""
+    assert scraper_module.build_state_law_section_url("FL", "abc", code_name="Fla. Stat.") == ""
+    assert scraper_module.build_state_law_section_url("IL", "602.7", code_name="ILCS") == ""
+    assert scraper_module.build_state_law_section_url("PA", "12", code_name="23 Pa.C.S.") == ""
+
+    assert (
+        scraper_module.build_state_law_section_url("TX", "153.002", code_name="Penal Code", preferred_host="statutes.capitol.texas.gov")
+        == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.153.htm#153.002"
+    )
+
+
+def test_state_laws_scraper_builds_unknown_backlog_section_urls():
+    expected_urls = {
+        ("AL", "13A-6-2", "Ala. Code"): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
+        ("AR", "5-13-201", "Ark. Code"): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
+        ("CO", "18-3-204", "Colo. Rev. Stat."): "https://colorado.public.law/statutes/crs_18-3-204",
+        ("CT", "53a-61", "Conn. Gen. Stat."): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
+        ("DE", "11-601", "Del. Code"): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+        ("GA", "16-5-23", "Ga. Code"): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
+        ("HI", "707-712", "Haw. Rev. Stat."): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
+        ("KY", "508.030", "Ky. Rev. Stat."): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
+        ("LA", "14:35", "La. Rev. Stat."): "https://legis.la.gov/legis/Law.aspx?d=78452",
+        ("MD", "3-203", "Md. Code"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        ("MS", "97-3-7", "Miss. Code"): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
+        ("NH", "631:2-a", "N.H. Rev. Stat."): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
+        ("NJ", "2C:12-1", "N.J. Stat."): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
+        ("NM", "30-3-4", "N.M. Stat."): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
+        ("ND", "12.1-17-01", "N.D. Cent. Code"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
+        ("OK", "21-644", "Okla. Stat."): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
+        ("TN", "39-13-101", "Tenn. Code"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
+        ("WY", "6-2-501", "Wyo. Stat."): "https://wyoleg.gov/statutes/compress/title06.pdf",
+    }
+
+    for (state, section, code_name), expected_url in expected_urls.items():
+        assert scraper_module.build_state_law_section_url(state, section, code_name=code_name) == expected_url
+
+
+def test_state_laws_scraper_trims_max_statutes_per_state() -> None:
+    scraped, total = scraper_module._trim_scraped_statutes_to_max(
+        [
+            {"state_code": "MN", "statutes": [{"id": "mn-1"}, {"id": "mn-2"}, {"id": "mn-3"}]},
+            {"state_code": "KY", "statutes": [{"id": "ky-1"}, {"id": "ky-2"}, {"id": "ky-3"}]},
+        ],
+        2,
+    )
+
+    assert [block["state_code"] for block in scraped] == ["MN", "KY"]
+    assert [[row["id"] for row in block["statutes"]] for block in scraped] == [
+        ["mn-1", "mn-2"],
+        ["ky-1", "ky-2"],
+    ]
+    assert total == 4
+
+
+def test_state_laws_scraper_compacts_streamed_state_result_for_retention() -> None:
+    result = {
+        "state_code": "KY",
+        "statutes_count": 2,
+        "statute_data": {
+            "state_code": "KY",
+            "statutes": [{"id": "ky-1"}, {"id": "ky-2"}],
+        },
+    }
+
+    compact = scraper_module._compact_state_result_for_retention(result)
+
+    assert compact["statute_data"]["statutes"] == []
+    assert compact["statute_data"]["statutes_count"] == 2
+    assert compact["statute_data"]["streamed_to_state_completion_callback"] is True
+    assert scraper_module._compute_coverage_summary(
+        selected_states=["KY"],
+        scraped_statutes=[compact["statute_data"]],
+        errors=[],
+    )["full_coverage"] is True
 
 
 @pytest.mark.asyncio
@@ -20,6 +189,9 @@ async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
             self._target()
 
     def _fake_scrape_state_once_sync(**kwargs):
+        captured["code_timeout"] = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
+        captured["fetch_timeout"] = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
+        captured["per_state_timeout_seconds"] = kwargs.get("per_state_timeout_seconds")
         return {"state_code": kwargs["state_code"], "status": "ok"}
 
     monkeypatch.setattr(scraper_module.threading, "Thread", _FakeThread)
@@ -39,6 +211,9 @@ async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     assert result == {"state_code": "OR", "status": "ok"}
     assert captured["daemon"] is True
     assert captured["name"] == "state-scrape-or"
+    assert captured["code_timeout"] == "0.400"
+    assert captured["fetch_timeout"] == "0.133"
+    assert captured["per_state_timeout_seconds"] == 0.5
 
 
 @pytest.mark.asyncio
@@ -68,5 +243,503 @@ async def test_state_laws_scraper_timeout_returns_without_waiting_for_blocked_wo
     assert result["state_code"] == "OR"
     assert result["zero_statute"] is True
     assert "timed out" in str(result["error"])
+    assert result.get("timeout_diagnostics", {}).get("classification") == "timeout_without_partial_checkpoint"
 
     await asyncio.sleep(0.25)
+
+
+def test_state_laws_scraper_checkpoint_activity_uses_quick_meta_for_large_files(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-WA-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "WA",
+                "updated_at": "2026-05-28T00:00:00+00:00",
+                "stage_label": "scrape_all:complete",
+                "statutes_count": 123,
+                "padding": "x" * 10000,
+                "statutes": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_CHECKPOINT_PARSE_MAX_BYTES", "1024")
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_CHECKPOINT_META_READ_BYTES", "4096")
+
+    activity = scraper_module._read_partial_checkpoint_activity("WA")
+
+    assert activity["stage_complete"] is True
+    assert activity["statutes_count"] == 123
+    assert activity["signature"]
+    assert activity["updated_ts"] > 0
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_timeout_promotes_checkpoint_complete_state(monkeypatch, tmp_path):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-NH-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "NH",
+                "updated_at": "2026-05-28T00:00:00+00:00",
+                "stage_label": "complete",
+                "statutes_count": 1,
+                "progress": {"codes_completed": 1, "codes_total": 1},
+                "statutes": [
+                    {
+                        "state_code": "NH",
+                        "state_name": "New Hampshire",
+                        "statute_id": "NH RSA 1",
+                        "code_name": "New Hampshire Revised Statutes",
+                        "section_number": "1",
+                        "section_name": "Section 1",
+                        "full_text": "Section 1 text",
+                        "source_url": "https://example.invalid/nh/rsa/1",
+                        "scraped_at": "2026-05-28T00:00:00+00:00",
+                        "scraper_version": "1.0",
+                        "structured_data": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "0.01")
+    monkeypatch.setenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "0")
+    monkeypatch.setenv("STATE_SCRAPER_CHECKPOINT_COMPLETE_SETTLE_SECONDS", "1")
+
+    def _fake_scrape_state_once_sync(**kwargs):
+        time.sleep(0.4)
+        return {"state_code": kwargs["state_code"], "status": "ok"}
+
+    monkeypatch.setattr(scraper_module, "_scrape_state_once_sync", _fake_scrape_state_once_sync)
+
+    started_at = time.perf_counter()
+    result = await scraper_module._run_sync_scrape_on_daemon_thread(
+        state_code="NH",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=1,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=False,
+        timeout_seconds=0.05,
+    )
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.2
+    assert result["state_code"] == "NH"
+    assert result["error"] is None
+    assert result["statutes_count"] == 1
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("classification") == "checkpoint_complete_promotion"
+    assert diag.get("work_remaining") is False
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_timeout_promotes_checkpoint_signal_complete_state(monkeypatch, tmp_path):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-MS-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "MS",
+                "updated_at": "2026-05-28T00:00:00+00:00",
+                "stage_label": "mississippi:scrape_code:start",
+                "statutes_count": 2,
+                "progress": {
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                    "discovered_history_urls": 2,
+                    "scanned_history_urls": 2,
+                },
+                "statutes": [
+                    {
+                        "state_code": "MS",
+                        "state_name": "Mississippi",
+                        "statute_id": "MS 1",
+                        "code_name": "Mississippi Code",
+                        "section_number": "1",
+                        "section_name": "Section 1",
+                        "full_text": "Section 1 text",
+                        "source_url": "https://example.invalid/ms/1",
+                        "scraped_at": "2026-05-28T00:00:00+00:00",
+                        "scraper_version": "1.0",
+                        "structured_data": {},
+                    },
+                    {
+                        "state_code": "MS",
+                        "state_name": "Mississippi",
+                        "statute_id": "MS 2",
+                        "code_name": "Mississippi Code",
+                        "section_number": "2",
+                        "section_name": "Section 2",
+                        "full_text": "Section 2 text",
+                        "source_url": "https://example.invalid/ms/2",
+                        "scraped_at": "2026-05-28T00:00:00+00:00",
+                        "scraper_version": "1.0",
+                        "structured_data": {},
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "0.01")
+    monkeypatch.setenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "0")
+    monkeypatch.setenv("STATE_SCRAPER_CHECKPOINT_COMPLETE_SETTLE_SECONDS", "1")
+
+    def _fake_scrape_state_once_sync(**kwargs):
+        time.sleep(0.4)
+        return {"state_code": kwargs["state_code"], "status": "ok"}
+
+    monkeypatch.setattr(scraper_module, "_scrape_state_once_sync", _fake_scrape_state_once_sync)
+
+    started_at = time.perf_counter()
+    result = await scraper_module._run_sync_scrape_on_daemon_thread(
+        state_code="MS",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=1,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=False,
+        timeout_seconds=0.05,
+    )
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.2
+    assert result["state_code"] == "MS"
+    assert result["error"] is None
+    assert result["statutes_count"] == 2
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("classification") == "checkpoint_complete_promotion"
+    assert diag.get("work_remaining") is False
+    assert diag.get("signal_kind") == "history_scan"
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_timeout_promotes_signal_complete_checkpoint_with_updated_at_churn(
+    monkeypatch,
+    tmp_path,
+):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-MS-partial.json"
+    checkpoint_payload = {
+        "state_code": "MS",
+        "updated_at": "2026-05-28T00:00:00+00:00",
+        "stage_label": "mississippi:scrape_code:start",
+        "statutes_count": 1,
+        "progress": {
+            "codes_completed": 0,
+            "codes_total": 1,
+            "discovered_history_urls": 1,
+            "scanned_history_urls": 1,
+        },
+        "statutes": [
+            {
+                "state_code": "MS",
+                "state_name": "Mississippi",
+                "statute_id": "MS 1",
+                "code_name": "Mississippi Code",
+                "section_number": "1",
+                "section_name": "Section 1",
+                "full_text": "Section 1 text",
+                "source_url": "https://example.invalid/ms/1",
+                "scraped_at": "2026-05-28T00:00:00+00:00",
+                "scraper_version": "1.0",
+                "structured_data": {},
+            }
+        ],
+    }
+    checkpoint_path.write_text(json.dumps(checkpoint_payload), encoding="utf-8")
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "0.01")
+    monkeypatch.setenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "0")
+    monkeypatch.setenv("STATE_SCRAPER_CHECKPOINT_COMPLETE_SETTLE_SECONDS", "0.05")
+
+    def _fake_scrape_state_once_sync(**kwargs):
+        # Rewrite checkpoint heartbeat timestamps without changing counters.
+        for _ in range(30):
+            payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+            checkpoint_path.write_text(json.dumps(payload), encoding="utf-8")
+            time.sleep(0.02)
+        return {"state_code": kwargs["state_code"], "status": "ok"}
+
+    monkeypatch.setattr(scraper_module, "_scrape_state_once_sync", _fake_scrape_state_once_sync)
+
+    started_at = time.perf_counter()
+    result = await scraper_module._run_sync_scrape_on_daemon_thread(
+        state_code="MS",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=1,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=False,
+        timeout_seconds=0.15,
+    )
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.35
+    assert result["state_code"] == "MS"
+    assert result["error"] is None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("classification") == "checkpoint_complete_promotion"
+    assert diag.get("work_remaining") is False
+    assert diag.get("signal_kind") == "history_scan"
+    assert diag.get("checkpoint_signal_stability_age_seconds", 0.0) >= 0.05
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_timeout_retry_promotes_checkpoint_no_remaining_work(monkeypatch, tmp_path):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-MS-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "MS",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "stage_label": "mississippi:scrape_code:start",
+                "statutes_count": 1,
+                "progress": {
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                    "discovered_history_urls": 1,
+                    "scanned_history_urls": 1,
+                },
+                "statutes": [
+                    {
+                        "state_code": "MS",
+                        "state_name": "Mississippi",
+                        "statute_id": "MS 1",
+                        "code_name": "Mississippi Code",
+                        "section_number": "1",
+                        "section_name": "Section 1",
+                        "full_text": "Section 1 text",
+                        "source_url": "https://example.invalid/ms/1",
+                        "scraped_at": "2026-05-28T00:00:00+00:00",
+                        "scraper_version": "1.0",
+                        "structured_data": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+    monkeypatch.setenv("STATE_SCRAPER_TIMEOUT_POLL_SECONDS", "0.01")
+    monkeypatch.setenv("STATE_SCRAPER_PROGRESS_GRACE_SECONDS", "0")
+    # Prevent in-loop promotion so we exercise the timeout recovery branch.
+    monkeypatch.setenv("STATE_SCRAPER_CHECKPOINT_COMPLETE_SETTLE_SECONDS", "999")
+
+    def _fake_scrape_state_once_sync(**kwargs):
+        time.sleep(0.3)
+        return {"state_code": kwargs["state_code"], "status": "ok"}
+
+    monkeypatch.setattr(scraper_module, "_scrape_state_once_sync", _fake_scrape_state_once_sync)
+
+    result = await scraper_module._scrape_state_with_retries(
+        state_code="MS",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=1,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=False,
+        retry_attempts=0,
+        retry_zero_statute_states=False,
+        per_state_timeout_seconds=0.05,
+    )
+
+    assert result["state_code"] == "MS"
+    assert result["error"] is None
+    assert result["statutes_count"] == 1
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("classification") == "checkpoint_complete_promotion"
+    assert diag.get("work_remaining") is False
+
+
+def test_state_laws_scraper_timeout_checkpoint_diagnostics_work_remaining(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-OK-partial.json"
+    checkpoint_path.write_text(
+        '{"state_code":"OK","scanned_candidates":100,"discovered_candidates":1000,'
+        '"updated_at":1716210000.0,'
+        '"statutes":[{"statute_id":"ok-1","section_number":"1","section_name":"S1","full_text":"§ 1 text"}]}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "OK",
+        "Failed to scrape Oklahoma: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("classification") == "timeout_while_work_remaining"
+    assert diag.get("work_remaining") is True
+    assert diag.get("signal_kind") == "candidate_scan"
+    assert diag.get("progress_scanned") == 100
+    assert diag.get("progress_discovered") == 1000
+
+
+def test_state_laws_scraper_timeout_checkpoint_diagnostics_no_work_remaining(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-RI-partial.json"
+    checkpoint_path.write_text(
+        '{"state_code":"RI","progress":{"codes_completed":1,"codes_total":1},'
+        '"updated_at":"2026-05-20T15:00:00+00:00",'
+        '"statutes":[{"statute_id":"ri-1","section_number":"1","section_name":"S1","full_text":"§ 1 text"}]}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "RI",
+        "Failed to scrape Rhode Island: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("classification") == "timeout_with_no_detectable_remaining_work"
+    assert diag.get("work_remaining") is False
+    assert diag.get("signal_kind") == "codes_progress"
+
+
+def test_state_laws_scraper_timeout_checkpoint_prefers_section_signal_over_unscanned_title(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-WA-partial.json"
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "state_code": "WA",
+                "progress": {
+                    "titles_scanned": 0,
+                    "discovered_titles": 105,
+                    "sections_scanned": 91,
+                    "discovered_sections": 110,
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+                "updated_at": "2026-05-26T07:56:26+00:00",
+                "statutes": [
+                    {
+                        "statute_id": "wa-1",
+                        "section_number": "1.01.001",
+                        "section_name": "S1",
+                        "full_text": "Section text",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "WA",
+        "Failed to scrape Washington: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("signal_kind") == "section_scan"
+    assert diag.get("work_remaining") is True
+    assert diag.get("progress_scanned") == 91
+    assert diag.get("progress_discovered") == 110
+    assert diag.get("classification") == "timeout_while_work_remaining"
+
+
+def test_state_laws_scraper_quality_flags_bill_history_noise():
+    statutes = [
+        {
+            "section_number": "25-3-33",
+            "section_name": "Commissioner of Public Safety; remove from omnibus pay section.",
+            "source_url": "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0006.htm",
+            "full_text": (
+                "HB 6 - History of Actions/Background Mississippi Legislature 1997 Regular Session "
+                "House Bill 6 [Introduced] History of Actions: ..."
+            ),
+        },
+        {
+            "section_number": "27-33-77",
+            "section_name": "Homestead exemption; reimburse cities.",
+            "source_url": "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0378.htm",
+            "full_text": (
+                "HB 378 - History of Actions/Background Mississippi Legislature 1997 Regular Session "
+                "House Bill 378 [Introduced] History of Actions: ..."
+            ),
+        },
+    ]
+    metrics = scraper_module._compute_state_quality_metrics(statutes)
+    assert metrics["bill_history_ratio"] >= 0.5
+    assert scraper_module._should_flag_quality(metrics) is True
+
+
+@pytest.mark.asyncio
+async def test_state_laws_scraper_full_corpus_low_quality_is_promoted_to_error(monkeypatch):
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+
+    async def _fake_run_sync_scrape_on_daemon_thread(**_kwargs):
+        return {
+            "state_code": "MS",
+            "state_name": "Mississippi",
+            "error": None,
+            "statutes_count": 10,
+            "zero_statute": False,
+            "low_quality": True,
+            "quality_metrics": {
+                "total": 10,
+                "nav_like_ratio": 0.0,
+                "fallback_section_ratio": 0.0,
+                "numeric_section_name_ratio": 0.9,
+                "scaffold_ratio": 0.0,
+                "bill_history_ratio": 0.8,
+            },
+            "warnings": [],
+            "statute_data": {
+                "state_code": "MS",
+                "state_name": "Mississippi",
+                "title": "Mississippi Laws",
+                "source": "Official State Legislative Website",
+                "scraped_at": "2026-05-26T00:00:00",
+                "statutes": [{"statute_id": "MS-1"}],
+            },
+        }
+
+    monkeypatch.setattr(scraper_module, "_run_sync_scrape_on_daemon_thread", _fake_run_sync_scrape_on_daemon_thread)
+
+    result = await scraper_module._scrape_state_with_retries(
+        state_code="MS",
+        legal_areas=None,
+        rate_limit_delay=0.0,
+        max_statutes=None,
+        strict_full_text=False,
+        min_full_text_chars=0,
+        hydrate_statute_text=True,
+        retry_attempts=0,
+        retry_zero_statute_states=True,
+        per_state_timeout_seconds=0.0,
+    )
+
+    assert result.get("error")
+    assert "full-corpus quality gate failed" in str(result.get("error"))

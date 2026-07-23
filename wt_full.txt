@@ -1,0 +1,844 @@
+worktree /home/barberb/portland-laws.github.io/ipfs_datasets_py
+HEAD 276080740a162afeab9ad3a0e91c940ac81a5219
+branch refs/heads/main
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000019-20260519_091202
+HEAD 2c8a9d23f83a96f31e0d847867e7537976f6ed05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000020-20260519_092231
+HEAD 2c8a9d23f83a96f31e0d847867e7537976f6ed05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000021-20260519_093008
+HEAD 435bf88ed1bff7cd2ab22b826aab0691b3875624
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000022-20260519_093624
+HEAD 00e9dc36a88337ba54e131094cf3c588e5692905
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000023-20260519_094546
+HEAD 1dca323d51b764ab96703c8a6d833fe9ec661aa5
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000024-20260519_095013
+HEAD 411d551e35196cb8cebe8d22cf86e5b51719b03b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000025-20260519_095651
+HEAD 55fb88f7332f685b277dbabf3325725703277586
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000026-20260519_100114
+HEAD f46f7ef6b9553743dd7b0e45c3ccb3e320c4493a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000027-20260519_100901
+HEAD 64a68d8198e5016e0f32695addccd12afecbafa2
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000028-20260519_101700
+HEAD 77ce0a6bf718c3ddf315c585d8e9d32e0d0fdd27
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000029-20260519_102309
+HEAD 827ddbc0af0268ffe963fcaa6e8a392f81a83ebf
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000030-20260519_103006
+HEAD 1b561c1210e51c8e8335429010bbfa5bd748cb7f
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000031-20260519_103627
+HEAD d9addef38e1bee10a2f76f7b3728c485b451bc86
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000032-20260519_104258
+HEAD 788ac065c642f2e88e4abe68c53e464417495dcb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000033-20260519_105025
+HEAD 44e242ce4bc1b8d76abf5e42450ba4d80808150d
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000034-20260519_105718
+HEAD 60cc0e386bc3868f061ded2621b136e2ecdc21bc
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000035-20260519_110224
+HEAD 48dd71a727c0037ce3a3ecc3b172b46034a47c35
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000108-20260519_111337
+HEAD 717f782fb058faab55b464bd05e8d293ce5a5cb5
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000109-20260519_111904
+HEAD 1a9757095b045cf67b2549f2584eecfc5ec2437a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000112-20260519_112326
+HEAD c56e56aed5a0da3793d321acfce375f0f92f9d87
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000113-20260519_113146
+HEAD 136ba9418220ded96fede32816333631e46cc45b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000133-20260519_113816
+HEAD 827c4b8ab16609201a2609caf879c62e50a93403
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000134-20260519_114315
+HEAD 6eb80d5ce5ec26af3b4e6a9758b9aab93360d0ba
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000135-20260519_114932
+HEAD 27cec0b8397fb314805f894acee874b1e7cf14b4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000136-20260519_115726
+HEAD 94b3a999feb863900eca40ffb9f6c8e759360b12
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000137-20260519_120243
+HEAD 32581070124676722bf892e6d23d39d58b987406
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000138-20260519_120926
+HEAD 002ae66b93100b88352bd1be5a6402292d72713c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000139-20260519_121630
+HEAD 35c54849b0bce8e7c54708ef069e43da3703049f
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000167-20260519_122546
+HEAD c2b9183742719ea6aedeed46eacb8070bf4a99ec
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000168-20260519_123248
+HEAD e9c50f9ecc9049603c8e41172de11d781b20086c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000169-20260519_123909
+HEAD 1afb18f95c08d7706f1d3124123256366e8e12ec
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000170-20260519_124412
+HEAD ed13273ff8838d7a89784ef05be752c9479f6c3c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000207-20260519_125503
+HEAD 88c335238e203e6942c875d0a3adea69761f4b23
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000208-20260519_130322
+HEAD ed7227cfb82d47c989976179b3af38636db914e4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000209-20260519_131150
+HEAD f442ce64cd3178c5f3d8061f5537fb914011293c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000210-20260519_131953
+HEAD 1f9fd98bc78eb6923556eda7950d1efdf60769f0
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000219-20260519_132807
+HEAD ce065fb0b834d64677afea0dc6162e0104319a78
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000231-20260519_133440
+HEAD e18dae89c64c01fbb005e68c1618d3a58d9fadbf
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000280-20260519_134343
+HEAD 10cd87a92e3e770e2932b5877ce3d5cf23aaecfb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000281-20260519_135247
+HEAD 0119076468b28c3ff93d620147af4c78309f45c2
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000363-20260519_140613
+HEAD c82c0133c75a93d9131404c9f29d0a5fe5368f32
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000364-20260519_141449
+HEAD 3b2888c0b8bd9dc6dc39e9250870deef4c273b11
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000365-20260519_142102
+HEAD 67081d780b6f0b86b4aa51ba3f9269c947114086
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000366-20260519_142642
+HEAD ce905c04e79588a6c98f13914536aaca84858e8a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000367-20260519_143114
+HEAD efb99c1f5810281a841c4c5165ce00fd027c039e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000368-20260519_143740
+HEAD 4a786eff9b7dcbe9175ff541473f46fb1808dbe7
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000369-20260519_144224
+HEAD 6f6fdc6d512e4dbcfa347058b45e2659608c5e6c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000370-20260519_144650
+HEAD 391de93a955e207ca3f41901a535adfe5c8b25e8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000371-20260519_145234
+HEAD de66d0a369561764528669baf02af40138b2dc3c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000372-20260519_145812
+HEAD 1be032e6b2e9cbdbc9af5fde26985fdfc1501f67
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000401-20260519_151123
+HEAD 1faa693a89b0aed210fdc9f21c293f452d186614
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000428-20260519_152147
+HEAD 3543c0d2486ddd0cd7b90cbc60d2279edd8b3e7d
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000471-20260519_152946
+HEAD bd2f08701fb32640fe970b25d7745ad0cc198203
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000472-20260519_153850
+HEAD 7a2f43b4978e52b8b1f7a4ac31d0e6e130860b97
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000473-20260519_154715
+HEAD 1aa01de7b51a5e5da4454340fb3a4e67a0b17c4b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000497-20260519_155717
+HEAD d45a040794d1299c419309b50c0b7b91949737a5
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000564-20260519_160937
+HEAD 63fdb8eb05fce3cd8374eb029dd01ade6e7e4c5c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000565-20260519_161559
+HEAD 120d054a2d5d3ea10a432075ebce4ba0d801acaf
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000566-20260519_162452
+HEAD 3228b8878e74207f85818e8c06aa5c4fc70fbe68
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000567-20260519_163406
+HEAD e163a7c2a40436ea9745d843db0509c93a3132f8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000568-20260519_163910
+HEAD 2a93a988d064b2a28de20f96838835ff7bcadcd4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000569-20260519_164522
+HEAD a75920fbd64e93d4ffc561a0e9f7b6241b6bfe06
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000570-20260519_165320
+HEAD 929f3296bb77f4f56a539eedb2026539d62f3c08
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000571-20260519_170248
+HEAD 09597937ad80c915598481f13c33a1fa26f792ea
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000010-20260519_091117
+HEAD 2c8a9d23f83a96f31e0d847867e7537976f6ed05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000011-20260519_092336
+HEAD 4290bdbf3ca4d333cafd92b54fdf842d2f492162
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000012-20260519_093054
+HEAD 435bf88ed1bff7cd2ab22b826aab0691b3875624
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000013-20260519_094048
+HEAD 7ac3ee22eea3223016006a5260791b01364a3935
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000014-20260519_095214
+HEAD 480e7e4211ac542494a9439da344352753262d9f
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000015-20260519_100252
+HEAD f46f7ef6b9553743dd7b0e45c3ccb3e320c4493a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000016-20260519_101446
+HEAD d8c50742eeeac993642b2d59dcab90ae3c9da721
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000017-20260519_102604
+HEAD 04473abb333d90e2f6967eb9e17065405be166c8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000018-20260519_103603
+HEAD ff9dd58496153bc39e9c272b9df327354a8bde9d
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000019-20260519_104935
+HEAD 788ac065c642f2e88e4abe68c53e464417495dcb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000020-20260519_105817
+HEAD ff26537d5a806709c0369878106c1deee1cce82d
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000021-20260519_110738
+HEAD 717f782fb058faab55b464bd05e8d293ce5a5cb5
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000022-20260519_112127
+HEAD 1a9757095b045cf67b2549f2584eecfc5ec2437a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000023-20260519_112954
+HEAD c56e56aed5a0da3793d321acfce375f0f92f9d87
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000024-20260519_114212
+HEAD f8c3efa9026dde4797b381d21e4abc8ad12f6e22
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000025-20260519_115134
+HEAD 34264344ceb9137230fa5ff4cfc9bb3ff931a01e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000026-20260519_120107
+HEAD 94b3a999feb863900eca40ffb9f6c8e759360b12
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000027-20260519_121239
+HEAD 002ae66b93100b88352bd1be5a6402292d72713c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000028-20260519_122139
+HEAD 044158ac8587d9a03f68da78e039c59c851af7d1
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000029-20260519_123051
+HEAD 816b7ccc8950ad4e7d46c65f56aa0d0b86212163
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000030-20260519_124207
+HEAD 1afb18f95c08d7706f1d3124123256366e8e12ec
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000105-20260519_125459
+HEAD 88c335238e203e6942c875d0a3adea69761f4b23
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000106-20260519_130446
+HEAD f442ce64cd3178c5f3d8061f5537fb914011293c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000107-20260519_131306
+HEAD 1f9fd98bc78eb6923556eda7950d1efdf60769f0
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000108-20260519_132050
+HEAD a02d51154695a8a0b7499de9abdd13166c7272a3
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000109-20260519_133207
+HEAD a7383a0972f84df55a39f9bec0e1d99f7e02b04b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000110-20260519_134225
+HEAD 10cd87a92e3e770e2932b5877ce3d5cf23aaecfb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000111-20260519_135222
+HEAD 27a9ed81a1ed85c813ec6ab80615d43b79efacf3
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000176-20260519_140612
+HEAD c82c0133c75a93d9131404c9f29d0a5fe5368f32
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000177-20260519_141804
+HEAD 30e1201ad9ec3035004de7de9890f334470a77ad
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000178-20260519_142816
+HEAD ce905c04e79588a6c98f13914536aaca84858e8a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000179-20260519_143642
+HEAD efb99c1f5810281a841c4c5165ce00fd027c039e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000180-20260519_144722
+HEAD f8740f32418a437cc65b7897c47d36c4a56b74b6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000181-20260519_145623
+HEAD 1be032e6b2e9cbdbc9af5fde26985fdfc1501f67
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000249-20260519_151120
+HEAD 1faa693a89b0aed210fdc9f21c293f452d186614
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000266-20260519_152147
+HEAD 3543c0d2486ddd0cd7b90cbc60d2279edd8b3e7d
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000267-20260519_153723
+HEAD bd2f08701fb32640fe970b25d7745ad0cc198203
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000268-20260519_154633
+HEAD 7a2f43b4978e52b8b1f7a4ac31d0e6e130860b97
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000269-20260519_155954
+HEAD 1472874676cb8f002e0a8f24d70b27c442d5cfb4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000270-20260519_161027
+HEAD 38636b2a0e98a3917b0116575aa29ebe368cce69
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000271-20260519_162140
+HEAD 120d054a2d5d3ea10a432075ebce4ba0d801acaf
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000272-20260519_162837
+HEAD 99da234c97ffaa6ead6bed952bbf6825675b47a1
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000273-20260519_163844
+HEAD e163a7c2a40436ea9745d843db0509c93a3132f8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000274-20260519_165114
+HEAD 2d4ac5b1d47bd4a85f4e0670d95ef428ffba3c6a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000275-20260519_165700
+HEAD 09597937ad80c915598481f13c33a1fa26f792ea
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-frame_logic/worktrees/agent-codex-frame_logic-packet-000028-20260519_091247
+HEAD 2c8a9d23f83a96f31e0d847867e7537976f6ed05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-hardened-4codex-gpu-8h-20260519T091017Z-codex-ir_decompiler/worktrees/agent-codex-ir_decompiler-packet-000028-20260519_091247
+HEAD 2c8a9d23f83a96f31e0d847867e7537976f6ed05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-launch-diagnostic3-20260519T071948Z-codex-compiler_ambiguity/worktrees/agent-codex-compiler_ambiguity-packet-000036-20260519_072028
+HEAD 86c72871967dfa150c115adb62c987754a469d58
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary-4codex-gpu-1h-20260519T070521Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000023-20260519_070727
+HEAD 86c72871967dfa150c115adb62c987754a469d58
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary-4codex-gpu-1h-20260519T070521Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000042-20260519_070903
+HEAD 86c72871967dfa150c115adb62c987754a469d58
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary-4codex-gpu-1h-20260519T070521Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000023-20260519_070727
+HEAD 86c72871967dfa150c115adb62c987754a469d58
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000053-20260519_072832
+HEAD ca12c5c18c1534aac0d4639c0ece279d556bf300
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000054-20260519_073728
+HEAD c0faead6c21c943701da47b4a313110c76f6913b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000055-20260519_074633
+HEAD ac9e441639b2108b8b27d4b2cec85093c861cae4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000056-20260519_075724
+HEAD 39a9f387012ba95c83685d20e0ac943b7249aa54
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000057-20260519_080717
+HEAD 06e1fae4832a9c63cf09850141216d4c2b6f1a05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000100-20260519_081416
+HEAD 66ec5f896aa1db0a32bf95d27545836c102a11b7
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000121-20260519_082338
+HEAD f456bcf36c143ff9d6976debd243798c75ba4438
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000026-20260519_072617
+HEAD ca12c5c18c1534aac0d4639c0ece279d556bf300
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000027-20260519_073525
+HEAD 7a6a12bd20295ccec5103e5c63af02220fd3dde2
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000044-20260519_074109
+HEAD c0faead6c21c943701da47b4a313110c76f6913b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000045-20260519_075133
+HEAD fb7d7bd33018e8613107cbdd367ff40ecead498e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000046-20260519_080347
+HEAD e72c9315aac957c8d2050870208c381a6a023357
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000068-20260519_081029
+HEAD 06e1fae4832a9c63cf09850141216d4c2b6f1a05
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000069-20260519_081847
+HEAD a99d0a1226da41531a692ef66bffb0e48c2ffd45
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000070-20260519_082800
+HEAD 83f1515b813bdcc19d34af6926383943281d6810
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000026-20260519_072617
+HEAD ca12c5c18c1534aac0d4639c0ece279d556bf300
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000027-20260519_074123
+HEAD c0faead6c21c943701da47b4a313110c76f6913b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000028-20260519_075652
+HEAD fb7d7bd33018e8613107cbdd367ff40ecead498e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000029-20260519_080348
+HEAD e72c9315aac957c8d2050870208c381a6a023357
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000030-20260519_081236
+HEAD 66ec5f896aa1db0a32bf95d27545836c102a11b7
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000031-20260519_082350
+HEAD f456bcf36c143ff9d6976debd243798c75ba4438
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000032-20260519_083016
+HEAD 3d500f7d193d96585fea4b178e89e5a4fa7fc64e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-compiler_registry/worktrees/agent-codex-compiler_registry-packet-000033-20260519_084337
+HEAD 6d95b815ab7cb39feb4ee75b6b2ec880ff5ecf27
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-scheduler-canary4-4codex-gpu-1h-20260519T072357Z-codex-ir_decompiler/worktrees/agent-codex-ir_decompiler-packet-000048-20260519_072807
+HEAD ca12c5c18c1534aac0d4639c0ece279d556bf300
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-5scope-gpu-cache-1h-20260518T224426Z-codex-frame_logic/worktrees/agent-codex-frame_logic-packet-000036-20260518_232544
+HEAD 9b7845f3c5c9c490cf51d5f63f711b0a3d07862e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000012-20260518_233406
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000013-20260518_233849
+HEAD 1a206931c040704e5ad499840ec5c14c4a1f0339
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000014-20260518_234237
+HEAD 31420173c4dcfa49a78785067ce933e8016775c6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000015-20260518_235143
+HEAD f64516fefac3111cdbfbeff54b13a740dd5eab83
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000016-20260518_235621
+HEAD 1e26bec02eef279ed220a4a62c8146681d744ab4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000059-20260519_000746
+HEAD d7c21d99a23a10636ba8f3002620c27f80904092
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000060-20260519_001359
+HEAD 4a371ac0e395de7831d5d0828316dca7c01aa004
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000110-20260519_002602
+HEAD 0307b14dc1f327fd808841deaa275145ab2f3c73
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000111-20260519_003314
+HEAD 366544829dd185965e73385ee2dd8fe9f0ad2488
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000019-20260518_233441
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000020-20260518_234014
+HEAD 3796aa349770c4ef6af7e0580cd6832fb1015cdc
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000021-20260518_234607
+HEAD 31420173c4dcfa49a78785067ce933e8016775c6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000022-20260518_235100
+HEAD f64516fefac3111cdbfbeff54b13a740dd5eab83
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000023-20260518_235759
+HEAD 3bc929b222c77115d89000e2ac2df00ce3c76aa6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000024-20260519_000413
+HEAD d7c21d99a23a10636ba8f3002620c27f80904092
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000058-20260519_001121
+HEAD 054cb4efc30b8ce088f2b78fdb82f0b6c9f69a8e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000238-20260519_002939
+HEAD 0307b14dc1f327fd808841deaa275145ab2f3c73
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000012-20260518_233406
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000013-20260518_234157
+HEAD 7cd0a9458ed9d2ba4d31364c27df27443a7d7a27
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000014-20260518_234939
+HEAD 31420173c4dcfa49a78785067ce933e8016775c6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000015-20260519_000042
+HEAD 538721338516853e225a3a31aeea6bcd9c2f217a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000016-20260519_000914
+HEAD 054cb4efc30b8ce088f2b78fdb82f0b6c9f69a8e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000171-20260519_002941
+HEAD 0307b14dc1f327fd808841deaa275145ab2f3c73
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000019-20260518_233441
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000020-20260518_234129
+HEAD 16b71629965f090206ac49b423f18d0688dd088e
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000021-20260518_235032
+HEAD 31420173c4dcfa49a78785067ce933e8016775c6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000022-20260518_235953
+HEAD 3bc929b222c77115d89000e2ac2df00ce3c76aa6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000023-20260519_000729
+HEAD d7c21d99a23a10636ba8f3002620c27f80904092
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000024-20260519_001420
+HEAD 88986d22c087a51fa0d6d2c82a7432bcd04568f1
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000031-20260519_002208
+HEAD 0307b14dc1f327fd808841deaa275145ab2f3c73
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000047-20260519_002603
+HEAD 0307b14dc1f327fd808841deaa275145ab2f3c73
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000048-20260519_003408
+HEAD 33d62c5aeece062fa3bdf2debef4f7ff72f4caaf
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-frame_logic-01/worktrees/agent-codex-frame_logic-01-packet-000012-20260518_233406
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-dedup-8codex-gpu-1h-20260518T233253Z-codex-ir_decompiler-02/worktrees/agent-codex-ir_decompiler-02-packet-000012-20260518_233406
+HEAD bce199823b9b034f987b26b3aedcbb8d09744edd
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000039-20260519_021343
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000040-20260519_022054
+HEAD 9a994c34b246e64ee32551ed2deb059063b5f24c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000050-20260519_022533
+HEAD 1495d50aec1068432c8eb1c6d4fea72db3dc9729
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000058-20260519_023234
+HEAD 1918301a4cc8a4db45727efbc0ee5d01abc45dd4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000094-20260519_023957
+HEAD 16a58d9604db6c4d8c3b8b2b9dcbfd847dcf7822
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000125-20260519_024721
+HEAD d2d6330e6b56365cbe9919b492fabb88c712b2ec
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000130-20260519_025345
+HEAD 685cf03bc399eec5b631187dfa1756e50377bb02
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000159-20260519_030302
+HEAD c337f8044f8a532f96f4ae9fb5db7f2d553c07ad
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-01/worktrees/agent-codex-compiler_ambiguity-01-packet-000160-20260519_031122
+HEAD 5d64c8f13f4be0f4576ea92496998e2f0d4ab144
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000084-20260519_021727
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000097-20260519_022309
+HEAD 7bfcf964cf53be89a8e10a04d861e920bea64130
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000128-20260519_022939
+HEAD 6092165cedabf7389517cccc376257c6da966984
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000156-20260519_023649
+HEAD 1918301a4cc8a4db45727efbc0ee5d01abc45dd4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000188-20260519_024350
+HEAD ac3f8a18a249c4b2cffb6d4db6f7eec061054ca8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000217-20260519_025050
+HEAD ccb6323a216d4d581d8829b360f5ac2693f4f9d6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000225-20260519_025503
+HEAD 0cd6a572adce160842545a94fa072c4d362484bb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000226-20260519_030004
+HEAD 0cd6a572adce160842545a94fa072c4d362484bb
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000265-20260519_030730
+HEAD a4ea9b672269a5109f6fd54fcc5d2c8ff20e89a3
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000039-20260519_021343
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000040-20260519_022609
+HEAD 1e5f7c73cd87dc806fd4ffc12ed74b5246f4236c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000041-20260519_023328
+HEAD 1918301a4cc8a4db45727efbc0ee5d01abc45dd4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000064-20260519_024350
+HEAD ac3f8a18a249c4b2cffb6d4db6f7eec061054ca8
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000065-20260519_025345
+HEAD 685cf03bc399eec5b631187dfa1756e50377bb02
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000066-20260519_030208
+HEAD c337f8044f8a532f96f4ae9fb5db7f2d553c07ad
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000102-20260519_031330
+HEAD 6fe2b8f10a1b5128c29fd36fcad0d3fb98077f9a
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000084-20260519_021727
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000085-20260519_023119
+HEAD 80a0c553c78e2406e6ec7f8528b9e84aaf497043
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000091-20260519_023645
+HEAD 1918301a4cc8a4db45727efbc0ee5d01abc45dd4
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000104-20260519_023956
+HEAD 16a58d9604db6c4d8c3b8b2b9dcbfd847dcf7822
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000105-20260519_025015
+HEAD ccb6323a216d4d581d8829b360f5ac2693f4f9d6
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000106-20260519_030042
+HEAD c337f8044f8a532f96f4ae9fb5db7f2d553c07ad
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-compiler_registry-02/worktrees/agent-codex-compiler_registry-02-packet-000107-20260519_030924
+HEAD 0d47b51f1e9136362ddf2d1ecd73d8c2e2db807b
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-frame_logic-01/worktrees/agent-codex-frame_logic-01-packet-000050-20260519_021439
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-8codex-gpu-1h-20260519T021015Z-codex-ir_decompiler-02/worktrees/agent-codex-ir_decompiler-02-packet-000050-20260519_021438
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-packet-smoke-20260519T014817Z-codex-compiler_ambiguity-02/worktrees/agent-codex-compiler_ambiguity-02-packet-000045-20260519_015214
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+
+worktree /home/barberb/portland-laws.github.io/workspace/codex-work/uscode-modal-vector-patience-packet-smoke-20260519T014817Z-codex-compiler_registry-01/worktrees/agent-codex-compiler_registry-01-packet-000044-20260519_015210
+HEAD 27b94d0f6bb514d0b2b196f6406e89c6e2e5cb0c
+detached
+

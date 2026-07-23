@@ -6,8 +6,8 @@ This script is DEPRECATED and should NOT be used.
 
 Reason: Incorrect throttling approach, uses wrong Copilot CLI method
 
-This script uses the gh copilot extension incorrectly for automation.
-The throttling logic is unnecessary with the verified dual method.
+This script uses an older Copilot automation path and unnecessary throttling.
+The maintained repo path for existing PRs is the verified dual method.
 
 The correct method is the DUAL METHOD:
 1. Create draft PR
@@ -70,7 +70,6 @@ Key features:
 
 Requirements:
 - GitHub CLI (gh) installed and authenticated
-- GitHub Copilot CLI extension installed (gh extension install github/gh-copilot)
 - GITHUB_TOKEN or GH_TOKEN environment variable set
 
 Usage:
@@ -342,8 +341,8 @@ class ThrottledCopilotInvoker:
 - Do not remove or modify working code unless absolutely necessary
 - Focus on solving the specific issue described in the PR"""
         
-        # Method 1: Try using gh agent-task create (proper Copilot Coding Agent invocation)
-        logger.info("Creating agent task using gh agent-task create...")
+        # Method 1: Try GitHub-hosted agent-task creation when supported locally.
+        logger.info("Trying gh agent-task create when available...")
         
         if self.copilot_cli:
             # Use the CopilotCLI utility's create_agent_task method
@@ -380,19 +379,20 @@ class ThrottledCopilotInvoker:
             error_msg = result.get('error', result.get('stderr', ''))
             logger.error(f"❌ Failed to create agent task: {error_msg}")
             
-            # Method 3: Fallback to @copilot mention only if gh agent-task is not available
+            # Method 3: Fallback to PR comment flow if gh agent-task is not available
             if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
-                logger.warning("⚠️  gh agent-task not available, falling back to @copilot mention")
+                logger.warning("⚠️  gh agent-task not available, falling back to existing-PR comment flow")
                 return self._fallback_copilot_mention(pr_number, pr_title, branch_name)
             
             return False
     
     def _fallback_copilot_mention(self, pr_number: int, pr_title: str, branch_name: str) -> bool:
         """
-        Fallback method using @copilot mention if gh agent-task is not available.
-        This is NOT the preferred method.
+        Fallback method using a PR comment when gh agent-task is not available.
+
+        This matches the maintained repo behavior for existing PR automation.
         """
-        logger.info("Using fallback @copilot mention method (NOT RECOMMENDED)...")
+        logger.info("Using fallback PR comment method for an existing PR...")
         
         comment = f"""@copilot Please work on implementing the changes described in this PR.
 

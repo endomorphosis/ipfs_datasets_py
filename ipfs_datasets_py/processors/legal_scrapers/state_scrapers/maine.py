@@ -3,9 +3,12 @@
 This module contains the scraper for Maine statutes from the official state legislative website.
 """
 
-from typing import List, Dict
+import asyncio
+from typing import List, Dict, Optional
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -39,7 +42,12 @@ class MaineScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Maine's legislative website.
         
         Args:
@@ -49,6 +57,24 @@ class MaineScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        direct_limit = self._effective_scrape_limit(max_statutes, default=160)
+        return_threshold = self._bounded_return_threshold(160)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        official = await self._scrape_official_title_chapter_section_tree(
+            code_name,
+            max_statutes=max(10, return_threshold),
+        )
+        if official:
+            return official[:return_threshold]
+
+        direct = await self._scrape_direct_seed_sections(
+            code_name,
+            max_statutes=max(1, int(direct_limit or 2)),
+        )
+        if direct and not self._full_corpus_enabled():
+            return direct[: max(1, int(direct_limit or len(direct)))]
+
         candidate_urls = [
             "https://legislature.maine.gov/statutes/1/title1ch1sec0.html",
             "https://legislature.maine.gov/statutes/17-A/title17-Ach1sec0.html",
@@ -69,26 +95,387 @@ class MaineScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Me. Rev. Stat.",
-                        max_sections=220,
+                        max_sections=max(10, return_threshold),
                         wait_for_selector="a[href*='sec'][href$='.html'], a[href*='ch'][href$='sec0.html']",
                         timeout=45000,
                     )
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= 30:
+                    if len(statutes) >= return_threshold:
                         return statutes
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Me. Rev. Stat.", max_sections=220)
+            statutes = await self._generic_scrape(code_name, candidate, "Me. Rev. Stat.", max_sections=max(10, return_threshold))
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= return_threshold:
                 return statutes
 
         return best_statutes
+
+    async def _scrape_official_title_chapter_section_tree(
+        self,
+        code_name: str,
+        max_statutes: int,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        root_url = "https://legislature.maine.gov/statutes/"
+        root_raw = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=25)
+        if not root_raw:
+            return []
+        root_html = root_raw.decode("utf-8", errors="replace") if isinstance(root_raw, bytes) else str(root_raw)
+        root_soup = BeautifulSoup(root_html, "html.parser")
+
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        seen_keys: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_sections:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_sections.add(source_url)
+                statutes.append(statute)
+                if len(statutes) >= max_statutes:
+                    break
+
+        if resumed:
+            _extend_unique(resumed)
+            self.logger.info(
+                "Maine official tree: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_TITLE_REWIND", default=1)))
+        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_CHAPTER_REWIND", default=10)))
+        resume_title_floor = max(0, resume_titles_scanned - title_rewind)
+        resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
+        title_urls = []
+        seen_titles = set()
+        for link in root_soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not re.search(r"/?statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$|^[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$", href, re.IGNORECASE):
+                continue
+            full_url = urljoin(root_url, href)
+            if full_url in seen_titles:
+                continue
+            seen_titles.add(full_url)
+            title_urls.append(full_url)
+
+        self.logger.info(
+            "Maine official tree: discovered_titles=%s max_statutes=%s",
+            len(title_urls),
+            max_statutes,
+        )
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maine:title-discovery",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(title_urls)),
+                "chapters_scanned": 0,
+                "sections_scanned": int(max(len(statutes), resume_sections_scanned)),
+                "discovered_sections": int(max(len(statutes), resume_discovered_sections)),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
+
+        processed_chapters = 0
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
+        section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_ME_SECTION_CONCURRENCY", default=8)))
+        section_sem = asyncio.Semaphore(section_concurrency)
+
+        for title_index, title_url in enumerate(title_urls, start=1):
+            if len(statutes) >= max_statutes:
+                break
+            if title_index < resume_title_floor:
+                continue
+            title_raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=25)
+            if not title_raw:
+                continue
+            title_html = title_raw.decode("utf-8", errors="replace") if isinstance(title_raw, bytes) else str(title_raw)
+            title_soup = BeautifulSoup(title_html, "html.parser")
+            chapter_urls = []
+            seen_chapters = set()
+            for link in title_soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                if not re.search(r"title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", href, re.IGNORECASE):
+                    continue
+                full_url = urljoin(title_url, href)
+                if full_url in seen_chapters or full_url.endswith("ch0sec0.html"):
+                    continue
+                seen_chapters.add(full_url)
+                chapter_urls.append(full_url)
+
+            self.logger.info(
+                "Maine official tree: title_url=%s discovered_chapters=%s statutes_so_far=%s",
+                title_url,
+                len(chapter_urls),
+                len(statutes),
+            )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="maine:title-scan",
+                extra={
+                    "titles_scanned": int(title_index),
+                    "discovered_titles": int(len(title_urls)),
+                    "chapters_scanned": int(processed_chapters),
+                    "sections_scanned": int(sections_scanned_total),
+                    "discovered_sections": int(sections_discovered_total),
+                    "discovered_chapters": int(len(chapter_urls)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+
+            for chapter_url in chapter_urls:
+                if len(statutes) >= max_statutes:
+                    break
+                processed_chapters += 1
+                if processed_chapters < resume_chapter_floor:
+                    continue
+                chapter_raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=25)
+                if not chapter_raw:
+                    continue
+                chapter_html = chapter_raw.decode("utf-8", errors="replace") if isinstance(chapter_raw, bytes) else str(chapter_raw)
+                chapter_soup = BeautifulSoup(chapter_html, "html.parser")
+                section_candidates: List[str] = []
+                seen_local_candidates: set[str] = set()
+                for link in chapter_soup.find_all("a", href=True):
+                    href = str(link.get("href") or "").strip()
+                    if not re.search(r"title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", href, re.IGNORECASE):
+                        continue
+                    section_url = urljoin(chapter_url, href)
+                    if section_url.endswith("sec0.html"):
+                        continue
+                    if section_url in seen_sections or section_url in seen_local_candidates:
+                        continue
+                    seen_local_candidates.add(section_url)
+                    section_candidates.append(section_url)
+                sections_discovered_total += len(section_candidates)
+
+                async def _parse_section_url(section_url: str) -> Optional[NormalizedStatute]:
+                    async with section_sem:
+                        return await self._build_official_section_statute(code_name, section_url)
+
+                tasks = [asyncio.create_task(_parse_section_url(section_url)) for section_url in section_candidates]
+                scanned_sections = 0
+                cancelled_early = False
+                for task in asyncio.as_completed(tasks):
+                    scanned_sections += 1
+                    sections_scanned_total += 1
+                    statute = await task
+                    if statute is not None:
+                        _extend_unique([statute])
+                        if len(statutes) == 1 or len(statutes) % 25 == 0:
+                            self.logger.info(
+                                "Maine official tree: chapters_processed=%s statutes_so_far=%s",
+                                processed_chapters,
+                                len(statutes),
+                            )
+                            self._write_partial_checkpoint(
+                                statutes,
+                                code_name=code_name,
+                                stage_label="maine:section-scan",
+                                extra={
+                                    "titles_scanned": int(title_index),
+                                    "discovered_titles": int(len(title_urls)),
+                                    "chapters_scanned": int(processed_chapters),
+                                    "sections_scanned": int(sections_scanned_total),
+                                    "discovered_sections": int(sections_discovered_total),
+                                    "codes_completed": 0,
+                                    "codes_total": 1,
+                                },
+                            )
+                    if len(statutes) >= max_statutes:
+                        cancelled_early = True
+                        for pending in tasks:
+                            if not pending.done():
+                                pending.cancel()
+                        break
+                if cancelled_early:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                if scanned_sections and (
+                    scanned_sections == len(section_candidates)
+                    or scanned_sections % 200 == 0
+                ):
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="maine:section-scan",
+                        extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(len(title_urls)),
+                            "chapters_scanned": int(processed_chapters),
+                            "sections_scanned": int(sections_scanned_total),
+                            "discovered_sections": int(sections_discovered_total),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
+
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="maine:complete",
+            force=True,
+            extra={
+                "titles_scanned": int(len(title_urls)),
+                "discovered_titles": int(len(title_urls)),
+                "chapters_scanned": int(processed_chapters),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
+        return statutes
+
+    async def _build_official_section_statute(
+        self,
+        code_name: str,
+        url: str,
+    ) -> Optional[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+        if not raw:
+            return None
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
+        soup = BeautifulSoup(html, "html.parser")
+        heading = self._normalize_legal_text(
+            (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(" ", strip=True)
+        )
+        body_node = soup.select_one("div.row.section-content") or soup.select_one("div.MRSSection")
+        body = self._normalize_legal_text(body_node.get_text(" ", strip=True) if body_node else "")
+        if len(body) < 160:
+            text_nodes = [
+                self._normalize_legal_text(node.get_text(" ", strip=True))
+                for node in soup.select("div.mrs-text, div.qhistory")
+            ]
+            body = self._normalize_legal_text(" ".join(text_nodes))
+        if len(body) < 160:
+            return None
+
+        title_match = re.search(r"/title([0-9A-Za-z\-]+)sec", url, flags=re.IGNORECASE)
+        section_match = re.search(r"sec([0-9A-Za-z\-]+)\.html$", url, flags=re.IGNORECASE)
+        title_number = title_match.group(1) if title_match else None
+        section_number = section_match.group(1) if section_match else (self._extract_section_number(heading) or "")
+        section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
+        official_cite = f"Me. Rev. Stat. tit. {title_number}, § {section_number}" if title_number else f"Me. Rev. Stat. § {section_number}"
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} {official_cite}",
+            code_name=code_name,
+            title_number=title_number,
+            section_number=section_number,
+            section_name=section_name,
+            full_text=body,
+            legal_area=self._identify_legal_area(body[:1200]),
+            source_url=url,
+            official_cite=official_cite,
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_maine_revised_statutes_html",
+                "discovery_method": "official_title_chapter_section",
+                "skip_hydrate": True,
+            },
+        )
+
+    async def _scrape_direct_seed_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 2,
+    ) -> List[NormalizedStatute]:
+        """Parse official Maine section pages into full statute records."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        seeds = [
+            "https://legislature.maine.gov/statutes/1/title1sec1.html",
+            "https://legislature.maine.gov/statutes/17-A/title17-Asec1.html",
+        ]
+        out: List[NormalizedStatute] = []
+        for url in seeds[: max(1, int(max_statutes or 1))]:
+            raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+            if not raw:
+                continue
+            try:
+                html = raw.decode("utf-8", errors="replace")
+            except Exception:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            heading = self._normalize_legal_text(
+                (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(" ", strip=True)
+            )
+            body_node = soup.select_one("div.row.section-content") or soup.select_one("div.MRSSection")
+            body = self._normalize_legal_text(body_node.get_text(" ", strip=True) if body_node else "")
+            if len(body) < 160:
+                text_nodes = [
+                    self._normalize_legal_text(node.get_text(" ", strip=True))
+                    for node in soup.select("div.mrs-text, div.qhistory")
+                ]
+                body = self._normalize_legal_text(" ".join(text_nodes))
+            if len(body) < 160:
+                continue
+
+            title_match = re.search(r"/title([0-9A-Za-z\-]+)sec", url, flags=re.IGNORECASE)
+            section_match = re.search(r"sec([0-9A-Za-z\-]+)\.html$", url, flags=re.IGNORECASE)
+            title_number = title_match.group(1) if title_match else None
+            section_number = section_match.group(1) if section_match else (self._extract_section_number(heading) or "")
+            section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
+            official_cite = f"Me. Rev. Stat. tit. {title_number}, § {section_number}" if title_number else f"Me. Rev. Stat. § {section_number}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} {official_cite}",
+                    code_name=code_name,
+                    title_number=title_number,
+                    section_number=section_number,
+                    section_name=section_name,
+                    full_text=body,
+                    legal_area=self._identify_legal_area(body[:1200]),
+                    source_url=url,
+                    official_cite=official_cite,
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_maine_revised_statutes_html",
+                        "discovery_method": "official_seed_section",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
 
 
 # Register this scraper with the registry

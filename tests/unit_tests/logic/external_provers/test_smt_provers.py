@@ -5,6 +5,16 @@ Tests for Z3 and CVC5 prover bridges.
 
 import pytest
 from ipfs_datasets_py.logic.external_provers.smt import z3_prover_bridge, cvc5_prover_bridge
+from ipfs_datasets_py.logic.external_provers.interactive.lean_prover_bridge import TDFOLToLeanConverter
+from ipfs_datasets_py.logic.external_provers.interactive.coq_prover_bridge import TDFOLToCoqConverter
+from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+    Constant,
+    FunctionApplication,
+    Predicate,
+    QuantifiedFormula,
+    Quantifier,
+    Variable,
+)
 
 
 class TestZ3ProverBridge:
@@ -184,6 +194,32 @@ class TestProverIntegrationWithTDFOL:
             formula = parse_tdfol("atom1")
         assert formula is not None
         # Conversion logic would be tested here
+
+    def test_external_converters_use_current_tdfol_field_names(self):
+        """External prover converters should accept current TDFOL dataclass fields."""
+        term = FunctionApplication("parent_of", (Constant("alice"),))
+        formula = Predicate("Responsible", (term,))
+
+        assert z3_prover_bridge._function_name(term) == "parent_of"
+        assert z3_prover_bridge._node_args(formula) == (term,)
+        assert cvc5_prover_bridge._function_name(term) == "parent_of"
+        assert cvc5_prover_bridge._node_args(formula) == (term,)
+        assert TDFOLToLeanConverter().convert(formula) == "(Responsible (parent_of alice))"
+        assert TDFOLToCoqConverter().convert(formula) == "(Responsible (parent_of alice))"
+
+    def test_formula_analyzer_counts_current_tdfol_arguments(self):
+        """The router analyzer should inspect Predicate.arguments, not only legacy args."""
+        from ipfs_datasets_py.logic.external_provers.formula_analyzer import FormulaAnalyzer
+
+        formula = QuantifiedFormula(
+            Quantifier.FORALL,
+            Variable("x"),
+            Predicate("Person", (Variable("x"),)),
+        )
+
+        analysis = FormulaAnalyzer().analyze(formula)
+
+        assert analysis.analysis_details["variable_count"] == 1
     
     def test_smt_result_to_tdfol(self):
         """GIVEN: SMT prover result
@@ -192,3 +228,18 @@ class TestProverIntegrationWithTDFOL:
         """
         # Placeholder for bidirectional conversion test
         assert True
+
+
+class TestProverInstaller:
+    """Test documented prover installer routing for SMT and neural provers."""
+
+    def test_installer_accepts_smt_and_symbolicai_flags(self, monkeypatch):
+        from ipfs_datasets_py.logic.integration.bridges import prover_installer as installer
+
+        called = []
+        monkeypatch.setattr(installer, "ensure_z3", lambda **kwargs: called.append("z3") or True)
+        monkeypatch.setattr(installer, "ensure_cvc5", lambda **kwargs: called.append("cvc5") or True)
+        monkeypatch.setattr(installer, "ensure_symbolicai", lambda **kwargs: called.append("symbolicai") or True)
+
+        assert installer.main(["--z3", "--cvc5", "--symbolicai", "--yes"]) == 0
+        assert called == ["z3", "cvc5", "symbolicai"]

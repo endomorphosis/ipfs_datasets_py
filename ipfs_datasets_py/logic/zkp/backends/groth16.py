@@ -1,6 +1,7 @@
 """Groth16 backend entrypoint.
 
-This module intentionally remains **fail-closed by default**.
+This module uses the repository's Rust Groth16 backend by default when the
+compiled binary is present.
 
 Current state:
 - The repository includes a Rust-based Groth16 implementation accessed via
@@ -8,12 +9,12 @@ Current state:
 - The high-level `ZKPProver`/`ZKPVerifier` API uses the backend protocol defined
     in `backends/__init__.py` (theorem + private axioms → `ZKPProof`).
 
-To avoid accidental production usage, this backend only enables the Rust FFI
-path when explicitly opted-in via environment variable.
+To avoid falling back to insecure proofs, this backend fails closed when the
+Rust FFI binary or proving artifacts are unavailable.
 
-Opt-in:
-- Set `IPFS_DATASETS_ENABLE_GROTH16=1` to enable proof generation/verification
-    through the Rust binary (if present).
+Opt-out:
+- Set `IPFS_DATASETS_ENABLE_GROTH16=0` to disable proof generation/verification
+    through the Rust binary.
 
 Determinism:
 - Pass `metadata={"seed": <u64>}` to `ZKPProver.generate_proof(...)` (or this backend's
@@ -21,8 +22,9 @@ Determinism:
 - For test vectors, `GROTH16_BACKEND_DETERMINISTIC=1` may also force stable timestamps
     in the Rust CLI output when supported.
 
-When not enabled (default):
-- Backend selection works, but `generate_proof`/`verify_proof` raise `ZKPError`.
+When the Rust binary is missing:
+- Backend selection works, but `generate_proof`/`verify_proof` raise `ZKPError`
+    with installer/build instructions.
 """
 
 from __future__ import annotations
@@ -39,7 +41,9 @@ from ..canonicalization import (
     hash_theorem,
     tdfol_v1_axioms_commitment_hex_v2,
 )
+from ..circuits import build_proof_attestation_view, compiler_guidance_ref_from_metadata
 from ..legal_theorem_semantics import derive_tdfol_v1_trace
+from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
 @dataclass
@@ -55,9 +59,10 @@ class Groth16Backend:
     curve_id: str = "bn254"
     timeout_seconds: int = 30
     binary_path: Optional[str] = None
+    _DEFAULT_CIRCUIT_ID: str = "knowledge_of_axioms"
 
     def _enabled(self) -> bool:
-        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() in {"1", "true", "TRUE", "yes", "YES"}
+        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "0").strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _ffi(self):
         # Import lazily to keep imports quiet and lightweight.
@@ -69,8 +74,7 @@ class Groth16Backend:
         if not self._enabled():
             raise ZKPError(
                 "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving, "
-                "or use the default 'simulated' backend."
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
             )
 
         if not theorem:
@@ -80,8 +84,13 @@ class Groth16Backend:
 
         canonical_axioms = canonicalize_axioms(private_axioms)
 
-        circuit_version = int((metadata or {}).get("circuit_version", 1))
-        ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
+        metadata_dict = dict(metadata or {})
+        circuit_version = int(metadata_dict.get("circuit_version", 1))
+        ruleset_id = str(metadata_dict.get("ruleset_id", "TDFOL_v1"))
+        circuit_ref = self._resolve_circuit_ref(
+            metadata_dict,
+            circuit_version=circuit_version,
+        )
 
         if circuit_version >= 2 and ruleset_id == "TDFOL_v1":
             axioms_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
@@ -107,22 +116,81 @@ class Groth16Backend:
             "security_level": int((metadata or {}).get("security_level", 0)),
             "circuit_version": circuit_version,
             "ruleset_id": ruleset_id,
+            "circuit_ref": circuit_ref,
         }
+        guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
+        if guidance_ref:
+            witness["compiler_guidance_ref"] = guidance_ref
+            witness["compiler_guidance_version"] = int(
+                metadata_dict.get("compiler_guidance_version") or 1
+            )
 
-        seed = (metadata or {}).get("seed")
+        seed = metadata_dict.get("seed")
 
         try:
-            return self._ffi().generate_proof(json.dumps(witness), seed=seed)
+            proof = self._ffi().generate_proof(json.dumps(witness), seed=seed)
+            public_inputs = proof.public_inputs if isinstance(getattr(proof, "public_inputs", None), dict) else {}
+            metadata_out = proof.metadata if isinstance(getattr(proof, "metadata", None), dict) else {}
+            guidance_ref = compiler_guidance_ref_from_metadata(metadata_dict)
+            if guidance_ref and isinstance(public_inputs, dict):
+                public_inputs.setdefault("compiler_guidance_ref", guidance_ref)
+                public_inputs.setdefault(
+                    "compiler_guidance_version",
+                    int(metadata_dict.get("compiler_guidance_version") or 1),
+                )
+            attestation_view = build_proof_attestation_view(
+                proof_data=getattr(proof, "proof_data", b""),
+                public_inputs=public_inputs,
+                metadata={
+                    **metadata_out,
+                    "backend": self.backend_id,
+                    "proof_system": str(metadata_out.get("proof_system") or "Groth16"),
+                },
+            )
+            if isinstance(public_inputs, dict):
+                public_inputs.setdefault("attestation_ref", attestation_view["attestation_ref"])
+                public_inputs.setdefault(
+                    "attestation_view_version",
+                    int(attestation_view["attestation_view_version"]),
+                )
+            if isinstance(metadata_out, dict):
+                metadata_out.setdefault("attestation_view", attestation_view)
+            return proof
         except Exception as e:
             # Convert backend failures to ZKPError (fail-closed).
-            raise ZKPError(f"Groth16 proof generation failed: {e}")
+            raise ZKPError(
+                "Groth16 proof generation failed. Install/build the bundled backend with "
+                "`pip install -e .[groth16]` from the ipfs_datasets_py package, or run "
+                "`ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/build.sh`. "
+                f"Original error: {e}"
+            )
+
+    def _resolve_circuit_ref(self, metadata: dict[str, Any], *, circuit_version: int) -> str:
+        """Return a versioned circuit_ref consistent with circuit_version."""
+        candidate = str(metadata.get("circuit_ref") or "").strip()
+        default_circuit_id = str(metadata.get("circuit_id") or self._DEFAULT_CIRCUIT_ID).strip()
+        circuit_id = default_circuit_id or self._DEFAULT_CIRCUIT_ID
+
+        if candidate:
+            try:
+                parsed_id, parsed_version = parse_circuit_ref_lenient(
+                    candidate,
+                    legacy_default_version=circuit_version,
+                )
+                circuit_id = parsed_id
+                if parsed_version != circuit_version:
+                    return format_circuit_ref(circuit_id, circuit_version)
+                return format_circuit_ref(circuit_id, parsed_version)
+            except Exception:
+                return format_circuit_ref(circuit_id, circuit_version)
+
+        return format_circuit_ref(circuit_id, circuit_version)
 
     def verify_proof(self, proof: ZKPProof) -> bool:
         if not self._enabled():
             raise ZKPError(
                 "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification, "
-                "or use the default 'simulated' backend."
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
             )
 
         try:
@@ -155,8 +223,7 @@ class Groth16Backend:
         if not self._enabled():
             raise ZKPError(
                 "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup, "
-                "or use the default 'simulated' backend."
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
             )
 
         try:

@@ -1,0 +1,19 @@
+{
+  "artifact_cid": "bafkreicia75qefziwwk53jvt4yyguphcvwv5omyrajatztxsbnau6bb4ti",
+  "manifest_cid": "bafkreih2xqft37oso7apce6q6xpxynvtqtljky5ltragt2koim4qmtpt5e",
+  "required_review_criteria": [
+    "accepted",
+    "all_required_claims_bound",
+    "all_required_categories_reviewed",
+    "no_sensitive_material_present",
+    "request_authorized_channel_evidence"
+  ],
+  "required_scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": false,
+    "vendor_release_equivalent": false
+  },
+  "schema_version": "xaman-vendor-evidence-review-template/v1",
+  "task_id": "PORTAL-CXTP-153",
+  "template_status": "REVIEW_REQUIRED"
+}

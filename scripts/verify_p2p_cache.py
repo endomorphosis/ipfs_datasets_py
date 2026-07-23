@@ -10,6 +10,10 @@ import sys
 import subprocess
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "ipfs_accelerate_py"))
+
 # Colors for output
 GREEN = '\033[92m'
 RED = '\033[91m'
@@ -51,9 +55,14 @@ def test_multiformats():
 def test_libp2p():
     """Test libp2p library"""
     try:
-        from libp2p import new_host
-        host = new_host()
-        return host.get_id() is not None
+        import trio
+        from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import running_libp2p_host
+
+        async def _probe():
+            async with running_libp2p_host() as host:
+                return host.get_id() is not None
+
+        return trio.run(_probe)
     except Exception:
         return False
 

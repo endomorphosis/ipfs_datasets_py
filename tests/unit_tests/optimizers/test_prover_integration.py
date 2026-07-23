@@ -4,6 +4,7 @@ Tests for Phase 2 integration with theorem provers.
 """
 
 import pytest
+import time
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     ProverIntegrationAdapter,
     ProverVerificationResult,
@@ -12,6 +13,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
     LogicExtractionContext,
     DataType
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import LogicalStatement
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import ProverStatus
 
 
@@ -32,6 +34,22 @@ class TestProverIntegrationAdapter:
         
         assert 'z3' in adapter.use_provers
         assert 'cvc5' in adapter.use_provers
+
+    def test_init_empty_prover_list_is_respected(self):
+        """An explicit empty prover list should not fall back to Z3."""
+        adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
+
+        assert adapter.use_provers == []
+        assert adapter.provers == {}
+
+    def test_symbolicai_aliases_are_canonicalized(self):
+        """Optimizer prover names should accept SymbolicAI's common aliases."""
+        adapter = ProverIntegrationAdapter(
+            use_provers=['symbolic', 'symai', 'symbolic_ai', 'symbolicai'],
+            enable_cache=False,
+        )
+
+        assert adapter.use_provers == ['symbolicai']
     
     def test_init_with_cache_disabled(self):
         """Test adapter initialization with cache disabled."""
@@ -85,6 +103,73 @@ class TestProverIntegrationAdapter:
         
         # THEN should not raise exception
         assert True
+
+    def test_modal_statement_routes_through_modal_prover(self):
+        """Modal legal IR should compile through the modal prover router."""
+        adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
+        statement = LogicalStatement(
+            formula="O[deontic:D](make_records_promptly_available)",
+            natural_language="The agency must make records promptly available.",
+            confidence=0.82,
+            formalism="modal",
+            metadata={
+                "modal_family": "deontic",
+                "modal_system": "D",
+                "operator": "O",
+            },
+        )
+
+        verification = adapter.verify_statement(statement)
+
+        assert verification.overall_valid is True
+        assert verification.verified_by == ["modal:tdfol_modal_tableaux"]
+        assert verification.prover_results[0].status == ProverStatus.VALID
+        assert verification.prover_results[0].details["compiled_formula"] == "O(make_records_promptly_available)"
+        assert verification.prover_results[0].details["modal_theorem_valid"] is False
+
+    def test_modal_statement_uses_sound_kd45_fallback(self):
+        """Registered KD45 modal systems should use the bounded modal router."""
+        adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
+        statement = LogicalStatement(
+            formula="B[doxastic:KD45](reasonably_believes)",
+            natural_language="The officer reasonably believes the person intends to flee.",
+            confidence=0.82,
+            formalism="modal",
+            metadata={
+                "modal_family": "doxastic",
+                "modal_system": "KD45",
+                "operator": "B",
+            },
+        )
+
+        verification = adapter.verify_statement(statement)
+
+        assert verification.overall_valid is False
+        assert verification.verified_by == []
+        assert verification.prover_results[0].status == ProverStatus.INVALID
+        assert verification.prover_results[0].details["backend"] == "tdfol_modal_tableaux_fallback"
+        assert verification.prover_results[0].details["fallback_system"] == "D"
+
+    def test_adapter_enforces_bounded_per_prover_timeout(self):
+        """A hanging prover call should be reported as TIMEOUT by the adapter."""
+
+        class SlowProver:
+            def prove(self, formula, timeout=None):
+                del formula, timeout
+                time.sleep(0.2)
+                return True
+
+        adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=False)
+        adapter.provers["slow"] = SlowProver()
+
+        started = time.time()
+        verification = adapter.verify_statement("P(a)", timeout=0.01)
+
+        assert time.time() - started < 0.15
+        assert verification.overall_valid is False
+        assert verification.prover_results[0].status == ProverStatus.TIMEOUT
+        assert verification.prover_results[0].error_message == "Verification timeout"
+        assert adapter.stats["timeouts"] == 1
 
 
 class TestProverVerificationResult:

@@ -46,10 +46,6 @@ class TDFOLProofResult:
     proof_steps: list
     proof_time: float
 
-# Global instance for TDFOL
-_global_proof_cache: Optional[ProofCache] = None
-
-
 def get_global_proof_cache() -> ProofCache:
     """Get or create the global TDFOL proof cache.
     
@@ -58,10 +54,6 @@ def get_global_proof_cache() -> ProofCache:
     Returns:
         Global ProofCache instance
     """
-    global _global_proof_cache
-    if _global_proof_cache is None:
-        _global_proof_cache = ProofCache(maxsize=1000, ttl=3600)
-    
     warnings.warn(
         "TDFOL.tdfol_proof_cache is deprecated. "
         "Import from ipfs_datasets_py.logic.common.proof_cache instead. "
@@ -69,8 +61,8 @@ def get_global_proof_cache() -> ProofCache:
         DeprecationWarning,
         stacklevel=2
     )
-    
-    return _global_proof_cache
+
+    return get_global_cache(maxsize=1000, ttl=3600)
 
 
 def clear_global_proof_cache() -> None:

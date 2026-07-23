@@ -6,6 +6,7 @@ This module contains the scraper for Minnesota statutes from the official state 
 import asyncio
 from typing import List, Dict
 import re
+import urllib.request
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -39,7 +40,12 @@ class MinnesotaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Minnesota's legislative website.
         
         Args:
@@ -60,18 +66,29 @@ class MinnesotaScraper(BaseStateScraper):
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
+        limit = self._effective_scrape_limit(max_statutes, default=420)
+        enough = min(80, limit or 80)
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
+                if limit is not None and len(merged) >= limit:
+                    return
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
 
-        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=420)
+        if self._MN_SECTION_URL_RE.search(str(code_url or "")):
+            direct_seed = await self._build_statute_from_section_page(code_name, code_url)
+            if direct_seed is not None:
+                _merge([direct_seed])
+                if len(merged) >= enough:
+                    return merged
+
+        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit or 1000000)
         _merge(chapter_statutes)
-        if len(merged) >= 80:
+        if len(merged) >= enough:
             return merged
 
         for candidate in candidate_urls:
@@ -85,21 +102,21 @@ class MinnesotaScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Minn. Stat.",
-                        max_sections=420,
+                        max_sections=limit or 1000000,
                         wait_for_selector="a[href*='/statutes/cite/'], a[href*='/statutes/']",
                         timeout=45000,
                     )
                     statutes = self._filter_section_level(statutes)
                     _merge(statutes)
-                    if len(merged) >= 80:
+                    if len(merged) >= enough:
                         return merged
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=420)
+            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=limit or 1000000)
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= 80:
+            if len(merged) >= enough:
                 return merged
 
         return merged
@@ -110,11 +127,14 @@ class MinnesotaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        chapter_urls = await self._discover_chapter_urls(max_chapters=max_statutes * 2)
+        limit = max(1, int(max_statutes or 1))
+        chapter_budget = limit if self._full_corpus_enabled() else min(limit, 24)
+        chapter_urls = await self._discover_chapter_urls(max_chapters=max(1, chapter_budget))
         if not chapter_urls:
             chapter_urls = [
                 f"{self.get_base_url()}/statutes/cite/609",
                 f"{self.get_base_url()}/statutes/cite/645",
+                f"{self.get_base_url()}/statutes/cite/518",
                 f"{self.get_base_url()}/statutes/cite/518B",
                 f"{self.get_base_url()}/statutes/cite/169A",
                 f"{self.get_base_url()}/statutes/cite/8",
@@ -122,6 +142,11 @@ class MinnesotaScraper(BaseStateScraper):
                 f"{self.get_base_url()}/statutes/cite/144",
                 f"{self.get_base_url()}/statutes/cite/325F",
             ]
+        self.logger.info(
+            "Minnesota chapter crawl: discovered_chapters=%s max_statutes=%s",
+            len(chapter_urls),
+            limit,
+        )
 
         section_urls: List[str] = []
         seen_urls = set()
@@ -138,26 +163,31 @@ class MinnesotaScraper(BaseStateScraper):
                     continue
                 seen_urls.add(section_url)
                 section_urls.append(section_url)
-                if len(section_urls) >= max_statutes * 4:
+                if len(section_urls) >= limit:
                     break
-            if len(section_urls) >= max_statutes * 4:
+            if len(section_urls) >= limit:
                 break
 
         if not section_urls:
             return []
 
-        sem = asyncio.Semaphore(10)
-
-        async def _fetch_one(section_url: str) -> NormalizedStatute | None:
-            async with sem:
-                return await self._build_statute_from_section_page(code_name, section_url)
-
         statutes: List[NormalizedStatute] = []
-        for result in await asyncio.gather(*[_fetch_one(url) for url in section_urls[: max_statutes * 4]], return_exceptions=True):
-            if isinstance(result, Exception) or result is None:
+        for section_index, section_url in enumerate(section_urls[:limit], start=1):
+            try:
+                result = await self._build_statute_from_section_page(code_name, section_url)
+            except Exception:
+                continue
+            if result is None:
                 continue
             statutes.append(result)
-            if len(statutes) >= max_statutes:
+            if len(statutes) == 1 or len(statutes) % 25 == 0:
+                self.logger.info(
+                    "Minnesota chapter crawl: scanned_sections=%s/%s statutes_so_far=%s",
+                    section_index,
+                    min(len(section_urls), limit),
+                    len(statutes),
+                )
+            if len(statutes) >= limit:
                 break
 
         return statutes
@@ -265,16 +295,20 @@ class MinnesotaScraper(BaseStateScraper):
         return urls
 
     async def _build_statute_from_section_page(self, code_name: str, section_url: str) -> NormalizedStatute | None:
-        try:
-            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
-        except Exception:
-            return None
-        if not payload:
+        html_text = await self._request_text_direct(section_url, timeout=18)
+        if not html_text:
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+            except Exception:
+                return None
+            if not payload:
+                return None
+            html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        if not html_text:
             return None
 
         match = self._MN_SECTION_NUMBER_RE.search(section_url)
         section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]
-        html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
         text = self._extract_best_content_text(html_text)
         heading_pattern = re.compile(
             rf"\b{re.escape(section_number)}\b\s+[A-Z][A-Z0-9 ,;:'()\-/&]+\.",
@@ -306,7 +340,26 @@ class MinnesotaScraper(BaseStateScraper):
             legal_area=self._identify_legal_area(heading),
             official_cite=f"Minn. Stat. § {section_number}",
             metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_minnesota_statutes_html",
+                "discovery_method": "official_seed_or_section_page",
+                "skip_hydrate": True,
+            },
         )
+
+    async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return ""
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MN", MinnesotaScraper)

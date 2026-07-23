@@ -1,0 +1,430 @@
+{
+  "artifact_cid": "bafkreig66sstrnk3it7c3vtnmcwoy6fsigiw4d7kkc6f3a2z7r52ckw3x4",
+  "entries": [
+    {
+      "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:assumption-mutation-native-vault",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:auth-precondition-removal",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "classification": "EXTERNAL_EVIDENCE_REQUIRED",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:backend-double-use",
+      "next_action": "Obtain reviewed runtime/build evidence or an authorized backend contract; do not infer the missing behavior from public client source.",
+      "origin": "disproof_vector",
+      "result": "blocked_by_missing_evidence"
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:downgraded-solver-result",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:replay-resolved-payload",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "classification": "EXTERNAL_EVIDENCE_REQUIRED",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:runtime-equivalence-missing",
+      "next_action": "Obtain reviewed runtime/build evidence or an authorized backend contract; do not infer the missing behavior from public client source.",
+      "origin": "disproof_vector",
+      "result": "blocked_by_missing_evidence"
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:stale-evidence-acceptance",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:unsupported-xrpl-semantics",
+      "next_action": "Keep the affected transaction classes proof-ineligible until semantic validation is implemented or explicitly rejected before signing.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "confirmed_vulnerability": false,
+      "id": "xaman-disproof:wrong-network-signing",
+      "next_action": "Keep the guard or evidence assumption explicit; reproduce against an unmodified runtime before treating this mutation as a product defect.",
+      "origin": "disproof_vector",
+      "result": "counterexample_found"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-cancel-after-submit-race",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-cancel-gap-promoted",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-decline-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-decline-gap-promoted",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
+      "fuzz_domain": "stale_downgraded_evidence",
+      "id": "attack-downgraded-evidence-review",
+      "next_action": "Maintain proof-consumer rejection tests and require reviewed evidence before acceptance.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-expiry-after-auth-race",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-expiry-gap-promoted",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
+      "fuzz_domain": "solver_result_tampering",
+      "id": "attack-forged-broadcast-finality",
+      "next_action": "Maintain proof-consumer rejection tests and require reviewed evidence before acceptance.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-imported-production-account.json",
+      "fuzz_domain": "account_import",
+      "id": "attack-imported-production-account",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-malformed-payload-shape.json",
+      "fuzz_domain": "malformed_payload",
+      "id": "attack-malformed-payload-shape",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "id": "attack-offercreate-transaction-type",
+      "next_action": "Retain the transaction class as proof-ineligible and add source validation or an explicit pre-signing rejection.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-path-payment-semantics-skipped.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "id": "attack-path-payment-semantics-skipped",
+      "next_action": "Retain the transaction class as proof-ineligible and add source validation or an explicit pre-signing rejection.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-proof-obligation-status-forged.json",
+      "fuzz_domain": "solver_result_tampering",
+      "id": "attack-proof-obligation-status-forged",
+      "next_action": "Maintain proof-consumer rejection tests and require reviewed evidence before acceptance.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
+      "fuzz_domain": "malformed_payload",
+      "id": "attack-raw-payload-material",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+      "fuzz_domain": "malformed_payload",
+      "id": "attack-raw-signature-blob",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-reconnect-before-submit-result-race.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-reconnect-before-submit-result-race",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+      "fuzz_domain": "replayed_payload",
+      "id": "attack-replay-duplicate-resolution",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-submit-result.json",
+      "fuzz_domain": "replayed_payload",
+      "id": "attack-replay-duplicate-submit-result",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-review-bypass.json",
+      "fuzz_domain": "auth_review_bypass",
+      "id": "attack-review-bypass",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "id": "attack-signerlistset-transaction-type",
+      "next_action": "Retain the transaction class as proof-ineligible and add source validation or an explicit pre-signing rejection.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+      "fuzz_domain": "auth_review_bypass",
+      "id": "attack-signing-before-auth",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-solver-result-upgrade.json",
+      "fuzz_domain": "solver_result_tampering",
+      "id": "attack-solver-result-upgrade",
+      "next_action": "Maintain proof-consumer rejection tests and require reviewed evidence before acceptance.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json",
+      "fuzz_domain": "stale_downgraded_evidence",
+      "id": "attack-stale-evidence-digest",
+      "next_action": "Maintain proof-consumer rejection tests and require reviewed evidence before acceptance.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json",
+      "fuzz_domain": "cancellation_expiry_reconnect_race",
+      "id": "attack-submit-result-removed",
+      "next_action": "Use a reviewed self-hosted runtime or authorized backend contract to model and test the affected lifecycle semantics.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json",
+      "fuzz_domain": "transaction_type_mutation",
+      "id": "attack-trustset-transaction-type",
+      "next_action": "Retain the transaction class as proof-ineligible and add source validation or an explicit pre-signing rejection.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "confirmed_vulnerability": false,
+      "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json",
+      "fuzz_domain": "wrong_network",
+      "id": "attack-wrong-network",
+      "next_action": "Treat this as a model-boundary test; reproduce it against the unmodified public-source runtime before escalating.",
+      "origin": "fuzz_mutation",
+      "result": "target_claim_triggered"
+    },
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+      "next_action": "Under a valid independent verifier-only decision, inject the matching fault into an unmodified public-source runtime on Android and iOS; do not treat the bounded state as a product defect before reproduction.",
+      "origin": "native_vault_state_fuzz",
+      "result": "runtime_fault_injection_required",
+      "summary": "For a bounded two-vault batch, first- and later-vault failures can leave mixed old primary, absent primary with recovery, or new primary with recovery states. The public passcode flow visibly attempts rollback after rejected batch rekey, but runtime behavior remains unproved."
+    },
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+      "next_action": "Under a valid independent verifier-only decision, inject the matching fault into an unmodified public-source runtime on Android and iOS; do not treat the bounded state as a product defect before reproduction.",
+      "origin": "native_vault_state_fuzz",
+      "result": "runtime_fault_injection_required",
+      "summary": "A recovery-cleanup exception after replacement yields a new-key primary together with old-key recovery in the bounded model; the native bridge and TypeScript wrapper source show error propagation, which must be checked under runtime injection."
+    },
+    {
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "confirmed_vulnerability": false,
+      "id": "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery",
+      "next_action": "Under a valid independent verifier-only decision, inject the matching fault into an unmodified public-source runtime on Android and iOS; do not treat the bounded state as a product defect before reproduction.",
+      "origin": "native_vault_state_fuzz",
+      "result": "runtime_fault_injection_required",
+      "summary": "A failure after primary purge and before replacement write has an old-key recovery-only state in the bounded model."
+    }
+  ],
+  "inputs": {
+    "counterexample_report_task_id": "PORTAL-CXTP-070",
+    "fuzz_report_task_id": "PORTAL-CXTP-138",
+    "native_vault_state_fuzz_artifact_cid": "bafkreieaqpjiyuhsejag2vf6zfysh3l4rjws6gpuv5rnmlgbu34wdyifa4",
+    "native_vault_state_fuzz_task_id": "PORTAL-CXTP-167",
+    "transaction_coverage_artifact_cid": "sha256:3afcf320e04094a6b39cca1952c9c8a68351cc0c4b1f5ed26880a017d0914beb",
+    "transaction_coverage_task_id": "PORTAL-CXTP-146"
+  },
+  "interpretation_policy": {
+    "every_entry_requires_fail_closed_handling": true,
+    "fuzz_target_claim_trigger_is_not_product_exploit": true,
+    "model_mutation_is_not_product_exploit": true,
+    "source_bounded_runtime_obligation_is_not_product_exploit": true,
+    "source_supported_coverage_gap_blocks_proof_promotion": true
+  },
+  "overall_status": "triaged_fail_closed",
+  "production_release_blocked": true,
+  "schema_version": "xaman-counterexample-triage/v1",
+  "security_decision": "COUNTEREXAMPLES_TRIAGED_WITHOUT_PRODUCT_DEFECT_CLAIM",
+  "summary": {
+    "classification_counts": {
+      "BOUNDARY_MODEL_MUTATION": 7,
+      "EXTERNAL_EVIDENCE_REQUIRED": 2,
+      "MODEL_MUTATION_CONTROL_TEST": 6,
+      "PROOF_CONSUMER_CONTROL_MUTATION": 5,
+      "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION": 3,
+      "SOURCE_SUPPORTED_COVERAGE_GAP": 5,
+      "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS": 9
+    },
+    "confirmed_vulnerability_count": 0,
+    "entry_count": 37,
+    "required_proof_ineligible_transaction_classes": [
+      "OfferCreate",
+      "SignerListSet",
+      "TrustSet",
+      "multisign"
+    ],
+    "source_bounded_runtime_test_obligation_count": 3,
+    "source_supported_coverage_gap_count": 5,
+    "unmodeled_runtime_or_backend_semantics_count": 9
+  },
+  "task_id": "PORTAL-CXTP-164"
+}

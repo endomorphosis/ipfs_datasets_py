@@ -34,11 +34,13 @@ import json
 import logging
 import os
 import sys
+import re
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Literal, Union
 from enum import Enum
+from urllib.parse import urlparse
 
 import anyio
 
@@ -48,6 +50,46 @@ if str(PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(PARENT_DIR))
 
 logger = logging.getLogger(__name__)
+
+STATE_HOST_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "DC", "PR",
+}
+
+EXPLICIT_FEDERAL_GOV_HOSTS = (
+    "congress.gov",
+    "gpo.gov",
+    "federalregister.gov",
+    "supremecourt.gov",
+    "uscourts.gov",
+    "whitehouse.gov",
+    "va.gov",
+    "state.gov",
+    "justice.gov",
+    "treasury.gov",
+    "commerce.gov",
+    "energy.gov",
+    "transportation.gov",
+    "usda.gov",
+    "hhs.gov",
+    "hud.gov",
+    "doi.gov",
+    "dol.gov",
+    "dhs.gov",
+    "defense.gov",
+    "fbi.gov",
+    "cia.gov",
+    "census.gov",
+    "gsa.gov",
+    "ssa.gov",
+    "epa.gov",
+    "irs.gov",
+    "usa.gov",
+)
 
 # Try to import monitoring decorator
 try:
@@ -98,7 +140,7 @@ except ImportError:
 
 # Import logic module
 try:
-    from ...logic_integration import LogicProcessor
+    from ...core_operations import LogicProcessor
     HAVE_LOGIC = True
 except ImportError:
     HAVE_LOGIC = False
@@ -499,7 +541,7 @@ class CommonCrawlLegalScraper:
                 result.fallback_methods_tried.append(method)
                 
                 if method == FallbackMethod.COMMON_CRAWL:
-                    content = await self._fetch_common_crawl(url)
+                    content = await self._fetch_common_crawl(url, source_type=source_type)
                 elif method == FallbackMethod.BRAVE_SEARCH:
                     content = await self._fetch_brave_search(url)
                 elif method == FallbackMethod.WAYBACK_MACHINE:
@@ -560,30 +602,66 @@ class CommonCrawlLegalScraper:
         Returns:
             Detected SourceType
         """
-        url_lower = url.lower()
-        
-        # Federal indicators
-        if any(domain in url_lower for domain in [
-            "gov/", ".gov", "congress.", "gpo.", "federalregister",
-            "supremecourt", "uscourts"
-        ]):
-            return SourceType.FEDERAL
-        
+        url_lower = str(url or "").lower()
+        parsed = urlparse(str(url or ""))
+        host = str(parsed.netloc or "").lower().strip(".")
+
         # Municipal indicators
         if any(term in url_lower for term in [
             "city", "town", "county", "municipal", "municode"
         ]):
             return SourceType.MUNICIPAL
-        
+
         # State indicators
-        if any(term in url_lower for term in [
-            "state", "legislature", "statehouse"
-        ]):
+        if (
+            ".state." in host
+            or "legislature" in host
+            or "statehouse" in host
+            or any(term in url_lower for term in ["state", "legislature", "statehouse"])
+        ):
             return SourceType.STATE
-        
+
+        # Federal indicators
+        if any(host == domain or host.endswith(f".{domain}") for domain in EXPLICIT_FEDERAL_GOV_HOSTS):
+            return SourceType.FEDERAL
+        if any(domain in url_lower for domain in [
+            "congress.", "gpo.", "federalregister",
+            "supremecourt", "uscourts", "whitehouse"
+        ]):
+            return SourceType.FEDERAL
+
+        inferred_state_code = self._infer_state_code_from_url(url)
+        if host.endswith(".gov") and inferred_state_code in STATE_HOST_CODES:
+            return SourceType.STATE
+        if host.endswith(".gov") or host.endswith(".mil"):
+            return SourceType.FEDERAL
+
         return SourceType.UNKNOWN
     
-    async def _fetch_common_crawl(self, url: str) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def _infer_state_code_from_url(url: str) -> Optional[str]:
+        host = str(urlparse(str(url or "")).netloc or "").lower().strip(".")
+        if not host:
+            return None
+
+        state_us_match = re.search(r"\.state\.([a-z]{2})\.us$", host)
+        if state_us_match:
+            return state_us_match.group(1).upper()
+
+        gov_match = re.search(r"(?:^|\.)([a-z]{2})[a-z0-9-]*\.gov$", host)
+        if gov_match:
+            code = gov_match.group(1).upper()
+            if code in STATE_HOST_CODES:
+                return code
+
+        return None
+
+    async def _fetch_common_crawl(
+        self,
+        url: str,
+        *,
+        source_type: Optional[SourceType] = None,
+    ) -> Optional[Dict[str, Any]]:
         """Fetch content from Common Crawl via HuggingFace.
         
         Args:
@@ -596,15 +674,24 @@ class CommonCrawlLegalScraper:
             return None
         
         try:
-            # Query Common Crawl index
-            # TODO: Integrate HuggingFace datasets when available
-            # For now, use direct Common Crawl search
-            from urllib.parse import urlparse
             parsed = urlparse(url)
             domain = parsed.netloc
-            
-            # Search for domain
-            results = self.cc_engine.search_domain(domain, max_matches=10)
+
+            effective_source_type = source_type or self._detect_source_type(url)
+            jurisdiction = "federal"
+            state_code = None
+            if effective_source_type == SourceType.STATE:
+                jurisdiction = "state"
+                state_code = self._infer_state_code_from_url(url)
+            elif effective_source_type == SourceType.MUNICIPAL:
+                jurisdiction = "municipal"
+
+            results = self.cc_engine.search_domain(
+                domain,
+                max_matches=10,
+                jurisdiction=jurisdiction,
+                state_code=state_code,
+            )
             
             if not results:
                 return None

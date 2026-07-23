@@ -1,0 +1,670 @@
+{
+  "generated_at_utc": "2026-07-19T15:04:28Z",
+  "install_failure_count": 0,
+  "installer_mode": "install",
+  "lanes": [
+    {
+      "executables": [],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --z3"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "installation": {
+        "events": [],
+        "ok": true,
+        "operation": "install",
+        "requested": true,
+        "steps": [
+          {
+            "ok": true,
+            "step": "ensure_z3"
+          }
+        ]
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/miniforge3/bin/z3",
+        "installed_version": "4.16.0.0",
+        "managed_version": ">=4.12.0,<5.0.0",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "z3",
+        "status": "managed"
+      },
+      "name": "z3",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "SMT constraint solving",
+      "python_modules": [
+        {
+          "name": "z3",
+          "status": "present"
+        }
+      ],
+      "required_executables": [],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "cvc5",
+          "path": "/home/barberb/.local/bin/cvc5",
+          "status": "present",
+          "version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/cvc5",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --cvc5 --cvc5-cli"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/cvc5",
+        "installed_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+        "managed_version": "1.3.2",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "cvc5",
+        "status": "managed"
+      },
+      "name": "cvc5",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "SMT and SMT-LIB differential checking",
+      "python_modules": [
+        {
+          "name": "cvc5",
+          "status": "present"
+        }
+      ],
+      "required_executables": [
+        "cvc5"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "apalache-mc",
+          "path": "/home/barberb/.local/bin/apalache-mc",
+          "status": "present",
+          "version": "0.58.3",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/apalache-mc",
+              "version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "0.58.3"
+          }
+        },
+        {
+          "name": "apalache",
+          "path": null,
+          "status": "missing",
+          "version": null,
+          "version_probe": null
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --apalache"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/apalache-mc",
+        "installed_version": "0.58.3",
+        "managed_version": "0.58.3",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "apalache",
+        "status": "managed"
+      },
+      "name": "apalache",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "TLA model checking",
+      "python_modules": [],
+      "required_executables": [
+        "apalache-mc | apalache"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "maude",
+          "path": "/home/barberb/.local/bin/maude",
+          "status": "present",
+          "version": "3.5.1",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/maude",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "3.5.1"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --maude"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/maude",
+        "installed_version": "3.5.1",
+        "managed_version": "3.5.1",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "maude",
+        "status": "managed"
+      },
+      "name": "maude",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "Tamarin rewriting runtime",
+      "python_modules": [],
+      "required_executables": [
+        "maude"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "tamarin-prover",
+          "path": "/home/barberb/.local/bin/tamarin-prover",
+          "status": "present",
+          "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/tamarin-prover",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --tamarin"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/tamarin-prover",
+        "installed_version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023",
+        "managed_version": "1.12.0",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "tamarin",
+        "status": "managed"
+      },
+      "name": "tamarin",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "symbolic protocol model checking",
+      "python_modules": [],
+      "required_executables": [
+        "tamarin-prover"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "proverif",
+          "path": "/home/barberb/.local/bin/proverif",
+          "status": "present",
+          "version": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '--version'.",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/proverif",
+              "--version"
+            ],
+            "exit_code": 2,
+            "status": "error",
+            "version_raw": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '--version'."
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --proverif"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/proverif",
+        "installed_version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre",
+        "managed_version": "2.05",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "proverif",
+        "status": "managed"
+      },
+      "name": "proverif",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "symbolic reachability and secrecy verification",
+      "python_modules": [],
+      "required_executables": [
+        "proverif"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "lean",
+          "path": "/home/barberb/.elan/bin/lean",
+          "status": "present",
+          "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.elan/bin/lean",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
+          }
+        },
+        {
+          "name": "lake",
+          "path": "/home/barberb/.elan/bin/lake",
+          "status": "present",
+          "version": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.elan/bin/lake",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --lean"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.elan/bin/lean",
+        "installed_version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+        "managed_version": "v4.31.0",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "lean",
+        "status": "managed"
+      },
+      "name": "lean",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "Lean proof-consumer kernel",
+      "python_modules": [],
+      "required_executables": [
+        "lean",
+        "lake"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "coqc",
+          "path": "/home/barberb/.local/bin/coqc",
+          "status": "present",
+          "version": "The Rocq Prover, version 9.1.1",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/coqc",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "The Rocq Prover, version 9.1.1"
+          }
+        },
+        {
+          "name": "coqtop",
+          "path": "/home/barberb/.local/bin/coqtop",
+          "status": "present",
+          "version": "The Rocq Prover, version 9.1.1",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/bin/coqtop",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "The Rocq Prover, version 9.1.1"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --coq"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/bin/coqc",
+        "installed_version": "The Rocq Prover, version 9.1.1",
+        "managed_version": "9.1.1",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "rocq",
+        "status": "managed"
+      },
+      "name": "rocq",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "independent Rocq proof-kernel cross-check",
+      "python_modules": [],
+      "required_executables": [
+        "coqc",
+        "coqtop"
+      ],
+      "status": "ready"
+    },
+    {
+      "executables": [],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --symbolicai"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": null,
+        "installed_version": "1.18.0",
+        "managed_version": ">=1.14.0,<2.0.0",
+        "manual_update_required": false,
+        "present": true,
+        "solver": "symbolicai",
+        "status": "managed"
+      },
+      "name": "symbolicai",
+      "proof_acceptance_policy": "may_accept_reports_after_lane_specific_validation",
+      "proof_lane": "SymbolicAI-assisted proof proposal",
+      "python_modules": [
+        {
+          "name": "symai",
+          "status": "present"
+        }
+      ],
+      "required_executables": [],
+      "status": "ready"
+    },
+    {
+      "executables": [
+        {
+          "name": "ergoai",
+          "path": null,
+          "status": "missing",
+          "version": null,
+          "version_probe": null
+        },
+        {
+          "name": "ergo",
+          "path": null,
+          "status": "missing",
+          "version": null,
+          "version_probe": null
+        },
+        {
+          "name": "runErgo.sh",
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+          "status": "present",
+          "version": "XSB Version 5.0.0 (Green Tea) of May 15, 2022",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "XSB Version 5.0.0 (Green Tea) of May 15, 2022"
+          }
+        },
+        {
+          "name": "runergo",
+          "path": "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+          "status": "present",
+          "version": "XSB Version 5.0.0 (Green Tea) of May 15, 2022",
+          "version_probe": {
+            "command": [
+              "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "present",
+            "version_raw": "XSB Version 5.0.0 (Green Tea) of May 15, 2022"
+          }
+        }
+      ],
+      "install_plan": {
+        "commands": [
+          "python -m ipfs_datasets_py.logic.integration.bridges.prover_installer --yes --ergoai"
+        ],
+        "mode": "managed_user_local_installer",
+        "network_access_may_be_required": true,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+        "installed_version": "XSB Version 5.0.0 (Green Tea) of May 15, 2022",
+        "managed_version": "3.0",
+        "manual_update_required": true,
+        "present": true,
+        "solver": "ergoai",
+        "status": "manual_update_required"
+      },
+      "name": "ergoai",
+      "proof_acceptance_policy": "do_not_accept_reports_until_managed_version_is_reviewed",
+      "proof_lane": "ErgoAI logic-programming checks",
+      "python_modules": [],
+      "required_executables": [
+        "ergoai | ergo | runErgo.sh | runergo"
+      ],
+      "status": "degraded_optional_lane"
+    },
+    {
+      "advisory_lane": {
+        "configuration": {
+          "configured_by_route": false,
+          "configured_by_weights": false,
+          "model_candidates": [],
+          "status": "unconfigured",
+          "unapproved_candidates": []
+        },
+        "lean_kernel_ready": true,
+        "proof_authority": false
+      },
+      "executables": [],
+      "install_plan": {
+        "commands": [],
+        "mode": "advisory",
+        "network_access_may_be_required": false,
+        "platform": "linux",
+        "requires_manual_review": true
+      },
+      "managed_version_status": {
+        "executable": null,
+        "installed_version": "unconfigured",
+        "managed_version": "labs-leanstral-1-5|labs-leanstral-2603",
+        "manual_update_required": true,
+        "present": false,
+        "solver": "leanstral",
+        "status": "manual_update_required"
+      },
+      "name": "leanstral",
+      "proof_acceptance_policy": "do_not_accept_reports_until_leanstral_configuration_is_reviewed",
+      "proof_lane": "Leanstral advisory model-proposing lane (not proof authority)",
+      "python_modules": [],
+      "required_executables": [],
+      "status": "degraded_optional_lane"
+    }
+  ],
+  "managed_solver_versions": [
+    {
+      "executable": "/home/barberb/.local/bin/apalache-mc",
+      "installed_version": "0.58.3",
+      "managed_version": "0.58.3",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "apalache",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/bin/tamarin-prover",
+      "installed_version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023",
+      "managed_version": "1.12.0",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "tamarin",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/bin/maude",
+      "installed_version": "3.5.1",
+      "managed_version": "3.5.1",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "maude",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/bin/proverif",
+      "installed_version": "Proverif 2.05. Cryptographic protocol verifier, by Bruno Blanchet, Vincent Cheval, and Marc Sylvestre",
+      "managed_version": "2.05",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "proverif",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/bin/cvc5",
+      "installed_version": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+      "managed_version": "1.3.2",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "cvc5",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.elan/bin/lean",
+      "installed_version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+      "managed_version": "v4.31.0",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "lean",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/bin/coqc",
+      "installed_version": "The Rocq Prover, version 9.1.1",
+      "managed_version": "9.1.1",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "rocq",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/miniforge3/bin/z3",
+      "installed_version": "4.16.0.0",
+      "managed_version": ">=4.12.0,<5.0.0",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "z3",
+      "status": "managed"
+    },
+    {
+      "executable": null,
+      "installed_version": "1.18.0",
+      "managed_version": ">=1.14.0,<2.0.0",
+      "manual_update_required": false,
+      "present": true,
+      "solver": "symbolicai",
+      "status": "managed"
+    },
+    {
+      "executable": "/home/barberb/.local/share/ipfs_datasets_py/provers/ergoai/Coherent/ERGOAI_3.0/ErgoAI/runergo",
+      "installed_version": "XSB Version 5.0.0 (Green Tea) of May 15, 2022",
+      "managed_version": "3.0",
+      "manual_update_required": true,
+      "present": true,
+      "solver": "ergoai",
+      "status": "manual_update_required"
+    }
+  ],
+  "missing_or_degraded_lane_count": 2,
+  "overall_status": "ready_with_blocked_optional_lanes",
+  "platform": "linux",
+  "policy_document": "docs/security_verification/optional_solver_installation.md",
+  "proof_acceptance_blocked": false,
+  "ready_lane_count": 9,
+  "schema_version": "optional-theorem-solver-install-report/v2",
+  "security_decision": "OPTIONAL_SOLVER_LANES_EXPLICITLY_BLOCKED_OR_READY",
+  "selected_solvers": [
+    "z3"
+  ],
+  "solver_probe": {
+    "exists": true,
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+    "security_decision": "SOLVER_DEPENDENCY_ENVIRONMENT_READY_WITH_CAPABILITY_GAPS"
+  },
+  "task_id": "PORTAL-CXTP-086",
+  "warning_count": 1,
+  "warnings": [
+    {
+      "base_probe_status": "error",
+      "code": "OPTIONAL_LANE_READY_BUT_BASE_PROBE_STALE",
+      "solver": "proverif"
+    }
+  ]
+}

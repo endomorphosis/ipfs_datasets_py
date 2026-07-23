@@ -10,6 +10,7 @@ Status: FFI Integration (Phase 3C.2)
 import json
 import subprocess
 import os
+import platform
 from pathlib import Path
 from typing import Optional, Protocol, runtime_checkable
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from functools import lru_cache
 import jsonschema
 
 from ipfs_datasets_py.logic.zkp import ZKPProof
+from ipfs_datasets_py.logic.zkp.circuits import build_proof_attestation_view
 
 logger = logging.getLogger(__name__)
 
@@ -187,10 +189,15 @@ class Groth16Backend(ZKPBackend):
         #   - <repo-root>/groth16_backend/
         python_package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
         monorepo_root = python_package_root.parent  # .../ipfs_datasets_py
+        backend_root = python_package_root / "processors" / "groth16_backend"
+        platform_binary_name = self._platform_binary_name()
 
         candidates = [
+            # Packaged prebuilt binary. This is the preferred zero-Rust install path.
+            backend_root / "bin" / platform_binary_name / "groth16",
+
             # Canonical monorepo location (preferred for this repo)
-            python_package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+            backend_root / "target" / "release" / "groth16",
 
             # Alternate location (some checkouts keep processors/ alongside the Python package)
             monorepo_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
@@ -205,10 +212,29 @@ class Groth16Backend(ZKPBackend):
         
         for path in candidates:
             if path.exists():
+                self._ensure_executable(path)
                 logger.info(f"Found Groth16 binary at {path}")
                 return str(path)
         
         return None
+
+    def _platform_binary_name(self) -> str:
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        machine_map = {
+            "x86_64": "x86_64",
+            "amd64": "x86_64",
+            "aarch64": "aarch64",
+            "arm64": "aarch64",
+        }
+        return f"{system}-{machine_map.get(machine, machine)}"
+
+    def _ensure_executable(self, path: Path) -> None:
+        try:
+            if os.name != "nt" and not os.access(path, os.X_OK):
+                path.chmod(path.stat().st_mode | 0o755)
+        except Exception:
+            pass
     
     def generate_proof(self, witness_json: str, seed: Optional[int] = None) -> ZKPProof:
         """
@@ -376,22 +402,39 @@ class Groth16Backend(ZKPBackend):
             'theorem': witness.get('theorem', ''),
             'theorem_hash': witness.get('theorem_hash_hex', ''),
             'axioms_commitment': witness.get('axioms_commitment_hex', ''),
+            'circuit_ref': witness.get('circuit_ref', ''),
             'circuit_version': witness.get('circuit_version', 0),
             'ruleset_id': witness.get('ruleset_id', ''),
         }
+        guidance_ref = str(witness.get("compiler_guidance_ref") or "")
+        if guidance_ref:
+            public_inputs["compiler_guidance_ref"] = guidance_ref
+            public_inputs["compiler_guidance_version"] = int(
+                witness.get("compiler_guidance_version") or 1
+            )
         
         # Reconstruct proof (would be properly decoded from Rust)
         proof_hex = json.dumps(proof_data).encode()
+        metadata = {
+            'backend': 'groth16',
+            'curve': 'BN254',
+            'version': proof_data.get('version', 1),
+            'security_level': int(witness.get('security_level', 0)),
+            'proof_system': 'Groth16',
+        }
+        attestation_view = build_proof_attestation_view(
+            proof_data=proof_hex,
+            public_inputs=public_inputs,
+            metadata=metadata,
+        )
+        public_inputs["attestation_ref"] = attestation_view["attestation_ref"]
+        public_inputs["attestation_view_version"] = int(attestation_view["attestation_view_version"])
+        metadata["attestation_view"] = attestation_view
         
         return Groth16Proof(
             proof_data=proof_hex,
             public_inputs=public_inputs,
-            metadata={
-                'backend': 'groth16',
-                'curve': 'BN254',
-                'version': proof_data.get('version', 1),
-                'security_level': int(witness.get('security_level', 0)),
-            },
+            metadata=metadata,
             timestamp=proof_data.get('timestamp', 0),
             size_bytes=len(proof_hex),
         )
@@ -511,8 +554,19 @@ class Groth16BackendFallback(ZKPBackend):
                 'theorem': witness.get('theorem', ''),
                 'theorem_hash': witness['theorem_hash_hex'],
                 'axioms_commitment': witness['axioms_commitment_hex'],
+                'circuit_ref': witness.get('circuit_ref', ''),
                 'circuit_version': witness['circuit_version'],
                 'ruleset_id': witness['ruleset_id'],
+                **(
+                    {
+                        "compiler_guidance_ref": str(witness.get("compiler_guidance_ref") or ""),
+                        "compiler_guidance_version": int(
+                            witness.get("compiler_guidance_version") or 1
+                        ),
+                    }
+                    if witness.get("compiler_guidance_ref")
+                    else {}
+                ),
             },
             metadata={
                 'backend': 'groth16_fallback',
@@ -557,4 +611,3 @@ class Groth16BackendFallback(ZKPBackend):
             'status': 'fallback_only',
             'note': 'Using placeholder for testing. Install Rust binary for real proofs.',
         }
-

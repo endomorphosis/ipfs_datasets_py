@@ -38,10 +38,12 @@ from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import logging
 import os
 import time
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any, Tuple, Literal
 from dataclasses import dataclass, field
 from datetime import datetime
 import json
+
+from .shared_fetch_cache import SharedFetchCache
 
 logger = logging.getLogger(__name__)
 
@@ -135,10 +137,11 @@ class ParallelWebArchiver:
         self.retry_attempts = retry_attempts
         self.timeout = timeout
         self.fallback_priority = fallback_priority or ["warc", "wayback", "web_archive"]
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
         
         # Initialize components
         self._hf_search = None
-        if self.use_warc_pointers and HAVE_HF_API and self.hf_api_key:
+        if self.use_warc_pointers and HAVE_HF_API:
             try:
                 self._hf_search = HuggingFaceAPISearch(api_key=self.hf_api_key)
             except Exception as e:
@@ -165,7 +168,10 @@ class ParallelWebArchiver:
     async def archive_urls_parallel(
         self,
         urls: List[str],
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
+        max_concurrent: Optional[int] = None,
+        jurisdiction: Optional[Literal["federal", "state", "municipal"]] = None,
+        state_code: Optional[str] = None,
     ) -> List[ArchiveResult]:
         """
         Archive multiple URLs in parallel with fallback sources.
@@ -181,14 +187,47 @@ class ParallelWebArchiver:
             logger.warning("aiohttp not available, using synchronous fallback")
             return self._archive_urls_sync(urls, progress_callback)
         
-        progress = ArchiveProgress(total=len(urls))
+        requested_urls = [str(url).strip() for url in list(urls or []) if str(url).strip()]
+        progress = ArchiveProgress(total=len(requested_urls))
+        concurrency = max(1, int(max_concurrent or self.max_concurrent or 1))
+        if not requested_urls:
+            return []
+
+        cached_results: Dict[str, ArchiveResult] = {}
+        cache_misses: List[str] = []
+        seen_urls: set[str] = set()
+        for url in requested_urls:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            cached = self._load_cached_result(url)
+            if cached is not None:
+                cached_results[url] = cached
+            else:
+                cache_misses.append(url)
+
+        if cached_results:
+            progress.completed += len(cached_results)
+            progress.successful += len(cached_results)
+            if progress_callback:
+                try:
+                    progress_callback(progress)
+                except Exception as e:
+                    logger.warning(f"Progress callback error: {e}")
         
         # Create semaphore to limit concurrent requests
-        semaphore = anyio.Semaphore(self.max_concurrent)
+        semaphore = anyio.Semaphore(concurrency)
         
+        normalized_jurisdiction = str(jurisdiction or "").strip().lower() or None
+        normalized_state_code = str(state_code or "").strip().upper() or None
+
         async def archive_with_semaphore(url: str) -> ArchiveResult:
             async with semaphore:
-                result = await self._archive_single_url(url)
+                result = await self._archive_single_url(
+                    url,
+                    jurisdiction=normalized_jurisdiction,
+                    state_code=normalized_state_code,
+                )
                 progress.completed += 1
                 if result.success:
                     progress.successful += 1
@@ -204,25 +243,82 @@ class ParallelWebArchiver:
                 return result
         
         # Execute all tasks in parallel
-        tasks = [archive_with_semaphore(url) for url in urls]
+        tasks = [archive_with_semaphore(url) for url in cache_misses]
         results = await _anyio_gather(*tasks)
         
         # Handle any exceptions
-        final_results = []
+        fetched_results: Dict[str, ArchiveResult] = {}
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.error(f"Failed to archive {urls[i]}: {result}")
-                final_results.append(ArchiveResult(
-                    url=urls[i],
+                logger.error(f"Failed to archive {cache_misses[i]}: {result}")
+                fetched_results[cache_misses[i]] = ArchiveResult(
+                    url=cache_misses[i],
                     success=False,
                     error=str(result)
-                ))
+                )
             else:
-                final_results.append(result)
+                fetched_results[result.url] = result
+                self._store_cached_result(result)
+
+        final_results = []
+        for url in requested_urls:
+            final_results.append(
+                cached_results.get(url)
+                or fetched_results.get(url)
+                or ArchiveResult(url=url, success=False, error="missing_result")
+            )
         
         return final_results
+
+    def _load_cached_result(self, url: str) -> Optional[ArchiveResult]:
+        if self._shared_fetch_cache is None:
+            return None
+        payload = self._shared_fetch_cache.load(namespace="parallel_web_archiver", url=url)
+        if not isinstance(payload, dict):
+            return None
+        content = str(payload.get("content") or "").strip()
+        if not content:
+            return None
+        return ArchiveResult(
+            url=str(payload.get("url") or url),
+            success=bool(payload.get("success", False)),
+            content=content,
+            source="cache",
+            error=payload.get("error"),
+            warc_pointer=payload.get("warc_pointer") if isinstance(payload.get("warc_pointer"), dict) else None,
+        )
+
+    def _store_cached_result(self, result: ArchiveResult) -> None:
+        if self._shared_fetch_cache is None or not result.success:
+            return
+        content = str(result.content or "").strip()
+        if not content:
+            return
+        try:
+            self._shared_fetch_cache.save(
+                namespace="parallel_web_archiver",
+                url=result.url,
+                payload={
+                    "url": result.url,
+                    "success": bool(result.success),
+                    "content": content,
+                    "source": str(result.source or ""),
+                    "error": result.error,
+                    "warc_pointer": result.warc_pointer if isinstance(result.warc_pointer, dict) else None,
+                    "timestamp": result.timestamp.isoformat(),
+                },
+                payload_name=f"parallel_web_archiver_{abs(hash(result.url))}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write parallel archiver cache entry for %s: %s", result.url, exc)
     
-    async def _archive_single_url(self, url: str) -> ArchiveResult:
+    async def _archive_single_url(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> ArchiveResult:
         """Archive a single URL with fallback sources."""
         self._stats["total_requests"] += 1
         
@@ -235,7 +331,11 @@ class ParallelWebArchiver:
                 await self._rate_limit_wait(source)
                 
                 if source == "warc":
-                    result = await self._archive_via_warc(url)
+                    result = await self._archive_via_warc(
+                        url,
+                        jurisdiction=jurisdiction,
+                        state_code=state_code,
+                    )
                 elif source == "wayback":
                     result = await self._archive_via_wayback(url)
                 elif source == "web_archive":
@@ -260,31 +360,73 @@ class ParallelWebArchiver:
             error="All fallback sources failed"
         )
     
-    async def _archive_via_warc(self, url: str) -> Optional[ArchiveResult]:
+    async def _archive_via_warc(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> Optional[ArchiveResult]:
         """Archive via Common Crawl WARC pointers from HuggingFace."""
         if not self._hf_search:
             return None
         
         try:
             # Query HF for WARC pointers
-            pointer_data = await self.get_warc_pointer(url)
+            pointer_data = await self.get_warc_pointer(
+                url,
+                jurisdiction=jurisdiction,
+                state_code=state_code,
+            )
             if not pointer_data:
                 return None
             
             # Extract WARC file info
-            warc_file = pointer_data.get("warc_file")
-            warc_offset = pointer_data.get("warc_offset")
-            warc_length = pointer_data.get("warc_length")
+            warc_file = pointer_data.get("warc_file") or pointer_data.get("warc_filename") or pointer_data.get("filename")
+            warc_offset = pointer_data.get("warc_offset") or pointer_data.get("offset")
+            warc_length = pointer_data.get("warc_length") or pointer_data.get("length")
             
             if not all([warc_file, warc_offset, warc_length]):
                 return None
-            
-            # For now, return pointer info (actual WARC retrieval would require more infrastructure)
-            # In production, you'd fetch from Common Crawl S3 using the pointer
+
+            try:
+                from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import (
+                    CommonCrawlSearchEngine,
+                    _ensure_common_crawl_import_path,
+                )
+
+                _ensure_common_crawl_import_path()
+                from common_crawl_search_engine.ccindex import api as ccapi
+
+                engine = CommonCrawlSearchEngine(mode="local")
+                raw_record = await anyio.to_thread.run_sync(
+                    engine.fetch_warc_record,
+                    str(warc_file),
+                    int(warc_offset),
+                    int(warc_length),
+                )
+                http = await anyio.to_thread.run_sync(
+                    lambda: ccapi.extract_http_from_warc_gzip_member(
+                        raw_record,
+                        max_body_bytes=2_000_000,
+                        max_preview_chars=80_000,
+                    )
+                )
+                content = str(getattr(http, "body_text_preview", "") or "").strip()
+                if not getattr(http, "ok", False) or not content:
+                    return None
+            except Exception as exc:
+                logger.debug("Common Crawl WARC body extraction failed for %s: %s", url, exc)
+                return None
+
+            pointer_data.setdefault("warc_file", str(warc_file))
+            pointer_data.setdefault("warc_filename", str(warc_file))
+            pointer_data["warc_offset"] = int(warc_offset)
+            pointer_data["warc_length"] = int(warc_length)
             return ArchiveResult(
                 url=url,
                 success=True,
-                content=None,  # Would contain actual content in production
+                content=content,
                 source="warc",
                 warc_pointer=pointer_data
             )
@@ -356,21 +498,47 @@ class ParallelWebArchiver:
             logger.debug(f"web_archiving failed for {url}: {e}")
             return None
     
-    async def get_warc_pointer(self, url: str) -> Optional[Dict[str, Any]]:
+    async def get_warc_pointer(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """Get WARC file pointer for a URL from HuggingFace."""
         if not self._hf_search:
             return None
         
         try:
+            normalized_jurisdiction = str(jurisdiction or "").strip().lower()
+            if normalized_jurisdiction not in {"federal", "state", "municipal"}:
+                normalized_jurisdiction = "state"
+
+            normalized_state_code = str(state_code or "").strip().upper() or None
+            if normalized_jurisdiction != "state":
+                normalized_state_code = None
+
             # Query HF pointer dataset
             results = self._hf_search.search(
                 query=url,
-                jurisdiction="federal",  # Would be determined dynamically
-                max_results=1
+                jurisdiction=normalized_jurisdiction,
+                state_code=normalized_state_code,
+                max_results=1,
             )
             
             if results and len(results) > 0:
-                return results[0]
+                pointer = dict(results[0])
+                warc_file = pointer.get("warc_file") or pointer.get("warc_filename") or pointer.get("filename")
+                warc_offset = pointer.get("warc_offset") or pointer.get("offset")
+                warc_length = pointer.get("warc_length") or pointer.get("length")
+                if warc_file:
+                    pointer.setdefault("warc_file", str(warc_file))
+                    pointer.setdefault("warc_filename", str(warc_file))
+                if warc_offset is not None:
+                    pointer["warc_offset"] = int(warc_offset)
+                if warc_length is not None:
+                    pointer["warc_length"] = int(warc_length)
+                return pointer
             
             return None
             
@@ -378,9 +546,18 @@ class ParallelWebArchiver:
             logger.debug(f"Failed to get WARC pointer for {url}: {e}")
             return None
     
-    async def get_warc_pointers(self, urls: List[str]) -> List[Optional[Dict[str, Any]]]:
+    async def get_warc_pointers(
+        self,
+        urls: List[str],
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> List[Optional[Dict[str, Any]]]:
         """Get WARC pointers for multiple URLs in parallel."""
-        tasks = [self.get_warc_pointer(url) for url in urls]
+        tasks = [
+            self.get_warc_pointer(url, jurisdiction=jurisdiction, state_code=state_code)
+            for url in urls
+        ]
         return await _anyio_gather(tasks)
     
     def _archive_urls_sync(

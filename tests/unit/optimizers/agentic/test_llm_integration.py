@@ -45,8 +45,9 @@ class TestOptimizerLLMRouter:
     def test_init_default(self):
         """Test default initialization."""
         router = OptimizerLLMRouter()
-        assert router.preferred_provider is not None
-        assert len(router.fallback_providers) > 0
+        assert router.preferred_provider == LLMProvider.CODEX
+        assert router.model_name == "gpt-5.5"
+        assert router.fallback_providers == []
         assert router.enable_tracking is True
     
     def test_init_with_provider(self):
@@ -56,6 +57,56 @@ class TestOptimizerLLMRouter:
             fallback_providers=[LLMProvider.GPT4],
         )
         assert router.preferred_provider == LLMProvider.CLAUDE
+
+    def test_codex_preference_stays_codex_for_reasoning_methods(self):
+        """Codex-pinned optimizer runs should not route reasoning methods elsewhere."""
+        router = OptimizerLLMRouter(
+            preferred_provider=LLMProvider.CODEX,
+            fallback_providers=[LLMProvider.CLAUDE, LLMProvider.GPT4],
+            enable_caching=False,
+        )
+
+        assert router.select_provider(OptimizationMethod.ACTOR_CRITIC) == LLMProvider.CODEX
+
+    @pytest.mark.parametrize(
+        ("provider", "expected"),
+        [
+            (LLMProvider.GPT4, "codex"),
+            (LLMProvider.CLAUDE, "claude"),
+            (LLMProvider.CODEX, "codex"),
+            (LLMProvider.COPILOT, "copilot_cli"),
+            (LLMProvider.GEMINI, "gemini_cli"),
+            (LLMProvider.LOCAL, "hf"),
+        ],
+    )
+    def test_router_provider_name_maps_to_router_supported_aliases(self, provider, expected):
+        router = OptimizerLLMRouter(enable_caching=False)
+        assert router._router_provider_name(provider) == expected
+
+    def test_prepare_generation_request_compacts_local_prompt(self):
+        router = OptimizerLLMRouter(enable_caching=False)
+        long_prompt = "A" * 5000
+
+        prompt, max_tokens = router._prepare_generation_request(
+            provider=LLMProvider.LOCAL,
+            prompt=long_prompt,
+            max_tokens=2000,
+        )
+
+        assert len(prompt) < len(long_prompt)
+        assert "truncated for model context" in prompt
+        assert max_tokens == 128
+
+    def test_prepare_generation_request_leaves_non_local_prompt_unchanged(self):
+        router = OptimizerLLMRouter(enable_caching=False)
+        prompt, max_tokens = router._prepare_generation_request(
+            provider=LLMProvider.CLAUDE,
+            prompt="hello",
+            max_tokens=500,
+        )
+
+        assert prompt == "hello"
+        assert max_tokens == 500
 
     def test_generate_passes_router_kwargs_to_backend(self):
         """generate() should forward typed router_kwargs to router backend."""
@@ -77,6 +128,9 @@ class TestOptimizerLLMRouter:
         call_kwargs = mocked_generate.call_args.kwargs
         assert call_kwargs["top_p"] == 0.1
         assert call_kwargs["presence_penalty"] == 0.2
+        assert call_kwargs["provider"] == "codex"
+        assert call_kwargs["model_name"] == "gpt-5.5"
+        assert call_kwargs["max_tokens"] == 2000
 
     def test_generate_cache_key_includes_router_kwargs(self):
         """router_kwargs should participate in cache-key arguments."""

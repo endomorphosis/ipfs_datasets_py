@@ -1,0 +1,365 @@
+theory XamanPayloadProtocol
+begin
+
+builtins: hashing, signing
+
+functions:
+  request_json/4,
+  payload_ref/2,
+  qr_ref/2,
+  deep_link_ref/2,
+  push_ref/2,
+  event_ref/2,
+  signed_payload/4,
+  backend_patch/3
+
+/*
+  PORTAL-CXTP-072: symbolic protocol projection for the Xaman remote payload
+  flow. The theory models source-backed client transitions only. Backend
+  authorization, native parser/link delivery, native vault cryptography,
+  third-party signing correctness, and deployed-runtime equivalence are
+  explicit assumptions in protocol-report.json.
+
+  Compatibility aliases:
+    Event names: PayloadIssued, PayloadReceived, DigestChecked, UserReviewed,
+    UserApproved, AuthPassed, VaultOpened, PayloadBroadcast, PayloadRejected,
+    NonceConsumed
+    Lemmas: sign_requires_digest_check, sign_requires_user_approval,
+    sign_requires_auth_and_vault, broadcast_requires_signature,
+    rejected_payload_not_broadcast, nonce_consumed_at_most_once
+*/
+
+rule CreatePayloadSession:
+  [ Fr(~Sid), Fr(~Uuid) ]
+--[
+    PayloadSessionCreated(~Sid, ~Uuid, 'requester_app', 'xaman_user', 'xrpl_mainnet'),
+    PayloadIssued(~Sid, ~Uuid, 'requester_app', 'xaman_user', 'xrpl_mainnet'),
+    RequesterBound(~Sid, ~Uuid, 'requester_app')
+  ]->
+  [
+    !PayloadSession(~Sid, ~Uuid, 'requester_app', 'xaman_user', 'xrpl_mainnet'),
+    Out(payload_ref(~Uuid, 'requester_app'))
+  ]
+
+rule RegisterSoftwareSignerSecret:
+  [ Fr(~Sk) ]
+--[
+    VaultSecretStored('xaman_user', ~Sk)
+  ]->
+  [
+    !VaultSecret('xaman_user', ~Sk),
+    Out(pk(~Sk))
+  ]
+
+rule TrustedBackendRegistersPayload:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network)
+  ]
+--[
+    BackendTrustBoundary(Sid, Uuid, Requester, 'payload_registered'),
+    PayloadReceived(Sid, Uuid, Requester, Signer, Network),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    !BackendPayloadAuthorized(
+      Uuid,
+      Requester,
+      Signer,
+      Network,
+      h(request_json(Uuid, Requester, Signer, Network))
+    ),
+    Out(qr_ref(Uuid, Requester)),
+    Out(deep_link_ref(Uuid, Requester)),
+    Out(push_ref(Uuid, Requester)),
+    Out(event_ref(Uuid, Requester))
+  ]
+
+rule QRReferenceIntake:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network),
+    In(qr_ref(Uuid, Requester))
+  ]
+--[
+    IntakeAccepted(Sid, Uuid, Requester, 'QR'),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, 'QR')
+  ]
+
+rule DeepLinkReferenceIntake:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network),
+    In(deep_link_ref(Uuid, Requester))
+  ]
+--[
+    IntakeAccepted(Sid, Uuid, Requester, 'DEEP_LINK'),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, 'DEEP_LINK')
+  ]
+
+rule PushReferenceIntake:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network),
+    In(push_ref(Uuid, Requester))
+  ]
+--[
+    IntakeAccepted(Sid, Uuid, Requester, 'PUSH_NOTIFICATION'),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, 'PUSH_NOTIFICATION')
+  ]
+
+rule EventListReferenceIntake:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network),
+    In(event_ref(Uuid, Requester))
+  ]
+--[
+    IntakeAccepted(Sid, Uuid, Requester, 'EVENT_LIST'),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, 'EVENT_LIST')
+  ]
+
+rule FetchAndVerifyRemotePayload:
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, Origin),
+    !BackendPayloadAuthorized(Uuid, Requester, Signer, Network, Digest)
+  ]
+--[
+    BackendTrustBoundary(Sid, Uuid, Requester, 'authorized_fetch'),
+    DigestVerified(Sid, Uuid, Digest),
+    DigestChecked(Sid, Uuid, Digest),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    VerifiedPayload(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+
+rule DisplayReview:
+  [
+    VerifiedPayload(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+--[
+    ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin),
+    UserReviewed(Sid, Uuid, Requester, Signer, Network, Origin),
+    DigestVerified(Sid, Uuid, Digest),
+    RequesterBound(Sid, Uuid, Requester)
+  ]->
+  [
+    ReviewState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+
+rule ApprovePayload:
+  [
+    ReviewState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+--[
+    UserApproved(Sid, Uuid, Requester, Signer, Network),
+    ApprovalRecorded(Sid, Uuid, Requester, Signer)
+  ]->
+  [
+    ApprovedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+
+rule RevalidateBeforeSigning:
+  [
+    ApprovedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest),
+    !BackendPayloadAuthorized(Uuid, Requester, Signer, Network, Digest)
+  ]
+--[
+    PayloadRevalidated(Sid, Uuid, Requester, Signer, Network),
+    DigestVerified(Sid, Uuid, Digest),
+    BackendTrustBoundary(Sid, Uuid, Requester, 'pre_sign_revalidation')
+  ]->
+  [
+    RevalidatedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+
+rule OpenVaultAfterAuthentication:
+  [
+    RevalidatedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest),
+    !VaultSecret(Signer, Sk)
+  ]
+--[
+    AuthenticatedVaultOpen(Sid, Uuid, Signer),
+    AuthPassed(Sid, Uuid, Signer),
+    VaultOpened(Sid, Uuid, Signer),
+    PayloadRevalidated(Sid, Uuid, Requester, Signer, Network)
+  ]->
+  [
+    AuthenticatedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest, Sk)
+  ]
+
+rule SignRevalidatedPayload:
+  [
+    AuthenticatedState(Sid, Uuid, Requester, Signer, Network, Origin, Digest, Sk)
+  ]
+--[
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network),
+    AuthenticatedVaultOpen(Sid, Uuid, Signer),
+    PayloadRevalidated(Sid, Uuid, Requester, Signer, Network)
+  ]->
+  [
+    SignedState(
+      Sid,
+      Uuid,
+      Requester,
+      Signer,
+      Network,
+      signed_payload(Uuid, Digest, pk(Sk), sign(request_json(Uuid, Requester, Signer, Network), Sk))
+    ),
+    !ConsumedPayload(Uuid)
+  ]
+
+rule PatchSignedPayloadToBackend:
+  [
+    SignedState(Sid, Uuid, Requester, Signer, Network, SignedPayload),
+    !BackendPayloadAuthorized(Uuid, Requester, Signer, Network, Digest)
+  ]
+--[
+    SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network),
+    BackendTrustBoundary(Sid, Uuid, Requester, 'signed_patch')
+  ]->
+  [
+    PatchedState(Sid, Uuid, Requester, Signer, Network, backend_patch(Uuid, Requester, SignedPayload))
+  ]
+
+rule SubmitPatchedPayloadToLedger:
+  [
+    PatchedState(Sid, Uuid, Requester, Signer, Network, Patch)
+  ]
+--[
+    LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network),
+    PayloadBroadcast(Sid, Uuid, Requester, Signer, Network),
+    SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network)
+  ]->
+  [
+    SubmittedState(Sid, Uuid, Requester, Signer, Network, Patch)
+  ]
+
+rule BlockReplayOfConsumedPayload:
+  [
+    !PayloadSession(Sid, Uuid, Requester, Signer, Network),
+    !ConsumedPayload(Uuid),
+    In(payload_ref(Uuid, Requester))
+  ]
+--[
+    ReplayBlocked(Sid, Uuid, Requester),
+    NonceConsumed(Sid, Uuid, Requester, Signer)
+  ]->
+  [
+    ReplayBlockedState(Sid, Uuid, Requester, Signer, Network)
+  ]
+
+rule RejectPayload:
+  [
+    ReviewState(Sid, Uuid, Requester, Signer, Network, Origin, Digest)
+  ]
+--[
+    PayloadRejected(Sid, Uuid, Requester),
+    BackendTrustBoundary(Sid, Uuid, Requester, 'reject_patch')
+  ]->
+  [
+    RejectedState(Sid, Uuid, Requester, Signer, Network)
+  ]
+
+rule ExpirePayload:
+  [
+    IntakeState(Sid, Uuid, Requester, Signer, Network, Origin)
+  ]
+--[
+    PayloadExpired(Sid, Uuid, Requester)
+  ]->
+  [
+    ExpiredState(Sid, Uuid, Requester, Signer, Network)
+  ]
+
+lemma review_requires_verified_payload:
+  "All Sid Uuid Requester Signer Network Origin #i.
+    ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin) @ i
+    ==> (Ex Digest #j. DigestVerified(Sid, Uuid, Digest) @ j & j < i)"
+
+lemma requester_binding_precedes_review:
+  "All Sid Uuid Requester Signer Network Origin #i.
+    ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin) @ i
+    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & j < i)"
+
+lemma qr_and_deep_link_intake_preserve_requester:
+  "All Sid Uuid Requester Origin #i.
+    IntakeAccepted(Sid, Uuid, Requester, Origin) @ i
+    & (Origin = 'QR' | Origin = 'DEEP_LINK')
+    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & (#j < #i | #j = #i))"
+
+lemma signing_requires_auth_revalidation_and_network:
+  "All Sid Uuid Requester Signer Network #i.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j #k.
+      AuthenticatedVaultOpen(Sid, Uuid, Signer) @ j
+      & PayloadRevalidated(Sid, Uuid, Requester, Signer, Network) @ k
+      & j < i
+      & k < i
+      & Network = 'xrpl_mainnet')"
+
+lemma modeled_vault_secret_not_revealed:
+  "All Signer Sk #i.
+    VaultSecretStored(Signer, Sk) @ i
+    ==> not (Ex #j. K(Sk) @ j)"
+
+lemma signed_patch_requires_backend_trust:
+  "All Sid Uuid Requester Signer Network #i.
+    SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. BackendTrustBoundary(Sid, Uuid, Requester, 'signed_patch') @ j & (#j < #i | #j = #i))"
+
+lemma broadcast_requires_signed_patch:
+  "All Sid Uuid Requester Signer Network #i.
+    LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. SignedPayloadPatched(Sid, Uuid, Requester, Signer, Network) @ j & (#j < #i | #j = #i))"
+
+lemma local_replay_after_signing_is_blocked:
+  "All Sid Uuid Requester Signer Network #i #j.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    & ReplayBlocked(Sid, Uuid, Requester) @ j
+    ==> i < j"
+
+lemma sign_requires_digest_check:
+  "All Sid Uuid Requester Signer Network Origin #i.
+    ReviewDisplayed(Sid, Uuid, Requester, Signer, Network, Origin) @ i
+    ==> (Ex Digest #j. DigestVerified(Sid, Uuid, Digest) @ j & j < i)"
+
+lemma sign_requires_user_approval:
+  "All Sid Uuid Requester Signer Network #i.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. RequesterBound(Sid, Uuid, Requester) @ j & (#j < #i | #j = #i))"
+
+lemma sign_requires_auth_and_vault:
+  "All Sid Uuid Requester Signer Network #i.
+    PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j #k.
+      AuthenticatedVaultOpen(Sid, Uuid, Signer) @ j
+      & PayloadRevalidated(Sid, Uuid, Requester, Signer, Network) @ k
+      & j < i
+      & k < i)"
+
+lemma broadcast_requires_signature:
+  "All Sid Uuid Requester Signer Network #i.
+    LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ i
+    ==> (Ex #j. PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ j & (#j < #i | #j = #i))"
+
+lemma rejected_payload_not_broadcast:
+  "All Sid Uuid Requester #i.
+    PayloadRejected(Sid, Uuid, Requester) @ i
+    ==> (All #j. All Signer Network.
+          (LedgerBroadcastRequested(Sid, Uuid, Requester, Signer, Network) @ #j) ==> (#j < #i))"
+
+lemma nonce_consumed_at_most_once:
+  "All Sid Uuid Requester #i.
+    ReplayBlocked(Sid, Uuid, Requester) @ i
+    ==> (Ex #j. PayloadSigned(Sid, Uuid, Requester, Signer, Network) @ j & j < i)"
+
+end

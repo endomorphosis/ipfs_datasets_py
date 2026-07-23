@@ -21,12 +21,14 @@ try:
         BraveSearchClient,
         brave_search_cache_stats,
         clear_brave_search_cache,
+        resolve_brave_search_api_key,
     )
 
     HAVE_BRAVE_CLIENT = True
 except ImportError:
     HAVE_BRAVE_CLIENT = False
     BraveSearchClient = None  # type: ignore[assignment,misc]
+    resolve_brave_search_api_key = None  # type: ignore[assignment]
 
 
 class BraveSearchAPI:
@@ -43,9 +45,9 @@ class BraveSearchAPI:
             api_key: Brave Search API key (can use BRAVE_API_KEY env var)
         """
         self.api_key = (
-            api_key
-            or os.environ.get("BRAVE_API_KEY")
-            or os.environ.get("BRAVE_SEARCH_API_KEY")
+            resolve_brave_search_api_key(api_key)
+            if resolve_brave_search_api_key is not None
+            else (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY") or "")
         )
         self.queue: List[Dict[str, Any]] = []
         self.config: Dict[str, Any] = {
@@ -247,11 +249,13 @@ try:
     from ipfs_datasets_py.processors.web_archiving.brave_search_client import (
         brave_search_cache_stats as _brave_search_cache_stats,
         clear_brave_search_cache as _clear_brave_search_cache,
+        resolve_brave_search_api_key as _resolve_brave_search_api_key,
     )
     _HAVE_CACHE_CLIENT = True
 except ImportError:
     _brave_search_cache_stats = None  # type: ignore[assignment]
     _clear_brave_search_cache = None  # type: ignore[assignment]
+    _resolve_brave_search_api_key = None  # type: ignore[assignment]
     _HAVE_CACHE_CLIENT = False
 
 
@@ -303,11 +307,15 @@ async def search_brave(
             return {"status": "error", "error": f"Invalid freshness value: {freshness}"}
 
         if api_key is None:
-            api_key = os.environ.get("BRAVE_API_KEY")
+            api_key = (
+                _resolve_brave_search_api_key()
+                if _resolve_brave_search_api_key is not None
+                else (os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY"))
+            )
         if not api_key:
             return {
                 "status": "error",
-                "error": "Brave Search API key required. Set BRAVE_API_KEY or pass api_key.",
+                "error": "Brave Search API key required. Set BRAVE_SEARCH_API_KEY/BRAVE_API_KEY or pass api_key.",
                 "help": "Get API key from https://brave.com/search/api/",
             }
 

@@ -3,24 +3,56 @@
 This module contains the scraper for Virginia statutes from the official state legislative website.
 """
 
-from typing import List, Dict
+import asyncio
+from typing import Callable, List, Dict, Optional, Tuple
 import re
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from urllib.parse import urljoin, urlparse
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class VirginiaScraper(BaseStateScraper):
     """Scraper for Virginia state laws from https://law.lis.virginia.gov"""
 
-    _VA_SECTION_URL_RE = re.compile(r"/vacode/title[0-9A-Za-z\.]+/chapter[0-9A-Za-z\.]+/section[0-9A-Za-z\-\.]+/?$", re.IGNORECASE)
+    _VA_SECTION_URL_RE = re.compile(
+        r"^/vacode/title[0-9A-Za-z\.]+/chapter[0-9A-Za-z\.]+/section[0-9A-Za-z\-\.]+/?$",
+        re.IGNORECASE,
+    )
+    _VA_DIRECT_SECTION_URL_RE = re.compile(
+        r"^/vacode/[0-9A-Za-z\.]+-[0-9A-Za-z\-\.]+/?$",
+        re.IGNORECASE,
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
             source = str(statute.source_url or "")
-            if self._VA_SECTION_URL_RE.search(source):
+            if self._is_section_source_url(source):
                 filtered.append(statute)
         return filtered
+
+    def _is_section_source_url(self, source_url: str) -> bool:
+        path = str(urlparse(str(source_url or "")).path or "").strip()
+        if not path.lower().startswith("/vacode/"):
+            return False
+        return bool(
+            self._VA_SECTION_URL_RE.match(path)
+            or self._VA_DIRECT_SECTION_URL_RE.match(path)
+        )
+
+    def _derive_va_section_number(self, source_url: str) -> str:
+        path = str(urlparse(str(source_url or "")).path or "").strip()
+        section_match = re.search(
+            r"/vacode/title[0-9A-Za-z.]+/chapter[0-9A-Za-z.]+/section([0-9A-Za-z.\-]+)/?$",
+            path,
+            flags=re.IGNORECASE,
+        )
+        if section_match:
+            return str(section_match.group(1) or "").strip()
+        direct_match = re.search(r"/vacode/([0-9A-Za-z.]+-[0-9A-Za-z.\-]+)/?$", path, flags=re.IGNORECASE)
+        if direct_match:
+            return str(direct_match.group(1) or "").strip()
+        return ""
     
     def get_base_url(self) -> str:
         """Return the base URL for Virginia's legislative website."""
@@ -34,7 +66,12 @@ class VirginiaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Virginia's legislative website.
         
         Args:
@@ -44,6 +81,16 @@ class VirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        limit = self._effective_scrape_limit(max_statutes, default=160)
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        if official:
+            return official[:limit] if limit is not None else official
+
+        if limit is not None:
+            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
+
         candidate_urls = [
             "https://law.lis.virginia.gov/vacode/title1/chapter1/",
             "https://law.lis.virginia.gov/vacode/title18.2/chapter7/",
@@ -53,6 +100,8 @@ class VirginiaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
+        return_threshold = limit if limit is not None else 1000000
+        scan_limit = return_threshold if limit is not None else 1000
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -64,26 +113,393 @@ class VirginiaScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Va. Code Ann.",
-                        max_sections=220,
+                        max_sections=scan_limit,
                         wait_for_selector="a[href*='/section'], a[href*='/chapter']",
                         timeout=45000,
                     )
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= 30:
+                    if len(statutes) >= return_threshold:
                         return statutes
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Va. Code Ann.", max_sections=220)
+            statutes = await self._generic_scrape(
+                code_name,
+                candidate,
+                "Va. Code Ann.",
+                max_sections=scan_limit,
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= 30:
-                return statutes
+            if len(statutes) >= return_threshold:
+                return statutes[:return_threshold]
 
         return best_statutes
+
+    async def _scrape_direct_sections(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        section_urls = [
+            "https://law.lis.virginia.gov/vacode/title1/chapter1/section1-1/",
+            "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-247/",
+        ]
+        return await self._scrape_section_urls(code_name, [(url, "") for url in section_urls], max_statutes=max_statutes)
+
+    async def _scrape_official_index(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        title_links = await self._discover_title_links()
+        self.logger.info("Virginia official index: discovered %s title links", len(title_links))
+        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        checkpoint_progress = self._load_partial_checkpoint_progress()
+        statutes: List[NormalizedStatute] = []
+        seen_keys: set[str] = set()
+        seen_urls: set[str] = set()
+
+        def _extend_unique(batch: List[NormalizedStatute]) -> None:
+            for statute in batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                source_url = str(statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if source_url and source_url in seen_urls:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                if source_url:
+                    seen_urls.add(source_url)
+                statutes.append(statute)
+
+        _extend_unique(resumed)
+        if resumed:
+            self.logger.info(
+                "Virginia official index: resumed %s statutes from partial checkpoint",
+                len(statutes),
+            )
+        resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
+        resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
+        resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
+        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        title_rewind = max(0, int(self._env_int("STATE_SCRAPER_VA_RESUME_TITLE_REWIND", default=1)))
+        resume_title_floor = max(0, resume_titles_scanned - title_rewind)
+        chapters_scanned_total = int(resume_chapters_scanned)
+        sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
+        sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="virginia:title-discovery",
+            extra={
+                "titles_scanned": 0,
+                "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
+                "codes_completed": 0,
+                "codes_total": 1,
+            },
+        )
+        for title_index, (title_url, title_label) in enumerate(title_links, start=1):
+            if limit is not None and len(statutes) >= limit:
+                break
+            if title_index < resume_title_floor:
+                continue
+            chapter_links = await self._discover_chapter_links(title_url)
+            self.logger.info(
+                "Virginia official index: title=%s index=%s/%s chapters=%s statutes_so_far=%s",
+                title_label or title_url,
+                title_index,
+                len(title_links),
+                len(chapter_links),
+                len(statutes),
+            )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="virginia:title-scan",
+                extra={
+                    "titles_scanned": int(title_index),
+                    "discovered_titles": int(len(title_links)),
+                    "chapters_scanned": int(chapters_scanned_total),
+                    "sections_scanned": int(sections_scanned_total),
+                    "discovered_sections": int(sections_discovered_total),
+                    "discovered_chapters": int(len(chapter_links)),
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                },
+            )
+            for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
+                if limit is not None and len(statutes) >= limit:
+                    break
+                chapters_scanned_total += 1
+                section_links = await self._discover_section_links(chapter_url)
+                if seen_urls:
+                    section_links = [
+                        (url, section_label)
+                        for url, section_label in section_links
+                        if str(url or "").strip().lower() not in seen_urls
+                    ]
+                sections_discovered_total += len(section_links)
+                if chapter_index == 1 or chapter_index % 10 == 0 or chapter_index == len(chapter_links):
+                    self.logger.info(
+                        "Virginia official index: title=%s chapter=%s/%s sections=%s statutes_so_far=%s",
+                        title_label or title_url,
+                        chapter_index,
+                        len(chapter_links),
+                        len(section_links),
+                        len(statutes),
+                    )
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="virginia:chapter-scan",
+                        extra={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(len(title_links)),
+                            "chapters_scanned": int(chapters_scanned_total),
+                            "sections_scanned": int(sections_scanned_total),
+                            "discovered_sections": int(sections_discovered_total),
+                            "discovered_chapters": int(len(chapter_links)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
+                def _progress_hook(
+                    scanned_sections: int,
+                    total_sections: int,
+                    partial_batch: List[NormalizedStatute],
+                ) -> None:
+                    if (
+                        scanned_sections == 1
+                        or scanned_sections % 200 == 0
+                        or scanned_sections == total_sections
+                    ):
+                        self._write_partial_checkpoint(
+                            statutes + partial_batch,
+                            code_name=code_name,
+                            stage_label="virginia:section-scan",
+                            extra={
+                                "titles_scanned": int(title_index),
+                                "discovered_titles": int(len(title_links)),
+                                "chapters_scanned": int(chapters_scanned_total),
+                                "sections_scanned": int(sections_scanned_total + scanned_sections),
+                                "discovered_sections": int(sections_discovered_total),
+                                "discovered_chapters": int(len(chapter_links)),
+                                "codes_completed": 0,
+                                "codes_total": 1,
+                            },
+                        )
+                parsed = await self._scrape_section_urls(
+                    code_name,
+                    section_links,
+                    max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+                    progress_hook=_progress_hook,
+                )
+                sections_scanned_total += len(section_links)
+                _extend_unique(parsed)
+        self._write_partial_checkpoint(
+            statutes,
+            code_name=code_name,
+            stage_label="virginia:complete",
+            force=True,
+            extra={
+                "titles_scanned": int(len(title_links)),
+                "discovered_titles": int(len(title_links)),
+                "chapters_scanned": int(chapters_scanned_total),
+                "sections_scanned": int(sections_scanned_total),
+                "discovered_sections": int(sections_discovered_total),
+                "codes_completed": 1,
+                "codes_total": 1,
+            },
+        )
+        return statutes[:limit] if limit is not None else statutes
+
+    async def _discover_title_links(self) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        index_url = f"{self.get_base_url()}/vacode/"
+        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
+        if not payload:
+            return []
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(index_url, str(anchor.get("href") or "").strip())
+            if not re.search(r"/vacode/title[0-9A-Za-z.]+/?$", href, re.IGNORECASE):
+                continue
+            normalized = href.rstrip("/") + "/"
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
+        return out
+
+    async def _discover_chapter_links(self, title_url: str) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=20)
+        if not payload:
+            return []
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(title_url, str(anchor.get("href") or "").strip())
+            if not re.search(r"/vacode/title[0-9A-Za-z.]+/chapter[0-9A-Za-z.]+/?$", href, re.IGNORECASE):
+                continue
+            normalized = href.rstrip("/") + "/"
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
+        return out
+
+    async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        if not payload:
+            return []
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(chapter_url, str(anchor.get("href") or "").strip())
+            if not self._is_section_source_url(href):
+                continue
+            normalized = href.rstrip("/") + "/"
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
+        return out
+
+    async def _scrape_section_urls(
+        self,
+        code_name: str,
+        section_urls: List[Tuple[str, str]],
+        max_statutes: Optional[int] = None,
+        progress_hook: Optional[Callable[[int, int, List[NormalizedStatute]], None]] = None,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        statutes: List[NormalizedStatute] = []
+        concurrency = max(1, int(self._env_int("STATE_SCRAPER_VA_SECTION_CONCURRENCY", default=8)))
+        sem = asyncio.Semaphore(concurrency)
+        total_sections = len(section_urls)
+        seen_keys: set[str] = set()
+
+        async def _parse_section(source_url: str, section_label: str) -> Optional[NormalizedStatute]:
+            async with sem:
+                payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
+                if not payload:
+                    return None
+                soup = BeautifulSoup(payload, "html.parser")
+                node = (
+                    soup.find(id="va_code")
+                    or soup.find("article", id="vacode")
+                    or soup.select_one("main")
+                    or soup
+                )
+                for tag in node(["script", "style", "nav", "header", "footer"]):
+                    tag.decompose()
+                text = self._normalize_legal_text(node.get_text(" ", strip=True))
+                heading = node.find("h2") or soup.find("title")
+                heading_text = heading.get_text(" ", strip=True) if heading else ""
+                match = re.search(r"(?:§|section)\s*([0-9A-Za-z.-]+)", heading_text or text, flags=re.IGNORECASE)
+                section_number = (
+                    self._derive_va_section_number(source_url)
+                    or (match.group(1) if match else "")
+                    or str(self._derive_section_number_from_url(source_url) or "").strip()
+                )
+                section_name = re.sub(r"^§\s*[0-9A-Za-z.-]+\s*\.?\s*", "", heading_text or section_label).strip(". ")
+                # Some valid Virginia sections are short; avoid treating those
+                # as missing rows during full-corpus sweeps.
+                if len(text) < 120 or not section_number:
+                    return None
+                return NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200] or f"Section {section_number}",
+                    full_text=text,
+                    legal_area=self._identify_legal_area(section_name or text),
+                    source_url=source_url,
+                    official_cite=f"Va. Code Ann. § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_virginia_code_html", "skip_hydrate": True},
+                )
+
+        tasks = [
+            asyncio.create_task(_parse_section(source_url, section_label))
+            for source_url, section_label in section_urls
+        ]
+        scanned_sections = 0
+        cancelled_early = False
+        for task in asyncio.as_completed(tasks):
+            scanned_sections += 1
+            statute = await task
+            if statute is not None:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if key and key in seen_keys:
+                    continue
+                if key:
+                    seen_keys.add(key)
+                statutes.append(statute)
+            if progress_hook is not None:
+                try:
+                    progress_hook(scanned_sections, total_sections, statutes)
+                except Exception:
+                    pass
+            if (
+                scanned_sections == 1
+                or scanned_sections % 100 == 0
+                or scanned_sections == total_sections
+            ):
+                self.logger.info(
+                    "Virginia section scan: scanned_sections=%s/%s statutes_so_far=%s",
+                    scanned_sections,
+                    total_sections,
+                    len(statutes),
+                )
+            if limit is not None and len(statutes) >= limit:
+                cancelled_early = True
+                for pending in tasks:
+                    if not pending.done():
+                        pending.cancel()
+                break
+        if cancelled_early:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        return statutes
 
 
 # Register this scraper with the registry

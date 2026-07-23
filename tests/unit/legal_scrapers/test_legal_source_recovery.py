@@ -1,0 +1,1349 @@
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime
+import json
+from pathlib import Path
+import sys
+from types import SimpleNamespace
+
+import pytest
+
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import CanonicalLegalCorpus
+from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
+    LegalSourceCandidate,
+    LegalSourceRecoveryWorkflow,
+    RecoveredCandidateFile,
+    _blocked_fetch_escalation_worker,
+    build_recovery_feedback_entries_from_citation_audit,
+    build_missing_citation_recovery_query,
+    recover_citation_audit_feedback,
+    recover_missing_legal_citation_source,
+)
+
+
+class _FakeLiveSearcher:
+    def search(self, query: str, max_results: int = 20, **kwargs):
+        return {
+            "results": [
+                {
+                    "title": "Minnesota Statutes 518.17",
+                    "url": "https://www.revisor.mn.gov/statutes/cite/518.17",
+                    "source": "brave",
+                },
+                {
+                    "title": "Secondary explainer",
+                    "url": "https://example.org/mn-518-17",
+                    "source": "brave",
+                },
+            ]
+        }
+
+
+class _FakeArchiveSearcher:
+    def search_with_indexes(
+        self,
+        query: str,
+        jurisdiction_type: str | None = None,
+        state_code: str | None = None,
+        max_results: int = 50,
+    ):
+        return {
+            "results": [
+                {
+                    "title": "Archived Minnesota Statutes 518.17",
+                    "url": "https://archive.org/details/mn-stat-518-17",
+                    "source": "common_crawl_indexes",
+                }
+            ]
+        }
+
+
+class _FakeArchiver:
+    async def archive_urls_parallel(self, urls, jurisdiction=None, state_code=None):
+        return [
+            SimpleNamespace(
+                url=url,
+                success=True,
+                source="wayback",
+                error=None,
+                timestamp=datetime(2024, 1, 2, 3, 4, 5),
+            )
+            for url in urls
+        ]
+
+
+class _FakeFetchAPI:
+    def fetch(self, request, **kwargs):
+        url = request if isinstance(request, str) else request.url
+        if url == "https://www.revisor.mn.gov/statutes/cite/518.17":
+            return SimpleNamespace(
+                success=True,
+                document=SimpleNamespace(
+                    title="Minnesota Statutes 518.17",
+                    text="Official statute page",
+                    html="<a href=\"https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf\">Download PDF</a>",
+                    content_type="text/html",
+                    metadata={
+                        "content_type": "text/html",
+                        "links": [
+                            {
+                                "url": "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf",
+                                "text": "Download PDF",
+                            }
+                        ],
+                    },
+                    extraction_provenance={"method": "requests_only"},
+                ),
+                errors=[],
+            )
+        if url == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf":
+            return SimpleNamespace(
+                success=True,
+                document=SimpleNamespace(
+                    title="Minnesota Statutes 518.17 PDF",
+                    text="Minnesota Statutes 518.17 full text",
+                    html="",
+                    content_type="application/pdf",
+                    metadata={
+                        "content_type": "application/pdf",
+                        "raw_bytes": b"%PDF-1.4 fake",
+                    },
+                    extraction_provenance={"method": "requests_only"},
+                ),
+                errors=[],
+            )
+        return SimpleNamespace(success=False, document=None, errors=[SimpleNamespace(message="not found")])
+
+
+class _FakePatchManager:
+    def __init__(self):
+        self.saved = []
+
+    def save_patch(self, patch, output_path=None):
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(patch.diff_content, encoding="utf-8")
+        output_path.with_suffix(".json").write_text(json.dumps(patch.to_dict(), indent=2), encoding="utf-8")
+        self.saved.append((patch, output_path))
+        return output_path
+
+
+def test_default_archiver_disables_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", raising=False)
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is False
+    assert captured["fallback_priority"] == ["wayback", "web_archive"]
+
+
+def test_archiver_can_opt_into_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", "1")
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is True
+    assert captured["fallback_priority"] == ["warc", "wayback", "web_archive"]
+
+
+def test_candidate_file_ranking_prefers_exact_citation_url_over_generic_links():
+    workflow = LegalSourceRecoveryWorkflow(fetch_api=_FakeFetchAPI(), enable_candidate_file_fetch=True)
+
+    files = workflow._discover_candidate_files(
+        candidates=[
+            LegalSourceCandidate(
+                url="https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002",
+                title="Texas FA section 153.002",
+                source="citation_url_hint",
+                source_type="current",
+                score=27,
+            )
+        ],
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+
+    assert files[0].url == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+
+
+def test_candidate_file_ranking_keeps_citation_hint_page_above_generic_pdfs(monkeypatch):
+    def _fake_fetch(self, url, title_hint=None):
+        return SimpleNamespace(
+            success=True,
+            document=SimpleNamespace(
+                title=title_hint or "Delaware Code Online",
+                text="",
+                html="",
+                content_type="text/html",
+                metadata={
+                    "content_type": "text/html",
+                    "links": [
+                        {
+                            "url": "https://delcode.delaware.gov/constitution/constitution.pdf",
+                            "text": "Authenticated PDF",
+                        },
+                        {
+                            "url": "https://delcode.delaware.gov/title1/title1.pdf",
+                            "text": "Authenticated PDF",
+                        },
+                    ],
+                },
+                extraction_provenance={"method": "requests_lightweight"},
+            ),
+            errors=[],
+        )
+
+    monkeypatch.setattr(LegalSourceRecoveryWorkflow, "_candidate_fetch_response", _fake_fetch)
+
+    files = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=True)._discover_candidate_files(
+        candidates=[
+            LegalSourceCandidate(
+                url="https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+                title="DE statute section 11-601",
+                source="citation_url_hint",
+                source_type="current",
+                score=25,
+            ),
+            LegalSourceCandidate(
+                url="https://delcode.delaware.gov/",
+                title="Delaware Code Online",
+                source="duckduckgo",
+                source_type="current",
+                score=15,
+            ),
+        ],
+        corpus_key="state_laws",
+        state_code="DE",
+    )
+
+    assert files[0].url == "https://delcode.delaware.gov/title11/c005/sc02/index.html#601"
+
+
+def test_candidate_content_validation_accepts_official_section_page_without_full_bluebook_text():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Ariz. Code § 13-1203",
+        normalized_citation="Ariz. Code § 13-1203",
+        url="https://www.azleg.gov/ars/13/01203.htm",
+        title="13-1203 - Assault; classification",
+        content_type="text/html",
+        text=(
+            "13-1203. Assault; classification. A person commits assault by "
+            "intentionally, knowingly or recklessly causing physical injury."
+        ),
+        html="",
+    )
+
+    assert validation["confirmed"] is True
+    assert validation["section_fragment_present"] is True
+    assert validation["title_url_section_fragment_present"] is True
+    assert validation["legal_body_signal"] is True
+
+
+def test_candidate_content_validation_rejects_search_shell_with_only_url_section():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Cal. Civ. Code § 999999",
+        normalized_citation="Cal. Civ. Code § 999999",
+        url="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=999999",
+        title="California Codes Text Search",
+        content_type="text/html",
+        text="California Codes Text Search Section Number 999999 Search code text.",
+        html="",
+    )
+
+    assert validation["confirmed"] is False
+    assert validation["section_fragment_present"] is True
+    assert validation["title_url_section_fragment_present"] is True
+    assert validation["legal_body_signal"] is False
+
+
+def test_candidate_content_validation_does_not_treat_legal_phrase_as_no_result():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="S.C. Code § 16-3-600",
+        normalized_citation="S.C. Code § 16-3-600",
+        url="https://www.scstatehouse.gov/code/t16c003.php#16-3-600",
+        title="SC statute section 16-3-600",
+        content_type="text/html",
+        text=(
+            "Section 16-3-600. Assault and battery. "
+            "A respondent resides where the respondent cannot be found. "
+            "A person commits an offense under this section."
+        ),
+        html="",
+    )
+
+    assert validation["no_result_detected"] is False
+    assert validation["confirmed"] is True
+
+
+def test_candidate_content_validation_ignores_embedded_file_not_found_scripts_when_body_matches():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Md. Code § 3-203",
+        normalized_citation="Md. Code § 3-203",
+        url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        title="MD statute section 3-203",
+        content_type="text/html",
+        text=(
+            "Section 3-203. Assault in the second degree. A person may not commit "
+            "an assault. A person who violates this section is subject to penalties "
+            "provided by law, and the court may consider the offense classification. "
+            "<script>alert('File not Found');</script>"
+        ),
+        html="",
+    )
+
+    assert validation["no_result_marker_present"] is True
+    assert validation["no_result_detected"] is False
+    assert validation["confirmed"] is True
+
+
+def test_citation_validation_fragments_ignore_reporter_abbreviation_parts():
+    fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="18 Pa.C.S. § 2701",
+        normalized_citation="18 Pa.C.S. § 2701",
+    )
+
+    assert "2701" in fragments
+    assert "Pa.C.S" not in fragments
+    assert "C" not in fragments
+    assert "S" not in fragments
+
+
+def test_citation_validation_fragments_ignore_federal_abbreviation_parts():
+    cfr_fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="21 C.F.R. § 314.80",
+        normalized_citation="21 C.F.R. § 314.80",
+    )
+    case_fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="410 U.S. 113",
+        normalized_citation="410 U.S. 113",
+    )
+
+    assert "314.80" in cfr_fragments
+    assert "C.F.R" not in cfr_fragments
+    assert "R" not in cfr_fragments
+    assert "U.S" not in case_fragments
+    assert "S" not in case_fragments
+
+
+def test_scraper_patch_source_prefers_candidate_url_over_unblock_interstitial():
+    source_url = LegalSourceRecoveryWorkflow._preferred_scraper_patch_source_url(
+        primary_file=RecoveredCandidateFile(
+            url="https://unblock.federalregister.gov/",
+            title="Candidate File",
+            discovered_from_url="https://www.ecfr.gov/current/title-8/section-214.2",
+            source="citation_url_hint",
+            source_type="current",
+        ),
+        primary_candidate=LegalSourceCandidate(
+            url="https://www.ecfr.gov/current/title-8/section-214.2",
+            title="8 C.F.R. section 214.2",
+            source="citation_url_hint",
+            source_type="current",
+            score=16,
+        ),
+    )
+
+    assert source_url == "https://www.ecfr.gov/current/title-8/section-214.2"
+
+
+def test_candidate_fetch_response_escalates_blocked_lightweight_fetch(monkeypatch):
+    lightweight_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=[SimpleNamespace(message="http_status_403")],
+    )
+    escalated_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Recovered",
+            text="Section 12-1. A person commits assault.",
+            html="",
+            content_type="text/html",
+            metadata={"content_type": "text/html"},
+            extraction_provenance={"method": "blocked_fetch_escalation"},
+        ),
+        errors=[],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_lightweight_fetch_url",
+        staticmethod(lambda url, title_hint=None: lightweight_response),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    response = LegalSourceRecoveryWorkflow()._candidate_fetch_response("https://example.test/blocked")
+
+    assert response is escalated_response
+
+
+def test_candidate_fetch_response_preserves_original_failure_when_escalation_fails(monkeypatch):
+    lightweight_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=[SimpleNamespace(message="http_status_403")],
+    )
+    escalated_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=["playwright error: browser unavailable"],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_lightweight_fetch_url",
+        staticmethod(lambda url, title_hint=None: lightweight_response),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    response = LegalSourceRecoveryWorkflow()._candidate_fetch_response("https://example.test/blocked")
+
+    assert response is lightweight_response
+    assert any("http_status_403" in str(error) for error in response.errors)
+    assert any("playwright error" in str(error) for error in response.errors)
+
+
+def test_blocked_fetch_escalation_reports_jina_status_when_only_jina_configured(monkeypatch):
+    class _FakeQueue:
+        def __init__(self):
+            self.payload = None
+
+        def put(self, payload):
+            self.payload = payload
+
+    fake_requests = SimpleNamespace(
+        get=lambda *args, **kwargs: SimpleNamespace(
+            status_code=503,
+            text="",
+            headers={"content-type": "text/plain"},
+        )
+    )
+    queue = _FakeQueue()
+    monkeypatch.setitem(sys.modules, "requests", fake_requests)
+
+    _blocked_fetch_escalation_worker(
+        queue,
+        url="https://example.test/blocked",
+        title_hint="Blocked",
+        methods=["jina_reader"],
+        timeout_seconds=1,
+    )
+
+    assert queue.payload["success"] is False
+    assert queue.payload["errors"] == ["jina_reader_http_status_503"]
+
+
+def test_candidate_file_materialization_escalates_unconfirmed_success(monkeypatch, tmp_path):
+    shell_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Texas Statutes Shell",
+            text="Texas Constitution and Statutes Search",
+            html="<main id=\"app\"></main>",
+            content_type="text/html",
+            metadata={"content_type": "text/html"},
+            extraction_provenance={"method": "requests_lightweight"},
+        ),
+        errors=[],
+    )
+    escalated_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Texas Penal Code Chapter 22",
+            text=(
+                "Sec. 22.01. ASSAULT. A person commits an offense if the person "
+                "intentionally, knowingly, or recklessly causes bodily injury to another, "
+                "including the person's spouse. The section also describes when a person "
+                "intentionally or knowingly threatens another with imminent bodily injury."
+            ),
+            html="",
+            content_type="text/markdown",
+            metadata={"content_type": "text/markdown"},
+            extraction_provenance={"method": "blocked_fetch_escalation", "scraper_method": "jina_reader"},
+        ),
+        errors=[],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_UNCONFIRMED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_candidate_fetch_response",
+        lambda self, url, title_hint=None: shell_response,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    materialized = LegalSourceRecoveryWorkflow()._materialize_candidate_file_artifacts(
+        manifest_dir=tmp_path,
+        candidate_files=[
+            RecoveredCandidateFile(
+                url="https://statutes.capitol.texas.gov/Docs/PE/htm/PE.22.htm#22.01",
+                title="Texas Penal Code 22.01",
+                source="citation_url_hint",
+                source_type="current",
+            )
+        ],
+        citation_text="Tex. Penal Code § 22.01",
+        normalized_citation="Tex. Penal Code § 22.01",
+    )
+
+    assert materialized[0].fetch_success is True
+    assert materialized[0].notes is None
+    metadata = json.loads(Path(materialized[0].metadata_path).read_text(encoding="utf-8"))
+    assert metadata["candidate_validation"]["confirmed"] is True
+    assert metadata["extraction_provenance"]["method"] == "blocked_fetch_escalation"
+    assert "Sec. 22.01. ASSAULT" in Path(materialized[0].artifact_path).read_text(encoding="utf-8")
+
+
+def test_default_publisher_loads_repo_script() -> None:
+    publisher = LegalSourceRecoveryWorkflow()._publisher()
+
+    assert callable(publisher)
+    assert publisher.__name__ == "publish"
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, tmp_path):
+    published = {}
+
+    def _fake_publish(**kwargs):
+        published.update(kwargs)
+        return {"repo_id": kwargs["repo_id"], "path_in_repo": kwargs["path_in_repo"], "uploaded": True}
+
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        fetch_api=_FakeFetchAPI(),
+        patch_manager=_FakePatchManager(),
+        enable_candidate_file_fetch=True,
+        publish_func=_fake_publish,
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        publish_to_hf=True,
+    )
+
+    assert result.status == "tracked_and_published"
+    assert result.corpus_key == "state_laws"
+    assert result.candidate_count == 3
+    assert result.archived_count == 3
+    assert result.publish_report == {
+        "repo_id": "justicedao/ipfs_state_laws",
+        "path_in_repo": "source_recovery/20240102_030405_minn-stat-518-17",
+        "uploaded": True,
+    }
+
+    manifest_path = Path(result.manifest_path)
+    assert manifest_path.exists()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["citation_text"] == "Minn. Stat. § 518.17"
+    assert manifest["corpus_key"] == "state_laws"
+    assert manifest["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert manifest["search_query"].startswith("Minn. Stat. § 518.17 MN Minnesota official statutes code legislature")
+    assert manifest["candidates"][0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    assert manifest["candidate_files"][0]["url"] == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert manifest["candidate_files"][0]["artifact_path"].endswith(".pdf")
+    assert manifest["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    assert Path(manifest["scraper_patch"]["patch_path"]).exists()
+    assert result.promotion_preview["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert result.promotion_preview["target_parquet_file"] == "STATE-MN.parquet"
+    assert result.release_plan_preview["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+
+    assert published["repo_id"] == "justicedao/ipfs_state_laws"
+    assert published["path_in_repo"] == "source_recovery/20240102_030405_minn-stat-518-17"
+    assert Path(published["local_dir"]) == manifest_path.parent
+    assert published["allow_patterns"] == ["*.json", "candidate_files/*", "patches/*"]
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_discovers_candidate_files_and_writes_patch(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    patch_manager = _FakePatchManager()
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        fetch_api=_FakeFetchAPI(),
+        patch_manager=patch_manager,
+        enable_candidate_file_fetch=True,
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+    )
+
+    assert result.candidate_files
+    assert result.candidate_files[0].url == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert result.candidate_files[0].fetch_success is True
+    assert result.candidate_files[0].artifact_path is not None
+    assert Path(result.candidate_files[0].artifact_path).exists()
+    assert result.scraper_patch is not None
+    assert result.scraper_patch.host == "www.revisor.mn.gov"
+    assert result.scraper_patch.extraction_recipe_path is not None
+    assert Path(result.scraper_patch.extraction_recipe_path).exists()
+    assert patch_manager.saved
+    patch_text = Path(result.scraper_patch.patch_path).read_text(encoding="utf-8")
+    assert "UnifiedWebArchivingAPI.fetch" in patch_text
+    assert "++# preferred_fetch_path" not in patch_text
+    assert "CommonCrawlSearchEngine.search_domain" in patch_text
+    assert "_extract_recovered_www_revisor_mn_gov_text" in patch_text
+    assert "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf" in patch_text
+    artifact_metadata = json.loads(Path(result.candidate_files[0].metadata_path).read_text(encoding="utf-8"))
+    assert artifact_metadata["extraction_recipe"]["parser_kind"] == "pdf"
+    assert "CommonCrawlSearchEngine.search_domain(host, query=citation_query)" in artifact_metadata["extraction_recipe"]["fallback_fetch_paths"]
+
+
+@pytest.mark.anyio
+async def test_public_recover_missing_legal_citation_source_emits_candidate_files_and_patch(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    fake_searcher = SimpleNamespace(
+        legal_searcher=_FakeLiveSearcher(),
+        search_with_indexes=_FakeArchiveSearcher().search_with_indexes,
+    )
+
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_searcher",
+        lambda self: fake_searcher,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_archiver_instance",
+        lambda self: _FakeArchiver(),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_fetch_api_instance",
+        lambda self: _FakeFetchAPI(),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_patch_manager_instance",
+        lambda self, *, manifest_dir: _FakePatchManager(),
+    )
+
+    result = await recover_missing_legal_citation_source(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        archive_top_k=1,
+        enable_candidate_file_fetch=True,
+    )
+
+    assert result["status"] == "tracked"
+    assert result["candidate_files"]
+    assert result["candidate_files"][0]["url"] == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert result["candidate_files"][0]["fetch_success"] is True
+    assert result["scraper_patch"]["host"] == "www.revisor.mn.gov"
+    assert Path(result["scraper_patch"]["patch_path"]).exists()
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_times_out_multi_engine_search_and_still_writes_manifest(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery._SEARCH_TIMEOUT_SECONDS",
+        0.01,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    async def _slow_multi_engine_search(*, query: str, engines: list[str], max_results: int):
+        del query, engines, max_results
+        await asyncio.sleep(0.2)
+        return {"status": "success", "results": []}
+
+    monkeypatch.setattr(workflow, "_multi_engine_search", _slow_multi_engine_search)
+    monkeypatch.setattr(
+        workflow,
+        "_searcher",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        workflow,
+        "_search_backend_status",
+        lambda: {
+            "brave_configured": False,
+            "duckduckgo_configured": True,
+            "archive_search_available": False,
+            "live_search_available": False,
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        archive_top_k=0,
+    )
+
+    assert result.status == "tracked"
+    assert result.candidate_count == 1
+    assert result.candidates[0].source == "citation_url_hint"
+    assert result.candidates[0].url == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    assert result.search_backend_status["multi_engine_error"] == "multi_engine_timeout"
+    assert result.manifest_path is not None
+    assert Path(result.manifest_path).exists()
+
+
+def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states():
+    mn_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Minnesota Statutes section 518.17",
+        normalized_citation="Minnesota Statutes section 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+    )
+    ca_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Cal. Fam. Code § 3011",
+        normalized_citation="Cal. Fam. Code § 3011",
+        corpus_key="state_laws",
+        state_code="CA",
+    )
+    ny_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="N.Y. Fam. Ct. Act § 651",
+        normalized_citation="N.Y. Fam. Ct. Act § 651",
+        corpus_key="state_laws",
+        state_code="NY",
+    )
+    tx_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Tex. Fam. Code § 153.002",
+        normalized_citation="Tex. Fam. Code § 153.002",
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+    fl_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Fla. Stat. § 61.13",
+        normalized_citation="Fla. Stat. § 61.13",
+        corpus_key="state_laws",
+        state_code="FL",
+    )
+    il_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="750 ILCS 5/602.7",
+        normalized_citation="750 ILCS 5/602.7",
+        corpus_key="state_laws",
+        state_code="IL",
+    )
+    pa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="23 Pa.C.S. § 5328",
+        normalized_citation="23 Pa.C.S. § 5328",
+        corpus_key="state_laws",
+        state_code="PA",
+    )
+
+    assert ca_results[0]["url"] == (
+        "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
+    )
+    assert mn_results[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    assert ny_results[0]["url"] == "https://www.nysenate.gov/legislation/laws/FCT/651"
+    assert tx_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+    assert fl_results[0]["url"] == (
+        "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert il_results[0]["url"] == "https://www.ilga.gov/documents/legislation/ilcs/documents/075000050K602.7.htm"
+    assert pa_results[0]["url"] == (
+        "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
+    )
+    assert all(
+        result["source"] == "citation_url_hint"
+        for result in [mn_results[0], ca_results[0], ny_results[0], tx_results[0], fl_results[0], il_results[0], pa_results[0]]
+    )
+
+
+def test_legal_source_recovery_ilcs_url_hint_preserves_hyphenated_section_suffix():
+    results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="720 ILCS 5/12-1",
+        normalized_citation="720 ILCS 5/12-1",
+        corpus_key="state_laws",
+        state_code="IL",
+    )
+
+    assert results[0]["url"] == "https://www.ilga.gov/documents/legislation/ilcs/documents/072000050K12-1.htm"
+    assert results[0]["title"] == "Illinois Compiled Statutes 720 ILCS 5/12-1"
+
+
+def test_legal_source_recovery_citation_url_hints_cover_prose_and_section_variants():
+    florida_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Florida Statutes section 61.13",
+        normalized_citation="Florida Statutes section 61.13",
+        corpus_key="state_laws",
+        state_code="FL",
+    )
+    pa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="23 Pa.C.S. section 5328",
+        normalized_citation="23 Pa.C.S. section 5328",
+        corpus_key="state_laws",
+        state_code="PA",
+    )
+    ca_penal_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Cal. Penal Code § 1203.4",
+        normalized_citation="Cal. Penal Code § 1203.4",
+        corpus_key="state_laws",
+        state_code="CA",
+    )
+    tx_penal_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Tex. Penal Code § 31.03",
+        normalized_citation="Tex. Penal Code § 31.03",
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+
+    assert florida_results[0]["url"] == (
+        "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert pa_results[0]["url"] == (
+        "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
+    )
+    assert ca_penal_results[0]["url"] == (
+        "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=PEN&sectionNum=1203.4"
+    )
+    assert tx_penal_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.31.htm#31.03"
+
+
+def test_legal_source_recovery_citation_url_hints_cover_derived_state_builders():
+    az_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Ariz. Rev. Stat. § 13-1203",
+        normalized_citation="Ariz. Rev. Stat. § 13-1203",
+        corpus_key="state_laws",
+        state_code="AZ",
+    )
+    me_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Me. Rev. Stat. § 17-A:207",
+        normalized_citation="Me. Rev. Stat. § 17-A:207",
+        corpus_key="state_laws",
+        state_code="ME",
+    )
+    nc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="N.C. Gen. Stat. § 14-33",
+        normalized_citation="N.C. Gen. Stat. § 14-33",
+        corpus_key="state_laws",
+        state_code="NC",
+    )
+    oh_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Ohio Rev. Code § 2903.13",
+        normalized_citation="Ohio Rev. Code § 2903.13",
+        corpus_key="state_laws",
+        state_code="OH",
+    )
+    wa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Wash. Rev. Code § 9A.36.041",
+        normalized_citation="Wash. Rev. Code § 9A.36.041",
+        corpus_key="state_laws",
+        state_code="WA",
+    )
+    ok_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Okla. Stat. tit. 21 § 644",
+        normalized_citation="Okla. Stat. tit. 21 § 644",
+        corpus_key="state_laws",
+        state_code="OK",
+    )
+    vt_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Vt. Stat. tit. 13 § 1023",
+        normalized_citation="Vt. Stat. tit. 13 § 1023",
+        corpus_key="state_laws",
+        state_code="VT",
+    )
+
+    assert az_results[0]["url"] == "https://www.azleg.gov/ars/13/01203.htm"
+    assert me_results[0]["url"] == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
+    assert nc_results[0]["url"] == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
+    assert oh_results[0]["url"] == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
+    assert wa_results[0]["url"] == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
+    assert ok_results[0]["url"] == "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf"
+    assert vt_results[0]["url"] == "https://legislature.vermont.gov/statutes/section/13/019/01023"
+
+
+def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
+    usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="42 U.S.C. § 1983",
+        normalized_citation="42 U.S.C. § 1983",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    public_law_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Pub. L. No. 117-58",
+        normalized_citation="Pub. L. No. 117-58",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    cfr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="21 C.F.R. § 314.80",
+        normalized_citation="21 C.F.R. § 314.80",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+    fr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="89 Fed. Reg. 12345",
+        normalized_citation="89 Fed. Reg. 12345",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+
+    assert usc_results[0]["url"] == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    assert public_law_results[0]["url"] == "https://www.congress.gov/public-law/117th-congress/58"
+    assert cfr_results[0]["url"] == "https://www.ecfr.gov/current/title-21/section-314.80"
+    assert fr_results[0]["url"] == "https://www.federalregister.gov/citation/89-FR-12345"
+    assert all(
+        result["source"] == "citation_url_hint"
+        for result in [usc_results[0], public_law_results[0], cfr_results[0], fr_results[0]]
+    )
+
+
+def test_legal_source_recovery_citation_url_hints_preserve_expanded_federal_forms():
+    usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="5 U.S.C. section 552",
+        normalized_citation="5 U.S.C. section 552",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    public_law_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Public Law No. 111-148",
+        normalized_citation="Public Law No. 111-148",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    cfr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="17 CFR 240.10b-5",
+        normalized_citation="17 C.F.R. § 240.10b-5",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+    fr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="87 Federal Register 54321",
+        normalized_citation="87 Federal Register 54321",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+
+    assert usc_results[0]["url"] == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title5-section552"
+    assert public_law_results[0]["url"] == "https://www.congress.gov/public-law/111th-congress/148"
+    assert cfr_results[0]["url"] == "https://www.ecfr.gov/current/title-17/section-240.10b-5"
+    assert fr_results[0]["url"] == "https://www.federalregister.gov/citation/87-FR-54321"
+
+
+def test_legal_source_recovery_official_hint_domains_cover_bluebook_fuzz_states():
+    assert LegalSourceRecoveryWorkflow._official_hint_domains(corpus_key="state_laws", state_code="MN")[:1] == [
+        "revisor.mn.gov"
+    ]
+    assert "oregonlegislature.gov" in LegalSourceRecoveryWorkflow._official_hint_domains(
+        corpus_key="state_laws",
+        state_code="OR",
+    )
+
+
+def test_build_missing_citation_recovery_query_prefers_official_domains():
+    query = build_missing_citation_recovery_query(
+        "42 U.S.C. § 1983",
+        corpus_key="us_code",
+    )
+
+    assert "42 U.S.C. § 1983" in query
+    assert "site:uscode.house.gov" in query
+    assert "site:govinfo.gov" in query
+
+
+def test_build_missing_citation_recovery_query_state_laws_includes_state_name_and_official_hints():
+    query = build_missing_citation_recovery_query(
+        "AK official statutes",
+        corpus_key="state_laws",
+        state_code="AK",
+    )
+
+    assert "AK" in query
+    assert "Alaska" in query
+    assert "official statutes code legislature" in query
+    assert "site:.gov" in query
+
+
+def test_build_recovery_feedback_entries_from_citation_audit_flattens_unresolved_documents():
+    entries = build_recovery_feedback_entries_from_citation_audit(
+        {
+            "document_count": 2,
+            "unresolved_documents": [
+                {
+                    "document_id": "doc_1",
+                    "document_title": "Motion",
+                    "unmatched_citations": [
+                        {
+                            "citation_text": "Minn. Stat. § 999.999",
+                            "normalized_citation": "Minn. Stat. § 999.999",
+                            "citation_type": "state_statute",
+                            "metadata": {
+                                "state_code": "MN",
+                                "recovery_corpus_key": "state_laws",
+                                "candidate_corpora": ["state_laws"],
+                                "preferred_dataset_ids": ["justicedao/ipfs_state_laws"],
+                                "preferred_parquet_files": ["STATE-MN.parquet"],
+                                "recovery_query": "Minn. Stat. § 999.999 MN statute site:.gov OR site:.us",
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert len(entries) == 1
+    assert entries[0]["document_id"] == "doc_1"
+    assert entries[0]["corpus_key"] == "state_laws"
+    assert entries[0]["preferred_dataset_ids"] == ["justicedao/ipfs_state_laws"]
+    assert entries[0]["preferred_parquet_files"] == ["STATE-MN.parquet"]
+
+
+@pytest.mark.anyio
+async def test_recover_citation_audit_feedback_emits_promotion_metadata(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await recover_citation_audit_feedback(
+        {
+            "document_count": 1,
+            "unmatched_citation_count": 1,
+            "unresolved_documents": [
+                {
+                    "document_id": "doc_1",
+                    "document_title": "Motion",
+                    "unmatched_citations": [
+                        {
+                            "citation_text": "Minn. Stat. § 518.17",
+                            "normalized_citation": "Minn. Stat. § 518.17",
+                            "citation_type": "state_statute",
+                            "metadata": {
+                                "state_code": "MN",
+                                "recovery_corpus_key": "state_laws",
+                                "candidate_corpora": ["state_laws"],
+                                "preferred_dataset_ids": ["justicedao/ipfs_state_laws"],
+                                "preferred_parquet_files": ["STATE-MN.parquet"],
+                            },
+                        }
+                    ],
+                }
+            ],
+        },
+        workflow=workflow,
+    )
+
+    assert result["feedback_entry_count"] == 1
+    assert result["recovery_count"] == 1
+    recovery = result["recoveries"][0]
+    assert recovery["feedback_entry"]["document_id"] == "doc_1"
+    assert recovery["promotion_preview"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert recovery["promotion_preview"]["target_parquet_file"] == "STATE-MN.parquet"
+    assert recovery["release_plan_preview"]["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_uses_multi_engine_fallback_and_reports_backend_status(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    async def _fake_multi_engine_search(self, *, query: str, engines, max_results: int):
+        return {
+            "status": "success",
+            "results": [
+                {
+                    "title": "Alaska Statutes",
+                    "url": "https://www.akleg.gov/basis/statutes.asp",
+                    "engine": "duckduckgo",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_multi_engine_search",
+        _fake_multi_engine_search,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_search_backend_status",
+        lambda self: {
+            "brave_configured": False,
+            "duckduckgo_configured": True,
+            "archive_search_available": bool(self._archive_searcher is not None),
+            "live_search_available": bool(self._live_searcher is not None),
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    class _EmptyLiveSearcher:
+        def search(self, query: str, max_results: int = 20, **kwargs):
+            return {"results": []}
+
+    class _EmptyArchiveSearcher:
+        def search_with_indexes(self, query: str, jurisdiction_type: str | None = None, state_code: str | None = None, max_results: int = 50):
+            return {"results": []}
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_EmptyLiveSearcher(),
+        archive_searcher=_EmptyArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="AK official statutes",
+        normalized_citation="AK official statutes",
+        corpus_key="state_laws",
+        state_code="AK",
+        metadata={"candidate_corpora": ["state_laws"]},
+    )
+
+    assert result.candidate_count == 1
+    assert result.candidates[0].url == "https://www.akleg.gov/basis/statutes.asp"
+    assert result.search_backend_status["multi_engine_used"] is True
+    assert "duckduckgo" in result.search_backend_status["engines_attempted"]
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_miss(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR", "2024")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "2")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "25")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
+
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+    observed_search_kwargs = {}
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            observed_search_kwargs.update(kwargs)
+            return [
+                {
+                    "url": f"https://{domain}/download/title42-section1983.pdf",
+                    "title": "Recovered official PDF",
+                    "mime": "application/pdf",
+                    "timestamp": "20240101000000",
+                    "collection": "CC-MAIN-2024-10",
+                }
+            ]
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_search_backend_status",
+        lambda self: {
+            "brave_configured": False,
+            "duckduckgo_configured": False,
+            "archive_search_available": False,
+            "live_search_available": False,
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="42 U.S.C. § 1983",
+        normalized_citation="42 U.S.C. § 1983",
+        corpus_key="us_code",
+        state_code=None,
+        archive_top_k=0,
+    )
+
+    assert result.candidate_count == 4
+    assert result.candidates[0].source == "citation_url_hint"
+    assert result.candidates[0].url == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    assert any(
+        candidate.source == "common_crawl_indexes"
+        and candidate.url == "https://uscode.house.gov/download/title42-section1983.pdf"
+        for candidate in result.candidates
+    )
+    assert result.search_backend_status["common_crawl_used"] is True
+    assert result.search_backend_status["common_crawl_available"] is True
+    assert result.search_backend_status["common_crawl_domains"][0] == "uscode.house.gov"
+    assert observed_search_kwargs["year"] == "2024"
+    assert observed_search_kwargs["max_parquet_files"] == 2
+    assert observed_search_kwargs["per_parquet_limit"] == 25
+    assert result.scraper_patch is not None
+    assert result.scraper_patch.host == "uscode.house.gov"
+
+
+@pytest.mark.anyio
+async def test_common_crawl_fallback_prioritizes_citation_hint_domains(monkeypatch):
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
+
+    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+
+    monkeypatch.setattr(legal_source_recovery, "_MAX_COMMON_CRAWL_DOMAINS", 1)
+
+    observed = {}
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            pass
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            observed["domain"] = domain
+            return [{"url": f"https://{domain}/statutes/cite/518.17", "timestamp": "20240101000000"}]
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+
+    workflow = LegalSourceRecoveryWorkflow()
+    backend_status = {}
+    rows = await workflow._common_crawl_fallback_results(
+        query="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        live_results=[{"url": "https://en.wikipedia.org/wiki/Minnesota_Statutes"}],
+        archived_results=[],
+        max_candidates=2,
+        backend_status=backend_status,
+        citation_hint_results=[{"url": "https://www.revisor.mn.gov/statutes/cite/518.17"}],
+    )
+
+    assert observed["domain"] == "www.revisor.mn.gov"
+    assert backend_status["common_crawl_domains"] == ["www.revisor.mn.gov"]
+    assert rows[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_can_skip_live_search_for_common_crawl_fuzz(monkeypatch):
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
+
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+
+    class _FailingLiveSearcher:
+        def search(self, **kwargs):
+            raise AssertionError("live search should be skipped")
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            pass
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            return [{"url": f"https://{domain}/statutes/cite/518.17", "timestamp": "20240101000000"}]
+
+    async def _failing_multi_engine(self, **kwargs):
+        raise AssertionError("multi-engine search should be skipped")
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+    monkeypatch.setattr(LegalSourceRecoveryWorkflow, "_multi_engine_search", _failing_multi_engine)
+
+    workflow = LegalSourceRecoveryWorkflow(live_searcher=_FailingLiveSearcher())
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        archive_top_k=0,
+    )
+
+    assert result.search_backend_status["live_search_skipped"] is True
+    assert result.search_backend_status["live_search_error"] == "live_search_skipped"
+    assert result.search_backend_status["multi_engine_error"] == "multi_engine_skipped"
+    assert result.search_backend_status["common_crawl_used"] is True
+    assert result.search_backend_status["common_crawl_domains"] == ["www.revisor.mn.gov", "revisor.mn.gov", "mncourts.gov"]

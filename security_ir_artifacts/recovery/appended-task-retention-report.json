@@ -1,0 +1,152 @@
+{
+  "blocker_count": 0,
+  "blockers": [],
+  "generated_at_utc": "2026-07-19T05:53:12Z",
+  "overall_status": "ready",
+  "required_task_ids": [
+    "PORTAL-CXTP-090",
+    "PORTAL-CXTP-091",
+    "PORTAL-CXTP-092",
+    "PORTAL-CXTP-093",
+    "PORTAL-CXTP-094",
+    "PORTAL-CXTP-095",
+    "PORTAL-CXTP-096",
+    "PORTAL-CXTP-097"
+  ],
+  "retained_count": 8,
+  "retained_tasks": [
+    {
+      "depends_on": [
+        "PORTAL-CXTP-058",
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-086"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P1",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-090",
+      "title": "Remediate Lean optional proof-consumer solver lane",
+      "track": "solver"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-058",
+        "PORTAL-CXTP-071",
+        "PORTAL-CXTP-086"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P1",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-091",
+      "title": "Provision Apalache TLA model-checker lane",
+      "track": "solver"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-058",
+        "PORTAL-CXTP-072",
+        "PORTAL-CXTP-086"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P1",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-092",
+      "title": "Provision Tamarin and ProVerif protocol solver lanes",
+      "track": "solver"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-058",
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-086"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P1",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-093",
+      "title": "Provision Coq proof-kernel solver lane",
+      "track": "solver"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-076",
+        "PORTAL-CXTP-085"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P0",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-094",
+      "title": "Generate production evidence packets for each remaining blocker",
+      "track": "ops"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-085",
+        "PORTAL-CXTP-094"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P0",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-095",
+      "title": "Build guarded production blocker status updater",
+      "track": "ops"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-057",
+        "PORTAL-CXTP-087"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P0",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-096",
+      "title": "Protect appended solver and production unblocker tasks",
+      "track": "quality"
+    },
+    {
+      "depends_on": [
+        "PORTAL-CXTP-090",
+        "PORTAL-CXTP-096"
+      ],
+      "has_acceptance": true,
+      "has_completion_evidence": true,
+      "has_outputs": true,
+      "has_validation": true,
+      "priority": "P1",
+      "status": "completed",
+      "task_id": "PORTAL-CXTP-097",
+      "title": "Integrate Leanstral proof-assistant lane",
+      "track": "solver"
+    }
+  ],
+  "schema_version": "appended-cxtp-task-retention/v1",
+  "security_decision": "APPENDED_TASK_RETENTION_READY",
+  "task_id": "PORTAL-CXTP-096",
+  "taskboard": {
+    "exists": true,
+    "path": "docs/security_verification/crypto_exchange_theorem_prover_taskboard.todo.md"
+  },
+  "warning_count": 0,
+  "warnings": []
+}

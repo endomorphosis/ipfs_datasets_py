@@ -83,6 +83,7 @@ class DependencyChecker:
             # Configuration and serialization
             'yaml': 'PyYAML',
             'toml': 'toml',
+            'jsonschema': 'jsonschema',
             
             # Additional visualization
             'dash_cytoscape': 'dash-cytoscape',
@@ -185,6 +186,7 @@ class DependencyChecker:
             'git': 'git --version',
             'curl': 'curl --version',
             'ffmpeg': 'ffmpeg -version',
+            'cargo': 'cargo --version',
         }
         
         for dep, check_cmd in system_deps.items():
@@ -358,6 +360,8 @@ class DependencyChecker:
                     print(f"  - {dep}: sudo apt install git")
                 elif dep == 'curl':
                     print(f"  - {dep}: sudo apt install curl")
+                elif dep == 'cargo':
+                    print(f"  - {dep}: install Rust/Cargo with rustup: https://rustup.rs/")
                 else:
                     print(f"  - {dep}")
         

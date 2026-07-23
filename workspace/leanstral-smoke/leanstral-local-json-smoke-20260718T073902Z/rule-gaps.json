@@ -1,0 +1,10 @@
+{
+  "accepted_supporting_audit_count": 0,
+  "conflicting_audit_count": 0,
+  "gaps": [],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 0
+}

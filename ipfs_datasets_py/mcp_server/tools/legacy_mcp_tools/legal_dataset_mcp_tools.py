@@ -201,11 +201,11 @@ def list_scraping_jobs(
     """List all scraping jobs with optional filters.
 
     Note: This function is intentionally synchronous because the underlying
-    ``state_manager.list_scraping_jobs`` reads from a local file/DB synchronously.
+    public MCP scraping-job listing reads from a local file/DB synchronously.
     Consumers that need async behavior should run this in a thread executor.
     """
     try:
-        from ...mcp_server.tools.legal_dataset_tools.state_manager import list_scraping_jobs as _list
+        from ...mcp_server.tools.legal_dataset_tools import list_scraping_jobs as _list
         jobs = _list()
         if status_filter != "all":
             jobs = [j for j in jobs if j.get("status") == status_filter]

@@ -1,0 +1,359 @@
+{
+  "schema_version": "xaman-security-claims/v1",
+  "task_id": "PORTAL-CXTP-067",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json"
+  },
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-10",
+    "scope": "Xaman wallet, payload lifecycle, XRPL transaction, runtime trace, and proof-consumer claim definitions."
+  },
+  "source_models": {
+    "wallet_auth": {
+      "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "schema_version": "xaman-wallet-auth-facts/v1"
+    },
+    "payload_lifecycle": {
+      "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "schema_version": "xaman-payload-lifecycle-facts/v1"
+    },
+    "xrpl_transaction": {
+      "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "schema_version": "xaman-xrpl-transaction-facts/v1"
+    },
+    "runtime_trace": {
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+      "schema_version": "xaman-runtime-trace-report/v1"
+    },
+    "optional_solver_install": {
+      "path": "security_ir_artifacts/environment/optional-solver-install-report.json",
+      "schema_version": "optional-theorem-solver-install-report/v1"
+    }
+  },
+  "claims": [
+    {
+      "id": "xaman-claim:software-custody-requires-vault-authentication",
+      "category": "custody",
+      "severity": "blocking",
+      "status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "summary": "Software-account private-key use is modeled as vault-mediated and authentication-gated, but native vault cryptographic implementation is outside reviewed TypeScript source.",
+      "assumptions": [
+        "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "fact_ids": [
+            "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
+            "xaman-wallet-auth:fact:vault-access-is-through-native-module"
+          ]
+        }
+      ],
+      "release_policy": "block_until_proved_and_assumptions_cleared"
+    },
+    {
+      "id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "category": "authentication",
+      "severity": "blocking",
+      "status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "summary": "Signing requires account selection, review acceptance, authentication/vault overlay, and signed-object callback values before a signed blob is accepted.",
+      "assumptions": [
+        "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+          "fact_ids": [
+            "xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay"
+          ]
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing"
+          ]
+        }
+      ],
+      "release_policy": "block_until_proved_and_assumptions_cleared"
+    },
+    {
+      "id": "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+      "category": "payload_integrity",
+      "severity": "high",
+      "status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "summary": "Remote payload fetch verifies request JSON digest and non-generated approvals revalidate payload state before signing.",
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest",
+            "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing"
+          ]
+        }
+      ],
+      "release_policy": "block_until_backend_and_runtime_evidence_present"
+    },
+    {
+      "id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "category": "replay_prevention",
+      "severity": "blocking",
+      "status": "PARTIAL_CLIENT_CONTROL_BACKEND_BLOCKING",
+      "summary": "Client-side replay controls block resolved, expired, and locally already-submitted states, but backend atomic single-use behavior is not proved.",
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+            "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards",
+            "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use"
+          ]
+        }
+      ],
+      "release_policy": "block_until_backend_single_use_proved"
+    },
+    {
+      "id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+      "category": "network_binding",
+      "severity": "high",
+      "status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "summary": "Payload preflight and signing enforce forced network, transaction-template network, current network definitions, and non-legacy NetworkID population.",
+      "assumptions": [
+        "xaman-assumption:xrpl-consensus-node-honesty-and-finality",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing"
+          ]
+        },
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "fact_ids": [
+            "xaman-xrpl-transaction:fact:signing-requires-fee-sequence-network-and-supported-type"
+          ]
+        }
+      ],
+      "release_policy": "block_until_network_runtime_evidence_present"
+    },
+    {
+      "id": "xaman-claim:payment-semantics-check-amount-balance-and-trustlines",
+      "category": "transaction_semantics",
+      "severity": "high",
+      "status": "SUPPORTED_FOR_PAYMENT_WITH_ASSUMPTIONS",
+      "summary": "Payment validation models amount, native balance, issued-currency trustline, freeze, and issuer obligation-limit checks.",
+      "assumptions": [
+        "xaman-assumption:xrpl-consensus-node-honesty-and-finality",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "fact_ids": [
+            "xaman-xrpl-transaction:fact:payment-validation-blocks-zero-native-overspend-and-trustline-failures"
+          ]
+        }
+      ],
+      "release_policy": "block_until_solver_and_runtime_evidence_present"
+    },
+    {
+      "id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "category": "transaction_semantics",
+      "severity": "blocking",
+      "status": "NOT_PROVED_BLOCKING",
+      "summary": "TrustSet, OfferCreate, and SignerListSet validations are TODO pass-throughs, so safety claims depending on those transaction classes must remain blocked.",
+      "assumptions": [
+        "xaman-assumption:incomplete-transaction-class-validation"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+          "fact_ids": [
+            "xaman-xrpl-transaction:gap:trustset-offercreate-signerlistset-validation-is-todo"
+          ]
+        }
+      ],
+      "release_policy": "block_until_transaction_validations_implemented_or_out_of_scope"
+    },
+    {
+      "id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "category": "backend_trust",
+      "severity": "blocking",
+      "status": "NOT_PROVED_BLOCKING",
+      "summary": "Backend payload creation authorization, PATCH conflict handling, expiration, and atomic single-use are required assumptions, not proved facts.",
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration"
+      ],
+      "evidence": [
+        {
+          "kind": "source_model_artifact",
+          "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+          "fact_ids": [
+            "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use"
+          ]
+        }
+      ],
+      "release_policy": "block_until_backend_evidence_bundle_present"
+    },
+    {
+      "id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "category": "runtime_equivalence",
+      "severity": "blocking",
+      "status": "NOT_PROVED_BLOCKING",
+      "summary": "The runtime-trace report has monitor facts but no real-device trace bundle, so source review cannot be treated as deployed runtime equivalence.",
+      "assumptions": [
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "evidence": [
+        {
+          "kind": "runtime_report",
+          "path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+          "fact_ids": [
+            "xaman-runtime:monitor:real-device-runtime-equivalence-is-absent"
+          ]
+        }
+      ],
+      "release_policy": "block_until_real_device_trace_bundle_present"
+    },
+    {
+      "id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "category": "proof_consumer_policy",
+      "severity": "blocking",
+      "status": "POLICY_DEFINED_NOT_YET_KERNEL_PROVED",
+      "summary": "The proof consumer must reject disproved, unknown, not-modeled, stale, missing-solver, and blocked-assumption outcomes; this policy is defined here but still requires kernel proof tasks.",
+      "assumptions": [
+        "xaman-assumption:proof-consumer-kernel-validation"
+      ],
+      "evidence": [
+        {
+          "kind": "policy_artifact",
+          "path": "security_ir_artifacts/policies/security-decision-policy.json"
+        },
+        {
+          "kind": "solver_report",
+          "path": "security_ir_artifacts/environment/optional-solver-install-report.json"
+        }
+      ],
+      "release_policy": "block_until_proof_consumer_kernel_validated"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "xaman-assumption:native-vault-crypto-and-biometric-security",
+      "status": "BLOCKING",
+      "source": "wallet_auth_gaps",
+      "summary": "Native vault, keychain, biometric, and passcode cryptographic implementation properties are outside the reviewed TypeScript model.",
+      "required_evidence_to_clear": [
+        "native vault source or binary audit",
+        "biometric/passcode threat model",
+        "real-device auth and signing traces"
+      ]
+    },
+    {
+      "id": "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+      "status": "BLOCKING",
+      "source": "payload_lifecycle_gaps",
+      "summary": "Backend payload authorization, single-use, expiration, and PATCH conflict behavior are required but not proved.",
+      "required_evidence_to_clear": [
+        "backend API source snapshot",
+        "production payload API traces",
+        "single-use and expiration tests"
+      ]
+    },
+    {
+      "id": "xaman-assumption:xrpl-consensus-node-honesty-and-finality",
+      "status": "BLOCKING",
+      "source": "xrpl_transaction_gaps",
+      "summary": "XRPL consensus, node honesty, mempool, queue, and finality behavior are outside the client source model.",
+      "required_evidence_to_clear": [
+        "ledger endpoint trust assumptions",
+        "validated-ledger verification traces",
+        "consensus/finality model assumptions"
+      ]
+    },
+    {
+      "id": "xaman-assumption:deployed-runtime-equivalence",
+      "status": "BLOCKING",
+      "source": "runtime_trace_report",
+      "summary": "No real-device runtime trace bundle proves that deployed app behavior matches reviewed source behavior.",
+      "required_evidence_to_clear": [
+        "build provenance",
+        "real-device trace bundle",
+        "runtime environment snapshot"
+      ]
+    },
+    {
+      "id": "xaman-assumption:incomplete-transaction-class-validation",
+      "status": "BLOCKING",
+      "source": "xrpl_transaction_gaps",
+      "summary": "Selected transaction classes have TODO validation functions and cannot support broad transaction-safety claims.",
+      "required_evidence_to_clear": [
+        "implemented validations",
+        "negative tests for invalid transaction intents",
+        "updated proof obligations"
+      ]
+    },
+    {
+      "id": "xaman-assumption:proof-consumer-kernel-validation",
+      "status": "BLOCKING",
+      "source": "proof_consumer_policy",
+      "summary": "The proof-consumer kernel still needs to prove receipt binding and rejection of non-proved outcomes.",
+      "required_evidence_to_clear": [
+        "Lean or Coq proof-consumer kernel report",
+        "model/report CID binding tests",
+        "fresh environment probe evidence"
+      ]
+    }
+  ],
+  "proof_consumer_policy": {
+    "accept_only_result": "proved",
+    "reject_results": [
+      "disproved",
+      "unknown",
+      "not_modelled",
+      "not_modeled",
+      "stale_evidence",
+      "missing_solver",
+      "blocked_assumption"
+    ],
+    "requires_model_cid": true,
+    "requires_report_cid": true,
+    "requires_claim_id": true,
+    "requires_corpus_commit": true,
+    "requires_fresh_environment_probe": true,
+    "requires_reviewed_source_evidence": true,
+    "requires_no_blocking_assumptions": true
+  },
+  "claim_summary": {
+    "total_claim_count": 10,
+    "proved_claim_count": 0,
+    "blocking_claim_count": 7,
+    "high_risk_claim_count": 3
+  },
+  "production_release_blocked": true,
+  "security_decision": "BLOCK_SECURITY_CLAIMS_PENDING_PROOFS_AND_ASSUMPTIONS"
+}

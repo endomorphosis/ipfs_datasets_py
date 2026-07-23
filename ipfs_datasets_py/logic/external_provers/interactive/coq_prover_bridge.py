@@ -21,13 +21,40 @@ Usage:
 from dataclasses import dataclass
 from typing import List, Optional
 import subprocess
-import shutil
 import time
 import tempfile
 import os
 
+from ..lazy_installer import find_executable, lazy_install_prover
+
 # Check Coq availability
-COQ_AVAILABLE = shutil.which("coqc") is not None or shutil.which("coqtop") is not None
+COQ_AVAILABLE = find_executable("coqc") is not None or find_executable("coqtop") is not None
+
+
+def _ensure_coq_available() -> bool:
+    """Ensure Coq is executable, with opt-in lazy install support."""
+
+    global COQ_AVAILABLE
+    if find_executable("coqc") or find_executable("coqtop"):
+        COQ_AVAILABLE = True
+        return True
+
+    if lazy_install_prover("coq", reason="CoqProverBridge requested"):
+        COQ_AVAILABLE = find_executable("coqc") is not None or find_executable("coqtop") is not None
+        return COQ_AVAILABLE
+
+    COQ_AVAILABLE = False
+    return False
+
+
+def _node_args(node) -> tuple:
+    """Return TDFOL node arguments across current and legacy field names."""
+    return tuple(getattr(node, "arguments", getattr(node, "args", ())) or ())
+
+
+def _function_name(term) -> str:
+    """Return a TDFOL function name across current and legacy field names."""
+    return str(getattr(term, "function_name", getattr(term, "function_symbol", "")) or "")
 
 
 @dataclass
@@ -98,16 +125,18 @@ class TDFOLToCoqConverter:
         elif isinstance(term, tdfol_core.Constant):
             return term.name
         elif isinstance(term, tdfol_core.FunctionApplication):
-            args = " ".join(self._convert_term(arg) for arg in term.args)
-            return f"({term.function_symbol} {args})"
+            func_name = _function_name(term)
+            args = " ".join(self._convert_term(arg) for arg in _node_args(term))
+            return f"({func_name} {args})" if args else func_name
         else:
             return str(term)
     
     def _convert_predicate(self, pred) -> str:
         """Convert a predicate to Coq notation."""
-        if not pred.args:
+        args_tuple = _node_args(pred)
+        if not args_tuple:
             return pred.name
-        args = " ".join(self._convert_term(arg) for arg in pred.args)
+        args = " ".join(self._convert_term(arg) for arg in args_tuple)
         return f"({pred.name} {args})"
     
     def _convert_binary(self, formula) -> str:
@@ -188,7 +217,7 @@ class CoqProverBridge:
             auto_tactics: List of tactics to try (default: ["auto", "intuition", "tauto"])
             enable_cache: Whether to enable proof caching
         """
-        if not COQ_AVAILABLE:
+        if not _ensure_coq_available():
             raise ImportError("Coq is not available. Install via opam: opam install coq")
         
         self.timeout = timeout or 30.0
@@ -346,17 +375,19 @@ class CoqProverBridge:
         
         try:
             # Try coqc first (batch compiler)
-            if shutil.which("coqc"):
+            coqc_cmd = find_executable("coqc")
+            coqtop_cmd = find_executable("coqtop")
+            if coqc_cmd:
                 result = subprocess.run(
-                    ["coqc", script_file],
+                    [coqc_cmd, script_file],
                     capture_output=True,
                     text=True,
                     timeout=timeout
                 )
             # Fall back to coqtop (interactive)
-            elif shutil.which("coqtop"):
+            elif coqtop_cmd:
                 result = subprocess.run(
-                    ["coqtop", "-batch", "-load-vernac-source", script_file],
+                    [coqtop_cmd, "-batch", "-load-vernac-source", script_file],
                     capture_output=True,
                     text=True,
                     timeout=timeout
@@ -384,4 +415,10 @@ class CoqProverBridge:
                 pass
 
 
-__all__ = ["CoqProverBridge", "CoqProofResult", "COQ_AVAILABLE", "TDFOLToCoqConverter"]
+__all__ = [
+    "CoqProverBridge",
+    "CoqProofResult",
+    "COQ_AVAILABLE",
+    "TDFOLToCoqConverter",
+    "_ensure_coq_available",
+]

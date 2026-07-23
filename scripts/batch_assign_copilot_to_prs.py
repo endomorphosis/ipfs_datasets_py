@@ -4,10 +4,11 @@
 
 This script is DEPRECATED and should NOT be used.
 
-Reason: Uses `gh agent-task create` which DOES NOT EXIST
+Reason: Targets `gh agent-task create`, which is not available in this environment
+and is not the maintained existing-PR workflow for this repo
 
-This script claims to use "Official GitHub CLI command" but gh agent-task
-has NEVER existed. All workflows using this had 0% success rate.
+This script claims to use an "official GitHub CLI command" but that is not the
+maintained path for this repo's existing PR automation.
 
 The correct method is the DUAL METHOD:
 1. Create draft PR
@@ -36,7 +37,7 @@ def _deprecated_exit() -> None:
     print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
     print("=" * 80)
     print()
-    print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+    print("This script targets 'gh agent-task create', which is not available here.")
     print("This command has NEVER been part of GitHub CLI.")
     print()
     print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
@@ -53,15 +54,10 @@ def _deprecated_exit() -> None:
 Batch process all open PRs and assign Copilot where appropriate.
 
 This script analyzes all open pull requests and automatically assigns
-GitHub Copilot Coding Agent to work on them using the OFFICIAL method:
-gh agent-task create
-
-Per GitHub's official documentation:
-- https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
-- https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+GitHub Copilot to work on them using an old agent-task-based path.
 
 This script uses:
-✅ gh agent-task create - Official GitHub CLI command for Copilot Coding Agent
+✅ gh agent-task create when the local gh build supports it
 ✅ CopilotCLI utility wrapper - Python wrapper for gh commands
 
 This script does NOT use:
@@ -216,10 +212,11 @@ def analyze_pr(pr: Dict[str, Any]) -> Dict[str, Any]:
 
 def assign_copilot(pr_number: int, task: str, reason: str, pr_title: str, pr_body: str = "", branch_name: str = "") -> bool:
     """
-    Assign Copilot Coding Agent to a PR using gh agent-task create.
-    
-    This is the OFFICIAL method per GitHub documentation:
-    https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+    Assign Copilot to a PR.
+
+    This deprecated script tries `gh agent-task create` when the local gh build
+    supports it, but the maintained repo path for existing PRs is
+    `invoke_copilot_on_pr.py`.
     """
     
     # Get branch name if not provided
@@ -324,8 +321,7 @@ Please provide feedback and suggestions for improvement."""
         # Check if gh agent-task is not available
         if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
             print(f"   ❌ gh agent-task command not available on this system")
-            print(f"   💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
-            print(f"   📚 See: https://docs.github.com/en/copilot/concepts/agents/coding-agent/")
+            print(f"   💡 Use scripts/invoke_copilot_on_pr.py for existing PRs in this repo")
         else:
             print(f"   ❌ Failed to create agent task: {error_msg}")
         

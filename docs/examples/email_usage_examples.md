@@ -217,6 +217,26 @@ ipfs-datasets email search inbox_export.json "urgent" --output results.json
 - `to` - Search recipients only
 - `body` - Search email body only
 
+### 8. Enrich Timeline Authorities
+
+Generate authority-search plans and seed citations from an `email_timeline_handoff.json`:
+
+```bash
+# Run with default catalog
+ipfs-datasets email authority-enrichment \
+  email_timeline_handoff.json
+
+# Run with a custom catalog override
+ipfs-datasets email authority-enrichment \
+  email_timeline_handoff.json \
+  --catalog-path docs/examples/legal_data/email_authority_enrichment_catalog.example.json \
+  --output-dir ./authority_enrichment
+```
+
+Outputs:
+- `email_authority_enrichment.json`
+- `email_authority_enrichment.md`
+
 ## Python Package Usage
 
 ### Basic Email Processing

@@ -1,0 +1,45 @@
+{
+  "schema_version": "uscode-logic-proof-artifacts-v1",
+  "artifact_kind": "partial_llm_router_groth16_sharded_export",
+  "row_range": "0:150",
+  "source_row_count": 150,
+  "artifact_row_count": 150,
+  "failure_count": 0,
+  "shards": [
+    {
+      "path": "workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000000_000025",
+      "status": "complete",
+      "rows": 25,
+      "failures": 0
+    },
+    {
+      "path": "workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000025_000125",
+      "status": "complete",
+      "rows": 100,
+      "failures": 0
+    },
+    {
+      "path": "workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000125_000150",
+      "status": "complete",
+      "rows": 25,
+      "failures": 0
+    }
+  ],
+  "logic_source": "llm_router",
+  "require_llm": true,
+  "llm_models": {
+    "gpt-5.3-codex-spark": 124,
+    "gpt-5.3-codex": 26
+  },
+  "logic_generation_methods": {
+    "llm_router": 150
+  },
+  "zkp_backend": {
+    "groth16": 150
+  },
+  "zkp_verified_count": 150,
+  "ontology_version": {
+    "uscode-logic-ontology-v1": 150
+  },
+  "created_at": "2026-04-26T23:37:43.714135+00:00"
+}

@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "message": "Extracted 5 Common Crawl municipal page(s)",
+  "jurisdiction": "Portland, OR",
+  "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+  "index_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/data/common_crawl_indexes",
+  "downloaded_index": null,
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_title33_pdf_all5",
+  "pages_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_title33_pdf_all5/pages.parquet",
+  "pointers_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_title33_pdf_all5/pointers.parquet",
+  "pages_extracted": 5,
+  "metadata": {
+    "method": "common_crawl",
+    "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+    "jurisdiction": "Portland, OR",
+    "place_name": "Portland",
+    "state_code": "OR",
+    "gnis": null,
+    "errors": [
+      {
+        "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+        "error": "PDF text extraction failed: PdfReadError: Cannot find Root object in pdf"
+      },
+      {
+        "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+        "error": "PDF text extraction failed: PdfReadError: Cannot find Root object in pdf"
+      },
+      {
+        "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+        "error": "PDF text extraction failed: PdfReadError: Cannot find Root object in pdf"
+      },
+      {
+        "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+        "error": "PDF text extraction failed: PdfReadError: Cannot find Root object in pdf"
+      },
+      {
+        "url": "https://www.portlandoregon.gov/bps/title33_complete_print.pdf",
+        "error": "PDF text extraction failed: PdfReadError: Cannot find Root object in pdf"
+      }
+    ]
+  }
+}

@@ -12,8 +12,10 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
+from datetime import datetime
 from typing import Any, Dict, Iterable, List
 
 import anyio
@@ -38,16 +40,17 @@ except ImportError:  # pragma: no cover - file-based test imports
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_CAP_HF_DATASET_ID = "justicedao/ipfs_caselaw_access_project"
-DEFAULT_CAP_HF_PARQUET_FILE = "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"
-DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
+DEFAULT_CAP_HF_DATASET_ID = get_canonical_legal_corpus("caselaw_access_project").hf_dataset_id
+DEFAULT_CAP_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_parquet_path()
+DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_embeddings_path()
 
-DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
-DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
+DEFAULT_USCODE_HF_DATASET_ID = get_canonical_legal_corpus("us_code").hf_dataset_id
+DEFAULT_USCODE_HF_PARQUET_PREFIX = get_canonical_legal_corpus("us_code").parquet_dir_name
 DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_dataset_id
 DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
 DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id
 DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = get_canonical_legal_corpus("federal_register").hf_dataset_id
+DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("netherlands_laws").hf_dataset_id
 
 
 def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
@@ -56,6 +59,448 @@ def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
     if len(state) != 2 or not state.isalpha():
         raise ValueError("state must be a two-letter code (e.g., OR, CA, NY)")
     return state
+
+
+def _parse_iso_date(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        return ""
+
+
+def _extract_temporal_case(result_row: Dict[str, Any]) -> Dict[str, Any]:
+    case = result_row.get("case")
+    return case if isinstance(case, dict) else result_row
+
+
+def _result_matches_as_of(case: Dict[str, Any], as_of_date: str) -> bool:
+    target = _parse_iso_date(as_of_date)
+    if not target:
+        return True
+
+    version_start = _parse_iso_date(case.get("version_start_date") or case.get("effective_date"))
+    version_end = _parse_iso_date(case.get("version_end_date"))
+
+    if version_start and target < version_start:
+        return False
+    if version_end and target > version_end:
+        return False
+    return bool(version_start) or bool(case.get("is_current"))
+
+
+def _result_matches_effective_date(case: Dict[str, Any], effective_date: str) -> bool:
+    target = _parse_iso_date(effective_date)
+    if not target:
+        return True
+    return _parse_iso_date(case.get("version_start_date") or case.get("effective_date")) == target
+
+
+def _apply_netherlands_temporal_filters(
+    results: List[Dict[str, Any]],
+    *,
+    prefer_current_versions: bool,
+    include_historical_versions: bool,
+    as_of_date: str,
+    effective_date: str,
+) -> List[Dict[str, Any]]:
+    filtered: List[Dict[str, Any]] = []
+    for row in results:
+        case = _extract_temporal_case(row)
+        is_current = bool(case.get("is_current"))
+        if not include_historical_versions and not is_current:
+            continue
+        if effective_date and not _result_matches_effective_date(case, effective_date):
+            continue
+        if as_of_date and not _result_matches_as_of(case, as_of_date):
+            continue
+        filtered.append(row)
+
+    if prefer_current_versions:
+        filtered.sort(
+            key=lambda item: (
+                0 if bool(_extract_temporal_case(item).get("is_current")) else 1,
+                -float(item.get("score", 0.0)),
+            )
+        )
+    return filtered
+
+
+def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
+    query = str(value or "").strip()
+    if not query:
+        return {}
+
+    lowered = query.lower()
+    identifier_match = re.search(r"\b(BWBR[0-9A-Z]+)\b", query, re.IGNORECASE)
+    article_numbers: List[str] = []
+
+    range_match = re.search(
+        r"\bartik(?:el|elen)\s+([0-9]+)\s*(?:-|t/m|tot)\s*([0-9]+)\b",
+        lowered,
+        re.IGNORECASE,
+    )
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2))
+        if start <= end and (end - start) <= 20:
+            article_numbers.extend(str(number) for number in range(start, end + 1))
+
+    if not article_numbers:
+        articles_match = re.search(
+            r"\bartik(?:el|elen)\s+([0-9a-z:.\s,enetm/-]+)$",
+            lowered,
+            re.IGNORECASE,
+        )
+        if articles_match:
+            for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", articles_match.group(1), re.IGNORECASE):
+                normalized_token = token.strip()
+                if normalized_token and normalized_token not in article_numbers:
+                    article_numbers.append(normalized_token)
+
+    hierarchy_segments: List[str] = []
+    for kind in ("boek", "titel", "hoofdstuk", "afdeling", "paragraaf"):
+        for match in re.finditer(rf"\b{kind}\s+[0-9a-zivxlcdm.\-]+\b", lowered, re.IGNORECASE):
+            hierarchy_segments.append(match.group(0).strip())
+
+    law_reference = query
+    for pattern in [
+        r"\bBWBR[0-9A-Z]+\b",
+        r"\bartik(?:el|elen)\s+[0-9]+(?:[.:][0-9]+)*(?:[a-z])?(?:\s*(?:-|t/m|tot|,|en)\s*[0-9]+(?:[.:][0-9]+)*(?:[a-z])?)*\b",
+        r"\b(?:boek|titel|hoofdstuk|afdeling|paragraaf)\s+[0-9a-zivxlcdm.\-]+\b",
+    ]:
+        law_reference = re.sub(pattern, " ", law_reference, flags=re.IGNORECASE)
+    law_reference = re.sub(r"\s+", " ", law_reference).strip(" ,;:-")
+
+    parsed = {
+        "raw_query": query,
+        "law_identifier": identifier_match.group(1).upper() if identifier_match else "",
+        "law_reference": law_reference.strip(),
+        "article_number": article_numbers[0] if article_numbers else "",
+        "article_numbers": article_numbers,
+        "hierarchy_segments": hierarchy_segments,
+    }
+    if not parsed["law_identifier"] and not parsed["law_reference"] and not parsed["article_number"]:
+        return {}
+    return parsed
+
+
+def _normalize_match_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip()).lower()
+
+
+def _clean_answer_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip())
+
+
+def _extract_netherlands_article_references(text: Any) -> List[str]:
+    normalized = _normalize_match_text(text)
+    if not normalized:
+        return []
+
+    references: List[str] = []
+    range_match = re.search(
+        r"\bartik(?:el|elen)\s+([0-9]+)\s*(?:-|t/m|tot)\s*([0-9]+)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2))
+        if start <= end and (end - start) <= 20:
+            references.extend(str(number) for number in range(start, end + 1))
+
+    for match in re.finditer(
+        r"\bartik(?:el|elen)\s+([0-9a-z:.\s,enetm/-]+)",
+        normalized,
+        re.IGNORECASE,
+    ):
+        for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", match.group(1), re.IGNORECASE):
+            if token not in references:
+                references.append(token)
+    return references
+
+
+def _article_sort_key(value: Any) -> tuple[int, str]:
+    text = str(value or "").strip()
+    match = re.match(r"^([0-9]+)", text)
+    if match:
+        return (int(match.group(1)), text)
+    return (10**9, text)
+
+
+def _score_netherlands_citation_match(
+    case: Dict[str, Any],
+    parsed_citation: Dict[str, Any],
+    *,
+    prefer_current_versions: bool,
+) -> int:
+    score = 0
+    query_identifier = str(parsed_citation.get("law_identifier") or "")
+    query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
+    query_article = _normalize_match_text(parsed_citation.get("article_number") or "")
+    query_articles = {
+        _normalize_match_text(article)
+        for article in (parsed_citation.get("article_numbers") or [])
+        if _normalize_match_text(article)
+    }
+
+    case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
+    case_article = _normalize_match_text(case.get("article_number") or "")
+
+    alias_candidates = [
+        _normalize_match_text(case.get("canonical_title")),
+        _normalize_match_text(case.get("title")),
+        _normalize_match_text(case.get("citation")),
+        _normalize_match_text(case.get("document_citation")),
+    ]
+    alias_candidates.extend(_normalize_match_text(item) for item in (case.get("aliases") or []))
+
+    if query_identifier:
+        if query_identifier == case_identifier:
+            score += 10
+        else:
+            return 0
+
+    if query_reference:
+        if any(query_reference == candidate for candidate in alias_candidates if candidate):
+            score += 8
+        elif any(query_reference in candidate for candidate in alias_candidates if candidate):
+            score += 5
+        elif not query_identifier:
+            return 0
+
+    if query_articles or query_article:
+        if (query_articles and case_article in query_articles) or (query_article and query_article == case_article):
+            score += 10
+        else:
+            return 0
+
+    hierarchy_labels = [_normalize_match_text(item) for item in (case.get("hierarchy_labels") or [])]
+    for segment in parsed_citation.get("hierarchy_segments") or []:
+        if _normalize_match_text(segment) in hierarchy_labels:
+            score += 2
+
+    if prefer_current_versions and bool(case.get("is_current")):
+        score += 1
+    return score
+
+
+def _determine_netherlands_match_reason(case: Dict[str, Any], parsed_citation: Dict[str, Any]) -> str:
+    query_identifier = str(parsed_citation.get("law_identifier") or "").upper()
+    query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
+    case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
+    aliases = [_normalize_match_text(item) for item in (case.get("aliases") or [])]
+    titles = [
+        _normalize_match_text(case.get("canonical_title")),
+        _normalize_match_text(case.get("title")),
+    ]
+
+    if query_identifier and query_identifier == case_identifier:
+        return "identifier_article_match"
+    if query_reference and query_reference in aliases:
+        return "alias_article_match"
+    if query_reference and query_reference in titles:
+        return "title_article_match"
+    if query_reference:
+        return "citation_article_match"
+    return "vector_match"
+
+
+def _format_netherlands_article_answer(
+    case: Dict[str, Any],
+    *,
+    match_reason: str,
+    retrieval_reason: str,
+) -> Dict[str, Any]:
+    return {
+        "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
+        "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
+        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "canonical_title": str(case.get("canonical_title") or case.get("title") or ""),
+        "aliases": list(case.get("aliases") or []),
+        "article_number": str(case.get("article_number") or ""),
+        "hierarchy_path": list(case.get("hierarchy_path") or []),
+        "hierarchy_labels": list(case.get("hierarchy_labels") or []),
+        "effective_date": str(case.get("effective_date") or ""),
+        "version_start_date": str(case.get("version_start_date") or case.get("effective_date") or ""),
+        "version_end_date": str(case.get("version_end_date") or ""),
+        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+        "information_url": str(case.get("information_url") or ""),
+        "article_text": _clean_answer_text(case.get("text") or ""),
+        "referenced_articles": _extract_netherlands_article_references(case.get("text") or ""),
+        "previous_article": None,
+        "next_article": None,
+        "sibling_articles": [],
+        "match_reason": match_reason,
+        "retrieval_reason": retrieval_reason,
+    }
+
+
+def _compact_netherlands_context_article(case: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
+        "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
+        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "article_number": str(case.get("article_number") or ""),
+        "hierarchy_labels": list(case.get("hierarchy_labels") or []),
+        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+    }
+
+
+def _same_netherlands_hierarchy_scope(left: Dict[str, Any], right: Dict[str, Any]) -> bool:
+    left_path = list(left.get("hierarchy_path") or [])
+    right_path = list(right.get("hierarchy_path") or [])
+    if not left_path or not right_path:
+        return False
+    left_scope = [item.get("label") for item in left_path[:-1]]
+    right_scope = [item.get("label") for item in right_path[:-1]]
+    return left_scope == right_scope
+
+
+def _enrich_netherlands_answers_with_context(
+    answers: List[Dict[str, Any]],
+    *,
+    results: List[Dict[str, Any]],
+    context_mode: str,
+) -> List[Dict[str, Any]]:
+    normalized_mode = str(context_mode or "exact").strip().lower()
+    if normalized_mode not in {"exact", "neighbors", "hierarchy"}:
+        normalized_mode = "exact"
+
+    cases = [_extract_temporal_case(row) for row in results]
+    by_version: Dict[str, List[Dict[str, Any]]] = {}
+    for case in cases:
+        version_id = str(case.get("law_version_identifier") or case.get("version_specific_identifier") or "")
+        by_version.setdefault(version_id, []).append(case)
+
+    for version_id, version_cases in by_version.items():
+        version_cases.sort(key=lambda case: _article_sort_key(case.get("article_number")))
+        by_version[version_id] = version_cases
+
+    for answer in answers:
+        version_cases = by_version.get(str(answer.get("law_version_identifier") or ""), [])
+        current_index = next(
+            (
+                index
+                for index, case in enumerate(version_cases)
+                if str(case.get("article_number") or "") == str(answer.get("article_number") or "")
+            ),
+            -1,
+        )
+        if current_index < 0:
+            continue
+
+        current_case = version_cases[current_index]
+        if normalized_mode in {"neighbors", "hierarchy"}:
+            if current_index > 0:
+                answer["previous_article"] = _compact_netherlands_context_article(version_cases[current_index - 1])
+            if current_index + 1 < len(version_cases):
+                answer["next_article"] = _compact_netherlands_context_article(version_cases[current_index + 1])
+
+        if normalized_mode == "hierarchy":
+            siblings = [
+                _compact_netherlands_context_article(case)
+                for case in version_cases
+                if case is not current_case and _same_netherlands_hierarchy_scope(current_case, case)
+            ]
+            answer["sibling_articles"] = siblings
+
+    return answers
+
+
+def _assemble_netherlands_answers(
+    results: List[Dict[str, Any]],
+    *,
+    citation_query: str,
+    prefer_current_versions: bool,
+    context_mode: str,
+    context_results: List[Dict[str, Any]] | None = None,
+) -> List[Dict[str, Any]]:
+    parsed = _parse_netherlands_citation_query(citation_query)
+    answers: List[Dict[str, Any]] = []
+
+    if parsed:
+        for row in results:
+            case = _extract_temporal_case(row)
+            score = _score_netherlands_citation_match(
+                case,
+                parsed,
+                prefer_current_versions=prefer_current_versions,
+            )
+            if score <= 0:
+                continue
+            answers.append(
+                _format_netherlands_article_answer(
+                    case,
+                    match_reason=_determine_netherlands_match_reason(case, parsed),
+                    retrieval_reason="citation_grounded_retrieval",
+                )
+            )
+
+        if parsed.get("article_numbers"):
+            desired_order = {
+                str(article): index
+                for index, article in enumerate(parsed.get("article_numbers") or [])
+            }
+            answers.sort(
+                key=lambda item: (
+                    desired_order.get(str(item.get("article_number") or ""), 999),
+                    0 if item.get("version_end_date") == "" else 1,
+                    item.get("canonical_citation") or "",
+                )
+            )
+        if answers:
+            return _enrich_netherlands_answers_with_context(
+                answers,
+                results=list(context_results or results),
+                context_mode=context_mode,
+            )
+
+    for row in results[:3]:
+        case = _extract_temporal_case(row)
+        answers.append(
+            _format_netherlands_article_answer(
+                case,
+                match_reason="vector_match",
+                retrieval_reason="vector_search_fallback",
+            )
+        )
+    return _enrich_netherlands_answers_with_context(
+        answers,
+        results=list(context_results or results),
+        context_mode=context_mode,
+    )
+
+
+def _apply_netherlands_citation_query(
+    results: List[Dict[str, Any]],
+    *,
+    citation_query: str,
+    prefer_current_versions: bool,
+) -> List[Dict[str, Any]]:
+    parsed = _parse_netherlands_citation_query(citation_query)
+    if not parsed:
+        return results
+
+    scored: List[tuple[int, Dict[str, Any]]] = []
+    for row in results:
+        case = _extract_temporal_case(row)
+        score = _score_netherlands_citation_match(
+            case,
+            parsed,
+            prefer_current_versions=prefer_current_versions,
+        )
+        scored.append((score, row))
+
+    matches = [(score, row) for score, row in scored if score > 0]
+    if not matches:
+        return results
+
+    matches.sort(key=lambda item: (-item[0], -float(item[1].get("score", 0.0))))
+    return [row for _, row in matches]
 
 
 def _get_repo_root() -> Path:
@@ -941,14 +1386,14 @@ async def scrape_state_admin_rules_from_parameters(
             parallel_workers=parameters.get("parallel_workers", 6),
             per_state_retry_attempts=parameters.get("per_state_retry_attempts", 1),
             retry_zero_rule_states=parameters.get("retry_zero_rule_states", True),
-            per_state_timeout_seconds=parameters.get("per_state_timeout_seconds", 480.0),
+            per_state_timeout_seconds=parameters.get("per_state_timeout_seconds", 86400.0),
             include_dc=parameters.get("include_dc", False),
             agentic_fallback_enabled=parameters.get("agentic_fallback_enabled", True),
-            agentic_max_candidates_per_state=parameters.get("agentic_max_candidates_per_state", 12),
-            agentic_max_fetch_per_state=parameters.get("agentic_max_fetch_per_state", 5),
-            agentic_max_results_per_domain=parameters.get("agentic_max_results_per_domain", 20),
-            agentic_max_hops=parameters.get("agentic_max_hops", 1),
-            agentic_max_pages=parameters.get("agentic_max_pages", 8),
+            agentic_max_candidates_per_state=parameters.get("agentic_max_candidates_per_state", 1000),
+            agentic_max_fetch_per_state=parameters.get("agentic_max_fetch_per_state", 1000),
+            agentic_max_results_per_domain=parameters.get("agentic_max_results_per_domain", 1000),
+            agentic_max_hops=parameters.get("agentic_max_hops", 4),
+            agentic_max_pages=parameters.get("agentic_max_pages", 1000),
             agentic_fetch_concurrency=parameters.get("agentic_fetch_concurrency", 6),
             write_agentic_kg_corpus=parameters.get("write_agentic_kg_corpus", True),
             require_substantive_rule_text=parameters.get("require_substantive_rule_text", True),
@@ -1063,6 +1508,40 @@ async def scrape_federal_laws_from_parameters(
 
     except Exception as e:
         logger.error("Federal laws scraping failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {},
+        }
+
+
+async def scrape_netherlands_laws_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    try:
+        from .netherlands_laws_scraper import scrape_netherlands_laws
+
+        return await scrape_netherlands_laws(
+            document_urls=parameters.get("document_urls"),
+            seed_urls=parameters.get("seed_urls"),
+            output_format=parameters.get("output_format", "json"),
+            output_dir=parameters.get("output_dir"),
+            rate_limit_delay=parameters.get("rate_limit_delay", 0.4),
+            max_documents=parameters.get("max_documents"),
+            include_metadata=parameters.get("include_metadata", True),
+            custom_sources=parameters.get("custom_sources"),
+            max_seed_pages=parameters.get("max_seed_pages", 25),
+            crawl_depth=parameters.get("crawl_depth", 2),
+            use_default_seeds=parameters.get("use_default_seeds", False),
+            skip_existing=parameters.get("skip_existing", False),
+            resume=parameters.get("resume", False),
+        )
+
+    except Exception as e:
+        logger.error("Netherlands laws scraping failed: %s", e)
         return {
             "status": "error",
             "error": str(e),
@@ -1323,6 +1802,10 @@ async def search_caselaw_access_cases_from_parameters(
             "hf_parquet_files": parameters.get("hf_parquet_files"),
             "max_case_parquet_files": int(parameters.get("max_case_parquet_files", 0)),
             "preferred_chunk_parquet_names": parameters.get("preferred_chunk_parquet_names"),
+            "prefer_current_versions": parameters.get("prefer_current_versions"),
+            "include_historical_versions": parameters.get("include_historical_versions"),
+            "as_of_date": parameters.get("as_of_date"),
+            "effective_date": parameters.get("effective_date"),
         }
         result = await anyio.to_thread.run_sync(
             lambda: _run_cap_vector_operation_in_venv(
@@ -1503,6 +1986,94 @@ async def search_federal_register_corpus_from_parameters(
     )
 
 
+async def search_netherlands_law_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search Netherlands law corpus vectors and enrich matches with law metadata/snippets."""
+    nl_params = dict(parameters)
+    netherlands_corpus = get_canonical_legal_corpus("netherlands_laws")
+
+    nl_params.setdefault("hf_dataset_id", netherlands_corpus.hf_dataset_id)
+    nl_params.setdefault("hf_parquet_file", netherlands_corpus.combined_parquet_filename)
+    nl_params.setdefault("hf_parquet_prefix", None)
+    nl_params.setdefault("cid_metadata_field", netherlands_corpus.cid_field)
+    nl_params.setdefault("cid_column", netherlands_corpus.cid_field)
+    nl_params.setdefault(
+        "text_field_candidates",
+        [
+            "citation",
+            "document_citation",
+            "canonical_title",
+            "title",
+            "aliases",
+            "hierarchy_path_text",
+            "hierarchy_labels",
+            "text",
+            "document_type",
+            "citations",
+            "headings",
+            "jsonld",
+        ],
+    )
+    nl_params.setdefault("chunk_lookup_enabled", False)
+    nl_params.setdefault("chunk_hf_parquet_file", None)
+    nl_params.setdefault("chunk_hf_parquet_prefix", None)
+    nl_params.setdefault("prefer_current_versions", True)
+    nl_params.setdefault("include_historical_versions", True)
+    nl_params.setdefault("citation_query", str(nl_params.get("query_text") or ""))
+    nl_params.setdefault("context_mode", "exact")
+    nl_params.setdefault(
+        "preferred_case_parquet_names",
+        [
+            netherlands_corpus.combined_parquet_filename,
+            "netherlands_laws.parquet",
+            "nl_laws.parquet",
+            "wetten_overheid.parquet",
+        ],
+    )
+
+    result = await search_caselaw_access_cases_from_parameters(
+        nl_params,
+        tool_version=tool_version,
+    )
+    if isinstance(result, dict):
+        if isinstance(result.get("results"), list):
+            temporally_filtered_results = _apply_netherlands_temporal_filters(
+                list(result.get("results") or []),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+                include_historical_versions=bool(nl_params.get("include_historical_versions", True)),
+                as_of_date=str(nl_params.get("as_of_date") or ""),
+                effective_date=str(nl_params.get("effective_date") or ""),
+            )
+            result["results"] = _apply_netherlands_citation_query(
+                list(temporally_filtered_results),
+                citation_query=str(nl_params.get("citation_query") or ""),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+            )
+            result["answers"] = _assemble_netherlands_answers(
+                list(result.get("results") or []),
+                citation_query=str(nl_params.get("citation_query") or ""),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+                context_mode=str(nl_params.get("context_mode") or "exact"),
+                context_results=list(temporally_filtered_results),
+            )
+        result.setdefault(
+            "temporal_parameters",
+            {
+                "prefer_current_versions": bool(nl_params.get("prefer_current_versions", True)),
+                "include_historical_versions": bool(nl_params.get("include_historical_versions", True)),
+                "as_of_date": str(nl_params.get("as_of_date") or ""),
+                "effective_date": str(nl_params.get("effective_date") or ""),
+            },
+        )
+        result.setdefault("citation_query", str(nl_params.get("citation_query") or ""))
+        result.setdefault("context_mode", str(nl_params.get("context_mode") or "exact"))
+        result.setdefault("jurisdiction", "NL")
+    return result
+
+
 async def search_court_rules_corpus_from_parameters(
     parameters: Dict[str, Any],
     *,
@@ -1614,6 +2185,287 @@ async def search_court_rules_corpus_from_parameters(
         result.setdefault("jurisdiction", jurisdiction)
         if state_code is not None:
             result.setdefault("state", state_code)
+    return result
+
+
+async def recover_missing_legal_citation_source_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search, archive, and optionally publish candidate sources for an unresolved legal citation."""
+    from .legal_source_recovery import recover_missing_legal_citation_source
+
+    citation_text = str(parameters.get("citation_text") or "").strip()
+    normalized_citation = str(parameters.get("normalized_citation") or citation_text).strip()
+    if not citation_text:
+        return {
+            "status": "error",
+            "error": "citation_text is required",
+            "operation": "recover_missing_legal_citation_source",
+            "tool_version": tool_version,
+        }
+
+    corpus_key = str(parameters.get("corpus_key") or "").strip() or None
+    state_code_raw = str(parameters.get("state_code") or parameters.get("state") or "").strip()
+    state_code = None
+    if state_code_raw:
+        try:
+            state_code = _normalize_state_code(state_code_raw)
+        except ValueError as exc:
+            return {
+                "status": "error",
+                "error": str(exc),
+                "operation": "recover_missing_legal_citation_source",
+                "tool_version": tool_version,
+            }
+
+    metadata = dict(parameters.get("metadata") or {})
+    candidate_corpora = [
+        str(item).strip()
+        for item in list(parameters.get("candidate_corpora") or metadata.get("candidate_corpora") or [])
+        if str(item).strip()
+    ]
+    if candidate_corpora:
+        metadata["candidate_corpora"] = candidate_corpora
+
+    result = await recover_missing_legal_citation_source(
+        citation_text=citation_text,
+        normalized_citation=normalized_citation or None,
+        corpus_key=corpus_key,
+        state_code=state_code,
+        metadata=metadata,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+    )
+    result["status"] = str(result.get("status") or "tracked")
+    result["operation"] = "recover_missing_legal_citation_source"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def promote_recovery_manifest_to_canonical_bundle_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import promote_recovery_manifest_to_canonical_bundle
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "promote_recovery_manifest_to_canonical_bundle",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    result = await anyio.to_thread.run_sync(
+        lambda: promote_recovery_manifest_to_canonical_bundle(
+            manifest_path,
+            output_dir=output_dir,
+            write_parquet=bool(parameters.get("write_parquet", True)),
+        )
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "promote_recovery_manifest_to_canonical_bundle"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def preview_recovery_manifest_release_plan_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import build_recovery_manifest_release_plan
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "preview_recovery_manifest_release_plan",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    workspace_root = str(parameters.get("workspace_root") or "").strip() or None
+    python_bin = str(parameters.get("python_bin") or "python3").strip() or "python3"
+    result = await anyio.to_thread.run_sync(
+        lambda: build_recovery_manifest_release_plan(
+            manifest_path,
+            output_dir=output_dir,
+            workspace_root=workspace_root,
+            python_bin=python_bin,
+        )
+    )
+    result["operation"] = "preview_recovery_manifest_release_plan"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def merge_recovery_manifest_into_canonical_dataset_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import merge_recovery_manifest_into_canonical_dataset
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "merge_recovery_manifest_into_canonical_dataset",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    target_local_parquet_path = str(parameters.get("target_local_parquet_path") or "").strip() or None
+    hf_cache_dir = str(parameters.get("hf_cache_dir") or "").strip() or None
+    result = await anyio.to_thread.run_sync(
+        lambda: merge_recovery_manifest_into_canonical_dataset(
+            manifest_path,
+            output_dir=output_dir,
+            target_local_parquet_path=target_local_parquet_path,
+            write_promotion_parquet=bool(parameters.get("write_promotion_parquet", True)),
+            hydrate_from_hf=bool(parameters.get("hydrate_from_hf", False)),
+            hf_token=str(parameters.get("hf_token") or "") or None,
+            hf_revision=str(parameters.get("hf_revision") or "") or None,
+            hf_cache_dir=hf_cache_dir,
+            force_hf_download=bool(parameters.get("force_hf_download", False)),
+            publish_merged_to_hf=bool(parameters.get("publish_merged_to_hf", False)),
+            hf_commit_message=str(parameters.get("hf_commit_message") or "") or None,
+        )
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "merge_recovery_manifest_into_canonical_dataset"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def collect_packaged_docket_citation_recovery_candidates_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        collect_packaged_docket_citation_recovery_candidates,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "collect_packaged_docket_citation_recovery_candidates",
+            "tool_version": tool_version,
+        }
+
+    result = await anyio.to_thread.run_sync(
+        lambda: collect_packaged_docket_citation_recovery_candidates(manifest_path)
+    )
+    result["status"] = "success"
+    result["operation"] = "collect_packaged_docket_citation_recovery_candidates"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def recover_packaged_docket_missing_authorities_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        recover_packaged_docket_missing_authorities,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "recover_packaged_docket_missing_authorities",
+            "tool_version": tool_version,
+        }
+
+    result = await recover_packaged_docket_missing_authorities(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+    )
+    result["status"] = "success"
+    result["operation"] = "recover_packaged_docket_missing_authorities"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def plan_packaged_docket_missing_authority_follow_up_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        plan_packaged_docket_missing_authority_follow_up,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "plan_packaged_docket_missing_authority_follow_up",
+            "tool_version": tool_version,
+        }
+
+    result = await plan_packaged_docket_missing_authority_follow_up(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+    )
+    result["status"] = "success"
+    result["operation"] = "plan_packaged_docket_missing_authority_follow_up"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def execute_packaged_docket_missing_authority_follow_up_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        execute_packaged_docket_missing_authority_follow_up,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "execute_packaged_docket_missing_authority_follow_up",
+            "tool_version": tool_version,
+        }
+
+    result = await execute_packaged_docket_missing_authority_follow_up(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+        execute_publish=bool(parameters.get("execute_publish", False)),
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "execute_packaged_docket_missing_authority_follow_up"
+    result["tool_version"] = tool_version
     return result
 
 

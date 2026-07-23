@@ -86,12 +86,11 @@ class TestLexerTokenization:
         lexer = TDFOLLexer(text)
         tokens = lexer.tokenize()
         
-        # THEN should tokenize (note: "P" is ambiguous with PERMISSION)
-        # The lexer tokenizes "P" as PERMISSION, then "erson" as IDENTIFIER
-        assert len(tokens) == 3
-        assert tokens[0].type == TokenType.PERMISSION  # "P" matches keyword
-        assert tokens[1].type == TokenType.IDENTIFIER  # "erson"
-        assert tokens[2].type == TokenType.EOF
+        # THEN should preserve it as one identifier token
+        assert len(tokens) == 2
+        assert tokens[0].type == TokenType.IDENTIFIER
+        assert tokens[0].value == "Person"
+        assert tokens[1].type == TokenType.EOF
     
     def test_lexer_identifier_with_underscore(self):
         """Test tokenizing identifier with underscores."""
@@ -359,6 +358,45 @@ class TestParserPredicates:
         assert isinstance(formula, Predicate)
         assert formula.name == "Q"
         assert formula.arguments == ()
+
+    def test_parse_empty_argument_predicate_export(self):
+        """Test parsing compiler exports that spell nullary predicates with ()."""
+        # GIVEN a zero-argument predicate application from an external proof view
+        formula_str = "Notice()"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN it should be accepted as a nullary predicate
+        assert isinstance(formula, Predicate)
+        assert formula.name == "Notice"
+        assert formula.arguments == ()
+
+    def test_parse_deontic_empty_argument_predicate_export(self):
+        """Test parsing deontic proof obligations over nullary predicates."""
+        # GIVEN a TDFOL proof obligation whose payload has an empty arg list
+        formula_str = "O(Repealed())"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN the deontic payload should be a nullary predicate
+        assert isinstance(formula, DeonticFormula)
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "Repealed"
+        assert formula.formula.arguments == ()
+
+    def test_parse_reserved_single_letter_nullary_predicates(self):
+        """Test reserved modal symbols as atoms when no modal payload follows."""
+        # GIVEN single-letter atom names that are modal operators with (...)
+        for formula_str in ("P", "O", "F", "G", "X", "U", "S", "W", "R"):
+            # WHEN parsing
+            formula = parse_tdfol(formula_str)
+
+            # THEN they should be accepted as propositional variables
+            assert isinstance(formula, Predicate)
+            assert formula.name == formula_str
+            assert formula.arguments == ()
     
     def test_parse_unary_predicate(self):
         """Test parsing a unary predicate."""
@@ -416,6 +454,21 @@ class TestParserPredicates:
         assert len(formula.arguments) == 1
         assert isinstance(formula.arguments[0], FunctionApplication)
         assert formula.arguments[0].function_name == "myfunc"
+
+    def test_parse_zero_argument_function_application(self):
+        """Test parsing zero-argument function terms in proof exports."""
+        # GIVEN a predicate with a zero-argument function term
+        formula_str = "Effective(clock())"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN the function application should preserve an empty argument tuple
+        assert isinstance(formula, Predicate)
+        assert len(formula.arguments) == 1
+        assert isinstance(formula.arguments[0], FunctionApplication)
+        assert formula.arguments[0].function_name == "clock"
+        assert formula.arguments[0].arguments == ()
     
     def test_parse_predicate_mixed_arguments(self):
         """Test parsing predicate with mixed argument types."""
@@ -529,6 +582,18 @@ class TestParserLogicOperators:
         # THEN should be a binary formula with AND
         assert isinstance(formula, BinaryFormula)
         assert formula.operator == LogicOperator.AND
+
+    def test_parse_conjunction_with_text_keyword(self):
+        """Test parsing conjunction via textual keyword."""
+        # GIVEN a conjunction written with textual syntax
+        formula_str = "Qa and Qb"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN should be a binary formula with AND
+        assert isinstance(formula, BinaryFormula)
+        assert formula.operator == LogicOperator.AND
     
     def test_parse_disjunction(self):
         """Test parsing disjunction."""
@@ -541,6 +606,22 @@ class TestParserLogicOperators:
         # THEN should be a binary formula with OR
         assert isinstance(formula, BinaryFormula)
         assert formula.operator == LogicOperator.OR
+
+    def test_parse_implication_with_reserved_single_letter_atoms(self):
+        """Test implication syntax used by prover examples with P and Q atoms."""
+        # GIVEN a compact propositional implication
+        formula_str = "P -> Q"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
+        # THEN P should be an atom, not a malformed permission operator
+        assert isinstance(formula, BinaryFormula)
+        assert formula.operator == LogicOperator.IMPLIES
+        assert isinstance(formula.left, Predicate)
+        assert formula.left.name == "P"
+        assert isinstance(formula.right, Predicate)
+        assert formula.right.name == "Q"
     
     def test_parse_negation(self):
         """Test parsing negation."""
@@ -550,6 +631,18 @@ class TestParserLogicOperators:
         # WHEN parsing
         formula = parse_tdfol(formula_str)
         
+        # THEN should be a unary formula with NOT
+        assert isinstance(formula, UnaryFormula)
+        assert formula.operator == LogicOperator.NOT
+
+    def test_parse_negation_with_text_keyword(self):
+        """Test parsing negation via textual keyword."""
+        # GIVEN a negation written with textual syntax
+        formula_str = "not Qq"
+
+        # WHEN parsing
+        formula = parse_tdfol(formula_str)
+
         # THEN should be a unary formula with NOT
         assert isinstance(formula, UnaryFormula)
         assert formula.operator == LogicOperator.NOT
@@ -850,6 +943,57 @@ class TestParserComplexFormulas:
         # THEN should parse without error
         assert isinstance(formula, QuantifiedFormula)
         assert isinstance(formula.formula, BinaryFormula)
+
+
+# ============================================================================
+# Legacy Proof-Obligation Compatibility
+# ============================================================================
+
+
+class TestParserLegacyProofObligationCompatibility:
+    """Test parser compatibility with legacy proof-obligation formula shapes."""
+
+    def test_parse_quantifier_without_dot_when_parenthesized(self):
+        """Test parsing legacy quantifier form: forall t (...)."""
+        formula_str = "forall t (true and not(false) -> O(frm:1,t))"
+
+        formula = parse_tdfol(formula_str)
+
+        assert isinstance(formula, QuantifiedFormula)
+        assert formula.quantifier == Quantifier.FORALL
+        assert formula.variable.name == "t"
+        assert "legacy_deontic_target" in formula.get_predicates()
+
+    def test_parse_deontic_frame_reference_single_term(self):
+        """Test parsing O(frm:abc) as a deontic formula."""
+        formula = parse_tdfol("O(frm:abc)")
+
+        assert isinstance(formula, DeonticFormula)
+        assert formula.operator == DeonticOperator.OBLIGATION
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "frm:abc"
+
+    def test_parse_deontic_frame_reference_with_time_argument(self):
+        """Test parsing O(frm:1,t) into a deterministic deontic target predicate."""
+        formula = parse_tdfol("O(frm:1,t)")
+
+        assert isinstance(formula, DeonticFormula)
+        assert formula.operator == DeonticOperator.OBLIGATION
+        assert isinstance(formula.formula, Predicate)
+        assert formula.formula.name == "legacy_deontic_target"
+        assert len(formula.formula.arguments) == 2
+        assert formula.formula.arguments[0].to_string() == "frm:1"
+        assert formula.formula.arguments[1].to_string() == "t"
+
+    def test_parse_iso_date_literal_in_temporal_guard(self):
+        """Test parsing YYYY-MM-DD literals inside temporal predicates."""
+        formula_str = "forall t (By(t,2026-03-20) -> O(frm:1,t))"
+
+        formula = parse_tdfol(formula_str)
+
+        assert isinstance(formula, QuantifiedFormula)
+        assert "By" in formula.get_predicates()
+        assert "legacy_deontic_target" in formula.get_predicates()
 
 
 # ============================================================================

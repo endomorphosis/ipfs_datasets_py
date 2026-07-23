@@ -7,6 +7,7 @@ This package must remain lightweight and import-safe:
 Backends:
 - "simulated": current demo-only backend (educational, not cryptographically secure)
 - "groth16": production backend placeholder (fails closed until Phase C implementation)
+- "provekit": ProveKit WHIR backend shell (fails closed without configured CLI/artifacts)
 
 Backend Protocol:
   All backends must implement the ZKBackend protocol with:
@@ -59,7 +60,25 @@ _BACKEND_METADATA = {
         "curve": "bn254",
         "module": "groth16",
         "class_name": "Groth16Backend",
-    }
+    },
+    "provekit": {
+        "description": "World Foundation ProveKit WHIR backend (Noir/R1CS) - fails closed until configured",
+        "curve": "bn254",
+        "module": "provekit",
+        "class_name": "ProveKitBackend",
+    },
+}
+
+_BACKEND_ALIASES = {
+    "": "simulated",
+    "sim": "simulated",
+    "simulated": "simulated",
+    "g16": "groth16",
+    "groth16": "groth16",
+    "pk": "provekit",
+    "provekit": "provekit",
+    "provekit-whir": "provekit",
+    "whir": "provekit",
 }
 
 
@@ -69,7 +88,8 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
     
     Args:
         backend: Backend identifier (default: "simulated")
-                 Recognized: "", "sim", "simulated", "groth16", "g16"
+                 Recognized: "", "sim", "simulated", "groth16", "g16",
+                 "provekit", "pk", "provekit-whir", "whir"
     
     Returns:
         ZKBackend instance (cached for subsequent calls)
@@ -82,7 +102,8 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
         >>> proof = backend.generate_proof("P", ["P"], {})
     """
     # Normalize backend name
-    backend_norm = (backend or "").strip().lower()
+    backend_raw = (backend or "").strip().lower()
+    backend_norm = _BACKEND_ALIASES.get(backend_raw, backend_raw)
     
     # Check cache first
     cache_key = backend_norm if backend_norm else "simulated"
@@ -90,14 +111,14 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
         return _backend_cache[cache_key]
     
     # Load simulated backend (always available)
-    if backend_norm in {"", "sim", "simulated"}:
+    if backend_norm == "simulated":
         mod = importlib.import_module(f"{__name__}.simulated")
         backend_instance = mod.SimulatedBackend()
         _backend_cache["simulated"] = backend_instance
         return backend_instance
 
     # Load Groth16 backend (requires py_ecc at minimum)
-    if backend_norm in {"groth16", "g16"}:
+    if backend_norm == "groth16":
         # Try to load Groth16 backend
         mod = importlib.import_module(f"{__name__}.groth16")
         try:
@@ -110,6 +131,12 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
                 f"See PHASE3_GROTH16_STACK_SELECTION.md for roadmap.\n"
                 f"Original error: {e}"
             )
+
+    if backend_norm == "provekit":
+        mod = importlib.import_module(f"{__name__}.provekit")
+        backend_instance = mod.ProveKitBackend()
+        _backend_cache["provekit"] = backend_instance
+        return backend_instance
 
     # Unknown backend
     available = ", ".join(f"'{k}'" for k in _BACKEND_METADATA.keys())

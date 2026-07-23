@@ -6,7 +6,7 @@ This guide clarifies the **correct** way to invoke GitHub Copilot in different s
 
 ## Important: Two Different Use Cases
 
-### 1. Creating NEW Tasks (New PRs) - Use `gh agent-task create`
+### 1. Creating NEW Tasks (New PRs) - Use `gh agent-task create` When Available
 
 When you want Copilot to **create a NEW pull request** from scratch:
 
@@ -22,6 +22,8 @@ gh agent-task create -F task-description.txt --base main
 - Starting completely new work from an issue
 - Creating a feature from scratch
 - No existing PR exists yet
+
+**Caution:** Do not assume every runner's `gh` binary exposes `agent-task`. Check availability in the environment before making this your only path.
 
 **What happens:**
 - Copilot analyzes the task
@@ -87,6 +89,8 @@ Only use `gh agent-task create` directly if you want a completely new PR:
 ```
 
 **⚠️ WARNING**: Do NOT use `gh agent-task create` when you already have a PR! It will create a DIFFERENT, NEW PR instead of working on the existing one.
+
+If your runner does not support `gh agent-task`, do not replace existing-PR automation with it. Use the maintained PR-comment workflow for those cases.
 
 ## Common Mistakes
 

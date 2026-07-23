@@ -20,6 +20,8 @@ New Features:
 - Intelligent search term generation from queries
 """
 
+from importlib import import_module
+
 # Import main scraper modules using relative imports.
 # Federal modules were moved under federal_scrapers/ in some layouts, so
 # keep a fallback for compatibility.
@@ -55,6 +57,7 @@ from .legal_dataset_api import (
     list_scraping_jobs_from_parameters,
     scrape_us_code_from_parameters,
     scrape_federal_laws_from_parameters,
+    scrape_netherlands_laws_from_parameters,
     scrape_municipal_codes_from_parameters,
     setup_legal_tools_venv_from_parameters,
     ingest_caselaw_access_vectors_from_parameters,
@@ -64,6 +67,15 @@ from .legal_dataset_api import (
     search_state_law_corpus_from_parameters,
     search_court_rules_corpus_from_parameters,
     search_federal_register_corpus_from_parameters,
+    search_netherlands_law_corpus_from_parameters,
+    recover_missing_legal_citation_source_from_parameters,
+    promote_recovery_manifest_to_canonical_bundle_from_parameters,
+    preview_recovery_manifest_release_plan_from_parameters,
+    merge_recovery_manifest_into_canonical_dataset_from_parameters,
+    collect_packaged_docket_citation_recovery_candidates_from_parameters,
+    recover_packaged_docket_missing_authorities_from_parameters,
+    plan_packaged_docket_missing_authority_follow_up_from_parameters,
+    execute_packaged_docket_missing_authority_follow_up_from_parameters,
     search_federal_register_hf_index_from_parameters,
     list_caselaw_access_vector_files_from_parameters,
     search_caselaw_access_vectors_with_centroids_from_parameters,
@@ -120,6 +132,11 @@ from .state_admin_rules_scraper import (
     scrape_state_admin_rules,
 )
 
+from .netherlands_laws_scraper import (
+    list_netherlands_law_sources,
+    scrape_netherlands_laws,
+)
+
 from .state_laws_verifier import (
     StateLawsVerifier,
     verify_state_laws_scraper,
@@ -150,6 +167,116 @@ from .citation_extraction import (
     extract_citations_from_text,
     analyze_document_citations,
     create_citation_network,
+)
+from .bluebook_citation_linker import (
+    BluebookCitationResolver,
+    CitationLink,
+    audit_bluebook_exact_anchor_guarantees_for_documents,
+    audit_bluebook_citation_resolution_for_documents,
+    citation_link_to_dict,
+    resolve_bluebook_lookup_result_document,
+    resolve_bluebook_citations_in_text,
+)
+from .legal_source_recovery import (
+    LegalSourceRecoveryWorkflow,
+    LegalSourceRecoveryResult,
+    build_recovery_feedback_entries_from_citation_audit,
+    build_missing_citation_recovery_query,
+    recover_citation_audit_feedback,
+    recover_citation_feedback_entries,
+    recover_missing_legal_citation_source,
+)
+from .legal_source_recovery_promotion import (
+    build_recovery_manifest_promotion_row,
+    build_recovery_manifest_release_plan,
+    load_recovery_manifest,
+    merge_recovery_manifest_into_canonical_dataset,
+    promote_recovery_manifest_to_canonical_bundle,
+)
+from .eu_legal_citation_bridge import (
+    EUJurisdictionProfile,
+    EULegalCitation,
+    EULegalIdentifier,
+    EULegalCitationLookupAction,
+    EULegalCitationLookupPlan,
+    EULegalCitationLookupResult,
+    EULegalNorm,
+    EULegalReasoningBundle,
+    EULegalResolutionBundle,
+    ECLI_RESOLVER_REGISTRY,
+    ECLIHTTPResolverConfig,
+    build_default_eu_lookup_handlers,
+    build_eu_lookup_action_for_citation,
+    build_eu_legal_citation_lookup_plan,
+    build_eu_legal_resolution_bundle,
+    build_eu_deontic_cognitive_event_calculus,
+    build_eu_deontic_graph,
+    build_eu_frame_logic_facts,
+    build_eu_knowledge_graph,
+    build_eu_legal_reasoning_bundle,
+    build_eu_multilingual_normalization_map,
+    build_eu_temporal_deontic_fol,
+    eu_legal_citation_lookup_plan_to_dict,
+    eu_legal_citation_lookup_result_to_dict,
+    eu_legal_reasoning_bundle_to_dict,
+    eu_legal_resolution_bundle_to_dict,
+    execute_eu_legal_citation_lookup_plan,
+    extract_eu_deontic_norms,
+    extract_eu_legal_citations,
+    get_eu_jurisdiction_profiles,
+    register_ecli_resolver,
+    register_ecli_http_resolver,
+    register_de_openlegaldata_ecli_resolver,
+    register_fr_judilibre_ecli_resolver,
+)
+from .justicedao_dataset_inventory import (
+    BluebookDatasetExecutionResult,
+    BluebookDatasetQueryPlan,
+    LegalCitationQueryStrategy,
+    LegalCitationDatasetExecutionResult,
+    LegalCitationDatasetQueryPlan,
+    CanonicalCorpusArtifactBuildResult,
+    BluebookQueryStrategy,
+    CanonicalCorpusIndexBuildResult,
+    CanonicalCorpusIndexPublishResult,
+    CanonicalCorpusQueryResult,
+    CitationQueryPlan,
+    JusticeDAORebuildPlan,
+    JusticeDAORebuildRecommendation,
+    JusticeDAORebuildTarget,
+    bluebook_dataset_execution_result_to_dict,
+    bluebook_dataset_query_plan_to_dict,
+    legal_citation_dataset_execution_result_to_dict,
+    legal_citation_dataset_query_plan_to_dict,
+    canonical_corpus_artifact_build_result_to_dict,
+    canonical_corpus_index_build_result_to_dict,
+    canonical_corpus_index_publish_result_to_dict,
+    canonical_corpus_query_result_to_dict,
+    build_canonical_corpus_artifacts,
+    build_canonical_corpus_semantic_index,
+    build_justicedao_rebuild_plan,
+    build_justicedao_bluebook_query_plan,
+    build_justicedao_legal_citation_query_plan,
+    dataset_profiles_to_dict,
+    derive_justicedao_bluebook_strategies,
+    derive_justicedao_legal_citation_strategies,
+    build_eu_country_corpus_onboarding_plan,
+    filter_dataset_profiles,
+    render_justicedao_rebuild_plan_markdown,
+    justicedao_rebuild_plan_to_dict,
+    justicedao_library_rebuild_result_to_dict,
+    publish_canonical_corpus_semantic_index,
+    query_canonical_legal_corpus,
+    rebuild_justicedao_dataset_library,
+    execute_justicedao_bluebook_query_plan,
+    execute_justicedao_legal_citation_query_plan,
+    inspect_justicedao_datasets,
+    render_bluebook_dataset_query_plan_markdown,
+    render_justicedao_legal_citation_query_plan_markdown,
+    render_dataset_profiles_markdown,
+    summarize_dataset_profile_coverage_by_branch,
+    summarize_dataset_profiles_by_branch,
+    summarize_dataset_profiles_by_country,
 )
 
 from .ipfs_storage_integration import (
@@ -185,17 +312,6 @@ from .state_laws_scheduler_engine import (
     run_schedule_now,
     enable_disable_schedule,
 )
-from .state_laws_agentic_daemon import (
-    PostCycleReleaseConfig,
-    ScraperTacticProfile,
-    StateLawsAgenticDaemonConfig,
-    StateLawsAgenticDaemon,
-    default_tactic_profiles,
-    run_state_laws_agentic_daemon,
-    run_state_admin_rules_agentic_daemon,
-    run_state_court_rules_agentic_daemon,
-)
-
 # Incremental Updates Engine — delta scraping helpers
 from .incremental_updates_engine import (
     IncrementalUpdateTracker,
@@ -241,11 +357,56 @@ from .search_term_generator import (
     SearchStrategy,
 )
 
+_LAZY_AGENTIC_DAEMON_EXPORTS = {
+    "PostCycleReleaseConfig",
+    "ScraperTacticProfile",
+    "StateLawsAgenticDaemonConfig",
+    "StateLawsAgenticDaemon",
+    "default_tactic_profiles",
+    "run_state_laws_agentic_daemon",
+    "run_state_admin_rules_agentic_daemon",
+    "run_state_court_rules_agentic_daemon",
+}
+
+_LAZY_LEGAL_GRAPHRAG_EXPORTS = {
+    "LegalGraphRAG",
+    "LegalEntity",
+    "LegalRelationship",
+    "LegalKnowledgeGraph",
+    "HAVE_LEGAL_GRAPHRAG",
+}
+
+
+def __getattr__(name: str):
+    if name in _LAZY_AGENTIC_DAEMON_EXPORTS:
+        module = import_module(".state_laws_agentic_daemon", __name__)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    if name in _LAZY_LEGAL_GRAPHRAG_EXPORTS:
+        try:
+            module = import_module(".legal_graphrag", __name__)
+        except ImportError:
+            if name == "HAVE_LEGAL_GRAPHRAG":
+                globals()[name] = False
+                return False
+            globals()[name] = None
+            globals()["HAVE_LEGAL_GRAPHRAG"] = False
+            return None
+        if name == "HAVE_LEGAL_GRAPHRAG":
+            globals()[name] = True
+            return True
+        value = getattr(module, name)
+        globals()[name] = value
+        globals()["HAVE_LEGAL_GRAPHRAG"] = True
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 # Legal Web Archive Search - Unified search with archiving (NEW)
 try:
     from .legal_web_archive_search import LegalWebArchiveSearch
     HAVE_WEB_ARCHIVE_SEARCH = True
-except ImportError:
+except Exception:
     LegalWebArchiveSearch = None
     HAVE_WEB_ARCHIVE_SEARCH = False
 
@@ -253,7 +414,7 @@ except ImportError:
 try:
     from .common_crawl_index_loader import CommonCrawlIndexLoader
     HAVE_CC_INDEX_LOADER = True
-except ImportError:
+except Exception:
     CommonCrawlIndexLoader = None
     HAVE_CC_INDEX_LOADER = False
 
@@ -262,7 +423,7 @@ except ImportError:
 try:
     from . import common
     HAVE_COMMON_MODULE = True
-except ImportError:
+except Exception:
     common = None
     HAVE_COMMON_MODULE = False
 
@@ -270,7 +431,7 @@ except ImportError:
 try:
     from .query_expander import QueryExpander, ExpandedQuery, expand_query
     HAVE_QUERY_EXPANDER = True
-except ImportError:
+except Exception:
     QueryExpander = None
     ExpandedQuery = None
     expand_query = None
@@ -280,7 +441,7 @@ except ImportError:
 try:
     from .enhanced_query_expander import EnhancedQueryExpander, EnhancedExpandedQuery
     HAVE_ENHANCED_QUERY_EXPANDER = True
-except ImportError:
+except Exception:
     EnhancedQueryExpander = None
     EnhancedExpandedQuery = None
     HAVE_ENHANCED_QUERY_EXPANDER = False
@@ -289,7 +450,7 @@ except ImportError:
 try:
     from .result_filter import ResultFilter, FilterConfig, FilteredResult
     HAVE_RESULT_FILTER = True
-except ImportError:
+except Exception:
     ResultFilter = None
     FilterConfig = None
     FilteredResult = None
@@ -303,27 +464,14 @@ try:
         CitationNetwork
     )
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = True
-except ImportError:
+except Exception:
     SearchResultCitationExtractor = None
     SearchResultWithCitations = None
     CitationNetwork = None
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = False
 
 # Legal GraphRAG - GraphRAG integration for legal search (Enhancement 12 Phase 5)
-try:
-    from .legal_graphrag import (
-        LegalGraphRAG,
-        LegalEntity,
-        LegalRelationship,
-        LegalKnowledgeGraph
-    )
-    HAVE_LEGAL_GRAPHRAG = True
-except ImportError:
-    LegalGraphRAG = None
-    LegalEntity = None
-    LegalRelationship = None
-    LegalKnowledgeGraph = None
-    HAVE_LEGAL_GRAPHRAG = False
+HAVE_LEGAL_GRAPHRAG = False
 
 # Multi-Language Support - I18n for legal search (Enhancement 12 Phase 6)
 try:
@@ -333,7 +481,7 @@ try:
         TranslationResult
     )
     HAVE_MULTILANGUAGE_SUPPORT = True
-except ImportError:
+except Exception:
     MultiLanguageSupport = None
     LanguageConfig = None
     TranslationResult = None
@@ -347,7 +495,7 @@ try:
         RegulationChange
     )
     HAVE_REGULATION_VERSION_TRACKER = True
-except ImportError:
+except Exception:
     RegulationVersionTracker = None
     RegulationVersion = None
     RegulationChange = None
@@ -362,7 +510,7 @@ try:
         ReportSection
     )
     HAVE_LEGAL_REPORT_GENERATOR = True
-except ImportError:
+except Exception:
     LegalSearchReportGenerator = None
     LegalSearchReport = None
     ReportConfig = None
@@ -373,7 +521,7 @@ except ImportError:
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
     HAVE_HF_API_SEARCH = True
-except ImportError:
+except Exception:
     HuggingFaceAPISearch = None
     HAVE_HF_API_SEARCH = False
 
@@ -439,6 +587,8 @@ __all__ = [
     "FederalLawScraper",
     "list_federal_law_sources",
     "scrape_federal_laws",
+    "list_netherlands_law_sources",
+    "scrape_netherlands_laws",
     # State Laws functions
     "list_state_jurisdictions",
     "scrape_state_laws",
@@ -459,9 +609,24 @@ __all__ = [
     # Citation extraction
     "Citation",
     "CitationExtractor",
+    "CitationLink",
     "extract_citations_from_text",
     "analyze_document_citations",
     "create_citation_network",
+    "BluebookCitationResolver",
+    "resolve_bluebook_citations_in_text",
+    "LegalSourceRecoveryWorkflow",
+    "LegalSourceRecoveryResult",
+    "build_recovery_feedback_entries_from_citation_audit",
+    "build_missing_citation_recovery_query",
+    "build_recovery_manifest_promotion_row",
+    "build_recovery_manifest_release_plan",
+    "load_recovery_manifest",
+    "merge_recovery_manifest_into_canonical_dataset",
+    "promote_recovery_manifest_to_canonical_bundle",
+    "recover_citation_audit_feedback",
+    "recover_citation_feedback_entries",
+    "recover_missing_legal_citation_source",
     # IPFS storage
     "IPFSStorageManager",
     "store_dataset_to_ipfs",
@@ -484,6 +649,7 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_federal_laws_from_parameters",
+    "scrape_netherlands_laws_from_parameters",
     "scrape_municipal_codes_from_parameters",
     "setup_legal_tools_venv_from_parameters",
     "ingest_caselaw_access_vectors_from_parameters",
@@ -493,10 +659,40 @@ __all__ = [
     "search_state_law_corpus_from_parameters",
     "search_court_rules_corpus_from_parameters",
     "search_federal_register_corpus_from_parameters",
+    "search_netherlands_law_corpus_from_parameters",
+    "recover_missing_legal_citation_source_from_parameters",
+    "promote_recovery_manifest_to_canonical_bundle_from_parameters",
+    "preview_recovery_manifest_release_plan_from_parameters",
+    "merge_recovery_manifest_into_canonical_dataset_from_parameters",
+    "collect_packaged_docket_citation_recovery_candidates_from_parameters",
+    "recover_packaged_docket_missing_authorities_from_parameters",
+    "plan_packaged_docket_missing_authority_follow_up_from_parameters",
+    "execute_packaged_docket_missing_authority_follow_up_from_parameters",
+    "build_justicedao_bluebook_query_plan",
+    "build_justicedao_legal_citation_query_plan",
+    "derive_justicedao_bluebook_strategies",
+    "derive_justicedao_legal_citation_strategies",
+    "BluebookQueryStrategy",
+    "LegalCitationQueryStrategy",
+    "BluebookDatasetQueryPlan",
+    "LegalCitationDatasetQueryPlan",
+    "BluebookDatasetExecutionResult",
+    "LegalCitationDatasetExecutionResult",
+    "bluebook_dataset_query_plan_to_dict",
+    "legal_citation_dataset_query_plan_to_dict",
+    "bluebook_dataset_execution_result_to_dict",
+    "legal_citation_dataset_execution_result_to_dict",
+    "execute_justicedao_bluebook_query_plan",
+    "execute_justicedao_legal_citation_query_plan",
+    "render_bluebook_dataset_query_plan_markdown",
+    "render_justicedao_legal_citation_query_plan_markdown",
     "search_federal_register_hf_index_from_parameters",
     "list_caselaw_access_vector_files_from_parameters",
     "search_caselaw_access_vectors_with_centroids_from_parameters",
     "ingest_caselaw_access_vector_bundle_from_parameters",
+    "build_eu_country_corpus_onboarding_plan",
+    "summarize_dataset_profile_coverage_by_branch",
+    "summarize_dataset_profiles_by_country",
     
     # Patent Engine
     "Patent",
@@ -639,6 +835,17 @@ __all__ = [
     "translate_legal_query",
     "cross_language_legal_search",
     "get_legal_term_translations",
+    "CanonicalCorpusArtifactBuildResult",
+    "canonical_corpus_artifact_build_result_to_dict",
+    "build_canonical_corpus_artifacts",
+    "JusticeDAORebuildTarget",
+    "JusticeDAORebuildPlan",
+    "JusticeDAORebuildRecommendation",
+    "build_justicedao_rebuild_plan",
+    "justicedao_rebuild_plan_to_dict",
+    "render_justicedao_rebuild_plan_markdown",
+    "rebuild_justicedao_dataset_library",
+    "justicedao_library_rebuild_result_to_dict",
 ]
 
 # ---------------------------------------------------------------------------

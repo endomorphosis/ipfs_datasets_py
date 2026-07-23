@@ -1,0 +1,179 @@
+{
+  "created_at": "2026-07-19T13:04:56.854659+00:00",
+  "decomposition_plan": null,
+  "metadata": {},
+  "normalized_evidence": [],
+  "notes": [
+    "HAMMER-015 release-evidence golden case: verified_lean"
+  ],
+  "publishable_digest": "bafkreigoy4c3dd4rh4o4df4ewcms4725nki42eyq6qkgcn7ct2fcklb5u4",
+  "receipt_id": "bafkreieiejodyokompid62abmrcmp4gvvaoeq7lndwcrlcmcbxrcw4x3f4",
+  "reconstruction_evidence": {
+    "candidate_id": "bafkreifysrbalfpnscd77ocwoawwknxlpmymcdtec34ujsu2paovgcrvyi",
+    "checked_source": "<redacted:private-theorem-checked-source length=218 digest=bafkreic7f2b2qodl7orbzcupopqk7oca2ribaq3zuj22tp44xdgga5vota>",
+    "checked_source_digest": "bafkreifublgpgdngk3jxaqtcioyfuuuxzb3mfvjeouzo562chlin7j5rs4",
+    "command": [
+      "/home/barberb/.elan/bin/lean",
+      "--json",
+      "/tmp/hammer-lean-recon-dibgy3i1/Reconstruction.lean"
+    ],
+    "itp": "lean",
+    "raw_output_digest": "bafkreihympwnhq6iqtloo3a45wl6rlymf3d44lnzcuutexnjxstucias4m",
+    "reconstructed_proof_text": "<redacted:private-theorem-proof-text length=110 digest=bafkreiadicn5p6hrbjp5lldceshtltzux7ibezt3a4xqff2zjt6nxghegq>",
+    "reconstruction_id": "bafkreie5nmci7t6ezezcgaoslud72pebyaf6m7j3kjc4ggkxklxoeanbia",
+    "request_id": "golden-verified-lean-1",
+    "returncode": 0,
+    "schema_version": "1.0.0",
+    "stderr": "",
+    "stdout": "<redacted:kernel-stdout length=739 digest=bafkreibe6dxzr73cnmboln3wtpqdledc56yoq23hqcvvheryabiomwac5q>",
+    "timed_out": false,
+    "wall_time_seconds": 0.34750220000569243
+  },
+  "redaction_notes": [
+    "kernel-stdout",
+    "private-theorem-checked-source",
+    "private-theorem-goal",
+    "private-theorem-proof-text",
+    "private-theorem-translation"
+  ],
+  "result": {
+    "completed_at": null,
+    "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+    "created_at": "2026-07-19T13:04:56.854475+00:00",
+    "environment_lock": {
+      "container_digest": null,
+      "executable_paths": {
+        "lake": "/home/barberb/.elan/bin/lake",
+        "lean": "/home/barberb/.elan/bin/lean"
+      },
+      "itp": "lean",
+      "itp_version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)",
+      "kernel_command_template": "{lean} --json {source_file}",
+      "lock_id": "bafkreiay3kdounbaxw5mqz47u4wytbsmj2d7kopm3sm6lfv74thjyowkvu",
+      "os_info": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+      "pinned_at": "2026-07-19T13:04:56.502495+00:00",
+      "policy_digest": "bafkreidns4oiolslm2j2g5bd63q76feub2qinfndee43rygvjzeksmyaai",
+      "schema_version": "1.0.0",
+      "solver_versions": {}
+    },
+    "errors": [],
+    "notes": [
+      "kernel-checked via LeanReconstructor (HAMMER-010)"
+    ],
+    "premises": [
+      {
+        "content_digest": "bafkreiex3n5ic2zx3tvo2qh6sdhr4krx7uuv44ak7cbslbxalgm3s7nia4",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_assoc",
+        "rank": 0,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_assoc : forall a b c : Nat, Nat.add (Nat.add a b) c = Nat.add a (Nat.add b c)"
+      },
+      {
+        "content_digest": "bafkreifmsx7rjexmds2a3ikidh65cioocz2h6r4oigvidr27garyhwxbau",
+        "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+        "premise_id": "Hammer.Nat.add_comm",
+        "rank": 1,
+        "schema_version": "1.0.0",
+        "score": 0.0,
+        "selection_method": "deterministic-baseline",
+        "source_itp": "lean",
+        "statement": "theorem add_comm : forall a b : Nat, Nat.add a b = Nat.add b a"
+      }
+    ],
+    "proof_candidate": {
+      "candidate_id": "bafkreifysrbalfpnscd77ocwoawwknxlpmymcdtec34ujsu2paovgcrvyi",
+      "certificate": null,
+      "certificate_format": null,
+      "premise_ids": [
+        "Hammer.Nat.add_assoc"
+      ],
+      "request_id": "golden-verified-lean-1",
+      "schema_version": "1.0.0",
+      "solver_attempt_id": "golden-verified-lean-1:golden-verified-lean-1:goal:tptp:0:vampire:0"
+    },
+    "reconstruction": {
+      "candidate_id": "bafkreifysrbalfpnscd77ocwoawwknxlpmymcdtec34ujsu2paovgcrvyi",
+      "environment_lock_id": "bafkreiay3kdounbaxw5mqz47u4wytbsmj2d7kopm3sm6lfv74thjyowkvu",
+      "failure_reason": null,
+      "finished_at": "2026-07-19T13:04:56.852367+00:00",
+      "kernel_accepted": true,
+      "kernel_command": "/home/barberb/.elan/bin/lean --json /tmp/hammer-lean-recon-dibgy3i1/Reconstruction.lean",
+      "kernel_output_digest": "bafkreihympwnhq6iqtloo3a45wl6rlymf3d44lnzcuutexnjxstucias4m",
+      "reconstruction_id": "bafkreie5nmci7t6ezezcgaoslud72pebyaf6m7j3kjc4ggkxklxoeanbia",
+      "request_id": "golden-verified-lean-1",
+      "schema_version": "1.0.0",
+      "started_at": "2026-07-19T13:04:56.503504+00:00",
+      "target_itp": "lean"
+    },
+    "request": {
+      "corpus_revision": "bafkreidya6bkwkfmduidoznoiwq6qat6xjizy3yldh2g2kwg4vch2h4ipm",
+      "created_at": "2026-07-19T13:04:56.321349+00:00",
+      "goal_statement": "<redacted:private-theorem-goal length=5 digest=bafkreiecskqsnfl34kyirmf2qt4hvejp7nvtk7ufrnojcyqjzg6y2q3eiy>",
+      "itp": "lean",
+      "metadata": {},
+      "policy": {
+        "allow_learned_premise_selector": false,
+        "allow_llm_decomposition_hints": false,
+        "allow_llm_premise_ranking": false,
+        "allow_native_automation_fallback": false,
+        "allowed_solvers": [
+          "vampire"
+        ],
+        "cpu_seconds": null,
+        "max_decomposition_subgoals": 4,
+        "max_premises": 64,
+        "memory_mb": null,
+        "network_allowed": false,
+        "schema_version": "1.0.0",
+        "timeout_seconds": 20.0
+      },
+      "request_id": "golden-verified-lean-1",
+      "schema_version": "1.0.0",
+      "theorem_id": "hammer_golden_verified"
+    },
+    "result_id": "golden-verified-lean-1:result",
+    "schema_version": "1.0.0",
+    "solver_attempts": [
+      {
+        "attempt_id": "golden-verified-lean-1:golden-verified-lean-1:goal:tptp:0:vampire:0",
+        "exit_code": 0,
+        "finished_at": null,
+        "network_used": false,
+        "raw_output_digest": "bafkreibtssjtnwjmmxgbwgalmadzwcu3denrz6lckoocrzt6uatmnap4j4",
+        "request_id": "golden-verified-lean-1",
+        "resource_usage": {},
+        "schema_version": "1.0.0",
+        "solver_name": "vampire",
+        "solver_version": "fixture-1.0",
+        "started_at": "2026-07-19T13:04:56.328456+00:00",
+        "target": "tptp",
+        "timeout_seconds": 20.0,
+        "translation_id": "golden-verified-lean-1:goal:tptp:0",
+        "verdict": "proved",
+        "wall_time_seconds": 1.0
+      }
+    ],
+    "status": "verified",
+    "translations": [
+      {
+        "content_digest": "bafkreic27hx2pkd57wkvaupvqoe4ul4jgmxfoehvsibulgicla6cwg6bfe",
+        "obligations": [],
+        "request_id": "golden-verified-lean-1",
+        "schema_version": "1.0.0",
+        "source_construct": "goal",
+        "status": "supported",
+        "target": "tptp",
+        "translated_text": "<redacted:private-theorem-translation length=89 digest=bafkreigi5am37rdyemhu2pm6nda7cla4g2i7pzxeistek2kqojtotatit4>",
+        "translation_id": "golden-verified-lean-1:goal:tptp:0",
+        "unsupported_reason": null
+      }
+    ]
+  },
+  "schema_version": "1.0.0",
+  "solver_evidence": [],
+  "visibility": "publishable"
+}

@@ -33,7 +33,7 @@ import logging
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, asdict, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Callable, TypedDict, cast
 
@@ -180,7 +180,7 @@ class PipelineJSONLogger:
                 status = "info"
 
         payload = {
-            "timestamp": f"{datetime.utcnow().isoformat()}Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "level": str(logging.getLevelName(level)),
             "message": event_type,
             "event": event_type,

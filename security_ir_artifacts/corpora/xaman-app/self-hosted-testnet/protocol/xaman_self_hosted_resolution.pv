@@ -1,0 +1,23 @@
+(*
+  PORTAL-CXTP-159: conditional local-resolver projection. Choice represents
+  one terminal state for an issued payload. It is not a model of Xaman's
+  vendor backend and cannot establish vendor single-use or expiry behavior.
+*)
+
+event issued(bitstring).
+event submitted(bitstring).
+event cancelled(bitstring).
+event expired(bitstring).
+event replay_blocked(bitstring).
+
+query payload: bitstring; event(submitted(payload)) ==> event(issued(payload)).
+query payload: bitstring; event(cancelled(payload)) ==> event(issued(payload)).
+query payload: bitstring; event(expired(payload)) ==> event(issued(payload)).
+query payload: bitstring; event(replay_blocked(payload)) ==> event(submitted(payload)).
+
+process
+  ! new payload: bitstring;
+    event issued(payload);
+    (event submitted(payload); event replay_blocked(payload)
+    | event cancelled(payload)
+    | event expired(payload))

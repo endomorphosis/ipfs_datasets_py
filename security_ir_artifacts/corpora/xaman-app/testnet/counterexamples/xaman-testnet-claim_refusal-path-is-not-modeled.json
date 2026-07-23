@@ -1,0 +1,51 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreigb5r6t3a4bfsmyrt3jbmaegpnnps7ebb57t4m3pmnbfxtm3e33si",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:decline-cancel-expiry-not-exercised"
+  ],
+  "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "e2e_flow",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "reviewed decline trace; reviewed cancel trace; reviewed expiry trace",
+      "assumption_id": "xaman-testnet-assumption:decline-cancel-expiry-not-exercised",
+      "description": "Decline/refusal, cancellation, and expiry actions appear only as reviewed coverage gaps and are not modeled as successful runtime paths.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "runtime-verification",
+      "required_evidence_to_clear": [
+        "reviewed decline trace",
+        "reviewed cancel trace",
+        "reviewed expiry trace"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreib7zc4bjor7crq5o24ff2qxqgghv4qcutqdwwixv6bsjoi3pdn5yi",
+    "assertion_count": 2,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_refusal-path-is-not-modeled.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

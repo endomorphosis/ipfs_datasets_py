@@ -1,0 +1,385 @@
+{
+  "artifact_cid": "bafkreietbt3to5elzbk6vq2fxsbfzo2x6zohabylbvmsnlvyfgrdjyncoq",
+  "build_inputs": {
+    "android_build_files": [
+      {
+        "git_blob_sha1": "2dee69231a4b135bf74e8e704690a8d1ef6d8997",
+        "path": "android/build.gradle",
+        "present_in_public_source_manifest": true,
+        "sha256": "932bd5492620d06412d49db06442df56bab050e8ec1489cda9308d8714b6d381",
+        "size_bytes": 2257
+      },
+      {
+        "git_blob_sha1": "0275e4fccffc37a43c2ce8c7509b2fa37ba9502b",
+        "path": "android/app/build.gradle",
+        "present_in_public_source_manifest": true,
+        "sha256": "afd34e9e4fef16a507b31428c2fbd3da32763e3274ce938a0c11e8fb93f7131e",
+        "size_bytes": 13835
+      },
+      {
+        "git_blob_sha1": "5afef94904a83fbfd162879287f4c6bb30343fe5",
+        "path": "android/settings.gradle",
+        "present_in_public_source_manifest": true,
+        "sha256": "68639fbd82e6fbef1a19699a76de42249b0652d2685267c0d9b271810b39f12c",
+        "size_bytes": 253
+      },
+      {
+        "git_blob_sha1": "9fb15664bd5bb108e1f51b5e0c471614e1bc7e04",
+        "path": "android/gradle.properties",
+        "present_in_public_source_manifest": true,
+        "sha256": "ffcb47e44ee57418258fbb94950f551aa423e597f69a00fc4fab171ba5b054ce",
+        "size_bytes": 1737
+      },
+      {
+        "git_blob_sha1": "6f7a6eb33e809897344f2d326d3d6ed7869cb39a",
+        "path": "android/gradle/wrapper/gradle-wrapper.properties",
+        "present_in_public_source_manifest": true,
+        "sha256": "629597dc77c5f0b1b0d4ee690207b70c5c06d4f85c263aeb530d8fbfa3998c46",
+        "size_bytes": 250
+      },
+      {
+        "git_blob_sha1": "7f93135c49b765f8051ef9d0a6055ff8e46073d8",
+        "path": "android/gradle/wrapper/gradle-wrapper.jar",
+        "present_in_public_source_manifest": true,
+        "sha256": "0336f591bc0ec9aa0c9988929b93ecc916b3c1d52aed202c7381db144aa0ef15",
+        "size_bytes": 63721
+      },
+      {
+        "git_blob_sha1": "b740cf13397ab16efc23cba3d6234ff8433403b1",
+        "path": "android/gradlew",
+        "present_in_public_source_manifest": true,
+        "sha256": "d8231d345ab33433ab7b2c0720d5beb416c8d5c6789dbc01ad122b63bc2cae0d",
+        "size_bytes": 8706
+      },
+      {
+        "git_blob_sha1": "8dafd810d483a943fdbf62ebf2bb879764943e09",
+        "path": "package.json",
+        "present_in_public_source_manifest": true,
+        "sha256": "6a985518a34f942a8d462bca26f279f1352ad3c0a59965817fb2f1fccc91874b",
+        "size_bytes": 3344
+      },
+      {
+        "git_blob_sha1": "295cea1d7bc15f937770dec1c566c07a14f2a916",
+        "path": "package-lock.json",
+        "present_in_public_source_manifest": true,
+        "sha256": "f27be60a558a178d6fefec5fb0cab13ff4c196d13b96c3406d600f32277b458a",
+        "size_bytes": 497783
+      }
+    ],
+    "dependency_lockfiles": [
+      {
+        "git_blob_sha1": "5cd4b48265b0aca3151a7d012a9868b9794e82f1",
+        "path": "Gemfile.lock",
+        "sha256": "584c22420eb3969297a9ec35a946c8a809ca8f421ea1db14cff1c323738342a4",
+        "size_bytes": 2382
+      },
+      {
+        "git_blob_sha1": "a64d81526516eec84ca5e5be17f948391a64c9b8",
+        "path": "ios/Podfile.lock",
+        "sha256": "cc3f2f4efc8d7efcc3435ef25c16702c512e656df549edaa34f8ce1797c5e886",
+        "size_bytes": 53080
+      },
+      {
+        "git_blob_sha1": "295cea1d7bc15f937770dec1c566c07a14f2a916",
+        "path": "package-lock.json",
+        "sha256": "f27be60a558a178d6fefec5fb0cab13ff4c196d13b96c3406d600f32277b458a",
+        "size_bytes": 497783
+      }
+    ],
+    "required_dependency_lockfiles": [
+      "package-lock.json"
+    ]
+  },
+  "corpus": "xaman-app",
+  "dependency_resolution": {
+    "gradle": {
+      "build_files": [
+        {
+          "git_blob_sha1": "2dee69231a4b135bf74e8e704690a8d1ef6d8997",
+          "path": "android/build.gradle",
+          "present_in_public_source_manifest": true,
+          "sha256": "932bd5492620d06412d49db06442df56bab050e8ec1489cda9308d8714b6d381",
+          "size_bytes": 2257
+        },
+        {
+          "git_blob_sha1": "0275e4fccffc37a43c2ce8c7509b2fa37ba9502b",
+          "path": "android/app/build.gradle",
+          "present_in_public_source_manifest": true,
+          "sha256": "afd34e9e4fef16a507b31428c2fbd3da32763e3274ce938a0c11e8fb93f7131e",
+          "size_bytes": 13835
+        },
+        {
+          "git_blob_sha1": "5afef94904a83fbfd162879287f4c6bb30343fe5",
+          "path": "android/settings.gradle",
+          "present_in_public_source_manifest": true,
+          "sha256": "68639fbd82e6fbef1a19699a76de42249b0652d2685267c0d9b271810b39f12c",
+          "size_bytes": 253
+        },
+        {
+          "git_blob_sha1": "9fb15664bd5bb108e1f51b5e0c471614e1bc7e04",
+          "path": "android/gradle.properties",
+          "present_in_public_source_manifest": true,
+          "sha256": "ffcb47e44ee57418258fbb94950f551aa423e597f69a00fc4fab171ba5b054ce",
+          "size_bytes": 1737
+        }
+      ],
+      "method": "Gradle wrapper with verifier-only init script overlays where production credentials are absent",
+      "restored_release_runtime_graph": [
+        {
+          "module": "com.google.mlkit:barcode-scanning",
+          "requested_or_declared": [
+            "16.2.0",
+            "17.1.0",
+            "17.2.0"
+          ],
+          "selected_for_verifier_release": "16.2.0"
+        },
+        {
+          "module": "com.google.android.gms:play-services-mlkit-barcode-scanning",
+          "selected_for_verifier_release": "16.2.0"
+        },
+        {
+          "module": "com.google.android.gms:play-services-mlkit-text-recognition",
+          "requested_or_declared": [
+            "16.3.0",
+            "19.0.0"
+          ],
+          "selected_for_verifier_release": "16.3.0"
+        },
+        {
+          "module": "com.google.mlkit:vision-common",
+          "requested_or_declared": [
+            "16.5.0",
+            "17.0.0",
+            "17.2.0",
+            "17.3.0"
+          ],
+          "selected_for_verifier_release": "16.5.0"
+        },
+        {
+          "module": "com.google.mlkit:common",
+          "note": "This common artifact remained on the graph-selected newer version; R8 succeeded because the removed types were restored by the legacy provider artifacts above.",
+          "selected_for_verifier_release": "18.8.0"
+        }
+      ]
+    },
+    "native_local_inputs": [
+      {
+        "artifact": "com.github.Tangem.tangem-sdk-android:android:3.7.2",
+        "sha256": "ae26e4e42888fab9965cf820d2402e4fd270015637383d60b51ca1c8e22d9546"
+      },
+      {
+        "artifact": "com.github.Tangem.tangem-sdk-android:core:3.7.2",
+        "sha256": "a8b975060387e0808bbc78cacef377b46a93d54e34fa00f13c3e3d75d4bdc2f2"
+      }
+    ],
+    "npm": {
+      "lockfile_path": "package-lock.json",
+      "lockfile_sha256": "f27be60a558a178d6fefec5fb0cab13ff4c196d13b96c3406d600f32277b458a",
+      "method": "package-lock based npm dependency resolution",
+      "node_modules_embedded_in_artifact": false
+    }
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "locked_toolchain": {
+    "android_sdk": {
+      "android_home": "/home/barberb/lift_coding/.tools/android-sdk",
+      "emulator_profile_api_level": 34,
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
+    },
+    "gradle": {
+      "locked_by_public_source_manifest": true,
+      "version_source": "Gradle wrapper files are pinned by manifest digests; wrapper file contents are not embedded in this artifact.",
+      "wrapper": "android/gradlew",
+      "wrapper_jar": "android/gradle/wrapper/gradle-wrapper.jar",
+      "wrapper_properties": "android/gradle/wrapper/gradle-wrapper.properties"
+    },
+    "java": {
+      "home": "/home/barberb/.local/jdks/jdk-17.0.18+8",
+      "recorded_version": "17.0.18+8",
+      "required_major_version": 17,
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
+    },
+    "node": {
+      "executable": "/home/barberb/.local/bin/node",
+      "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+      "status": "present",
+      "version": "22.23.1"
+    },
+    "npm": {
+      "executable": "/home/barberb/.local/bin/npm",
+      "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+      "status": "present",
+      "version": "10.9.8"
+    },
+    "typescript": {
+      "executable": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/environment/typescript_toolchain/node_modules/.bin/tsc",
+      "source": "security_ir_artifacts/corpora/xaman-app/environment-probe.json",
+      "status": "present",
+      "version": "5.5.4"
+    }
+  },
+  "missing_credentials_and_service_dependencies": [
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "production_android_signing_keystore",
+      "kind": "credential",
+      "public_reproduction_status": "absent",
+      "required_for": "vendor release equivalence and production distribution signing",
+      "verifier_substitute": "debug keystore for Testnet debug APK and verifier-only one-day release keystore for R8 evidence"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "production_android_signing_passwords",
+      "kind": "credential",
+      "public_reproduction_status": "absent",
+      "required_for": "unlocking the vendor signing key and proving signing lineage",
+      "verifier_substitute": "temporary verifier signing inputs only"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "android_google_services_json",
+      "kind": "credential_or_service_config",
+      "public_reproduction_status": "absent",
+      "required_for": "Google Services Gradle processing against the vendor Firebase project",
+      "verifier_substitute": "Google Services Gradle tasks disabled for the verifier build"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "crashlytics_upload_mapping_credentials",
+      "kind": "credential_or_service_config",
+      "public_reproduction_status": "absent",
+      "required_for": "Crashlytics mapping upload and release crash reporting integration",
+      "verifier_substitute": "Crashlytics upload tasks disabled for the verifier build"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "firebase_analytics_messaging_crashlytics_project",
+      "kind": "service_dependency",
+      "public_reproduction_status": "not_connected_to_vendor_project",
+      "required_for": "runtime equivalence for Firebase-backed analytics, messaging, installation, and crash reporting components",
+      "verifier_substitute": "JavaScript Firebase module stubs with native Firebase packaging still present"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "xaman_backend_payload_api",
+      "kind": "service_dependency",
+      "public_reproduction_status": "not_available_from_public_source",
+      "required_for": "payload creation, payload status, backend single-use, expiry, and submission semantics",
+      "verifier_substitute": "redacted Testnet lifecycle observations only"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "vendor_ci_release_environment",
+      "kind": "service_dependency",
+      "public_reproduction_status": "absent",
+      "required_for": "proving the public checkout was built with the same CI variables, caches, secrets, and release orchestration as the vendor release",
+      "verifier_substitute": "local locked verifier environment recorded in this artifact"
+    },
+    {
+      "blocks_vendor_release_equivalence": true,
+      "id": "vendor_release_binary_or_store_bundle",
+      "kind": "evidence_dependency",
+      "public_reproduction_status": "absent",
+      "required_for": "byte or signature comparison against a distributed vendor APK/AAB",
+      "verifier_substitute": "locally recorded Testnet verifier APK digest only"
+    },
+    {
+      "blocks_vendor_release_equivalence": false,
+      "id": "xrpl_testnet_public_endpoint_availability",
+      "kind": "service_dependency",
+      "public_reproduction_status": "observed_as_redacted_endpoint_digest_only",
+      "required_for": "runtime Testnet network probing and transaction lifecycle observations",
+      "verifier_substitute": "endpoint key and request/response digests; no raw endpoint or payload retained"
+    }
+  ],
+  "policy": {
+    "fail_closed_when_credentials_or_service_dependencies_are_missing": true,
+    "production_release_approval": false,
+    "public_build_must_not_be_classified_as_vendor_release": true,
+    "raw_credentials_recorded": false,
+    "vendor_release_equivalence_allowed": false
+  },
+  "schema_version": "xaman-testnet-public-build-environment/v1",
+  "scope": {
+    "build_kind": "public_source_testnet_verifier",
+    "network": "XRPL Testnet",
+    "network_id": 1,
+    "platform": "Android",
+    "production_security_result": false,
+    "public_source_only": true,
+    "vendor_release_equivalence_claimed": false
+  },
+  "source_pin": {
+    "commit_matches_expected": true,
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "exact_commit_required": true,
+    "expected_commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_aggregate_sha256": null,
+    "manifest_file_count": null,
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "requested_ref": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "source_coverage_analysis_mode": "manifest_only",
+    "source_coverage_parsed_source_available": false,
+    "source_coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json"
+  },
+  "task_id": "PORTAL-CXTP-149",
+  "verifier_only_patches": [
+    {
+      "classification": "verifier_only",
+      "id": "firebase_gradle_tasks_disabled",
+      "production_equivalence_preserved": false,
+      "purpose": "Avoid requiring absent vendor Firebase configuration while producing a Testnet verifier APK.",
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json"
+    },
+    {
+      "classification": "verifier_only",
+      "id": "firebase_js_module_stubs",
+      "native_firebase_fully_disabled": false,
+      "patched_modules": [
+        "@react-native-firebase/analytics",
+        "@react-native-firebase/crashlytics",
+        "@react-native-firebase/messaging"
+      ],
+      "production_equivalence_preserved": false,
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/testnet-device-trial-report.json"
+    },
+    {
+      "classification": "verifier_only",
+      "id": "react_native_navigation_compatibility_overlay",
+      "production_equivalence_preserved": false,
+      "sha256": "c7ea6acd4300e8645644facc9f5c31dd8e601d29b890d6b7c0e55fffcd318f99",
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
+    },
+    {
+      "classification": "verifier_only_release_r8",
+      "id": "mlkit_dependency_resolution_strategy",
+      "production_equivalence_preserved": false,
+      "restored_versions": [
+        {
+          "module": "com.google.mlkit:barcode-scanning",
+          "reason": "Matches react-native-camera's ML Kit variant request and restores the legacy barcode API surface.",
+          "version": "16.2.0"
+        },
+        {
+          "module": "com.google.android.gms:play-services-mlkit-barcode-scanning",
+          "reason": "Provides com.google.mlkit.vision.barcode.Barcode and related scanner classes required by react-native-camera.",
+          "version": "16.2.0"
+        },
+        {
+          "module": "com.google.android.gms:play-services-mlkit-text-recognition",
+          "reason": "Provides com.google.mlkit.vision.text.TextRecognizerOptions required by react-native-camera.",
+          "version": "16.3.0"
+        },
+        {
+          "module": "com.google.mlkit:vision-common",
+          "reason": "Provides com.google.mlkit.vision.common.internal.Detector after restoring the legacy barcode provider.",
+          "version": "16.5.0"
+        }
+      ],
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime/release-r8-dependency-report.json"
+    }
+  ]
+}

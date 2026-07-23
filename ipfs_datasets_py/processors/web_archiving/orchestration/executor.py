@@ -8,6 +8,12 @@ from typing import Any, List, Optional
 from .planner import SearchExecutionPlan
 from .resilience import CircuitBreakerRegistry, RetryPolicy, execute_with_retry
 
+try:
+    from ..search_engines.base import SearchEngineQuotaExceededError, SearchEngineRateLimitError
+except Exception:  # pragma: no cover - keeps executor decoupled from optional adapters
+    SearchEngineQuotaExceededError = None  # type: ignore[assignment]
+    SearchEngineRateLimitError = None  # type: ignore[assignment]
+
 
 @dataclass
 class SearchExecutionResult:
@@ -59,6 +65,7 @@ class SearchExecutor:
                         engines=[provider],
                     ),
                     policy=self.retry_policy,
+                    is_retryable=self._is_retryable_error,
                 )
 
                 providers_used = list(getattr(raw_response, "metadata", {}).get("engines_used", []) or [])
@@ -92,6 +99,19 @@ class SearchExecutor:
             raise RuntimeError("All providers failed: " + " | ".join(errors))
 
         raise RuntimeError("No providers available for execution")
+
+    @staticmethod
+    def _is_retryable_error(exc: Exception) -> bool:
+        if SearchEngineRateLimitError is not None and isinstance(exc, SearchEngineRateLimitError):
+            return False
+        if SearchEngineQuotaExceededError is not None and isinstance(exc, SearchEngineQuotaExceededError):
+            return False
+        message = str(exc or "").lower()
+        if "rate limit" in message or "rate-limited" in message or "too many requests" in message:
+            return False
+        if "quota" in message or "http 429" in message or "status code 429" in message:
+            return False
+        return True
 
 
 __all__ = [

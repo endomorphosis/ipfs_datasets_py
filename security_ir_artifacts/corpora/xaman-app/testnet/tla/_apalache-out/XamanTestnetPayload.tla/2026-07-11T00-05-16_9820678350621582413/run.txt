@@ -1,0 +1,1 @@
+ check --no-deadlock --init=Init --next=Next --inv=ResolutionRequiresPriorReview XamanTestnetPayload.tla

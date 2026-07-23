@@ -1,0 +1,40 @@
+{
+  "root_dir": "../../../../workspace",
+  "summary_path": "../../../../workspace/improved-complaint-from-temporary-session.summary.json",
+  "complaint_md_path": "../../../../workspace/improved-complaint-from-temporary-session.md",
+  "full_packet_dir": "../../../../workspace/assembled-full-packet",
+  "reduced_packet_dir": "../../../../workspace/assembled-reduced-packet",
+  "complaint_output_relative": "rendered/0001_complaint_courtstyle_v2.pdf",
+  "body_start_marker": "Plaintiffs allege as follows:",
+  "curated_sources": {
+    "Exhibit J": ["README.md"],
+    "Exhibit M": ["README.md"],
+    "Exhibit R": ["summary.json"]
+  },
+  "r_snippet_ids": ["seq_10269"],
+  "r_summary_intro_lines": [
+    "Custom summary intro line 1.",
+    "Custom summary intro line 2."
+  ],
+  "summary_sections": {
+    "Exhibit J": [
+      {
+        "heading": "Representative messages",
+        "lines": ["J sample line"]
+      }
+    ],
+    "Exhibit M": [
+      {
+        "heading": "Representative messages",
+        "lines": ["M sample line"]
+      }
+    ]
+  },
+  "static_image_exhibits": [
+    {
+      "source": "some/path/to/image.png",
+      "output_name": "Exhibit_Q_image.pdf",
+      "title": "Exhibit Q custom title"
+    }
+  ]
+}

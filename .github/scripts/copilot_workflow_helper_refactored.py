@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-GitHub Copilot CLI Workflow Helper - Thin Wrapper
+gh copilot Workflow Helper - Thin Wrapper
 
 This is a thin wrapper around ipfs_datasets_py.utils.cli_tools.Copilot that provides
 workflow-specific functionality for GitHub Actions.
 
-For core Copilot CLI functionality, see: ipfs_datasets_py/utils/cli_tools/copilot.py
+For core gh copilot wrapper functionality, see: ipfs_datasets_py/utils/cli_tools/copilot.py
 
 Usage:
     python copilot_workflow_helper.py install
@@ -30,7 +30,7 @@ from ipfs_datasets_py.utils.cli_tools import Copilot
 
 class CopilotWorkflowHelper:
     """
-    Workflow-specific helper for GitHub Copilot CLI.
+    Workflow-specific helper for gh copilot flows.
     
     This class wraps ipfs_datasets_py.utils.cli_tools.Copilot and adds
     workflow-specific functionality like analyze_workflow and suggest_workflow_fix.
@@ -74,13 +74,15 @@ class CopilotWorkflowHelper:
         print(f"\n📋 Analyzing {workflow_file.name}...")
         
         if self.copilot_available:
-            # Use the utils.cli_tools.Copilot.explain method
-            explanation = self.copilot.explain(content[:1000])  # First 1000 chars
-            if explanation and 'stdout' in explanation:
-                result['analysis'] = explanation['stdout']
-                result['success'] = True
+            try:
+                explanation = self.copilot.explain(content[:1000])  # First 1000 chars
+                if explanation:
+                    result['analysis'] = explanation
+                    result['success'] = True
+            except Exception as exc:
+                result['error'] = str(exc)
         else:
-            result['analysis'] = "Copilot CLI not available - install with: gh extension install github/gh-copilot"
+            result['analysis'] = "gh copilot extension not available - install with: gh extension install github/gh-copilot"
         
         return result
     
@@ -101,7 +103,7 @@ class CopilotWorkflowHelper:
         suggestions = []
         
         if not self.copilot_available:
-            suggestions.append("Install Copilot CLI: gh extension install github/gh-copilot")
+            suggestions.append("Install the gh copilot extension: gh extension install github/gh-copilot")
             return suggestions
         
         # Build a description of the issue
@@ -113,8 +115,8 @@ class CopilotWorkflowHelper:
         print(f"\n🔧 Getting fix suggestions for {workflow_file.name}...")
         result = self.copilot.suggest(description)
         
-        if result and 'stdout' in result:
-            suggestions.append(result['stdout'])
+        if result:
+            suggestions.append(result)
         
         return suggestions
 
@@ -124,8 +126,8 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='GitHub Copilot CLI Workflow Helper',
-        epilog='Core Copilot functionality provided by ipfs_datasets_py.utils.cli_tools.Copilot'
+        description='gh copilot workflow helper',
+        epilog='Core gh copilot wrapper functionality is provided by ipfs_datasets_py.utils.cli_tools.Copilot'
     )
     
     subparsers = parser.add_subparsers(dest='command', help='Command to run')
@@ -161,8 +163,12 @@ def main():
     
     # Execute command
     if args.command == 'install':
-        success = helper.copilot.install()
-        return 0 if success else 1
+        result = helper.copilot.install()
+        if result.get('success'):
+            print(result.get('message', 'gh copilot extension installed'))
+            return 0
+        print(result.get('error') or result.get('message', 'Install failed'))
+        return 1
     
     elif args.command == 'analyze':
         workflow_path = Path(args.workflow)
@@ -200,11 +206,11 @@ def main():
     elif args.command == 'explain':
         result = helper.copilot.explain(args.code)
         
-        if result and 'stdout' in result:
+        if result:
             print("\n" + "=" * 80)
             print("Explanation:")
             print("=" * 80)
-            print(result['stdout'])
+            print(result)
         else:
             print("\n❌ Explanation failed")
             return 1
@@ -212,11 +218,11 @@ def main():
     elif args.command == 'suggest':
         result = helper.copilot.suggest(args.description)
         
-        if result and 'stdout' in result:
+        if result:
             print("\n" + "=" * 80)
             print("Suggestion:")
             print("=" * 80)
-            print(result['stdout'])
+            print(result)
         else:
             print("\n❌ Suggestion failed")
             return 1

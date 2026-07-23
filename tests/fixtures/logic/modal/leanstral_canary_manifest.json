@@ -1,0 +1,720 @@
+{
+  "cases": [
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.0055,
+        "source_copy_loss": 0.011,
+        "source_span_copy_ratio": 0.011
+      },
+      "case_id": "leanstral-canary-01-alethic",
+      "compiler_ir": {
+        "cosine_loss": 0.043,
+        "cosine_similarity": 0.957,
+        "cross_entropy_excess_loss": 0.034,
+        "cross_entropy_loss": 0.191
+      },
+      "family": "alethic",
+      "learned_ir_view_by_family": {
+        "alethic": {
+          "cosine_loss": 0.037,
+          "cosine_similarity": 0.963,
+          "cross_entropy_excess_loss": 0.023,
+          "cross_entropy_loss": 0.16,
+          "family": "alethic",
+          "predicted_probability": 0.87,
+          "target_probability": 1.0
+        },
+        "deontic": {
+          "cosine_loss": 0.092,
+          "cosine_similarity": 0.908,
+          "cross_entropy_excess_loss": 0.082,
+          "cross_entropy_loss": 0.325,
+          "family": "deontic",
+          "predicted_probability": 0.042,
+          "target_probability": 0.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-alethic-002c6ad82d897e9b",
+      "phase_timings": [
+        {
+          "duration_ms": 0.43,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.3,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.74,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 0.95,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-3bf73e9719ede8bc",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "002c6ad82d897e9b7b5365dce1754d4bf94cde6f0ed702330fd197f36986c282",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.052,
+        "embedding_cosine_similarity": 0.948,
+        "token_loss": 0.062,
+        "token_similarity": 0.938
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.006,
+        "source_copy_loss": 0.012,
+        "source_span_copy_ratio": 0.012
+      },
+      "case_id": "leanstral-canary-02-deontic",
+      "compiler_ir": {
+        "cosine_loss": 0.046,
+        "cosine_similarity": 0.954,
+        "cross_entropy_excess_loss": 0.038,
+        "cross_entropy_loss": 0.202
+      },
+      "family": "deontic",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.039,
+          "cosine_similarity": 0.961,
+          "cross_entropy_excess_loss": 0.026,
+          "cross_entropy_loss": 0.17,
+          "family": "deontic",
+          "predicted_probability": 0.86,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-deontic-1ca938d69d9a7266",
+      "phase_timings": [
+        {
+          "duration_ms": 0.46,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.4,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.78,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.0,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-2333ec5c1472d923",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "1ca938d69d9a7266ee4e81fc6d4a458b4e4f1d90aafb1dd3502072b4b6eba975",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.054,
+        "embedding_cosine_similarity": 0.946,
+        "token_loss": 0.064,
+        "token_similarity": 0.936
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.0065,
+        "source_copy_loss": 0.013,
+        "source_span_copy_ratio": 0.013
+      },
+      "case_id": "leanstral-canary-03-temporal",
+      "compiler_ir": {
+        "cosine_loss": 0.049,
+        "cosine_similarity": 0.951,
+        "cross_entropy_excess_loss": 0.042,
+        "cross_entropy_loss": 0.213
+      },
+      "family": "temporal",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.096,
+          "cosine_similarity": 0.904,
+          "cross_entropy_excess_loss": 0.086,
+          "cross_entropy_loss": 0.335,
+          "family": "deontic",
+          "predicted_probability": 0.046,
+          "target_probability": 0.0
+        },
+        "temporal": {
+          "cosine_loss": 0.041,
+          "cosine_similarity": 0.959,
+          "cross_entropy_excess_loss": 0.029,
+          "cross_entropy_loss": 0.18,
+          "family": "temporal",
+          "predicted_probability": 0.85,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-temporal-2a21e4b458ae58a6",
+      "phase_timings": [
+        {
+          "duration_ms": 0.49,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.5,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.82,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.05,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-4f0c116042e37a63",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "2a21e4b458ae58a6308303da038edd6463357999d94c2de83756a3bfa6d74a9b",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.056,
+        "embedding_cosine_similarity": 0.944,
+        "token_loss": 0.066,
+        "token_similarity": 0.934
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.007,
+        "source_copy_loss": 0.014,
+        "source_span_copy_ratio": 0.014
+      },
+      "case_id": "leanstral-canary-04-epistemic",
+      "compiler_ir": {
+        "cosine_loss": 0.052,
+        "cosine_similarity": 0.948,
+        "cross_entropy_excess_loss": 0.046,
+        "cross_entropy_loss": 0.224
+      },
+      "family": "epistemic",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.098,
+          "cosine_similarity": 0.902,
+          "cross_entropy_excess_loss": 0.088,
+          "cross_entropy_loss": 0.34,
+          "family": "deontic",
+          "predicted_probability": 0.048,
+          "target_probability": 0.0
+        },
+        "epistemic": {
+          "cosine_loss": 0.043,
+          "cosine_similarity": 0.957,
+          "cross_entropy_excess_loss": 0.032,
+          "cross_entropy_loss": 0.19,
+          "family": "epistemic",
+          "predicted_probability": 0.84,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-epistemic-e8ce8843777813c4",
+      "phase_timings": [
+        {
+          "duration_ms": 0.52,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.6,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.86,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.1,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-68bb2e2e7972225d",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "e8ce8843777813c49a69f0148750821733ce35d82e405322238dd91f78523abc",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.058,
+        "embedding_cosine_similarity": 0.942,
+        "token_loss": 0.068,
+        "token_similarity": 0.932
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.0075,
+        "source_copy_loss": 0.015,
+        "source_span_copy_ratio": 0.015
+      },
+      "case_id": "leanstral-canary-05-doxastic",
+      "compiler_ir": {
+        "cosine_loss": 0.055,
+        "cosine_similarity": 0.945,
+        "cross_entropy_excess_loss": 0.05,
+        "cross_entropy_loss": 0.235
+      },
+      "family": "doxastic",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.1,
+          "cosine_similarity": 0.9,
+          "cross_entropy_excess_loss": 0.09,
+          "cross_entropy_loss": 0.345,
+          "family": "deontic",
+          "predicted_probability": 0.05,
+          "target_probability": 0.0
+        },
+        "doxastic": {
+          "cosine_loss": 0.045,
+          "cosine_similarity": 0.955,
+          "cross_entropy_excess_loss": 0.035,
+          "cross_entropy_loss": 0.2,
+          "family": "doxastic",
+          "predicted_probability": 0.83,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-doxastic-843cad05e78a70cc",
+      "phase_timings": [
+        {
+          "duration_ms": 0.55,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.7,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.9,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.15,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-57ef95f1acd29d53",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "843cad05e78a70ccfb408001f30345c28774075de6808a0037ab27250ee43b6f",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.06,
+        "embedding_cosine_similarity": 0.94,
+        "token_loss": 0.07,
+        "token_similarity": 0.93
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.008,
+        "source_copy_loss": 0.016,
+        "source_span_copy_ratio": 0.016
+      },
+      "case_id": "leanstral-canary-06-dynamic",
+      "compiler_ir": {
+        "cosine_loss": 0.058,
+        "cosine_similarity": 0.942,
+        "cross_entropy_excess_loss": 0.054,
+        "cross_entropy_loss": 0.246
+      },
+      "family": "dynamic",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.102,
+          "cosine_similarity": 0.898,
+          "cross_entropy_excess_loss": 0.092,
+          "cross_entropy_loss": 0.35,
+          "family": "deontic",
+          "predicted_probability": 0.052,
+          "target_probability": 0.0
+        },
+        "dynamic": {
+          "cosine_loss": 0.047,
+          "cosine_similarity": 0.953,
+          "cross_entropy_excess_loss": 0.038,
+          "cross_entropy_loss": 0.21,
+          "family": "dynamic",
+          "predicted_probability": 0.82,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-dynamic-d380225cac13b939",
+      "phase_timings": [
+        {
+          "duration_ms": 0.58,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.8,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.94,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.2,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-55f771b00d611b18",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "d380225cac13b93935c7f84e58ffce8ecc58b0525ee2961f08ddeae96c65509b",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.062,
+        "embedding_cosine_similarity": 0.938,
+        "token_loss": 0.072,
+        "token_similarity": 0.928
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.0085,
+        "source_copy_loss": 0.017,
+        "source_span_copy_ratio": 0.017
+      },
+      "case_id": "leanstral-canary-07-conditional_normative",
+      "compiler_ir": {
+        "cosine_loss": 0.061,
+        "cosine_similarity": 0.939,
+        "cross_entropy_excess_loss": 0.058,
+        "cross_entropy_loss": 0.257
+      },
+      "family": "conditional_normative",
+      "learned_ir_view_by_family": {
+        "conditional_normative": {
+          "cosine_loss": 0.049,
+          "cosine_similarity": 0.951,
+          "cross_entropy_excess_loss": 0.041,
+          "cross_entropy_loss": 0.22,
+          "family": "conditional_normative",
+          "predicted_probability": 0.81,
+          "target_probability": 1.0
+        },
+        "deontic": {
+          "cosine_loss": 0.104,
+          "cosine_similarity": 0.896,
+          "cross_entropy_excess_loss": 0.094,
+          "cross_entropy_loss": 0.355,
+          "family": "deontic",
+          "predicted_probability": 0.054,
+          "target_probability": 0.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-conditional_normative-9122b529f6ca3c5d",
+      "phase_timings": [
+        {
+          "duration_ms": 0.61,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 1.9,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 0.98,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.25,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-bba3335643164ece",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "9122b529f6ca3c5dde2563d01351b5fff4f9ecd2f781edd0411f4286f1bee139",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.064,
+        "embedding_cosine_similarity": 0.936,
+        "token_loss": 0.074,
+        "token_similarity": 0.926
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.009,
+        "source_copy_loss": 0.018,
+        "source_span_copy_ratio": 0.018
+      },
+      "case_id": "leanstral-canary-08-frame",
+      "compiler_ir": {
+        "cosine_loss": 0.064,
+        "cosine_similarity": 0.936,
+        "cross_entropy_excess_loss": 0.062,
+        "cross_entropy_loss": 0.268
+      },
+      "family": "frame",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.106,
+          "cosine_similarity": 0.894,
+          "cross_entropy_excess_loss": 0.096,
+          "cross_entropy_loss": 0.36,
+          "family": "deontic",
+          "predicted_probability": 0.056,
+          "target_probability": 0.0
+        },
+        "frame": {
+          "cosine_loss": 0.051,
+          "cosine_similarity": 0.949,
+          "cross_entropy_excess_loss": 0.044,
+          "cross_entropy_loss": 0.23,
+          "family": "frame",
+          "predicted_probability": 0.8,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-frame-ecf9ef42dae15c7f",
+      "phase_timings": [
+        {
+          "duration_ms": 0.64,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 2.0,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 1.02,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.3,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-b9ea2d465631eeee",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "ecf9ef42dae15c7f37de7f95cd330ad932eb9168d50d1ae3d35aeaaac495cbef",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.066,
+        "embedding_cosine_similarity": 0.934,
+        "token_loss": 0.076,
+        "token_similarity": 0.924
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    },
+    {
+      "anti_copy": {
+        "anti_copy_penalty": 0.0095,
+        "source_copy_loss": 0.019,
+        "source_span_copy_ratio": 0.019
+      },
+      "case_id": "leanstral-canary-09-hybrid",
+      "compiler_ir": {
+        "cosine_loss": 0.067,
+        "cosine_similarity": 0.933,
+        "cross_entropy_excess_loss": 0.066,
+        "cross_entropy_loss": 0.279
+      },
+      "family": "hybrid",
+      "learned_ir_view_by_family": {
+        "deontic": {
+          "cosine_loss": 0.108,
+          "cosine_similarity": 0.892,
+          "cross_entropy_excess_loss": 0.098,
+          "cross_entropy_loss": 0.365,
+          "family": "deontic",
+          "predicted_probability": 0.058,
+          "target_probability": 0.0
+        },
+        "hybrid": {
+          "cosine_loss": 0.053,
+          "cosine_similarity": 0.947,
+          "cross_entropy_excess_loss": 0.047,
+          "cross_entropy_loss": 0.24,
+          "family": "hybrid",
+          "predicted_probability": 0.79,
+          "target_probability": 1.0
+        }
+      },
+      "modal_ir_hash": "modal-ir-hybrid-241db7b39a7d5023",
+      "phase_timings": [
+        {
+          "duration_ms": 0.67,
+          "phase": "compiler_ir_metrics"
+        },
+        {
+          "duration_ms": 2.1,
+          "phase": "encode"
+        },
+        {
+          "duration_ms": 1.06,
+          "phase": "learned_ir_view_metrics"
+        },
+        {
+          "duration_ms": 1.35,
+          "phase": "prover_validation"
+        }
+      ],
+      "record_id": "lir-metric-d464ac11d9efc8f4",
+      "schema_version": "legal-ir-introspection-metrics-v1",
+      "source_text_sha256": "241db7b39a7d5023f3870bdec7d3000dd036b93c0750e7767baac9f789e05680",
+      "source_to_decoded": {
+        "embedding_cosine_loss": 0.068,
+        "embedding_cosine_similarity": 0.932,
+        "token_loss": 0.078,
+        "token_similarity": 0.922
+      },
+      "validity": {
+        "attempted_count": 1,
+        "failure_ratio": 0.0,
+        "modal_ir_valid": true,
+        "proofs_valid": true,
+        "proved_count": 1,
+        "prover_compiles": true,
+        "structural_valid": true,
+        "valid_count": 1
+      },
+      "versions": {
+        "architecture_version": "legacy_dense_v1",
+        "config_version": "legal-ir-introspection-metrics-config-v1",
+        "modal_ir_version": "modal-ir-v1",
+        "state_version": "modal-autoencoder-state-v1"
+      }
+    }
+  ],
+  "frozen": true,
+  "manifest_version": "legal-ir-leanstral-canary-manifest-v1",
+  "metric_schema_version": "legal-ir-introspection-metrics-v1",
+  "required_families": [
+    "alethic",
+    "deontic",
+    "temporal",
+    "epistemic",
+    "doxastic",
+    "dynamic",
+    "conditional_normative",
+    "frame",
+    "hybrid"
+  ]
+}

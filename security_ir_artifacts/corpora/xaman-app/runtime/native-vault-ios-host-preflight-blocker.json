@@ -1,0 +1,60 @@
+{
+  "artifact_cid": "bafkreigchgpc5xwkilkobu76uz7nomsqlx6agw4hntp6ocq6fibl6gmdu4",
+  "capability": {
+    "android_host_verified_by_this_check": false,
+    "independent_review_required_before_capture": true,
+    "ios_xctest_host_prepared": false,
+    "runtime_capture_recorded": false,
+    "simulator_started_by_this_check": false,
+    "xaman_build_or_test_started_by_this_check": false
+  },
+  "generated_at_utc": "2026-07-19T02:41:33Z",
+  "host_paths_redacted": true,
+  "platform": "Linux",
+  "remaining_blockers": [
+    "iOS preflight requires Darwin host",
+    "Non-Darwin host detected"
+  ],
+  "schema_version": "xaman-native-vault-ios-host-preflight/v1",
+  "scope": {
+    "production_security_result": false,
+    "public_source_verifier_only": true,
+    "vendor_release_equivalent": false
+  },
+  "security_decision": "IOS_NATIVE_VAULT_HOST_PREPARED_BLOCKED_NON_DARWIN",
+  "simulator": {
+    "available_ios_simulator_count": 0,
+    "ios_runtime_available": false,
+    "simctl_resolves_on_host": false,
+    "simctl_supported": false
+  },
+  "source": {
+    "clean_checkout": null,
+    "files": {},
+    "source_commit": null,
+    "source_root_check": [
+      {
+        "clean_checkout": false,
+        "source_root": "/home/barberb/.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app"
+      }
+    ]
+  },
+  "task_id": "PORTAL-CXTP-168",
+  "toolchain": {
+    "simctl": {
+      "executable": false,
+      "sha256": null,
+      "version": null
+    },
+    "xcodebuild": {
+      "executable": false,
+      "sha256": null,
+      "version": null
+    },
+    "xcrun": {
+      "executable": false,
+      "sha256": null,
+      "version": null
+    }
+  }
+}

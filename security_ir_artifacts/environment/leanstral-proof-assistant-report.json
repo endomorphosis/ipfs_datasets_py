@@ -1,0 +1,120 @@
+{
+  "acceptance_policy": {
+    "disallowed_lean_patterns": [
+      "axiom",
+      "admit",
+      "sorry",
+      "unsafe proof bypass"
+    ],
+    "leanstral_is_proof_authority": false,
+    "network_calls_by_default": false,
+    "production_evidence_gate_required": true,
+    "required_verification_command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "required_verifier": "Lean/Lake compile check",
+    "rule": "Leanstral may propose Lean edits or proof strategies, but every suggestion must compile through the Lean lane and still pass the production evidence gates."
+  },
+  "artifact_cid": "sha256:05893c3a41580056897b41e9e17679617b967d60365a6a65fb7f6b0366f625a0",
+  "blockers": [
+    {
+      "approved_model_routes": [
+        "labs-leanstral-1-5",
+        "labs-leanstral-2603"
+      ],
+      "code": "LEANSTRAL_MODEL_NOT_CONFIGURED",
+      "effect": "advisory-lane-unavailable"
+    }
+  ],
+  "configuration": {
+    "approved_model_routes": [
+      "labs-leanstral-1-5",
+      "labs-leanstral-2603"
+    ],
+    "configured_by_route": false,
+    "configured_by_weights": false,
+    "local_weights": {
+      "env_var": "IPFS_DATASETS_PY_LEANSTRAL_WEIGHTS",
+      "exists": false,
+      "path": null,
+      "sha256": null,
+      "value": null
+    },
+    "model_candidates": [],
+    "observed_env_vars": {},
+    "provider_configuration": {},
+    "status": "unconfigured",
+    "unapproved_leanstral_candidates": []
+  },
+  "default_mode": "probe-only-no-network",
+  "generated_at_utc": "2026-07-19T06:33:51Z",
+  "lean_lane": {
+    "exists": true,
+    "lake_present": true,
+    "lean_present": true,
+    "overall_status": "ready",
+    "path": "security_ir_artifacts/environment/lean-solver-lane-report.json",
+    "proof_kernel_checked": true,
+    "proof_kernel_status": "passed",
+    "security_decision": "LEAN_SOLVER_LANE_READY",
+    "sha256": "3fde23467cc3449d0df0550b247a1778f231712be5003ddc28af8a71b8b74609"
+  },
+  "overall_status": "degraded",
+  "policy_document": "docs/security_verification/leanstral_proof_assistant_lane.md",
+  "proof_attempt_prompts": [
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "id": "leanstral:xaman-receipt-kernel-tightening",
+      "prompt": "You are assisting with Lean 4 proof engineering for security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean. Return Lean 4 code edits only when they preserve the existing public claim, keep rejected proof fixtures rejected, and compile with the verification command. Strengthen the proof-consumer receipt invariants for xaman-claim:proof-consumer-must-reject-non-proved-results without adding axioms, sorry, admitted, or opaque trust shortcuts.",
+      "target_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+      "verification_command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "id": "leanstral:negative-fixture-preservation",
+      "prompt": "Review the Lean 4 proof kernel at security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean. Propose a minimal patch that keeps DISPROVED, UNKNOWN, NOT_MODELED, MISSING_SOLVER, stale-environment, CID-mismatch, and unaccepted-assumption receipts rejected. Return Lean 4 code edits only when they preserve the existing public claim, keep rejected proof fixtures rejected, and compile with the verification command.",
+      "target_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+      "verification_command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "id": "leanstral:proof-comment-to-formal-step",
+      "prompt": "Convert any remaining explanatory proof comments in security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean into explicit Lean definitions or theorem steps where possible. Do not change the production evidence gate; every suggested proof must pass `lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean`.",
+      "target_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+      "verification_command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    }
+  ],
+  "proof_context": {
+    "proof_consumer_report": {
+      "artifact_cid": null,
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "exists": true,
+      "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+      "proof_kernel_cid": null,
+      "schema_version": "xaman-proof-consumer-report/v1",
+      "sha256": "3fd62d8c0b7c209877cf499c9ad7523d4ccdc044a3fdff79fd1b773c87b01b77"
+    },
+    "proof_kernel": {
+      "exists": true,
+      "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+      "sha256": "fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f",
+      "verification_command": "lean security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    }
+  },
+  "release_effect": "no-production-unblock",
+  "repo_root": "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets",
+  "schema_version": "crypto-exchange-leanstral-proof-assistant-report/v1",
+  "security_decision": "DEGRADE_LEANSTRAL_ASSISTANT_UNCONFIGURED",
+  "sources": {
+    "mistral_leanstral_1_5_model_card": "https://docs.mistral.ai/models/model-cards/leanstral-1-5",
+    "mistral_leanstral_blog": "https://mistral.ai/news/leanstral/"
+  },
+  "summary": {
+    "blocker_count": 1,
+    "configured": false,
+    "configured_by_route": false,
+    "configured_by_weights": false,
+    "lean_lane_ready": true,
+    "prompt_count": 3,
+    "proof_kernel_checked": true
+  },
+  "task_id": "PORTAL-CXTP-097"
+}

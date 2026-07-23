@@ -31,7 +31,10 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
-    import seaborn as sns
+    try:
+        import seaborn as sns
+    except ImportError:
+        sns = None
     from matplotlib.figure import Figure
     VISUALIZATION_AVAILABLE = True
 except ImportError:

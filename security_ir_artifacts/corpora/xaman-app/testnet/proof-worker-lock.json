@@ -1,0 +1,96 @@
+{
+  "claim_scope": {
+    "claim_count": 12,
+    "claim_ids": [
+      "xaman-testnet-claim:network-binding-is-testnet-only",
+      "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "xaman-testnet-claim:review-auth-sequence-observed",
+      "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "xaman-testnet-claim:audit-redaction-boundary-is-preserved"
+    ],
+    "selection": "all-blocking-and-high-testnet-claims",
+    "severities": [
+      "blocking",
+      "high"
+    ]
+  },
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "inputs": {
+    "assumptions": {
+      "artifact_cid": "bafkreief2eknqggwzavzp7ifzx2k4g3qoepsvs2wughwqrvc26xrgoxt54",
+      "blocking_assumption_count": 14,
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/assumptions.json"
+    },
+    "claim_trace_map": {
+      "artifact_cid": "bafkreidlh5bi76b54tz56p5cph23wh7bu5mj37snu7m5zs5j2ffcktzsgq",
+      "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/claim-trace-map.json"
+    },
+    "security_model_ir": {
+      "artifact_cid": "bafkreico3kwwceylnbisec3kox5injjlc7q3v4z2qyy554uhtmcgintlim",
+      "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+      "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json"
+    },
+    "solver_dependency_probe": {
+      "path": "security_ir_artifacts/environment/solver-dependency-probe.json",
+      "required_for_task": [
+        "z3",
+        "cvc5"
+      ]
+    }
+  },
+  "lock_cid": "bafkreihf3ja4v4z2bykldmotrzukh2peewwlsbmrdv6v6enakn4apuk2yq",
+  "model": {
+    "allowed_model_cids": [
+      "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43"
+    ],
+    "cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+    "cid_path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.cid",
+    "id": "xaman-app-testnet-transaction-lifecycle-security-model-ir",
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/security-model-ir.json",
+    "schema_version": "security-model-ir/xaman/v1"
+  },
+  "outputs": {
+    "cvc5_runner_report": "security_ir_artifacts/corpora/xaman-app/testnet/cvc5-runner-report.json",
+    "proof_worker_lock": "security_ir_artifacts/corpora/xaman-app/testnet/proof-worker-lock.json",
+    "smtlib_dir": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib"
+  },
+  "schema_version": "xaman-testnet-proof-worker-lock/v1",
+  "smt_contract": {
+    "fail_closed_solver_results": [
+      "error",
+      "parser_error",
+      "timeout",
+      "unavailable",
+      "unknown",
+      "unsupported"
+    ],
+    "logic": "QF_LIA",
+    "query_kind": "xaman_blocking_acceptance_satisfiability",
+    "selected_provers": [
+      "z3",
+      "cvc5"
+    ],
+    "supported_smtlib_logics": [
+      "QF_LIA"
+    ],
+    "timeout_ms": 5000,
+    "unknown_timeout_unsupported_blocks_testnet_assurance": true,
+    "z3_cvc5_disagreement_blocks_testnet_assurance": true
+  },
+  "task_id": "PORTAL-CXTP-132",
+  "worker": {
+    "id": "xaman-testnet-smt-proof-worker",
+    "locked": true,
+    "track": "solver",
+    "version": "xaman-testnet-smt-proof-worker/v1"
+  }
+}

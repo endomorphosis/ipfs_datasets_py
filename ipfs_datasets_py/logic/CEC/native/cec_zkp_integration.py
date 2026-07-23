@@ -487,7 +487,7 @@ class ZKPCECProver:
             zkp_proof = self.zkp_prover.prove(statement_str, witness)
             
             # Verify proof
-            is_valid = self.zkp_verifier.verify(statement, zkp_proof)
+            is_valid = self.zkp_verifier.verify_proof(zkp_proof)
             
             proof_time = time.time() - start_time
             

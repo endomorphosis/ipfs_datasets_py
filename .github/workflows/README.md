@@ -606,7 +606,9 @@ python .github/scripts/analyze_autohealing_metrics.py --days 7
 
 ### Invoking GitHub Copilot Coding Agent
 
-**✅ Recommended Approach**: Use `gh agent-task create`
+**✅ Recommended Approach**: Match the Copilot surface to the job type
+
+For new hosted tasks, use `gh agent-task create` when the runner supports it:
 
 ```yaml
 - name: Create Copilot Coding Agent Task
@@ -627,10 +629,12 @@ python .github/scripts/analyze_autohealing_metrics.py --days 7
     gh agent-task create -F task.txt
 ```
 
-**❌ Deprecated**: `@copilot` mentions in comments
+For existing PR automation in this repo, use `scripts/invoke_copilot_on_pr.py` and the PR-comment flow instead of creating a second task.
 
-- `@copilot` mentions are for interactive UI use, not automation
-- Use `gh agent-task create` for programmatic workflows
+**❌ Deprecated as a universal rule**: treating all Copilot automation as `gh agent-task create`
+
+- `gh agent-task create` is for new hosted tasks, not every existing-PR workflow
+- Existing PR automation in this repo uses PR comments and draft PRs intentionally
 - See [COPILOT-CLI-INTEGRATION.md](./COPILOT-CLI-INTEGRATION.md) for migration guide
 
 ### Monitoring Agent Tasks

@@ -1,0 +1,1082 @@
+{
+  "artifact_cid": "bafkreidpjl3x2lxipw22ao37sx6pq454gf7wr4ywbtbcx2nwcqraflnnqi",
+  "blocked_classifications": [
+    "EXTERNAL_EVIDENCE_REQUIRED"
+  ],
+  "entries": [
+    {
+      "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-imported-production-account",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-imported-production-account.json",
+        "fuzz_domain": "account_import",
+        "mutation_target_claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-malformed-payload-shape",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-malformed-payload-shape.json",
+        "fuzz_domain": "malformed_payload",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-raw-payload-material",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-payload-material.json",
+        "fuzz_domain": "malformed_payload",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-raw-signature-blob",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-raw-signature-blob.json",
+        "fuzz_domain": "malformed_payload",
+        "mutation_target_claim_id": "xaman-testnet-claim:signing-decision-is-observed-but-crypto-output-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-review-bypass",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-review-bypass.json",
+        "fuzz_domain": "auth_review_bypass",
+        "mutation_target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-signing-before-auth",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signing-before-auth.json",
+        "fuzz_domain": "auth_review_bypass",
+        "mutation_target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "classification": "BOUNDARY_MODEL_MUTATION",
+      "entry_id": "attack-wrong-network",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-wrong-network.json",
+        "fuzz_domain": "wrong_network",
+        "mutation_target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Increase source-to-model boundary coverage and map to claim evidences.",
+        "Reproduce as a boundary mutation on unmodified verifier-only runtime before escalation."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-145",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "blocked_by": [
+        "EXTERNAL_EVIDENCE_REQUIRED"
+      ],
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "classification": "EXTERNAL_EVIDENCE_REQUIRED",
+      "entry_id": "xaman-disproof:backend-double-use",
+      "evidence": {
+        "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+        "release_policy": "block",
+        "result": "blocked_by_missing_evidence"
+      },
+      "execution_state": "blocked",
+      "next_actions": [
+        "Do not map this item to a proof-lane promotion until evidence owner is known.",
+        "If vendor backend evidence is unavailable, keep this claim blocked and limit conclusions to public-source/Testnet scope.",
+        "Obtain or produce reviewed backend payload-service evidence that binds payload issuance, single-use controls, replay rejection, audit logging, and owner signoff to the tested release.",
+        "Request authorized backend/runtime/vendor evidence or testnet-to-production bridge artifacts."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-152",
+        "PORTAL-CXTP-153"
+      ],
+      "origin": "disproof_vector",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "blocked_by": [
+        "EXTERNAL_EVIDENCE_REQUIRED"
+      ],
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "classification": "EXTERNAL_EVIDENCE_REQUIRED",
+      "entry_id": "xaman-disproof:runtime-equivalence-missing",
+      "evidence": {
+        "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+        "release_policy": "block",
+        "result": "blocked_by_missing_evidence"
+      },
+      "execution_state": "blocked",
+      "next_actions": [
+        "Capture reviewed device runtime traces for the release-equivalent wallet path, including network binding, payload review, authentication, signing decision, submit attempt, submit result, cancellation, expiry, replay, and reconnect categories.",
+        "Do not map this item to a proof-lane promotion until evidence owner is known.",
+        "If release-equivalent runtime evidence is unavailable, keep this claim blocked and do not promote self-hosted or emulator traces to production equivalence.",
+        "Request authorized backend/runtime/vendor evidence or testnet-to-production bridge artifacts."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-152",
+        "PORTAL-CXTP-153"
+      ],
+      "origin": "disproof_vector",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:assumption-mutation-native-vault",
+      "evidence": {
+        "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:auth-precondition-removal",
+      "evidence": {
+        "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:downgraded-solver-result",
+      "evidence": {
+        "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:replay-resolved-payload",
+      "evidence": {
+        "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:stale-evidence-acceptance",
+      "evidence": {
+        "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+      "classification": "MODEL_MUTATION_CONTROL_TEST",
+      "entry_id": "xaman-disproof:wrong-network-signing",
+      "evidence": {
+        "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Tighten assumptions and re-run mutated proofs under the same solver profile.",
+        "Record any new disproof witnesses as explicit assumptions before changing gating."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-069",
+        "PORTAL-CXTP-070"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "entry_id": "attack-downgraded-evidence-review",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-downgraded-evidence-review.json",
+        "fuzz_domain": "stale_downgraded_evidence",
+        "mutation_target_claim_id": "xaman-testnet-claim:audit-redaction-boundary-is-preserved",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-run proof-consumer verification and lock down evidence freshness checks.",
+        "Update proof-consumer policies and keep this item blocked until tests remain passing."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-075"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "entry_id": "attack-forged-broadcast-finality",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-forged-broadcast-finality.json",
+        "fuzz_domain": "solver_result_tampering",
+        "mutation_target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-run proof-consumer verification and lock down evidence freshness checks.",
+        "Update proof-consumer policies and keep this item blocked until tests remain passing."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-075"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "entry_id": "attack-proof-obligation-status-forged",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-proof-obligation-status-forged.json",
+        "fuzz_domain": "solver_result_tampering",
+        "mutation_target_claim_id": "xaman-testnet-claim:broadcast-and-ledger-finality-are-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-run proof-consumer verification and lock down evidence freshness checks.",
+        "Update proof-consumer policies and keep this item blocked until tests remain passing."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-075"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "entry_id": "attack-solver-result-upgrade",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-solver-result-upgrade.json",
+        "fuzz_domain": "solver_result_tampering",
+        "mutation_target_claim_id": "xaman-testnet-claim:network-binding-is-testnet-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-run proof-consumer verification and lock down evidence freshness checks.",
+        "Update proof-consumer policies and keep this item blocked until tests remain passing."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-075"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+      "classification": "PROOF_CONSUMER_CONTROL_MUTATION",
+      "entry_id": "attack-stale-evidence-digest",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-stale-evidence-digest.json",
+        "fuzz_domain": "stale_downgraded_evidence",
+        "mutation_target_claim_id": "xaman-testnet-claim:review-auth-sequence-observed",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-run proof-consumer verification and lock down evidence freshness checks.",
+        "Update proof-consumer policies and keep this item blocked until tests remain passing."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-073",
+        "PORTAL-CXTP-075"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 2,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": null,
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "entry_id": "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+      "evidence": {
+        "observed": null,
+        "result": null,
+        "summary": "For a bounded two-vault batch, first- and later-vault failures can leave mixed old primary, absent primary with recovery, or new primary with recovery states. The public passcode flow visibly attempts rollback after rejected batch rekey, but runtime behavior remains unproved.",
+        "summary_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Run CAPTURE evidence workflow (PORTAL-CXTP-165 and PORTAL-CXTP-163).",
+        "Only close this item after both Android and reviewed iOS paths are represented."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-163",
+        "PORTAL-CXTP-165"
+      ],
+      "origin": "native_vault_state_fuzz",
+      "priority": 4,
+      "source_supported_tx_class": "For a bounded two-vault batch, first- and later-vault failures can leave mixed old primary, absent primary with recovery, or new primary with recovery states. The public passcode flow visibly attempts rollback after rejected batch rekey, but runtime behavior remains unproved."
+    },
+    {
+      "claim_id": null,
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "entry_id": "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+      "evidence": {
+        "observed": null,
+        "result": null,
+        "summary": "A recovery-cleanup exception after replacement yields a new-key primary together with old-key recovery in the bounded model; the native bridge and TypeScript wrapper source show error propagation, which must be checked under runtime injection.",
+        "summary_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Run CAPTURE evidence workflow (PORTAL-CXTP-165 and PORTAL-CXTP-163).",
+        "Only close this item after both Android and reviewed iOS paths are represented."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-163",
+        "PORTAL-CXTP-165"
+      ],
+      "origin": "native_vault_state_fuzz",
+      "priority": 4,
+      "source_supported_tx_class": "A recovery-cleanup exception after replacement yields a new-key primary together with old-key recovery in the bounded model; the native bridge and TypeScript wrapper source show error propagation, which must be checked under runtime injection."
+    },
+    {
+      "claim_id": null,
+      "classification": "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION",
+      "entry_id": "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery",
+      "evidence": {
+        "observed": null,
+        "result": null,
+        "summary": "A failure after primary purge and before replacement write has an old-key recovery-only state in the bounded model.",
+        "summary_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Run CAPTURE evidence workflow (PORTAL-CXTP-165 and PORTAL-CXTP-163).",
+        "Only close this item after both Android and reviewed iOS paths are represented."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-163",
+        "PORTAL-CXTP-165"
+      ],
+      "origin": "native_vault_state_fuzz",
+      "priority": 4,
+      "source_supported_tx_class": "A failure after primary purge and before replacement write has an old-key recovery-only state in the bounded model."
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "entry_id": "attack-offercreate-transaction-type",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-offercreate-transaction-type.json",
+        "fuzz_domain": "transaction_type_mutation",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Model OfferCreate support in XRPL transaction constraints and rerun disproof/fuzz assertions.",
+        "Re-run PORTAL-CXTP-147 once syntax and coverage updates are committed."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-146",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 1,
+      "source_supported_tx_class": "OfferCreate"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "entry_id": "attack-path-payment-semantics-skipped",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-path-payment-semantics-skipped.json",
+        "fuzz_domain": "transaction_type_mutation",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "No automated action; keep as fail-closed source gap."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-146",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 1,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "entry_id": "attack-signerlistset-transaction-type",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-signerlistset-transaction-type.json",
+        "fuzz_domain": "transaction_type_mutation",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Model SignerListSet support in XRPL transaction constraints and rerun disproof/fuzz assertions.",
+        "Re-run PORTAL-CXTP-147 once syntax and coverage updates are committed."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-146",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 1,
+      "source_supported_tx_class": "SignerListSet"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "entry_id": "attack-trustset-transaction-type",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-trustset-transaction-type.json",
+        "fuzz_domain": "transaction_type_mutation",
+        "mutation_target_claim_id": "xaman-testnet-claim:payload-intake-is-categorical-only",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Model TrustSet support in XRPL transaction constraints and rerun disproof/fuzz assertions.",
+        "Re-run PORTAL-CXTP-147 once syntax and coverage updates are committed."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-146",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 1,
+      "source_supported_tx_class": "TrustSet"
+    },
+    {
+      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "classification": "SOURCE_SUPPORTED_COVERAGE_GAP",
+      "entry_id": "xaman-disproof:unsupported-xrpl-semantics",
+      "evidence": {
+        "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+        "release_policy": "block",
+        "result": "counterexample_found"
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Re-check transaction-class support matrix for OfferCreate/SignerListSet/TrustSet/multisign."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-146",
+        "PORTAL-CXTP-147"
+      ],
+      "origin": "disproof_vector",
+      "priority": 1,
+      "source_supported_tx_class": "multisign"
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-cancel-after-submit-race",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-after-submit-race.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-cancel-gap-promoted",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-cancel-gap-promoted.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:cancellation-path-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-decline-gap-promoted",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-decline-gap-promoted.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:refusal-path-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-expiry-after-auth-race",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-after-auth-race.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-expiry-gap-promoted",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-expiry-gap-promoted.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:expiry-path-is-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-reconnect-before-submit-result-race",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-reconnect-before-submit-result-race.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-replay-duplicate-resolution",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-resolution.json",
+        "fuzz_domain": "replayed_payload",
+        "mutation_target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-replay-duplicate-submit-result",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-replay-duplicate-submit-result.json",
+        "fuzz_domain": "replayed_payload",
+        "mutation_target_claim_id": "xaman-testnet-claim:replay-controls-are-not-modeled",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    },
+    {
+      "claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+      "classification": "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS",
+      "entry_id": "attack-submit-result-removed",
+      "evidence": {
+        "counterexample_path": "security_ir_artifacts/corpora/xaman-app/testnet/fuzz/counterexamples/attack-submit-result-removed.json",
+        "fuzz_domain": "cancellation_expiry_reconnect_race",
+        "mutation_target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+        "result": "target_claim_triggered",
+        "target_claim_trigger_count": null
+      },
+      "execution_state": "ready",
+      "next_actions": [
+        "Collect redacted runtime categories and backend contracts for the target claim.",
+        "Feed observed evidence back into claim-to-source mappings before any claim promotion."
+      ],
+      "next_task_ids": [
+        "PORTAL-CXTP-150",
+        "PORTAL-CXTP-157"
+      ],
+      "origin": "fuzz_mutation",
+      "priority": 3,
+      "source_supported_tx_class": null
+    }
+  ],
+  "execution_manifest": {
+    "blocked_by_evidence_lanes": [
+      "EXTERNAL_EVIDENCE_REQUIRED"
+    ],
+    "disproof_vectors": {
+      "blocked": [
+        "xaman-disproof:backend-double-use",
+        "xaman-disproof:runtime-equivalence-missing"
+      ],
+      "ready": [
+        "xaman-disproof:assumption-mutation-native-vault",
+        "xaman-disproof:auth-precondition-removal",
+        "xaman-disproof:downgraded-solver-result",
+        "xaman-disproof:replay-resolved-payload",
+        "xaman-disproof:stale-evidence-acceptance",
+        "xaman-disproof:unsupported-xrpl-semantics",
+        "xaman-disproof:wrong-network-signing"
+      ]
+    },
+    "fuzz_mutation_ids": {
+      "blocked": [],
+      "ready": [
+        "attack-cancel-after-submit-race",
+        "attack-cancel-gap-promoted",
+        "attack-decline-gap-promoted",
+        "attack-downgraded-evidence-review",
+        "attack-expiry-after-auth-race",
+        "attack-expiry-gap-promoted",
+        "attack-forged-broadcast-finality",
+        "attack-imported-production-account",
+        "attack-malformed-payload-shape",
+        "attack-offercreate-transaction-type",
+        "attack-path-payment-semantics-skipped",
+        "attack-proof-obligation-status-forged",
+        "attack-raw-payload-material",
+        "attack-raw-signature-blob",
+        "attack-reconnect-before-submit-result-race",
+        "attack-replay-duplicate-resolution",
+        "attack-replay-duplicate-submit-result",
+        "attack-review-bypass",
+        "attack-signerlistset-transaction-type",
+        "attack-signing-before-auth",
+        "attack-solver-result-upgrade",
+        "attack-stale-evidence-digest",
+        "attack-submit-result-removed",
+        "attack-trustset-transaction-type",
+        "attack-wrong-network"
+      ]
+    },
+    "native_vault_state_conditions": {
+      "blocked": [],
+      "ready": [
+        "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+        "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+        "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery"
+      ]
+    },
+    "required_next_lanes": {
+      "fuzz_mutation_campaign": [
+        "attack-cancel-after-submit-race",
+        "attack-cancel-gap-promoted",
+        "attack-decline-gap-promoted",
+        "attack-downgraded-evidence-review",
+        "attack-expiry-after-auth-race",
+        "attack-expiry-gap-promoted",
+        "attack-forged-broadcast-finality",
+        "attack-imported-production-account",
+        "attack-malformed-payload-shape",
+        "attack-offercreate-transaction-type",
+        "attack-path-payment-semantics-skipped",
+        "attack-proof-obligation-status-forged",
+        "attack-raw-payload-material",
+        "attack-raw-signature-blob",
+        "attack-reconnect-before-submit-result-race",
+        "attack-replay-duplicate-resolution",
+        "attack-replay-duplicate-submit-result",
+        "attack-review-bypass",
+        "attack-signerlistset-transaction-type",
+        "attack-signing-before-auth",
+        "attack-solver-result-upgrade",
+        "attack-stale-evidence-digest",
+        "attack-submit-result-removed",
+        "attack-trustset-transaction-type",
+        "attack-wrong-network"
+      ],
+      "native_vault_runtime": [
+        "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+        "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+        "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery"
+      ],
+      "proof_counterexample": [
+        "xaman-disproof:assumption-mutation-native-vault",
+        "xaman-disproof:auth-precondition-removal",
+        "xaman-disproof:backend-double-use",
+        "xaman-disproof:downgraded-solver-result",
+        "xaman-disproof:replay-resolved-payload",
+        "xaman-disproof:runtime-equivalence-missing",
+        "xaman-disproof:stale-evidence-acceptance",
+        "xaman-disproof:unsupported-xrpl-semantics",
+        "xaman-disproof:wrong-network-signing"
+      ]
+    }
+  },
+  "execution_mode": "prioritized_source_bounded_remediation",
+  "generated_from_task_id": "PORTAL-CXTP-170",
+  "matrix_task_count": 37,
+  "overall_status": "blocked_by_gap_remediation_dependencies",
+  "production_release_blocked": true,
+  "required_by_classification": {
+    "BOUNDARY_MODEL_MUTATION": [
+      "attack-imported-production-account",
+      "attack-malformed-payload-shape",
+      "attack-raw-payload-material",
+      "attack-raw-signature-blob",
+      "attack-review-bypass",
+      "attack-signing-before-auth",
+      "attack-wrong-network"
+    ],
+    "EXTERNAL_EVIDENCE_REQUIRED": [
+      "xaman-disproof:backend-double-use",
+      "xaman-disproof:runtime-equivalence-missing"
+    ],
+    "MODEL_MUTATION_CONTROL_TEST": [
+      "xaman-disproof:assumption-mutation-native-vault",
+      "xaman-disproof:auth-precondition-removal",
+      "xaman-disproof:downgraded-solver-result",
+      "xaman-disproof:replay-resolved-payload",
+      "xaman-disproof:stale-evidence-acceptance",
+      "xaman-disproof:wrong-network-signing"
+    ],
+    "PROOF_CONSUMER_CONTROL_MUTATION": [
+      "attack-downgraded-evidence-review",
+      "attack-forged-broadcast-finality",
+      "attack-proof-obligation-status-forged",
+      "attack-solver-result-upgrade",
+      "attack-stale-evidence-digest"
+    ],
+    "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION": [
+      "xaman-native-vault:condition:batch-failure-can-be-mixed-state",
+      "xaman-native-vault:condition:cleanup-failure-retains-old-key-recovery",
+      "xaman-native-vault:condition:replacement-write-failure-leaves-old-key-recovery"
+    ],
+    "SOURCE_SUPPORTED_COVERAGE_GAP": [
+      "attack-offercreate-transaction-type",
+      "attack-path-payment-semantics-skipped",
+      "attack-signerlistset-transaction-type",
+      "attack-trustset-transaction-type",
+      "xaman-disproof:unsupported-xrpl-semantics"
+    ],
+    "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS": [
+      "attack-cancel-after-submit-race",
+      "attack-cancel-gap-promoted",
+      "attack-decline-gap-promoted",
+      "attack-expiry-after-auth-race",
+      "attack-expiry-gap-promoted",
+      "attack-reconnect-before-submit-result-race",
+      "attack-replay-duplicate-resolution",
+      "attack-replay-duplicate-submit-result",
+      "attack-submit-result-removed"
+    ]
+  },
+  "required_task_ids": [
+    "PORTAL-CXTP-069",
+    "PORTAL-CXTP-070",
+    "PORTAL-CXTP-073",
+    "PORTAL-CXTP-075",
+    "PORTAL-CXTP-145",
+    "PORTAL-CXTP-146",
+    "PORTAL-CXTP-147",
+    "PORTAL-CXTP-150",
+    "PORTAL-CXTP-152",
+    "PORTAL-CXTP-153",
+    "PORTAL-CXTP-157",
+    "PORTAL-CXTP-163",
+    "PORTAL-CXTP-165"
+  ],
+  "schema_version": "xaman-gap-remediation-workflow-manifest/v1",
+  "security_decision": "GAP_REMEDIATION_WORKFLOW_MANIFEST_GENERATED",
+  "source_gap_matrix_path": "security_ir_artifacts/corpora/xaman-app/gap-remediation-matrix.json",
+  "summary": {
+    "blocked_classification_count": 1,
+    "blocked_count": 2,
+    "classification_counts": {
+      "BOUNDARY_MODEL_MUTATION": 7,
+      "EXTERNAL_EVIDENCE_REQUIRED": 2,
+      "MODEL_MUTATION_CONTROL_TEST": 6,
+      "PROOF_CONSUMER_CONTROL_MUTATION": 5,
+      "SOURCE_BOUNDED_RUNTIME_TEST_OBLIGATION": 3,
+      "SOURCE_SUPPORTED_COVERAGE_GAP": 5,
+      "UNMODELED_RUNTIME_OR_BACKEND_SEMANTICS": 9
+    },
+    "entry_count": 37,
+    "ready_count": 35,
+    "ready_disproof_vector_count": 7,
+    "ready_fuzz_mutation_count": 25,
+    "ready_native_vault_condition_count": 3,
+    "required_task_count": 13
+  },
+  "task_id": "PORTAL-CXTP-172"
+}

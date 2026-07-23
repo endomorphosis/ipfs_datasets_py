@@ -19,6 +19,7 @@ from enum import Enum
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
 from ipfs_datasets_py.optimizers.common.extraction_contexts import (
     LogicExtractionConfig,
     ExtractionMode,
@@ -62,6 +63,7 @@ class LogicExtractionContext:
         ontology: Knowledge graph ontology to align with
         previous_extractions: Previous extraction results for consistency
         hints: Optional hints for extraction
+        metadata: Additional extraction metadata
     """
     data: Any
     data_type: 'DataType' = DataType.TEXT
@@ -70,6 +72,7 @@ class LogicExtractionContext:
     ontology: Optional[Dict[str, Any]] = None
     previous_extractions: List['ExtractionResult'] = field(default_factory=list)
     hints: Optional[List[str]] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
         """Normalise config to LogicExtractionConfig if passed as dict."""
@@ -132,6 +135,7 @@ class ExtractionResult:
     errors: List[str] = field(default_factory=list)
     reasoning_trace: List[str] = field(default_factory=list)
     ontology_alignment: Dict[str, float] = field(default_factory=dict)
+    metrics: Dict[str, Any] = field(default_factory=dict)
 
 
 class LogicExtractor:
@@ -145,7 +149,7 @@ class LogicExtractor:
     - Adapt extraction based on feedback
     
     Example:
-        >>> extractor = LogicExtractor(model="gpt-4")
+        >>> extractor = LogicExtractor(model="gpt-5.3-codex")
         >>> context = LogicExtractionContext(
         ...     data="All employees must complete training within 30 days",
         ...     extraction_mode=ExtractionMode.TDFOL,
@@ -163,24 +167,28 @@ class LogicExtractor:
         use_ipfs_accelerate: bool = True,
         enable_formula_translation: bool = True,
         enable_kg_integration: bool = True,
-        enable_rag_integration: bool = True
+        enable_rag_integration: bool = True,
+        allow_mock_fallback: bool = True,
     ):
         """Initialize the logic extractor.
         
         Args:
-            model: Model name to use (e.g., "gpt-4", "claude-3")
+            model: Model name to use (defaults to Codex 5.3 via llm_router)
             backend: Backend for LLM inference
             use_ipfs_accelerate: Use ipfs_accelerate_py for model inference
             enable_formula_translation: Use TDFOL/CEC translation (Phase 2.2 feature)
             enable_kg_integration: Use knowledge graph integration (Phase 2.4 feature)
             enable_rag_integration: Use RAG integration (Phase 2.5 feature)
+            allow_mock_fallback: Allow test-only mock LLM extraction when real
+                backends fail or are unavailable.
         """
-        self.model = model or "gpt-4"
+        self.model = model or DEFAULT_CODEX_MODEL
         self.backend = backend
         self.use_ipfs_accelerate = use_ipfs_accelerate
         self.enable_formula_translation = enable_formula_translation
         self.enable_kg_integration = enable_kg_integration
         self.enable_rag_integration = enable_rag_integration
+        self.allow_mock_fallback = allow_mock_fallback
         self._llm_call_policy = BackendCallPolicy(
             service_name="logic_extractor_llm",
             timeout_seconds=20.0,
@@ -197,6 +205,7 @@ class LogicExtractor:
             recovery_timeout=self._llm_call_policy.circuit_recovery_timeout,
             expected_exception=Exception,
         )
+        self.llm_call_count = 0
         self._init_backend()
         
         # Track extraction history for improvement
@@ -253,9 +262,9 @@ class LogicExtractor:
             try:
                 # Phase 2.3: Use LLM backend adapter
                 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import get_default_adapter
-                self.backend = get_default_adapter()
-                logger.info("Using LLM backend adapter (Phase 2.3)")
-            except ImportError:
+                self.backend = get_default_adapter(fallback_to_mock=self.allow_mock_fallback)
+                logger.info("Using llm_router LLM backend adapter (Phase 2.3)")
+            except (ImportError, RuntimeError):
                 logger.warning("LLM backend adapter not available, using fallback")
                 self.backend = None
     
@@ -302,6 +311,15 @@ class LogicExtractor:
                 # Store KG context for later use
                 context.metadata = getattr(context, 'metadata', {})
                 context.metadata['kg_context'] = kg_context
+
+            # Deterministic legal modal parser path. This keeps modal legal
+            # extraction reproducible and avoids LLM calls when registry cues
+            # are enough to produce IR.
+            if context.extraction_mode == ExtractionMode.MODAL and str(context.domain).lower() == "legal":
+                deterministic_result = self._extract_with_deterministic_modal_parser(context)
+                if deterministic_result.statements:
+                    self.extraction_history.append(deterministic_result)
+                    return deterministic_result
             
             # Phase 2.2: Use formula translation if available
             if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
@@ -327,7 +345,11 @@ class LogicExtractor:
                 statements=statements,
                 context=context,
                 success=True,
-                ontology_alignment=alignment
+                ontology_alignment=alignment,
+                metrics={
+                    "deterministic_coverage_ratio": 0.0,
+                    "llm_call_count": 1,
+                },
             )
             
             # Phase 2.5: Store successful extraction in RAG
@@ -365,8 +387,98 @@ class LogicExtractor:
                 statements=[],
                 context=context,
                 success=False,
-                errors=[str(e)]
+            errors=[str(e)]
+        )
+
+    def _extract_with_deterministic_modal_parser(
+        self,
+        context: LogicExtractionContext,
+    ) -> ExtractionResult:
+        """Extract legal modal statements without LLM calls."""
+        modal_profile = (context.config.modal_profile or "").lower()
+        parser_backend = "spacy" if modal_profile in {
+            "spacy",
+            "spacy_modal",
+            "spacy_modal_codec_v1",
+        } else "regex"
+        from ipfs_datasets_py.logic.modal import (  # noqa: PLC0415
+            DeterministicModalLogicCodec,
+            ModalLogicCodecConfig,
+            modal_formula_to_text,
+        )
+
+        codec = DeterministicModalLogicCodec(
+            ModalLogicCodecConfig(parser_backend=parser_backend)
+        )
+        codec_result = codec.encode(
+            str(context.data),
+            source="logic_extractor",
+            citation=(context.hints or [None])[0],
+        )
+        modal_ir = codec_result.modal_ir
+        parser_name = codec_result.parser_name
+        statements: List[LogicalStatement] = []
+        for formula in modal_ir.formulas:
+            statement_text = modal_ir.normalized_text[
+                formula.provenance.start_char:formula.provenance.end_char
+            ]
+            statements.append(
+                LogicalStatement(
+                    formula=modal_formula_to_text(formula),
+                    natural_language=statement_text,
+                    confidence=0.82,
+                    formalism=ExtractionMode.MODAL.value,
+                    metadata={
+                        "cue": formula.metadata.get("cue"),
+                        "deterministic_parser": parser_name,
+                        "flogic_ontology_consistent": codec_result.metadata["flogic_ontology_consistent"],
+                        "frame_candidates": list(codec_result.frame_candidates),
+                        "formula_id": formula.formula_id,
+                        "modal_family": formula.operator.family,
+                        "modal_ir_document_hash": modal_ir.canonical_hash(),
+                        "modal_system": formula.operator.system,
+                        "operator": formula.operator.symbol,
+                        "selected_frame": codec_result.selected_frame,
+                    },
+                )
             )
+
+        modal_families = sorted(
+            {statement.metadata["modal_family"] for statement in statements}
+        )
+        modal_systems = sorted(
+            {statement.metadata["modal_system"] for statement in statements}
+        )
+        return ExtractionResult(
+            statements=statements,
+            context=context,
+            success=True,
+            reasoning_trace=[
+                f"Parsed legal modal statements with deterministic {parser_name}"
+            ],
+            metrics={
+                "cosine_similarity": codec_result.losses["cosine_similarity"],
+                "cross_entropy_loss": codec_result.losses["cross_entropy_loss"],
+                "deterministic_coverage_ratio": 1.0,
+                "embedding_cosine_similarity": codec_result.losses["cosine_similarity"],
+                "flogic_ontology_consistent": codec_result.metadata["flogic_ontology_consistent"],
+                "flogic_similarity_score": codec_result.losses["flogic_similarity_score"],
+                "frame_candidate_count": len(codec_result.frame_candidates),
+                "frame_logic_selected_frame": codec_result.selected_frame,
+                "frame_ranking_loss": codec_result.losses["frame_ranking_loss"],
+                "deterministic_parser": parser_name,
+                "llm_call_count": 0,
+                "modal_families": modal_families,
+                "modal_profile": context.config.modal_profile,
+                "modal_systems": modal_systems,
+                "ontology_violation_count": codec_result.losses["ontology_violation_count"],
+                "reconstruction_loss": codec_result.losses["reconstruction_loss"],
+                "spacy_model_name": codec_result.metadata["spacy_model_name"],
+                "spacy_token_count": codec_result.metadata["spacy_token_count"],
+                "spacy_used_fallback_model": codec_result.metadata["spacy_used_fallback_model"],
+                "symbolic_validity_penalty": codec_result.losses["symbolic_validity_penalty"],
+            },
+        )
     
     def _extract_with_translation(
         self,
@@ -427,7 +539,11 @@ class LogicExtractor:
             context=context,
             success=True,
             ontology_alignment=alignment,
-            reasoning_trace=[f"Translated to {formalism.value} using formula translator"]
+            reasoning_trace=[f"Translated to {formalism.value} using formula translator"],
+            metrics={
+                "deterministic_coverage_ratio": 1.0,
+                "llm_call_count": 0,
+            },
         )
         
         self.extraction_history.append(result)
@@ -451,7 +567,11 @@ class LogicExtractor:
             statements=statements,
             context=context,
             success=True,
-            ontology_alignment=alignment
+            ontology_alignment=alignment,
+            metrics={
+                "deterministic_coverage_ratio": 0.0,
+                "llm_call_count": 1,
+            },
         )
     
     def extract_batch(
@@ -478,8 +598,8 @@ class LogicExtractor:
             Chosen extraction mode
         """
         # Simple heuristic - can be made smarter
-        if context.domain == "legal":
-            return ExtractionMode.TDFOL
+        if str(context.domain).lower() == "legal":
+            return ExtractionMode.MODAL
         elif "time" in str(context.data).lower():
             return ExtractionMode.CEC
         elif "must" in str(context.data).lower() or "obligation" in str(context.data).lower():
@@ -566,6 +686,7 @@ class LogicExtractor:
         Returns:
             LLM response text
         """
+        self.llm_call_count += 1
         # Phase 2.3: Use LLM backend adapter
         if self.backend:
             try:
@@ -585,6 +706,8 @@ class LogicExtractor:
                     circuit_breaker=self._llm_call_circuit_breaker,
                 )
                 logger.info(f"Generated response using {response.backend} backend")
+                if str(getattr(response, "backend", "")).lower() == "mock" and not self.allow_mock_fallback:
+                    raise RuntimeError("Mock LLM response received while mock fallback is disabled")
                 return response.text
                 
             except (
@@ -599,8 +722,12 @@ class LogicExtractor:
                 TimeoutError,
             ) as e:
                 logger.warning("LLM backend error: %s, using fallback", _safe_error_text(e))
+                if not self.allow_mock_fallback:
+                    raise RuntimeError("LLM backend failed and mock fallback is disabled") from e
         
         # Fallback mock response for testing
+        if not self.allow_mock_fallback:
+            raise RuntimeError("LLM backend unavailable and mock fallback is disabled")
         logger.warning("Using mock LLM response")
         return self._mock_llm_response(context)
     

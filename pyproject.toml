@@ -9,35 +9,9 @@ description = "IPFS-native decentralized AI data platform"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.12"
-
-# Core dependencies — numpy is always installed automatically.
-# Version bounds mirror requirements.txt to keep all installation paths
-# (pip install ., pip install -r requirements.txt, pip install ipfs_datasets_py)
-# consistent. The python_version markers future-proof the bounds: numpy 1.x is
-# used for Python < 3.14 and numpy 2.x for Python >= 3.14 (even though only
-# Python 3.12+ is currently supported, keeping both lines ensures the dep spec
-# remains valid when Python 3.14 support is added).
-dependencies = [
-    "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
-    "numpy>=2.0.0; python_version >= '3.14'",
-    "ddgs>=9.11.2",
-    "google-api-python-client>=2.192.0",
-    "cloudscraper>=1.2.71",
-    "playwright>=1.40.0",
-    "cfscrape>=2.1.1; python_version < '3.12'",
-    "brave-search==0.1.8",
-    "nltk>=3.8.1",
-    "pdfplumber>=0.11.7",
-    "pymupdf>=1.26.3",
-    "pillow>=10.2.0,<11.0.0",
-    "PyPDF2>=3.0.0",
-    "pypdf>=5.0.0",
-    "pytesseract>=0.3.13",
-    "striprtf>=0.0.29",
-    "tiktoken>=0.6.0",
-    "pysbd",
-    "surya-ocr>=0.14.6; platform_system != 'Windows' and python_version < '3.14'",
-]
+# Dependencies are resolved dynamically from setup.py so editable installs can
+# prefer the vendored ipfs_kit_py/ipfs_accelerate_py checkouts when present.
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 # IPLD / CAR format extras
@@ -55,15 +29,157 @@ knowledge_graphs = [
     "transformers>=4.30.0",
     "scipy>=1.7.0",
     "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
     "plotly>=5.9.0",
     "rdflib>=6.0.0",
+    "neo4j>=5.20.0",
+]
+logic = [
+    "nltk>=3.8.1",
+    "symbolicai>=1.14.0,<2.0.0",
+]
+# Python bindings used by theorem-prover integrations. Native solver binaries
+# remain lazy and user-local; use ipfs-datasets-install-provers for managed
+# installation and see docs/security_verification/lazy_theorem_prover_installation.md.
+theorem-provers = [
+    "z3-solver>=4.12.0,<5.0.0",
+    "cvc5>=1.0.0,<2.0.0",
+    "symbolicai>=1.14.0,<2.0.0",
+]
+file_conversion = [
+    "markitdown>=0.1.0",
+    "aiohttp>=3.8.0",
+    "playwright>=1.40.0",
+    "striprtf>=0.0.29",
+    "python-docx>=1.1.2",
+    "yt-dlp>=2025.6.30",
+    "ffmpeg-python>=0.2.0",
+]
+vectors = [
+    "sentence-transformers>=3.0.0,<6.0.0",
+    "faiss-cpu>=1.7.0; platform_system == 'Windows'",
+    "faiss-cpu>=1.8.0; platform_system != 'Windows'",
+    "scikit-learn>=1.3.0,<2.0.0",
+    "qdrant-client>=1.0.0",
+    "elasticsearch>=8.0.0",
+]
+groth16 = [
+    "jsonschema>=4.0.0",
+]
+profile-f-zk = [
+    # Rust prover/key material is intentionally installed or provisioned
+    # separately so normal dataset installs do not acquire a trusted setup.
+    "jsonschema>=4.0.0",
+]
+provekit = [
+    "jsonschema>=4.0.0",
+]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.0",
+]
+legal_netherlands = [
+    "pyarrow>=10.0.0",
+    "huggingface-hub>=0.34.0",
+    "datasets>=2.10.0",
+    "faiss-cpu>=1.7.0; platform_system == 'Windows'",
+    "faiss-cpu>=1.8.0; platform_system != 'Windows'",
+    "scikit-learn>=1.3.0,<2.0.0",
+]
+scraping = [
+    "beautifulsoup4>=4.12.0,<5.0.0",
+    "newspaper3k>=0.2.8,<1.0.0",
+    "readability-lxml>=0.8.0,<1.0.0",
+    "lxml_html_clean>=0.4.0",
+    "selenium>=4.15.0,<4.16.0",
+    "scrapy>=2.11.0",
+    "autoscraper>=1.1.14",
+    "cdx-toolkit>=0.9.37",
+    "wayback>=0.4.5",
+    "internetarchive>=5.5.0",
+    "aiohttp>=3.8.0",
+]
+test = [
+    "pytest>=7.3.1",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-timeout>=2.0.2",
+    "pytest-xdist>=3.8.0",
+    "pytest-parallel>=0.1.1",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "hypothesis>=6.0.0",
+]
+all = [
+    "spacy>=3.0.0",
+    "networkx>=2.8.0",
+    "transformers>=4.30.0",
+    "scipy>=1.7.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.9.0",
+    "rdflib>=6.0.0",
+    "neo4j>=5.20.0",
+    "aiohttp>=3.8.0",
+    "python-docx>=1.1.2",
+    "yt-dlp>=2025.6.30",
+    "ffmpeg-python>=0.2.0",
+    "jsonschema>=4.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.0",
+    "sentence-transformers>=3.0.0,<6.0.0",
+    "faiss-cpu>=1.7.0; platform_system == 'Windows'",
+    "faiss-cpu>=1.8.0; platform_system != 'Windows'",
+    "scikit-learn>=1.3.0,<2.0.0",
+    "qdrant-client>=1.0.0",
+    "elasticsearch>=8.0.0",
+    "selenium>=4.15.0,<4.16.0",
+    "newspaper3k>=0.2.8,<1.0.0",
+    "readability-lxml>=0.8.0,<1.0.0",
+    "lxml_html_clean>=0.4.0",
+    "scrapy>=2.11.0",
+    "autoscraper>=1.1.14",
+    "cdx-toolkit>=0.9.37",
+    "wayback>=0.4.5",
+    "internetarchive>=5.5.0",
+    "symbolicai>=1.14.0,<2.0.0",
 ]
 
 [tool.setuptools]
-packages = {find = {}}
+packages = {find = {exclude = [
+    "ipfs_kit_py*",
+    "ipfs_accelerate_py*",
+    "ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type.test*",
+    "ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type.test*",
+]}}
 
 [tool.setuptools.package-data]
-ipfs_datasets_py = ["py.typed"]
+ipfs_datasets_py = [
+    "py.typed",
+    "processors/groth16_backend/Cargo.toml",
+    "processors/groth16_backend/Cargo.lock",
+    "processors/groth16_backend/build.sh",
+    "processors/groth16_backend/bin/*/groth16",
+    "processors/groth16_backend/artifacts/v*/proving_key.bin",
+    "processors/groth16_backend/artifacts/v*/verifying_key.bin",
+    "processors/groth16_backend/src/*.rs",
+    "processors/groth16_backend/schemas/*.json",
+    "processors/groth16_backend/contracts/*.sol",
+    "processors/provekit_backend/README.md",
+    "processors/provekit_backend/build.sh",
+    "logic/zkp/provekit/circuits/*/Nargo.toml",
+    "logic/zkp/provekit/circuits/*/src/*.nr",
+]
+
+[project.scripts]
+netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main"
+ipfs-netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main"
+ipfs-datasets-sms-bridge = "ipfs_datasets_py.messaging.sms_bridge:main"
+ipfs-datasets-install-provers = "ipfs_datasets_py.logic.integration.bridges.prover_installer:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,0 +1,37 @@
+{
+  "artifact_cid": "bafkreia7aor4v543hmaer3ghpn23r2ev34v4hkcdyetduyedmcwojfc2ai",
+  "fuzz_domain": "cancellation_expiry_reconnect_race",
+  "legacy_task_id": "PORTAL-CXTP-138",
+  "minimal_counterexample": {
+    "fuzz_domain": "cancellation_expiry_reconnect_race",
+    "mutation_keys": [
+      "race_condition"
+    ],
+    "payload_sha256": "34b05df3905bf7ccacb8d3e62cdf69da0300639a4475c21da92dbe285322d6ba",
+    "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+  },
+  "minimization": {
+    "algorithm": "deterministic-one-domain-delta-minimizer/v1",
+    "fuzz_domain": "cancellation_expiry_reconnect_race",
+    "minimality_claim": "single registered fuzz domain with the smallest categorical mutation marker set that still triggers the target claim",
+    "minimized_payload_sha256": "34b05df3905bf7ccacb8d3e62cdf69da0300639a4475c21da92dbe285322d6ba",
+    "raw_sensitive_material_recorded": false,
+    "removed_mutation_keys": [],
+    "retained_mutation_keys": [
+      "race_condition"
+    ],
+    "status": "minimal"
+  },
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "mutation_id": "attack-reconnect-before-submit-result-race",
+  "payload_sha256": "34b05df3905bf7ccacb8d3e62cdf69da0300639a4475c21da92dbe285322d6ba",
+  "raw_sensitive_material_recorded": false,
+  "redaction_policy": "categorical_mutation_markers_only",
+  "result": "target_claim_triggered",
+  "schema_version": "xaman-testnet-fuzz-counterexample/v1",
+  "target_claim_id": "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed",
+  "task_id": "PORTAL-CXTP-148",
+  "triggered_claim_ids": [
+    "xaman-testnet-claim:submission-ui-attempt-and-result-are-observed"
+  ]
+}

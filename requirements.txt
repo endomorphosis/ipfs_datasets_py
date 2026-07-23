@@ -1,26 +1,26 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
+# Optional theorem-prover Python bindings are kept separate so regular installs
+# do not pull them in: pip install -r requirements-theorem-provers.txt
 
-# GitHub dependencies - always install from main branch
-git+https://github.com/endomorphosis/ipfs_kit_py.git@main
-git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
-
-# Local submodule dependencies
-# -e ./ipfs_kit_py  # Commented out - now using GitHub direct install above
-# -e ./ipfs_accelerate_py  # Commented out - now using GitHub direct install above
+# Local submodule dependencies. These avoid fragile nested GitHub submodule
+# fetches and match the dynamic setup.py resolver used by editable installs.
+-e ./ipfs_kit_py[api,ipld,ai_ml]
+-e ./ipfs_accelerate_py
 
 # Core Python packages
-numpy>=1.21.0,<2.0.0; python_version < '3.14'
+numpy>=1.26.4,<=2.1.3; python_version < '3.14'
 numpy>=2.0.0; python_version >= '3.14'
 pandas>=1.5.0,<3.0.0
 requests>=2.25.0,<3.0.0
+urllib3>=2.5.0,<3.0.0
 
 # Caching for CLI tools
 cachetools>=5.3.0,<6.0.0
 fsspec>=2023.1.0,<=2024.6.1
 
 # Testing framework
-pytest>=7.3.1,<9.0.0
+pytest>=9.0.3,<10.0.0
 pytest-mock>=3.12.0
 pytest-cov>=4.1.0,<6.0.0
 hypothesis>=6.0.0
@@ -49,30 +49,41 @@ mypy>=1.0.0,<2.0.0
 flake8>=6.0.0,<8.0.0
 
 # Data processing
-pyarrow>=15.0.0,<21.0.0; python_version < '3.14'
-datasets>=2.0.0,<4.0.0
+pyarrow>=23.0.1,<26.0.0; python_version < '3.14'
+datasets>=4.5.0,<5.0.0
+dill>=0.4.0,<0.4.1
 jsonschema>=4.0.0,<5.0.0
 jsonpatch>=1.33
 pydantic>=2.0.0,<3.0.0
 pydantic-settings>=2.0.0
 jsonnet>=0.20.0; platform_system != 'Windows'  # Jsonnet data templating language support
+# Torch 2.13.0 contains the security fix required by GHSA-rrmf-rvhw-rf47.
+torch>=2.13.0,<3.0.0; platform_system == 'Linux' and platform_machine == 'aarch64'
 
 # PDF processing
 networkx>=3.1
 scipy>=1.7.0
 matplotlib>=3.5.0
+seaborn>=0.12.0
 plotly>=5.9.0
 rdflib>=6.0.0
+neo4j>=5.20.0
+markitdown>=0.1.0
+python-docx>=1.1.2
 pdfplumber>=0.11.7
 PyPDF2>=3.0.0
 pytesseract>=0.3.13
 tiktoken>=0.6.0
 opencv-contrib-python-headless>=4.11.0.86 # NOTE THis library errors with "Clock skew detected"
+# symbolicai/ultralytics require the opencv-python distribution name; keep it
+# below the NumPy 2-only wheel line so pip check stays compatible with NumPy 1.26.
+opencv-python>=4.11.0.86,<4.13.0
 
 # File type detection
 python-magic>=0.4.27; platform_system != 'Windows'
 python-magic-bin>=0.4.14; platform_system == 'Windows'
-magika>=0.5.0; python_version < '3.14'
+# Keep magika compatible with markitdown 0.1.x, which requires the 0.6 series.
+magika>=0.6.1,<0.7.0; python_version < '3.14'
 
 Flask>=3.1.1
 duckdb>=1.3.2
@@ -81,9 +92,9 @@ pymupdf>=1.26.3
 pypdf>=5.0.0
 striprtf>=0.0.29
 yt-dlp>=2025.6.30
-surya-ocr>=0.14.6; python_version < '3.14'
-# Keep Pillow compatible with surya-ocr (requires Pillow < 11).
-pillow>=10.2.0,<11.0.0
+# Surya remains runtime-optional because its published releases require Pillow < 11.
+# Do not install it by default while supported Pillow releases are 12.2.0 or newer.
+pillow>=12.2.0,<13.0.0
 ffmpeg-python>=0.2.0
 openai>=1.97.1
 toml>=0.10.2
@@ -94,7 +105,9 @@ mcp>=1.2.0
 
 # libp2p must be installed from git main
 libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
-protobuf>=3.20.0
+protobuf>=5.27.0
+pymultihash>=0.8.2
+dnspython>=2.2.1
 eth-hash>=0.3.2
 eth-keys>=0.5.0
 
@@ -110,12 +123,15 @@ reportlab>=4.4.3
 pyfakefs
 moviepy
 cryptography # For encrypting/decrypting test files
+cffi>=1.16.0
 
 # ipld crap
 ipfsspec<0.6.0
 ipld-car
 ipld-dag-pb
 dag-cbor>=0.3.3
+libipld>=3.3.2
+multiformats>=0.3.0
 
 # All this other crap in order to get the debugger to fucking work.
 python-slugify
@@ -138,8 +154,11 @@ autoscraper>=1.1.14  # Intelligent web scraping
 ipwb>=0.2024.10.24  # InterPlanetary Wayback Machine
 warcio>=1.7.4  # WARC file processing
 beautifulsoup4>=4.12.0  # HTML parsing for scraping
+newspaper3k>=0.2.8,<1.0.0  # Article extraction via `newspaper`
+readability-lxml>=0.8.0,<1.0.0  # Readability extraction via `readability`
+lxml_html_clean>=0.4.0  # Required by newspaper/readability with modern lxml
 playwright>=1.40.0  # Browser rendering for JS-heavy legal portals
-selenium>=4.15.0  # Browser automation for dynamic content
+selenium>=4.15.0,<4.16.0
 scrapy>=2.11.0  # Advanced web scraping framework
 aiohttp>=3.8.0  # Async HTTP client for web archiving
 
@@ -148,20 +167,21 @@ ddgs>=9.11.2  # DuckDuckGo search API (no key required)
 google-api-python-client>=2.100.0  # Google Custom Search Engine API
 cloudscraper>=1.2.71  # Cloudflare-aware requests wrapper for search/scrape fallbacks
 cfscrape>=2.1.1; python_version < '3.12'  # Legacy Cloudflare fallback; incompatible with urllib3 on Python 3.12+
-# 0.2.0 currently publishes invalid metadata on PyPI; 0.1.8 is the newest installable release.
-brave-search==0.1.8  # Brave Search client package
+# Brave Search is intentionally excluded from the base environment.
+# The installable release line depends on older httpx, which conflicts with the MCP stack.
+# Install it separately only if you need that client in an isolated environment.
 
 # Add these one by one after basic setup works:
-datasets>=2.10.0,<3.0.0
+datasets>=4.5.0,<5.0.0
 huggingface-hub>=0.34.0,<1.0.0
 # Vector store backend
 faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0,<6.0.0
+scikit-learn>=1.3.0,<2.0.0
 # transformers>=4.0.0,<5.0.0
-# torch>=1.9.0,<3.0.0
 # Alert system dependencies
 discord.py>=2.0.0
 aiohttp>=3.8.0
 PyYAML>=6.0
 pytest-asyncio>=0.21.0
-magika>=1.0.1; python_version < '3.14'
 python-magic>=0.4.27; platform_system != 'Windows'

@@ -16,7 +16,7 @@ Analogous to AdversarialSession in the complaint-generator harness.
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             TheoremSession, LogicExtractor, LogicCritic, SessionConfig
         )
-        extractor = LogicExtractor(model="gpt-4")
+        extractor = LogicExtractor(model="gpt-5.3-codex")
         critic = LogicCritic(use_provers=['z3'])
         session = TheoremSession(extractor, critic, SessionConfig(max_rounds=10))
         result = session.run(data="All employees must complete training")
@@ -133,7 +133,7 @@ class TheoremSession:
         >>> from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         ...     TheoremSession, LogicExtractor, LogicCritic, SessionConfig
         ... )
-        >>> extractor = LogicExtractor(model="gpt-4")
+        >>> extractor = LogicExtractor(model="gpt-5.3-codex")
         >>> critic = LogicCritic(use_provers=['z3'])
         >>> session = TheoremSession(extractor, critic)
         >>> result = session.run(data="All employees must complete training")
@@ -186,13 +186,16 @@ class TheoremSession:
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
             LogicExtractionContext, DataType, ExtractionMode
         )
+        from ipfs_datasets_py.optimizers.common.extraction_contexts import LogicExtractionConfig
         
         # Initialize extraction context
         extraction_context = LogicExtractionContext(
             data=data,
             data_type=context.get('data_type', DataType.TEXT) if context else DataType.TEXT,
-            extraction_mode=context.get('extraction_mode', ExtractionMode.AUTO) if context else ExtractionMode.AUTO,
             domain=context.get('domain', 'general') if context else 'general',
+            config=LogicExtractionConfig(
+                extraction_mode=context.get('extraction_mode', ExtractionMode.AUTO) if context else ExtractionMode.AUTO,
+            ),
             ontology=context.get('ontology') if context else None
         )
         

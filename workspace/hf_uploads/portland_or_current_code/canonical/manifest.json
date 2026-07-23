@@ -1,0 +1,86 @@
+{
+  "input": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current/pages.parquet",
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts",
+  "canonical_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.parquet",
+  "source_row_count": 3052,
+  "canonical_row_count": 3052,
+  "artifact": {
+    "corpus_key": "municipal_laws",
+    "dataset_id": "justicedao/american_municipal_law",
+    "canonical_parquet_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.parquet",
+    "updated_canonical_parquet_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.parquet",
+    "row_count": 3052,
+    "join_field": "ipfs_cid",
+    "state_code": "OR",
+    "missing_join_values_filled": 0,
+    "cid_index_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_cid_index.parquet",
+    "bm25_documents_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_bm25.parquet",
+    "knowledge_graph_entities_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_knowledge_graph_entities.parquet",
+    "knowledge_graph_relationships_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_knowledge_graph_relationships.parquet",
+    "knowledge_graph_summary_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_knowledge_graph_summary.json",
+    "corpus_quality_summary": {
+      "corpus_key": "municipal_laws",
+      "row_count": 3052,
+      "status": "healthy",
+      "issues": [],
+      "navigation_like_row_count": 454,
+      "navigation_like_ratio": 0.14875491480996067,
+      "identified_row_count": 3052,
+      "identified_row_ratio": 1.0,
+      "section_like_identifier_count": 2791,
+      "section_like_identifier_ratio": 0.9144823066841415,
+      "sample_rows": [
+        {
+          "title": "1.01.035 Auditor to Specify the Form and Style of Code Provisions.",
+          "identifier": "Portland City Code 1.01.035",
+          "source_id": "portland-code-1-01-035",
+          "classification": "navigation_like"
+        },
+        {
+          "title": "1.05.040 Notice Requirements.",
+          "identifier": "Portland City Code 1.05.040",
+          "source_id": "portland-code-1-5-040",
+          "classification": "navigation_like"
+        },
+        {
+          "title": "1.05.090 Temporary and Emergency Administrative Rules.",
+          "identifier": "Portland City Code 1.05.090",
+          "source_id": "portland-code-1-5-090",
+          "classification": "navigation_like"
+        },
+        {
+          "title": "10.70.070 Administrative Review.",
+          "identifier": "Portland City Code 10.70.070",
+          "source_id": "portland-code-10-70-070",
+          "classification": "navigation_like"
+        },
+        {
+          "title": "10.80.030 Financial Responsibility.",
+          "identifier": "Portland City Code 10.80.030",
+          "source_id": "portland-code-10-80-030",
+          "classification": "navigation_like"
+        }
+      ]
+    },
+    "recovery_recommendation": null,
+    "recovery_manifest_draft": null,
+    "recovery_execution": null,
+    "llm_knowledge_graph_summary": null,
+    "semantic_index": {
+      "corpus_key": "municipal_laws",
+      "dataset_id": "justicedao/american_municipal_law",
+      "canonical_parquet_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.parquet",
+      "embeddings_parquet_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_embeddings.parquet",
+      "faiss_index_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.faiss",
+      "faiss_metadata_path": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR_faiss_metadata.parquet",
+      "row_count": 3052,
+      "vector_dimension": 384,
+      "backend": "embeddings_router",
+      "provider": "auto",
+      "model_name": "thenlper/gte-small",
+      "join_field": "ipfs_cid",
+      "state_code": "OR"
+    },
+    "publish_result": null
+  }
+}

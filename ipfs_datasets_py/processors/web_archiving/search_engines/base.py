@@ -5,10 +5,11 @@ This module defines the abstract interface that all search engine
 adapters must implement, along with common data structures.
 """
 
-import time
 import logging
+import os
+import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
@@ -100,6 +101,7 @@ class SearchEngineAdapter(ABC):
         self._last_request_time: float = 0.0
         self._request_count: int = 0
         self._cache: Dict[str, tuple] = {}  # (response, timestamp)
+        self._persistent_cache = self._build_persistent_cache()
     
     @abstractmethod
     def search(
@@ -187,19 +189,22 @@ class SearchEngineAdapter(ABC):
         if not self.config.cache_enabled:
             return None
         
-        if cache_key not in self._cache:
-            return None
-        
-        response, timestamp = self._cache[cache_key]
-        
-        # Check if cache entry is still valid
-        if time.time() - timestamp > self.config.cache_ttl_seconds:
+        if cache_key in self._cache:
+            response, timestamp = self._cache[cache_key]
+
+            # Check if cache entry is still valid
+            if time.time() - timestamp <= self.config.cache_ttl_seconds:
+                response.from_cache = True
+                return response
+
             del self._cache[cache_key]
-            return None
-        
-        # Mark as from cache
-        response.from_cache = True
-        return response
+
+        persistent_response = self._get_from_persistent_cache(cache_key)
+        if persistent_response is not None:
+            self._cache[cache_key] = (persistent_response, time.time())
+            return persistent_response
+
+        return None
     
     def _save_to_cache(self, cache_key: str, response: SearchEngineResponse) -> None:
         """Save response to cache.
@@ -212,6 +217,7 @@ class SearchEngineAdapter(ABC):
             return
         
         self._cache[cache_key] = (response, time.time())
+        self._save_to_persistent_cache(cache_key, response)
     
     def clear_cache(self) -> None:
         """Clear all cached responses."""
@@ -230,4 +236,106 @@ class SearchEngineAdapter(ABC):
             "cache_entries": cache_entries,
             "cache_enabled": self.config.cache_enabled,
             "rate_limit": self.config.rate_limit_per_minute,
+            "persistent_cache_enabled": self._persistent_cache is not None,
         }
+
+    @staticmethod
+    def _env_bool(*names: str) -> Optional[bool]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip().lower()
+            if not raw:
+                continue
+            if raw in {"1", "true", "yes", "on"}:
+                return True
+            if raw in {"0", "false", "no", "off"}:
+                return False
+        return None
+
+    def _build_persistent_cache(self) -> Any:
+        enabled = self._env_bool(
+            "IPFS_DATASETS_SEARCH_CACHE_ENABLED",
+            "LEGAL_SCRAPER_SEARCH_CACHE_ENABLED",
+        )
+        if enabled is False:
+            return None
+
+        cache_dir = (
+            os.environ.get("IPFS_DATASETS_SEARCH_CACHE_DIR")
+            or os.environ.get("LEGAL_SCRAPER_SEARCH_CACHE_DIR")
+        )
+        if not cache_dir and enabled is not True:
+            return None
+
+        mirror = self._env_bool(
+            "IPFS_DATASETS_SEARCH_CACHE_IPFS_MIRROR",
+            "LEGAL_SCRAPER_SEARCH_CACHE_IPFS_MIRROR",
+        )
+        try:
+            from ...legal_scrapers.shared_fetch_cache import SharedFetchCache
+
+            return SharedFetchCache(cache_dir=cache_dir, enable_ipfs_mirroring=bool(mirror))
+        except Exception as exc:
+            logger.warning("Persistent search cache unavailable: %s", exc)
+            return None
+
+    def _persistent_cache_url(self, cache_key: str) -> str:
+        engine = str(self.config.engine_type or "search").lower()
+        return f"search-cache://{engine}/{cache_key}"
+
+    def _get_from_persistent_cache(self, cache_key: str) -> Optional[SearchEngineResponse]:
+        if self._persistent_cache is None:
+            return None
+        try:
+            payload = self._persistent_cache.load(
+                namespace="search_results",
+                url=self._persistent_cache_url(cache_key),
+            )
+            if not payload:
+                return None
+
+            cached_at = float(payload.get("cached_at_epoch") or 0.0)
+            if cached_at and time.time() - cached_at > self.config.cache_ttl_seconds:
+                return None
+
+            response = SearchEngineResponse(
+                results=[
+                    SearchEngineResult(**result)
+                    for result in payload.get("results", [])
+                    if isinstance(result, dict)
+                ],
+                engine=str(payload.get("engine") or self.config.engine_type),
+                query=str(payload.get("query") or ""),
+                total_results=int(payload.get("total_results") or 0),
+                page=int(payload.get("page") or 1),
+                took_ms=float(payload.get("took_ms") or 0.0),
+                from_cache=True,
+                metadata=dict(payload.get("metadata") or {}),
+            )
+            response.metadata.setdefault("persistent_cache", payload.get("_cache") or {})
+            return response
+        except Exception as exc:
+            logger.warning("Persistent search cache read failed for %s: %s", cache_key, exc)
+            return None
+
+    def _save_to_persistent_cache(self, cache_key: str, response: SearchEngineResponse) -> None:
+        if self._persistent_cache is None:
+            return
+        try:
+            payload = {
+                "cached_at_epoch": time.time(),
+                "results": [asdict(result) for result in response.results],
+                "engine": response.engine,
+                "query": response.query,
+                "total_results": response.total_results,
+                "page": response.page,
+                "took_ms": response.took_ms,
+                "metadata": dict(response.metadata or {}),
+            }
+            self._persistent_cache.save(
+                namespace="search_results",
+                url=self._persistent_cache_url(cache_key),
+                payload=payload,
+                payload_name=f"search_results_{self.config.engine_type}_{cache_key[:16]}",
+            )
+        except Exception as exc:
+            logger.warning("Persistent search cache write failed for %s: %s", cache_key, exc)

@@ -1,0 +1,61 @@
+{
+  "acceptance_decision": "REJECT_PROOF_PROMOTION",
+  "artifact_cid": "bafkreibw27yjrdmejqrwgano7246mnaohiivohymktd7in3v35fbl6ffay",
+  "blocked_by_assumptions": [
+    "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+    "xaman-testnet-assumption:redacted-categorical-evidence-only"
+  ],
+  "claim_id": "xaman-testnet-claim:account-provenance-is-fresh-testnet-only",
+  "claim_version": "1.0",
+  "counterexample_kind": "blocking_acceptance_counterexample",
+  "domain": "store",
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "owner_actions": [
+    {
+      "action": "reviewed wallet provenance trace with allowed account identifiers redacted by policy",
+      "assumption_id": "xaman-testnet-assumption:fresh-account-boundary-is-verifier-attested",
+      "description": "Fresh account provenance is accepted only as reviewed categorical verifier evidence; no account address, seed, or credential material is retained.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "wallet-verification",
+      "required_evidence_to_clear": [
+        "reviewed wallet provenance trace with allowed account identifiers redacted by policy"
+      ],
+      "status": "BLOCKING"
+    },
+    {
+      "action": "reviewer signoff and replacement evidence bundle",
+      "assumption_id": "xaman-testnet-assumption:redacted-categorical-evidence-only",
+      "description": "The artifacts retain categorical outcomes, source digests, and redaction digests only; raw security material is intentionally excluded.",
+      "evidence_expires_at": "2027-01-11T00:00:00Z",
+      "owner": "security-verification",
+      "required_evidence_to_clear": [
+        "reviewer signoff and replacement evidence bundle"
+      ],
+      "status": "BLOCKING"
+    }
+  ],
+  "raw_sensitive_material_recorded": false,
+  "result": "COUNTEREXAMPLE",
+  "schema_version": "xaman-testnet-smt-counterexample/v1",
+  "security_result": "NON_SECURE_TESTNET_RESULT",
+  "severity": "blocking",
+  "smtlib_artifact": {
+    "artifact_cid": "bafkreihpxuiz4dl47rwh3gt2kttdez42dbhbrs2oicbs2y5zfdakjole74",
+    "assertion_count": 3,
+    "path": "security_ir_artifacts/corpora/xaman-app/testnet/smtlib/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.smt2"
+  },
+  "solver_blockers": [],
+  "solver_tuple": {
+    "agreement": true,
+    "cvc5": "sat",
+    "z3": "sat"
+  },
+  "soundness_notes": [
+    "This SMT-LIB query models Xaman proof-acceptance blocking conditions, not native cryptographic implementation correctness.",
+    "A SAT result for this query classifies the claim as blocked until the listed assumptions are evidenced and rechecked."
+  ],
+  "task_id": "PORTAL-CXTP-133",
+  "worker_classification": "blocked_assumption",
+  "worker_classification_reason": "both solvers found unresolved blocking assumptions"
+}

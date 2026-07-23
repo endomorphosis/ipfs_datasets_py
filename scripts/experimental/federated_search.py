@@ -38,21 +38,23 @@ except ImportError:
     FAISS_AVAILABLE = False
 
 try:
-    from multiaddr import Multiaddr
-    import py_libp2p # TODO Debug import of py_libp2p
-    from py_libp2p.network.stream.net_stream_interface import INetStream # TODO INetStream is not defined in the original code. Also does this library even exist?
-    LIBP2P_AVAILABLE = True
+    from ipfs_accelerate_py.mcplusplus_module.p2p.libp2p_runtime import have_libp2p_runtime
+
+    LIBP2P_AVAILABLE = have_libp2p_runtime()
 except ImportError:
     LIBP2P_AVAILABLE = False
-    # Create stub classes for type checking
-    class INetStream:
-        pass
 
-# Import our own modules
-from ipfs_datasets_py.libp2p_kit import (
-    NetworkProtocol, # TODO NetworkProtocol is not defined in the original code
+# Create a local type stub for stream annotations; runtime streams are supplied
+# by the MCP++ libp2p transport.
+class INetStream:
+    pass
+
+# Import legacy distributed-dataset data models. Runtime P2P host creation is
+# handled by the MCP++ libp2p runtime in ipfs_accelerate_py.
+from ipfs_datasets_py.p2p_networking.libp2p_kit_full import (
+    NetworkProtocol,
     LibP2PNotAvailableError,
-    ShardMetadata, # TODO ShardMetadata is not defined in the original code
+    ShardMetadata,
 )
 
 T = TypeVar('T')
@@ -1089,12 +1091,27 @@ class FederatedSearch:
         timeout = query.timeout_ms / 1000 if query.timeout_ms else self.default_timeout_ms / 1000
 
         # Execute tasks with timeout
-        try:
-            results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=True)
-        except TimeoutError:
+        results: List[Any] = [None] * len(tasks)
+
+        async def _collect_result(index: int, task: Any) -> None:
+            try:
+                results[index] = await task
+            except Exception as exc:
+                results[index] = exc
+
+        with anyio.move_on_after(timeout) as cancel_scope:
+            async with anyio.create_task_group() as task_group:
+                for index, task in enumerate(tasks):
+                    task_group.start_soon(_collect_result, index, task)
+
+        if cancel_scope.cancelled_caught:
             logging.warning(f"Search timed out after {timeout} seconds")
             results = [{"status": "error", "message": f"Timeout after {timeout} seconds"}] * len(tasks)
+        else:
+            results = [
+                result if result is not None else RuntimeError("Search task completed without a result")
+                for result in results
+            ]
 
         # Process results
         processed_results = []

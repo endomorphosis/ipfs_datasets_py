@@ -18,20 +18,44 @@ from huggingface_hub import HfApi, hf_hub_url, list_repo_files
 import requests
 
 
-def _range_magic_check(url: str, timeout: int = 60) -> Dict[str, Any]:
-    head = requests.get(url, headers={"Range": "bytes=0-3"}, allow_redirects=True, timeout=timeout)
-    foot = requests.get(url, headers={"Range": "bytes=-4"}, allow_redirects=True, timeout=timeout)
-    head.raise_for_status()
-    foot.raise_for_status()
+def _resolve_token(token: Optional[str]) -> Optional[str]:
+    explicit = str(token or "").strip()
+    if explicit:
+        return explicit
+    try:
+        from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import _resolve_hf_token
 
-    head_bytes = head.content
-    foot_bytes = foot.content
-    return {
-        "header_hex": head_bytes.hex(),
-        "footer_hex": foot_bytes.hex(),
-        "header_ok": head_bytes == b"PAR1",
-        "footer_ok": foot_bytes == b"PAR1",
-    }
+        return _resolve_hf_token()
+    except Exception:
+        return None
+
+
+def _range_magic_check(url: str, timeout: int = 60) -> Dict[str, Any]:
+    import time
+    for attempt in range(3):
+        try:
+            head = requests.get(url, headers={"Range": "bytes=0-3"}, allow_redirects=True, timeout=timeout)
+            foot = requests.get(url, headers={"Range": "bytes=-4"}, allow_redirects=True, timeout=timeout)
+            if head.status_code == 429 or foot.status_code == 429:
+                wait = 15 * (attempt + 1)
+                time.sleep(wait)
+                continue
+            head.raise_for_status()
+            foot.raise_for_status()
+            head_bytes = head.content
+            foot_bytes = foot.content
+            return {
+                "header_hex": head_bytes.hex(),
+                "footer_hex": foot_bytes.hex(),
+                "header_ok": head_bytes == b"PAR1",
+                "footer_ok": foot_bytes == b"PAR1",
+            }
+        except requests.exceptions.HTTPError as exc:
+            if attempt < 2:
+                time.sleep(15 * (attempt + 1))
+                continue
+            return {"error": str(exc), "header_ok": False, "footer_ok": False}
+    return {"error": "rate_limited_after_retries", "header_ok": False, "footer_ok": False}
 
 
 def _duckdb_remote_probe(url: str, cid_column: str) -> Dict[str, Any]:
@@ -77,19 +101,29 @@ def publish(
     do_verify: bool,
     cid_column: str,
 ) -> Dict[str, Any]:
+    token = _resolve_token(token)
     api = HfApi(token=token)
 
     if create_repo:
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
 
-    upload_info = api.upload_folder(
-        folder_path=str(local_dir),
-        repo_id=repo_id,
-        repo_type="dataset",
-        path_in_repo=path_in_repo,
-        commit_message=commit_message,
-        allow_patterns=allow_patterns,
-    )
+    upload_info = None
+    try:
+        upload_info = api.upload_folder(
+            folder_path=str(local_dir),
+            repo_id=repo_id,
+            repo_type="dataset",
+            path_in_repo=path_in_repo,
+            commit_message=commit_message,
+            allow_patterns=allow_patterns,
+        )
+    except Exception as exc:
+        msg = str(exc)
+        # HF raises when nothing changed — treat as success (files already current)
+        if "no files have been modified" in msg.lower() or "nothing to commit" in msg.lower() or "empty commit" in msg.lower():
+            upload_info = "no_change_already_current"
+        else:
+            raise
 
     report: Dict[str, Any] = {
         "repo_id": repo_id,

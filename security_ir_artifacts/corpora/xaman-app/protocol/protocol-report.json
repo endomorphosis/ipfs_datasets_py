@@ -1,0 +1,786 @@
+{
+  "artifact_cid": "sha256:711950dfd304b8a98dcde03ef6f826cd77d62d286c26110ea714c42ac849ea2c",
+  "blockers": [
+    {
+      "code": "PROTOCOL_MODEL_NOT_CHECKED",
+      "message": "Projection report generation intentionally omits Tamarin/ProVerif execution; run protocol solver checks before treating this as checked."
+    }
+  ],
+  "corpus": {
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "name": "xaman-app",
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App"
+  },
+  "covered_claim_ids": [
+    "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+    "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+    "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+    "xaman-claim:backend-payload-service-is-trusted-not-proved"
+  ],
+  "evidence_scope": {
+    "missing_evidence_fact_ids": [],
+    "missing_gap_record_ids": [],
+    "not_claimed": [
+      "Backend payload API authorization, creation policy, atomic single-use enforcement, and replay resistance.",
+      "Native camera, OS deep-link, push notification, and third-party string decoder correctness.",
+      "Ledger consensus, node honesty, and finality beyond client submit/verify calls.",
+      "Deployed mobile binary or production backend equivalence to the reviewed source.",
+      "Native keychain/keystore implementation security.",
+      "Biometric spoof resistance or platform enrollment guarantees.",
+      "Passcode KDF resistance to offline attack.",
+      "Cryptographic correctness of xrpl-accountlib, Tangem SDK, or Tangem firmware.",
+      "Equivalence between this source commit and any deployed binary."
+    ],
+    "source_backed_claims": [
+      "Client-side remote payload intake verifies request_json digest before review.",
+      "Client-side remote payload intake blocks already-resolved and expired payloads when the backend reports those states.",
+      "User approval revalidates non-generated payloads before signing.",
+      "User or app rejection patches backend rejection state for non-generated payloads.",
+      "Review preflight and signing bind forced network, active network definitions, and non-legacy NetworkID population.",
+      "Signed payload backend patching is separate from optional ledger broadcast.",
+      "Ledger submit has local signed-state, duplicate-submit, and abort guards.",
+      "Full-access software account secrets are routed through the native vault facade.",
+      "Realm datastore encryption key material is obtained through the vault facade.",
+      "Generic authentication overlays require passcode or enabled biometric success before caller success callbacks.",
+      "Signing flows use Vault overlay authentication by encryption level before returning signed blobs.",
+      "Submission requires a signed blob and rejects duplicate or aborted submission attempts."
+    ]
+  },
+  "model_check": {
+    "proverif": {
+      "available": true,
+      "executable": "/home/barberb/.local/bin/proverif",
+      "solver": "proverif",
+      "version": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'."
+    },
+    "reason": "Solver checks are not executed during projection report generation. Run protocol solver checks to execute Tamarin/ProVerif evidence generation.",
+    "run_status": "not-run",
+    "tamarin": {
+      "available": true,
+      "executable": "/home/barberb/.local/bin/tamarin-prover",
+      "solver": "tamarin-prover",
+      "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+    }
+  },
+  "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+  "model_id": "xaman-app-security-model-ir",
+  "negative_cases": [
+    {
+      "attack_class": "replay_payload",
+      "blocked_by_property_id": "xaman-protocol:property:local-replay-after-signing-is-blocked",
+      "description": "A replayed payload reference for a consumed UUID is routed to ReplayBlockedState in the modeled client.",
+      "expected_action_fact": "ReplayBlocked",
+      "id": "xaman-protocol:negative:reused-uuid-after-consumption"
+    },
+    {
+      "attack_class": "stale_or_resolved_payload",
+      "description": "Expired or already-resolved payloads are modeled as terminal before signing.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads"
+      ],
+      "expected_action_fact": "PayloadExpired",
+      "id": "xaman-protocol:negative:expired-or-resolved-payload"
+    },
+    {
+      "attack_class": "requester_substitution",
+      "blocked_by_property_id": "xaman-protocol:property:requester-binding-precedes-review",
+      "description": "Review requires the requester value carried by the accepted payload reference and backend authorization fact.",
+      "expected_action_fact": "RequesterBound",
+      "id": "xaman-protocol:negative:mismatched-requester-app-source"
+    },
+    {
+      "attack_class": "digest_tampering",
+      "blocked_by_property_id": "xaman-protocol:property:digest-verification-precedes-review",
+      "description": "Review is unreachable without a matching BackendPayloadAuthorized digest fact.",
+      "expected_action_fact": "DigestVerified",
+      "id": "xaman-protocol:negative:tampered-request-json-digest"
+    },
+    {
+      "attack_class": "wrong_network",
+      "blocked_by_property_id": "xaman-protocol:property:signature-requires-auth-and-revalidation",
+      "description": "The signing lemma binds the modeled flow to the network value accepted at session creation and revalidation.",
+      "expected_action_fact": "PayloadSigned",
+      "id": "xaman-protocol:negative:wrong-network-before-signing"
+    },
+    {
+      "attack_class": "auth_precondition_removed",
+      "blocked_by_property_id": "xaman-protocol:property:signature-requires-auth-and-revalidation",
+      "description": "PayloadSigned requires an earlier AuthenticatedVaultOpen event for the same session and signer.",
+      "expected_action_fact": "AuthenticatedVaultOpen",
+      "id": "xaman-protocol:negative:missing-auth-before-signing"
+    },
+    {
+      "attack_class": "duplicate_submit",
+      "blocked_by_property_id": "xaman-protocol:property:broadcast-requires-signed-patch",
+      "description": "The modeled broadcast path is downstream of signed backend patching and local submit guards.",
+      "expected_action_fact": "LedgerBroadcastRequested",
+      "id": "xaman-protocol:negative:duplicate-submit-race"
+    }
+  ],
+  "overall_status": "blocked_optional_lane",
+  "production_release_blocked_by_protocol_lane": true,
+  "properties": [
+    {
+      "action_facts": [
+        "PayloadSessionCreated",
+        "RequesterBound",
+        "ReviewDisplayed"
+      ],
+      "assumption_categories": [
+        "payload_integrity"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "session_identity",
+      "claim_categories": [
+        "payload_integrity"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "Payload UUID and session identity are created once and carried into review events with the requester binding.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:payload-build-creates-local-sign-request",
+        "xaman-payload-lifecycle:fact:payload-types-carry-expiration-origin-and-network-fields"
+      ],
+      "id": "xaman-protocol:property:session-identity-created-and-carried",
+      "lemma": "requester_binding_precedes_review",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for requester_binding_precedes_review",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "CreatePayloadSession",
+        "DisplayReview"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=requester_binding_precedes_review",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "RequesterBound",
+        "BackendTrustBoundary",
+        "ReviewDisplayed"
+      ],
+      "assumption_categories": [
+        "payload_integrity",
+        "network_binding"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "requester_binding",
+      "claim_categories": [
+        "payload_integrity",
+        "network_binding"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "The requester binding is observed before the transaction review UI can display a remote payload.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:review-preflight-binds-forced-network-and-signer",
+        "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
+      ],
+      "id": "xaman-protocol:property:requester-binding-precedes-review",
+      "lemma": "requester_binding_precedes_review",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for requester_binding_precedes_review",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "TrustedBackendRegistersPayload",
+        "FetchAndVerifyRemotePayload",
+        "DisplayReview"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=requester_binding_precedes_review",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "IntakeAccepted",
+        "RequesterBound"
+      ],
+      "assumption_categories": [
+        "payload_integrity"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "intake",
+      "claim_categories": [
+        "payload_integrity"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "QR and deep-link intake rules preserve the decoded requester value when routing to payload fetch.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:qr-payload-reference-intake-fetches-and-routes-to-review",
+        "xaman-payload-lifecycle:fact:deep-link-payload-reference-intake-fetches-and-routes-to-review",
+        "xaman-payload-lifecycle:fact:push-notification-payload-intake-fetches-with-push-origin",
+        "xaman-payload-lifecycle:fact:event-list-loads-pending-payloads-and-opens-review"
+      ],
+      "id": "xaman-protocol:property:qr-and-deep-link-intake-preserve-requester",
+      "lemma": "qr_and_deep_link_intake_preserve_requester",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for qr_and_deep_link_intake_preserve_requester",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "QRReferenceIntake",
+        "DeepLinkReferenceIntake"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=qr_and_deep_link_intake_preserve_requester",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "DigestVerified",
+        "ReviewDisplayed"
+      ],
+      "assumption_categories": [
+        "payload_integrity"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "payload_integrity",
+      "claim_categories": [
+        "payload_integrity"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "A review event requires an earlier digest verification event for the same session and UUID.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:remote-payload-fetch-verifies-request-json-digest",
+        "xaman-payload-lifecycle:fact:review-ui-displays-app-source-account-transaction-and-accept-control"
+      ],
+      "id": "xaman-protocol:property:digest-verification-precedes-review",
+      "lemma": "review_requires_verified_payload",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for review_requires_verified_payload",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "FetchAndVerifyRemotePayload",
+        "DisplayReview"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=review_requires_verified_payload",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "PayloadSigned",
+        "ReplayBlocked"
+      ],
+      "assumption_categories": [
+        "replay_prevention"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "replay",
+      "claim_categories": [
+        "replay_prevention"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "The modeled client can only enter replay-blocked state after a consumed payload UUID is replayed.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:remote-fetch-blocks-resolved-or-expired-payloads",
+        "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+        "xaman-payload-lifecycle:fact:ledger-submit-has-local-single-submit-and-abort-guards"
+      ],
+      "id": "xaman-protocol:property:local-replay-after-signing-is-blocked",
+      "lemma": "local_replay_after_signing_is_blocked",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for local_replay_after_signing_is_blocked",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "SignRevalidatedPayload",
+        "BlockReplayOfConsumedPayload"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=local_replay_after_signing_is_blocked",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "VaultSecretStored",
+        "AuthenticatedVaultOpen",
+        "PayloadSigned"
+      ],
+      "assumption_categories": [
+        "custody"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "secrets",
+      "claim_categories": [
+        "custody"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "The source-level model never emits the software signing secret; it remains behind the vault facade.",
+      "evidence_fact_ids": [
+        "xaman-wallet-auth:fact:vault-access-is-through-native-module",
+        "xaman-wallet-auth:fact:software-private-key-signing-requires-vault-open-with-encryption-key",
+        "xaman-wallet-auth:fact:account-secret-vaulted-for-full-access"
+      ],
+      "id": "xaman-protocol:property:modeled-vault-secret-not-output",
+      "lemma": "modeled_vault_secret_not_revealed",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for modeled_vault_secret_not_revealed",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "RegisterSoftwareSignerSecret",
+        "OpenVaultAfterAuthentication",
+        "SignRevalidatedPayload"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=modeled_vault_secret_not_revealed",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "PayloadRevalidated",
+        "AuthenticatedVaultOpen",
+        "PayloadSigned"
+      ],
+      "assumption_categories": [
+        "authentication",
+        "payload_integrity",
+        "network_binding"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "signatures",
+      "claim_categories": [
+        "authentication",
+        "payload_integrity",
+        "network_binding"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "A signature event requires pre-sign revalidation, authenticated vault opening, and the modeled network binding.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:approval-revalidates-non-generated-payload-before-signing",
+        "xaman-payload-lifecycle:fact:approval-enters-vault-signing-boundary",
+        "xaman-payload-lifecycle:fact:network-binding-applies-to-templates-review-and-signing",
+        "xaman-wallet-auth:fact:vault-overlay-selects-signer-and-auth-method-from-access-and-encryption-level",
+        "xaman-wallet-auth:fact:transaction-signing-preconditions-before-vault-overlay",
+        "xaman-wallet-auth:fact:signed-object-callback-must-include-blob-pubkey-method-and-id-for-non-pseudo"
+      ],
+      "id": "xaman-protocol:property:signature-requires-auth-and-revalidation",
+      "lemma": "signing_requires_auth_revalidation_and_network",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for signing_requires_auth_revalidation_and_network",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "RevalidateBeforeSigning",
+        "OpenVaultAfterAuthentication",
+        "SignRevalidatedPayload"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=signing_requires_auth_revalidation_and_network",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "BackendTrustBoundary",
+        "SignedPayloadPatched"
+      ],
+      "assumption_categories": [
+        "backend_trust"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "backend_trust_boundary",
+      "claim_categories": [
+        "backend_trust"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "Signed payload patching is modeled as crossing an explicit backend authorization boundary.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast",
+        "xaman-payload-lifecycle:fact:dispatch-result-is-patched-after-ledger-submit"
+      ],
+      "id": "xaman-protocol:property:signed-patch-stays-at-backend-trust-boundary",
+      "lemma": "signed_patch_requires_backend_trust",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for signed_patch_requires_backend_trust",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "TrustedBackendRegistersPayload",
+        "PatchSignedPayloadToBackend"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=signed_patch_requires_backend_trust",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    },
+    {
+      "action_facts": [
+        "SignedPayloadPatched",
+        "LedgerBroadcastRequested"
+      ],
+      "assumption_categories": [
+        "backend_trust",
+        "transaction_semantics"
+      ],
+      "assumption_ids": [],
+      "blocking_assumption_ids": [],
+      "category": "broadcast_boundary",
+      "claim_categories": [
+        "backend_trust",
+        "transaction_semantics"
+      ],
+      "claim_ids": [],
+      "classification": "READY_TO_CHECK",
+      "description": "Optional ledger broadcast is reachable only after the signed payload has been patched through the backend boundary.",
+      "evidence_fact_ids": [
+        "xaman-payload-lifecycle:fact:signed-payload-is-patched-before-optional-ledger-broadcast",
+        "xaman-payload-lifecycle:fact:broadcast-only-when-submit-true-non-pseudo-and-not-multisign",
+        "xaman-payload-lifecycle:fact:submit-request-type-boundary-is-xrpl-submit",
+        "xaman-wallet-auth:fact:submit-requires-signed-blob-single-submit-and-not-aborted"
+      ],
+      "id": "xaman-protocol:property:broadcast-requires-signed-patch",
+      "lemma": "broadcast_requires_signed_patch",
+      "modeled": true,
+      "proverif_equivalent_query": {
+        "query": "equivalent reachability/secrecy query for broadcast_requires_signed_patch",
+        "solver_blocker": null,
+        "status": "READY_TO_TRANSLATE"
+      },
+      "rule_names": [
+        "PatchSignedPayloadToBackend",
+        "SubmitPatchedPayloadToLedger"
+      ],
+      "solver_blocker": null,
+      "solver_status": "READY",
+      "tamarin_command": [
+        "tamarin-prover",
+        "--prove",
+        "--prove=broadcast_requires_signed_patch",
+        "xaman_payload_protocol.spthy"
+      ],
+      "unresolved_assumption_ids": []
+    }
+  ],
+  "protocol_model": {
+    "artifact_cid": "bafkreicxha4ob6cujuefk6yu52im3s4kh7kjkb6254ha3ttkzyba4dim2a",
+    "backend_boundary": "BackendPayloadAuthorized is an explicit trusted precondition; backend authorization and atomicity are rejected when claimed without backend evidence.",
+    "categories": [
+      "session_identity",
+      "requester_binding",
+      "intake",
+      "payload_integrity",
+      "replay",
+      "secrets",
+      "signatures",
+      "backend_trust_boundary",
+      "broadcast_boundary"
+    ],
+    "lemmas": [
+      "sign_requires_digest_check",
+      "sign_requires_user_approval",
+      "sign_requires_auth_and_vault",
+      "broadcast_requires_signature",
+      "rejected_payload_not_broadcast",
+      "nonce_consumed_at_most_once"
+    ],
+    "line_count": 365,
+    "modeled_intake_origins": [
+      "QR",
+      "DEEP_LINK",
+      "PUSH_NOTIFICATION",
+      "EVENT_LIST"
+    ],
+    "path": "security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy",
+    "required_action_facts": [
+      "PayloadSessionCreated",
+      "RequesterBound",
+      "IntakeAccepted",
+      "BackendTrustBoundary",
+      "DigestVerified",
+      "ReviewDisplayed",
+      "ApprovalRecorded",
+      "PayloadRevalidated",
+      "VaultSecretStored",
+      "AuthenticatedVaultOpen",
+      "PayloadSigned",
+      "SignedPayloadPatched",
+      "LedgerBroadcastRequested",
+      "ReplayBlocked",
+      "PayloadRejected",
+      "PayloadExpired"
+    ],
+    "required_lemmas": [
+      "review_requires_verified_payload",
+      "requester_binding_precedes_review",
+      "qr_and_deep_link_intake_preserve_requester",
+      "signing_requires_auth_revalidation_and_network",
+      "modeled_vault_secret_not_revealed",
+      "signed_patch_requires_backend_trust",
+      "broadcast_requires_signed_patch",
+      "local_replay_after_signing_is_blocked"
+    ],
+    "required_rules": [
+      "CreatePayloadSession",
+      "RegisterSoftwareSignerSecret",
+      "TrustedBackendRegistersPayload",
+      "QRReferenceIntake",
+      "DeepLinkReferenceIntake",
+      "PushReferenceIntake",
+      "EventListReferenceIntake",
+      "FetchAndVerifyRemotePayload",
+      "DisplayReview",
+      "ApprovePayload",
+      "RevalidateBeforeSigning",
+      "OpenVaultAfterAuthentication",
+      "SignRevalidatedPayload",
+      "PatchSignedPayloadToBackend",
+      "SubmitPatchedPayloadToLedger",
+      "BlockReplayOfConsumedPayload",
+      "RejectPayload",
+      "ExpirePayload"
+    ],
+    "sha256": "sha256:503d8cebc4105abb5265d5b4f237395a42179f501a0b13c78924124122253d93",
+    "source_byte_length": 11033,
+    "theory_name": "XamanPayloadProtocol"
+  },
+  "rejected_claims": [
+    {
+      "blocked_by_assumption_ids": [
+        "xaman-security:assumption:backend-payload-api-single-use-and-authorization"
+      ],
+      "claim_ids": [
+        "xaman-security:claim:backend-trust-boundary-is-safe-for-payload-resolution",
+        "xaman-security:claim:payload-replay-prevention-is-single-use"
+      ],
+      "classification": "REJECTED_UNAVAILABLE_EVIDENCE",
+      "gap_ids": [
+        "xaman-payload-lifecycle:gap:backend-payload-creation-auth-and-single-use"
+      ],
+      "gap_summaries": [
+        "The client source shows fetch, validate, patch, reject, and expired/resolved checks, but does not prove backend authorization, payload creation policy, atomic single-use resolution, replay resistance across devices, or PATCH conflict handling."
+      ],
+      "id": "xaman-protocol:rejected:backend-global-single-use-and-authorization",
+      "missing_assumption_ids": [],
+      "modeled": false,
+      "reason": "Backend authorization, atomic resolution, cross-device replay prevention, and PATCH conflict behavior are not available in the reviewed client-source evidence.",
+      "required_evidence_to_accept": [],
+      "solver_status": "NOT_SUBMITTED"
+    },
+    {
+      "blocked_by_assumption_ids": [
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity"
+      ],
+      "claim_ids": [
+        "xaman-security:claim:payload-integrity-before-review-and-signing"
+      ],
+      "classification": "REJECTED_UNAVAILABLE_EVIDENCE",
+      "gap_ids": [
+        "xaman-payload-lifecycle:gap:string-decoder-and-native-intake-integrity"
+      ],
+      "gap_summaries": [
+        "The model uses client dispatch after StringTypeDetector/StringDecoder output, but does not prove the third-party decoder, native camera module, OS deep-link dispatcher, clipboard, or QR image parsing integrity."
+      ],
+      "id": "xaman-protocol:rejected:native-intake-parser-and-delivery-integrity",
+      "missing_assumption_ids": [
+        "xaman-security:assumption:intake-decoder-and-os-delivery-integrity"
+      ],
+      "modeled": false,
+      "reason": "QR image parsing, third-party string decoding, native camera behavior, OS deep-link routing, clipboard, and malformed-input behavior are outside the source-backed client model.",
+      "required_evidence_to_accept": [],
+      "solver_status": "NOT_SUBMITTED"
+    },
+    {
+      "blocked_by_assumption_ids": [
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:passcode-kdf-and-secret-protection",
+        "xaman-security:assumption:biometric-native-binding"
+      ],
+      "claim_ids": [
+        "xaman-security:claim:custody-software-private-key-not-available-without-authorized-vault-path"
+      ],
+      "classification": "REJECTED_UNAVAILABLE_EVIDENCE",
+      "gap_ids": [
+        "xaman-wallet-auth:gap:native-vault-manager-cryptographic-implementation",
+        "xaman-wallet-auth:gap:passcode-hash-kdf-strength",
+        "xaman-wallet-auth:gap:biometric-native-security-properties"
+      ],
+      "gap_summaries": [
+        "The TypeScript facade proves that VaultManagerModule is called, but this artifact does not model the Android or iOS native implementation, keychain accessibility class, cipher mode, hardware-backed storage, migration behavior, or memory-zeroization guarantees.",
+        "The reviewed authentication service calls CoreRepository.hashPasscode and compares the result, but this artifact does not model the hash or KDF algorithm, salt handling, parameter strength, or stored-passcode protection.",
+        "This artifact models calls to the biometric helper and the app's fallback behavior, but not the native biometric prompt policy, biometric enrollment binding, device secure-enclave behavior, or spoof-resistance properties."
+      ],
+      "id": "xaman-protocol:rejected:native-vault-cryptographic-secrecy",
+      "missing_assumption_ids": [
+        "xaman-security:assumption:biometric-native-binding",
+        "xaman-security:assumption:native-vault-cryptographic-confidentiality",
+        "xaman-security:assumption:passcode-kdf-and-secret-protection"
+      ],
+      "modeled": false,
+      "reason": "The protocol projection can show that source-level rules do not output secrets, but not native keychain, KDF, biometric, or memory-handling security.",
+      "required_evidence_to_accept": [],
+      "solver_status": "NOT_SUBMITTED"
+    },
+    {
+      "blocked_by_assumption_ids": [
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus"
+      ],
+      "claim_ids": [
+        "xaman-security:claim:xrpl-transaction-semantics-match-reviewed-signing-intent"
+      ],
+      "classification": "REJECTED_UNAVAILABLE_EVIDENCE",
+      "gap_ids": [
+        "xaman-wallet-auth:gap:third-party-signing-library-correctness",
+        "xaman-payload-lifecycle:gap:ledger-consensus-and-node-honesty"
+      ],
+      "gap_summaries": [
+        "This artifact models when Xaman calls xrpl-accountlib and Tangem SDK signing paths, but not the correctness of transaction canonicalization, signature generation, raw signing completion, Tangem firmware, or SDK attestation.",
+        "The model covers client submit and verify calls plus typed submit response fields, but not XRPL consensus safety, node honesty, mempool behavior, or final ledger inclusion beyond the app's verify response."
+      ],
+      "id": "xaman-protocol:rejected:third-party-signature-correctness",
+      "missing_assumption_ids": [
+        "xaman-security:assumption:third-party-signing-correctness",
+        "xaman-security:assumption:trustset-and-signerlist-client-validation",
+        "xaman-security:assumption:xrpl-server-rule-enforcement-and-consensus"
+      ],
+      "modeled": false,
+      "reason": "The model records when signing is invoked and what callback evidence is required, but not cryptographic library, SDK, firmware, or XRPL server-rule correctness.",
+      "required_evidence_to_accept": [],
+      "solver_status": "NOT_SUBMITTED"
+    },
+    {
+      "blocked_by_assumption_ids": [
+        "xaman-security:assumption:deployed-runtime-equivalence",
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "claim_ids": [
+        "xaman-security:claim:reviewed-source-is-equivalent-to-deployed-runtime"
+      ],
+      "classification": "REJECTED_UNAVAILABLE_EVIDENCE",
+      "gap_ids": [
+        "xaman-payload-lifecycle:gap:deployed-runtime-equivalence",
+        "xaman-wallet-auth:gap:runtime-and-deployed-binary-behavior"
+      ],
+      "gap_summaries": [
+        "This artifact models pinned source behavior, not compiled app binaries, mobile OS runtime behavior, production configuration, or backend deployment equivalence.",
+        "The artifact binds source facts at a commit, but does not prove that an app-store binary, build environment, backend dependency, native runtime trace, or device configuration matches these source facts."
+      ],
+      "id": "xaman-protocol:rejected:deployed-runtime-equivalence",
+      "missing_assumption_ids": [
+        "xaman-security:assumption:deployed-network-and-node-config-equivalence"
+      ],
+      "modeled": false,
+      "reason": "A symbolic protocol theory over pinned source facts cannot prove app-store binary, native runtime, backend deployment, or production configuration equivalence.",
+      "required_evidence_to_accept": [],
+      "solver_status": "NOT_SUBMITTED"
+    }
+  ],
+  "schema_version": "xaman-protocol-projection-report/v1",
+  "security_decision": "BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE",
+  "solvers": {
+    "proverif": {
+      "available": true,
+      "blocker": null,
+      "executable": "/home/barberb/.local/bin/proverif",
+      "solver": "proverif",
+      "status": "READY",
+      "version": "/home/barberb/.local/share/xaman-proof-solvers/src/proverif2.05/proverif: unknown option '-version'."
+    },
+    "tamarin": {
+      "available": true,
+      "blocker": null,
+      "executable": "/home/barberb/.local/bin/tamarin-prover",
+      "solver": "tamarin-prover",
+      "status": "READY",
+      "version": "tamarin-prover 1.12.0, (C) David Basin, Cas Cremers, Jannik Dreier, Simon Meier, Ralf Sasse, Benedikt Schmidt, 2010-2023"
+    }
+  },
+  "summary": {
+    "blocked_property_count": 0,
+    "checked_property_count": 9,
+    "missing_evidence_count": 0,
+    "modeled_property_count": 9,
+    "negative_case_count": 7,
+    "property_count": 9,
+    "proverif_available": true,
+    "rejected_claim_count": 5,
+    "release_ready": false,
+    "tamarin_available": true
+  },
+  "task_id": "PORTAL-CXTP-072"
+}

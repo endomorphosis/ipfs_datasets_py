@@ -1,0 +1,64 @@
+{
+  "corpus_quality": {
+    "corpus_key": "us_code",
+    "identified_row_count": 0,
+    "identified_row_ratio": 0.0,
+    "issues": [],
+    "navigation_like_ratio": 0.26009953892504617,
+    "navigation_like_row_count": 15626,
+    "row_count": 60077,
+    "sample_rows": [
+      {
+        "classification": "navigation_like",
+        "identifier": "",
+        "source_id": "",
+        "title": "Words denoting number, gender, and so forth"
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "",
+        "source_id": "",
+        "title": "Marriage"
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "",
+        "source_id": "",
+        "title": "Title of appropriation Acts"
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "",
+        "source_id": "",
+        "title": "Printing bills and joint resolutions"
+      },
+      {
+        "classification": "navigation_like",
+        "identifier": "",
+        "source_id": "",
+        "title": "Parchment or paper for printing enrolled bills or resolutions"
+      }
+    ],
+    "section_like_identifier_count": 0,
+    "section_like_identifier_ratio": 0.0,
+    "status": "healthy"
+  },
+  "document_count": 60077,
+  "entity_count": 180270,
+  "entity_type_counts": {
+    "all_caps_heading": 1,
+    "document": 60068,
+    "legal_document": 60077,
+    "letter_heading": 3,
+    "section": 60068,
+    "usc_title": 53
+  },
+  "ontology": {},
+  "ontology_version": "generic-legal-document-kg-v1",
+  "relationship_count": 120140,
+  "relationship_type_counts": {
+    "HAS_SECTION": 60068,
+    "IN_TITLE": 60068,
+    "has_section": 4
+  }
+}

@@ -23,6 +23,7 @@ from ..common.exceptions import (
     OptimizerTimeoutError,
     RetryableBackendError,
 )
+from ..common.llm_defaults import DEFAULT_CODEX_MODEL
 
 _SECRET_KV_PATTERN = re.compile(
     r"(?i)\b(api[_-]?key|access[_-]?token|token|secret|password)\b\s*[:=]\s*([^\s,;]+)"
@@ -131,6 +132,15 @@ PROVIDER_CAPABILITIES = {
     ),
 }
 
+_ROUTER_PROVIDER_NAME_MAP = {
+    LLMProvider.GPT4: "codex",
+    LLMProvider.CLAUDE: "claude",
+    LLMProvider.CODEX: "codex",
+    LLMProvider.COPILOT: "copilot_cli",
+    LLMProvider.GEMINI: "gemini_cli",
+    LLMProvider.LOCAL: "hf",
+}
+
 
 class OptimizerLLMRouter:
     """LLM Router for optimizer operations.
@@ -154,6 +164,7 @@ class OptimizerLLMRouter:
         self,
         preferred_provider: Optional[LLMProvider] = None,
         fallback_providers: Optional[List[LLMProvider]] = None,
+        model_name: str = DEFAULT_CODEX_MODEL,
         enable_tracking: bool = True,
         enable_caching: bool = True,
         cache: Optional[LLMCache] = None,
@@ -163,12 +174,14 @@ class OptimizerLLMRouter:
         Args:
             preferred_provider: Preferred LLM provider (None = auto-detect)
             fallback_providers: Fallback providers if preferred fails
+            model_name: Default model for Codex-backed optimizer calls
             enable_tracking: Enable token usage tracking
             enable_caching: Enable LLM response caching (70-90% API reduction)
             cache: Custom cache instance (None = use global cache)
         """
         self.preferred_provider = preferred_provider or self._detect_provider()
         self.fallback_providers = fallback_providers or self._get_default_fallbacks()
+        self.model_name = model_name
         self.enable_tracking = enable_tracking
         self.enable_caching = enable_caching
         
@@ -214,6 +227,34 @@ class OptimizerLLMRouter:
             circuit_failure_threshold=3,
             circuit_recovery_timeout=30.0,
         )
+
+    def _router_provider_name(self, provider: LLMProvider) -> str:
+        """Map optimizer provider enum values to router-supported provider names."""
+        return _ROUTER_PROVIDER_NAME_MAP.get(provider, PROVIDER_CAPABILITIES[provider].name)
+
+    def _prepare_generation_request(
+        self,
+        *,
+        provider: LLMProvider,
+        prompt: str,
+        max_tokens: int,
+    ) -> Tuple[str, int]:
+        """Trim oversized local prompts before they hit small-context fallback models."""
+        if provider != LLMProvider.LOCAL:
+            return prompt, max_tokens
+
+        safe_max_tokens = max(32, min(max_tokens, 128))
+        if len(prompt) <= 3000:
+            return prompt, safe_max_tokens
+
+        head = prompt[:1200].rstrip()
+        tail = prompt[-1400:].lstrip()
+        compacted = (
+            f"{head}\n\n"
+            "[... local optimizer prompt truncated for model context ...]\n\n"
+            f"{tail}"
+        )
+        return compacted, safe_max_tokens
     
     def _detect_provider(self) -> LLMProvider:
         """Auto-detect best available provider.
@@ -221,6 +262,8 @@ class OptimizerLLMRouter:
         Returns:
             Best available LLM provider
         """
+        if not os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER"):
+            return LLMProvider.CODEX
         provider = detect_provider_from_environment(prefer_accelerate=False)
         return self._provider_from_name(provider)
 
@@ -237,7 +280,7 @@ class OptimizerLLMRouter:
             "accelerate": LLMProvider.LOCAL,
             "local": LLMProvider.LOCAL,
         }
-        return mapping.get(name, LLMProvider.LOCAL)
+        return mapping.get(name, LLMProvider.CODEX)
     
     def _get_default_fallbacks(self) -> List[LLMProvider]:
         """Get default fallback providers.
@@ -245,6 +288,9 @@ class OptimizerLLMRouter:
         Returns:
             List of fallback providers
         """
+        if self.preferred_provider == LLMProvider.CODEX:
+            return []
+
         # Sort providers by priority
         sorted_providers = sorted(
             PROVIDER_CAPABILITIES.items(),
@@ -271,6 +317,9 @@ class OptimizerLLMRouter:
         Returns:
             Selected LLM provider
         """
+        if self.preferred_provider == LLMProvider.CODEX:
+            return self.preferred_provider
+
         # For simple tasks, any provider works
         if complexity == "simple":
             return self.preferred_provider
@@ -322,6 +371,7 @@ class OptimizerLLMRouter:
             cache_key_kwargs = {
                 "method": str(method),
                 "max_tokens": max_tokens,
+                "model_name": self.model_name,
                 "temperature": temperature,
                 **{k: str(v) for k, v in resolved_router_kwargs.items()}
             }
@@ -342,7 +392,12 @@ class OptimizerLLMRouter:
         for current_provider in providers_to_try:
             try:
                 # Get provider name for router
-                provider_name = PROVIDER_CAPABILITIES[current_provider].name
+                provider_name = self._router_provider_name(current_provider)
+                request_prompt, request_max_tokens = self._prepare_generation_request(
+                    provider=current_provider,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                )
                 
                 # Track call
                 if self.enable_tracking:
@@ -350,18 +405,26 @@ class OptimizerLLMRouter:
                 
                 # Call router with provider hint
                 os.environ["IPFS_DATASETS_PY_LLM_PROVIDER"] = provider_name
+                generation_kwargs = {
+                    "prompt": request_prompt,
+                    "provider": provider_name,
+                    "max_tokens": request_max_tokens,
+                    "temperature": temperature,
+                    **resolved_router_kwargs,
+                }
+                if (
+                    provider_name in {"codex", "codex_cli"}
+                    and "model_name" not in generation_kwargs
+                    and "model" not in generation_kwargs
+                ):
+                    generation_kwargs["model_name"] = self.model_name
                 
                 # Production hardening: Use circuit breaker + retry logic
                 def _make_llm_call():
                     return execute_with_resilience(
                         lambda: self._breakers[current_provider].call(
                             router_generate,
-                            call_kwargs={
-                                "prompt": prompt,
-                                "max_tokens": max_tokens,
-                                "temperature": temperature,
-                                **resolved_router_kwargs,
-                            },
+                            call_kwargs=generation_kwargs,
                         ),
                         self._policy_for_provider(current_provider),
                         circuit_breaker=self._resilience_breakers[current_provider],
@@ -374,6 +437,7 @@ class OptimizerLLMRouter:
                     cache_key_kwargs = {
                         "method": str(method),
                         "max_tokens": max_tokens,
+                        "model_name": self.model_name,
                         "temperature": temperature,
                         **{k: str(v) for k, v in resolved_router_kwargs.items()}
                     }

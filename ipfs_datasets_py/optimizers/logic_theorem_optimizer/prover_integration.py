@@ -13,13 +13,44 @@ It handles:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import re
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
 logger = logging.getLogger(__name__)
+
+_MODAL_FORMULA_RE = re.compile(
+    r"^\s*(?P<operator>[^\[\(]+)"
+    r"(?:\[(?P<family>[^:\]]+):(?P<system>[^\]]+)\])?"
+    r"\((?P<predicate>.*)\)\s*$"
+)
+_PREDICATE_NAME_RE = re.compile(r"[^A-Za-z0-9_]+")
+_PROVER_ALIASES = {
+    "symbolic": "symbolicai",
+    "symbolic_ai": "symbolicai",
+    "symai": "symbolicai",
+}
+
+
+def _canonical_prover_name(name: Any) -> str:
+    normalized = str(name or "").strip().lower()
+    return _PROVER_ALIASES.get(normalized, normalized)
+
+
+def _canonical_prover_names(names: Iterable[Any]) -> List[str]:
+    canonical: List[str] = []
+    seen = set()
+    for name in names:
+        prover_name = _canonical_prover_name(name)
+        if not prover_name or prover_name in seen:
+            continue
+        canonical.append(prover_name)
+        seen.add(prover_name)
+    return canonical
 
 
 class ProverStatus(Enum):
@@ -100,7 +131,7 @@ class ProverIntegrationAdapter:
             enable_cache: Whether to enable proof caching
             default_timeout: Default timeout for provers (seconds)
         """
-        self.use_provers = use_provers or ['z3']
+        self.use_provers = ['z3'] if use_provers is None else _canonical_prover_names(use_provers)
         self.enable_cache = enable_cache
         self.default_timeout = default_timeout
         
@@ -155,9 +186,9 @@ class ProverIntegrationAdapter:
                     self.provers['coq'] = CoqProverBridge()
                     logger.info("Initialized Coq prover bridge")
                     
-                elif prover_name == 'symbolic':
+                elif prover_name == 'symbolicai':
                     from ipfs_datasets_py.logic.external_provers.neural.symbolicai_prover_bridge import SymbolicAIProverBridge
-                    self.provers['symbolic'] = SymbolicAIProverBridge()
+                    self.provers['symbolicai'] = SymbolicAIProverBridge()
                     logger.info("Initialized SymbolicAI prover bridge")
                     
             except ImportError as e:
@@ -203,6 +234,18 @@ class ProverIntegrationAdapter:
         
         # Verify with each prover
         prover_results = []
+        if self._is_modal_statement(statement):
+            prover_results.append(self._verify_modal_statement(statement, timeout))
+            aggregated = self._aggregate_results(prover_results)
+            if self.cache:
+                self._cache_result(statement, aggregated)
+
+            elapsed_ms = (time.time() - round_trip_start) * 1000.0
+            self.stats['round_trip_count'] += 1
+            self.stats['round_trip_total_ms'] += elapsed_ms
+            self.stats['round_trip_max_ms'] = max(self.stats['round_trip_max_ms'], elapsed_ms)
+            return aggregated
+
         for prover_name, prover in self.provers.items():
             result = self._verify_with_prover(
                 statement, prover_name, prover, timeout
@@ -222,6 +265,20 @@ class ProverIntegrationAdapter:
         self.stats['round_trip_max_ms'] = max(self.stats['round_trip_max_ms'], elapsed_ms)
 
         return aggregated
+
+    def validate_statement(
+        self,
+        statement: Any,
+        formalism: Optional[str] = None,
+        timeout: Optional[float] = None,
+    ) -> bool:
+        """Return a boolean validity result for legacy validation callers.
+
+        ``formalism`` is accepted for API compatibility; prover translation is
+        still inferred from the statement payload in ``verify_statement``.
+        """
+        del formalism
+        return self.verify_statement(statement, timeout=timeout).overall_valid
     
     def _verify_with_prover(
         self,
@@ -247,13 +304,12 @@ class ProverIntegrationAdapter:
             # Translate statement to prover format
             formula = self._translate_to_prover_format(statement, prover_name)
             
-            # Verify with prover
-            if hasattr(prover, 'prove'):
-                result = prover.prove(formula, timeout=timeout)
-            elif hasattr(prover, 'verify'):
-                result = prover.verify(formula, timeout=timeout)
-            else:
-                raise AttributeError(f"Prover {prover_name} has no prove/verify method")
+            result = self._call_prover_with_timeout(
+                prover,
+                prover_name=prover_name,
+                formula=formula,
+                timeout=timeout,
+            )
             
             proof_time = time.time() - start_time
             
@@ -292,7 +348,173 @@ class ProverIntegrationAdapter:
                 proof_time=time.time() - start_time,
                 error_message=str(e)
             )
+
+    def _call_prover_with_timeout(
+        self,
+        prover: Any,
+        *,
+        prover_name: str,
+        formula: Any,
+        timeout: float,
+    ) -> Any:
+        """Call one prover with an adapter-enforced wall-clock budget."""
+
+        if hasattr(prover, 'prove'):
+            call = prover.prove
+        elif hasattr(prover, 'verify'):
+            call = prover.verify
+        else:
+            raise AttributeError(f"Prover {prover_name} has no prove/verify method")
+
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix=f"prover-{prover_name}")
+        future = executor.submit(call, formula, timeout=timeout)
+        try:
+            return future.result(timeout=max(0.001, float(timeout)))
+        except FutureTimeoutError as exc:
+            future.cancel()
+            raise TimeoutError("Verification timeout") from exc
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
     
+    def _is_modal_statement(self, statement: Any) -> bool:
+        """Return True when the statement carries deterministic modal IR metadata."""
+        formalism = str(getattr(statement, "formalism", "") or "").lower()
+        if formalism == "modal":
+            return True
+        metadata = getattr(statement, "metadata", None)
+        if isinstance(metadata, dict):
+            return any(
+                key in metadata
+                for key in ("modal_system", "modal_family", "operator", "modal_ir_document_hash")
+            )
+        return False
+
+    def _verify_modal_statement(self, statement: Any, timeout: float) -> ProverVerificationResult:
+        """Compile modal legal IR and route it through the modal prover router."""
+        del timeout  # Modal tableaux currently expose no timeout hook.
+        start_time = time.time()
+        try:
+            formula = self._modal_statement_to_tdfol_formula(statement)
+            system = self._modal_system_for_statement(statement)
+
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
+                ModalProverRouter,
+                ModalProverStatus,
+            )
+
+            route = ModalProverRouter().route(formula=formula, system=system)
+            proof_time = time.time() - start_time
+            details = {
+                "backend": route.backend,
+                "compiled_formula": formula.to_string(pretty=True) if hasattr(formula, "to_string") else str(formula),
+                "modal_route_status": route.status.value,
+                "modal_system": route.system,
+                "raw_result": route.result,
+                "reason": route.reason,
+            }
+            details.update(route.metadata)
+
+            if route.status == ModalProverStatus.AVAILABLE:
+                theorem_valid = bool(getattr(route.result, "is_valid", False))
+                proof_steps = getattr(route.result, "proof_steps", None)
+                details["modal_theorem_valid"] = theorem_valid
+                if proof_steps is not None:
+                    details["proof_steps"] = list(proof_steps)
+                return ProverVerificationResult(
+                    prover_name=f"modal:{route.backend or 'router'}",
+                    status=ProverStatus.VALID,
+                    is_valid=True,
+                    confidence=1.0 if theorem_valid else 0.85,
+                    proof_time=proof_time,
+                    details=details,
+                )
+
+            if route.status == ModalProverStatus.UNAVAILABLE:
+                return ProverVerificationResult(
+                    prover_name=f"modal:{route.backend or 'router'}",
+                    status=ProverStatus.UNAVAILABLE,
+                    is_valid=False,
+                    confidence=0.0,
+                    proof_time=proof_time,
+                    details=details,
+                    error_message=route.reason,
+                )
+
+            self.stats['errors'] += 1
+            return ProverVerificationResult(
+                prover_name=f"modal:{route.backend or 'router'}",
+                status=ProverStatus.ERROR,
+                is_valid=False,
+                confidence=0.0,
+                proof_time=proof_time,
+                details=details,
+                error_message=route.reason or "Modal prover routing failed",
+            )
+
+        except (AttributeError, KeyError, RuntimeError, TypeError, ValueError) as e:
+            self.stats['errors'] += 1
+            logger.error(f"Error verifying modal statement: {e}")
+            return ProverVerificationResult(
+                prover_name="modal:router",
+                status=ProverStatus.ERROR,
+                is_valid=False,
+                confidence=0.0,
+                proof_time=time.time() - start_time,
+                error_message=str(e),
+            )
+
+    def _modal_statement_to_tdfol_formula(self, statement: Any) -> Any:
+        """Compile a deterministic modal statement into a TDFOL formula object."""
+        metadata = getattr(statement, "metadata", None)
+        metadata = metadata if isinstance(metadata, dict) else {}
+        rendered_formula = str(getattr(statement, "formula", "") or "")
+        parsed = _MODAL_FORMULA_RE.match(rendered_formula)
+        operator = str(metadata.get("operator") or (parsed.group("operator") if parsed else "")).strip()
+        family = str(metadata.get("modal_family") or (parsed.group("family") if parsed else "")).strip().lower()
+        predicate_name = self._modal_predicate_name(statement, parsed)
+
+        from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+            DeonticFormula,
+            DeonticOperator,
+            Predicate,
+            TemporalFormula,
+            TemporalOperator,
+        )
+
+        predicate = Predicate(predicate_name, ())
+        if operator in {"O", "O|"} or family in {"deontic", "conditional_normative"}:
+            return DeonticFormula(DeonticOperator.OBLIGATION, predicate)
+        if operator == "P":
+            return DeonticFormula(DeonticOperator.PERMISSION, predicate)
+        if operator == "F" and family == "deontic":
+            return DeonticFormula(DeonticOperator.PROHIBITION, predicate)
+        if operator in {"◇", "F"}:
+            return TemporalFormula(TemporalOperator.EVENTUALLY, predicate)
+        if operator == "X":
+            return TemporalFormula(TemporalOperator.NEXT, predicate)
+        return TemporalFormula(TemporalOperator.ALWAYS, predicate)
+
+    def _modal_system_for_statement(self, statement: Any) -> str:
+        metadata = getattr(statement, "metadata", None)
+        metadata = metadata if isinstance(metadata, dict) else {}
+        if metadata.get("modal_system"):
+            return str(metadata["modal_system"])
+        rendered_formula = str(getattr(statement, "formula", "") or "")
+        parsed = _MODAL_FORMULA_RE.match(rendered_formula)
+        if parsed and parsed.group("system"):
+            return str(parsed.group("system"))
+        return "K"
+
+    def _modal_predicate_name(self, statement: Any, parsed: Optional[re.Match[str]]) -> str:
+        predicate = parsed.group("predicate") if parsed else ""
+        predicate = predicate.split("(", 1)[0].strip()
+        if not predicate:
+            predicate = str(getattr(statement, "natural_language", "") or getattr(statement, "formula", ""))
+        predicate = _PREDICATE_NAME_RE.sub("_", predicate).strip("_").lower()
+        if not predicate or predicate[0].isdigit():
+            predicate = f"modal_{predicate}" if predicate else "modal_statement"
+        return predicate
+
     def _translate_to_prover_format(
         self,
         statement: Any,
@@ -383,7 +605,7 @@ class ProverIntegrationAdapter:
         
         # Filter successful verifications
         successful = [r for r in prover_results 
-                     if r.status not in [ProverStatus.ERROR, ProverStatus.TIMEOUT]]
+                     if r.status not in [ProverStatus.ERROR, ProverStatus.TIMEOUT, ProverStatus.UNAVAILABLE]]
         
         if not successful:
             return AggregatedProverResult(

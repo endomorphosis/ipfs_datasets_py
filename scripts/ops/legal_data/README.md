@@ -29,6 +29,186 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Run `build_canonical_corpus_semantic_index.py` to generate a semantic sidecar
+	for a canonical parquet slice when a corpus is missing an embeddings/FAISS
+	index or when you want to rebuild one locally.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key state_laws --canonical-parquet ~/.ipfs_datasets/state_laws/state_laws_parquet_cid/STATE-MN.parquet --state MN --json`
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key federal_register --canonical-parquet ~/.ipfs_datasets/federal_register/federal_register.parquet --no-faiss`
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key state_laws --canonical-parquet ~/.ipfs_datasets/state_laws/state_laws_parquet_cid/STATE-MN.parquet --state MN --publish-to-hf --hf-token $HF_TOKEN --include-canonical-parquet`
+	This writes an `_embeddings.parquet` companion automatically and, when the
+	local `faiss` build supports it, also writes a FAISS index plus metadata
+	parquet for direct semantic retrieval. When `--publish-to-hf` is used, the
+	generated sidecars, and optionally the canonical parquet itself, are uploaded
+	back to the target JusticeDAO dataset repo.
+- Run `store_huggingface_token.py` to place a Hugging Face token into a usable
+	secret backend for this machine.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend auto --json`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend keyring --service huggingface_hub --account endomorphosis`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend hf-local --json`
+	In `auto` mode the helper tries the system keyring first, but falls back to
+	Hugging Face's local token store if the secret-service backend is unavailable
+	or noninteractive.
+- Run `run_bluebook_linker_fuzz_harness.py` to have `llm_router` generate
+	Bluebook-style citations, run them through the linker with Hugging Face
+	dataset fallback enabled, and optionally recover/merge unresolved citations
+	into the local canonical parquet path that later gets published to HF.
+	The harness now supports deterministic stratified seeded sampling across
+	corpus/state/source partitions and writes a patch backlog artifact for
+	statistically actionable failures.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --provider openrouter --model openai/gpt-4.1-mini --states MN,OR,NY --corpora us_code,state_laws,caselaw_access_project --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --input-candidates /tmp/bluebook_candidates.json --samples 12 --disable-hf-fallback --disable-exhaustive --recovery-archive-top-k 0 --output-dir /tmp/bluebook_gap_fill --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --seed-from-corpora --seed-examples-per-corpus 3 --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,caselaw_access_project --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 60 --seed-only --seed-from-corpora --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,state_court_rules,caselaw_access_project --seed-examples-per-corpus 12 --max-seed-examples-per-state 4 --max-seed-examples-per-source 2 --sampling-shuffle-seed 11 --max-acceptable-failure-rate 0.08 --min-actionable-failures 3 --merge-recovered-rows --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --disable-hf-fallback --disable-exhaustive --states MN,OR --corpora state_laws --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 30 --merge-recovered-rows --output-dir /tmp/bluebook_fuzz_run`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --publish-to-hf --hf-token $HF_TOKEN`
+	Use `--input-candidates` when you already have unresolved citations from an
+	audit, issue, prior fuzz run artifact, or hand-curated gap list. This bypasses
+	LLM generation while still exercising linker resolution, live recovery,
+	manifest creation, scraper patch scaffolding, and the patch backlog writer.
+	Common Crawl/Hugging Face archive-index recovery is opt-in for this gap-fill
+	path; set `LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL=1` when live search
+	candidates are insufficient and you want the deeper archive lookup.
+	The run artifact is written to `bluebook_linker_fuzz_run.json`, the
+	actionable scraper patch queue is written to
+	`bluebook_linker_fuzz_patch_backlog.json`, and malformed citation repairs are
+	written to `bluebook_linker_fuzz_malformed_repairs.json` under `--output-dir`.
+- Run `run_bluebook_exact_anchor_audit.py` to verify Bluebook citation outputs
+	are exact-anchor guaranteed (or surface non-exact fallback matches).
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --output /tmp/bluebook_exact_anchor_audit.json --report-output /tmp/bluebook_exact_anchor_audit.txt`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --allow-non-exact --json`
+	Exit code is `0` when no non-exact matches are found, `2` when non-exact
+	matches are present, and `1` on script/runtime errors.
+- Run `export_courtlistener_docket_single_bundle.py` to ingest a CourtListener
+	docket, attach public RECAP evidence and optional public filing-page PDFs, and
+	export a single parquet bundle with documents, filings, acquisition queue,
+	BM25 rows, vector rows, and knowledge-graph rows.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --filing-url "https://www.courtlistener.com/docket/67658002/american-alliance-for-equal-rights-v-fearless-fund-management-llc-filing/" --output-parquet /tmp/fearless_single_bundle.parquet --strict-evidence-mode --write-enriched-json /tmp/fearless_enriched.json --json`
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_full.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --input-enriched-json /tmp/fearless_enriched.json --output-parquet /tmp/fearless_from_cache.parquet --strict-evidence-mode`
+	Use embeddings_router + chunking by passing embedding flags, for example:
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_embeddings.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
+	Use `--prefer-hacc-venv` to rerun the export with `/home/barberb/HACC/.venv` (CUDA-ready torch/transformers) when available.
+	Set `IPFS_DATASETS_PY_AUTO_CUDA=1` to auto-select `--embeddings-device cuda` when CUDA is available.
+	Use `--strict-evidence-mode` when you want the bundle built from the
+	`plain_text+` subset instead of the full enriched docket payload.
+- Run `export_workspace_dataset_single_bundle.py` to ingest a workspace corpus
+	(email, Discord, Google Voice, directories, or custom JSON) and export a
+	single parquet bundle with documents, collections, BM25 rows, vector rows, and
+	knowledge-graph rows. When `--input-path` is used without `--input-type`, the
+	script auto-detects supported source shapes for directories, Google Voice
+	manifests, Discord exports, email exports, and generic workspace JSON.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace_payload.json --output-parquet /tmp/workspace_bundle.parquet --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/evidence_dir --output-parquet /tmp/workspace_bundle.parquet --workspace-id ws-01 --workspace-name "Evidence Workspace" --source-type directory --glob-pattern "*.txt"`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --strict-evidence-mode --write-normalized-json /tmp/workspace_dataset.json --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-parquet /tmp/mailbox_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/google_voice_manifest.json --output-parquet /tmp/google_voice_bundle.parquet --strict-evidence-mode`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/discord_export.json --output-parquet /tmp/discord_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/imap_snippets_summary.json --output-parquet /tmp/imap_bundle.parquet`
+	Explicit typing remains available when you want to pin the route rather than rely on auto-detection:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-parquet /tmp/google_voice_bundle.parquet --strict-evidence-mode`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type discord-export --input-path /tmp/discord_export.json --output-parquet /tmp/discord_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type email-export --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-parquet /tmp/imap_bundle.parquet`
+	To enable real embeddings + chunking:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --output-parquet /tmp/mailbox_bundle.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
+	Use `--prefer-hacc-venv` to rerun the export with `/home/barberb/HACC/.venv` (CUDA-ready torch/transformers) when available.
+	Set `IPFS_DATASETS_PY_AUTO_CUDA=1` to auto-select `--embeddings-device cuda` when CUDA is available.
+	Use `--strict-evidence-mode` when you want the bundle built from the
+	`plain_text+` retrieval subset instead of the full normalized workspace payload.
+- Run `export_workspace_dataset_bundle.py` to package a workspace dataset into
+	chain-loadable parquet (and optional CAR) artifacts similar to docket bundles.
+	When `--input-path` is used without `--input-type`, the script auto-detects
+	the same supported source shapes as the single-bundle exporter.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-dir /tmp/mailbox_bundle --no-car`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-path /tmp/email_export.json --output-dir /tmp/email_bundle --package-name email_bundle --no-car --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action search-bm25 --input-path /tmp/google_voice_bundle.parquet --query inspection --top-k 5`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action search-vector --input-path /tmp/google_voice_bundle.parquet --query inspection --top-k 5`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-bm25 --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-vector --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
+	For an end-to-end lifecycle overview, see `docs/guides/legal_data/WORKSPACE_DATASET_BUNDLES.md`.
+
+- Legal PDF helper CLI
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action validate-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action count-pages --input-path /tmp/packet.pdf --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action render-binder-title --output-path /tmp/binder_title.pdf --lean-mode`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action merge-pdfs --input-paths /tmp/front.pdf /tmp/table.pdf /tmp/packet_a.pdf --output-path /tmp/binder.pdf`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-filing-packet --input-paths /tmp/motion.md /tmp/memo.md --output-dir /tmp/filing_pdfs --packet-output-path /tmp/filing_packet.pdf --contact-block "Benjamin Jay Barber, pro se<br/>Defendant" --court-name "IN THE CLACKAMAS COUNTY JUSTICE COURT" --state-name "STATE OF OREGON" --caption-left "PLAINTIFF,<br/>v.<br/>DEFENDANT."`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-filing-packet-from-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-exhibit-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/exhibit-binder-court-ready/exhibit_binder_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-full-evidence-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/full_evidence_binder_manifest.json --lean-mode --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --config-path /path/to/courtstyle_packet_config.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --config-path /path/to/court_ready_binder_index_config.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --config-path /path/to/official_form_drafts_config.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --config-path /path/to/filing_specific_binders_config.json --json`
+	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
+	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
+	JSON response highlights for manifest builders:
+	`build-court-filing-packet-from-manifest` -> `packet_path`, `rendered_paths`, `document_count`
+	`build-exhibit-binder-from-manifest` -> `output_pdf`, `front_pdf`, `table_pdf`, `packet_paths`, `exhibit_count`
+	`build-full-evidence-binder-from-manifest` -> `output_pdf`, `family_outputs`, `working_dir`, `generated_dir`, `build_manifest_output`, `family_count`, `merged_input_count`, `lean_mode`
+	Config-driven default builder actions also return reusable payloads:
+	`build-courtstyle-packet-default --config-path ...` -> `config_path`, `complaint_output`, `summary_path`, `complaint_md_path`, `full_packet_dir`, `reduced_packet_dir`
+	`build-court-ready-binder-index-default --config-path ...` -> `config_path`, `output_path`
+	`build-official-form-drafts-default --config-path ...` -> `config_path`, `output_paths`, `output_count`
+	`build-filing-specific-binders-default --config-path ...` -> `config_path`, `compiled_dir`, `output_paths`, `set_count`
+	Explicit typing remains available when you want to pin the route:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`
+	Search actions return both flat `results` and grouped bundle-aware `grouped_results`; text mode renders bundle groups inline so Google Voice parent events, enrichments, and readable attachments appear together.
+- Run `run_email_authority_enrichment.py` to enrich an `email_timeline_handoff.json`
+	with authority query plans, live legal authority search results, and a seed
+	authority recommendation catalog.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_email_authority_enrichment.py --input /tmp/email_timeline_handoff.json --json`
+	`.venv/bin/python scripts/ops/legal_data/run_email_authority_enrichment.py --input /tmp/email_timeline_handoff.json --catalog-path docs/examples/legal_data/email_authority_enrichment_catalog.example.json --output-dir /tmp/authority_enrichment --json`
+	Use `--no-state-archives` to skip supplemental archive domain lookups and
+	`--prefer-hacc-venv` to rerun under `/home/barberb/HACC/.venv` when available.
+- Packaged docket bundle inspection/read workflow:
+	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
+	to inspect bundle metadata without rebuilding the full packaged dataset object.
+	Prefer `--packaged-action` for scripted use; the older mode flags remain supported
+	for compatibility.
+	Examples:
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action summary --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action summary --fields dataset_id,document_count,proof_store_count --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action inspect --fields latest_routing_reason,top_routing_citation --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action report --report-format parsed --fields latest_routing_reason,top_routing_citation`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --fields citation_count,matched_citation_count,unmatched_citation_count --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --recover-citation-sources --fields feedback_entry_count,recovery_count --json`
+	Compatibility examples:
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --inspect-packaged --fields latest_routing_reason,top_routing_citation --json`
+	These packaged read-only modes do not require `--output` and use the lightweight
+	manifest/provenance/report loaders instead of a full packaged docket rebuild.
+	Packaged `--citation-source-audit` and `--recover-citation-sources` now also stay on
+	the manifest-based path, so they avoid rebuilding the full packaged docket object
+	unless you explicitly request an enriched dataset operation such as `--enrich-query`.
+- Run `run_all_state_legal_corpora_agentic.py` to drive the agentic daemon across
+	state laws, state court rules, and state administrative rules with shared fetch
+	caching and IPFS-backed page reuse enabled by default.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states all --max-cycles 1`
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states RI,OR --corpora laws,court --max-cycles 2 --stop-on-target-score`
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states all --skip-passed --output-root /tmp/all_state_legal_corpora_agentic`
+	The runner writes `aggregated_summary.json` under the output root and emits a
+	`patch_backlog` section when any corpus still fails after its cycle.
 - Run `run_state_laws_agentic_full.sh` for end-to-end autonomous state-law
 	collection via the actor/critic loop.
 	Examples:
@@ -45,6 +225,48 @@ Notes:
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
+- `refresh_state_laws_corpus.py` keeps a persistent completed-state registry at
+	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json` by default
+	(even when shard output roots differ), and skips those states on later runs
+	unless `--no-skip-completed-states` is set.
+	It also loads a repo-tracked baseline file by default:
+	`scripts/ops/legal_data/state_laws_completed_states.baseline.json`
+	(currently seeded with completed states:
+	`AK`, `AL`, `AR`, `AZ`, `CA`, `CO`, `CT`, `DE`, `FL`, `GA`, `IA`, `ID`, `IL`, `IN`, `KS`,
+	`KY`, `LA`, `MA`, `MD`, `ME`, `MI`, `MN`, `MO`, `MS`, `MT`, `NC`, `NE`, `NH`, `ND`, `NJ`, `NM`,
+	`NV`, `NY`, `OH`, `OK`, `OR`, `PA`, `SC`, `SD`, `TN`, `TX`, `UT`, `VA`, `VT`, `WI`, `WV`, `WY`).
+	Indiana (`IN`) was re-verified as full-corpus complete on 2026-05-26
+	(`statutes_count=73194`) and is intentionally baseline-skipped in later runs.
+	New Hampshire (`NH`) was promoted into baseline on 2026-05-28
+	(`statutes_count=1041`, `timeout_classification=checkpoint_complete_promotion`).
+	Mississippi (`MS`) was promoted into baseline on 2026-05-28
+	(`statutes_count=28508`, source path now substantive Unicourt sections).
+	Maine (`ME`), Nebraska (`NE`), and Virginia (`VA`) were promoted into baseline
+	on 2026-05-28 from shared-registry full-corpus confirmations.
+	Unresolved/non-baselined states as of 2026-05-28: `HI`, `RI`, `WA`.
+	Only add states to this baseline after an uncapped/full-corpus confirmation.
+	Do not promote bounded probe runs (for example `--max-statutes 120/200`) to
+	baseline-complete, because those runs are diagnostic and intentionally partial.
+	By default only `status=success` entries are treated as skip-complete; legacy
+	`status=zero_statutes` rows are still recorded for diagnostics but are *not*
+	auto-skipped unless `STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE=1` is set.
+	For long-running daemon shards, use `--progress-heartbeat-seconds` so
+	`state_refresh_progress.json` is updated continuously while states are still
+	in-flight.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --no-skip-completed-states --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-registry /tmp/state_laws_completed_states.json --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-baseline scripts/ops/legal_data/state_laws_completed_states.baseline.json --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --no-load-completed-states-baseline --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,ME --progress-heartbeat-seconds 30 --json`
+	`python3 scripts/ops/legal_data/refresh_state_laws_corpus.py --states MN,WA --dry-run --json` (example: MN already marked complete, WA still queued)
+	To manually pin a state as completed in the shared registry (example: `MN`):
+	`python3 -c "import json,pathlib,datetime; p=pathlib.Path.home()/'.ipfs_datasets/state_laws/state_laws_completed_states.json'; o=json.loads(p.read_text()) if p.exists() else {'schema':'ipfs_datasets_py.state_laws_refresh.completed_states.v1','states':{}}; now=datetime.datetime.now(datetime.timezone.utc).isoformat(); o.setdefault('states',{})['MN']={'status':'success','statutes_count':16389,'completed_at':now,'first_completed_at':o.get('states',{}).get('MN',{}).get('first_completed_at',now),'updated_at':now,'output_root':'manual_seed'}; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(o,indent=2,sort_keys=True)); print(p)"`.
+	When archive providers are rate-limited, set
+	`LEGAL_SCRAPER_DISABLE_ARCHIVE_IS=1` and/or `LEGAL_SCRAPER_DISABLE_WAYBACK=1`,
+	or tune `LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS` and
+	`LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS`.
 - `refresh_state_jsonld_quality.py` now emits structured JSON even on failures
 	(interrupt/exception) so loop wrappers can persist diagnostics to `*.refresh.json`.
 	Exit codes: `0` success, `1` generic error, `130` interrupt.

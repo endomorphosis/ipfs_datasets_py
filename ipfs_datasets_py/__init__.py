@@ -26,6 +26,17 @@ def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _enable_default_auto_install() -> None:
+    """Enable runtime dependency installation unless the caller opted out."""
+    if not os.environ.get("IPFS_DATASETS_AUTO_INSTALL"):
+        os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
+    if not os.environ.get("IPFS_KIT_AUTO_INSTALL_DEPS"):
+        os.environ["IPFS_KIT_AUTO_INSTALL_DEPS"] = "1"
+
+
+_enable_default_auto_install()
+
+
 # In benchmark/CI contexts we want imports to be as hermetic as possible.
 # This prevents package import-time side effects from optional subsystems
 # (FastAPI services, vector stores, search integrations) that are unrelated to
@@ -171,10 +182,14 @@ if _MINIMAL_IMPORTS:
     def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
         return False
 else:
-    from .auto_installer import get_installer, ensure_module
+    from .auto_installer import get_installer, ensure_module, ensure_repo_installer_current
 
     # Initialize installer with environment configuration
     installer = get_installer()
+    try:
+        ensure_repo_installer_current()
+    except Exception:
+        pass
 
 class _FallbackIPFSDatasets:
     """Fallback IPFSDatasets interface when core dependencies are missing."""
@@ -482,8 +497,7 @@ def _lazy_import_pdf_symbol(name: str):
     if (
         (not _MINIMAL_IMPORTS)
         and installer.auto_install
-        and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
-        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
+        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').strip().lower() in {'1', 'true', 'yes', 'on'}
     ):
         try:
             from .auto_installer import install_for_component

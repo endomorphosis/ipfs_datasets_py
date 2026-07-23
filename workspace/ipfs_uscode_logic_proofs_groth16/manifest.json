@@ -1,0 +1,22 @@
+{
+  "schema_version": "uscode-logic-proof-artifacts-v1",
+  "input": "/tmp/ipfs_uscode_probe/uscode_parquet/laws.parquet",
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/ipfs_uscode_logic_proofs_groth16",
+  "logic_proof_artifacts": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/ipfs_uscode_logic_proofs_groth16/laws_logic_proof_artifacts.parquet",
+  "source_row_count": 60068,
+  "artifact_row_count": 60068,
+  "completed_row_count": 60068,
+  "remaining_row_count": 0,
+  "failure_count": 0,
+  "failures": [],
+  "bm25_document_count": 60068,
+  "kg_relationship_source_count": 60068,
+  "formalization_scope": "machine_generated_candidate",
+  "ontology_version": "uscode-logic-ontology-v1",
+  "zkp_backend": "groth16",
+  "zkp_circuit_version": 1,
+  "zkp_verified_count": 60068,
+  "status": "complete",
+  "started_at": "2026-04-26T21:47:59.102692+00:00",
+  "updated_at": "2026-04-26T22:09:46.229484+00:00"
+}

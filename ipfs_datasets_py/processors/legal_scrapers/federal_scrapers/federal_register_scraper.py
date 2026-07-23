@@ -45,6 +45,24 @@ FEDERAL_AGENCIES = {
 }
 
 
+def build_ecfr_section_url(title: str, section: str) -> str:
+    """Build the official eCFR section URL used by recovery fuzzing."""
+    normalized_title = str(title or "").strip()
+    normalized_section = str(section or "").strip()
+    if not normalized_title or not normalized_section:
+        return ""
+    return f"https://www.ecfr.gov/current/title-{normalized_title}/section-{normalized_section}"
+
+
+def build_federal_register_citation_url(volume: str, page: str) -> str:
+    """Build the Federal Register citation URL used by recovery fuzzing."""
+    normalized_volume = str(volume or "").strip()
+    normalized_page = str(page or "").strip()
+    if not normalized_volume or not normalized_page:
+        return ""
+    return f"https://www.federalregister.gov/citation/{normalized_volume}-FR-{normalized_page}"
+
+
 def _is_public_ip(ip_str: str) -> bool:
     """Return True if the IP address is globally routable (not private/loopback/etc.)."""
     try:
@@ -749,6 +767,8 @@ async def scrape_federal_register(
 
 
 __all__ = [
+    "build_ecfr_section_url",
+    "build_federal_register_citation_url",
     "search_federal_register",
     "scrape_federal_register",
 ]

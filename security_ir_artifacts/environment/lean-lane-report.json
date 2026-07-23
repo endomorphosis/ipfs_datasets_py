@@ -1,0 +1,56 @@
+{
+  "artifact_cid": "sha256:58e9cb918a2b83f24bac99570851e071216183b70ff9ecb7fc9f35c2204948d3",
+  "blockers": [],
+  "generated_at": "2026-07-19T03:29:30Z",
+  "lake": {
+    "executable": "/home/barberb/.elan/bin/lake",
+    "present": true,
+    "version": "Lake version 5.0.0-src+68218e8 (Lean version 4.31.0)"
+  },
+  "lean": {
+    "executable": "/home/barberb/.elan/bin/lean",
+    "present": true,
+    "version": "Lean (version 4.31.0, x86_64-unknown-linux-gnu, commit 68218e876d2a38b1985b8590fff244a83c321783, Release)"
+  },
+  "overall_status": "ready",
+  "proof_consumer_report": {
+    "exists": true,
+    "kernel_artifact_cid": "sha256:fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f",
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+    "schema_version": "xaman-proof-consumer-report/v1",
+    "security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS",
+    "sha256": "sha256:3fd62d8c0b7c209877cf499c9ad7523d4ccdc044a3fdff79fd1b773c87b01b77"
+  },
+  "proof_kernel": {
+    "exists": true,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "sha256": "sha256:fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f"
+  },
+  "proof_kernel_check": {
+    "command": [
+      "/home/barberb/.elan/bin/lean",
+      "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean"
+    ],
+    "returncode": 0,
+    "status": "passed",
+    "stderr": "",
+    "stdout": ""
+  },
+  "schema_version": "crypto-exchange-lean-solver-lane-report/v1",
+  "security_decision": "LEAN_SOLVER_LANE_READY",
+  "summary": {
+    "blocker_count": 0,
+    "lake_present": true,
+    "lean_present": true,
+    "proof_consumer_report_present": true,
+    "proof_kernel_checked": true,
+    "warning_count": 1
+  },
+  "task_id": "PORTAL-CXTP-090",
+  "warnings": [
+    {
+      "code": "PRODUCTION_RELEASE_STILL_BLOCKED",
+      "message": "Lean lane is ready but Xaman release remains blocked by integration and assumptions"
+    }
+  ]
+}

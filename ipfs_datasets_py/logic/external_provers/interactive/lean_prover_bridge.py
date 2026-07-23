@@ -21,13 +21,41 @@ Usage:
 from dataclasses import dataclass
 from typing import List, Optional
 import subprocess
-import shutil
 import time
 import tempfile
 import os
 
+from ..lazy_installer import find_executable, lazy_install_prover
+from ...modal.lean_runtime import run_lean_process
+
 # Check Lean availability
-LEAN_AVAILABLE = shutil.which("lean") is not None or shutil.which("lake") is not None
+LEAN_AVAILABLE = find_executable("lean") is not None or find_executable("lake") is not None
+
+
+def _ensure_lean_available() -> bool:
+    """Ensure Lean is executable, with opt-in lazy install support."""
+
+    global LEAN_AVAILABLE
+    if find_executable("lean") or find_executable("lake"):
+        LEAN_AVAILABLE = True
+        return True
+
+    if lazy_install_prover("lean", reason="LeanProverBridge requested"):
+        LEAN_AVAILABLE = find_executable("lean") is not None or find_executable("lake") is not None
+        return LEAN_AVAILABLE
+
+    LEAN_AVAILABLE = False
+    return False
+
+
+def _node_args(node) -> tuple:
+    """Return TDFOL node arguments across current and legacy field names."""
+    return tuple(getattr(node, "arguments", getattr(node, "args", ())) or ())
+
+
+def _function_name(term) -> str:
+    """Return a TDFOL function name across current and legacy field names."""
+    return str(getattr(term, "function_name", getattr(term, "function_symbol", "")) or "")
 
 
 @dataclass
@@ -98,16 +126,18 @@ class TDFOLToLeanConverter:
         elif isinstance(term, tdfol_core.Constant):
             return term.name
         elif isinstance(term, tdfol_core.FunctionApplication):
-            args = " ".join(self._convert_term(arg) for arg in term.args)
-            return f"({term.function_symbol} {args})"
+            func_name = _function_name(term)
+            args = " ".join(self._convert_term(arg) for arg in _node_args(term))
+            return f"({func_name} {args})" if args else func_name
         else:
             return str(term)
     
     def _convert_predicate(self, pred) -> str:
         """Convert a predicate to Lean notation."""
-        if not pred.args:
+        args_tuple = _node_args(pred)
+        if not args_tuple:
             return pred.name
-        args = " ".join(self._convert_term(arg) for arg in pred.args)
+        args = " ".join(self._convert_term(arg) for arg in args_tuple)
         return f"({pred.name} {args})"
     
     def _convert_binary(self, formula) -> str:
@@ -188,7 +218,7 @@ class LeanProverBridge:
             auto_tactics: List of tactics to try (default: ["trivial", "simp", "tauto"])
             enable_cache: Whether to enable proof caching
         """
-        if not LEAN_AVAILABLE:
+        if not _ensure_lean_available():
             raise ImportError("Lean is not available. Install from: https://leanprover.github.io/")
         
         self.timeout = timeout or 30.0
@@ -344,25 +374,27 @@ class LeanProverBridge:
         
         try:
             # Execute with lean compiler
-            if shutil.which("lean"):
-                result = subprocess.run(
-                    ["lean", script_file],
-                    capture_output=True,
-                    text=True,
+            lean_cmd = find_executable("lean")
+            lake_cmd = find_executable("lake")
+            if lean_cmd:
+                result = run_lean_process(
+                    [lean_cmd, script_file],
                     timeout=timeout
                 )
-            elif shutil.which("lake"):
+            elif lake_cmd:
                 # If only lake is available, try using it
-                result = subprocess.run(
-                    ["lake", "env", "lean", script_file],
-                    capture_output=True,
-                    text=True,
+                result = run_lean_process(
+                    [lake_cmd, "env", "lean", script_file],
                     timeout=timeout
                 )
             else:
                 raise FileNotFoundError("Neither lean nor lake found in PATH")
             
             # Check if proof succeeded
+            if result.timed_out:
+                raise subprocess.TimeoutExpired(cmd=[lean_cmd or lake_cmd], timeout=timeout)
+            if result.error:
+                raise OSError(result.error)
             output = result.stdout + result.stderr
             success = (result.returncode == 0 and 
                       "error:" not in output.lower() and
@@ -383,4 +415,10 @@ class LeanProverBridge:
                 pass
 
 
-__all__ = ["LeanProverBridge", "LeanProofResult", "LEAN_AVAILABLE", "TDFOLToLeanConverter"]
+__all__ = [
+    "LeanProverBridge",
+    "LeanProofResult",
+    "LEAN_AVAILABLE",
+    "TDFOLToLeanConverter",
+    "_ensure_lean_available",
+]

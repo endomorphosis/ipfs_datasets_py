@@ -19,7 +19,9 @@ from ipfs_datasets_py.logic.zkp import (
     ZKPCircuit,
     ZKPProof,
     ZKPError,
+    build_proof_attestation_view,
     create_implication_circuit,
+    decode_simulated_proof_layout,
 )
 
 
@@ -161,6 +163,86 @@ class TestZKPProver:
         assert stats['cache_hits'] == 1
         assert proof2.public_inputs["theorem"] == "  Q\n"
         assert proof2.public_inputs["theorem_hash"] == proof1.public_inputs["theorem_hash"]
+
+    def test_simulated_proof_is_deterministic_without_cache(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        theorem = "Q"
+        axioms = ["P", "P -> Q"]
+
+        proof1 = prover.generate_proof(theorem=theorem, private_axioms=axioms)
+        proof2 = prover.generate_proof(theorem=theorem, private_axioms=axioms)
+
+        assert proof1.proof_data == proof2.proof_data
+        assert proof1.public_inputs["theorem_hash"] == proof2.public_inputs["theorem_hash"]
+
+    def test_simulated_public_inputs_include_versioned_circuit_ref(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={
+                "circuit_ref": "legal_ir_zkp_attestation",
+                "circuit_version": 2,
+            },
+        )
+
+        assert proof.public_inputs["circuit_ref"] == "legal_ir_zkp_attestation@v2"
+        assert proof.public_inputs["circuit_version"] == 2
+
+    def test_simulated_public_inputs_include_attestation_reference(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+        )
+
+        assert "attestation_ref" in proof.public_inputs
+        assert isinstance(proof.public_inputs["attestation_ref"], str)
+        assert len(proof.public_inputs["attestation_ref"]) == 64
+        assert proof.public_inputs["attestation_view_version"] == 1
+        assert proof.metadata["attestation_view"]["attestation_ref"] == proof.public_inputs["attestation_ref"]
+
+    def test_simulated_attestation_view_layout_is_decodable(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+        )
+
+        layout = decode_simulated_proof_layout(proof.proof_data)
+        assert layout["valid"] is True
+        assert layout["format"] == "SIMZKP/1"
+        assert layout["proof_hash_hex"] == proof.proof_data[8:40].hex()
+        assert layout["circuit_hash_hex"] == proof.proof_data[40:72].hex()
+        assert layout["witness_hash_hex"] == proof.proof_data[72:104].hex()
+
+    def test_attestation_ref_changes_with_circuit_version(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        proof_v1 = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+        )
+        proof_v2 = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={"circuit_ref": "legal_ir_zkp_attestation@v2", "circuit_version": 2},
+        )
+
+        assert proof_v1.public_inputs["attestation_ref"] != proof_v2.public_inputs["attestation_ref"]
+        view_v1 = build_proof_attestation_view(
+            proof_data=proof_v1.proof_data,
+            public_inputs=proof_v1.public_inputs,
+            metadata=proof_v1.metadata,
+        )
+        view_v2 = build_proof_attestation_view(
+            proof_data=proof_v2.proof_data,
+            public_inputs=proof_v2.public_inputs,
+            metadata=proof_v2.metadata,
+        )
+        assert view_v1["circuit_ref"] == "legal_ir_zkp_attestation@v1"
+        assert view_v2["circuit_ref"] == "legal_ir_zkp_attestation@v2"
     
     def test_proof_size_limit(self):
         """
@@ -510,6 +592,25 @@ class TestZKPIntegration:
         
         assert restored.proof_data == original_bytes
         assert proof_dict['proof_data'] == original_bytes.hex()
+
+    def test_form_certificate_serialization_includes_attestation_view(self):
+        from ipfs_datasets_py.logic.zkp.form_circuit import FormCompletionCertificate
+
+        prover = ZKPProver(backend="simulated")
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={"circuit_ref": "legal_ir_zkp_attestation@v1", "circuit_version": 1},
+        )
+        cert = FormCompletionCertificate(
+            proof=proof,
+            form_id="form-1",
+            source_pdf="form.pdf",
+        )
+
+        cert_dict = cert.to_dict()
+        assert "zkp_attestation" in cert_dict
+        assert cert_dict["zkp_attestation"]["attestation_ref"] == proof.public_inputs["attestation_ref"]
 
 
 if __name__ == "__main__":

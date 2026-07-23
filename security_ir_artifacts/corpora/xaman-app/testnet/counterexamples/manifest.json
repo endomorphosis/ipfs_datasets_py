@@ -1,0 +1,22 @@
+{
+  "artifact_cid": "bafkreigpwf7bmhiv77mpim7b6xrzvhsljhpbr75v3wyfxvnvimvpfml6hq",
+  "counterexample_count": 12,
+  "counterexamples": [
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_account-provenance-is-fresh-testnet-only.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_audit-redaction-boundary-is-preserved.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_broadcast-and-ledger-finality-are-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_cancellation-path-is-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_expiry-path-is-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_network-binding-is-testnet-only.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_payload-intake-is-categorical-only.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_refusal-path-is-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_replay-controls-are-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_review-auth-sequence-observed.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_signing-decision-is-observed-but-crypto-output-is-not-modeled.json",
+    "security_ir_artifacts/corpora/xaman-app/testnet/counterexamples/xaman-testnet-claim_submission-ui-attempt-and-result-are-observed.json"
+  ],
+  "generated_at_utc": "2026-07-11T00:00:00Z",
+  "model_cid": "sha256:4edaad61130b6851220b6a75fa86a52b17e1baf33a8631def2879b0464366b43",
+  "schema_version": "xaman-testnet-smt-counterexample-manifest/v1",
+  "task_id": "PORTAL-CXTP-133"
+}

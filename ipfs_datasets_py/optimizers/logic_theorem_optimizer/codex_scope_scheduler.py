@@ -1,0 +1,1871 @@
+"""Conflict-aware scheduling for parallel Codex program-synthesis workers.
+
+The modal optimizer creates related repair evidence faster than a single Codex
+worker can consume it.  Starting workers solely by queue priority is unsafe,
+however: nominally different logic scopes can still edit a shared registry,
+codec, test, or package initializer.  This module is the policy boundary for
+that concurrency.  It provides:
+
+* canonical ownership for the nine LegalIR repair lanes;
+* deterministic evidence bundles matched by AST ownership, logic family,
+  expected writes, shared validation, and verified readiness;
+* an initial scheduler capped at four unique, non-conflicting scopes;
+* concurrent validation of isolated worktrees;
+* a fair merge serializer which permits disjoint callbacks, never overlaps
+  conflicting write sets, and offers a validation-receipt-guarded merge path;
+* a stateful worker controller which backs off on validation failures, apply
+  conflicts, memory pressure, and transient provider/infrastructure failures.
+
+Git operations remain injected callbacks.  The daemon owns its process-safe
+main-checkout lock and final promotion validation; this module never weakens
+those boundaries and isolated candidate validation does not replace them.
+"""
+
+from __future__ import annotations
+
+import fnmatch
+import hashlib
+import json
+import math
+import threading
+import time
+from collections import Counter, deque
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
+from enum import Enum
+from pathlib import Path
+from types import MappingProxyType
+from typing import Any, Final, Iterator, Optional
+
+
+CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION: Final = "legal-ir-codex-scope-scheduler-v1"
+CODEX_SCOPE_BUNDLE_SCHEMA_VERSION: Final = "legal-ir-codex-scope-bundle-v1"
+MAX_INITIAL_CODEX_WORKERS: Final = 4
+
+
+class CodexOwnershipScope(str, Enum):
+    """Canonical queue/daemon names for the LegalIR Codex ownership lanes."""
+
+    COMPILER_PARSER = "compiler_parser"
+    COMPILER_REGISTRY = "compiler_registry"
+    IR_DECOMPILER = "ir_decompiler"
+    DEONTIC = "deontic"
+    FRAME_LOGIC = "frame_logic"
+    TDFOL = "tdfol"
+    KG = "knowledge_graphs"
+    CEC = "cec"
+    EXTERNAL_PROVER = "external_provers"
+
+    @classmethod
+    def coerce(cls, value: "CodexOwnershipScope | str") -> "CodexOwnershipScope":
+        if isinstance(value, cls):
+            return value
+        normalized = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "compiler": cls.COMPILER_PARSER,
+            "parser": cls.COMPILER_PARSER,
+            "compiler_ambiguity": cls.COMPILER_REGISTRY,
+            "registry": cls.COMPILER_REGISTRY,
+            "decompiler": cls.IR_DECOMPILER,
+            "flogic": cls.FRAME_LOGIC,
+            "frame": cls.FRAME_LOGIC,
+            "td_fol": cls.TDFOL,
+            "temporal_deontic_fol": cls.TDFOL,
+            "kg": cls.KG,
+            "knowledge_graph": cls.KG,
+            "knowledge_graphs": cls.KG,
+            "event_calculus": cls.CEC,
+            "external_prover": cls.EXTERNAL_PROVER,
+            "prover": cls.EXTERNAL_PROVER,
+            "provers": cls.EXTERNAL_PROVER,
+        }
+        if normalized in aliases:
+            return aliases[normalized]
+        try:
+            return cls(normalized)
+        except ValueError as exc:
+            expected = ", ".join(scope.value for scope in cls)
+            raise ValueError(f"unsupported Codex ownership scope {value!r}; expected {expected}") from exc
+
+
+CODEX_OWNERSHIP_SCOPES: Final[tuple[str, ...]] = tuple(
+    scope.value for scope in CodexOwnershipScope
+)
+# Names used in the planning packet/acceptance text.  Runtime queue names stay
+# lowercase and compatible with the existing modal daemon.
+CODEX_OWNERSHIP_SCOPE_LABELS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        CodexOwnershipScope.COMPILER_PARSER.value: "compiler_parser",
+        CodexOwnershipScope.COMPILER_REGISTRY.value: "compiler_registry",
+        CodexOwnershipScope.IR_DECOMPILER.value: "ir_decompiler",
+        CodexOwnershipScope.DEONTIC.value: "deontic",
+        CodexOwnershipScope.FRAME_LOGIC.value: "frame_logic",
+        CodexOwnershipScope.TDFOL.value: "TDFOL",
+        CodexOwnershipScope.KG.value: "KG",
+        CodexOwnershipScope.CEC.value: "CEC",
+        CodexOwnershipScope.EXTERNAL_PROVER.value: "external_prover",
+    }
+)
+
+
+# These are ownership candidates, not permission grants.  Explicit allowed
+# paths on a task are retained as well and can therefore reveal conflicts in
+# shared files such as __init__.py or modal/codec.py.
+DEFAULT_SCOPE_OWNERSHIP: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
+    {
+        "compiler_parser": (
+            "ipfs_datasets_py/logic/modal/compiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+        ),
+        "compiler_registry": (
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        ),
+        "ir_decompiler": (
+            "ipfs_datasets_py/logic/modal/decompiler.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        ),
+        "deontic": ("ipfs_datasets_py/logic/deontic/**",),
+        "frame_logic": (
+            "ipfs_datasets_py/logic/flogic/**",
+            "ipfs_datasets_py/logic/flogic_optimizer.py",
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+        ),
+        "tdfol": ("ipfs_datasets_py/logic/TDFOL/**",),
+        "knowledge_graphs": (
+            "ipfs_datasets_py/knowledge_graphs/**",
+            "ipfs_datasets_py/logic/modal/kg_bridge.py",
+        ),
+        "cec": ("ipfs_datasets_py/logic/CEC/**",),
+        "external_provers": (
+            "ipfs_datasets_py/logic/external_provers/**",
+            "ipfs_datasets_py/logic/bridge/external_prover_router.py",
+        ),
+    }
+)
+
+
+def canonical_codex_scope(value: CodexOwnershipScope | str) -> str:
+    """Return the canonical daemon scope name, accepting task-plan aliases."""
+
+    return CodexOwnershipScope.coerce(value).value
+
+
+def _scope_from_ast_ownership(value: Any) -> str:
+    text = " ".join(str(item) for item in _sequence(value)).lower().replace("-", "_")
+    ordered = (
+        (("registry", "codec"), "compiler_registry"),
+        (("decompil", "reconstruct"), "ir_decompiler"),
+        (("frame", "flogic"), "frame_logic"),
+        (("tdfol", "td_fol", "temporal_deontic"), "tdfol"),
+        (("knowledge_graph", "kg"), "knowledge_graphs"),
+        (("event_calculus", "cec"), "cec"),
+        (("external_prover", "prover_router"), "external_provers"),
+        (("deontic",), "deontic"),
+        (("compiler", "parser"), "compiler_parser"),
+    )
+    for terms, scope in ordered:
+        if any(term in text for term in terms):
+            return scope
+    return ""
+
+
+def _sequence(value: Any) -> tuple[Any, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, (str, bytes, bytearray)):
+        return (value,)
+    if isinstance(value, Sequence):
+        return tuple(value)
+    return (value,)
+
+
+def _normalize_path(value: Any) -> str:
+    path = str(value or "").strip().replace("\\", "/")
+    while path.startswith("./"):
+        path = path[2:]
+    while "//" in path:
+        path = path.replace("//", "/")
+    if not path or path.startswith("/") or ".." in path.split("/"):
+        raise ValueError(f"write-set paths must be repository-relative: {value!r}")
+    return path.rstrip("/")
+
+
+def _paths(value: Any) -> tuple[str, ...]:
+    normalized: set[str] = set()
+    for item in _sequence(value):
+        if isinstance(item, Mapping):
+            item = item.get("path") or item.get("file") or item.get("pattern")
+        if item:
+            normalized.add(_normalize_path(item))
+    return tuple(sorted(normalized))
+
+
+def _identifiers(value: Any) -> tuple[str, ...]:
+    return tuple(sorted({str(item).strip() for item in _sequence(value) if str(item).strip()}))
+
+
+def _logic_families(value: Any) -> tuple[str, ...]:
+    """Normalize the family spellings emitted by TODO and validation producers."""
+
+    aliases = {
+        "flogic": "frame_logic",
+        "frame": "frame_logic",
+        "td_fol": "tdfol",
+        "temporal_deontic_fol": "tdfol",
+        "kg": "knowledge_graphs",
+        "knowledge_graph": "knowledge_graphs",
+        "event_calculus": "cec",
+        "external_prover": "external_provers",
+        "prover": "external_provers",
+        "ir_decompiler": "decompiler",
+    }
+    normalized: set[str] = set()
+    for item in _sequence(value):
+        if isinstance(item, Mapping):
+            item = item.get("family") or item.get("logic_family") or item.get("name")
+        text = str(item or "").strip().lower().replace("-", "_").replace(" ", "_")
+        if text:
+            normalized.add(aliases.get(text, text))
+    return tuple(sorted(normalized))
+
+
+def _json_safe(value: Any, *, depth: int = 0) -> Any:
+    if depth > 8:
+        return "<depth-limit>"
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else str(value)
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_safe(item, depth=depth + 1)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_json_safe(item, depth=depth + 1) for item in list(value)[:512]]
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        return _json_safe(to_dict(), depth=depth + 1)
+    return str(value)
+
+
+def _digest(value: Any) -> str:
+    encoded = json.dumps(
+        _json_safe(value), ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _glob_root(pattern: str) -> str:
+    positions = [pattern.find(token) for token in ("*", "?", "[") if token in pattern]
+    cut = min(positions) if positions else len(pattern)
+    return pattern[:cut].rstrip("/")
+
+
+def _path_patterns_conflict(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    left_root, right_root = _glob_root(left), _glob_root(right)
+    if not left_root or not right_root:
+        return True
+    if fnmatch.fnmatchcase(left, right) or fnmatch.fnmatchcase(right, left):
+        return True
+    # A directory pattern owns every descendant.  Plain file names do not own
+    # sibling paths merely because their textual prefixes happen to match.
+    left_directory = any(token in left for token in "*?[") or left.endswith("/")
+    right_directory = any(token in right for token in "*?[") or right.endswith("/")
+    if left_directory and (right_root == left_root or right_root.startswith(left_root + "/")):
+        return True
+    if right_directory and (left_root == right_root or left_root.startswith(right_root + "/")):
+        return True
+    return False
+
+
+@dataclass(frozen=True, slots=True)
+class PredictedWriteSet:
+    """A conservative set of repository paths and typed symbols a patch may edit."""
+
+    paths: tuple[str, ...] = ()
+    symbols: tuple[str, ...] = ()
+    unknown: bool = False
+    sources: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "paths", _paths(self.paths))
+        object.__setattr__(self, "symbols", _identifiers(self.symbols))
+        object.__setattr__(self, "sources", _identifiers(self.sources))
+
+    @classmethod
+    def from_value(cls, value: "PredictedWriteSet | Mapping[str, Any] | Sequence[str]") -> "PredictedWriteSet":
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, Mapping):
+            return cls(
+                paths=_paths(value.get("paths") or value.get("files")),
+                symbols=_identifiers(value.get("symbols")),
+                unknown=bool(value.get("unknown", False)),
+                sources=_identifiers(value.get("sources")),
+            )
+        return cls(paths=_paths(value))
+
+    def conflicts_with(self, other: "PredictedWriteSet") -> bool:
+        if not isinstance(other, PredictedWriteSet):
+            raise TypeError("write-set conflicts require PredictedWriteSet values")
+        if self.unknown or other.unknown:
+            return True
+        if set(self.symbols) & set(other.symbols):
+            return True
+        return any(
+            _path_patterns_conflict(left, right)
+            for left in self.paths
+            for right in other.paths
+        )
+
+    def union(self, *others: "PredictedWriteSet") -> "PredictedWriteSet":
+        return PredictedWriteSet(
+            paths=tuple(path for value in (self, *others) for path in value.paths),
+            symbols=tuple(symbol for value in (self, *others) for symbol in value.symbols),
+            unknown=any(value.unknown for value in (self, *others)),
+            sources=tuple(source for value in (self, *others) for source in value.sources),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "paths": list(self.paths),
+            "sources": list(self.sources),
+            "symbols": list(self.symbols),
+            "unknown": self.unknown,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexScopeTask:
+    """Normalized queue evidence consumed by the scheduler."""
+
+    task_id: str
+    scope: str
+    priority: float = 0.0
+    correlation_key: str = ""
+    explicit_paths: tuple[str, ...] = ()
+    symbols: tuple[str, ...] = ()
+    validation_commands: tuple[str, ...] = ()
+    readiness_verified: bool = True
+    readiness_evidence: tuple[str, ...] = ()
+    ready_blockers: tuple[str, ...] = ()
+    evidence: Mapping[str, Any] = field(default_factory=dict, compare=False)
+    ast_ownership: tuple[str, ...] = ()
+    logic_families: tuple[str, ...] = ()
+    observed_confirmed_patches_per_hour: float = 0.0
+
+    def __post_init__(self) -> None:
+        task_id = str(self.task_id or "").strip()
+        if not task_id:
+            raise ValueError("Codex scheduler task_id must not be empty")
+        object.__setattr__(self, "task_id", task_id)
+        object.__setattr__(self, "scope", canonical_codex_scope(self.scope))
+        priority = float(self.priority)
+        if not math.isfinite(priority):
+            raise ValueError("Codex scheduler priority must be finite")
+        object.__setattr__(self, "priority", priority)
+        object.__setattr__(self, "correlation_key", str(self.correlation_key or "").strip())
+        object.__setattr__(self, "explicit_paths", _paths(self.explicit_paths))
+        object.__setattr__(self, "symbols", _identifiers(self.symbols))
+        object.__setattr__(self, "validation_commands", _identifiers(self.validation_commands))
+        object.__setattr__(self, "readiness_verified", bool(self.readiness_verified))
+        object.__setattr__(self, "readiness_evidence", _identifiers(self.readiness_evidence))
+        object.__setattr__(self, "ready_blockers", _identifiers(self.ready_blockers))
+        object.__setattr__(self, "evidence", MappingProxyType(dict(_json_safe(self.evidence))))
+        object.__setattr__(self, "ast_ownership", _identifiers(self.ast_ownership))
+        object.__setattr__(self, "logic_families", _logic_families(self.logic_families))
+        confirmed_rate = _finite_non_negative(
+            "observed_confirmed_patches_per_hour", self.observed_confirmed_patches_per_hour
+        )
+        object.__setattr__(self, "observed_confirmed_patches_per_hour", confirmed_rate)
+
+    @property
+    def uses_structured_compatibility(self) -> bool:
+        """Whether this TODO carries the four-factor bundle contract."""
+
+        return bool(
+            self.ast_ownership
+            and self.logic_families
+            and self.validation_commands
+            and (self.explicit_paths or self.symbols)
+        )
+
+    @classmethod
+    def from_value(cls, value: "CodexScopeTask | Mapping[str, Any] | Any") -> "CodexScopeTask":
+        if isinstance(value, cls):
+            return value
+        if not isinstance(value, Mapping):
+            to_dict = getattr(value, "to_dict", None)
+            if not callable(to_dict):
+                raise TypeError("Codex tasks must be mappings or expose to_dict()")
+            value = to_dict()
+        data = dict(value)
+        metadata = dict(data.get("metadata") or {})
+        task_id = data.get("task_id") or data.get("todo_id") or data.get("id")
+        raw_ast_ownership = (
+            data.get("ast_ownership")
+            or data.get("owned_ast_scope")
+            or data.get("typed_ast_scopes")
+            or metadata.get("ast_ownership")
+            or metadata.get("owned_ast_scope")
+            or metadata.get("typed_ast_scopes")
+        )
+        scope = (
+            data.get("scope")
+            or data.get("program_synthesis_scope")
+            or data.get("ownership_scope")
+            or metadata.get("program_synthesis_scope")
+            or metadata.get("scope")
+            or _scope_from_ast_ownership(raw_ast_ownership)
+        )
+        paths: list[Any] = []
+        predicted_symbols: list[Any] = []
+        for source in (data, metadata):
+            for key in (
+                "predicted_write_set", "predicted_write_paths", "changed_files",
+                "suggested_target_files", "target_files", "allowed_paths",
+            ):
+                raw = source.get(key)
+                if isinstance(raw, Mapping):
+                    predicted_symbols.extend(_sequence(raw.get("symbols")))
+                    raw = raw.get("paths")
+                paths.extend(_sequence(raw))
+        correlation = (
+            data.get("correlation_key")
+            or metadata.get("semantic_bundle_key")
+            or metadata.get("correlation_key")
+            or metadata.get("contract_id")
+            or metadata.get("target_component")
+            or data.get("action")
+            or task_id
+        )
+        evidence = {
+            "action": data.get("action"),
+            "citations": data.get("citations") or (),
+            "hint_evidence": metadata.get("hint_evidence") or (),
+            "loss_name": data.get("loss_name"),
+            "objective": data.get("objective"),
+            "sample_ids": data.get("sample_ids") or (),
+            "target_component": metadata.get("target_component"),
+        }
+        status = str(
+            data.get("status") or metadata.get("status") or data.get("queue_status") or ""
+        ).strip().lower()
+        explicit_ready = (
+            data.get("readiness_verified")
+            if "readiness_verified" in data
+            else data.get("verified_ready")
+            if "verified_ready" in data
+            else metadata.get("readiness_verified")
+            if "readiness_verified" in metadata
+            else metadata.get("verified_ready")
+            if "verified_ready" in metadata
+            else None
+        )
+        blocked_by = _identifiers(
+            data.get("ready_blockers")
+            or data.get("blockers")
+            or metadata.get("ready_blockers")
+            or metadata.get("blockers")
+        )
+        readiness_evidence = _identifiers(
+            data.get("readiness_evidence")
+            or data.get("ready_evidence")
+            or metadata.get("readiness_evidence")
+            or metadata.get("ready_evidence")
+            or data.get("depends_on_satisfied_by")
+            or metadata.get("depends_on_satisfied_by")
+        )
+        if explicit_ready is None:
+            ready = status not in {"blocked", "waiting", "held", "failed", "done", "completed"}
+        else:
+            ready = bool(explicit_ready)
+        if blocked_by:
+            ready = False
+        verification_flags = tuple(
+            bool(value)
+            for value in (
+                data.get("leanstral_verified", metadata.get("leanstral_verified")),
+                data.get("hammer_verified", metadata.get("hammer_verified")),
+                data.get("evidence_verified", metadata.get("evidence_verified")),
+            )
+            if value is not None
+        )
+        if verification_flags and not all(verification_flags):
+            ready = False
+            blocked_by = _identifiers((*blocked_by, "verification_not_confirmed"))
+        raw_validation_set = data.get("validation_set") or metadata.get("validation_set") or {}
+        validation_set = raw_validation_set if isinstance(raw_validation_set, Mapping) else {}
+        ast_ownership = _identifiers(raw_ast_ownership)
+        logic_families = _logic_families(
+            data.get("logic_families")
+            or data.get("logic_family")
+            or data.get("legal_ir_families")
+            or data.get("semantic_family")
+            or data.get("affected_ir_families")
+            or metadata.get("logic_families")
+            or metadata.get("logic_family")
+            or metadata.get("legal_ir_families")
+            or metadata.get("semantic_family")
+            or metadata.get("affected_ir_families")
+            or validation_set.get("logic_families")
+            or validation_set.get("families")
+        )
+        observed_rate = (
+            data.get("observed_accepted_next_cycle_confirmed_patches_per_hour")
+            or data.get("accepted_next_cycle_confirmed_patches_per_hour")
+            or metadata.get("observed_accepted_next_cycle_confirmed_patches_per_hour")
+            or metadata.get("accepted_next_cycle_confirmed_patches_per_hour")
+            or 0.0
+        )
+        return cls(
+            task_id=str(task_id or ""),
+            scope=str(scope or ""),
+            priority=float(data.get("priority", metadata.get("priority", 0.0)) or 0.0),
+            correlation_key=str(correlation or ""),
+            explicit_paths=tuple(paths),
+            symbols=_identifiers(
+                data.get("symbols")
+                or metadata.get("symbols")
+                or metadata.get("typed_ast_symbols")
+                or predicted_symbols
+            ),
+            validation_commands=_identifiers(
+                data.get("validation_commands")
+                or metadata.get("validation_commands")
+                or validation_set.get("commands")
+                or validation_set.get("validation_commands")
+                or (raw_validation_set if not isinstance(raw_validation_set, Mapping) else ())
+            ),
+            readiness_verified=ready,
+            readiness_evidence=readiness_evidence,
+            ready_blockers=blocked_by,
+            evidence=evidence,
+            ast_ownership=ast_ownership,
+            logic_families=logic_families,
+            observed_confirmed_patches_per_hour=float(observed_rate),
+        )
+
+
+class WriteSetPredictor:
+    """Predict patch writes from task paths plus stable scope ownership."""
+
+    def __init__(
+        self,
+        ownership: Optional[Mapping[str, Sequence[str]]] = None,
+        *,
+        include_scope_defaults: bool = True,
+    ) -> None:
+        configured = ownership or DEFAULT_SCOPE_OWNERSHIP
+        self.ownership = MappingProxyType(
+            {canonical_codex_scope(scope): _paths(paths) for scope, paths in configured.items()}
+        )
+        self.include_scope_defaults = bool(include_scope_defaults)
+
+    def predict(self, task: CodexScopeTask | Mapping[str, Any] | Any) -> PredictedWriteSet:
+        normalized = CodexScopeTask.from_value(task)
+        paths = list(normalized.explicit_paths)
+        sources: list[str] = []
+        if normalized.explicit_paths:
+            sources.append("task")
+        if self.include_scope_defaults:
+            paths.extend(self.ownership.get(normalized.scope, ()))
+            sources.append("scope_ownership")
+        unknown = not paths and not normalized.symbols
+        return PredictedWriteSet(
+            paths=tuple(paths), symbols=normalized.symbols, unknown=unknown, sources=tuple(sources)
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ScopeEvidenceBundle:
+    """Correlated evidence for exactly one ownership scope and one worker."""
+
+    bundle_id: str
+    scope: str
+    correlation_key: str
+    tasks: tuple[CodexScopeTask, ...]
+    write_set: PredictedWriteSet
+    priority: float
+    validation_commands: tuple[str, ...] = ()
+    readiness_verified: bool = True
+    ready_blockers: tuple[str, ...] = ()
+    schema_version: str = CODEX_SCOPE_BUNDLE_SCHEMA_VERSION
+    ast_ownership: tuple[str, ...] = ()
+    logic_families: tuple[str, ...] = ()
+    shared_validation_commands: tuple[str, ...] = ()
+    observed_confirmed_patches_per_hour: float = 0.0
+
+    def __post_init__(self) -> None:
+        scope = canonical_codex_scope(self.scope)
+        if not self.tasks:
+            raise ValueError("scope evidence bundles must contain at least one task")
+        if any(task.scope != scope for task in self.tasks):
+            raise ValueError("correlated evidence cannot cross ownership scopes")
+        object.__setattr__(self, "scope", scope)
+        object.__setattr__(self, "validation_commands", _identifiers(self.validation_commands))
+        object.__setattr__(self, "ast_ownership", _identifiers(self.ast_ownership))
+        object.__setattr__(self, "logic_families", _logic_families(self.logic_families))
+        object.__setattr__(
+            self, "shared_validation_commands", _identifiers(self.shared_validation_commands)
+        )
+        object.__setattr__(
+            self,
+            "observed_confirmed_patches_per_hour",
+            _finite_non_negative(
+                "observed_confirmed_patches_per_hour",
+                self.observed_confirmed_patches_per_hour,
+            ),
+        )
+        blockers = tuple(
+            blocker for task in self.tasks for blocker in task.ready_blockers
+        )
+        object.__setattr__(self, "ready_blockers", _identifiers((*self.ready_blockers, *blockers)))
+        object.__setattr__(
+            self,
+            "readiness_verified",
+            bool(self.readiness_verified)
+            and all(task.readiness_verified and not task.ready_blockers for task in self.tasks),
+        )
+
+    @property
+    def task_ids(self) -> tuple[str, ...]:
+        return tuple(task.task_id for task in self.tasks)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "bundle_id": self.bundle_id,
+            "ast_ownership": list(self.ast_ownership),
+            "correlation_key": self.correlation_key,
+            "logic_families": list(self.logic_families),
+            "observed_confirmed_patches_per_hour": self.observed_confirmed_patches_per_hour,
+            "priority": self.priority,
+            "schema_version": self.schema_version,
+            "scope": self.scope,
+            "shared_validation_commands": list(self.shared_validation_commands),
+            "task_ids": list(self.task_ids),
+            "readiness_verified": self.readiness_verified,
+            "ready_blockers": list(self.ready_blockers),
+            "validation_commands": list(self.validation_commands),
+            "write_set": self.write_set.to_dict(),
+        }
+
+
+class ScopeEvidenceBundler:
+    """Bundle related evidence without ever crossing a write-ownership lane."""
+
+    def __init__(self, *, predictor: Optional[WriteSetPredictor] = None, max_tasks: int = 16) -> None:
+        if int(max_tasks) < 1:
+            raise ValueError("max_tasks must be at least one")
+        self.predictor = predictor or WriteSetPredictor()
+        self.max_tasks = int(max_tasks)
+
+    def bundle(
+        self, tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any]
+    ) -> tuple[ScopeEvidenceBundle, ...]:
+        normalized = [CodexScopeTask.from_value(task) for task in tasks]
+        grouped: list[list[CodexScopeTask]] = []
+        legacy_groups: dict[tuple[str, str, bool], list[CodexScopeTask]] = {}
+        # Rich TODO packets are matched pairwise.  In particular, the shared
+        # validation intersection is maintained across the complete bundle;
+        # pairwise overlap alone is not enough (A/B, B/C must not admit A/C).
+        rich = sorted(
+            (task for task in normalized if task.uses_structured_compatibility),
+            key=lambda item: (
+                not item.readiness_verified,
+                -item.observed_confirmed_patches_per_hour,
+                -item.priority,
+                item.task_id,
+            ),
+        )
+        for task in rich:
+            if not task.readiness_verified or task.ready_blockers:
+                grouped.append([task])
+                continue
+            # Compatibility is based on the TODO's expected writes, not the
+            # broader lane defaults which are added later for conservative
+            # cross-worker conflict detection.
+            task_write_set = PredictedWriteSet(
+                paths=task.explicit_paths,
+                symbols=task.symbols,
+                unknown=not task.explicit_paths and not task.symbols,
+                sources=("task",),
+            )
+            placed = False
+            for members in grouped:
+                first = members[0]
+                if not first.uses_structured_compatibility or not first.readiness_verified:
+                    continue
+                shared_validation = set(task.validation_commands)
+                for member in members:
+                    shared_validation.intersection_update(member.validation_commands)
+                compatible = (
+                    first.scope == task.scope
+                    and first.ast_ownership == task.ast_ownership
+                    and first.logic_families == task.logic_families
+                    and bool(shared_validation)
+                    and all(
+                        not task_write_set.unknown
+                        and task_write_set.conflicts_with(
+                            PredictedWriteSet(
+                                paths=member.explicit_paths,
+                                symbols=member.symbols,
+                                unknown=not member.explicit_paths and not member.symbols,
+                                sources=("task",),
+                            )
+                        )
+                        for member in members
+                    )
+                )
+                if compatible and len(members) < self.max_tasks:
+                    members.append(task)
+                    placed = True
+                    break
+            if not placed:
+                grouped.append([task])
+        for task in normalized:
+            if task.uses_structured_compatibility:
+                continue
+            key = (task.scope, task.correlation_key or task.task_id, task.readiness_verified)
+            legacy_groups.setdefault(key, []).append(task)
+        grouped.extend(legacy_groups[key] for key in sorted(legacy_groups))
+
+        bundles: list[ScopeEvidenceBundle] = []
+        for members in grouped:
+            scope = members[0].scope
+            ordered = sorted(members, key=lambda item: (-item.priority, item.task_id))
+            for offset in range(0, len(ordered), self.max_tasks):
+                shard = tuple(ordered[offset : offset + self.max_tasks])
+                correlations = {task.correlation_key or task.task_id for task in shard}
+                correlation_key = (
+                    next(iter(correlations))
+                    if len(correlations) == 1
+                    else f"compatible-{_digest(sorted(correlations))[:16]}"
+                )
+                write_sets = tuple(self.predictor.predict(task) for task in shard)
+                write_set = write_sets[0].union(*write_sets[1:])
+                shared_validation = set(shard[0].validation_commands)
+                for task in shard[1:]:
+                    shared_validation.intersection_update(task.validation_commands)
+                payload = {
+                    "ast_ownership": list(shard[0].ast_ownership),
+                    "correlation_key": correlation_key,
+                    "logic_families": list(shard[0].logic_families),
+                    "scope": scope,
+                    "shared_validation_commands": sorted(shared_validation),
+                    "task_ids": [task.task_id for task in shard],
+                }
+                bundle_id = f"scope-bundle-{_digest(payload)[:20]}"
+                if len(ordered) > self.max_tasks:
+                    bundle_id += f"-{(offset // self.max_tasks) + 1:02d}"
+                bundles.append(
+                    ScopeEvidenceBundle(
+                        bundle_id=bundle_id,
+                        scope=scope,
+                        correlation_key=correlation_key,
+                        tasks=shard,
+                        write_set=write_set,
+                        priority=max(task.priority for task in shard),
+                        validation_commands=tuple(
+                            command for task in shard for command in task.validation_commands
+                        ),
+                        ast_ownership=shard[0].ast_ownership,
+                        logic_families=shard[0].logic_families,
+                        shared_validation_commands=tuple(shared_validation),
+                        observed_confirmed_patches_per_hour=max(
+                            task.observed_confirmed_patches_per_hour for task in shard
+                        ),
+                    )
+                )
+        return tuple(
+            sorted(
+                bundles,
+                key=lambda item: (
+                    -item.observed_confirmed_patches_per_hour,
+                    -item.priority,
+                    item.scope,
+                    item.bundle_id,
+                ),
+            )
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SchedulerSignals:
+    """Recent rates and pressure used to choose a safe worker count."""
+
+    validation_failure_rate: float = 0.0
+    apply_conflict_rate: float = 0.0
+    memory_pressure: float = 0.0
+    transient_failure_rate: float = 0.0
+    sample_count: int = 0
+
+    def __post_init__(self) -> None:
+        for name in (
+            "validation_failure_rate", "apply_conflict_rate", "memory_pressure",
+            "transient_failure_rate",
+        ):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value < 0.0 or value > 1.0:
+                raise ValueError(f"{name} must be finite and between zero and one")
+            object.__setattr__(self, name, value)
+        object.__setattr__(self, "sample_count", max(0, int(self.sample_count)))
+
+    @classmethod
+    def from_mapping(cls, value: Optional[Mapping[str, Any]]) -> "SchedulerSignals":
+        data = dict(value or {})
+        if isinstance(data.get("overall"), Mapping):
+            overall = dict(data["overall"])
+            data = {**overall, **data}
+        memory = data.get("memory_pressure", data.get("memory_used_ratio", 0.0))
+        if isinstance(memory, bool):
+            memory = 1.0 if memory else 0.0
+        return cls(
+            validation_failure_rate=float(
+                data.get("validation_failure_rate", data.get("validation_failed_rate", 0.0)) or 0.0
+            ),
+            apply_conflict_rate=float(
+                data.get("apply_conflict_rate", data.get("merge_conflict_rate", 0.0)) or 0.0
+            ),
+            memory_pressure=float(memory or 0.0),
+            transient_failure_rate=float(data.get("transient_failure_rate", 0.0) or 0.0),
+            sample_count=int(data.get("sample_count", data.get("attempt_count", 0)) or 0),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "apply_conflict_rate": self.apply_conflict_rate,
+            "memory_pressure": self.memory_pressure,
+            "sample_count": self.sample_count,
+            "transient_failure_rate": self.transient_failure_rate,
+            "validation_failure_rate": self.validation_failure_rate,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WorkerDecision:
+    requested_workers: int
+    effective_workers: int
+    reasons: tuple[str, ...]
+    signals: SchedulerSignals
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "effective_workers": self.effective_workers,
+            "reasons": list(self.reasons),
+            "requested_workers": self.requested_workers,
+            "signals": self.signals.to_dict(),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SchedulerOutcome:
+    accepted: bool = False
+    validation_failed: bool = False
+    apply_conflict: bool = False
+    memory_pressure: bool = False
+    transient_failure: bool = False
+
+
+def _finite_non_negative(name: str, value: float) -> float:
+    value = float(value)
+    if not math.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative")
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class CodexServiceRates:
+    """Measured downstream service rates used to size Codex generation.
+
+    ``generation_patches_per_hour_per_worker`` is the expected accepted-candidate
+    production rate from one Codex worker before validation and merge.  The
+    validation and merge rates are aggregate capacities for the shared isolated
+    validation pool and serialized main-apply path.
+    """
+
+    generation_patches_per_hour_per_worker: float = 1.0
+    validation_patches_per_hour: float = 4.0
+    merge_patches_per_hour: float = 2.0
+    validation_utilization_target: float = 0.80
+    merge_utilization_target: float = 0.80
+
+    def __post_init__(self) -> None:
+        for name in (
+            "generation_patches_per_hour_per_worker",
+            "validation_patches_per_hour",
+            "merge_patches_per_hour",
+        ):
+            object.__setattr__(self, name, _finite_non_negative(name, getattr(self, name)))
+        for name in ("validation_utilization_target", "merge_utilization_target"):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value <= 0.0 or value > 1.0:
+                raise ValueError(f"{name} must be finite and in (0, 1]")
+            object.__setattr__(self, name, value)
+
+    @classmethod
+    def from_mapping(cls, value: Optional[Mapping[str, Any]]) -> "CodexServiceRates":
+        data = dict(value or {})
+        return cls(
+            generation_patches_per_hour_per_worker=float(
+                data.get(
+                    "generation_patches_per_hour_per_worker",
+                    data.get("generation_service_rate_per_hour", data.get("generation_rate", 1.0)),
+                )
+                or 0.0
+            ),
+            validation_patches_per_hour=float(
+                data.get(
+                    "validation_patches_per_hour",
+                    data.get("validation_service_rate_per_hour", data.get("validation_rate", 4.0)),
+                )
+                or 0.0
+            ),
+            merge_patches_per_hour=float(
+                data.get(
+                    "merge_patches_per_hour",
+                    data.get("merge_service_rate_per_hour", data.get("merge_rate", 2.0)),
+                )
+                or 0.0
+            ),
+            validation_utilization_target=float(
+                data.get("validation_utilization_target", data.get("validation_utilization", 0.80))
+                or 0.0
+            ),
+            merge_utilization_target=float(
+                data.get("merge_utilization_target", data.get("merge_utilization", 0.80)) or 0.0
+            ),
+        )
+
+    def worker_capacity(self, requested_workers: int) -> tuple[int, tuple[str, ...]]:
+        requested = max(0, min(MAX_INITIAL_CODEX_WORKERS, int(requested_workers)))
+        if requested == 0:
+            return 0, ("no_workers_requested",)
+        reasons: list[str] = []
+        generation_rate = self.generation_patches_per_hour_per_worker
+        if generation_rate <= 0.0:
+            return 0, ("generation_service_rate_unavailable",)
+
+        validation_capacity = math.floor(
+            (self.validation_patches_per_hour * self.validation_utilization_target)
+            / generation_rate
+        )
+        merge_capacity = math.floor(
+            (self.merge_patches_per_hour * self.merge_utilization_target) / generation_rate
+        )
+        if validation_capacity < requested:
+            reasons.append("validation_service_rate_bottleneck")
+        if merge_capacity < requested:
+            reasons.append("merge_service_rate_bottleneck")
+        effective = min(requested, int(validation_capacity), int(merge_capacity))
+        if effective <= 0:
+            reasons.append("downstream_service_rate_saturated")
+            effective = 0
+        if not reasons:
+            reasons.append("service_rates_healthy")
+        return effective, tuple(dict.fromkeys(reasons))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "generation_patches_per_hour_per_worker": self.generation_patches_per_hour_per_worker,
+            "merge_patches_per_hour": self.merge_patches_per_hour,
+            "merge_utilization_target": self.merge_utilization_target,
+            "validation_patches_per_hour": self.validation_patches_per_hour,
+            "validation_utilization_target": self.validation_utilization_target,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlSignals:
+    """Queue and conflict pressure that can pause new Codex generation."""
+
+    ready_depth: int = 0
+    validation_backlog: int = 0
+    merge_backlog: int = 0
+    predicted_conflict_count: int = 0
+    conflict_growth_rate: float = 0.0
+    validation_backlog_pause_threshold: int = 8
+    merge_backlog_pause_threshold: int = 4
+    conflict_growth_pause_threshold: float = 0.25
+
+    def __post_init__(self) -> None:
+        for name in (
+            "ready_depth",
+            "validation_backlog",
+            "merge_backlog",
+            "predicted_conflict_count",
+            "validation_backlog_pause_threshold",
+            "merge_backlog_pause_threshold",
+        ):
+            object.__setattr__(self, name, max(0, int(getattr(self, name))))
+        for name in ("conflict_growth_rate", "conflict_growth_pause_threshold"):
+            object.__setattr__(self, name, _finite_non_negative(name, getattr(self, name)))
+
+    @classmethod
+    def from_mapping(cls, value: Optional[Mapping[str, Any]]) -> "CodexFlowControlSignals":
+        data = dict(value or {})
+        return cls(
+            ready_depth=int(data.get("ready_depth", data.get("verified_ready_depth", 0)) or 0),
+            validation_backlog=int(
+                data.get("validation_backlog", data.get("isolated_validation_backlog", 0)) or 0
+            ),
+            merge_backlog=int(data.get("merge_backlog", data.get("main_apply_backlog", 0)) or 0),
+            predicted_conflict_count=int(
+                data.get("predicted_conflict_count", data.get("conflict_count", 0)) or 0
+            ),
+            conflict_growth_rate=float(
+                data.get("conflict_growth_rate", data.get("apply_conflict_growth_rate", 0.0))
+                or 0.0
+            ),
+            validation_backlog_pause_threshold=int(
+                data.get("validation_backlog_pause_threshold", 8) or 8
+            ),
+            merge_backlog_pause_threshold=int(data.get("merge_backlog_pause_threshold", 4) or 4),
+            conflict_growth_pause_threshold=float(
+                data.get("conflict_growth_pause_threshold", 0.25) or 0.25
+            ),
+        )
+
+    def pause_reasons(self) -> tuple[str, ...]:
+        reasons: list[str] = []
+        if self.ready_depth <= 0:
+            reasons.append("no_verified_ready_work")
+        if self.validation_backlog >= self.validation_backlog_pause_threshold:
+            reasons.append("validation_backlog")
+        if self.merge_backlog >= self.merge_backlog_pause_threshold:
+            reasons.append("merge_backlog")
+        if self.conflict_growth_rate >= self.conflict_growth_pause_threshold:
+            reasons.append("conflict_growth")
+        return tuple(reasons)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "conflict_growth_pause_threshold": self.conflict_growth_pause_threshold,
+            "conflict_growth_rate": self.conflict_growth_rate,
+            "merge_backlog": self.merge_backlog,
+            "merge_backlog_pause_threshold": self.merge_backlog_pause_threshold,
+            "predicted_conflict_count": self.predicted_conflict_count,
+            "ready_depth": self.ready_depth,
+            "validation_backlog": self.validation_backlog,
+            "validation_backlog_pause_threshold": self.validation_backlog_pause_threshold,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlDecision:
+    """Admission decision for the generation/validation/merge pipeline."""
+
+    requested_workers: int
+    effective_workers: int
+    paused: bool
+    reasons: tuple[str, ...]
+    signals: CodexFlowControlSignals
+    service_rates: CodexServiceRates
+    primary_throughput_metric: str = "accepted_next_cycle_confirmed_patches_per_hour"
+    accepted_next_cycle_confirmed_patches_per_hour: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted_next_cycle_confirmed_patches_per_hour": round(
+                self.accepted_next_cycle_confirmed_patches_per_hour, 9
+            ),
+            "effective_workers": self.effective_workers,
+            "paused": self.paused,
+            "primary_throughput_metric": self.primary_throughput_metric,
+            "reasons": list(self.reasons),
+            "requested_workers": self.requested_workers,
+            "service_rates": self.service_rates.to_dict(),
+            "signals": self.signals.to_dict(),
+        }
+
+
+@dataclass(slots=True)
+class CodexPatchThroughputLedger:
+    """Windowed counters where next-cycle confirmation is the only reward metric."""
+
+    started_at_monotonic: float = field(default_factory=time.monotonic)
+    claimed_tasks: int = 0
+    generated_diffs: int = 0
+    validation_accepted: int = 0
+    merged_patches: int = 0
+    next_cycle_confirmed_patches: int = 0
+
+    def record(
+        self,
+        *,
+        claimed_tasks: int = 0,
+        generated_diffs: int = 0,
+        validation_accepted: int = 0,
+        merged_patches: int = 0,
+        next_cycle_confirmed_patches: int = 0,
+    ) -> None:
+        for name, value in (
+            ("claimed_tasks", claimed_tasks),
+            ("generated_diffs", generated_diffs),
+            ("validation_accepted", validation_accepted),
+            ("merged_patches", merged_patches),
+            ("next_cycle_confirmed_patches", next_cycle_confirmed_patches),
+        ):
+            setattr(self, name, int(getattr(self, name)) + max(0, int(value)))
+
+    def accepted_next_cycle_confirmed_patches_per_hour(
+        self, *, wall_clock_seconds: Optional[float] = None
+    ) -> float:
+        elapsed = (
+            _finite_non_negative("wall_clock_seconds", wall_clock_seconds)
+            if wall_clock_seconds is not None
+            else max(0.0, time.monotonic() - self.started_at_monotonic)
+        )
+        if elapsed <= 0.0:
+            return 0.0
+        return float(self.next_cycle_confirmed_patches) / (elapsed / 3600.0)
+
+    def to_dict(self, *, wall_clock_seconds: Optional[float] = None) -> dict[str, Any]:
+        primary = self.accepted_next_cycle_confirmed_patches_per_hour(
+            wall_clock_seconds=wall_clock_seconds
+        )
+        return {
+            "accepted_next_cycle_confirmed_patches_per_hour": round(primary, 9),
+            "claimed_tasks": self.claimed_tasks,
+            "generated_diffs": self.generated_diffs,
+            "merged_patches": self.merged_patches,
+            "next_cycle_confirmed_patches": self.next_cycle_confirmed_patches,
+            "primary_throughput_metric": "accepted_next_cycle_confirmed_patches_per_hour",
+            "validation_accepted": self.validation_accepted,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CodexFlowControlledSchedule:
+    """Combined flow-control and conflict-aware scope schedule."""
+
+    scope_plan: ScopeSchedulePlan
+    flow_decision: CodexFlowControlDecision
+
+    @property
+    def assignments(self) -> tuple[ScopeAssignment, ...]:
+        return self.scope_plan.assignments
+
+    @property
+    def deferred(self) -> Mapping[str, str]:
+        return self.scope_plan.deferred
+
+    @property
+    def worker_count(self) -> int:
+        return len(self.assignments)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "assignments": [assignment.to_dict() for assignment in self.assignments],
+            "deferred": dict(self.deferred),
+            "flow_decision": self.flow_decision.to_dict(),
+            "scope_plan": self.scope_plan.to_dict(),
+            "worker_count": self.worker_count,
+        }
+
+
+class CodexValidationMergeFlowController:
+    """Balance Codex generation against validation and serialized merge capacity."""
+
+    def __init__(
+        self,
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        bundler: Optional[ScopeEvidenceBundler] = None,
+        throughput_ledger: Optional[CodexPatchThroughputLedger] = None,
+    ) -> None:
+        if not 1 <= int(max_workers) <= MAX_INITIAL_CODEX_WORKERS:
+            raise ValueError("flow controller max_workers must be between one and four")
+        self.max_workers = int(max_workers)
+        self.bundler = bundler or ScopeEvidenceBundler()
+        self.throughput_ledger = throughput_ledger or CodexPatchThroughputLedger()
+
+    def decide(
+        self,
+        *,
+        signals: CodexFlowControlSignals | Mapping[str, Any] | None = None,
+        service_rates: CodexServiceRates | Mapping[str, Any] | None = None,
+        requested_workers: Optional[int] = None,
+        wall_clock_seconds: Optional[float] = None,
+    ) -> CodexFlowControlDecision:
+        flow_signals = (
+            signals
+            if isinstance(signals, CodexFlowControlSignals)
+            else CodexFlowControlSignals.from_mapping(signals)
+        )
+        rates = (
+            service_rates
+            if isinstance(service_rates, CodexServiceRates)
+            else CodexServiceRates.from_mapping(service_rates)
+        )
+        requested = min(
+            self.max_workers,
+            MAX_INITIAL_CODEX_WORKERS,
+            max(0, int(requested_workers if requested_workers is not None else self.max_workers)),
+        )
+        pause_reasons = list(flow_signals.pause_reasons())
+        service_capacity, service_reasons = rates.worker_capacity(requested)
+        ready_capacity = min(service_capacity, flow_signals.ready_depth)
+        capacity_reasons: list[str] = []
+        if flow_signals.ready_depth < service_capacity:
+            capacity_reasons.append("ready_depth_bottleneck")
+        reasons = [*pause_reasons, *capacity_reasons, *service_reasons]
+        paused = bool(pause_reasons) or ready_capacity <= 0
+        if ready_capacity <= 0 and "downstream_service_rate_saturated" not in reasons:
+            reasons.append("generation_paused")
+        effective = 0 if paused else ready_capacity
+        return CodexFlowControlDecision(
+            requested_workers=requested,
+            effective_workers=effective,
+            paused=paused,
+            reasons=tuple(dict.fromkeys(reasons)),
+            signals=flow_signals,
+            service_rates=rates,
+            accepted_next_cycle_confirmed_patches_per_hour=(
+                self.throughput_ledger.accepted_next_cycle_confirmed_patches_per_hour(
+                    wall_clock_seconds=wall_clock_seconds
+                )
+            ),
+        )
+
+    def schedule(
+        self,
+        tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any],
+        *,
+        active_write_sets: Iterable[PredictedWriteSet | Mapping[str, Any] | Sequence[str]] = (),
+        signals: CodexFlowControlSignals | Mapping[str, Any] | None = None,
+        service_rates: CodexServiceRates | Mapping[str, Any] | None = None,
+        worker_prefix: str = "codex",
+        wall_clock_seconds: Optional[float] = None,
+    ) -> CodexFlowControlledSchedule:
+        normalized = [CodexScopeTask.from_value(task) for task in tasks]
+        inferred_ready_depth = sum(
+            1 for task in normalized if task.readiness_verified and not task.ready_blockers
+        )
+        if isinstance(signals, CodexFlowControlSignals):
+            flow_signals = signals
+            if flow_signals.ready_depth == 0 and inferred_ready_depth:
+                flow_signals = replace(flow_signals, ready_depth=inferred_ready_depth)
+        else:
+            raw_signals = dict(signals or {})
+            raw_signals.setdefault("ready_depth", inferred_ready_depth)
+            flow_signals = CodexFlowControlSignals.from_mapping(raw_signals)
+        decision = self.decide(
+            signals=flow_signals,
+            service_rates=service_rates,
+            requested_workers=self.max_workers,
+            wall_clock_seconds=wall_clock_seconds,
+        )
+        if decision.effective_workers <= 0:
+            bundles = self.bundler.bundle(normalized)
+            reason = decision.reasons[0] if decision.reasons else "generation_paused"
+            deferred = {
+                bundle.bundle_id: (
+                    "readiness_not_verified" if not bundle.readiness_verified else reason
+                )
+                for bundle in bundles
+            }
+            worker_decision = WorkerDecision(
+                requested_workers=decision.requested_workers,
+                effective_workers=0,
+                reasons=decision.reasons,
+                signals=SchedulerSignals(),
+            )
+            return CodexFlowControlledSchedule(
+                ScopeSchedulePlan((), deferred, worker_decision),
+                decision,
+            )
+        scheduler = CodexScopeScheduler(
+            max_workers=max(1, decision.effective_workers),
+            bundler=self.bundler,
+        )
+        plan = scheduler.schedule(
+            normalized,
+            active_write_sets=active_write_sets,
+            worker_prefix=worker_prefix,
+        )
+        return CodexFlowControlledSchedule(plan, decision)
+
+
+class AdaptiveWorkerController:
+    """Bounded additive-decrease/slow-recovery controller for Codex workers."""
+
+    def __init__(
+        self,
+        *,
+        initial_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        min_workers: int = 1,
+        window_size: int = 20,
+        validation_failure_threshold: float = 0.20,
+        apply_conflict_threshold: float = 0.10,
+        memory_pressure_threshold: float = 0.85,
+        transient_failure_threshold: float = 0.20,
+        recovery_successes: int = 4,
+    ) -> None:
+        if not 1 <= int(min_workers) <= int(initial_workers) <= MAX_INITIAL_CODEX_WORKERS:
+            raise ValueError("worker bounds must satisfy 1 <= min <= initial <= 4")
+        if int(window_size) < 1 or int(recovery_successes) < 1:
+            raise ValueError("window and recovery_successes must be positive")
+        self.initial_workers = int(initial_workers)
+        self.min_workers = int(min_workers)
+        self.current_workers = self.initial_workers
+        self.window: deque[SchedulerOutcome] = deque(maxlen=int(window_size))
+        self.validation_failure_threshold = float(validation_failure_threshold)
+        self.apply_conflict_threshold = float(apply_conflict_threshold)
+        self.memory_pressure_threshold = float(memory_pressure_threshold)
+        self.transient_failure_threshold = float(transient_failure_threshold)
+        self.recovery_successes = int(recovery_successes)
+        self._healthy_streak = 0
+        self._lock = threading.Lock()
+
+    def recommend(
+        self, signals: SchedulerSignals | Mapping[str, Any], *, requested_workers: Optional[int] = None
+    ) -> WorkerDecision:
+        if isinstance(signals, Mapping):
+            signals = SchedulerSignals.from_mapping(signals)
+        requested = min(
+            MAX_INITIAL_CODEX_WORKERS,
+            max(self.min_workers, int(requested_workers or self.initial_workers)),
+        )
+        effective = requested
+        reasons: list[str] = []
+        checks = (
+            (signals.validation_failure_rate, self.validation_failure_threshold, "validation_failures"),
+            (signals.apply_conflict_rate, self.apply_conflict_threshold, "apply_conflicts"),
+            (signals.transient_failure_rate, self.transient_failure_threshold, "transient_failures"),
+        )
+        for rate, threshold, reason in checks:
+            if rate >= threshold and rate > 0.0:
+                effective -= 1
+                reasons.append(reason)
+                if threshold > 0.0 and rate >= min(1.0, threshold * 2.5):
+                    effective -= 1
+        if signals.memory_pressure >= self.memory_pressure_threshold and signals.memory_pressure > 0.0:
+            effective -= 1
+            reasons.append("memory_pressure")
+            if signals.memory_pressure >= 0.95:
+                effective = self.min_workers
+        effective = max(self.min_workers, min(requested, effective))
+        if not reasons:
+            reasons.append("healthy")
+        return WorkerDecision(requested, effective, tuple(reasons), signals)
+
+    def _signals_locked(self) -> SchedulerSignals:
+        count = len(self.window)
+        if not count:
+            return SchedulerSignals()
+        return SchedulerSignals(
+            validation_failure_rate=sum(item.validation_failed for item in self.window) / count,
+            apply_conflict_rate=sum(item.apply_conflict for item in self.window) / count,
+            memory_pressure=sum(item.memory_pressure for item in self.window) / count,
+            transient_failure_rate=sum(item.transient_failure for item in self.window) / count,
+            sample_count=count,
+        )
+
+    def observe(self, outcome: SchedulerOutcome | Mapping[str, Any]) -> WorkerDecision:
+        if isinstance(outcome, Mapping):
+            outcome = SchedulerOutcome(**{
+                key: bool(outcome.get(key, False))
+                for key in SchedulerOutcome.__dataclass_fields__
+            })
+        with self._lock:
+            self.window.append(outcome)
+            unhealthy = any(
+                (outcome.validation_failed, outcome.apply_conflict,
+                 outcome.memory_pressure, outcome.transient_failure)
+            )
+            self._healthy_streak = 0 if unhealthy else self._healthy_streak + int(outcome.accepted)
+            signals = self._signals_locked()
+            decision = self.recommend(signals, requested_workers=self.initial_workers)
+            if decision.effective_workers < self.current_workers:
+                self.current_workers = decision.effective_workers
+            elif self._healthy_streak >= self.recovery_successes and self.current_workers < self.initial_workers:
+                self.current_workers += 1
+                self._healthy_streak = 0
+            return replace(decision, effective_workers=self.current_workers)
+
+    def snapshot(self) -> WorkerDecision:
+        with self._lock:
+            decision = self.recommend(self._signals_locked(), requested_workers=self.initial_workers)
+            return replace(decision, effective_workers=min(self.current_workers, decision.effective_workers))
+
+
+@dataclass(frozen=True, slots=True)
+class ScopeAssignment:
+    assignment_id: str
+    worker_id: str
+    bundle: ScopeEvidenceBundle
+    worktree_path: str = ""
+
+    @property
+    def scope(self) -> str:
+        return self.bundle.scope
+
+    @property
+    def write_set(self) -> PredictedWriteSet:
+        return self.bundle.write_set
+
+    def with_worktree(self, path: str | Path) -> "ScopeAssignment":
+        return replace(self, worktree_path=str(Path(path)))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "assignment_id": self.assignment_id,
+            "bundle": self.bundle.to_dict(),
+            "scope": self.scope,
+            "worker_id": self.worker_id,
+            "worktree_path": self.worktree_path,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ScopeSchedulePlan:
+    assignments: tuple[ScopeAssignment, ...]
+    deferred: Mapping[str, str]
+    worker_decision: WorkerDecision
+    schema_version: str = CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "deferred", MappingProxyType(dict(sorted(self.deferred.items()))))
+
+    @property
+    def worker_count(self) -> int:
+        return len(self.assignments)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "assignments": [assignment.to_dict() for assignment in self.assignments],
+            "deferred": dict(self.deferred),
+            "schema_version": self.schema_version,
+            "worker_count": self.worker_count,
+            "worker_decision": self.worker_decision.to_dict(),
+        }
+
+
+class CodexScopeScheduler:
+    """Select one high-value bundle per disjoint scope/write lane."""
+
+    def __init__(
+        self,
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        bundler: Optional[ScopeEvidenceBundler] = None,
+        controller: Optional[AdaptiveWorkerController] = None,
+    ) -> None:
+        if not 1 <= int(max_workers) <= MAX_INITIAL_CODEX_WORKERS:
+            raise ValueError("Codex initial max_workers must be between one and four")
+        self.max_workers = int(max_workers)
+        self.bundler = bundler or ScopeEvidenceBundler()
+        self.controller = controller or AdaptiveWorkerController(initial_workers=self.max_workers)
+
+    def schedule(
+        self,
+        tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any],
+        *,
+        active_write_sets: Iterable[PredictedWriteSet | Mapping[str, Any] | Sequence[str]] = (),
+        signals: SchedulerSignals | Mapping[str, Any] | None = None,
+        worker_prefix: str = "codex",
+    ) -> ScopeSchedulePlan:
+        bundles = self.bundler.bundle(tasks)
+        decision = self.controller.recommend(
+            signals or SchedulerSignals(), requested_workers=self.max_workers
+        )
+        limit = min(self.max_workers, decision.effective_workers)
+        active = [PredictedWriteSet.from_value(value) for value in active_write_sets]
+        selected: list[ScopeAssignment] = []
+        selected_scopes: set[str] = set()
+        deferred: dict[str, str] = {}
+        for bundle in bundles:
+            if not bundle.readiness_verified:
+                deferred[bundle.bundle_id] = "readiness_not_verified"
+                continue
+            if len(selected) >= limit:
+                deferred[bundle.bundle_id] = "worker_limit"
+                continue
+            if bundle.scope in selected_scopes:
+                deferred[bundle.bundle_id] = "scope_already_assigned"
+                continue
+            if any(bundle.write_set.conflicts_with(write_set) for write_set in active):
+                deferred[bundle.bundle_id] = "active_write_conflict"
+                continue
+            if any(bundle.write_set.conflicts_with(item.write_set) for item in selected):
+                deferred[bundle.bundle_id] = "predicted_write_conflict"
+                continue
+            number = len(selected) + 1
+            selected.append(
+                ScopeAssignment(
+                    assignment_id=f"assignment-{number:02d}-{bundle.bundle_id}",
+                    worker_id=f"{worker_prefix}-{bundle.scope}-{number:02d}",
+                    bundle=bundle,
+                )
+            )
+            selected_scopes.add(bundle.scope)
+        return ScopeSchedulePlan(tuple(selected), deferred, decision)
+
+
+@dataclass(frozen=True, slots=True)
+class IsolatedValidationResult:
+    assignment_id: str
+    scope: str
+    accepted: bool
+    status: str
+    elapsed_seconds: float
+    evidence: Mapping[str, Any] = field(default_factory=dict)
+    error: str = ""
+    worker_thread_id: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "assignment_id": self.assignment_id,
+            "elapsed_seconds": round(self.elapsed_seconds, 9),
+            "error": self.error,
+            "evidence": _json_safe(self.evidence),
+            "scope": self.scope,
+            "status": self.status,
+            "worker_thread_id": self.worker_thread_id,
+        }
+
+
+ValidationCallback = Callable[[ScopeAssignment], Any]
+
+
+class IsolatedValidationExecutor:
+    """Validate independent assignment worktrees concurrently, fail closed."""
+
+    def __init__(self, *, max_workers: int = MAX_INITIAL_CODEX_WORKERS) -> None:
+        if not 1 <= int(max_workers) <= MAX_INITIAL_CODEX_WORKERS:
+            raise ValueError("isolated validation workers must be between one and four")
+        self.max_workers = int(max_workers)
+
+    @staticmethod
+    def _normalize(value: Any) -> tuple[bool, Mapping[str, Any], str]:
+        if value is None:
+            return True, {}, ""
+        if isinstance(value, bool):
+            return value, {}, "" if value else "validation_failed"
+        if isinstance(value, Mapping):
+            data = dict(value)
+            accepted = bool(data.pop("accepted", data.pop("passed", data.get("status") == "passed")))
+            error = str(data.pop("error", data.pop("reason", "")) or "")
+            return accepted, data, error
+        return False, {}, f"invalid_validation_result:{type(value).__name__}"
+
+    def _run(self, assignment: ScopeAssignment, callback: ValidationCallback) -> IsolatedValidationResult:
+        started = time.monotonic()
+        try:
+            accepted, evidence, error = self._normalize(callback(assignment))
+        except Exception as exc:
+            accepted, evidence = False, {}
+            error = f"{type(exc).__name__}: {exc}"
+        return IsolatedValidationResult(
+            assignment_id=assignment.assignment_id,
+            scope=assignment.scope,
+            accepted=accepted,
+            status="passed" if accepted else "failed",
+            elapsed_seconds=time.monotonic() - started,
+            evidence=evidence,
+            error=error,
+            worker_thread_id=threading.get_ident(),
+        )
+
+    def validate(
+        self,
+        assignments: Sequence[ScopeAssignment],
+        callback: ValidationCallback,
+        *,
+        require_distinct_worktrees: bool = True,
+    ) -> Mapping[str, IsolatedValidationResult]:
+        if not callable(callback):
+            raise TypeError("isolated validation callback must be callable")
+        assignment_ids = [item.assignment_id for item in assignments]
+        if len(set(assignment_ids)) != len(assignment_ids):
+            raise ValueError("assignment ids must be unique")
+        if require_distinct_worktrees and len(assignments) > 1:
+            worktrees = [str(item.worktree_path or "") for item in assignments]
+            if any(not path for path in worktrees) or len(set(worktrees)) != len(worktrees):
+                raise ValueError("concurrent validation requires one distinct worktree per assignment")
+        results: dict[str, IsolatedValidationResult] = {}
+        if not assignments:
+            return MappingProxyType(results)
+        with ThreadPoolExecutor(
+            max_workers=min(self.max_workers, len(assignments)),
+            thread_name_prefix="codex-isolated-validation",
+        ) as pool:
+            futures = {pool.submit(self._run, item, callback): item.assignment_id for item in assignments}
+            for future in as_completed(futures):
+                result = future.result()
+                results[result.assignment_id] = result
+        return MappingProxyType(dict(sorted(results.items())))
+
+
+@dataclass(frozen=True, slots=True)
+class MergeResult:
+    assignment_id: str
+    scope: str
+    accepted: bool
+    status: str
+    wait_seconds: float
+    elapsed_seconds: float
+    evidence: Mapping[str, Any] = field(default_factory=dict)
+    error: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "assignment_id": self.assignment_id,
+            "elapsed_seconds": round(self.elapsed_seconds, 9),
+            "error": self.error,
+            "evidence": _json_safe(self.evidence),
+            "scope": self.scope,
+            "status": self.status,
+            "wait_seconds": round(self.wait_seconds, 9),
+        }
+
+
+class ConflictAwareMergeSerializer:
+    """Fairly serialize overlapping merges while allowing disjoint callbacks."""
+
+    def __init__(self) -> None:
+        self._condition = threading.Condition()
+        self._active: dict[int, PredictedWriteSet] = {}
+        self._pending: list[tuple[int, PredictedWriteSet]] = []
+        self._next_ticket = 0
+        self._counters: Counter[str] = Counter()
+
+    @contextmanager
+    def acquire(
+        self, write_set: PredictedWriteSet, *, timeout_seconds: Optional[float] = None
+    ) -> Iterator[float]:
+        if not isinstance(write_set, PredictedWriteSet):
+            raise TypeError("merge serializer requires a PredictedWriteSet")
+        started = time.monotonic()
+        with self._condition:
+            ticket = self._next_ticket
+            self._next_ticket += 1
+            request = (ticket, write_set)
+            self._pending.append(request)
+            deadline = None if timeout_seconds is None else started + max(0.0, float(timeout_seconds))
+            while True:
+                active_conflict = any(write_set.conflicts_with(active) for active in self._active.values())
+                earlier_conflict = any(
+                    earlier_ticket < ticket and write_set.conflicts_with(earlier_set)
+                    for earlier_ticket, earlier_set in self._pending
+                )
+                if not active_conflict and not earlier_conflict:
+                    self._pending.remove(request)
+                    self._active[ticket] = write_set
+                    self._counters["acquisitions"] += 1
+                    self._counters["contended_acquisitions"] += int(time.monotonic() > started + 0.0001)
+                    self._counters["max_parallel_merges"] = max(
+                        self._counters["max_parallel_merges"], len(self._active)
+                    )
+                    break
+                remaining = None if deadline is None else deadline - time.monotonic()
+                if remaining is not None and remaining <= 0.0:
+                    self._pending.remove(request)
+                    self._counters["timeouts"] += 1
+                    self._condition.notify_all()
+                    raise TimeoutError("timed out waiting for conflicting Codex merge")
+                self._condition.wait(timeout=remaining)
+            wait_seconds = time.monotonic() - started
+        try:
+            yield wait_seconds
+        finally:
+            with self._condition:
+                self._active.pop(ticket, None)
+                self._condition.notify_all()
+
+    def merge(
+        self,
+        assignments: Sequence[ScopeAssignment],
+        callback: Callable[[ScopeAssignment], Any],
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        timeout_seconds: Optional[float] = None,
+    ) -> Mapping[str, MergeResult]:
+        if not callable(callback):
+            raise TypeError("merge callback must be callable")
+
+        def run(assignment: ScopeAssignment) -> MergeResult:
+            started = time.monotonic()
+            try:
+                with self.acquire(assignment.write_set, timeout_seconds=timeout_seconds) as waited:
+                    value = callback(assignment)
+                accepted, evidence, error = IsolatedValidationExecutor._normalize(value)
+                status = "merged" if accepted else "rejected"
+            except TimeoutError as exc:
+                waited, accepted, evidence, error, status = (
+                    time.monotonic() - started, False, {}, str(exc), "timeout"
+                )
+            except Exception as exc:
+                waited, accepted, evidence, error, status = (
+                    0.0, False, {}, f"{type(exc).__name__}: {exc}", "failed"
+                )
+            return MergeResult(
+                assignment.assignment_id, assignment.scope, accepted, status,
+                waited, time.monotonic() - started, evidence, error,
+            )
+
+        results: dict[str, MergeResult] = {}
+        if assignments:
+            with ThreadPoolExecutor(
+                max_workers=min(MAX_INITIAL_CODEX_WORKERS, max(1, int(max_workers)), len(assignments)),
+                thread_name_prefix="codex-merge",
+            ) as pool:
+                futures = {pool.submit(run, item): item.assignment_id for item in assignments}
+                for future in as_completed(futures):
+                    result = future.result()
+                    results[result.assignment_id] = result
+        return MappingProxyType(dict(sorted(results.items())))
+
+    def merge_validated(
+        self,
+        assignments: Sequence[ScopeAssignment],
+        validation_results: Mapping[str, Any],
+        callback: Callable[[ScopeAssignment], Any],
+        *,
+        max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+        timeout_seconds: Optional[float] = None,
+    ) -> Mapping[str, MergeResult]:
+        """Merge only assignments carrying an accepted validation receipt.
+
+        The older :meth:`merge` remains the low-level serializer used by
+        daemon code which performs its validation gate under the main-checkout
+        lock.  New bundle pipelines must use this guarded entry point so a
+        missing, stale-shaped, or failed receipt cannot invoke the merge
+        callback.
+        """
+
+        eligible: list[ScopeAssignment] = []
+        rejected: dict[str, MergeResult] = {}
+        for assignment in assignments:
+            receipt = validation_results.get(assignment.assignment_id)
+            if isinstance(receipt, Mapping):
+                accepted = bool(
+                    receipt.get("accepted", receipt.get("passed", receipt.get("merge_allowed", False)))
+                )
+            else:
+                accepted = bool(
+                    getattr(receipt, "merge_allowed", getattr(receipt, "accepted", False))
+                )
+            if accepted:
+                eligible.append(assignment)
+            else:
+                rejected[assignment.assignment_id] = MergeResult(
+                    assignment_id=assignment.assignment_id,
+                    scope=assignment.scope,
+                    accepted=False,
+                    status="validation_rejected",
+                    wait_seconds=0.0,
+                    elapsed_seconds=0.0,
+                    evidence={"validation_receipt_present": receipt is not None},
+                    error=(
+                        "validation_failed" if receipt is not None else "validation_receipt_missing"
+                    ),
+                )
+        merged = self.merge(
+            eligible,
+            callback,
+            max_workers=max_workers,
+            timeout_seconds=timeout_seconds,
+        )
+        return MappingProxyType(dict(sorted({**rejected, **dict(merged)}.items())))
+
+    def telemetry(self) -> dict[str, int]:
+        with self._condition:
+            return dict(sorted(self._counters.items()))
+
+
+def predict_codex_write_set(task: CodexScopeTask | Mapping[str, Any] | Any) -> PredictedWriteSet:
+    """Convenience wrapper using the production ownership catalog."""
+
+    return WriteSetPredictor().predict(task)
+
+
+def bundle_codex_scope_evidence(
+    tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any], *, max_tasks: int = 16
+) -> tuple[ScopeEvidenceBundle, ...]:
+    """Convenience wrapper for deterministic, scope-local evidence bundling."""
+
+    return ScopeEvidenceBundler(max_tasks=max_tasks).bundle(tasks)
+
+
+def schedule_codex_scopes(
+    tasks: Iterable[CodexScopeTask | Mapping[str, Any] | Any],
+    *,
+    max_workers: int = MAX_INITIAL_CODEX_WORKERS,
+    active_write_sets: Iterable[PredictedWriteSet] = (),
+    signals: SchedulerSignals | Mapping[str, Any] | None = None,
+) -> ScopeSchedulePlan:
+    """Build one initial conflict-aware Codex worker wave."""
+
+    return CodexScopeScheduler(max_workers=max_workers).schedule(
+        tasks, active_write_sets=active_write_sets, signals=signals
+    )
+
+
+# Stable shorter aliases for runtime callers and downstream benchmark tooling.
+OwnershipScope = CodexOwnershipScope
+CodexTask = CodexScopeTask
+CodexScopeAssignment = ScopeAssignment
+ConflictAwareCodexScheduler = CodexScopeScheduler
+MergeSerializer = ConflictAwareMergeSerializer
+AdaptiveCodexWorkerController = AdaptiveWorkerController
+IsolatedValidationRunner = IsolatedValidationExecutor
+WriteSet = PredictedWriteSet
+
+
+__all__ = [
+    "CODEX_OWNERSHIP_SCOPES",
+    "CODEX_OWNERSHIP_SCOPE_LABELS",
+    "CODEX_SCOPE_BUNDLE_SCHEMA_VERSION",
+    "CODEX_SCOPE_SCHEDULER_SCHEMA_VERSION",
+    "DEFAULT_SCOPE_OWNERSHIP",
+    "MAX_INITIAL_CODEX_WORKERS",
+    "AdaptiveWorkerController",
+    "AdaptiveCodexWorkerController",
+    "CodexOwnershipScope",
+    "CodexFlowControlledSchedule",
+    "CodexFlowControlDecision",
+    "CodexFlowControlSignals",
+    "CodexPatchThroughputLedger",
+    "CodexServiceRates",
+    "CodexScopeAssignment",
+    "CodexScopeScheduler",
+    "CodexScopeTask",
+    "CodexTask",
+    "CodexValidationMergeFlowController",
+    "ConflictAwareMergeSerializer",
+    "ConflictAwareCodexScheduler",
+    "IsolatedValidationExecutor",
+    "IsolatedValidationResult",
+    "IsolatedValidationRunner",
+    "MergeResult",
+    "MergeSerializer",
+    "OwnershipScope",
+    "PredictedWriteSet",
+    "SchedulerOutcome",
+    "SchedulerSignals",
+    "ScopeAssignment",
+    "ScopeEvidenceBundle",
+    "ScopeEvidenceBundler",
+    "ScopeSchedulePlan",
+    "WorkerDecision",
+    "WriteSetPredictor",
+    "WriteSet",
+    "bundle_codex_scope_evidence",
+    "canonical_codex_scope",
+    "predict_codex_write_set",
+    "schedule_codex_scopes",
+]
