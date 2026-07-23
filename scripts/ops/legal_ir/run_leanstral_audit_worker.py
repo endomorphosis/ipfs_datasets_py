@@ -23,15 +23,21 @@ for import_root in (ACCELERATE_ROOT, REPO_ROOT):
 
 from ipfs_datasets_py.utils import anyio_compat
 from ipfs_datasets_py.logic.modal import (
+    LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION,
     LeanstralAuditVerifier,
     LeanstralAuditWorker,
     LeanstralAuditWorkerConfig,
+    LeanstralHammerVerifierConfig,
     LeanstralVerifierConfig,
     aggregate_verified_audits,
     build_leanstral_audit_work_items,
     leanstral_llm_router_health,
     leanstral_rule_gap_report_to_json,
     load_leanstral_audit_disagreements,
+    verify_leanstral_audit_hammer_candidates,
+)
+from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer import (
+    LegalIRHammerConfig,
 )
 from ipfs_datasets_py.logic.modal.leanstral_audit import (
     LEANSTRAL_EVIDENCE_REFRESH_POLICIES,
@@ -43,6 +49,13 @@ DEFAULT_CHECKPOINT_PATH = Path("workspace/leanstral-audit-worker/checkpoint.json
 DEFAULT_CACHE_DIR = Path("workspace/leanstral-audit-worker/cache")
 DEFAULT_LEAN_TIMEOUT_SECONDS = 30.0
 SNAPSHOT_SELECTION_POLICIES = ("latest_canonical_snapshot", "none")
+
+
+def _environment_integer(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, str(default)) or default)
+    except (TypeError, ValueError):
+        return int(default)
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -107,12 +120,47 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--prompt-payload-mode",
         choices=("full", "compact", "daemon"),
-        default="full",
+        default="daemon",
         help=(
             "Use full prompts for offline audits or compact/daemon prompts for "
             "low-latency supervised guidance."
         ),
     )
+    parser.add_argument(
+        "--context-size-per-slot",
+        type=int,
+        default=_environment_integer(
+            "IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT",
+            8096,
+        ),
+        help="Maximum Leanstral tokens available to each parallel llama.cpp slot.",
+    )
+    parser.add_argument(
+        "--context-safety-margin-tokens",
+        type=int,
+        default=512,
+        help="Reserved context headroom beyond prompt and completion tokens.",
+    )
+    parser.add_argument(
+        "--tokenizer-base-url",
+        default=os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL", ""),
+        help="llama.cpp base URL used for exact /tokenize preflight.",
+    )
+    parser.add_argument(
+        "--require-exact-token-count",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Fail closed when the serving tokenizer cannot measure the prompt.",
+    )
+    parser.add_argument(
+        "--require-trusted-semantic-context",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Reject generation when no reference example passes source and IR hashes.",
+    )
+    parser.add_argument("--max-semantic-context-source-chars", type=int, default=2500)
+    parser.add_argument("--max-semantic-context-formulas", type=int, default=6)
+    parser.add_argument("--max-semantic-context-obligations", type=int, default=3)
     parser.add_argument(
         "--batch-size",
         type=int,
@@ -231,6 +279,9 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--lean-proof-cache-max-entries", type=int, default=4096)
     parser.add_argument("--lean-proof-cache-ttl-seconds", type=int, default=2_592_000)
     parser.add_argument("--prover-timeout-seconds", type=float, default=5.0)
+    parser.add_argument("--hammer-timeout-seconds", type=float, default=5.0)
+    parser.add_argument("--hammer-max-premises", type=int, default=64)
+    parser.add_argument("--hammer-parallel-workers", type=int, default=1)
     parser.add_argument(
         "--require-modal-bridge-proof",
         action="store_true",
@@ -283,6 +334,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
                 "snapshot_selection": snapshot_selection,
             }
         )
+    reference_examples = load_reference_examples(args.reference_example_path)
     config = LeanstralAuditWorkerConfig(
         max_concurrency=args.max_concurrency,
         max_retries=args.max_retries,
@@ -304,6 +356,14 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         require_leanstral_model=not args.allow_non_leanstral_model,
         max_new_tokens=args.max_new_tokens,
         prompt_payload_mode=args.prompt_payload_mode,
+        context_size_per_slot=args.context_size_per_slot,
+        context_safety_margin_tokens=args.context_safety_margin_tokens,
+        tokenizer_base_url=args.tokenizer_base_url,
+        require_exact_token_count=args.require_exact_token_count,
+        require_trusted_semantic_context=args.require_trusted_semantic_context,
+        max_semantic_context_source_chars=args.max_semantic_context_source_chars,
+        max_semantic_context_formulas=args.max_semantic_context_formulas,
+        max_semantic_context_obligations=args.max_semantic_context_obligations,
         batch_size=args.batch_size,
         batch_min_size=args.batch_min_size,
         batch_queue_max_items=args.batch_queue_max_items,
@@ -319,6 +379,7 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         records,
         schema_failures=schema_failures,
         source_digest=source_digest,
+        reference_examples=reference_examples,
     )
     publication: Dict[str, Any] = {"status": "not_requested"}
     if (
@@ -326,7 +387,6 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
         or args.rule_gap_report_output
         or args.publish_rule_gap_report_output
     ):
-        reference_examples = load_reference_examples(args.reference_example_path)
         verification_records, report = verify_worker_audit_outputs(
             args.input,
             worker=worker,
@@ -357,6 +417,15 @@ async def async_main(argv: Optional[Sequence[str]] = None) -> int:
                 run_syntax_check=not args.skip_syntax_check,
                 run_graph_check=not args.skip_graph_check,
                 run_provenance_check=not args.skip_provenance_check,
+            ),
+            hammer_config=LeanstralHammerVerifierConfig(
+                hammer_config=LegalIRHammerConfig(
+                    max_obligations=1,
+                    max_premises=max(1, args.hammer_max_premises),
+                    parallel_workers=max(1, args.hammer_parallel_workers),
+                    timeout_seconds=max(0.1, args.hammer_timeout_seconds),
+                    total_timeout_seconds=max(0.1, args.hammer_timeout_seconds),
+                )
             ),
         )
         if args.verification_output:
@@ -588,6 +657,9 @@ def verify_worker_audit_outputs(
     reference_examples: Optional[Mapping[str, Mapping[str, Any]]] = None,
     records: Optional[Sequence[Mapping[str, Any]]] = None,
     verifier_config: Optional[LeanstralVerifierConfig] = None,
+    hammer_config: Optional[LeanstralHammerVerifierConfig] = None,
+    hammer_backends: Optional[Sequence[Any]] = None,
+    hammer_kernel_verifier: Any = None,
 ) -> Tuple[List[Dict[str, Any]], Any]:
     """Verify cached real audit responses and build a deterministic gap report."""
 
@@ -597,8 +669,13 @@ def verify_worker_audit_outputs(
             paths,
             max_records=worker_config.max_records,
         )
-    items, _ = build_leanstral_audit_work_items(loaded_records, config=worker_config)
-    verifier = LeanstralAuditVerifier(verifier_config)
+    items, _ = build_leanstral_audit_work_items(
+        loaded_records,
+        config=worker_config,
+        reference_examples=reference_examples,
+    )
+    resolved_verifier_config = verifier_config or LeanstralVerifierConfig()
+    verifier = LeanstralAuditVerifier(resolved_verifier_config)
     verification_records: List[Dict[str, Any]] = []
     report_inputs: List[Mapping[str, Any]] = []
     for item in items:
@@ -606,31 +683,71 @@ def verify_worker_audit_outputs(
         if entry is None:
             continue
         response = entry.response
-        hammer_verification = (
-            entry.validation.get("hammer_verification")
-            if isinstance(entry.validation, Mapping)
-            else None
+        examples = _reference_examples_for_item(
+            item,
+            response=response,
+            reference_examples=reference_examples or {},
         )
         verification = verifier.verify(
             item.request,
             response,
-            examples=_reference_examples_for_item(
-                item,
-                response=response,
-                reference_examples=reference_examples or {},
-            ),
+            examples=examples,
+        )
+        if response.drafted_logic_candidates and verification.accepted:
+            hammer_verification: Any = verify_leanstral_audit_hammer_candidates(
+                item.request,
+                response,
+                examples=examples,
+                verifier_config=resolved_verifier_config,
+                config=hammer_config,
+                backends=hammer_backends,
+                kernel_verifier=hammer_kernel_verifier,
+            )
+        elif response.drafted_logic_candidates:
+            hammer_verification = {
+                "accepted": False,
+                "candidate_count": len(response.drafted_logic_candidates),
+                "candidate_results": [],
+                "reasons": ["deterministic_audit_verification_failed"],
+                "schema_version": LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION,
+                "status": "skipped",
+                "trusted": False,
+            }
+        else:
+            hammer_verification = {
+                "accepted": False,
+                "candidate_count": 0,
+                "candidate_results": [],
+                "reasons": [],
+                "schema_version": LEANSTRAL_HAMMER_VERIFIER_SCHEMA_VERSION,
+                "status": "not_requested",
+                "trusted": False,
+            }
+        hammer_payload = (
+            hammer_verification.to_dict()
+            if hasattr(hammer_verification, "to_dict")
+            else dict(hammer_verification)
+        )
+        worker.runner.cache.put(
+            item.request,
+            response,
+            verification.audit_validation,
+            validation_metadata={
+                "deterministic_verification": verification.to_dict(),
+                "hammer_verification": hammer_payload,
+            },
         )
         record = {
             "request": item.request.to_dict(),
             "response": response.to_dict(),
             "verification": verification.to_dict(),
-            "hammer_verification": hammer_verification,
+            "hammer_verification": hammer_payload,
             "work_key": item.work_key,
         }
         verification_records.append(record)
         report_inputs.append(
             {
-                "hammer_verification": hammer_verification,
+                "hammer_verification": hammer_payload,
                 "request": item.request.to_dict(),
                 "request_id": item.request.request_id,
                 "response": response,
