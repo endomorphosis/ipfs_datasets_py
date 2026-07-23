@@ -68,6 +68,29 @@ def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail
     assert {runner.problem_format for runner in runners} == {"smt-lib", "tptp-fof"}
 
 
+def test_subprocess_backend_rejects_an_unusable_resolver_candidate() -> None:
+    runner = SubprocessHammerBackendRunner(
+        name="cvc5",
+        executable="cvc5",
+        problem_format="smt-lib",
+        suffix=".smt2",
+        executable_resolver=lambda _command: None,
+    )
+
+    result = runner.run(
+        HammerTranslation(
+            target_format="smt-lib",
+            problem="(assert (not true))\n(check-sat)",
+            selected_premises=[],
+            transformations=[],
+        ),
+        timeout_seconds=1.0,
+    )
+
+    assert result.status is HammerBackendStatus.UNAVAILABLE
+    assert "Usable executable not found" in result.error
+
+
 def test_native_python_z3_runner_proves_unsatisfiable_smt_without_a_binary() -> None:
     pytest.importorskip("z3")
     result = PythonZ3HammerBackendRunner().run(
@@ -137,3 +160,22 @@ def test_lazy_install_hook_is_explicit_and_side_effect_injectable() -> None:
     assert calls[0][0] == ("python", "-m", "pip", "install", "z3-solver")
     assert calls[0][1] == 12.0
     assert health.name == "z3"
+
+
+def test_cvc5_install_hook_requests_the_architecture_aware_cli_installer() -> None:
+    calls = []
+
+    def _runner(command, timeout):
+        calls.append((tuple(command), timeout))
+        return subprocess.CompletedProcess(list(command), 0, "", "")
+
+    health = lazy_install_hammer_backend("cvc5", runner=_runner, timeout_seconds=12.0)
+
+    assert calls[0][0] == (
+        "python",
+        "-m",
+        "scripts.setup.ipfs_prover_installer",
+        "--yes",
+        "--cvc5",
+    )
+    assert health.name == "cvc5"

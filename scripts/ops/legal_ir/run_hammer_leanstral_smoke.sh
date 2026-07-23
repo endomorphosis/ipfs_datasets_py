@@ -571,7 +571,14 @@ if not service.get("generation") or service_health.get("generation") != service.
     raise SystemExit(f"persistent Leanstral generation identity mismatch: {service!r}")
 if identity.get("context_fingerprint") != service_health.get("context_fingerprint"):
     raise SystemExit(f"persistent Leanstral context identity mismatch: {service!r}")
-if int(identity.get("context_size") or 0) < 1 or "leanstral" not in str(identity.get("model") or "").lower():
+required_context = max(
+    1,
+    int(os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT", "8096")),
+)
+if (
+    int(identity.get("context_size") or 0) < required_context
+    or "leanstral" not in str(identity.get("model") or "").lower()
+):
     raise SystemExit(f"persistent Leanstral model/context identity invalid: {identity!r}")
 if int(service.get("model_load_count") or 0) != 1:
     raise SystemExit(f"canonical Leanstral weights reloaded within one generation: {service!r}")
