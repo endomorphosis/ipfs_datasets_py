@@ -96,13 +96,16 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     root = tmp_path / "provers"
     monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
     monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
-    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(prover_installer.platform, "machine", lambda: "aarch64")
+    downloaded: dict[str, str] = {}
 
     def fake_which(name: str) -> str | None:
         launcher = root / "bin" / name
         return str(launcher) if launcher.is_file() else None
 
-    def fake_download(_url, destination, _sha256, **_kwargs) -> bool:
+    def fake_download(url, destination, sha256, **_kwargs) -> bool:
+        downloaded["url"] = url
+        downloaded["sha256"] = sha256
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"fixture")
         return True
@@ -110,7 +113,10 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     def fake_extract(_archive: Path, destination: Path) -> None:
         executable = destination / "bin" / "cvc5"
         executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        executable.write_text(
+            "#!/bin/sh\nprintf 'This is cvc5 version 1.3.3\\n'\n",
+            encoding="utf-8",
+        )
         executable.chmod(0o755)
 
     monkeypatch.setattr(prover_installer, "_which", fake_which)
@@ -121,6 +127,58 @@ def test_cvc5_cli_installer_uses_user_local_launcher_without_network(monkeypatch
     launcher = root / "bin" / "cvc5"
     assert launcher.is_file()
     assert "exec" in launcher.read_text(encoding="utf-8")
+    assert downloaded == {
+        "url": (
+            "https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.3/"
+            "cvc5-Linux-arm64-static.zip"
+        ),
+        "sha256": "2572d01b142a6bfebdcb259f5a395f6228d2db5609f7dcc9a60851a5f1a58655",
+    }
+
+
+def test_cvc5_resolution_skips_broken_path_binary_for_managed_launcher(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    root = tmp_path / "provers"
+    managed = root / "bin" / "cvc5"
+    managed.parent.mkdir(parents=True)
+    managed.write_text(
+        "#!/bin/sh\nprintf 'This is cvc5 version 1.3.3\\n'\n",
+        encoding="utf-8",
+    )
+    managed.chmod(0o755)
+    incompatible = tmp_path / "path" / "cvc5"
+    incompatible.parent.mkdir()
+    incompatible.write_text("#!/bin/sh\nexit 126\n", encoding="utf-8")
+    incompatible.chmod(0o755)
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(
+        lazy_installer.shutil,
+        "which",
+        lambda command: str(incompatible) if command == "cvc5" else None,
+    )
+
+    assert lazy_installer.find_executable("cvc5") == str(managed)
+
+
+def test_cvc5_resolution_accepts_explicit_portable_launcher(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    launcher = tmp_path / "cvc5-wasm"
+    launcher.write_text(
+        "#!/bin/sh\nprintf 'This is cvc5 version wasm-test\\n'\n",
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    monkeypatch.setenv("IPFS_DATASETS_PY_CVC5_EXECUTABLE", str(launcher))
+    monkeypatch.setattr(lazy_installer.shutil, "which", lambda _command: None)
+
+    assert lazy_installer.find_executable("cvc5") == str(launcher)
 
 
 def test_apalache_installer_handles_versioned_archive_root(monkeypatch, tmp_path: Path) -> None:
