@@ -793,7 +793,7 @@ def _trial_command(
         "--generalizable-projection-max-update-families",
         "1",
         "--test-every-cycles",
-        "1",
+        "0",
         "--autoencoder-device",
         "cuda",
         "--autoencoder-bridge-workers",
