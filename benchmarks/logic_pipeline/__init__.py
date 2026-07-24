@@ -357,6 +357,8 @@ from .adapters import (  # noqa: E402
     SpacyAdapterConfig,
     SpacyAdapterMode,
     StageAdapter,
+    StageArtifact,
+    StageInvocation,
     StageOutput,
     StageRequest,
     StageTelemetry,
@@ -405,6 +407,8 @@ __all__ += [
     "SpacyAdapterConfig",
     "SpacyAdapterMode",
     "StageAdapter",
+    "StageArtifact",
+    "StageInvocation",
     "StageOutput",
     "StageRequest",
     "StageTelemetry",
@@ -462,6 +466,36 @@ __all__ += [
     "prepare_isolated_worktree",
     "probe_runtime_capabilities",
     "require_capabilities",
+]
+
+# Live runtime construction is explicit and remains side-effect free until a
+# stage is invoked.
+from .runtime import (  # noqa: E402
+    COMPILED_OBLIGATION_SCHEMA,
+    KERNEL_RECEIPT_SCHEMA,
+    CompiledObligation,
+    HSSLEV1142E95,
+    LiveRuntime,
+    NativeKernelRunner,
+    RuntimeBackendHandlers,
+    RuntimeBindingError,
+    build_live_adapters,
+    build_live_runtime,
+    compile_reviewed_obligation,
+)
+
+__all__ += [
+    "COMPILED_OBLIGATION_SCHEMA",
+    "KERNEL_RECEIPT_SCHEMA",
+    "CompiledObligation",
+    "HSSLEV1142E95",
+    "LiveRuntime",
+    "NativeKernelRunner",
+    "RuntimeBackendHandlers",
+    "RuntimeBindingError",
+    "build_live_adapters",
+    "build_live_runtime",
+    "compile_reviewed_obligation",
 ]
 
 # Corpus records are dependency-free and load no fixture data until a caller

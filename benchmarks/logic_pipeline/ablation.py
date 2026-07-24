@@ -8,7 +8,7 @@ and reparsed before it may be treated as completed during resume.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 import math
@@ -18,7 +18,13 @@ import re
 from types import MappingProxyType
 from typing import Final, Mapping, Sequence
 
-from .adapters import StageAdapter, StageOutput, StageRequest
+from .adapters import (
+    StageAdapter,
+    StageArtifact,
+    StageInvocation,
+    StageOutput,
+    StageRequest,
+)
 from .cases import BenchmarkCase
 from .capabilities import (
     ResourceClass,
@@ -43,10 +49,12 @@ from .contracts import (
     Split,
     StageName,
     StageStatus,
+    TelemetryRecord,
     canonical_json,
 )
 from .variants import (
     ALL_VARIANT_IDS,
+    StagePolicy,
     VARIANT_REGISTRY,
     VARIANT_REGISTRY_SHA256,
     get_variant_definition,
@@ -951,6 +959,160 @@ def _select_adapters(
     return MappingProxyType(result)
 
 
+_RESOURCE_CLASS = MappingProxyType(
+    {
+        StageName.COMPILER: ResourceClass.CPU,
+        StageName.SPACY: ResourceClass.CPU,
+        StageName.SYMAI: ResourceClass.MODEL,
+        StageName.HAMMER: ResourceClass.SOLVER,
+        StageName.LEANSTRAL: ResourceClass.MODEL,
+        StageName.KERNEL: ResourceClass.KERNEL,
+    }
+)
+
+_RESOURCE_LANE = MappingProxyType(
+    {
+        StageName.COMPILER: ResourceLane.CPU,
+        StageName.SPACY: ResourceLane.CPU,
+        StageName.SYMAI: ResourceLane.MODEL,
+        StageName.HAMMER: ResourceLane.SOLVER,
+        StageName.LEANSTRAL: ResourceLane.MODEL,
+        StageName.KERNEL: ResourceLane.KERNEL,
+    }
+)
+
+
+def _ambiguity_decision(artifacts: Sequence[StageArtifact]) -> bool:
+    """Return the deterministic frontend gate, defaulting open if unspecified."""
+
+    found_signal = False
+    ambiguous = False
+    for artifact in artifacts:
+        if artifact.stage not in {StageName.COMPILER, StageName.SPACY}:
+            continue
+        queue: list[object] = [artifact.data]
+        while queue:
+            value = queue.pop()
+            if isinstance(value, Mapping):
+                if "ambiguity_detected" in value:
+                    found_signal = True
+                    ambiguous = ambiguous or value["ambiguity_detected"] is True
+                for key in ("ambiguity_flags", "ambiguities"):
+                    if key in value and isinstance(
+                        value[key], (list, tuple)
+                    ):
+                        found_signal = True
+                        ambiguous = ambiguous or bool(value[key])
+                queue.extend(value.values())
+            elif isinstance(value, (list, tuple)):
+                queue.extend(value)
+    # An older injected adapter may not expose ambiguity evidence.  Keeping
+    # the gate open retains the requested arm instead of silently disabling it.
+    return ambiguous if found_signal else True
+
+
+def _proof_succeeded(artifact: StageArtifact) -> bool:
+    if not artifact.invoked or artifact.status is not StageStatus.SUCCESS:
+        return False
+    if not isinstance(artifact.data, Mapping):
+        return False
+    data = artifact.data
+    explicit = data.get("proof_success")
+    if isinstance(explicit, bool):
+        return explicit
+    if artifact.stage is StageName.HAMMER:
+        return bool(
+            data.get("proof_candidate")
+            or data.get("candidate")
+            or data.get("status") in {"candidate", "verified"}
+        )
+    if artifact.stage is StageName.LEANSTRAL:
+        draft = data.get("draft")
+        return isinstance(draft, Mapping) and bool(
+            draft.get("proof_text", draft.get("draft_text"))
+        )
+    return False
+
+
+def _has_obligation(input_data: object) -> bool:
+    if not isinstance(input_data, Mapping):
+        return False
+    # Legacy/injected benchmark cases may omit reviewed-obligation metadata.
+    # Treat that as unspecified (gate open) for compatibility.  Corpus-derived
+    # cases always include an explicit mapping or explicit None, so the real
+    # runtime can distinguish a reviewed proof target from a no-proof case.
+    if "proof_obligation" not in input_data:
+        return True
+    return isinstance(input_data.get("proof_obligation"), Mapping) and isinstance(
+        input_data.get("obligation_id"), str
+    )
+
+
+def _synthetic_invocation(
+    stage: StageName,
+    request: StageRequest,
+    *,
+    reason: str,
+) -> StageInvocation:
+    output = StageOutput(
+        data={
+            "schema": "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1",
+            "stage": stage.value,
+            "invoked": False,
+            "reason": reason,
+            "invocation_index": request.invocation_index,
+            "consumed_artifact_sha256": [
+                artifact.digest for artifact in request.upstream_artifacts
+            ],
+        },
+        effective_identity={
+            **dict(request.requested_identity),
+            "invoked": False,
+            "policy_reason": reason,
+            "graph_invocation_index": request.invocation_index,
+            "consumed_artifact_sha256": tuple(
+                artifact.digest for artifact in request.upstream_artifacts
+            ),
+        },
+        telemetry=TelemetryRecord(
+            input_items=1,
+            output_items=1,
+            model_calls=0,
+            bytes_in=request.input_bytes,
+            resource_lane=_RESOURCE_LANE[stage],
+        ),
+    )
+    return StageInvocation(output, output.telemetry)
+
+
+def _artifact(
+    stage: StageName,
+    invocation: StageInvocation,
+    *,
+    invocation_index: int,
+    invoked: bool,
+    reason: str,
+) -> StageArtifact:
+    output = invocation.output
+    output_sha256 = (
+        hashlib.sha256(
+            canonical_json(_thaw(output.data)).encode("utf-8")
+        ).hexdigest()
+        if output.status is StageStatus.SUCCESS
+        else None
+    )
+    return StageArtifact(
+        stage=stage,
+        status=output.status,
+        data=output.data,
+        output_sha256=output_sha256,
+        effective_identity=output.effective_identity,
+        invocation_index=invocation_index,
+        invoked=invoked,
+        policy_reason=reason,
+    )
+
+
 def _failure(
     plan: AblationPlan,
     job: ScheduledCase,
@@ -993,9 +1155,215 @@ def _execute_job(
     definition = get_variant_definition(job.variant_id)
     try:
         selected = _select_adapters(adapters, job.variant_id)
+        invocations: dict[StageName, StageInvocation] = {}
+        artifacts: list[StageArtifact] = []
+        invocation_index = 0
+        terminal_failure = False
+
+        def request_for(stage: StageName) -> StageRequest:
+            return StageRequest(
+                run_id=plan.run_id,
+                case_id=job.case.case_id,
+                case_manifest_sha256=plan.case_manifest_sha256,
+                variant_id=job.variant_id,
+                split=plan.split,
+                cache_mode=job.cache_mode,
+                input_data=_thaw(job.case.input_data),
+                requested_identity=definition.requested_identity(stage),
+                environment_sha256=plan.environment_sha256,
+                source=("ablation_plan", plan.digest, job.job_id),
+                upstream_artifacts=tuple(artifacts),
+                invocation_index=invocation_index,
+            )
+
+        def invoke(
+            stage: StageName,
+            *,
+            should_invoke: bool = True,
+            reason: str = "scheduled",
+        ) -> StageArtifact:
+            nonlocal invocation_index
+            adapter = selected.get(stage, StageAdapter(stage))
+            request = request_for(stage)
+            if not should_invoke:
+                invocation = _synthetic_invocation(
+                    stage, request, reason=reason
+                )
+            else:
+                resource_class = _RESOURCE_CLASS[stage]
+                requested_model = request.requested_identity.get(
+                    "model",
+                    request.requested_identity.get(
+                        "requested_model", "shared-model-service"
+                    ),
+                )
+                model_identity = (
+                    re.sub(r"[^A-Za-z0-9._-]", "-", str(requested_model))[:128]
+                    if resource_class is ResourceClass.MODEL
+                    else None
+                )
+                if model_identity in {"", ".", ".."}:
+                    model_identity = "shared-model-service"
+                lease_request = ResourceLeaseRequest(
+                    owner_id=f"lease-{job.ordinal}-{stage.value}",
+                    resource_class=resource_class,
+                    model_identity=model_identity,
+                    timeout_seconds=plan.limits.case_timeout_seconds,
+                )
+                with scheduler.acquire(lease_request) as lease:
+                    lease.assert_active()
+                    invocation = adapter.invoke(request)
+                identity = {
+                    **dict(
+                        invocation.output.effective_identity
+                        or request.requested_identity
+                    ),
+                    "graph_invocation_index": invocation_index,
+                    "graph_invoked": True,
+                    "graph_policy_reason": reason,
+                    "consumed_artifact_sha256": tuple(
+                        artifact.digest for artifact in artifacts
+                    ),
+                }
+                invocation = StageInvocation(
+                    replace(
+                        invocation.output,
+                        effective_identity=identity,
+                    ),
+                    invocation.telemetry,
+                )
+            invocations[stage] = invocation
+            artifact = _artifact(
+                stage,
+                invocation,
+                invocation_index=invocation_index,
+                invoked=should_invoke,
+                reason=reason,
+            )
+            artifacts.append(artifact)
+            invocation_index += 1
+            return artifact
+
+        proof_stages = {StageName.HAMMER, StageName.LEANSTRAL}
+        frontend = tuple(
+            stage
+            for stage in definition.stages
+            if stage not in proof_stages | {StageName.KERNEL}
+        )
+        for stage in frontend:
+            should_invoke = not (
+                stage is StageName.SYMAI
+                and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
+                and not _ambiguity_decision(artifacts)
+            )
+            artifact = invoke(
+                stage,
+                should_invoke=should_invoke,
+                reason=(
+                    "frontend_ambiguity_gate_closed"
+                    if not should_invoke
+                    else (
+                        "frontend_ambiguity_gate_open"
+                        if stage is StageName.SYMAI
+                        and definition.symai_policy
+                        is StagePolicy.AMBIGUITY_GATED
+                        else "frontend_scheduled"
+                    )
+                ),
+            )
+            if artifact.status is not StageStatus.SUCCESS:
+                terminal_failure = True
+                break
+
+        has_obligation = _has_obligation(job.case.input_data)
+        previous_proof: StageArtifact | None = None
+        if not terminal_failure:
+            for proof_index, stage in enumerate(definition.proof_order):
+                should_invoke = has_obligation
+                reason = "proof_scheduled"
+                if not has_obligation:
+                    reason = "no_reviewed_proof_obligation"
+                elif proof_index and job.variant_id != "A12":
+                    should_invoke = not (
+                        previous_proof is not None
+                        and _proof_succeeded(previous_proof)
+                    )
+                    reason = (
+                        "proof_fallback_suppressed"
+                        if not should_invoke
+                        else "proof_failure_fallback"
+                    )
+                artifact = invoke(
+                    stage,
+                    should_invoke=should_invoke,
+                    reason=reason,
+                )
+                previous_proof = artifact
+            # A failed or unavailable first proof backend is exactly what a
+            # bounded fallback is for.  The independent kernel remains the
+            # terminal authority even when no proof backend produced a usable
+            # candidate: its rejection is part of the complete frozen graph.
+
+        if not terminal_failure and StageName.KERNEL in definition.stages:
+            kernel_should_invoke = not (
+                definition.proof_order and not has_obligation
+            )
+            kernel_artifact = invoke(
+                StageName.KERNEL,
+                should_invoke=kernel_should_invoke,
+                reason=(
+                    "no_reviewed_proof_obligation"
+                    if not kernel_should_invoke
+                    else (
+                        "legacy_diagnostic_kernel"
+                        if definition.safety_diagnostic_only
+                        else "independent_native_kernel"
+                    )
+                ),
+            )
+            if (
+                definition.safety_diagnostic_only
+                and invocations[StageName.KERNEL].output.kernel_accepted
+            ):
+                original = invocations[StageName.KERNEL]
+                data = (
+                    {
+                        **dict(original.output.data),
+                        "diagnostic_only": True,
+                        "authority_withheld": True,
+                    }
+                    if isinstance(original.output.data, Mapping)
+                    else {
+                        "diagnostic_payload": _thaw(original.output.data),
+                        "diagnostic_only": True,
+                        "authority_withheld": True,
+                    }
+                )
+                invocations[StageName.KERNEL] = StageInvocation(
+                    replace(
+                        original.output,
+                        data=data,
+                        kernel_accepted=False,
+                        kernel_receipt_sha256=None,
+                    ),
+                    original.telemetry,
+                )
+                replacement = _artifact(
+                    StageName.KERNEL,
+                    invocations[StageName.KERNEL],
+                    invocation_index=kernel_artifact.invocation_index,
+                    invoked=True,
+                    reason="legacy_diagnostic_kernel",
+                )
+                artifacts[-1] = replacement
+
         records = []
-        upstream: tuple[str, ...] = ()
+        canonical_upstream: tuple[str, ...] = ()
+        by_stage_artifacts = tuple(artifacts)
         for stage in definition.stages:
+            invocation = invocations.get(stage)
+            if invocation is None:
+                break
             adapter = selected.get(stage, StageAdapter(stage))
             request = StageRequest(
                 run_id=plan.run_id,
@@ -1008,40 +1376,17 @@ def _execute_job(
                 requested_identity=definition.requested_identity(stage),
                 environment_sha256=plan.environment_sha256,
                 source=("ablation_plan", plan.digest, job.job_id),
-                upstream_stage_digests=upstream,
+                upstream_stage_digests=canonical_upstream,
+                upstream_artifacts=by_stage_artifacts,
+                invocation_index=next(
+                    artifact.invocation_index
+                    for artifact in artifacts
+                    if artifact.stage is stage
+                ),
             )
-            resource_class = {
-                StageName.COMPILER: ResourceClass.CPU,
-                StageName.SPACY: ResourceClass.CPU,
-                StageName.SYMAI: ResourceClass.MODEL,
-                StageName.HAMMER: ResourceClass.SOLVER,
-                StageName.LEANSTRAL: ResourceClass.MODEL,
-                StageName.KERNEL: ResourceClass.KERNEL,
-            }[stage]
-            # SyMAI and Leanstral route through the same pinned, managed model
-            # service.  Identity-aware leases prevent a second 119B instance
-            # while still allowing bounded sharing of the existing service.
-            model_identity = (
-                "leanstral-119b-shared"
-                if resource_class is ResourceClass.MODEL
-                else None
-            )
-            lease_request = ResourceLeaseRequest(
-                owner_id=f"lease-{job.ordinal}-{stage.value}",
-                resource_class=resource_class,
-                model_identity=model_identity,
-                timeout_seconds=plan.limits.case_timeout_seconds,
-            )
-            with scheduler.acquire(lease_request) as lease:
-                lease.assert_active()
-                record = adapter.run(request)
+            record = adapter.record(request, invocation)
             records.append(record)
-            upstream = (*upstream, record.digest)
-            # A case failure is local to this scheduled job.  Do not invoke
-            # downstream tools with missing or malformed upstream evidence;
-            # the next scheduled case remains eligible and executes normally.
-            if record.status is not StageStatus.SUCCESS:
-                break
+            canonical_upstream = (*canonical_upstream, record.digest)
         result = CaseResultRecord.from_stages(tuple(records))
     except (ResourceLeaseTimeout, ResourceLeaseCancelled, ResourceLeaseError) as exc:
         return _failure(
@@ -1254,11 +1599,9 @@ def execute_ablation(
     else:
         _write_once(plan_path, plan.to_dict())
 
-    contracts = tuple(
-        _contract(plan, variant, mode)
-        for variant in plan.variant_ids
-        for mode in plan.cache_modes
-    )
+    # The plan is the sole owner of run-contract construction.  Reusing its
+    # canonical projection prevents per-executor duplicate contracts.
+    contracts = plan.run_contracts
     contract_map = {
         (contract.requested_variant_id, contract.cache_mode): contract
         for contract in contracts
