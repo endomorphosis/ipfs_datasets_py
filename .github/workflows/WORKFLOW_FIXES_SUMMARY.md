@@ -191,7 +191,7 @@ All changes have been:
 - [GitHub CLI Manual](https://cli.github.com/manual/gh)
 - [Copilot CLI Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli)
 - [Agent Management](https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management)
-- [COPILOT_INVOCATION_GUIDE.md](.github/workflows/COPILOT_INVOCATION_GUIDE.md)
+- [COPILOT_INVOCATION_GUIDE.md](COPILOT_INVOCATION_GUIDE.md)
 
 ---
 
