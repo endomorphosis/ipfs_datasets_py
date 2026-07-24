@@ -779,6 +779,6 @@ for cfg in configs_to_test:
 
 ## See Also
 
-- [OntologyGenerator](./ONTOLOGY_GENERATOR.md) — Main extraction class
+- [OntologyGenerator](./optimizers/ONTOLOGY_GENERATOR_DOCTEST_REFERENCE.md) — Main extraction class
 - [ExtractionConfig validation tests](../tests/unit/optimizers/graphrag/test_extraction_config_validation.py)
-- [Example end-to-end pipeline](./EXAMPLES.md)
+- [Example end-to-end pipeline](./USAGE_EXAMPLES.md)
