@@ -79,6 +79,9 @@ is never completion evidence.
 - Acceptance: Tests use a disposable repository to prove pinned-base worktree creation, run-specific state roots, no active-checkout mutations, no automatic merge, and explicit submodule commit capture.
 - Gap task: Add the worktree isolation contract, adversarial tests, and a machine-readable safety receipt.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.capabilities.HSSLEV0118D14` binds this goal to the executable worktree-safety contract; pinned worktree preparation, immutable repository snapshots, and canonical safety receipts make the isolation claim machine-verifiable.
+- Safety contract: Preparation resolves and records an exact base commit, creates only a detached run-scoped worktree, keeps cache, receipt, result, supervisor, and other mutable state below the selected run root, captures explicit submodule gitlink commits, and verifies that the active checkout's HEAD, branch, status, and contents are unchanged. Active-checkout targets, overlapping or escaping state roots, automatic merge, and destructive Git operations fail closed.
+- Backlog alignment: HSSL-G011 and HSSL-G012 are already the two bounded work items in `goal_packet/benchmark_protocol/benchmarks/e434c88200e1` and share the cohesive `capabilities.py` output. No child goal, parent edge, or output refinement is needed; successful HSSL-BENCH-001 packet validation propagates to HSSL-BENCH-004 and HSSL-BENCH-005 without manually changing generated supervisor todo/vector state.
 
 ## HSSL-G012 Inventory runtime capabilities and identities
 
@@ -96,6 +99,9 @@ is never completion evidence.
 - Acceptance: Every optional capability is available, unavailable, or degraded with provenance; no missing tool silently becomes a different benchmark variant.
 - Gap task: Implement fail-closed capability probing and environment identity capture.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.capabilities.HSSLEV0125F83` binds this goal to the versioned capability and environment inventory; canonical records preserve requested and effective identities, probe provenance, and a replayable digest before any variant runs.
+- Capability contract: The preflight records spaCy pipelines, SyMAI configuration, llm_router providers, Hammer solvers, the Leanstral model service, the Lean toolchain, the cache backend, and the resource scheduler as `available`, `unavailable`, or `degraded`. Probe failures and fallbacks remain explicit, secret values are not serialized, and a missing or degraded requirement makes the requested variant ineligible instead of silently selecting another effective arm.
+- Backlog alignment: HSSL-G012 remains the existing capability member of the HSSL-G011/HSSL-G012 protocol packet, with its unit contract and shared implementation already represented by HSSL-BENCH-001 and HSSL-BENCH-005. No child goal or generated backlog edit is required; aggregate completion remains validation-driven and propagates through the packet work order.
 
 ## HSSL-G020 Build the reviewed and immutable benchmark corpus
 

@@ -161,6 +161,25 @@ one shared Leanstral service, distinct model/kernel resource lanes, no
 recursive routing, no automatic merge, and no production promotion remain
 mandatory safety invariants.
 
+## Worktree and capability preflight
+
+`prepare_isolated_worktree` resolves the requested revision before creating
+state, rejects any run root that overlaps the active checkout or shared Git
+directory, and creates a detached worktree below the selected `RunPaths`.
+The active checkout's HEAD, branch, and complete porcelain status are compared
+before and after preparation. The resulting canonical receipt binds the pinned
+commit, detached worktree, run state root, no-auto-merge invariant, and every
+submodule gitlink recorded in the pinned tree.
+
+`probe_runtime_capabilities` then emits exactly one status-bearing record for
+each preregistered runtime: spaCy, SyMAI, llm_router, Hammer solvers, Leanstral,
+Lean/Lake, cache, and resource scheduler. Probes are read-only and do not
+import optional backends, install providers, make inference calls, or start
+services. Secrets are reduced to redaction/presence evidence. A missing probe,
+exception, partial configuration, or explicit fallback remains `unavailable`
+or `degraded`; `require_capabilities` accepts only the exact fully available
+request and never selects a different arm.
+
 ## Records and validation
 
 `ProtocolRecord` validates the protocol payload against its digest.
@@ -174,4 +193,6 @@ Run the executable protocol evidence with:
 
 ```bash
 python -m pytest tests/unit/benchmarks/logic_pipeline/test_contracts.py -q
+python -m pytest tests/unit/benchmarks/logic_pipeline/test_capabilities.py -q
+python -m pytest tests/integration/benchmarks/logic_pipeline/test_worktree_isolation.py -q
 ```
