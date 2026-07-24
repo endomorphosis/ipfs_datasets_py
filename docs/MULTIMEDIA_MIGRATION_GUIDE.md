@@ -358,12 +358,12 @@ with warnings.catch_warnings(record=True) as w:
 
 All classes maintain the same API. For detailed API documentation, see:
 
-- **FFmpegWrapper:** [processors/multimedia/ffmpeg_wrapper.py](../../ipfs_datasets_py/processors/multimedia/ffmpeg_wrapper.py)
-- **YtDlpWrapper:** [processors/multimedia/ytdlp_wrapper.py](../../ipfs_datasets_py/processors/multimedia/ytdlp_wrapper.py)
-- **MediaProcessor:** [processors/multimedia/media_processor.py](../../ipfs_datasets_py/processors/multimedia/media_processor.py)
-- **MediaUtils:** [processors/multimedia/media_utils.py](../../ipfs_datasets_py/processors/multimedia/media_utils.py)
-- **EmailProcessor:** [processors/multimedia/email_processor.py](../../ipfs_datasets_py/processors/multimedia/email_processor.py)
-- **DiscordWrapper:** [processors/multimedia/discord_wrapper.py](../../ipfs_datasets_py/processors/multimedia/discord_wrapper.py)
+- **FFmpegWrapper:** [processors/multimedia/ffmpeg_wrapper.py](../ipfs_datasets_py/processors/multimedia/ffmpeg_wrapper.py)
+- **YtDlpWrapper:** [processors/multimedia/ytdlp_wrapper.py](../ipfs_datasets_py/processors/multimedia/ytdlp_wrapper.py)
+- **MediaProcessor:** [processors/multimedia/media_processor.py](../ipfs_datasets_py/processors/multimedia/media_processor.py)
+- **MediaUtils:** [processors/multimedia/media_utils.py](../ipfs_datasets_py/processors/multimedia/media_utils.py)
+- **EmailProcessor:** [processors/multimedia/email_processor.py](../ipfs_datasets_py/processors/multimedia/email_processor.py)
+- **DiscordWrapper:** [processors/multimedia/discord_wrapper.py](../ipfs_datasets_py/processors/multimedia/discord_wrapper.py)
 
 ---
 
@@ -396,7 +396,7 @@ All classes maintain the same API. For detailed API documentation, see:
 ## Getting Help
 
 - **GitHub Issues:** [ipfs_datasets_py/issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
-- **Documentation:** [docs/](../../docs/)
+- **Documentation:** [docs/](../docs/)
 - **Migration Support:** Open an issue with the `migration` label
 
 ---
