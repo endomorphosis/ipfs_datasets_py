@@ -3532,7 +3532,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="override the selected report, decision, or runbook path",
     )
+    parser.add_argument(
+        "--artifact",
+        type=Path,
+        default=None,
+        help=(
+            "artifact path alias used by phase-gate validation commands; "
+            "mutually exclusive with --results-path"
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.artifact is not None and args.results_path is not None:
+        parser.error("--artifact and --results-path are mutually exclusive")
+    selected_path = args.artifact or args.results_path
     final_modes = int(args.validate_final_decision) + int(args.validate_runbook)
     if final_modes:
         if final_modes != 1:
@@ -3548,7 +3560,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.validate_final_decision:
             try:
                 value = load_final_decision(
-                    args.results_path or DEFAULT_FINAL_DECISION_PATH
+                    selected_path or DEFAULT_FINAL_DECISION_PATH
                 )
             except FinalDecisionValidationError as exc:
                 parser.error(str(exc))
@@ -3556,7 +3568,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             try:
                 summary = load_runbook(
-                    args.results_path or DEFAULT_BENCHMARK_RUNBOOK_PATH
+                    selected_path or DEFAULT_BENCHMARK_RUNBOOK_PATH
                 )
             except RunbookValidationError as exc:
                 parser.error(str(exc))
@@ -3575,27 +3587,66 @@ def main(argv: Sequence[str] | None = None) -> int:
 
             try:
                 report = load_holdout_gate_report(
-                    args.results_path or DEFAULT_HOLDOUT_GATE_PATH
+                    selected_path or DEFAULT_HOLDOUT_GATE_PATH
                 )
             except HoldoutGateError as exc:
                 parser.error(str(exc))
             summary = holdout_gate_summary(report)
             sys.stdout.write(canonical_json(summary) + "\n")
             return 0
-        from benchmarks.logic_pipeline.pilot_gate import (
-            DEFAULT_PILOT_SHORTLIST_PATH,
-            PilotGateError,
-            load_pilot_shortlist_report,
-            pilot_shortlist_summary,
-        )
+        if selected_path is not None:
+            try:
+                artifact_header = json.loads(
+                    selected_path.read_text(encoding="utf-8")
+                )
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                parser.error(f"cannot inspect pilot gate artifact: {exc}")
+            if (
+                isinstance(artifact_header, Mapping)
+                and artifact_header.get("schema")
+                == (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "reassessment-pilot-shortlist.v1"
+                )
+            ):
+                from benchmarks.logic_pipeline.pilot_reassessment import (
+                    PilotReassessmentError,
+                    load_pilot_reassessment_report,
+                    pilot_reassessment_summary,
+                )
 
-        try:
-            report = load_pilot_shortlist_report(
-                args.results_path or DEFAULT_PILOT_SHORTLIST_PATH
+                try:
+                    report = load_pilot_reassessment_report(selected_path)
+                except PilotReassessmentError as exc:
+                    parser.error(str(exc))
+                summary = pilot_reassessment_summary(report)
+            else:
+                from benchmarks.logic_pipeline.pilot_gate import (
+                    PilotGateError,
+                    load_pilot_shortlist_report,
+                    pilot_shortlist_summary,
+                )
+
+                try:
+                    report = load_pilot_shortlist_report(selected_path)
+                except PilotGateError as exc:
+                    parser.error(str(exc))
+                summary = pilot_shortlist_summary(report)
+        else:
+            from benchmarks.logic_pipeline.pilot_gate import (
+                DEFAULT_PILOT_SHORTLIST_PATH,
+                PilotGateError,
+                load_pilot_shortlist_report,
+                pilot_shortlist_summary,
             )
-        except PilotGateError as exc:
-            parser.error(str(exc))
-        summary = pilot_shortlist_summary(report)
+
+            try:
+                report = load_pilot_shortlist_report(
+                    DEFAULT_PILOT_SHORTLIST_PATH
+                )
+            except PilotGateError as exc:
+                parser.error(str(exc))
+            summary = pilot_shortlist_summary(report)
         sys.stdout.write(canonical_json(summary) + "\n")
         return 0
     if args.section is None:
@@ -3607,8 +3658,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             report = (
                 create_efficiency_capability_preflight_report()
-                if args.results_path is None
-                else load_efficiency_report(args.results_path)
+                if selected_path is None
+                else load_efficiency_report(selected_path)
             )
         except EfficiencyReportError as exc:
             parser.error(str(exc))
@@ -3620,10 +3671,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             statistics_summary,
         )
 
-        if args.results_path is None:
+        if selected_path is None:
             parser.error("--section statistics requires --results-path")
         try:
-            report = load_statistics_report(args.results_path)
+            report = load_statistics_report(selected_path)
         except StatisticsError as exc:
             parser.error(str(exc))
         summary = statistics_summary(report)
@@ -3637,7 +3688,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         try:
             report = load_frontend_report(
-                args.results_path or DEFAULT_FRONTEND_REPORT_PATH
+                selected_path or DEFAULT_FRONTEND_REPORT_PATH
             )
         except FrontendReportError as exc:
             parser.error(str(exc))
@@ -3645,7 +3696,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         try:
             report = load_proof_report(
-                args.results_path or DEFAULT_PROOF_REPORT_PATH
+                selected_path or DEFAULT_PROOF_REPORT_PATH
             )
         except ProofReportError as exc:
             parser.error(str(exc))
