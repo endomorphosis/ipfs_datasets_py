@@ -582,8 +582,8 @@ pytest tests/unit/core_operations/ --cov=ipfs_datasets_py.core_operations --cov-
 
 - [MCP Tools Guide](./MCP_TOOLS_GUIDE.md)
 - [Phase 9 Progress Report](./PHASE_9_PROGRESS_REPORT.md)
-- [Enhancement 12 Completion](../ENHANCEMENT_12_MCP_COMPLETION.md)
-- [Testing Guide](./TESTING_GUIDE.md)
+- [Enhancement 12 Completion](./ENHANCEMENT_12_MCP_COMPLETION.md)
+- [Testing Guide](./MCP_TESTING_GUIDE.md)
 
 ---
 
