@@ -460,6 +460,6 @@ For issues or questions:
 
 ## See Also
 
-- [Workflow Auto-Fix Documentation](README-workflow-auto-fix.md)
+- [Workflow Auto-Fix Documentation](../workflows/README-workflow-auto-fix.md)
 - [GitHub Actions Documentation](https://docs.github.com/actions)
 - [PyYAML Documentation](https://pyyaml.org/)
