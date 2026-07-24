@@ -205,6 +205,16 @@ def HSSLEV0615B24() -> str:
     return efficiency_evidence()
 
 
+def HSSLEV0801D68() -> str:
+    """Return AST-verifiable evidence for the pilot-shortlist gate."""
+
+    from benchmarks.logic_pipeline.pilot_gate import (
+        HSSLEV0801D68 as pilot_gate_evidence,
+    )
+
+    return pilot_gate_evidence()
+
+
 def build_statistics_report(
     plan: object,
     requests: Sequence[object],
@@ -2367,9 +2377,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--section",
         choices=("frontend", "proof", "statistics", "efficiency"),
-        required=True,
+        default=None,
     )
-    parser.add_argument("--validate", action="store_true", required=True)
+    parser.add_argument(
+        "--gate",
+        choices=("pilot-shortlist",),
+        default=None,
+    )
+    parser.add_argument("--validate", action="store_true")
     parser.add_argument(
         "--results-path",
         type=Path,
@@ -2377,6 +2392,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="override the selected section's canonical report JSON path",
     )
     args = parser.parse_args(argv)
+    if args.gate is not None:
+        if args.section is not None:
+            parser.error("--gate and --section are mutually exclusive")
+        from benchmarks.logic_pipeline.pilot_gate import (
+            DEFAULT_PILOT_SHORTLIST_PATH,
+            PilotGateError,
+            load_pilot_shortlist_report,
+            pilot_shortlist_summary,
+        )
+
+        try:
+            report = load_pilot_shortlist_report(
+                args.results_path or DEFAULT_PILOT_SHORTLIST_PATH
+            )
+        except PilotGateError as exc:
+            parser.error(str(exc))
+        summary = pilot_shortlist_summary(report)
+        sys.stdout.write(canonical_json(summary) + "\n")
+        return 0
+    if args.section is None:
+        parser.error("one of --section or --gate is required")
+    if not args.validate:
+        parser.error("--section requires --validate")
+
     if args.section == "efficiency":
         try:
             report = (
@@ -2444,6 +2483,7 @@ __all__ = [
     "HSSLEV0526A41",
     "HSSLEV0608F63",
     "HSSLEV0615B24",
+    "HSSLEV0801D68",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",

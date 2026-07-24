@@ -530,6 +530,57 @@ is never completion evidence.
 - Acceptance: Every pilot case has an explicit outcome, invalid controls have zero kernel-verified false positives, failures and exclusions are documented, and shortlist selection uses only pilot/development evidence.
 - Gap task: Execute the pilot screen, diagnose infrastructure failures, and freeze the shortlist manifest.
 - Refinement depth: 1
+- Evidence implementation: `benchmarks.logic_pipeline.pilot_gate.HSSLEV0801D68`
+  is the stable AST evidence symbol for the strict pilot/shortlist phase gate;
+  `benchmarks.logic_pipeline.report.HSSLEV0801D68` exposes the same marker
+  through the CLI boundary.
+  `python benchmarks/logic_pipeline/report.py --gate pilot-shortlist` strictly
+  reparses and validates the canonical
+  `workspace/benchmarks/hammer-symai-spacy-leanstral/results/pilot-shortlist-v1.json`
+  result, content-addressed as
+  `5be9bff6e4f0abf9c096e007b3c3230d09eab943d7ccd58f5fd6d7ab31c746fa`,
+  against its allowlisted source evidence; the dated
+  `docs/performance_snapshots/2026-07-24_pilot_shortlist.json` companion
+  publishes that validated receipt for comparison. A
+  structurally valid artifact is not automatically a passed efficacy decision:
+  the gate reports the decision state and holdout authorization independently.
+- Pilot coverage and missingness contract: The result normalizes the complete
+  280-coordinate pilot product: A0 through A12 plus the S1 diagnostic, the ten
+  frozen pilot cases, and separate cold and warm cache modes. Every coordinate
+  has an explicit terminal outcome. Capability-unavailable and
+  preregistered-excluded cells remain typed missingness with null measurements;
+  they are never omitted, substituted with another arm, or converted to
+  success, logical failure, zero cost, or zero efficacy.
+- Safety and efficacy finding: The normalized pilot evidence contains zero
+  observed invalid-control kernel false positives and no benchmark
+  infrastructure failures. Because the available evidence is explicit
+  capability/exclusion missingness rather than measured paired outcomes, all
+  efficacy and dominance conclusions remain null. Zero observed safety
+  incidents under missing evidence is retained as an observation and is not
+  promoted into a claim that a candidate passed the frozen safety or quality
+  thresholds.
+- Shortlist and authorization finding: No nonbaseline arm is eligible for the
+  frozen shortlist, so the nonbaseline shortlist is empty. The decision is
+  `incomplete`, not passed or failed, and holdout access is unauthorized. A0 is
+  retained only as the baseline and S1 only as an ineligible safety diagnostic;
+  neither can manufacture a candidate. The validator fails closed if an
+  incomplete decision contains a shortlisted arm, claims efficacy, or
+  authorizes holdout.
+- Pre-holdout freeze: The receipt binds the preregistered protocol, reviewed
+  corpus and pilot membership, arm registry, prompts, routing and fallback
+  policies, backend/model/solver identities, cache separation, resource
+  policy, and frozen decision thresholds before any holdout access. The empty
+  shortlist does not relax or rewrite those inputs, and the snapshot records
+  that no holdout audit exists and no tuning or production promotion is
+  authorized.
+- Backlog alignment: HSSL-G080 remains one cohesive phase-gate aggregate. Its
+  complete coordinate matrix, explicit missingness, safety and infrastructure
+  findings, frozen inputs, shortlist decision, and holdout lock are one
+  indivisible validation boundary, so no smaller child goal is needed.
+  Generated todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and are not manually edited; the supervisor can reconcile
+  HSSLEV0801D68 from the AST symbol, canonical result and snapshot, objective
+  heap, discovery receipt, and required validator.
 
 ## HSSL-G090 Execute the untouched paired holdout evaluation
 

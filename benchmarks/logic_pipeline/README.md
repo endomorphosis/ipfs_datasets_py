@@ -368,3 +368,48 @@ Run the split and holdout evidence with:
 ```bash
 python -m pytest tests/unit/benchmarks/logic_pipeline/test_holdout_integrity.py -q
 ```
+
+## Pilot shortlist phase gate
+
+The pilot/shortlist gate validates the transition between preregistered pilot
+work and the still-locked holdout phase:
+
+```bash
+python benchmarks/logic_pipeline/report.py --gate pilot-shortlist
+```
+
+By default, the command validates
+`workspace/benchmarks/hammer-symai-spacy-leanstral/results/pilot-shortlist-v1.json`
+against its allowlisted source artifacts. The companion
+`docs/performance_snapshots/2026-07-24_pilot_shortlist.json` publishes the
+validated result for point-in-time comparison. The result must normalize the
+complete pilot coordinate set:
+
+```text
+(A0 through A12, plus S1) × 10 frozen pilot cases × (cold, warm) = 280
+```
+
+Every coordinate is retained. An unavailable capability or a preregistered
+exclusion is explicit typed missingness with null measurements, not a silently
+substituted arm, omitted row, logical failure, success, or zero-efficacy
+observation. The gate separately validates invalid-control kernel false
+positives, infrastructure failures, candidate eligibility, shortlist
+membership, frozen selection inputs, and holdout authorization.
+
+A `valid` structural gate does not mean that a candidate has demonstrated
+efficacy. In particular, the checked-in pilot receipt records zero observed
+invalid-control kernel false positives and no infrastructure failures, while
+its unavailable/excluded evidence leaves efficacy null. It therefore has an
+empty nonbaseline shortlist and an `incomplete` decision. Holdout remains
+unauthorized. This is the intended fail-closed result: the artifacts completely
+and honestly describe the available evidence, but do not turn missing
+measurements into a safety pass, efficacy claim, or permission to access
+holdout.
+
+Before any future holdout authorization, the validator requires the protocol,
+corpus and case identities, arm registry, prompts, routing/fallback policy,
+backend/model/solver identities, resource and cache policy, and decision
+thresholds to be frozen. It rejects missing or duplicate coordinates,
+manufactured values, shortlist drift, an eligible S1 diagnostic, an incomplete
+decision that claims efficacy, or any holdout authorization unsupported by a
+completed shortlist decision.
