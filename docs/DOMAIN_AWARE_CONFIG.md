@@ -12,7 +12,7 @@ GraphRAG entity extraction performance varies significantly across different doc
 - **Technical documentation**: Sparse with specialized terminology and multi-paragraph procedures
 - **Financial reports**: Structured with numerical relationships and corporate hierarchy
 
-A universal `sentence_window` setting (which limits co-occurrence inference to entities within N sentences) doesn't optimize well for all domains. The domain-aware factory addresses this with domain-specific recommendations derived from [SENTENCE_WINDOW_BENCHMARK_REPORT.md](../docs/SENTENCE_WINDOW_BENCHMARK_REPORT.md).
+A universal `sentence_window` setting (which limits co-occurrence inference to entities within N sentences) doesn't optimize well for all domains. The domain-aware factory addresses this with domain-specific recommendations derived from [SENTENCE_WINDOW_BENCHMARK_REPORT.md](SENTENCE_WINDOW_BENCHMARK_REPORT.md).
 
 ## Supported Domains
 
@@ -109,7 +109,7 @@ Only `sentence_window` varies by domain. All other fields use standard defaults.
 
 ## Performance Impact
 
-Based on [SENTENCE_WINDOW_BENCHMARK_REPORT.md](../docs/SENTENCE_WINDOW_BENCHMARK_REPORT.md):
+Based on [SENTENCE_WINDOW_BENCHMARK_REPORT.md](SENTENCE_WINDOW_BENCHMARK_REPORT.md):
 
 **Small documents (100-200 entities)**:
 - Legal domain (window=2): **-35% latency** vs. unwindowed
@@ -181,9 +181,9 @@ cfg_parallel = dc.replace(cfg, enable_parallel_inference=True, max_workers=8)
 
 ## Related Documentation
 
-- [SENTENCE_WINDOW_BENCHMARK_REPORT.md](../docs/SENTENCE_WINDOW_BENCHMARK_REPORT.md): Detailed benchmark methodology and results (14 measurements across 3 domains)
-- [CONFIGURATION_REFERENCE.md](../docs/CONFIGURATION_REFERENCE.md): Complete field-by-field ExtractionConfig guide
-- [OPTIMIZERS_QUICK_START.md](../docs/OPTIMIZERS_QUICK_START.md): Quick-start examples with P1/P2/P3 optimizations
+- [SENTENCE_WINDOW_BENCHMARK_REPORT.md](SENTENCE_WINDOW_BENCHMARK_REPORT.md): Detailed benchmark methodology and results (14 measurements across 3 domains)
+- [CONFIGURATION_REFERENCE.md](optimizers/graphrag/CONFIGURATION_REFERENCE.md): Complete field-by-field ExtractionConfig guide
+- [OPTIMIZERS_QUICK_START.md](OPTIMIZERS_QUICK_START.md): Quick-start examples with P1/P2/P3 optimizations
 
 ## API Reference
 
