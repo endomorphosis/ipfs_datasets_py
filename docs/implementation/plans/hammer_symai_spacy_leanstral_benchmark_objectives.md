@@ -1262,6 +1262,57 @@ is never completion evidence.
 - Gap task: Produce and validate the measured pilot/development reports and one source-bound shortlist authorization decision.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 3.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.pilot_reassessment.HSSLEV1409B38` is the stable
+  AST-verifiable gate receipt. The reassessment-specific builder, strict
+  loader, source recomputation validator, canonical writer, public summary,
+  and `report.py --artifact` schema dispatch preserve the historical v1 gate
+  while making the persisted v2 decision independently reproducible.
+- Source and report contract: The gate first invokes the HSSL-G130 matrix
+  validator, then reparses and receipt-validates all 560 exact
+  pilot/development case/arm/cache coordinates. It binds matrix byte SHA-256
+  `ad76be697eb084517354a9d2b82bf48378f33d820b6f6014a13d5a08bb105ac9`
+  and semantic SHA-256
+  `437961214b97fadd495f65d4a006406b27086e6aeb9f46d8cd27e36df1ed39bb`.
+  Front-end invocation/model-call evidence, proof efficacy, per-coordinate
+  latency and operational cost, 40 source-bound A0 pairs per candidate,
+  materiality decisions, invalid-control safety, and multidimensional Pareto
+  inputs are all recomputed from the validated case records. The 520
+  non-missing efficacy observations measure a kernel-verified rate of `0.0`;
+  this non-null zero is not treated as a positive result. The missing
+  independently reviewed semantic-quality dimension remains explicitly null
+  and never becomes zero quality or eligibility.
+- Safety, Pareto, and authorization decision: All 56 invalid-control
+  coordinates have zero kernel-verified false positives. Every A1-A12 arm has
+  non-null receipt-bound cost and paired proof statistics, but none has a
+  kernel acceptance or an independent semantic-quality receipt. The gate
+  therefore records the observed nondominance calculation while marking every
+  candidate ineligible, freezes an exact empty shortlist, keeps holdout sealed,
+  and publishes four ordered remediation actions. It does not rank, truncate,
+  inspect holdout outcomes, authorize production promotion, or invent the
+  nonempty shortlist anticipated by the goal title. A later nonempty decision
+  is possible only after repaired evidence passes the unchanged frozen gates.
+- Deep-freeze and publication contract: Protocol and registry identities,
+  prompts, policies, repaired model/backend identities, isolated cache policy,
+  resource policy, thresholds, detached source/gitlinks, tuning prohibition,
+  source receipt set, and selected configuration set are individually
+  content-addressed into freeze SHA-256
+  `9272f193cde2c64496ed780c52c282fe88203ebffeea0b5a3c4b5f3b5897ebb9`.
+  The canonical decision has semantic SHA-256
+  `2d146c1cb75eb8c2261a3e1be68ba98bf8b2a4996a1839fb36e26f9bd7f37acb`
+  and byte SHA-256
+  `21713e069e063db32763f563f0184a7d7123a5e559527d54618fadc98d286a48`;
+  the dated performance snapshot binds both identities and the sealed
+  remediation state.
+- Backlog alignment: HSSL-G140 remains one cohesive source-bound phase gate.
+  Report derivation, safety, materiality/Pareto selection, deep freeze, and
+  authorization share the same validated matrix graph, so splitting them
+  would weaken the trust boundary and no child goal or heap refinement is
+  needed. Generated todo-vector, objective-bundle, external todo, and task
+  status metadata remain supervisor-owned and were not manually edited. The
+  supervisor can reconcile HSSLEV1409B38 from the AST marker, canonical
+  artifact and snapshot, focused integration tests, this objective entry,
+  discovery receipt, and exact validator.
 
 ## HSSL-G150 Execute the explicitly authorized paired holdout
 
