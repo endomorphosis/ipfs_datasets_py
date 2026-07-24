@@ -656,10 +656,10 @@ Phase 11 provides production-ready legal scraping with:
 
 ## Additional Resources
 
-- [Phase 11 Implementation Plan](PHASE_11_COMMON_CRAWL_INTEGRATION_PLAN.md)
-- [Processors Refactoring Overview](PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)
+- [Phase 11 Implementation Plan](archive/completion_reports/PHASE_11_COMMON_CRAWL_INTEGRATION_PLAN.md)
+- [Processors Refactoring Overview](archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)
 - [Cross-Cutting Integration Guide](CROSS_CUTTING_INTEGRATION_GUIDE.md)
-- [Monitoring Dashboard Guide](../scripts/monitoring/README.md)
+- [Monitoring Dashboard](../scripts/monitoring/processor_dashboard.py)
 
 ## Support
 
