@@ -275,3 +275,24 @@ __all__ = [
     "canonical_manifest_json",
     "manifest_sha256",
 ]
+
+# The protocol module is also standard-library-only and side-effect-free.  The
+# imports live at the end so it can reuse ``BENCHMARK_ID`` without creating an
+# initialization cycle.
+from .contracts import (  # noqa: E402
+    DEFAULT_PROTOCOL,
+    DEFAULT_PROTOCOL_SHA256,
+    HSSLEV0103C72,
+    BenchmarkProtocol,
+    ProtocolContractError,
+    build_default_protocol,
+)
+
+__all__ += [
+    "BenchmarkProtocol",
+    "DEFAULT_PROTOCOL",
+    "DEFAULT_PROTOCOL_SHA256",
+    "HSSLEV0103C72",
+    "ProtocolContractError",
+    "build_default_protocol",
+]
