@@ -1124,6 +1124,56 @@ is never completion evidence.
 - Gap task: Run the repaired preflight in a fresh namespace, resolve any remaining mismatch outside the run, and freeze the first fully eligible inventory.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-ups 1 and 2.
+- Evidence implementation: `benchmarks.logic_pipeline.runtime.HSSLEV1207F16`
+  and `benchmarks.logic_pipeline.capability_reprobe.HSSLEV1207F16` are the
+  stable AST receipts for the repaired live-preflight boundary. The canonical
+  `reassessment-v2/receipts/capability-inventory.json` inventory is
+  content-addressed as
+  `9a3d1c61f9d09ebedee0ff446fb9aa72808a467ff1ea41feb8ca204eacb9948b`;
+  the cross-file freeze is
+  `2446b48d1550fd5792ac9b126dd9fa2785d251f01c1ddc7afcae019889336252`.
+  The dated
+  `docs/performance_snapshots/2026-07-24_hssl_reassessment_capability_inventory.json`
+  publishes the eligible inventory without weakening its receipt validation.
+- Detached source and environment contract: The freeze revalidates the
+  source-reconciled `reassessment-v2` baseline before probing. It binds
+  detached source commit `3e053f6edece026fef48c153aa5c4d62a50da3d2`,
+  worktree receipt
+  `800cae053102c79c27ed530cd1cb8dd516a3627166e59aba13beb495c65bd974`,
+  all twenty recursive gitlinks under identity
+  `72f2e124dcd3c03f671cfd8641881b73272800ae0587472b6bbf6192696e4531`,
+  CPython/platform/machine identity, run-scoped cache and process state, and
+  an explicit no-corpus/no-holdout observation. Source, worktree, gitlink,
+  environment, or run-id drift makes the freeze ineligible.
+- Live identity and smoke contract: The required command imports and executes
+  the locked full `en_core_web_sm` pipeline and all required annotations;
+  imports SymbolicAI 1.14.0, the repository `llm_router`, and its existing
+  router engine before one zero-retry bounded call to the single served
+  Leanstral identity; probes Leanstral health and exact model advertisement;
+  imports Hammer and executes a fixed cvc5 satisfiability smoke; and verifies
+  Lean and Lake identities. Cache readiness is proven by exclusive create and
+  read-after-write, while `ResourceScheduler` is proven by a released kernel
+  lease and a bounded reaped process. Each requested identity exactly equals
+  its effective identity and each inventory row is joined to a strict,
+  content-addressed component receipt.
+- Independent kernel and freeze contract: A separate native-kernel receipt,
+  `9c341ffbf7eefb6c517b43a028f5a5183813867ce471576b1f134527665ff92d`,
+  compiles a fixed non-corpus Lean identity theorem with the pinned native
+  executable under a ten-second/output bound and records acceptance,
+  timeout state, and process-group reaping. Canonical freeze validation
+  rejects unknown/duplicate/noncanonical JSON, missing or symlinked receipt
+  files, byte or semantic digest drift, unavailable or degraded rows,
+  requested/effective mismatch, fallback, and secret-bearing fields. Evidence
+  is create-only and cannot be silently replaced; it authorizes only the
+  unchanged reassessment matrix and never changes production routing.
+- Backlog alignment: HSSL-G120 remains one cohesive pre-matrix authorization
+  boundary. Live component identity, detached-source provenance, native-kernel
+  authority, no-holdout safety, and the aggregate freeze cannot be split
+  without weakening the eligibility decision, so no child goal is required.
+  Generated todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and were not manually edited; the supervisor can reconcile
+  HSSLEV1207F16 from the AST markers, canonical receipts and snapshot,
+  objective heap, discovery receipt, and required validator.
 
 ## HSSL-G130 Re-run the unchanged pilot and development matrices
 

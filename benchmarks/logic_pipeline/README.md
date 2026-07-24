@@ -196,6 +196,15 @@ exception, partial configuration, or explicit fallback remains `unavailable`
 or `degraded`; `require_capabilities` accepts only the exact fully available
 request and never selects a different arm.
 
+HSSL-G120 adds a stronger boundary after remediation. The
+`benchmarks.logic_pipeline.runtime probe` operator command revalidates the
+detached `reassessment-v2` source manifest and performs fixed, bounded,
+non-corpus live imports and smokes before it can report matrix eligibility.
+Its create-only freeze links the standard inventory to component receipts and
+an independent native-Lean-kernel receipt. The generic metadata probe above
+remains inert and is still used for planning; it cannot by itself authorize a
+reassessment matrix.
+
 ## Records and validation
 
 `ProtocolRecord` validates the protocol payload against its digest.

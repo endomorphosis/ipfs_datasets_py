@@ -34,6 +34,7 @@ from .adapters import (
     SymaiAdapterConfig,
 )
 from .capabilities import (
+    CapabilityContractError,
     CapabilityInventory,
     CapabilityKind,
     CapabilityRecord,
@@ -79,6 +80,14 @@ def HSSLEV1142E95() -> str:
     """Return the AST-verifiable real bounded stage-graph evidence receipt."""
 
     return "every frozen arm executes its real capability-bound bounded stage graph"
+
+
+def HSSLEV1207F16() -> str:
+    """Return the AST-verifiable repaired capability freeze evidence receipt."""
+
+    from .capability_reprobe import HSSLEV1207F16 as capability_evidence
+
+    return capability_evidence()
 
 
 def _sha(value: object) -> str:
@@ -922,29 +931,74 @@ def build_live_adapters(
 
 
 def _probe_cli(args: argparse.Namespace) -> int:
-    from . import RunPaths
-
-    inventory = probe_runtime_capabilities(
-        args.run_id, RunPaths.for_run(args.run_id)
+    from .capability_reprobe import (
+        CapabilityFreezeError,
+        freeze_live_capability_reprobe,
+        run_live_capability_reprobe,
+        validate_capability_snapshot,
+        validate_frozen_capability_reprobe,
     )
-    required = {
-        item.strip()
-        for item in (args.require or "").split(",")
-        if item.strip()
-    }
-    unknown = required - {kind.value for kind in CapabilityKind}
-    if unknown:
-        raise RuntimeBindingError(
-            f"unknown required capabilities: {sorted(unknown)}"
-        )
-    unavailable = [
-        record.kind.value
-        for record in inventory.capabilities
-        if record.kind.value in required
-        and record.status is not CapabilityStatus.AVAILABLE
+
+    requested = [
+        item.strip() for item in (args.require or "").split(",") if item.strip()
     ]
-    print(canonical_json(inventory.to_dict()))
-    return 1 if unavailable else 0
+    duplicates = sorted({item for item in requested if requested.count(item) > 1})
+    unknown = sorted(set(requested) - {kind.value for kind in CapabilityKind})
+    if duplicates:
+        raise RuntimeBindingError(
+            f"duplicate required capabilities: {duplicates}"
+        )
+    if unknown:
+        raise RuntimeBindingError(f"unknown required capabilities: {unknown}")
+    try:
+        if args.validate_freeze:
+            reprobe = validate_frozen_capability_reprobe(
+                repository_root=args.repository_root,
+                receipt_directory=args.receipt_directory,
+            )
+            validate_capability_snapshot(
+                repository_root=args.repository_root,
+                snapshot_path=args.snapshot,
+            )
+        else:
+            reprobe = run_live_capability_reprobe(
+                repository_root=args.repository_root,
+                run_id=args.run_id,
+                legacy_probe=probe_runtime_capabilities,
+            )
+        # The six names in the operator command are the optional backends.
+        # Eligibility always checks cache, scheduler, and native kernel too;
+        # callers cannot weaken the matrix boundary by omitting them here.
+        required = tuple(
+            CapabilityKind(item) for item in requested
+        ) or tuple(CapabilityKind)
+        from .capabilities import require_capabilities
+
+        require_capabilities(reprobe.inventory, required)
+        if args.freeze:
+            freeze_live_capability_reprobe(
+                reprobe,
+                repository_root=args.repository_root,
+                receipt_directory=args.receipt_directory,
+                snapshot_path=args.snapshot,
+            )
+    except (CapabilityFreezeError, CapabilityContractError) as exc:
+        print(
+            canonical_json(
+                {
+                    "schema": (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "capability-probe-failure.v1"
+                    ),
+                    "run_id": args.run_id,
+                    "status": "ineligible",
+                    "reason": str(exc),
+                }
+            )
+        )
+        return 1
+    print(canonical_json(reprobe.inventory.to_dict()))
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -953,8 +1007,33 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     probe = subparsers.add_parser("probe")
-    probe.add_argument("--run-id", default="hssl-runtime-probe")
+    probe.add_argument("--run-id", default="reassessment-v2")
     probe.add_argument("--require", default="")
+    probe.add_argument("--repository-root", default=".")
+    probe.add_argument(
+        "--receipt-directory",
+        default=(
+            "workspace/benchmarks/hammer-symai-spacy-leanstral/"
+            "reassessment-v2/receipts"
+        ),
+    )
+    probe.add_argument(
+        "--snapshot",
+        default=(
+            "docs/performance_snapshots/"
+            "2026-07-24_hssl_reassessment_capability_inventory.json"
+        ),
+    )
+    probe.add_argument(
+        "--freeze",
+        action="store_true",
+        help="exclusively write the eligible live inventory and receipts",
+    )
+    probe.add_argument(
+        "--validate-freeze",
+        action="store_true",
+        help="strictly validate the existing frozen evidence without live calls",
+    )
     args = parser.parse_args(argv)
     if args.command == "probe":
         return _probe_cli(args)
@@ -969,6 +1048,7 @@ __all__ = [
     "COMPILED_OBLIGATION_SCHEMA",
     "CompiledObligation",
     "HSSLEV1142E95",
+    "HSSLEV1207F16",
     "KERNEL_RECEIPT_SCHEMA",
     "LiveRuntime",
     "NativeKernelRunner",
