@@ -172,7 +172,7 @@ You can add a CI check to ensure the workflow list is up-to-date:
 ## Related Files
 
 - `.github/workflows/copilot-agent-autofix.yml` - Main auto-healing workflow
-- `.github/workflows/workflow-auto-fix-config.yml` - Configuration
+- `.github/config/workflow-auto-fix-config.yml` - Configuration
 - `.github/scripts/generate_workflow_list.py` - List generator
 - `.github/scripts/update_autofix_workflow_list.py` - Automatic updater
 - `.github/scripts/analyze_workflow_failure.py` - Failure analyzer
@@ -182,5 +182,5 @@ You can add a CI check to ensure the workflow list is up-to-date:
 ## Additional Resources
 
 - [GitHub Actions workflow_run documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run)
-- [Auto-Healing System README](.github/workflows/README-copilot-autohealing.md)
-- [Quick Start Guide](.github/workflows/QUICKSTART-copilot-autohealing.md)
+- [Auto-Healing System README](README-copilot-autohealing.md)
+- [Quick Start Guide](QUICKSTART-copilot-autohealing.md)
