@@ -726,3 +726,420 @@ def test_legacy_report_validation_clis_remain_accepted(
     assert summary["section"] == section
     assert summary["status"] == "valid"
     assert summary[expected_count_key] == expected_count
+
+
+def _measured_gate_sources(
+    *,
+    frontier: list[str] | None = None,
+    candidate_ids: list[str] | None = None,
+    missing_cost: bool = False,
+    invalid_control_verified: bool = False,
+) -> dict[str, dict[str, object]]:
+    run_id = "measured-pilot-test"
+    candidates = candidate_ids or ["A1", "A2"]
+    selected = frontier if frontier is not None else ["A1"]
+    baseline_receipt = hashlib.sha256(b"case-A0").hexdigest()
+    candidate_receipts = {
+        candidate_id: hashlib.sha256(
+            f"case-{candidate_id}".encode()
+        ).hexdigest()
+        for candidate_id in candidates
+    }
+
+    frontend = {
+        "schema": "frontend-test.v1",
+        "run_id": run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "observations": [
+            {
+                "status": "semantically_correct",
+                "source_receipt_sha256": baseline_receipt,
+            }
+        ],
+        "analysis": {
+            "coverage": {
+                "expected_observation_count": 240,
+                "observed_observation_count": 240,
+            },
+            "variant_metrics": [
+                {
+                    "metrics": {
+                        "semantic_quality_rate": 0.9,
+                        "latency_ms_p95": 10.0,
+                        "model_calls": 1,
+                        "symai_model_calls": 1,
+                    }
+                }
+            ],
+        },
+        "artifact_sha256": hashlib.sha256(b"frontend-test").hexdigest(),
+    }
+    proof = {
+        "schema": "proof-test.v1",
+        "run_id": run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "observations": [
+            {
+                "status": "verified",
+                "source_receipt_sha256": candidate_receipts[candidates[0]],
+            }
+        ],
+        "analysis": {
+            "coverage": {
+                "expected_observation_count": 154,
+                "observed_observation_count": 154,
+            },
+            "primary_metrics": [
+                {
+                    "kernel_verified_rate": 0.8,
+                    "mean_wall_time_ms": 12.0,
+                    "model_calls": 1,
+                }
+            ],
+        },
+        "artifact_sha256": hashlib.sha256(b"proof-test").hexdigest(),
+    }
+    cost = {
+        "model_calls": 2,
+        "solver_processes": None if missing_cost else 1,
+        "accelerator_minutes": 0.25,
+        "retries": 0,
+        "operational_components": 2,
+    }
+    efficiency = {
+        "schema": "efficiency-test.v1",
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "observations": [
+            {
+                "invalid_control": True,
+                "case_result_sha256": baseline_receipt,
+                "case_result": {
+                    "status": (
+                        "verified"
+                        if invalid_control_verified
+                        else "rejected"
+                    ),
+                    "kernel_receipt_sha256": (
+                        hashlib.sha256(
+                            b"invalid-kernel-receipt"
+                        ).hexdigest()
+                        if invalid_control_verified
+                        else None
+                    ),
+                },
+            },
+            *[
+                {
+                    "invalid_control": False,
+                    "case_result_sha256": receipt,
+                    "case_result": {
+                        "status": "verified",
+                        "kernel_receipt_sha256": hashlib.sha256(
+                            f"kernel-{candidate_id}".encode()
+                        ).hexdigest(),
+                    },
+                }
+                for candidate_id, receipt in candidate_receipts.items()
+            ],
+        ],
+        "analysis": {
+            "measured": True,
+            "case_count": 20,
+            "run_id": run_id,
+            "pareto_points": [
+                {
+                    "variant_id": candidate_id,
+                    "eligible": not missing_cost,
+                    "kernel_verified_rate": 0.8,
+                    "costs": dict(cost),
+                    "unnecessary_call_rate": 0.1,
+                    "failed_attempts": 0,
+                }
+                for candidate_id in candidates
+            ],
+        },
+        "artifact_sha256": hashlib.sha256(b"efficiency-test").hexdigest(),
+    }
+    statistics_report = {
+        "schema": "statistics-test.v1",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "analyses": [
+            {"split": "pilot", "measured_count": 10, "missing_count": 0},
+            {
+                "split": "development",
+                "measured_count": 10,
+                "missing_count": 0,
+            },
+        ],
+        "requests": [
+            {
+                "observations": [
+                    {
+                        "run_id": run_id,
+                        "baseline_result_sha256": baseline_receipt,
+                        "candidate_result_sha256": candidate_receipts[
+                            candidate_id
+                        ],
+                    }
+                ]
+            }
+            for candidate_id in candidates
+        ],
+        "pareto": {
+            "frontier_candidate_ids": selected,
+            "candidates": [
+                {
+                    "candidate_id": candidate_id,
+                    "eligible": True,
+                    "on_frontier": candidate_id in selected,
+                    "dominated_by": (
+                        [] if candidate_id in selected else [selected[0]]
+                    ),
+                    "metrics": {
+                        "quality": 0.8,
+                        "latency": 12.0,
+                        "resource": 2.0,
+                        "routing": 0.1,
+                        "complexity": 2.0,
+                    },
+                    "analysis_sha256s": [
+                        hashlib.sha256(
+                            f"analysis-{candidate_id}".encode()
+                        ).hexdigest()
+                    ],
+                    "case_result_sha256s": [
+                        baseline_receipt,
+                        candidate_receipts[candidate_id],
+                    ],
+                    "safety_feasible": True,
+                }
+                for candidate_id in candidates
+            ],
+        },
+        "artifact_sha256": hashlib.sha256(b"statistics-test").hexdigest(),
+    }
+    return {
+        "frontend": frontend,
+        "proof": proof,
+        "efficiency": efficiency,
+        "statistics": statistics_report,
+    }
+
+
+def _measured_gate_inputs(
+    sources: dict[str, dict[str, object]],
+) -> tuple[dict[str, object], dict[str, object]]:
+    bindings = {
+        kind: source["artifact_sha256"] for kind, source in sources.items()
+    }
+    freeze_inputs = {
+        "prompts": {"prompt_sha256s": ["1" * 64]},
+        "policies": {"policy": "frozen"},
+        "model_identities": {"model": "pinned-model@revision"},
+        "cache_policy": {"cold_warm_separate": True},
+        "resource_policy": {"lanes": ["model", "kernel"]},
+        "thresholds": DEFAULT_PROTOCOL.thresholds.to_dict(),
+    }
+    return bindings, freeze_inputs
+
+
+def _build_synthetic_measured_gate(
+    monkeypatch: pytest.MonkeyPatch,
+    sources: dict[str, dict[str, object]],
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    monkeypatch.setattr(
+        pilot_gate,
+        "_measured_source_reports",
+        lambda *_args: copy.deepcopy(sources),
+    )
+    bindings, freeze_inputs = _measured_gate_inputs(sources)
+    value = pilot_gate.build_measured_pilot_gate_report(
+        sources["frontend"],
+        sources["proof"],
+        sources["efficiency"],
+        sources["statistics"],
+        source_bindings=bindings,
+        freeze_inputs=freeze_inputs,
+    )
+    return value, bindings, freeze_inputs
+
+
+def test_measured_gate_authorizes_exact_nondominated_frontier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = _measured_gate_sources(frontier=["A1"])
+    value, bindings, freeze_inputs = _build_synthetic_measured_gate(
+        monkeypatch, sources
+    )
+
+    assert pilot_gate.HSSLEV1159F06() == report.HSSLEV1159F06()
+    assert value["evidence"] == pilot_gate.HSSLEV1159F06()
+    assert value["schema"] == pilot_gate.MEASURED_PILOT_GATE_SCHEMA
+    assert value["completeness"]["complete"] is True
+    assert value["shortlist"]["frontier_variant_ids"] == ["A1"]
+    assert value["shortlist"]["selected_variant_ids"] == ["A1"]
+    assert value["shortlist"]["ranking_applied"] is False
+    assert value["shortlist"]["truncation_applied"] is False
+    assert value["holdout"]["authorized"] is True
+    assert len(value["holdout"]["authorization_sha256"]) == 64
+    assert value["decision"]["status"] == "complete"
+    assert value["decision"]["production_promotion_authorized"] is False
+    assert [
+        row["variant_id"]
+        for row in value["deep_freeze"]["registry"][
+            "selected_configurations"
+        ]
+    ] == ["A1"]
+    assert pilot_gate.validate_measured_pilot_gate_report(
+        value,
+        sources["frontend"],
+        sources["proof"],
+        sources["efficiency"],
+        sources["statistics"],
+        source_bindings=bindings,
+        freeze_inputs=freeze_inputs,
+    ) == value
+
+
+def test_measured_gate_retains_null_cost_as_incomplete(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    value, _, _ = _build_synthetic_measured_gate(
+        monkeypatch, _measured_gate_sources(missing_cost=True)
+    )
+
+    assert value["decision"]["status"] == "incomplete"
+    assert value["holdout"]["authorized"] is False
+    assert value["shortlist"]["selected_variant_ids"] == []
+    assert any(
+        reason.startswith("efficiency_metric_missing:A1:")
+        for reason in value["shortlist"]["reasons"]
+    )
+    assert value["candidate_evidence"][0]["efficiency"]["costs"][
+        "solver_processes"
+    ] is None
+
+
+def test_measured_gate_invalid_control_forces_rejection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    value, _, _ = _build_synthetic_measured_gate(
+        monkeypatch,
+        _measured_gate_sources(invalid_control_verified=True),
+    )
+
+    assert value["safety"][
+        "kernel_verified_invalid_control_false_positive_count"
+    ] == 1
+    assert value["safety"]["fatal_safety_incident"] is True
+    assert value["decision"]["status"] == "rejected"
+    assert value["shortlist"]["selected_variant_ids"] == []
+    assert value["holdout"]["authorized"] is False
+
+
+def test_measured_gate_cannot_treat_absent_invalid_controls_as_safe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = _measured_gate_sources()
+    sources["efficiency"]["observations"] = [
+        row
+        for row in sources["efficiency"]["observations"]
+        if row["invalid_control"] is not True
+    ]
+    value, _, _ = _build_synthetic_measured_gate(monkeypatch, sources)
+
+    assert value["safety"]["observed_invalid_control_count"] == 0
+    assert value["safety"][
+        "kernel_verified_invalid_control_false_positive_rate"
+    ] is None
+    assert value["completeness"]["complete"] is False
+    assert "invalid_control_safety_evidence_missing" in value["shortlist"][
+        "reasons"
+    ]
+    assert value["decision"]["status"] == "incomplete"
+    assert value["holdout"]["authorized"] is False
+
+
+def test_measured_gate_never_truncates_an_oversized_frontier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frontier = ["A1", "A2", "A3", "A4", "A5"]
+    value, _, _ = _build_synthetic_measured_gate(
+        monkeypatch,
+        _measured_gate_sources(
+            frontier=frontier,
+            candidate_ids=frontier,
+        ),
+    )
+
+    assert value["shortlist"]["frontier_variant_ids"] == frontier
+    assert value["shortlist"]["selected_variant_ids"] == []
+    assert value["shortlist"]["truncation_applied"] is False
+    assert "nondominated_frontier_exceeds_shortlist_max" in value[
+        "shortlist"
+    ]["reasons"]
+    assert value["holdout"]["authorized"] is False
+
+
+def test_measured_gate_requires_exact_source_and_freeze_bindings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = _measured_gate_sources()
+    monkeypatch.setattr(
+        pilot_gate,
+        "_measured_source_reports",
+        lambda *_args: copy.deepcopy(sources),
+    )
+    bindings, freeze_inputs = _measured_gate_inputs(sources)
+    bindings["statistics"] = "0" * 64
+    with pytest.raises(pilot_gate.PilotGateError, match="statistics source"):
+        pilot_gate.build_measured_pilot_gate_report(
+            sources["frontend"],
+            sources["proof"],
+            sources["efficiency"],
+            sources["statistics"],
+            source_bindings=bindings,
+            freeze_inputs=freeze_inputs,
+        )
+
+    bindings, freeze_inputs = _measured_gate_inputs(sources)
+    freeze_inputs["thresholds"] = {"shortlist_candidate_max": 99}
+    with pytest.raises(pilot_gate.PilotGateError, match="thresholds differ"):
+        pilot_gate.build_measured_pilot_gate_report(
+            sources["frontend"],
+            sources["proof"],
+            sources["efficiency"],
+            sources["statistics"],
+            source_bindings=bindings,
+            freeze_inputs=freeze_inputs,
+        )
+
+
+def test_measured_gate_rejects_cross_run_statistics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = _measured_gate_sources()
+    sources["statistics"]["requests"][0]["observations"][0][
+        "run_id"
+    ] = "different-run"
+    monkeypatch.setattr(
+        pilot_gate,
+        "_measured_source_reports",
+        lambda *_args: copy.deepcopy(sources),
+    )
+    bindings, freeze_inputs = _measured_gate_inputs(sources)
+
+    with pytest.raises(pilot_gate.PilotGateError, match="statistics observations"):
+        pilot_gate.build_measured_pilot_gate_report(
+            sources["frontend"],
+            sources["proof"],
+            sources["efficiency"],
+            sources["statistics"],
+            source_bindings=bindings,
+            freeze_inputs=freeze_inputs,
+        )

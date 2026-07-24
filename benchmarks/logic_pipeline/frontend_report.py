@@ -24,10 +24,15 @@ from benchmarks.logic_pipeline.cases import (
 from benchmarks.logic_pipeline.contracts import (
     CaseResultRecord,
     DEFAULT_PROTOCOL_SHA256,
+    OutcomeStatus,
     ProtocolContractError,
     Split,
     StageName,
     canonical_json,
+)
+from benchmarks.logic_pipeline.metrics import (
+    MetricsContractError,
+    validate_kernel_bound_result,
 )
 from benchmarks.logic_pipeline.variants import (
     VARIANT_REGISTRY,
@@ -59,6 +64,14 @@ CAPABILITY_KEYS: Final = (
     "symai",
     "llm_router",
 )
+REQUIRED_CAPABILITIES: Final = {
+    "A0": ("current_modal_codec",),
+    "A1": ("spacy_full_model",),
+    "A4": ("spacy_full_model", "symai", "llm_router"),
+    "A5": ("spacy_full_model", "symai", "llm_router"),
+    "A7": ("regex_legal_parser", "symai", "llm_router"),
+    "A8": ("spacy_blank_model", "symai", "llm_router"),
+}
 STATUS_VALUES: Final = frozenset(
     {
         "semantically_correct",
@@ -101,6 +114,15 @@ def HSSLEV0519C80() -> str:
     return (
         "paired spaCy and SyMAI front-end overlap, unique-win, "
         "unnecessary-call, and capability-missingness report"
+    )
+
+
+def HSSLEV1159F06() -> str:
+    """Return objective evidence for receipt-driven measured front-end reports."""
+
+    return (
+        "complete source-bound case receipts produce measured front-end "
+        "quality, latency, routing, and missingness evidence"
     )
 
 
@@ -260,7 +282,9 @@ def _semantic_success(row: Mapping[str, object]) -> bool | None:
     )
 
 
-def _validate_measured_source(row: Mapping[str, object]) -> None:
+def _validate_measured_source(
+    row: Mapping[str, object], *, expected_run_id: str | None = None
+) -> None:
     raw = row["case_result"]
     if raw is None:
         raise FrontendReportError(
@@ -268,8 +292,18 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
         )
     try:
         result = CaseResultRecord.from_dict(raw)
-    except (ProtocolContractError, TypeError, ValueError) as exc:
+        validate_kernel_bound_result(result)
+    except (
+        MetricsContractError,
+        ProtocolContractError,
+        TypeError,
+        ValueError,
+    ) as exc:
         raise FrontendReportError("case_result failed strict validation") from exc
+    if expected_run_id is not None and result.run_id != expected_run_id:
+        raise FrontendReportError(
+            "case_result run id differs from the front-end report"
+        )
     for field in ("case_id", "variant_id"):
         if getattr(result, field) != row[field]:
             raise FrontendReportError(
@@ -286,7 +320,16 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
     definition = VARIANT_REGISTRY[str(row["variant_id"])]
     expected_stages = tuple(definition.stages)
     actual_stages = tuple(item.stage for item in result.stages)
-    if actual_stages != expected_stages[: len(actual_stages)]:
+    terminal_missing = result.status in {
+        OutcomeStatus.UNAVAILABLE,
+        OutcomeStatus.INFRASTRUCTURE_FAILURE,
+    }
+    route_matches = (
+        actual_stages == expected_stages[: len(actual_stages)]
+        if terminal_missing
+        else actual_stages == expected_stages
+    )
+    if not route_matches:
         raise FrontendReportError("case_result stages differ from requested route")
     spacy_present = StageName.SPACY in actual_stages
     symai_present = StageName.SYMAI in actual_stages
@@ -310,6 +353,25 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
     ):
         raise FrontendReportError("latency telemetry differs from case_result")
 
+    expected_missing_status = {
+        OutcomeStatus.UNAVAILABLE: "unavailable",
+        OutcomeStatus.INFRASTRUCTURE_FAILURE: "infrastructure_failure",
+    }.get(result.status)
+    if expected_missing_status is not None:
+        if row["status"] != expected_missing_status:
+            raise FrontendReportError(
+                "case_result missingness differs from the observation"
+            )
+        return
+    if result.status is OutcomeStatus.EXCLUDED:
+        raise FrontendReportError(
+            "measured front-end scope cannot contain excluded case results"
+        )
+    if row["status"] in {"unavailable", "infrastructure_failure"}:
+        raise FrontendReportError(
+            "front-end missingness is not supported by the case result"
+        )
+
     signature = row["semantic_signature_sha256"]
     if signature is None:
         raise FrontendReportError(
@@ -317,22 +379,25 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
         )
     source_digest: str | None = None
     for stage in reversed(result.stages):
+        stage_data = stage.to_dict()["data"]
+        if not isinstance(stage_data, Mapping):  # pragma: no cover - contract
+            continue
         if stage.stage is StageName.SYMAI:
-            candidate = stage.data.get("candidate_ir")
+            candidate = stage_data.get("candidate_ir")
             if candidate is not None:
                 source_digest = hashlib.sha256(
                     canonical_json(candidate).encode("utf-8")
                 ).hexdigest()
                 break
         if stage.stage is StageName.SPACY:
-            modal_ir = stage.data.get("modal_ir")
+            modal_ir = stage_data.get("modal_ir")
             if modal_ir is not None:
                 source_digest = hashlib.sha256(
                     canonical_json(modal_ir).encode("utf-8")
                 ).hexdigest()
                 break
         if stage.stage is StageName.COMPILER:
-            candidate_digest = stage.data.get("modal_ir_sha256")
+            candidate_digest = stage_data.get("modal_ir_sha256")
             if isinstance(candidate_digest, str) and _SHA256.fullmatch(
                 candidate_digest
             ):
@@ -969,7 +1034,23 @@ def validate_frontend_report(value: object) -> dict[str, object]:
             )
     else:
         for row in observations:
-            _validate_measured_source(row)
+            _validate_measured_source(
+                row, expected_run_id=str(data["run_id"])
+            )
+            if row["status"] not in {
+                "unavailable",
+                "infrastructure_failure",
+            }:
+                missing = [
+                    name
+                    for name in REQUIRED_CAPABILITIES[str(row["variant_id"])]
+                    if capabilities[name]["status"] != "available"
+                ]
+                if missing:
+                    raise FrontendReportError(
+                        "measured front-end success conflicts with unavailable "
+                        f"capabilities: {', '.join(missing)}"
+                    )
 
     derived = derive_frontend_analysis(observations)
     if data["analysis"] != derived:
@@ -1032,14 +1113,6 @@ def create_capability_preflight_report() -> dict[str, object]:
     capability_inventory_sha256 = hashlib.sha256(
         canonical_json(capabilities).encode("utf-8")
     ).hexdigest()
-    required = {
-        "A0": (),
-        "A1": ("spacy_full_model",),
-        "A4": ("spacy_full_model", "symai", "llm_router"),
-        "A5": ("spacy_full_model", "symai", "llm_router"),
-        "A7": ("regex_legal_parser", "symai", "llm_router"),
-        "A8": ("spacy_blank_model", "symai", "llm_router"),
-    }
     observations: list[dict[str, object]] = []
     for split in SPLITS:
         for mode in CACHE_MODES:
@@ -1047,7 +1120,7 @@ def create_capability_preflight_report() -> dict[str, object]:
                 spacy_mode, symai_policy = _variant_identity(variant)
                 missing = [
                     name
-                    for name in required[variant]
+                    for name in REQUIRED_CAPABILITIES[variant]
                     if capabilities[name]["status"] != "available"
                 ]
                 if missing:
@@ -1140,6 +1213,119 @@ def create_capability_preflight_report() -> dict[str, object]:
     return validate_frontend_report(report)
 
 
+def build_frontend_report(
+    run_id: str,
+    capabilities: Mapping[str, object],
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    """Build a canonical measured report from receipt-bearing observations.
+
+    The caller supplies case-level semantic validation results, never aggregate
+    metrics.  Each observation must embed its complete ``CaseResultRecord``;
+    this builder fixes canonical matrix order, derives every aggregate, binds
+    the capability inventory, and then executes the same strict validation
+    used for a report loaded from disk.
+    """
+
+    safe_run_id = _safe_id(run_id, "run_id")
+    capability_records = _validate_capabilities(capabilities)
+    catalog, by_split = _case_catalog()
+    if isinstance(observations, (str, bytes, Mapping)):
+        raise FrontendReportError(
+            "observations must be a sequence of observation mappings"
+        )
+    try:
+        rows = [
+            _validate_observation(item, catalog) for item in observations
+        ]
+    except TypeError as exc:
+        raise FrontendReportError(
+            "observations must be a sequence of observation mappings"
+        ) from exc
+    for row in rows:
+        _validate_measured_source(row, expected_run_id=safe_run_id)
+
+    order = {
+        (split, mode, variant, case_id): index
+        for index, (split, mode, variant, case_id) in enumerate(
+            (
+                (split, mode, variant, case_id)
+                for split in SPLITS
+                for mode in CACHE_MODES
+                for variant in FRONTEND_VARIANT_IDS
+                for case_id in by_split[split]
+            )
+        )
+    }
+    coordinates = [
+        (
+            str(row["split"]),
+            str(row["cache_mode"]),
+            str(row["variant_id"]),
+            str(row["case_id"]),
+        )
+        for row in rows
+    ]
+    if len(coordinates) != len(set(coordinates)):
+        raise FrontendReportError(
+            "front-end report contains duplicate observations"
+        )
+    if set(coordinates) != set(order):
+        raise FrontendReportError(
+            "front-end observation matrix is incomplete; "
+            f"missing={sorted(set(order) - set(coordinates))}, "
+            f"extra={sorted(set(coordinates) - set(order))}"
+        )
+    rows.sort(
+        key=lambda row: order[
+            (
+                str(row["split"]),
+                str(row["cache_mode"]),
+                str(row["variant_id"]),
+                str(row["case_id"]),
+            )
+        ]
+    )
+    capability_inventory_sha256 = hashlib.sha256(
+        canonical_json(capability_records).encode("utf-8")
+    ).hexdigest()
+    value: dict[str, object] = {
+        "schema": FRONTEND_REPORT_SCHEMA,
+        "evidence": HSSLEV0519C80(),
+        "benchmark_id": BENCHMARK_ID,
+        "run_id": safe_run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "split_sha256": {
+            split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
+        },
+        "case_ids_by_split": by_split,
+        "stratum_by_case": {
+            case_id: item["stratum"] for case_id, item in catalog.items()
+        },
+        "variant_ids": list(FRONTEND_VARIANT_IDS),
+        "cache_modes": list(CACHE_MODES),
+        "development_selection": {
+            "status": "preregistered_full_split",
+            "case_ids": by_split["development"],
+            "selection_basis": (
+                "all reviewed development cases; "
+                "no outcome-derived case shortlist"
+            ),
+            "outcomes_inspected": False,
+        },
+        "capability_inventory_sha256": capability_inventory_sha256,
+        "capabilities": capability_records,
+        "observations": rows,
+        "analysis": derive_frontend_analysis(rows),
+        "artifact_sha256": "",
+    }
+    value["artifact_sha256"] = _artifact_digest(value)
+    return validate_frontend_report(value)
+
+
 def frontend_summary(report: Mapping[str, object]) -> dict[str, object]:
     """Return a stable concise CLI validation receipt."""
 
@@ -1179,7 +1365,9 @@ __all__ = [
     "FRONTEND_VARIANT_IDS",
     "FrontendReportError",
     "HSSLEV0519C80",
+    "HSSLEV1159F06",
     "SPLITS",
+    "build_frontend_report",
     "create_capability_preflight_report",
     "derive_frontend_analysis",
     "frontend_summary",

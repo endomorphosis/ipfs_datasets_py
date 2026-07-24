@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import tempfile
 from typing import Final, Mapping, Sequence
@@ -43,6 +44,12 @@ PILOT_OUTCOME_CELL_SCHEMA: Final = (
 )
 PILOT_FREEZE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.pilot-deep-freeze.v1"
+)
+MEASURED_PILOT_GATE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.measured-pilot-authorization-gate.v1"
+)
+MEASURED_PILOT_FREEZE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.measured-pilot-deep-freeze.v1"
 )
 PILOT_GATE_RUN_ID: Final = "pilot-shortlist-v1"
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
@@ -77,6 +84,34 @@ NONBASELINE_CANDIDATE_IDS: Final = tuple(
 )
 OVERLAP_VARIANT_IDS: Final = ("A4", "A7", "A8")
 INVALID_CONTROL_EXPECTED_CLASSES: Final = frozenset({"unsupported"})
+# The v1 artifact froze the adapter prompt contract at this source identity.
+# Revalidating historical evidence must not silently rebind that immutable
+# contract to a later checkout of adapters.py.
+HISTORICAL_V1_ADAPTER_SOURCE_SHA256: Final = (
+    "2cf22d51a890cb03d1a7a0d1fbc79ecb21eaf7097c194f7040f93758da451bb7"
+)
+MEASURED_SOURCE_KINDS: Final = (
+    "frontend",
+    "proof",
+    "efficiency",
+    "statistics",
+)
+MEASURED_FREEZE_INPUTS: Final = (
+    "prompts",
+    "policies",
+    "model_identities",
+    "cache_policy",
+    "resource_policy",
+    "thresholds",
+)
+_MEASURED_COST_FIELDS: Final = (
+    "model_calls",
+    "solver_processes",
+    "accelerator_minutes",
+    "retries",
+    "operational_components",
+)
+_SHA256_PATTERN: Final = re.compile(r"[0-9a-f]{64}\Z")
 _MAX_REPORT_BYTES: Final = 32 * 1024 * 1024
 _REPORT_FIELDS: Final = {
     "schema",
@@ -107,6 +142,16 @@ def HSSLEV0801D68() -> str:
     return (
         "complete pilot outcome ledger, capability diagnosis, "
         "and deeply frozen nonbaseline shortlist"
+    )
+
+
+def HSSLEV1159F06() -> str:
+    """Return AST-verifiable evidence for the measured authorization gate."""
+
+    return (
+        "receipt-driven front-end, proof, resource, and statistical reports "
+        "with typed missingness and a complete source-bound data-driven "
+        "pilot authorization gate"
     )
 
 
@@ -887,15 +932,10 @@ def _deep_freeze(
     from benchmarks.logic_pipeline.capabilities import ResourcePolicy
     from benchmarks.logic_pipeline.contracts import CacheMode, CacheScope, Split
 
-    adapter_path = Path(adapter_contracts.__file__).resolve()
-    try:
-        adapter_source_sha256 = _sha256_bytes(adapter_path.read_bytes())
-    except OSError as exc:
-        raise PilotGateError("cannot bind adapter prompt contracts") from exc
     leanstral_config = adapter_contracts.LeanstralAdapterConfig()
     prompt_contract_body = {
         "adapter_module": "benchmarks.logic_pipeline.adapters",
-        "adapter_source_sha256": adapter_source_sha256,
+        "adapter_source_sha256": HISTORICAL_V1_ADAPTER_SOURCE_SHA256,
         "symai": {
             "schema": adapter_contracts.SYMAI_PROMPT_SCHEMA,
             "builder": "benchmarks.logic_pipeline.adapters._symai_prompt",
@@ -1229,6 +1269,813 @@ def create_pilot_shortlist_report(
     return build_pilot_gate_report(repository_root=repository_root)
 
 
+def _measured_source_reports(
+    frontend_report: object,
+    proof_report: object,
+    efficiency_report: object,
+    statistics_report: object,
+) -> dict[str, dict[str, object]]:
+    """Validate every upstream report at its own receipt boundary."""
+
+    from benchmarks.logic_pipeline.frontend_report import (
+        validate_frontend_report,
+    )
+    from benchmarks.logic_pipeline.report import (
+        validate_efficiency_report,
+        validate_proof_report,
+    )
+    from benchmarks.logic_pipeline.statistics import (
+        validate_statistics_report,
+    )
+
+    validators = {
+        "frontend": (validate_frontend_report, frontend_report),
+        "proof": (validate_proof_report, proof_report),
+        "efficiency": (validate_efficiency_report, efficiency_report),
+        "statistics": (validate_statistics_report, statistics_report),
+    }
+    result: dict[str, dict[str, object]] = {}
+    for kind in MEASURED_SOURCE_KINDS:
+        validator, value = validators[kind]
+        try:
+            result[kind] = validator(value)
+        except (TypeError, ValueError) as exc:
+            raise PilotGateError(
+                f"{kind} source report failed validation"
+            ) from exc
+    return result
+
+
+def _normalize_measured_source_bindings(
+    source_bindings: object,
+    reports: Mapping[str, Mapping[str, object]],
+) -> list[dict[str, str]]:
+    """Require callers to bind the exact four validated source artifacts.
+
+    A concise ``{kind: artifact_sha256}`` mapping and a sequence of records
+    containing ``kind`` and ``semantic_sha256`` are both accepted.  Output is
+    always the same canonical fixed-shape list.
+    """
+
+    supplied: dict[str, object] = {}
+    if isinstance(source_bindings, Mapping):
+        if not all(isinstance(key, str) for key in source_bindings):
+            raise PilotGateError("source_bindings keys must be strings")
+        supplied = dict(source_bindings)
+    elif isinstance(source_bindings, Sequence) and not isinstance(
+        source_bindings, (str, bytes, bytearray)
+    ):
+        for raw in source_bindings:
+            row = _mapping(raw, "source_bindings[]")
+            kind = row.get("kind")
+            if not isinstance(kind, str) or kind in supplied:
+                raise PilotGateError(
+                    "source binding kinds must be unique strings"
+                )
+            supplied[kind] = row
+    else:
+        raise PilotGateError(
+            "source_bindings must be a mapping or sequence of records"
+        )
+    expected = set(MEASURED_SOURCE_KINDS)
+    if set(supplied) != expected:
+        raise PilotGateError(
+            "measured source binding kinds changed; "
+            f"missing={sorted(expected - set(supplied))}, "
+            f"unknown={sorted(set(supplied) - expected)}"
+        )
+
+    result: list[dict[str, str]] = []
+    for kind in MEASURED_SOURCE_KINDS:
+        raw = supplied[kind]
+        digest = (
+            raw.get("semantic_sha256", raw.get("artifact_sha256"))
+            if isinstance(raw, Mapping)
+            else raw
+        )
+        expected_digest = reports[kind].get("artifact_sha256")
+        if (
+            not isinstance(digest, str)
+            or not _SHA256_PATTERN.fullmatch(digest)
+            or digest != expected_digest
+        ):
+            raise PilotGateError(
+                f"{kind} source binding does not match its validated artifact"
+            )
+        schema = reports[kind].get("schema")
+        if not isinstance(schema, str) or not schema:
+            raise PilotGateError(f"{kind} source has no schema identity")
+        result.append(
+            {
+                "kind": kind,
+                "schema": schema,
+                "semantic_sha256": digest,
+            }
+        )
+    return result
+
+
+def _normalize_measured_freeze_inputs(
+    freeze_inputs: object,
+) -> dict[str, dict[str, object]]:
+    """Content-address every immutable selection input before authorization."""
+
+    raw = dict(_mapping(freeze_inputs, "freeze_inputs"))
+    # ``backend_identities`` was used in early reassessment packets.  Accept
+    # it as an input spelling, but emit the stable model-identities name.
+    if "backend_identities" in raw and "model_identities" not in raw:
+        raw["model_identities"] = raw.pop("backend_identities")
+    required = set(MEASURED_FREEZE_INPUTS)
+    if set(raw) != required:
+        raise PilotGateError(
+            "freeze input kinds changed; "
+            f"missing={sorted(required - set(raw))}, "
+            f"unknown={sorted(set(raw) - required)}"
+        )
+    if raw["thresholds"] != DEFAULT_PROTOCOL.thresholds.to_dict():
+        raise PilotGateError("selection thresholds differ from the protocol")
+
+    frozen: dict[str, dict[str, object]] = {}
+    for kind in MEASURED_FREEZE_INPUTS:
+        snapshot = raw[kind]
+        if snapshot is None or snapshot == "" or snapshot == [] or snapshot == {}:
+            raise PilotGateError(f"freeze_inputs.{kind} must be nonempty")
+        try:
+            digest = _sha256_json(snapshot)
+        except (TypeError, ValueError) as exc:
+            raise PilotGateError(
+                f"freeze_inputs.{kind} is not canonical JSON"
+            ) from exc
+        frozen[kind] = {
+            "frozen": True,
+            "snapshot": snapshot,
+            "sha256": digest,
+        }
+    return frozen
+
+
+def _measured_completeness(
+    reports: Mapping[str, Mapping[str, object]],
+) -> tuple[dict[str, object], list[str]]:
+    """Return data completeness evidence without coercing nulls to zero."""
+
+    reasons: list[str] = []
+    frontend = reports["frontend"]
+    proof = reports["proof"]
+    efficiency = reports["efficiency"]
+    statistics = reports["statistics"]
+
+    if frontend.get("execution_mode") != "measured":
+        reasons.append("frontend_not_measured")
+    frontend_rows = [
+        _mapping(item, "frontend.observations[]")
+        for item in _array(frontend.get("observations"), "frontend.observations")
+    ]
+    frontend_missing = sum(
+        row.get("status") in {"unavailable", "infrastructure_failure"}
+        for row in frontend_rows
+    )
+    if frontend_missing:
+        reasons.append("frontend_missing_or_infrastructure_evidence")
+    frontend_analysis = _mapping(
+        frontend.get("analysis"), "frontend.analysis"
+    )
+    frontend_coverage = _mapping(
+        frontend_analysis.get("coverage"), "frontend.analysis.coverage"
+    )
+    if (
+        frontend_coverage.get("expected_observation_count")
+        != frontend_coverage.get("observed_observation_count")
+    ):
+        reasons.append("frontend_matrix_incomplete")
+    core_frontend_metrics = (
+        "semantic_quality_rate",
+        "latency_ms_p95",
+        "model_calls",
+        "symai_model_calls",
+    )
+    frontend_metric_rows = [
+        _mapping(item, "frontend.analysis.variant_metrics[]")
+        for item in _array(
+            frontend_analysis.get("variant_metrics"),
+            "frontend.analysis.variant_metrics",
+        )
+    ]
+    if any(
+        _mapping(row.get("metrics"), "frontend.variant.metrics").get(metric)
+        is None
+        for row in frontend_metric_rows
+        for metric in core_frontend_metrics
+    ):
+        reasons.append("frontend_quality_latency_or_routing_metric_missing")
+
+    if proof.get("execution_mode") != "measured":
+        reasons.append("proof_not_measured")
+    proof_rows = [
+        _mapping(item, "proof.observations[]")
+        for item in _array(proof.get("observations"), "proof.observations")
+    ]
+    proof_missing = sum(
+        row.get("status") in {"unavailable", "infrastructure_failure"}
+        for row in proof_rows
+    )
+    if proof_missing:
+        reasons.append("proof_missing_or_infrastructure_evidence")
+    proof_analysis = _mapping(proof.get("analysis"), "proof.analysis")
+    proof_coverage = _mapping(
+        proof_analysis.get("coverage"), "proof.analysis.coverage"
+    )
+    if (
+        proof_coverage.get("expected_observation_count")
+        != proof_coverage.get("observed_observation_count")
+    ):
+        reasons.append("proof_matrix_incomplete")
+    proof_metric_rows = [
+        _mapping(item, "proof.analysis.primary_metrics[]")
+        for item in _array(
+            proof_analysis.get("primary_metrics"),
+            "proof.analysis.primary_metrics",
+        )
+    ]
+    if any(
+        row.get(metric) is None
+        for row in proof_metric_rows
+        for metric in ("kernel_verified_rate", "mean_wall_time_ms", "model_calls")
+    ):
+        reasons.append("proof_efficacy_latency_or_resource_metric_missing")
+
+    efficiency_analysis = _mapping(
+        efficiency.get("analysis"), "efficiency.analysis"
+    )
+    efficiency_rows = [
+        _mapping(item, "efficiency.observations[]")
+        for item in _array(
+            efficiency.get("observations"), "efficiency.observations"
+        )
+    ]
+    invalid_control_count = sum(
+        row.get("invalid_control") is True for row in efficiency_rows
+    )
+    if (
+        efficiency.get("execution_mode") != "measured"
+        or efficiency_analysis.get("measured") is not True
+        or not isinstance(efficiency_analysis.get("case_count"), int)
+        or int(efficiency_analysis["case_count"]) <= 0
+    ):
+        reasons.append("efficiency_not_measured")
+    if invalid_control_count == 0:
+        reasons.append("invalid_control_safety_evidence_missing")
+
+    analyses = [
+        _mapping(item, "statistics.analyses[]")
+        for item in _array(statistics.get("analyses"), "statistics.analyses")
+    ]
+    if not analyses:
+        reasons.append("statistics_analyses_missing")
+    if any(
+        row.get("missing_count") != 0
+        or not isinstance(row.get("measured_count"), int)
+        or int(row["measured_count"]) <= 0
+        for row in analyses
+    ):
+        reasons.append("statistics_pair_missingness_retained")
+    analysis_splits = sorted(
+        {
+            str(row.get("split"))
+            for row in analyses
+            if row.get("split") in {"pilot", "development"}
+        }
+    )
+    if analysis_splits != ["development", "pilot"]:
+        reasons.append("statistics_selection_splits_incomplete")
+
+    return (
+        {
+            "complete": not reasons,
+            "reasons": reasons,
+            "frontend": {
+                "execution_mode": frontend.get("execution_mode"),
+                "expected_observation_count": frontend_coverage.get(
+                    "expected_observation_count"
+                ),
+                "observed_observation_count": frontend_coverage.get(
+                    "observed_observation_count"
+                ),
+                "missing_or_infrastructure_count": frontend_missing,
+            },
+            "proof": {
+                "execution_mode": proof.get("execution_mode"),
+                "expected_observation_count": proof_coverage.get(
+                    "expected_observation_count"
+                ),
+                "observed_observation_count": proof_coverage.get(
+                    "observed_observation_count"
+                ),
+                "missing_or_infrastructure_count": proof_missing,
+            },
+            "efficiency": {
+                "execution_mode": efficiency.get("execution_mode"),
+                "measured": efficiency_analysis.get("measured"),
+                "case_count": efficiency_analysis.get("case_count"),
+                "invalid_control_observation_count": invalid_control_count,
+            },
+            "statistics": {
+                "analysis_count": len(analyses),
+                "selection_splits": analysis_splits,
+                "missing_pair_count": sum(
+                    int(row.get("missing_count", 0)) for row in analyses
+                ),
+            },
+            "null_is_never_zero": True,
+        },
+        reasons,
+    )
+
+
+def _measured_safety(
+    efficiency: Mapping[str, object],
+) -> dict[str, object]:
+    """Derive invalid-control safety directly from kernel-bound observations."""
+
+    observations = [
+        _mapping(item, "efficiency.observations[]")
+        for item in _array(efficiency.get("observations"), "observations")
+    ]
+    invalid = [row for row in observations if row.get("invalid_control") is True]
+    false_positive_receipts: list[str] = []
+    for row in invalid:
+        result = _mapping(row.get("case_result"), "case_result")
+        if result.get("status") == "verified":
+            receipt = result.get("kernel_receipt_sha256")
+            if not isinstance(receipt, str) or not _SHA256_PATTERN.fullmatch(
+                receipt
+            ):
+                raise PilotGateError(
+                    "verified invalid control has no kernel receipt"
+                )
+            false_positive_receipts.append(receipt)
+    count = len(false_positive_receipts)
+    threshold = DEFAULT_PROTOCOL.thresholds.invalid_control_verified_max
+    return {
+        "observed_invalid_control_count": len(invalid),
+        "kernel_verified_invalid_control_false_positive_count": count,
+        "kernel_verified_invalid_control_false_positive_rate": (
+            None if not invalid else count / len(invalid)
+        ),
+        "kernel_receipt_sha256s": sorted(false_positive_receipts),
+        "threshold": threshold,
+        "fatal_safety_incident": count > threshold,
+        "absence_is_not_negative_efficacy": True,
+    }
+
+
+def _measured_receipt_binding(
+    reports: Mapping[str, Mapping[str, object]],
+    run_id: str,
+) -> tuple[dict[str, object], list[str]]:
+    """Bind statistical pairs and Pareto links to measured source receipts."""
+
+    source_receipts: set[str] = set()
+    for kind in ("frontend", "proof"):
+        for raw in _array(
+            reports[kind].get("observations"), f"{kind}.observations"
+        ):
+            row = _mapping(raw, f"{kind}.observations[]")
+            receipt = row.get("source_receipt_sha256")
+            if isinstance(receipt, str) and _SHA256_PATTERN.fullmatch(receipt):
+                source_receipts.add(receipt)
+    for raw in _array(
+        reports["efficiency"].get("observations"),
+        "efficiency.observations",
+    ):
+        row = _mapping(raw, "efficiency.observations[]")
+        receipt = row.get("case_result_sha256")
+        if isinstance(receipt, str) and _SHA256_PATTERN.fullmatch(receipt):
+            source_receipts.add(receipt)
+
+    statistics_receipts: set[str] = set()
+    observation_count = 0
+    for raw_request in _array(
+        reports["statistics"].get("requests"), "statistics.requests"
+    ):
+        request = _mapping(raw_request, "statistics.requests[]")
+        for raw_observation in _array(
+            request.get("observations"), "statistics.request.observations"
+        ):
+            observation = _mapping(
+                raw_observation, "statistics.request.observations[]"
+            )
+            observation_count += 1
+            if observation.get("run_id") != run_id:
+                raise PilotGateError(
+                    "statistics observations do not share the measured run identity"
+                )
+            for field in (
+                "baseline_result_sha256",
+                "candidate_result_sha256",
+            ):
+                receipt = observation.get(field)
+                if (
+                    not isinstance(receipt, str)
+                    or not _SHA256_PATTERN.fullmatch(receipt)
+                ):
+                    raise PilotGateError(
+                        f"statistics observation has no valid {field}"
+                    )
+                statistics_receipts.add(receipt)
+    if observation_count == 0:
+        raise PilotGateError("statistics report has no source observations")
+
+    pareto = _mapping(
+        reports["statistics"].get("pareto"), "statistics.pareto"
+    )
+    pareto_receipts = {
+        str(receipt)
+        for raw_candidate in _array(
+            pareto.get("candidates"), "statistics.pareto.candidates"
+        )
+        for receipt in _array(
+            _mapping(
+                raw_candidate, "statistics.pareto.candidates[]"
+            ).get("case_result_sha256s"),
+            "statistics.pareto.candidate.case_result_sha256s",
+        )
+    }
+    if not pareto_receipts <= statistics_receipts:
+        raise PilotGateError(
+            "Pareto case-result links are absent from statistics observations"
+        )
+    unbound = sorted(pareto_receipts - source_receipts)
+    reasons = (
+        ["statistics_case_receipts_not_in_measured_sources"] if unbound else []
+    )
+    return (
+        {
+            "statistics_observation_count": observation_count,
+            "statistics_case_result_receipt_count": len(statistics_receipts),
+            "pareto_case_result_receipt_count": len(pareto_receipts),
+            "measured_source_receipt_count": len(source_receipts),
+            "unbound_pareto_case_result_sha256s": unbound,
+            "complete": not unbound,
+        },
+        reasons,
+    )
+
+
+def _measured_candidate_evidence(
+    statistics: Mapping[str, object],
+    efficiency: Mapping[str, object],
+) -> tuple[list[dict[str, object]], list[str], list[str]]:
+    """Join statistical Pareto inputs to receipt-bound efficiency evidence."""
+
+    reasons: list[str] = []
+    pareto = statistics.get("pareto")
+    if pareto is None:
+        return [], [], ["statistics_pareto_missing"]
+    pareto_map = _mapping(pareto, "statistics.pareto")
+    frontier = [
+        str(item)
+        for item in _array(
+            pareto_map.get("frontier_candidate_ids"),
+            "pareto.frontier_candidate_ids",
+        )
+    ]
+    records = [
+        _mapping(item, "pareto.candidates[]")
+        for item in _array(pareto_map.get("candidates"), "pareto.candidates")
+    ]
+    efficiency_analysis = _mapping(
+        efficiency.get("analysis"), "efficiency.analysis"
+    )
+    points = {
+        str(row["variant_id"]): row
+        for row in (
+            _mapping(item, "efficiency.pareto_points[]")
+            for item in _array(
+                efficiency_analysis.get("pareto_points"),
+                "efficiency.analysis.pareto_points",
+            )
+        )
+    }
+
+    evidence: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for row in records:
+        variant_id = str(row.get("candidate_id"))
+        if variant_id in seen:
+            raise PilotGateError("statistics Pareto candidates are duplicated")
+        seen.add(variant_id)
+        if variant_id not in NONBASELINE_CANDIDATE_IDS:
+            reasons.append(f"noncandidate_pareto_arm:{variant_id}")
+            continue
+        metrics = _mapping(row.get("metrics"), "pareto.candidate.metrics")
+        if not metrics or any(value is None for value in metrics.values()):
+            reasons.append(f"statistics_metric_missing:{variant_id}")
+        point = points.get(variant_id)
+        if point is None:
+            reasons.append(f"efficiency_evidence_missing:{variant_id}")
+            continue
+        costs = _mapping(point.get("costs"), "efficiency.point.costs")
+        missing_costs = [
+            field
+            for field in _MEASURED_COST_FIELDS
+            if costs.get(field) is None
+        ]
+        if point.get("unnecessary_call_rate") is None:
+            missing_costs.append("unnecessary_call_rate")
+        if point.get("failed_attempts") is None:
+            missing_costs.append("failed_attempts")
+        if point.get("kernel_verified_rate") is None:
+            missing_costs.append("kernel_verified_rate")
+        if missing_costs:
+            reasons.append(
+                f"efficiency_metric_missing:{variant_id}:"
+                + ",".join(missing_costs)
+            )
+        if point.get("eligible") is not True:
+            reasons.append(f"efficiency_ineligible:{variant_id}")
+        if row.get("eligible") is not True or row.get("safety_feasible") is not True:
+            reasons.append(f"statistics_ineligible:{variant_id}")
+        evidence.append(
+            {
+                "variant_id": variant_id,
+                "configuration_sha256": VARIANT_REGISTRY[variant_id].digest,
+                "statistics": {
+                    "on_frontier": row.get("on_frontier"),
+                    "dominated_by": row.get("dominated_by"),
+                    "metrics": dict(metrics),
+                    "analysis_sha256s": row.get("analysis_sha256s"),
+                    "case_result_sha256s": row.get("case_result_sha256s"),
+                    "safety_feasible": row.get("safety_feasible"),
+                },
+                "efficiency": {
+                    "eligible": point.get("eligible"),
+                    "kernel_verified_rate": point.get(
+                        "kernel_verified_rate"
+                    ),
+                    "costs": dict(costs),
+                    "unnecessary_call_rate": point.get(
+                        "unnecessary_call_rate"
+                    ),
+                    "failed_attempts": point.get("failed_attempts"),
+                },
+            }
+        )
+    evidence.sort(key=lambda item: str(item["variant_id"]))
+    expected_frontier = sorted(
+        str(row["variant_id"])
+        for row in evidence
+        if _mapping(row["statistics"], "candidate.statistics").get(
+            "on_frontier"
+        )
+        is True
+    )
+    if frontier != expected_frontier:
+        reasons.append("statistics_frontier_identity_mismatch")
+    if len(frontier) > DEFAULT_PROTOCOL.thresholds.shortlist_candidate_max:
+        reasons.append("nondominated_frontier_exceeds_shortlist_max")
+    if not frontier:
+        reasons.append("nondominated_frontier_empty")
+    return evidence, frontier, reasons
+
+
+def build_measured_pilot_gate_report(
+    frontend_report: object,
+    proof_report: object,
+    efficiency_report: object,
+    statistics_report: object,
+    *,
+    source_bindings: object,
+    freeze_inputs: object,
+    run_id: str | None = None,
+) -> dict[str, object]:
+    """Build a receipt-driven pilot decision from validated measured reports.
+
+    The gate never chooses a convenient subset of a large frontier.  It
+    authorizes holdout only when the complete statistical frontier contains
+    one to four exact nonbaseline arms and all of those arms have complete
+    source-linked efficacy, resource, routing, and complexity evidence.
+    """
+
+    reports = _measured_source_reports(
+        frontend_report,
+        proof_report,
+        efficiency_report,
+        statistics_report,
+    )
+    frontend_run_id = reports["frontend"].get("run_id")
+    proof_run_id = reports["proof"].get("run_id")
+    efficiency_analysis = _mapping(
+        reports["efficiency"].get("analysis"), "efficiency.analysis"
+    )
+    efficiency_run_id = efficiency_analysis.get("run_id")
+    effective_run_id = frontend_run_id if run_id is None else run_id
+    if (
+        not isinstance(effective_run_id, str)
+        or not effective_run_id
+        or frontend_run_id != effective_run_id
+        or proof_run_id != effective_run_id
+        or efficiency_run_id != effective_run_id
+    ):
+        raise PilotGateError(
+            "measured reports do not share the requested run identity"
+        )
+    for kind, source in reports.items():
+        if source.get("protocol_sha256") != DEFAULT_PROTOCOL_SHA256:
+            raise PilotGateError(f"{kind} protocol identity changed")
+    if (
+        reports["frontend"].get("registry_sha256")
+        != VARIANT_REGISTRY_SHA256
+        or reports["proof"].get("registry_sha256")
+        != VARIANT_REGISTRY_SHA256
+    ):
+        raise PilotGateError("measured report registry identity changed")
+
+    bindings = _normalize_measured_source_bindings(source_bindings, reports)
+    frozen_inputs = _normalize_measured_freeze_inputs(freeze_inputs)
+    completeness, incomplete_reasons = _measured_completeness(reports)
+    receipt_binding, receipt_reasons = _measured_receipt_binding(
+        reports, effective_run_id
+    )
+    completeness["receipt_binding"] = receipt_binding
+    incomplete_reasons.extend(receipt_reasons)
+    completeness["reasons"] = incomplete_reasons
+    completeness["complete"] = not incomplete_reasons
+    safety = _measured_safety(reports["efficiency"])
+    candidates, frontier, candidate_reasons = _measured_candidate_evidence(
+        reports["statistics"], reports["efficiency"]
+    )
+    reasons = list(dict.fromkeys((*incomplete_reasons, *candidate_reasons)))
+    fatal = safety["fatal_safety_incident"] is True
+    eligible = not fatal and not reasons
+    selected = frontier if eligible else []
+
+    if fatal:
+        status = "rejected"
+        reason = "kernel-verified invalid-control false positive is fatal"
+        freeze_kind = "empty_due_to_fatal_safety_incident"
+    elif reasons:
+        status = "incomplete"
+        reason = "required measured selection evidence is incomplete"
+        freeze_kind = "empty_due_to_ineligible_evidence"
+    else:
+        status = "complete"
+        reason = "complete source-bound nondominated shortlist authorized"
+        freeze_kind = "exact_nondominated_shortlist"
+
+    source_digest = _sha256_json(bindings)
+    selection_inputs = {
+        "statistics_pareto_sha256": _sha256_json(
+            reports["statistics"]["pareto"]
+        ),
+        "candidate_evidence_sha256": _sha256_json(candidates),
+        "source_bindings_sha256": source_digest,
+        "selection_splits": ["pilot", "development"],
+        "holdout_outcomes_permitted": False,
+        "post_freeze_reranking_permitted": False,
+        "arbitrary_ranking_or_truncation_permitted": False,
+    }
+    deep_freeze: dict[str, object] = {
+        "schema": MEASURED_PILOT_FREEZE_SCHEMA,
+        "frozen": True,
+        "tuning_permitted": False,
+        "protocol": {
+            "sha256": DEFAULT_PROTOCOL_SHA256,
+            "snapshot": DEFAULT_PROTOCOL.to_dict(),
+        },
+        "registry": {
+            "sha256": VARIANT_REGISTRY_SHA256,
+            "selected_configurations": [
+                {
+                    "variant_id": variant_id,
+                    "configuration_sha256": VARIANT_REGISTRY[
+                        variant_id
+                    ].digest,
+                    "configuration": VARIANT_REGISTRY[
+                        variant_id
+                    ].to_dict(),
+                }
+                for variant_id in selected
+            ],
+        },
+        "inputs": frozen_inputs,
+        "source_bindings": bindings,
+        "selection_inputs": selection_inputs,
+        "freeze_sha256": "",
+    }
+    deep_freeze["freeze_sha256"] = _sha256_json(
+        {
+            key: value
+            for key, value in deep_freeze.items()
+            if key != "freeze_sha256"
+        }
+    )
+
+    report: dict[str, object] = {
+        "schema": MEASURED_PILOT_GATE_SCHEMA,
+        "evidence": HSSLEV1159F06(),
+        "benchmark_id": BENCHMARK_ID,
+        "run_id": effective_run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "source_bindings": bindings,
+        "completeness": completeness,
+        "safety": safety,
+        "candidate_evidence": candidates,
+        "shortlist": {
+            "status": status,
+            "frozen": True,
+            "freeze_kind": freeze_kind,
+            "candidate_max": DEFAULT_PROTOCOL.thresholds.shortlist_candidate_max,
+            "frontier_variant_ids": frontier,
+            "selected_variant_ids": selected,
+            "selected_count": len(selected),
+            "nonbaseline_only": True,
+            "diagnostic_arms_excluded": ["S1"],
+            "baseline_arms_excluded": ["A0"],
+            "selection_splits": ["pilot", "development"],
+            "ranking_applied": False,
+            "truncation_applied": False,
+            "reasons": reasons,
+        },
+        "holdout": {
+            "status": "authorized_unopened" if eligible else "unopened",
+            "authorized": eligible,
+            "authorization_sha256": None,
+            "outcomes_inspected": False,
+            "access_log_ids": [],
+            "selection_used_holdout": False,
+            "tuning_after_access": False,
+            "reason": (
+                "exact frozen shortlist authorizes paired holdout execution"
+                if eligible
+                else "pilot evidence did not authorize holdout access"
+            ),
+        },
+        "deep_freeze": deep_freeze,
+        "decision": {
+            "status": status,
+            "structurally_valid": True,
+            "efficacy_status": "measured" if completeness["complete"] else "incomplete",
+            "shortlist_status": (
+                "frozen_nonempty" if eligible else "frozen_empty"
+            ),
+            "holdout_authorized": eligible,
+            "production_promotion_authorized": False,
+            "reason": reason,
+        },
+        "artifact_sha256": "",
+    }
+    if eligible:
+        holdout = _mapping(report["holdout"], "holdout")
+        holdout["authorization_sha256"] = _sha256_json(
+            {
+                "run_id": effective_run_id,
+                "selected_variant_ids": selected,
+                "freeze_sha256": deep_freeze["freeze_sha256"],
+                "source_bindings_sha256": source_digest,
+            }
+        )
+    report["artifact_sha256"] = _artifact_digest(report)
+    return report
+
+
+def validate_measured_pilot_gate_report(
+    value: object,
+    frontend_report: object,
+    proof_report: object,
+    efficiency_report: object,
+    statistics_report: object,
+    *,
+    source_bindings: object,
+    freeze_inputs: object,
+) -> dict[str, object]:
+    """Recompute a measured gate from its source reports and frozen inputs."""
+
+    data = dict(_mapping(value, "measured pilot gate report"))
+    if data.get("schema") != MEASURED_PILOT_GATE_SCHEMA:
+        raise PilotGateError("unsupported measured pilot gate schema")
+    if data.get("evidence") != HSSLEV1159F06():
+        raise PilotGateError("measured pilot evidence marker changed")
+    if data.get("artifact_sha256") != _artifact_digest(data):
+        raise PilotGateError("measured pilot artifact digest changed")
+    expected = build_measured_pilot_gate_report(
+        frontend_report,
+        proof_report,
+        efficiency_report,
+        statistics_report,
+        source_bindings=source_bindings,
+        freeze_inputs=freeze_inputs,
+        run_id=str(data.get("run_id")),
+    )
+    if data != expected:
+        raise PilotGateError(
+            "measured pilot gate differs from recomputed source evidence"
+        )
+    return data
+
+
 def validate_pilot_gate_report(
     value: object, *, repository_root: str | Path = REPOSITORY_ROOT
 ) -> dict[str, object]:
@@ -1475,7 +2322,13 @@ __all__ = [
     "DEFAULT_PILOT_GATE_PATH",
     "DEFAULT_PILOT_SHORTLIST_PATH",
     "FRONTEND_SOURCE_PATH",
+    "HISTORICAL_V1_ADAPTER_SOURCE_SHA256",
     "HSSLEV0801D68",
+    "HSSLEV1159F06",
+    "MEASURED_FREEZE_INPUTS",
+    "MEASURED_PILOT_FREEZE_SCHEMA",
+    "MEASURED_PILOT_GATE_SCHEMA",
+    "MEASURED_SOURCE_KINDS",
     "NONBASELINE_CANDIDATE_IDS",
     "OVERLAP_VARIANT_IDS",
     "PILOT_CASE_IDS",
@@ -1487,6 +2340,7 @@ __all__ = [
     "PROOF_SOURCE_PATH",
     "PilotGateError",
     "build_pilot_gate_report",
+    "build_measured_pilot_gate_report",
     "build_pilot_shortlist_report",
     "canonical_pilot_shortlist_json",
     "create_pilot_shortlist_report",
@@ -1495,6 +2349,7 @@ __all__ = [
     "pilot_gate_summary",
     "pilot_shortlist_summary",
     "validate_pilot_gate_report",
+    "validate_measured_pilot_gate_report",
     "validate_pilot_shortlist_report",
     "write_pilot_gate_report",
     "write_pilot_shortlist_report",
