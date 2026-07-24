@@ -957,6 +957,14 @@ def validate_ablation_evidence(
         scope_path = _cache_scope_path(root, contract)
         scope = _mapping(_read_canonical(scope_path, "cache scope"), "cache scope")
         expected_scope_root = scope_path.parent.resolve(strict=False)
+        canonical_output_root = root.resolve(strict=False)
+        if not expected_scope_root.is_relative_to(canonical_output_root):
+            raise AblationValidationError(
+                "persisted cache scope resolves outside the selected output root"
+            )
+        portable_scope_root = expected_scope_root.relative_to(
+            canonical_output_root
+        ).as_posix()
         expected_scope = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
             "plan_sha256": plan.digest,
@@ -967,7 +975,7 @@ def validate_ablation_evidence(
             "cache_namespace": contract.cache_namespace,
             "environment_sha256": plan.environment_sha256,
             "configuration_sha256": contract.configuration_sha256,
-            "canonical_root": expected_scope_root.as_posix(),
+            "canonical_root": portable_scope_root,
             "run_contract_sha256": _sha(contract.to_dict()),
         }
         if dict(scope) != expected_scope:
@@ -1043,7 +1051,9 @@ def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
         policy_frozen=True,
         model_identities_frozen=True,
         thresholds_frozen=True,
-        tuning_permitted=plan.split is not Split.HOLDOUT,
+        # Every frozen matrix is observational.  Pilot/development may inform
+        # a later, separately frozen plan, but no in-run tuning is permitted.
+        tuning_permitted=False,
         holdout_access_log_id=access_log_id,
     )
 
@@ -1830,6 +1840,9 @@ def _execute_ablation(
             raise AblationValidationError(
                 "cache scope resolves outside the selected output root"
             )
+        portable_scope_root = canonical_scope_root.relative_to(
+            canonical_output_root
+        ).as_posix()
         scope_record = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
             "plan_sha256": plan.digest,
@@ -1840,7 +1853,7 @@ def _execute_ablation(
             "cache_namespace": contract.cache_namespace,
             "environment_sha256": plan.environment_sha256,
             "configuration_sha256": contract.configuration_sha256,
-            "canonical_root": canonical_scope_root.as_posix(),
+            "canonical_root": portable_scope_root,
             "run_contract_sha256": _sha(contract.to_dict()),
         }
         if scope_path.exists():

@@ -88,6 +88,32 @@ DEFAULT_MATRIX_INDEX: Final = Path(
 DEFAULT_MATRIX_SNAPSHOT: Final = Path(
     "docs/performance_snapshots/2026-07-24_hssl_reassessment_matrix.json"
 )
+FROZEN_SELECTION_PATH: Final = Path(
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+    "pilot-shortlist-v1.json"
+)
+FROZEN_SELECTION_BYTES_SHA256: Final = (
+    "0e702d4e19dbc242b445f4f6ef91647506ee4c0174072318098a6f6be2173e45"
+)
+FROZEN_SELECTION_SHA256S: Final = MappingProxyType(
+    {
+        "freeze": (
+            "1349e8ed8cdc20bcfc6de4b6eba83f41a9188702a95c28a7ec3566127d24b007"
+        ),
+        "prompts": (
+            "7f3140b13261feb8d6eb22a3df60c3b7656649306d1a683b91979922655c369b"
+        ),
+        "policies": (
+            "528ed32632e523e0c0c79abb0459bdba8f6c68bafda5609db04ec35dc5b771e0"
+        ),
+        "resource_policy": (
+            "66bd17812fee1b8d5a59b31ded57552c44c161fbda8fa8b82d4ab1f1f712bdfb"
+        ),
+        "thresholds": (
+            "17f2bc866988a7fd5101a6ce6b905beff5f010c17195289078cd81077df0d424"
+        ),
+    }
+)
 REQUIRED_COMMAND: Final = (
     "python -m benchmarks.logic_pipeline.runtime execute "
     "--splits pilot,development --cache-mode both --validate-complete"
@@ -556,6 +582,7 @@ def _split_summary(
     failures: Counter[str] = Counter()
     kernel_invoked = 0
     kernel_accepted = 0
+    invalid_control_coordinates = 0
     invalid_verified = 0
     refs: list[dict[str, object]] = []
     for ordinal, (job, result) in enumerate(
@@ -575,6 +602,8 @@ def _split_summary(
         kernel_invoked += invoked
         kernel_accepted += accepted
         expected_class = job.case.input_data.get("expected_class")
+        if expected_class == ExpectedClass.UNSUPPORTED.value:
+            invalid_control_coordinates += 1
         if (
             expected_class == ExpectedClass.UNSUPPORTED.value
             and result.status is OutcomeStatus.VERIFIED
@@ -630,28 +659,78 @@ def _split_summary(
         "failure_counts": dict(sorted(failures.items())),
         "kernel_invoked_count": kernel_invoked,
         "kernel_accepted_count": kernel_accepted,
+        "invalid_control_coordinate_count": invalid_control_coordinates,
         "invalid_control_verified_count": invalid_verified,
         "results": refs,
     }
 
 
-def _selection_inputs() -> dict[str, object]:
+def _selection_inputs(
+    repository: Path, frozen: LiveCapabilityReprobe
+) -> dict[str, object]:
+    source_path = repository / FROZEN_SELECTION_PATH
+    raw = source_path.read_bytes()
+    if _sha_bytes(raw) != FROZEN_SELECTION_BYTES_SHA256:
+        raise MatrixReassessmentError(
+            "frozen pilot/development selection input bytes changed"
+        )
+    source = _mapping(
+        _read_canonical(source_path, "frozen selection input"),
+        "frozen selection input",
+    )
+    deep_freeze = _mapping(source.get("deep_freeze"), "selection deep freeze")
+    observed = {
+        "freeze": deep_freeze.get("freeze_sha256"),
+        "prompts": _mapping(
+            deep_freeze.get("prompts"), "frozen prompts"
+        ).get("sha256"),
+        "policies": _mapping(
+            deep_freeze.get("policies"), "frozen policies"
+        ).get("sha256"),
+        "resource_policy": _mapping(
+            deep_freeze.get("resource_policy"), "frozen resource policy"
+        ).get("sha256"),
+        "thresholds": _mapping(
+            deep_freeze.get("thresholds"), "frozen thresholds"
+        ).get("sha256"),
+    }
+    if (
+        observed != dict(FROZEN_SELECTION_SHA256S)
+        or deep_freeze.get("frozen") is not True
+        or deep_freeze.get("tuning_permitted") is not False
+    ):
+        raise MatrixReassessmentError(
+            "frozen pilot/development selection contract changed"
+        )
     return {
         "splits": [split.value for split in _MATRIX_SPLITS],
         "cache_modes": [mode.value for mode in _MATRIX_CACHE_MODES],
         "variant_ids": list(ALL_VARIANT_IDS),
+        "source": {
+            "path": FROZEN_SELECTION_PATH.as_posix(),
+            "bytes_sha256": FROZEN_SELECTION_BYTES_SHA256,
+            "semantic_sha256": FROZEN_SELECTION_SHA256S["freeze"],
+        },
+        "prompts_sha256": FROZEN_SELECTION_SHA256S["prompts"],
+        "policies_sha256": FROZEN_SELECTION_SHA256S["policies"],
+        "resource_policy_sha256": FROZEN_SELECTION_SHA256S[
+            "resource_policy"
+        ],
+        "thresholds_sha256": FROZEN_SELECTION_SHA256S["thresholds"],
+        "repaired_model_identities_sha256": frozen.inventory.sha256,
         "prompts_frozen": True,
         "policies_frozen": True,
         "model_identities_frozen": True,
         "thresholds_frozen": True,
         "selection_inputs_changed": False,
-        "tuning_permitted": True,
+        "tuning_permitted": False,
     }
 
 
 def _build_index(
     frozen: LiveCapabilityReprobe,
     summaries: Sequence[Mapping[str, object]],
+    repository: Path,
 ) -> dict[str, object]:
     totals = {
         "case_count": sum(int(item["case_count"]) for item in summaries),
@@ -672,6 +751,9 @@ def _build_index(
         ),
         "invalid_control_verified_count": sum(
             int(item["invalid_control_verified_count"]) for item in summaries
+        ),
+        "invalid_control_coordinate_count": sum(
+            int(item["invalid_control_coordinate_count"]) for item in summaries
         ),
     }
     without_digest = {
@@ -695,7 +777,7 @@ def _build_index(
             }
         ),
         "source_binding": dict(frozen.source_binding),
-        "selection_inputs": _selection_inputs(),
+        "selection_inputs": _selection_inputs(repository, frozen),
         "split_runs": [dict(item) for item in summaries],
         "totals": totals,
         "safety": {
@@ -708,9 +790,17 @@ def _build_index(
             "invalid_control_verified_count": totals[
                 "invalid_control_verified_count"
             ],
+            "invalid_control_coordinate_count": totals[
+                "invalid_control_coordinate_count"
+            ],
         },
     }
-    if totals["case_count"] != 20 or totals["coordinate_count"] != 560:
+    if (
+        totals["case_count"] != 20
+        or totals["coordinate_count"] != 560
+        or totals["invalid_control_coordinate_count"] != 56
+        or totals["invalid_control_verified_count"] != 0
+    ):
         raise MatrixReassessmentError("aggregate matrix total is incomplete")
     return {**without_digest, "artifact_sha256": _sha(without_digest)}
 
@@ -754,6 +844,7 @@ def _validate_index_payload(
     value: object,
     *,
     frozen: LiveCapabilityReprobe,
+    repository: Path,
     index_path: Path,
     output_root: Path,
 ) -> Mapping[str, object]:
@@ -791,7 +882,7 @@ def _validate_index_payload(
         or data["corpus_manifest_sha256"] != FROZEN_CORPUS_MANIFEST_SHA256
         or data["environment_sha256"] != frozen.inventory.sha256
         or data["source_binding"] != dict(frozen.source_binding)
-        or data["selection_inputs"] != _selection_inputs()
+        or data["selection_inputs"] != _selection_inputs(repository, frozen)
     ):
         raise MatrixReassessmentError("matrix frozen identity drifted")
     without_digest = {key: data[key] for key in data if key != "artifact_sha256"}
@@ -827,7 +918,7 @@ def _validate_index_payload(
                 f"{plan.split.value} matrix summary changed"
             )
         summaries.append(summary)
-    expected = _build_index(frozen, summaries)
+    expected = _build_index(frozen, summaries, repository)
     if data != expected:
         raise MatrixReassessmentError("matrix aggregate recomputation changed")
     return MappingProxyType(dict(data))
@@ -852,6 +943,7 @@ def validate_reassessment_matrix(
         index = _validate_index_payload(
             _read_canonical(index_path, "matrix index"),
             frozen=frozen,
+            repository=repository,
             index_path=index_path,
             output_root=root,
         )
@@ -890,11 +982,6 @@ def execute_reassessment_matrix(
             output_root=root,
             snapshot_path=snapshot_path,
         )
-    if root.exists():
-        raise MatrixReassessmentError(
-            "partial matrix namespace exists without an aggregate receipt; "
-            "use a fresh run namespace"
-        )
     frozen = frozen_reprobe or validate_frozen_capability_reprobe(
         repository_root=repository,
         receipt_directory=repository / DEFAULT_RECEIPT_DIRECTORY,
@@ -914,6 +1001,30 @@ def execute_reassessment_matrix(
     try:
         for plan in plans:
             split_root = root / plan.split.value
+            ledger_path = _ledger_path(split_root)
+            if split_root.exists():
+                if not ledger_path.is_file():
+                    raise MatrixReassessmentError(
+                        f"{plan.split.value} has partial evidence without a "
+                        "completed resource ledger; use a fresh split namespace"
+                    )
+                validated_run = validate_ablation_evidence(
+                    plan, output_root=split_root
+                )
+                ledger = _validate_ledger(
+                    _read_canonical(ledger_path, "resource ledger"),
+                    validated_run,
+                )
+                summaries.append(
+                    _split_summary(
+                        run=validated_run,
+                        split_root=split_root,
+                        index_path=index_path,
+                        ledger_path=ledger_path,
+                        ledger=ledger,
+                    )
+                )
+                continue
             run = execute_ablation(
                 plan,
                 live.adapters,
@@ -925,7 +1036,6 @@ def execute_reassessment_matrix(
                     f"{plan.split.value} execution is incomplete"
                 )
             ledger_value = _build_ledger(run)
-            ledger_path = _ledger_path(split_root)
             _write_once(ledger_path, ledger_value)
             validated_run = validate_ablation_evidence(
                 plan, output_root=split_root
@@ -942,7 +1052,7 @@ def execute_reassessment_matrix(
             )
     finally:
         live.close()
-    index = _build_index(frozen, summaries)
+    index = _build_index(frozen, summaries, repository)
     _write_once(index_path, index)
     _write_once(Path(snapshot_path), _snapshot(index, index_path))
     return validate_reassessment_matrix(
@@ -957,6 +1067,9 @@ __all__ = [
     "DEFAULT_MATRIX_ROOT",
     "DEFAULT_MATRIX_SNAPSHOT",
     "EXPECTED_COORDINATE_COUNT",
+    "FROZEN_SELECTION_BYTES_SHA256",
+    "FROZEN_SELECTION_PATH",
+    "FROZEN_SELECTION_SHA256S",
     "HSSLEV1305A27",
     "MATRIX_INDEX_SCHEMA",
     "MATRIX_SEED",

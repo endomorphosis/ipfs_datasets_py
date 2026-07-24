@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass, field
+from functools import lru_cache
 import hashlib
 import importlib
 import json
@@ -271,6 +272,76 @@ def _serialize(value: object) -> object:
     return value
 
 
+@lru_cache(maxsize=1)
+def _current_modal_codec() -> object:
+    """Load the immutable compiler/model once while keeping outputs isolated.
+
+    Codec initialization loads the same frozen spaCy model for every arm.
+    Sharing that read-only model instance is part of the resource contract;
+    individual ``encode`` calls remain distinct so cold/warm and variant
+    observations never reuse an output.
+    """
+
+    from ipfs_datasets_py.logic.modal.codec import (
+        DeterministicModalLogicCodec,
+        ModalLogicCodecConfig,
+    )
+
+    return DeterministicModalLogicCodec(ModalLogicCodecConfig())
+
+
+def _encode_current_modal(text: str, document_id: str) -> tuple[object, str]:
+    codec = _current_modal_codec()
+    encoded = codec.encode(
+        text,
+        document_id=document_id,
+        source="logic_pipeline_benchmark",
+    )
+    return (
+        _serialize(getattr(encoded, "modal_ir", {})),
+        str(getattr(encoded, "parser_name", "")),
+    )
+
+
+def _bounded_modal_ir_projection(modal_ir: object) -> object:
+    """Retain benchmark-relevant IR while bounding the stage artifact.
+
+    The production codec also emits large ontology and graph-export metadata.
+    Those derived indexes are not consumed by the benchmark graph and can
+    exceed the 64 KiB stage-artifact contract on a short case.  The complete
+    output is still bound by ``modal_ir_sha256``; this projection keeps the
+    semantic formulas and source identity needed for inspection and replay.
+    """
+
+    if not isinstance(modal_ir, Mapping):
+        return {
+            "value_type": type(modal_ir).__name__,
+            "projection": "digest_only",
+        }
+    retained = {
+        key: modal_ir[key]
+        for key in (
+            "document_id",
+            "formulas",
+            "normalized_text",
+            "source",
+            "version",
+        )
+        if key in modal_ir
+    }
+    encoded = canonical_json(retained).encode("utf-8")
+    if len(encoded) <= 32 * 1024:
+        return retained
+    return {
+        "document_id": retained.get("document_id"),
+        "normalized_text_sha256": _sha(retained.get("normalized_text")),
+        "formulas_sha256": _sha(retained.get("formulas")),
+        "source": retained.get("source"),
+        "version": retained.get("version"),
+        "projection": "digest_only",
+    }
+
+
 def _current_compiler_handler(request: StageRequest) -> StageOutput:
     """Invoke the repository's current deterministic modal codec lazily."""
 
@@ -279,24 +350,16 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
     text = request.input_data.get("text")
     if not isinstance(text, str) or not text.strip():
         raise RuntimeBindingError("compiler input requires source text")
-    from ipfs_datasets_py.logic.modal.codec import (
-        DeterministicModalLogicCodec,
-        ModalLogicCodecConfig,
-    )
-
-    codec = DeterministicModalLogicCodec(ModalLogicCodecConfig())
-    encoded = codec.encode(
-        text,
-        document_id=request.case_id,
-        source="logic_pipeline_benchmark",
-    )
-    modal_ir = _serialize(getattr(encoded, "modal_ir", {}))
+    modal_ir, parser_name = _encode_current_modal(text, request.case_id)
+    modal_ir_bytes = len(canonical_json(modal_ir).encode("utf-8"))
     compiled = compile_reviewed_obligation(request.input_data)
     payload: dict[str, object] = {
         "schema": "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1",
-        "modal_ir": modal_ir,
+        "modal_ir": _bounded_modal_ir_projection(modal_ir),
         "modal_ir_sha256": _sha(modal_ir),
-        "parser_name": str(getattr(encoded, "parser_name", "")),
+        "modal_ir_canonical_bytes": modal_ir_bytes,
+        "modal_ir_projection": "benchmark-semantic-v1",
+        "parser_name": parser_name,
         "compiled_obligation": None if compiled is None else compiled.to_dict(),
         "compiled_obligation_sha256": None if compiled is None else compiled.digest,
     }
@@ -1224,6 +1287,7 @@ def _probe_cli(args: argparse.Namespace) -> int:
 
 def _execute_cli(args: argparse.Namespace) -> int:
     from . import matrix_reassessment
+    from .ablation import AblationValidationError
     from .contracts import CacheMode, Split
 
     split_values = tuple(
@@ -1256,7 +1320,13 @@ def _execute_cli(args: argparse.Namespace) -> int:
             seed=args.seed,
             resume=True,
         )
-    except matrix_reassessment.MatrixReassessmentError as exc:
+    except (
+        matrix_reassessment.MatrixReassessmentError,
+        AblationValidationError,
+        CapabilityContractError,
+        ProtocolContractError,
+        RuntimeBindingError,
+    ) as exc:
         print(
             canonical_json(
                 {

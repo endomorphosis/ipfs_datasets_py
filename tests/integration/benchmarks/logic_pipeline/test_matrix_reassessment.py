@@ -14,6 +14,7 @@ from benchmarks.logic_pipeline import ablation, capability_reprobe, runtime
 from benchmarks.logic_pipeline import matrix_reassessment as reassessment
 from benchmarks.logic_pipeline.adapters import StageOutput
 from benchmarks.logic_pipeline.cases import FROZEN_CORPUS_MANIFEST_SHA256
+from benchmarks.logic_pipeline.cases import DEFAULT_CORPUS_PATH, DEFAULT_MANIFEST_PATH
 from benchmarks.logic_pipeline.contracts import (
     CacheMode,
     CaseResultRecord,
@@ -275,6 +276,25 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
             )
 
 
+def test_non_holdout_reader_never_deserializes_the_sealed_tail(
+    tmp_path: Path,
+) -> None:
+    source_lines = (ROOT / DEFAULT_CORPUS_PATH).read_bytes().splitlines(
+        keepends=True
+    )
+    assert len(source_lines) == 30
+    poisoned = tmp_path / "sealed-corpus.jsonl"
+    poisoned.write_bytes(b"".join(source_lines[:20]) + b"{not-json}\n" * 10)
+
+    _manifest, cases = reassessment._sealed_non_holdout_cases(
+        corpus_path=poisoned,
+        manifest_path=ROOT / DEFAULT_MANIFEST_PATH,
+    )
+
+    assert len(cases) == 20
+    assert {case.split for case in cases} == {Split.PILOT, Split.DEVELOPMENT}
+
+
 def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     tmp_path: Path,
     frozen_reprobe: capability_reprobe.LiveCapabilityReprobe,
@@ -297,6 +317,10 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
         output_root=output_root,
         snapshot_path=snapshot_path,
     )
+    # Simulate interruption after both split ledgers were durably written but
+    # before the aggregate index/snapshot publication.
+    (output_root.parent / "matrix-execution-v2.json").unlink()
+    snapshot_path.unlink()
     replay = reassessment.execute_reassessment_matrix(
         frozen_reprobe,
         repository_root=ROOT,
@@ -311,6 +335,25 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     assert len(handlers.calls) == first_call_count
     assert snapshot_path.is_file()
     assert first["artifact_sha256"]
+    assert first["totals"]["invalid_control_coordinate_count"] == 56
+    assert first["totals"]["invalid_control_verified_count"] == 0
+    selection = first["selection_inputs"]
+    assert selection["tuning_permitted"] is False
+    assert selection["selection_inputs_changed"] is False
+    assert selection["source"] == {
+        "path": reassessment.FROZEN_SELECTION_PATH.as_posix(),
+        "bytes_sha256": reassessment.FROZEN_SELECTION_BYTES_SHA256,
+        "semantic_sha256": reassessment.FROZEN_SELECTION_SHA256S["freeze"],
+    }
+    assert selection["prompts_sha256"] == (
+        reassessment.FROZEN_SELECTION_SHA256S["prompts"]
+    )
+    assert selection["policies_sha256"] == (
+        reassessment.FROZEN_SELECTION_SHA256S["policies"]
+    )
+    assert selection["thresholds_sha256"] == (
+        reassessment.FROZEN_SELECTION_SHA256S["thresholds"]
+    )
     split_runs = first["split_runs"]
     assert isinstance(split_runs, list)
     for split_run in split_runs:

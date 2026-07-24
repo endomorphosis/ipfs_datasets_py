@@ -109,7 +109,9 @@ def test_cache_evidence_namespaces_and_scope_receipts_bind_all_identities(
         assert scope["environment_sha256"] == SHA_ENVIRONMENT
         assert scope["configuration_sha256"] == contract.configuration_sha256
         assert scope["cache_namespace"] == contract.cache_namespace
-        assert Path(scope["canonical_root"]) == scope_path.parent.resolve()
+        assert scope["canonical_root"] == scope_path.parent.relative_to(
+            tmp_path
+        ).as_posix()
 
 
 def test_schedule_is_seeded_recorded_and_position_counterbalanced() -> None:
