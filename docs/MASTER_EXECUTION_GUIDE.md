@@ -401,17 +401,17 @@ Community size            Emerging    Large       Large       Growing
 ## Support & Resources
 
 ### Documentation
-- **Project README:** [README.md](README.md)
-- **Testing Guide:** [TESTING.md](TESTING.md)
-- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Architecture:** [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **Project README:** [README.md](../README.md)
+- **Testing Guide:** [CONTRIBUTING.md](../CONTRIBUTING.md#testing)
+- **Contributing:** [CONTRIBUTING.md](../CONTRIBUTING.md)
+- **Architecture:** [Architecture documentation](architecture/README.md)
 
 ### Key Files for Phase 3C.7
 - [PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md](PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md) - Main guide
 - [PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md](PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md) - Cost details
 - [GrothVerifier.sol](../ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol) - Smart contract
-- [eth_integration.py](eth_integration.py) - Integration code
-- [test_eth_integration.py](test_eth_integration.py) - Tests
+- [eth_integration.py](../ipfs_datasets_py/logic/zkp/eth_integration.py) - Integration code
+- [test_eth_integration.py](../ipfs_datasets_py/logic/zkp/tests/test_eth_integration.py) - Tests
 
 ### External Resources
 - **Ethereum Sepolia Faucet:** https://sepoliafaucet.com/
