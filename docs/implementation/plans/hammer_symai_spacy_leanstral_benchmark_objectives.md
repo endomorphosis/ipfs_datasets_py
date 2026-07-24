@@ -797,6 +797,62 @@ is never completion evidence.
 - Gap task: Repair and pin the full spaCy runtime outside any frozen evaluation run, then record reproducible provisioning and identity validation.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1 and the validated benchmark runbook.
+- Evidence implementation:
+  `scripts.benchmarks.provision_hssl_spacy.HSSLEV1103A41` is the stable AST
+  evidence symbol for the full-model runtime boundary. The closed-schema
+  `benchmarks/logic_pipeline/runtime_env/spacy.lock` is semantically
+  content-addressed as
+  `f45945e4e8a24305b3ade669ed52da2df2b0af63267b9ef28823b9bac442d68d`;
+  `scripts/benchmarks/provision_hssl_spacy.py` owns strict lock parsing,
+  artifact verification, detached-environment provisioning, isolated probing,
+  canonical receipt construction, and receipt revalidation. The focused
+  `tests/integration/benchmarks/logic_pipeline/test_spacy_runtime.py` suite
+  exercises that boundary together with the existing fail-closed adapter
+  suite.
+- Pinned runtime contract: The lock selects spaCy `3.8.14` for CPython 3.12
+  from exact Linux aarch64 or x86-64 wheels and selects
+  `en_core_web_sm==3.8.0` from its exact platform-independent wheel. Every
+  wheel carries a credential-free HTTPS URL, byte size, and SHA-256; the
+  model metadata file is separately pinned as
+  `7456349002fa8cf31111051bd37fdbea67a1b7f7a0a60ce235466f98a6758125`.
+  The spaCy wheel SHA-256 values are
+  `daeb64b048f12c059997281aed53eb8776d26416dd313cf17ad6f63124b2b564`
+  (aarch64) and
+  `6d45715a24446f23b98ec3f09409a1d4111983d1d64613250ee38c3270e21853`
+  (x86-64); the model wheel SHA-256 is
+  `1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85`.
+  The `click==8.3.2` import prerequisite exposed by a clean-environment probe
+  is also artifact-pinned rather than left to resolver drift. Validation
+  requires the exact locked model metadata, language, enabled
+  `tok2vec`/`tagger`/`parser`/`attribute_ruler`/`lemmatizer`/`ner` pipeline,
+  disabled `senter`, full annotation set, and spaCy/model versions. Requested
+  and effective identities must both be `en_core_web_sm`; any version,
+  artifact, metadata, component, annotation, identity, blank-model, regex, or
+  fallback drift fails closed.
+- Smoke and immutability contract: Provisioning accepts only an explicit
+  detached virtual-environment destination, rejects active-run markers,
+  current-environment mutation, frozen result namespaces, and repository
+  evidence/data paths, and verifies downloaded bytes before installation. It
+  executes a fixed 47-byte non-corpus sentence with isolated Python and emits
+  only its digest, byte count, annotation/count summary, pipeline identity,
+  artifact identities, safety flags, and a recomputable receipt digest. A live
+  Linux/aarch64 CPython 3.12 detached probe produced receipt
+  `1879cbe401d89530458534394a502b8832a3ff769ec9d927ed5059474ce7ae4a`
+  with requested equal to effective, fallback false, all six locked
+  annotations present, one sentence, nine tokens, and two entities. The
+  command never reads a corpus or holdout, changes production routing, or
+  writes an evaluation result; the frozen protocol, corpus, variants, prompts,
+  policies, thresholds, selection inputs, and all v1 evidence remain
+  unchanged.
+- Backlog alignment: HSSL-G110 remains one cohesive bounded runtime
+  identity/provisioning goal. The lock, provisioner, AST symbol, focused
+  integration coverage, and this evidence record cover HSSLEV1103A41 without
+  requiring a smaller child goal or output/parent refinement. HSSL-G120
+  separately owns the new-run capability reprobe after all runtime repairs.
+  Generated todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and were not manually edited; the supervisor can reconcile
+  this goal from the AST symbol, lock digest, objective heap, discovery
+  receipt, and required validator.
 
 ## HSSL-G111 Restore and pin SyMAI and llm_router provider/model identities
 
