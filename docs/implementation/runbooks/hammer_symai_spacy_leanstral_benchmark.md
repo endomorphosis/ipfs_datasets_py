@@ -1,26 +1,30 @@
 # Hammer, SyMAI, spaCy, and Leanstral Benchmark Decision Runbook
 
-Runbook ID: HSSL-BENCH-026  
-Goal ID: HSSL-G100  
-Evidence: HSSLEV1006B8A  
-Evidence marker: evidence-bound final architecture decision, delegation matrix, and worktree-safe reproduction runbook  
-Protocol revision: 1  
-Decision artifact: docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json  
+Runbook ID: HSSL-BENCH-043
+Goal ID: HSSL-G170
+Evidence: HSSLEV1703E61
+Evidence marker: source-bound replacement architecture decision, immutable v1 preservation, measured delegation dispositions, and worktree-safe reassessment reproduction runbook
+Protocol revision: 1
+Decision artifact: docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json
 Objective heap: docs/implementation/plans/hammer_symai_spacy_leanstral_benchmark_objectives.md
 
 ## Purpose and authority
 
-This is the operator runbook for reproducing and maintaining the final
+This is the operator runbook for reproducing and maintaining the replacement
 Hammer/SyMAI/spaCy/Leanstral architecture decision. It is an evidence
 procedure, not a production deployment procedure. Nothing in this runbook
 authorizes a production route change, service installation, model download,
-automatic merge, holdout access, or promotion.
+automatic merge, holdout access, or production promotion.
 
-The machine-readable final-decision artifact is authoritative for the current
-disposition. The objective heap records the dependency graph. Canonical
-benchmark result files and their dated performance snapshots provide the phase
-receipts. If prose conflicts with a source-validated canonical receipt, stop
-and use the receipt. Never edit a receipt to make the prose agree.
+The machine-readable v2 final-decision artifact is authoritative for the
+current disposition. It is valid only when its exact HSSL-G140 pilot,
+HSSL-G150 holdout, and HSSL-G160 replay/report sources revalidate. The
+immutable v1 decision remains the historical predecessor and is linked by
+both byte and semantic digest; v2 does not overwrite or reinterpret it. The
+objective heap records the dependency graph. Canonical benchmark result files
+and their dated performance snapshots provide the phase receipts. If prose
+conflicts with a source-validated canonical receipt, stop and use the receipt.
+Never edit a receipt to make the prose agree.
 
 The independent native kernel is the only proof authority. Hammer solver
 evidence, Leanstral drafts, SyMAI output, spaCy annotations, reconstruction
@@ -28,22 +32,79 @@ records, model confidence, and legacy S1 predictions are non-authoritative.
 
 ## Published decision
 
-The 2026-07-24 decision is **no architecture promotion**:
+The 2026-07-24 replacement decision is **no architecture promotion**:
 
 - Keep the current effective A0 route unchanged.
+- Select `gather_more_evidence` as the architecture outcome.
 - Do not add full-model spaCy, SyMAI, Hammer, or Leanstral to the production
   route on the basis of this benchmark capture.
 - Do not select P0, P1, P2, or P3 for production.
 - Keep the holdout sealed and unopened.
 
-This is a blocked-evidence decision, not a finding that the optional
-components are ineffective. The capability capture found the requested full
-spaCy pipeline and Leanstral service unavailable, SyMAI/router identities
-degraded, and no complete paired efficacy observations. The pilot gate is
-therefore `incomplete`, its nonbaseline shortlist is empty, and holdout access
-is unauthorized. The holdout gate is correspondingly `blocked` and
-`sealed_unopened`. Null or unavailable measurements must never be presented as
-zero cost, zero failures, or an efficacy result.
+This is a source-validated blocked-evidence decision, not a finding that the
+optional components are ineffective or that A0 won. The repaired-runtime
+reassessment executed all 560 pilot/development coordinates for A0-A12 and S1
+across cold and warm modes. It produced 520 non-missing proof-efficacy
+observations, zero independent-native-kernel acceptances, and no independent
+reviewed semantic-quality receipt. All 56 invalid-control coordinates had
+zero kernel-verified false positives, but that alone cannot establish
+candidate quality or authorize a shortlist.
+
+The source-valid HSSL-G140 pilot gate is therefore `incomplete`, its frozen
+nonbaseline shortlist is empty, and holdout access is unauthorized. The
+HSSL-G150 holdout gate is correspondingly `blocked` and `sealed_unopened`,
+with no writes, backend calls, scheduled or observed pairs, or inspected
+outcomes. HSSL-G160 truthfully selects an empty replay population and sets
+`replay_claimed=false`; its pilot/development statistics remain measured,
+while every holdout-only value is
+`not_applicable_before_authorization` and null. Structural validation, a
+zero-population replay accounting flag, or an observed zero must never be
+presented as paired holdout efficacy, zero holdout cost, or replay success.
+
+The immutable predecessor decision is:
+
+```text
+docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json
+byte SHA-256     0e53798d3f1deaab040cf99f10034644f421ffd51f15090a948aa7085041a84e
+semantic SHA-256 80823442e5115b2f499a2e77a11817dff555494ca0ecccfc79e59cbf423b7cce
+disposition      gather_more_evidence / no production promotion
+```
+
+The v2 publication preserves that object byte-for-byte and links it as its
+predecessor. A timestamp, replacement filename, or structurally valid
+reassessment cannot supersede the predecessor unless all named source
+artifacts and the predecessor itself match their recorded identities.
+
+Every experimental arm has an explicit evidence disposition:
+
+| Arm | Reassessment evidence | Replacement decision |
+|---|---|---|
+| A0 | Frozen current route; measured reference coordinates | Retain unchanged as reference only; not promoted or declared superior |
+| A1 | Full-spaCy deterministic core; zero kernel acceptances and no semantic-quality receipt | Not selected |
+| A2 | A1 plus deterministic Hammer; no kernel-verified marginal gain | Not selected |
+| A3 | Hammer-first and bounded Leanstral fallback; observed nondominated only on an ineligible frontier | Not selected |
+| A4 | A3 plus ambiguity-gated SyMAI; no eligible quality result | Not selected |
+| A5 | A4 with SyMAI always on; measured calls without eligible benefit | Not selected |
+| A6 | Leanstral before Hammer; proof-order benefit not established | Not selected |
+| A7 | A4 with regex/legal parser; observed nondominated only on an ineligible frontier | Not selected |
+| A8 | A4 with forced spaCy blank fallback; no eligible full-model/fallback comparison | Not selected |
+| A9 | A4 without Hammer; no eligible Hammer marginal-value result | Not selected |
+| A10 | A4 with pinned learned Hammer selector; no eligible selector benefit | Not selected |
+| A11 | A4 with SyMAI/LLM premise ranking; no eligible ranking benefit | Not selected |
+| A12 | Always-on duplicated-work stress arm; measured work does not establish benefit | Not selected |
+| S1 | Legacy SymbolicAI/kernel-truth diagnostic; typed unavailable coordinates retained | Diagnostic only; never candidate-eligible |
+
+The measured and missing tradeoffs remain separate:
+
+| Domain | Reassessment result | Decision use |
+|---|---|---|
+| Quality | 520 non-missing proof-efficacy observations, zero kernel acceptances; independent semantic-quality rate null with a reason | No arm satisfies the frozen quality gate |
+| Safety | 56 invalid-control coordinates and zero kernel-verified false positives | Required containment evidence, but not sufficient efficacy evidence |
+| Latency | 433009.90631 ms total and 773.231976 ms mean per coordinate across the complete matrix | Retained as measured pilot/development cost; no holdout latency claim |
+| Resources | 748 model calls, 120 solver processes, 1580 stage/resource leases, and 360 retries | Retained as measured cost; never recast as benefit |
+| Reliability and routing | All 560 coordinates terminal; 96 kernel invocations, zero acceptances, no arm substitution or fallback | Supports completeness and trust-boundary checks, not promotion |
+| Complexity/Pareto | A1, A3, and A7 observed nondominated; no eligible nondominated candidate | No ranking or truncation; ineligible frontier cannot select an arm |
+| Holdout and replay | Zero authorized pairs and an empty replay population | All holdout-only values remain null; no efficacy or replay claim |
 
 The immutable baseline manifest is:
 
@@ -53,11 +114,12 @@ SHA-256 6b37a6493d6328102b558258843218128ad0bf6f8cc7be13f8d0c2e0bb61e156
 source commit 2a1be00b1b76e6652c25d418752affbf0f85d176
 ```
 
-The canonical holdout phase receipt is:
+The canonical reassessment holdout phase receipt is:
 
 ```text
-workspace/benchmarks/hammer-symai-spacy-leanstral/results/holdout-evaluation-v1.json
-SHA-256 7d064c5fe82c25ad93c01fd13d4350ae2457f93d3bd32b9cf9a9365b1836c2cd
+workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json
+byte SHA-256     9e712b9ed1fb67c80115d12e3bc92850f23da601543fa59a4cbd700a54b0df9d
+semantic SHA-256 e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d
 state blocked / sealed_unopened
 ```
 
@@ -75,11 +137,11 @@ production authorization.
 
 | Component or policy | Operational owner | Allowed benchmark responsibility | Authority and fallback | Current disposition |
 |---|---|---|---|---|
-| A0 current route | Logic-pipeline maintainer | Frozen current codec, including the recorded `spacy.blank:en` fallback | Existing deterministic validators; no experimental escalation | Retain unchanged |
-| Full-model spaCy | NLP adapter owner | Tokens, sentences, lemmas, dependencies, entities, SRL features, and modal cues | Linguistic evidence only; unavailable full model stays unavailable and never becomes blank/regex success | Withheld; no paired holdout evidence |
-| SyMAI | Model-routing owner | Bounded structured semantic candidate or contract repair through the existing `llm_router` | Canonical schema/parser validates; no recursive routing or second model manager | Withheld; no paired holdout evidence |
-| Hammer | Proof-search owner | Premise selection, translation, bounded solver portfolio, normalization, and native reconstruction | Solver/reconstruction evidence is untrusted until a separate native-kernel receipt accepts it | Withheld; no paired holdout evidence |
-| Leanstral | Model-service owner | One bounded Lean draft and at most one reviewed repair for a fixed obligation | Draft only; no `sorry`, `admit`, obligation rebinding, or model proof claim; kernel checks independently | Withheld; no paired holdout evidence |
+| A0 current route | Logic-pipeline maintainer | Frozen current codec, including the recorded `spacy.blank:en` fallback | Existing deterministic validators; no experimental escalation | Retain unchanged as reference; not selected as a measured winner |
+| Full-model spaCy | NLP adapter owner | Tokens, sentences, lemmas, dependencies, entities, SRL features, and modal cues | Linguistic evidence only; unavailable full model stays unavailable and never becomes blank/regex success | No expanded production role; semantic quality and paired holdout value are unavailable |
+| SyMAI | Model-routing owner | Bounded structured semantic candidate or contract repair through the existing `llm_router` | Canonical schema/parser validates; no recursive routing or second model manager | No production role; measured calls produced no eligible candidate and paired holdout value is unavailable |
+| Hammer | Proof-search owner | Premise selection, translation, bounded solver portfolio, normalization, and native reconstruction | Solver/reconstruction evidence is untrusted until a separate native-kernel receipt accepts it | No production role; no kernel-verified gain or paired holdout tradeoff |
+| Leanstral | Model-service owner | One bounded Lean draft and at most one reviewed repair for a fixed obligation | Draft only; no `sorry`, `admit`, obligation rebinding, or model proof claim; kernel checks independently | No production role; bounded fallback value and paired holdout tradeoff are unavailable |
 | Native kernel | Kernel/toolchain owner | Check the exact terminal obligation and emit the accepted receipt | Sole verification authority; no fallback authority | Mandatory for every proof claim |
 | P0 always-on | Benchmark decision owner | Comparison policy only | Same resource limits and kernel boundary as every policy | Rejected for production at this revision |
 | P1 deterministic-first | Benchmark decision owner | Comparison policy only | At most one bounded cross-family fallback | Rejected for production at this revision |
@@ -279,13 +341,14 @@ PYTHONPATH=ipfs_accelerate_py python -m \
 
 The absence of `--submit-bundles` is intentional. Inspect the todo board,
 objective graph, discovery receipts, bundle index, and
-`objective_bundles/todo_vector_index.json`. HSSL-G100 must remain downstream
-of HSSL-G090, each generated task must stay in its bundle shard, and evidence
-terms must reconcile from validated outputs rather than descriptive prose.
-Do not manually mark generated backlog tasks complete. If a genuine gap is too
-large, refine the objective heap into bounded child goals, rerun ingestion,
-and preserve the parent/child phase edge; do not split merely to bypass a
-failed gate.
+`objective_bundles/todo_vector_index.json`. HSSL-G170 must remain downstream
+of HSSL-G160, which must retain its HSSL-G150 and HSSL-G140 source chain. Each
+generated task must stay in its bundle shard, and evidence terms must
+reconcile from validated outputs rather than descriptive prose. Do not
+manually mark generated backlog tasks complete. If a genuine gap is too large,
+refine the objective heap into bounded child goals, rerun ingestion, and
+preserve the parent/child phase edge; do not split merely to bypass a failed
+gate.
 
 ## Baseline and ablation execution
 
@@ -329,14 +392,18 @@ separately. Safety is a hard constraint, not a weighted score.
 Run the canonical pilot gate:
 
 ```bash
-python benchmarks/logic_pipeline/report.py --gate pilot-shortlist
+python benchmarks/logic_pipeline/report.py \
+  --gate pilot-shortlist \
+  --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/pilot-shortlist-v2.json
 ```
 
 The command's `artifact_sha256` must be
-`5be9bff6e4f0abf9c096e007b3c3230d09eab943d7ccd58f5fd6d7ab31c746fa`.
-Its complete matrix contains 280 coordinates: fourteen arms, ten pilot cases,
-and cold/warm modes. A future shortlist may contain at most four nonbaseline
-arms and may pass only when:
+`2d146c1cb75eb8c2261a3e1be68ba98bf8b2a4996a1839fb36e26f9bd7f37acb`.
+The source-bound matrix has semantic SHA-256
+`437961214b97fadd495f65d4a006406b27086e6aeb9f46d8cd27e36df1ed39bb`
+and contains 560 coordinates: fourteen arms, ten cases in each of pilot and
+development, and cold/warm modes. A future shortlist may contain at most four
+nonbaseline arms and may pass only when:
 
 - every coordinate has a terminal measured or typed-missing outcome;
 - invalid controls have zero native-kernel false positives;
@@ -349,22 +416,42 @@ arms and may pass only when:
 - the receipt explicitly sets holdout authorization for that exact nonempty
   shortlist.
 
-For the published capture the decision is `incomplete`, the shortlist is
-empty, and holdout is unauthorized. Stop here. An operator must not interpret
-“zero observed invalid-control false positives” under missing measurements as
-a safety pass.
+For the published reassessment the decision is `incomplete`, the shortlist is
+frozen empty, and holdout is unauthorized. All coordinates are terminal and
+the proof, latency, resource, routing, and complexity measurements are
+source-bound, but there are zero kernel acceptances and the independent
+semantic-quality measurement is unavailable. The observed nondominated
+candidate IDs A1, A3, and A7 are not eligible candidates and are not a
+ranking. Stop here. An operator must not interpret zero invalid-control false
+positives, zero proof completion, or Pareto nondominance as an authorization.
+
+Remediation occurs outside this frozen run, in order: repair reviewed
+obligation and proof-candidate generation for A1/A2; supply the registered
+nonempty Leanstral prompt/context boundary for A3; repair the frozen SyMAI
+router invocation for A4-A12 without substitution; and publish independent
+reviewed semantic-quality receipts for A1-A12. Any repair requires a new run
+ID, a new capability inventory, and full pilot/development reassessment before
+another shortlist decision.
 
 ## Holdout gate
 
 Validate the unopened seal without executing a holdout:
 
 ```bash
-python benchmarks/logic_pipeline/report.py --gate holdout
+python benchmarks/logic_pipeline/report.py \
+  --gate holdout \
+  --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json
 ```
 
 The command's `artifact_sha256` must be
-`7d064c5fe82c25ad93c01fd13d4350ae2457f93d3bd32b9cf9a9365b1836c2cd`.
+`e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d`.
 The expected published state is `blocked` and `sealed_unopened`.
+
+The authorization audit must fail at `before_holdout_activity`. The blocked
+receipt must have no reviewed-input access, execution or cache namespace,
+write, backend call, scheduled pair, observed pair, case result, kernel
+success, failure, or non-null holdout metric. These zero activity counts prove
+containment only; they are not efficacy, safety, latency, or resource values.
 
 A future holdout execution is allowed only when the source-validated pilot
 receipt is passed, authorizes access, and freezes an exact nonempty shortlist.
@@ -396,19 +483,40 @@ environment digest, and the new `WorktreeSafetyReceipt`. Same-run replay,
 warm-cache replay, same-cache reuse, backend drift, stale receipts, or a source
 commit mismatch fails closed.
 
+For the canonical reassessment, the source-validated holdout contains no
+success or failure population to replay. The canonical replay index at
+`workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/replay/replay-index.json`
+must therefore retain zero required and completed replays, no replay
+worktree/process/cache/receipt activity, and `replay_claimed=false`. Its
+semantic SHA-256 is
+`6248b875566afb7e9706c4f39d28e3a2eea680bd04dfd11f5fee6a5883af27d2`.
+`all_observed_successes_replayed=true` is only zero-population accounting and
+must never be described as replay success.
+
 Validate every report from canonical case-level evidence:
 
 ```bash
 python benchmarks/logic_pipeline/report.py --section frontend --validate
 python benchmarks/logic_pipeline/report.py --section proof --validate
 python benchmarks/logic_pipeline/report.py --section efficiency --validate
-python benchmarks/logic_pipeline/report.py --gate pilot-shortlist
-python benchmarks/logic_pipeline/report.py --gate holdout
-python benchmarks/logic_pipeline/report.py --validate-final-decision
+python benchmarks/logic_pipeline/report.py \
+  --gate pilot-shortlist \
+  --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/pilot-shortlist-v2.json
+python benchmarks/logic_pipeline/report.py \
+  --gate holdout \
+  --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json
+python benchmarks/logic_pipeline/report.py \
+  --section statistics \
+  --validate \
+  --results-path workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json
+python benchmarks/logic_pipeline/report.py \
+  --validate-final-decision \
+  --artifact docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json
 python benchmarks/logic_pipeline/report.py --validate-runbook
 ```
 
-For a measured statistics report, also supply its run-scoped canonical JSON:
+For a new measured statistics report, supply its new run-scoped canonical
+JSON:
 
 ```bash
 python benchmarks/logic_pipeline/report.py \
@@ -417,11 +525,13 @@ python benchmarks/logic_pipeline/report.py \
   --results-path "$HSSL_OPERATIONS_ROOT/$HSSL_RUN_ID/results/statistics.json"
 ```
 
-The final decision must recompute quality, safety, latency, resources, routing,
-reliability, marginal escalation value, unnecessary-call burden, and the
-complexity Pareto frontier from source receipts. It must select or reject all
-four policies explicitly. Missing dimensions make a candidate ineligible;
-they do not become favorable zeroes.
+The v2 decision must source-validate the HSSL-G160 report, which in turn binds
+the exact matrix, pilot, holdout, replay index, statistics, and case receipts.
+It must report quality, safety, latency, resources, routing, reliability,
+marginal escalation value, unnecessary-call burden, and the complexity Pareto
+frontier; select or reject A0-A12, S1, and P0-P3 explicitly; and assign only
+bounded component responsibilities. Missing dimensions make a candidate
+ineligible; they do not become favorable zeroes.
 
 ## Phase gates
 
@@ -432,7 +542,7 @@ they do not become favorable zeroes.
 | Shortlist | Safety plus preregistered quality/resource gates; at most four exact arms | Freeze and explicitly authorize holdout | Keep holdout sealed |
 | Holdout | Passed authorization, exact pairs, frozen resources/order, kernel receipts | Permit replay only | Seal invalid/blocked; no tuning |
 | Replay | All successes and sampled failures pass in fresh worktrees/caches | Permit final analysis | Reject affected claims |
-| Final decision | Every policy/component disposed; all domains and receipts validated | Publish evidence; request separate production review | Keep A0 and no promotion |
+| Replacement decision | Every arm, policy, and component disposed; predecessor and all v2 sources validated | Publish evidence; request separate production review | Keep A0 and no promotion |
 | Production | Separately approved rollout, canary, monitoring, rollback owner | Change only the approved route | Roll back production change |
 
 ## Evidence inventory and freshness
@@ -443,13 +553,28 @@ The minimum publication set is:
 |---|---|
 | Objective heap | `docs/implementation/plans/hammer_symai_spacy_leanstral_benchmark_objectives.md` |
 | Baseline manifest | `workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/baseline-manifest.json` |
-| Front-end analysis | `workspace/benchmarks/hammer-symai-spacy-leanstral/results/frontend-overlap-v1.json` |
-| Proof analysis | `workspace/benchmarks/hammer-symai-spacy-leanstral/results/proof-overlap-ordering-v1.json` |
-| Pilot receipt | `workspace/benchmarks/hammer-symai-spacy-leanstral/results/pilot-shortlist-v1.json` |
-| Holdout receipt | `workspace/benchmarks/hammer-symai-spacy-leanstral/results/holdout-evaluation-v1.json` |
-| Final decision | `docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` |
+| Immutable v1 predecessor | `docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` |
+| Reassessment matrix | `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/matrix-execution-v2.json` |
+| Reassessment pilot gate | `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/pilot-shortlist-v2.json` |
+| Reassessment holdout gate | `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json` |
+| Reassessment replay index | `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/replay/replay-index.json` |
+| Reassessment statistics | `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json` |
+| Reassessment report snapshot | `docs/performance_snapshots/2026-07-24_hssl_reassessment_reports.json` |
+| Replacement final decision | `docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json` |
 | Operator procedure | `docs/implementation/runbooks/hammer_symai_spacy_leanstral_benchmark.md` |
-| Supervisor reconciliation | `data/agent_supervisor/discovery/` |
+| Supervisor reconciliation | `data/agent_supervisor/discovery/2026-07-24-hssl-bench-043-objective-gap-f4c6a8ab86c9.md` |
+
+The publication chain is content-addressed:
+
+| Artifact | Byte SHA-256 | Semantic SHA-256 |
+|---|---|---|
+| Immutable v1 decision | `0e53798d3f1deaab040cf99f10034644f421ffd51f15090a948aa7085041a84e` | `80823442e5115b2f499a2e77a11817dff555494ca0ecccfc79e59cbf423b7cce` |
+| Reassessment matrix | `ad76be697eb084517354a9d2b82bf48378f33d820b6f6014a13d5a08bb105ac9` | `437961214b97fadd495f65d4a006406b27086e6aeb9f46d8cd27e36df1ed39bb` |
+| Reassessment pilot | `21713e069e063db32763f563f0184a7d7123a5e559527d54618fadc98d286a48` | `2d146c1cb75eb8c2261a3e1be68ba98bf8b2a4996a1839fb36e26f9bd7f37acb` |
+| Reassessment holdout | `9e712b9ed1fb67c80115d12e3bc92850f23da601543fa59a4cbd700a54b0df9d` | `e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d` |
+| Reassessment replay | `3fc20f5526b1ed9fe81eed52e3cd0bd17084b0a46361c37e25b6bc7236401649` | `6248b875566afb7e9706c4f39d28e3a2eea680bd04dfd11f5fee6a5883af27d2` |
+| Reassessment statistics | `6cf420232c0ae432ac9f2471670916d93d7f440fc144b9adfea4509ca41a4e92` | `857bae66f9b336de82c6506b469b864f6bcfb1862a67142ba858695e85781b3d` |
+| Reassessment report snapshot | `1008b759bce54f22010316d408f7fc162a88204bf69bd18b8953119ff657d689` | Source graph validated by HSSLEV1605D50 |
 
 Evidence is fresh only when all referenced bytes match their recorded SHA-256,
 strict validators pass, the source/submodule commits and complete capability
@@ -464,8 +589,11 @@ Treat evidence as stale and stop comparison when any of these occurs:
 - canonical validation, content digest, or receipt linkage fails;
 - a capability changes status or effective identity during a run;
 - cold/warm namespaces collide or measured execution order differs;
-- a parent phase receipt is missing, blocked, incomplete, invalid, or replaced;
-- an objective graph omits HSSL-G100’s HSSL-G090 prerequisite; or
+- a parent phase receipt differs from the exact blocked/incomplete/valid state
+  represented by its child, or is missing, invalid, or replaced;
+- the v1 predecessor bytes or semantic identity change;
+- an objective graph omits HSSL-G170’s HSSL-G160 prerequisite or any
+  HSSL-G160-to-HSSL-G150-to-HSSL-G140 source edge; or
 - the active checkout differs from the recorded before/after snapshot.
 
 Refresh by opening a new run ID, re-probing, and rerunning from the earliest
@@ -537,39 +665,54 @@ Safe fallbacks are typed outcomes:
 - [ ] Worktree-safety and capability inventory receipts validated.
 - [ ] Objective graph, todo, bundles, and todo-vector index reviewed locally.
 - [ ] Frozen baseline and reviewed corpus digests match.
+- [ ] Immutable v1 decision byte and semantic digests match and its file was
+      not overwritten.
+- [ ] HSSL-G140, HSSL-G150, and HSSL-G160 artifacts pass their exact
+      source-bound validators before the v2 decision is loaded.
 - [ ] Cold and warm caches are distinct and order/resource policies are fixed.
 - [ ] Pilot matrix is complete; exclusions and infrastructure failures remain.
-- [ ] Shortlist is at most four exact nonbaseline arms and explicitly passed.
+- [ ] Shortlist is at most four exact nonbaseline arms and explicitly passed,
+      or is truthfully frozen empty with the holdout sealed.
 - [ ] Holdout access is explicitly authorized, or remains sealed and unopened.
 - [ ] Every proof claim has a native-kernel receipt.
-- [ ] Every success and required failure sample replayed in a fresh cold run.
+- [ ] Every success and required failure sample is replayed in a fresh cold
+      run, or the validated empty population explicitly makes no replay claim.
 - [ ] Quality, safety, latency, resource, routing, reliability, and complexity
       dimensions are reported without missing-as-zero coercion.
+- [ ] A0-A12 and S1 each have an explicit evidence disposition.
 - [ ] P0, P1, P2, and P3 each have an explicit evidence disposition.
-- [ ] Final-decision and runbook validators pass.
+- [ ] The v2 final-decision validator with its exact `--artifact` and the
+      runbook validator pass.
 - [ ] No production promotion, merge, or active-checkout mutation occurred.
 
-## HSSLEV1006B8A traceability
+## HSSLEV1703E61 traceability
 
-HSSLEV1006B8A is the stable evidence symbol for the **evidence-bound final
-architecture decision, delegation matrix, and worktree-safe reproduction
-runbook**. It is satisfied by the combined, fail-closed contract below:
+HSSLEV1703E61 is the stable evidence symbol for the **source-bound replacement
+architecture decision, immutable v1 preservation, measured delegation
+dispositions, and worktree-safe reassessment reproduction runbook**. It is
+satisfied by the combined, fail-closed contract below:
 
 | Acceptance term | Runbook evidence |
 |---|---|
-| Cite immutable baseline and holdout manifests | Published decision and evidence inventory name exact paths and digests |
-| Count only kernel-verified proofs | Trust boundaries, delegation matrix, replay, and invariants assign sole authority to native-kernel receipts |
-| Report quality, resource, and complexity tradeoffs | Baseline/ablation and reporting sections require separate paired domains and a hard-safety Pareto frontier |
-| Select or reject every delegation policy | Published decision and matrix explicitly reject P0–P3 for production at this revision |
+| Create only from a validated paired-holdout and replay/report chain | Holdout and replay/report sections validate the exact G140/G150/G160 chain and preserve its blocked, empty-population outcome without inventing activity |
+| Preserve and link immutable v1 | Published decision and evidence inventory name the exact predecessor path, byte digest, semantic digest, and unchanged disposition |
+| Select or reject A0-A12 and S1 | Published-decision arm matrix gives all fourteen arms an explicit, evidence-specific disposition |
+| Select or reject every delegation policy | Ownership matrix explicitly rejects P0-P3 for production at this revision |
+| Assign bounded component responsibilities | Ownership matrix limits spaCy, SyMAI, Hammer, and Leanstral to non-authoritative experimental boundaries and grants no new production role |
+| Count only kernel-verified proofs | Trust boundaries, delegation matrix, replay, and invariants assign sole authority to independent native-kernel receipts |
+| Report quality, resource, and complexity tradeoffs | Published decision records measured pilot/development values, typed holdout nulls, and the safety-constrained ineligible Pareto frontier |
 | Reproduce capability probing | Read-only preflight command writes a canonical run-scoped inventory |
 | Reproduce objective ingestion | Local objective-daemon command writes run-scoped graph, bundles, discovery, and todo-vector state without submission |
-| Reproduce pilot and shortlist | Pilot gate command plus explicit matrix, safety, threshold, and freeze requirements |
-| Reproduce untouched holdout | Holdout section validates the current unopened seal and defines the only permitted future authorization |
-| Reproduce replay and reporting | Fresh-worktree/cold-cache replay contract and all canonical report validators are listed |
+| Reproduce pilot and shortlist | Exact reassessment artifact command plus matrix, safety, semantic-quality, threshold, and freeze requirements |
+| Reproduce untouched holdout | Exact reassessment holdout command validates the unopened seal and defines the only permitted future authorization |
+| Reproduce replay and reporting | Fresh-worktree/cold-cache replay contract, empty-population semantics, statistics path, and all canonical validators are listed |
 | Protect active progress | Detached worktree, disjoint state root, before/after source status, no auto-merge, and no destructive Git operation |
 | Prevent automatic production promotion | Purpose, every phase gate, published decision, and rollback require a separate production approval |
-| Preserve supervisor/objective alignment | Objective ingestion keeps HSSL-G100 downstream of HSSL-G090 and forbids manual generated-status edits |
+| Preserve supervisor/objective alignment | Objective ingestion keeps HSSL-G170 downstream of HSSL-G160 and forbids manual generated-status edits |
 
-This runbook and the final-decision artifact are one publication boundary:
-validation of either must fail if paths, dispositions, evidence identity, or
-the no-promotion decision diverge.
+This runbook and the v2 final-decision artifact are one publication boundary.
+Validation of either must fail if the predecessor, source paths and digests,
+arm or policy dispositions, component boundaries, missingness semantics, or
+the no-promotion decision diverge. A valid replacement decision may be
+published as evidence for a separate production review; it is never that
+review and never changes routing itself.
