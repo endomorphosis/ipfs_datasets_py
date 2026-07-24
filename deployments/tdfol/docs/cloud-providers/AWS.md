@@ -636,7 +636,7 @@ aws cloudwatch get-metric-statistics \
 
 ## Next Steps
 
-- [Configure monitoring and alerts](../monitoring.md)
-- [Set up CI/CD pipeline](../cicd.md)
-- [Scale your deployment](../scaling.md)
-- [Backup and disaster recovery](../backup.md)
+- [Configure monitoring and alerts](../../QUICKSTART.md#monitoring)
+- [Set up CI/CD pipeline](../../README.md#cicd-integration)
+- [Scale your deployment](../../kubernetes/hpa.yaml)
+- [Backup and disaster recovery](../../README.md#production-readiness-checklist)
