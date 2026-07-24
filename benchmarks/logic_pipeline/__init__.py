@@ -280,12 +280,15 @@ __all__ = [
 # imports live at the end so it can reuse ``BENCHMARK_ID`` without creating an
 # initialization cycle.
 from .contracts import (  # noqa: E402
+    CASE_RESULT_RECEIPT_SCHEMA,
     CASE_RESULT_SCHEMA,
     CaseResultRecord,
+    CaseResultReceipt,
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
     HSSLEV0103C72,
     HSSLEV0306C18,
+    HSSLEV0357C0D,
     BenchmarkProtocol,
     ProtocolContractError,
     ResourceLane,
@@ -302,12 +305,15 @@ from .contracts import (  # noqa: E402
 
 __all__ += [
     "BenchmarkProtocol",
+    "CASE_RESULT_RECEIPT_SCHEMA",
     "CASE_RESULT_SCHEMA",
     "CaseResultRecord",
+    "CaseResultReceipt",
     "DEFAULT_PROTOCOL",
     "DEFAULT_PROTOCOL_SHA256",
     "HSSLEV0103C72",
     "HSSLEV0306C18",
+    "HSSLEV0357C0D",
     "ProtocolContractError",
     "ResourceLane",
     "STAGE_PROVENANCE_SCHEMA",
