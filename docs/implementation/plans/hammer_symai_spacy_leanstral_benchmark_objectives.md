@@ -779,3 +779,237 @@ is never completion evidence.
   supervisor-owned and are not manually edited; the supervisor can reconcile
   HSSLEV1006B8A from the AST symbol, decision snapshot, validated runbook,
   objective heap, discovery receipt, and required validators.
+
+## HSSL-G110 Restore and pin the requested full spaCy pipeline
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 2584
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-spacy
+- Goal: Provision the requested full spaCy pipeline reproducibly for a fresh benchmark run without changing the frozen protocol, corpus, variants, prompts, policies, thresholds, or selection inputs.
+- Evidence: HSSLEV1103A41
+- Outputs: benchmarks/logic_pipeline/runtime_env/spacy.lock, scripts/benchmarks/provision_hssl_spacy.py, tests/integration/benchmarks/logic_pipeline/test_spacy_runtime.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_spacy_runtime.py tests/unit/benchmarks/logic_pipeline/test_spacy_adapter.py -q
+- Acceptance: The requested `en_core_web_sm` pipeline and spaCy distribution are version- and artifact-pinned, loadable in the detached benchmark environment, recorded as requested equals effective with no fallback, and a bounded non-corpus smoke receipt proves the full pipeline while the original v1 evidence remains immutable.
+- Gap task: Repair and pin the full spaCy runtime outside any frozen evaluation run, then record reproducible provisioning and identity validation.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1 and the validated benchmark runbook.
+
+## HSSL-G111 Restore and pin SyMAI and llm_router provider/model identities
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 4181
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-symai-router
+- Goal: Provision SymbolicAI/SyMAI through the repository's existing `llm_router` with one explicit provider/model identity and secret-safe configuration, without creating a second router or model manager.
+- Evidence: HSSLEV1118B52
+- Outputs: benchmarks/logic_pipeline/runtime_env/symai-router.lock, scripts/benchmarks/provision_hssl_symai_router.py, tests/integration/benchmarks/logic_pipeline/test_symai_router_runtime.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_symai_router_runtime.py tests/unit/benchmarks/logic_pipeline/test_symai_adapter.py -q
+- Acceptance: SyMAI and `llm_router` are installed and available; requested and effective provider/model identities are complete and identical; credentials are represented only by presence or digest receipts; setup is noninteractive; recursive routing and unrequested fallback remain disabled; and a bounded non-corpus structured smoke call validates the existing-router path.
+- Gap task: Repair package/configuration discovery and pin the SyMAI plus `llm_router` identity used by the fresh run.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1 and the validated benchmark runbook.
+
+## HSSL-G112 Restore and pin the shared Leanstral endpoint and model identity
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 6765
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-leanstral
+- Goal: Restore the supervisor-owned Leanstral service, model-manager advertisement, and MCP client discovery path; bind one exact endpoint/provider/model identity shared with SyMAI where configured; and produce a bounded health receipt without opening benchmark inputs.
+- Evidence: HSSLEV1126C73
+- Outputs: benchmarks/logic_pipeline/runtime_env/leanstral.lock, scripts/benchmarks/provision_hssl_leanstral.py, tests/integration/benchmarks/logic_pipeline/test_leanstral_runtime.py, ipfs_accelerate_py/test/api/test_model_manager_mcp_live.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_leanstral_runtime.py tests/integration/benchmarks/logic_pipeline/test_leanstral_adapter.py ipfs_accelerate_py/test/api/test_model_manager_mcp_live.py -q
+- Acceptance: The existing shared endpoint is reachable through bounded health and model-list calls; the model manager and an MCP client report the exact served Leanstral model and intended service identity; endpoint, provider, model, server build, and receipt digest agree without serializing secrets; no duplicate model server is created; P2P transport, when requested by the configured provider, advertises and dials usable policy-approved addresses and the configured custom port rather than silently substituting another provider; and one non-corpus proof draft remains untrusted until independent native-kernel validation.
+- Gap task: Repair the existing shared model-service, model-manager, MCP discovery, and configured P2P path, then pin its Leanstral identity for the fresh run.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1, plus the existing model-serving and P2P deployment contract.
+
+## HSSL-G113 Reconcile source and submodule freshness in a new run namespace
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 10946
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-source-isolation
+- Goal: Establish a fresh detached benchmark source, exact recursive submodule gitlinks, environment inventory, state root, and cache namespaces without rewriting any frozen v1 manifest, result, or decision.
+- Evidence: HSSLEV1134D84
+- Outputs: benchmarks/logic_pipeline/source_reconciliation.py, tests/integration/benchmarks/logic_pipeline/test_source_reconciliation.py, workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/state/baseline-manifest.json
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_source_reconciliation.py tests/integration/benchmarks/logic_pipeline/test_worktree_isolation.py tests/integration/benchmarks/logic_pipeline/test_baseline_runner.py -q
+- Acceptance: A detached worktree records the exact source commit and every recursive gitlink; old and fresh A0 treatment code and normalized pilot outputs are compared before a new source-bound baseline is accepted; the new run uses disjoint state, result, receipt, worktree, process, and cold/warm cache namespaces; any unexplained A0 drift fails closed; and no v1 artifact or active checkout is mutated.
+- Gap task: Reconcile the stale A0 source/gitlink identity and create a behavior-equivalent, source-fresh v2 baseline in a separate run namespace.
+- Refinement depth: 1
+- Follow-up source: The final decision's immutable-evidence and freshness findings and the runbook's evidence-freshness contract.
+
+## HSSL-G114 Make every frozen arm execute its real bounded stage graph
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 17711
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-runtime-execution
+- Goal: Replace inert/preflight-only adapter assembly with capability-bound spaCy, SyMAI, Hammer, Leanstral, and independent native-kernel handlers, and execute the exact preregistered A0-A12/S1 dataflow without changing any treatment definition.
+- Evidence: HSSLEV1142E95
+- Outputs: benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/adapters.py, benchmarks/logic_pipeline/ablation.py, tests/integration/benchmarks/logic_pipeline/test_live_runtime.py, tests/integration/benchmarks/logic_pipeline/test_ablation_dataflow.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_live_runtime.py tests/integration/benchmarks/logic_pipeline/test_ablation_dataflow.py tests/integration/benchmarks/logic_pipeline/test_kernel_bound_results.py tests/integration/benchmarks/logic_pipeline/test_hammer_adapter.py tests/integration/benchmarks/logic_pipeline/test_leanstral_adapter.py -q
+- Acceptance: Available requested stages cannot silently remain inert or substitute a different arm; typed stage outputs and provenance digests flow to downstream requests; ambiguity gates, bounded proof-failure fallbacks, and the registered Hammer/Leanstral proof order are enforced for every A0-A12/S1 branch; duplicate run contracts are eliminated; frozen reviewed obligations are deterministically compiled into runnable native-kernel inputs without changing their semantic targets; all resource owners are bounded and reaped; and only an independent native-kernel receipt can mark a proof verified.
+- Gap task: Repair real backend assembly, stage dataflow, policy routing, proof ordering, formal-obligation compilation, and native-kernel authority before measured execution.
+- Refinement depth: 1
+- Follow-up source: The final decision's zero-call findings and the runbook's adapter, routing, resource, and kernel trust boundaries.
+
+## HSSL-G115 Build measured reports and a data-driven pilot authorization gate
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 28657
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-measured-gates
+- Goal: Replace preflight-only and hard-coded incomplete report builders with receipt-driven front-end, proof, resource, statistics, and pilot-gate builders that can validate complete measured evidence while preserving fail-closed missingness.
+- Evidence: HSSLEV1159F06
+- Outputs: benchmarks/logic_pipeline/frontend_report.py, benchmarks/logic_pipeline/pilot_gate.py, benchmarks/logic_pipeline/report.py, tests/unit/benchmarks/logic_pipeline/test_measured_reports.py, tests/unit/benchmarks/logic_pipeline/test_pilot_gate.py
+- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline/test_measured_reports.py tests/unit/benchmarks/logic_pipeline/test_frontend_report.py tests/unit/benchmarks/logic_pipeline/test_efficiency_report.py tests/unit/benchmarks/logic_pipeline/test_statistics.py tests/unit/benchmarks/logic_pipeline/test_pilot_gate.py -q
+- Acceptance: Complete case receipts produce non-null efficacy, latency, resource, routing, and complexity evidence; capability missingness remains typed and cannot become zero cost or efficacy; invalid-control kernel false positives force rejection; the pilot gate passes only a complete source-bound matrix and freezes a nonempty nondominated shortlist of at most four exact arms plus all immutable selection inputs; and the existing incomplete v1 artifact still validates only as historical fail-closed evidence.
+- Gap task: Implement measured artifact derivation and generalize the pilot gate so eligible real evidence, rather than a hard-coded outcome, controls holdout authorization.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-ups 2 and 3.
+
+## HSSL-G116 Implement fail-closed authorized holdout and detached replay orchestration
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G100
+- Fib priority: 46368
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/remediation-holdout-replay
+- Goal: Implement the execution boundary that can run holdout only from a passed source-bound pilot authorization and can replay evidence only in fresh detached worktrees and isolated namespaces.
+- Evidence: HSSLEV1167A17
+- Outputs: benchmarks/logic_pipeline/holdout_execution.py, benchmarks/logic_pipeline/replay.py, tests/integration/benchmarks/logic_pipeline/test_authorized_holdout_execution.py, tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_authorized_holdout_execution.py tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py -q
+- Acceptance: Before any write or backend call the orchestrator verifies a passed nonempty frozen shortlist and per-contract access audit; it schedules A0 and only exact shortlisted arms on identical holdout manifests with counterbalanced cold/warm order and no tuning; replay requires a new detached worktree, source/environment identity, process namespace, and cache namespace; and unauthorized, drifted, same-run, stale-receipt, or post-access configuration-change attempts fail closed.
+- Gap task: Add the authorized holdout and replay code paths that the generic ablation executor intentionally does not provide.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-ups 4 and 5.
+
+## HSSL-G120 Re-probe and freeze the repaired runtime capabilities
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G110, HSSL-G111, HSSL-G112, HSSL-G113, HSSL-G114
+- Fib priority: 75025
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/capability-reprobe
+- Goal: Start a fresh run ID in a new detached worktree and freeze a capability/environment inventory only after every requested benchmark backend and the independent kernel path passes live identity and bounded smoke validation.
+- Evidence: HSSLEV1207F16
+- Outputs: docs/performance_snapshots/2026-07-24_hssl_reassessment_capability_inventory.json, workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/receipts
+- Validation: python -m benchmarks.logic_pipeline.runtime probe --require spacy_pipeline,symai,llm_router,hammer,leanstral_service,lean_toolchain
+- Acceptance: Full spaCy, SyMAI, `llm_router`, Hammer, Leanstral, Lean/Lake, cache, scheduler, and native-kernel records are terminal and identity-pinned; requested equals effective for required components; live imports and bounded health/model/smoke results, not self-asserted environment flags, bind the receipt digests; no holdout data is opened; source/gitlink/worktree/environment identities are frozen; and any unavailable, degraded, drifted, mismatched, fallback, or secret-bearing record closes the run instead of permitting matrix execution.
+- Gap task: Run the repaired preflight in a fresh namespace, resolve any remaining mismatch outside the run, and freeze the first fully eligible inventory.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-ups 1 and 2.
+
+## HSSL-G130 Re-run the unchanged pilot and development matrices
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G120
+- Fib priority: 121393
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/matrix-reassessment
+- Goal: Execute the unchanged A0-A12 and S1 pilot and development matrices in balanced cold/warm order using the frozen repaired environment and complete case-level evidence.
+- Evidence: HSSLEV1305A27
+- Outputs: workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results, docs/performance_snapshots/2026-07-24_hssl_reassessment_matrix.json
+- Validation: python -m benchmarks.logic_pipeline.runtime execute --splits pilot,development --cache-mode both --validate-complete
+- Acceptance: All 560 case/arm/cache coordinates are retained as measured or contractually typed terminal outcomes; every invoked stage has a case result, requested/effective identity, telemetry, resource lease, route, and independent native-kernel receipts; invalid controls have zero kernel-verified false positives; failures remain visible; capability missingness is not synthesized as efficacy; cold/warm execution order is counterbalanced; and no frozen protocol, corpus, variant, prompt, policy, threshold, or selection input changes.
+- Gap task: Execute and validate a fresh complete pilot/development run without reading or opening holdout semantics.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 2.
+
+## HSSL-G140 Validate the complete pilot gate and freeze a nonempty shortlist
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G115, HSSL-G130
+- Fib priority: 196418
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/pilot-regate
+- Goal: Recompute front-end, proof, efficiency, statistics, safety, and Pareto evidence from source receipts and authorize holdout only for an exact nonempty shortlist of at most four eligible candidates.
+- Evidence: HSSLEV1409B38
+- Outputs: workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/pilot-shortlist-v2.json, docs/performance_snapshots/2026-07-24_hssl_reassessment_pilot_shortlist.json
+- Validation: python benchmarks/logic_pipeline/report.py --gate pilot-shortlist --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/pilot-shortlist-v2.json
+- Acceptance: The gate source-validates the complete unchanged matrix, records zero kernel-verified invalid-control false positives, has non-null efficacy and cost evidence, freezes prompts, policies, backend identities, thresholds, resources, and one to four nondominated eligible arms before setting exact holdout authorization; if no arm passes, it keeps holdout sealed and records remediation instead of inventing a shortlist.
+- Gap task: Produce and validate the measured pilot/development reports and one source-bound shortlist authorization decision.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 3.
+
+## HSSL-G150 Execute the explicitly authorized paired holdout
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G116, HSSL-G140
+- Fib priority: 317811
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/authorized-holdout
+- Goal: Open holdout only from the exact passed HSSL-G140 authorization and compare A0 with every exact shortlisted arm on the identical frozen holdout manifest in balanced cold and warm pairs.
+- Evidence: HSSLEV1507C49
+- Outputs: workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json, docs/performance_snapshots/2026-07-24_hssl_reassessment_holdout.json
+- Validation: python benchmarks/logic_pipeline/report.py --gate holdout --artifact workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/holdout-evaluation-v2.json
+- Acceptance: A source-bound access audit precedes all holdout activity; A0 and each exact shortlisted arm use identical case/source manifests, frozen identities and limits, isolated cold/warm caches, and counterbalanced ordering; every success requires native-kernel acceptance; every scheduled pair is observed or explicitly failed; no tuning or substitution occurs; and an unauthorized or invalid pilot gate performs zero holdout writes or calls.
+- Gap task: Execute, seal, and validate the untouched paired holdout only if the new pilot receipt authorizes it.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 4.
+
+## HSSL-G160 Replay holdout evidence and publish complete reassessment reports
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G150
+- Fib priority: 514229
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/replay-report
+- Goal: Replay every kernel-verified holdout success and the frozen sample of failures in fresh detached worktrees and isolated namespaces, then recompute all decision domains from source evidence.
+- Evidence: HSSLEV1605D50
+- Outputs: workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/replay, workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json, docs/performance_snapshots/2026-07-24_hssl_reassessment_reports.json
+- Validation: python benchmarks/logic_pipeline/report.py --section statistics --validate --results-path workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json
+- Acceptance: Every success and required sampled failure has a fresh-worktree, fresh-cold-cache replay bound to the same source, environment, case, route, and kernel identities; drift, stale receipts, and same-run replay fail; safety, quality, latency, resources, reliability, routing, marginal escalation value, unnecessary calls, and complexity/Pareto reports are complete and non-null where applicable; and all claims trace to case-level and independent native-kernel receipts.
+- Gap task: Complete independent replay and validate every report needed for a defensible architecture decision.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 5.
+
+## HSSL-G170 Publish the replacement evidence-bound architecture decision
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G160
+- Fib priority: 832040
+- Track: benchmark-reassessment
+- Priority: P0
+- Bundle: objective/hssl/reassessment-decision
+- Goal: Publish a replacement Hammer/SyMAI/spaCy/Leanstral architecture decision and updated reproduction runbook only from a validated source-bound paired holdout and replay/report chain.
+- Evidence: HSSLEV1703E61
+- Outputs: docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json, docs/implementation/runbooks/hammer_symai_spacy_leanstral_benchmark.md, tests/unit/benchmarks/logic_pipeline/test_final_decision.py
+- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline/test_final_decision.py -q; python benchmarks/logic_pipeline/report.py --validate-final-decision --artifact docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json; python benchmarks/logic_pipeline/report.py --validate-runbook
+- Acceptance: The replacement artifact is created only when the paired holdout gate and replay/report chain validate; it preserves and links the immutable v1 gather-more-evidence decision; selects or rejects every A0-A12/S1 arm and P0-P3 policy from measured evidence; assigns bounded component responsibilities; reports all quality, resource, and complexity tradeoffs; and never changes production routing or authorizes production promotion, which remains a separate reviewed action.
+- Gap task: Publish the reassessment decision and runbook update without overwriting v1 evidence or promoting production automatically.
+- Refinement depth: 1
+- Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 6.
