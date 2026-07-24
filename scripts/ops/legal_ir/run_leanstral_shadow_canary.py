@@ -632,41 +632,6 @@ def run_real_shadow_canary(
     if canonical_state.get("expected_compiler_commit_mismatch"):
         blocked_reasons.append("expected_compiler_commit_mismatch")
 
-    worker_config = cfg.worker_config()
-    canary_worker = worker or LeanstralAuditWorker(
-        worker_config,
-        llm_generate=llm_generate,
-    )
-    worker_summary = None
-    items: List[LeanstralAuditWorkItem] = []
-    stale_rejections: Sequence[Mapping[str, Any]] = ()
-    if valid_records and not any(
-        reason
-        in {
-            "canonical_state_not_unique",
-            "compiler_commit_not_unique",
-            "expected_state_hash_mismatch",
-            "expected_compiler_commit_mismatch",
-        }
-        for reason in blocked_reasons
-    ):
-        worker_summary = asyncio.run(
-            canary_worker.run_records(valid_records, source_digest=source_digest)
-        )
-        items, stale_rejections = build_leanstral_audit_work_items(
-            valid_records,
-            config=worker_config,
-        )
-    else:
-        items, stale_rejections = build_leanstral_audit_work_items(
-            valid_records,
-            config=worker_config,
-        )
-
-    work_results_by_key = {
-        result.work_key: result
-        for result in (tuple(worker_summary.results) if worker_summary is not None else ())
-    }
     verifier_example_resolution: Dict[str, Any] = {
         "enabled": bool(cfg.resolve_verifier_examples),
         "failure_count": 0,
@@ -700,6 +665,48 @@ def run_real_shadow_canary(
                     "source": "huggingface_error",
                 }
             )
+
+    worker_config = cfg.worker_config()
+    canary_worker = worker or LeanstralAuditWorker(
+        worker_config,
+        llm_generate=llm_generate,
+    )
+    worker_summary = None
+    items: List[LeanstralAuditWorkItem] = []
+    stale_rejections: Sequence[Mapping[str, Any]] = ()
+    if valid_records and not any(
+        reason
+        in {
+            "canonical_state_not_unique",
+            "compiler_commit_not_unique",
+            "expected_state_hash_mismatch",
+            "expected_compiler_commit_mismatch",
+        }
+        for reason in blocked_reasons
+    ):
+        worker_summary = asyncio.run(
+            canary_worker.run_records(
+                valid_records,
+                source_digest=source_digest,
+                reference_examples=resolved_verifier_examples,
+            )
+        )
+        items, stale_rejections = build_leanstral_audit_work_items(
+            valid_records,
+            config=worker_config,
+            reference_examples=resolved_verifier_examples,
+        )
+    else:
+        items, stale_rejections = build_leanstral_audit_work_items(
+            valid_records,
+            config=worker_config,
+            reference_examples=resolved_verifier_examples,
+        )
+
+    work_results_by_key = {
+        result.work_key: result
+        for result in (tuple(worker_summary.results) if worker_summary is not None else ())
+    }
     real_audits = _verify_real_shadow_audits(
         items,
         results_by_key=work_results_by_key,

@@ -34,14 +34,18 @@ the current process `PATH`.
 
 | Solver | First-use installation |
 | --- | --- |
-| Apalache | Pinned, checksum-verified Linux x86_64 release; requires Java. |
-| Maude | Pinned, checksum-verified Linux x86_64 release. |
-| Tamarin | Pinned Linux x86_64 release, paired with Maude. |
+| Apalache | Pinned portable JVM release; requires Java and works on Linux x86_64/arm64. |
+| Maude | Pinned, checksum-verified native release; Linux arm64 uses the reviewed Debian Maude `3.5.1` package. |
+| Tamarin | Pinned native release when available, or a managed Stack source build on Linux arm64; paired with an explicitly compatible Maude. |
 | ProVerif | Pinned source archive, checksum verified, built without the optional GTK UI; reuses OCaml or creates an isolated OPAM switch. |
 | CVC5 CLI | Pinned, checksum-verified static release for Linux/macOS x86_64 and arm64. |
 | SymbolicAI (`symai`) | Optional Python package installed from the theorem-provers extra or on requested bridge use. |
 | Lean | Official `elan` bootstrapper in the user's home directory, using the reviewed `v4.31.0` toolchain unless overridden. |
-| Coq/Rocq | An isolated OPAM root and switch under the user-local solver root; installs and version-verifies Rocq `9.1.1`. |
+| Coq/Rocq | An isolated OPAM root and switch under the user-local solver root; installs and version-verifies Rocq `9.1.1` and provides Coq-compatible launchers. |
+| Isabelle | Official checksum-verified Isabelle bundle for Linux x86_64 or arm64. |
+| Vampire | Pinned checksum-verified native release for Linux x86_64 or arm64. |
+| E | Pinned checksum-verified source release built user-locally. |
+| ErgoAI | Reviewed ErgoAI distribution used as the native F-logic authority. |
 | Z3 | The optional `z3-solver` Python binding used by the exchange runner. |
 
 For unsupported platforms or organization-managed packages, provide a
@@ -79,6 +83,36 @@ Tamarin installation is complete only after its pinned binary accepts the
 selected Maude `3.5.1` runtime with Tamarin's `checking installation: OK`
 marker. A present executable with an incompatible Maude runtime is reported as
 a failed installation, not as a ready protocol solver.
+
+## Managed Portfolios
+
+The unified installer can bootstrap reviewed solver groups before a run:
+
+```bash
+ipfs-datasets-install-provers --portfolio legal_ir_generation --yes --strict
+ipfs-datasets-install-provers --portfolio legal_ir_full --yes --strict
+```
+
+`legal_ir_generation` installs Z3, cvc5, Lean, Vampire, E, and ErgoAI for the
+normal Leanstral/Hammer candidate path. `legal_ir_specialists` adds Apalache,
+Maude, Tamarin, and ProVerif. `reconstruction` adds Rocq and Isabelle.
+`legal_ir_full` is their complete union plus SymbolicAI.
+
+Setup can select the same behavior non-interactively:
+
+```bash
+export IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1
+export IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS=1
+export IPFS_DATASETS_PY_PROVER_INSTALL_STRICT=1
+```
+
+Alternatively, set
+`IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS=legal_ir_generation,legal_ir_specialists`
+to choose explicit groups. The supervised Leanstral worker preflights
+`legal_ir_generation` by default to keep restarts bounded, while a missing
+specialist is installed lazily when its route is first requested. Set
+`LEANSTRAL_AUDIT_PROVER_PORTFOLIO=legal_ir_full` to require every managed
+solver before the worker starts.
 
 ## Control and Safety
 

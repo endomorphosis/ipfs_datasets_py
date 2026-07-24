@@ -605,6 +605,7 @@ class HParamSearchConfig:
     cosine_penalty: float = 4.0
     ir_ce_weight: float = 0.25
     ir_cosine_penalty: float = 2.0
+    metric_regression_tolerances: Mapping[str, float] = field(default_factory=dict)
     guardrails: FamilyGuardrailConfig = field(default_factory=FamilyGuardrailConfig)
     resources: ResourceRequirements = field(default_factory=ResourceRequirements)
 
@@ -637,6 +638,23 @@ class HParamSearchConfig:
         object.__setattr__(self, "rung_budgets_seconds", budgets)
         for name in ("min_validation_cosine", "cosine_penalty", "ir_ce_weight", "ir_cosine_penalty"):
             _finite(getattr(self, name), name=name, minimum=0.0)
+        if not isinstance(self.metric_regression_tolerances, Mapping):
+            raise ValueError("metric_regression_tolerances must be a mapping")
+        tolerances: dict[str, float] = {}
+        for raw_name, raw_value in self.metric_regression_tolerances.items():
+            name = str(raw_name).strip()
+            if name not in TENSORIZED_OBJECTIVE_METRICS:
+                raise ValueError(f"unsupported metric regression tolerance: {name or '<empty>'}")
+            tolerances[name] = _finite(
+                raw_value,
+                name=f"metric_regression_tolerances[{name}]",
+                minimum=0.0,
+            )
+        object.__setattr__(
+            self,
+            "metric_regression_tolerances",
+            MappingProxyType(dict(sorted(tolerances.items()))),
+        )
         _finite(self.max_evidence_age_seconds, name="max_evidence_age_seconds", minimum=0.0)
         _finite(self.pressure_max_age_seconds, name="pressure_max_age_seconds", minimum=0.0)
         for name in ("max_second_trainer_pressure", "max_service_pressure"):
@@ -963,6 +981,9 @@ class LegalIRHParamScheduler:
                     if self.config.require_tensorized_objective
                     else []
                 ),
+                "metric_regression_tolerances": dict(
+                    self.config.metric_regression_tolerances
+                ),
                 "min_confidence": self.config.guardrails.min_confidence,
             },
         }
@@ -1150,6 +1171,10 @@ class LegalIRHParamScheduler:
                 continue
             direction = TENSORIZED_METRIC_DIRECTIONS[name]
             raw_improvement = after - before if direction == "higher" else before - after
+            regression_tolerance = _metric_regression_tolerance(
+                self.config.metric_regression_tolerances,
+                name,
+            )
             # Normalize disparate losses/rates without allowing tiny baselines
             # to explode the rank.  Guardrails still operate on the raw pair.
             improvements[name] = raw_improvement / max(abs(before), 1.0e-6, 1.0)
@@ -1162,9 +1187,10 @@ class LegalIRHParamScheduler:
                 candidate_metrics=snapshot.metrics,
                 confidence=snapshot.metric_confidence,
                 min_confidence=self.config.guardrails.min_confidence,
+                regression_tolerance=regression_tolerance,
             ):
                 failures.append(f"objective_confidence_guardrail:{name}")
-            if raw_improvement < -1.0e-12:
+            if raw_improvement < -regression_tolerance - 1.0e-12:
                 failures.append(f"objective_metric_regression:{name}")
         return failures, improvements
 
@@ -1200,17 +1226,25 @@ class LegalIRHParamScheduler:
                     before = _maybe_float(baseline.get(metric))
                     after = _maybe_float(candidate.get(metric))
                     if before is not None and after is not None:
+                        tolerance = _metric_regression_tolerance(
+                            self.config.metric_regression_tolerances,
+                            metric,
+                        )
                         compared = True
                         if metric in {"semantic_equivalence", "semantic_equivalence_score"}:
                             semantic_compared = True
-                        if after < before - 1e-12:
+                        if after < before - tolerance - 1e-12:
                             failures.append(f"family_metric_regression:{family}:{metric}")
                 for metric in LOWER_IS_BETTER:
                     before = _maybe_float(baseline.get(metric))
                     after = _maybe_float(candidate.get(metric))
                     if before is not None and after is not None:
+                        tolerance = _metric_regression_tolerance(
+                            self.config.metric_regression_tolerances,
+                            metric,
+                        )
                         compared = True
-                        if after > before + 1e-12:
+                        if after > before + tolerance + 1e-12:
                             failures.append(f"family_metric_regression:{family}:{metric}")
             if self.config.guardrails.require_paired_metrics and not compared:
                 failures.append(f"family_paired_metric_missing:{family}")
@@ -1226,10 +1260,14 @@ class LegalIRHParamScheduler:
                         direction = TENSORIZED_METRIC_DIRECTIONS[metric]
                     before = _metric_value(baseline, aliases)
                     after = _metric_value(candidate, aliases)
+                    tolerance = _metric_regression_tolerance(
+                        self.config.metric_regression_tolerances,
+                        metric,
+                    )
                     if before is None or after is None:
                         failures.append(f"family_objective_metric_missing:{family}:{metric}")
-                    elif (direction == "higher" and after < before - 1.0e-12) or (
-                        direction == "lower" and after > before + 1.0e-12
+                    elif (direction == "higher" and after < before - tolerance - 1.0e-12) or (
+                        direction == "lower" and after > before + tolerance + 1.0e-12
                     ):
                         failure = f"family_metric_regression:{family}:{metric}"
                         if failure not in failures:
@@ -1457,6 +1495,22 @@ def _metric_value(metrics: Mapping[str, Any], keys: Sequence[str]) -> float | No
     return None
 
 
+def _metric_regression_tolerance(
+    tolerances: Mapping[str, float],
+    metric: str,
+) -> float:
+    """Resolve a canonical tolerance for either a canonical metric or an alias."""
+
+    canonical = metric
+    if canonical not in TENSORIZED_METRIC_DIRECTIONS:
+        for name, aliases in TENSORIZED_METRIC_ALIASES.items():
+            if metric in aliases:
+                canonical = name
+                break
+    value = _maybe_float(tolerances.get(canonical))
+    return max(0.0, value) if value is not None else 0.0
+
+
 def _bound(payload: Mapping[str, Any], *keys: str) -> float | None:
     for key in keys:
         value = _maybe_float(payload.get(key))
@@ -1475,6 +1529,7 @@ def _confidence_proves_no_regression(
     candidate_metrics: Mapping[str, Any],
     confidence: Mapping[str, Any],
     min_confidence: float,
+    regression_tolerance: float = 0.0,
 ) -> bool:
     """Apply conservative paired confidence bounds for a hard metric gate."""
 
@@ -1508,7 +1563,9 @@ def _confidence_proves_no_regression(
             baseline_conservative = _bound(baseline_raw, "upper_bound", "confidence_upper_bound")
         return (
             candidate_conservative if candidate_conservative is not None else candidate_value
-        ) >= (baseline_conservative if baseline_conservative is not None else baseline_value) - 1.0e-12
+        ) >= (
+            baseline_conservative if baseline_conservative is not None else baseline_value
+        ) - regression_tolerance - 1.0e-12
     candidate_conservative = _bound(
         raw, "candidate_upper_bound", "confidence_upper_bound", "upper_bound"
     )
@@ -1517,7 +1574,9 @@ def _confidence_proves_no_regression(
         baseline_conservative = _bound(baseline_raw, "lower_bound", "confidence_lower_bound")
     return (
         candidate_conservative if candidate_conservative is not None else candidate_value
-    ) <= (baseline_conservative if baseline_conservative is not None else baseline_value) + 1.0e-12
+    ) <= (
+        baseline_conservative if baseline_conservative is not None else baseline_value
+    ) + regression_tolerance + 1.0e-12
 
 
 def _metric(metrics: Mapping[str, Any], *keys: str, default: float) -> float:

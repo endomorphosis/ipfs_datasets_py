@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -170,18 +171,40 @@ def default_hammer_backend_specs() -> List[HammerBackendSpec]:
             problem_format="smt-lib",
             args=("--lang", "smt2"),
             suffix=".smt2",
-            install_command=("python", "-m", "pip", "install", "cvc5"),
-            notes="SMT-LIB backend.",
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--cvc5",
+            ),
+            notes=(
+                "SMT-LIB backend; uses a checksummed native platform release or "
+                "IPFS_DATASETS_PY_CVC5_EXECUTABLE."
+            ),
         ),
         HammerBackendSpec(
             name="vampire",
             executable="vampire",
             route_type="atp",
             problem_format="tptp-fof",
-            args=("-t", "10", "--proof"),
+            args=(
+                "--time_limit",
+                "10",
+                "--proof",
+                "tptp",
+                "--input_syntax",
+                "tptp",
+            ),
             suffix=".p",
-            install_command=("bash", "-lc", "install-vampire-or-add-to-PATH"),
-            notes="TPTP FOF backend.",
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--vampire",
+            ),
+            notes="TPTP FOF backend using a checksummed platform release.",
         ),
         HammerBackendSpec(
             name="e_prover",
@@ -190,29 +213,53 @@ def default_hammer_backend_specs() -> List[HammerBackendSpec]:
             problem_format="tptp-fof",
             args=("--auto", "--proof-object"),
             suffix=".p",
-            install_command=("bash", "-lc", "install-eprover-or-add-to-PATH"),
-            notes="TPTP FOF backend.",
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--eprover",
+            ),
+            notes="TPTP FOF backend built from a checksummed source release.",
         ),
         HammerBackendSpec(
             name="lean",
             executable="lean",
             route_type="itp_checker",
-            install_command=("bash", "-lc", "install-elan-and-lean-or-add-to-PATH"),
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--lean",
+            ),
             notes="Native Lean reconstruction checker.",
         ),
         HammerBackendSpec(
             name="coq",
             executable="coqc",
             route_type="itp_checker",
-            install_command=("bash", "-lc", "install-coq-or-add-coqc-to-PATH"),
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--coq",
+            ),
             notes="Native Coq reconstruction checker.",
         ),
         HammerBackendSpec(
             name="isabelle",
             executable="isabelle",
             route_type="itp_checker",
-            install_command=("bash", "-lc", "install-isabelle-or-add-to-PATH"),
-            notes="Native Isabelle reconstruction checker.",
+            install_command=(
+                "python",
+                "-m",
+                "scripts.setup.ipfs_prover_installer",
+                "--yes",
+                "--isabelle",
+            ),
+            notes="Official checksummed Isabelle reconstruction bundle.",
         ),
     ]
 
@@ -227,6 +274,12 @@ def _resolve_executable(executable: str, resolver: ExecutableResolver) -> str:
         return ""
     if Path(candidate).is_file():
         return candidate
+    if resolver is shutil.which:
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+            find_executable,
+        )
+
+        return str(find_executable(candidate) or "")
     resolved = resolver(candidate)
     return str(resolved or "")
 
@@ -380,15 +433,42 @@ def default_hammer_backend_runners(
 
     names = list(backend_names or ("z3", "cvc5", "vampire", "e_prover"))
     runners: List[HammerBackendRunner] = []
+    subprocess_names = list(names)
     if "z3" in names:
         try:
             import z3  # noqa: F401
 
             runners.append(PythonZ3HammerBackendRunner())
+            subprocess_names = [name for name in subprocess_names if name != "z3"]
         except Exception:
             pass
-    runners.extend(default_hammer_subprocess_backends(names))
+    runners.extend(default_hammer_subprocess_backends(subprocess_names))
     return runners
+
+
+def _managed_executable_resolver(prover_name: str) -> ExecutableResolver:
+    """Resolve and, if needed, install one backend once per pipeline."""
+
+    state: Dict[str, Any] = {"attempted": False, "path": None}
+    lock = threading.Lock()
+
+    def resolve(_executable: str) -> Optional[str]:
+        if state["attempted"]:
+            return state["path"]
+        with lock:
+            if not state["attempted"]:
+                from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                    ensure_prover_executable,
+                )
+
+                state["path"] = ensure_prover_executable(
+                    prover_name,
+                    reason=f"Hammer {prover_name} proof route",
+                )
+                state["attempted"] = True
+        return state["path"]
+
+    return resolve
 
 
 def default_hammer_subprocess_backends(
@@ -415,6 +495,7 @@ def default_hammer_subprocess_backends(
                 problem_format=spec.problem_format,
                 args=spec.args,
                 suffix=spec.suffix,
+                executable_resolver=_managed_executable_resolver(spec.name),
             )
         )
     return runners

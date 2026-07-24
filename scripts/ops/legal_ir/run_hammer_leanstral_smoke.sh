@@ -221,6 +221,8 @@ export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_A
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_BATCH_SIZE="${LEANSTRAL_AUDIT_BATCH_SIZE:-1}"
+export LEANSTRAL_AUDIT_MAX_WORK_ITEMS="${LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-5}"
+export LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES="${LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES:-tdfol,dcec,flogic,deontic,knowledge_graph}"
 export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
 export LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR="${LEANSTRAL_AUDIT_LLAMA_CPP_ACCELERATOR:-cuda}"
 export LEANSTRAL_AUDIT_REQUIRE_CUDA="${LEANSTRAL_AUDIT_REQUIRE_CUDA:-1}"
@@ -571,7 +573,14 @@ if not service.get("generation") or service_health.get("generation") != service.
     raise SystemExit(f"persistent Leanstral generation identity mismatch: {service!r}")
 if identity.get("context_fingerprint") != service_health.get("context_fingerprint"):
     raise SystemExit(f"persistent Leanstral context identity mismatch: {service!r}")
-if int(identity.get("context_size") or 0) < 1 or "leanstral" not in str(identity.get("model") or "").lower():
+required_context = max(
+    1,
+    int(os.environ.get("IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_PER_SLOT", "8096")),
+)
+if (
+    int(identity.get("context_size") or 0) < required_context
+    or "leanstral" not in str(identity.get("model") or "").lower()
+):
     raise SystemExit(f"persistent Leanstral model/context identity invalid: {identity!r}")
 if int(service.get("model_load_count") or 0) != 1:
     raise SystemExit(f"canonical Leanstral weights reloaded within one generation: {service!r}")

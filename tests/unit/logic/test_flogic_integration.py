@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib.util
 import math
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -481,14 +482,18 @@ class TestErgoAIWrapperSimulation:
             env_path = os.environ.get("ERGOAI_BINARY")
             return Path(env_path) if env_path else None
 
-        def fake_lazy_install(prover_name, **kwargs):
+        def fake_ensure_executable(prover_name, **kwargs):
             calls.append((prover_name, kwargs))
             monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
-            return True
+            return str(fake_binary)
 
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setattr(ergoai_wrapper, "_find_ergo_binary", fake_find_ergo_binary)
-        monkeypatch.setattr(lazy_installer, "lazy_install_prover", fake_lazy_install)
+        monkeypatch.setattr(
+            lazy_installer,
+            "ensure_prover_executable",
+            fake_ensure_executable,
+        )
 
         ergo = ergoai_wrapper.ErgoAIWrapper(lazy_install=True)
 
@@ -540,6 +545,7 @@ class TestErgoAIWrapperSimulation:
         monkeypatch.delenv("ERGOAI_BINARY", raising=False)
         monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
         monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+        monkeypatch.setattr(shutil, "which", lambda _name: None)
 
         assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) is None
 

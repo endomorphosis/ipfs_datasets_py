@@ -131,6 +131,12 @@ __all__ = [
     'pack_modal_autoencoder_state',
     'unpack_modal_autoencoder_state',
     'stable_parameter_id',
+    'FeatureCapacityEvidence',
+    'FeatureCapacityFamily',
+    'FeatureCapacityPolicy',
+    'FeatureCapacityResult',
+    'apply_modal_autoencoder_feature_capacity',
+    'select_sparse_tail',
     'FactorizedHeadConfig',
     'FactorizedSemanticInteractionHead',
     'FactorizedSemanticInteractionHeads',
@@ -148,6 +154,16 @@ __all__ = [
     'migrate_modal_autoencoder_factorized_heads',
     'materialize_legacy_interaction_tables',
     'load_factorized_head_checkpoint',
+    'BoundedLowRankLegacyAdapter',
+    'DirectBulkEmbeddingTransferError',
+    'LegacyDistillationConfig',
+    'LegacyDistillationLineage',
+    'LegacyDistillationPromotionConfig',
+    'LegacyDistillationResult',
+    'LegacyEmbeddingAdapterBundle',
+    'distill_legacy_embedding_tails',
+    'evaluate_legacy_distillation_promotion',
+    'require_legacy_distillation_promotion',
     'AutoencoderEvaluation',
     'AutoencoderIntrospection',
     'CodexCallCache',
@@ -1155,6 +1171,19 @@ def __getattr__(name):
             'stable_parameter_id': stable_parameter_id,
         }[name]
     elif name in (
+        'FeatureCapacityEvidence',
+        'FeatureCapacityFamily',
+        'FeatureCapacityPolicy',
+        'FeatureCapacityResult',
+        'apply_modal_autoencoder_feature_capacity',
+        'select_sparse_tail',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            modal_autoencoder_feature_capacity,
+        )
+
+        return getattr(modal_autoencoder_feature_capacity, name)
+    elif name in (
         'FactorizedHeadConfig',
         'FactorizedSemanticInteractionHead',
         'FactorizedSemanticInteractionHeads',
@@ -1181,6 +1210,23 @@ def __getattr__(name):
         if hasattr(modal_autoencoder_factorized_heads, name):
             return getattr(modal_autoencoder_factorized_heads, name)
         return getattr(modal_autoencoder_state_migration, name)
+    elif name in (
+        'BoundedLowRankLegacyAdapter',
+        'DirectBulkEmbeddingTransferError',
+        'LegacyDistillationConfig',
+        'LegacyDistillationLineage',
+        'LegacyDistillationPromotionConfig',
+        'LegacyDistillationResult',
+        'LegacyEmbeddingAdapterBundle',
+        'distill_legacy_embedding_tails',
+        'evaluate_legacy_distillation_promotion',
+        'require_legacy_distillation_promotion',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            modal_autoencoder_legacy_distillation,
+        )
+
+        return getattr(modal_autoencoder_legacy_distillation, name)
     elif name in (
         'AutoencoderEvaluation',
         'AdaptiveModalAutoencoder',

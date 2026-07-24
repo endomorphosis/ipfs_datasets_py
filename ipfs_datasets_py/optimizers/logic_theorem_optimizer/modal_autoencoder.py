@@ -108,10 +108,11 @@ LEGAL_IR_VIEW_FAMILY_METRIC_NAMES = (
     "source_copy_penalty",
 )
 TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION = (
-    "legal-ir-trusted-hammer-leanstral-feature-bus-v1"
+    "legal-ir-trusted-hammer-leanstral-feature-bus-v2"
 )
 TRUSTED_HAMMER_FEATURE_FAMILIES = (
     "contract_id",
+    "logic_family",
     "obligation_family",
     "premise_family",
     "backend_status",
@@ -452,12 +453,21 @@ _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
 
 _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS: Mapping[str, tuple[str, ...]] = {
     "conditional_normative": ("deontic.ir", "TDFOL.prover"),
+    "cec": ("CEC.native",),
     "deontic": ("deontic.ir", "TDFOL.prover"),
+    "dcec": ("CEC.native",),
     "doxastic": ("TDFOL.prover",),
     "dynamic": ("TDFOL.prover",),
     "epistemic": ("TDFOL.prover", "knowledge_graphs.neo4j_compat"),
+    "event_calculus": ("CEC.native",),
     "frame": ("modal.frame_logic", "knowledge_graphs.neo4j_compat"),
+    "flogic": ("modal.frame_logic",),
+    "frame_logic": ("modal.frame_logic",),
+    "graph_projection": ("knowledge_graphs.neo4j_compat",),
+    "knowledge_graph": ("knowledge_graphs.neo4j_compat",),
+    "tdfol": ("TDFOL.prover",),
     "temporal": ("TDFOL.prover", "modal.frame_logic"),
+    "temporal_first_order": ("TDFOL.prover",),
 }
 
 _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT = 1.6
@@ -1473,17 +1483,36 @@ class ModalAutoencoderTrainingState:
         max_entries_per_group: int = (
             DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
         ),
+        *,
+        capacity_policy: Any = None,
     ) -> bool:
-        """Return whether any coupled sparse-key group exceeds its global cap."""
+        """Return whether a coupled sparse-key group exceeds its capacity.
+
+        Passing ``capacity_policy`` enables the per-group policy introduced by
+        the evidence-aware sparse-tail selector.  The positional integer is
+        retained as the accepted-state rollout compatibility path.
+        """
 
         limit = int(max_entries_per_group)
         if limit < 1:
             raise ValueError("max_entries_per_group must be positive")
-        for fields in MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.values():
+        if (
+            capacity_policy is not None
+            and getattr(capacity_policy, "mode", "") == "accepted_state_v2"
+        ):
+            return False
+        for group_name, fields in (
+            MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.items()
+        ):
+            group_limit = (
+                int(capacity_policy.budget_for(group_name))
+                if capacity_policy is not None
+                else limit
+            )
             keys: set[Any] = set()
             for field_name in fields:
                 keys.update(getattr(self, field_name))
-                if len(keys) > limit:
+                if len(keys) > group_limit:
                     return True
         return False
 
@@ -1492,6 +1521,10 @@ class ModalAutoencoderTrainingState:
         max_entries_per_group: int = (
             DEFAULT_MODAL_AUTOENCODER_MAX_GENERALIZABLE_ENTRIES_PER_GROUP
         ),
+        *,
+        capacity_policy: Any = None,
+        capacity_evidence: Optional[Mapping[str, Mapping[Any, Any]]] = None,
+        accepted_state: Optional["ModalAutoencoderTrainingState"] = None,
     ) -> Dict[str, Any]:
         """Bound reusable sparse rows while preserving coupled head alignment.
 
@@ -1503,6 +1536,21 @@ class ModalAutoencoderTrainingState:
         limit = int(max_entries_per_group)
         if limit < 1:
             raise ValueError("max_entries_per_group must be positive")
+        if capacity_policy is not None:
+            # Lazy import avoids making the core state class depend on the
+            # optional migration/selection layer during module initialization.
+            from .modal_autoencoder_feature_capacity import (
+                apply_modal_autoencoder_feature_capacity,
+            )
+
+            result = apply_modal_autoencoder_feature_capacity(
+                self,
+                policy=capacity_policy,
+                evidence_by_group=capacity_evidence,
+                accepted_state=accepted_state,
+                inplace=True,
+            )
+            return dict(result.report)
 
         before_entry_count = self.generalizable_entry_count()
         compacted_fields: set[str] = set()
@@ -1646,6 +1694,23 @@ class ModalAutoencoderTrainingState:
                 self.semantic_slot_legal_ir_view_embedding_weights
             ),
         }
+
+    def distill_legacy_embedding_tails(
+        self,
+        teacher: "ModalAutoencoderTrainingState",
+        **kwargs: Any,
+    ) -> Any:
+        """Fit separate legacy-teacher adapters with this state as student."""
+
+        from .modal_autoencoder_legacy_distillation import (
+            distill_legacy_embedding_tails,
+        )
+
+        return distill_legacy_embedding_tails(
+            teacher,
+            self,
+            **kwargs,
+        )
 
     def low_rank_shadow_report(
         self,
@@ -3850,6 +3915,8 @@ class AdaptiveModalAutoencoder:
         proof_head_abstention_threshold: float = 0.55,
         proof_feedback_version_fingerprint: str = "",
         compute_device: str = "auto",
+        legacy_embedding_adapters: Optional[Any] = None,
+        legacy_distillation_adapters: Optional[Any] = None,
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
@@ -4206,6 +4273,22 @@ class AdaptiveModalAutoencoder:
         self._cuda_resident_projection_state: Any = None
         self._cuda_resident_proof_state: Any = None
         self._cuda_residency_reports: List[Dict[str, Any]] = []
+        self._legacy_embedding_adapters: Optional[Any] = None
+        if (
+            legacy_embedding_adapters is not None
+            and legacy_distillation_adapters is not None
+        ):
+            raise ValueError(
+                "provide only one of legacy_embedding_adapters and "
+                "legacy_distillation_adapters"
+            )
+        effective_legacy_adapters = (
+            legacy_embedding_adapters
+            if legacy_embedding_adapters is not None
+            else legacy_distillation_adapters
+        )
+        if effective_legacy_adapters is not None:
+            self.attach_legacy_embedding_adapters(effective_legacy_adapters)
 
     def evaluate(
         self,
@@ -4557,6 +4640,70 @@ class AdaptiveModalAutoencoder:
             "target_family_distribution": _observed_family_distribution(sample),
             "embedding_projection": self._decoded_for(sample, use_sample_memory=use_sample_memory),
         }
+
+    @property
+    def legacy_embedding_adapters(self) -> Optional[Any]:
+        """Return the separately owned legacy-teacher adapter bundle, if any."""
+
+        return self._legacy_embedding_adapters
+
+    def attach_legacy_embedding_adapters(self, bundle: Any) -> Dict[str, Any]:
+        """Attach a bounded adapter bundle without merging it into model state.
+
+        The import is local to keep the core autoencoder usable in minimal
+        environments and to avoid a module import cycle.
+        """
+
+        from .modal_autoencoder_legacy_distillation import (
+            LegacyEmbeddingAdapterBundle,
+        )
+
+        if not isinstance(bundle, LegacyEmbeddingAdapterBundle):
+            raise TypeError(
+                "legacy_embedding_adapters must be a "
+                "LegacyEmbeddingAdapterBundle"
+            )
+        if (
+            bundle.lineage.student_architecture
+            != self.state.architecture_version
+        ):
+            raise ValueError(
+                "legacy adapter student architecture does not match "
+                "autoencoder state"
+            )
+        if not bundle.zero_influence and not bundle.promotion_allowed:
+            raise ValueError(
+                "nonzero legacy adapter influence requires a passing "
+                "lineage-bound multi-seed promotion report"
+            )
+        object.__setattr__(self, "_legacy_embedding_adapters", bundle)
+        return bundle.report()
+
+    def detach_legacy_embedding_adapters(self) -> Optional[Any]:
+        """Detach and return the bundle without changing student parameters."""
+
+        previous = self._legacy_embedding_adapters
+        object.__setattr__(self, "_legacy_embedding_adapters", None)
+        return previous
+
+    attach_legacy_distillation_adapters = attach_legacy_embedding_adapters
+    detach_legacy_distillation_adapters = detach_legacy_embedding_adapters
+
+    def legacy_embedding_adapter_report(self) -> Dict[str, Any]:
+        """Return a key-free report including the exact zero-influence mode."""
+
+        bundle = self._legacy_embedding_adapters
+        if bundle is None:
+            return {
+                "adapter_count": 0,
+                "attached": False,
+                "direct_bulk_embedding_replacement": False,
+                "sample_memory_included": False,
+                "zero_influence": True,
+            }
+        return {"attached": True, **bundle.report()}
+
+    legacy_distillation_adapter_report = legacy_embedding_adapter_report
 
     def decode(self, encoded: Mapping[str, object]) -> List[float]:
         """Decode the intermediate representation into an embedding vector."""
@@ -8251,6 +8398,11 @@ class AdaptiveModalAutoencoder:
             use_sample_memory=use_sample_memory,
         )
         adjustment = self._feature_embedding_adjustment(sample, dimensions=len(base))
+        legacy_tail_adjustment = self._legacy_embedding_tail_adjustment(
+            sample,
+            dimensions=len(base),
+            use_sample_memory=use_sample_memory,
+        )
         candidate = [
             (
                 base_value
@@ -8267,8 +8419,9 @@ class AdaptiveModalAutoencoder:
                 + joint_value
                 + view_value
                 + adjustment_value
+                + legacy_tail_value
             )
-            for base_value, compiler_quality_value, logic_signature_value, round_trip_signal_value, decompiler_plan_value, predicate_argument_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value in zip(
+            for base_value, compiler_quality_value, logic_signature_value, round_trip_signal_value, decompiler_plan_value, predicate_argument_value, family_value, slot_value, family_slot_value, slot_view_value, family_slot_view_value, joint_value, view_value, adjustment_value, legacy_tail_value in zip(
                 base,
                 compiler_quality_adjustment,
                 logic_signature_adjustment,
@@ -8283,6 +8436,7 @@ class AdaptiveModalAutoencoder:
                 family_legal_ir_view_adjustment,
                 legal_ir_view_adjustment,
                 adjustment,
+                legacy_tail_adjustment,
             )
         ]
         return self._reconstruction_safe_projection(
@@ -8290,6 +8444,146 @@ class AdaptiveModalAutoencoder:
             base,
             candidate,
         )
+
+    def _legacy_embedding_tail_adjustment(
+        self,
+        sample: LegalSample,
+        *,
+        dimensions: int,
+        use_sample_memory: bool,
+    ) -> List[float]:
+        """Apply separately owned legacy-tail adapters to current activations.
+
+        The early zero-influence return is intentionally exact: no feature
+        extraction, teacher state, adapter reconstruction, or floating-point
+        addition occurs in the accepted-state baseline.
+        """
+
+        bundle = self._legacy_embedding_adapters
+        if bundle is None or bundle.zero_influence:
+            return [0.0 for _ in range(dimensions)]
+        if not bundle.promotion_allowed:
+            raise RuntimeError(
+                "unpromoted legacy adapter attempted nonzero runtime influence"
+            )
+        adapters = bundle.adapters
+        adjustment = [0.0 for _ in range(dimensions)]
+
+        def add(
+            field_name: str,
+            distribution: Mapping[str, float],
+            scale: float,
+        ) -> None:
+            if field_name not in adapters or scale <= 0.0:
+                return
+            weighted = {
+                str(key): max(0.0, float(weight)) * float(scale)
+                for key, weight in distribution.items()
+                if float(weight) > 0.0
+            }
+            values = bundle.adjustment_for(
+                field_name,
+                weighted,
+                dimensions=dimensions,
+            )
+            for index, value in enumerate(values):
+                adjustment[index] += float(value)
+
+        add(
+            "compiler_quality_embedding_weights",
+            self._compiler_quality_slot_distribution_for(sample),
+            self.compiler_quality_embedding_weight_scale,
+        )
+        add(
+            "logic_signature_embedding_weights",
+            self._logic_signature_distribution_for(sample),
+            self.logic_signature_embedding_weight_scale,
+        )
+        add(
+            "round_trip_signal_embedding_weights",
+            self._round_trip_signal_distribution_for(sample),
+            self.round_trip_signal_embedding_weight_scale,
+        )
+        add(
+            "decompiler_plan_embedding_weights",
+            self._decompiler_plan_distribution_for(sample),
+            self.decompiler_plan_embedding_weight_scale,
+        )
+        add(
+            "predicate_argument_embedding_weights",
+            self._predicate_argument_distribution_for(sample),
+            self.predicate_argument_embedding_weight_scale,
+        )
+        add(
+            "family_embedding_weights",
+            self._family_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_embedding_weight_scale,
+        )
+        add(
+            "semantic_slot_embedding_weights",
+            self._semantic_slot_distribution_for(sample),
+            self.semantic_slot_embedding_weight_scale,
+        )
+        add(
+            "family_semantic_slot_embedding_weights",
+            self._family_semantic_slot_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_semantic_slot_embedding_weight_scale,
+        )
+        add(
+            "semantic_slot_legal_ir_view_embedding_weights",
+            self._semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.semantic_slot_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "family_semantic_slot_legal_ir_view_embedding_weights",
+            self._family_semantic_slot_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_semantic_slot_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "family_legal_ir_view_embedding_weights",
+            self._family_legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.family_legal_ir_view_embedding_weight_scale,
+        )
+        add(
+            "legal_ir_view_embedding_weights",
+            self._legal_ir_view_distribution_for_embedding(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
+            self.legal_ir_view_embedding_weight_scale,
+        )
+        if "feature_embedding_weights" in adapters:
+            feature_keys = self._feature_keys_for(sample)
+            feature_adapter = adapters["feature_embedding_weights"]
+            active_feature_count = sum(
+                1 for feature in feature_keys if feature in feature_adapter.keys
+            )
+            feature_scale = (
+                1.0 / self._feature_activity_scale(active_feature_count)
+                if active_feature_count
+                else 0.0
+            )
+            add(
+                "feature_embedding_weights",
+                {feature: 1.0 for feature in feature_keys},
+                self.feature_embedding_weight_scale * feature_scale,
+            )
+        return adjustment
 
     def _reconstruction_safe_projection(
         self,
@@ -29197,6 +29491,16 @@ def build_trusted_hammer_leanstral_feature_bus(
         if str(value).strip() in known_obligation_families
     )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
 
+    logic_families = _unique_preserve_order(
+        _trusted_feature_atom(value, max_tokens=3)
+        for value in _trusted_guidance_keyed_values(
+            item,
+            frozenset({"logic_family"}),
+        )
+        if _trusted_feature_atom(value, max_tokens=3)
+        in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+
     raw_premise_families = _trusted_guidance_keyed_values(
         item,
         frozenset(
@@ -29312,6 +29616,7 @@ def build_trusted_hammer_leanstral_feature_bus(
         "contract_id": tuple(
             str(getattr(contract, "contract_id", "")) for contract in resolved_contracts
         ),
+        "logic_family": tuple(logic_families),
         "obligation_family": tuple(obligation_families),
         "premise_family": tuple(premise_families),
         "backend_status": tuple(backend_features),
@@ -29324,6 +29629,7 @@ def build_trusted_hammer_leanstral_feature_bus(
     feature_keys: List[str] = []
     prefixes = {
         "contract_id": "contract-id",
+        "logic_family": "logic-family",
         "obligation_family": "obligation-family",
         "premise_family": "premise-family",
         "backend_status": "backend-status",
@@ -29347,17 +29653,20 @@ def build_trusted_hammer_leanstral_feature_bus(
     ]
 
     target_views = _unique_preserve_order(
-        str(getattr(contract, "target_component", "") or "").strip()
-        for contract in resolved_contracts
-    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
-    logic_families = _unique_preserve_order(
-        _trusted_feature_atom(value, max_tokens=3)
-        for value in _trusted_guidance_keyed_values(
-            item,
-            frozenset({"logic_family"}),
-        )
-        if _trusted_feature_atom(value, max_tokens=3)
-        in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS
+        [
+            *(
+                str(getattr(contract, "target_component", "") or "").strip()
+                for contract in resolved_contracts
+            ),
+            *(
+                view
+                for family in logic_families
+                for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(
+                    family,
+                    (),
+                )
+            ),
+        ]
     )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
     safe_backend_statuses = {
         value.split(":", 1)[0]: value.split(":", 1)[1]
@@ -29370,7 +29679,12 @@ def build_trusted_hammer_leanstral_feature_bus(
             {
                 "confidence": 1.0,
                 "logic_family": family,
-                "target_view": target_views[0] if target_views else "",
+                "target_view": (
+                    _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(
+                        family,
+                        ("",),
+                    )[0]
+                ),
             }
             for family in logic_families
         ],

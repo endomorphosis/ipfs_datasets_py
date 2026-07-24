@@ -44,6 +44,8 @@ logic = [
 theorem-provers = [
     "z3-solver>=4.12.0,<5.0.0",
     "cvc5>=1.0.0,<2.0.0",
+    "pysmt>=0.9.5,<1.0.0",
+    "beartype>=0.15.0,<1.0.0",
     "symbolicai>=1.14.0,<2.0.0",
 ]
 file_conversion = [
@@ -54,6 +56,18 @@ file_conversion = [
     "python-docx>=1.1.2",
     "yt-dlp>=2025.6.30",
     "ffmpeg-python>=0.2.0",
+]
+multimedia = [
+    "yt-dlp>=2025.6.30",
+    "ffmpeg-python>=0.2.0",
+    "imageio-ffmpeg>=0.6.0",
+    "pillow>=12.2.0,<13.0.0",
+    "moviepy",
+]
+ocr = [
+    "easyocr>=1.6.0",
+    "opencv-python>=4.8.1.78,<4.12.0",
+    "pytesseract>=0.3.13",
 ]
 vectors = [
     "sentence-transformers>=3.0.0,<6.0.0",
@@ -79,6 +93,33 @@ api = [
     "uvicorn>=0.23.0",
     "python-multipart>=0.0.6",
     "jinja2>=3.1.0",
+]
+symai_router = [
+    "opencv-python>=4.8.1.78,<4.12.0",
+    "symbolicai>=1.14.0,<2.0.0",
+    "github-copilot-sdk>=0.1.0",
+]
+lazy = [
+    "chardet>=5.0.0,<6.0.0",
+    "llama-cpp-python",
+    "playsound3",
+    "pydub>=0.25.0",
+    "pymediainfo",
+    "pydocx",
+    "rouge",
+    "openai-whisper",
+    "xformers; platform_system != 'Darwin'",
+    "torch-directml; platform_system == 'Windows'",
+    "intel-extension-for-pytorch; platform_system == 'Linux' and platform_machine == 'x86_64'",
+    "rasterio",
+    "geopandas",
+    "requests-cache>=1.2.0",
+    "httpx>=0.27.0",
+    "httpx-cache",
+    "aiohttp-cache",
+    "python-magic>=0.4.27; platform_system != 'Windows'",
+    "python-magic-bin>=0.4.14; platform_system == 'Windows'",
+    "lxml>=5.0.0",
 ]
 legal_netherlands = [
     "pyarrow>=10.0.0",

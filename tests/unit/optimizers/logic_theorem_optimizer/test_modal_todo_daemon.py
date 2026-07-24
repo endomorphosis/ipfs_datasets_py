@@ -28,6 +28,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     AdaptiveModalAutoencoder,
     ModalAutoencoderTrainingState,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_checkpoint import (
+    write_checkpoint_atomic as write_autoencoder_checkpoint_atomic,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import modal_todo_daemon as daemon
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
     LeanstralTodoProjectionConfig,
@@ -5270,6 +5273,41 @@ def test_load_warm_start_state_bounds_sparse_groups_before_merge(tmp_path: Path)
     assert metadata["capacity"]["averaged"]["compacted"] is False
 
 
+def test_load_warm_start_state_enforces_checkpoint_capacity_contract(
+    tmp_path: Path,
+) -> None:
+    state_path = tmp_path / "ported.state.json"
+    write_autoencoder_checkpoint_atomic(
+        state_path,
+        ModalAutoencoderTrainingState(
+            feature_family_logits={
+                "legacy": {"deontic": 2.0},
+            },
+        ),
+        metadata={
+            "required_max_generalizable_entries_per_group": 4,
+        },
+    )
+
+    with pytest.raises(ValueError, match="requires at least 4"):
+        runner.load_warm_start_state(
+            [state_path],
+            max_entries_per_group=2,
+        )
+
+    state, metadata = runner.load_warm_start_state(
+        [state_path],
+        max_entries_per_group=4,
+    )
+
+    assert state.feature_family_logits["legacy"]["deontic"] == pytest.approx(2.0)
+    source = metadata["capacity"]["sources"][0]
+    assert source["required_max_entries_per_group"] == 4
+    assert source["checkpoint_metadata"] == {
+        "required_max_generalizable_entries_per_group": 4,
+    }
+
+
 def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(tmp_path: Path) -> None:
     queue_dir = tmp_path / "todo-queues"
     queue_dir.mkdir()
@@ -5291,6 +5329,31 @@ def test_resolve_warm_start_state_paths_can_disable_or_require_canonical_state(t
 
     with pytest.raises(FileNotFoundError, match=runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME):
         runner.resolve_warm_start_state_paths(args_require, queue_dir)
+
+
+def test_explicit_warm_start_replaces_automatic_canonical_state(tmp_path: Path) -> None:
+    queue_dir = tmp_path / "todo-queues"
+    queue_dir.mkdir()
+    canonical = queue_dir / runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME
+    explicit = tmp_path / "selected.state.json"
+    ModalAutoencoderTrainingState().save_json(canonical)
+    ModalAutoencoderTrainingState().save_json(explicit)
+    args = SimpleNamespace(
+        warm_start_run_id=[],
+        warm_start_state=[explicit],
+        autoencoder_canonical_warm_start="auto",
+        canonical_warm_start_state=Path(
+            runner.DEFAULT_CANONICAL_AUTOENCODER_STATE_NAME
+        ),
+    )
+
+    assert runner.resolve_warm_start_state_paths(args, queue_dir) == [explicit]
+
+    args.autoencoder_canonical_warm_start = "require"
+    assert runner.resolve_warm_start_state_paths(args, queue_dir) == [
+        canonical,
+        explicit,
+    ]
 
 
 def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children() -> None:

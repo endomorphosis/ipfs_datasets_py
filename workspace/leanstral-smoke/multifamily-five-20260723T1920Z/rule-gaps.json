@@ -1,0 +1,97 @@
+{
+  "accepted_supporting_audit_count": 0,
+  "conflicting_audit_count": 4,
+  "gaps": [],
+  "max_examples_per_gap": 5,
+  "max_gaps": 25,
+  "rejected_audits": [
+    {
+      "audit_id": "leanstral-rejected-42d27c607eb2b2cf",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "knowledge_graphs.neo4j_compat",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "lean_timeout"
+      ],
+      "request_id": "leanstral-audit-1af591f26d64104a",
+      "response_hash": "250c65576530944fbaee237f4aabb309990c1db33b82808f6d54738ad561a69c",
+      "status": "timed-out",
+      "verification_outcome": "timed-out"
+    },
+    {
+      "audit_id": "leanstral-rejected-64447ca49a7c8025",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "event_calculus.core",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "unowned_compiler_surface"
+      ],
+      "request_id": "leanstral-audit-5801f7c8949aa889",
+      "response_hash": "ded8524241a47ba6a867ef1c33afd0cc0a2af2e7966e06f5afcb5a7f232de898",
+      "status": "timed-out",
+      "verification_outcome": "timed-out"
+    },
+    {
+      "audit_id": "leanstral-rejected-7507ed88ea58e221",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "deontic.ir",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "drafted_logic_candidate_copies_obligation",
+        "drafted_logic_candidate_insufficient_grounding"
+      ],
+      "request_id": "leanstral-audit-10a19b82f6521672",
+      "response_hash": "6c2799d684974852c5606ab891550818e411db79fdc479490075d0e6fd76bea9",
+      "status": "rejected",
+      "verification_outcome": "rejected"
+    },
+    {
+      "audit_id": "leanstral-rejected-cd64f6155b4ba7c6",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "TDFOL.prover",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "lean_timeout"
+      ],
+      "request_id": "leanstral-audit-06dcc527a3e7b3d0",
+      "response_hash": "b544b7322c55c01b6900a6f953508e83d270eebd5b70bed994a1410264b41daa",
+      "status": "timed-out",
+      "verification_outcome": "timed-out"
+    },
+    {
+      "audit_id": "leanstral-rejected-e907c739f29d5214",
+      "classification": "missing_semantic_rule",
+      "proposed_surfaces": [
+        {
+          "component": "modal.frame_logic",
+          "operation": "add deterministic compiler or decompiler rule"
+        }
+      ],
+      "reasons": [
+        "untyped_logic"
+      ],
+      "request_id": "leanstral-audit-f80c237ed9ebd8a8",
+      "response_hash": "ab3cfede6bd212516f14cd43ffddf0147c858f47bcebcbb5ba64500ae7469fd3",
+      "status": "rejected",
+      "verification_outcome": "rejected"
+    }
+  ],
+  "schema_version": "legal-ir-leanstral-rule-gap-report-v1",
+  "source_audit_count": 5
+}

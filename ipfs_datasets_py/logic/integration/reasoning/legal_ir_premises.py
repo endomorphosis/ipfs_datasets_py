@@ -133,6 +133,109 @@ def _premise(
     )
 
 
+def _compiler_candidate_fact_specs(
+    formula: Any,
+) -> List[tuple[str, str, str, str, str]]:
+    """Project one trusted modal formula into exact family proof facts."""
+
+    from ipfs_datasets_py.logic.modal.leanstral import (
+        _leanstral_candidate_symbol,
+    )
+
+    predicate = _predicate(formula)
+    operator = _operator(formula)
+    predicate_name = _leanstral_candidate_symbol(
+        _get(predicate, "name") or _as_mapping(predicate).get("name")
+    )
+    if not predicate_name:
+        return []
+    arguments = [
+        _leanstral_candidate_symbol(value)
+        for value in _sequence(
+            _get(predicate, "arguments")
+            or _as_mapping(predicate).get("arguments", [])
+        )
+    ]
+    arguments = [value for value in arguments if value]
+    role = _leanstral_candidate_symbol(
+        _get(predicate, "role") or _as_mapping(predicate).get("role")
+    )
+    formula_mapping = _as_mapping(formula)
+    metadata = _as_mapping(
+        _get(formula, "metadata") or formula_mapping.get("metadata")
+    )
+    operator_mapping = _as_mapping(operator)
+    cue = _leanstral_candidate_symbol(
+        metadata.get("cue")
+        or _get(operator, "label")
+        or operator_mapping.get("label")
+        or _get(operator, "symbol")
+        or operator_mapping.get("symbol")
+    )
+    operator_family = _leanstral_candidate_symbol(
+        _get(operator, "family") or _as_mapping(operator).get("family")
+    )
+
+    facts: List[tuple[str, str, str, str, str]] = []
+    if cue:
+        facts.extend(
+            [
+                (
+                    "tdfol_temporal_anchor",
+                    f"temporal_anchor(event:{predicate_name}, time:{cue})",
+                    "TDFOL.prover",
+                    "temporal_first_order",
+                    "temporal_anchor",
+                ),
+                (
+                    "dcec_happens",
+                    f"happens(event:{predicate_name}, time:{cue})",
+                    "CEC.native",
+                    "event_calculus",
+                    "happens",
+                ),
+            ]
+        )
+    if role:
+        facts.extend(
+            [
+                (
+                    "flogic_frame_role",
+                    (
+                        f"frame_role(frame:{predicate_name}, role:{role}, "
+                        f"value:{predicate_name})"
+                    ),
+                    "modal.frame_logic",
+                    "frame_logic",
+                    "frame_role",
+                ),
+                (
+                    "knowledge_graph_relation",
+                    (
+                        f"relation(subject:{predicate_name}, predicate:{role}, "
+                        f"object:{predicate_name})"
+                    ),
+                    "knowledge_graphs.neo4j_compat",
+                    "graph_projection",
+                    "relation",
+                ),
+            ]
+        )
+    if operator_family in {"deontic", "conditional_normative"}:
+        actor = arguments[0] if arguments else role
+        if actor:
+            facts.append(
+                (
+                    "deontic_obligation",
+                    f"obligation(actor:{actor}, action:{predicate_name})",
+                    "deontic.ir",
+                    "deontic",
+                    "obligation",
+                )
+            )
+    return facts
+
+
 def default_legal_ir_premises() -> List[HammerPremise]:
     """Return reusable domain axioms used by every Legal IR hammer run."""
 
@@ -372,6 +475,31 @@ def premises_from_document(sample_or_document: Any) -> List[HammerPremise]:
                 },
             )
         )
+        for (
+            fact_kind,
+            fact_statement,
+            fact_view,
+            fact_family,
+            fact_head,
+        ) in _compiler_candidate_fact_specs(formula):
+            premises.append(
+                _premise(
+                    (
+                        f"compiler_candidate_fact_{_atom(formula_id)}_"
+                        f"{fact_kind}"
+                    ),
+                    fact_statement,
+                    legal_ir_view=fact_view,
+                    logic_family=fact_family,
+                    source_module="legal_ir_document",
+                    weight=2.0,
+                    metadata={
+                        "candidate_predicate_head": fact_head,
+                        "formula_id": formula_id,
+                        "premise_kind": "compiler_candidate_fact",
+                    },
+                )
+            )
         exceptions = _sequence(_get(formula, "exceptions") or _as_mapping(formula).get("exceptions", []))
         if exceptions:
             premises.append(

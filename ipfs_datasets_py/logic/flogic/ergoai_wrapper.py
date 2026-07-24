@@ -120,19 +120,18 @@ def _find_ergo_binary() -> Optional[Path]:
 
 
 def _lazy_install_ergo_binary(reason: str) -> Optional[Path]:
-    """Attempt an opt-in lazy ErgoAI install and return the resolved binary."""
+    """Request the shared managed ErgoAI installer on explicit execution."""
 
     try:
         from ipfs_datasets_py.logic.external_provers.lazy_installer import (
-            lazy_install_prover,
+            ensure_prover_executable,
         )
     except Exception as exc:
         logger.debug("Could not import lazy prover installer for ErgoAI: %s", exc)
         return None
 
-    if not lazy_install_prover("ergoai", reason=reason):
-        return None
-    return _find_ergo_binary()
+    executable = ensure_prover_executable("ergoai", reason=reason)
+    return Path(executable) if executable else None
 
 
 def resolve_ergo_binary(
@@ -240,7 +239,12 @@ class ErgoAIWrapper:
     # Querying
     # ------------------------------------------------------------------
 
-    def query(self, goal: str) -> FLogicQuery:
+    def query(
+        self,
+        goal: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> FLogicQuery:
         """
         Execute a single F-logic goal against the current ontology.
 
@@ -260,11 +264,19 @@ class ErgoAIWrapper:
             )
             return result
 
-        return self._run_ergo_query(goal)
+        return self._run_ergo_query(goal, timeout_seconds=timeout_seconds)
 
-    def batch_query(self, goals: Sequence[str]) -> List[FLogicQuery]:
+    def batch_query(
+        self,
+        goals: Sequence[str],
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> List[FLogicQuery]:
         """Execute multiple goals and return one :class:`FLogicQuery` per goal."""
-        return [self.query(g) for g in goals]
+        return [
+            self.query(g, timeout_seconds=timeout_seconds)
+            for g in goals
+        ]
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -274,13 +286,19 @@ class ErgoAIWrapper:
         """Build the current ontology as a loadable Ergo source program."""
         return self.ontology.to_ergo_program()
 
-    def _run_ergo_query(self, goal: str) -> FLogicQuery:
+    def _run_ergo_query(
+        self,
+        goal: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> FLogicQuery:
         """Invoke the ErgoAI binary and parse its output."""
         assert self.binary is not None  # guaranteed by caller
 
         program = self._build_ergo_program()
         result = FLogicQuery(goal=goal)
         tmp_path: Optional[str] = None
+        timeout = max(0.001, min(300.0, float(timeout_seconds)))
 
         try:
             with tempfile.NamedTemporaryFile(
@@ -296,7 +314,7 @@ class ErgoAIWrapper:
                 input=commands,
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=timeout,
             )
 
             output = "\n".join(part for part in (proc.stdout, proc.stderr) if part)
@@ -310,7 +328,9 @@ class ErgoAIWrapper:
                 result.error_message = output.strip()
         except subprocess.TimeoutExpired:
             result.status = FLogicStatus.ERROR
-            result.error_message = "ErgoAI subprocess timed out after 30 s"
+            result.error_message = (
+                f"ErgoAI subprocess timed out after {timeout:g} s"
+            )
         except (OSError, ValueError) as exc:
             result.status = FLogicStatus.ERROR
             result.error_message = str(exc)

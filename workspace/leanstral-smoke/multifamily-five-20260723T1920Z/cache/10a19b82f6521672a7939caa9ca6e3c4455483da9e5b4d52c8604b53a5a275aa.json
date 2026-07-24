@@ -1,0 +1,114 @@
+{
+  "cache_key": "10a19b82f6521672a7939caa9ca6e3c4455483da9e5b4d52c8604b53a5a275aa",
+  "request_hash": "749d2bdd89291b8ff4e1d170528e706a5a3c830dddaae8337224c039d3da8d88",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "deontic"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.5,
+    "counterexample": {
+      "evidence_id": "lir-disagree-4986d60000adf40ee837",
+      "expected": "scoped_exception_precedes_governed_norm(contract:legal-ir-view/deontic/v1) and exception_order_is_preserved(contract:legal-ir-view/deontic/v1)",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "drafted_logic_candidates": [
+      {
+        "candidate": "scoped_exception_precedes_governed_norm(contract:legal-ir-view/deontic/v1) and exception_order_is_preserved(contract:legal-ir-view/deontic/v1)",
+        "compiler_surface": "deontic.ir",
+        "confidence": 0.5,
+        "contract_id": "legal-ir-view/deontic/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "deontic",
+        "premise_hints": [
+          "exception_scope_precedence",
+          "operator_force",
+          "prohibition_polarity",
+          "condition_scope",
+          "exception_precedence"
+        ],
+        "proof_obligation_id": "lir-obligation-383c22c3eabd1a979cea",
+        "proof_obligation_ids": [
+          "lir-obligation-383c22c3eabd1a979cea"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "deontic.ir"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic semantic rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-383c22c3eabd1a979cea"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "deontic.ir",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "10a19b82f6521672a7939caa9ca6e3c4455483da9e5b4d52c8604b53a5a275aa",
+    "request_id": "leanstral-audit-10a19b82f6521672",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "6c2799d684974852c5606ab891550818e411db79fdc479490075d0e6fd76bea9",
+  "response_schema_hash": "b83d792e69337419885022d5998be6f83dc6c4e4c9ba141d11e79d7cc47db26f",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": false,
+    "cache_key": "10a19b82f6521672a7939caa9ca6e3c4455483da9e5b4d52c8604b53a5a275aa",
+    "deterministic_verification": {
+      "accepted": false,
+      "audit_validation": {
+        "accepted": false,
+        "cache_key": "10a19b82f6521672a7939caa9ca6e3c4455483da9e5b4d52c8604b53a5a275aa",
+        "reasons": [
+          "drafted_logic_candidate_copies_obligation",
+          "drafted_logic_candidate_insufficient_grounding"
+        ],
+        "response_hash": "6c2799d684974852c5606ab891550818e411db79fdc479490075d0e6fd76bea9",
+        "verified": false,
+        "verified_by": []
+      },
+      "compiler_checks": [],
+      "local_checks": [],
+      "outcome": "rejected",
+      "reasons": [
+        "drafted_logic_candidate_copies_obligation",
+        "drafted_logic_candidate_insufficient_grounding"
+      ],
+      "request_id": "leanstral-audit-10a19b82f6521672",
+      "response_hash": "6c2799d684974852c5606ab891550818e411db79fdc479490075d0e6fd76bea9",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [],
+      "verified_by": []
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [],
+      "reasons": [
+        "deterministic_audit_verification_failed"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "status": "skipped",
+      "trusted": false
+    },
+    "reasons": [
+      "drafted_logic_candidate_copies_obligation",
+      "drafted_logic_candidate_insufficient_grounding"
+    ],
+    "response_hash": "6c2799d684974852c5606ab891550818e411db79fdc479490075d0e6fd76bea9",
+    "verified": false,
+    "verified_by": []
+  }
+}

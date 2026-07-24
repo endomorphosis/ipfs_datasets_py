@@ -252,7 +252,12 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
     # Overridden query methods
     # ------------------------------------------------------------------
 
-    def query(self, goal: str) -> FLogicCachedQueryResult:  # type: ignore[override]
+    def query(
+        self,
+        goal: str,
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> FLogicCachedQueryResult:  # type: ignore[override]
         """
         Execute a query, returning a cached result where possible.
 
@@ -277,7 +282,10 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
                 self._misses += 1
 
         start = time.monotonic()
-        raw: FLogicQuery = super().query(goal)
+        raw: FLogicQuery = super().query(
+            goal,
+            timeout_seconds=timeout_seconds,
+        )
         elapsed = time.monotonic() - start
 
         cid = self._compute_entry_cid(normalized_goal)
@@ -288,9 +296,17 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
 
         return result
 
-    def batch_query(self, goals: Sequence[str]) -> List[FLogicCachedQueryResult]:  # type: ignore[override]
+    def batch_query(
+        self,
+        goals: Sequence[str],
+        *,
+        timeout_seconds: float = 30.0,
+    ) -> List[FLogicCachedQueryResult]:  # type: ignore[override]
         """Execute multiple goals with per-goal caching."""
-        return [self.query(g) for g in goals]
+        return [
+            self.query(g, timeout_seconds=timeout_seconds)
+            for g in goals
+        ]
 
     # ------------------------------------------------------------------
     # Cache helpers

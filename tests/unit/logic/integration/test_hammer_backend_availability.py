@@ -23,6 +23,7 @@ from ipfs_datasets_py.logic.integration.reasoning.hammer_backends import (
     hammer_backend_health_summary,
     lazy_install_hammer_backend,
     PythonZ3HammerBackendRunner,
+    hammer_backend_specs_by_name,
 )
 
 
@@ -68,6 +69,47 @@ def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail
     assert {runner.problem_format for runner in runners} == {"smt-lib", "tptp-fof"}
 
 
+def test_default_subprocess_backend_requests_managed_install_on_first_use(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    calls = []
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda prover, *, reason: calls.append((prover, reason)) or "/managed/cvc5",
+    )
+
+    runner = default_hammer_subprocess_backends(["cvc5"])[0]
+
+    assert runner._executable_resolver("cvc5") == "/managed/cvc5"
+    assert calls == [("cvc5", "Hammer cvc5 proof route")]
+
+
+def test_subprocess_backend_rejects_an_unusable_resolver_candidate() -> None:
+    runner = SubprocessHammerBackendRunner(
+        name="cvc5",
+        executable="cvc5",
+        problem_format="smt-lib",
+        suffix=".smt2",
+        executable_resolver=lambda _command: None,
+    )
+
+    result = runner.run(
+        HammerTranslation(
+            target_format="smt-lib",
+            problem="(assert (not true))\n(check-sat)",
+            selected_premises=[],
+            transformations=[],
+        ),
+        timeout_seconds=1.0,
+    )
+
+    assert result.status is HammerBackendStatus.UNAVAILABLE
+    assert "Usable executable not found" in result.error
+
+
 def test_native_python_z3_runner_proves_unsatisfiable_smt_without_a_binary() -> None:
     pytest.importorskip("z3")
     result = PythonZ3HammerBackendRunner().run(
@@ -91,7 +133,7 @@ def test_default_hammer_runners_prefer_native_python_z3_when_available() -> None
     runners = default_hammer_backend_runners(["z3", "cvc5"])
 
     assert runners[0].name == "z3_python"
-    assert [runner.name for runner in runners[1:]] == ["z3", "cvc5"]
+    assert [runner.name for runner in runners[1:]] == ["cvc5"]
 
 
 def test_backend_health_for_runtime_and_subprocess_runners() -> None:
@@ -137,3 +179,30 @@ def test_lazy_install_hook_is_explicit_and_side_effect_injectable() -> None:
     assert calls[0][0] == ("python", "-m", "pip", "install", "z3-solver")
     assert calls[0][1] == 12.0
     assert health.name == "z3"
+
+
+def test_cvc5_install_hook_requests_the_architecture_aware_cli_installer() -> None:
+    calls = []
+
+    def _runner(command, timeout):
+        calls.append((tuple(command), timeout))
+        return subprocess.CompletedProcess(list(command), 0, "", "")
+
+    health = lazy_install_hammer_backend("cvc5", runner=_runner, timeout_seconds=12.0)
+
+    assert calls[0][0] == (
+        "python",
+        "-m",
+        "scripts.setup.ipfs_prover_installer",
+        "--yes",
+        "--cvc5",
+    )
+    assert health.name == "cvc5"
+
+
+def test_reconstruction_install_hooks_use_the_unified_installer() -> None:
+    specs = hammer_backend_specs_by_name()
+
+    assert tuple(specs["coq"].install_command)[-1] == "--coq"
+    assert tuple(specs["isabelle"].install_command)[-1] == "--isabelle"
+    assert "install-isabelle-or-add-to-PATH" not in specs["isabelle"].install_command

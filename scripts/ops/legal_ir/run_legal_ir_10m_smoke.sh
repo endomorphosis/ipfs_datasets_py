@@ -27,9 +27,10 @@ ACTIVE_SECONDS=600
 MAX_WALL_SECONDS=1500
 HEARTBEAT_SECONDS=5
 STALL_SECONDS=360
-# Preserve a full TODO claim window after reserving Codex execution plus
-# candidate and baseline validation inside the 1,500-second watchdog.
-CODEX_QUEUE_GRACE_SECONDS=360
+# These values keep the producer's observed cold-cycle overrun inside the
+# claim window while leaving the worst-case Codex drain inside the watchdog.
+CYCLE_COMPLETION_GRACE_SECONDS=30
+CODEX_QUEUE_GRACE_SECONDS=120
 
 usage() {
   cat <<'EOF'
@@ -106,12 +107,16 @@ if (( DRY_RUN )); then
   echo "canonical_runner=${CANONICAL_RUNNER}"
   echo "evidence=${EVIDENCE_PATH}"
   PYTHON_BIN="${PYTHON_BIN}" DURATION_SECONDS=600 MAX_CYCLES=0 \
-    PAIRED_GRACE_SECONDS=240 \
+    PAIRED_GRACE_SECONDS="${CYCLE_COMPLETION_GRACE_SECONDS}" \
     PAIRED_CODEX_QUEUE_GRACE_SECONDS="${CODEX_QUEUE_GRACE_SECONDS}" \
     "${CANONICAL_RUNNER}" --run-id "${RUN_ID}" --dry-run
   exit 0
 fi
 
+if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+  echo "canonical evidence requires a clean Git checkout" >&2
+  exit 2
+fi
 if [[ -e "${EVIDENCE_PATH}" ]]; then
   echo "refusing to overwrite evidence: ${EVIDENCE_PATH}" >&2
   exit 2
@@ -143,6 +148,28 @@ PROGRESS_HEARTBEATS=0
 MAX_PROGRESS_GAP=0
 RUNNER_PID=""
 
+newest_run_progress_epoch() {
+  local restore_nullglob=0
+  if ! shopt -q nullglob; then
+    shopt -s nullglob
+    restore_nullglob=1
+  fi
+  local -a progress_paths=(
+    "${RUN_LOG}"
+    "${RUN_ROOT}"
+    "${ROOT_DIR}/workspace/test-logs/${RUN_ID}"*
+    "${ROOT_DIR}/workspace/todo-queues/${RUN_ID}"*
+    "${ROOT_DIR}/workspace/artifact-writer/${RUN_ID}"*
+    "${ROOT_DIR}/workspace/codex-work/${RUN_ID}"*
+    "${ROOT_DIR}/workspace/leanstral-audit-worker/${RUN_ID}"*
+  )
+  if (( restore_nullglob )); then
+    shopt -u nullglob
+  fi
+  find "${progress_paths[@]}" -type f -printf '%T@\n' 2>/dev/null \
+    | sort -nr | head -1 || true
+}
+
 terminate_group() {
   local signal_name="$1"
   if [[ -n "${RUNNER_PID}" ]] && kill -0 "${RUNNER_PID}" 2>/dev/null; then
@@ -170,7 +197,7 @@ setsid --wait env \
   PYTHON_BIN="${PYTHON_BIN}" \
   DURATION_SECONDS=600 \
   MAX_CYCLES=0 \
-  PAIRED_GRACE_SECONDS=240 \
+  PAIRED_GRACE_SECONDS="${CYCLE_COMPLETION_GRACE_SECONDS}" \
   PAIRED_CODEX_QUEUE_GRACE_SECONDS="${CODEX_QUEUE_GRACE_SECONDS}" \
   AUTOENCODER_DEVICE=cuda \
   LEANSTRAL_AUDIT_REQUIRE_CUDA=1 \
@@ -189,11 +216,7 @@ while kill -0 "${RUNNER_PID}" 2>/dev/null; do
   gap=$((now_epoch - LAST_HEARTBEAT_EPOCH))
   (( gap > MAX_HEARTBEAT_GAP )) && MAX_HEARTBEAT_GAP="${gap}"
   LAST_HEARTBEAT_EPOCH="${now_epoch}"
-  newest_progress="$(
-    find "${RUN_LOG}" "${ROOT_DIR}/workspace" \
-      -type f \( -path "*${RUN_ID}*" -o -path "${RUN_LOG}" \) \
-      -printf '%T@\n' 2>/dev/null | sort -nr | head -1 || true
-  )"
+  newest_progress="$(newest_run_progress_epoch)"
   newest_progress="${newest_progress%%.*}"
   if [[ "${newest_progress:-}" =~ ^[0-9]+$ ]] && (( newest_progress > LAST_PROGRESS_EPOCH )); then
     progress_gap=$((newest_progress - LAST_PROGRESS_EPOCH))

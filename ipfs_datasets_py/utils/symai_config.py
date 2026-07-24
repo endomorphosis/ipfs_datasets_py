@@ -38,8 +38,16 @@ def _default_symai_config() -> Dict[str, Any]:
     }
 
 
-def _symai_prefix_path() -> Path:
-    configured_prefix = os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX", "").strip()
+def _symai_prefix_path(config_root: Optional[Path] = None) -> Path:
+    configured_prefix = (
+        str(config_root)
+        if config_root is not None
+        else (
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX")
+            or os.environ.get("IPFS_DATASETS_PY_SYMAI_CONFIG_ROOT")
+            or ""
+        )
+    ).strip()
     if configured_prefix:
         return Path(configured_prefix).expanduser()
 
@@ -62,6 +70,7 @@ def ensure_symai_config(
     neurosymbolic_api_key: str,
     force: bool = False,
     apply_engine_router: bool = False,
+    config_root: Optional[Path] = None,
 ) -> Optional[Path]:
     """Ensure `symai` has a config file so `import symai` doesn't call sys.exit(1).
 
@@ -76,7 +85,7 @@ def ensure_symai_config(
     if not neurosymbolic_model:
         return None
 
-    prefix_path = _symai_prefix_path()
+    prefix_path = _symai_prefix_path(config_root)
     config_dir = prefix_path / ".symai"
     config_path = config_dir / "symai.config.json"
 
@@ -237,7 +246,7 @@ def ensure_symai_config_for_import(*, force: bool = False) -> Optional[Path]:
         try:
             sys.prefix = str(config_path.parent.parent)
             __import__("symai")
-        except Exception:
+        except (Exception, SystemExit):
             sys.modules.pop("symai", None)
         finally:
             sys.prefix = original_prefix

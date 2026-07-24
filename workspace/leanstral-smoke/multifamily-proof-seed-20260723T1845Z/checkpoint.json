@@ -1,0 +1,96 @@
+{
+  "completed_work_keys": [
+    "5a15621e6b251752b422c0af8c7a4da431da8cc5f8fa2d7ec2623d6a16a977a9",
+    "ce0b79f37d4af3da4f0165dc1cba278db2edc05ff0b2473d61161d62dad39346",
+    "dddb84300578141d1f27ce4bcf45a16a07bd9f24e9e5e238f0eaf36bc43c410b"
+  ],
+  "results": {
+    "5a15621e6b251752b422c0af8c7a4da431da8cc5f8fa2d7ec2623d6a16a977a9": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "1c0d2150f4eee207ff7d8b642a87c9f3153321c44ffc432c3e6f6a102d6f9e2b",
+      "elapsed_seconds": 31.806269,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-1c0d2150f4eee207",
+      "response_hash": "4cb002fea69c423c56315976fe798055bdf65a46f44fdc130ec30012688cb70e",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "1c0d2150f4eee207ff7d8b642a87c9f3153321c44ffc432c3e6f6a102d6f9e2b",
+        "reasons": [],
+        "response_hash": "4cb002fea69c423c56315976fe798055bdf65a46f44fdc130ec30012688cb70e",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "5a15621e6b251752b422c0af8c7a4da431da8cc5f8fa2d7ec2623d6a16a977a9"
+    },
+    "ce0b79f37d4af3da4f0165dc1cba278db2edc05ff0b2473d61161d62dad39346": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "dd34adf5f9025f4ed1fca8d6ec9debb7d504daefca6188ae918d4f168fba057e",
+      "elapsed_seconds": 34.137099,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-dd34adf5f9025f4e",
+      "response_hash": "0f83972efb5fa165a9707060a1f4f64fb73745a2173fa0432222dc1d53a84c48",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "dd34adf5f9025f4ed1fca8d6ec9debb7d504daefca6188ae918d4f168fba057e",
+        "reasons": [],
+        "response_hash": "0f83972efb5fa165a9707060a1f4f64fb73745a2173fa0432222dc1d53a84c48",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "ce0b79f37d4af3da4f0165dc1cba278db2edc05ff0b2473d61161d62dad39346"
+    },
+    "dddb84300578141d1f27ce4bcf45a16a07bd9f24e9e5e238f0eaf36bc43c410b": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "8ae5697d0fdab207510fd11265069aa4d7490cf055c5bb936b6f75718877f8a2",
+      "elapsed_seconds": 33.667154,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-8ae5697d0fdab207",
+      "response_hash": "a800fd7245eaaf4b7227873d1a23b26b43e1c11f46ee84bed869dc3f85fea899",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "8ae5697d0fdab207510fd11265069aa4d7490cf055c5bb936b6f75718877f8a2",
+        "reasons": [],
+        "response_hash": "a800fd7245eaaf4b7227873d1a23b26b43e1c11f46ee84bed869dc3f85fea899",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "dddb84300578141d1f27ce4bcf45a16a07bd9f24e9e5e238f0eaf36bc43c410b"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "bffa8b2549edac854fb6fc5494fb86f46e7d5ccbfb900a82c402d3ad459a1df6",
+  "updated_at": 1784832259.644795
+}

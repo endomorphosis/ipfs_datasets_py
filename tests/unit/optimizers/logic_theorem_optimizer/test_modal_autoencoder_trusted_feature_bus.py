@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
 )
@@ -72,6 +74,7 @@ def test_feature_bus_emits_all_bounded_contract_families_and_repair_labels() -> 
     assert receipt["feature_families"]["contract_id"] == [
         "legal-ir-view/deontic/v1"
     ]
+    assert receipt["feature_families"]["logic_family"] == ["deontic"]
     assert receipt["feature_families"]["obligation_family"] == [
         "exception_scope_precedence"
     ]
@@ -90,6 +93,7 @@ def test_feature_bus_emits_all_bounded_contract_families_and_repair_labels() -> 
         "deontic.ir": ["deontic.norm_semantics"]
     }
     assert "hammer:contract-id:legal_ir_view_deontic_v1" in packet.feature_keys
+    assert "hammer:logic-family:deontic" in packet.feature_keys
     assert "hammer:obligation-family:exception_scope_precedence" in packet.feature_keys
     assert "hammer:premise-family:exception_scope_precedence" in packet.feature_keys
     assert "hammer:backend-status:z3:proved" in packet.feature_keys
@@ -98,6 +102,36 @@ def test_feature_bus_emits_all_bounded_contract_families_and_repair_labels() -> 
         "hammer:repair-lane:deontic_ir:deontic_norm_semantics"
         in packet.feature_keys
     )
+
+
+@pytest.mark.parametrize(
+    ("logic_family", "target_view"),
+    (
+        ("temporal_first_order", "TDFOL.prover"),
+        ("event_calculus", "CEC.native"),
+        ("frame_logic", "modal.frame_logic"),
+        ("graph_projection", "knowledge_graphs.neo4j_compat"),
+    ),
+)
+def test_feature_bus_preserves_verified_formalism_family_for_learning(
+    logic_family: str,
+    target_view: str,
+) -> None:
+    guidance = _trusted_guidance()
+    guidance["drafted_logic_candidates"][0]["logic_family"] = logic_family
+    guidance["drafted_logic_candidates"][0]["target_view"] = target_view
+
+    packet = build_trusted_hammer_leanstral_feature_bus(guidance)
+    target_distribution = (
+        AdaptiveModalAutoencoder()._leanstral_guidance_target_distribution(
+            packet.learning_payload
+        )
+    )
+
+    assert logic_family in packet.feature_families["logic_family"]
+    assert f"hammer:logic-family:{logic_family}" in packet.feature_keys
+    assert target_view in packet.target_views
+    assert target_distribution[target_view] > 0.0
 
 
 def test_feature_bus_receipt_and_learning_payload_exclude_all_raw_text() -> None:

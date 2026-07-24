@@ -1,0 +1,100 @@
+{
+  "completed_work_keys": [
+    "e6a742d25254b7cd8c3fb38e9f21c6be3376045c389ac6bed7eeccffde474acd"
+  ],
+  "results": {
+    "0c3fb25ec57534a146cc7c637edef70a6b8241b3d618e02718c3752fc5e03654": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "0246e3ff3c106a658c14650e20cbe67210c3c65a106422ed425463713b2a9be6",
+      "elapsed_seconds": 57.764706,
+      "generation_attempts": 2,
+      "llm_called": true,
+      "reasons": [
+        "drafted_logic_candidate_copies_obligation"
+      ],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable",
+        "drafted_logic_candidate_copies_obligation"
+      ],
+      "request_id": "leanstral-audit-0246e3ff3c106a65",
+      "response_hash": "b846878582737b46444174e6756ffae1a17bdc2af7e40fe089cc398cdd361849",
+      "status": "rejected",
+      "validation": {
+        "accepted": false,
+        "cache_key": "0246e3ff3c106a658c14650e20cbe67210c3c65a106422ed425463713b2a9be6",
+        "reasons": [
+          "drafted_logic_candidate_copies_obligation"
+        ],
+        "response_hash": "b846878582737b46444174e6756ffae1a17bdc2af7e40fe089cc398cdd361849",
+        "verified": false,
+        "verified_by": []
+      },
+      "work_key": "0c3fb25ec57534a146cc7c637edef70a6b8241b3d618e02718c3752fc5e03654"
+    },
+    "315ed067033b9a9ec5b67892bd581fcbf6ffd8df3a29b8629a1ed0364fc731c0": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+      "elapsed_seconds": 59.733328,
+      "generation_attempts": 2,
+      "llm_called": true,
+      "reasons": [
+        "drafted_logic_candidate_copies_obligation"
+      ],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable",
+        "drafted_logic_candidate_copies_obligation"
+      ],
+      "request_id": "leanstral-audit-4243287695e8c241",
+      "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+      "status": "rejected",
+      "validation": {
+        "accepted": false,
+        "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+        "reasons": [
+          "drafted_logic_candidate_copies_obligation"
+        ],
+        "response_hash": "d9464650c2c7239fd8a4f489a7705de488cd421d6cb2fc153793ca4cf71698ba",
+        "verified": false,
+        "verified_by": []
+      },
+      "work_key": "315ed067033b9a9ec5b67892bd581fcbf6ffd8df3a29b8629a1ed0364fc731c0"
+    },
+    "e6a742d25254b7cd8c3fb38e9f21c6be3376045c389ac6bed7eeccffde474acd": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "63f4bc3356443000527b5a190998771ae167d4c7439ea84cedf0506a3b45f9bb",
+      "elapsed_seconds": 35.012706,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-63f4bc3356443000",
+      "response_hash": "4ad96c0a7c81e5ba45ac248ecf9c88b5d81c70e9ef7ab8b2568cc2fafdee795a",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "63f4bc3356443000527b5a190998771ae167d4c7439ea84cedf0506a3b45f9bb",
+        "reasons": [],
+        "response_hash": "4ad96c0a7c81e5ba45ac248ecf9c88b5d81c70e9ef7ab8b2568cc2fafdee795a",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "e6a742d25254b7cd8c3fb38e9f21c6be3376045c389ac6bed7eeccffde474acd"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "1ecd43deafa5a00375f2e618a51c40a4751205b372c5effda16e426a6f1eec30",
+  "updated_at": 1784829749.460282
+}

@@ -4,17 +4,23 @@ from __future__ import annotations
 
 import time
 
+import pytest
+
 from ipfs_datasets_py.logic.integration.reasoning.hammer import (
     CallableHammerBackendRunner,
     HammerBackendResult,
     HammerBackendStatus,
     HammerGoal,
+    HammerLogicTranslator,
     HammerPipeline,
     HammerPremise,
     HammerStatus,
     HammerVerification,
     HeuristicPremiseSelector,
     hammer_prove,
+)
+from ipfs_datasets_py.logic.integration.reasoning.hammer_backends import (
+    PythonZ3HammerBackendRunner,
 )
 
 
@@ -219,3 +225,27 @@ def test_tptp_backend_gets_tptp_translation() -> None:
     assert captured["format"] == "tptp-fof"
     assert "fof(lemma_one, axiom" in captured["problem"]
     assert "fof(hammer_generated_goal, conjecture" in captured["problem"]
+
+
+def test_typed_legal_ir_conjunct_is_not_lowered_as_an_opaque_goal() -> None:
+    pytest.importorskip("z3")
+    translator = HammerLogicTranslator()
+    translation = translator.translate(
+        HammerGoal(
+            "temporal_anchor(event:e1, time:t1)",
+            name="typed_tdfol_candidate",
+        ),
+        [
+            HammerPremise(
+                "typed_contract",
+                "temporal_anchor(event:e1, time:t1) "
+                "and event_order(before:e1, after:e2)",
+            )
+        ],
+        target_format="smt-lib",
+    )
+
+    result = PythonZ3HammerBackendRunner().run(translation, timeout_seconds=1.0)
+
+    assert "(assert (and " in translation.problem
+    assert result.status is HammerBackendStatus.PROVED

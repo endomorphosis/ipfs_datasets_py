@@ -9,13 +9,43 @@ import sys
 import platform
 import subprocess
 import importlib
+import importlib.util
 import logging
 import json
+import hashlib
+import re
+import threading
+import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple, Set
+from typing import Dict, Iterator, List, Optional, Tuple, Set
 import warnings
 
+if __package__:
+    from .dependency_catalog import (
+        COMPONENT_MODULES,
+        canonical_distribution_name,
+        companion_packages,
+        dependencies_for_component,
+        dependency_for_distribution,
+        dependency_for_import,
+        package_candidates,
+    )
+else:  # pragma: no cover - compatibility for direct script execution.
+    from dependency_catalog import (  # type: ignore[no-redef]
+        COMPONENT_MODULES,
+        canonical_distribution_name,
+        companion_packages,
+        dependencies_for_component,
+        dependency_for_distribution,
+        dependency_for_import,
+        package_candidates,
+    )
+
 logger = logging.getLogger(__name__)
+
+_INSTALL_LOCKS: Dict[str, threading.Lock] = {}
+_INSTALL_LOCKS_GUARD = threading.Lock()
 
 
 def _truthy_env_value(value: Optional[str]) -> bool:
@@ -24,11 +54,7 @@ def _truthy_env_value(value: Optional[str]) -> bool:
 
 def _runtime_installer_check_enabled() -> bool:
     configured = os.getenv("IPFS_DATASETS_ENSURE_INSTALLER")
-    if configured is None:
-        return _truthy_env_value(os.getenv("IPFS_DATASETS_AUTO_INSTALL")) or _truthy_env_value(
-            os.getenv("IPFS_AUTO_INSTALL")
-        )
-    return _truthy_env_value(configured)
+    return configured is not None and _truthy_env_value(configured)
 
 
 def _runtime_installer_marker_path() -> Path:
@@ -93,6 +119,10 @@ class DependencyInstaller:
             auto_install = _truthy_env_value(os.getenv('IPFS_DATASETS_AUTO_INSTALL')) or _truthy_env_value(
                 os.getenv('IPFS_AUTO_INSTALL')
             )
+        if _truthy_env_value(os.getenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS")) or _truthy_env_value(
+            os.getenv("IPFS_DATASETS_PY_BENCHMARK")
+        ):
+            auto_install = False
         self.auto_install = auto_install
         self.verbose = verbose
         self.system = platform.system().lower()
@@ -164,110 +194,12 @@ class DependencyInstaller:
             }
         }
         
-        # Python package specifications with fallbacks
-        numpy_specs = ['numpy>=2.0.0'] if self.python_version >= (3, 14) else ['numpy>=1.21.0,<2.0.0']
-        surya_specs: List[str] = []
-        if self.python_version < (3, 14) and self.system != 'windows':
-            surya_specs = ['surya-ocr>=0.14.0']
-
-        self.python_packages = {
-            # Core ML/AI packages
-            'numpy': numpy_specs,
-            'pandas': ['pandas>=1.5.0,<3.0.0'],
-            'torch': ['torch>=1.9.0,<3.0.0', 'torch-cpu>=1.9.0'],
-            'transformers': ['transformers>=4.0.0,<5.0.0'],
-            'sentence-transformers': ['sentence-transformers>=2.2.0,<3.0.0'],
-            'datasets': ['datasets>=2.10.0,<3.0.0'],
-            
-            # PDF processing
-            'pymupdf': ['pymupdf>=1.24.0,<2.0.0', 'PyMuPDF>=1.24.0'],
-            'pdfplumber': ['pdfplumber>=0.10.0,<1.0.0'],
-            'pytesseract': ['pytesseract>=0.3.10,<1.0.0'],
-            'pillow': ['pillow>=10.0.0,<12.0.0', 'PIL>=10.0.0'],
-                'reportlab': ['reportlab>=4.0.0,<5.0.0'],
-            
-            # OCR and vision
-            'opencv-python': ['opencv-python>=4.5.0', 'opencv-contrib-python>=4.5.0'],
-            'surya-ocr': surya_specs,
-            'easyocr': ['easyocr>=1.6.0'],
-            
-            # NLP
-            'nltk': ['nltk>=3.8.0,<4.0.0'],
-            'spacy': ['spacy>=3.4.0,<4.0.0'],
-            
-            # Vector stores
-            'faiss-cpu': ['faiss-cpu>=1.7.4,<2.0.0', 'faiss>=1.7.4'],
-            'qdrant-client': ['qdrant-client>=1.0.0'],
-            'elasticsearch': ['elasticsearch>=8.0.0,<9.0.0'],
-            
-            # Scientific computing
-            'scipy': ['scipy>=1.11.0,<2.0.0'],
-            'scikit-learn': ['scikit-learn>=1.3.0,<2.0.0'],
-            'networkx': ['networkx>=3.0.0,<4.0.0'],
-            
-            # LLM APIs
-            'openai': ['openai>=1.0.0,<2.0.0'],
-            'anthropic': ['anthropic>=0.50.0,<1.0.0'],
-            'tiktoken': ['tiktoken>=0.6.0'],
-            
-            # Web and API
-            'fastapi': ['fastapi>=0.100.0,<1.0.0'],
-            'uvicorn': ['uvicorn>=0.20.0,<1.0.0'],
-            'requests': ['requests>=2.25.0,<3.0.0'],
-
-            # Dashboards / lightweight servers
-            'flask': ['flask>=2.3.0,<4.0.0'],
-            
-            # Data formats
-            'pyarrow': ['pyarrow>=15.0.0,<21.0.0'],
-            
-            # Theorem Provers and SAT/SMT Solvers (Python bindings)
-            'z3-solver': ['z3-solver>=4.12.0,<5.0.0'],
-            'pysmt': ['pysmt>=0.9.5,<1.0.0'],
-            'cvc5': ['cvc5>=1.0.0,<2.0.0'], 
-            'mathsat': ['mathsat>=5.6.0'],
-            'beartype': ['beartype>=0.15.0,<1.0.0'],
-            'pydantic': ['pydantic>=2.0.0,<3.0.0'],
-            'jsonschema': ['jsonschema>=4.0.0,<5.0.0'],
-            
-            # Media processing
-            'ffmpeg-python': ['ffmpeg-python>=0.2.0'],
-            'moviepy': ['moviepy>=1.0.0'],
-            
-            # Web scraping
-            'requests': ['requests>=2.25.0,<3.0.0'],
-            'beautifulsoup4': ['beautifulsoup4>=4.10.0,<5.0.0'],
-            'newspaper3k': ['newspaper3k>=0.2.8,<1.0.0'],
-            'readability-lxml': ['readability-lxml>=0.8.0,<1.0.0'],
-            'lxml_html_clean': ['lxml_html_clean>=0.4.0'],
-            
-            # Development
-            'pytest': ['pytest>=8.0.0,<9.0.0'],
-            'pytest-asyncio': ['pytest-asyncio>=0.21.0'],
-            'pytest-cov': ['pytest-cov>=4.1.0'],
-            'pytest-timeout': ['pytest-timeout>=2.0.2'],
-            'pytest-xdist': ['pytest-xdist>=3.8.0'],
-            'pytest-benchmark': ['pytest-benchmark>=4.0.0'],
-            'pytest-mock': ['pytest-mock>=3.12.0'],
-            'hypothesis': ['hypothesis>=6.0.0'],
-            'anyio': ['anyio>=4.0.0,<5.0.0'],
-            'coverage': ['coverage>=7.0.0,<8.0.0'],
-
-            # Test utilities
-            'faker': ['Faker>=24.0.0,<26.0.0', 'faker>=24.0.0,<26.0.0'],
-            'reportlab': ['reportlab>=4.0.0,<5.0.0'],
-            # Local binary helpers
-            'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
-            # Copilot SDK
-            'github-copilot-sdk': ['github-copilot-sdk>=0.1.0'],
-        }
-
-        self.python_package_companions = {
-            # newspaper3k imports lxml.html.clean at runtime, which modern lxml
-            # exposes through this separate package.
-            'newspaper3k': ['lxml_html_clean'],
-            'readability-lxml': ['lxml_html_clean'],
-        }
+        # Runtime installation uses the same reviewed specifications for every
+        # call site. Import names and distribution names are intentionally
+        # separate (for example, ``fitz`` is provided by ``pymupdf``).
+        self.python_packages = package_candidates()
+        self.python_package_companions = companion_packages()
+        self._failed_packages: Dict[str, float] = {}
 
         # Node CLI packages used by the SyMAI router (npm install -g)
         self.node_cli_packages = {
@@ -741,9 +673,6 @@ exec "$BIN" "$@"
         if self._system_dep_satisfied(package_name) and not self.force_local_system_deps:
             return True
 
-        # In CI/sandbox we avoid package-manager installs, but local installs are allowed.
-        in_ci = bool(os.getenv('CI') or os.getenv('GITHUB_ACTIONS'))
-            
         package_manager = self.detect_package_manager()
         
         if package_name not in self.system_packages.get(self.system, {}):
@@ -973,34 +902,212 @@ exec "$BIN" "$@"
                 logger.warning(f"Failed to update user PATH: {e}")
             return False
 
-    def install_python_dependency(self, package_name: str, force_reinstall: bool = False) -> bool:
-        """Install Python dependency with fallback options"""
-        if package_name in self.installed_packages and not force_reinstall:
+    @staticmethod
+    def _bounded_env_seconds(
+        name: str,
+        default: float,
+        *,
+        minimum: float,
+        maximum: float,
+    ) -> float:
+        try:
+            value = float(os.getenv(name, str(default)))
+        except (TypeError, ValueError):
+            value = default
+        return max(minimum, min(maximum, value))
+
+    @staticmethod
+    def _valid_package_spec(package_spec: str) -> bool:
+        """Reject option injection and malformed requirement arguments."""
+
+        candidate = str(package_spec or "").strip()
+        return bool(
+            candidate
+            and not candidate.startswith("-")
+            and "\n" not in candidate
+            and "\r" not in candidate
+            and "\x00" not in candidate
+        )
+
+    def _module_is_importable(self, module_name: Optional[str]) -> bool:
+        if not module_name:
+            return False
+        try:
+            importlib.import_module(module_name)
             return True
-            
-        if package_name not in self.python_packages:
-            # Try direct pip install
-            return self._pip_install(package_name)
-            
-        packages_to_try = self.python_packages[package_name]
-        
-        for package_spec in packages_to_try:
-            if self._pip_install(package_spec):
-                for companion_package in self.python_package_companions.get(package_name, []):
-                    if not self.install_python_dependency(companion_package, force_reinstall=force_reinstall):
+        except Exception:
+            return False
+
+    @contextmanager
+    def _package_install_lock(self, package_key: str) -> Iterator[bool]:
+        """Serialize pip installs across threads and supervisor worker processes."""
+
+        lock_timeout = self._bounded_env_seconds(
+            "IPFS_DATASETS_INSTALL_LOCK_TIMEOUT",
+            1320.0,
+            minimum=1.0,
+            maximum=7200.0,
+        )
+        with _INSTALL_LOCKS_GUARD:
+            thread_lock = _INSTALL_LOCKS.setdefault(package_key, threading.Lock())
+
+        if not thread_lock.acquire(timeout=lock_timeout):
+            logger.warning("Timed out waiting for dependency lock: %s", package_key)
+            yield False
+            return
+
+        lock_root = self.deps_dir / "install-locks"
+        lock_path = lock_root / f"{package_key}.lock"
+        acquired_process_lock = False
+        deadline = time.monotonic() + lock_timeout
+        stale_after = max(
+            lock_timeout * 4.0,
+            self._bounded_env_seconds(
+                "IPFS_DATASETS_PIP_TIMEOUT",
+                600.0,
+                minimum=30.0,
+                maximum=3600.0,
+            )
+            * 4.0,
+        )
+
+        try:
+            lock_root.mkdir(parents=True, exist_ok=True)
+            while time.monotonic() < deadline:
+                try:
+                    lock_path.mkdir()
+                    acquired_process_lock = True
+                    break
+                except FileExistsError:
+                    try:
+                        age = time.time() - lock_path.stat().st_mtime
+                        if age > stale_after:
+                            lock_path.rmdir()
+                            continue
+                    except (FileNotFoundError, OSError):
+                        pass
+                    time.sleep(0.05)
+
+            if not acquired_process_lock:
+                logger.warning("Timed out waiting for process dependency lock: %s", package_key)
+            yield acquired_process_lock
+        finally:
+            if acquired_process_lock:
+                try:
+                    lock_path.rmdir()
+                except OSError:
+                    pass
+            thread_lock.release()
+
+    def _package_candidates_for(self, package_name: str) -> List[str]:
+        dependency = dependency_for_distribution(package_name)
+        has_explicit_constraint = bool(re.search(r"[\s\[<>=!~;@]", package_name))
+        if dependency is not None and not has_explicit_constraint:
+            return list(dependency.requirements)
+        return [package_name]
+
+    @staticmethod
+    def _package_install_key(package_name: str) -> str:
+        identity = canonical_distribution_name(package_name)
+        safe_identity = re.sub(r"[^a-z0-9-]+", "-", identity).strip("-")
+        digest_source = identity if safe_identity else package_name
+        digest = hashlib.sha256(digest_source.encode("utf-8")).hexdigest()[:12]
+        prefix = (safe_identity or "dependency")[:80]
+        return f"{prefix}-{digest}"
+
+    def install_python_dependency(
+        self,
+        package_name: str,
+        force_reinstall: bool = False,
+        *,
+        module_name: Optional[str] = None,
+    ) -> bool:
+        """Install one Python dependency once, with reviewed fallback options."""
+
+        if not self._valid_package_spec(package_name):
+            logger.error("Refusing malformed dependency specification: %r", package_name)
+            return False
+
+        package_identity = canonical_distribution_name(package_name) or package_name
+        package_lock_key = self._package_install_key(package_name)
+
+        if package_identity in self.installed_packages and not force_reinstall:
+            return not module_name or self._module_is_importable(module_name)
+
+        retry_after = self._bounded_env_seconds(
+            "IPFS_DATASETS_INSTALL_RETRY_SECONDS",
+            30.0,
+            minimum=0.0,
+            maximum=3600.0,
+        )
+        failed_at = self._failed_packages.get(package_identity)
+        if (
+            failed_at is not None
+            and not force_reinstall
+            and time.monotonic() - failed_at < retry_after
+        ):
+            return False
+
+        with self._package_install_lock(package_lock_key) as acquired:
+            if not acquired:
+                return False
+
+            if package_identity in self.installed_packages and not force_reinstall:
+                return not module_name or self._module_is_importable(module_name)
+
+            failed_at = self._failed_packages.get(package_identity)
+            if (
+                failed_at is not None
+                and not force_reinstall
+                and time.monotonic() - failed_at < retry_after
+            ):
+                return False
+
+            # A sibling worker may have completed the install while this worker
+            # was waiting for the process lock.
+            importlib.invalidate_caches()
+            if not force_reinstall and self._module_is_importable(module_name):
+                self.installed_packages.add(package_identity)
+                self._failed_packages.pop(package_identity, None)
+                return True
+
+            packages_to_try = self._package_candidates_for(package_name)
+            for package_spec in packages_to_try:
+                if not self._valid_package_spec(package_spec):
+                    continue
+                installed = (
+                    self._pip_install(package_spec, force_reinstall=True)
+                    if force_reinstall
+                    else self._pip_install(package_spec)
+                )
+                if not installed:
+                    continue
+
+                dependency = dependency_for_distribution(package_name)
+                companion_key = dependency.distribution if dependency is not None else package_name
+                for companion_package in self.python_package_companions.get(companion_key, []):
+                    if not self.install_python_dependency(
+                        companion_package,
+                        force_reinstall=force_reinstall,
+                    ):
                         logger.error(
                             "Failed to install companion dependency %s for %s",
                             companion_package,
                             package_name,
                         )
+                        self._failed_packages[package_identity] = time.monotonic()
                         return False
-                self.installed_packages.add(package_name)
-                return True
-                
-        logger.error(f"Failed to install any variant of {package_name}")
-        return False
 
-    def _pip_install(self, package_spec: str) -> bool:
+                importlib.invalidate_caches()
+                self.installed_packages.add(package_identity)
+                self._failed_packages.pop(package_identity, None)
+                return True
+
+            self._failed_packages[package_identity] = time.monotonic()
+            logger.error("Failed to install any variant of %s", package_name)
+            return False
+
+    def _pip_install(self, package_spec: str, *, force_reinstall: bool = False) -> bool:
         """Install package using pip"""
         try:
             if self.verbose:
@@ -1010,8 +1117,21 @@ exec "$BIN" "$@"
                 sys.executable, '-m', 'pip', 'install', package_spec,
                 '--quiet', '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
             ]
+            if force_reinstall:
+                base_cmd.append("--force-reinstall")
+            if _truthy_env_value(os.getenv("IPFS_DATASETS_AUTO_INSTALL_OFFLINE")):
+                base_cmd.append("--no-index")
+            wheelhouse = os.getenv("IPFS_DATASETS_AUTO_INSTALL_WHEELHOUSE", "").strip()
+            if wheelhouse:
+                base_cmd.extend(["--find-links", wheelhouse])
 
-            result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=600)
+            timeout = self._bounded_env_seconds(
+                "IPFS_DATASETS_PIP_TIMEOUT",
+                600.0,
+                minimum=30.0,
+                maximum=3600.0,
+            )
+            result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=timeout)
 
             # PEP 668 (externally managed environment) is common on Debian/Ubuntu.
             # If we hit it, retry as a user install with the explicit override.
@@ -1020,7 +1140,7 @@ exec "$BIN" "$@"
                 or 'ExternallyManagedEnvironment' in (result.stderr or '')
             ):
                 retry_cmd = base_cmd + ['--user', '--break-system-packages']
-                result = subprocess.run(retry_cmd, capture_output=True, text=True, timeout=600)
+                result = subprocess.run(retry_cmd, capture_output=True, text=True, timeout=timeout)
             
             if result.returncode == 0:
                 if self.verbose:
@@ -1028,7 +1148,11 @@ exec "$BIN" "$@"
                 return True
             else:
                 if self.verbose:
-                    logger.warning(f"Failed to install {package_spec}: {result.stderr}")
+                    logger.warning(
+                        "Failed to install %s: %s",
+                        package_spec,
+                        (result.stderr or "")[-4000:],
+                    )
                 return False
                 
         except subprocess.TimeoutExpired:
@@ -1055,104 +1179,103 @@ exec "$BIN" "$@"
         Returns:
             Tuple of (success, imported_module)
         """
-        # First try to import
+        dependency = dependency_for_import(module_name)
+        if package_name is None and dependency is not None:
+            package_name = dependency.distribution
+        if system_deps is None and dependency is not None:
+            system_deps = list(dependency.system_dependencies)
+
+        # First try to import. Only a missing requested module should trigger
+        # pip; an ImportError raised from inside an installed package indicates
+        # a broken/incompatible environment and must not create an install loop.
         try:
             module = importlib.import_module(module_name)
             return True, module
-        except ImportError as e:
+        except ModuleNotFoundError as exc:
+            requested_root = module_name.split(".", 1)[0]
+            missing_root = str(exc.name or "").split(".", 1)[0]
+            if missing_root and missing_root != requested_root:
+                logger.warning(
+                    "Module %s is installed but its dependency %s failed to import",
+                    module_name,
+                    exc.name,
+                )
+                return False, None
             if not self.auto_install:
                 logger.warning(f"Module {module_name} not available and auto_install disabled")
                 return False, None
-                
+        except ImportError as exc:
+            logger.warning("Module %s failed to import: %s", module_name, exc)
+            return False, None
+        except Exception as exc:
+            logger.warning("Module %s raised during import: %s", module_name, exc)
+            return False, None
+
+        if self.verbose:
+            logger.info("Module %s not found, attempting lazy installation", module_name)
+
+        if system_deps:
+            for system_dependency in system_deps:
+                self.install_system_dependency(system_dependency)
+
+        package_name = package_name or module_name
+        if not self.install_python_dependency(package_name, module_name=module_name):
+            logger.error("Failed to install %s", package_name)
+            return False, None
+
+        importlib.invalidate_caches()
+        try:
+            module = importlib.import_module(module_name)
             if self.verbose:
-                logger.info(f"Module {module_name} not found, attempting to install")
-            
-            # Install system dependencies first
-            if system_deps:
-                for sys_dep in system_deps:
-                    self.install_system_dependency(sys_dep)
-            
-            # Install Python package
-            pkg_name = package_name or module_name
-            if self.install_python_dependency(pkg_name):
-                # Try importing again
-                try:
-                    module = importlib.import_module(module_name)
-                    if self.verbose:
-                        logger.info(f"Successfully installed and imported {module_name}")
-                    return True, module
-                except ImportError:
-                    logger.error(f"Failed to import {module_name} after installation")
-                    return False, None
-            else:
-                logger.error(f"Failed to install {pkg_name}")
-                return False, None
+                logger.info("Successfully installed and imported %s", module_name)
+            return True, module
+        except (ImportError, OSError) as exc:
+            logger.error("Failed to import %s after installation: %s", module_name, exc)
+            return False, None
+        except Exception as exc:
+            logger.error("Module %s raised after installation: %s", module_name, exc)
+            return False, None
 
     def install_graphrag_dependencies(self) -> bool:
         """Install all dependencies needed for GraphRAG PDF processing"""
         if self.verbose:
             logger.info("Installing GraphRAG PDF processing dependencies...")
-            
-        # Core dependencies for GraphRAG
-        dependencies = [
-            # Core ML
-            ('numpy', 'numpy'),
-            ('pandas', 'pandas'), 
-            ('torch', 'torch'),
-            ('transformers', 'transformers'),
-            ('sentence_transformers', 'sentence-transformers'),
-            ('datasets', 'datasets'),
-            
-            # PDF processing
-            ('fitz', 'pymupdf', ['poppler']),  # PyMuPDF imports as 'fitz'
-            ('pdfplumber', 'pdfplumber'),
-            ('pytesseract', 'pytesseract', ['tesseract']),
-            ('PIL', 'pillow'),
-            
-            # OCR and vision
-            ('cv2', 'opencv-python'),
-            ('easyocr', 'easyocr'),
-            
-            # NLP
-            ('nltk', 'nltk'),
-            
-            # Vector stores
-            ('faiss', 'faiss-cpu'),
-            ('qdrant_client', 'qdrant-client'),
-            ('elasticsearch', 'elasticsearch'),
-            
-            # Scientific
-            ('scipy', 'scipy'),
-            ('sklearn', 'scikit-learn'),
-            ('networkx', 'networkx'),
-            
-            # LLM APIs
-            ('openai', 'openai'),
-            
-            # Data
-            ('pyarrow', 'pyarrow'),
-            ('pydantic', 'pydantic'),
-        ]
-        
-        if self.python_packages.get('surya-ocr'):
-            dependencies.insert(11, ('surya', 'surya-ocr'))
-        
-        success_count = 0
-        total_count = len(dependencies)
 
-        for dep_info in dependencies:
-            module_name = dep_info[0]
-            package_name = dep_info[1] if len(dep_info) > 1 else module_name
-            system_deps = dep_info[2] if len(dep_info) > 2 else None
-            
-            success, _ = self.ensure_dependency(module_name, package_name, system_deps)
+        return self.install_component_dependencies(
+            "graphrag",
+            minimum_success_ratio=0.8,
+        )
+
+    def install_component_dependencies(
+        self,
+        component: str,
+        *,
+        minimum_success_ratio: float = 1.0,
+    ) -> bool:
+        """Resolve a catalog component and install only its missing imports."""
+
+        dependencies = dependencies_for_component(component)
+        if not dependencies:
+            return False
+
+        success_count = 0
+        for dependency in dependencies:
+            success, _ = self.ensure_dependency(
+                dependency.import_name,
+                dependency.distribution,
+                list(dependency.system_dependencies),
+            )
             if success:
                 success_count += 1
-            
+
         if self.verbose:
-            logger.info(f"Installed {success_count}/{total_count} GraphRAG dependencies")
-            
-        return success_count >= (total_count * 0.8)  # 80% success rate
+            logger.info(
+                "Installed %s/%s dependencies for %s",
+                success_count,
+                len(dependencies),
+                component,
+            )
+        return success_count >= len(dependencies) * minimum_success_ratio
 
     def install_theorem_provers(self) -> Dict[str, bool]:
         """Install multiple theorem provers and return status"""
@@ -1296,8 +1419,6 @@ _installer = None
 def _load_setup_install_module():
     """Best-effort load of scripts/setup/install.py as a module."""
     try:
-        import importlib.util
-
         repo_root = Path(__file__).resolve().parents[1]
         install_path = repo_root / "scripts" / "setup" / "install.py"
         if not install_path.exists():
@@ -1425,108 +1546,29 @@ def ensure_module(module_name: str, package_name: Optional[str] = None,
         return None
 
 
+def lazy_import(module_name: str, package_name: Optional[str] = None, **kwargs: object) -> object:
+    """Import a supported dependency on demand, installing it when configured."""
+
+    return ensure_module(module_name, package_name, **kwargs)
+
+
 def install_for_component(component: str) -> bool:
-    """Install dependencies for a specific component"""
+    """Install missing dependencies for a catalog feature component."""
+
     installer = get_installer()
-    
+
     if component == 'graphrag':
         return installer.install_graphrag_dependencies()
-    elif component == 'pdf':
-        dependencies = [
-            ('fitz', 'pymupdf', ['poppler']),
-            ('pdfplumber', 'pdfplumber'),
-            ('pytesseract', 'pytesseract', ['tesseract']),
-            ('PIL', 'pillow'),
-        ]
-    elif component == 'ocr':
-        dependencies = [
-            ('cv2', 'opencv-python'),
-            ('easyocr', 'easyocr'),
-            ('pytesseract', 'pytesseract', ['tesseract']),
-        ]
-        if installer.python_packages.get('surya-ocr'):
-            dependencies.insert(1, ('surya', 'surya-ocr'))
-    elif component == 'ml':
-        dependencies = [
-            ('numpy', 'numpy'),
-            ('torch', 'torch'),
-            ('transformers', 'transformers'),
-            ('sentence_transformers', 'sentence-transformers'),
-        ]
-    elif component == 'vectors':
-        dependencies = [
-            ('faiss', 'faiss-cpu'),
-            ('qdrant_client', 'qdrant-client'),
-            ('elasticsearch', 'elasticsearch'),
-        ]
-    elif component == 'ipfs':
+    if component == 'ipfs':
         return ensure_main_ipfs_kit_py()
-    elif component == 'ipld':
-        dependencies = [
-            ('libipld', 'libipld>=3.3.2'),
-            ('ipld_car', 'ipld-car>=0.0.1'),
-            ('ipld_dag_pb', 'ipld-dag-pb>=0.0.1'),
-            ('dag_cbor', 'dag-cbor>=0.3.3'),
-            ('multiformats', 'multiformats>=0.3.0'),
-        ]
-    elif component == 'theorem_provers':
-        # Install theorem provers and SAT/SMT solvers
+    if component == 'theorem_provers':
         return installer.install_theorem_provers()
-    elif component == 'z3':
-        dependencies = [
-            ('z3', 'z3-solver', ['z3']),
-        ]
-    elif component == 'lean':
-        dependencies = [
-            # Lean 4 is system-only, no Python binding
-        ]
-        # Install system dependency only
+    if component == 'lean':
         return installer.install_system_dependency('lean')
-    elif component == 'coq':
-        dependencies = [
-            # Coq is system-only, no Python binding
-        ]
-        # Install system dependency only
+    if component == 'coq':
         return installer.install_system_dependency('coq')
-    elif component == 'cvc5':
-        dependencies = [
-            ('cvc5', 'cvc5', ['cvc5']),
-        ]
-    elif component == 'smt_solvers':
-        dependencies = [
-            ('z3', 'z3-solver', ['z3']),
-            ('cvc5', 'cvc5', ['cvc5']),
-            ('pysmt', 'pysmt'),
-        ]
-    elif component in {'logic', 'symbolicai'}:
-        dependencies = [
-            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
-            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
-        ]
-    elif component == 'web':
-        dependencies = [
-            ('requests', 'requests'),
-            ('bs4', 'beautifulsoup4'),
-            ('newspaper', 'newspaper3k'),
-            ('readability', 'readability-lxml'),
-        ]
-    elif component == 'test':
-        dependencies = [
-            ('pytest', 'pytest'),
-            ('pytest_asyncio', 'pytest-asyncio'),
-            ('pytest_cov', 'pytest-cov'),
-            ('pytest_timeout', 'pytest-timeout'),
-            ('xdist', 'pytest-xdist'),
-            ('pytest_benchmark', 'pytest-benchmark'),
-            ('pytest_mock', 'pytest-mock'),
-            ('hypothesis', 'hypothesis'),
-        ]
-    elif component == 'symai_router':
-        dependencies = [
-            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
-            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
-            ('copilot', 'github-copilot-sdk'),
-        ]
+
+    if component == 'symai_router':
         if not installer.ensure_nodejs(min_major=20):
             if installer.verbose:
                 logger.warning("Node.js 20+ not available; CLI installs may fail")
@@ -1542,39 +1584,26 @@ def install_for_component(component: str) -> bool:
             if installer.install_node_cli_dependency(cli_info.get('package', '')):
                 if installer.verify_node_cli(command):
                     cli_success += 1
-        success_count = 0
-        for dep_info in dependencies:
-            module_name = dep_info[0]
-            package_name = dep_info[1] if len(dep_info) > 1 else module_name
-            system_deps = dep_info[2] if len(dep_info) > 2 else None
-            success, _ = installer.ensure_dependency(module_name, package_name, system_deps)
-            if success:
-                success_count += 1
-        return success_count >= len(dependencies) and cli_success == cli_total
-    else:
-        logger.warning(f"Unknown component: {component}")
+        return installer.install_component_dependencies(component) and cli_success == cli_total
+
+    if component not in COMPONENT_MODULES:
+        logger.warning("Unknown component: %s", component)
         return False
-    
-    success_count = 0
-    for dep_info in dependencies:
-        module_name = dep_info[0]
-        package_name = dep_info[1] if len(dep_info) > 1 else module_name
-        system_deps = dep_info[2] if len(dep_info) > 2 else None
-        
-        success, _ = installer.ensure_dependency(module_name, package_name, system_deps)
-        if success:
-            success_count += 1
-    
-    return success_count >= len(dependencies)
+    return installer.install_component_dependencies(component)
 
 
 if __name__ == '__main__':
     # CLI for testing dependency installation
     import argparse
-    
+
+    available_components = sorted(
+        set(COMPONENT_MODULES)
+        | {"ipfs", "theorem_provers", "lean", "coq"}
+    )
     parser = argparse.ArgumentParser(description='Install dependencies for IPFS datasets')
     parser.add_argument('component', nargs='?', default='graphrag',
-                       help='Component to install deps for (graphrag, pdf, ocr, ml, vectors, theorem_provers, z3, lean, coq, cvc5, smt_solvers, web)')
+                       choices=available_components,
+                       help='Feature component to provision eagerly')
     parser.add_argument('--verbose', action='store_true', help='Verbose output')
     parser.add_argument('--no-auto-install', action='store_true', 
                        help='Disable auto installation')

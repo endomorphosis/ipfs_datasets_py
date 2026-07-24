@@ -339,6 +339,8 @@ setup(
         'theorem-provers': [
             'z3-solver>=4.12.0,<5.0.0',
             'cvc5>=1.0.0,<2.0.0',
+            'pysmt>=0.9.5,<1.0.0',
+            'beartype>=0.15.0,<1.0.0',
             'symbolicai>=1.14.0,<2.0.0',
         ],
         # API server extras for the logic module (FastAPI + uvicorn for api_server.py)
@@ -454,8 +456,14 @@ setup(
         'multimedia': [
             'yt-dlp>=2024.0.0',
             'ffmpeg-python>=0.2.0',
+            'imageio-ffmpeg>=0.6.0',
             'pillow>=12.2.0,<13.0.0',
             'moviepy',
+        ],
+        'ocr': [
+            'easyocr>=1.6.0',
+            'opencv-python>=4.8.1.78,<4.12.0',
+            'pytesseract>=0.3.13',
         ],
         # File conversion (Phase 1: Import & Wrap external libraries)
         'file_conversion': [
@@ -508,6 +516,35 @@ setup(
             'uvicorn>=0.23.0',
             'flask>=3.0.0',
             'mcp>=1.2.0',  # Model Context Protocol
+        ],
+        'symai_router': [
+            'opencv-python>=4.8.1.78,<4.12.0',
+            'symbolicai>=1.14.0,<2.0.0',
+            'github-copilot-sdk>=0.1.0',
+        ],
+        # Dependencies exposed by the shared on-demand dependency proxy. This
+        # extra is the eager equivalent of first-use lazy installation.
+        'lazy': [
+            'chardet>=5.0.0,<6.0.0',
+            'llama-cpp-python',
+            'playsound3',
+            'pydub>=0.25.0',
+            'pymediainfo',
+            'pydocx',
+            'rouge',
+            'openai-whisper',
+            'xformers; platform_system!="Darwin"',
+            'torch-directml; platform_system=="Windows"',
+            'intel-extension-for-pytorch; platform_system=="Linux" and platform_machine=="x86_64"',
+            'rasterio',
+            'geopandas',
+            'requests-cache>=1.2.0',
+            'httpx>=0.27.0',
+            'httpx-cache',
+            'aiohttp-cache',
+            'python-magic>=0.4.27; platform_system!="Windows"',
+            'python-magic-bin>=0.4.14; platform_system=="Windows"',
+            'lxml>=5.0.0',
         ],
         # Development tools
         'dev': [

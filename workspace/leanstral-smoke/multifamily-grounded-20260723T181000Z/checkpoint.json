@@ -1,0 +1,106 @@
+{
+  "completed_work_keys": [
+    "de694b1d48331346286cf2e28b1ebc55d908e4873ba7b413f0f7844a7270e0f4"
+  ],
+  "results": {
+    "6b62ab266a94ca06bbe48f5d21171982b9bb3ad931e8ca286d24ab75936bc975": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "f8febb4f3fa876cd1cffa7680c6480c7672cd876a5f64432a493e761db998e19",
+      "elapsed_seconds": 54.767803,
+      "generation_attempts": 2,
+      "llm_called": true,
+      "reasons": [
+        "drafted_logic_candidate_copies_shape_template",
+        "drafted_logic_candidate_missing_grounding_symbol"
+      ],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable",
+        "drafted_logic_candidate_copies_shape_template",
+        "drafted_logic_candidate_missing_grounding_symbol"
+      ],
+      "request_id": "leanstral-audit-f8febb4f3fa876cd",
+      "response_hash": "f8e904e73484e3dbf2dccd467bca4d0309e35656f0f185e6faf7fb6eef4d4f04",
+      "status": "rejected",
+      "validation": {
+        "accepted": false,
+        "cache_key": "f8febb4f3fa876cd1cffa7680c6480c7672cd876a5f64432a493e761db998e19",
+        "reasons": [
+          "drafted_logic_candidate_copies_shape_template",
+          "drafted_logic_candidate_missing_grounding_symbol"
+        ],
+        "response_hash": "f8e904e73484e3dbf2dccd467bca4d0309e35656f0f185e6faf7fb6eef4d4f04",
+        "verified": false,
+        "verified_by": []
+      },
+      "work_key": "6b62ab266a94ca06bbe48f5d21171982b9bb3ad931e8ca286d24ab75936bc975"
+    },
+    "de694b1d48331346286cf2e28b1ebc55d908e4873ba7b413f0f7844a7270e0f4": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "0a3719cc83e7899c8cda71b72d636fd516a77a8006439314a09ba4e0e528f6ea",
+      "elapsed_seconds": 31.89707,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-0a3719cc83e7899c",
+      "response_hash": "2b532818d6623dd341b22b8ba838b18084c4082e353fbd7e1c8bc2c0d9c25d53",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "0a3719cc83e7899c8cda71b72d636fd516a77a8006439314a09ba4e0e528f6ea",
+        "reasons": [],
+        "response_hash": "2b532818d6623dd341b22b8ba838b18084c4082e353fbd7e1c8bc2c0d9c25d53",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "de694b1d48331346286cf2e28b1ebc55d908e4873ba7b413f0f7844a7270e0f4"
+    },
+    "f58a3d643683474993ed629485df03bc6a7b63be4cf8370f40a9c3f5611e4a90": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "6631fd65a24644d88a14910816e79ed8aa0a8587aee37229a8429241f3e36f8d",
+      "elapsed_seconds": 56.660312,
+      "generation_attempts": 2,
+      "llm_called": true,
+      "reasons": [
+        "drafted_logic_candidate_copies_shape_template",
+        "drafted_logic_candidate_missing_grounding_symbol"
+      ],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable",
+        "drafted_logic_candidate_copies_shape_template",
+        "drafted_logic_candidate_missing_grounding_symbol"
+      ],
+      "request_id": "leanstral-audit-6631fd65a24644d8",
+      "response_hash": "36c977c3bb14721a28f22a044ed5f759ab1e721395149ae3b7e0ca206ebf6506",
+      "status": "rejected",
+      "validation": {
+        "accepted": false,
+        "cache_key": "6631fd65a24644d88a14910816e79ed8aa0a8587aee37229a8429241f3e36f8d",
+        "reasons": [
+          "drafted_logic_candidate_copies_shape_template",
+          "drafted_logic_candidate_missing_grounding_symbol"
+        ],
+        "response_hash": "36c977c3bb14721a28f22a044ed5f759ab1e721395149ae3b7e0ca206ebf6506",
+        "verified": false,
+        "verified_by": []
+      },
+      "work_key": "f58a3d643683474993ed629485df03bc6a7b63be4cf8370f40a9c3f5611e4a90"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "1ecd43deafa5a00375f2e618a51c40a4751205b372c5effda16e426a6f1eec30",
+  "updated_at": 1784830496.978018
+}

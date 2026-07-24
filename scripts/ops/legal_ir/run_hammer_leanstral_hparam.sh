@@ -15,7 +15,7 @@ BASE_RUN_ID="${BASE_RUN_ID:-legal-ir-hammer-leanstral-rollout-$(date -u +%Y%m%dT
 SMOKE_SECONDS="${SMOKE_SECONDS:-600}"
 TRIAL_SECONDS="${TRIAL_SECONDS:-600}"
 TRIAL_COUNT="${TRIAL_COUNT:-6}"
-HPARAM_CANDIDATE_COUNT="${HPARAM_CANDIDATE_COUNT:-12}"
+HPARAM_CANDIDATE_COUNT="${HPARAM_CANDIDATE_COUNT:-6}"
 HPARAM_BASE_SEED="${HPARAM_BASE_SEED:-8675309}"
 HPARAM_SEEDS_PER_CANDIDATE="${HPARAM_SEEDS_PER_CANDIDATE:-3}"
 # One trainer is always the safe operating point.  Two is merely the policy
@@ -38,6 +38,12 @@ SUMMARY_PATH="${SUMMARY_PATH:-${LOG_DIR}/${BASE_RUN_ID}-best-24h-autoencoder.sum
 DRY_RUN=0
 GATE_ONLY=0
 ALLOW_PREFIX=0
+SEARCH_ONLY=0
+HPARAM_BASELINE_EVIDENCE="${HPARAM_BASELINE_EVIDENCE:-${ROOT_DIR}/docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json}"
+HPARAM_BASELINE_SUMMARY="${HPARAM_BASELINE_SUMMARY:-${LOG_DIR}/legal-ir-10m-smoke-20260723T033130Z-autoencoder.summary}"
+HPARAM_BASELINE_STATE="${HPARAM_BASELINE_STATE:-${ROOT_DIR}/workspace/todo-queues/legal-ir-10m-smoke-20260723T033130Z-autoencoder.state.json}"
+HPARAM_OUTPUT="${HPARAM_OUTPUT:-${LOG_DIR}/${BASE_RUN_ID}-hparam-selection.json}"
+HPARAM_WORK_ROOT="${HPARAM_WORK_ROOT:-${ROOT_DIR}/workspace/legal-ir-hparam/${BASE_RUN_ID}}"
 
 usage() {
   cat <<'EOF'
@@ -54,6 +60,8 @@ Options:
   --summary-path PATH         Production summary path (gate-only compatibility)
   --gate-only                 Gate an existing snapshot without starting work
   --allow-prefix              With --gate-only, accept a valid strict prefix
+  --search-only               Execute only the measured one-hour CUDA search
+  --hparam-output PATH        Search-only selection receipt destination
   --dry-run                   Print the rollout contract and commands
   -h, --help                  Show this help
 EOF
@@ -71,6 +79,7 @@ while (( $# > 0 )); do
     --dry-run) DRY_RUN=1; shift ;;
     --gate-only) GATE_ONLY=1; shift ;;
     --allow-prefix) ALLOW_PREFIX=1; shift ;;
+    --search-only) SEARCH_ONLY=1; shift ;;
     --run-id|--base-run-id)
       require_value "$@"
       BASE_RUN_ID="$2"
@@ -78,11 +87,14 @@ while (( $# > 0 )); do
       EVIDENCE_OUTPUT="${LOG_DIR}/${BASE_RUN_ID}-rollout-gate.json"
       EVIDENCE_DIR="${LOG_DIR}/${BASE_RUN_ID}-rollout-evidence"
       SUMMARY_PATH="${LOG_DIR}/${BASE_RUN_ID}-best-24h-autoencoder.summary"
+      HPARAM_OUTPUT="${LOG_DIR}/${BASE_RUN_ID}-hparam-selection.json"
+      HPARAM_WORK_ROOT="${ROOT_DIR}/workspace/legal-ir-hparam/${BASE_RUN_ID}"
       shift 2
       ;;
     --snapshot-path) require_value "$@"; SNAPSHOT_PATH="$2"; shift 2 ;;
     --evidence-output) require_value "$@"; EVIDENCE_OUTPUT="$2"; shift 2 ;;
     --summary-path) require_value "$@"; SUMMARY_PATH="$2"; shift 2 ;;
+    --hparam-output) require_value "$@"; HPARAM_OUTPUT="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -152,6 +164,34 @@ export CODEX_SCOPE_WORKERS="${CODEX_SCOPE_WORKERS:-1}"
 export CODEX_BUNDLE_MODE="${CODEX_BUNDLE_MODE:-vector}"
 export CODEX_VECTOR_MIN_BUNDLE_SIZE="${CODEX_VECTOR_MIN_BUNDLE_SIZE:-2}"
 export CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS="${CODEX_VECTOR_MAX_BUNDLE_WAIT_SECONDS:-120}"
+
+if (( SEARCH_ONLY )); then
+  if (( HPARAM_CANDIDATE_COUNT != 6 || HPARAM_SEEDS_PER_CANDIDATE != 3 )); then
+    echo "the measured one-hour search requires six candidates and three seeds" >&2
+    exit 2
+  fi
+  if (( ! DRY_RUN )) && [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+    echo "canonical hparam evidence requires a clean Git checkout" >&2
+    exit 2
+  fi
+  search_args=(
+    "${PYTHON_BIN}" -m
+    ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hparam_execution
+    --run-id "${BASE_RUN_ID}"
+    --repo-root "${ROOT_DIR}"
+    --python "${PYTHON_BIN}"
+    --baseline-evidence "${HPARAM_BASELINE_EVIDENCE}"
+    --baseline-summary "${HPARAM_BASELINE_SUMMARY}"
+    --baseline-state "${HPARAM_BASELINE_STATE}"
+    --output "${HPARAM_OUTPUT}"
+    --work-root "${HPARAM_WORK_ROOT}"
+    --candidate-count "${HPARAM_CANDIDATE_COUNT}"
+    --seeds-per-candidate "${HPARAM_SEEDS_PER_CANDIDATE}"
+    --max-concurrent-trainers "${HPARAM_MAX_CONCURRENT_TRAINERS}"
+  )
+  (( DRY_RUN )) && search_args+=(--dry-run)
+  exec "${search_args[@]}"
+fi
 
 HARD_GUARDRAILS="$("${PYTHON_BIN}" -m scripts.ops.legal_ir.hammer_leanstral_rollout_gate guardrail-metrics)"
 EXTRA_ARGS=(

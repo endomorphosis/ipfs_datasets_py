@@ -1,0 +1,68 @@
+{
+  "completed_work_keys": [
+    "0c3fb25ec57534a146cc7c637edef70a6b8241b3d618e02718c3752fc5e03654",
+    "315ed067033b9a9ec5b67892bd581fcbf6ffd8df3a29b8629a1ed0364fc731c0"
+  ],
+  "results": {
+    "0c3fb25ec57534a146cc7c637edef70a6b8241b3d618e02718c3752fc5e03654": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "0246e3ff3c106a658c14650e20cbe67210c3c65a106422ed425463713b2a9be6",
+      "elapsed_seconds": 33.848559,
+      "generation_attempts": 1,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable"
+      ],
+      "request_id": "leanstral-audit-0246e3ff3c106a65",
+      "response_hash": "17c7eb823636f4b464b07b292c0b608b1e63f43baf5e21c9ab5b7bde1061c621",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "0246e3ff3c106a658c14650e20cbe67210c3c65a106422ed425463713b2a9be6",
+        "reasons": [],
+        "response_hash": "17c7eb823636f4b464b07b292c0b608b1e63f43baf5e21c9ab5b7bde1061c621",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "0c3fb25ec57534a146cc7c637edef70a6b8241b3d618e02718c3752fc5e03654"
+    },
+    "315ed067033b9a9ec5b67892bd581fcbf6ffd8df3a29b8629a1ed0364fc731c0": {
+      "attempts": 1,
+      "cache_hit": false,
+      "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+      "elapsed_seconds": 58.869611,
+      "generation_attempts": 2,
+      "llm_called": true,
+      "reasons": [],
+      "repair_reasons": [
+        "llm_router:ipfs_accelerate_py",
+        "llm_router_mode:single",
+        "llm_router_trace:unavailable",
+        "untyped_logic"
+      ],
+      "request_id": "leanstral-audit-4243287695e8c241",
+      "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+      "status": "accepted",
+      "validation": {
+        "accepted": true,
+        "cache_key": "4243287695e8c2410d8f2e94b17b1e8e12acef5d339af9b273908661b1215c87",
+        "reasons": [],
+        "response_hash": "342923248ce2aa52c026054a6b346f7156c2356968d52a770d3706183808e9d8",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "work_key": "315ed067033b9a9ec5b67892bd581fcbf6ffd8df3a29b8629a1ed0364fc731c0"
+    }
+  },
+  "schema_version": "legal-ir-leanstral-audit-checkpoint-v1",
+  "source_digest": "1ecd43deafa5a00375f2e618a51c40a4751205b372c5effda16e426a6f1eec30",
+  "updated_at": 1784830033.393727
+}

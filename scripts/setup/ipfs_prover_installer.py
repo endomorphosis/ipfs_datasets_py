@@ -7,12 +7,14 @@ Usage:
 - `python -m ipfs_prover_installer --yes --lean`
 - `python -m ipfs_prover_installer --yes --coq`
 
-For Apalache, Tamarin, Maude, ProVerif, and the CVC5 CLI this script delegates
-to the unified user-local installer in ``ipfs_datasets_py``. That import occurs
-only after the user explicitly selects one of those solver flags.
+Native and portfolio installs delegate to the unified user-local installer in
+``ipfs_datasets_py``. That import occurs only after the user explicitly selects
+one of those solver flags or portfolios.
 
-See also: setup.py env vars:
+See also: setup installer env vars:
 - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1
+- IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS=legal_ir_training
+- IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS=1
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1
 """
@@ -343,139 +345,17 @@ def _download_to(path: Path, url: str, *, strict: bool) -> bool:
 
 
 def ensure_cvc5(*, yes: bool, strict: bool) -> bool:
-    """Attempt to ensure CVC5 is available.
-
-    Preference order:
-    - `cvc5` already on PATH
-    - `apt-get install cvc5` when running as root
-    - Download a prebuilt Linux binary into `~/.local/bin/cvc5` (best-effort)
-    """
-
-    existing = _which("cvc5")
-    if existing:
-        if _works(existing, ["--version"]):
-            return True
-        # Broken binary (e.g., wrong arch) — try to clean up user-local install.
-        try:
-            p = Path(existing).resolve()
-            if str(p).startswith(str(_user_local_bin().resolve())):
-                p.unlink(missing_ok=True)
-        except Exception:
-            pass
-
-    if not yes:
-        print("cvc5 not found. Re-run with --yes to attempt a best-effort install.")
-        return False
+    """Delegate CVC5 CLI installation to the checksummed platform installer."""
 
     try:
-        is_root = hasattr(os, "geteuid") and os.geteuid() == 0
-        if is_root and _which("apt-get"):
-            print("Attempting to install cvc5 via apt-get (root detected)...")
-            _run(["apt-get", "update"], check=False)
-            rc = _run(["apt-get", "install", "-y", "cvc5"], check=False)
-            if rc == 0 and _which("cvc5"):
-                print("Installed cvc5 via apt-get.")
-                return True
+        repo_root = Path(__file__).resolve().parents[2]
+        if str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        from ipfs_datasets_py.logic.integration.bridges.prover_installer import (
+            ensure_cvc5_cli,
+        )
 
-        # Best-effort download for Linux x86_64.
-        dest = _user_local_bin() / "cvc5"
-        print(f"Attempting to download cvc5 into {dest} (best-effort)...")
-
-        try:
-            assets = _github_latest_assets("cvc5", "cvc5")
-            # Prefer actual solver bundles for Linux x86_64, and avoid java API jars.
-            preferred = []
-            for a in assets:
-                name = str(a.get("name") or "")
-                if not name:
-                    continue
-                if name.lower().endswith(".jar"):
-                    continue
-                if "Linux-x86_64" not in name:
-                    continue
-                preferred.append(a)
-
-            # Priority: static zip -> shared zip -> anything else x86_64 zip.
-            patterns = [
-                r"cvc5-Linux-x86_64-static(-gpl)?\\.zip$",
-                r"cvc5-Linux-x86_64-shared(-gpl)?\\.zip$",
-                r"cvc5-Linux-x86_64.*\\.zip$",
-            ]
-
-            # Build a prioritized list of assets to try.
-            to_try: list[dict] = []
-            for pat in patterns:
-                a = _select_asset(preferred, [pat])
-                if a and a not in to_try:
-                    to_try.append(a)
-            for a in preferred:
-                if a not in to_try:
-                    to_try.append(a)
-
-            for asset in to_try:
-                if not asset.get("browser_download_url"):
-                    continue
-                url = str(asset["browser_download_url"])
-                name = str(asset.get("name") or "cvc5")
-                print(f"Downloading cvc5 release asset: {name}")
-                tmp_path = Path(tempfile.gettempdir()) / name
-
-                try:
-                    _download_file(url, tmp_path)
-                except Exception:
-                    continue
-
-                installed = False
-                if name.lower().endswith((".zip", ".tar.gz", ".tgz", ".tar")):
-                    installed = _install_executable_from_archive(
-                        archive_path=tmp_path,
-                        executable_name="cvc5",
-                        dest_path=dest,
-                    )
-                else:
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    dest.write_bytes(tmp_path.read_bytes())
-                    dest.chmod(0o755)
-                    installed = True
-
-                if not installed:
-                    continue
-
-                # Basic ELF check to avoid leaving a broken file.
-                try:
-                    magic = dest.read_bytes()[:4]
-                    if magic != b"\x7fELF":
-                        raise RuntimeError("not an ELF binary")
-                except Exception:
-                    try:
-                        dest.unlink(missing_ok=True)
-                    except Exception:
-                        pass
-                    continue
-
-                rc = subprocess.run([str(dest), "--version"], capture_output=True, text=True, timeout=10)
-                if rc.returncode == 0:
-                    print(f"Installed cvc5 to {dest}")
-                    return True
-
-                # Clean up bad install.
-                try:
-                    dest.unlink(missing_ok=True)
-                except Exception:
-                    pass
-        except Exception as exc:
-            if strict:
-                raise
-            print(f"cvc5 download install failed (best-effort): {exc}")
-
-        print("Attempting to install Python package cvc5 (fallback)...")
-        if _pip_install("cvc5>=1.0.0,<2.0.0", strict=strict) and _module_available("cvc5"):
-            print("Installed cvc5 Python bindings.")
-            return True
-
-        print("Unable to install cvc5 automatically. Install via your OS package manager or build from source.")
-        return False
-
+        return bool(ensure_cvc5_cli(yes=yes, strict=strict))
     except Exception as exc:
         print(f"Failed to install cvc5: {exc}")
         if strict:
@@ -656,6 +536,49 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--maude", action="store_true", help="Install/ensure Maude")
     parser.add_argument("--proverif", action="store_true", help="Install/ensure headless ProVerif")
     parser.add_argument("--cvc5-cli", action="store_true", help="Install/ensure the CVC5 CLI")
+    parser.add_argument("--vampire", action="store_true", help="Install/ensure Vampire")
+    parser.add_argument("--eprover", "--e-prover", action="store_true", help="Install/ensure E prover")
+    parser.add_argument(
+        "--isabelle",
+        action="store_true",
+        help="Install/ensure the large Isabelle reconstruction bundle",
+    )
+    parser.add_argument("--ergoai", "--ergo", action="store_true", help="Install/ensure ErgoAI")
+    parser.add_argument(
+        "--portfolio",
+        action="append",
+        choices=(
+            "legal_ir_core",
+            "legal_ir_generation",
+            "legal_ir_training",
+            "legal_ir_specialists",
+            "reconstruction",
+            "legal_ir_full",
+        ),
+        default=[],
+        help="Install a named unified prover portfolio; repeatable.",
+    )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        choices=(
+            "apalache",
+            "coq",
+            "cvc5",
+            "cvc5_cli",
+            "eprover",
+            "ergoai",
+            "isabelle",
+            "lean",
+            "maude",
+            "proverif",
+            "tamarin",
+            "vampire",
+            "z3",
+        ),
+        default=[],
+        help="Exclude a solver inherited from a selected portfolio; repeatable.",
+    )
     parser.add_argument("--check-updates", action="store_true", help="Report managed solver version drift")
     parser.add_argument("--update", action="store_true", help="Manually refresh selected managed solvers")
     parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
@@ -679,8 +602,18 @@ def main(argv: list[str] | None = None) -> int:
         "--maude": args.maude,
         "--proverif": args.proverif,
         "--cvc5-cli": args.cvc5_cli,
+        "--vampire": args.vampire,
+        "--eprover": args.eprover,
+        "--isabelle": args.isabelle,
+        "--ergoai": args.ergoai,
     }
-    if any(native_flags.values()) or args.check_updates or args.update:
+    if (
+        any(native_flags.values())
+        or args.portfolio
+        or args.exclude
+        or args.check_updates
+        or args.update
+    ):
         repo_root = Path(__file__).resolve().parents[2]
         if str(repo_root) not in sys.path:
             sys.path.insert(0, str(repo_root))
@@ -697,6 +630,10 @@ def main(argv: list[str] | None = None) -> int:
             delegated.append("--coq")
         if args.symbolicai:
             delegated.append("--symbolicai")
+        for portfolio in args.portfolio:
+            delegated.extend(("--portfolio", portfolio))
+        for solver in args.exclude:
+            delegated.extend(("--exclude", solver))
         if args.yes:
             delegated.append("--yes")
         if args.allow_sudo:

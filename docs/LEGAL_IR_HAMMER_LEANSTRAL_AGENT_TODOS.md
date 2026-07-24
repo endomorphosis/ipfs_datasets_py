@@ -16,7 +16,7 @@ Operator contract:
 
 - This board is the supervisor's dependency source of truth. A dependency must name another task in this file; task lifecycle values are limited to `todo`, `in_progress`, `blocked`, and `completed`.
 - `Outputs` names the concrete implementation or documentation artifacts owned by a task. `Validation` is the executable, semicolon-delimited command set the supervisor must pass before merge. Do not infer completion from advisory JSON or from an artifact merely being present.
-- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100. The measured throughput-remediation tranche is tracked by PORTAL-LIR-HAMMER-101 through PORTAL-LIR-HAMMER-118, with explicit execution evidence required by PORTAL-LIR-HAMMER-117 and PORTAL-LIR-HAMMER-118.
+- The representation targets, PORTAL-LIR-HAMMER-019 through PORTAL-LIR-HAMMER-033, retain focused output and validation contracts; PORTAL-LIR-HAMMER-034 records their operator handoff. Runtime and proof-feedback targets PORTAL-LIR-HAMMER-035 through PORTAL-LIR-HAMMER-052 form the first performance wave, and PORTAL-LIR-HAMMER-053 is its rollout handoff. The evidence-driven follow-up in `docs/implementation/plans/HAMMER_LEANSTRAL_LEGAL_IR_NEXT_OPTIMIZATION_PLAN.md` is tracked by PORTAL-LIR-HAMMER-054 through PORTAL-LIR-HAMMER-100. The measured throughput-remediation tranche is tracked by PORTAL-LIR-HAMMER-101 through PORTAL-LIR-HAMMER-118. The legacy-signal migration and validation tranche is tracked by PORTAL-LIR-HAMMER-119 through PORTAL-LIR-HAMMER-127 and gates the eight-hour execution in PORTAL-LIR-HAMMER-118.
 - A generated patch, learned export, or model draft is never promoted merely because its producer task completed. Runtime trust and rollout evidence remain mandatory.
 
 Artifact and authority lanes:
@@ -34,6 +34,7 @@ Artifact and authority lanes:
 | Evaluation integrity | PORTAL-LIR-HAMMER-073-084 | Leakage-resistant evaluation, semantic-equivalence metrics, uncertainty, fuzzing, hard negatives, multi-seed promotion, schema compatibility, poisoning defenses, external benchmarks, and drift rollback. |
 | Compiler productization | PORTAL-LIR-HAMMER-085-100 | Source maps, symbol tables, citations, temporal authority, ambiguity, pass manager, backend conformance, reproducibility, incremental compilation, semantic diffs, proof-carrying outputs, diagnostics, APIs, interoperability, and final conformance. |
 | Measured throughput remediation | PORTAL-LIR-HAMMER-101-118 | Incremental state identity, compact checkpoints, copy-on-write updates, bounded persistence, evaluation cadence, packed CUDA training, factorized heads, persistent Leanstral reuse, stage parallelism, Codex rescue, resource-aware search, fail-closed performance promotion, and preserved smoke/canary execution evidence. |
+| Legacy-signal migration | PORTAL-LIR-HAMMER-119-127 | Provenance-bound feature inventory, evidence-aware sparse capacity, low-rank teacher distillation, LegalIR-view calibration, current compiler-guidance and proof replay, Leanstral conflict re-audit, stratified promotion, and an integrated CUDA selection smoke. |
 
 Expanded optimization target manifest:
 
@@ -65,6 +66,7 @@ Next execution wave:
 | 048-050 | Incremental validation, failure rescue, and conflict-aware Codex scheduling | Validate concurrently; serialize overlapping writes and merges |
 | 051-052 | Learned-rule distillation, pipeline benchmark, and adaptive tuning | Optimize held-out compiler quality and useful throughput together |
 | 053 | Short smoke, one-hour hparam, eight-hour canary, and 24-hour production rollout | Fail closed and preserve rollback evidence at every stage |
+| 119-127 | Recover useful legacy autoencoder, guidance, proof, and rule-gap signals into the current architecture | Audit first; migrate each signal class independently; require current trusted validation and a stratified CUDA promotion gate before the eight-hour run |
 
 Evidence-driven follow-up wave:
 
@@ -2133,7 +2135,7 @@ The manifest is an operator index. The full paths and commands in each task's `O
 
 ## PORTAL-LIR-HAMMER-117 Execute and verify the ten-minute integrated smoke
 
-- Status: todo
+- Status: completed
 - Completion: 0
 - Priority: P0
 - Track: rollout-execution
@@ -2152,13 +2154,148 @@ The manifest is an operator index. The full paths and commands in each task's `O
 - Completion: 0
 - Priority: P0
 - Track: rollout-execution
-- Depends on: PORTAL-LIR-HAMMER-117
+- Depends on: PORTAL-LIR-HAMMER-117, PORTAL-LIR-HAMMER-127
 - Outputs: scripts/ops/legal_ir/run_legal_ir_8h_canary.sh, docs/implementation/reports/LEGAL_IR_8_HOUR_CANARY_REPORT.md, docs/implementation/reports/evidence/legal_ir_8_hour_canary.json, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_8h_canary_execution.py
 - Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_8h_canary_execution.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/verify_legal_ir_run_evidence.py --evidence docs/implementation/reports/evidence/legal_ir_8_hour_canary.json --stage eight_hour_canary --minimum-active-seconds 28800
-- Acceptance: Runs the task-115 winning hyperparameters and task-117 smoke-approved configuration for at least 28,800 accumulated active seconds under the watchdog, using resumable lineage-bound checkpoints without counting downtime, startup, dry-run, fixture replay, or validation-only time as training time. Fresh evidence must continuously demonstrate real CUDA autoencoder updates, persistent CUDA Leanstral reuse, Hammer proof and reconstruction throughput, Codex TODO generation and accepted-or-safely-rejected patch flow, bounded queues and memory, regular heartbeats, successful resume drills, and no orphaned children or canonical concurrent writers. The report must compare matched baseline and canary time series for cycles/hour, samples/second, state-to-accepted-patch p50/p95, IR CE/cosine, autoencoder CE/cosine, all LegalIR family metrics, symbolic validity, proof/reconstruction, provenance, round trip, calibration/uncertainty, holdout behavior, source-copy penalties, TODO yield, validation outcomes, and accepted next-cycle-confirmed patches. Completion and any promotion recommendation must fail closed when a required service silently falls back, metrics are nonresponsive or regress beyond configured confidence bounds, lineage or artifact hashes disagree, the run stalls without a bounded documented recovery, or the full active duration and final durable checkpoint cannot be verified.
+- Acceptance: Runs the task-115 winning hyperparameters with the task-127 selected migrated-signal configuration and checkpoint for at least 28,800 accumulated active seconds under the watchdog, after preserving task-117's integrated-service smoke guarantees. It uses resumable lineage-bound checkpoints without counting downtime, startup, dry-run, fixture replay, or validation-only time as training time. Fresh evidence must continuously demonstrate real CUDA autoencoder updates, persistent CUDA Leanstral reuse, Hammer proof and reconstruction throughput, Codex TODO generation and accepted-or-safely-rejected patch flow, bounded queues and memory, regular heartbeats, successful resume drills, and no orphaned children or canonical concurrent writers. The report must compare matched baseline and canary time series for cycles/hour, samples/second, state-to-accepted-patch p50/p95, IR CE/cosine, autoencoder CE/cosine, all LegalIR family metrics, symbolic validity, proof/reconstruction, provenance, round trip, calibration/uncertainty, holdout behavior, source-copy penalties, TODO yield, validation outcomes, and accepted next-cycle-confirmed patches. Completion and any promotion recommendation must fail closed when a required service silently falls back, metrics are nonresponsive or regress beyond configured confidence bounds, lineage or artifact hashes disagree, the run stalls without a bounded documented recovery, or the full active duration and final durable checkpoint cannot be verified.
 
 ```json
-{"phase":"rollout_execution","scope":"eight_hour_integrated_canary","minimum_active_seconds":28800,"configuration_source":"PORTAL-LIR-HAMMER-115","smoke_gate":"PORTAL-LIR-HAMMER-117","hard_rule":"only_active_lineage_verified_runtime_counts_toward_eight_hours"}
+{"phase":"rollout_execution","scope":"eight_hour_integrated_canary","minimum_active_seconds":28800,"configuration_source":"PORTAL-LIR-HAMMER-127","smoke_gate":"PORTAL-LIR-HAMMER-117","hard_rule":"only_active_lineage_verified_runtime_counts_toward_eight_hours"}
+```
+
+## PORTAL-LIR-HAMMER-119 Audit and bind the complete legacy feature-transfer inventory
+
+- Status: completed
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-056, PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-079, PORTAL-LIR-HAMMER-080, PORTAL-LIR-HAMMER-103, PORTAL-LIR-HAMMER-107, PORTAL-LIR-HAMMER-109
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_inventory.py, scripts/ops/legal_ir/audit_legacy_autoencoder_features.py, docs/implementation/reports/LEGAL_IR_LEGACY_FEATURE_INVENTORY.md, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_feature_inventory.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_feature_inventory.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/audit_legacy_autoencoder_features.py --old-state /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json --new-state /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-safe-legacy-port-v2-20260723T074055Z.state.json --transfer-report /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/test-logs/legal-ir-autoencoder-safe-legacy-port-v2-20260723T074055Z.report.json --canary-report /home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/test-logs/legal-ir-autoencoder-safe-legacy-port-v2-20260723T074055Z.canary.json --output workspace/test-logs/legal-ir-legacy-feature-inventory.json
+- Acceptance: Produces a deterministic, content-addressed inventory of every transferable, remapped, overridden, and omitted legacy tensor group without serializing source samples, prompts, decoded modal text, or nested artifact payloads. It must reproduce the accepted transfer lineage and row counts, classify the 995,577 omitted rows by semantic family and transfer risk, report activation frequency and signed signal mass, bind the old state, accepted state, transfer report, architecture schema, tokenizer, compiler, and evaluation-canary hashes, and fail closed on unknown fields or incompatible dimensions. The legacy state `sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be`, accepted state `sha256:1c615f7c622b46e1a3d7349b436bf5daefc3e26866e9458c0feacfe545bcb033`, transfer report `sha256:5d6da2dca0c2ad5c74c16d9c47eee2fc43b18aabe5e53a6c1f55e3f6a14995e2`, and canary `sha256:a71a67bf14b5740f9b52ef7ac3859b436df6406d4b60f0fc13e0e1e2125c2bb5` are immutable audit inputs rather than automatically trusted training labels.
+
+```json
+{"phase":"legacy_signal_migration","scope":"complete_transfer_inventory","known_old_rows":1205336,"known_accepted_rows":209759,"known_exact_rows":209753,"known_omitted_rows":995577}
+```
+
+## PORTAL-LIR-HAMMER-120 Add per-group capacity and evidence-aware sparse-tail selection
+
+- Status: completed
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-109, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_capacity.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_feature_transfer.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_feature_capacity.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_feature_capacity.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_sparse_state.py -q
+- Acceptance: Replaces a uniform sparse-state cap with deterministic per-group budgets and coupled-key retention for embeddings, global logits, per-view logits, relation/entity heads, projection factors, proof feedback, compiler guidance, and calibration state. Ranking combines bounded activation frequency, recency, held-out loss contribution, trusted proof or reconstruction impact, and migration confidence; it cannot rank source-text memorization, rejected proof output, or unsigned guidance as useful signal. Capacity decisions, evictions, and tie breaks are reproducible and reported by family, unknown groups fail closed, and the accepted-state behavior remains available as an explicit zero-risk baseline.
+
+```json
+{"phase":"legacy_signal_migration","scope":"evidence_aware_sparse_capacity","baseline_policy":"accepted_state_v2","hard_rule":"coupled_parameters_are_retained_or_evicted_atomically"}
+```
+
+## PORTAL-LIR-HAMMER-121 Distill legacy-only embedding tails through bounded low-rank adapters
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-107, PORTAL-LIR-HAMMER-109, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_distillation.py, ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_legacy_distillation.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_legacy_distillation.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_low_rank_shadow.py tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_transfer.py -q
+- Acceptance: Uses the immutable legacy checkpoint only as a teacher to recover useful embedding-tail geometry through bounded low-rank or confidence-gated shadow adapters in the current architecture. It forbids direct bulk embedding replacement because the measured direct transfer regressed autoencoder cosine, excludes source and decoded-text memory, supports a zero-influence baseline, isolates gradients and optimizer state by adapter, and records teacher, student, split, seed, rank, confidence, and lineage. Promotion requires multi-seed held-out improvement in autoencoder CE or cosine without regression in IR, per-family semantic, proof, reconstruction, round-trip, provenance, uncertainty, holdout, or anti-copy gates.
+
+```json
+{"phase":"legacy_signal_migration","scope":"embedding_tail_teacher_distillation","known_omitted_embedding_rows":569806,"default_influence":0.0,"direct_bulk_transfer_allowed":false}
+```
+
+## PORTAL-LIR-HAMMER-122 Calibrate legacy feature-to-LegalIR-view transfer
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-055, PORTAL-LIR-HAMMER-058, PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_legacy_view_calibration.py, scripts/ops/legal_ir/evaluate_legacy_view_calibration.py, tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_legacy_view_calibration.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_legacy_view_calibration.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_view_family_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_objective.py -q
+- Acceptance: Adds per-head and per-view temperature, interpolation, and confidence calibration for legacy `feature_legal_ir_view_logits`, including an exact alpha-zero baseline and family-specific rejection. Search runs on a lineage-bound development split while the immutable canary remains hidden, and promotion rejects the full legacy transfer known to regress IR cross entropy. Reports independently cover deontic, frame-logic, TDFOL, knowledge-graph, CEC, prover, and global heads with CE, cosine, calibration error, semantic equivalence, proof reconstruction, source-copy, and uncertainty metrics; no aggregate improvement may mask a family regression.
+
+```json
+{"phase":"legacy_signal_migration","scope":"legal_ir_view_logit_calibration","known_omitted_view_logit_rows":92867,"default_alpha":0.0,"full_transfer_allowed":false}
+```
+
+## PORTAL-LIR-HAMMER-123 Revalidate and replay promotion-eligible compiler guidance
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-051, PORTAL-LIR-HAMMER-056, PORTAL-LIR-HAMMER-061, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_guidance_replay.py, scripts/ops/legal_ir/revalidate_compiler_guidance.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_guidance_replay.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_guidance_replay.py tests/unit/optimizers/logic_theorem_optimizer/test_compiler_guidance_distillation.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_promotion_evidence.py -q
+- Acceptance: Audits the 142 historical compiler-guidance distillation reports and treats the 17 previously promotion-allowed reports only as replay candidates. Every candidate must be reconstructed and revalidated against current compiler, schema, canonicalization, fixed holdout, proof, provenance, and source-copy policy before a content-addressed bounded feature update can be emitted. Stale, unsigned, nonreconstructible, contradictory, source-bearing, or lineage-mismatched reports fail closed; the replay may accept fewer than 17 and must report every rejection reason without copying raw prompts or decoded text into state.
+
+```json
+{"phase":"legacy_signal_migration","scope":"compiler_guidance_revalidation","historical_reports":142,"historically_promotion_allowed":17,"hard_rule":"historical_promotion_is_only_replay_eligibility"}
+```
+
+## PORTAL-LIR-HAMMER-124 Replay historical Hammer obligations into trusted proof feedback
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-045, PORTAL-LIR-HAMMER-047, PORTAL-LIR-HAMMER-057, PORTAL-LIR-HAMMER-059, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_proof_feedback_replay.py, scripts/ops/legal_ir/replay_historical_hammer_obligations.py, tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_replay.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_replay.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_training.py -q
+- Acceptance: Content-addresses and deduplicates the 96 unique historical Hammer obligations, then re-executes them with current translators, solver policy, timeouts, reconstruction checks, compiler schema, and trust roots. The 115 historical cycle files and 1,196 nested artifacts are untrusted replay inputs because none recorded trusted, proved, or proof-checked status; only fresh current proof and reconstruction receipts may become bounded proof-feedback supervision. Replay is resumable, cache-safe, parallel under the global solver budget, strips bulky nested artifacts and decoded text, records deterministic failure classes, and cannot reward a draft, timeout, unsupported result, or unreconstructed proof.
+
+```json
+{"phase":"legacy_signal_migration","scope":"trusted_hammer_obligation_replay","historical_cycle_files":115,"historical_nested_artifacts":1196,"unique_obligations":96,"historically_trusted":0}
+```
+
+## PORTAL-LIR-HAMMER-125 Re-audit conflicted historical Leanstral rule gaps
+
+- Status: todo
+- Completion: 0
+- Priority: P1
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-024, PORTAL-LIR-HAMMER-025, PORTAL-LIR-HAMMER-060, PORTAL-LIR-HAMMER-119
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/leanstral_rule_gap_reaudit.py, scripts/ops/legal_ir/reaudit_leanstral_rule_gaps.py, tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_rule_gap_reaudit.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_rule_gap_reaudit.py tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_rule_gap_integration.py tests/unit/optimizers/logic_theorem_optimizer/test_leanstral_failure_branch_candidates.py -q
+- Acceptance: Deduplicates the nine historical Leanstral rule-gap reports into their underlying gap identities and re-audits the conflicted frame-logic ontology gap against current deterministic extraction, schema, Hammer obligations, and reconstruction policy. Historical accepted support and conflicting decisions are evidence to investigate rather than labels to import; only a fresh sanitized candidate with current deterministic validation and trusted proof may influence bounded guidance. The task reports conflict provenance, rejection and abstention explicitly, preserves the zero-guidance baseline, and never treats free-form Leanstral text as canonical IR or compiler code.
+
+```json
+{"phase":"legacy_signal_migration","scope":"leanstral_rule_gap_reaudit","historical_reports":9,"known_unique_gaps":1,"hard_rule":"fresh_verification_is_required"}
+```
+
+## PORTAL-LIR-HAMMER-126 Add a stratified multi-family legacy-transfer promotion gate
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: legacy-signal-migration
+- Depends on: PORTAL-LIR-HAMMER-073, PORTAL-LIR-HAMMER-074, PORTAL-LIR-HAMMER-079, PORTAL-LIR-HAMMER-081, PORTAL-LIR-HAMMER-120, PORTAL-LIR-HAMMER-121, PORTAL-LIR-HAMMER-122, PORTAL-LIR-HAMMER-123, PORTAL-LIR-HAMMER-124, PORTAL-LIR-HAMMER-125
+- Outputs: ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_feature_transfer_promotion.py, scripts/ops/legal_ir/evaluate_legacy_feature_transfer.py, tests/unit/optimizers/logic_theorem_optimizer/test_legacy_feature_transfer_promotion.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legacy_feature_transfer_promotion.py tests/unit/optimizers/logic_theorem_optimizer/test_multi_seed_promotion_gate.py tests/unit/optimizers/logic_theorem_optimizer/test_source_copy_reward_hack_metrics.py tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_holdout_integrity.py -q
+- Acceptance: Evaluates every migrated signal class alone and in the selected combination over immutable document-disjoint, citation-disjoint, jurisdiction-aware, template-resistant, multi-seed splits stratified across deontic, frame-logic, TDFOL, knowledge-graph, CEC, prover, and global views. Promotion jointly gates IR CE and cosine, autoencoder CE and cosine, per-family semantic equivalence, symbolic validity, proof and reconstruction, provenance, round trip, calibration and uncertainty, holdout behavior, source-copy penalties, state size, persistence cost, and CUDA throughput with confidence bounds. Any family regression, leakage, missing lineage, untrusted signal, nonfinite metric, CPU fallback, unstable seed, or aggregate-only win rejects the candidate and selects the accepted-state zero-transfer baseline.
+
+```json
+{"phase":"legacy_signal_migration","scope":"stratified_multi_family_promotion","required_views":["deontic","frame_logic","tdfol","knowledge_graph","cec","prover","global"],"fallback":"accepted_state_zero_transfer"}
+```
+
+## PORTAL-LIR-HAMMER-127 Execute integrated CUDA feature-transfer smoke and select checkpoint
+
+- Status: todo
+- Completion: 0
+- Priority: P0
+- Track: rollout-execution
+- Depends on: PORTAL-LIR-HAMMER-108, PORTAL-LIR-HAMMER-110, PORTAL-LIR-HAMMER-111, PORTAL-LIR-HAMMER-112, PORTAL-LIR-HAMMER-116, PORTAL-LIR-HAMMER-117, PORTAL-LIR-HAMMER-126
+- Outputs: scripts/ops/legal_ir/run_legacy_feature_transfer_smoke.sh, scripts/ops/legal_ir/verify_legacy_feature_transfer_smoke.py, docs/implementation/reports/LEGAL_IR_LEGACY_FEATURE_TRANSFER_SMOKE_REPORT.md, docs/implementation/reports/evidence/legal_ir_legacy_feature_transfer_smoke.json, tests/unit/optimizers/logic_theorem_optimizer/test_legacy_feature_transfer_smoke.py
+- Validation: /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python -m pytest tests/unit/optimizers/logic_theorem_optimizer/test_legacy_feature_transfer_smoke.py -q; /home/barberb/portland-laws.github.io/ipfs_datasets_py/.venv-cuda/bin/python scripts/ops/legal_ir/verify_legacy_feature_transfer_smoke.py --evidence docs/implementation/reports/evidence/legal_ir_legacy_feature_transfer_smoke.json --minimum-active-seconds 600
+- Acceptance: Executes at least 600 active seconds of the canonical integrated pipeline using the task-126 selected migrated-signal configuration under the production watchdog with context capacity at least 8,096 tokens. Fresh compact evidence must prove CUDA autoencoder forward, loss, backward, and optimizer updates with CPU fallback disabled; persistent CUDA Leanstral reuse; Hammer proof and reconstruction activity; Codex TODO generation, focused validation, rescue, and merge-or-safe-rejection flow; responsive state revisions and metrics; bounded checkpoints and evaluation-cache records; and clean child shutdown. It selects and content-addresses the checkpoint and complete configuration for PORTAL-LIR-HAMMER-118 only when all task-126 quality gates remain passing across warm cycles, and otherwise explicitly selects the accepted-state zero-transfer baseline. Dry runs, fixtures, stale reports, inferred CUDA, untrusted historical outcomes, and startup or shutdown time do not count as execution evidence.
+
+```json
+{"phase":"rollout_execution","scope":"integrated_legacy_feature_transfer_smoke","minimum_active_seconds":600,"minimum_context_tokens":8096,"required_services":["cuda_autoencoder","cuda_leanstral","hammer","codex","watchdog"],"downstream_gate":"PORTAL-LIR-HAMMER-118"}
 ```
 
 ## PORTAL-101 Resolve dirty main checkout blocking 1 worktree merges

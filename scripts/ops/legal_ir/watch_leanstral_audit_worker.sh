@@ -6,7 +6,14 @@ cd "${ROOT_DIR}"
 
 RUN_ID="${1:?run id is required}"
 PARENT_PID="${2:-0}"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+DEFAULT_PYTHON_BIN="${ROOT_DIR}/.venv-cuda/bin/python"
+if [[ ! -x "${DEFAULT_PYTHON_BIN}" ]]; then
+  DEFAULT_PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+fi
+if [[ ! -x "${DEFAULT_PYTHON_BIN}" ]]; then
+  DEFAULT_PYTHON_BIN="$(command -v python3 || command -v python)"
+fi
+PYTHON_BIN="${PYTHON_BIN:-${DEFAULT_PYTHON_BIN}}"
 INPUT_PATH_OVERRIDE="${LEANSTRAL_AUDIT_INPUT_PATH:-}"
 DEFAULT_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.canonical-disagreements.jsonl"
 LEGACY_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.canonical-disagreements.jsonl"
@@ -249,9 +256,12 @@ esac
 
 export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/../ipfs_accelerate_py${PYTHONPATH:+:${PYTHONPATH}}"
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1}"
+export IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS="${IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS:-1}"
+PROVER_PREFLIGHT_PORTFOLIO="${LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_training}"
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_PROVIDER_FALLBACKS="${LEANSTRAL_AUDIT_PROVIDER_FALLBACKS:-llama_cpp_native,mistral_vibe}"
+export LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES="${LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES:-tdfol,dcec,flogic,deontic,knowledge_graph}"
 if [[ "${LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER}" == "1" ]]; then
   export IPFS_ACCELERATE_LLAMA_CPP_AUTOSTART="0"
 else
@@ -277,9 +287,16 @@ export LEANSTRAL_AUDIT_BATCH_USE_MESH="${LEANSTRAL_AUDIT_BATCH_USE_MESH:-1}"
 export IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS="${IPFS_ACCELERATE_LLM_ROUTER_BATCH_WORKERS:-${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS}}"
 export IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS="${IPFS_DATASETS_PY_LLM_ROUTER_BATCH_WORKERS:-${LEANSTRAL_AUDIT_BATCH_MAX_WORKERS}}"
 AUDIT_PROVIDER_TIMEOUT_SECONDS="${LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600}"
+AUDIT_MAX_WORK_ITEMS="${LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-8}"
+AUDIT_MAX_CONCURRENCY="${LEANSTRAL_AUDIT_MAX_CONCURRENCY:-1}"
 AUDIT_RUN_TIMEOUT_SECONDS="${LEANSTRAL_AUDIT_RUN_TIMEOUT_SECONDS:-}"
 if [[ -z "${AUDIT_RUN_TIMEOUT_SECONDS}" ]]; then
-  if [[ "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" =~ ^[0-9]+$ ]]; then
+  if [[ "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" =~ ^[0-9]+$ ]] \
+      && [[ "${AUDIT_MAX_WORK_ITEMS}" =~ ^[0-9]+$ ]] \
+      && [[ "${AUDIT_MAX_CONCURRENCY}" =~ ^[0-9]+$ ]] \
+      && (( AUDIT_MAX_WORK_ITEMS > 0 && AUDIT_MAX_CONCURRENCY > 0 )); then
+    AUDIT_RUN_TIMEOUT_SECONDS="$((AUDIT_PROVIDER_TIMEOUT_SECONDS * ((AUDIT_MAX_WORK_ITEMS + AUDIT_MAX_CONCURRENCY - 1) / AUDIT_MAX_CONCURRENCY) + 60))"
+  elif [[ "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" =~ ^[0-9]+$ ]]; then
     AUDIT_RUN_TIMEOUT_SECONDS="$((AUDIT_PROVIDER_TIMEOUT_SECONDS + 60))"
   else
     AUDIT_RUN_TIMEOUT_SECONDS="${AUDIT_PROVIDER_TIMEOUT_SECONDS}"
@@ -287,6 +304,28 @@ if [[ -z "${AUDIT_RUN_TIMEOUT_SECONDS}" ]]; then
 fi
 AUDIT_RUN_KILL_AFTER_SECONDS="${LEANSTRAL_AUDIT_RUN_KILL_AFTER_SECONDS:-30}"
 CURRENT_AUDIT_PID=""
+
+preflight_core_provers() {
+  local preflight_log
+  case "${LEANSTRAL_AUDIT_AUTO_INSTALL_CORE_PROVERS:-1}" in
+    0|false|False|FALSE|no|No|NO|off|Off|OFF)
+      log_line "prover_preflight_skipped reason=disabled"
+      return 0
+      ;;
+  esac
+  preflight_log="${WORK_DIR}/${RUN_ID}.prover-preflight.log"
+  log_line "prover_preflight_started portfolio=${PROVER_PREFLIGHT_PORTFOLIO} log=${preflight_log}"
+  if "${PYTHON_BIN}" -m scripts.setup.ipfs_prover_installer \
+    --yes \
+    --strict \
+    --portfolio "${PROVER_PREFLIGHT_PORTFOLIO}" \
+    > "${preflight_log}" 2>&1; then
+    log_line "prover_preflight_completed portfolio=${PROVER_PREFLIGHT_PORTFOLIO}"
+    return 0
+  fi
+  log_line "prover_preflight_failed portfolio=${PROVER_PREFLIGHT_PORTFOLIO} log=${preflight_log}"
+  return 1
+}
 
 current_compiler_commit() {
   git rev-parse HEAD 2>/dev/null || true
@@ -919,24 +958,34 @@ run_audit_if_due() {
     --input "${INPUT_PATH}" \
     --cache-dir "${CACHE_DIR}" \
     --checkpoint-path "${CHECKPOINT_PATH}" \
-    --max-concurrency "${LEANSTRAL_AUDIT_MAX_CONCURRENCY:-1}" \
+    --max-concurrency "${AUDIT_MAX_CONCURRENCY}" \
     --max-retries "${LEANSTRAL_AUDIT_MAX_RETRIES:-0}" \
-    --validation-repair-retries "${LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-0}" \
+    --validation-repair-retries "${LEANSTRAL_AUDIT_VALIDATION_REPAIR_RETRIES:-1}" \
     --timeout-seconds "${AUDIT_PROVIDER_TIMEOUT_SECONDS}" \
     --retry-backoff-seconds "${LEANSTRAL_AUDIT_RETRY_BACKOFF_SECONDS:-2}" \
     "${expected_compiler_commit_args[@]}" \
     --snapshot-selection "${LEANSTRAL_AUDIT_SNAPSHOT_SELECTION:-latest_canonical_snapshot}" \
     --min-snapshot-records "${LEANSTRAL_AUDIT_MIN_SNAPSHOT_RECORDS:-25}" \
     --max-records "${LEANSTRAL_AUDIT_MAX_RECORDS:-0}" \
-    --max-work-items "${LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-2}" \
+    --max-work-items "${AUDIT_MAX_WORK_ITEMS}" \
+    --required-semantic-families "${LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES}" \
+    --family-balanced-selection \
     --max-evidence-packets-per-item "${LEANSTRAL_AUDIT_MAX_EVIDENCE_PACKETS_PER_ITEM:-1}" \
     --evidence-refresh-policy latest_compiler_snapshot \
     --provider "${LEANSTRAL_AUDIT_PROVIDER}" \
     --provider-fallbacks "${LEANSTRAL_AUDIT_PROVIDER_FALLBACKS}" \
     --model "${LEANSTRAL_AUDIT_MODEL:-Leanstral}" \
     --vibe-agent "${LEANSTRAL_AUDIT_VIBE_AGENT:-lean}" \
-    --max-new-tokens "${LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-512}" \
-    --prompt-payload-mode "${LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-compact}" \
+    --max-new-tokens "${LEANSTRAL_AUDIT_MAX_NEW_TOKENS:-1000}" \
+    --prompt-payload-mode "${LEANSTRAL_AUDIT_PROMPT_PAYLOAD_MODE:-daemon}" \
+    --context-size-per-slot "${LLAMA_CPP_CONTEXT_DEFAULT}" \
+    --context-safety-margin-tokens "${LEANSTRAL_AUDIT_CONTEXT_SAFETY_MARGIN_TOKENS:-512}" \
+    --tokenizer-base-url "${IPFS_ACCELERATE_LLAMA_CPP_BASE_URL}" \
+    --require-exact-token-count \
+    --require-trusted-semantic-context \
+    --max-semantic-context-source-chars "${LEANSTRAL_AUDIT_MAX_SEMANTIC_SOURCE_CHARS:-2500}" \
+    --max-semantic-context-formulas "${LEANSTRAL_AUDIT_MAX_SEMANTIC_FORMULAS:-6}" \
+    --max-semantic-context-obligations "${LEANSTRAL_AUDIT_MAX_SEMANTIC_OBLIGATIONS:-3}" \
     --batch-size "${LEANSTRAL_AUDIT_BATCH_SIZE:-2}" \
     --batch-min-size "${LEANSTRAL_AUDIT_BATCH_MIN_SIZE:-1}" \
     --batch-queue-max-items "${LEANSTRAL_AUDIT_BATCH_QUEUE_MAX_ITEMS:-0}" \
@@ -956,6 +1005,9 @@ run_audit_if_due() {
     --lean-slice-size "${LEANSTRAL_LEAN_SLICE_SIZE:-4}" \
     --lean-proof-cache-path "${PROOF_CACHE_PATH}" \
     --prover-timeout-seconds "${LEANSTRAL_PROVER_TIMEOUT_SECONDS:-5}" \
+    --hammer-timeout-seconds "${LEANSTRAL_HAMMER_TIMEOUT_SECONDS:-5}" \
+    --hammer-max-premises "${LEANSTRAL_HAMMER_MAX_PREMISES:-64}" \
+    --hammer-parallel-workers "${LEANSTRAL_HAMMER_PARALLEL_WORKERS:-4}" \
     > "${AUDIT_STDOUT_OUTPUT}" \
     &
   CURRENT_AUDIT_PID=$!
@@ -990,6 +1042,9 @@ PY
 
 configure_reference_example_args
 resolve_input_path
+if ! preflight_core_provers; then
+  exit 2
+fi
 log_line "audit_companion_started parent_pid=${PARENT_PID} input=${INPUT_PATH} reference_example_paths=${REFERENCE_EXAMPLE_COUNT}"
 log_line "llama_cpp_accelerator_resolved requested=${LLAMA_CPP_ACCELERATOR_REQUEST} resolved=${LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR} context=${IPFS_ACCELERATE_LLAMA_CPP_CONTEXT_SIZE} context_per_slot=${LLAMA_CPP_CONTEXT_DEFAULT} parallel_slots=${LLAMA_CPP_PARALLEL_SLOTS} gpu_layers=${IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS} auto_sizing=${IPFS_ACCELERATE_LLAMA_CPP_AUTO_SIZING} extra_args=${IPFS_ACCELERATE_LLAMA_CPP_EXTRA_ARGS}"
 log_line "leanstral_persistent_service_config state_path=${SERVICE_STATE_PATH} start_lock=${SERVICE_START_LOCK_PATH} state_lock=${SERVICE_STATE_LOCK_PATH} max_warm_servers=${IPFS_ACCELERATE_LLAMA_CPP_MAX_WARM_SERVERS} health_failure_limit=${SERVICE_HEALTH_FAILURE_LIMIT} min_requests_for_reuse=${SERVICE_MIN_REQUESTS_FOR_REUSE}"

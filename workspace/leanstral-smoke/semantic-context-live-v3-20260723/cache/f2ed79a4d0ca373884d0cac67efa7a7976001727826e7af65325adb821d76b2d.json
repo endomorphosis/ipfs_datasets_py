@@ -1,0 +1,353 @@
+{
+  "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+  "request_hash": "fdcd81a348d122b75dcdd325cccf6a54f4e7cb32d618ab09553ffdc29c739a36",
+  "request_schema_hash": "9254d72e22b459bb578488956d599e085a3ef517fad997a3c2a13386d387620d",
+  "response": {
+    "abstention_reason": "",
+    "affected_ir_families": [
+      "frame_logic"
+    ],
+    "classification": "missing_semantic_rule",
+    "confidence": 0.0,
+    "counterexample": {
+      "evidence_id": "lir-obligation-7d0e25d98d6e8e698013",
+      "expected": "legal semantics should be preserved",
+      "observed": "compiler loses or distorts this semantic signal"
+    },
+    "drafted_logic_candidates": [
+      {
+        "candidate": "frame_relation_has_typed_subject_predicate_object(contract:legal-ir-view/frame-logic/v1) and frame_role_binding_is_preserved(contract:legal-ir-view/frame-logic/v1)",
+        "compiler_surface": "modal.frame_logic",
+        "confidence": 0.95,
+        "contract_id": "legal-ir-view/frame-logic/v1",
+        "expected_failure_mode": "hammer_unproved",
+        "guidance_only": true,
+        "intended_use": "guidance_only",
+        "logic_family": "frame_logic",
+        "premise_hints": [
+          "frame_role_typing",
+          "typed_role",
+          "relation_direction",
+          "modal_operator",
+          "exception_scope"
+        ],
+        "proof_obligation_id": "lir-obligation-7d0e25d98d6e8e698013",
+        "proof_obligation_ids": [
+          "lir-obligation-7d0e25d98d6e8e698013"
+        ],
+        "repair_scope": "failed_obligation_subtree",
+        "schema_version": "legal-ir-leanstral-hammer-candidate-v1",
+        "source_copy_policy": "reject_full_span_copy",
+        "source_copy_rejected": false,
+        "target_view": "modal.frame_logic"
+      }
+    ],
+    "missing_semantic_rule": {
+      "description": "missing deterministic semantic rule"
+    },
+    "proof_obligation_ids": [
+      "lir-obligation-7d0e25d98d6e8e698013"
+    ],
+    "proposed_compiler_surface": [
+      {
+        "component": "modal.frame_logic",
+        "operation": "add deterministic compiler or decompiler rule"
+      }
+    ],
+    "rationale": "",
+    "request_cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+    "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+    "schema_version": "legal-ir-leanstral-audit-response-v3",
+    "witness": null
+  },
+  "response_hash": "bc9b86d0d17e22957b16cec56f2d9707f5ac19b3fc62672b93d354474f57694e",
+  "response_schema_hash": "1554e2f71598bfae07c8e86561d95bf5cf33af514efcb2da3ce77e96079c745e",
+  "schema_version": "legal-ir-leanstral-audit-cache-v1",
+  "validation": {
+    "accepted": true,
+    "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+    "deterministic_verification": {
+      "accepted": true,
+      "audit_validation": {
+        "accepted": true,
+        "cache_key": "f2ed79a4d0ca373884d0cac67efa7a7976001727826e7af65325adb821d76b2d",
+        "reasons": [],
+        "response_hash": "bc9b86d0d17e22957b16cec56f2d9707f5ac19b3fc62672b93d354474f57694e",
+        "verified": true,
+        "verified_by": [
+          "leanstral-audit-schema-v3"
+        ]
+      },
+      "compiler_checks": [
+        {
+          "accepted": true,
+          "actual_modal_ir_hash": "5bb8231e70cbdb6cdd030121a10adc91fddd5832628c70164b408bda02790357",
+          "document_id": "us-code-36-100107-f0191006a8277a33",
+          "example_id": "us-code-36-100107-f0191006a8277a33",
+          "expected_modal_ir_hash": "5bb8231e70cbdb6cdd030121a10adc91fddd5832628c70164b408bda02790357",
+          "reasons": []
+        }
+      ],
+      "local_checks": [
+        {
+          "checker_name": "syntax",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-36-100107-f0191006a8277a33",
+            "formula_count": 35
+          },
+          "elapsed_seconds": 2.4080276489257812e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        },
+        {
+          "checker_name": "graph",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-36-100107-f0191006a8277a33",
+            "graph_id": "",
+            "node_count": 2012,
+            "relationship_count": 68647,
+            "triple_count": 68589
+          },
+          "elapsed_seconds": 4.125600814819336,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        },
+        {
+          "checker_name": "provenance",
+          "details": {
+            "check_phase": "cheap",
+            "document_id": "us-code-36-100107-f0191006a8277a33",
+            "formula_count": 35,
+            "source_span_check_count": 0
+          },
+          "elapsed_seconds": 5.030632019042969e-05,
+          "error_message": "",
+          "route_available": true,
+          "status": "accepted",
+          "theorem_valid": true,
+          "timeout_seconds": 0.0
+        }
+      ],
+      "outcome": "accepted",
+      "reasons": [],
+      "request_id": "leanstral-audit-f2ed79a4d0ca3738",
+      "response_hash": "bc9b86d0d17e22957b16cec56f2d9707f5ac19b3fc62672b93d354474f57694e",
+      "schema_version": "legal-ir-leanstral-verifier-v1",
+      "source_span_checks": [],
+      "verified_by": []
+    },
+    "hammer_verification": {
+      "accepted": false,
+      "candidate_count": 1,
+      "candidate_results": [
+        {
+          "accepted": false,
+          "candidate_index": 1,
+          "deterministic_checks": [
+            {
+              "checker_name": "leanstral_hammer_candidate_syntax",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_contract",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_provenance",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            },
+            {
+              "checker_name": "leanstral_hammer_candidate_graph",
+              "error_message": "",
+              "route_available": true,
+              "status": "accepted",
+              "theorem_valid": true
+            }
+          ],
+          "hammer_report": {
+            "elapsed_seconds": 0.048785448074,
+            "metadata": {
+              "backend_health": {
+                "available_count": 0,
+                "available_routes": [],
+                "records": [
+                  {
+                    "available": false,
+                    "check_error": "",
+                    "elapsed_seconds": 9.5129013e-05,
+                    "executable": "z3",
+                    "install_command": [
+                      "python",
+                      "-m",
+                      "pip",
+                      "install",
+                      "z3-solver"
+                    ],
+                    "installer_available": true,
+                    "name": "z3",
+                    "problem_format": "smt-lib",
+                    "resolved_path": "",
+                    "route_type": "smt",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": ""
+                  },
+                  {
+                    "available": false,
+                    "check_error": "OSError: [Errno 8] Exec format error: '/home/barberb/.local/bin/cvc5'",
+                    "elapsed_seconds": 0.002359390259,
+                    "executable": "cvc5",
+                    "install_command": [
+                      "python",
+                      "-m",
+                      "pip",
+                      "install",
+                      "cvc5"
+                    ],
+                    "installer_available": true,
+                    "name": "cvc5",
+                    "problem_format": "smt-lib",
+                    "resolved_path": "/home/barberb/.local/bin/cvc5",
+                    "route_type": "smt",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": ""
+                  },
+                  {
+                    "available": false,
+                    "check_error": "",
+                    "elapsed_seconds": 9.8705292e-05,
+                    "executable": "vampire",
+                    "install_command": [
+                      "bash",
+                      "-lc",
+                      "install-vampire-or-add-to-PATH"
+                    ],
+                    "installer_available": true,
+                    "name": "vampire",
+                    "problem_format": "tptp-fof",
+                    "resolved_path": "",
+                    "route_type": "atp",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": ""
+                  },
+                  {
+                    "available": false,
+                    "check_error": "",
+                    "elapsed_seconds": 3.9339066e-05,
+                    "executable": "eprover",
+                    "install_command": [
+                      "bash",
+                      "-lc",
+                      "install-eprover-or-add-to-PATH"
+                    ],
+                    "installer_available": true,
+                    "name": "e_prover",
+                    "problem_format": "tptp-fof",
+                    "resolved_path": "",
+                    "route_type": "atp",
+                    "schema_version": "legal-ir-hammer-backend-health-v1",
+                    "version_output": ""
+                  }
+                ],
+                "schema_version": "legal-ir-hammer-backend-health-v1",
+                "unavailable_count": 4,
+                "unavailable_routes": [
+                  "z3",
+                  "cvc5",
+                  "vampire",
+                  "e_prover"
+                ]
+              },
+              "coverage_promotion_allowed": false,
+              "proof_route_count": 1,
+              "proof_routing_enabled": true,
+              "timeout_seconds": 5.0,
+              "verify_reconstruction": false
+            },
+            "obligation_count": 1,
+            "premise_count": 49,
+            "proof_success_rate": 0.0,
+            "proved_count": 0,
+            "reconstruction_receipts": [
+              {
+                "backend": "",
+                "backend_proved": false,
+                "backend_statuses": {
+                  "cvc5": "error",
+                  "e_prover": "unavailable",
+                  "vampire": "unavailable",
+                  "z3": "unavailable"
+                },
+                "errors": [
+                  "Executable not found: eprover",
+                  "Executable not found: vampire",
+                  "Executable not found: z3",
+                  "OSError: [Errno 8] Exec format error: '/home/barberb/.local/bin/cvc5'"
+                ],
+                "obligation_id": "lir-obligation-7d0e25d98d6e8e698013",
+                "outcome": "no_backend_proof",
+                "receipt_id": "hammer-receipt-4dc80fc3ea33692a5d00",
+                "reconstruction_status": "",
+                "translation_failed": false,
+                "translation_succeeded": true,
+                "trust_reason": "backend_proof_missing",
+                "trust_status": "untrusted",
+                "trusted": false
+              }
+            ],
+            "route_results": [
+              {
+                "obligation_id": "lir-obligation-7d0e25d98d6e8e698013",
+                "proved": false,
+                "status": "unknown",
+                "stop_reason": "routes_exhausted",
+                "trust_level": "none",
+                "trust_satisfied": false
+              }
+            ],
+            "schema_version": "legal-ir-hammer-report-v1",
+            "trusted_count": 0,
+            "trusted_success_rate": 0.0
+          },
+          "reasons": [
+            "unknown",
+            "unproved"
+          ],
+          "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+          "trusted": false
+        }
+      ],
+      "proposal_task_id": "leanstral-audit-hammer-0b3e4117a9eaf3cc",
+      "reasons": [
+        "unknown",
+        "unproved"
+      ],
+      "schema_version": "legal-ir-leanstral-hammer-verifier-v1",
+      "task_id": "leanstral-audit-hammer-0b3e4117a9eaf3cc",
+      "trusted": false,
+      "trusted_candidate_count": 0
+    },
+    "reasons": [],
+    "response_hash": "bc9b86d0d17e22957b16cec56f2d9707f5ac19b3fc62672b93d354474f57694e",
+    "verified": true,
+    "verified_by": [
+      "leanstral-audit-schema-v3"
+    ]
+  }
+}

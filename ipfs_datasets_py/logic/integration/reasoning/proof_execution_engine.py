@@ -182,6 +182,11 @@ class ProofExecutionEngine:
         return dirs
 
     def _find_executable(self, name: str, extra: Optional[List[Path]] = None) -> Optional[str]:
+        if name == "cvc5":
+            from ...external_provers.lazy_installer import find_executable
+
+            return find_executable(name)
+
         # Try PATH first.
         path = shutil.which(name)
         if path:

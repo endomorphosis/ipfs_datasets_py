@@ -1,0 +1,689 @@
+{
+  "artifacts": {
+    "autoencoder_summary": {
+      "bytes": 1387396,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-autoencoder_summary",
+      "max_bytes": 8388608,
+      "sha256": "sha256:da547612adaef8933227e5195605f102ead34e624a1709b76cbf087523ed1f1d"
+    },
+    "checkpoint": {
+      "bytes": 5316102,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-checkpoint",
+      "max_bytes": 536870912,
+      "sha256": "sha256:da740e12033995e56524a9666b561616e346537b9cb929c0e7c0ea61ad997c13"
+    },
+    "gate_decision": {
+      "bytes": 51145,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-gate_decision",
+      "max_bytes": 4194304,
+      "sha256": "sha256:fb660cd5435d1bf92fa181d5f1190de1c19e7e16fe65888a21b6e804f37783bd"
+    },
+    "leanstral_service": {
+      "bytes": 1457,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-leanstral_service",
+      "max_bytes": 4194304,
+      "sha256": "sha256:20a36c8f5d906336e65121986d8441e46199f60b90072febd69eb69329fbd2d1"
+    },
+    "paired_summary": {
+      "bytes": 53912,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-paired_summary",
+      "max_bytes": 8388608,
+      "sha256": "sha256:59e6d51de9c592681d7520e8cabd2011c66f047bffa1545b728f02e270d9fef5"
+    },
+    "training_log": {
+      "bytes": 4467055,
+      "durable": true,
+      "id": "legal-ir-10m-smoke-20260723T033130Z-training_log",
+      "max_bytes": 67108864,
+      "sha256": "sha256:663ecc6e7967372f843973a3547467dcd1f4f2646449edc91c5bfc258159907d"
+    }
+  },
+  "complete": true,
+  "decision": "passed",
+  "dry_run": false,
+  "fixed_fixture": {
+    "dataset_id": "justicedao/ipfs_uscode",
+    "fixture_id": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
+    "immutable": true,
+    "replay": false,
+    "sample_hash_count": 8,
+    "sha256": "sha256:13fe9b304b91c8b25cb45cbcb427fd1d617d11708b2d9dd369721d74da4b17fa"
+  },
+  "fixture_replay": false,
+  "lineage": {
+    "baseline_state_id": "legal-ir-10m-smoke-20260723T033130Z-baseline",
+    "baseline_state_revision": "state-acd44719652a20c0",
+    "baseline_state_sha256": "sha256:e032a3e7bdafeb65dd05f29c5735db2f40d8b58cd73aa30bacd44719652a20c0",
+    "code_revision": "19fc6962bf45262043971ca2f05e1c0005fc97fd",
+    "configuration_id": "PORTAL-LIR-HAMMER-117-selected-v1",
+    "configuration_sha256": "sha256:828efcd8157f05efe61a0912071d5d882c632ebf84bac4e1bd6552a2e0c8d380",
+    "final_state_revision": "state-e7c0ea61ad997c13",
+    "final_state_sha256": "sha256:da740e12033995e56524a9666b561616e346537b9cb929c0e7c0ea61ad997c13",
+    "fixture_id": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
+    "fixture_sha256": "sha256:13fe9b304b91c8b25cb45cbcb427fd1d617d11708b2d9dd369721d74da4b17fa",
+    "holdout_id": "PORTAL-LIR-HAMMER-117-fixed-canary-v1",
+    "holdout_sha256": "sha256:54fc90f6d1ccfadf1b3fed9065e9701f18fb1b11cbd72219147880821006c0ee",
+    "run_id": "legal-ir-10m-smoke-20260723T033130Z",
+    "source_tree_sha256": "sha256:086970597373abeb45bb13051e5d952f652423c0ca742ab68babb9c5deff09bb",
+    "stage": "ten_minute_smoke"
+  },
+  "manifest_sha256": "sha256:1a9e7acc411b30c8c900180e990b10a3f1f232f8b347096b04b3fca12ae95f28",
+  "model_context": {
+    "context_fingerprint": "ee3bcd12bb423546dec7e311805949e9e8b06dc35da4a3c96c82a10a15fa45e9",
+    "context_size": 8096,
+    "device": "cuda",
+    "model_id": "Leanstral",
+    "model_sha256": "sha256:8e346c9785227faa51730c3b4db9d23b97c82f3a79376f805e604caf3d07c3d9",
+    "service_generation": "leanstral-generation-f05fdfe4407ce152aa617882"
+  },
+  "progress": {
+    "resume_count": 0,
+    "resumes": [],
+    "sample_count_end": 32,
+    "sample_count_start": 0,
+    "state_revision_end": "state-e7c0ea61ad997c13",
+    "state_revision_start": "state-acd44719652a20c0",
+    "warm_cycles_completed": 4
+  },
+  "quality_families": {
+    "cec": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.797230871722,
+        "ir_cosine_similarity": 0.888959526555,
+        "ir_cross_entropy_loss": 0.966572895017,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.875,
+      "baseline_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.797230871722,
+        "ir_cosine_similarity": 0.888959526555,
+        "ir_cross_entropy_loss": 0.966572895017,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.875,
+      "candidate_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "decompiler": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.624317237481,
+        "ir_cosine_similarity": 0.240367294,
+        "ir_cross_entropy_loss": 1.673622255,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.52417275,
+        "round_trip": 0.52417275,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.875,
+      "baseline_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.624317237481,
+        "ir_cosine_similarity": 0.240367294,
+        "ir_cross_entropy_loss": 1.673622255,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.52417275,
+        "round_trip": 0.52417275,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.875,
+      "candidate_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "deontic": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.475657547926,
+        "ir_cosine_similarity": 0.987677451831,
+        "ir_cross_entropy_loss": 0.597011295045,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.0,
+        "round_trip": 0.0,
+        "semantic_equivalence": 0.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 1.0,
+      "baseline_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "hammer_proof_success_rate",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.475657547926,
+        "ir_cosine_similarity": 0.987677451831,
+        "ir_cross_entropy_loss": 0.597011295045,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.0,
+        "round_trip": 0.0,
+        "semantic_equivalence": 0.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 1.0,
+      "candidate_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "hammer_proof_success_rate",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "external_provers": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 1.0,
+        "ir_cosine_similarity": 1.0,
+        "ir_cross_entropy_loss": 0.0,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.625,
+      "baseline_observed_metrics": [
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 1.0,
+        "ir_cosine_similarity": 1.0,
+        "ir_cross_entropy_loss": 0.0,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.625,
+      "candidate_observed_metrics": [
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "frame_logic": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.972255730794,
+        "ir_cosine_similarity": 0.994320871644,
+        "ir_cross_entropy_loss": 0.101682147389,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.959254955,
+        "round_trip": 0.959254955,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.625,
+      "baseline_observed_metrics": [
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.972255730794,
+        "ir_cosine_similarity": 0.994320871644,
+        "ir_cross_entropy_loss": 0.101682147389,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.959254955,
+        "round_trip": 0.959254955,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.625,
+      "candidate_observed_metrics": [
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "kg": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.786609468801,
+        "ir_cosine_similarity": 0.986574879977,
+        "ir_cross_entropy_loss": 0.581417165224,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.52417275,
+        "round_trip": 0.52417275,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.875,
+      "baseline_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.786609468801,
+        "ir_cosine_similarity": 0.986574879977,
+        "ir_cross_entropy_loss": 0.581417165224,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 0.52417275,
+        "round_trip": 0.52417275,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.875,
+      "candidate_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    },
+    "tdfol": {
+      "baseline": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.840416275148,
+        "ir_cosine_similarity": 0.996831468121,
+        "ir_cross_entropy_loss": 0.499733030488,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "baseline_metric_coverage": 0.875,
+      "baseline_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "baseline_sample_count": 8,
+      "candidate": {
+        "autoencoder_cosine_similarity": 0.78937515,
+        "autoencoder_cross_entropy_loss": 1.051159246,
+        "holdout": 0.840416275148,
+        "ir_cosine_similarity": 0.996831468121,
+        "ir_cross_entropy_loss": 0.499733030488,
+        "proof_success_rate": 0.0,
+        "provenance": 1.0,
+        "reconstruction_success_rate": 1.0,
+        "round_trip": 1.0,
+        "semantic_equivalence": 1.0,
+        "source_copy_penalty": 0.0,
+        "uncertainty": 0.0
+      },
+      "candidate_metric_coverage": 0.875,
+      "candidate_observed_metrics": [
+        "autoencoder_cosine_similarity",
+        "autoencoder_cross_entropy_loss",
+        "ir_cosine_similarity",
+        "ir_cross_entropy_loss",
+        "reconstruction_success_rate",
+        "source_copy_penalty",
+        "symbolic_validity_success_rate"
+      ],
+      "candidate_sample_count": 8,
+      "guardrail_passed": true,
+      "sample_count": 8
+    }
+  },
+  "run_id": "legal-ir-10m-smoke-20260723T033130Z",
+  "schema_version": "legal-ir-10-minute-integrated-smoke-evidence-v1",
+  "selected_configuration": {
+    "active_duration_seconds": 600,
+    "autoencoder_device": "cuda",
+    "canonical_runner_budget_seconds": 610,
+    "codex_apply_mode": "patch_only",
+    "compiler_ir_metric_sample_timeout_seconds": 30.0,
+    "fixture_seed": "PORTAL-LIR-HAMMER-117-fixed-smoke-v1",
+    "full_checkpoint_every_n_cycles": 16,
+    "hammer_reconstruction_required": true,
+    "leanstral_persistent_cuda_required": true,
+    "max_codex_todos": 32,
+    "max_generalizable_entries_per_group": 8192,
+    "metric_bridge_adapters": [
+      "cec_dcec",
+      "deontic_norms",
+      "external_prover_router",
+      "fol_tdfol",
+      "modal_frame_logic"
+    ],
+    "paired_codex_queue_grace_seconds": 120.0,
+    "paired_cycle_completion_grace_seconds": 30.0,
+    "paired_shutdown_poll_cushion_seconds": 15.0,
+    "train_count": 4,
+    "validation_canary_count": 8
+  },
+  "services": {
+    "codex": {
+      "accepted_merge_count": 0,
+      "apply_mode": "patch_only",
+      "dispositions": [
+        {
+          "count": 4,
+          "focused_validation": true,
+          "reason_code": "validated_patch_withheld_by_patch_only_policy",
+          "status": "safe_rejection",
+          "todo_sha256": "sha256:93532eb2774e38ca605c0856d6f8aaf1c2408d60ae12d8a497e5ab68bf93e404",
+          "validation_sha256": "sha256:d87a5e847b52a8fde7d6f9eb67955eb38cb253fbff9acf317d7675ec210efb84"
+        }
+      ],
+      "fixture_sha256": "sha256:13fe9b304b91c8b25cb45cbcb427fd1d617d11708b2d9dd369721d74da4b17fa",
+      "focused_validation_count": 4,
+      "invocation_count": 4,
+      "max_queue_bytes": 67108864,
+      "max_todos": 32,
+      "queue_bytes_peak": 356321,
+      "run_id": "legal-ir-10m-smoke-20260723T033130Z",
+      "safe_rejection_count": 4,
+      "todo_count": 14,
+      "transient_failure_count": 0,
+      "transient_requeue_count": 0
+    },
+    "contract_validation": {
+      "coverage": 1.0,
+      "failure_count": 0,
+      "failure_counts": {
+        "cross_view_mismatches": 0,
+        "decompiler_preservation_failures": 0,
+        "missing_required_fields": 0,
+        "provenance_policy_failures": 0,
+        "validation_errors": 0
+      },
+      "family_gap_count": 0
+    },
+    "cuda_autoencoder": {
+      "backend": "torch_cuda",
+      "backward_count": 4,
+      "cpu_fallback": false,
+      "device": "cuda",
+      "forward_count": 4,
+      "loss_count": 4,
+      "optimizer_step_count": 4,
+      "simulated": false
+    },
+    "hammer": {
+      "backend_attempt_count": 1,
+      "backend_available": true,
+      "checker_routes": [
+        "lean"
+      ],
+      "evidence_kind": "runtime_canary",
+      "fatal_failure_count": 0,
+      "healthy": true,
+      "legal_obligation_count": 16,
+      "legal_proof_attempt_count": 16,
+      "legal_proved_count": 0,
+      "legal_reconstruction_count": 0,
+      "legal_trusted_guidance_count": 0,
+      "obligation_count": 1,
+      "proof_attempt_count": 1,
+      "proved_count": 1,
+      "reconstruction_count": 1,
+      "trusted_guidance_count": 1,
+      "winner_backends": [
+        "z3_python"
+      ]
+    },
+    "leanstral": {
+      "context_fingerprint": "ee3bcd12bb423546dec7e311805949e9e8b06dc35da4a3c96c82a10a15fa45e9",
+      "cpu_fallback": false,
+      "device": "cuda",
+      "generation": "leanstral-generation-f05fdfe4407ce152aa617882",
+      "healthy": true,
+      "healthy_cuda_service_reused": true,
+      "inference_seconds": 675.1699230000002,
+      "model_id": "Leanstral",
+      "model_load_count": 1,
+      "persistent": true,
+      "preflight_count": 1,
+      "queue_seconds": 0.0,
+      "request_count": 43,
+      "restart_seconds": 0.0,
+      "reuse_count": 42,
+      "verification_seconds": 506.47352447699996
+    },
+    "metric_evaluation": {
+      "evaluated_count": 16,
+      "failure_count": 0,
+      "sample_count": 16,
+      "sample_timeout_count": 0,
+      "timeout_fallback_count": 0
+    },
+    "watchdog": {
+      "children_launched": 7,
+      "children_reaped": 7,
+      "concurrent_writer_count": 0,
+      "fatal_event_count": 0,
+      "healthy": true,
+      "heartbeat_count": 139,
+      "managed_children": [
+        {
+          "exit_code": 0,
+          "name": "canonical-runner",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 0,
+          "name": "cuda-autoencoder",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 143,
+          "expected_managed_shutdown": true,
+          "name": "leanstral-worker",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 0,
+          "name": "legal-ir-10m-smoke-20260723T033130Z-codex-compiler_parser",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 0,
+          "name": "legal-ir-10m-smoke-20260723T033130Z-codex-compiler_registry",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 0,
+          "name": "legal-ir-10m-smoke-20260723T033130Z-codex-frame_logic",
+          "orphaned": false,
+          "status": "exited"
+        },
+        {
+          "exit_code": 0,
+          "name": "legal-ir-10m-smoke-20260723T033130Z-codex-ir_decompiler",
+          "orphaned": false,
+          "status": "exited"
+        }
+      ],
+      "max_heartbeat_gap_seconds": 8,
+      "max_progress_gap_seconds": 12,
+      "missed_heartbeat_count": 0,
+      "orphaned_child_count": 0,
+      "progress_heartbeat_count": 139,
+      "status": "exited_cleanly"
+    }
+  },
+  "simulated": false,
+  "stage": "ten_minute_smoke",
+  "task_id": "PORTAL-LIR-HAMMER-117",
+  "telemetry": {
+    "queue_depth_limit": 512.0,
+    "queue_depth_peak": 17.0,
+    "queue_timings_seconds": {
+      "codex_queue_seconds": 0.035,
+      "hammer_queue_seconds": 0.0,
+      "leanstral_queue_seconds": 0.0,
+      "persistence_queue_seconds": 29.851,
+      "snapshot_queue_seconds": 0.068
+    },
+    "stage_timings_seconds": {
+      "codex": 3179.819,
+      "cuda_training": 4.859,
+      "focused_validation": 0.0,
+      "hammer": 1.595,
+      "leanstral": 0.893,
+      "persistence": 29.851,
+      "snapshot_evaluation": 85.09299999999999
+    }
+  },
+  "timing": {
+    "active_intervals": [
+      {
+        "active_seconds": 679.88,
+        "ended_at": "2026-07-23T03:43:01+00:00",
+        "started_at": "2026-07-23T03:31:42+00:00"
+      }
+    ],
+    "active_seconds": 679.88,
+    "downtime_seconds": 341.12,
+    "ended_at": "2026-07-23T03:48:43+00:00",
+    "generated_at": "2026-07-23T03:56:14.117263+00:00",
+    "started_at": "2026-07-23T03:31:36+00:00",
+    "startup_seconds": 6.0,
+    "wall_seconds": 1027.0
+  }
+}

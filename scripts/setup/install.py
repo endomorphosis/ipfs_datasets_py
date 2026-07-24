@@ -426,6 +426,115 @@ def ensure_project_venv(original_argv: list[str], *, venv_dir: Path, disable_boo
     os.execv(str(target_python), [str(target_python), __file__, '--no-venv-bootstrap', *original_argv])
 
 
+_LOGIC_PROVER_PORTFOLIOS = frozenset(
+    {
+        "legal_ir_core",
+        "legal_ir_full",
+        "legal_ir_generation",
+        "legal_ir_specialists",
+        "legal_ir_training",
+        "reconstruction",
+    }
+)
+_LOGIC_PROVER_ENV_FLAGS = (
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_Z3", "z3", "--z3"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_CVC5", "cvc5", "--cvc5"),
+    (
+        "IPFS_DATASETS_PY_AUTO_INSTALL_CVC5_CLI",
+        "cvc5_cli",
+        "--cvc5-cli",
+    ),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_LEAN", "lean", "--lean"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "coq", "--coq"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_ISABELLE", "isabelle", "--isabelle"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_APALACHE", "apalache", "--apalache"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_TAMARIN", "tamarin", "--tamarin"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_MAUDE", "maude", "--maude"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERIF", "proverif", "--proverif"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_VAMPIRE", "vampire", "--vampire"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_EPROVER", "eprover", "--eprover"),
+    ("IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI", "ergoai", "--ergoai"),
+    (
+        "IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI",
+        "symbolicai",
+        "--symbolicai",
+    ),
+)
+
+
+def _setup_env_truthy(name: str, default: str = "1") -> bool:
+    value = os.environ.get(name, default)
+    return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def _logic_prover_install_args() -> tuple[list[str], tuple[str, ...]]:
+    """Build a deterministic unified-installer command from setup env vars."""
+
+    portfolio_env_names = (
+        "IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS",
+        "IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIO",
+    )
+    configured_portfolio = next(
+        (
+            str(os.environ[name]).strip()
+            for name in portfolio_env_names
+            if name in os.environ
+        ),
+        "",
+    )
+    portfolio_is_explicit = any(name in os.environ for name in portfolio_env_names)
+    if _setup_env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS", "0"):
+        configured_portfolio = "legal_ir_full"
+        portfolio_is_explicit = True
+    if not portfolio_is_explicit:
+        # AUTO_INSTALL_PROVERS is itself explicit. Preserve its historical
+        # all-prover behavior while routing through one reviewed manifest.
+        configured_portfolio = "legal_ir_full"
+
+    requested = tuple(
+        dict.fromkeys(
+            token
+            for token in configured_portfolio.replace(",", " ").split()
+            if token
+        )
+    )
+    unknown = tuple(
+        portfolio for portfolio in requested if portfolio not in _LOGIC_PROVER_PORTFOLIOS
+    )
+    if unknown:
+        raise ValueError(
+            "unknown prover portfolio(s): " + ", ".join(sorted(unknown))
+        )
+    portfolios = tuple(
+        portfolio for portfolio in requested if portfolio in _LOGIC_PROVER_PORTFOLIOS
+    )
+    args = [
+        sys.executable,
+        "-m",
+        "ipfs_datasets_py.logic.integration.bridges.prover_installer",
+        "--yes",
+    ]
+    for portfolio in portfolios:
+        args.extend(("--portfolio", portfolio))
+
+    for env_name, solver, flag in _LOGIC_PROVER_ENV_FLAGS:
+        explicitly_configured = env_name in os.environ
+        if not explicitly_configured:
+            if solver == "symbolicai" and not portfolio_is_explicit:
+                args.append(flag)
+            continue
+        if _setup_env_truthy(env_name):
+            args.append(flag)
+        elif solver != "symbolicai":
+            args.extend(("--exclude", solver))
+
+    if _setup_env_truthy("IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS", "0"):
+        args.append("--allow-sudo")
+    if _setup_env_truthy("IPFS_DATASETS_PY_PROVER_INSTALL_STRICT", "0"):
+        args.append("--strict")
+    return args, portfolios
+
+
 def ensure_logic_provers() -> None:
     """Optionally pre-install external provers through the unified installer.
 
@@ -434,51 +543,45 @@ def ensure_logic_provers() -> None:
 
     Controlled via env vars (disabled unless explicitly enabled):
     - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS
+    - IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS
+    - IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS
     - IPFS_DATASETS_PY_AUTO_INSTALL_Z3
     - IPFS_DATASETS_PY_AUTO_INSTALL_CVC5
+    - IPFS_DATASETS_PY_AUTO_INSTALL_CVC5_CLI
     - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN
     - IPFS_DATASETS_PY_AUTO_INSTALL_COQ
+    - IPFS_DATASETS_PY_AUTO_INSTALL_ISABELLE
     - IPFS_DATASETS_PY_AUTO_INSTALL_APALACHE
     - IPFS_DATASETS_PY_AUTO_INSTALL_TAMARIN
     - IPFS_DATASETS_PY_AUTO_INSTALL_MAUDE
     - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERIF
+    - IPFS_DATASETS_PY_AUTO_INSTALL_VAMPIRE
+    - IPFS_DATASETS_PY_AUTO_INSTALL_EPROVER
+    - IPFS_DATASETS_PY_AUTO_INSTALL_ERGOAI
     - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI
     """
 
-    def env_truthy(name: str, default: str = "1") -> bool:
-        value = os.environ.get(name, default)
-        return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
-
-    if not env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "0"):
+    if not _setup_env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "0"):
         return
 
-    args = [
-        sys.executable,
-        "-m",
-        "ipfs_datasets_py.logic.integration.bridges.prover_installer",
-        "--yes",
-    ]
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_Z3", "1"):
-        args.append("--z3")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_CVC5", "1"):
-        args.append("--cvc5")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_LEAN", "1"):
-        args.append("--lean")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "1"):
-        args.append("--coq")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_APALACHE", "1"):
-        args.append("--apalache")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_TAMARIN", "1"):
-        args.append("--tamarin")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_MAUDE", "1"):
-        args.append("--maude")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERIF", "1"):
-        args.append("--proverif")
-    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI", "1"):
-        args.append("--symbolicai")
-
-    print("\nInstalling explicitly requested theorem provers (best-effort)...")
-    subprocess.run(args, check=False, text=True)
+    try:
+        args, portfolios = _logic_prover_install_args()
+    except ValueError as exc:
+        print(f"\nSkipping theorem-prover setup: {exc}")
+        return
+    selected = ", ".join(portfolios) if portfolios else "explicit solver flags"
+    print(
+        "\nInstalling explicitly requested theorem provers "
+        f"through {selected} (best-effort)..."
+    )
+    completed = subprocess.run(args, check=False, text=True)
+    if (
+        completed.returncode
+        and _setup_env_truthy("IPFS_DATASETS_PY_PROVER_INSTALL_STRICT", "0")
+    ):
+        raise RuntimeError(
+            f"strict theorem-prover setup failed with exit code {completed.returncode}"
+        )
 
 def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     """Check whether ipfs_kit_py is installed from the main repo path."""
