@@ -185,4 +185,4 @@ To add a new dev tool task:
 
 - [scripts/dev_tools/README.md](../scripts/dev_tools/README.md) - Dev tools documentation
 - [.github/workflows/README-documentation-maintenance.md](../.github/workflows/README-documentation-maintenance.md) - CI/CD usage
-- [docs/CLAUDE.md](../docs/CLAUDE.md) - Tool standards and guidelines
+- [docs/developer_guide.md](../docs/developer_guide.md) - Development standards and guidelines
