@@ -526,6 +526,9 @@ def _generate_text(
             provider=selected_provider,
             deps=resolved_deps,
             allow_local_fallback=allow_local_fallback,
+            # A pinned SyMAI benchmark route must not silently retry the same
+            # provider with its default model after the requested model fails.
+            disable_model_retry=not allow_local_fallback,
         )
         trace_getter = getattr(llm_router, "get_last_generation_trace", None)
         trace = trace_getter() if callable(trace_getter) else {}
