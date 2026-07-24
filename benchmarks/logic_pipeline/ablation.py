@@ -983,6 +983,11 @@ def _execute_job(
             record = adapter.run(request)
             records.append(record)
             upstream = (*upstream, record.digest)
+            # A case failure is local to this scheduled job.  Do not invoke
+            # downstream tools with missing or malformed upstream evidence;
+            # the next scheduled case remains eligible and executes normally.
+            if record.status is not StageStatus.SUCCESS:
+                break
         result = CaseResultRecord.from_stages(tuple(records))
     except Exception as exc:
         return _failure(
