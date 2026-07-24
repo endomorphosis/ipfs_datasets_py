@@ -196,3 +196,36 @@ python -m pytest tests/unit/benchmarks/logic_pipeline/test_contracts.py -q
 python -m pytest tests/unit/benchmarks/logic_pipeline/test_capabilities.py -q
 python -m pytest tests/integration/benchmarks/logic_pipeline/test_worktree_isolation.py -q
 ```
+
+## Reviewed corpus
+
+`tests/fixtures/logic_pipeline_benchmark/corpus.jsonl` is the frozen revision-1
+ground-truth corpus. It contains ten pilot, ten development, and ten holdout
+cases across ten strata. Every case has a stable ID, source digest, expected
+class, semantic IR target, provenance, review attestation, and a theorem or
+countermodel obligation when its expected class is `proved` or `disproved`.
+Ambiguous and unsupported cases instead carry an adjudicated semantic reason.
+Two distinct reviewer roles attest every target, and both review and provenance
+explicitly prohibit model output from establishing ground truth.
+
+`manifest.json` binds exact JSONL bytes, ordered per-case/source digests,
+coverage counts, the frozen protocol revision, and a separate digest over the
+reviewed semantic targets. Revision 1 identities are:
+
+```text
+corpus_sha256   a2720cee073bfe4221594c5b29d8a4557865f272f4d2c2c3553dfeab74c03509
+semantic_sha256 9a1747aac8ab7393147795b7f756318a67f66b6f4eedd6ed368b0337c5e46932
+manifest_sha256 58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26
+```
+
+`load_reviewed_corpus` validates both files before returning deeply immutable
+records. It rejects unknown or duplicate fields, noncanonical JSON, absent
+splits/classes, invalid review claims, source changes, semantic changes,
+reordering, and any byte/content digest mismatch. Importing the package does
+not read the fixture.
+
+Run the corpus evidence with:
+
+```bash
+python -m pytest tests/unit/benchmarks/logic_pipeline/test_cases.py -q
+```

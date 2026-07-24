@@ -334,3 +334,47 @@ __all__ += [
     "probe_runtime_capabilities",
     "require_capabilities",
 ]
+
+# Corpus records are dependency-free and load no fixture data until a caller
+# explicitly asks for it.
+from .cases import (  # noqa: E402
+    CASE_SCHEMA,
+    CORPUS_ID,
+    CORPUS_MANIFEST_SCHEMA,
+    DEFAULT_CORPUS_PATH,
+    DEFAULT_MANIFEST_PATH,
+    BenchmarkCase,
+    CorpusContractError,
+    CorpusManifest,
+    Difficulty,
+    ExpectedClass,
+    HSSLEV0201B64,
+    ReviewAttestation,
+    ReviewedCorpus,
+    case_sha256,
+    corpus_manifest_sha256,
+    load_corpus,
+    load_manifest,
+    load_reviewed_corpus,
+)
+
+__all__ += [
+    "CASE_SCHEMA",
+    "CORPUS_ID",
+    "CORPUS_MANIFEST_SCHEMA",
+    "DEFAULT_CORPUS_PATH",
+    "DEFAULT_MANIFEST_PATH",
+    "BenchmarkCase",
+    "CorpusContractError",
+    "CorpusManifest",
+    "Difficulty",
+    "ExpectedClass",
+    "HSSLEV0201B64",
+    "ReviewAttestation",
+    "ReviewedCorpus",
+    "case_sha256",
+    "corpus_manifest_sha256",
+    "load_corpus",
+    "load_manifest",
+    "load_reviewed_corpus",
+]
