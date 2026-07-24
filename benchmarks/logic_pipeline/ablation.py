@@ -20,6 +20,16 @@ from typing import Final, Mapping, Sequence
 
 from .adapters import StageAdapter, StageOutput, StageRequest
 from .cases import BenchmarkCase
+from .capabilities import (
+    ResourceClass,
+    ResourceLeaseCancelled,
+    ResourceLeaseError,
+    ResourceLeaseReceipt,
+    ResourceLeaseRequest,
+    ResourceLeaseTimeout,
+    ResourcePolicy,
+    ResourceScheduler,
+)
 from .contracts import (
     DEFAULT_PROTOCOL_SHA256,
     RUN_CONTRACT_SCHEMA,
@@ -49,7 +59,7 @@ ABLATION_PLAN_SCHEMA: Final = (
 ABLATION_RESULT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v1"
 )
-ORDERING_ALGORITHM: Final = "sha256-seed-ranked-paired-blocks-v1"
+ORDERING_ALGORITHM: Final = "sha256-seeded-counterbalanced-blocks-v2"
 MAX_CASE_INPUT_BYTES: Final = 64 * 1024
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -556,19 +566,26 @@ class AblationPlan:
             raise AblationValidationError(
                 "block order does not match recorded seed and algorithm"
             )
+        base_arm_order = sorted(
+            variants,
+            key=lambda arm: (_rank(self.seed, "arm-base", arm), arm),
+        )
+        position_counts = {
+            arm: [0 for _ in variants] for arm in variants
+        }
         for block_id in block_sequence:
             items = blocks[block_id]
-            expected_arms = sorted(
-                variants,
-                key=lambda arm: (
-                    _rank(self.seed, "arm", block_id, arm),
-                    arm,
-                ),
+            block_ordinal = items[0].block_ordinal
+            rotation = block_ordinal % len(base_arm_order)
+            expected_arms = (
+                base_arm_order[rotation:] + base_arm_order[:rotation]
             )
             if [item.variant_id for item in items] != expected_arms:
                 raise AblationValidationError(
                     "arm order does not match recorded seed and algorithm"
                 )
+            for position, arm in enumerate(expected_arms):
+                position_counts[arm][position] += 1
             first = items[0]
             expected_block_id = (
                 f"b-{first.cache_mode.value}-{first.case.case_id}"
@@ -582,6 +599,13 @@ class AblationPlan:
                 )
                 if item.job_id != expected_job_id:
                     raise AblationValidationError("job id is not canonical")
+        if any(
+            max(counts) - min(counts) > 1
+            for counts in position_counts.values()
+        ):
+            raise AblationValidationError(
+                "arm positions are not counterbalanced across blocks"
+            )
         object.__setattr__(self, "jobs", jobs)
         if self.split is Split.HOLDOUT:
             _safe_id(self.holdout_access_log_id, "holdout_access_log_id")
@@ -734,11 +758,15 @@ def build_ablation_plan(
         )
     )
     jobs: list[ScheduledCase] = []
+    base_arm_order = sorted(
+        variants,
+        key=lambda arm: (_rank(seed, "arm-base", arm), arm),
+    )
     for block_ordinal, (case, mode) in enumerate(blocks):
         block_id = f"b-{mode.value}-{case.case_id}"
-        arm_order = sorted(
-            variants,
-            key=lambda arm: (_rank(seed, "arm", block_id, arm), arm),
+        rotation = block_ordinal % len(base_arm_order)
+        arm_order = (
+            base_arm_order[rotation:] + base_arm_order[:rotation]
         )
         for within, arm in enumerate(arm_order):
             jobs.append(
@@ -782,6 +810,7 @@ class AblationRunResult:
     executed_job_ids: tuple[str, ...]
     resumed_job_ids: tuple[str, ...]
     output_root: Path
+    resource_receipts: tuple[ResourceLeaseReceipt, ...] = ()
 
     @property
     def complete(self) -> bool:
@@ -959,6 +988,7 @@ def _execute_job(
     plan: AblationPlan,
     job: ScheduledCase,
     adapters: Mapping[object, object],
+    scheduler: ResourceScheduler,
 ) -> CaseResultRecord:
     definition = get_variant_definition(job.variant_id)
     try:
@@ -980,7 +1010,31 @@ def _execute_job(
                 source=("ablation_plan", plan.digest, job.job_id),
                 upstream_stage_digests=upstream,
             )
-            record = adapter.run(request)
+            resource_class = {
+                StageName.COMPILER: ResourceClass.CPU,
+                StageName.SPACY: ResourceClass.CPU,
+                StageName.SYMAI: ResourceClass.MODEL,
+                StageName.HAMMER: ResourceClass.SOLVER,
+                StageName.LEANSTRAL: ResourceClass.MODEL,
+                StageName.KERNEL: ResourceClass.KERNEL,
+            }[stage]
+            # SyMAI and Leanstral route through the same pinned, managed model
+            # service.  Identity-aware leases prevent a second 119B instance
+            # while still allowing bounded sharing of the existing service.
+            model_identity = (
+                "leanstral-119b-shared"
+                if resource_class is ResourceClass.MODEL
+                else None
+            )
+            lease_request = ResourceLeaseRequest(
+                owner_id=f"lease-{job.ordinal}-{stage.value}",
+                resource_class=resource_class,
+                model_identity=model_identity,
+                timeout_seconds=plan.limits.case_timeout_seconds,
+            )
+            with scheduler.acquire(lease_request) as lease:
+                lease.assert_active()
+                record = adapter.run(request)
             records.append(record)
             upstream = (*upstream, record.digest)
             # A case failure is local to this scheduled job.  Do not invoke
@@ -989,6 +1043,13 @@ def _execute_job(
             if record.status is not StageStatus.SUCCESS:
                 break
         result = CaseResultRecord.from_stages(tuple(records))
+    except (ResourceLeaseTimeout, ResourceLeaseCancelled, ResourceLeaseError) as exc:
+        return _failure(
+            plan,
+            job,
+            FailureCode.RESOURCE_LEASE_CANCELLATION,
+            f"resource lease failed for {job.job_id}: {type(exc).__name__}",
+        )
     except Exception as exc:
         return _failure(
             plan,
@@ -1140,6 +1201,7 @@ def execute_ablation(
     *,
     output_root: str | Path,
     resume: bool = True,
+    resource_scheduler: ResourceScheduler | None = None,
 ) -> AblationRunResult:
     """Execute all jobs or resume only exact, validated immutable evidence."""
 
@@ -1151,6 +1213,27 @@ def execute_ablation(
         raise AblationValidationError("resume must be a boolean")
     if isinstance(output_root, str) and not output_root.strip():
         raise AblationValidationError("output_root must not be empty")
+    if resource_scheduler is None:
+        scheduler = ResourceScheduler(
+            ResourcePolicy.from_resource_limits(plan.limits)
+        )
+    elif not isinstance(resource_scheduler, ResourceScheduler):
+        raise AblationValidationError(
+            "resource_scheduler must be a ResourceScheduler"
+        )
+    else:
+        scheduler = resource_scheduler
+        policy = scheduler.policy
+        if (
+            policy.max_workers > plan.limits.max_workers
+            or policy.max_memory_bytes > plan.limits.max_memory_bytes
+            or policy.max_solver_processes
+            > plan.limits.max_solver_processes_per_case
+        ):
+            raise AblationValidationError(
+                "resource scheduler policy exceeds the frozen plan limits"
+            )
+    receipt_start = len(scheduler.receipts)
     root = Path(output_root)
     plan_path = root / "state" / "ablation-plan.json"
     if plan_path.exists():
@@ -1191,13 +1274,23 @@ def execute_ablation(
         else:
             _write_once(path, contract.to_dict())
         scope_path = _cache_scope_path(root, contract)
+        canonical_scope_root = scope_path.parent.resolve(strict=False)
+        canonical_output_root = root.resolve(strict=False)
+        if not canonical_scope_root.is_relative_to(canonical_output_root):
+            raise AblationValidationError(
+                "cache scope resolves outside the selected output root"
+            )
         scope_record = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
+            "plan_sha256": plan.digest,
             "run_id": plan.run_id,
             "variant_id": contract.requested_variant_id,
             "split": contract.split.value,
             "cache_mode": contract.cache_mode.value,
             "cache_namespace": contract.cache_namespace,
+            "environment_sha256": plan.environment_sha256,
+            "configuration_sha256": contract.configuration_sha256,
+            "canonical_root": canonical_scope_root.as_posix(),
             "run_contract_sha256": _sha(contract.to_dict()),
         }
         if scope_path.exists():
@@ -1238,7 +1331,7 @@ def execute_ablation(
             )
             resumed.append(job.job_id)
         else:
-            result = _execute_job(plan, job, adapters)
+            result = _execute_job(plan, job, adapters, scheduler)
             try:
                 _write_once(path, _envelope(plan, job, contract, result))
                 executed.append(job.job_id)
@@ -1260,6 +1353,7 @@ def execute_ablation(
         tuple(executed),
         tuple(resumed),
         root,
+        scheduler.receipts[receipt_start:],
     )
 
 
