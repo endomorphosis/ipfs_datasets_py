@@ -1,223 +1,63 @@
 # Documentation Index
 
-Complete index of all documentation in the complaint-generator repository.
+This page is the navigation hub for the maintained documentation in
+`ipfs_datasets_py`. Links are relative to this file, so they remain valid when
+the repository is viewed locally or on a hosting service.
 
-## Quick Start
+## Start here
 
-- [README.md](README.md) - Main project overview and getting started guide
-- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) - Complete configuration reference
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Production deployment guide
-- [TESTING.md](TESTING.md) - Testing guide and TDD workflow
-- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute to the project
+- [Project README](../README.md) — project overview, installation, and basic usage
+- [User guide](user_guide.md) — end-user workflows and common operations
+- [Developer guide](developer_guide.md) — development conventions and extension points
+- [Configuration reference](configuration.md) — configuration options and defaults
+- [Contributing guide](../CONTRIBUTING.md) — contribution and review workflow
 
-## MCP++ Integration
+## Core guides
 
-- [MCPPLUSPLUS_INTEGRATION_TODO.md](MCPPLUSPLUS_INTEGRATION_TODO.md) - Entry point for MCP++ integration work
-- [MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md](MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md) - Infinite backlog for MCP++/P2P integration
-- [plan-mcpPlusPlusIntegration.prompt.md](plan-mcpPlusPlusIntegration.prompt.md) - High-level integration plan
+- [Core operations guide](CORE_OPERATIONS_GUIDE.md) — primary data and processing operations
+- [Core modules API](CORE_MODULES_API.md) — public module APIs
+- [Features](FEATURES.md) — supported capabilities and integrations
+- [Architecture](architecture/README.md) — system architecture documentation
+- [Project structure](architecture/project_structure.md) — repository layout and module ownership
+- [Glossary](GLOSSARY.md) — project terminology
 
-## Core Module Documentation
+## Data, extraction, and optimization
 
-### Adversarial Testing Framework
-- [adversarial_harness/README.md](adversarial_harness/README.md) - Complete guide to adversarial testing with all agents
+- [Extraction configuration](EXTRACTION_CONFIG_GUIDE.md) — extraction settings
+- [Data transformation migration](DATA_TRANSFORMATION_MIGRATION_SUMMARY.md) — transformation changes and migration notes
+- [Optimizers quick start](OPTIMIZERS_QUICK_START.md) — optimizer workflows
+- [Optimizer usage guide](optimizers/USAGE_GUIDE.md) — optimizer configuration and usage
+- [GraphRAG quick start](optimizers/GRAPHRAG_QUICK_START.md) — GraphRAG setup
+- [IPLD vector database guide](IPLD_VECTOR_DATABASE_GUIDE.md) — vector database workflows
+- [IPLD vector store quickstart](IPLD_VECTOR_STORE_QUICKSTART.md) — vector store setup
 
-### Complaint Analysis System
-- [complaint_analysis/README.md](complaint_analysis/README.md) - Analysis framework for 14 complaint types
+## Logic and knowledge graphs
 
-### Three-Phase Processing
-- [complaint_phases/README.md](complaint_phases/README.md) - Knowledge graphs, dependency graphs, and neurosymbolic matching
+- [Knowledge graphs documentation](knowledge_graphs/DOCUMENTATION_GUIDE.md) — knowledge graph features
+- [Knowledge graphs user guide](knowledge_graphs/USER_GUIDE.md) — user workflows
+- [Logic quickstart](logic/QUICKSTART.md) — logic subsystem introduction
+- [Logic integration guide](logic/INTEGRATION_GUIDE.md) — integrating logic components
+- [Theorem prover quick reference](tdfol/QUICK_REFERENCE.md) — TDFOL reference
 
-### Mediator & Orchestration
-- [mediator/readme.md](mediator/readme.md) - Core orchestration layer and hooks
+## MCP and integrations
 
-### Testing
-- [tests/README.md](tests/README.md) - Test suite documentation (19 files, 60+ test classes)
+- [MCP quickstart](MCP_QUICKSTART.md) — MCP setup and first steps
+- [MCP tools guide](MCP_TOOLS_GUIDE.md) — available MCP tools
+- [MCP testing guide](MCP_TESTING_GUIDE.md) — MCP testing workflow
+- [MCP tools architecture](architecture/MCP_TOOLS_ARCHITECTURE.md) — MCP architecture
+- [Third-party integrations](THIRD_PARTY_INTEGRATION.md) — integration guidance
+- [Web archiving migration guide](WEB_ARCHIVING_MIGRATION_GUIDE.md) — web archiving migration
 
-## Feature Documentation
+## Deployment and operations
 
-### System Architecture
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture, data flows, and integration points
-- [docs/APPLICATIONS.md](docs/APPLICATIONS.md) - CLI and web server applications guide
+- [Deployment guide](guides/DEPLOYMENT_GUIDE.md) — deployment options
+- [Docker deployment](deployment/DOCKER_DEPLOYMENT_GUIDE.md) — container deployment
+- [Performance tuning](PERFORMANCE_TUNING_GUIDE.md) — performance tuning guidance
+- [Testing strategy](TESTING_STRATEGY.md) — test strategy and coverage expectations
+- [Changelog](CHANGELOG.md) — documented project changes
 
-### Three-Phase System
-- [docs/THREE_PHASE_SYSTEM.md](docs/THREE_PHASE_SYSTEM.md) - Detailed three-phase workflow documentation
+## Documentation maintenance
 
-### Configuration & Deployment
-- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) - Complete configuration reference
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Production deployment guide (Docker, K8s, Cloud)
-- [docs/SECURITY.md](docs/SECURITY.md) - Security best practices and hardening
-
-### Adversarial Testing
-- [docs/ADVERSARIAL_HARNESS.md](docs/ADVERSARIAL_HARNESS.md) - Adversarial testing framework details
-- [docs/ADVERSARIAL_IMPLEMENTATION_SUMMARY.md](docs/ADVERSARIAL_IMPLEMENTATION_SUMMARY.md) - Implementation summary
-
-### Backend Systems
-- [docs/BACKENDS.md](docs/BACKENDS.md) - LLM backend configuration and providers
-- [docs/LLM_ROUTER.md](docs/LLM_ROUTER.md) - LLM routing details
-
-### Complaint Analysis
-- [docs/COMPLAINT_ANALYSIS_INTEGRATION.md](docs/COMPLAINT_ANALYSIS_INTEGRATION.md) - Integration with adversarial harness
-- [docs/COMPLAINT_ANALYSIS_EXAMPLES.md](docs/COMPLAINT_ANALYSIS_EXAMPLES.md) - Usage examples
-
-### Legal Research
-- [docs/LEGAL_HOOKS.md](docs/LEGAL_HOOKS.md) - Legal analysis hooks (4-stage pipeline)
-- [docs/LEGAL_AUTHORITY_RESEARCH.md](docs/LEGAL_AUTHORITY_RESEARCH.md) - Multi-source legal research
-
-### Evidence Management
-- [docs/EVIDENCE_MANAGEMENT.md](docs/EVIDENCE_MANAGEMENT.md) - IPFS storage and DuckDB metadata
-- [docs/WEB_EVIDENCE_DISCOVERY.md](docs/WEB_EVIDENCE_DISCOVERY.md) - Automated web evidence discovery
-
-### Search Integration
-- [docs/SEARCH_HOOKS.md](docs/SEARCH_HOOKS.md) - Legal corpus RAG and search integration
-
-### IPFS Integration
-- [docs/IPFS_DATASETS_INTEGRATION.md](docs/IPFS_DATASETS_INTEGRATION.md) - IPFS integration guide
-- [docs/IPFS_DATASETS_PY_INTEGRATION.md](docs/IPFS_DATASETS_PY_INTEGRATION.md) - Python IPFS integration
-
-### DEI Analysis (HACC)
-- [docs/HACC_INTEGRATION.md](docs/HACC_INTEGRATION.md) - DEI policy analysis
-- [docs/HACC_INTEGRATION_ARCHITECTURE.md](docs/HACC_INTEGRATION_ARCHITECTURE.md) - Architecture details
-- [docs/HACC_ANALYSIS_README.md](docs/HACC_ANALYSIS_README.md) - Analysis guide
-- [docs/HACC_FILES_SUMMARY.md](docs/HACC_FILES_SUMMARY.md) - Files summary
-- [docs/HACC_QUICK_REFERENCE.md](docs/HACC_QUICK_REFERENCE.md) - Quick reference
-- [docs/HACC_SCRIPTS_REUSE_ANALYSIS.md](docs/HACC_SCRIPTS_REUSE_ANALYSIS.md) - Script reuse analysis
-- [docs/HACC_IPFS_HYBRID_USAGE.md](docs/HACC_IPFS_HYBRID_USAGE.md) - IPFS hybrid usage
-- [docs/HACC_VS_IPFS_DATASETS_QUICK.md](docs/HACC_VS_IPFS_DATASETS_QUICK.md) - Comparison guide
-
-### Probate Integration
-- [docs/PROBATE_INTEGRATION.md](docs/PROBATE_INTEGRATION.md) - Probate complaint type integration
-
-### Additional Documentation
-- [docs/EXAMPLES.md](docs/EXAMPLES.md) - Complete reference for all 21 example scripts
-- [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) - Implementation summary
-- [docs/TAXONOMY_EXPANSION_SUMMARY.md](docs/TAXONOMY_EXPANSION_SUMMARY.md) - Taxonomy expansion
-- [docs/VERIFICATION_SUMMARY.md](docs/VERIFICATION_SUMMARY.md) - Verification summary
-
-## Example Scripts
-
-See [docs/EXAMPLES.md](docs/EXAMPLES.md) for detailed documentation of all 21 example scripts, organized by category:
-
-### Core System Examples (6)
-1. three_phase_example.py
-2. legal_analysis_demo.py
-3. evidence_management_demo.py
-4. legal_authority_research_demo.py
-5. web_evidence_discovery_demo.py
-6. search_hooks_demo.py
-
-### Complaint Analysis Examples (5)
-7. complaint_analysis_integration_demo.py
-8. complaint_analysis_taxonomies_demo.py
-9. dei_taxonomy_example.py
-10. hacc_integration_example.py
-11. hacc_dei_analysis_example.py
-
-### Adversarial Testing Examples (8)
-12. adversarial_harness_example.py
-13. adversarial_harness_standalone.py
-14. adversarial_optimization_demo.py
-15. batch_sgd_cycle.py
-16. session_sgd_report.py
-17. parallelism_backoff_sweep.py
-18. sweep_ranker.py
-19-21. codex_autopatch_*.py (3 variants)
-
-## Documentation Statistics
-
-- **Total Markdown Files**: 42+
-- **Module READMEs**: 4 (adversarial_harness, complaint_analysis, complaint_phases, tests)
-- **Core Documentation**: 3 (README.md, TESTING.md, CONTRIBUTING.md)
-- **Feature Documentation**: 32 docs/*.md files
-- **Example Scripts Documented**: 21
-- **Test Files Documented**: 19
-- **Complaint Types Covered**: 14
-- **Total Pages of Documentation**: 250+
-
-## Documentation by Topic
-
-### Getting Started
-- README.md - Project overview
-- docs/CONFIGURATION.md - Configuration guide
-- docs/DEPLOYMENT.md - Deployment guide
-- docs/APPLICATIONS.md - CLI and server guide
-- TESTING.md - Testing guide
-- CONTRIBUTING.md - Contribution guide
-- docs/BACKENDS.md - Backend setup
-- docs/EXAMPLES.md - Example scripts
-
-### Architecture & Design
-- docs/ARCHITECTURE.md - System architecture
-- docs/THREE_PHASE_SYSTEM.md - Three-phase design
-- docs/ADVERSARIAL_HARNESS.md - Testing framework design
-
-### Features & APIs
-- complaint_analysis/README.md - Analysis API
-- complaint_phases/README.md - Phase processing API
-- mediator/readme.md - Mediator API
-- docs/SEARCH_HOOKS.md - Search API
-- docs/LEGAL_HOOKS.md - Legal analysis API
-
-### Integration & Usage
-- docs/COMPLAINT_ANALYSIS_INTEGRATION.md - Analysis integration
-- docs/IPFS_DATASETS_INTEGRATION.md - IPFS integration
-- docs/HACC_INTEGRATION.md - DEI analysis integration
-
-### Development & Testing
-- tests/README.md - Test documentation
-- TESTING.md - Testing workflow
-- CONTRIBUTING.md - Development workflow
-- docs/SECURITY.md - Security practices
-
-## Finding What You Need
-
-### "I want to..."
-
-- **Get started with the project** → README.md
-- **Configure the system** → docs/CONFIGURATION.md
-- **Deploy to production** → docs/DEPLOYMENT.md
-- **Use CLI or web server** → docs/APPLICATIONS.md
-- **Secure the system** → docs/SECURITY.md
-- **Understand the architecture** → docs/ARCHITECTURE.md
-- **Use the three-phase system** → docs/THREE_PHASE_SYSTEM.md, complaint_phases/README.md
-- **Analyze complaints** → complaint_analysis/README.md
-- **Test the system** → adversarial_harness/README.md, TESTING.md
-- **Configure backends** → docs/BACKENDS.md, docs/LLM_ROUTER.md
-- **Run examples** → docs/EXAMPLES.md
-- **Contribute code** → CONTRIBUTING.md
-- **Write tests** → tests/README.md, TESTING.md
-- **Integrate IPFS** → docs/IPFS_DATASETS_INTEGRATION.md
-- **Perform legal research** → docs/LEGAL_AUTHORITY_RESEARCH.md
-- **Manage evidence** → docs/EVIDENCE_MANAGEMENT.md
-- **Use search/RAG** → docs/SEARCH_HOOKS.md
-
-## Navigation Tips
-
-1. **Start with README.md** for project overview
-2. **Check module READMEs** for specific features
-3. **Review docs/** for detailed documentation
-4. **Look at examples/** for code samples
-5. **Read CONTRIBUTING.md** before submitting PRs
-
-## Keeping Documentation Updated
-
-When making changes:
-
-1. Update relevant module README if changing that module
-2. Update main README.md if adding major features
-3. Update or create docs/*.md for detailed feature docs
-4. Add examples/ scripts to demonstrate new features
-5. Update this index if adding new documentation files
-6. Keep DOCUMENTATION_INDEX.md (this file) current
-
-## Feedback
-
-Found an issue with documentation? Please:
-
-1. Open an issue on GitHub
-2. Submit a PR with improvements
-3. Start a discussion for questions
-
----
-
-**Last Updated**: 2026-02-10
-**Total Documentation**: 42+ markdown files, 250+ pages
+When adding or moving maintained documentation, update this index with a
+repository-relative link. Keep links relative to the index file and verify
+them with the documentation supervisor validation command.
