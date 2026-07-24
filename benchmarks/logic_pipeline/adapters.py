@@ -333,6 +333,124 @@ def _input_digest(value: object) -> tuple[str, int]:
     return hashlib.sha256(encoded).hexdigest(), len(encoded)
 
 
+def _freeze_json(value: object) -> object:
+    """Return an immutable, detached JSON value for live stage handoffs."""
+
+    # Contract records already expose deeply frozen mappings/tuples.  Thaw
+    # those containers before the canonical round trip so artifacts can carry
+    # either fresh handler output or a previously materialized record.
+    encoded = canonical_json(_thaw_json(value)).encode("utf-8")
+    if len(encoded) > 64 * 1024:
+        raise ProtocolContractError("stage artifact exceeds the 64 KiB bound")
+
+    def freeze(item: object) -> object:
+        if isinstance(item, dict):
+            return MappingProxyType(
+                {str(key): freeze(member) for key, member in item.items()}
+            )
+        if isinstance(item, list):
+            return tuple(freeze(member) for member in item)
+        return item
+
+    return freeze(json.loads(encoded))
+
+
+def _thaw_json(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {str(key): _thaw_json(member) for key, member in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_json(member) for member in value]
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class StageArtifact:
+    """Typed, content-addressed output passed between live stage handlers.
+
+    Artifacts describe the actual invocation graph.  They deliberately do not
+    replace ``StageRecord``: durable records remain in canonical wire order,
+    while an A6/A12 Leanstral-first invocation can still be represented
+    truthfully in downstream requests.
+    """
+
+    stage: StageName
+    status: StageStatus
+    data: object
+    output_sha256: str | None
+    effective_identity: Mapping[str, object]
+    invocation_index: int
+    invoked: bool = True
+    policy_reason: str = "scheduled"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.stage, StageName):
+            raise ProtocolContractError("artifact stage must be a StageName")
+        if not isinstance(self.status, StageStatus):
+            raise ProtocolContractError("artifact status must be a StageStatus")
+        if (
+            isinstance(self.invocation_index, bool)
+            or not isinstance(self.invocation_index, int)
+            or not 0 <= self.invocation_index < len(StageName)
+        ):
+            raise ProtocolContractError(
+                "artifact invocation_index must be a bounded integer"
+            )
+        if type(self.invoked) is not bool:
+            raise ProtocolContractError("artifact invoked must be a boolean")
+        if (
+            not isinstance(self.policy_reason, str)
+            or not self.policy_reason.strip()
+            or len(self.policy_reason) > 256
+        ):
+            raise ProtocolContractError(
+                "artifact policy_reason must be a bounded nonempty string"
+            )
+        frozen = _freeze_json(self.data)
+        object.__setattr__(self, "data", frozen)
+        if not isinstance(self.effective_identity, Mapping):
+            raise ProtocolContractError(
+                "artifact.effective_identity must be an object"
+            )
+        identity = _freeze_json(self.effective_identity)
+        if not isinstance(identity, Mapping):  # defensive after JSON freezing
+            raise ProtocolContractError(
+                "artifact.effective_identity must remain an object"
+            )
+        object.__setattr__(self, "effective_identity", identity)
+        calculated = hashlib.sha256(
+            canonical_json(_thaw_json(frozen)).encode("utf-8")
+        ).hexdigest()
+        if self.status is StageStatus.SUCCESS:
+            if self.output_sha256 is None:
+                object.__setattr__(self, "output_sha256", calculated)
+            elif _digest(self.output_sha256, "artifact.output_sha256") != calculated:
+                raise ProtocolContractError(
+                    "artifact output_sha256 does not match its data"
+                )
+        elif self.output_sha256 is not None:
+            raise ProtocolContractError(
+                "non-success artifact cannot carry an output digest"
+            )
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            canonical_json(self.to_dict()).encode("utf-8")
+        ).hexdigest()
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "stage": self.stage.value,
+            "status": self.status.value,
+            "data": _thaw_json(self.data),
+            "output_sha256": self.output_sha256,
+            "effective_identity": _thaw_json(self.effective_identity),
+            "invocation_index": self.invocation_index,
+            "invoked": self.invoked,
+            "policy_reason": self.policy_reason,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class StageRequest:
     """Immutable invocation context shared by all stage handlers."""
@@ -350,6 +468,8 @@ class StageRequest:
     environment_sha256: str | None = None
     source: tuple[str, ...] = ("benchmark_input",)
     upstream_stage_digests: tuple[str, ...] = ()
+    upstream_artifacts: tuple[StageArtifact, ...] = ()
+    invocation_index: int = 0
     protocol_sha256: str = DEFAULT_PROTOCOL_SHA256
 
     def __post_init__(self) -> None:
@@ -377,7 +497,36 @@ class StageRequest:
             raise ProtocolContractError("upstream_stage_digests must be a tuple")
         for digest in self.upstream_stage_digests:
             _digest(digest, "upstream_stage_digests[]")
-        _freeze_mapping(self.requested_identity, "requested_identity")
+        if not isinstance(self.upstream_artifacts, tuple):
+            raise ProtocolContractError("upstream_artifacts must be a tuple")
+        if len(self.upstream_artifacts) > len(StageName):
+            raise ProtocolContractError("too many upstream stage artifacts")
+        if not all(
+            isinstance(artifact, StageArtifact)
+            for artifact in self.upstream_artifacts
+        ):
+            raise ProtocolContractError(
+                "upstream_artifacts must contain StageArtifact values"
+            )
+        artifact_stages = tuple(
+            artifact.stage for artifact in self.upstream_artifacts
+        )
+        if len(set(artifact_stages)) != len(artifact_stages):
+            raise ProtocolContractError(
+                "upstream_artifacts must not contain duplicate stages"
+            )
+        if (
+            isinstance(self.invocation_index, bool)
+            or not isinstance(self.invocation_index, int)
+            or not 0 <= self.invocation_index < len(StageName)
+        ):
+            raise ProtocolContractError(
+                "invocation_index must be a bounded integer"
+            )
+        identity = _freeze_mapping(
+            self.requested_identity, "requested_identity"
+        )
+        object.__setattr__(self, "requested_identity", identity)
         _input_digest(self.input_data)
 
     @property
@@ -393,6 +542,26 @@ class StageRequest:
         return replace(
             self,
             upstream_stage_digests=(*self.upstream_stage_digests, digest),
+        )
+
+    def with_artifact(self, artifact: StageArtifact) -> "StageRequest":
+        if not isinstance(artifact, StageArtifact):
+            raise ProtocolContractError("artifact must be a StageArtifact")
+        return replace(
+            self,
+            upstream_artifacts=(*self.upstream_artifacts, artifact),
+        )
+
+    def artifact(self, stage: StageName) -> StageArtifact | None:
+        """Return the typed upstream output for ``stage``, when scheduled."""
+
+        return next(
+            (
+                artifact
+                for artifact in self.upstream_artifacts
+                if artifact.stage is stage
+            ),
+            None,
         )
 
 
@@ -432,6 +601,24 @@ class StageOutput:
 
 
 StageHandler = Callable[[StageRequest], object]
+
+
+@dataclass(frozen=True, slots=True)
+class StageInvocation:
+    """One bounded handler invocation before canonical record materialization."""
+
+    output: StageOutput
+    telemetry: TelemetryRecord
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.output, StageOutput):
+            raise ProtocolContractError(
+                "invocation output must be a StageOutput"
+            )
+        if not isinstance(self.telemetry, TelemetryRecord):
+            raise ProtocolContractError(
+                "invocation telemetry must be a TelemetryRecord"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -508,13 +695,13 @@ class StageAdapter:
             upstream_stage_digests=request.upstream_stage_digests,
         )
 
-    def run(
+    def invoke(
         self,
         request: StageRequest,
         *,
         telemetry: TelemetryRecord | None = None,
-    ) -> StageRecord:
-        """Execute the injected handler and always return a strict record."""
+    ) -> StageInvocation:
+        """Invoke the handler once and retain a typed, bounded result."""
 
         if not isinstance(request, StageRequest):
             raise ProtocolContractError("request must be a StageRequest")
@@ -566,6 +753,32 @@ class StageAdapter:
                 failure_detail="non-kernel stage attempted kernel acceptance",
                 telemetry=measured,
             )
+        if result.effective_identity != effective_identity:
+            result = replace(result, effective_identity=effective_identity)
+        return StageInvocation(result, measured)
+
+    def record(
+        self,
+        request: StageRequest,
+        invocation: StageInvocation,
+    ) -> StageRecord:
+        """Materialize a previously invoked result into a canonical record."""
+
+        if not isinstance(request, StageRequest):
+            raise ProtocolContractError("request must be a StageRequest")
+        if not isinstance(invocation, StageInvocation):
+            raise ProtocolContractError(
+                "invocation must be a StageInvocation"
+            )
+        result = invocation.output
+        effective_identity = (
+            result.effective_identity or request.requested_identity
+        )
+        measured = invocation.telemetry
+        if measured.resource_lane is not self.resource_lane:
+            raise ProtocolContractError(
+                f"{self.stage.value} telemetry must use {self.resource_lane.value} resource lane"
+            )
         return StageRecord.create(
             protocol_sha256=request.protocol_sha256,
             run_id=request.run_id,
@@ -584,6 +797,19 @@ class StageAdapter:
             failure_detail=result.failure_detail,
             kernel_accepted=result.kernel_accepted,
             kernel_receipt_sha256=result.kernel_receipt_sha256,
+        )
+
+    def run(
+        self,
+        request: StageRequest,
+        *,
+        telemetry: TelemetryRecord | None = None,
+    ) -> StageRecord:
+        """Execute the injected handler and always return a strict record."""
+
+        return self.record(
+            request,
+            self.invoke(request, telemetry=telemetry),
         )
 
     execute = run
@@ -3060,7 +3286,8 @@ def run_stages(
         raise ProtocolContractError("adapters must be a mapping")
     records: list[StageRecord] = []
     current_request = request
-    for stage in stages:
+    selected_stages = tuple(stages)
+    for index, stage in enumerate(selected_stages):
         if not isinstance(stage, StageName):
             raise ProtocolContractError("stages must contain StageName values")
         adapter = adapters.get(stage)
@@ -3068,7 +3295,29 @@ def run_stages(
             raise ProtocolContractError(f"missing adapter for {stage.value}")
         record = adapter.run(current_request)
         records.append(record)
-        current_request = current_request.with_upstream(record.digest)
+        if index + 1 < len(selected_stages):
+            artifact = StageArtifact(
+                stage=stage,
+                status=record.status,
+                data=record.data,
+                output_sha256=record.output_sha256,
+                effective_identity=record.provenance.effective_identity,
+                invocation_index=index,
+                invoked=True,
+                policy_reason="explicit_stage_sequence",
+            )
+            current_request = replace(
+                current_request,
+                upstream_stage_digests=(
+                    *current_request.upstream_stage_digests,
+                    record.digest,
+                ),
+                upstream_artifacts=(
+                    *current_request.upstream_artifacts,
+                    artifact,
+                ),
+                invocation_index=index + 1,
+            )
     return CaseResultRecord.from_stages(records)
 
 
@@ -3111,7 +3360,9 @@ __all__ = [
     "SpacyAdapterConfig",
     "SpacyAdapterMode",
     "StageAdapter",
+    "StageArtifact",
     "StageHandler",
+    "StageInvocation",
     "StageOutput",
     "StageRequest",
     "StageTelemetry",
