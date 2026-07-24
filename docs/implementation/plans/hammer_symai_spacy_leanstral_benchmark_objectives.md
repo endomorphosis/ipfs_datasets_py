@@ -1192,6 +1192,58 @@ is never completion evidence.
 - Gap task: Execute and validate a fresh complete pilot/development run without reading or opening holdout semantics.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 2.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.matrix_reassessment.HSSLEV1305A27` is the stable
+  matrix-execution evidence symbol and
+  `benchmarks.logic_pipeline.runtime.HSSLEV1305A27` exposes the same boundary
+  through the supported CLI. The canonical aggregate at
+  `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/matrix-execution-v2.json`
+  is complete with semantic SHA-256
+  `437961214b97fadd495f65d4a006406b27086e6aeb9f46d8cd27e36df1ed39bb`;
+  its public summary is
+  `docs/performance_snapshots/2026-07-24_hssl_reassessment_matrix.json`.
+- Frozen matrix contract: The executor revalidates the detached source and
+  repaired capability freeze before loading exactly the first ten pilot and
+  first ten development cases from the reviewed corpus. It schedules the
+  unchanged A0-A12 and S1 registry over both cold and warm modes in
+  seed-bound, counterbalanced blocks: `2 splits * 10 cases * 14 arms * 2
+  cache modes = 560` unique coordinates. The aggregate binds protocol
+  `a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3`,
+  registry
+  `53a106ddd6c68af445d0a3a912b0d7d09e04c6b23500d4c6362bb5c089f2e44f`,
+  corpus
+  `58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26`,
+  repaired environment
+  `9a3d1c61f9d09ebedee0ff446fb9aa72808a467ff1ea41feb8ca204eacb9948b`,
+  and the exact prior frozen selection receipt by byte and semantic digest.
+  Prompts, policies, thresholds, model identities, resources, variants, and
+  case inputs remain frozen and tuning is false on every run contract.
+- Measured terminal evidence: All 560 case records, 56 run contracts, 56
+  isolated cache-scope receipts, two ablation plans, and two resource ledgers
+  are retained below the result root. The run records 1,580 invoked stages and
+  exactly 1,580 released resource leases. Each split has 66 `not_verified`,
+  194 `rejected`, and 20 `unavailable` coordinates; typed capability,
+  Leanstral, and SyMAI failures remain visible rather than becoming positive
+  efficacy. Ninety-six native-kernel invocations are retained with zero
+  acceptances. The 56 invalid-control coordinates therefore have zero
+  kernel-verified false positives. S1 capability missingness remains
+  nonauthoritative, no fallback or production-route change occurred, and
+  neither holdout cases nor holdout semantics were accessed.
+- Validation and recovery contract: The exact required command,
+  `python -m benchmarks.logic_pipeline.runtime execute --splits
+  pilot,development --cache-mode both --validate-complete`, validates every
+  canonical result, run contract, cache scope, plan, lease, source binding,
+  selection digest, terminal outcome, and aggregate checksum. Complete
+  split-level state can republish a missing aggregate without backend calls;
+  partial, drifted, noncanonical, out-of-root, or incomplete state fails
+  closed.
+- Backlog alignment: HSSL-G130 remains one cohesive execution goal. The two
+  split ledgers and their aggregate share one frozen selection, environment,
+  safety, and completeness decision, so no smaller child goal is needed.
+  Generated todo-vector, objective-bundle, external todo, and task-status
+  metadata remain supervisor-owned and were not manually edited. The
+  supervisor can reconcile HSSLEV1305A27 from the AST symbols, canonical
+  matrix and snapshot, objective heap, discovery receipt, and exact validator.
 
 ## HSSL-G140 Validate the complete pilot gate and freeze a nonempty shortlist
 

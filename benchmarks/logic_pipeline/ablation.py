@@ -907,6 +907,119 @@ class AblationRunResult:
         return tuple(_result_path(self.output_root, job) for job in self.plan.jobs)
 
 
+def validate_ablation_evidence(
+    plan: AblationPlan,
+    *,
+    output_root: str | Path,
+) -> AblationRunResult:
+    """Strictly reparse one complete persisted non-holdout execution.
+
+    This is the read-only counterpart to :func:`execute_ablation`.  Aggregate
+    benchmark receipts use it instead of trusting filenames, counts, or
+    previously deserialized objects.  The function intentionally validates
+    the plan, every run contract and cache scope, the exact result-file set,
+    and every result envelope without importing or invoking a backend.
+    """
+
+    if not isinstance(plan, AblationPlan):
+        raise AblationValidationError("plan must be an AblationPlan")
+    if plan.split is Split.HOLDOUT:
+        raise AblationValidationError(
+            "generic persisted validation is forbidden for holdout evidence"
+        )
+    if isinstance(output_root, str) and not output_root.strip():
+        raise AblationValidationError("output_root must not be empty")
+    root = Path(output_root)
+    plan_path = root / "state" / "ablation-plan.json"
+    restored = AblationPlan.from_dict(_read_canonical(plan_path, "plan"))
+    if restored != plan or restored.digest != plan.digest:
+        raise AblationValidationError("persisted plan conflicts with request")
+
+    contracts = plan.run_contracts
+    contract_map = {
+        (contract.requested_variant_id, contract.cache_mode): contract
+        for contract in contracts
+    }
+    for contract in contracts:
+        contract_path = _contract_path(root, contract)
+        try:
+            persisted_contract = RunContract.from_dict(
+                _read_canonical(contract_path, "run contract")
+            )
+        except (ProtocolContractError, TypeError, ValueError) as exc:
+            raise AblationValidationError(
+                f"invalid persisted run contract: {contract_path}"
+            ) from exc
+        if persisted_contract != contract:
+            raise AblationValidationError(
+                f"persisted run contract conflicts with plan: {contract_path}"
+            )
+        scope_path = _cache_scope_path(root, contract)
+        scope = _mapping(_read_canonical(scope_path, "cache scope"), "cache scope")
+        expected_scope_root = scope_path.parent.resolve(strict=False)
+        canonical_output_root = root.resolve(strict=False)
+        if not expected_scope_root.is_relative_to(canonical_output_root):
+            raise AblationValidationError(
+                "persisted cache scope resolves outside the selected output root"
+            )
+        portable_scope_root = expected_scope_root.relative_to(
+            canonical_output_root
+        ).as_posix()
+        expected_scope = {
+            "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
+            "plan_sha256": plan.digest,
+            "run_id": plan.run_id,
+            "variant_id": contract.requested_variant_id,
+            "split": contract.split.value,
+            "cache_mode": contract.cache_mode.value,
+            "cache_namespace": contract.cache_namespace,
+            "environment_sha256": plan.environment_sha256,
+            "configuration_sha256": contract.configuration_sha256,
+            "canonical_root": portable_scope_root,
+            "run_contract_sha256": _sha(contract.to_dict()),
+        }
+        if dict(scope) != expected_scope:
+            raise AblationValidationError(
+                f"persisted cache scope conflicts with plan: {scope_path}"
+            )
+
+    expected_paths = {_result_path(root, job) for job in plan.jobs}
+    results_root = root / "results"
+    actual_paths = (
+        {path for path in results_root.rglob("*.json")}
+        if results_root.exists()
+        else set()
+    )
+    missing = expected_paths - actual_paths
+    foreign = actual_paths - expected_paths
+    if missing or foreign:
+        raise AblationValidationError(
+            "persisted result set is incomplete or foreign: "
+            f"missing={len(missing)}, foreign={len(foreign)}"
+        )
+
+    results: list[CaseResultRecord] = []
+    for job in plan.jobs:
+        contract = contract_map[(job.variant_id, job.cache_mode)]
+        path = _result_path(root, job)
+        results.append(
+            _validate_envelope(
+                _read_canonical(path, "result"),
+                plan,
+                job,
+                contract,
+            )
+        )
+    return AblationRunResult(
+        plan=plan,
+        contracts=contracts,
+        results=tuple(results),
+        executed_job_ids=(),
+        resumed_job_ids=tuple(job.job_id for job in plan.jobs),
+        output_root=root,
+    )
+
+
 def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
     definition = get_variant_definition(variant)
     access_log_id = plan.holdout_access_log_id
@@ -938,7 +1051,9 @@ def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
         policy_frozen=True,
         model_identities_frozen=True,
         thresholds_frozen=True,
-        tuning_permitted=plan.split is not Split.HOLDOUT,
+        # Every frozen matrix is observational.  Pilot/development may inform
+        # a later, separately frozen plan, but no in-run tuning is permitted.
+        tuning_permitted=False,
         holdout_access_log_id=access_log_id,
     )
 
@@ -1725,6 +1840,9 @@ def _execute_ablation(
             raise AblationValidationError(
                 "cache scope resolves outside the selected output root"
             )
+        portable_scope_root = canonical_scope_root.relative_to(
+            canonical_output_root
+        ).as_posix()
         scope_record = {
             "schema": "ipfs-datasets.logic-pipeline-benchmark.cache-scope.v1",
             "plan_sha256": plan.digest,
@@ -1735,7 +1853,7 @@ def _execute_ablation(
             "cache_namespace": contract.cache_namespace,
             "environment_sha256": plan.environment_sha256,
             "configuration_sha256": contract.configuration_sha256,
-            "canonical_root": canonical_scope_root.as_posix(),
+            "canonical_root": portable_scope_root,
             "run_contract_sha256": _sha(contract.to_dict()),
         }
         if scope_path.exists():
@@ -1840,4 +1958,5 @@ __all__ = [
     "ScheduledCase",
     "build_ablation_plan",
     "execute_ablation",
+    "validate_ablation_evidence",
 ]

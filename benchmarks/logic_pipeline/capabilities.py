@@ -646,6 +646,7 @@ def run_bounded_process_group(
     cancellation_grace_seconds: float = 2.0,
     cwd: str | Path | None = None,
     env: Mapping[str, str] | None = None,
+    input_bytes: bytes | None = None,
     max_output_bytes: int = 64 * 1024,
 ) -> BoundedProcessResult:
     """Run without a shell and reap the entire child process group on timeout."""
@@ -679,12 +680,22 @@ def run_bounded_process_group(
         raise CapabilityContractError(
             "max_output_bytes must be from 1 to 16777216"
         )
+    if input_bytes is not None and not isinstance(input_bytes, bytes):
+        raise CapabilityContractError("input_bytes must be bytes or None")
+    if input_bytes is not None and len(input_bytes) > 16 * 1024 * 1024:
+        raise CapabilityContractError(
+            "input_bytes must not exceed 16777216 bytes"
+        )
     try:
         process = subprocess.Popen(
             command,
             cwd=cwd,
             env=None if env is None else dict(env),
-            stdin=subprocess.DEVNULL,
+            stdin=(
+                subprocess.DEVNULL
+                if input_bytes is None
+                else subprocess.PIPE
+            ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=False,
@@ -697,7 +708,10 @@ def run_bounded_process_group(
         ) from exc
     timed_out = False
     try:
-        stdout, stderr = process.communicate(timeout=float(timeout_seconds))
+        stdout, stderr = process.communicate(
+            input=input_bytes,
+            timeout=float(timeout_seconds),
+        )
     except subprocess.TimeoutExpired:
         timed_out = True
         try:

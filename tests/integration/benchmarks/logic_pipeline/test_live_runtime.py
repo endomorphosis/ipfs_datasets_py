@@ -155,6 +155,57 @@ def test_available_backend_cannot_remain_inert_and_unavailable_is_not_substitute
     )
 
 
+def test_current_compiler_projects_oversized_derived_indexes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The real codec boundary must fit a durable stage artifact."""
+
+    full_modal_ir = {
+        "document_id": "case-1",
+        "normalized_text": "A policy applies.",
+        "formulas": [{"operator": "must", "predicate": "applies"}],
+        "source": "logic_pipeline_benchmark",
+        "version": "1",
+        # Production graph/ontology exports can be much larger than the
+        # benchmark's 64 KiB artifact boundary.
+        "metadata": {"ontology_export": "x" * (160 * 1024)},
+    }
+    monkeypatch.setattr(
+        runtime,
+        "_encode_current_modal",
+        lambda _text, _document_id: (full_modal_ir, "spacy"),
+    )
+    request = adapters.StageRequest(
+        run_id="live-runtime-test",
+        case_id="case-1",
+        case_manifest_sha256="a" * 64,
+        variant_id="A0",
+        input_data={"text": "A policy applies."},
+    )
+
+    record = adapters.CompilerAdapter(
+        runtime._current_compiler_handler
+    ).run(request)
+
+    assert record.status is contracts.StageStatus.SUCCESS
+    durable_data = record.to_dict()["data"]
+    assert durable_data["modal_ir"] == {
+        key: full_modal_ir[key]
+        for key in (
+            "document_id",
+            "formulas",
+            "normalized_text",
+            "source",
+            "version",
+        )
+    }
+    assert durable_data["modal_ir_sha256"] == hashlib.sha256(
+        contracts.canonical_json(full_modal_ir).encode("utf-8")
+    ).hexdigest()
+    assert durable_data["modal_ir_canonical_bytes"] > 64 * 1024
+    assert len(contracts.canonical_json(durable_data).encode("utf-8")) < 64 * 1024
+
+
 def test_reviewed_obligation_compilation_is_deterministic_and_target_bound() -> None:
     value = {
         "obligation_id": "pilot-p01-obligation",
