@@ -619,9 +619,9 @@ async def tool_function(
 
 ## Additional Resources
 
-- [Enhancement 12 Completion Report](../ENHANCEMENT_12_MCP_COMPLETION.md)
+- [Enhancement 12 Completion Report](./ENHANCEMENT_12_MCP_COMPLETION.md)
 - [Core Operations Guide](./CORE_OPERATIONS_GUIDE.md)
-- [Testing Guide](./TESTING_GUIDE.md)
+- [Testing Guide](./MCP_TESTING_GUIDE.md)
 - [MCP Server Documentation](../ipfs_datasets_py/mcp_server/README.md)
 
 ---
