@@ -413,3 +413,35 @@ thresholds to be frozen. It rejects missing or duplicate coordinates,
 manufactured values, shortlist drift, an eligible S1 diagnostic, an incomplete
 decision that claims efficacy, or any holdout authorization unsupported by a
 completed shortlist decision.
+
+## Paired holdout phase gate
+
+The holdout phase is validated with:
+
+```bash
+python benchmarks/logic_pipeline/report.py --gate holdout
+```
+
+The canonical
+`workspace/benchmarks/hammer-symai-spacy-leanstral/results/holdout-evaluation-v1.json`
+artifact is recomputed from the allowlisted pilot gate and the frozen manifest.
+The dated
+`docs/performance_snapshots/2026-07-24_holdout_evaluation.json` snapshot
+publishes its content-addressed result.
+
+The current result is deliberately `blocked`, not a completed efficacy
+evaluation. The pilot gate is incomplete, its nonbaseline shortlist is empty,
+and holdout access is unauthorized. A0 is therefore not run alone. The seal
+records zero scheduled or observed pairs and no access, result, receipt,
+replay, tuning, or promotion state. Safety, quality, latency, resource, and
+routing fields remain explicit null missingness; structural validity does not
+turn those nulls into zero-cost measurements or a safety pass.
+
+The sealed contract binds the ten ordered holdout identities without loading
+their semantic targets, A0 and the exact frozen shortlist, separate cold and
+warm modes, identical-manifest pairing, counterbalanced order, frozen resource
+limits, independent-native-kernel success authority, and fresh-worktree
+replay. A future authorized run must satisfy all of those boundaries. Generic
+`execute_ablation` calls reject holdout plans before any filesystem or backend
+work so an arbitrary access-log label cannot bypass pilot authorization and
+per-contract access audits.

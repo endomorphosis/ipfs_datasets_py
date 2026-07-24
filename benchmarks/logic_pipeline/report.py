@@ -215,6 +215,16 @@ def HSSLEV0801D68() -> str:
     return pilot_gate_evidence()
 
 
+def HSSLEV0909F29() -> str:
+    """Return AST-verifiable evidence for the paired holdout phase gate."""
+
+    from benchmarks.logic_pipeline.holdout_gate import (
+        HSSLEV0909F29 as holdout_gate_evidence,
+    )
+
+    return holdout_gate_evidence()
+
+
 def build_statistics_report(
     plan: object,
     requests: Sequence[object],
@@ -2381,7 +2391,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--gate",
-        choices=("pilot-shortlist",),
+        choices=("pilot-shortlist", "holdout"),
         default=None,
     )
     parser.add_argument("--validate", action="store_true")
@@ -2395,6 +2405,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.gate is not None:
         if args.section is not None:
             parser.error("--gate and --section are mutually exclusive")
+        if args.gate == "holdout":
+            from benchmarks.logic_pipeline.holdout_gate import (
+                DEFAULT_HOLDOUT_GATE_PATH,
+                HoldoutGateError,
+                holdout_gate_summary,
+                load_holdout_gate_report,
+            )
+
+            try:
+                report = load_holdout_gate_report(
+                    args.results_path or DEFAULT_HOLDOUT_GATE_PATH
+                )
+            except HoldoutGateError as exc:
+                parser.error(str(exc))
+            summary = holdout_gate_summary(report)
+            sys.stdout.write(canonical_json(summary) + "\n")
+            return 0
         from benchmarks.logic_pipeline.pilot_gate import (
             DEFAULT_PILOT_SHORTLIST_PATH,
             PilotGateError,

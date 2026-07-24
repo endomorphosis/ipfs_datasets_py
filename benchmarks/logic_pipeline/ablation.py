@@ -1207,6 +1207,13 @@ def execute_ablation(
 
     if not isinstance(plan, AblationPlan):
         raise AblationValidationError("plan must be an AblationPlan")
+    if plan.split is Split.HOLDOUT:
+        raise AblationValidationError(
+            "generic ablation execution is forbidden for holdout; use an "
+            "authorized holdout orchestrator that validates the completed "
+            "pilot gate and per-contract access audits before any write or "
+            "backend call"
+        )
     if not isinstance(adapters, Mapping):
         raise AblationValidationError("adapters must be a mapping")
     if type(resume) is not bool:

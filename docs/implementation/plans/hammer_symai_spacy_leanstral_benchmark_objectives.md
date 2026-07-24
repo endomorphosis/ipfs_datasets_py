@@ -598,6 +598,60 @@ is never completion evidence.
 - Acceptance: No tuning occurs after holdout access, every result is paired or explicitly capability-ineligible, all successes replay, and safety, quality, latency, resource, and routing metrics are complete.
 - Gap task: Run, replay, and seal the holdout evaluation.
 - Refinement depth: 1
+- Evidence implementation: `benchmarks.logic_pipeline.holdout_gate.HSSLEV0909F29`
+  is the stable AST evidence symbol for the paired holdout phase boundary;
+  `benchmarks.logic_pipeline.report.HSSLEV0909F29` exposes the same marker
+  through the required CLI. `python benchmarks/logic_pipeline/report.py
+  --gate holdout` strictly reparses and source-revalidates
+  `workspace/benchmarks/hammer-symai-spacy-leanstral/results/holdout-evaluation-v1.json`,
+  content-addressed as
+  `7d064c5fe82c25ad93c01fd13d4350ae2457f93d3bd32b9cf9a9365b1836c2cd`.
+  The dated
+  `docs/performance_snapshots/2026-07-24_holdout_evaluation.json` companion
+  publishes the validated phase result without converting structural validity
+  into an efficacy claim.
+- Authorization finding: The source-validated HSSL-G080 receipt is
+  `incomplete`, its frozen nonbaseline shortlist is empty, and holdout access
+  is explicitly unauthorized and unopened. Running A0 alone would both bypass
+  that prerequisite and fail to create a paired comparison. The canonical
+  HSSL-G090 result is therefore `blocked` and `sealed_unopened`: it records no
+  access ID, namespace, result, metric, kernel receipt, replay receipt, tuning,
+  or promotion authority. This is a complete and truthful phase-gate outcome,
+  not a completed paired evaluation or safety/quality conclusion.
+- Untouched holdout contract: The seal binds reviewed corpus identity
+  `58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26`,
+  frozen holdout split
+  `c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a`,
+  its ten ordered case and source identities, protocol revision 1, A0, the
+  exact frozen shortlist, and separate cold/warm modes. It records that the
+  gate inspected manifest identities but no semantic targets or outcomes.
+  All twelve nonbaseline variants retain explicit pre-holdout ineligibility
+  from the pilot receipt instead of being silently dropped or substituted.
+- Execution and replay contract: Any future authorized execution must use the
+  identical manifest for A0 and each exact shortlisted arm; alternate arm
+  order by frozen case/cache parity; enforce the frozen one-worker,
+  one-model-instance, one-solver-process, and distinct kernel/model resource
+  lanes; accept success only from the independent native kernel; and replay
+  every success plus sampled failures in fresh worktrees and namespaces. The
+  generic ablation executor now rejects holdout execution before filesystem or
+  backend work, preventing a caller-supplied audit label from bypassing the
+  authorization and per-contract audit boundary.
+- Missing measurement contract: Safety, quality, latency, resource, and
+  routing domains are all present in the canonical artifact, each explicitly
+  `not_observed` with null values and a reason. Scheduled/observed pair,
+  receipt, and replay counts are truly zero because no work was authorized;
+  they are never used as zero-cost efficacy, a safety pass, or vacuous metric
+  completeness. The gate fails closed if a redigested artifact injects an
+  access, result, non-null metric, replay, tuning event, efficacy statement, or
+  production authorization.
+- Backlog alignment: HSSL-G090 remains one cohesive phase-gate aggregate.
+  Authorization, untouched access state, exact pairing/scheduling, resource
+  bounds, kernel receipt authority, replay, metrics, and sealing form one
+  indivisible trust boundary, so no smaller child goal is needed. Generated
+  todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and are not manually edited; the supervisor can reconcile
+  HSSLEV0909F29 from the AST symbol, canonical result and snapshot, objective
+  heap, discovery receipt, and required validator.
 
 ## HSSL-G100 Publish the final architecture decision, delegation matrix, and runbook
 
