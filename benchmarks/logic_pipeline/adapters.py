@@ -20,7 +20,7 @@ from dataclasses import dataclass, field, replace
 import hashlib
 import time
 from types import MappingProxyType
-from typing import Callable, Final, Mapping, Sequence
+from typing import Any, Callable, Final, Mapping, Sequence
 
 from .contracts import (
     BASELINE_VARIANT,
@@ -54,6 +54,20 @@ STAGE_ORDER: Final = (
 
 _SAFE_ID_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
 _MAX_DETAIL_LENGTH: Final = 512
+
+HAMMER_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
+)
+
+
+class HammerAdapterContractError(ProtocolContractError):
+    """Raised when Hammer records cannot be joined to one proof-search path.
+
+    The underlying Hammer package owns the individual record contracts.  This
+    exception is specific to the benchmark boundary: it covers the joins
+    between request, portfolio, candidate, reconstruction, and environment
+    records that are otherwise easy to lose when serializing a stage result.
+    """
 
 
 def _safe_id(value: object, field_name: str) -> str:
@@ -371,9 +385,399 @@ class SymaiAdapter(StageAdapter):
         super().__init__(StageName.SYMAI, handler=handler, **kwargs)
 
 
+def HSSLEV0335D9B() -> str:
+    """Return the AST-verifiable Hammer proof-path evidence receipt."""
+
+    return "Hammer request, bounded portfolio, normalization, reconstruction, and receipt records"
+
+
+def _hammer_contract_types() -> tuple[Any, ...]:
+    """Load Hammer record types only when a Hammer handler is executed."""
+
+    from ipfs_datasets_py.logic.hammers.models import (
+        EnvironmentLockRecord,
+        HammerRequest,
+        ProofCandidateRecord,
+        ReconstructionRecord,
+        SUPPORTED_SCHEMA_VERSIONS,
+    )
+    from ipfs_datasets_py.logic.hammers.portfolio import PortfolioRunResult
+
+    return (
+        HammerRequest,
+        PortfolioRunResult,
+        ProofCandidateRecord,
+        ReconstructionRecord,
+        EnvironmentLockRecord,
+        SUPPORTED_SCHEMA_VERSIONS,
+    )
+
+
+def _coerce_hammer_record(
+    value: object,
+    record_type: Any,
+    field_name: str,
+    *,
+    optional: bool = False,
+) -> Any:
+    if value is None and optional:
+        return None
+    if isinstance(value, record_type):
+        record = value
+    elif isinstance(value, Mapping):
+        try:
+            record = record_type.from_dict(dict(value))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HammerAdapterContractError(
+                f"{field_name} is not a valid {record_type.__name__}: {exc}"
+            ) from exc
+    else:
+        raise HammerAdapterContractError(
+            f"{field_name} must be a {record_type.__name__} or serialized object"
+        )
+    validator = getattr(record, "validate", None)
+    if callable(validator):
+        try:
+            validator()
+        except (TypeError, ValueError) as exc:
+            raise HammerAdapterContractError(
+                f"{field_name} failed {record_type.__name__} validation: {exc}"
+            ) from exc
+    return record
+
+
+def _hammer_record_dict(record: object, field_name: str) -> dict[str, object]:
+    to_dict = getattr(record, "to_dict", None)
+    if not callable(to_dict):
+        raise HammerAdapterContractError(
+            f"{field_name} does not expose a serializable to_dict contract"
+        )
+    value = to_dict()
+    if not isinstance(value, dict):
+        raise HammerAdapterContractError(f"{field_name}.to_dict() must return an object")
+    return value
+
+
+def _validate_hammer_evidence(
+    value: object,
+    *,
+    request: StageRequest,
+) -> dict[str, object]:
+    """Validate and serialize one complete Hammer proof-search path.
+
+    The backend handler may return native Hammer records or their serialized
+    forms.  The resulting benchmark payload is always JSON data and retains
+    each record separately.  Cross-record checks here are intentionally
+    stricter than the individual Hammer model validators: a candidate from a
+    different request, a reconstruction for a different candidate, or a
+    portfolio attempt from a different request must never be presented as one
+    stage result.
+
+    Expected payload keys are ``request``, ``portfolio`` (a
+    ``PortfolioRunResult``), optional ``proof_candidate``/``candidate``,
+    optional ``reconstruction``, optional ``environment_lock``, and optional
+    ``normalized_evidence``.  The handler may attach diagnostic keys, but the
+    adapter emits only the bounded, contract-defined records below.
+    """
+
+    if not isinstance(value, Mapping):
+        raise HammerAdapterContractError("Hammer handler output must be an object")
+    (
+        request_type,
+        portfolio_type,
+        candidate_type,
+        reconstruction_type,
+        environment_type,
+        supported_schema_versions,
+    ) = _hammer_contract_types()
+
+    request_value = value.get("request")
+    hammer_request = _coerce_hammer_record(request_value, request_type, "request")
+    portfolio_value = value.get("portfolio", value.get("run_result"))
+    portfolio = _coerce_hammer_record(portfolio_value, portfolio_type, "portfolio")
+    if portfolio.schema_version not in supported_schema_versions:
+        raise HammerAdapterContractError(
+            f"portfolio.schema_version {portfolio.schema_version!r} is unsupported"
+        )
+    candidate_value = value.get("proof_candidate", value.get("candidate"))
+    candidate = _coerce_hammer_record(
+        candidate_value,
+        candidate_type,
+        "proof_candidate",
+        optional=True,
+    )
+    reconstruction = _coerce_hammer_record(
+        value.get("reconstruction"),
+        reconstruction_type,
+        "reconstruction",
+        optional=True,
+    )
+    environment_lock = _coerce_hammer_record(
+        value.get("environment_lock"),
+        environment_type,
+        "environment_lock",
+        optional=True,
+    )
+
+    request_id = hammer_request.request_id
+    # If the caller supplied a Hammer id in benchmark input/identity, bind it
+    # too.  The fields are optional for compatibility with generic stage
+    # callers, but when present they prevent a handler from silently switching
+    # the request it is answering.
+    expected_ids: list[object] = []
+    if isinstance(request.input_data, Mapping):
+        expected_ids.extend(
+            request.input_data.get(name)
+            for name in ("hammer_request_id", "request_id")
+            if name in request.input_data
+        )
+    expected_ids.extend(
+        request.requested_identity.get(name)
+        for name in ("hammer_request_id", "request_id")
+        if name in request.requested_identity
+    )
+    for expected_id in expected_ids:
+        if expected_id is not None and expected_id != request_id:
+            raise HammerAdapterContractError(
+                f"Hammer request_id {request_id!r} does not match benchmark identity "
+                f"{expected_id!r}"
+            )
+
+    if portfolio.request_id != request_id:
+        raise HammerAdapterContractError(
+            f"portfolio.request_id {portfolio.request_id!r} does not match "
+            f"request.request_id {request_id!r}"
+        )
+    for attempt in portfolio.attempts:
+        try:
+            attempt.validate()
+        except (TypeError, ValueError) as exc:
+            raise HammerAdapterContractError(
+                f"portfolio attempt {attempt.attempt_id!r} failed validation: {exc}"
+            ) from exc
+        if attempt.solver_name not in hammer_request.policy.allowed_solvers:
+            raise HammerAdapterContractError(
+                f"solver {attempt.solver_name!r} is not allowlisted by request policy"
+            )
+        if attempt.timeout_seconds > hammer_request.policy.timeout_seconds:
+            raise HammerAdapterContractError(
+                f"attempt {attempt.attempt_id!r} exceeds the request timeout budget"
+            )
+        if attempt.network_used and not hammer_request.policy.network_allowed:
+            raise HammerAdapterContractError(
+                f"attempt {attempt.attempt_id!r} used network under a denied policy"
+            )
+        if attempt.request_id != request_id:
+            raise HammerAdapterContractError(
+                f"portfolio attempt {attempt.attempt_id!r} belongs to "
+                f"request {attempt.request_id!r}, not {request_id!r}"
+            )
+    attempt_ids = {attempt.attempt_id for attempt in portfolio.attempts}
+
+    # A policy flag alone is not enough to change the benchmark arm.  The
+    # preregistered matrix names the learned and LLM-ranking arms explicitly,
+    # so a record cannot smuggle either ranking mode into A0-A9 or A12.
+    if hammer_request.policy.allow_learned_premise_selector and request.variant_id != "A10":
+        raise HammerAdapterContractError(
+            "learned premise selection is only permitted by named variant A10"
+        )
+    if hammer_request.policy.allow_llm_premise_ranking and request.variant_id != "A11":
+        raise HammerAdapterContractError(
+            "LLM premise ranking is only permitted by named variant A11"
+        )
+    if set(portfolio.evidence) - attempt_ids:
+        raise HammerAdapterContractError(
+            "portfolio evidence contains an unknown solver attempt"
+        )
+
+    if candidate is not None:
+        if candidate.request_id != request_id:
+            raise HammerAdapterContractError(
+                f"proof_candidate.request_id {candidate.request_id!r} does not "
+                f"match request.request_id {request_id!r}"
+            )
+        if candidate.solver_attempt_id not in attempt_ids:
+            raise HammerAdapterContractError(
+                f"proof_candidate.solver_attempt_id {candidate.solver_attempt_id!r} "
+                "is not present in portfolio.attempts"
+            )
+
+    if reconstruction is not None:
+        if reconstruction.request_id != request_id:
+            raise HammerAdapterContractError(
+                f"reconstruction.request_id {reconstruction.request_id!r} does not "
+                f"match request.request_id {request_id!r}"
+            )
+        if reconstruction.target_itp is not hammer_request.itp:
+            raise HammerAdapterContractError(
+                f"reconstruction.target_itp {reconstruction.target_itp.value!r} "
+                f"does not match request.itp {hammer_request.itp.value!r}"
+            )
+        if candidate is None:
+            raise HammerAdapterContractError(
+                "reconstruction requires the corresponding proof_candidate"
+            )
+        if reconstruction.candidate_id != candidate.candidate_id:
+            raise HammerAdapterContractError(
+                f"reconstruction.candidate_id {reconstruction.candidate_id!r} "
+                f"does not match proof_candidate.candidate_id {candidate.candidate_id!r}"
+            )
+        if environment_lock is None:
+            raise HammerAdapterContractError(
+                "reconstruction requires environment_lock"
+            )
+        if (
+            environment_lock is not None
+            and reconstruction.environment_lock_id != environment_lock.lock_id
+        ):
+            raise HammerAdapterContractError(
+                "reconstruction.environment_lock_id does not match environment_lock"
+            )
+        if environment_lock is not None and environment_lock.itp is not hammer_request.itp:
+            raise HammerAdapterContractError(
+                f"environment_lock.itp {environment_lock.itp.value!r} does not "
+                f"match request.itp {hammer_request.itp.value!r}"
+            )
+
+    normalized_payload: dict[str, dict[str, object]] = {}
+    normalized_value = value.get("normalized_evidence", {})
+    if normalized_value is None:
+        normalized_value = {}
+    if not isinstance(normalized_value, Mapping):
+        raise HammerAdapterContractError("normalized_evidence must be an object")
+    try:
+        from ipfs_datasets_py.logic.hammers.provenance import NormalizedEvidence
+
+        for attempt_id, evidence_value in normalized_value.items():
+            if not isinstance(attempt_id, str) or not (
+                isinstance(evidence_value, Mapping)
+                or isinstance(evidence_value, NormalizedEvidence)
+            ):
+                raise HammerAdapterContractError(
+                    "normalized_evidence keys and values must be objects"
+                )
+            evidence = (
+                evidence_value
+                if isinstance(evidence_value, NormalizedEvidence)
+                else NormalizedEvidence.from_dict(dict(evidence_value))
+            )
+            validator = getattr(evidence, "validate", None)
+            if callable(validator):
+                validator()
+            if evidence.request_id != request_id or evidence.attempt_id != attempt_id:
+                raise HammerAdapterContractError(
+                    f"normalized evidence {attempt_id!r} is not bound to the "
+                    "owning request/attempt"
+                )
+            if attempt_id not in attempt_ids:
+                raise HammerAdapterContractError(
+                    f"normalized evidence references unknown attempt {attempt_id!r}"
+                )
+            normalized_payload[attempt_id] = _hammer_record_dict(
+                evidence, f"normalized_evidence[{attempt_id!r}]"
+            )
+    except HammerAdapterContractError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HammerAdapterContractError(
+            f"invalid normalized_evidence payload: {exc}"
+        ) from exc
+
+    accepted = bool(reconstruction is not None and reconstruction.kernel_accepted)
+    record_payload: dict[str, object] = {
+        "request": _hammer_record_dict(hammer_request, "request"),
+        "portfolio": _hammer_record_dict(portfolio, "portfolio"),
+        "normalized_evidence": normalized_payload,
+        "proof_candidate": (
+            None if candidate is None else _hammer_record_dict(candidate, "proof_candidate")
+        ),
+        "reconstruction": (
+            None
+            if reconstruction is None
+            else _hammer_record_dict(reconstruction, "reconstruction")
+        ),
+        "environment_lock": (
+            None
+            if environment_lock is None
+            else _hammer_record_dict(environment_lock, "environment_lock")
+        ),
+        "reconstruction_kernel_accepted": accepted,
+        "status": "verified" if accepted else ("candidate" if candidate else "unknown"),
+    }
+    evidence_id = hashlib.sha256(
+        canonical_json({"schema": HAMMER_EVIDENCE_SCHEMA, **record_payload}).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    return {
+        "schema": HAMMER_EVIDENCE_SCHEMA,
+        "evidence_id": evidence_id,
+        **record_payload,
+        # This is descriptive evidence for the subsequent kernel stage.  It
+        # intentionally does not set StageOutput.kernel_accepted: only the
+        # benchmark's explicit kernel adapter can establish final authority.
+    }
+
+
 class HammerAdapter(StageAdapter):
     def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
-        super().__init__(StageName.HAMMER, handler=handler, **kwargs)
+        # Keep the backend callable injected and lazy.  Importing this module
+        # must not import Hammer's optional solver/frontend dependencies.
+        wrapped = None if handler is None else self._validated_handler(handler)
+        super().__init__(StageName.HAMMER, handler=wrapped, **kwargs)
+
+    @staticmethod
+    def _validated_handler(handler: StageHandler) -> StageHandler:
+        def invoke(request: StageRequest) -> object:
+            try:
+                raw = handler(request)
+                if not isinstance(raw, StageOutput):
+                    raw = StageOutput(data=raw)
+                if raw.status is StageStatus.SUCCESS:
+                    # Preserve the generic StageAdapter behavior for callers
+                    # that use Hammer as an opaque stage payload.  Once a
+                    # handler opts into the Hammer record vocabulary, the
+                    # complete cross-record contract is mandatory.
+                    if not isinstance(raw.data, Mapping) or not any(
+                        key in raw.data
+                        for key in (
+                            "request",
+                            "portfolio",
+                            "run_result",
+                            "proof_candidate",
+                            "candidate",
+                            "reconstruction",
+                            "environment_lock",
+                            "normalized_evidence",
+                        )
+                    ):
+                        return raw
+                    data = _validate_hammer_evidence(
+                        raw.data,
+                        request=request,
+                    )
+                    return replace(raw, data=data)
+                return raw
+            except HammerAdapterContractError as exc:
+                return StageOutput(
+                    status=StageStatus.FAILED,
+                    effective_identity=request.requested_identity,
+                    failure_code=FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
+                    failure_detail=str(exc)[:_MAX_DETAIL_LENGTH],
+                )
+            except ImportError as exc:
+                return StageOutput(
+                    status=StageStatus.UNAVAILABLE,
+                    effective_identity=request.requested_identity,
+                    failure_code=FailureCode.CAPABILITY_UNAVAILABLE,
+                    failure_detail=f"Hammer contracts unavailable: {exc}",
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise HammerAdapterContractError(
+                    f"invalid Hammer evidence payload: {exc}"
+                ) from exc
+
+        return invoke
 
 
 class LeanstralAdapter(StageAdapter):
@@ -442,7 +846,10 @@ __all__ = [
     "ADAPTER_VERSION",
     "CaseResultRecord",
     "CompilerAdapter",
+    "HAMMER_EVIDENCE_SCHEMA",
     "HammerAdapter",
+    "HammerAdapterContractError",
+    "HSSLEV0335D9B",
     "HSSLEV0306C18",
     "KernelAdapter",
     "LeanstralAdapter",
