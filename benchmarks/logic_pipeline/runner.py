@@ -307,7 +307,7 @@ def _validate_source_snapshot(source: Mapping[str, object]) -> None:
             text=True,
         )
         gitlinks = subprocess.run(
-            ["git", "ls-files", "--stage"],
+            ["git", "ls-tree", "-r", "-z", revision],
             cwd=REPOSITORY_ROOT,
             check=True,
             capture_output=True,
@@ -322,10 +322,22 @@ def _validate_source_snapshot(source: Mapping[str, object]) -> None:
             "source.repository_commit is not available in this repository"
         )
     actual_submodules: list[tuple[str, str]] = []
-    for line in gitlinks.stdout.splitlines():
-        fields = line.split(maxsplit=3)
-        if len(fields) == 4 and fields[0] == "160000":
-            actual_submodules.append((fields[3], fields[1]))
+    for entry in gitlinks.stdout.split("\0"):
+        if not entry:
+            continue
+        header, separator, path = entry.partition("\t")
+        fields = header.split()
+        if not separator or len(fields) != 3:
+            raise BaselineValidationError(
+                "Git returned a malformed entry for the pinned source commit"
+            )
+        mode, object_type, object_id = fields
+        if mode == "160000":
+            if object_type != "commit" or not _HEX_REVISION.fullmatch(object_id):
+                raise BaselineValidationError(
+                    "pinned source commit has a malformed submodule gitlink"
+                )
+            actual_submodules.append((path, object_id))
     if frozen_submodules != actual_submodules:
         raise BaselineValidationError("recorded submodule gitlinks drifted")
 
