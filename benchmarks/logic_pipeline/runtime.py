@@ -11,9 +11,12 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass, field
 import hashlib
+import importlib
 import json
 from pathlib import Path
 import re
+import sys
+import time
 from types import MappingProxyType
 from typing import Callable, Final, Mapping, Sequence
 
@@ -40,6 +43,7 @@ from .capabilities import (
     CapabilityRecord,
     CapabilityStatus,
     probe_runtime_capabilities,
+    run_bounded_process_group,
 )
 from .contracts import (
     FailureCode,
@@ -88,6 +92,14 @@ def HSSLEV1207F16() -> str:
     from .capability_reprobe import HSSLEV1207F16 as capability_evidence
 
     return capability_evidence()
+
+
+def HSSLEV1305A27() -> str:
+    """Return the AST-verifiable complete matrix evidence receipt."""
+
+    from .matrix_reassessment import HSSLEV1305A27 as matrix_evidence
+
+    return matrix_evidence()
 
 
 def _sha(value: object) -> str:
@@ -483,17 +495,30 @@ class NativeKernelRunner:
         compiled = self._compiled(request)
         candidate = self._proof_candidate(request)
         if compiled is None or candidate is None:
+            reason = (
+                "no_compiled_obligation"
+                if compiled is None
+                else "no_proof_candidate"
+            )
+            receipt = {
+                "schema": KERNEL_RECEIPT_SCHEMA,
+                "run_id": request.run_id,
+                "case_id": request.case_id,
+                "variant_id": request.variant_id,
+                "protocol_sha256": request.protocol_sha256,
+                "case_manifest_sha256": request.case_manifest_sha256,
+                "input_sha256": request.input_sha256,
+                "split": request.split.value,
+                "cache_mode": request.cache_mode.value,
+                "environment_sha256": self.environment_sha256,
+                "accepted": False,
+                "independent": True,
+                "active_process_count": self.active_process_count,
+                "reason": reason,
+            }
+            receipt_sha256 = _sha(receipt)
             return StageOutput(
-                data={
-                    "schema": KERNEL_RECEIPT_SCHEMA,
-                    "accepted": False,
-                    "reason": (
-                        "no_compiled_obligation"
-                        if compiled is None
-                        else "no_proof_candidate"
-                    ),
-                    "independent": True,
-                },
+                data={**receipt, "receipt_sha256": receipt_sha256},
                 effective_identity={
                     **dict(request.requested_identity),
                     "implementation": "lean-native-kernel",
@@ -761,6 +786,179 @@ def _capability_handler(
     return adapter
 
 
+def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
+    """Build a bounded real-solver diagnostic for untranslated reviewed goals.
+
+    The generic corpus language cannot be soundly relabeled as SMT input.
+    This handler therefore invokes the pinned solver on a case-bound
+    uninterpreted proposition, retains the terminal result, and deliberately
+    creates no proof candidate.  It proves backend execution and cost without
+    synthesizing efficacy.
+    """
+
+    solver_path = record.identity.get("solver_path")
+    if not isinstance(solver_path, str) or not solver_path:
+        raise RuntimeBindingError(
+            "available Hammer has no live hammer handler: identity lacks "
+            "solver_path"
+        )
+
+    def invoke(request: StageRequest) -> StageOutput:
+        symbol = f"target_{request.input_sha256[:24]}"
+        source = (
+            "(set-logic QF_UF)\n"
+            f"(declare-fun {symbol} () Bool)\n"
+            f"(assert {symbol})\n"
+            "(check-sat)\n"
+        )
+        started = time.perf_counter()
+        try:
+            process = run_bounded_process_group(
+                (solver_path, "--lang=smt2"),
+                timeout_seconds=5.0,
+                max_output_bytes=4096,
+                env=None,
+                input_bytes=source.encode("utf-8"),
+            )
+        except Exception as exc:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                effective_identity=request.requested_identity,
+                failure_code=FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE,
+                failure_detail=f"Hammer solver launch failed: {type(exc).__name__}",
+                telemetry=TelemetryRecord(
+                    wall_time_ms=(time.perf_counter() - started) * 1000,
+                    bytes_in=len(source.encode("utf-8")),
+                    resource_lane=ResourceLane.SOLVER,
+                ),
+            )
+        # The case-bound proposition exercises the pinned solver process, but
+        # it is not a translation of the reviewed semantic target and cannot
+        # create a proof candidate or efficacy observation.
+        status = "available" if process.returncode in {0, 1} else "inconclusive"
+        return StageOutput(
+            data={
+                "schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "hammer-untranslated-terminal.v1"
+                ),
+                "case_input_sha256": request.input_sha256,
+                "translation_status": "unsupported",
+                "solver_status": status,
+                "solver_command_sha256": hashlib.sha256(
+                    f"{solver_path}\0--lang=smt2".encode("utf-8")
+                ).hexdigest(),
+                "stdout_sha256": hashlib.sha256(
+                    process.stdout.encode("utf-8")
+                ).hexdigest(),
+                "stderr_sha256": hashlib.sha256(
+                    process.stderr.encode("utf-8")
+                ).hexdigest(),
+                "timed_out": process.timed_out,
+                "process_group_reaped": process.process_group_reaped,
+                "candidate_created": False,
+                "efficacy_observed": False,
+            },
+            effective_identity={
+                **dict(request.requested_identity),
+                "implementation": record.identity.get("implementation"),
+                "solver": record.identity.get("solver"),
+                "solver_path": solver_path,
+            },
+            telemetry=TelemetryRecord(
+                wall_time_ms=(time.perf_counter() - started) * 1000,
+                input_items=1,
+                output_items=1,
+                bytes_in=len(source.encode("utf-8")),
+                bytes_out=len(process.stdout.encode("utf-8"))
+                + len(process.stderr.encode("utf-8")),
+                resource_lane=ResourceLane.SOLVER,
+            ),
+        )
+
+    return invoke
+
+
+def _legacy_symai_unavailable(request: StageRequest) -> StageOutput:
+    """Retain S1 as a distinct diagnostic when no legacy identity was frozen."""
+
+    return StageOutput(
+        status=StageStatus.UNAVAILABLE,
+        data={
+            "schema": (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "legacy-symai-terminal.v1"
+            ),
+            "diagnostic_only": True,
+            "authority_withheld": True,
+            "reason": "legacy_symbolicai_identity_not_in_repaired_freeze",
+        },
+        effective_identity={
+            **dict(request.requested_identity),
+            "diagnostic_only": True,
+            "legacy_identity_frozen": False,
+        },
+        failure_code=FailureCode.CAPABILITY_UNAVAILABLE,
+        failure_detail=(
+            "S1 legacy SymbolicAI identity was not part of the repaired "
+            "capability freeze and cannot be substituted"
+        ),
+        telemetry=TelemetryRecord(resource_lane=ResourceLane.MODEL),
+    )
+
+
+def _configured_symai_engine_factory(
+    state_directory: Path,
+) -> Callable[[SymaiAdapterConfig, str], object]:
+    """Import SyMAI against a run-scoped non-secret configuration."""
+
+    config_root = state_directory / "symai-runtime"
+    config_path = config_root / ".symai" / "symai.config.json"
+
+    def factory(config: SymaiAdapterConfig, namespace: str) -> object:
+        config_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        value = {
+            "NEUROSYMBOLIC_ENGINE_API_KEY": "ipfs",
+            "NEUROSYMBOLIC_ENGINE_MODEL": f"ipfs:{config.model}",
+            "SYMBOLIC_ENGINE": "ipfs",
+        }
+        raw = canonical_json(value) + "\n"
+        if config_path.exists():
+            if config_path.read_text(encoding="utf-8") != raw:
+                raise RuntimeBindingError("run-scoped SyMAI configuration drifted")
+        else:
+            with config_path.open("x", encoding="utf-8") as handle:
+                handle.write(raw)
+        original_prefix = sys.prefix
+        try:
+            sys.prefix = str(config_root)
+            importlib.import_module("symai")
+        finally:
+            sys.prefix = original_prefix
+        engine_module = importlib.import_module(
+            "ipfs_datasets_py.utils.symai_ipfs_engine"
+        )
+        engine_type = getattr(
+            engine_module, "IPFSSyMAINeurosymbolicEngine", None
+        )
+        if not isinstance(engine_type, type):
+            raise ImportError("IPFSSyMAINeurosymbolicEngine is unavailable")
+        return engine_type(
+            "neurosymbolic",
+            "NEUROSYMBOLIC_ENGINE_MODEL",
+            provider=config.provider,
+            cache_namespace=namespace,
+            allow_local_fallback=False,
+            dry_run=config.dry_run,
+            cache_enabled=(
+                config.cache_enabled and namespace.endswith("/cache/warm")
+            ),
+            model_name=config.model,
+        )
+
+    return factory
+
+
 def build_live_runtime(
     inventory: CapabilityInventory,
     handlers: RuntimeBackendHandlers = RuntimeBackendHandlers(),
@@ -792,10 +990,15 @@ def build_live_runtime(
     if handlers.kernel is None and _available(
         inventory, CapabilityKind.LEAN_TOOLCHAIN
     ):
-        lean = _record(
+        lean_identity = _record(
             inventory, CapabilityKind.LEAN_TOOLCHAIN
-        ).identity.get("lean")
-        path = lean.get("path") if isinstance(lean, Mapping) else None
+        ).identity
+        lean = lean_identity.get("lean")
+        path = (
+            lean.get("path")
+            if isinstance(lean, Mapping)
+            else lean_identity.get("lean_path")
+        )
         if not isinstance(path, str) or not path:
             raise RuntimeBindingError(
                 "available Lean toolchain lacks an executable path"
@@ -859,17 +1062,27 @@ def build_live_runtime(
                 elif injected is not None:
                     route[stage] = SymaiAdapter(injected)
                 elif definition.symai_policy is StagePolicy.LEGACY_DIAGNOSTIC:
-                    raise RuntimeBindingError(
-                        "available SyMAI capability lacks the distinct legacy S1 handler"
-                    )
+                    route[stage] = SymaiAdapter(_legacy_symai_unavailable)
                 else:
                     provider = symai_record.identity.get(
                         "requested_provider",
-                        router_record.identity.get("requested_provider"),
+                        symai_record.identity.get(
+                            "provider",
+                            router_record.identity.get(
+                                "requested_provider",
+                                router_record.identity.get("provider"),
+                            ),
+                        ),
                     )
                     model = symai_record.identity.get(
                         "requested_model",
-                        router_record.identity.get("requested_model"),
+                        symai_record.identity.get(
+                            "model",
+                            router_record.identity.get(
+                                "requested_model",
+                                router_record.identity.get("model"),
+                            ),
+                        ),
                     )
                     if not isinstance(provider, str) or not isinstance(model, str):
                         raise RuntimeBindingError(
@@ -879,7 +1092,11 @@ def build_live_runtime(
                         config=SymaiAdapterConfig(
                             provider=provider,
                             model=model,
-                        )
+                        ),
+                        engine_factory=_configured_symai_engine_factory(
+                            Path(state_directory or ".hssl-runtime-processes")
+                            / inventory.run_id
+                        ),
                     )
             elif stage is StageName.HAMMER:
                 route[stage] = _capability_handler(
@@ -887,7 +1104,11 @@ def build_live_runtime(
                     kind=CapabilityKind.HAMMER,
                     stage=stage,
                     injected=handlers.hammer,
-                    default_factory=None,
+                    default_factory=lambda: HammerAdapter(
+                        _hammer_live_handler(
+                            _record(inventory, CapabilityKind.HAMMER)
+                        )
+                    ),
                 )
             elif stage is StageName.LEANSTRAL:
                 route[stage] = _capability_handler(
@@ -1001,6 +1222,59 @@ def _probe_cli(args: argparse.Namespace) -> int:
     return 0
 
 
+def _execute_cli(args: argparse.Namespace) -> int:
+    from . import matrix_reassessment
+    from .contracts import CacheMode, Split
+
+    split_values = tuple(
+        item.strip() for item in args.splits.split(",") if item.strip()
+    )
+    try:
+        splits = tuple(Split(item) for item in split_values)
+    except ValueError as exc:
+        raise RuntimeBindingError("execute contains an unsupported split") from exc
+    if args.cache_mode == "both":
+        cache_modes = (CacheMode.COLD, CacheMode.WARM)
+    else:
+        try:
+            cache_modes = (CacheMode(args.cache_mode),)
+        except ValueError as exc:
+            raise RuntimeBindingError(
+                "execute contains an unsupported cache mode"
+            ) from exc
+    if not args.validate_complete:
+        raise RuntimeBindingError(
+            "matrix execution requires --validate-complete"
+        )
+    try:
+        result = matrix_reassessment.execute_reassessment_matrix(
+            repository_root=args.repository_root,
+            output_root=Path(args.output_root),
+            snapshot_path=Path(args.snapshot),
+            splits=splits,
+            cache_modes=cache_modes,
+            seed=args.seed,
+            resume=True,
+        )
+    except matrix_reassessment.MatrixReassessmentError as exc:
+        print(
+            canonical_json(
+                {
+                    "schema": (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "reassessment-matrix-failure.v1"
+                    ),
+                    "run_id": "reassessment-v2",
+                    "status": "incomplete",
+                    "reason": str(exc),
+                }
+            )
+        )
+        return 1
+    print(canonical_json(dict(result)))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Frozen logic-pipeline live runtime"
@@ -1034,9 +1308,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="strictly validate the existing frozen evidence without live calls",
     )
+    execute = subparsers.add_parser("execute")
+    execute.add_argument("--splits", default="pilot,development")
+    execute.add_argument(
+        "--cache-mode",
+        choices=("cold", "warm", "both"),
+        default="both",
+    )
+    execute.add_argument("--validate-complete", action="store_true")
+    execute.add_argument("--repository-root", default=".")
+    execute.add_argument(
+        "--output-root",
+        default=(
+            "workspace/benchmarks/hammer-symai-spacy-leanstral/"
+            "reassessment-v2/results/matrix"
+        ),
+    )
+    execute.add_argument(
+        "--snapshot",
+        default=(
+            "docs/performance_snapshots/"
+            "2026-07-24_hssl_reassessment_matrix.json"
+        ),
+    )
+    execute.add_argument("--seed", type=int, default=2737)
     args = parser.parse_args(argv)
     if args.command == "probe":
         return _probe_cli(args)
+    if args.command == "execute":
+        return _execute_cli(args)
     raise RuntimeBindingError(f"unsupported runtime command: {args.command}")
 
 
@@ -1049,6 +1349,7 @@ __all__ = [
     "CompiledObligation",
     "HSSLEV1142E95",
     "HSSLEV1207F16",
+    "HSSLEV1305A27",
     "KERNEL_RECEIPT_SCHEMA",
     "LiveRuntime",
     "NativeKernelRunner",

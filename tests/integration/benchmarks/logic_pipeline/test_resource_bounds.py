@@ -257,6 +257,24 @@ def test_solver_process_group_timeout_terminates_and_reaps_children() -> None:
         pytest.fail("solver child survived process-group cancellation")
 
 
+def test_bounded_process_receives_binary_stdin_without_a_shell() -> None:
+    payload = b"(check-sat)\\n"
+    result = run_bounded_process_group(
+        (
+            sys.executable,
+            "-c",
+            "import sys;sys.stdout.buffer.write(sys.stdin.buffer.read())",
+        ),
+        timeout_seconds=1,
+        input_bytes=payload,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == payload.decode("utf-8")
+    assert not result.timed_out
+    assert result.process_group_reaped
+
+
 def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(
     tmp_path: Path,
 ) -> None:
