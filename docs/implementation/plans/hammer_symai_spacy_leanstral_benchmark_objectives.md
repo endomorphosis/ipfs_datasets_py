@@ -199,6 +199,10 @@ is never completion evidence.
 - Acceptance: Each stage emits bounded, provenance-bearing data; unverified stages cannot serialize a verified final status; the current baseline route remains behaviorally unchanged.
 - Gap task: Add thin adapters, strict contracts, and deterministic telemetry serialization.
 - Refinement depth: 1
+- Evidence implementation: `benchmarks.logic_pipeline.adapters.HSSLEV0306C18` binds this goal to the dependency-free adapter boundary; `StageRequest`, six versioned stage adapters, immutable provenance/telemetry records, content-addressed stage records, and kernel-bound case results make the evidence executable without importing or changing any production route.
+- Adapter contract: Compiler, spaCy, SyMAI, Hammer, Leanstral, and kernel stages use the stable `StageName` vocabulary and adapter version `1`. Every invocation records requested/effective identity, input and upstream digests, environment identity when available, bounded output, deterministic telemetry serialization, explicit unavailable/failure states, and a stage-bound resource lane (`cpu`, `model`, `solver`, or `kernel`). Only a successful kernel stage with an accepted native-kernel receipt can produce a verified case result; model, solver, missing-backend, and non-kernel receipt claims fail closed.
+- Baseline safety: `build_default_adapters()` performs no optional imports and supplies no handlers, so the existing production route remains untouched. Backend-specific children HSSL-G031 through HSSL-G035 can inject their existing implementations into this boundary without changing the record contract.
+- Backlog alignment: HSSL-G030 remains one bounded parent adapter work item. Its foundational contract is implemented here; the existing child goals remain separate for spaCy, SyMAI, Hammer, Leanstral, and receipt-specific integrations, so no new child goal or generated todo/vector edit is required.
 
 ## HSSL-G031 Integrate spaCy as reproducible linguistic evidence
 

@@ -2,8 +2,8 @@
 
 This package deliberately lives outside :mod:`ipfs_datasets_py`: importing it
 must never configure an optional backend or alter a production routing default.
-The backend adapters and runner are added by later benchmark goals.  This
-foundation only defines the dependency-free contract they share:
+The dependency-free contracts and versioned adapter boundary live here; later
+goals inject optional backend handlers explicitly.  This package provides:
 
 * every mutable path is below a caller-selected run directory;
 * the smoke configuration is offline, shadow-only, and deterministic; and
@@ -280,21 +280,88 @@ __all__ = [
 # imports live at the end so it can reuse ``BENCHMARK_ID`` without creating an
 # initialization cycle.
 from .contracts import (  # noqa: E402
+    CASE_RESULT_SCHEMA,
+    CaseResultRecord,
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
     HSSLEV0103C72,
+    HSSLEV0306C18,
     BenchmarkProtocol,
     ProtocolContractError,
+    ResourceLane,
+    STAGE_PROVENANCE_SCHEMA,
+    STAGE_RECORD_SCHEMA,
+    StageName,
+    StageProvenance,
+    StageRecord,
+    StageStatus,
+    TELEMETRY_SCHEMA,
+    TelemetryRecord,
     build_default_protocol,
 )
 
 __all__ += [
     "BenchmarkProtocol",
+    "CASE_RESULT_SCHEMA",
+    "CaseResultRecord",
     "DEFAULT_PROTOCOL",
     "DEFAULT_PROTOCOL_SHA256",
     "HSSLEV0103C72",
+    "HSSLEV0306C18",
     "ProtocolContractError",
+    "ResourceLane",
+    "STAGE_PROVENANCE_SCHEMA",
+    "STAGE_RECORD_SCHEMA",
+    "StageName",
+    "StageProvenance",
+    "StageRecord",
+    "StageStatus",
+    "TELEMETRY_SCHEMA",
+    "TelemetryRecord",
     "build_default_protocol",
+]
+
+# Adapters remain dependency-free.  These imports only expose constructors;
+# optional stage packages are imported by explicit handlers supplied by a
+# caller, never while importing this benchmark package.
+from .adapters import (  # noqa: E402
+    ADAPTER_SOURCE,
+    ADAPTER_VERSION,
+    CompilerAdapter,
+    HammerAdapter,
+    KernelAdapter,
+    LeanstralAdapter,
+    PipelineResult,
+    SpacyAdapter,
+    StageAdapter,
+    StageOutput,
+    StageRequest,
+    StageTelemetry,
+    STAGE_ORDER,
+    SymaiAdapter,
+    VersionedStageAdapter,
+    build_default_adapters,
+    run_stages,
+)
+
+__all__ += [
+    "ADAPTER_SOURCE",
+    "ADAPTER_VERSION",
+    "CompilerAdapter",
+    "HammerAdapter",
+    "KernelAdapter",
+    "LeanstralAdapter",
+    "PipelineResult",
+    "SpacyAdapter",
+    "StageAdapter",
+    "StageOutput",
+    "StageRequest",
+    "StageTelemetry",
+    "STAGE_ORDER",
+    "SymaiAdapter",
+    "VersionedStageAdapter",
+    "build_default_adapters",
+    "run_stages",
 ]
 
 # Capability/worktree contracts are standard-library-only and perform no
