@@ -275,6 +275,16 @@ def HSSLEV1507C49() -> str:
     return holdout_reassessment_evidence()
 
 
+def HSSLEV1605D50() -> str:
+    """Return AST-verifiable evidence for reassessment replay and reports."""
+
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        HSSLEV1605D50 as reassessment_reports_evidence,
+    )
+
+    return reassessment_reports_evidence()
+
+
 def build_statistics_report(
     plan: object,
     requests: Sequence[object],
@@ -3712,11 +3722,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         if selected_path is None:
             parser.error("--section statistics requires --results-path")
-        try:
-            report = load_statistics_report(selected_path)
-        except StatisticsError as exc:
-            parser.error(str(exc))
-        summary = statistics_summary(report)
+        from benchmarks.logic_pipeline.reassessment_reports import (
+            DEFAULT_STATISTICS_PATH as REASSESSMENT_STATISTICS_PATH,
+            REPOSITORY_ROOT as REASSESSMENT_REPOSITORY_ROOT,
+            ReassessmentReportsError,
+            load_reassessment_statistics,
+            reassessment_statistics_summary,
+        )
+
+        if selected_path.resolve() == (
+            REASSESSMENT_REPOSITORY_ROOT / REASSESSMENT_STATISTICS_PATH
+        ).resolve():
+            try:
+                report = load_reassessment_statistics(selected_path)
+                summary = reassessment_statistics_summary(
+                    report, validated=True
+                )
+            except ReassessmentReportsError as exc:
+                parser.error(str(exc))
+        else:
+            try:
+                report = load_statistics_report(selected_path)
+            except StatisticsError as exc:
+                parser.error(str(exc))
+            summary = statistics_summary(report)
     elif args.section == "frontend":
         from benchmarks.logic_pipeline.frontend_report import (
             DEFAULT_FRONTEND_REPORT_PATH,
@@ -3769,6 +3798,7 @@ __all__ = [
     "HSSLEV0909F29",
     "HSSLEV1006B8A",
     "HSSLEV1507C49",
+    "HSSLEV1605D50",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",

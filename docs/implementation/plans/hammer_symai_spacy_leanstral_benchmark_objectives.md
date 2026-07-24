@@ -1402,6 +1402,66 @@ is never completion evidence.
 - Gap task: Complete independent replay and validate every report needed for a defensible architecture decision.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 5.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.reassessment_reports.HSSLEV1605D50` is the
+  stable AST evidence symbol for source-bound replay selection and complete
+  reassessment publication; `benchmarks.logic_pipeline.report.HSSLEV1605D50`
+  exposes the same statement at the validator boundary. The dedicated
+  builder, source-recomputing validators, strict canonical loaders, atomic
+  publisher, and focused integration suite bind the G150 holdout result, G140
+  pilot decision, complete reassessment matrix, replay index, paired
+  statistics, and public report into one fail-closed graph.
+- Exact prerequisite result: The canonical HSSL-G150 artifact was
+  revalidated with semantic SHA-256
+  `e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d`
+  and byte SHA-256
+  `9e712b9ed1fb67c80115d12e3bc92850f23da601543fa59a4cbd700a54b0df9d`.
+  It is structurally valid but blocked and `sealed_unopened`: HSSL-G140 froze
+  an empty shortlist and did not authorize holdout access, so it contains
+  zero scheduled or observed pairs, successes, failures, and case results,
+  with zero execution writes and backend calls. G160 therefore cannot create
+  a detached worktree, choose a failure sample, replay A0 alone, or claim
+  measured holdout efficacy.
+- Replay selection and freshness contract: The tracked canonical
+  `reassessment-v2/replay/replay-index.json` records empty success, observed
+  failure, and sampled-failure populations; zero required and completed
+  replays; no worktree, process, cache, receipt, write, or backend activity;
+  `all_observed_successes_replayed=true` only as zero-population accounting;
+  and `replay_claimed=false`. It freezes the future nonempty path: distinct
+  replay run and process identities, a fresh detached worktree and cold cache,
+  identical source/environment/case/variant/route/adapter/native-kernel
+  identities, unchanged terminal outcomes, and rejection of stale receipts,
+  same-run reuse, configuration drift, and automatic merge.
+- Recomputed reports: The canonical `statistics.json` contains forty-eight
+  A0-versus-A1-through-A12 comparisons separated by pilot/development split
+  and cold/warm cache, totaling 480 case-receipt pairs. Its seeded stratified
+  inference and safety-ineligible Pareto result are recomputed by the existing
+  strict statistics schema. The dated report enumerates safety, quality,
+  latency, resources, reliability, routing, marginal escalation value,
+  unnecessary calls, and complexity/Pareto. Available pilot/development
+  values remain source-bound; every holdout-only value is explicitly
+  `not_applicable_before_authorization` and null, never synthetic zero. The
+  report is structurally complete while publishing no holdout efficacy or
+  replay claim, and every measured comparison links case-result digests under
+  the independent native-kernel-only success rule.
+- Publication result: The replay index has semantic SHA-256
+  `6248b875566afb7e9706c4f39d28e3a2eea680bd04dfd11f5fee6a5883af27d2`
+  and byte SHA-256
+  `3fc20f5526b1ed9fe81eed52e3cd0bd17084b0a46361c37e25b6bc7236401649`.
+  The statistics report has semantic SHA-256
+  `857bae66f9b336de82c6506b469b864f6bcfb1862a67142ba858695e85781b3d`
+  and byte SHA-256
+  `6cf420232c0ae432ac9f2471670916d93d7f440fc144b9adfea4509ca41a4e92`.
+  The cross-bound public snapshot has byte SHA-256
+  `1008b759bce54f22010316d408f7fc162a88204bf69bd18b8953119ff657d689`.
+- Backlog alignment: HSSL-G160 remains one cohesive aggregate because source
+  authentication, replay population selection and freshness, paired
+  statistics, typed holdout missingness, traceability, and publication share
+  one trust graph. No child goal or heap refinement is needed. Generated
+  external todo, objective-bundle, todo-vector, task-status, and supervisor
+  backlog metadata remain supervisor-owned and were not manually edited;
+  reconciliation is driven by HSSLEV1605D50, these canonical artifacts, the
+  HSSL-BENCH-042 discovery receipt, and the exact validator.
 
 ## HSSL-G170 Publish the replacement evidence-bound architecture decision
 
