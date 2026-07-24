@@ -1054,6 +1054,58 @@ is never completion evidence.
 - Gap task: Add the authorized holdout and replay code paths that the generic ablation executor intentionally does not provide.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-ups 4 and 5.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.holdout_execution.HSSLEV1167A17` is the stable
+  AST evidence symbol for the complete authorized-holdout and detached-replay
+  boundary. `PilotAuthorizationReceipt`, `build_authorized_holdout_plan`,
+  `build_holdout_access_audits`, `execute_authorized_holdout`,
+  `ReplayRequest`, `ReplayReceipt`, `run_detached_replay`, and
+  `validate_detached_replay_pair` provide strict content-addressed records and
+  orchestration. The focused
+  `tests/integration/benchmarks/logic_pipeline/test_authorized_holdout_execution.py`
+  and
+  `tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py`
+  suites exercise both trust boundaries, including real disposable Git
+  worktrees and injected backend-call counters.
+- Authorized execution contract: The executor round-trips and authenticates a
+  passed, nonempty, frozen pilot authorization bound to an exact pilot-gate
+  digest, source commit, environment, protocol, reviewed corpus, holdout split,
+  prompts, policy, model identities, thresholds, and A0 plus at most four
+  exact shortlisted configurations. It schedules only A0 and that shortlist
+  over every frozen holdout case with separate cold/warm modes and
+  counterbalanced paired blocks. Every variant/cache `RunContract` receives a
+  deterministic unique access-audit identity, and every complete ordered
+  `HoldoutAccessAudit` must bind the identical case manifest, configuration,
+  cache, freeze, no-tuning, and evaluation purpose. All of these checks,
+  including a fresh non-symlink output namespace, finish before the first
+  directory, immutable write, or adapter call. Generic ablation execution
+  remains forbidden for holdout, resume is forbidden, and source,
+  environment, manifest, arm, audit, purpose, cache, or post-access
+  configuration drift fails closed.
+- Detached replay contract: Replay first authenticates the completed source
+  execution and source worktree receipts, then requires a different run ID,
+  process namespace, cold cache namespace, and fresh state root under the exact
+  source environment and commit. It live-checks the original detached
+  worktree, creates a second detached worktree with
+  `prepare_isolated_worktree`, rechecks its live HEAD and detached state, and
+  invokes a bounded shell-free command in a new process session with isolated
+  run/process/cache variables. Evidence must be a bounded regular non-symlink
+  file inside the replay run root before a canonical create-only receipt is
+  published. `validate_detached_replay_pair` composes that orchestration proof
+  with the existing strict semantic, backend, kernel, reconstruction, and
+  cold-cache replay validator. Same-run, reused-state, reused-process,
+  reused-cache, stale/foreign receipt, attached/wrong-commit worktree,
+  environment/configuration/backend/output drift, timeout, failed command, or
+  automatic merge attempts are rejected.
+- Backlog alignment: HSSL-G116 remains one cohesive pre-execution trust
+  boundary and needs no smaller child goal, output refinement, or parent
+  change. HSSL-G150 continues to own the real explicitly authorized holdout
+  run and HSSL-G160 continues to own its real replay and publication; this
+  implementation does not open the holdout or claim efficacy. Generated todo
+  vector, objective-bundle, and task-status metadata remain supervisor-owned
+  and were not edited manually. The supervisor can reconcile HSSLEV1167A17
+  from the AST symbol, two implementation modules, focused tests, objective
+  heap, discovery receipt, and required validator.
 
 ## HSSL-G120 Re-probe and freeze the repaired runtime capabilities
 
