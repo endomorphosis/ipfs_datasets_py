@@ -41,6 +41,19 @@ from .normalize import (
     normalize_manifest,
     normalize_spoken_text,
 )
+from .graphrag import (
+    GRAPHRAG_INDEX_SCHEMA_VERSION,
+    EvidenceRecord,
+    GraphEdge,
+    GraphNode,
+    GraphRAGIngestionError,
+    GraphRAGVoiceTemplateProvider,
+    IngestionReceipt,
+    SlottedResponseIndex,
+    TemplateGraphSnapshot,
+    TemplateMatch,
+    UnsafeSlotBindingError,
+)
 
 __all__ = [
     "ABBY_VOICE_AUDIO_V2",
@@ -59,6 +72,17 @@ __all__ = [
     "QualityIssue",
     "QuarantineReason",
     "QuarantineRecord",
+    "GRAPHRAG_INDEX_SCHEMA_VERSION",
+    "EvidenceRecord",
+    "GraphEdge",
+    "GraphNode",
+    "GraphRAGIngestionError",
+    "GraphRAGVoiceTemplateProvider",
+    "IngestionReceipt",
+    "SlottedResponseIndex",
+    "TemplateGraphSnapshot",
+    "TemplateMatch",
+    "UnsafeSlotBindingError",
     "build_slotted_response_dag",
     "deduplicate_voice_response_chunks",
     "deterministic_split",
