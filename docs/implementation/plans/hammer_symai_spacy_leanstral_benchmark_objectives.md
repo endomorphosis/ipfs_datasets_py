@@ -942,6 +942,49 @@ is never completion evidence.
 - Gap task: Reconcile the stale A0 source/gitlink identity and create a behavior-equivalent, source-fresh v2 baseline in a separate run namespace.
 - Refinement depth: 1
 - Follow-up source: The final decision's immutable-evidence and freshness findings and the runbook's evidence-freshness contract.
+- Evidence implementation: `benchmarks.logic_pipeline.source_reconciliation.HSSLEV1134D84`
+  is the stable AST evidence symbol for the source-fresh baseline boundary.
+  `SourceReconciledBaselineManifest`, `capture_recursive_gitlinks`,
+  `compare_a0_outputs`, `reconcile_source`, and the strict canonical
+  loader/exclusive writer make freshness executable rather than prose-only.
+  The canonical
+  `workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/state/baseline-manifest.json`
+  uses schema
+  `ipfs-datasets.logic-pipeline-benchmark.source-reconciled-baseline.v1`
+  and semantic digest
+  `6c7084db784022d81abc65148fb0d72a8046da881c4d4b448434b9b13af7e469`.
+- Source reconciliation contract: The v2 receipt binds detached outer source
+  commit `3e053f6edece026fef48c153aa5c4d62a50da3d2`, its twenty sorted
+  recursively discovered gitlinks, and secret-safe environment inventory
+  digest `141e63efa862766f860673494bad3406b9b8f0fd40dd4c634822e21326734738`
+  to run `reassessment-v2`. The historical and fresh A0 route files remain
+  byte-identical, and two complete cold/warm pilot executions normalize to
+  the same twenty-coordinate digest
+  `599e85c5c19c87c370cdf28f8a156ff5af3fc6f6c186028c963c84f659319b22`.
+  Acceptance requires complete treatment and normalized-output equivalence;
+  missing, extra, rebound, or partial recursive gitlinks, a source/environment
+  mismatch, and any unexplained treatment, status, route, identity, or output
+  drift fail closed.
+- Namespace and immutability contract: `reassessment-v2` owns distinct state,
+  result, receipt, detached-worktree, process, cold-cache, and warm-cache
+  namespaces outside `a0-baseline-v1`; cold and warm contracts cannot collide.
+  The predecessor manifest remains the immutable v1 schema and semantic
+  identity
+  `6b37a6493d6328102b558258843218128ad0bf6f8cc7be13f8d0c2e0bb61e156`
+  at source commit `2a1be00b1b76e6652c25d418752affbf0f85d176`.
+  Reconciliation snapshots every named predecessor artifact, observes the
+  active checkout before and after detached preparation, initializes
+  submodules only from already provisioned exact objects, and creates the v2
+  artifact exclusively. It never refreshes v1 in place, fetches during the
+  trust boundary, merges, or changes production routing.
+- Backlog alignment: HSSL-G113 remains one cohesive bounded work item because
+  source identity, recursive gitlinks, environment identity, behavior
+  equivalence, namespace separation, and predecessor immutability jointly
+  authorize one v2 baseline. No child goal or output refinement is needed.
+  Generated todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and were not manually edited; the supervisor can reconcile
+  HSSLEV1134D84 from the AST symbol, canonical v2 manifest, objective heap,
+  discovery receipt, and required integration suite.
 
 ## HSSL-G114 Make every frozen arm execute its real bounded stage graph
 

@@ -33,6 +33,9 @@ state
 !workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/
 !workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/
 !workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/baseline-manifest.json
+!workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/
+!workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/state/
+!workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/state/baseline-manifest.json
 artifacts
 ipfs_datasets_py/processors/groth16_backend/target/
 ipfs_datasets_py/artifacts/
