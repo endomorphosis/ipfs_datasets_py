@@ -111,7 +111,7 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 ```
 
 **Removal Date:** v2.0 (August 2026)  
-**Migration Guide:** See [PHASE_2_SERIALIZATION_COMPLETE.md](./PHASE_2_SERIALIZATION_COMPLETE.md)
+**Migration Guide:** See [PHASE_2_SERIALIZATION_COMPLETE.md](./archive/completion_reports/phases/PHASE_2_SERIALIZATION_COMPLETE.md)
 
 #### 3. GraphRAG Processors (processors/ root)
 
