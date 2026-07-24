@@ -1480,3 +1480,81 @@ is never completion evidence.
 - Gap task: Publish the reassessment decision and runbook update without overwriting v1 evidence or promoting production automatically.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 6.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.report.HSSLEV1703E61` is the stable AST evidence
+  symbol for the source-bound replacement decision and updated reproduction
+  runbook. `build_reassessment_final_decision` revalidates the immutable v1
+  decision and the complete G130-G160 source graph before deriving any row;
+  `validate_final_decision` recomputes the canonical v2 document and rejects
+  source, disposition, missingness, or authorization drift; and
+  `write_reassessment_final_decision` publishes canonical JSON while refusing
+  an existing or symlinked destination by default. The CLI artifact selector
+  and runbook validator expose the same evidence boundary.
+- Immutable predecessor and source graph: The v1 gather-more-evidence decision
+  remains unchanged at
+  `docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json`.
+  The v2 `supersedes` binding records it as a preserved immutable predecessor
+  with semantic SHA-256
+  `80823442e5115b2f499a2e77a11817dff555494ca0ecccfc79e59cbf423b7cce`
+  and byte SHA-256
+  `0e53798d3f1deaab040cf99f10034644f421ffd51f15090a948aa7085041a84e`.
+  The replacement also authenticates the complete matrix
+  (`437961214b97fadd495f65d4a006406b27086e6aeb9f46d8cd27e36df1ed39bb`),
+  pilot gate
+  (`2d146c1cb75eb8c2261a3e1be68ba98bf8b2a4996a1839fb36e26f9bd7f37acb`),
+  holdout
+  (`e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d`),
+  replay index
+  (`6248b875566afb7e9706c4f39d28e3a2eea680bd04dfd11f5fee6a5883af27d2`),
+  statistics
+  (`857bae66f9b336de82c6506b469b864f6bcfb1862a67142ba858695e85781b3d`),
+  and dated reports
+  (`91ba9aa88e48598c36d480c21552476bce454af9ca1449475fcab7785ec78fcf`)
+  by their semantic identities. Their corresponding live byte SHA-256 values
+  are
+  `ad76be697eb084517354a9d2b82bf48378f33d820b6f6014a13d5a08bb105ac9`,
+  `21713e069e063db32763f563f0184a7d7123a5e559527d54618fadc98d286a48`,
+  `9e712b9ed1fb67c80115d12e3bc92850f23da601543fa59a4cbd700a54b0df9d`,
+  `3fc20f5526b1ed9fe81eed52e3cd0bd17084b0a46361c37e25b6bc7236401649`,
+  `6cf420232c0ae432ac9f2471670916d93d7f440fc144b9adfea4509ca41a4e92`,
+  and
+  `1008b759bce54f22010316d408f7fc162a88204bf69bd18b8953119ff657d689`.
+- Measured disposition: The validated graph contains 560 pilot/development
+  case results and 480 paired statistics observations, but every A1-A12
+  candidate has zero independent-kernel-verified success and no independent
+  semantic-quality observation. The pilot therefore froze an empty shortlist;
+  the holdout remained `sealed_unopened`; and the valid replay population is
+  empty with no replay claim. The ordered fourteen-row matrix retains A0 only
+  as the current reference, rejects A1-A12 for this reassessment, and keeps S1
+  diagnostic-only. All four P0-P3 policies are explicitly rejected because no
+  eligible candidate or paired holdout evidence exists. This is measured
+  rejection of the present candidates, not a claim that A0 won or that an
+  experimental component can never be useful.
+- Responsibilities and tradeoffs: spaCy is bounded to linguistic annotation,
+  SyMAI to one pinned-router semantic or contract-repair attempt, Hammer to
+  bounded deterministic search plus native reconstruction, and Leanstral to
+  one bounded proof draft and reviewed repair. None receives a production
+  responsibility. Safety, quality, latency, resources, reliability, routing,
+  marginal escalation value, unnecessary calls, and complexity/Pareto are
+  all structurally complete and source-bound. Applicable pilot/development
+  values remain measured; all nine holdout domain values remain typed
+  `not_applicable_before_authorization` nulls, never synthetic zero.
+- Publication result: The canonical v2 artifact has semantic SHA-256
+  `4742d8735c4b07b699f5f01049dec6d60305c4321f47e344c769eb21dcb6e0f2`
+  and byte SHA-256
+  `af14a16f7f72da0374a12b0b47c8ad58c0d2b707e6e8ffaf3a282cd260e05e3e`.
+  Its outcome remains `gather_more_evidence`, with no selected variant or
+  policy, no paired holdout efficacy, no replay claim, no production routing
+  change, and no promotion or automatic merge authority. Any future
+  production change remains a separately reviewed action requiring a canary
+  and rollback plan.
+- Backlog alignment: HSSL-G170 remains one cohesive aggregate because
+  predecessor preservation, source authentication, arm and policy
+  dispositions, component boundaries, tradeoff missingness, publication, and
+  runbook traceability share one fail-closed trust graph. Splitting them would
+  allow the decision or operating procedure to drift from its evidence, so no
+  child goal or objective-heap refinement is needed. Generated external todo,
+  objective-bundle, todo-vector, task-status, and supervisor backlog metadata
+  remain supervisor-owned and were not manually edited; reconciliation is
+  driven by HSSLEV1703E61, the canonical v2 artifact, the HSSL-BENCH-043
+  discovery receipt, and the three exact validation commands.
