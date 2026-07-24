@@ -26,6 +26,18 @@ PROTOCOL_SCHEMA: Final = (
 PROTOCOL_RECORD_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.protocol-record.v1"
 )
+TELEMETRY_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.telemetry.v1"
+)
+STAGE_PROVENANCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.stage-provenance.v1"
+)
+STAGE_RECORD_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"
+)
+CASE_RESULT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.case-result.v1"
+)
 RUN_CONTRACT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.run-contract.v1"
 )
@@ -90,6 +102,40 @@ class OutcomeStatus(str, Enum):
     UNAVAILABLE = "unavailable"
     EXCLUDED = "excluded"
     INFRASTRUCTURE_FAILURE = "infrastructure_failure"
+
+
+class StageName(str, Enum):
+    """The stable names of stages in the benchmark route.
+
+    These names are benchmark vocabulary, not production router settings.  A
+    stage adapter may observe a production implementation, but it cannot
+    mutate or replace that implementation through this contract.
+    """
+
+    COMPILER = "compiler"
+    SPACY = "spacy"
+    SYMAI = "symai"
+    HAMMER = "hammer"
+    LEANSTRAL = "leanstral"
+    KERNEL = "kernel"
+
+
+class StageStatus(str, Enum):
+    """Bounded stage outcomes; verification is deliberately not a stage state."""
+
+    SUCCESS = "success"
+    UNAVAILABLE = "unavailable"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class ResourceLane(str, Enum):
+    """Mutually visible resource classes used to keep model/kernel work apart."""
+
+    CPU = "cpu"
+    MODEL = "model"
+    SOLVER = "solver"
+    KERNEL = "kernel"
 
 
 class FailureCode(str, Enum):
@@ -1112,6 +1158,66 @@ def canonical_json(value: object) -> str:
         raise ProtocolContractError("value is not canonical JSON data") from exc
 
 
+_MAX_BOUNDED_JSON_DEPTH: Final = 8
+_MAX_BOUNDED_JSON_ITEMS: Final = 256
+_MAX_BOUNDED_JSON_STRING: Final = 4096
+_MAX_STAGE_PAYLOAD_BYTES: Final = 64 * 1024
+_MAX_CASE_RESULT_BYTES: Final = 512 * 1024
+
+
+def _freeze_bounded_json(value: object, field: str, *, depth: int = 0) -> object:
+    """Validate and deeply freeze the small JSON values carried by adapters."""
+
+    if depth > _MAX_BOUNDED_JSON_DEPTH:
+        raise ProtocolContractError(f"{field} exceeds maximum JSON depth")
+    if value is None or isinstance(value, (bool, int, float, str)):
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ProtocolContractError(f"{field} contains a non-finite number")
+        if isinstance(value, str) and len(value) > _MAX_BOUNDED_JSON_STRING:
+            raise ProtocolContractError(f"{field} contains an oversized string")
+        return value
+    if isinstance(value, Mapping):
+        if len(value) > _MAX_BOUNDED_JSON_ITEMS:
+            raise ProtocolContractError(f"{field} contains too many object keys")
+        frozen: dict[str, object] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise ProtocolContractError(f"{field} keys must be strings")
+            frozen[key] = _freeze_bounded_json(
+                item, f"{field}.{key}", depth=depth + 1
+            )
+        return MappingProxyType(frozen)
+    if isinstance(value, (list, tuple)):
+        if len(value) > _MAX_BOUNDED_JSON_ITEMS:
+            raise ProtocolContractError(f"{field} contains too many array items")
+        return tuple(
+            _freeze_bounded_json(item, f"{field}[]", depth=depth + 1)
+            for item in value
+        )
+    raise ProtocolContractError(f"{field} must contain JSON-compatible values")
+
+
+def _thaw_bounded_json(value: object) -> object:
+    """Convert the immutable internal representation back to JSON values."""
+
+    if isinstance(value, Mapping):
+        return {str(key): _thaw_bounded_json(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_bounded_json(item) for item in value]
+    return value
+
+
+def _bounded_json(value: object, field: str, *, maximum: int) -> object:
+    frozen = _freeze_bounded_json(value, field)
+    try:
+        encoded = canonical_json(_thaw_bounded_json(frozen)).encode("utf-8")
+    except ProtocolContractError:
+        raise
+    if len(encoded) > maximum:
+        raise ProtocolContractError(f"{field} exceeds {maximum} encoded bytes")
+    return frozen
+
+
 def canonical_protocol_json(protocol: BenchmarkProtocol) -> str:
     if not isinstance(protocol, BenchmarkProtocol):
         raise ProtocolContractError("protocol must be a BenchmarkProtocol")
@@ -1533,6 +1639,577 @@ class OutcomeRecord:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class TelemetryRecord:
+    """Deterministic, bounded measurements emitted by every stage adapter.
+
+    No wall-clock timestamp, host name, PID, or random identifier is stored.
+    This keeps equivalent measurements canonically serializable while still
+    retaining the resource counters needed by the benchmark protocol.
+    """
+
+    schema: str = TELEMETRY_SCHEMA
+    wall_time_ms: float = 0.0
+    cpu_time_ms: float = 0.0
+    peak_memory_bytes: int = 0
+    input_items: int = 0
+    output_items: int = 0
+    model_calls: int = 0
+    cache_hits: int = 0
+    cache_misses: int = 0
+    retries: int = 0
+    bytes_in: int = 0
+    bytes_out: int = 0
+    resource_lane: ResourceLane = ResourceLane.CPU
+
+    def __post_init__(self) -> None:
+        if self.schema != TELEMETRY_SCHEMA:
+            raise ProtocolContractError("unsupported telemetry schema")
+        if not isinstance(self.resource_lane, ResourceLane):
+            raise ProtocolContractError("resource_lane must be a ResourceLane")
+        _number(self.wall_time_ms, "wall_time_ms", minimum=0, maximum=86_400_000)
+        _number(self.cpu_time_ms, "cpu_time_ms", minimum=0, maximum=86_400_000)
+        for field in (
+            "peak_memory_bytes",
+            "input_items",
+            "output_items",
+            "model_calls",
+            "cache_hits",
+            "cache_misses",
+            "retries",
+            "bytes_in",
+            "bytes_out",
+        ):
+            _integer(getattr(self, field), field)
+        if self.peak_memory_bytes > 1 << 40:
+            raise ProtocolContractError("peak_memory_bytes exceeds the bound")
+        if self.input_items > _MAX_BOUNDED_JSON_ITEMS * 1024:
+            raise ProtocolContractError("input_items exceeds the bound")
+        if self.output_items > _MAX_BOUNDED_JSON_ITEMS * 1024:
+            raise ProtocolContractError("output_items exceeds the bound")
+        for field in ("model_calls", "cache_hits", "cache_misses", "retries"):
+            if getattr(self, field) > 1_000_000:
+                raise ProtocolContractError(f"{field} exceeds the bound")
+        for field in ("bytes_in", "bytes_out"):
+            if getattr(self, field) > 1 << 40:
+                raise ProtocolContractError(f"{field} exceeds the bound")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            name: getattr(self, name)
+            for name in self.__dataclass_fields__
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "telemetry")
+        _exact_keys(data, set(cls.__dataclass_fields__), "telemetry")
+        return cls(
+            schema=_nonempty(data["schema"], "telemetry.schema"),
+            wall_time_ms=_number(data["wall_time_ms"], "wall_time_ms"),
+            cpu_time_ms=_number(data["cpu_time_ms"], "cpu_time_ms"),
+            peak_memory_bytes=_integer(data["peak_memory_bytes"], "peak_memory_bytes"),
+            input_items=_integer(data["input_items"], "input_items"),
+            output_items=_integer(data["output_items"], "output_items"),
+            model_calls=_integer(data["model_calls"], "model_calls"),
+            cache_hits=_integer(data["cache_hits"], "cache_hits"),
+            cache_misses=_integer(data["cache_misses"], "cache_misses"),
+            retries=_integer(data["retries"], "retries"),
+            bytes_in=_integer(data["bytes_in"], "bytes_in"),
+            bytes_out=_integer(data["bytes_out"], "bytes_out"),
+            resource_lane=_enum(ResourceLane, data["resource_lane"], "resource_lane"),  # type: ignore[arg-type]
+        )
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class StageProvenance:
+    """Identity and source receipt for one adapter invocation."""
+
+    schema: str
+    adapter_id: str
+    adapter_version: str
+    source: tuple[str, ...]
+    requested_identity: Mapping[str, object]
+    effective_identity: Mapping[str, object]
+    input_sha256: str
+    environment_sha256: str | None = None
+    upstream_stage_digests: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.schema != STAGE_PROVENANCE_SCHEMA:
+            raise ProtocolContractError("unsupported stage-provenance schema")
+        _safe_id(self.adapter_id, "adapter_id")
+        _safe_id(self.adapter_version, "adapter_version")
+        if not isinstance(self.source, tuple) or not self.source:
+            raise ProtocolContractError("source must be a nonempty tuple")
+        for item in self.source:
+            _nonempty(item, "source[]")
+        object.__setattr__(
+            self,
+            "requested_identity",
+            _bounded_json(self.requested_identity, "requested_identity", maximum=16 * 1024),
+        )
+        object.__setattr__(
+            self,
+            "effective_identity",
+            _bounded_json(self.effective_identity, "effective_identity", maximum=16 * 1024),
+        )
+        _digest(self.input_sha256, "input_sha256")
+        if self.environment_sha256 is not None:
+            _digest(self.environment_sha256, "environment_sha256")
+        if not isinstance(self.upstream_stage_digests, tuple):
+            raise ProtocolContractError("upstream_stage_digests must be a tuple")
+        if len(self.upstream_stage_digests) > len(StageName):
+            raise ProtocolContractError("too many upstream stage digests")
+        for digest in self.upstream_stage_digests:
+            _digest(digest, "upstream_stage_digests[]")
+        if len(set(self.upstream_stage_digests)) != len(self.upstream_stage_digests):
+            raise ProtocolContractError("upstream stage digests must be unique")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "adapter_id": self.adapter_id,
+            "adapter_version": self.adapter_version,
+            "source": list(self.source),
+            "requested_identity": _thaw_bounded_json(self.requested_identity),
+            "effective_identity": _thaw_bounded_json(self.effective_identity),
+            "input_sha256": self.input_sha256,
+            "environment_sha256": self.environment_sha256,
+            "upstream_stage_digests": list(self.upstream_stage_digests),
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "stage_provenance")
+        _exact_keys(data, set(cls.__dataclass_fields__), "stage_provenance")
+        source = data["source"]
+        upstream = data["upstream_stage_digests"]
+        if not isinstance(source, list) or not isinstance(upstream, list):
+            raise ProtocolContractError("provenance arrays must be arrays")
+        return cls(
+            schema=_nonempty(data["schema"], "schema"),
+            adapter_id=_safe_id(data["adapter_id"], "adapter_id"),
+            adapter_version=_safe_id(data["adapter_version"], "adapter_version"),
+            source=tuple(_nonempty(item, "source[]") for item in source),
+            requested_identity=_mapping(data["requested_identity"], "requested_identity"),
+            effective_identity=_mapping(data["effective_identity"], "effective_identity"),
+            input_sha256=_digest(data["input_sha256"], "input_sha256"),
+            environment_sha256=(
+                None
+                if data["environment_sha256"] is None
+                else _digest(data["environment_sha256"], "environment_sha256")
+            ),
+            upstream_stage_digests=tuple(
+                _digest(item, "upstream_stage_digests[]") for item in upstream
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class StageRecord:
+    """Versioned, content-addressed output of one benchmark stage."""
+
+    schema: str
+    protocol_sha256: str
+    run_id: str
+    case_id: str
+    case_manifest_sha256: str
+    variant_id: str
+    split: Split
+    cache_mode: CacheMode
+    stage: StageName
+    adapter_version: str
+    status: StageStatus
+    provenance: StageProvenance
+    telemetry: TelemetryRecord
+    data: object = MappingProxyType({})
+    output_sha256: str | None = None
+    failure_code: FailureCode | None = None
+    failure_detail: str | None = None
+    kernel_accepted: bool = False
+    kernel_receipt_sha256: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.schema != STAGE_RECORD_SCHEMA:
+            raise ProtocolContractError("unsupported stage-record schema")
+        _digest(self.protocol_sha256, "protocol_sha256")
+        if _FROZEN_PROTOCOL_SHA256 is not None and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256:
+            raise ProtocolContractError("stage record does not bind frozen protocol revision 1")
+        _safe_id(self.run_id, "run_id")
+        _safe_id(self.case_id, "case_id")
+        _digest(self.case_manifest_sha256, "case_manifest_sha256")
+        _safe_id(self.variant_id, "variant_id")
+        if self.variant_id not in _REQUIRED_VARIANTS:
+            raise ProtocolContractError(f"variant_id is not registered: {self.variant_id!r}")
+        if not isinstance(self.split, Split) or not isinstance(self.cache_mode, CacheMode):
+            raise ProtocolContractError("split and cache_mode must use protocol enums")
+        if not isinstance(self.stage, StageName):
+            raise ProtocolContractError("stage must be a StageName")
+        _safe_id(self.adapter_version, "adapter_version")
+        if not isinstance(self.status, StageStatus):
+            raise ProtocolContractError("status must be a StageStatus")
+        if not isinstance(self.provenance, StageProvenance):
+            raise ProtocolContractError("provenance must be a StageProvenance")
+        if self.provenance.adapter_version != self.adapter_version:
+            raise ProtocolContractError("adapter versions disagree")
+        if not isinstance(self.telemetry, TelemetryRecord):
+            raise ProtocolContractError("telemetry must be a TelemetryRecord")
+        frozen_data = _bounded_json(self.data, "data", maximum=_MAX_STAGE_PAYLOAD_BYTES)
+        object.__setattr__(self, "data", frozen_data)
+        calculated = hashlib.sha256(
+            canonical_json(_thaw_bounded_json(frozen_data)).encode("utf-8")
+        ).hexdigest()
+        if self.status is StageStatus.SUCCESS:
+            if self.output_sha256 is None:
+                raise ProtocolContractError("successful stages require output_sha256")
+            _digest(self.output_sha256, "output_sha256")
+            if self.output_sha256 != calculated:
+                raise ProtocolContractError("output_sha256 does not match stage data")
+            if self.failure_code is not None or self.failure_detail is not None:
+                raise ProtocolContractError("successful stages cannot carry failures")
+        else:
+            if self.output_sha256 is not None:
+                raise ProtocolContractError("unavailable stages cannot carry output")
+            if self.status is StageStatus.UNAVAILABLE and self.failure_code is not FailureCode.CAPABILITY_UNAVAILABLE:
+                raise ProtocolContractError("unavailable stages require capability_unavailable")
+            if self.failure_code is None:
+                raise ProtocolContractError("non-success stages require a failure code")
+            if self.failure_detail is not None:
+                _nonempty(self.failure_detail, "failure_detail")
+        if self.stage is not StageName.KERNEL and self.kernel_accepted:
+            raise ProtocolContractError("only the kernel stage may accept a kernel receipt")
+        _bool(self.kernel_accepted, "kernel_accepted")
+        if self.kernel_accepted:
+            if self.status is not StageStatus.SUCCESS or self.kernel_receipt_sha256 is None:
+                raise ProtocolContractError("kernel acceptance requires a successful receipt")
+            _digest(self.kernel_receipt_sha256, "kernel_receipt_sha256")
+        elif self.kernel_receipt_sha256 is not None:
+            raise ProtocolContractError("a receipt cannot be present without kernel acceptance")
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        protocol_sha256: str,
+        run_id: str,
+        case_id: str,
+        case_manifest_sha256: str,
+        variant_id: str,
+        split: Split,
+        cache_mode: CacheMode,
+        stage: StageName,
+        adapter_version: str,
+        status: StageStatus,
+        provenance: StageProvenance,
+        telemetry: TelemetryRecord,
+        data: object = None,
+        failure_code: FailureCode | None = None,
+        failure_detail: str | None = None,
+        kernel_accepted: bool = False,
+        kernel_receipt_sha256: str | None = None,
+    ) -> Self:
+        payload = {} if data is None else data
+        output_digest = None
+        if status is StageStatus.SUCCESS:
+            output_digest = hashlib.sha256(
+                canonical_json(payload).encode("utf-8")
+            ).hexdigest()
+        return cls(
+            schema=STAGE_RECORD_SCHEMA,
+            protocol_sha256=protocol_sha256,
+            run_id=run_id,
+            case_id=case_id,
+            case_manifest_sha256=case_manifest_sha256,
+            variant_id=variant_id,
+            split=split,
+            cache_mode=cache_mode,
+            stage=stage,
+            adapter_version=adapter_version,
+            status=status,
+            provenance=provenance,
+            telemetry=telemetry,
+            data=payload,
+            output_sha256=output_digest,
+            failure_code=failure_code,
+            failure_detail=failure_detail,
+            kernel_accepted=kernel_accepted,
+            kernel_receipt_sha256=kernel_receipt_sha256,
+        )
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "protocol_sha256": self.protocol_sha256,
+            "run_id": self.run_id,
+            "case_id": self.case_id,
+            "case_manifest_sha256": self.case_manifest_sha256,
+            "variant_id": self.variant_id,
+            "split": self.split.value,
+            "cache_mode": self.cache_mode.value,
+            "stage": self.stage.value,
+            "adapter_version": self.adapter_version,
+            "status": self.status.value,
+            "provenance": self.provenance.to_dict(),
+            "telemetry": self.telemetry.to_dict(),
+            "data": _thaw_bounded_json(self.data),
+            "output_sha256": self.output_sha256,
+            "failure_code": None if self.failure_code is None else self.failure_code.value,
+            "failure_detail": self.failure_detail,
+            "kernel_accepted": self.kernel_accepted,
+            "kernel_receipt_sha256": self.kernel_receipt_sha256,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "stage_record")
+        _exact_keys(data, set(cls.__dataclass_fields__), "stage_record")
+        failure_code = data["failure_code"]
+        return cls(
+            schema=_nonempty(data["schema"], "schema"),
+            protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
+            run_id=_safe_id(data["run_id"], "run_id"),
+            case_id=_safe_id(data["case_id"], "case_id"),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
+            variant_id=_safe_id(data["variant_id"], "variant_id"),
+            split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
+            stage=_enum(StageName, data["stage"], "stage"),  # type: ignore[arg-type]
+            adapter_version=_safe_id(data["adapter_version"], "adapter_version"),
+            status=_enum(StageStatus, data["status"], "status"),  # type: ignore[arg-type]
+            provenance=StageProvenance.from_dict(data["provenance"]),
+            telemetry=TelemetryRecord.from_dict(data["telemetry"]),
+            data=data["data"],
+            output_sha256=(None if data["output_sha256"] is None else _digest(data["output_sha256"], "output_sha256")),
+            failure_code=(None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")),  # type: ignore[arg-type]
+            failure_detail=(None if data["failure_detail"] is None else _nonempty(data["failure_detail"], "failure_detail")),
+            kernel_accepted=_bool(data["kernel_accepted"], "kernel_accepted"),
+            kernel_receipt_sha256=(None if data["kernel_receipt_sha256"] is None else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CaseResultRecord:
+    """Case-level result bound to every stage record and kernel authority."""
+
+    schema: str
+    protocol_sha256: str
+    run_id: str
+    case_id: str
+    case_manifest_sha256: str
+    variant_id: str
+    split: Split
+    cache_mode: CacheMode
+    stages: tuple[StageRecord, ...]
+    status: OutcomeStatus
+    verification_authority: VerificationAuthority = VerificationAuthority.NONE
+    kernel_accepted: bool = False
+    kernel_receipt_sha256: str | None = None
+    failure_code: FailureCode | None = None
+    failure_detail: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.schema != CASE_RESULT_SCHEMA:
+            raise ProtocolContractError("unsupported case-result schema")
+        _digest(self.protocol_sha256, "protocol_sha256")
+        if _FROZEN_PROTOCOL_SHA256 is not None and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256:
+            raise ProtocolContractError("case result does not bind frozen protocol revision 1")
+        _safe_id(self.run_id, "run_id")
+        _safe_id(self.case_id, "case_id")
+        _digest(self.case_manifest_sha256, "case_manifest_sha256")
+        _safe_id(self.variant_id, "variant_id")
+        if self.variant_id not in _REQUIRED_VARIANTS:
+            raise ProtocolContractError(f"variant_id is not registered: {self.variant_id!r}")
+        if not isinstance(self.split, Split) or not isinstance(self.cache_mode, CacheMode):
+            raise ProtocolContractError("split and cache_mode must use protocol enums")
+        if not isinstance(self.stages, tuple) or not self.stages:
+            raise ProtocolContractError("a case result requires stage records")
+        if len(self.stages) > len(StageName):
+            raise ProtocolContractError("case result contains too many stages")
+        names: set[StageName] = set()
+        for stage in self.stages:
+            if not isinstance(stage, StageRecord):
+                raise ProtocolContractError("stages must contain StageRecord values")
+            if stage.stage in names:
+                raise ProtocolContractError("case result contains duplicate stages")
+            names.add(stage.stage)
+            for field in ("protocol_sha256", "run_id", "case_id", "case_manifest_sha256", "variant_id", "split", "cache_mode"):
+                if getattr(stage, field) != getattr(self, field):
+                    raise ProtocolContractError("stage and case identities do not match")
+        if not isinstance(self.status, OutcomeStatus):
+            raise ProtocolContractError("status must be an OutcomeStatus")
+        if not isinstance(self.verification_authority, VerificationAuthority):
+            raise ProtocolContractError("verification_authority must be a VerificationAuthority")
+        _bool(self.kernel_accepted, "kernel_accepted")
+        kernel = next((item for item in self.stages if item.stage is StageName.KERNEL), None)
+        all_success = all(item.status is StageStatus.SUCCESS for item in self.stages)
+        if self.status is OutcomeStatus.VERIFIED:
+            if not all_success or kernel is None or not kernel.kernel_accepted:
+                raise ProtocolContractError("verified case results require successful stages and kernel acceptance")
+            if self.verification_authority is not VerificationAuthority.NATIVE_KERNEL:
+                raise ProtocolContractError("verified case results require native-kernel authority")
+            if not self.kernel_accepted or self.kernel_receipt_sha256 is None:
+                raise ProtocolContractError("verified case results require a kernel receipt")
+            _digest(self.kernel_receipt_sha256, "kernel_receipt_sha256")
+            if self.kernel_receipt_sha256 != kernel.kernel_receipt_sha256:
+                raise ProtocolContractError("case receipt does not match kernel stage receipt")
+            if self.failure_code is not None:
+                raise ProtocolContractError("verified case results cannot carry failures")
+        else:
+            if self.kernel_accepted or self.kernel_receipt_sha256 is not None:
+                raise ProtocolContractError("non-verified case results cannot claim kernel acceptance")
+            if self.failure_detail is not None:
+                _nonempty(self.failure_detail, "failure_detail")
+        if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
+            raise ProtocolContractError("failure_code must be a FailureCode")
+        if self.status in {OutcomeStatus.UNAVAILABLE, OutcomeStatus.EXCLUDED}:
+            if self.failure_code not in EXCLUSION_FAILURE_CODES:
+                raise ProtocolContractError("unavailable/excluded case results require an exclusion code")
+        if self.status is OutcomeStatus.INFRASTRUCTURE_FAILURE:
+            if self.failure_code not in INFRASTRUCTURE_FAILURE_CODES:
+                raise ProtocolContractError("infrastructure case results require an infrastructure code")
+            _nonempty(self.failure_detail, "failure_detail")
+        if self.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED}:
+            if self.failure_code in EXCLUSION_FAILURE_CODES:
+                raise ProtocolContractError("an exclusion code cannot hide a logical case result")
+
+    @classmethod
+    def from_stages(cls, stages: tuple[StageRecord, ...] | list[StageRecord]) -> Self:
+        records = tuple(stages)
+        if not records:
+            raise ProtocolContractError("cannot build a case result without stages")
+        first = records[0]
+        unavailable = next((item for item in records if item.status is StageStatus.UNAVAILABLE), None)
+        failed = next((item for item in records if item.status in {StageStatus.FAILED, StageStatus.SKIPPED}), None)
+        kernel = next((item for item in records if item.stage is StageName.KERNEL), None)
+        if unavailable is not None:
+            status = OutcomeStatus.UNAVAILABLE
+            failure_code = unavailable.failure_code
+            detail = unavailable.failure_detail
+        elif failed is not None:
+            status = (
+                OutcomeStatus.INFRASTRUCTURE_FAILURE
+                if failed.failure_code in INFRASTRUCTURE_FAILURE_CODES
+                else OutcomeStatus.REJECTED
+            )
+            failure_code = failed.failure_code
+            detail = failed.failure_detail
+        elif kernel is not None and kernel.kernel_accepted:
+            status = OutcomeStatus.VERIFIED
+            failure_code = None
+            detail = None
+        else:
+            status = OutcomeStatus.NOT_VERIFIED
+            failure_code = None
+            detail = None
+        return cls(
+            schema=CASE_RESULT_SCHEMA,
+            protocol_sha256=first.protocol_sha256,
+            run_id=first.run_id,
+            case_id=first.case_id,
+            case_manifest_sha256=first.case_manifest_sha256,
+            variant_id=first.variant_id,
+            split=first.split,
+            cache_mode=first.cache_mode,
+            stages=records,
+            status=status,
+            verification_authority=(VerificationAuthority.NATIVE_KERNEL if status is OutcomeStatus.VERIFIED else VerificationAuthority.NONE),
+            kernel_accepted=bool(status is OutcomeStatus.VERIFIED),
+            kernel_receipt_sha256=(None if kernel is None else kernel.kernel_receipt_sha256) if status is OutcomeStatus.VERIFIED else None,
+            failure_code=failure_code,
+            failure_detail=detail,
+        )
+
+    @property
+    def stage_digests(self) -> tuple[str, ...]:
+        return tuple(stage.digest for stage in self.stages)
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
+
+    def to_outcome(self, *, invalid_control: bool = False) -> OutcomeRecord:
+        return OutcomeRecord(
+            schema=OUTCOME_RECORD_SCHEMA,
+            protocol_sha256=self.protocol_sha256,
+            run_id=self.run_id,
+            case_id=self.case_id,
+            case_manifest_sha256=self.case_manifest_sha256,
+            variant_id=self.variant_id,
+            split=self.split,
+            cache_mode=self.cache_mode,
+            status=self.status,
+            invalid_control=invalid_control,
+            verification_authority=self.verification_authority,
+            kernel_accepted=self.kernel_accepted,
+            kernel_receipt_sha256=self.kernel_receipt_sha256,
+            failure_code=self.failure_code,
+            failure_detail=self.failure_detail,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "protocol_sha256": self.protocol_sha256,
+            "run_id": self.run_id,
+            "case_id": self.case_id,
+            "case_manifest_sha256": self.case_manifest_sha256,
+            "variant_id": self.variant_id,
+            "split": self.split.value,
+            "cache_mode": self.cache_mode.value,
+            "stages": [stage.to_dict() for stage in self.stages],
+            "status": self.status.value,
+            "verification_authority": self.verification_authority.value,
+            "kernel_accepted": self.kernel_accepted,
+            "kernel_receipt_sha256": self.kernel_receipt_sha256,
+            "failure_code": None if self.failure_code is None else self.failure_code.value,
+            "failure_detail": self.failure_detail,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "case_result")
+        _exact_keys(data, set(cls.__dataclass_fields__) - {"stage_digests"}, "case_result")
+        stages = data["stages"]
+        if not isinstance(stages, list):
+            raise ProtocolContractError("case_result.stages must be an array")
+        failure_code = data["failure_code"]
+        result = cls(
+            schema=_nonempty(data["schema"], "schema"),
+            protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
+            run_id=_safe_id(data["run_id"], "run_id"),
+            case_id=_safe_id(data["case_id"], "case_id"),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
+            variant_id=_safe_id(data["variant_id"], "variant_id"),
+            split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
+            stages=tuple(StageRecord.from_dict(item) for item in stages),
+            status=_enum(OutcomeStatus, data["status"], "status"),  # type: ignore[arg-type]
+            verification_authority=_enum(VerificationAuthority, data["verification_authority"], "verification_authority"),  # type: ignore[arg-type]
+            kernel_accepted=_bool(data["kernel_accepted"], "kernel_accepted"),
+            kernel_receipt_sha256=(None if data["kernel_receipt_sha256"] is None else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")),
+            failure_code=(None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")),  # type: ignore[arg-type]
+            failure_detail=(None if data["failure_detail"] is None else _nonempty(data["failure_detail"], "failure_detail")),
+        )
+        if len(canonical_json(result.to_dict()).encode("utf-8")) > _MAX_CASE_RESULT_BYTES:
+            raise ProtocolContractError("case result exceeds the encoded size bound")
+        return result
+
+
+def HSSLEV0306C18() -> str:
+    """Return AST-verifiable evidence for the versioned adapter objective."""
+
+    return "versioned stage adapters and deterministic telemetry"
+
+
 def validate_paired_outcomes(
     baseline: OutcomeRecord,
     candidate: OutcomeRecord,
@@ -1715,6 +2392,8 @@ _FROZEN_PROTOCOL_SHA256 = DEFAULT_PROTOCOL_SHA256
 __all__ = [
     "BASELINE_VARIANT",
     "BenchmarkProtocol",
+    "CASE_RESULT_SCHEMA",
+    "CaseResultRecord",
     "CacheMode",
     "CacheScope",
     "CandidateGateObservation",
@@ -1724,6 +2403,7 @@ __all__ = [
     "FailureCode",
     "GateDecision",
     "GateStatus",
+    "HSSLEV0306C18",
     "HSSLEV0103C72",
     "HoldoutRules",
     "HypothesisSpec",
@@ -1742,11 +2422,20 @@ __all__ = [
     "PROTOCOL_VERSION",
     "ProtocolContractError",
     "ProtocolRecord",
+    "ResourceLane",
     "RUN_CONTRACT_SCHEMA",
     "RunContract",
     "SafetyInvariants",
+    "STAGE_PROVENANCE_SCHEMA",
+    "STAGE_RECORD_SCHEMA",
+    "StageName",
+    "StageProvenance",
+    "StageRecord",
+    "StageStatus",
     "Split",
     "StopCondition",
+    "TELEMETRY_SCHEMA",
+    "TelemetryRecord",
     "VariantSpec",
     "VerificationAuthority",
     "build_default_protocol",
