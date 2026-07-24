@@ -25,7 +25,7 @@ Phase 3C.5 successfully validated the complete Groth16 zkSNARK system through co
 
 ### 2.1 Test Implementation
 
-**File Created:** [test_phase3c5_golden_vector_roundtrip.py](ipfs_datasets_py/tests/unit_tests/logic/zkp/test_phase3c5_golden_vector_roundtrip.py)
+**File Created:** [test_phase3c5_golden_vector_roundtrip.py](../tests/unit_tests/logic/zkp/test_phase3c5_golden_vector_roundtrip.py)
 
 **Architecture:**
 ```python
@@ -434,15 +434,15 @@ Test Suite Summary:
 ## 11. Files Created/Modified
 
 ### Created
-- [test_phase3c5_golden_vector_roundtrip.py](ipfs_datasets_py/tests/unit_tests/logic/zkp/test_phase3c5_golden_vector_roundtrip.py) - 450+ lines
+- [test_phase3c5_golden_vector_roundtrip.py](../tests/unit_tests/logic/zkp/test_phase3c5_golden_vector_roundtrip.py) - 450+ lines
 
 ### Modified
 None (new standalone test file)
 
 ### Referenced
-- [zkp_golden_vectors.json](ipfs_datasets_py/tests/unit_tests/logic/zkp/zkp_golden_vectors.json) - 8 golden vectors
-- [groth16_ffi.py](ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/groth16_ffi.py) - Proof generation/verification
-- [canonicalization.py](ipfs_datasets_py/ipfs_datasets_py/logic/zkp/canonicalization.py) - Hashing utilities
+- [zkp_golden_vectors.json](../tests/unit_tests/logic/zkp/zkp_golden_vectors.json) - 8 golden vectors
+- [groth16_ffi.py](../ipfs_datasets_py/logic/zkp/backends/groth16_ffi.py) - Proof generation/verification
+- [canonicalization.py](../ipfs_datasets_py/logic/zkp/canonicalization.py) - Hashing utilities
 
 ---
 
@@ -485,4 +485,3 @@ The system is now ready for Phase 3C.6 (On-Chain Integration), with:
 **Session Duration:** ~5 minutes (efficient test execution via fallback backend)  
 **Test Execution Time:** 0.25 seconds for 5 comprehensive tests  
 **Overall Phase 3C Status:** 83% complete (5 of 6 substeps)
-
