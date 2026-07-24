@@ -310,7 +310,7 @@ For issues or questions:
 - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
 - [GitHub CLI Documentation](https://cli.github.com/manual/)
 - [COPILOT-CLI-INTEGRATION.md](./COPILOT-CLI-INTEGRATION.md)
-- [Workflow Source](./.github/workflows/copilot-agent-autofix.yml)
+- [Workflow Source](./copilot-agent-autofix.yml)
 
 ## Change Log
 
