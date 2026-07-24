@@ -29,6 +29,10 @@ venv/
 state/*
 state/
 state
+!workspace/benchmarks/hammer-symai-spacy-leanstral/
+!workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/
+!workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/
+!workspace/benchmarks/hammer-symai-spacy-leanstral/a0-baseline-v1/state/baseline-manifest.json
 artifacts
 ipfs_datasets_py/processors/groth16_backend/target/
 ipfs_datasets_py/artifacts/

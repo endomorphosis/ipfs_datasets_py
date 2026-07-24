@@ -197,6 +197,27 @@ python -m pytest tests/unit/benchmarks/logic_pipeline/test_capabilities.py -q
 python -m pytest tests/integration/benchmarks/logic_pipeline/test_worktree_isolation.py -q
 ```
 
+## Frozen A0 baseline
+
+`runner.py` validates and measures the exact current effective modal-codec
+architecture without enabling experimental stages. The checked-in manifest
+pins source revisions and files, protocol and corpus identities, immutable
+pilot membership, requested and effective configuration, the observed spaCy
+blank-model fallback, and isolated cold/warm run contracts.
+
+Validation is read-only and does not import the production codec:
+
+```bash
+python benchmarks/logic_pipeline/runner.py --variant A0 --split pilot --validate-only
+```
+
+An operator can execute both cache arms into the manifest's isolated run root
+by omitting `--validate-only`, or select a new empty destination with
+`--output-root`. Execution emits one strict case result for each of the ten
+pilot cases in each requested cache mode. It invokes only the existing
+`DeterministicModalLogicCodec.encode` entry point, retains backend failures as
+case results, and refuses to overwrite an existing measurement.
+
 ## Reviewed corpus
 
 `tests/fixtures/logic_pipeline_benchmark/corpus.jsonl` is the frozen revision-1
