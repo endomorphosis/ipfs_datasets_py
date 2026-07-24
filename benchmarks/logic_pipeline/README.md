@@ -140,6 +140,22 @@ Successful receipts and sampled failures are replayed in a fresh worktree and
 cache namespace. Benchmark code is shadow-only: it cannot auto-merge or promote
 production routing.
 
+`report.py` makes that replay rule executable. A replay must use a distinct run
+ID and cold cache namespace, a detached `WorktreeSafetyReceipt` at the pinned
+source commit, and source/replay `RunContract` records with the same frozen
+configuration. It reparses both case results, validates every stage against the
+pinned environment, and compares stable case, route, adapter, backend, input,
+output, terminal, kernel, and reconstruction identities. Corruption, stale
+environment or source state, same-cache reuse, and backend drift fail closed.
+
+The same module records the complete failure-injection matrix (missing tools,
+malformed output, timeout, cancellation, corrupt cache, and backend drift).
+Each observation must be classified with the frozen taxonomy, stay within its
+recorded time ceiling, affect only its injected case, and account for every
+child process. Bounded commands run without a shell in a new process group;
+timeout and cancellation terminate and reap the group, and a surviving child
+is an immediate `orphaned_child` stop rather than a logical miss.
+
 ## Failure and stop policy
 
 `FailureCode` in `contracts.py` is the complete stable taxonomy. In particular,
