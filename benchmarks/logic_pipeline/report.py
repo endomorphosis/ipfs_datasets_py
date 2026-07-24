@@ -69,6 +69,7 @@ from benchmarks.logic_pipeline.contracts import (
     ProtocolContractError,
     RunContract,
     Split,
+    StageName,
     VerificationAuthority,
     canonical_json,
 )
@@ -232,6 +233,16 @@ def HSSLEV0615B24() -> str:
     )
 
     return efficiency_evidence()
+
+
+def HSSLEV1159F06() -> str:
+    """Return AST-verifiable evidence for measured reports and authorization."""
+
+    return (
+        "receipt-driven front-end, proof, resource, and statistical reports "
+        "with typed missingness and a complete source-bound data-driven "
+        "pilot authorization gate"
+    )
 
 
 def HSSLEV0801D68() -> str:
@@ -1472,6 +1483,22 @@ def _validate_capabilities(value: object) -> dict[str, dict[str, str]]:
     return result
 
 
+def _required_proof_capabilities(variant_id: str) -> tuple[str, ...]:
+    stages = set(VARIANT_REGISTRY[variant_id].stages)
+    required: list[str] = []
+    if StageName.SPACY in stages:
+        required.append("spacy")
+    if StageName.SYMAI in stages:
+        required.extend(("symai", "llm_router"))
+    if StageName.HAMMER in stages:
+        required.append("hammer")
+    if StageName.LEANSTRAL in stages:
+        required.append("leanstral")
+    if StageName.KERNEL in stages:
+        required.append("lean_kernel")
+    return tuple(required)
+
+
 def _validate_observation(value: object) -> dict[str, object]:
     data = _mapping(value, "observation")
     fields = {
@@ -1645,7 +1672,9 @@ def _validate_observation(value: object) -> dict[str, object]:
     return dict(data)
 
 
-def _validate_measured_source(row: Mapping[str, object]) -> None:
+def _validate_measured_source(
+    row: Mapping[str, object], *, expected_run_id: str | None = None
+) -> None:
     """Revalidate the complete durable result behind one measured row."""
 
     try:
@@ -1667,6 +1696,12 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
     )
     if actual_identity != expected_identity:
         raise ProofReportError("measured case-result identity changed")
+    if expected_run_id is not None and result.run_id != expected_run_id:
+        raise ProofReportError(
+            "measured case-result run id differs from the proof report"
+        )
+    if result.split is not Split.PILOT:
+        raise ProofReportError("measured proof results must use the pilot split")
     if result.digest != row["source_receipt_sha256"]:
         raise ProofReportError("measured case-result digest changed")
     expected_status = {
@@ -1690,6 +1725,138 @@ def _validate_measured_source(row: Mapping[str, object]) -> None:
         or row["kernel_receipt_sha256"] != result.kernel_receipt_sha256
     ):
         raise ProofReportError("measured kernel authority projection changed")
+
+    definition = VARIANT_REGISTRY[result.variant_id]
+    expected_stages = tuple(definition.stages)
+    actual_stages = tuple(stage.stage for stage in result.stages)
+    terminal_missing = result.status in {
+        OutcomeStatus.UNAVAILABLE,
+        OutcomeStatus.EXCLUDED,
+        OutcomeStatus.INFRASTRUCTURE_FAILURE,
+    }
+    route_matches = (
+        actual_stages == expected_stages[: len(actual_stages)]
+        if terminal_missing
+        else actual_stages == expected_stages
+    )
+    if not route_matches:
+        raise ProofReportError(
+            "measured case-result route differs from the frozen variant"
+        )
+    total_wall_time_ms = round(
+        sum(stage.telemetry.wall_time_ms for stage in result.stages), 6
+    )
+    if not math.isclose(
+        float(row["total_wall_time_ms"]),
+        total_wall_time_ms,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "measured proof latency differs from stage telemetry"
+        )
+    model_calls = sum(stage.telemetry.model_calls for stage in result.stages)
+    if row["model_calls"] != model_calls:
+        raise ProofReportError(
+            "measured proof model calls differ from stage telemetry"
+        )
+
+    by_stage = {stage.stage: stage for stage in result.stages}
+    hammer_stage = by_stage.get(StageName.HAMMER)
+    hammer = _mapping(row["hammer"], "observation.hammer")
+    if hammer["invoked"] is not (hammer_stage is not None):
+        raise ProofReportError(
+            "Hammer invocation differs from the case-result route"
+        )
+    expected_hammer_wall = (
+        0.0 if hammer_stage is None else hammer_stage.telemetry.wall_time_ms
+    )
+    if not math.isclose(
+        float(hammer["wall_time_ms"]),
+        expected_hammer_wall,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "Hammer latency differs from stage telemetry"
+        )
+    hammer_data = (
+        {}
+        if hammer_stage is None or not isinstance(hammer_stage.data, Mapping)
+        else hammer_stage.data
+    )
+    candidate = hammer_data.get(
+        "proof_candidate", hammer_data.get("candidate")
+    )
+    reconstruction = hammer_data.get("reconstruction")
+    if hammer["candidate_created"] is not (candidate is not None):
+        raise ProofReportError(
+            "Hammer candidate projection differs from stage evidence"
+        )
+    if hammer["reconstruction_attempted"] is not (
+        reconstruction is not None
+    ):
+        raise ProofReportError(
+            "Hammer reconstruction projection differs from stage evidence"
+        )
+    reconstruction_succeeded = bool(
+        reconstruction is not None
+        and hammer_stage is not None
+        and hammer_stage.status.value == "success"
+    )
+    if hammer["reconstruction_succeeded"] is not reconstruction_succeeded:
+        raise ProofReportError(
+            "Hammer reconstruction result differs from stage evidence"
+        )
+
+    lean_stage = by_stage.get(StageName.LEANSTRAL)
+    leanstral = _mapping(row["leanstral"], "observation.leanstral")
+    if leanstral["invoked"] is not (lean_stage is not None):
+        raise ProofReportError(
+            "Leanstral invocation differs from the case-result route"
+        )
+    expected_lean_wall = (
+        0.0 if lean_stage is None else lean_stage.telemetry.wall_time_ms
+    )
+    if not math.isclose(
+        float(leanstral["wall_time_ms"]),
+        expected_lean_wall,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "Leanstral latency differs from stage telemetry"
+        )
+    lean_data = (
+        {}
+        if lean_stage is None or not isinstance(lean_stage.data, Mapping)
+        else lean_stage.data
+    )
+    lean_candidate = lean_data.get("draft")
+    if leanstral["candidate_created"] is not (lean_candidate is not None):
+        raise ProofReportError(
+            "Leanstral candidate projection differs from stage evidence"
+        )
+    repair_attempts = lean_data.get("repair_attempts", 0)
+    repair_attempted = (
+        isinstance(repair_attempts, int)
+        and not isinstance(repair_attempts, bool)
+        and repair_attempts > 0
+    )
+    if leanstral["repair_attempted"] is not repair_attempted:
+        raise ProofReportError(
+            "Leanstral repair projection differs from stage evidence"
+        )
+    repair_succeeded = bool(
+        repair_attempted
+        and lean_candidate is not None
+        and lean_stage is not None
+        and lean_stage.status.value == "success"
+    )
+    if leanstral["repair_succeeded"] is not repair_succeeded:
+        raise ProofReportError(
+            "Leanstral repair result differs from stage evidence"
+        )
 
 
 def _rate(numerator: int, denominator: int) -> float | None:
@@ -1993,7 +2160,26 @@ def validate_proof_report(value: object) -> dict[str, object]:
                 raise ProofReportError(
                     "measured observations require full case-result evidence"
                 )
-            _validate_measured_source(row)
+            _validate_measured_source(
+                row, expected_run_id=str(data["run_id"])
+            )
+            if row["status"] not in {
+                "unavailable",
+                "excluded",
+                "infrastructure_failure",
+            }:
+                missing = [
+                    name
+                    for name in _required_proof_capabilities(
+                        str(row["variant_id"])
+                    )
+                    if capabilities[name]["status"] != "available"
+                ]
+                if missing:
+                    raise ProofReportError(
+                        "measured proof result conflicts with unavailable "
+                        f"capabilities: {', '.join(missing)}"
+                    )
     derived = derive_proof_analysis(observations)
     if data["analysis"] != derived:
         raise ProofReportError("serialized proof analysis differs from observations")
@@ -2150,6 +2336,102 @@ def create_capability_preflight_report() -> dict[str, object]:
     }
     report["artifact_sha256"] = _artifact_digest(report)
     return validate_proof_report(report)
+
+
+def build_proof_report(
+    run_id: str,
+    capabilities: Mapping[str, object],
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    """Build canonical measured proof evidence from complete case receipts.
+
+    Observation rows carry descriptive proof-source fields, but their durable
+    ``CaseResultRecord`` remains authoritative.  This builder canonicalizes
+    the complete frozen pilot matrix, derives all aggregate proof and routing
+    metrics, content-addresses the artifact, and executes strict validation.
+    """
+
+    safe_run_id = _safe_id(run_id, "run_id")
+    capability_records = _validate_capabilities(capabilities)
+    if isinstance(observations, (str, bytes, Mapping)):
+        raise ProofReportError(
+            "observations must be a sequence of observation mappings"
+        )
+    try:
+        rows = [_validate_observation(item) for item in observations]
+    except TypeError as exc:
+        raise ProofReportError(
+            "observations must be a sequence of observation mappings"
+        ) from exc
+    for row in rows:
+        _validate_measured_source(row, expected_run_id=safe_run_id)
+
+    variant_order = (*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS)
+    order = {
+        (case_id, mode, variant): index
+        for index, (case_id, mode, variant) in enumerate(
+            (
+                (case_id, mode, variant)
+                for mode in CACHE_MODES
+                for variant in variant_order
+                for case_id in ELIGIBLE_CASE_IDS
+            )
+        )
+    }
+    coordinates = [
+        (
+            str(row["case_id"]),
+            str(row["cache_mode"]),
+            str(row["variant_id"]),
+        )
+        for row in rows
+    ]
+    if len(coordinates) != len(set(coordinates)):
+        raise ProofReportError(
+            "proof report contains duplicate observations"
+        )
+    if set(coordinates) != set(order):
+        raise ProofReportError(
+            "proof observation matrix is incomplete; "
+            f"missing={sorted(set(order) - set(coordinates))}, "
+            f"extra={sorted(set(coordinates) - set(order))}"
+        )
+    rows.sort(
+        key=lambda row: order[
+            (
+                str(row["case_id"]),
+                str(row["cache_mode"]),
+                str(row["variant_id"]),
+            )
+        ]
+    )
+    capability_inventory_sha256 = hashlib.sha256(
+        canonical_json(capability_records).encode("utf-8")
+    ).hexdigest()
+    value: dict[str, object] = {
+        "schema": PROOF_REPORT_SCHEMA,
+        "evidence": HSSLEV0526A41(),
+        "benchmark_id": BENCHMARK_ID,
+        "run_id": safe_run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "pilot_split_sha256": FROZEN_SPLIT_SHA256[Split.PILOT],
+        "split": "pilot",
+        "eligible_case_ids": list(ELIGIBLE_CASE_IDS),
+        "excluded_case_ids": list(EXCLUDED_CASE_IDS),
+        "cache_modes": list(CACHE_MODES),
+        "primary_variant_ids": list(PRIMARY_VARIANT_IDS),
+        "diagnostic_variant_ids": list(DIAGNOSTIC_VARIANT_IDS),
+        "capability_inventory_sha256": capability_inventory_sha256,
+        "capabilities": capability_records,
+        "observations": rows,
+        "analysis": derive_proof_analysis(rows),
+        "artifact_sha256": "",
+    }
+    value["artifact_sha256"] = _artifact_digest(value)
+    return validate_proof_report(value)
 
 
 class EfficiencyReportError(ValueError):
