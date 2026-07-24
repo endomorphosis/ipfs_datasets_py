@@ -467,7 +467,7 @@ jobs:
 
 **Questions?** Create an issue with the `workflow-gating` label
 
-**Need runner setup?** See [RUNNER_SETUP.md](../../RUNNER_SETUP.md)
+**Need runner setup?** See [runner setup guide](../../docs/guides/deployment/runner_setup.md)
 
 **Emergency?** Contact DevOps on-call
 
