@@ -274,6 +274,9 @@ is never completion evidence.
 - Acceptance: Requests carry fixed obligation IDs and bounded context, responses reject forbidden constructs and malformed schemas, model/kernel resource lanes differ, and all drafts remain unverified.
 - Gap task: Implement the Leanstral adapter and bounded repair contract over success, rejection, timeout, and unavailable-backend cases.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.adapters.HSSLEV0342A4C` and `LeanstralAdapter` lazily reuse the supervisor-owned local `LeanstralProofProvider`. The adapter binds exactly one fixed obligation ID, bounds the provider payload, records only draft artifacts, rejects schema drift, obligation rebinding, forbidden Lean escape hatches, and model authority claims, and maps timeout, malformed, and unavailable outcomes to explicit stage statuses.
+- Bounded repair contract: A request may carry one reviewed failure diagnostic and failed draft with `repair_attempt: 1`; the adapter forwards that context once, records `mode: repair` and `repair_attempts: 1`, and rejects a second attempt before invoking the provider. Model inference stays in the `model` lane while kernel checking is declared separately as `kernel`; no Leanstral record can set `kernel_accepted` or create a kernel receipt.
+- Backlog alignment: HSSL-BENCH-016 closes the focused HSSL-G034 gap without a child goal. The focused integration suite covers synthesis, one repair, malformed/forbidden responses, timeout, unavailable backend, fixed-obligation and bound checks; generated supervisor todo/vector state remains supervisor-owned.
 
 ## HSSL-G035 Bind all claimed successes to kernel and provenance receipts
 

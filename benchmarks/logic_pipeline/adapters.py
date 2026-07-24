@@ -18,6 +18,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 import hashlib
+import importlib
+import json
+import re
 import time
 from types import MappingProxyType
 from typing import Any, Callable, Final, Mapping, Sequence
@@ -57,6 +60,60 @@ _MAX_DETAIL_LENGTH: Final = 512
 
 HAMMER_EVIDENCE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
+)
+LEANSTRAL_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-evidence.v1"
+)
+LEANSTRAL_DRAFT_SCHEMA: Final = (
+    "ipfs_accelerate_py/agent-supervisor/leanstral-proof-draft@1"
+)
+LEANSTRAL_MODEL_RESOURCE_CLASS: Final = "model"
+LEANSTRAL_KERNEL_RESOURCE_CLASS: Final = "kernel"
+LEANSTRAL_MAX_REPAIR_ATTEMPTS: Final = 1
+LEANSTRAL_MAX_CONTEXT_BYTES: Final = 64 * 1024
+# StageRecord also bounds individual strings to 4096 characters.  Keep the
+# provider output within that durable wire-contract limit.
+LEANSTRAL_MAX_DRAFT_BYTES: Final = 4 * 1024
+_LEANSTRAL_FORBIDDEN_CONSTRUCT = re.compile(
+    r"(?i)(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx|axiom|unsafe)(?![A-Za-z0-9_'])"
+)
+_LEANSTRAL_DRAFT_KEYS = frozenset(
+    {
+        "schema_version",
+        "artifact_id",
+        "artifact_kind",
+        "stage",
+        "draft_text",
+        "proof_text",
+        "request_id",
+        "llm_provider",
+        "model",
+        "obligation_ids",
+        "canonical_source_digest",
+        "prompt_sha256",
+        "output_sha256",
+        "timeout_ms",
+        "token_budget",
+        "resource_class",
+        "theorem_id",
+        "theorem_equivalence_key",
+        "context_capsule_id",
+        "proposal_kind",
+        "proposal_schema",
+        "decomposition",
+        "reused_artifact_ids",
+        "prompt_tokens",
+        "response_tokens",
+        "assurance",
+        "verified",
+        "authoritative",
+        "proof_attempted",
+        "proof_success",
+        "kernel_checked",
+        "can_mutate_canonical_source",
+        "can_mutate_obligations",
+        "metadata",
+    }
 )
 
 
@@ -780,9 +837,484 @@ class HammerAdapter(StageAdapter):
         return invoke
 
 
+class LeanstralAdapterContractError(ProtocolContractError):
+    """Raised when a Leanstral request or draft crosses the benchmark boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class LeanstralAdapterConfig:
+    """Frozen limits for the benchmark's untrusted Leanstral model lane.
+
+    The supervisor provider has its own limits.  These smaller benchmark-side
+    limits keep a malformed case from expanding the provider request and make
+    the one-repair rule visible in the stage receipt.
+    """
+
+    max_context_bytes: int = LEANSTRAL_MAX_CONTEXT_BYTES
+    max_draft_bytes: int = LEANSTRAL_MAX_DRAFT_BYTES
+    max_repair_attempts: int = LEANSTRAL_MAX_REPAIR_ATTEMPTS
+    model_resource_class: str = LEANSTRAL_MODEL_RESOURCE_CLASS
+    kernel_resource_class: str = LEANSTRAL_KERNEL_RESOURCE_CLASS
+
+    def __post_init__(self) -> None:
+        for name in ("max_context_bytes", "max_draft_bytes"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise LeanstralAdapterContractError(f"{name} must be a positive integer")
+        if self.max_draft_bytes > LEANSTRAL_MAX_DRAFT_BYTES:
+            raise LeanstralAdapterContractError(
+                f"max_draft_bytes cannot exceed {LEANSTRAL_MAX_DRAFT_BYTES}"
+            )
+        if self.max_repair_attempts != LEANSTRAL_MAX_REPAIR_ATTEMPTS:
+            raise LeanstralAdapterContractError(
+                "Leanstral benchmark repair is fixed to exactly one bounded attempt"
+            )
+        for name in ("model_resource_class", "kernel_resource_class"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise LeanstralAdapterContractError(f"{name} must be non-empty")
+        if self.model_resource_class == self.kernel_resource_class:
+            raise LeanstralAdapterContractError(
+                "Leanstral model and kernel resource lanes must differ"
+            )
+
+
+def HSSLEV0342A4C() -> str:
+    """Return the AST-verifiable Leanstral synthesis/repair evidence receipt."""
+
+    return "Leanstral proof drafts use strict schemas and one bounded unverified repair"
+
+
+def _bounded_canonical(value: object, field_name: str, maximum: int) -> object:
+    try:
+        encoded = canonical_json(value).encode("utf-8")
+    except ProtocolContractError as exc:
+        raise LeanstralAdapterContractError(f"{field_name} is not strict JSON") from exc
+    if len(encoded) > maximum:
+        raise LeanstralAdapterContractError(
+            f"{field_name} exceeds the {maximum} byte bound"
+        )
+    return json.loads(encoded.decode("utf-8"))
+
+
+def _leanstral_input(
+    request: StageRequest,
+    config: LeanstralAdapterConfig,
+) -> tuple[dict[str, object], str, int]:
+    """Build one fixed-obligation provider request from benchmark input."""
+
+    if not isinstance(request.input_data, Mapping):
+        raise LeanstralAdapterContractError("Leanstral input_data must be an object")
+    raw = dict(request.input_data)
+    raw_ids = raw.get("obligation_ids", raw.get("obligation_id"))
+    if isinstance(raw_ids, str):
+        obligation_ids = (raw_ids.strip(),)
+    elif isinstance(raw_ids, Sequence) and not isinstance(raw_ids, (bytes, bytearray)):
+        obligation_ids = tuple(item.strip() for item in raw_ids if isinstance(item, str))
+        if len(obligation_ids) != len(raw_ids):
+            raise LeanstralAdapterContractError("obligation_ids must contain strings")
+    else:
+        raise LeanstralAdapterContractError("one fixed obligation_id is required")
+    if len(obligation_ids) != 1:
+        raise LeanstralAdapterContractError(
+            "Leanstral accepts exactly one fixed obligation_id per request"
+        )
+    obligation_id = _safe_id(obligation_ids[0], "obligation_id")
+
+    repair_value = raw.get("repair")
+    supplied_attempt = raw.get("repair_attempt", 0)
+    if isinstance(supplied_attempt, bool) or not isinstance(supplied_attempt, int):
+        raise LeanstralAdapterContractError("repair_attempt must be an integer")
+    if supplied_attempt not in (0, 1):
+        raise LeanstralAdapterContractError("repair_attempt exceeds the one-attempt bound")
+    repair_attempt = 0
+    if repair_value is not None:
+        if not isinstance(repair_value, Mapping):
+            raise LeanstralAdapterContractError("repair must be an object")
+        repair = dict(_bounded_canonical(repair_value, "repair", config.max_context_bytes))
+        if supplied_attempt != 1:
+            raise LeanstralAdapterContractError(
+                "a repair payload must explicitly identify repair_attempt 1"
+            )
+        failure = repair.get("failure", repair.get("error"))
+        failed_draft = repair.get("failed_draft", repair.get("draft"))
+        if not isinstance(failure, str) or not failure.strip():
+            raise LeanstralAdapterContractError("repair requires a bounded failure message")
+        if not isinstance(failed_draft, (str, Mapping)):
+            raise LeanstralAdapterContractError("repair requires the failed draft")
+        if isinstance(failed_draft, str) and not failed_draft.strip():
+            raise LeanstralAdapterContractError("repair failed_draft cannot be empty")
+        repair_attempt = 1
+    elif supplied_attempt:
+        raise LeanstralAdapterContractError(
+            "repair_attempt 1 requires a repair payload"
+        )
+
+    context_capsule = raw.get(
+        "context_capsule",
+        raw.get("proof_context_capsule", raw.get("proof_context")),
+    )
+    prompt = raw.get("prompt")
+    if prompt is None:
+        context = raw.get("context")
+        if isinstance(context, str):
+            prompt = context
+        elif context is not None and context_capsule is None:
+            # Keep generic benchmark callers useful while still sending a
+            # strict string prompt to the provider.
+            prompt = canonical_json(_bounded_canonical(context, "context", config.max_context_bytes))
+    if context_capsule is None and (not isinstance(prompt, str) or not prompt.strip()):
+        raise LeanstralAdapterContractError(
+            "Leanstral input requires a non-empty prompt or context_capsule"
+        )
+    if isinstance(prompt, str) and not prompt.strip():
+        raise LeanstralAdapterContractError("prompt cannot be empty")
+
+    payload = dict(raw)
+    payload["obligation_id"] = obligation_id
+    payload["obligation_ids"] = [obligation_id]
+    payload["repair_attempt"] = repair_attempt
+    payload["max_repair_attempts"] = config.max_repair_attempts
+    payload["resource_class"] = config.model_resource_class
+    if context_capsule is not None:
+        payload["context_capsule"] = _bounded_canonical(
+            context_capsule, "context_capsule", config.max_context_bytes
+        )
+        payload.pop("proof_context_capsule", None)
+        payload.pop("proof_context", None)
+    else:
+        payload["prompt"] = prompt
+    if repair_value is not None:
+        repair = payload["repair"]
+        assert isinstance(repair, Mapping)
+        failure = repair.get("failure", repair.get("error"))
+        failed_draft = repair.get("failed_draft", repair.get("draft"))
+        payload["compact_failures"] = [{"message": failure}]
+        if isinstance(failed_draft, Mapping):
+            payload["reusable_drafts"] = [dict(failed_draft)]
+        elif isinstance(prompt, str):
+            payload["prompt"] = (
+                prompt
+                + "\n\nREPAIR FAILURE (untrusted diagnostic):\n"
+                + str(failure).strip()
+                + "\nPREVIOUS DRAFT (untrusted):\n"
+                + failed_draft.strip()
+            )
+    normalized = _bounded_canonical(payload, "Leanstral provider payload", config.max_context_bytes)
+    if not isinstance(normalized, dict):  # pragma: no cover - guarded above
+        raise LeanstralAdapterContractError("Leanstral provider payload must be an object")
+    return normalized, obligation_id, repair_attempt
+
+
+def _draft_mapping(value: object) -> Mapping[str, object]:
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        value = value.to_dict()
+    if not isinstance(value, Mapping):
+        raise LeanstralAdapterContractError("Leanstral response must be a draft object")
+    # Permit a transport wrapper, but never permit arbitrary nested response
+    # data to pass through as if it were a draft.
+    for key in ("draft", "proof_draft", "model_artifact"):
+        if key in value:
+            if len(value) != 1 or not isinstance(value[key], Mapping):
+                raise LeanstralAdapterContractError("Leanstral draft wrapper is malformed")
+            value = value[key]
+            break
+    if not isinstance(value, Mapping):  # pragma: no cover - defensive
+        raise LeanstralAdapterContractError("Leanstral draft must be an object")
+    unknown = sorted(set(value) - _LEANSTRAL_DRAFT_KEYS)
+    if unknown:
+        raise LeanstralAdapterContractError(
+            f"Leanstral draft contains unknown fields: {', '.join(unknown[:8])}"
+        )
+    return value
+
+
+def _validate_leanstral_draft(
+    value: object,
+    *,
+    request: StageRequest,
+    obligation_id: str,
+    repair_attempt: int,
+    config: LeanstralAdapterConfig,
+) -> dict[str, object]:
+    draft = dict(_draft_mapping(value))
+    if draft.get("schema_version") != LEANSTRAL_DRAFT_SCHEMA:
+        raise LeanstralAdapterContractError("Leanstral response used the wrong draft schema")
+    if draft.get("artifact_kind", "llm_output") != "llm_output":
+        raise LeanstralAdapterContractError("Leanstral response is not an LLM draft artifact")
+    if draft.get("stage", "model_draft") != "model_draft":
+        raise LeanstralAdapterContractError("Leanstral response is not a model draft")
+    artifact_id = draft.get("artifact_id")
+    if not isinstance(artifact_id, str) or not artifact_id.strip():
+        raise LeanstralAdapterContractError("Leanstral draft requires artifact_id")
+    text = draft.get("draft_text", draft.get("proof_text"))
+    if not isinstance(text, str) or not text.strip():
+        raise LeanstralAdapterContractError("Leanstral draft text is empty or missing")
+    text = text.strip()
+    if len(text.encode("utf-8")) > config.max_draft_bytes:
+        raise LeanstralAdapterContractError("Leanstral draft exceeds the byte bound")
+    if "proof_text" in draft and draft["proof_text"] != text:
+        raise LeanstralAdapterContractError("draft_text and proof_text disagree")
+    forbidden = _LEANSTRAL_FORBIDDEN_CONSTRUCT.search(text)
+    if forbidden:
+        raise LeanstralAdapterContractError(
+            f"Leanstral draft contains forbidden construct {forbidden.group(0)!r}"
+        )
+    raw_ids = draft.get("obligation_ids")
+    if isinstance(raw_ids, str):
+        draft_ids = (raw_ids.strip(),)
+    elif isinstance(raw_ids, Sequence) and not isinstance(raw_ids, (bytes, bytearray)):
+        draft_ids = tuple(item.strip() for item in raw_ids if isinstance(item, str))
+    else:
+        draft_ids = ()
+    if draft_ids != (obligation_id,):
+        raise LeanstralAdapterContractError(
+            "Leanstral draft obligation_ids do not match the fixed request"
+        )
+    if draft.get("resource_class", config.model_resource_class) != config.model_resource_class:
+        raise LeanstralAdapterContractError(
+            "Leanstral model draft cannot use the kernel resource lane"
+        )
+    for field_name in (
+        "verified",
+        "authoritative",
+        "proof_success",
+        "kernel_checked",
+        "can_mutate_canonical_source",
+        "can_mutate_obligations",
+    ):
+        if field_name in draft and draft[field_name] is not False:
+            raise LeanstralAdapterContractError(
+                f"Leanstral model draft cannot claim {field_name}"
+            )
+    if draft.get("assurance", "unverified") not in {"unverified", "none"}:
+        raise LeanstralAdapterContractError("Leanstral model draft must be unverified")
+    supplied_digest = draft.get("output_sha256")
+    calculated_digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if supplied_digest is not None and supplied_digest != calculated_digest:
+        raise LeanstralAdapterContractError("Leanstral draft output digest is invalid")
+    draft["draft_text"] = text
+    draft["proof_text"] = text
+    draft["obligation_ids"] = [obligation_id]
+    draft["output_sha256"] = calculated_digest
+    draft["assurance"] = "unverified"
+    draft["verified"] = False
+    draft["authoritative"] = False
+    draft["kernel_checked"] = False
+    draft["repair_attempt"] = repair_attempt
+    draft["benchmark_request_id"] = f"{request.run_id}:{request.case_id}"
+    return draft
+
+
+def _leanstral_failure(
+    request: StageRequest,
+    detail: str,
+    *,
+    unavailable: bool = False,
+) -> StageOutput:
+    return StageOutput(
+        status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
+        effective_identity=request.requested_identity,
+        failure_code=(
+            FailureCode.CAPABILITY_UNAVAILABLE
+            if unavailable
+            else FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
+        ),
+        failure_detail=detail[:_MAX_DETAIL_LENGTH],
+    )
+
+
+def _provider_request_id(request: StageRequest, repair_attempt: int) -> str:
+    digest = hashlib.sha256(
+        f"{request.run_id}:{request.case_id}:{request.input_sha256}:{repair_attempt}".encode(
+            "utf-8"
+        )
+    ).hexdigest()[:48]
+    return f"leanstral-{digest}"
+
+
+def _local_leanstral_handler(
+    provider_config: object | None = None,
+    adapter_config: LeanstralAdapterConfig | None = None,
+) -> StageHandler:
+    """Return a lazy handler over the supervisor-owned local provider."""
+
+    provider_holder: dict[str, object] = {}
+
+    def invoke(request: StageRequest) -> object:
+        module = importlib.import_module(
+            "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
+        )
+        protocol = importlib.import_module(
+            "ipfs_accelerate_py.agent_supervisor.formal_verification_provider"
+        )
+        capabilities = importlib.import_module(
+            "ipfs_accelerate_py.agent_supervisor.formal_verification_capabilities"
+        )
+        contracts = importlib.import_module(
+            "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts"
+        )
+        provider = provider_holder.get("provider")
+        if provider is None:
+            factory = getattr(module, "create_leanstral_proof_provider")
+            provider = factory(provider_config) if provider_config is not None else factory()
+            provider_holder["provider"] = provider
+        payload, _, repair_attempt = _leanstral_input(
+            request, adapter_config or LeanstralAdapterConfig()
+        )
+        provider_request = getattr(protocol, "ProviderRequest")(
+            operation=getattr(capabilities, "ProofProviderOperation").PROVE,
+            payload=payload,
+            request_id=_provider_request_id(request, repair_attempt),
+            resource_budget=getattr(contracts, "ResourceBudget")(
+                wall_time_ms=0,
+                model_token_limit=0,
+                max_output_bytes=LEANSTRAL_MAX_DRAFT_BYTES,
+            ),
+            network_allowed=False,
+        )
+        return getattr(provider, "prove")(provider_request)
+
+    return invoke
+
+
 class LeanstralAdapter(StageAdapter):
-    def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
-        super().__init__(StageName.LEANSTRAL, handler=handler, **kwargs)
+    """Benchmark boundary for untrusted Leanstral synthesis and one repair.
+
+    ``handler`` remains injectable for deterministic benchmark tests.  With no
+    handler the local supervisor provider is resolved lazily at execution time;
+    an absent router/model is therefore an explicit unavailable result rather
+    than an import-time failure or a silent fallback to another arm.
+    """
+
+    def __init__(
+        self,
+        handler: StageHandler | None = None,
+        *,
+        provider: object | None = None,
+        config: LeanstralAdapterConfig | None = None,
+        provider_config: object | None = None,
+        **kwargs: object,
+    ) -> None:
+        if handler is not None and provider is not None:
+            raise ProtocolContractError("provide either handler or provider, not both")
+        object.__setattr__(self, "config", config or LeanstralAdapterConfig())
+        selected = handler
+        if provider is not None:
+            if callable(provider):
+                selected = provider  # type: ignore[assignment]
+            elif callable(getattr(provider, "prove", None)):
+                def invoke(request: StageRequest) -> object:
+                    payload, _, repair_attempt = _leanstral_input(request, self.config)
+                    # A provider object supplied by a benchmark test follows
+                    # the same supervisor ProviderRequest boundary as the
+                    # local provider, without importing it at module import.
+                    protocol = importlib.import_module(
+                        "ipfs_accelerate_py.agent_supervisor.formal_verification_provider"
+                    )
+                    capabilities = importlib.import_module(
+                        "ipfs_accelerate_py.agent_supervisor.formal_verification_capabilities"
+                    )
+                    verification_contracts = importlib.import_module(
+                        "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts"
+                    )
+                    return provider.prove(
+                        protocol.ProviderRequest(
+                            operation=capabilities.ProofProviderOperation.PROVE,
+                            payload=payload,
+                            request_id=_provider_request_id(request, repair_attempt),
+                            resource_budget=verification_contracts.ResourceBudget(
+                                max_output_bytes=self.config.max_draft_bytes,
+                            ),
+                            network_allowed=False,
+                        )
+                    )
+                selected = invoke
+            else:
+                raise ProtocolContractError("provider must be callable or expose prove()")
+        elif selected is None:
+            selected = _local_leanstral_handler(provider_config, self.config)
+
+        def validated(request: StageRequest) -> object:
+            try:
+                payload, obligation_id, repair_attempt = _leanstral_input(
+                    request, self.config
+                )
+                normalized_request = replace(request, input_data=payload)
+                raw = selected(normalized_request)  # type: ignore[misc]
+                if isinstance(raw, StageOutput):
+                    if raw.status is not StageStatus.SUCCESS:
+                        return raw
+                    output = raw
+                else:
+                    output = StageOutput(data=raw)
+                data = _validate_leanstral_draft(
+                    output.data,
+                    request=request,
+                    obligation_id=obligation_id,
+                    repair_attempt=repair_attempt,
+                    config=self.config,
+                )
+                evidence_without_id = {
+                    "schema": LEANSTRAL_EVIDENCE_SCHEMA,
+                    "obligation_id": obligation_id,
+                    "mode": "repair" if repair_attempt else "synthesis",
+                    "repair_attempts": repair_attempt,
+                    "max_repair_attempts": self.config.max_repair_attempts,
+                    "draft": data,
+                    "trust": {
+                        "assurance": "unverified",
+                        "verified": False,
+                        "authoritative": False,
+                        "kernel_checked": False,
+                    },
+                    "resource_classes": {
+                        "model_inference": self.config.model_resource_class,
+                        "kernel_check": self.config.kernel_resource_class,
+                    },
+                }
+                evidence_id = hashlib.sha256(
+                    canonical_json(evidence_without_id).encode("utf-8")
+                ).hexdigest()
+                evidence = {"evidence_id": evidence_id, **evidence_without_id}
+                identity = {
+                    **dict(output.effective_identity),
+                    "provider": data.get("llm_provider", "leanstral"),
+                    "model": data.get("model", "Leanstral"),
+                    "obligation_id": obligation_id,
+                    "repair_attempt": repair_attempt,
+                    "resource_class": self.config.model_resource_class,
+                }
+                return replace(output, data=evidence, effective_identity=identity)
+            except LeanstralAdapterContractError as exc:
+                return _leanstral_failure(request, str(exc))
+            except (ImportError, ModuleNotFoundError) as exc:
+                return _leanstral_failure(
+                    request,
+                    f"Leanstral provider unavailable: {type(exc).__name__}",
+                    unavailable=True,
+                )
+            except TimeoutError as exc:
+                return _leanstral_failure(request, f"Leanstral provider timed out: {exc}")
+            except Exception as exc:
+                provider_code = str(getattr(getattr(exc, "code", None), "value", getattr(exc, "code", "")))
+                if provider_code in {"unavailable", "optional_dependency"}:
+                    return _leanstral_failure(
+                        request, "Leanstral provider is unavailable", unavailable=True
+                    )
+                if provider_code in {"timed_out", "resource_exhausted", "malformed_response", "malformed_request", "unsupported", "provider_error"}:
+                    return _leanstral_failure(
+                        request,
+                        f"Leanstral provider rejected the request ({provider_code})",
+                    )
+                return StageOutput(
+                    status=StageStatus.FAILED,
+                    effective_identity=request.requested_identity,
+                    failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+                    failure_detail=f"Leanstral adapter raised {type(exc).__name__}",
+                )
+
+        super().__init__(StageName.LEANSTRAL, handler=validated, **kwargs)
 
 
 class KernelAdapter(StageAdapter):
@@ -851,7 +1383,17 @@ __all__ = [
     "HammerAdapterContractError",
     "HSSLEV0335D9B",
     "HSSLEV0306C18",
+    "HSSLEV0342A4C",
     "KernelAdapter",
+    "LEANSTRAL_DRAFT_SCHEMA",
+    "LEANSTRAL_EVIDENCE_SCHEMA",
+    "LEANSTRAL_KERNEL_RESOURCE_CLASS",
+    "LEANSTRAL_MAX_CONTEXT_BYTES",
+    "LEANSTRAL_MAX_DRAFT_BYTES",
+    "LEANSTRAL_MAX_REPAIR_ATTEMPTS",
+    "LEANSTRAL_MODEL_RESOURCE_CLASS",
+    "LeanstralAdapterConfig",
+    "LeanstralAdapterContractError",
     "LeanstralAdapter",
     "PipelineResult",
     "SpacyAdapter",
