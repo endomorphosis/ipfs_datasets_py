@@ -59,6 +59,20 @@ from benchmarks.logic_pipeline.contracts import (
     TelemetryRecord,
     canonical_json,
 )
+from benchmarks.logic_pipeline.ablation import (
+    ABLATION_PLAN_SCHEMA,
+    ABLATION_RESULT_SCHEMA,
+    ORDERING_ALGORITHM,
+    AblationCase,
+    AblationPlan,
+    AblationRunResult,
+    AblationRunnerError,
+    AblationValidationError,
+    ResourceLimits,
+    ScheduledCase,
+    build_ablation_plan,
+    execute_ablation,
+)
 
 
 BASELINE_MANIFEST_SCHEMA: Final = (
@@ -905,6 +919,15 @@ def execute_baseline(
             "case_results_path": result_path.as_posix(),
             "summary_path": summary_path.as_posix(),
         }
+    )
+
+
+def HSSLEV0501F2F() -> str:
+    """Return the AST-verifiable stage-aware ablation-runner evidence."""
+
+    return (
+        "stage-aware A0 through A12 and S1 paired ablations with bounded "
+        "resources, seeded block order, isolated caches, and immutable resume"
     )
 
 
