@@ -1093,7 +1093,7 @@ car_cid = create_car_file("data/", "output.car")
 - **[Architecture Overview](docs/architecture/)** - Package structure and design
 
 ### Architecture & Migration (NEW) 🆕
-- **[Three-Tier Architecture](docs/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** - Complete architecture documentation
+- **[Three-Tier Architecture](docs/DATA_TRANSFORMATION_MIGRATION_SUMMARY.md)** - Processors and data-transformation architecture and migration details
 - **[Migration Guide v2.0](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 migration guide
 - **[Deprecation Timeline](docs/DEPRECATION_TIMELINE.md)** - 6-month deprecation schedule (Feb-Aug 2026)
 - **[GraphRAG Consolidation](docs/GRAPHRAG_CONSOLIDATION_GUIDE.md)** - Unified GraphRAG processor guide
