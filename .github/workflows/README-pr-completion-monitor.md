@@ -377,7 +377,7 @@ prompt = f"""Analyze this GitHub Pull Request...
 ## Related Documentation
 
 - [Copilot Auto-Fix Script](../../scripts/copilot_auto_fix_all_prs.py)
-- [HOW_TO_USE_COPILOT_AUTO_FIX.md](../../HOW_TO_USE_COPILOT_AUTO_FIX.md)
+- [HOW_TO_USE_COPILOT_AUTO_FIX.md](../../docs/guides/HOW_TO_USE_COPILOT_AUTO_FIX.md)
 - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
 
 ## Workflow File Location
