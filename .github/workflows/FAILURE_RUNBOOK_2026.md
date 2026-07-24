@@ -692,7 +692,7 @@ gh workflow run <workflow-name>
 - [Self-Hosted Runners](https://docs.github.com/en/actions/hosting-your-own-runners)
 
 ### Internal Resources
-- [Workflow Catalog](WORKFLOW_CATALOG.md) - All workflows documented
+- [Workflow Documentation Index](README.md) - Workflow inventory and documentation
 - [Improvement Plan](COMPREHENSIVE_IMPROVEMENT_PLAN_2026.md) - Full plan
 - [Security Best Practices](SECURITY_BEST_PRACTICES.md) - Security guidelines
 - [Runner Gating Guide](RUNNER_GATING_GUIDE.md) - Runner availability
