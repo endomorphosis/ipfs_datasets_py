@@ -551,18 +551,54 @@ class AblationPlan:
             raise AblationValidationError(
                 "recorded block sequence and ordinals disagree"
             )
-        expected_blocks = [
-            (case_id, mode)
-            for case_id in case_ids
-            for mode in modes
-        ]
-        expected_blocks.sort(
-            key=lambda item: (
-                _rank(self.seed, "block", item[0], item[1].value),
-                item[0],
-                item[1].value,
+        if self.split is Split.HOLDOUT and set(modes) == {
+            CacheMode.COLD,
+            CacheMode.WARM,
+        }:
+            ordered_cases = sorted(
+                case_ids,
+                key=lambda case_id: (
+                    _rank(self.seed, "holdout-case", case_id),
+                    case_id,
+                ),
             )
-        )
+            first_mode = (
+                CacheMode.COLD
+                if int(_rank(self.seed, "holdout-mode-start"), 16) % 2 == 0
+                else CacheMode.WARM
+            )
+            expected_blocks = []
+            for index, case_id in enumerate(ordered_cases):
+                leading = (
+                    first_mode
+                    if index % 2 == 0
+                    else (
+                        CacheMode.WARM
+                        if first_mode is CacheMode.COLD
+                        else CacheMode.COLD
+                    )
+                )
+                trailing = (
+                    CacheMode.WARM
+                    if leading is CacheMode.COLD
+                    else CacheMode.COLD
+                )
+                expected_blocks.extend(
+                    ((case_id, leading), (case_id, trailing))
+                )
+        else:
+            expected_blocks = [
+                (case_id, mode)
+                for case_id in case_ids
+                for mode in modes
+            ]
+            expected_blocks.sort(
+                key=lambda item: (
+                    _rank(self.seed, "block", item[0], item[1].value),
+                    item[0],
+                    item[1].value,
+                )
+            )
         actual_blocks = [
             (
                 blocks[block_id][0].case.case_id,
@@ -757,14 +793,48 @@ def build_ablation_plan(
     if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < 1 << 63:
         raise AblationValidationError("seed must be a nonnegative 63-bit integer")
 
-    blocks = [(case, mode) for case in normalized for mode in modes]
-    blocks.sort(
-        key=lambda item: (
-            _rank(seed, "block", item[0].case_id, item[1].value),
-            item[0].case_id,
-            item[1].value,
+    if split is Split.HOLDOUT and set(modes) == {
+        CacheMode.COLD,
+        CacheMode.WARM,
+    }:
+        ordered_cases = sorted(
+            normalized,
+            key=lambda case: (
+                _rank(seed, "holdout-case", case.case_id),
+                case.case_id,
+            ),
         )
-    )
+        first_mode = (
+            CacheMode.COLD
+            if int(_rank(seed, "holdout-mode-start"), 16) % 2 == 0
+            else CacheMode.WARM
+        )
+        blocks = []
+        for index, case in enumerate(ordered_cases):
+            leading = (
+                first_mode
+                if index % 2 == 0
+                else (
+                    CacheMode.WARM
+                    if first_mode is CacheMode.COLD
+                    else CacheMode.COLD
+                )
+            )
+            trailing = (
+                CacheMode.WARM
+                if leading is CacheMode.COLD
+                else CacheMode.COLD
+            )
+            blocks.extend(((case, leading), (case, trailing)))
+    else:
+        blocks = [(case, mode) for case in normalized for mode in modes]
+        blocks.sort(
+            key=lambda item: (
+                _rank(seed, "block", item[0].case_id, item[1].value),
+                item[0].case_id,
+                item[1].value,
+            )
+        )
     jobs: list[ScheduledCase] = []
     base_arm_order = sorted(
         variants,
@@ -839,6 +909,18 @@ class AblationRunResult:
 
 def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
     definition = get_variant_definition(variant)
+    access_log_id = plan.holdout_access_log_id
+    if plan.split is Split.HOLDOUT:
+        # A plan owns one logical access ledger, while each run contract needs
+        # a distinct immutable audit identity so the complete ledger can be
+        # validated for duplicates and contiguous sequencing.
+        access_log_id = "ha-" + _sha(
+            {
+                "ledger_id": plan.holdout_access_log_id,
+                "variant_id": variant,
+                "cache_mode": mode.value,
+            }
+        )[:32]
     return RunContract(
         schema=RUN_CONTRACT_SCHEMA,
         protocol_sha256=plan.protocol_sha256,
@@ -857,7 +939,7 @@ def _contract(plan: AblationPlan, variant: str, mode: CacheMode) -> RunContract:
         model_identities_frozen=True,
         thresholds_frozen=True,
         tuning_permitted=plan.split is not Split.HOLDOUT,
-        holdout_access_log_id=plan.holdout_access_log_id,
+        holdout_access_log_id=access_log_id,
     )
 
 
@@ -1540,19 +1622,32 @@ def _validate_envelope(
     return result
 
 
-def execute_ablation(
+def _execute_ablation(
     plan: AblationPlan,
     adapters: Mapping[object, object],
     *,
     output_root: str | Path,
     resume: bool = True,
     resource_scheduler: ResourceScheduler | None = None,
+    authorized_holdout: bool = False,
 ) -> AblationRunResult:
-    """Execute all jobs or resume only exact, validated immutable evidence."""
+    """Execute jobs after the caller has selected the appropriate trust boundary.
+
+    ``authorized_holdout`` is intentionally private implementation plumbing.
+    The public :func:`execute_ablation` entry point always leaves it disabled;
+    only :mod:`benchmarks.logic_pipeline.holdout_execution` enables it after
+    completing its source-bound authorization and access-audit checks.
+    """
 
     if not isinstance(plan, AblationPlan):
         raise AblationValidationError("plan must be an AblationPlan")
-    if plan.split is Split.HOLDOUT:
+    if type(authorized_holdout) is not bool:
+        raise AblationValidationError("authorized_holdout must be a boolean")
+    if authorized_holdout and plan.split is not Split.HOLDOUT:
+        raise AblationValidationError(
+            "authorized holdout execution requires a holdout plan"
+        )
+    if plan.split is Split.HOLDOUT and not authorized_holdout:
         raise AblationValidationError(
             "generic ablation execution is forbidden for holdout; use an "
             "authorized holdout orchestrator that validates the completed "
@@ -1704,6 +1799,31 @@ def execute_ablation(
         tuple(resumed),
         root,
         scheduler.receipts[receipt_start:],
+    )
+
+
+def execute_ablation(
+    plan: AblationPlan,
+    adapters: Mapping[object, object],
+    *,
+    output_root: str | Path,
+    resume: bool = True,
+    resource_scheduler: ResourceScheduler | None = None,
+) -> AblationRunResult:
+    """Execute non-holdout jobs or resume exact immutable evidence.
+
+    Holdout remains fail-closed here even when a caller has assembled a
+    structurally valid :class:`AblationPlan`.  The authorized holdout
+    orchestrator is the sole supported execution entry point for that split.
+    """
+
+    return _execute_ablation(
+        plan,
+        adapters,
+        output_root=output_root,
+        resume=resume,
+        resource_scheduler=resource_scheduler,
+        authorized_holdout=False,
     )
 
 
