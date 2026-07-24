@@ -1941,6 +1941,58 @@ def _symai_evidence_handler(
                 cache_hit=cache_hit,
             )
 
+        effective_provider_value = metadata.get("effective_provider_name")
+        if effective_provider_value is None:
+            effective_provider_value = metadata.get("provider")
+        effective_model_value = metadata.get("effective_model_name")
+        if effective_model_value is None:
+            effective_model_value = metadata.get("model")
+        if (
+            not isinstance(effective_provider_value, str)
+            or not effective_provider_value.strip()
+            or not isinstance(effective_model_value, str)
+            or not effective_model_value.strip()
+        ):
+            return _symai_failure_output(
+                request,
+                config,
+                detail=(
+                    "SyMAI existing-router trace omitted the effective "
+                    "provider/model identity"
+                ),
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
+                raw_output=raw_output,
+                metadata=metadata,
+                model_calls=model_calls,
+                retries=retries,
+                cache_hit=cache_hit,
+            )
+        effective_provider = effective_provider_value.strip()
+        effective_model = effective_model_value.strip()
+        if effective_provider != config.provider or effective_model != config.model:
+            return _symai_failure_output(
+                request,
+                config,
+                detail=(
+                    "SyMAI existing-router requested/effective "
+                    "provider/model identity mismatch"
+                ),
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
+                raw_output=raw_output,
+                metadata=metadata,
+                model_calls=model_calls,
+                retries=retries,
+                cache_hit=cache_hit,
+            )
+
         if config.cache_enabled and not cache_hit:
             cache[cache_key] = {
                 "raw_output": raw_output,
@@ -1948,16 +2000,6 @@ def _symai_evidence_handler(
             }
 
         safe_metadata = _safe_symai_metadata(metadata)
-        effective_provider = str(
-            metadata.get("effective_provider_name")
-            or metadata.get("provider")
-            or config.provider
-        )
-        effective_model = str(
-            metadata.get("effective_model_name")
-            or metadata.get("model")
-            or config.model
-        )
         candidate_ir = validated["candidate_ir"]
         candidate_sha256 = hashlib.sha256(
             canonical_json(candidate_ir).encode("utf-8")

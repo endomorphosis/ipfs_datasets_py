@@ -815,6 +815,41 @@ is never completion evidence.
 - Gap task: Repair package/configuration discovery and pin the SyMAI plus `llm_router` identity used by the fresh run.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1 and the validated benchmark runbook.
+- Evidence implementation: `scripts.benchmarks.provision_hssl_symai_router.HSSLEV1118B52`
+  is the stable AST receipt. The strict
+  `benchmarks/logic_pipeline/runtime_env/symai-router.lock` pins the
+  `symbolicai` distribution and `symai` import at 1.14.0, its distribution
+  metadata digest, the repository-owned `ipfs_datasets_py.llm_router` and
+  `IPFSSyMAINeurosymbolicEngine` path, provider `ipfs_accelerate_py`, model
+  `Leanstral-119B`, and the corresponding `ipfs:Leanstral-119B` SyMAI config
+  value. Unknown lock fields, package/artifact drift, recursive providers, or
+  any enabled provider, model, or local fallback fail closed.
+- Provisioning and smoke boundary: The provisioner defaults to a read-only
+  availability check. Installation and configuration are explicit,
+  noninteractive operations; the installer uses the current interpreter and
+  exact requirement without a shell, and configuration is written under an
+  operator-supplied isolated prefix with the non-secret `ipfs` routing
+  sentinel. Runtime receipts retain credential presence and contextual SHA-256
+  only. The opt-in smoke operation makes exactly one zero-retry, deadline- and
+  byte-bounded structured call on an authored non-corpus sentence through the
+  existing router, serializes no raw output, requires requested and effective
+  provider/model equality, and records that no model server or model manager
+  was started. The SyMAI engine passes `disable_model_retry=True` whenever
+  local fallback is disabled, so the router cannot retry with an unrequested
+  default model while reporting the pinned request identity.
+- Executable validation: The focused integration suite verifies the strict
+  lock and artifact probe, aligned SyMAI/router capability environment,
+  isolated config import, secret redaction, exact noninteractive install plan,
+  one-call structured contract, identity drift and recursive-route rejection,
+  model-fallback disablement, canonical create-only receipts, and hermetic CLI
+  check. Existing SyMAI adapter tests continue to cover contract parsing,
+  retry bounds, cache isolation, and unavailable-package behavior.
+- Backlog alignment: HSSL-G111 remains one cohesive runtime identity boundary,
+  so no smaller child goal is needed. Generated todo-vector, objective-bundle,
+  and task-status metadata remain supervisor-owned and are not manually
+  edited. The supervisor can reconcile HSSLEV1118B52 from the AST symbol,
+  runtime lock, provisioner, focused tests, objective heap, and discovery
+  receipt.
 
 ## HSSL-G112 Restore and pin the shared Leanstral endpoint and model identity
 
