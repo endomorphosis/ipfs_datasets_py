@@ -18,8 +18,14 @@ from pathlib import Path
 import re
 from types import MappingProxyType
 from typing import Final, Mapping, Self
+import unicodedata
 
-from .contracts import DEFAULT_PROTOCOL_SHA256, Split
+from .contracts import (
+    DEFAULT_PROTOCOL_SHA256,
+    RUN_CONTRACT_SCHEMA,
+    RunContract,
+    Split,
+)
 
 
 CASE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.case.v1"
@@ -27,8 +33,41 @@ REVIEW_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.review.v1"
 CORPUS_MANIFEST_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.corpus-manifest.v1"
 )
+SPLIT_MANIFEST_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.split-manifest.v1"
+)
+SPLIT_INTEGRITY_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.split-integrity.v1"
+)
+HOLDOUT_ACCESS_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.holdout-access.v1"
+)
 CORPUS_ID: Final = "hammer-symai-spacy-leanstral-reviewed-v1"
 CORPUS_VERSION: Final = 1
+SOURCE_NORMALIZATION_VERSION: Final = "unicode-nfkc-casefold-alnum-v1"
+NEAR_DUPLICATE_JACCARD_THRESHOLD: Final = 0.8
+FROZEN_CORPUS_MANIFEST_SHA256: Final = (
+    "58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26"
+)
+# These identities bind the reviewed revision-1 membership, order, exact case
+# bytes, source bytes, and normalized source text.  They are filled from the
+# canonical split records below and deliberately do not depend on runtime I/O.
+FROZEN_SPLIT_SHA256: Final[Mapping[Split, str]] = MappingProxyType(
+    {
+        Split.PILOT: (
+            "a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"
+        ),
+        Split.DEVELOPMENT: (
+            "530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"
+        ),
+        Split.HOLDOUT: (
+            "c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a"
+        ),
+    }
+)
+FROZEN_SPLIT_INTEGRITY_SHA256: Final = (
+    "dd68177636a3db87752de54399ed8f066d5fdefe568649d9551bb29a0fb529d0"
+)
 DEFAULT_FIXTURE_DIRECTORY: Final = (
     Path(__file__).parents[2]
     / "tests"
@@ -39,6 +78,7 @@ DEFAULT_CORPUS_PATH: Final = DEFAULT_FIXTURE_DIRECTORY / "corpus.jsonl"
 DEFAULT_MANIFEST_PATH: Final = DEFAULT_FIXTURE_DIRECTORY / "manifest.json"
 
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}\Z")
+_PROTOCOL_SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -65,6 +105,12 @@ def HSSLEV0201B64() -> str:
     return "reviewed immutable semantic and proof benchmark corpus"
 
 
+def HSSLEV0232D57() -> str:
+    """Return the objective evidence bound to split and holdout integrity."""
+
+    return "frozen split integrity and audited leakage-free holdout access"
+
+
 def canonical_json(value: object) -> str:
     """Return the unique UTF-8 JSON representation used by corpus digests."""
 
@@ -75,6 +121,54 @@ def canonical_json(value: object) -> str:
         sort_keys=True,
         separators=(",", ":"),
     )
+
+
+def normalize_source_text(value: str) -> str:
+    """Return the frozen comparison form used for leakage detection.
+
+    Compatibility characters are folded with NFKC, casing is removed with
+    Unicode ``casefold``, and every run of punctuation or whitespace becomes
+    one ASCII space.  Keeping alphanumeric Unicode characters makes this
+    deterministic without an optional tokenizer or locale dependency.
+    """
+
+    if not isinstance(value, str) or not value.strip():
+        raise CorpusContractError("source_text must be a nonempty string")
+    text = value.strip()
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    result = " ".join(
+        "".join(character if character.isalnum() else " " for character in normalized)
+        .split()
+    )
+    if not result:
+        raise CorpusContractError(
+            "source_text must contain alphanumeric content after normalization"
+        )
+    return result
+
+
+def normalized_source_sha256(value: str) -> str:
+    """Return the digest of :func:`normalize_source_text`."""
+
+    return hashlib.sha256(normalize_source_text(value).encode("utf-8")).hexdigest()
+
+
+def _source_shingles(value: str) -> frozenset[tuple[str, ...]]:
+    tokens = normalize_source_text(value).split()
+    width = min(3, len(tokens))
+    return frozenset(
+        tuple(tokens[index:index + width])
+        for index in range(len(tokens) - width + 1)
+    )
+
+
+def source_similarity(left: str, right: str) -> float:
+    """Return deterministic token-shingle Jaccard similarity in ``[0, 1]``."""
+
+    left_shingles = _source_shingles(left)
+    right_shingles = _source_shingles(right)
+    union = left_shingles | right_shingles
+    return len(left_shingles & right_shingles) / len(union)
 
 
 def _duplicate_rejecting_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -133,6 +227,15 @@ def _safe_id(value: object, field_name: str) -> str:
         raise CorpusContractError(
             f"{field_name} must contain only lowercase letters, digits, '.', "
             "'_', or '-' and start with a letter or digit"
+        )
+    return result
+
+
+def _protocol_safe_id(value: object, field_name: str) -> str:
+    result = _nonempty(value, field_name)
+    if not _PROTOCOL_SAFE_ID.fullmatch(result):
+        raise CorpusContractError(
+            f"{field_name} must be a safe protocol identifier"
         )
     return result
 
@@ -651,6 +754,360 @@ def corpus_manifest_sha256(manifest: CorpusManifest) -> str:
     ).hexdigest()
 
 
+def _split_manifest_payload(
+    *,
+    schema: str,
+    corpus_manifest_sha256_value: str,
+    split: Split,
+    case_ids: tuple[str, ...],
+    case_sha256s: tuple[str, ...],
+    source_sha256s: tuple[str, ...],
+    normalized_source_sha256s: tuple[str, ...],
+) -> dict[str, object]:
+    return {
+        "schema": schema,
+        "corpus_manifest_sha256": corpus_manifest_sha256_value,
+        "split": split.value,
+        "case_ids": list(case_ids),
+        "case_sha256s": list(case_sha256s),
+        "source_sha256s": list(source_sha256s),
+        "normalized_source_sha256s": list(normalized_source_sha256s),
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class SplitManifest:
+    """Canonical identity of one ordered, immutable corpus partition."""
+
+    schema: str
+    corpus_manifest_sha256: str
+    split: Split
+    case_ids: tuple[str, ...]
+    case_sha256s: tuple[str, ...]
+    source_sha256s: tuple[str, ...]
+    normalized_source_sha256s: tuple[str, ...]
+    split_sha256: str
+
+    def __post_init__(self) -> None:
+        if self.schema != SPLIT_MANIFEST_SCHEMA:
+            raise CorpusContractError("unsupported split-manifest schema")
+        _digest(self.corpus_manifest_sha256, "corpus_manifest_sha256")
+        if not isinstance(self.split, Split):
+            raise CorpusContractError("split manifest split must be a Split value")
+
+        case_ids = tuple(
+            _safe_id(value, "split_manifest.case_ids[]")
+            for value in self.case_ids
+        )
+        if not case_ids or len(set(case_ids)) != len(case_ids):
+            raise CorpusContractError(
+                "split manifest requires distinct ordered case ids"
+            )
+        object.__setattr__(self, "case_ids", case_ids)
+
+        digest_fields = (
+            "case_sha256s",
+            "source_sha256s",
+            "normalized_source_sha256s",
+        )
+        for field_name in digest_fields:
+            values = tuple(
+                _digest(value, f"split_manifest.{field_name}[]")
+                for value in getattr(self, field_name)
+            )
+            if len(values) != len(case_ids):
+                raise CorpusContractError(
+                    f"split manifest {field_name} length does not match case ids"
+                )
+            if len(set(values)) != len(values):
+                raise CorpusContractError(
+                    f"split manifest {field_name} contains duplicates"
+                )
+            object.__setattr__(self, field_name, values)
+
+        expected = hashlib.sha256(
+            canonical_json(self.identity_payload()).encode("utf-8")
+        ).hexdigest()
+        if _digest(self.split_sha256, "split_sha256") != expected:
+            raise CorpusContractError(
+                "split_sha256 does not match split manifest content"
+            )
+        if (
+            self.corpus_manifest_sha256 == FROZEN_CORPUS_MANIFEST_SHA256
+            and self.split_sha256 != FROZEN_SPLIT_SHA256[self.split]
+        ):
+            raise CorpusContractError(
+                f"{self.split.value} split identity is not frozen revision 1"
+            )
+
+    def identity_payload(self) -> dict[str, object]:
+        return _split_manifest_payload(
+            schema=self.schema,
+            corpus_manifest_sha256_value=self.corpus_manifest_sha256,
+            split=self.split,
+            case_ids=self.case_ids,
+            case_sha256s=self.case_sha256s,
+            source_sha256s=self.source_sha256s,
+            normalized_source_sha256s=self.normalized_source_sha256s,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self.identity_payload(), "split_sha256": self.split_sha256}
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "split_manifest")
+        _exact_keys(data, set(cls.__dataclass_fields__), "split_manifest")
+        tuple_fields: dict[str, tuple[str, ...]] = {}
+        for field_name in (
+            "case_ids",
+            "case_sha256s",
+            "source_sha256s",
+            "normalized_source_sha256s",
+        ):
+            tuple_fields[field_name] = _string_tuple(
+                data[field_name], f"split_manifest.{field_name}"
+            )
+        return cls(
+            schema=_nonempty(data["schema"], "split_manifest.schema"),
+            corpus_manifest_sha256=_digest(
+                data["corpus_manifest_sha256"],
+                "split_manifest.corpus_manifest_sha256",
+            ),
+            split=_enum(  # type: ignore[arg-type]
+                Split, data["split"], "split_manifest.split"
+            ),
+            split_sha256=_digest(
+                data["split_sha256"], "split_manifest.split_sha256"
+            ),
+            **tuple_fields,  # type: ignore[arg-type]
+        )
+
+
+def _integrity_manifest_payload(
+    *,
+    schema: str,
+    corpus_manifest_sha256_value: str,
+    normalization_version: str,
+    near_duplicate_jaccard_threshold: float,
+    splits: tuple[SplitManifest, ...],
+) -> dict[str, object]:
+    return {
+        "schema": schema,
+        "corpus_manifest_sha256": corpus_manifest_sha256_value,
+        "normalization_version": normalization_version,
+        "near_duplicate_jaccard_threshold": near_duplicate_jaccard_threshold,
+        "splits": [split.to_dict() for split in splits],
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class SplitIntegrityManifest:
+    """Frozen aggregate of all split identities and leakage policy."""
+
+    schema: str
+    corpus_manifest_sha256: str
+    normalization_version: str
+    near_duplicate_jaccard_threshold: float
+    splits: tuple[SplitManifest, ...]
+    integrity_sha256: str
+
+    def __post_init__(self) -> None:
+        if self.schema != SPLIT_INTEGRITY_SCHEMA:
+            raise CorpusContractError("unsupported split-integrity schema")
+        _digest(self.corpus_manifest_sha256, "corpus_manifest_sha256")
+        if self.normalization_version != SOURCE_NORMALIZATION_VERSION:
+            raise CorpusContractError("unsupported source normalization version")
+        threshold = self.near_duplicate_jaccard_threshold
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (int, float))
+            or not math.isfinite(float(threshold))
+            or float(threshold) != NEAR_DUPLICATE_JACCARD_THRESHOLD
+        ):
+            raise CorpusContractError(
+                "near-duplicate threshold must match the frozen policy"
+            )
+        object.__setattr__(
+            self, "near_duplicate_jaccard_threshold", float(threshold)
+        )
+
+        splits = tuple(self.splits)
+        object.__setattr__(self, "splits", splits)
+        if tuple(item.split for item in splits) != tuple(Split):
+            raise CorpusContractError(
+                "split integrity manifest must contain pilot, development, "
+                "and holdout in frozen order"
+            )
+        if any(
+            item.corpus_manifest_sha256 != self.corpus_manifest_sha256
+            for item in splits
+        ):
+            raise CorpusContractError(
+                "split manifest corpus identities do not match"
+            )
+        case_ids = tuple(
+            case_id for split in splits for case_id in split.case_ids
+        )
+        if len(set(case_ids)) != len(case_ids):
+            raise CorpusContractError("case ids overlap between split manifests")
+        source_digests = tuple(
+            digest for split in splits for digest in split.source_sha256s
+        )
+        normalized_digests = tuple(
+            digest
+            for split in splits
+            for digest in split.normalized_source_sha256s
+        )
+        if len(set(source_digests)) != len(source_digests):
+            raise CorpusContractError("exact source content overlaps splits")
+        if len(set(normalized_digests)) != len(normalized_digests):
+            raise CorpusContractError("normalized source content overlaps splits")
+
+        expected = hashlib.sha256(
+            canonical_json(self.identity_payload()).encode("utf-8")
+        ).hexdigest()
+        if _digest(self.integrity_sha256, "integrity_sha256") != expected:
+            raise CorpusContractError(
+                "integrity_sha256 does not match split integrity content"
+            )
+        if (
+            self.corpus_manifest_sha256 == FROZEN_CORPUS_MANIFEST_SHA256
+            and self.integrity_sha256 != FROZEN_SPLIT_INTEGRITY_SHA256
+        ):
+            raise CorpusContractError(
+                "split-integrity identity is not frozen revision 1"
+            )
+
+    @property
+    def holdout(self) -> SplitManifest:
+        return self.splits[-1]
+
+    @property
+    def by_split(self) -> Mapping[Split, SplitManifest]:
+        return MappingProxyType({item.split: item for item in self.splits})
+
+    def identity_payload(self) -> dict[str, object]:
+        return _integrity_manifest_payload(
+            schema=self.schema,
+            corpus_manifest_sha256_value=self.corpus_manifest_sha256,
+            normalization_version=self.normalization_version,
+            near_duplicate_jaccard_threshold=(
+                self.near_duplicate_jaccard_threshold
+            ),
+            splits=self.splits,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            **self.identity_payload(),
+            "integrity_sha256": self.integrity_sha256,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "split_integrity_manifest")
+        _exact_keys(
+            data,
+            set(cls.__dataclass_fields__),
+            "split_integrity_manifest",
+        )
+        raw_splits = data["splits"]
+        if not isinstance(raw_splits, list):
+            raise CorpusContractError(
+                "split_integrity_manifest.splits must be an array"
+            )
+        threshold = data["near_duplicate_jaccard_threshold"]
+        if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
+            raise CorpusContractError(
+                "near_duplicate_jaccard_threshold must be numeric"
+            )
+        return cls(
+            schema=_nonempty(
+                data["schema"], "split_integrity_manifest.schema"
+            ),
+            corpus_manifest_sha256=_digest(
+                data["corpus_manifest_sha256"],
+                "split_integrity_manifest.corpus_manifest_sha256",
+            ),
+            normalization_version=_nonempty(
+                data["normalization_version"],
+                "split_integrity_manifest.normalization_version",
+            ),
+            near_duplicate_jaccard_threshold=float(threshold),
+            splits=tuple(SplitManifest.from_dict(item) for item in raw_splits),
+            integrity_sha256=_digest(
+                data["integrity_sha256"],
+                "split_integrity_manifest.integrity_sha256",
+            ),
+        )
+
+
+def _make_split_manifest(
+    corpus_manifest_digest: str,
+    split: Split,
+    split_cases: tuple[BenchmarkCase, ...],
+) -> SplitManifest:
+    payload = _split_manifest_payload(
+        schema=SPLIT_MANIFEST_SCHEMA,
+        corpus_manifest_sha256_value=corpus_manifest_digest,
+        split=split,
+        case_ids=tuple(case.case_id for case in split_cases),
+        case_sha256s=tuple(case_sha256(case) for case in split_cases),
+        source_sha256s=tuple(case.source_sha256 for case in split_cases),
+        normalized_source_sha256s=tuple(
+            normalized_source_sha256(case.source_text) for case in split_cases
+        ),
+    )
+    split_digest = hashlib.sha256(
+        canonical_json(payload).encode("utf-8")
+    ).hexdigest()
+    return SplitManifest(
+        schema=SPLIT_MANIFEST_SCHEMA,
+        corpus_manifest_sha256=corpus_manifest_digest,
+        split=split,
+        case_ids=tuple(case.case_id for case in split_cases),
+        case_sha256s=tuple(case_sha256(case) for case in split_cases),
+        source_sha256s=tuple(case.source_sha256 for case in split_cases),
+        normalized_source_sha256s=tuple(
+            normalized_source_sha256(case.source_text) for case in split_cases
+        ),
+        split_sha256=split_digest,
+    )
+
+
+def _make_split_integrity_manifest(
+    manifest: CorpusManifest,
+    cases: tuple[BenchmarkCase, ...],
+) -> SplitIntegrityManifest:
+    corpus_digest = corpus_manifest_sha256(manifest)
+    splits = tuple(
+        _make_split_manifest(
+            corpus_digest,
+            split,
+            tuple(case for case in cases if case.split is split),
+        )
+        for split in Split
+    )
+    payload = _integrity_manifest_payload(
+        schema=SPLIT_INTEGRITY_SCHEMA,
+        corpus_manifest_sha256_value=corpus_digest,
+        normalization_version=SOURCE_NORMALIZATION_VERSION,
+        near_duplicate_jaccard_threshold=NEAR_DUPLICATE_JACCARD_THRESHOLD,
+        splits=splits,
+    )
+    return SplitIntegrityManifest(
+        schema=SPLIT_INTEGRITY_SCHEMA,
+        corpus_manifest_sha256=corpus_digest,
+        normalization_version=SOURCE_NORMALIZATION_VERSION,
+        near_duplicate_jaccard_threshold=NEAR_DUPLICATE_JACCARD_THRESHOLD,
+        splits=splits,
+        integrity_sha256=hashlib.sha256(
+            canonical_json(payload).encode("utf-8")
+        ).hexdigest(),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewedCorpus:
     """A manifest-verified, deeply immutable ordered case collection."""
@@ -658,6 +1115,7 @@ class ReviewedCorpus:
     manifest: CorpusManifest
     cases: tuple[BenchmarkCase, ...]
     by_id: Mapping[str, BenchmarkCase] = field(init=False, repr=False)
+    split_integrity: SplitIntegrityManifest = field(init=False)
 
     def __post_init__(self) -> None:
         cases = tuple(self.cases)
@@ -703,6 +1161,25 @@ class ReviewedCorpus:
             raise CorpusContractError(
                 "reviewed corpus semantic target digest does not match"
             )
+        validate_split_integrity(cases)
+        split_integrity = _make_split_integrity_manifest(self.manifest, cases)
+        if self.manifest_sha256 != FROZEN_CORPUS_MANIFEST_SHA256:
+            raise CorpusContractError(
+                "reviewed corpus manifest identity is not frozen revision 1"
+            )
+        for split, expected in FROZEN_SPLIT_SHA256.items():
+            if split_integrity.by_split[split].split_sha256 != expected:
+                raise CorpusContractError(
+                    f"{split.value} split identity is not frozen revision 1"
+                )
+        if (
+            split_integrity.integrity_sha256
+            != FROZEN_SPLIT_INTEGRITY_SHA256
+        ):
+            raise CorpusContractError(
+                "split-integrity identity is not frozen revision 1"
+            )
+        object.__setattr__(self, "split_integrity", split_integrity)
         object.__setattr__(
             self,
             "by_id",
@@ -714,6 +1191,508 @@ class ReviewedCorpus:
         """Return the digest a benchmark run records as its corpus identity."""
 
         return corpus_manifest_sha256(self.manifest)
+
+
+def validate_split_integrity(
+    cases: ReviewedCorpus | tuple[BenchmarkCase, ...],
+) -> None:
+    """Fail closed on split membership, duplicate, prompt, or copy leakage."""
+
+    records = cases.cases if isinstance(cases, ReviewedCorpus) else tuple(cases)
+    if not records or any(not isinstance(case, BenchmarkCase) for case in records):
+        raise CorpusContractError(
+            "split integrity requires BenchmarkCase records"
+        )
+    case_ids = tuple(case.case_id for case in records)
+    if len(set(case_ids)) != len(case_ids):
+        raise CorpusContractError("split integrity found duplicate case ids")
+    if {case.split for case in records} != set(Split):
+        raise CorpusContractError(
+            "split integrity requires pilot, development, and holdout cases"
+        )
+    for case in records:
+        if (
+            case.split is Split.HOLDOUT
+            and case.provenance["prompt_exposure"] != "none"
+        ):
+            raise CorpusContractError(
+                f"holdout prompt leakage for case {case.case_id}: "
+                "provenance.prompt_exposure must be 'none'"
+            )
+
+    for left_index, left in enumerate(records):
+        for right in records[left_index + 1:]:
+            if left.split is right.split:
+                continue
+            pair = (
+                f"{left.case_id} ({left.split.value}) and "
+                f"{right.case_id} ({right.split.value})"
+            )
+            if left.source_sha256 == right.source_sha256:
+                raise CorpusContractError(
+                    f"exact source duplicate across splits: {pair}"
+                )
+            if (
+                normalized_source_sha256(left.source_text)
+                == normalized_source_sha256(right.source_text)
+            ):
+                raise CorpusContractError(
+                    f"normalized source duplicate across splits: {pair}"
+                )
+            left_ref = left.provenance["source_ref"]
+            right_ref = right.provenance["source_ref"]
+            if left_ref == right_ref:
+                raise CorpusContractError(
+                    f"source provenance reused across splits: {pair}"
+                )
+            similarity = source_similarity(left.source_text, right.source_text)
+            if similarity >= NEAR_DUPLICATE_JACCARD_THRESHOLD:
+                raise CorpusContractError(
+                    "near-duplicate source across splits: "
+                    f"{pair} (similarity={similarity:.6f}, "
+                    f"threshold={NEAR_DUPLICATE_JACCARD_THRESHOLD:.6f})"
+                )
+
+
+def build_split_integrity_manifest(
+    corpus: ReviewedCorpus,
+) -> SplitIntegrityManifest:
+    """Return the validated frozen split manifest for a reviewed corpus."""
+
+    if not isinstance(corpus, ReviewedCorpus):
+        raise CorpusContractError("corpus must be a ReviewedCorpus")
+    validate_split_integrity(corpus.cases)
+    rebuilt = _make_split_integrity_manifest(corpus.manifest, corpus.cases)
+    if rebuilt != corpus.split_integrity:
+        raise CorpusContractError("stored split integrity manifest is inconsistent")
+    return rebuilt
+
+
+def frozen_holdout_manifest(corpus: ReviewedCorpus) -> SplitManifest:
+    """Return the immutable holdout member of the frozen split manifest."""
+
+    return build_split_integrity_manifest(corpus).holdout
+
+
+def validate_holdout_prompt_isolation(
+    corpus: ReviewedCorpus,
+    prompt_examples: Mapping[str, str],
+) -> tuple[str, ...]:
+    """Return prompt-example digests after proving no holdout copy leakage.
+
+    Prompt IDs and normalized prompt text are compared with every holdout case.
+    Near copies at or above the frozen shingle threshold are rejected too.
+    The returned ordered digests can be bound into a holdout access audit.
+    """
+
+    if not isinstance(corpus, ReviewedCorpus):
+        raise CorpusContractError("corpus must be a ReviewedCorpus")
+    examples = _mapping(prompt_examples, "prompt_examples")
+    holdout_cases = tuple(
+        case for case in corpus.cases if case.split is Split.HOLDOUT
+    )
+    digests: list[str] = []
+    for example_id in sorted(examples):
+        _safe_id(example_id, "prompt_examples key")
+        prompt = _nonempty(examples[example_id], f"prompt_examples.{example_id}")
+        for case in holdout_cases:
+            if example_id == case.case_id:
+                raise CorpusContractError(
+                    f"holdout case id exposed as prompt example: {case.case_id}"
+                )
+            if normalized_source_sha256(prompt) == normalized_source_sha256(
+                case.source_text
+            ):
+                raise CorpusContractError(
+                    f"holdout source exposed as prompt example: {case.case_id}"
+                )
+            similarity = source_similarity(prompt, case.source_text)
+            if similarity >= NEAR_DUPLICATE_JACCARD_THRESHOLD:
+                raise CorpusContractError(
+                    f"holdout near-copy exposed as prompt example: {case.case_id}"
+                )
+        digests.append(
+            hashlib.sha256(
+                canonical_json(
+                    {
+                        "example_id": example_id,
+                        "normalized_source": normalize_source_text(prompt),
+                    }
+                ).encode("utf-8")
+            ).hexdigest()
+        )
+    return tuple(digests)
+
+
+def _holdout_access_payload(
+    *,
+    schema: str,
+    audit_id: str,
+    sequence: int,
+    purpose: str,
+    run_contract_sha256: str,
+    run_id: str,
+    protocol_sha256: str,
+    variant_id: str,
+    cache_namespace: str,
+    cache_mode: str,
+    corpus_manifest_sha256_value: str,
+    holdout_split_sha256: str,
+    accessed_case_ids: tuple[str, ...],
+    configuration_sha256: str,
+    prompts_sha256: str,
+    policy_sha256: str,
+    model_identities_sha256: str,
+    thresholds_sha256: str,
+    prompt_example_sha256s: tuple[str, ...],
+    prompts_frozen: bool,
+    policy_frozen: bool,
+    model_identities_frozen: bool,
+    thresholds_frozen: bool,
+    tuning_permitted: bool,
+) -> dict[str, object]:
+    return {
+        "schema": schema,
+        "audit_id": audit_id,
+        "sequence": sequence,
+        "purpose": purpose,
+        "run_contract_sha256": run_contract_sha256,
+        "run_id": run_id,
+        "protocol_sha256": protocol_sha256,
+        "variant_id": variant_id,
+        "cache_namespace": cache_namespace,
+        "cache_mode": cache_mode,
+        "corpus_manifest_sha256": corpus_manifest_sha256_value,
+        "holdout_split_sha256": holdout_split_sha256,
+        "accessed_case_ids": list(accessed_case_ids),
+        "configuration_sha256": configuration_sha256,
+        "prompts_sha256": prompts_sha256,
+        "policy_sha256": policy_sha256,
+        "model_identities_sha256": model_identities_sha256,
+        "thresholds_sha256": thresholds_sha256,
+        "prompt_example_sha256s": list(prompt_example_sha256s),
+        "prompts_frozen": prompts_frozen,
+        "policy_frozen": policy_frozen,
+        "model_identities_frozen": model_identities_frozen,
+        "thresholds_frozen": thresholds_frozen,
+        "tuning_permitted": tuning_permitted,
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class HoldoutAccessAudit:
+    """Immutable receipt for one no-tuning access to frozen holdout cases."""
+
+    schema: str
+    audit_id: str
+    sequence: int
+    purpose: str
+    run_contract_sha256: str
+    run_id: str
+    protocol_sha256: str
+    variant_id: str
+    cache_namespace: str
+    cache_mode: str
+    corpus_manifest_sha256: str
+    holdout_split_sha256: str
+    accessed_case_ids: tuple[str, ...]
+    configuration_sha256: str
+    prompts_sha256: str
+    policy_sha256: str
+    model_identities_sha256: str
+    thresholds_sha256: str
+    prompt_example_sha256s: tuple[str, ...]
+    prompts_frozen: bool
+    policy_frozen: bool
+    model_identities_frozen: bool
+    thresholds_frozen: bool
+    tuning_permitted: bool
+    audit_sha256: str
+
+    def __post_init__(self) -> None:
+        if self.schema != HOLDOUT_ACCESS_SCHEMA:
+            raise CorpusContractError("unsupported holdout-access schema")
+        _protocol_safe_id(self.audit_id, "audit_id")
+        _positive_int(self.sequence, "sequence", allow_zero=True)
+        if self.purpose not in {"evaluation", "replay"}:
+            raise CorpusContractError(
+                "holdout access purpose must be evaluation or replay"
+            )
+        _protocol_safe_id(self.run_id, "run_id")
+        _protocol_safe_id(self.variant_id, "variant_id")
+        for field_name in (
+            "run_contract_sha256",
+            "protocol_sha256",
+            "corpus_manifest_sha256",
+            "holdout_split_sha256",
+            "configuration_sha256",
+            "prompts_sha256",
+            "policy_sha256",
+            "model_identities_sha256",
+            "thresholds_sha256",
+            "audit_sha256",
+        ):
+            _digest(getattr(self, field_name), field_name)
+        if (
+            not isinstance(self.cache_namespace, str)
+            or f"/run/{self.run_id}/" not in self.cache_namespace
+            or f"/variant/{self.variant_id}/" not in self.cache_namespace
+            or "/split/holdout/" not in self.cache_namespace
+            or not self.cache_namespace.endswith(f"/cache/{self.cache_mode}")
+        ):
+            raise CorpusContractError(
+                "holdout cache namespace must bind run, variant, holdout "
+                "split, and cache mode"
+            )
+        if self.cache_mode not in {"cold", "warm"}:
+            raise CorpusContractError("unsupported holdout cache mode")
+        case_ids = tuple(
+            _safe_id(value, "accessed_case_ids[]")
+            for value in self.accessed_case_ids
+        )
+        if not case_ids or len(case_ids) != len(set(case_ids)):
+            raise CorpusContractError(
+                "holdout access requires distinct accessed case ids"
+            )
+        object.__setattr__(self, "accessed_case_ids", case_ids)
+        prompt_digests = tuple(
+            _digest(value, "prompt_example_sha256s[]")
+            for value in self.prompt_example_sha256s
+        )
+        if len(prompt_digests) != len(set(prompt_digests)):
+            raise CorpusContractError(
+                "prompt example fingerprints must be distinct"
+            )
+        object.__setattr__(
+            self, "prompt_example_sha256s", prompt_digests
+        )
+        if not all(
+            (
+                self.prompts_frozen is True,
+                self.policy_frozen is True,
+                self.model_identities_frozen is True,
+                self.thresholds_frozen is True,
+            )
+        ):
+            raise CorpusContractError(
+                "all selection inputs must be frozen before holdout access"
+            )
+        if self.tuning_permitted is not False:
+            raise CorpusContractError("tuning is forbidden for holdout access")
+        expected = hashlib.sha256(
+            canonical_json(self.identity_payload()).encode("utf-8")
+        ).hexdigest()
+        if self.audit_sha256 != expected:
+            raise CorpusContractError(
+                "audit_sha256 does not match holdout access content"
+            )
+
+    def identity_payload(self) -> dict[str, object]:
+        return _holdout_access_payload(
+            schema=self.schema,
+            audit_id=self.audit_id,
+            sequence=self.sequence,
+            purpose=self.purpose,
+            run_contract_sha256=self.run_contract_sha256,
+            run_id=self.run_id,
+            protocol_sha256=self.protocol_sha256,
+            variant_id=self.variant_id,
+            cache_namespace=self.cache_namespace,
+            cache_mode=self.cache_mode,
+            corpus_manifest_sha256_value=self.corpus_manifest_sha256,
+            holdout_split_sha256=self.holdout_split_sha256,
+            accessed_case_ids=self.accessed_case_ids,
+            configuration_sha256=self.configuration_sha256,
+            prompts_sha256=self.prompts_sha256,
+            policy_sha256=self.policy_sha256,
+            model_identities_sha256=self.model_identities_sha256,
+            thresholds_sha256=self.thresholds_sha256,
+            prompt_example_sha256s=self.prompt_example_sha256s,
+            prompts_frozen=self.prompts_frozen,
+            policy_frozen=self.policy_frozen,
+            model_identities_frozen=self.model_identities_frozen,
+            thresholds_frozen=self.thresholds_frozen,
+            tuning_permitted=self.tuning_permitted,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self.identity_payload(), "audit_sha256": self.audit_sha256}
+
+    def validate_against(self, corpus: ReviewedCorpus) -> None:
+        integrity = build_split_integrity_manifest(corpus)
+        if self.corpus_manifest_sha256 != corpus.manifest_sha256:
+            raise CorpusContractError(
+                "holdout audit corpus manifest does not match corpus"
+            )
+        if self.holdout_split_sha256 != integrity.holdout.split_sha256:
+            raise CorpusContractError(
+                "holdout audit split identity does not match corpus"
+            )
+        positions = {
+            case_id: index
+            for index, case_id in enumerate(integrity.holdout.case_ids)
+        }
+        if any(case_id not in positions for case_id in self.accessed_case_ids):
+            raise CorpusContractError("audit includes a non-holdout case id")
+        if tuple(positions[item] for item in self.accessed_case_ids) != tuple(
+            sorted(positions[item] for item in self.accessed_case_ids)
+        ):
+            raise CorpusContractError(
+                "holdout access case ids are not in frozen manifest order"
+            )
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "holdout_access")
+        _exact_keys(data, set(cls.__dataclass_fields__), "holdout_access")
+        string_fields = (
+            "schema",
+            "audit_id",
+            "purpose",
+            "run_contract_sha256",
+            "run_id",
+            "protocol_sha256",
+            "variant_id",
+            "cache_namespace",
+            "cache_mode",
+            "corpus_manifest_sha256",
+            "holdout_split_sha256",
+            "configuration_sha256",
+            "prompts_sha256",
+            "policy_sha256",
+            "model_identities_sha256",
+            "thresholds_sha256",
+            "audit_sha256",
+        )
+        values = {
+            field_name: _nonempty(data[field_name], field_name)
+            for field_name in string_fields
+        }
+        return cls(
+            sequence=_positive_int(
+                data["sequence"], "sequence", allow_zero=True
+            ),
+            accessed_case_ids=_string_tuple(
+                data["accessed_case_ids"], "accessed_case_ids"
+            ),
+            prompt_example_sha256s=_string_tuple(
+                data["prompt_example_sha256s"],
+                "prompt_example_sha256s",
+            ),
+            prompts_frozen=data["prompts_frozen"],  # type: ignore[arg-type]
+            policy_frozen=data["policy_frozen"],  # type: ignore[arg-type]
+            model_identities_frozen=data[  # type: ignore[arg-type]
+                "model_identities_frozen"
+            ],
+            thresholds_frozen=data["thresholds_frozen"],  # type: ignore[arg-type]
+            tuning_permitted=data["tuning_permitted"],  # type: ignore[arg-type]
+            **values,  # type: ignore[arg-type]
+        )
+
+    @classmethod
+    def from_run_contract(
+        cls,
+        corpus: ReviewedCorpus,
+        run_contract: RunContract,
+        *,
+        prompts_sha256: str,
+        policy_sha256: str,
+        model_identities_sha256: str,
+        thresholds_sha256: str,
+        prompt_examples: Mapping[str, str],
+        accessed_case_ids: tuple[str, ...] | None = None,
+        sequence: int = 0,
+        purpose: str = "evaluation",
+    ) -> Self:
+        """Create an audit receipt after validating all holdout boundaries."""
+
+        if not isinstance(run_contract, RunContract):
+            raise CorpusContractError("run_contract must be a RunContract")
+        if run_contract.schema != RUN_CONTRACT_SCHEMA:
+            raise CorpusContractError("unsupported run contract")
+        if run_contract.split is not Split.HOLDOUT:
+            raise CorpusContractError(
+                "a holdout audit requires a holdout run contract"
+            )
+        if run_contract.case_manifest_sha256 != corpus.manifest_sha256:
+            raise CorpusContractError(
+                "run contract does not bind the reviewed corpus manifest"
+            )
+        integrity = build_split_integrity_manifest(corpus)
+        selected = (
+            integrity.holdout.case_ids
+            if accessed_case_ids is None
+            else tuple(accessed_case_ids)
+        )
+        prompt_digests = validate_holdout_prompt_isolation(
+            corpus, prompt_examples
+        )
+        run_payload = run_contract.to_dict()
+        run_digest = hashlib.sha256(
+            canonical_json(run_payload).encode("utf-8")
+        ).hexdigest()
+        payload = _holdout_access_payload(
+            schema=HOLDOUT_ACCESS_SCHEMA,
+            audit_id=run_contract.holdout_access_log_id or "",
+            sequence=sequence,
+            purpose=purpose,
+            run_contract_sha256=run_digest,
+            run_id=run_contract.run_id,
+            protocol_sha256=run_contract.protocol_sha256,
+            variant_id=run_contract.requested_variant_id,
+            cache_namespace=run_contract.cache_namespace,
+            cache_mode=run_contract.cache_mode.value,
+            corpus_manifest_sha256_value=corpus.manifest_sha256,
+            holdout_split_sha256=integrity.holdout.split_sha256,
+            accessed_case_ids=selected,
+            configuration_sha256=run_contract.configuration_sha256,
+            prompts_sha256=_digest(prompts_sha256, "prompts_sha256"),
+            policy_sha256=_digest(policy_sha256, "policy_sha256"),
+            model_identities_sha256=_digest(
+                model_identities_sha256, "model_identities_sha256"
+            ),
+            thresholds_sha256=_digest(
+                thresholds_sha256, "thresholds_sha256"
+            ),
+            prompt_example_sha256s=prompt_digests,
+            prompts_frozen=run_contract.prompts_frozen,
+            policy_frozen=run_contract.policy_frozen,
+            model_identities_frozen=run_contract.model_identities_frozen,
+            thresholds_frozen=run_contract.thresholds_frozen,
+            tuning_permitted=run_contract.tuning_permitted,
+        )
+        result = cls(
+            **payload,  # type: ignore[arg-type]
+            audit_sha256=hashlib.sha256(
+                canonical_json(payload).encode("utf-8")
+            ).hexdigest(),
+        )
+        result.validate_against(corpus)
+        return result
+
+
+def validate_holdout_access_log(
+    corpus: ReviewedCorpus,
+    records: tuple[HoldoutAccessAudit, ...],
+) -> None:
+    """Validate a complete ordered log of immutable holdout accesses."""
+
+    audits = tuple(records)
+    if not audits or any(
+        not isinstance(record, HoldoutAccessAudit) for record in audits
+    ):
+        raise CorpusContractError(
+            "holdout access log requires HoldoutAccessAudit records"
+        )
+    if tuple(record.sequence for record in audits) != tuple(range(len(audits))):
+        raise CorpusContractError(
+            "holdout access sequences must be contiguous and ordered"
+        )
+    audit_ids = tuple(record.audit_id for record in audits)
+    if len(set(audit_ids)) != len(audit_ids):
+        raise CorpusContractError("holdout access log contains duplicate audit ids")
+    for record in audits:
+        record.validate_against(corpus)
 
 
 def _semantic_sha256(cases: tuple[BenchmarkCase, ...]) -> str:
@@ -817,20 +1796,40 @@ __all__ = [
     "DEFAULT_CORPUS_PATH",
     "DEFAULT_FIXTURE_DIRECTORY",
     "DEFAULT_MANIFEST_PATH",
+    "FROZEN_CORPUS_MANIFEST_SHA256",
+    "FROZEN_SPLIT_INTEGRITY_SHA256",
+    "FROZEN_SPLIT_SHA256",
+    "HOLDOUT_ACCESS_SCHEMA",
+    "NEAR_DUPLICATE_JACCARD_THRESHOLD",
     "REVIEW_SCHEMA",
+    "SOURCE_NORMALIZATION_VERSION",
+    "SPLIT_INTEGRITY_SCHEMA",
+    "SPLIT_MANIFEST_SCHEMA",
     "BenchmarkCase",
     "CorpusContractError",
     "CorpusManifest",
     "Difficulty",
     "ExpectedClass",
     "HSSLEV0201B64",
+    "HSSLEV0232D57",
+    "HoldoutAccessAudit",
     "ManifestCase",
     "ReviewAttestation",
     "ReviewedCorpus",
+    "SplitIntegrityManifest",
+    "SplitManifest",
+    "build_split_integrity_manifest",
     "canonical_json",
     "case_sha256",
     "corpus_manifest_sha256",
+    "frozen_holdout_manifest",
     "load_corpus",
     "load_manifest",
     "load_reviewed_corpus",
+    "normalize_source_text",
+    "normalized_source_sha256",
+    "source_similarity",
+    "validate_holdout_access_log",
+    "validate_holdout_prompt_isolation",
+    "validate_split_integrity",
 ]
