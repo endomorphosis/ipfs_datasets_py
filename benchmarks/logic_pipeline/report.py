@@ -102,6 +102,21 @@ DEFAULT_PROOF_REPORT_PATH: Final = Path(
     "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
     "proof-overlap-ordering-v1.json"
 )
+DEFAULT_FINAL_DECISION_PATH: Final = Path(
+    "docs/performance_snapshots/"
+    "2026-07-24_hammer_symai_spacy_leanstral_final_decision.json"
+)
+DEFAULT_BENCHMARK_RUNBOOK_PATH: Final = Path(
+    "docs/implementation/runbooks/"
+    "hammer_symai_spacy_leanstral_benchmark.md"
+)
+FINAL_DECISION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.final-architecture-decision.v1"
+)
+FINAL_DECISION_EVIDENCE: Final = (
+    "evidence-bound final architecture decision, delegation matrix, "
+    "and worktree-safe reproduction runbook"
+)
 PRIMARY_VARIANT_IDS: Final = (
     "A2",
     "A3",
@@ -164,6 +179,20 @@ _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 
 class ProofReportError(ValueError):
     """Raised when proof evidence cannot support a report."""
+
+
+class FinalDecisionValidationError(ValueError):
+    """Raised when the published architecture decision is not trustworthy."""
+
+
+class RunbookValidationError(ValueError):
+    """Raised when the benchmark operator runbook is incomplete or unsafe."""
+
+
+def HSSLEV1006B8A() -> str:
+    """Return AST-verifiable evidence for the final architecture decision."""
+
+    return FINAL_DECISION_EVIDENCE
 
 
 def HSSLEV0526A41() -> str:
@@ -2358,6 +2387,816 @@ def efficiency_summary(report: Mapping[str, object]) -> dict[str, object]:
     }
 
 
+_FINAL_DECISION_SOURCE_ARTIFACTS: Final = {
+    "baseline": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/"
+        "a0-baseline-v1/state/baseline-manifest.json",
+        "ipfs-datasets.logic-pipeline-benchmark.frozen-baseline-manifest.v1",
+    ),
+    "frontend": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "frontend-overlap-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-report.v1",
+    ),
+    "proof": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "proof-overlap-ordering-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.proof-overlap-report.v1",
+    ),
+    "pilot": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "pilot-shortlist-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.pilot-shortlist-gate.v1",
+    ),
+    "holdout": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "holdout-evaluation-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.paired-holdout-gate.v1",
+    ),
+}
+_FINAL_DECISION_COMPONENTS: Final = ("spacy", "symai", "hammer", "leanstral")
+_FINAL_DECISION_VARIANTS: Final = (
+    "A0",
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "A10",
+    "A11",
+    "A12",
+    "S1",
+)
+_RUNBOOK_HEADINGS: Final = (
+    "Purpose and authority",
+    "Published decision",
+    "Ownership and delegation matrix",
+    "Trust boundaries and invariants",
+    "Clean-worktree operating flow",
+    "Preflight and capability probe",
+    "Objective ingestion and backlog alignment",
+    "Baseline and ablation execution",
+    "Pilot and shortlist gate",
+    "Holdout gate",
+    "Replay and reporting",
+    "Phase gates",
+    "Evidence inventory and freshness",
+    "Incident response",
+    "Rollback and fallback",
+    "Handoff checklist",
+    "HSSLEV1006B8A traceability",
+)
+
+
+def _decision_mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise FinalDecisionValidationError(f"{field} must be an object")
+    return value
+
+
+def _decision_array(value: object, field: str) -> list[object]:
+    if not isinstance(value, list):
+        raise FinalDecisionValidationError(f"{field} must be an array")
+    return value
+
+
+def _decision_exact(
+    value: Mapping[str, object], expected: set[str], field: str
+) -> None:
+    if set(value) != expected:
+        raise FinalDecisionValidationError(
+            f"{field} fields changed; expected {sorted(expected)}, "
+            f"got {sorted(value)}"
+        )
+
+
+def _decision_string(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise FinalDecisionValidationError(f"{field} must be a nonempty string")
+    return value
+
+
+def _decision_false(value: object, field: str) -> None:
+    if value is not False:
+        raise FinalDecisionValidationError(
+            f"{field} must remain false without paired holdout evidence"
+        )
+
+
+def _repository_file(root: Path, relative_path: str, field: str) -> Path:
+    candidate = Path(relative_path)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise FinalDecisionValidationError(
+            f"{field} must be a repository-relative path"
+        )
+    resolved_root = root.resolve()
+    resolved = (resolved_root / candidate).resolve()
+    if not resolved.is_relative_to(resolved_root):
+        raise FinalDecisionValidationError(f"{field} escapes the repository")
+    if not resolved.is_file():
+        raise FinalDecisionValidationError(f"{field} does not exist: {candidate}")
+    return resolved
+
+
+def _strict_json_file(path: Path, description: str) -> tuple[object, bytes]:
+    try:
+        raw = path.read_bytes()
+        text = raw.decode("utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise FinalDecisionValidationError(
+            f"cannot read {description}: {path}"
+        ) from exc
+    try:
+        value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
+    except (json.JSONDecodeError, ProofReportError) as exc:
+        raise FinalDecisionValidationError(
+            f"{description} is not strict JSON"
+        ) from exc
+    return value, raw
+
+
+def validate_final_decision(
+    value: object, *, repository_root: str | Path = "."
+) -> dict[str, object]:
+    """Validate the final decision and every immutable evidence binding.
+
+    The decision intentionally remains inconclusive while the paired holdout
+    is sealed and unopened.  This validator therefore fails if missing
+    measurements are converted to efficacy, a component is promoted, or a
+    bound source artifact changes on disk.
+    """
+
+    envelope = _decision_mapping(value, "snapshot")
+    _decision_exact(
+        envelope,
+        {"benchmark_script", "captured_on", "notes", "results"},
+        "snapshot",
+    )
+    if envelope["benchmark_script"] != (
+        "python benchmarks/logic_pipeline/report.py --validate-final-decision"
+    ):
+        raise FinalDecisionValidationError("benchmark_script changed")
+    captured_on = _decision_string(envelope["captured_on"], "captured_on")
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", captured_on) is None:
+        raise FinalDecisionValidationError("captured_on must use YYYY-MM-DD")
+    notes = _decision_array(envelope["notes"], "notes")
+    if not notes or any(
+        not isinstance(note, str) or not note.strip() for note in notes
+    ):
+        raise FinalDecisionValidationError("notes must contain nonempty strings")
+
+    results = _decision_mapping(envelope["results"], "results")
+    _decision_exact(
+        results,
+        {
+            "artifact_sha256",
+            "schema",
+            "evidence",
+            "evidence_symbol",
+            "source_artifacts",
+            "decision",
+            "component_decisions",
+            "delegation_matrix",
+            "policy_decisions",
+            "tradeoffs",
+            "rejected_alternatives",
+            "required_follow_up",
+        },
+        "results",
+    )
+    if results["schema"] != FINAL_DECISION_SCHEMA:
+        raise FinalDecisionValidationError("final decision schema changed")
+    if results["evidence"] != HSSLEV1006B8A():
+        raise FinalDecisionValidationError("final decision evidence marker changed")
+    if results["evidence_symbol"] != "HSSLEV1006B8A":
+        raise FinalDecisionValidationError("final decision evidence symbol changed")
+    artifact_sha256 = results["artifact_sha256"]
+    if not isinstance(artifact_sha256, str) or not _SHA256.fullmatch(
+        artifact_sha256
+    ):
+        raise FinalDecisionValidationError(
+            "artifact_sha256 must be a lowercase SHA-256 digest"
+        )
+    expected_artifact_sha256 = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    if artifact_sha256 != expected_artifact_sha256:
+        raise FinalDecisionValidationError("final decision artifact digest changed")
+
+    root = Path(repository_root)
+    sources = _decision_mapping(results["source_artifacts"], "source_artifacts")
+    if tuple(sources) != tuple(_FINAL_DECISION_SOURCE_ARTIFACTS):
+        raise FinalDecisionValidationError(
+            "source_artifacts must retain baseline-to-holdout order and scope"
+        )
+    for name, (expected_path, expected_schema) in (
+        _FINAL_DECISION_SOURCE_ARTIFACTS.items()
+    ):
+        binding = _decision_mapping(
+            sources[name], f"source_artifacts.{name}"
+        )
+        _decision_exact(
+            binding,
+            {"path", "content_sha256", "semantic_sha256", "schema"},
+            f"source_artifacts.{name}",
+        )
+        if binding["path"] != expected_path:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.path changed"
+            )
+        if binding["schema"] != expected_schema:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.schema changed"
+            )
+        source_path = _repository_file(
+            root, expected_path, f"source_artifacts.{name}.path"
+        )
+        source_value, source_bytes = _strict_json_file(
+            source_path, f"{name} source artifact"
+        )
+        content_sha256 = hashlib.sha256(source_bytes).hexdigest()
+        if binding["content_sha256"] != content_sha256:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.content_sha256 changed"
+            )
+        source_data = _decision_mapping(
+            source_value, f"source_artifacts.{name}.document"
+        )
+        if source_data.get("schema") != expected_schema:
+            raise FinalDecisionValidationError(
+                f"bound {name} source schema differs from its binding"
+            )
+        semantic_sha256 = source_data.get("artifact_sha256")
+        if semantic_sha256 is None:
+            semantic_sha256 = hashlib.sha256(
+                canonical_json(source_data).encode("utf-8")
+            ).hexdigest()
+        if binding["semantic_sha256"] != semantic_sha256:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.semantic_sha256 changed"
+            )
+
+    # Recompute both phase gates through their own source-backed trust
+    # boundaries.  Digest agreement alone is insufficient: a coordinated
+    # rewrite of a gate and this snapshot must not turn an unopened holdout
+    # into authorization.
+    from benchmarks.logic_pipeline.holdout_gate import (
+        HoldoutGateError,
+        load_holdout_gate_report,
+    )
+    from benchmarks.logic_pipeline.pilot_gate import (
+        PilotGateError,
+        load_pilot_gate_report,
+    )
+
+    try:
+        pilot_gate = load_pilot_gate_report(repository_root=root)
+        holdout_gate = load_holdout_gate_report(repository_root=root)
+    except (PilotGateError, HoldoutGateError) as exc:
+        raise FinalDecisionValidationError(
+            f"final decision phase-gate source validation failed: {exc}"
+        ) from exc
+    pilot_shortlist = _decision_mapping(
+        pilot_gate.get("shortlist"), "pilot.shortlist"
+    )
+    pilot_decision = _decision_mapping(
+        pilot_gate.get("decision"), "pilot.decision"
+    )
+    if (
+        pilot_shortlist.get("status") != "incomplete"
+        or pilot_shortlist.get("selected_variant_ids") != []
+        or pilot_shortlist.get("selected_count") != 0
+        or pilot_shortlist.get("frozen") is not True
+        or pilot_decision.get("holdout_authorized") is not False
+        or pilot_decision.get("production_promotion_authorized") is not False
+    ):
+        raise FinalDecisionValidationError(
+            "final decision requires an incomplete, empty, frozen pilot "
+            "shortlist with no holdout or production authorization"
+        )
+    holdout_decision = _decision_mapping(
+        holdout_gate.get("decision"), "holdout.decision"
+    )
+    holdout_access = _decision_mapping(
+        holdout_gate.get("access"), "holdout.access"
+    )
+    holdout_outcomes = _decision_mapping(
+        holdout_gate.get("outcomes"), "holdout.outcomes"
+    )
+    if (
+        holdout_decision.get("status") != "blocked"
+        or holdout_decision.get("seal_status") != "sealed_unopened"
+        or holdout_decision.get("holdout_untouched") is not True
+        or holdout_decision.get("paired_evaluation_complete") is not False
+        or holdout_decision.get("production_promotion_authorized") is not False
+        or holdout_access.get("status") != "unopened"
+        or holdout_access.get("authorized") is not False
+        or holdout_access.get("outcomes_inspected") is not False
+        or holdout_outcomes.get("status") != "not_run"
+        or holdout_outcomes.get("efficacy_claimed") is not False
+        or holdout_outcomes.get("case_results") != []
+    ):
+        raise FinalDecisionValidationError(
+            "final decision requires the blocked, sealed, unopened holdout "
+            "with no access, outcomes, efficacy, or promotion"
+        )
+
+    decision = _decision_mapping(results["decision"], "decision")
+    _decision_exact(
+        decision,
+        {
+            "architecture_outcome",
+            "current_architecture_action",
+            "evidence_status",
+            "holdout_status",
+            "paired_holdout_evidence_available",
+            "production_promotion_authorized",
+            "selected_variant_id",
+            "selected_policy",
+            "rationale",
+        },
+        "decision",
+    )
+    required_decision = {
+        "architecture_outcome": "gather_more_evidence",
+        "current_architecture_action": "retain_unchanged_pending_evidence",
+        "evidence_status": "inconclusive",
+        "holdout_status": "sealed_unopened",
+        "paired_holdout_evidence_available": False,
+        "production_promotion_authorized": False,
+        "selected_variant_id": None,
+        "selected_policy": None,
+    }
+    for field, expected in required_decision.items():
+        if decision.get(field) != expected:
+            raise FinalDecisionValidationError(
+                f"decision.{field} must remain {expected!r}"
+            )
+    _decision_string(decision.get("rationale"), "decision.rationale")
+
+    components = _decision_array(
+        results["component_decisions"], "component_decisions"
+    )
+    component_names: list[str] = []
+    for index, item in enumerate(components):
+        component = _decision_mapping(item, f"component_decisions[{index}]")
+        _decision_exact(
+            component,
+            {
+                "component",
+                "current_responsibility",
+                "candidate_responsibility",
+                "disposition",
+                "promotion_authorized",
+                "evidence_basis",
+            },
+            f"component_decisions[{index}]",
+        )
+        name = _decision_string(
+            component.get("component"), f"component_decisions[{index}].component"
+        )
+        component_names.append(name)
+        _decision_false(
+            component.get("promotion_authorized"),
+            f"component_decisions[{index}].promotion_authorized",
+        )
+        _decision_string(
+            component.get("disposition"),
+            f"component_decisions[{index}].disposition",
+        )
+        _decision_string(
+            component.get("evidence_basis"),
+            f"component_decisions[{index}].evidence_basis",
+        )
+    if tuple(component_names) != _FINAL_DECISION_COMPONENTS:
+        raise FinalDecisionValidationError(
+            "component decisions must cover spaCy, SyMAI, Hammer, and Leanstral "
+            "exactly once in canonical order"
+        )
+
+    matrix = _decision_array(results["delegation_matrix"], "delegation_matrix")
+    variant_ids: list[str] = []
+    for index, item in enumerate(matrix):
+        row = _decision_mapping(item, f"delegation_matrix[{index}]")
+        _decision_exact(
+            row,
+            {
+                "variant_id",
+                "role",
+                "disposition",
+                "promotion_authorized",
+                "evidence_basis",
+            },
+            f"delegation_matrix[{index}]",
+        )
+        variant_ids.append(
+            _decision_string(
+                row.get("variant_id"),
+                f"delegation_matrix[{index}].variant_id",
+            )
+        )
+        _decision_string(
+            row.get("role"), f"delegation_matrix[{index}].role"
+        )
+        _decision_string(
+            row.get("disposition"),
+            f"delegation_matrix[{index}].disposition",
+        )
+        _decision_false(
+            row.get("promotion_authorized"),
+            f"delegation_matrix[{index}].promotion_authorized",
+        )
+        _decision_string(
+            row.get("evidence_basis"),
+            f"delegation_matrix[{index}].evidence_basis",
+        )
+    if tuple(variant_ids) != _FINAL_DECISION_VARIANTS:
+        raise FinalDecisionValidationError(
+            "delegation matrix must cover A0-A12 and S1 in canonical order"
+        )
+    if _decision_mapping(matrix[0], "delegation_matrix[0]").get(
+        "disposition"
+    ) != "current_reference_only":
+        raise FinalDecisionValidationError(
+            "A0 must remain current_reference_only"
+        )
+    if any(
+        _decision_mapping(item, "delegation_matrix row").get("disposition")
+        != "evidence_ineligible"
+        for item in matrix[1:13]
+    ):
+        raise FinalDecisionValidationError(
+            "A1-A12 must remain evidence_ineligible"
+        )
+    if _decision_mapping(matrix[-1], "delegation_matrix[-1]").get(
+        "disposition"
+    ) != "diagnostic_only_never_candidate":
+        raise FinalDecisionValidationError(
+            "S1 must remain diagnostic_only_never_candidate"
+        )
+
+    policies = _decision_array(results["policy_decisions"], "policy_decisions")
+    policy_names: list[str] = []
+    for index, item in enumerate(policies):
+        policy = _decision_mapping(item, f"policy_decisions[{index}]")
+        _decision_exact(
+            policy,
+            {
+                "policy",
+                "role",
+                "selected",
+                "production_authorized",
+                "disposition",
+            },
+            f"policy_decisions[{index}]",
+        )
+        policy_names.append(
+            _decision_string(
+                policy.get("policy"),
+                f"policy_decisions[{index}].policy",
+            )
+        )
+        _decision_false(
+            policy.get("selected"), f"policy_decisions[{index}].selected"
+        )
+        _decision_false(
+            policy.get("production_authorized"),
+            f"policy_decisions[{index}].production_authorized",
+        )
+        if (
+            policy.get("disposition")
+            != "not_selected_insufficient_paired_holdout_evidence"
+        ):
+            raise FinalDecisionValidationError(
+                f"policy_decisions[{index}] has an unsupported disposition"
+            )
+        _decision_string(policy.get("role"), f"policy_decisions[{index}].role")
+    if policy_names != [
+        "P0_ALWAYS_ON",
+        "P1_DETERMINISTIC_FIRST",
+        "P2_PROOF_FAMILY",
+        "P3_BOUNDED_LEARNED",
+    ]:
+        raise FinalDecisionValidationError(
+            "policy decisions must cover P0-P3 in canonical order"
+        )
+
+    tradeoffs = _decision_mapping(results["tradeoffs"], "tradeoffs")
+    _decision_exact(
+        tradeoffs,
+        {"verification_authority", "execution_accounting", "domains"},
+        "tradeoffs",
+    )
+    if tradeoffs.get("verification_authority") != "independent_native_kernel_only":
+        raise FinalDecisionValidationError(
+            "tradeoffs must retain independent native-kernel authority"
+        )
+    accounting = _decision_mapping(
+        tradeoffs.get("execution_accounting"), "tradeoffs.execution_accounting"
+    )
+    _decision_exact(
+        accounting,
+        {
+            "scheduled_pair_count",
+            "observed_pair_count",
+            "kernel_verified_success_count",
+            "efficacy_claimed",
+            "interpretation",
+        },
+        "tradeoffs.execution_accounting",
+    )
+    if accounting.get("scheduled_pair_count") != 0:
+        raise FinalDecisionValidationError(
+            "scheduled_pair_count must reflect the unopened holdout"
+        )
+    if accounting.get("observed_pair_count") != 0:
+        raise FinalDecisionValidationError(
+            "observed_pair_count must reflect the unopened holdout"
+        )
+    if accounting.get("kernel_verified_success_count") != 0:
+        raise FinalDecisionValidationError(
+            "kernel_verified_success_count must reflect the unopened holdout"
+        )
+    _decision_false(
+        accounting.get("efficacy_claimed"),
+        "tradeoffs.execution_accounting.efficacy_claimed",
+    )
+    _decision_string(
+        accounting.get("interpretation"),
+        "tradeoffs.execution_accounting.interpretation",
+    )
+    domains = _decision_array(tradeoffs.get("domains"), "tradeoffs.domains")
+    if [
+        _decision_mapping(item, "tradeoff domain").get("domain")
+        for item in domains
+    ] != ["quality", "resource", "complexity"]:
+        raise FinalDecisionValidationError(
+            "tradeoffs must cover quality, resource, and complexity"
+        )
+    for index, item in enumerate(domains):
+        domain = _decision_mapping(item, f"tradeoffs.domains[{index}]")
+        _decision_exact(
+            domain,
+            {"domain", "measurement_status", "values", "reason"},
+            f"tradeoffs.domains[{index}]",
+        )
+        if domain.get("measurement_status") != "not_observed":
+            raise FinalDecisionValidationError(
+                f"tradeoffs.domains[{index}] must remain not_observed"
+            )
+        values = _decision_mapping(
+            domain.get("values"), f"tradeoffs.domains[{index}].values"
+        )
+        if not values or any(item is not None for item in values.values()):
+            raise FinalDecisionValidationError(
+                f"tradeoffs.domains[{index}] must retain explicit null values"
+            )
+        _decision_string(
+            domain.get("reason"), f"tradeoffs.domains[{index}].reason"
+        )
+
+    rejected = _decision_array(
+        results["rejected_alternatives"], "rejected_alternatives"
+    )
+    if not rejected:
+        raise FinalDecisionValidationError(
+            "rejected_alternatives cannot be empty"
+        )
+    for index, item in enumerate(rejected):
+        alternative = _decision_mapping(
+            item, f"rejected_alternatives[{index}]"
+        )
+        _decision_exact(
+            alternative,
+            {"alternative", "disposition", "reason"},
+            f"rejected_alternatives[{index}]",
+        )
+        _decision_string(
+            alternative.get("alternative"),
+            f"rejected_alternatives[{index}].alternative",
+        )
+        _decision_string(
+            alternative.get("reason"),
+            f"rejected_alternatives[{index}].reason",
+        )
+    follow_up = _decision_array(
+        results["required_follow_up"], "required_follow_up"
+    )
+    if len(follow_up) < 4 or any(
+        not isinstance(step, str) or not step.strip() for step in follow_up
+    ):
+        raise FinalDecisionValidationError(
+            "required_follow_up must retain the complete gated workflow"
+        )
+    follow_up_text = " ".join(str(step).lower() for step in follow_up)
+    required_follow_up_terms = (
+        "capability",
+        "pilot",
+        "holdout",
+        "cold",
+        "warm",
+        "replay",
+        "production promotion",
+    )
+    if any(term not in follow_up_text for term in required_follow_up_terms):
+        raise FinalDecisionValidationError(
+            "required_follow_up omits a capability, gate, replay, cache, or "
+            "promotion boundary"
+        )
+    return dict(envelope)
+
+
+def load_final_decision(
+    path: str | Path = DEFAULT_FINAL_DECISION_PATH,
+    *,
+    repository_root: str | Path = ".",
+) -> dict[str, object]:
+    """Load and validate the published final architecture decision snapshot."""
+
+    decision_path = Path(path)
+    if not decision_path.is_absolute():
+        decision_path = Path(repository_root) / decision_path
+    try:
+        if decision_path.is_symlink() or not decision_path.is_file():
+            raise FinalDecisionValidationError(
+                "final decision path must be a regular non-symlink file"
+            )
+        if not 0 < decision_path.stat().st_size <= 2 * 1024 * 1024:
+            raise FinalDecisionValidationError(
+                "final decision file size is outside the safe bound"
+            )
+    except OSError as exc:
+        raise FinalDecisionValidationError(
+            f"cannot inspect final decision snapshot: {decision_path}"
+        ) from exc
+    value, _ = _strict_json_file(decision_path, "final decision snapshot")
+    return validate_final_decision(value, repository_root=repository_root)
+
+
+def final_decision_summary(value: Mapping[str, object]) -> dict[str, object]:
+    """Return the stable CLI summary for a validated final decision."""
+
+    results = _decision_mapping(value["results"], "results")
+    decision = _decision_mapping(results["decision"], "decision")
+    return {
+        "section": "final-decision",
+        "status": "valid",
+        "artifact_sha256": results["artifact_sha256"],
+        "architecture_outcome": decision["architecture_outcome"],
+        "evidence_status": decision["evidence_status"],
+        "holdout_status": decision["holdout_status"],
+        "production_promotion_authorized": False,
+        "component_decision_count": len(
+            _decision_array(
+                results["component_decisions"], "component_decisions"
+            )
+        ),
+        "delegation_row_count": len(
+            _decision_array(results["delegation_matrix"], "delegation_matrix")
+        ),
+        "policy_decision_count": len(
+            _decision_array(results["policy_decisions"], "policy_decisions")
+        ),
+    }
+
+
+def _runbook_metadata(text: str) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    for line in text.splitlines():
+        if line.startswith("## "):
+            break
+        match = re.fullmatch(r"([A-Za-z][A-Za-z -]+):\s+(.+?)\s*", line)
+        if match is not None:
+            metadata[match.group(1)] = match.group(2).strip().strip("`")
+    return metadata
+
+
+def validate_runbook(
+    text: str, *, repository_root: str | Path = "."
+) -> dict[str, object]:
+    """Validate runbook traceability, coverage, ordering, and safety posture."""
+
+    if not isinstance(text, str) or not text.endswith("\n") or "\x00" in text:
+        raise RunbookValidationError(
+            "runbook must be newline-terminated UTF-8 text without NUL bytes"
+        )
+    metadata = _runbook_metadata(text)
+    expected_metadata = {
+        "Evidence": "HSSLEV1006B8A",
+        "Evidence marker": HSSLEV1006B8A(),
+        "Decision artifact": DEFAULT_FINAL_DECISION_PATH.as_posix(),
+        "Protocol revision": "1",
+    }
+    for field, expected in expected_metadata.items():
+        if metadata.get(field) != expected:
+            raise RunbookValidationError(
+                f"runbook metadata {field!r} must be {expected!r}"
+            )
+    headings = re.findall(r"^## (.+?)\s*$", text, flags=re.MULTILINE)
+    if tuple(headings) != _RUNBOOK_HEADINGS:
+        raise RunbookValidationError(
+            "runbook headings changed, are duplicated, or are out of order"
+        )
+
+    required_tokens = (
+        "detached worktree",
+        "benchmarks.logic_pipeline.capabilities",
+        "objective_daemon",
+        "benchmarks/logic_pipeline/runner.py",
+        "--gate pilot-shortlist",
+        "--gate holdout",
+        "--validate-final-decision",
+        "--validate-runbook",
+        "independent native kernel",
+        "cold",
+        "warm",
+        "fresh worktree",
+        "production promotion",
+        "active checkout",
+        "data/agent_supervisor/discovery",
+        "docs/implementation/plans/"
+        "hammer_symai_spacy_leanstral_benchmark_objectives.md",
+    )
+    lowered = text.lower()
+    missing_tokens = [token for token in required_tokens if token.lower() not in lowered]
+    if missing_tokens:
+        raise RunbookValidationError(
+            f"runbook is missing required operating evidence: {missing_tokens}"
+        )
+    for component in ("spaCy", "SyMAI", "Hammer", "Leanstral"):
+        if component not in text:
+            raise RunbookValidationError(
+                f"runbook delegation matrix does not mention {component}"
+            )
+    if re.search(
+        r"production promotion (?:is |is automatically )?authorized",
+        lowered,
+    ):
+        raise RunbookValidationError(
+            "runbook must not authorize production promotion"
+        )
+
+    try:
+        decision = load_final_decision(
+            metadata["Decision artifact"], repository_root=repository_root
+        )
+    except FinalDecisionValidationError as exc:
+        raise RunbookValidationError(
+            f"runbook decision binding is invalid: {exc}"
+        ) from exc
+    results = _decision_mapping(decision["results"], "results")
+    return {
+        "section": "runbook",
+        "status": "valid",
+        "path": DEFAULT_BENCHMARK_RUNBOOK_PATH.as_posix(),
+        "evidence_symbol": "HSSLEV1006B8A",
+        "decision_artifact_sha256": results["artifact_sha256"],
+        "heading_count": len(headings),
+        "production_promotion_authorized": False,
+    }
+
+
+def load_runbook(
+    path: str | Path = DEFAULT_BENCHMARK_RUNBOOK_PATH,
+    *,
+    repository_root: str | Path = ".",
+) -> dict[str, object]:
+    """Load and validate the worktree-safe benchmark operator runbook."""
+
+    runbook_path = Path(path)
+    if not runbook_path.is_absolute():
+        runbook_path = Path(repository_root) / runbook_path
+    try:
+        if runbook_path.is_symlink() or not runbook_path.is_file():
+            raise RunbookValidationError(
+                "runbook path must be a regular non-symlink file"
+            )
+        if not 0 < runbook_path.stat().st_size <= 512 * 1024:
+            raise RunbookValidationError(
+                "runbook file size is outside the safe bound"
+            )
+        text = runbook_path.read_text(encoding="utf-8")
+    except RunbookValidationError:
+        raise
+    except (OSError, UnicodeError) as exc:
+        raise RunbookValidationError(
+            f"cannot read benchmark runbook: {runbook_path}"
+        ) from exc
+    return validate_runbook(text, repository_root=repository_root)
+
+
 def _summary(report: Mapping[str, object]) -> dict[str, object]:
     analysis = _mapping(report["analysis"], "analysis")
     coverage = _mapping(analysis["coverage"], "coverage")
@@ -2396,12 +3235,51 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--validate", action="store_true")
     parser.add_argument(
+        "--validate-final-decision",
+        action="store_true",
+        help="validate the content-addressed final architecture decision",
+    )
+    parser.add_argument(
+        "--validate-runbook",
+        action="store_true",
+        help="validate the final decision's worktree-safe operator runbook",
+    )
+    parser.add_argument(
         "--results-path",
         type=Path,
         default=None,
-        help="override the selected section's canonical report JSON path",
+        help="override the selected report, decision, or runbook path",
     )
     args = parser.parse_args(argv)
+    final_modes = int(args.validate_final_decision) + int(args.validate_runbook)
+    if final_modes:
+        if final_modes != 1:
+            parser.error(
+                "--validate-final-decision and --validate-runbook are "
+                "mutually exclusive"
+            )
+        if args.section is not None or args.gate is not None or args.validate:
+            parser.error(
+                "final decision validators cannot be combined with "
+                "--section, --gate, or --validate"
+            )
+        if args.validate_final_decision:
+            try:
+                value = load_final_decision(
+                    args.results_path or DEFAULT_FINAL_DECISION_PATH
+                )
+            except FinalDecisionValidationError as exc:
+                parser.error(str(exc))
+            summary = final_decision_summary(value)
+        else:
+            try:
+                summary = load_runbook(
+                    args.results_path or DEFAULT_BENCHMARK_RUNBOOK_PATH
+                )
+            except RunbookValidationError as exc:
+                parser.error(str(exc))
+        sys.stdout.write(canonical_json(summary) + "\n")
+        return 0
     if args.gate is not None:
         if args.section is not None:
             parser.error("--gate and --section are mutually exclusive")
@@ -2500,31 +3378,43 @@ if __name__ == "__main__":
 
 __all__ = [
     "CACHE_MODES",
+    "DEFAULT_BENCHMARK_RUNBOOK_PATH",
+    "DEFAULT_FINAL_DECISION_PATH",
     "DEFAULT_PROOF_REPORT_PATH",
     "DIAGNOSTIC_VARIANT_IDS",
     "EFFICIENCY_REPORT_SCHEMA",
     "ELIGIBLE_CASE_IDS",
     "EXCLUDED_CASE_IDS",
     "EfficiencyReportError",
+    "FINAL_DECISION_EVIDENCE",
+    "FINAL_DECISION_SCHEMA",
+    "FinalDecisionValidationError",
     "HSSLEV0519C80",
     "HSSLEV0526A41",
     "HSSLEV0608F63",
     "HSSLEV0615B24",
     "HSSLEV0801D68",
+    "HSSLEV1006B8A",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",
     "PROOF_REPORT_SCHEMA",
     "ProofReportError",
+    "RunbookValidationError",
     "build_efficiency_report",
     "build_statistics_report",
     "create_efficiency_capability_preflight_report",
     "create_capability_preflight_report",
     "derive_proof_analysis",
     "efficiency_summary",
+    "final_decision_summary",
     "load_efficiency_report",
+    "load_final_decision",
+    "load_runbook",
     "load_statistics_report",
     "load_proof_report",
+    "validate_final_decision",
+    "validate_runbook",
     "validate_statistics_report",
     "validate_efficiency_report",
     "validate_proof_report",
