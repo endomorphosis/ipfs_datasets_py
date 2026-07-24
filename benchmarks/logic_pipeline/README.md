@@ -229,3 +229,40 @@ Run the corpus evidence with:
 ```bash
 python -m pytest tests/unit/benchmarks/logic_pipeline/test_cases.py -q
 ```
+
+## Frozen split and holdout integrity
+
+The reviewed corpus is also sealed as three ordered split manifests. Each
+manifest binds the corpus-manifest identity, split name, case IDs, case
+digests, source digests, and normalized-source digests. The revision-1
+identities are:
+
+```text
+pilot           a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881
+development     530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74
+holdout         c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a
+split integrity dd68177636a3db87752de54399ed8f066d5fdefe568649d9551bb29a0fb529d0
+```
+
+Before the corpus can be used, `validate_split_integrity` rejects exact source
+copies, Unicode/case/punctuation-normalized copies, reused source provenance,
+and token-trigram near copies across splits. The near-copy Jaccard threshold
+is frozen at `0.8`; it is not a tuning parameter. Holdout provenance must state
+that the case was not exposed in a prompt. `validate_holdout_prompt_isolation`
+additionally screens the actual frozen prompt examples against holdout IDs,
+normalized sources, and near-copy fingerprints.
+
+Every holdout use produces a `HoldoutAccessAudit` from a validated
+`RunContract`. The receipt binds the frozen corpus and holdout identities,
+accessed cases in manifest order, run, variant, split-scoped cold/warm cache,
+configuration and selection-input digests, prompt-example fingerprints, and
+audit sequence. Construction fails unless prompts, policy, model identities,
+and thresholds are frozen and tuning is forbidden. Receipts contain no
+timestamps or random values, so equivalent access declarations have identical
+canonical SHA-256 identities and can be replayed independently.
+
+Run the split and holdout evidence with:
+
+```bash
+python -m pytest tests/unit/benchmarks/logic_pipeline/test_holdout_integrity.py -q
+```
