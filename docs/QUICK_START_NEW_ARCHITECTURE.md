@@ -305,7 +305,7 @@ print(f"✅ UnifiedGraphRAGProcessor initialized: {processor}")
 ## 📚 Documentation
 
 ### Architecture & Migration
-- [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) - Complete architecture
+- [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) - Complete architecture
 - [MIGRATION_GUIDE_V2.md](MIGRATION_GUIDE_V2.md) - v1.x → v2.0 migration
 - [DEPRECATION_TIMELINE.md](DEPRECATION_TIMELINE.md) - 6-month timeline
 
@@ -314,8 +314,8 @@ print(f"✅ UnifiedGraphRAGProcessor initialized: {processor}")
 - [MULTIMEDIA_MIGRATION_GUIDE.md](MULTIMEDIA_MIGRATION_GUIDE.md) - Multimedia details
 
 ### Implementation
-- [IMPLEMENTATION_ROADMAP_COMPLETE.md](IMPLEMENTATION_ROADMAP_COMPLETE.md) - Roadmap summary
-- [PHASE_6_TESTING_VALIDATION_COMPLETE.md](PHASE_6_TESTING_VALIDATION_COMPLETE.md) - Testing report
+- [IMPLEMENTATION_ROADMAP_COMPLETE.md](archive/completion_reports/IMPLEMENTATION_ROADMAP_COMPLETE.md) - Roadmap summary
+- [PHASE_6_TESTING_VALIDATION_COMPLETE.md](archive/completion_reports/phases/PHASE_6_TESTING_VALIDATION_COMPLETE.md) - Testing report
 
 ## 🔍 Migration Tools
 
@@ -342,7 +342,7 @@ python scripts/tools/migration_checker.py . --target v2.0
 
 1. Try the examples above
 2. Read [MIGRATION_GUIDE_V2.md](MIGRATION_GUIDE_V2.md) if upgrading
-3. Explore [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) for deep dive
+3. Explore [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) for deep dive
 4. Check [GRAPHRAG_CONSOLIDATION_GUIDE.md](GRAPHRAG_CONSOLIDATION_GUIDE.md) for advanced GraphRAG usage
 
 ---
