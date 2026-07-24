@@ -17,6 +17,7 @@ proof authority merely by passing through an adapter.
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from enum import Enum
 import hashlib
 import importlib
 import json
@@ -74,6 +75,11 @@ LEANSTRAL_MAX_CONTEXT_BYTES: Final = 64 * 1024
 # StageRecord also bounds individual strings to 4096 characters.  Keep the
 # provider output within that durable wire-contract limit.
 LEANSTRAL_MAX_DRAFT_BYTES: Final = 4 * 1024
+SPACY_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
+)
+SPACY_MAX_EVIDENCE_BYTES: Final = 60 * 1024
+SPACY_MAX_TEXT_BYTES: Final = 4 * 1024
 _LEANSTRAL_FORBIDDEN_CONSTRUCT = re.compile(
     r"(?i)(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx|axiom|unsafe)(?![A-Za-z0-9_'])"
 )
@@ -125,6 +131,58 @@ class HammerAdapterContractError(ProtocolContractError):
     between request, portfolio, candidate, reconstruction, and environment
     records that are otherwise easy to lose when serializing a stage result.
     """
+
+
+class SpacyAdapterMode(str, Enum):
+    """Explicit linguistic execution paths recorded by :class:`SpacyAdapter`.
+
+    ``FULL_MODEL`` requires the requested installed spaCy package and refuses
+    the implicit blank-language fallback used by ``SpaCyLegalEncoder``.
+    ``BLANK_MODEL`` opts into that fallback for controlled ablations.
+    ``REGEX_LEGAL`` uses the deterministic legal parser and heuristic SRL
+    path without importing spaCy.
+    """
+
+    FULL_MODEL = "full_model"
+    BLANK_MODEL = "blank_model"
+    REGEX_LEGAL = "regex_legal"
+
+
+@dataclass(frozen=True, slots=True)
+class SpacyAdapterConfig:
+    """Frozen configuration for reproducible linguistic evidence extraction."""
+
+    requested_model: str = "en_core_web_sm"
+    mode: SpacyAdapterMode = SpacyAdapterMode.FULL_MODEL
+    language: str = "en"
+    max_text_bytes: int = SPACY_MAX_TEXT_BYTES
+
+    def __post_init__(self) -> None:
+        if isinstance(self.mode, str):
+            try:
+                object.__setattr__(self, "mode", SpacyAdapterMode(self.mode))
+            except ValueError as exc:
+                raise ProtocolContractError(
+                    f"unsupported spaCy adapter mode: {self.mode!r}"
+                ) from exc
+        if not isinstance(self.mode, SpacyAdapterMode):
+            raise ProtocolContractError("mode must be a SpacyAdapterMode")
+        _safe_id(self.requested_model, "requested_model")
+        if (
+            not isinstance(self.language, str)
+            or not re.fullmatch(r"[a-z]{2,8}", self.language)
+        ):
+            raise ProtocolContractError(
+                "language must be a lowercase ISO-style language identifier"
+            )
+        if (
+            not isinstance(self.max_text_bytes, int)
+            or isinstance(self.max_text_bytes, bool)
+            or not 1 <= self.max_text_bytes <= SPACY_MAX_TEXT_BYTES
+        ):
+            raise ProtocolContractError(
+                f"max_text_bytes must be between 1 and {SPACY_MAX_TEXT_BYTES}"
+            )
 
 
 def _safe_id(value: object, field_name: str) -> str:
@@ -432,8 +490,647 @@ class CompilerAdapter(StageAdapter):
         super().__init__(StageName.COMPILER, handler=handler, **kwargs)
 
 
+def HSSLEV0310F79() -> str:
+    """Return the AST-verifiable spaCy linguistic-evidence receipt."""
+
+    return (
+        "reproducible spaCy tokens, sentences, lemmas, dependencies, entities, "
+        "semantic roles, modal cues, and explicit fallback identity"
+    )
+
+
+def _spacy_request_document(
+    request: StageRequest,
+    config: SpacyAdapterConfig,
+) -> tuple[str, str, str | None, str]:
+    """Validate and return text, document id, citation, and source."""
+
+    data = request.input_data
+    if isinstance(data, str):
+        text = data
+        document_id = request.case_id
+        citation = None
+        source = "benchmark_input"
+    elif isinstance(data, Mapping):
+        raw_text = data.get("text")
+        legacy_source = data.get("source")
+        if raw_text is None and isinstance(legacy_source, str):
+            # StageRequest examples historically use ``source`` for source
+            # text.  Keep that input form while preferring the unambiguous
+            # ``text`` key in new records.
+            raw_text = legacy_source
+        if not isinstance(raw_text, str):
+            raise ProtocolContractError(
+                "spaCy input_data must contain a string text field"
+            )
+        text = raw_text
+        document_id = data.get("document_id", request.case_id)
+        citation = data.get("citation")
+        source = data.get(
+            "source_name",
+            (
+                legacy_source
+                if data.get("text") is not None and isinstance(legacy_source, str)
+                else "benchmark_input"
+            ),
+        )
+    else:
+        raise ProtocolContractError(
+            "spaCy input_data must be text or an object containing text"
+        )
+    if not text.strip():
+        raise ProtocolContractError("spaCy input text must not be empty")
+    if len(text.encode("utf-8")) > config.max_text_bytes:
+        raise ProtocolContractError(
+            f"spaCy input text exceeds {config.max_text_bytes} encoded bytes"
+        )
+    _safe_id(document_id, "document_id")
+    if citation is not None and (
+        not isinstance(citation, str)
+        or not citation.strip()
+        or len(citation) > 256
+    ):
+        raise ProtocolContractError("citation must be a bounded nonempty string")
+    if (
+        not isinstance(source, str)
+        or not source.strip()
+        or len(source) > 256
+    ):
+        raise ProtocolContractError("source_name must be a bounded nonempty string")
+    return text, document_id, citation, source
+
+
+def _spacy_failure(
+    request: StageRequest,
+    detail: str,
+    *,
+    unavailable: bool = False,
+    effective_identity: Mapping[str, object] | None = None,
+    failure_code: FailureCode = FailureCode.SPACY_PARSE_OR_MODEL_FALLBACK,
+) -> StageOutput:
+    """Build a bounded fail-closed spaCy result."""
+
+    return StageOutput(
+        status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
+        effective_identity=(
+            request.requested_identity
+            if effective_identity is None
+            else effective_identity
+        ),
+        failure_code=(
+            FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code
+        ),
+        failure_detail=detail[:_MAX_DETAIL_LENGTH],
+    )
+
+
+def _spacy_frame_value(value: object, name: str, default: object = None) -> object:
+    if isinstance(value, Mapping):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _spacy_semantic_roles(frames: object) -> list[dict[str, object]]:
+    """Serialize SRL frames without their UUID defaults.
+
+    ``SRLFrame`` intentionally uses UUIDs for graph node identity.  Those IDs
+    are inappropriate in a reproducible benchmark record, so the adapter
+    derives each frame ID from its stable linguistic content instead.
+    """
+
+    if not isinstance(frames, Sequence) or isinstance(frames, (str, bytes)):
+        raise ProtocolContractError("semantic-role extractor must return a sequence")
+    normalized: list[dict[str, object]] = []
+    for frame in frames:
+        if not isinstance(frame, Mapping):
+            serializer = getattr(frame, "to_dict", None)
+            if callable(serializer):
+                serialized_frame = serializer()
+                if not isinstance(serialized_frame, Mapping):
+                    raise ProtocolContractError(
+                        "semantic-role frame must serialize to an object"
+                    )
+                frame = serialized_frame
+        raw_arguments = _spacy_frame_value(frame, "arguments", ())
+        if not isinstance(raw_arguments, Sequence) or isinstance(
+            raw_arguments, (str, bytes)
+        ):
+            raise ProtocolContractError("semantic-role arguments must be a sequence")
+        arguments: list[dict[str, object]] = []
+        for argument in raw_arguments:
+            span = _spacy_frame_value(argument, "span")
+            serialized_span = None
+            if span is not None:
+                if (
+                    not isinstance(span, Sequence)
+                    or isinstance(span, (str, bytes))
+                    or len(span) != 2
+                    or not all(isinstance(item, int) for item in span)
+                ):
+                    raise ProtocolContractError(
+                        "semantic-role argument span must contain two integers"
+                    )
+                serialized_span = [int(span[0]), int(span[1])]
+            arguments.append(
+                {
+                    "role": str(_spacy_frame_value(argument, "role", "")),
+                    "text": str(_spacy_frame_value(argument, "text", "")),
+                    "span": serialized_span,
+                    "confidence": float(
+                        _spacy_frame_value(argument, "confidence", 0.0)
+                    ),
+                }
+            )
+        arguments.sort(
+            key=lambda item: (
+                item["span"] is None,
+                item["span"] or [-1, -1],
+                item["role"],
+                item["text"],
+            )
+        )
+        predicate_span = _spacy_frame_value(frame, "predicate_span")
+        serialized_predicate_span = None
+        if predicate_span is not None:
+            if (
+                not isinstance(predicate_span, Sequence)
+                or isinstance(predicate_span, (str, bytes))
+                or len(predicate_span) != 2
+                or not all(isinstance(item, int) for item in predicate_span)
+            ):
+                raise ProtocolContractError(
+                    "semantic-role predicate span must contain two integers"
+                )
+            serialized_predicate_span = [
+                int(predicate_span[0]),
+                int(predicate_span[1]),
+            ]
+        body: dict[str, object] = {
+            "predicate": str(_spacy_frame_value(frame, "predicate", "")),
+            "predicate_span": serialized_predicate_span,
+            "sentence": str(_spacy_frame_value(frame, "sentence", "")),
+            "arguments": arguments,
+            "confidence": float(_spacy_frame_value(frame, "confidence", 0.0)),
+            "source": str(_spacy_frame_value(frame, "source", "")),
+        }
+        body["frame_id"] = (
+            "srl-"
+            + hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()[:24]
+        )
+        normalized.append(body)
+    normalized.sort(
+        key=lambda item: (
+            item["predicate_span"] is None,
+            item["predicate_span"] or [-1, -1],
+            item["predicate"],
+            item["frame_id"],
+        )
+    )
+    return normalized
+
+
+def _spacy_entities(doc: object) -> list[dict[str, object]]:
+    entities: list[dict[str, object]] = []
+    for entity in getattr(doc, "ents", ()):
+        entities.append(
+            {
+                "text": str(getattr(entity, "text", "")),
+                "label": str(getattr(entity, "label_", "")),
+                "start_char": int(getattr(entity, "start_char", 0)),
+                "end_char": int(getattr(entity, "end_char", 0)),
+            }
+        )
+    entities.sort(
+        key=lambda item: (
+            item["start_char"],
+            item["end_char"],
+            item["label"],
+            item["text"],
+        )
+    )
+    return entities
+
+
+def _spacy_dependencies(doc: object) -> list[dict[str, object]]:
+    dependencies: list[dict[str, object]] = []
+    for index, token in enumerate(doc):
+        dep = str(getattr(token, "dep_", ""))
+        if not dep:
+            continue
+        head = getattr(token, "head", token)
+        dependencies.append(
+            {
+                "token_index": int(getattr(token, "i", index)),
+                "head_index": int(getattr(head, "i", index)),
+                "dep": dep,
+                "label": dep,
+            }
+        )
+    dependencies.sort(key=lambda item: (item["token_index"], item["head_index"]))
+    return dependencies
+
+
+_SPACY_REGEX_TOKEN = re.compile(r"[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*|[^\w\s]")
+
+
+def _regex_legal_tokens(normalized_text: str) -> list[dict[str, object]]:
+    return [
+        {
+            "text": match.group(0),
+            "lemma": match.group(0).lower(),
+            "lower": match.group(0).lower(),
+            "pos": "",
+            "dep": "",
+            "start_char": match.start(),
+            "end_char": match.end(),
+            "is_stop": False,
+            "is_alpha": match.group(0).isalpha(),
+        }
+        for match in _SPACY_REGEX_TOKEN.finditer(normalized_text)
+    ]
+
+
+def _modal_cues_from_ir(modal_ir: Mapping[str, object]) -> list[dict[str, object]]:
+    raw_formulas = modal_ir.get("formulas", ())
+    if not isinstance(raw_formulas, Sequence):
+        raise ProtocolContractError("legal parser formulas must be a sequence")
+    cues: list[dict[str, object]] = []
+    for formula in raw_formulas:
+        if not isinstance(formula, Mapping):
+            raise ProtocolContractError("legal parser formula must be an object")
+        metadata = formula.get("metadata", {})
+        operator = formula.get("operator", {})
+        provenance = formula.get("provenance", {})
+        if not all(isinstance(item, Mapping) for item in (metadata, operator, provenance)):
+            raise ProtocolContractError("legal parser formula metadata is malformed")
+        cue = metadata.get("cue")
+        if not isinstance(cue, str) or not cue:
+            continue
+        cues.append(
+            {
+                "cue": cue,
+                "family": str(operator.get("family", "")),
+                "system": str(operator.get("system", "")),
+                "symbol": str(operator.get("symbol", "")),
+                "label": str(operator.get("label", "")),
+                "start_char": int(
+                    metadata.get("cue_start_char", provenance.get("start_char", 0))
+                ),
+                "end_char": int(
+                    metadata.get("cue_end_char", provenance.get("end_char", 0))
+                ),
+                "token_indices": [],
+            }
+        )
+    cues.sort(
+        key=lambda item: (
+            item["start_char"],
+            item["end_char"],
+            item["family"],
+            item["symbol"],
+        )
+    )
+    return cues
+
+
+def _default_spacy_encoder(config: SpacyAdapterConfig) -> object:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+        SpaCyLegalEncoder,
+    )
+
+    encoder = SpaCyLegalEncoder(model_name=config.requested_model)
+    if config.mode is SpacyAdapterMode.BLANK_MODEL and not encoder.used_fallback_model:
+        # A blank run is an explicit ablation even on hosts where the requested
+        # package happens to be installed.
+        import spacy
+
+        nlp = spacy.blank(config.language)
+        if "sentencizer" not in nlp.pipe_names:
+            nlp.add_pipe("sentencizer")
+        encoder.nlp = nlp
+        encoder.used_fallback_model = True
+    return encoder
+
+
+def _default_srl_extractor(nlp: object | None) -> object:
+    from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
+    return SRLExtractor(nlp=nlp)
+
+
+def _default_legal_parser() -> object:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
+        LegalModalParser,
+    )
+
+    return LegalModalParser()
+
+
+def _default_spacy_modal_compiler() -> object:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+        SpaCyModalIRCompiler,
+    )
+
+    return SpaCyModalIRCompiler()
+
+
+def _spacy_evidence_handler(
+    config: SpacyAdapterConfig,
+    *,
+    encoder_factory: Callable[[SpacyAdapterConfig], object],
+    srl_factory: Callable[[object | None], object],
+    legal_parser_factory: Callable[[], object],
+    modal_compiler_factory: Callable[[], object],
+) -> StageHandler:
+    def handler(request: StageRequest) -> StageOutput:
+        try:
+            text, document_id, citation, source = _spacy_request_document(
+                request, config
+            )
+        except ProtocolContractError as exc:
+            return _spacy_failure(
+                request,
+                str(exc),
+                failure_code=FailureCode.FIXTURE_INVALID,
+            )
+
+        try:
+            if config.mode is SpacyAdapterMode.REGEX_LEGAL:
+                parser = legal_parser_factory()
+                modal_ir_object = parser.parse(
+                    text,
+                    document_id=document_id,
+                    citation=citation,
+                    source=source,
+                )
+                modal_ir = modal_ir_object.to_dict()
+                normalized_text = str(modal_ir.get("normalized_text", text.strip()))
+                segments = parser.segment(normalized_text)
+                sentences = [
+                    {
+                        "text": str(getattr(segment, "text", "")),
+                        "start_char": int(getattr(segment, "start_char", 0)),
+                        "end_char": int(getattr(segment, "end_char", 0)),
+                    }
+                    for segment in segments
+                ]
+                semantic_roles = _spacy_semantic_roles(
+                    srl_factory(None).extract_srl(normalized_text)
+                )
+                tokens = _regex_legal_tokens(normalized_text)
+                dependencies: list[dict[str, object]] = []
+                entities: list[dict[str, object]] = []
+                modal_cues = _modal_cues_from_ir(modal_ir)
+                used_fallback = False
+                effective_model = "regex-legal-parser-v1"
+                package_version = None
+                pipeline: list[str] = []
+                model_version = "1"
+                model_language = config.language
+                model_meta_sha256 = hashlib.sha256(
+                    canonical_json(
+                        {
+                            "name": effective_model,
+                            "version": model_version,
+                            "language": model_language,
+                            "pipeline": pipeline,
+                        }
+                    ).encode("utf-8")
+                ).hexdigest()
+                parser_backend = "legal_modal_parser_v1"
+                srl_backend = "heuristic"
+            else:
+                encoder = encoder_factory(config)
+                encoding = encoder.encode(
+                    text,
+                    document_id=document_id,
+                    citation=citation,
+                    source=source,
+                )
+                used_fallback = bool(
+                    getattr(
+                        encoding,
+                        "used_fallback_model",
+                        getattr(encoder, "used_fallback_model", False),
+                    )
+                )
+                nlp = getattr(encoder, "nlp", None)
+                pipe_names = list(getattr(nlp, "pipe_names", ()))
+                raw_model_meta = getattr(nlp, "meta", {})
+                model_meta = (
+                    raw_model_meta if isinstance(raw_model_meta, Mapping) else {}
+                )
+                model_version = str(model_meta.get("version", ""))
+                model_language = str(model_meta.get("lang", config.language))
+                model_meta_sha256 = hashlib.sha256(
+                    canonical_json(
+                        {
+                            "name": str(
+                                model_meta.get("name", config.requested_model)
+                            ),
+                            "version": model_version,
+                            "language": model_language,
+                            "pipeline": pipe_names,
+                        }
+                    ).encode("utf-8")
+                ).hexdigest()
+                identity = {
+                    **dict(request.requested_identity),
+                    "requested_model": config.requested_model,
+                    "effective_model": (
+                        f"spacy.blank:{config.language}"
+                        if used_fallback
+                        else config.requested_model
+                    ),
+                    "mode": config.mode.value,
+                    "used_fallback_model": used_fallback,
+                    "pipeline": pipe_names,
+                    "model_version": model_version,
+                    "model_language": model_language,
+                    "model_meta_sha256": model_meta_sha256,
+                }
+                if (
+                    config.mode is SpacyAdapterMode.FULL_MODEL
+                    and used_fallback
+                ):
+                    return _spacy_failure(
+                        request,
+                        f"requested spaCy model {config.requested_model!r} is "
+                        "unavailable; blank fallback refused",
+                        unavailable=True,
+                        effective_identity=identity,
+                    )
+                if (
+                    config.mode is SpacyAdapterMode.BLANK_MODEL
+                    and not used_fallback
+                ):
+                    return _spacy_failure(
+                        request,
+                        "blank-model mode did not produce a blank spaCy pipeline",
+                        effective_identity=identity,
+                    )
+                encoding_data = encoding.to_dict()
+                if not isinstance(encoding_data, Mapping):
+                    raise ProtocolContractError(
+                        "SpaCyLegalEncoder output must serialize to an object"
+                    )
+                normalized_text = str(
+                    encoding_data.get("normalized_text", text.strip())
+                )
+                tokens = list(encoding_data.get("tokens", ()))
+                sentences = list(encoding_data.get("sentences", ()))
+                modal_cues = list(encoding_data.get("cues", ()))
+                doc = nlp(normalized_text)
+                dependencies = _spacy_dependencies(doc)
+                entities = _spacy_entities(doc)
+                semantic_roles = _spacy_semantic_roles(
+                    srl_factory(nlp).extract_srl(normalized_text)
+                )
+                modal_ir_object = modal_compiler_factory().compile(encoding)
+                modal_ir = modal_ir_object.to_dict()
+                effective_model = (
+                    f"spacy.blank:{config.language}"
+                    if used_fallback
+                    else config.requested_model
+                )
+                try:
+                    import spacy
+
+                    package_version = str(spacy.__version__)
+                except ImportError:
+                    package_version = None
+                pipeline = pipe_names
+                parser_backend = "spacy_modal_codec_v1"
+                srl_backend = "heuristic" if used_fallback else "spacy"
+
+            effective_identity = {
+                **dict(request.requested_identity),
+                "requested_model": config.requested_model,
+                "effective_model": effective_model,
+                "mode": config.mode.value,
+                "used_fallback_model": used_fallback,
+                "language": config.language,
+                "pipeline": pipeline,
+                "model_version": model_version,
+                "model_language": model_language,
+                "model_meta_sha256": model_meta_sha256,
+                "parser_backend": parser_backend,
+                "srl_backend": srl_backend,
+                "spacy_version": package_version,
+            }
+            payload = {
+                "schema": SPACY_EVIDENCE_SCHEMA,
+                "document": {
+                    "document_id": document_id,
+                    "source": source,
+                    "citation": citation,
+                    "normalized_text": normalized_text,
+                    "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                },
+                "tokens": tokens,
+                "sentences": sentences,
+                "dependencies": dependencies,
+                "entities": entities,
+                "semantic_roles": semantic_roles,
+                "modal_cues": modal_cues,
+                "modal_ir": modal_ir,
+                "execution": effective_identity,
+                "assurance": {
+                    "evidence_only": True,
+                    "semantic_proof": False,
+                    "authoritative": False,
+                    "kernel_checked": False,
+                },
+            }
+            encoded = canonical_json(payload).encode("utf-8")
+            if len(encoded) > SPACY_MAX_EVIDENCE_BYTES:
+                return _spacy_failure(
+                    request,
+                    f"spaCy evidence exceeds {SPACY_MAX_EVIDENCE_BYTES} encoded bytes",
+                    effective_identity=effective_identity,
+                )
+            return StageOutput(
+                data=payload,
+                effective_identity=effective_identity,
+            )
+        except (ImportError, ModuleNotFoundError, RuntimeError) as exc:
+            return _spacy_failure(
+                request,
+                f"spaCy linguistic backend unavailable: {type(exc).__name__}",
+                unavailable=True,
+                effective_identity={
+                    **dict(request.requested_identity),
+                    "requested_model": config.requested_model,
+                    "mode": config.mode.value,
+                },
+            )
+        except (ProtocolContractError, AttributeError, TypeError, ValueError) as exc:
+            return _spacy_failure(
+                request,
+                f"spaCy linguistic evidence rejected: {type(exc).__name__}: {exc}",
+            )
+        except Exception as exc:
+            return _spacy_failure(
+                request,
+                f"spaCy linguistic adapter raised {type(exc).__name__}",
+                failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+            )
+
+    return handler
+
+
 class SpacyAdapter(StageAdapter):
-    def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
+    """Stage adapter for injected or existing-path linguistic evidence.
+
+    Passing no handler and no config preserves the dependency-free default
+    route.  A config opts into lazy execution of the repository's spaCy modal,
+    semantic-role, or regex/legal parser paths.
+    """
+
+    config: SpacyAdapterConfig | None
+
+    def __init__(
+        self,
+        handler: StageHandler | None = None,
+        *,
+        config: SpacyAdapterConfig | None = None,
+        encoder_factory: Callable[[SpacyAdapterConfig], object] | None = None,
+        srl_factory: Callable[[object | None], object] | None = None,
+        legal_parser_factory: Callable[[], object] | None = None,
+        modal_compiler_factory: Callable[[], object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        if handler is not None and config is not None:
+            raise ProtocolContractError(
+                "SpacyAdapter accepts either an injected handler or a config"
+            )
+        if config is None and any(
+            factory is not None
+            for factory in (
+                encoder_factory,
+                srl_factory,
+                legal_parser_factory,
+                modal_compiler_factory,
+            )
+        ):
+            raise ProtocolContractError(
+                "spaCy component factories require a SpacyAdapterConfig"
+            )
+        if config is not None:
+            if not isinstance(config, SpacyAdapterConfig):
+                raise ProtocolContractError(
+                    "config must be a SpacyAdapterConfig"
+                )
+            handler = _spacy_evidence_handler(
+                config,
+                encoder_factory=encoder_factory or _default_spacy_encoder,
+                srl_factory=srl_factory or _default_srl_extractor,
+                legal_parser_factory=legal_parser_factory or _default_legal_parser,
+                modal_compiler_factory=(
+                    modal_compiler_factory or _default_spacy_modal_compiler
+                ),
+            )
+        object.__setattr__(self, "config", config)
         super().__init__(StageName.SPACY, handler=handler, **kwargs)
 
 
@@ -1383,6 +2080,7 @@ __all__ = [
     "HammerAdapterContractError",
     "HSSLEV0335D9B",
     "HSSLEV0306C18",
+    "HSSLEV0310F79",
     "HSSLEV0342A4C",
     "KernelAdapter",
     "LEANSTRAL_DRAFT_SCHEMA",
@@ -1396,7 +2094,12 @@ __all__ = [
     "LeanstralAdapterContractError",
     "LeanstralAdapter",
     "PipelineResult",
+    "SPACY_EVIDENCE_SCHEMA",
+    "SPACY_MAX_EVIDENCE_BYTES",
+    "SPACY_MAX_TEXT_BYTES",
     "SpacyAdapter",
+    "SpacyAdapterConfig",
+    "SpacyAdapterMode",
     "StageAdapter",
     "StageHandler",
     "StageOutput",

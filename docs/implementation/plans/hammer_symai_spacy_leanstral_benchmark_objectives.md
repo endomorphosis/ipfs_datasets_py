@@ -220,6 +220,9 @@ is never completion evidence.
 - Acceptance: Output is deterministic for a fixed pipeline, records requested and effective model identity and fallback use, treats an unavailable requested full model as unavailable rather than successful fallback, has a stable digest, and makes no semantic-proof claim.
 - Gap task: Implement and test the spaCy evidence adapter over available and missing-model conditions.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.adapters.HSSLEV0310F79` binds this goal to the reproducible linguistic-evidence boundary. `SPACY_EVIDENCE_SCHEMA`, `SpacyAdapterMode`, `SpacyAdapterConfig`, and the configured `SpacyAdapter` capture document identity, tokens and lemmas, sentence spans, dependencies, entities, semantic-role frames, legal modal cues/IR, execution identity, and assurance from the existing spaCy modal, SRL, and regex/legal-parser paths in a bounded, content-addressed stage payload.
+- Linguistic evidence contract: The adapter records the requested and effective identities, spaCy/model versions, pipeline components, and a model-metadata digest, and pins the execution mode to `full_model`, `blank_model`, or `regex_legal`. Full-model mode refuses spaCy's implicit blank fallback: a missing requested model is `unavailable`, never a successful blank or regex result. The other modes are deliberate controls with explicit identities. Fixed inputs and a fixed effective backend serialize deterministically despite non-deterministic identifiers in upstream SRL objects; every mode remains descriptive evidence, never a semantic proof or kernel-acceptance claim.
+- Backlog alignment: HSSL-G031 remains one cohesive, bounded child of HSSL-G030. Its adapter output and focused unit validation cover HSSLEV0310F79 without another child goal; generated supervisor todo/vector/task state remains supervisor-owned and is not manually edited.
 
 ## HSSL-G032 Integrate SyMAI through the existing router
 
