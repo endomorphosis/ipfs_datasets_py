@@ -296,3 +296,41 @@ __all__ += [
     "ProtocolContractError",
     "build_default_protocol",
 ]
+
+# Capability/worktree contracts are standard-library-only and perform no
+# probing or filesystem access at import time.
+from .capabilities import (  # noqa: E402
+    CAPABILITY_INVENTORY_SCHEMA,
+    REQUIRED_CAPABILITY_KINDS,
+    WORKTREE_SAFETY_SCHEMA,
+    CapabilityContractError,
+    CapabilityInventory,
+    CapabilityKind,
+    CapabilityRecord,
+    CapabilityStatus,
+    CapabilityUnavailableError,
+    HSSLEV0118D14,
+    HSSLEV0125F83,
+    WorktreeSafetyReceipt,
+    prepare_isolated_worktree,
+    probe_runtime_capabilities,
+    require_capabilities,
+)
+
+__all__ += [
+    "CAPABILITY_INVENTORY_SCHEMA",
+    "REQUIRED_CAPABILITY_KINDS",
+    "WORKTREE_SAFETY_SCHEMA",
+    "CapabilityContractError",
+    "CapabilityInventory",
+    "CapabilityKind",
+    "CapabilityRecord",
+    "CapabilityStatus",
+    "CapabilityUnavailableError",
+    "HSSLEV0118D14",
+    "HSSLEV0125F83",
+    "WorktreeSafetyReceipt",
+    "prepare_isolated_worktree",
+    "probe_runtime_capabilities",
+    "require_capabilities",
+]
