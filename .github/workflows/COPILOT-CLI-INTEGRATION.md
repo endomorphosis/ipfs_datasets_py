@@ -424,7 +424,7 @@ Potential improvements to consider:
 - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
 - [GitHub CLI Documentation](https://cli.github.com/manual/)
 - [Workflow Auto-Healing Guide](./AUTO_HEALING_GUIDE.md)
-- [Repository COPILOT Instructions](../../COPILOT.md)
+- [Repository Copilot Instructions](../copilot-instructions.md)
 
 ## Support
 
