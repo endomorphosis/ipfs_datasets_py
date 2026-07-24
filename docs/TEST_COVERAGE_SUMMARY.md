@@ -55,4 +55,4 @@ python -m pytest ipfs_datasets_py/optimizers/tests/unit/agentic/ \
 ```
 
 ## Updated Documentation
-- [TODO.md](ipfs_datasets_py/optimizers/TODO.md) - Marked completed test tasks with completion notes
+- [TODO.md](optimizers/TODO.md) - Marked completed test tasks with completion notes
