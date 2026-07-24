@@ -6,7 +6,14 @@ cd "${ROOT_DIR}"
 
 RUN_ID="${1:?run id is required}"
 PARENT_PID="${2:-0}"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+DEFAULT_PYTHON_BIN="${ROOT_DIR}/.venv-cuda/bin/python"
+if [[ ! -x "${DEFAULT_PYTHON_BIN}" ]]; then
+  DEFAULT_PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+fi
+if [[ ! -x "${DEFAULT_PYTHON_BIN}" ]]; then
+  DEFAULT_PYTHON_BIN="$(command -v python3 || command -v python)"
+fi
+PYTHON_BIN="${PYTHON_BIN:-${DEFAULT_PYTHON_BIN}}"
 INPUT_PATH_OVERRIDE="${LEANSTRAL_AUDIT_INPUT_PATH:-}"
 DEFAULT_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}.canonical-disagreements.jsonl"
 LEGACY_INPUT_PATH="${ROOT_DIR}/workspace/test-logs/${RUN_ID}-autoencoder.canonical-disagreements.jsonl"
@@ -250,7 +257,7 @@ esac
 export PYTHONPATH="${ROOT_DIR}:${ROOT_DIR}/../ipfs_accelerate_py${PYTHONPATH:+:${PYTHONPATH}}"
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1}"
 export IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS="${IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS:-1}"
-PROVER_PREFLIGHT_PORTFOLIO="${LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_generation}"
+PROVER_PREFLIGHT_PORTFOLIO="${LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_training}"
 export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-ipfs_accelerate_py}"
 export LEANSTRAL_AUDIT_PROVIDER="${LEANSTRAL_AUDIT_PROVIDER:-leanstral_local}"
 export LEANSTRAL_AUDIT_PROVIDER_FALLBACKS="${LEANSTRAL_AUDIT_PROVIDER_FALLBACKS:-llama_cpp_native,mistral_vibe}"

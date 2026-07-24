@@ -291,6 +291,24 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
     # Reconstruction kernels are intentionally separate because first install
     # can require a lengthy toolchain build.
     "reconstruction": ("coq", "isabelle"),
+    # Complete production verification toolchain for LegalIR training. This
+    # intentionally excludes SymbolicAI because it is an LLM integration, not
+    # a theorem prover or reconstruction kernel.
+    "legal_ir_training": (
+        "z3",
+        "cvc5",
+        "cvc5_cli",
+        "lean",
+        "vampire",
+        "eprover",
+        "ergoai",
+        "apalache",
+        "maude",
+        "tamarin",
+        "proverif",
+        "coq",
+        "isabelle",
+    ),
     # Explicit operator action only: this may download/build several gigabytes.
     "legal_ir_full": (
         "z3",
@@ -2813,7 +2831,8 @@ def main(argv: list[str] | None = None) -> int:
             "Install a named prover portfolio; repeatable. legal_ir_core is the "
             "production Hammer preflight, legal_ir_generation also provides "
             "F-logic candidate checking, legal_ir_specialists adds family-specific "
-            "engines, and reconstruction adds Rocq and Isabelle."
+            "engines, legal_ir_training combines all proof and reconstruction "
+            "routes, and reconstruction adds Rocq and Isabelle."
         ),
     )
     parser.add_argument(

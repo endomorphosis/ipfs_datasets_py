@@ -271,6 +271,7 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
         encoding="utf-8"
     )
     assert "LEANSTRAL_LEAN_TIMEOUT_SECONDS:-30" in watcher
+    assert 'DEFAULT_PYTHON_BIN="${ROOT_DIR}/.venv-cuda/bin/python"' in watcher
     assert "LEANSTRAL_AUDIT_PROVIDER:-leanstral_local" in watcher
     assert "LEANSTRAL_AUDIT_PROVIDER_FALLBACKS:-llama_cpp_native,mistral_vibe" in watcher
     assert "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-1" in watcher
@@ -298,7 +299,7 @@ def test_live_audit_worker_lean_timeout_default_matches_canary_budget() -> None:
     assert "LEANSTRAL_AUDIT_MAX_RETRIES:-0" in watcher
     assert "LEANSTRAL_AUDIT_TIMEOUT_SECONDS:-600" in watcher
     assert "LEANSTRAL_AUDIT_MAX_WORK_ITEMS:-8" in watcher
-    assert "LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_generation" in watcher
+    assert "LEANSTRAL_AUDIT_PROVER_PORTFOLIO:-legal_ir_training" in watcher
     assert (
         "LEANSTRAL_AUDIT_REQUIRED_SEMANTIC_FAMILIES:"
         "-tdfol,dcec,flogic,deontic,knowledge_graph"

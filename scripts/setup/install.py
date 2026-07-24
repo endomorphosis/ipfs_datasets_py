@@ -432,6 +432,7 @@ _LOGIC_PROVER_PORTFOLIOS = frozenset(
         "legal_ir_full",
         "legal_ir_generation",
         "legal_ir_specialists",
+        "legal_ir_training",
         "reconstruction",
     }
 )

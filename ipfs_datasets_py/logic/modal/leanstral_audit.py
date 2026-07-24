@@ -4349,8 +4349,8 @@ def _candidate_language_profile(
         dialect = "FLOGIC"
         shape = "typed frame, class, slot, role, and value relations"
         semantic_roles = ["frame", "class", "slot_or_role", "value"]
-        verification_routes = ["flogic_shape", "z3", "cvc5", "vampire", "e_prover"]
-        preferred_authority = "ergoai"
+        verification_routes = ["native_flogic", "z3", "cvc5", "vampire", "e_prover"]
+        preferred_authority = "native_flogic"
     elif family == "deontic" or view == "deontic.ir":
         dialect = "DEONTIC"
         shape = "typed obligation, permission, prohibition, exception relations"

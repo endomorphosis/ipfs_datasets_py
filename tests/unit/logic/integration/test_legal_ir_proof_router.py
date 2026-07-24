@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from types import SimpleNamespace
 
 from ipfs_datasets_py.logic.integration.reasoning.hammer import (
     CallableHammerBackendRunner,
@@ -90,7 +91,7 @@ def test_cheap_proof_stops_and_records_every_skipped_route() -> None:
     assert result.trust_satisfied
     assert result.stop_reason == "required_trust_obtained"
     assert calls == ["deterministic_syntax"]
-    assert len(result.attempts) == 7
+    assert len(result.attempts) == 8
     assert result.attempts[0].status == ProofRouteStatus.PROVED
     assert all(item.status == ProofRouteStatus.SKIPPED for item in result.attempts[1:])
     assert set(result.skipped_routes) == {
@@ -98,6 +99,7 @@ def test_cheap_proof_stops_and_records_every_skipped_route() -> None:
         "deterministic_contract",
         "native_tdfol",
         "native_cec",
+        "native_flogic",
         "smt_atp_portfolio",
         "native_lean_reconstruction",
     }
@@ -160,6 +162,141 @@ def test_native_tdfol_result_avoids_external_portfolio() -> None:
     assert next(
         item for item in result.attempts if item.route == "smt_atp_portfolio"
     ).skip_reason == "required_trust_obtained"
+
+
+def test_drafted_tdfol_candidate_is_proved_from_compiler_owned_fact() -> None:
+    obligation = LegalIRProofObligation(
+        obligation_id="tdfol-candidate-1",
+        statement="temporal_anchor(event:filing, time:shall)",
+        kind="drafted_logic_candidate",
+        legal_ir_view="TDFOL.prover",
+        logic_family="temporal_first_order",
+        metadata={"drafted_candidate_goal": True},
+    )
+    premises = [
+        HammerPremise(
+            "compiler-temporal-anchor",
+            obligation.statement,
+            metadata={
+                "legal_ir_view": "TDFOL.prover",
+                "logic_family": "temporal_first_order",
+                "premise_kind": "compiler_candidate_fact",
+            },
+        )
+    ]
+    result = LegalIRProofRouter(
+        HammerPipeline(backends=[]),
+        policy=ProofRoutingPolicy(
+            required_trust="native",
+        ),
+    ).route(obligation, _goal(obligation), premises)
+
+    native = next(item for item in result.attempts if item.route == "native_tdfol")
+    assert result.trust_satisfied
+    assert native.status == ProofRouteStatus.PROVED
+    assert native.metadata["lowering"] == "typed_candidate_to_tdfol"
+    assert native.metadata["compiler_fact_count"] == 1
+
+
+def test_drafted_dcec_candidate_is_proved_from_compiler_owned_fact() -> None:
+    obligation = LegalIRProofObligation(
+        obligation_id="dcec-candidate-1",
+        statement="happens(event:filing, time:shall)",
+        kind="drafted_logic_candidate",
+        legal_ir_view="CEC.native",
+        logic_family="event_calculus",
+        metadata={"drafted_candidate_goal": True},
+    )
+    premises = [
+        HammerPremise(
+            "compiler-dcec-happens",
+            obligation.statement,
+            metadata={
+                "legal_ir_view": "CEC.native",
+                "logic_family": "event_calculus",
+                "premise_kind": "compiler_candidate_fact",
+            },
+        )
+    ]
+    result = LegalIRProofRouter(
+        HammerPipeline(backends=[]),
+        policy=ProofRoutingPolicy(
+            required_trust="native",
+        ),
+    ).route(obligation, _goal(obligation), premises)
+
+    native = next(item for item in result.attempts if item.route == "native_cec")
+    assert result.trust_satisfied
+    assert native.status == ProofRouteStatus.PROVED
+    assert native.metadata["lowering"] == "typed_candidate_to_dcec"
+    assert native.metadata["compiler_fact_count"] == 1
+
+
+def test_drafted_flogic_candidate_delegates_to_ergoai(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.flogic import ergoai_wrapper
+
+    calls: list[tuple[str, str]] = []
+
+    class FakeErgoAIWrapper:
+        simulation_mode = False
+
+        def __init__(self, *, ontology_name, lazy_install):
+            calls.append(("init", ontology_name))
+            assert lazy_install is True
+
+        def add_rule(self, rule):
+            calls.append(("rule", rule))
+
+        def query(self, goal, *, timeout_seconds):
+            calls.append(("query", goal))
+            assert timeout_seconds > 0.0
+            return SimpleNamespace(
+                status=SimpleNamespace(value="success"),
+                bindings=[{"?Proof": "yes"}],
+                error_message="",
+            )
+
+    monkeypatch.setattr(ergoai_wrapper, "ErgoAIWrapper", FakeErgoAIWrapper)
+    obligation = LegalIRProofObligation(
+        obligation_id="flogic-candidate-1",
+        statement="frame_role(frame:filing, role:actor, value:agency)",
+        kind="drafted_logic_candidate",
+        legal_ir_view="modal.frame_logic",
+        logic_family="frame_logic",
+        metadata={"drafted_candidate_goal": True},
+    )
+    premises = [
+        HammerPremise(
+            "compiler-frame-role",
+            obligation.statement,
+            metadata={
+                "legal_ir_view": "modal.frame_logic",
+                "logic_family": "frame_logic",
+                "premise_kind": "compiler_candidate_fact",
+            },
+        )
+    ]
+    result = LegalIRProofRouter(
+        HammerPipeline(backends=[]),
+        policy=ProofRoutingPolicy(
+            required_trust="native",
+        ),
+    ).route(obligation, _goal(obligation), premises)
+
+    native = next(item for item in result.attempts if item.route == "native_flogic")
+    tdfol = next(item for item in result.attempts if item.route == "native_tdfol")
+    assert result.trust_satisfied
+    assert tdfol.skip_reason == "logic_family_not_supported_by_tdfol"
+    assert native.status == ProofRouteStatus.PROVED
+    assert native.metadata["lowering"] == "typed_atoms_to_ergoai"
+    assert ("rule", "frame_role(filing,actor,agency).") in calls
+    assert (
+        "rule",
+        "legal_ir_candidate_proved(yes) :- frame_role(filing,actor,agency).",
+    ) in calls
+    assert ("query", "legal_ir_candidate_proved(?Proof)") in calls
 
 
 def test_canonical_graph_check_matches_the_source_graph_payload() -> None:
@@ -329,7 +466,7 @@ def test_pre_cancelled_request_records_cancellation_for_all_routes() -> None:
     )
 
     assert result.status == ProofRouteStatus.CANCELLED
-    assert len(result.attempts) == 7
+    assert len(result.attempts) == 8
     assert all(item.status == ProofRouteStatus.CANCELLED for item in result.attempts)
     assert set(result.cancellation_reasons) == {"caller_cancelled"}
     assert result.to_dict()["schema_version"] == LEGAL_IR_PROOF_ROUTER_SCHEMA_VERSION

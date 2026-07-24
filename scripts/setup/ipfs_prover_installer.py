@@ -13,7 +13,7 @@ one of those solver flags or portfolios.
 
 See also: setup installer env vars:
 - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1
-- IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS=legal_ir_generation
+- IPFS_DATASETS_PY_AUTO_INSTALL_PROVER_PORTFOLIOS=legal_ir_training
 - IPFS_DATASETS_PY_AUTO_INSTALL_ALL_PROVERS=1
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1
@@ -550,6 +550,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=(
             "legal_ir_core",
             "legal_ir_generation",
+            "legal_ir_training",
             "legal_ir_specialists",
             "reconstruction",
             "legal_ir_full",

@@ -30,6 +30,7 @@ import logging
 import os
 import shutil
 import subprocess
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
@@ -42,6 +43,9 @@ from ipfs_datasets_py.logic.common.feature_detection import (
 logger = logging.getLogger(__name__)
 
 _ATTEMPTED: set[str] = set()
+_INSTALL_RESULTS: dict[str, bool] = {}
+_INSTALL_LOCKS: dict[str, threading.Lock] = {}
+_INSTALL_LOCKS_GUARD = threading.Lock()
 
 _ALIASES = {
     "z3": "z3",
@@ -302,7 +306,7 @@ def lazy_install_strict() -> bool:
     )
 
 
-def lazy_install_prover(
+def _lazy_install_prover_once(
     prover_name: str,
     *,
     force: bool = False,
@@ -333,10 +337,6 @@ def lazy_install_prover(
         )
         return False
 
-    if prover in _ATTEMPTED and not force:
-        return False
-
-    _ATTEMPTED.add(prover)
     strict = lazy_install_strict() if strict is None else strict
     _emit(
         ProverInstallEvent(prover, "checking", f"checking whether {prover} is already available"),
@@ -404,6 +404,64 @@ def lazy_install_prover(
         return False
 
 
+def _install_lock(prover: str) -> threading.Lock:
+    """Return a per-prover lock without serializing unrelated installations."""
+
+    with _INSTALL_LOCKS_GUARD:
+        lock = _INSTALL_LOCKS.get(prover)
+        if lock is None:
+            lock = threading.Lock()
+            _INSTALL_LOCKS[prover] = lock
+        return lock
+
+
+def lazy_install_prover(
+    prover_name: str,
+    *,
+    force: bool = False,
+    strict: bool | None = None,
+    reason: str | None = None,
+    progress: ProgressCallback | None = None,
+    allow_automatic: bool = False,
+) -> bool:
+    """Install a prover at most once per process, safely under parallel use."""
+
+    prover = normalize_prover_name(prover_name)
+    allowed = prover_lazy_install_enabled(prover) or (
+        allow_automatic
+        and not _explicitly_disabled()
+        and not minimal_imports_enabled()
+    )
+    if not allowed:
+        return _lazy_install_prover_once(
+            prover,
+            force=force,
+            strict=strict,
+            reason=reason,
+            progress=progress,
+            allow_automatic=allow_automatic,
+        )
+
+    with _install_lock(prover):
+        if prover in _ATTEMPTED and not force:
+            return bool(_INSTALL_RESULTS.get(prover, False))
+        _ATTEMPTED.add(prover)
+        try:
+            installed = _lazy_install_prover_once(
+                prover,
+                force=force,
+                strict=strict,
+                reason=reason,
+                progress=progress,
+                allow_automatic=allow_automatic,
+            )
+        except Exception:
+            _INSTALL_RESULTS[prover] = False
+            raise
+        _INSTALL_RESULTS[prover] = bool(installed)
+        return bool(installed)
+
+
 def ensure_prover_executable(
     prover_name: str,
     *,
@@ -464,7 +522,9 @@ def ensure_prover_executable(
 def reset_lazy_install_attempts() -> None:
     """Clear the per-process lazy-install attempt cache."""
 
-    _ATTEMPTED.clear()
+    with _INSTALL_LOCKS_GUARD:
+        _ATTEMPTED.clear()
+        _INSTALL_RESULTS.clear()
 
 
 __all__ = [

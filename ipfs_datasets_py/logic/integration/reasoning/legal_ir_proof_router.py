@@ -290,6 +290,7 @@ _ROUTES: tuple[tuple[ProofRouteStage, str], ...] = (
     (ProofRouteStage.DETERMINISTIC, "deterministic_contract"),
     (ProofRouteStage.NATIVE_LOGIC, "native_tdfol"),
     (ProofRouteStage.NATIVE_LOGIC, "native_cec"),
+    (ProofRouteStage.NATIVE_LOGIC, "native_flogic"),
     (ProofRouteStage.SMT_ATP, "smt_atp_portfolio"),
     (ProofRouteStage.LEAN_RECONSTRUCTION, "native_lean_reconstruction"),
 )
@@ -490,6 +491,7 @@ class LegalIRProofRouter:
             "deterministic_contract": self._deterministic_contract,
             "native_tdfol": self._native_logic,
             "native_cec": self._native_logic,
+            "native_flogic": self._native_flogic,
             "smt_atp_portfolio": self._smt_atp,
             "native_lean_reconstruction": self._lean_reconstruction,
         }[route]
@@ -497,17 +499,43 @@ class LegalIRProofRouter:
     def _applicability(
         self, route: str, obligation: LegalIRProofObligation, portfolio: Optional[HammerResult]
     ) -> str:
-        family = f"{obligation.logic_family} {obligation.legal_ir_view}".lower()
+        logic_family = obligation.logic_family.lower()
+        legal_ir_view = obligation.legal_ir_view.lower()
+        family = f"{logic_family} {legal_ir_view}"
         if route == "deterministic_graph" and not (
             "graph" in obligation.kind.lower() or "knowledge_graph" in family or obligation.logic_family.lower() == "frame"
         ):
             return "not_a_graph_obligation"
         if route == "deterministic_contract" and not obligation.metadata.get("contract_id"):
             return "not_a_contract_obligation"
-        if route == "native_tdfol" and not any(token in family for token in ("tdfol", "temporal", "deontic", "modal")):
+        if route == "native_tdfol" and not (
+            legal_ir_view == "tdfol.prover"
+            or any(
+                token in logic_family
+                for token in (
+                    "tdfol",
+                    "temporal",
+                    "deontic",
+                    "conditional_normative",
+                    "doxastic",
+                    "dynamic",
+                    "epistemic",
+                )
+            )
+        ):
             return "logic_family_not_supported_by_tdfol"
-        if route == "native_cec" and not any(token in family for token in ("cec", "event", "lifecycle", "cognitive")):
+        if route == "native_cec" and not (
+            legal_ir_view == "cec.native"
+            or any(
+                token in logic_family
+                for token in ("cec", "event", "lifecycle", "cognitive")
+            )
+        ):
             return "logic_family_not_supported_by_cec"
+        if route == "native_flogic" and not any(
+            token in logic_family for token in ("flogic", "frame_logic", "frame")
+        ):
+            return "logic_family_not_supported_by_flogic"
         if route == "native_lean_reconstruction" and (
             portfolio is None or not any(item.proved for item in portfolio.backend_results)
         ):
@@ -632,6 +660,102 @@ class LegalIRProofRouter:
             normalized = replace(normalized, trust_level=ProofTrustLevel.NATIVE)
         return normalized
 
+    def _native_flogic(self, request: ProofRouteRequest) -> ProofRouteOutcome:
+        raw = request.obligation.metadata.get("native_flogic_result")
+        if callable(raw):
+            raw = raw(request)
+        if raw is not None:
+            normalized = self._normalize_outcome(raw, request.route)
+            if (
+                normalized.status == ProofRouteStatus.PROVED
+                and normalized.trust_level == ProofTrustLevel.NONE
+            ):
+                normalized = replace(
+                    normalized,
+                    trust_level=ProofTrustLevel.NATIVE,
+                )
+            return normalized
+        if not request.obligation.metadata.get("drafted_candidate_goal"):
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_flogic_formula_not_available",
+                metadata={"capability": request.route},
+            )
+
+        candidate_atoms = self._parse_flogic_candidate(
+            request.obligation.statement
+        )
+        if not candidate_atoms:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_flogic_candidate_not_lowerable",
+                metadata={"capability": request.route},
+            )
+        premise_atoms = [
+            atoms[0]
+            for statement in self._compiler_candidate_fact_statements(
+                request,
+                "native_flogic",
+            )
+            if len(atoms := self._parse_flogic_candidate(statement)) == 1
+        ]
+        if not premise_atoms:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_flogic_compiler_facts_not_available",
+                metadata={"capability": request.route},
+            )
+
+        from ipfs_datasets_py.logic.flogic.ergoai_wrapper import ErgoAIWrapper
+
+        wrapper = ErgoAIWrapper(
+            ontology_name=f"legal_ir_{self._atom(request.obligation.obligation_id)}",
+            lazy_install=True,
+        )
+        if wrapper.simulation_mode:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_flogic_ergoai_unavailable",
+                metadata={"capability": request.route},
+            )
+        for atom in premise_atoms:
+            wrapper.add_rule(self._render_ergo_atom(atom) + ".")
+        candidate_body = ", ".join(
+            self._render_ergo_atom(atom) for atom in candidate_atoms
+        )
+        wrapper.add_rule(
+            f"legal_ir_candidate_proved(yes) :- {candidate_body}."
+        )
+        query = wrapper.query(
+            "legal_ir_candidate_proved(?Proof)",
+            timeout_seconds=request.timeout_seconds,
+        )
+        status = str(getattr(getattr(query, "status", None), "value", "")).lower()
+        metadata = {
+            "capability": request.route,
+            "candidate_atom_count": len(candidate_atoms),
+            "compiler_fact_count": len(premise_atoms),
+            "lowering": "typed_atoms_to_ergoai",
+        }
+        if status == "success" and bool(getattr(query, "bindings", ())):
+            return ProofRouteOutcome(
+                ProofRouteStatus.PROVED,
+                ProofTrustLevel.NATIVE,
+                reason="native_flogic_ergoai_proved",
+                metadata=metadata,
+            )
+        if status == "error":
+            return ProofRouteOutcome(
+                ProofRouteStatus.ERROR,
+                reason=str(getattr(query, "error_message", "") or "ergoai_error"),
+                metadata=metadata,
+            )
+        return ProofRouteOutcome(
+            ProofRouteStatus.UNKNOWN,
+            reason="native_flogic_ergoai_unproved",
+            metadata=metadata,
+        )
+
     def _run_embedded_native_formula(self, request: ProofRouteRequest) -> Any:
         """Run an already typed native formula without guessing a text lowering.
 
@@ -647,6 +771,8 @@ class LegalIRProofRouter:
             if formula is None:
                 formula = metadata.get("tdfol_formula")
             if formula is None:
+                if metadata.get("drafted_candidate_goal"):
+                    return self._run_drafted_tdfol_candidate(request)
                 return None
             prover = metadata.get("native_tdfol_prover")
             if prover is None:
@@ -662,6 +788,8 @@ class LegalIRProofRouter:
         if formula is None:
             formula = metadata.get("cec_formula")
         if formula is None:
+            if metadata.get("drafted_candidate_goal"):
+                return self._run_drafted_cec_candidate(request)
             return None
         prover = metadata.get("native_cec_prover")
         if prover is None:
@@ -676,6 +804,211 @@ class LegalIRProofRouter:
             axioms=list(metadata.get("native_cec_axioms") or ()),
             timeout=request.timeout_seconds,
         )
+
+    def _run_drafted_tdfol_candidate(
+        self,
+        request: ProofRouteRequest,
+    ) -> ProofRouteOutcome:
+        from ipfs_datasets_py.logic.TDFOL.tdfol_core import TDFOLKnowledgeBase
+        from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol_safe
+        from ipfs_datasets_py.logic.TDFOL.tdfol_prover import TDFOLProver
+
+        goal = parse_tdfol_safe(request.obligation.statement)
+        if goal is None:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_tdfol_candidate_parse_failed",
+            )
+        axioms = [
+            formula
+            for statement in self._compiler_candidate_fact_statements(
+                request,
+                "native_tdfol",
+            )
+            if (formula := parse_tdfol_safe(statement)) is not None
+        ]
+        if not axioms:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_tdfol_compiler_facts_not_available",
+            )
+        kb = TDFOLKnowledgeBase()
+        for index, axiom in enumerate(axioms):
+            kb.add_axiom(axiom, name=f"compiler_candidate_fact_{index}")
+        result = TDFOLProver(kb=kb, enable_cache=True).prove(
+            goal,
+            timeout_ms=max(1, int(request.timeout_seconds * 1000)),
+        )
+        normalized = self._normalize_outcome(result, request.route)
+        return replace(
+            normalized,
+            trust_level=(
+                ProofTrustLevel.NATIVE
+                if normalized.status == ProofRouteStatus.PROVED
+                else normalized.trust_level
+            ),
+            metadata={
+                **dict(normalized.metadata),
+                "compiler_fact_count": len(axioms),
+                "lowering": "typed_candidate_to_tdfol",
+            },
+        )
+
+    def _run_drafted_cec_candidate(
+        self,
+        request: ProofRouteRequest,
+    ) -> ProofRouteOutcome:
+        from ipfs_datasets_py.logic.CEC.native.dcec_integration import (
+            parse_dcec_string,
+        )
+        from ipfs_datasets_py.logic.CEC.native.prover_core import TheoremProver
+
+        goal = parse_dcec_string(request.obligation.statement)
+        if goal is None:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_cec_candidate_parse_failed",
+            )
+        axioms = [
+            formula
+            for statement in self._compiler_candidate_fact_statements(
+                request,
+                "native_cec",
+            )
+            if (formula := parse_dcec_string(statement)) is not None
+        ]
+        if not axioms:
+            return ProofRouteOutcome(
+                ProofRouteStatus.UNSUPPORTED_TRANSLATION,
+                reason="native_cec_compiler_facts_not_available",
+            )
+        result = TheoremProver().prove_theorem(
+            goal,
+            axioms=axioms,
+            timeout=request.timeout_seconds,
+        )
+        normalized = self._normalize_outcome(result, request.route)
+        return replace(
+            normalized,
+            trust_level=(
+                ProofTrustLevel.NATIVE
+                if normalized.status == ProofRouteStatus.PROVED
+                else normalized.trust_level
+            ),
+            metadata={
+                **dict(normalized.metadata),
+                "compiler_fact_count": len(axioms),
+                "lowering": "typed_candidate_to_dcec",
+            },
+        )
+
+    def _compiler_candidate_fact_statements(
+        self,
+        request: ProofRouteRequest,
+        route: str,
+    ) -> list[str]:
+        statements: list[str] = []
+        for raw in request.premises:
+            if isinstance(raw, HammerPremise):
+                statement = raw.statement
+                metadata = raw.metadata
+            elif isinstance(raw, Mapping):
+                statement = str(raw.get("statement") or "")
+                metadata = raw.get("metadata") or {}
+            else:
+                continue
+            if not isinstance(metadata, Mapping):
+                continue
+            if metadata.get("premise_kind") != "compiler_candidate_fact":
+                continue
+            family = (
+                f"{metadata.get('logic_family', '')} "
+                f"{metadata.get('legal_ir_view', '')}"
+            ).lower()
+            if route == "native_tdfol" and not any(
+                token in family
+                for token in (
+                    "tdfol",
+                    "temporal",
+                    "deontic",
+                    "conditional_normative",
+                )
+            ):
+                continue
+            if route == "native_cec" and not any(
+                token in family for token in ("cec", "dcec", "event_calculus")
+            ):
+                continue
+            if route == "native_flogic" and not any(
+                token in family
+                for token in (
+                    "flogic",
+                    "frame_logic",
+                    "graph_projection",
+                    "knowledge_graph",
+                )
+            ):
+                continue
+            if statement and statement not in statements:
+                statements.append(statement)
+            if len(statements) >= 128:
+                break
+        return statements
+
+    @staticmethod
+    def _parse_flogic_candidate(
+        statement: str,
+    ) -> list[tuple[str, tuple[str, ...]]]:
+        signatures = {
+            "class": ("class",),
+            "frame": ("frame",),
+            "frame_role": ("frame", "role", "value"),
+            "frame_slot": ("frame", "slot", "value"),
+            "object": ("object",),
+            "predicate": ("predicate",),
+            "relation": ("subject", "predicate", "object"),
+            "subclass": ("class", "superclass"),
+            "subject": ("subject",),
+        }
+        atoms: list[tuple[str, tuple[str, ...]]] = []
+        for raw_atom in re.split(r"\s+and\s+", str(statement or "").strip()):
+            match = re.fullmatch(
+                r"([A-Za-z_][A-Za-z0-9_]*)\s*\(([^()]*)\)",
+                raw_atom.strip(),
+            )
+            if match is None or match.group(1).lower() not in signatures:
+                return []
+            head = match.group(1).lower()
+            roles: list[str] = []
+            values: list[str] = []
+            for raw_argument in match.group(2).split(","):
+                argument = raw_argument.strip()
+                if ":" not in argument:
+                    return []
+                role, value = argument.split(":", 1)
+                role = role.strip().lower()
+                value = value.strip().lower()
+                if not re.fullmatch(r"[a-z][a-z0-9_]*", role):
+                    return []
+                if not re.fullmatch(r"[a-z0-9_.-]+", value):
+                    return []
+                roles.append(role)
+                values.append(value)
+            if tuple(roles) != signatures[head]:
+                return []
+            atoms.append((head, tuple(values)))
+        return atoms
+
+    @staticmethod
+    def _render_ergo_atom(atom: tuple[str, tuple[str, ...]]) -> str:
+        head, values = atom
+        safe_head = {
+            "class": "frame_class",
+            "object": "frame_object",
+            "predicate": "frame_predicate",
+            "subject": "frame_subject",
+        }.get(head, head)
+        return f"{safe_head}({','.join(values)})"
 
     def _smt_atp(self, request: ProofRouteRequest) -> ProofRouteOutcome:
         required_attributes = (

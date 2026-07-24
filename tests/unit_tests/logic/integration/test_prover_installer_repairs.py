@@ -64,6 +64,44 @@ def test_setup_installer_accepts_symbolicai_flag(monkeypatch) -> None:
     assert called == ["symbolicai"]
 
 
+def test_setup_installer_delegates_legal_ir_training_portfolio(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    installer_path = (
+        Path(__file__).resolve().parents[4]
+        / "scripts"
+        / "setup"
+        / "ipfs_prover_installer.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "ipfs_prover_installer_training_test",
+        installer_path,
+    )
+    assert spec is not None and spec.loader is not None
+    ipfs_prover_installer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ipfs_prover_installer)
+
+    delegated: list[str] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "main",
+        lambda argv=None: delegated.extend(argv or []) or 0,
+    )
+
+    assert (
+        ipfs_prover_installer.main(
+            ["--portfolio", "legal_ir_training", "--yes", "--strict"]
+        )
+        == 0
+    )
+    assert delegated == [
+        "--portfolio",
+        "legal_ir_training",
+        "--yes",
+        "--strict",
+    ]
+
+
 def test_proof_execution_engine_uses_common_user_bin_dirs(monkeypatch, tmp_path) -> None:
     from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine import (
         ProofExecutionEngine,
@@ -93,7 +131,7 @@ def test_lazy_installer_is_opt_in(monkeypatch) -> None:
     assert lazy_installer.prover_lazy_install_enabled("z3") is False
 
 
-def test_lazy_installer_calls_packaged_installer_once(monkeypatch) -> None:
+def test_lazy_installer_reuses_successful_packaged_install(monkeypatch) -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
@@ -109,7 +147,7 @@ def test_lazy_installer_calls_packaged_installer_once(monkeypatch) -> None:
     )
 
     assert lazy_installer.lazy_install_prover("z3") is True
-    assert lazy_installer.lazy_install_prover("z3") is False
+    assert lazy_installer.lazy_install_prover("z3") is True
     assert calls == [{"yes": True, "strict": False}]
 
 

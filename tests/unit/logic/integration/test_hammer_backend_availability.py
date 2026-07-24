@@ -69,6 +69,24 @@ def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail
     assert {runner.problem_format for runner in runners} == {"smt-lib", "tptp-fof"}
 
 
+def test_default_subprocess_backend_requests_managed_install_on_first_use(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    calls = []
+    monkeypatch.setattr(
+        lazy_installer,
+        "ensure_prover_executable",
+        lambda prover, *, reason: calls.append((prover, reason)) or "/managed/cvc5",
+    )
+
+    runner = default_hammer_subprocess_backends(["cvc5"])[0]
+
+    assert runner._executable_resolver("cvc5") == "/managed/cvc5"
+    assert calls == [("cvc5", "Hammer cvc5 proof route")]
+
+
 def test_subprocess_backend_rejects_an_unusable_resolver_candidate() -> None:
     runner = SubprocessHammerBackendRunner(
         name="cvc5",

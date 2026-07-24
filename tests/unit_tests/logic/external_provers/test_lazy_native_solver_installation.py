@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -51,6 +52,35 @@ def test_execution_request_installs_native_solver_and_forwards_progress(monkeypa
         "installed",
     ]
     assert "Xaman model check" in events[1].message
+
+
+def test_parallel_first_use_installs_each_prover_once(monkeypatch) -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    _clear_lazy_install_environment(monkeypatch)
+    lazy_installer.reset_lazy_install_attempts()
+    calls: list[str] = []
+    monkeypatch.setattr(
+        prover_installer,
+        "ensure_vampire",
+        lambda **_kwargs: calls.append("vampire") or True,
+    )
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(
+            executor.map(
+                lambda _index: lazy_installer.lazy_install_prover(
+                    "vampire",
+                    allow_automatic=True,
+                    reason="parallel Hammer route",
+                ),
+                range(8),
+            )
+        )
+
+    assert results == [True] * 8
+    assert calls == ["vampire"]
 
 
 def test_execution_request_respects_global_opt_out(monkeypatch) -> None:
@@ -276,6 +306,12 @@ def test_generation_portfolio_includes_flogic_authority() -> None:
     managed_install_keys = set(prover_installer.MANAGED_SOLVER_VERSIONS)
     managed_install_keys.discard("rocq")
     managed_install_keys.add("coq")
+    assert "symbolicai" not in prover_installer.PROVER_PORTFOLIOS[
+        "legal_ir_training"
+    ]
+    assert managed_install_keys - {"symbolicai"} <= set(
+        prover_installer.PROVER_PORTFOLIOS["legal_ir_training"]
+    )
     assert managed_install_keys.issubset(
         prover_installer.PROVER_PORTFOLIOS["legal_ir_full"]
     )

@@ -886,7 +886,15 @@ class NativeKernelVerifier:
         )
 
     def _run_checker(self, executable: str, suffix: str, proof_script: str, start: float) -> HammerVerification:
-        binary = shutil.which(executable)
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+            ensure_prover_executable,
+        )
+
+        prover = "coq" if executable == "coqc" else executable
+        binary = ensure_prover_executable(
+            prover,
+            reason=f"{prover} kernel verification of a Hammer reconstruction",
+        )
         if not binary:
             return HammerVerification(
                 verified=False,

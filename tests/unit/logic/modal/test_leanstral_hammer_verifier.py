@@ -113,8 +113,14 @@ def _task() -> LegalIRLeanTask:
     )
 
 
-def _proposal(task: LegalIRLeanTask, candidate_text: str, **candidate_overrides) -> LeanstralProposal:
-    obligation = dict(task.proof_obligations[0])
+def _proposal(
+    task: LegalIRLeanTask,
+    candidate_text: str,
+    *,
+    obligation_index: int = 0,
+    **candidate_overrides,
+) -> LeanstralProposal:
+    obligation = dict(task.proof_obligations[obligation_index])
     candidate = {
         "candidate": candidate_text,
         "compiler_surface": obligation["legal_ir_view"],
@@ -180,6 +186,51 @@ def test_leanstral_hammer_verifier_accepts_candidate_only_after_hammer_proof() -
         and "obligation(agency, provide_notice) unless exception(emergency)"
         in translated_problems[0]
     )
+
+
+def test_leanstral_candidate_reaches_native_tdfol_and_verified_guidance() -> None:
+    sample = _sample()
+    task = _task()
+    obligation_index = next(
+        index
+        for index, obligation in enumerate(task.proof_obligations)
+        if obligation.get("kind") == "temporal_anchor"
+        and obligation.get("logic_family") == "temporal_first_order"
+    )
+    proposal = _proposal(
+        task,
+        "temporal_anchor(event:provide_notice, time:shall)",
+        obligation_index=obligation_index,
+    )
+
+    report = verify_leanstral_hammer_candidates(
+        task,
+        proposal,
+        sample_or_document=sample,
+        config=LeanstralHammerVerifierConfig(
+            hammer_config=LegalIRHammerConfig(
+                enabled_proof_routes=("native_tdfol",),
+                max_premises=32,
+                timeout_seconds=1,
+            )
+        ),
+        backends=[],
+    )
+
+    result = report.candidate_results[0]
+    native_attempt = next(
+        attempt
+        for attempt in result.hammer_report.route_results[0].attempts
+        if attempt.route == "native_tdfol"
+    )
+    assert report.accepted is True
+    assert report.trusted is True
+    assert native_attempt.status.value == "proved"
+    assert native_attempt.metadata["lowering"] == "typed_candidate_to_tdfol"
+    assert result.verified_guidance[0]["logic_family"] == "temporal_first_order"
+    assert result.verified_guidance[0]["drafted_logic_candidates"][0][
+        "logic_family"
+    ] == "temporal_first_order"
 
 
 def test_leanstral_hammer_verifier_rejects_source_copy_before_hammer_execution() -> None:

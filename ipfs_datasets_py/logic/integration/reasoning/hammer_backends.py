@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -445,6 +446,31 @@ def default_hammer_backend_runners(
     return runners
 
 
+def _managed_executable_resolver(prover_name: str) -> ExecutableResolver:
+    """Resolve and, if needed, install one backend once per pipeline."""
+
+    state: Dict[str, Any] = {"attempted": False, "path": None}
+    lock = threading.Lock()
+
+    def resolve(_executable: str) -> Optional[str]:
+        if state["attempted"]:
+            return state["path"]
+        with lock:
+            if not state["attempted"]:
+                from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+                    ensure_prover_executable,
+                )
+
+                state["path"] = ensure_prover_executable(
+                    prover_name,
+                    reason=f"Hammer {prover_name} proof route",
+                )
+                state["attempted"] = True
+        return state["path"]
+
+    return resolve
+
+
 def default_hammer_subprocess_backends(
     backend_names: Optional[Iterable[str]] = None,
 ) -> List[SubprocessHammerBackendRunner]:
@@ -458,10 +484,6 @@ def default_hammer_subprocess_backends(
     specs = hammer_backend_specs_by_name()
     names = list(backend_names or ("z3", "cvc5", "vampire", "e_prover"))
     runners: List[SubprocessHammerBackendRunner] = []
-    from ipfs_datasets_py.logic.external_provers.lazy_installer import (
-        find_executable,
-    )
-
     for name in names:
         spec = specs.get(name)
         if spec is None or spec.route_type not in {"atp", "smt"}:
@@ -473,7 +495,7 @@ def default_hammer_subprocess_backends(
                 problem_format=spec.problem_format,
                 args=spec.args,
                 suffix=spec.suffix,
-                executable_resolver=find_executable,
+                executable_resolver=_managed_executable_resolver(spec.name),
             )
         )
     return runners

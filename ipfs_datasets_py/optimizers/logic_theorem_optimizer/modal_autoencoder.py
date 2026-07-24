@@ -108,10 +108,11 @@ LEGAL_IR_VIEW_FAMILY_METRIC_NAMES = (
     "source_copy_penalty",
 )
 TRUSTED_HAMMER_FEATURE_BUS_SCHEMA_VERSION = (
-    "legal-ir-trusted-hammer-leanstral-feature-bus-v1"
+    "legal-ir-trusted-hammer-leanstral-feature-bus-v2"
 )
 TRUSTED_HAMMER_FEATURE_FAMILIES = (
     "contract_id",
+    "logic_family",
     "obligation_family",
     "premise_family",
     "backend_status",
@@ -452,12 +453,21 @@ _AUTOENCODER_TARGETED_RECONSTRUCTION_FAMILY_PAIRS = frozenset(
 
 _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS: Mapping[str, tuple[str, ...]] = {
     "conditional_normative": ("deontic.ir", "TDFOL.prover"),
+    "cec": ("CEC.native",),
     "deontic": ("deontic.ir", "TDFOL.prover"),
+    "dcec": ("CEC.native",),
     "doxastic": ("TDFOL.prover",),
     "dynamic": ("TDFOL.prover",),
     "epistemic": ("TDFOL.prover", "knowledge_graphs.neo4j_compat"),
+    "event_calculus": ("CEC.native",),
     "frame": ("modal.frame_logic", "knowledge_graphs.neo4j_compat"),
+    "flogic": ("modal.frame_logic",),
+    "frame_logic": ("modal.frame_logic",),
+    "graph_projection": ("knowledge_graphs.neo4j_compat",),
+    "knowledge_graph": ("knowledge_graphs.neo4j_compat",),
+    "tdfol": ("TDFOL.prover",),
     "temporal": ("TDFOL.prover", "modal.frame_logic"),
+    "temporal_first_order": ("TDFOL.prover",),
 }
 
 _AUTOENCODER_TYPED_DECOMPILER_SLOT_WEIGHT = 1.6
@@ -29481,6 +29491,16 @@ def build_trusted_hammer_leanstral_feature_bus(
         if str(value).strip() in known_obligation_families
     )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
 
+    logic_families = _unique_preserve_order(
+        _trusted_feature_atom(value, max_tokens=3)
+        for value in _trusted_guidance_keyed_values(
+            item,
+            frozenset({"logic_family"}),
+        )
+        if _trusted_feature_atom(value, max_tokens=3)
+        in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS
+    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
+
     raw_premise_families = _trusted_guidance_keyed_values(
         item,
         frozenset(
@@ -29596,6 +29616,7 @@ def build_trusted_hammer_leanstral_feature_bus(
         "contract_id": tuple(
             str(getattr(contract, "contract_id", "")) for contract in resolved_contracts
         ),
+        "logic_family": tuple(logic_families),
         "obligation_family": tuple(obligation_families),
         "premise_family": tuple(premise_families),
         "backend_status": tuple(backend_features),
@@ -29608,6 +29629,7 @@ def build_trusted_hammer_leanstral_feature_bus(
     feature_keys: List[str] = []
     prefixes = {
         "contract_id": "contract-id",
+        "logic_family": "logic-family",
         "obligation_family": "obligation-family",
         "premise_family": "premise-family",
         "backend_status": "backend-status",
@@ -29631,17 +29653,20 @@ def build_trusted_hammer_leanstral_feature_bus(
     ]
 
     target_views = _unique_preserve_order(
-        str(getattr(contract, "target_component", "") or "").strip()
-        for contract in resolved_contracts
-    )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
-    logic_families = _unique_preserve_order(
-        _trusted_feature_atom(value, max_tokens=3)
-        for value in _trusted_guidance_keyed_values(
-            item,
-            frozenset({"logic_family"}),
-        )
-        if _trusted_feature_atom(value, max_tokens=3)
-        in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS
+        [
+            *(
+                str(getattr(contract, "target_component", "") or "").strip()
+                for contract in resolved_contracts
+            ),
+            *(
+                view
+                for family in logic_families
+                for view in _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(
+                    family,
+                    (),
+                )
+            ),
+        ]
     )[:TRUSTED_HAMMER_FEATURE_BUS_MAX_VALUES_PER_FAMILY]
     safe_backend_statuses = {
         value.split(":", 1)[0]: value.split(":", 1)[1]
@@ -29654,7 +29679,12 @@ def build_trusted_hammer_leanstral_feature_bus(
             {
                 "confidence": 1.0,
                 "logic_family": family,
-                "target_view": target_views[0] if target_views else "",
+                "target_view": (
+                    _AUTOENCODER_FAMILY_LEGAL_IR_VIEW_TARGETS.get(
+                        family,
+                        ("",),
+                    )[0]
+                ),
             }
             for family in logic_families
         ],
