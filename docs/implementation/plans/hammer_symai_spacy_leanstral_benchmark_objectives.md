@@ -139,6 +139,9 @@ is never completion evidence.
 - Acceptance: Imported cases retain their original identifiers or source references, receive no model-generated expected result, and preserve positive and negative coverage.
 - Gap task: Add deterministic fixture importers and provenance checks.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.fixture_import.HSSLEV0217E25` binds this goal to the executable fixture-import contract; strict import entries, a canonical manifest, and a deeply immutable loaded fixture set make provenance-preserving reuse deterministic and machine-verifiable.
+- Fixture-import contract: Manifest schema `ipfs-datasets.logic-pipeline-benchmark.fixture-import-manifest.v1` freezes nine imports: two Legal IR ambiguity packets, two FOL/deontic/modal conformance cases, three Hammer golden/poisoned/reconstruction cases, and two Leanstral modality mutations, with five positive and four negative outcomes. Every entry preserves its original identifier, source path and selector, complete source payload, exact source-byte and canonical-record digests, `existing_fixture` expectation origin, and an explicit false model-generated attestation. Strict loading rejects schema drift, duplicate or ambiguous identifiers, path traversal, model provenance, source/provenance changes, coverage/count drift, and manifest/content tampering.
+- Backlog alignment: HSSL-G021 is the fixture-reuse member of `goal_packet/benchmark_corpus/general/919ae362bc61`; its shared fixture directory is intentionally implemented alongside HSSL-G022's negative controls by aggregate task HSSL-BENCH-002. Successful validation of the packet's import and adversarial contracts propagates to covered sibling HSSL-BENCH-008 without manually changing generated todo/vector metadata. The goal remains active for supervisor reconciliation, and no child goal or graph refinement is needed.
 
 ## HSSL-G022 Add adversarial and negative proof controls
 
@@ -156,6 +159,9 @@ is never completion evidence.
 - Acceptance: All adversarial controls fail closed or receive their expected non-verified class across deterministic contract tests.
 - Gap task: Create and independently validate negative controls for every trust boundary.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.adversarial.HSSLEV0224A96` binds this goal to the executable adversarial-control contract; immutable controls, a content-addressed control suite, deterministic candidate classification, and a fail-closed candidate gate turn every named negative class into testable evidence.
+- Adversarial-control contract: The frozen suite contains exactly one independently identified control for each of `invalid`, `contradictory`, `unsupported`, `prompt_like`, `copied`, `sorry_bearing`, and `admit_bearing`. Canonical JSONL and its manifest bind order, content, reviewed rationale, complete kind coverage, and all record/file digests; the gate binds each control to an expected rejected or safety-incident disposition. Duplicate keys, unknown fields, noncanonical bytes, reordering, count drift, digest changes, and coverage tampering fail closed. Every control is ineligible for a verified improvement. If any adversarial candidate is nevertheless claimed kernel-verified, the gate emits an `INVALID_CONTROL_VERIFIED` safety incident rather than eligibility; only a benign candidate with an accepted kernel receipt can pass.
+- Backlog alignment: HSSL-G022 is the P0 anchor of `goal_packet/benchmark_corpus/general/919ae362bc61`; aggregate HSSL-BENCH-002 owns the cohesive HSSL-G021/HSSL-G022 change and covers sibling HSSL-BENCH-006. Packet completion propagates only after both focused validations succeed, while all goal statuses remain active for supervisor reconciliation. No child goal, parent edge, or manual edit to generated todo/vector metadata is required.
 
 ## HSSL-G023 Freeze split integrity and leakage checks
 

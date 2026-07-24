@@ -230,6 +230,71 @@ Run the corpus evidence with:
 python -m pytest tests/unit/benchmarks/logic_pipeline/test_cases.py -q
 ```
 
+## Provenance-preserving fixture imports
+
+`fixture_import.py` reuses selected repository fixtures without copying their
+expected results into a new source of truth. The canonical
+`fixture_import_manifest.json` selects nine existing records by exact upstream
+path and original identifier: two adjudicated Legal IR ambiguity packets, two
+first-order/deontic/modal conformance cases, three positive and negative Hammer
+cases, and two negative Leanstral mutation regressions. The set contains five
+positive and four negative examples.
+
+Each import binds the complete source-file SHA-256, selected-record SHA-256,
+source selector, semantic family/tags, adapter polarity, and an explicit
+`existing_fixture` expectation origin. Source paths must stay inside the
+repository. Ambiguous selectors, duplicate keys or references, schema drift,
+source or record changes, missing family/polarity coverage, and any indication
+that a model supplied an expected result invalidate the entire import set.
+Returned payloads and indexes are deeply immutable. The frozen manifest
+identity is:
+
+```text
+93bc8297c84b85a018305edc311c42d0df345978af767e4b93b1e509d974a0fd
+```
+
+Loading is explicit and performs no optional backend imports:
+
+```python
+from benchmarks.logic_pipeline import load_fixture_imports
+
+fixtures = load_fixture_imports()
+```
+
+Run the fixture-import evidence with:
+
+```bash
+python -m pytest tests/unit/benchmarks/logic_pipeline/test_fixture_import.py -q
+```
+
+## Adversarial and negative proof controls
+
+`adversarial.py` places a deterministic trust boundary in front of improvement
+statistics. Its frozen control suite has one independently identified case for
+each required class: invalid, contradictory, unsupported, prompt-like, copied,
+`sorry`-bearing, and `admit`-bearing. Canonical JSONL records and their manifest
+bind order, complete taxonomy coverage, reviewed rationales, per-control
+digests, and exact file bytes. The frozen controls and manifest identities are:
+
+```text
+controls SHA-256 41cf374ccc4cbf9fd0605ee1156f78d7656b213f3b0cfb9b4bdf3715f599974b
+manifest SHA-256 3bd5ef467195f246f66e2ecd07251e1a942608adaba2babd2ad401d01bc0e235
+```
+
+`classify_candidate` fails closed on malformed candidate or protected-copy
+input. `gate_candidate` makes every classified or declared control ineligible
+for a verified improvement, even when an upstream component claims success.
+If such a candidate also presents a structurally complete native-kernel claim,
+the result is a fatal `INVALID_CONTROL_VERIFIED` safety incident rather than an
+eligible success. A benign candidate is eligible only with a claimed and
+accepted native-kernel receipt digest; otherwise it remains `not_verified`.
+
+Run the adversarial-control evidence with:
+
+```bash
+python -m pytest tests/integration/benchmarks/logic_pipeline/test_adversarial_controls.py -q
+```
+
 ## Frozen split and holdout integrity
 
 The reviewed corpus is also sealed as three ordered split manifests. Each

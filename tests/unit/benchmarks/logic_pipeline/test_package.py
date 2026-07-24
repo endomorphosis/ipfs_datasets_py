@@ -43,9 +43,14 @@ def test_package_import_does_not_load_optional_or_production_components(
         == "isolated benchmark package and execution skeleton"
     )
     assert set(reloaded.__all__) >= {
+        "HSSLEV0217E25",
+        "HSSLEV0224A96",
         "ExecutionDefaults",
         "RunPaths",
         "build_smoke_manifest",
+        "gate_candidate",
+        "load_control_suite",
+        "load_fixture_imports",
         "manifest_sha256",
     }
 
