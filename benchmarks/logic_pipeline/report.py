@@ -8,6 +8,11 @@ observations, keeps cold and warm cache modes separate, and admits a verified
 outcome only when a native-kernel receipt is present.  Legacy S1 model claims
 are retained as a safety diagnostic and never enter candidate metrics.
 
+The CLI also dispatches the reproducible inferential statistics validator in
+:mod:`statistics`.  Statistics reports are supplied explicitly because they
+are run-scoped analysis outputs rather than a fabricated checked-in efficacy
+snapshot.
+
 The checked-in artifact records a capability-preflight execution because the
 requested Leanstral service was unavailable in the capture environment.  This
 is intentional missingness: validation proves that the analysis/reporting
@@ -146,6 +151,57 @@ def HSSLEV0519C80() -> str:
     )
 
     return frontend_evidence()
+
+
+def HSSLEV0608F63() -> str:
+    """Return AST-verifiable evidence for reproducible statistical analysis."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        HSSLEV0608F63 as statistics_evidence,
+    )
+
+    return statistics_evidence()
+
+
+def build_statistics_report(
+    plan: object,
+    requests: Sequence[object],
+    *,
+    pareto_objectives: Sequence[object] = (),
+    pareto_candidates: Sequence[object] = (),
+) -> dict[str, object]:
+    """Build a run-scoped inferential report through the shared CLI boundary."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        build_statistics_report as build,
+    )
+
+    return build(
+        plan,  # type: ignore[arg-type]
+        requests,  # type: ignore[arg-type]
+        pareto_objectives=pareto_objectives,  # type: ignore[arg-type]
+        pareto_candidates=pareto_candidates,  # type: ignore[arg-type]
+    )
+
+
+def validate_statistics_report(value: object) -> dict[str, object]:
+    """Recompute and validate a run-scoped inferential report."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        validate_statistics_report as validate,
+    )
+
+    return validate(value)
+
+
+def load_statistics_report(path: str | Path) -> dict[str, object]:
+    """Load strict canonical statistics JSON through the report entry point."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        load_statistics_report as load,
+    )
+
+    return load(path)
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
@@ -971,7 +1027,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--section",
-        choices=("frontend", "proof"),
+        choices=("frontend", "proof", "statistics"),
         required=True,
     )
     parser.add_argument("--validate", action="store_true", required=True)
@@ -982,7 +1038,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="override the selected section's canonical report JSON path",
     )
     args = parser.parse_args(argv)
-    if args.section == "frontend":
+    if args.section == "statistics":
+        from benchmarks.logic_pipeline.statistics import (
+            StatisticsError,
+            load_statistics_report,
+            statistics_summary,
+        )
+
+        if args.results_path is None:
+            parser.error("--section statistics requires --results-path")
+        try:
+            report = load_statistics_report(args.results_path)
+        except StatisticsError as exc:
+            parser.error(str(exc))
+        summary = statistics_summary(report)
+    elif args.section == "frontend":
         from benchmarks.logic_pipeline.frontend_report import (
             DEFAULT_FRONTEND_REPORT_PATH,
             FrontendReportError,
@@ -1021,13 +1091,17 @@ __all__ = [
     "EXCLUDED_CASE_IDS",
     "HSSLEV0519C80",
     "HSSLEV0526A41",
+    "HSSLEV0608F63",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",
     "PROOF_REPORT_SCHEMA",
     "ProofReportError",
+    "build_statistics_report",
     "create_capability_preflight_report",
     "derive_proof_analysis",
+    "load_statistics_report",
     "load_proof_report",
+    "validate_statistics_report",
     "validate_proof_report",
 ]
