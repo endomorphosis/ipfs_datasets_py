@@ -240,6 +240,9 @@ is never completion evidence.
 - Acceptance: Import/configuration failures are explicit, recursive routing is rejected, structured output is validated, raw output is retained separately, and no second Leanstral server is started.
 - Gap task: Implement and test the SyMAI adapter, including dry-run, cache, malformed-contract, and unavailable-package cases.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.adapters.HSSLEV0328B3A` binds this goal to the strict existing-router boundary. `SYMAI_EVIDENCE_SCHEMA`, `SymaiAdapterConfig`, and the configured `SymaiAdapter` execute the repository's `IPFSSyMAINeurosymbolicEngine`, which pins the existing `ipfs_datasets_py.llm_router` provider path and disables local-model fallback instead of creating another model manager or Leanstral service.
+- SyMAI router contract: Every request derives its namespace from the frozen `CacheScope` across protocol, run, variant, split, and cold/warm mode; its cache key additionally binds case input, upstream records, provider, model, and dry-run state. The adapter rejects router re-entry before and after dispatch, caps retries and bytes, requires one exact JSON semantic contract, retains raw model text separately from validated candidate IR, records requested/effective router identity and telemetry, and denies every proof, kernel, verification, or authority claim. Missing packages or preflight configuration, router failures, and malformed contracts remain distinct explicit outcomes.
+- Backlog alignment: HSSL-G032 remains one cohesive, bounded child of HSSL-G030. Its configured adapter, existing-engine extension, focused unit validation, and discovery receipt cover HSSLEV0328B3A without a smaller child goal; generated supervisor todo/vector/task state remains supervisor-owned and is not manually edited.
 
 ## HSSL-G033 Integrate Hammer request, portfolio, and reconstruction records
 
