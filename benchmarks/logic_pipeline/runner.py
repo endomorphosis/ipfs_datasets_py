@@ -73,6 +73,19 @@ from benchmarks.logic_pipeline.ablation import (
     build_ablation_plan,
     execute_ablation,
 )
+from benchmarks.logic_pipeline.capabilities import (
+    BoundedProcessResult,
+    ResourceClass,
+    ResourceLease,
+    ResourceLeaseCancelled,
+    ResourceLeaseError,
+    ResourceLeaseReceipt,
+    ResourceLeaseRequest,
+    ResourceLeaseTimeout,
+    ResourcePolicy,
+    ResourceScheduler,
+    run_bounded_process_group,
+)
 
 
 BASELINE_MANIFEST_SCHEMA: Final = (
@@ -928,6 +941,332 @@ def HSSLEV0501F2F() -> str:
     return (
         "stage-aware A0 through A12 and S1 paired ablations with bounded "
         "resources, seeded block order, isolated caches, and immutable resume"
+    )
+
+
+CACHE_ISOLATION_REPORT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.cache-isolation-report.v1"
+)
+
+
+class CacheIsolationError(ValueError):
+    """Raised when cache-mode comparison could confound backend or order."""
+
+
+def HSSLEV0717A46() -> str:
+    """Return AST-verifiable evidence for cache and drift isolation."""
+
+    return (
+        "run protocol variant split and mode bound cache scopes, pinned "
+        "environment drift rejection, and recorded counterbalanced order"
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class CacheModePair:
+    """Digest-bound cold/warm observations for one case and requested arm."""
+
+    case_id: str
+    variant_id: str
+    cold_result_sha256: str
+    warm_result_sha256: str
+
+    def __post_init__(self) -> None:
+        for name in ("case_id", "variant_id"):
+            value = getattr(self, name)
+            if (
+                not isinstance(value, str)
+                or not re.fullmatch(
+                    r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", value
+                )
+                or value in {".", ".."}
+            ):
+                raise CacheIsolationError(
+                    f"{name} must be a safe benchmark identifier"
+                )
+        for name in ("cold_result_sha256", "warm_result_sha256"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not _SHA256.fullmatch(value):
+                raise CacheIsolationError(
+                    f"{name} must be a lowercase SHA-256 digest"
+                )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            name: getattr(self, name) for name in self.__dataclass_fields__
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "CacheModePair":
+        if not isinstance(value, Mapping):
+            raise CacheIsolationError("cache-mode pair must be an object")
+        expected = set(cls.__dataclass_fields__)
+        if set(value) != expected:
+            raise CacheIsolationError(
+                "cache-mode pair fields are missing or unknown"
+            )
+        try:
+            return cls(**value)  # type: ignore[arg-type]
+        except TypeError as exc:
+            raise CacheIsolationError("invalid cache-mode pair") from exc
+
+
+@dataclass(frozen=True, slots=True)
+class CacheIsolationReport:
+    """Immutable eligibility receipt for cache-mode comparisons."""
+
+    schema: str
+    plan_sha256: str
+    environment_sha256: str
+    cache_namespaces: tuple[str, ...]
+    execution_order: tuple[str, ...]
+    position_counts: Mapping[str, tuple[int, ...]]
+    pairs: tuple[CacheModePair, ...]
+
+    def __post_init__(self) -> None:
+        if self.schema != CACHE_ISOLATION_REPORT_SCHEMA:
+            raise CacheIsolationError(
+                "unsupported cache-isolation report schema"
+            )
+        for name in ("plan_sha256", "environment_sha256"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not _SHA256.fullmatch(value):
+                raise CacheIsolationError(
+                    f"{name} must be a lowercase SHA-256 digest"
+                )
+        namespaces = tuple(self.cache_namespaces)
+        if (
+            not namespaces
+            or any(not isinstance(item, str) or not item for item in namespaces)
+            or len(namespaces) != len(set(namespaces))
+        ):
+            raise CacheIsolationError(
+                "cache namespaces must be nonempty and unique"
+            )
+        object.__setattr__(self, "cache_namespaces", namespaces)
+        order = tuple(self.execution_order)
+        if (
+            not order
+            or any(not isinstance(item, str) or not item for item in order)
+            or len(order) != len(set(order))
+        ):
+            raise CacheIsolationError(
+                "execution order must contain distinct recorded jobs"
+            )
+        object.__setattr__(self, "execution_order", order)
+        frozen_counts: dict[str, tuple[int, ...]] = {}
+        for variant, counts in sorted(self.position_counts.items()):
+            if (
+                not isinstance(variant, str)
+                or not variant
+                or not isinstance(counts, (list, tuple))
+                or not counts
+                or any(
+                    isinstance(item, bool)
+                    or not isinstance(item, int)
+                    or item < 0
+                    for item in counts
+                )
+                or max(counts) - min(counts) > 1
+            ):
+                raise CacheIsolationError(
+                    "position counts must prove counterbalanced arm order"
+                )
+            frozen_counts[variant] = tuple(counts)
+        object.__setattr__(
+            self, "position_counts", MappingProxyType(frozen_counts)
+        )
+        pairs = tuple(self.pairs)
+        if not pairs or any(not isinstance(item, CacheModePair) for item in pairs):
+            raise CacheIsolationError(
+                "cache report must contain cold/warm pairs"
+            )
+        identities = {(item.case_id, item.variant_id) for item in pairs}
+        if len(identities) != len(pairs):
+            raise CacheIsolationError(
+                "cache report must not contain duplicate cold/warm pairs"
+            )
+        object.__setattr__(self, "pairs", pairs)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "plan_sha256": self.plan_sha256,
+            "environment_sha256": self.environment_sha256,
+            "cache_namespaces": list(self.cache_namespaces),
+            "execution_order": list(self.execution_order),
+            "position_counts": {
+                key: list(value)
+                for key, value in self.position_counts.items()
+            },
+            "pairs": [item.to_dict() for item in self.pairs],
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "CacheIsolationReport":
+        if not isinstance(value, Mapping):
+            raise CacheIsolationError(
+                "cache-isolation report must be an object"
+            )
+        expected = set(cls.__dataclass_fields__)
+        if set(value) != expected:
+            raise CacheIsolationError(
+                "cache-isolation report fields are missing or unknown"
+            )
+        namespaces = value["cache_namespaces"]
+        order = value["execution_order"]
+        counts = value["position_counts"]
+        pairs = value["pairs"]
+        if (
+            not isinstance(namespaces, (list, tuple))
+            or not isinstance(order, (list, tuple))
+            or not isinstance(counts, Mapping)
+            or not isinstance(pairs, (list, tuple))
+        ):
+            raise CacheIsolationError(
+                "cache-isolation report collections are invalid"
+            )
+        try:
+            return cls(
+                schema=value["schema"],  # type: ignore[arg-type]
+                plan_sha256=value["plan_sha256"],  # type: ignore[arg-type]
+                environment_sha256=value["environment_sha256"],  # type: ignore[arg-type]
+                cache_namespaces=tuple(namespaces),  # type: ignore[arg-type]
+                execution_order=tuple(order),  # type: ignore[arg-type]
+                position_counts=counts,  # type: ignore[arg-type]
+                pairs=tuple(CacheModePair.from_dict(item) for item in pairs),
+            )
+        except TypeError as exc:
+            raise CacheIsolationError(
+                "invalid cache-isolation report"
+            ) from exc
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            canonical_json(self.to_dict()).encode("utf-8")
+        ).hexdigest()
+
+
+def validate_cache_isolation(
+    execution: AblationRunResult,
+) -> CacheIsolationReport:
+    """Reject cache comparisons with missing pairs, drift, or order bias.
+
+    The check deliberately requires a pinned environment.  Cache namespaces
+    alone cannot distinguish a changed model, solver, or backend operating
+    under the same requested arm.
+    """
+
+    if not isinstance(execution, AblationRunResult) or not execution.complete:
+        raise CacheIsolationError(
+            "execution must be a complete AblationRunResult"
+        )
+    plan = execution.plan
+    if plan.environment_sha256 is None:
+        raise CacheIsolationError(
+            "cache comparison requires a pinned environment identity"
+        )
+    if set(plan.cache_modes) != {CacheMode.COLD, CacheMode.WARM}:
+        raise CacheIsolationError(
+            "cache comparison requires separate cold and warm modes"
+        )
+    namespaces = tuple(
+        contract.cache_namespace for contract in execution.contracts
+    )
+    if len(namespaces) != len(set(namespaces)):
+        raise CacheIsolationError("cache namespaces collide")
+    expected_namespaces = {
+        CacheScope(
+            plan.run_id,
+            plan.protocol_sha256,
+            variant,
+            plan.split,
+            mode,
+        ).namespace
+        for variant in plan.variant_ids
+        for mode in plan.cache_modes
+    }
+    if set(namespaces) != expected_namespaces:
+        raise CacheIsolationError(
+            "cache namespaces do not bind the complete execution identity"
+        )
+
+    jobs_by_identity = {
+        (job.case.case_id, job.variant_id, job.cache_mode): job
+        for job in plan.jobs
+    }
+    results_by_identity = {
+        (result.case_id, result.variant_id, result.cache_mode): result
+        for result in execution.results
+    }
+    if set(jobs_by_identity) != set(results_by_identity):
+        raise CacheIsolationError(
+            "cache results do not match the recorded schedule"
+        )
+    pairs: list[CacheModePair] = []
+    for case_id in plan.case_ids:
+        for variant in plan.variant_ids:
+            cold = results_by_identity[(case_id, variant, CacheMode.COLD)]
+            warm = results_by_identity[(case_id, variant, CacheMode.WARM)]
+            if (
+                cold.receipt is None
+                or warm.receipt is None
+                or cold.receipt.environment_sha256
+                != plan.environment_sha256
+                or warm.receipt.environment_sha256
+                != plan.environment_sha256
+            ):
+                raise CacheIsolationError(
+                    "result environment drifted from the pinned plan"
+                )
+            cold_route = tuple(stage.stage for stage in cold.stages)
+            warm_route = tuple(stage.stage for stage in warm.stages)
+            if cold_route != warm_route:
+                raise CacheIsolationError(
+                    "cold and warm results executed different routes"
+                )
+            for cold_stage, warm_stage in zip(cold.stages, warm.stages):
+                if (
+                    cold_stage.provenance.requested_identity
+                    != warm_stage.provenance.requested_identity
+                    or cold_stage.provenance.effective_identity
+                    != warm_stage.provenance.effective_identity
+                ):
+                    raise CacheIsolationError(
+                        "backend, model, or solver identity drifted across modes"
+                    )
+            pairs.append(
+                CacheModePair(
+                    case_id,
+                    variant,
+                    cold.digest,
+                    warm.digest,
+                )
+            )
+
+    position_counts = {
+        variant: [0 for _ in plan.variant_ids]
+        for variant in plan.variant_ids
+    }
+    for block in plan.blocks:
+        for position, job in enumerate(block):
+            position_counts[job.variant_id][position] += 1
+    if any(
+        max(counts) - min(counts) > 1
+        for counts in position_counts.values()
+    ):
+        raise CacheIsolationError(
+            "recorded execution order is not counterbalanced"
+        )
+    return CacheIsolationReport(
+        schema=CACHE_ISOLATION_REPORT_SCHEMA,
+        plan_sha256=plan.digest,
+        environment_sha256=plan.environment_sha256,
+        cache_namespaces=namespaces,
+        execution_order=tuple(job.job_id for job in plan.jobs),
+        position_counts=position_counts,
+        pairs=tuple(pairs),
     )
 
 
