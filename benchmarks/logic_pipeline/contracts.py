@@ -36,7 +36,10 @@ STAGE_RECORD_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"
 )
 CASE_RESULT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.case-result.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.case-result.v2"
+)
+CASE_RESULT_RECEIPT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.case-result-receipt.v1"
 )
 RUN_CONTRACT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.run-contract.v1"
@@ -193,6 +196,12 @@ def HSSLEV0103C72() -> str:
     """Return AST-verifiable evidence for the frozen protocol objective."""
 
     return "preregistered benchmark protocol and safety invariants"
+
+
+def HSSLEV0357C0D() -> str:
+    """Return AST-verifiable evidence for kernel-bound result receipts."""
+
+    return "kernel and provenance receipts for all claimed successes"
 
 
 _EnumT = TypeVar("_EnumT", bound=Enum)
@@ -1996,6 +2005,384 @@ class StageRecord:
         )
 
 
+_STAGE_RESOURCE_LANES: Final[Mapping[StageName, ResourceLane]] = MappingProxyType(
+    {
+        StageName.COMPILER: ResourceLane.CPU,
+        StageName.SPACY: ResourceLane.CPU,
+        StageName.SYMAI: ResourceLane.MODEL,
+        StageName.HAMMER: ResourceLane.SOLVER,
+        StageName.LEANSTRAL: ResourceLane.MODEL,
+        StageName.KERNEL: ResourceLane.KERNEL,
+    }
+)
+
+
+def _record_digest(value: object) -> str:
+    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def _optional_mapping_member(
+    value: Mapping[str, object],
+    key: str,
+    field: str,
+) -> Mapping[str, object] | None:
+    member = value.get(key)
+    if member is None:
+        return None
+    return _mapping(member, field)
+
+
+def _validate_hammer_stage_evidence(stage: StageRecord) -> str | None:
+    """Validate cross-record joins in a serialized Hammer reconstruction.
+
+    The adapter performs richer validation against native Hammer types.  This
+    dependency-free check is deliberately repeated at the durable record
+    boundary so a payload assembled without that adapter cannot join records
+    from different requests, candidates, or environments.
+    """
+
+    if stage.stage is not StageName.HAMMER or not isinstance(stage.data, Mapping):
+        return None
+    if (
+        stage.data.get("schema")
+        != "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
+    ):
+        return None
+
+    request = _mapping(stage.data.get("request"), "hammer.request")
+    portfolio = _mapping(stage.data.get("portfolio"), "hammer.portfolio")
+    candidate = _optional_mapping_member(
+        stage.data, "proof_candidate", "hammer.proof_candidate"
+    )
+    reconstruction = _optional_mapping_member(
+        stage.data, "reconstruction", "hammer.reconstruction"
+    )
+    environment = _optional_mapping_member(
+        stage.data, "environment_lock", "hammer.environment_lock"
+    )
+    request_id = _nonempty(request.get("request_id"), "hammer.request.request_id")
+    if portfolio.get("request_id") != request_id:
+        raise ProtocolContractError(
+            "Hammer portfolio and request identities do not match"
+        )
+    if candidate is not None and candidate.get("request_id") != request_id:
+        raise ProtocolContractError(
+            "Hammer candidate and request identities do not match"
+        )
+    if reconstruction is not None:
+        if reconstruction.get("request_id") != request_id:
+            raise ProtocolContractError(
+                "Hammer reconstruction and request identities do not match"
+            )
+        if candidate is None or reconstruction.get("candidate_id") != candidate.get(
+            "candidate_id"
+        ):
+            raise ProtocolContractError(
+                "Hammer reconstruction and candidate identities do not match"
+            )
+        if environment is None or reconstruction.get(
+            "environment_lock_id"
+        ) != environment.get("lock_id"):
+            raise ProtocolContractError(
+                "Hammer reconstruction and environment identities do not match"
+            )
+
+    evidence_id = _digest(stage.data.get("evidence_id"), "hammer.evidence_id")
+    evidence_payload = {
+        key: _thaw_bounded_json(value)
+        for key, value in stage.data.items()
+        if key != "evidence_id"
+    }
+    if evidence_id != _record_digest(evidence_payload):
+        raise ProtocolContractError("Hammer evidence_id does not match its payload")
+    if reconstruction is None:
+        return None
+    return _record_digest(_thaw_bounded_json(reconstruction))
+
+
+@dataclass(frozen=True, slots=True)
+class CaseResultReceipt:
+    """Content-addressed projection of every result trust dependency.
+
+    The full stage records remain embedded in :class:`CaseResultRecord`.  This
+    receipt makes their security-relevant joins explicit and independently
+    digestible: route order, stage/provenance/telemetry digests, resource
+    lanes, reconstruction, environment identity, and the terminal kernel
+    outcome.
+    """
+
+    schema: str
+    protocol_sha256: str
+    run_id: str
+    case_id: str
+    case_manifest_sha256: str
+    variant_id: str
+    split: Split
+    cache_mode: CacheMode
+    route: tuple[StageName, ...]
+    stage_digests: tuple[str, ...]
+    provenance_digests: tuple[str, ...]
+    telemetry_digests: tuple[str, ...]
+    resource_lanes: tuple[ResourceLane, ...]
+    environment_sha256: str | None
+    reconstruction_sha256: str | None
+    kernel_stage_digest: str | None
+    kernel_accepted: bool
+    kernel_receipt_sha256: str | None
+
+    def __post_init__(self) -> None:
+        if self.schema != CASE_RESULT_RECEIPT_SCHEMA:
+            raise ProtocolContractError("unsupported case-result receipt schema")
+        _digest(self.protocol_sha256, "protocol_sha256")
+        _safe_id(self.run_id, "run_id")
+        _safe_id(self.case_id, "case_id")
+        _digest(self.case_manifest_sha256, "case_manifest_sha256")
+        _safe_id(self.variant_id, "variant_id")
+        if self.variant_id not in _REQUIRED_VARIANTS:
+            raise ProtocolContractError(
+                f"variant_id is not registered: {self.variant_id!r}"
+            )
+        if not isinstance(self.split, Split) or not isinstance(
+            self.cache_mode, CacheMode
+        ):
+            raise ProtocolContractError(
+                "receipt split and cache_mode must use protocol enums"
+            )
+        for field in (
+            "route",
+            "stage_digests",
+            "provenance_digests",
+            "telemetry_digests",
+            "resource_lanes",
+        ):
+            if not isinstance(getattr(self, field), tuple):
+                raise ProtocolContractError(f"receipt {field} must be a tuple")
+        if not self.route or len(self.route) > len(StageName):
+            raise ProtocolContractError("receipt route has an invalid length")
+        if any(not isinstance(stage, StageName) for stage in self.route):
+            raise ProtocolContractError("receipt route must contain stage names")
+        positions = tuple(tuple(StageName).index(stage) for stage in self.route)
+        if tuple(sorted(positions)) != positions or len(set(self.route)) != len(
+            self.route
+        ):
+            raise ProtocolContractError(
+                "receipt route must be a unique canonical-order subsequence"
+            )
+        if StageName.KERNEL in self.route and self.route[-1] is not StageName.KERNEL:
+            raise ProtocolContractError("kernel must be the terminal route stage")
+        size = len(self.route)
+        for field in (
+            "stage_digests",
+            "provenance_digests",
+            "telemetry_digests",
+            "resource_lanes",
+        ):
+            if len(getattr(self, field)) != size:
+                raise ProtocolContractError(
+                    f"receipt {field} must align with every route stage"
+                )
+        for field in (
+            "stage_digests",
+            "provenance_digests",
+            "telemetry_digests",
+        ):
+            for value in getattr(self, field):
+                _digest(value, f"{field}[]")
+        for index, lane in enumerate(self.resource_lanes):
+            if not isinstance(lane, ResourceLane):
+                raise ProtocolContractError(
+                    "receipt resource_lanes must contain ResourceLane values"
+                )
+            if lane is not _STAGE_RESOURCE_LANES[self.route[index]]:
+                raise ProtocolContractError(
+                    f"{self.route[index].value} receipt uses the wrong resource lane"
+                )
+        if self.environment_sha256 is not None:
+            _digest(self.environment_sha256, "environment_sha256")
+        if self.reconstruction_sha256 is not None:
+            _digest(self.reconstruction_sha256, "reconstruction_sha256")
+        _bool(self.kernel_accepted, "kernel_accepted")
+        has_kernel = self.route[-1] is StageName.KERNEL
+        if has_kernel:
+            if self.kernel_stage_digest is None:
+                raise ProtocolContractError(
+                    "terminal kernel route requires its stage digest"
+                )
+            _digest(self.kernel_stage_digest, "kernel_stage_digest")
+            if self.kernel_stage_digest != self.stage_digests[-1]:
+                raise ProtocolContractError(
+                    "kernel stage digest does not match the terminal route stage"
+                )
+        elif self.kernel_stage_digest is not None:
+            raise ProtocolContractError(
+                "kernel stage digest requires a terminal kernel route"
+            )
+        if self.kernel_accepted:
+            if not has_kernel or self.kernel_receipt_sha256 is None:
+                raise ProtocolContractError(
+                    "accepted receipt requires a terminal kernel receipt"
+                )
+            _digest(self.kernel_receipt_sha256, "kernel_receipt_sha256")
+        elif self.kernel_receipt_sha256 is not None:
+            raise ProtocolContractError(
+                "an unaccepted kernel outcome cannot carry a receipt"
+            )
+
+    @classmethod
+    def from_stages(cls, stages: tuple[StageRecord, ...]) -> Self:
+        if not stages:
+            raise ProtocolContractError("cannot create a receipt without stages")
+        first = stages[0]
+        environments = {
+            stage.provenance.environment_sha256
+            for stage in stages
+            if stage.provenance.environment_sha256 is not None
+        }
+        environment = next(iter(environments)) if len(environments) == 1 else None
+        reconstruction_digests = tuple(
+            digest
+            for stage in stages
+            if (digest := _validate_hammer_stage_evidence(stage)) is not None
+        )
+        if len(reconstruction_digests) > 1:
+            raise ProtocolContractError(
+                "case result contains multiple reconstruction records"
+            )
+        kernel = stages[-1] if stages[-1].stage is StageName.KERNEL else None
+        accepted = bool(kernel is not None and kernel.kernel_accepted)
+        return cls(
+            schema=CASE_RESULT_RECEIPT_SCHEMA,
+            protocol_sha256=first.protocol_sha256,
+            run_id=first.run_id,
+            case_id=first.case_id,
+            case_manifest_sha256=first.case_manifest_sha256,
+            variant_id=first.variant_id,
+            split=first.split,
+            cache_mode=first.cache_mode,
+            route=tuple(stage.stage for stage in stages),
+            stage_digests=tuple(stage.digest for stage in stages),
+            provenance_digests=tuple(
+                _record_digest(stage.provenance.to_dict()) for stage in stages
+            ),
+            telemetry_digests=tuple(stage.telemetry.digest for stage in stages),
+            resource_lanes=tuple(
+                stage.telemetry.resource_lane for stage in stages
+            ),
+            environment_sha256=environment,
+            reconstruction_sha256=(
+                reconstruction_digests[0] if reconstruction_digests else None
+            ),
+            kernel_stage_digest=kernel.digest if kernel else None,
+            kernel_accepted=accepted,
+            kernel_receipt_sha256=(
+                kernel.kernel_receipt_sha256 if accepted and kernel else None
+            ),
+        )
+
+    @property
+    def digest(self) -> str:
+        return _record_digest(self.to_dict())
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "protocol_sha256": self.protocol_sha256,
+            "run_id": self.run_id,
+            "case_id": self.case_id,
+            "case_manifest_sha256": self.case_manifest_sha256,
+            "variant_id": self.variant_id,
+            "split": self.split.value,
+            "cache_mode": self.cache_mode.value,
+            "route": [stage.value for stage in self.route],
+            "stage_digests": list(self.stage_digests),
+            "provenance_digests": list(self.provenance_digests),
+            "telemetry_digests": list(self.telemetry_digests),
+            "resource_lanes": [lane.value for lane in self.resource_lanes],
+            "environment_sha256": self.environment_sha256,
+            "reconstruction_sha256": self.reconstruction_sha256,
+            "kernel_stage_digest": self.kernel_stage_digest,
+            "kernel_accepted": self.kernel_accepted,
+            "kernel_receipt_sha256": self.kernel_receipt_sha256,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "case_result_receipt")
+        _exact_keys(data, set(cls.__dataclass_fields__), "case_result_receipt")
+        arrays: dict[str, list[object]] = {}
+        for field in (
+            "route",
+            "stage_digests",
+            "provenance_digests",
+            "telemetry_digests",
+            "resource_lanes",
+        ):
+            member = data[field]
+            if not isinstance(member, list):
+                raise ProtocolContractError(
+                    f"case_result_receipt.{field} must be an array"
+                )
+            arrays[field] = member
+        return cls(
+            schema=_nonempty(data["schema"], "schema"),
+            protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
+            run_id=_safe_id(data["run_id"], "run_id"),
+            case_id=_safe_id(data["case_id"], "case_id"),
+            case_manifest_sha256=_digest(
+                data["case_manifest_sha256"], "case_manifest_sha256"
+            ),
+            variant_id=_safe_id(data["variant_id"], "variant_id"),
+            split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
+            cache_mode=_enum(
+                CacheMode, data["cache_mode"], "cache_mode"
+            ),  # type: ignore[arg-type]
+            route=tuple(
+                _enum(StageName, item, "route[]") for item in arrays["route"]
+            ),  # type: ignore[arg-type]
+            stage_digests=tuple(
+                _digest(item, "stage_digests[]")
+                for item in arrays["stage_digests"]
+            ),
+            provenance_digests=tuple(
+                _digest(item, "provenance_digests[]")
+                for item in arrays["provenance_digests"]
+            ),
+            telemetry_digests=tuple(
+                _digest(item, "telemetry_digests[]")
+                for item in arrays["telemetry_digests"]
+            ),
+            resource_lanes=tuple(
+                _enum(ResourceLane, item, "resource_lanes[]")
+                for item in arrays["resource_lanes"]
+            ),  # type: ignore[arg-type]
+            environment_sha256=(
+                None
+                if data["environment_sha256"] is None
+                else _digest(data["environment_sha256"], "environment_sha256")
+            ),
+            reconstruction_sha256=(
+                None
+                if data["reconstruction_sha256"] is None
+                else _digest(
+                    data["reconstruction_sha256"], "reconstruction_sha256"
+                )
+            ),
+            kernel_stage_digest=(
+                None
+                if data["kernel_stage_digest"] is None
+                else _digest(data["kernel_stage_digest"], "kernel_stage_digest")
+            ),
+            kernel_accepted=_bool(data["kernel_accepted"], "kernel_accepted"),
+            kernel_receipt_sha256=(
+                None
+                if data["kernel_receipt_sha256"] is None
+                else _digest(
+                    data["kernel_receipt_sha256"], "kernel_receipt_sha256"
+                )
+            ),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class CaseResultRecord:
     """Case-level result bound to every stage record and kernel authority."""
@@ -2015,6 +2402,7 @@ class CaseResultRecord:
     kernel_receipt_sha256: str | None = None
     failure_code: FailureCode | None = None
     failure_detail: str | None = None
+    receipt: CaseResultReceipt | None = None
 
     def __post_init__(self) -> None:
         if self.schema != CASE_RESULT_SCHEMA:
@@ -2035,15 +2423,32 @@ class CaseResultRecord:
         if len(self.stages) > len(StageName):
             raise ProtocolContractError("case result contains too many stages")
         names: set[StageName] = set()
+        input_sha256: str | None = None
+        environments: set[str | None] = set()
+        positions: list[int] = []
         for stage in self.stages:
             if not isinstance(stage, StageRecord):
                 raise ProtocolContractError("stages must contain StageRecord values")
             if stage.stage in names:
                 raise ProtocolContractError("case result contains duplicate stages")
             names.add(stage.stage)
+            positions.append(tuple(StageName).index(stage.stage))
             for field in ("protocol_sha256", "run_id", "case_id", "case_manifest_sha256", "variant_id", "split", "cache_mode"):
                 if getattr(stage, field) != getattr(self, field):
                     raise ProtocolContractError("stage and case identities do not match")
+            if stage.telemetry.resource_lane is not _STAGE_RESOURCE_LANES[stage.stage]:
+                raise ProtocolContractError(
+                    f"{stage.stage.value} stage uses the wrong resource lane"
+                )
+            if input_sha256 is None:
+                input_sha256 = stage.provenance.input_sha256
+            environments.add(stage.provenance.environment_sha256)
+        if positions != sorted(positions):
+            raise ProtocolContractError(
+                "case result route must follow canonical stage order"
+            )
+        if StageName.KERNEL in names and self.stages[-1].stage is not StageName.KERNEL:
+            raise ProtocolContractError("kernel must be the terminal route stage")
         if not isinstance(self.status, OutcomeStatus):
             raise ProtocolContractError("status must be an OutcomeStatus")
         if not isinstance(self.verification_authority, VerificationAuthority):
@@ -2054,6 +2459,21 @@ class CaseResultRecord:
         if self.status is OutcomeStatus.VERIFIED:
             if not all_success or kernel is None or not kernel.kernel_accepted:
                 raise ProtocolContractError("verified case results require successful stages and kernel acceptance")
+            expected_upstream: tuple[str, ...] = ()
+            for stage in self.stages:
+                if stage.provenance.upstream_stage_digests != expected_upstream:
+                    raise ProtocolContractError(
+                        "verified case result has a broken upstream stage digest chain"
+                    )
+                if stage.provenance.input_sha256 != input_sha256:
+                    raise ProtocolContractError(
+                        "verified case result mixes stage input identities"
+                    )
+                expected_upstream = (*expected_upstream, stage.digest)
+            if None in environments or len(environments) != 1:
+                raise ProtocolContractError(
+                    "verified case results require one coherent environment identity"
+                )
             if self.verification_authority is not VerificationAuthority.NATIVE_KERNEL:
                 raise ProtocolContractError("verified case results require native-kernel authority")
             if not self.kernel_accepted or self.kernel_receipt_sha256 is None:
@@ -2080,6 +2500,22 @@ class CaseResultRecord:
         if self.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED}:
             if self.failure_code in EXCLUSION_FAILURE_CODES:
                 raise ProtocolContractError("an exclusion code cannot hide a logical case result")
+        calculated_receipt = CaseResultReceipt.from_stages(self.stages)
+        if self.receipt is None:
+            object.__setattr__(self, "receipt", calculated_receipt)
+        elif not isinstance(self.receipt, CaseResultReceipt):
+            raise ProtocolContractError("receipt must be a CaseResultReceipt")
+        elif self.receipt != calculated_receipt:
+            raise ProtocolContractError(
+                "case-result receipt does not match its embedded stage records"
+            )
+        if self.status is OutcomeStatus.VERIFIED and (
+            self.receipt.kernel_accepted != self.kernel_accepted
+            or self.receipt.kernel_receipt_sha256 != self.kernel_receipt_sha256
+        ):
+            raise ProtocolContractError(
+                "case and provenance-receipt kernel outcomes do not match"
+            )
 
     @classmethod
     def from_stages(cls, stages: tuple[StageRecord, ...] | list[StageRecord]) -> Self:
@@ -2126,6 +2562,7 @@ class CaseResultRecord:
             kernel_receipt_sha256=(None if kernel is None else kernel.kernel_receipt_sha256) if status is OutcomeStatus.VERIFIED else None,
             failure_code=failure_code,
             failure_detail=detail,
+            receipt=None,
         )
 
     @property
@@ -2135,6 +2572,49 @@ class CaseResultRecord:
     @property
     def digest(self) -> str:
         return hashlib.sha256(canonical_json(self.to_dict()).encode("utf-8")).hexdigest()
+
+    @property
+    def provenance_receipt_sha256(self) -> str:
+        """Return the content address of the explicit provenance receipt."""
+
+        if self.receipt is None:  # pragma: no cover - guarded by __post_init__
+            raise ProtocolContractError("case result has no provenance receipt")
+        return self.receipt.digest
+
+    def validate_provenance(
+        self, *, expected_environment_sha256: str | None = None
+    ) -> None:
+        """Revalidate this result and, when supplied, its pinned environment."""
+
+        restored = type(self).from_dict(self.to_dict())
+        if restored.digest != self.digest:
+            raise ProtocolContractError(
+                "case result changed during canonical provenance validation"
+            )
+        expected_upstream: tuple[str, ...] = ()
+        expected_input = self.stages[0].provenance.input_sha256
+        for stage in self.stages:
+            if stage.provenance.upstream_stage_digests != expected_upstream:
+                raise ProtocolContractError(
+                    "case result has a broken upstream stage digest chain"
+                )
+            if stage.provenance.input_sha256 != expected_input:
+                raise ProtocolContractError(
+                    "case result mixes stage input identities"
+                )
+            expected_upstream = (*expected_upstream, stage.digest)
+        if expected_environment_sha256 is not None:
+            expected = _digest(
+                expected_environment_sha256, "expected_environment_sha256"
+            )
+            if (
+                self.status is OutcomeStatus.VERIFIED
+                and self.receipt is not None
+                and self.receipt.environment_sha256 != expected
+            ):
+                raise ProtocolContractError(
+                    "verified case result binds a stale environment identity"
+                )
 
     def to_outcome(self, *, invalid_control: bool = False) -> OutcomeRecord:
         return OutcomeRecord(
@@ -2172,6 +2652,9 @@ class CaseResultRecord:
             "kernel_receipt_sha256": self.kernel_receipt_sha256,
             "failure_code": None if self.failure_code is None else self.failure_code.value,
             "failure_detail": self.failure_detail,
+            "receipt": (
+                None if self.receipt is None else self.receipt.to_dict()
+            ),
         }
 
     @classmethod
@@ -2198,6 +2681,11 @@ class CaseResultRecord:
             kernel_receipt_sha256=(None if data["kernel_receipt_sha256"] is None else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")),
             failure_code=(None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")),  # type: ignore[arg-type]
             failure_detail=(None if data["failure_detail"] is None else _nonempty(data["failure_detail"], "failure_detail")),
+            receipt=(
+                None
+                if data["receipt"] is None
+                else CaseResultReceipt.from_dict(data["receipt"])
+            ),
         )
         if len(canonical_json(result.to_dict()).encode("utf-8")) > _MAX_CASE_RESULT_BYTES:
             raise ProtocolContractError("case result exceeds the encoded size bound")
@@ -2393,7 +2881,9 @@ __all__ = [
     "BASELINE_VARIANT",
     "BenchmarkProtocol",
     "CASE_RESULT_SCHEMA",
+    "CASE_RESULT_RECEIPT_SCHEMA",
     "CaseResultRecord",
+    "CaseResultReceipt",
     "CacheMode",
     "CacheScope",
     "CandidateGateObservation",
@@ -2404,6 +2894,7 @@ __all__ = [
     "GateDecision",
     "GateStatus",
     "HSSLEV0306C18",
+    "HSSLEV0357C0D",
     "HSSLEV0103C72",
     "HoldoutRules",
     "HypothesisSpec",

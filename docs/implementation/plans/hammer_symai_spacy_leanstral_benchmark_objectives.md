@@ -294,6 +294,9 @@ is never completion evidence.
 - Acceptance: Tampered, mixed-request, stale-environment, model-only, and solver-only records cannot deserialize or aggregate as verified.
 - Gap task: Implement content-addressed case results and adversarial provenance validation.
 - Refinement depth: 2
+- Evidence implementation: `benchmarks.logic_pipeline.contracts.HSSLEV0357C0D` binds HSSL-G035 to `CaseResultReceipt` and the strengthened `CaseResultRecord`, while `benchmarks.logic_pipeline.metrics.HSSLEV0357C0D` and `aggregate_case_results` admit verified outcomes only after full receipt validation.
+- Receipt contract: A case result embeds its stages and an independently content-addressed receipt over the canonical executed route, every stage/provenance/telemetry digest, the cumulative upstream chain, per-stage resource lane, Hammer reconstruction join when present, terminal kernel outcome and receipt, and pinned environment identity. Verified deserialization requires one input identity, one non-null environment, native-kernel authority, and an accepted terminal kernel record. Aggregation revalidates canonical serialization, environment freshness, same-arm identity, unique cases, and every receipt before a success enters the numerator; content tampering, mixed request/case/manifest/variant/cache records, stale environments, broken reconstruction joins, wrong resource lanes, and model- or solver-only claims fail closed.
+- Backlog alignment: HSSL-G035 remains one cohesive bounded child of HSSL-G030. Its existing contracts, metrics, and integration-test outputs plus the focused validation cover the gap, so no smaller child goal, parent edge, output refinement, or manual generated todo/vector edit is required; the goal remains active for supervisor reconciliation.
 
 ## HSSL-G040 Freeze and measure the current baseline
 
