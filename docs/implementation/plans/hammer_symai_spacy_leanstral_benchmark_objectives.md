@@ -39,6 +39,9 @@ is never completion evidence.
 - Gap task: Scaffold the isolated benchmark package and its deterministic smoke test.
 - Refinement depth: 0
 - Conflict policy: keep benchmark changes isolated; require review before merging any production routing change
+- Evidence implementation: `benchmarks.logic_pipeline.HSSLEV0009A31` binds this goal to the dependency-free execution contract; `RunPaths`, `ExecutionDefaults`, and the canonical smoke-manifest helpers implement it.
+- Foundation safety: A required validated run id scopes cache, corpus, objective bundles, receipts, results, state, logs, and worktrees; defaults are offline, shadow-only, non-promoting, and side-effect-free at import.
+- Backlog alignment: The original two code/test outputs and validation command are sufficient for this bounded root goal, so no child goal or downstream dependency change is required.
 
 ## HSSL-G010 Freeze the benchmark protocol and safety invariants
 
