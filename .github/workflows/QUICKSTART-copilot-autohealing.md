@@ -27,7 +27,7 @@ Auto-Healing automatically fixes failed GitHub Actions workflows by:
 The auto-healing workflow is already configured:
 - ✅ Workflow: `.github/workflows/copilot-agent-autofix.yml`
 - ✅ Scripts: `.github/scripts/` directory
-- ✅ Config: `.github/workflows/workflow-auto-fix-config.yml`
+- ✅ Config: `.github/config/workflow-auto-fix-config.yml`
 
 ### Step 3: Enable (If Needed)
 
@@ -35,7 +35,7 @@ Check configuration is enabled:
 
 ```bash
 # View current config
-cat .github/workflows/workflow-auto-fix-config.yml | grep "enabled:"
+cat .github/config/workflow-auto-fix-config.yml | grep "enabled:"
 ```
 
 Should show:
@@ -254,7 +254,7 @@ Error: Resource not accessible (403 Forbidden)
 
 Don't want auto-healing for certain workflows?
 
-Edit `.github/workflows/workflow-auto-fix-config.yml`:
+Edit `.github/config/workflow-auto-fix-config.yml`:
 
 ```yaml
 excluded_workflows:
@@ -348,7 +348,7 @@ gh workflow run copilot-agent-autofix.yml \
 ### 1. Learn More
 
 - [Full Documentation](README-copilot-autohealing.md)
-- [Configuration Guide](workflow-auto-fix-config.yml)
+- [Configuration Guide](../config/workflow-auto-fix-config.yml)
 - [Copilot Integration](COPILOT-INTEGRATION.md)
 
 ### 2. Customize
@@ -440,8 +440,9 @@ gh pr diff PR_NUMBER
 .github/
 ├── workflows/
 │   ├── copilot-agent-autofix.yml      # Main auto-healing workflow
-│   ├── workflow-auto-fix-config.yml   # Configuration
 │   └── README-copilot-autohealing.md  # Full documentation
+├── config/
+│   └── workflow-auto-fix-config.yml   # Configuration
 ├── scripts/
 │   ├── analyze_workflow_failure.py    # Failure analyzer
 │   ├── generate_workflow_fix.py       # Fix generator
