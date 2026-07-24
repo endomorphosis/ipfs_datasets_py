@@ -263,7 +263,7 @@ copilot:
 - 📖 [Full Documentation](README-copilot-autohealing.md)
 - 📊 [Validation Report](VALIDATION_REPORT.md)
 - 🧪 [Testing Guide](TESTING_GUIDE.md)
-- 🐛 [Report Issues](../../issues/new)
+- 🐛 [Report Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues/new)
 
 ### Support
 1. Check workflow logs in Actions tab
