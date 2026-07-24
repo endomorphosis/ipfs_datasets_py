@@ -669,3 +669,113 @@ is never completion evidence.
 - Acceptance: The decision cites immutable baseline and holdout manifests, counts only kernel-verified proofs, reports quality, resource, and complexity tradeoffs, selects or rejects every delegation policy, and lets a new operator reproduce capability probing, objective ingestion, pilot, shortlist, holdout, replay, and reporting in a clean worktree without automatically promoting production or touching active progress.
 - Gap task: After every prerequisite phase gate has a validated receipt, publish the evidence-backed delegation decision and worktree-safe operator runbook.
 - Refinement depth: 1
+- Evidence implementation: `benchmarks.logic_pipeline.report.HSSLEV1006B8A`
+  is the stable AST evidence symbol for the terminal architecture-decision
+  boundary. The dated
+  `docs/performance_snapshots/2026-07-24_hammer_symai_spacy_leanstral_final_decision.json`
+  records the source-bound decision under schema
+  `ipfs-datasets.logic-pipeline-benchmark.final-architecture-decision.v1`;
+  `python benchmarks/logic_pipeline/report.py --validate-final-decision`
+  strictly reparses it, recomputes its semantic digest, and cross-validates the
+  immutable source files and their internal semantic identities. The
+  `docs/implementation/runbooks/hammer_symai_spacy_leanstral_benchmark.md`
+  companion is validated by
+  `python benchmarks/logic_pipeline/report.py --validate-runbook`. Together
+  they implement evidence term `HSSLEV1006B8A`:
+  **evidence-bound final architecture decision, delegation matrix, and
+  worktree-safe reproduction runbook**.
+- Immutable evidence boundary: The decision cites both the canonical digest
+  and byte-content digest of the frozen A0 manifest, front-end overlap report,
+  proof overlap report, pilot gate, and holdout gate. Its immutable anchors are
+  A0 manifest `6b37a6493d6328102b558258843218128ad0bf6f8cc7be13f8d0c2e0bb61e156`,
+  reviewed corpus
+  `58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26`,
+  frozen holdout split
+  `c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a`,
+  pilot decision
+  `5be9bff6e4f0abf9c096e007b3c3230d09eab943d7ccd58f5fd6d7ab31c746fa`,
+  and sealed holdout decision
+  `7d064c5fe82c25ad93c01fd13d4350ae2457f93d3bd32b9cf9a9365b1836c2cd`.
+  The source gate was structurally valid but incomplete: its shortlist is
+  empty and it did not authorize holdout access. The holdout therefore remains
+  `sealed_unopened`, with zero scheduled pairs, zero observed pairs, and zero
+  kernel-verified successes. Those counts describe no authorized execution;
+  they are not zero-valued efficacy or safety measurements.
+- Final architecture decision: Select **gather more evidence** and retain the
+  current production architecture unchanged pending eligible paired holdout
+  evidence. This is a fail-closed operational disposition, not a finding that
+  A0 outperformed the experimental arms. No variant, component, or routing
+  policy is selected; no production promotion is authorized. Adding one
+  component, adopting a conditional cascade, and adopting the full stack for
+  selected strata are rejected for this decision because none has complete
+  paired holdout quality, safety, resource, and complexity evidence. Declaring
+  the current architecture superior is also rejected because missing
+  comparison data cannot establish superiority.
+- Component ownership decision: spaCy retains only its existing A0
+  responsibility, including the explicitly recorded degraded blank-model
+  fallback; no full-model expansion is justified. SyMAI receives no production
+  ambiguity-routing or premise-ranking responsibility. Hammer receives no
+  production proof-search responsibility. Leanstral receives no production
+  proof-fallback or proof-ordering responsibility. These are deferrals for
+  absent paired evidence, not claims that a component is ineffective. Any
+  future proof benefit counts only when an independent native-kernel receipt
+  accepts the reconstructed result; model or solver claims alone remain
+  ineligible.
+- Delegation matrix:
+
+  | Arm | Preregistered responsibility | Final disposition |
+  | --- | --- | --- |
+  | A0 | Exact current effective route | Retain unchanged as the reference only; not a newly promoted candidate |
+  | A1 | Full-spaCy deterministic core | Evidence-ineligible; no pilot/development efficacy or paired holdout result |
+  | A2 | A1 plus deterministic Hammer | Evidence-ineligible; no paired kernel-verified marginal value |
+  | A3 | Hammer-first with bounded Leanstral fallback | Evidence-ineligible; cascade quality and cost unmeasured |
+  | A4 | A3 plus ambiguity-gated SyMAI | Evidence-ineligible; conditional-stack value unmeasured |
+  | A5 | A4 with SyMAI always on | Evidence-ineligible; gate-efficiency tradeoff unmeasured |
+  | A6 | Leanstral before Hammer | Evidence-ineligible; proof-order tradeoff unmeasured |
+  | A7 | A4 with regex/legal parser | Evidence-ineligible; spaCy marginal value unmeasured |
+  | A8 | A4 with forced spaCy blank fallback | Evidence-ineligible; full-model/fallback tradeoff unmeasured |
+  | A9 | A4 without Hammer | Evidence-ineligible; Hammer marginal value unmeasured |
+  | A10 | A4 with pinned learned Hammer selector | Evidence-ineligible; learned-selector value unmeasured |
+  | A11 | A4 with SyMAI/LLM premise ranking | Evidence-ineligible; ranking overlap and cost unmeasured |
+  | A12 | Always-on duplicated-work stress arm | Evidence-ineligible; never infer benefit from preflight zero calls |
+  | S1 | Legacy SymbolicAI/kernel-truth diagnostic | Diagnostic only and never candidate-eligible |
+
+- Policy decision: Reject P0 always-on, P1 deterministic-first, P2
+  proof-family, and P3 bounded-learned routing from the current production
+  decision. All remain valid benchmark policies, but none is selected because
+  no policy passed the frozen shortlist and paired holdout gates. P3 also
+  remains development-frozen and may not learn from holdout. There are no
+  evidence-backed thresholds to publish as production settings; the only
+  operative threshold is the fail-closed requirement for a complete,
+  source-validated paired holdout receipt.
+- Tradeoff finding: Quality values—including kernel-verified completion,
+  paired delta from A0, semantic equivalence, normalized IR match, and A0
+  regressions—are `not_observed`, not zero. Resource values—including latency,
+  model calls, solver processes, accelerator-minutes, peak memory, and
+  retries—are `not_observed`, not zero-cost. Complexity values—including
+  deployed component count, unnecessary-call rate, failed attempts, marginal
+  verified gain per resource, and Pareto eligibility—are also `not_observed`.
+  The structural implementation can account for each field, but a
+  capability-preflight record cannot supply candidate efficacy or operational
+  burden. Safety likewise remains unevaluated on holdout; no observed invalid
+  control false positive must not be rewritten as a measured zero rate.
+- Reproduction and promotion boundary: A new operator follows the validated
+  runbook from a clean detached worktree and run-scoped state root through
+  capability probing, supervisor objective ingestion, baseline validation,
+  pilot/development execution, shortlist gating, authorized paired holdout,
+  fresh-worktree replay, and final reporting. The next eligible decision
+  requires pinned full spaCy, SyMAI/llm_router, and Leanstral identities; an
+  unchanged complete pilot/development matrix; zero kernel-verified invalid
+  controls; a frozen nonempty shortlist; explicit holdout authorization;
+  balanced A0/candidate cold and warm pairs; kernel receipts; replay; and
+  complete quality, resource, routing, and complexity reports. Benchmark
+  validation never changes production routing, merges a worktree, or promotes
+  a component automatically.
+- Backlog alignment: HSSL-G100 remains one cohesive terminal decision goal.
+  Its source binding, fail-closed decision, full A0-A12/S1 and P0-P3
+  dispositions, component ownership, tradeoff accounting, and reproduction
+  runbook are one publication boundary, so no smaller child goal is needed.
+  Generated todo-vector, objective-bundle, and task-status metadata remain
+  supervisor-owned and are not manually edited; the supervisor can reconcile
+  HSSLEV1006B8A from the AST symbol, decision snapshot, validated runbook,
+  objective heap, discovery receipt, and required validators.
