@@ -1,0 +1,35 @@
+{
+  "evidence": "HSSLEV1126C73",
+  "http": {
+    "health_path": "/health",
+    "max_draft_bytes": 65536,
+    "max_response_bytes": 1048576,
+    "models_path": "/v1/models",
+    "timeout_seconds": 2.0
+  },
+  "identity": {
+    "endpoint": "http://127.0.0.1:8080/v1",
+    "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+    "provider": "leanstral_local",
+    "server_build": "llama.cpp",
+    "service": "leanstral-119b-shared"
+  },
+  "mcp": {
+    "get_tool": "model_get_served",
+    "list_tool": "model_list_served",
+    "service": "ipfs-accelerate-mcp"
+  },
+  "p2p": {
+    "custom_port": 19001,
+    "enabled": false,
+    "required_provider": "leanstral_local"
+  },
+  "schema_version": "ipfs-accelerate.hssl-leanstral-runtime-lock.v1",
+  "smoke": {
+    "max_tokens": 64,
+    "prompt": "Complete this non-corpus Lean identity proof draft only: theorem hssl_identity (x : Nat) : x = x := by",
+    "temperature": 0.0,
+    "uses_benchmark_inputs": false
+  },
+  "task_id": "HSSL-BENCH-033"
+}
