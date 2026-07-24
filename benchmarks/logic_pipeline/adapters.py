@@ -21,14 +21,16 @@ from enum import Enum
 import hashlib
 import importlib
 import json
+import math
 import re
 import time
-from types import MappingProxyType
-from typing import Any, Callable, Final, Mapping, Sequence
+from types import MappingProxyType, SimpleNamespace
+from typing import Any, Callable, Final, Mapping, MutableMapping, Sequence
 
 from .contracts import (
     BASELINE_VARIANT,
     CacheMode,
+    CacheScope,
     CaseResultRecord,
     DEFAULT_PROTOCOL_SHA256,
     FailureCode,
@@ -80,8 +82,54 @@ SPACY_EVIDENCE_SCHEMA: Final = (
 )
 SPACY_MAX_EVIDENCE_BYTES: Final = 60 * 1024
 SPACY_MAX_TEXT_BYTES: Final = 4 * 1024
+SYMAI_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
+)
+SYMAI_PROMPT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v1"
+)
+SYMAI_MAX_TEXT_BYTES: Final = 8 * 1024
+SYMAI_MAX_RAW_OUTPUT_BYTES: Final = 4 * 1024
+SYMAI_MAX_CANDIDATE_BYTES: Final = 24 * 1024
+SYMAI_MAX_RETRIES: Final = 2
+SYMAI_MAX_LIST_ITEMS: Final = 256
+SYMAI_MAX_ITEM_LENGTH: Final = 256
+SYMAI_ROUTER_ENGINE: Final = (
+    "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine"
+)
 _LEANSTRAL_FORBIDDEN_CONSTRUCT = re.compile(
     r"(?i)(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx|axiom|unsafe)(?![A-Za-z0-9_'])"
+)
+_SYMAI_CONTRACT_KEYS = frozenset(
+    {
+        "candidate_ir",
+        "normalized_predicates",
+        "quantifiers",
+        "entities",
+        "ambiguity_flags",
+        "confidence",
+        "validation_errors",
+    }
+)
+_SYMAI_RECURSIVE_IDENTITIES = frozenset(
+    {
+        "symai",
+        "symbolicai",
+        "symbolic_ai",
+        "ipfs_symai",
+        "symai_ipfs_engine",
+    }
+)
+_SYMAI_AUTHORITY_KEYS = frozenset(
+    {
+        "authoritative",
+        "is_proved",
+        "kernel_accepted",
+        "kernel_receipt",
+        "kernel_receipt_sha256",
+        "proof_authority",
+        "verified",
+    }
 )
 _LEANSTRAL_DRAFT_KEYS = frozenset(
     {
@@ -182,6 +230,62 @@ class SpacyAdapterConfig:
         ):
             raise ProtocolContractError(
                 f"max_text_bytes must be between 1 and {SPACY_MAX_TEXT_BYTES}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class SymaiAdapterConfig:
+    """Frozen routing and contract limits for one SyMAI benchmark arm.
+
+    The provider is deliberately pinned to the repository's existing
+    ``llm_router`` accelerator provider by default.  The adapter never creates
+    a model server and disables the router's local-model fallback, so a
+    requested Leanstral model can only reuse the already managed service.
+    """
+
+    provider: str = "ipfs_accelerate_py"
+    model: str = "default"
+    max_retries: int = 1
+    dry_run: bool = False
+    cache_enabled: bool = True
+    max_text_bytes: int = SYMAI_MAX_TEXT_BYTES
+    max_raw_output_bytes: int = SYMAI_MAX_RAW_OUTPUT_BYTES
+
+    def __post_init__(self) -> None:
+        _safe_id(self.provider, "provider")
+        _safe_id(self.model, "model")
+        if _is_recursive_symai_identity(self.provider):
+            raise ProtocolContractError(
+                "SyMAI cannot select itself as an llm_router provider"
+            )
+        if (
+            not isinstance(self.max_retries, int)
+            or isinstance(self.max_retries, bool)
+            or not 0 <= self.max_retries <= SYMAI_MAX_RETRIES
+        ):
+            raise ProtocolContractError(
+                f"max_retries must be between 0 and {SYMAI_MAX_RETRIES}"
+            )
+        if type(self.dry_run) is not bool:
+            raise ProtocolContractError("dry_run must be a boolean")
+        if type(self.cache_enabled) is not bool:
+            raise ProtocolContractError("cache_enabled must be a boolean")
+        if (
+            not isinstance(self.max_text_bytes, int)
+            or isinstance(self.max_text_bytes, bool)
+            or not 1 <= self.max_text_bytes <= SYMAI_MAX_TEXT_BYTES
+        ):
+            raise ProtocolContractError(
+                f"max_text_bytes must be between 1 and {SYMAI_MAX_TEXT_BYTES}"
+            )
+        if (
+            not isinstance(self.max_raw_output_bytes, int)
+            or isinstance(self.max_raw_output_bytes, bool)
+            or not 1 <= self.max_raw_output_bytes <= SYMAI_MAX_RAW_OUTPUT_BYTES
+        ):
+            raise ProtocolContractError(
+                "max_raw_output_bytes must be between 1 and "
+                f"{SYMAI_MAX_RAW_OUTPUT_BYTES}"
             )
 
 
@@ -1134,8 +1238,848 @@ class SpacyAdapter(StageAdapter):
         super().__init__(StageName.SPACY, handler=handler, **kwargs)
 
 
+class SymaiAdapterContractError(ProtocolContractError):
+    """Raised when SyMAI returns malformed or unsafe semantic evidence."""
+
+
+class SymaiRecursiveRoutingError(SymaiAdapterContractError):
+    """Raised when a SyMAI request would route back through SyMAI."""
+
+
+SymaiEngineFactory = Callable[[SymaiAdapterConfig, str], object]
+SymaiTraceGetter = Callable[[], Mapping[str, object]]
+
+
+def HSSLEV0328B3A() -> str:
+    """Return the AST-verifiable SyMAI existing-router evidence receipt."""
+
+    return (
+        "strict SyMAI semantic contracts through the existing llm_router with "
+        "bounded retries and isolated cache namespaces"
+    )
+
+
+def _normalized_identity(value: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower()).strip("_")
+
+
+def _is_recursive_symai_identity(value: object) -> bool:
+    normalized = _normalized_identity(value)
+    return normalized in _SYMAI_RECURSIVE_IDENTITIES or normalized.startswith(
+        ("symai_", "symbolicai_")
+    )
+
+
+def _symai_routing_stack(request: StageRequest) -> tuple[str, ...]:
+    values: list[object] = []
+    sources = [request.requested_identity]
+    if isinstance(request.input_data, Mapping):
+        sources.append(request.input_data)
+    for source in sources:
+        for key in ("route_stack", "router_stack", "routing_stack"):
+            if key not in source:
+                continue
+            raw = source[key]
+            if isinstance(raw, str):
+                values.extend(part for part in re.split(r"[,>\s]+", raw) if part)
+            elif isinstance(raw, Sequence) and not isinstance(raw, (str, bytes)):
+                values.extend(raw)
+            else:
+                raise SymaiRecursiveRoutingError(
+                    f"{key} must be a string or sequence of route identifiers"
+                )
+    return tuple(_normalized_identity(value) for value in values)
+
+
+def _reject_symai_recursion(
+    request: StageRequest,
+    *,
+    metadata: Mapping[str, object] | None = None,
+) -> None:
+    stack = _symai_routing_stack(request)
+    if any(_is_recursive_symai_identity(item) for item in stack):
+        raise SymaiRecursiveRoutingError(
+            "recursive SyMAI -> llm_router -> SyMAI routing is forbidden"
+        )
+    if metadata is None:
+        return
+    for key in (
+        "backend",
+        "effective_provider",
+        "effective_provider_name",
+        "provider",
+        "route",
+        "router_provider",
+    ):
+        if key in metadata and _is_recursive_symai_identity(metadata[key]):
+            raise SymaiRecursiveRoutingError(
+                f"llm_router resolved recursively to SyMAI via {key}"
+            )
+
+
+def _symai_request_text(request: StageRequest, config: SymaiAdapterConfig) -> str:
+    value = request.input_data
+    if isinstance(value, str):
+        text = value
+    elif isinstance(value, Mapping):
+        text = value.get("text")
+        if text is None:
+            text = value.get("source_text")
+    else:
+        text = None
+    if not isinstance(text, str) or not text.strip():
+        raise SymaiAdapterContractError(
+            "SyMAI input must contain a nonempty text or source_text string"
+        )
+    normalized = text.strip()
+    if len(normalized.encode("utf-8")) > config.max_text_bytes:
+        raise SymaiAdapterContractError(
+            f"SyMAI input exceeds {config.max_text_bytes} encoded bytes"
+        )
+    return normalized
+
+
+def _symai_cache_namespace(request: StageRequest) -> str:
+    return CacheScope(
+        run_id=request.run_id,
+        protocol_sha256=request.protocol_sha256,
+        variant_id=request.variant_id,
+        split=request.split,
+        mode=request.cache_mode,
+    ).namespace
+
+
+def _symai_cache_key(
+    request: StageRequest,
+    config: SymaiAdapterConfig,
+    namespace: str,
+) -> str:
+    digest = hashlib.sha256(
+        canonical_json(
+            {
+                "schema": SYMAI_PROMPT_SCHEMA,
+                "namespace": namespace,
+                "case_id": request.case_id,
+                "input_sha256": request.input_sha256,
+                "upstream_stage_digests": list(request.upstream_stage_digests),
+                "provider": config.provider,
+                "model": config.model,
+                "dry_run": config.dry_run,
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return f"{namespace}/stage/symai/{digest}"
+
+
+def _symai_prompt(text: str, namespace: str) -> str:
+    request_payload = {
+        "schema": SYMAI_PROMPT_SCHEMA,
+        "cache_namespace": namespace,
+        "task": "semantic_interpretation",
+        "text": text,
+    }
+    return (
+        "Interpret the supplied text as an untrusted semantic candidate. "
+        "Return exactly one JSON object with exactly these keys: candidate_ir "
+        "(object), normalized_predicates (array of strings), quantifiers "
+        "(array of strings), entities (array of strings), ambiguity_flags "
+        "(array of strings), confidence (number from 0 to 1), and "
+        "validation_errors (array of strings). Do not claim proof, kernel "
+        "acceptance, verification, or authority.\n\n"
+        + canonical_json(request_payload)
+    )
+
+
+def _symai_dry_run_raw(request: StageRequest) -> str:
+    return canonical_json(
+        {
+            "candidate_ir": {
+                "kind": "dry_run",
+                "source_sha256": request.input_sha256,
+            },
+            "normalized_predicates": [],
+            "quantifiers": [],
+            "entities": [],
+            "ambiguity_flags": ["dry_run"],
+            "confidence": 0.0,
+            "validation_errors": ["model_call_skipped"],
+        }
+    )
+
+
+def _reject_json_constant(value: str) -> object:
+    raise SymaiAdapterContractError(f"non-finite JSON number is forbidden: {value}")
+
+
+def _reject_duplicate_json_keys(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise SymaiAdapterContractError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _symai_string_list(value: object, field_name: str) -> list[str]:
+    if not isinstance(value, list):
+        raise SymaiAdapterContractError(f"{field_name} must be an array")
+    if len(value) > SYMAI_MAX_LIST_ITEMS:
+        raise SymaiAdapterContractError(
+            f"{field_name} exceeds {SYMAI_MAX_LIST_ITEMS} items"
+        )
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            raise SymaiAdapterContractError(
+                f"{field_name} must contain nonempty strings"
+            )
+        normalized = item.strip()
+        if len(normalized) > SYMAI_MAX_ITEM_LENGTH:
+            raise SymaiAdapterContractError(
+                f"{field_name} contains an overlong string"
+            )
+        result.append(normalized)
+    if len(set(result)) != len(result):
+        raise SymaiAdapterContractError(f"{field_name} contains duplicate values")
+    return result
+
+
+def _contains_symai_authority_key(value: object) -> bool:
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if _normalized_identity(key) in _SYMAI_AUTHORITY_KEYS:
+                return True
+            if _contains_symai_authority_key(item):
+                return True
+    elif isinstance(value, list):
+        return any(_contains_symai_authority_key(item) for item in value)
+    return False
+
+
+def _validate_symai_candidate_value(
+    value: object,
+    field_name: str = "candidate_ir",
+    *,
+    depth: int = 0,
+) -> None:
+    # The enclosing StageRecord adds two levels (stage data + candidate field)
+    # to the shared eight-level JSON bound.
+    if depth > 6:
+        raise SymaiAdapterContractError("candidate_ir exceeds maximum nesting depth")
+    if value is None or isinstance(value, (bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise SymaiAdapterContractError(
+                f"{field_name} contains a non-finite number"
+            )
+        return
+    if isinstance(value, str):
+        if len(value) > 4096:
+            raise SymaiAdapterContractError(
+                f"{field_name} contains an overlong string"
+            )
+        return
+    if isinstance(value, list):
+        if len(value) > SYMAI_MAX_LIST_ITEMS:
+            raise SymaiAdapterContractError(
+                f"{field_name} contains too many array items"
+            )
+        for index, item in enumerate(value):
+            _validate_symai_candidate_value(
+                item, f"{field_name}[{index}]", depth=depth + 1
+            )
+        return
+    if isinstance(value, dict):
+        if len(value) > SYMAI_MAX_LIST_ITEMS:
+            raise SymaiAdapterContractError(
+                f"{field_name} contains too many object members"
+            )
+        for key, item in value.items():
+            if not isinstance(key, str) or not key or len(key) > SYMAI_MAX_ITEM_LENGTH:
+                raise SymaiAdapterContractError(
+                    f"{field_name} contains an invalid object key"
+                )
+            _validate_symai_candidate_value(
+                item, f"{field_name}.{key}", depth=depth + 1
+            )
+        return
+    raise SymaiAdapterContractError(
+        f"{field_name} contains a non-JSON value"
+    )
+
+
+def _validate_symai_contract(
+    raw_output: object,
+    config: SymaiAdapterConfig,
+) -> tuple[str, dict[str, object]]:
+    if not isinstance(raw_output, str) or not raw_output.strip():
+        raise SymaiAdapterContractError("SyMAI output must be a nonempty JSON string")
+    raw = raw_output.strip()
+    if len(raw.encode("utf-8")) > config.max_raw_output_bytes:
+        raise SymaiAdapterContractError(
+            f"SyMAI raw output exceeds {config.max_raw_output_bytes} encoded bytes"
+        )
+    try:
+        decoded = json.loads(
+            raw,
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_json_constant,
+        )
+    except SymaiAdapterContractError:
+        raise
+    except (json.JSONDecodeError, RecursionError, TypeError, ValueError) as exc:
+        raise SymaiAdapterContractError(
+            f"SyMAI output is not strict JSON: {type(exc).__name__}"
+        ) from exc
+    if not isinstance(decoded, dict):
+        raise SymaiAdapterContractError("SyMAI output must be one JSON object")
+    missing = _SYMAI_CONTRACT_KEYS - set(decoded)
+    unknown = set(decoded) - _SYMAI_CONTRACT_KEYS
+    if missing or unknown:
+        raise SymaiAdapterContractError(
+            "SyMAI contract keys do not match the frozen schema"
+        )
+    candidate_ir = decoded["candidate_ir"]
+    if not isinstance(candidate_ir, dict) or not candidate_ir:
+        raise SymaiAdapterContractError("candidate_ir must be a nonempty object")
+    _validate_symai_candidate_value(candidate_ir)
+    if _contains_symai_authority_key(candidate_ir):
+        raise SymaiAdapterContractError(
+            "candidate_ir contains a forbidden proof-authority claim"
+        )
+    candidate_bytes = len(canonical_json(candidate_ir).encode("utf-8"))
+    if candidate_bytes > SYMAI_MAX_CANDIDATE_BYTES:
+        raise SymaiAdapterContractError(
+            f"candidate_ir exceeds {SYMAI_MAX_CANDIDATE_BYTES} encoded bytes"
+        )
+    confidence = decoded["confidence"]
+    if (
+        isinstance(confidence, bool)
+        or not isinstance(confidence, (int, float))
+        or not math.isfinite(float(confidence))
+        or not 0.0 <= float(confidence) <= 1.0
+    ):
+        raise SymaiAdapterContractError(
+            "confidence must be a finite number between 0 and 1"
+        )
+    validated = {
+        "candidate_ir": candidate_ir,
+        "normalized_predicates": _symai_string_list(
+            decoded["normalized_predicates"], "normalized_predicates"
+        ),
+        "quantifiers": _symai_string_list(decoded["quantifiers"], "quantifiers"),
+        "entities": _symai_string_list(decoded["entities"], "entities"),
+        "ambiguity_flags": _symai_string_list(
+            decoded["ambiguity_flags"], "ambiguity_flags"
+        ),
+        "confidence": float(confidence),
+        "validation_errors": _symai_string_list(
+            decoded["validation_errors"], "validation_errors"
+        ),
+    }
+    return raw, validated
+
+
+def _default_symai_engine_factory(
+    config: SymaiAdapterConfig,
+    namespace: str,
+) -> object:
+    # Import SyMAI itself first.  Its import may raise SystemExit when the
+    # preflight configuration is missing; callers convert that to explicit
+    # capability missingness instead of invoking its setup wizard.
+    importlib.import_module("symai")
+    engine_module = importlib.import_module(
+        "ipfs_datasets_py.utils.symai_ipfs_engine"
+    )
+    engine_type = getattr(engine_module, "IPFSSyMAINeurosymbolicEngine", None)
+    if not isinstance(engine_type, type):
+        raise ImportError("IPFSSyMAINeurosymbolicEngine is unavailable")
+    return engine_type(
+        "neurosymbolic",
+        "NEUROSYMBOLIC_ENGINE_MODEL",
+        provider=config.provider,
+        cache_namespace=namespace,
+        allow_local_fallback=False,
+        dry_run=config.dry_run,
+        cache_enabled=(
+            config.cache_enabled and namespace.endswith("/cache/warm")
+        ),
+        model_name=config.model,
+    )
+
+
+def _default_symai_trace_getter() -> Mapping[str, object]:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    getter = getattr(router, "get_last_generation_trace", None)
+    if not callable(getter):
+        return {}
+    value = getter()
+    return value if isinstance(value, Mapping) else {}
+
+
+def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, object]]:
+    forward = getattr(engine, "forward", None)
+    if not callable(forward):
+        raise SymaiAdapterContractError("SyMAI engine must expose forward()")
+    argument = SimpleNamespace(
+        prop=SimpleNamespace(
+            prepared_input=prompt,
+            processed_input="",
+            prompt="",
+            raw_input=False,
+            response_format={"type": "json_object"},
+            payload={"response_format": {"type": "json_object"}},
+        ),
+        args=[],
+        kwargs={},
+    )
+    result = forward(argument)
+    if (
+        not isinstance(result, tuple)
+        or len(result) != 2
+        or not isinstance(result[0], Sequence)
+        or isinstance(result[0], (str, bytes))
+        or len(result[0]) != 1
+        or not isinstance(result[0][0], str)
+        or not isinstance(result[1], Mapping)
+    ):
+        raise SymaiAdapterContractError(
+            "SyMAI engine must return one text output and metadata"
+        )
+    return result[0][0], dict(result[1])
+
+
+def _safe_symai_metadata(value: Mapping[str, object]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key in (
+        "backend",
+        "cache",
+        "cache_key",
+        "cached_backend",
+        "effective_model_name",
+        "effective_provider_name",
+        "format",
+        "model",
+        "provider",
+        "router_provider",
+    ):
+        item = value.get(key)
+        if item is None or isinstance(item, (bool, int, float)):
+            if item is not None:
+                if not isinstance(item, float) or math.isfinite(item):
+                    result[key] = item
+        elif isinstance(item, str):
+            result[key] = item[:SYMAI_MAX_ITEM_LENGTH]
+    return result
+
+
+def _symai_telemetry(
+    request: StageRequest,
+    *,
+    started_wall: float,
+    started_cpu: float,
+    raw_output: str | None,
+    model_calls: int,
+    retries: int,
+    cache_hit: bool,
+    success: bool,
+) -> TelemetryRecord:
+    return TelemetryRecord(
+        wall_time_ms=round(max(0.0, time.perf_counter() - started_wall) * 1000, 6),
+        cpu_time_ms=round(max(0.0, time.process_time() - started_cpu) * 1000, 6),
+        input_items=1,
+        output_items=1 if success else 0,
+        model_calls=model_calls,
+        cache_hits=1 if cache_hit else 0,
+        cache_misses=0 if cache_hit else 1,
+        retries=retries,
+        bytes_in=request.input_bytes,
+        bytes_out=(
+            0 if raw_output is None else len(raw_output.encode("utf-8"))
+        ),
+        resource_lane=ResourceLane.MODEL,
+    )
+
+
+def _symai_failure_output(
+    request: StageRequest,
+    config: SymaiAdapterConfig,
+    *,
+    detail: str,
+    namespace: str,
+    cache_key: str,
+    started_wall: float,
+    started_cpu: float,
+    failure_code: FailureCode,
+    raw_output: str | None = None,
+    metadata: Mapping[str, object] | None = None,
+    model_calls: int = 0,
+    retries: int = 0,
+    cache_hit: bool = False,
+    unavailable: bool = False,
+) -> StageOutput:
+    bounded_detail = detail.strip()[:_MAX_DETAIL_LENGTH]
+    identity = {
+        **dict(request.requested_identity),
+        "adapter": "symai",
+        "requested_provider": config.provider,
+        "requested_model": config.model,
+        "cache_namespace": namespace,
+        "cache_key": cache_key,
+        "dry_run": config.dry_run,
+        "existing_router_engine": SYMAI_ROUTER_ENGINE,
+        "starts_model_server": False,
+        "symai_failure_code": failure_code.value,
+    }
+    if metadata:
+        identity.update(
+            {
+                f"router_{key}": value
+                for key, value in _safe_symai_metadata(metadata).items()
+            }
+        )
+    failure_data: dict[str, object] = {
+        "schema": SYMAI_EVIDENCE_SCHEMA,
+        "raw_output": raw_output,
+        "candidate_ir": None,
+        "cache_namespace": namespace,
+        "cache_key": cache_key,
+        "assurance": {
+            "semantic_hypothesis": False,
+            "authoritative": False,
+            "kernel_checked": False,
+            "verified": False,
+        },
+    }
+    return StageOutput(
+        data=failure_data,
+        status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
+        effective_identity=identity,
+        failure_code=(
+            FailureCode.CAPABILITY_UNAVAILABLE if unavailable else failure_code
+        ),
+        failure_detail=bounded_detail,
+        telemetry=_symai_telemetry(
+            request,
+            started_wall=started_wall,
+            started_cpu=started_cpu,
+            raw_output=raw_output,
+            model_calls=model_calls,
+            retries=retries,
+            cache_hit=cache_hit,
+            success=False,
+        ),
+    )
+
+
+def _symai_evidence_handler(
+    config: SymaiAdapterConfig,
+    *,
+    engine_factory: SymaiEngineFactory,
+    trace_getter: SymaiTraceGetter,
+    cache: MutableMapping[str, object],
+) -> StageHandler:
+    def handler(request: StageRequest) -> StageOutput:
+        started_wall = time.perf_counter()
+        started_cpu = time.process_time()
+        namespace = _symai_cache_namespace(request)
+        cache_key = _symai_cache_key(request, config, namespace)
+        raw_output: str | None = None
+        metadata: dict[str, object] = {}
+        cache_hit = False
+        model_calls = 0
+        retries = 0
+
+        try:
+            _reject_symai_recursion(request)
+            text = _symai_request_text(request, config)
+        except SymaiRecursiveRoutingError as exc:
+            return _symai_failure_output(
+                request,
+                config,
+                detail=str(exc),
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
+            )
+        except SymaiAdapterContractError as exc:
+            return _symai_failure_output(
+                request,
+                config,
+                detail=str(exc),
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=FailureCode.FIXTURE_INVALID,
+            )
+
+        if config.cache_enabled and request.cache_mode is CacheMode.WARM:
+            cached = cache.get(cache_key)
+            if isinstance(cached, Mapping):
+                cached_raw = cached.get("raw_output")
+                cached_metadata = cached.get("metadata", {})
+                if isinstance(cached_raw, str) and isinstance(
+                    cached_metadata, Mapping
+                ):
+                    raw_output = cached_raw
+                    metadata = dict(cached_metadata)
+                    cache_hit = True
+
+        validated: dict[str, object] | None = None
+        last_contract_error: SymaiAdapterContractError | None = None
+        last_engine_error: Exception | None = None
+        attempts = 1 if cache_hit else config.max_retries + 1
+        engine: object | None = None
+
+        for attempt in range(attempts):
+            if not cache_hit:
+                try:
+                    if config.dry_run:
+                        raw_output = _symai_dry_run_raw(request)
+                        metadata = {
+                            "backend": "dry_run",
+                            "effective_provider_name": config.provider,
+                            "effective_model_name": config.model,
+                        }
+                    else:
+                        if engine is None:
+                            engine = engine_factory(config, namespace)
+                        model_calls += 1
+                        raw_output, metadata = _invoke_symai_engine(
+                            engine, _symai_prompt(text, namespace)
+                        )
+                        try:
+                            trace = trace_getter()
+                        except Exception:
+                            trace = {}
+                        if isinstance(trace, Mapping):
+                            for key, value in trace.items():
+                                metadata.setdefault(str(key), value)
+                    _reject_symai_recursion(request, metadata=metadata)
+                except SymaiRecursiveRoutingError as exc:
+                    return _symai_failure_output(
+                        request,
+                        config,
+                        detail=str(exc),
+                        namespace=namespace,
+                        cache_key=cache_key,
+                        started_wall=started_wall,
+                        started_cpu=started_cpu,
+                        failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
+                        raw_output=raw_output,
+                        metadata=metadata,
+                        model_calls=model_calls,
+                        retries=retries,
+                    )
+                except (ImportError, ModuleNotFoundError, SystemExit) as exc:
+                    return _symai_failure_output(
+                        request,
+                        config,
+                        detail=(
+                            "SyMAI package or preflight configuration is unavailable: "
+                            f"{type(exc).__name__}"
+                        ),
+                        namespace=namespace,
+                        cache_key=cache_key,
+                        started_wall=started_wall,
+                        started_cpu=started_cpu,
+                        failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
+                        model_calls=model_calls,
+                        retries=retries,
+                        unavailable=True,
+                    )
+                except SymaiAdapterContractError as exc:
+                    last_contract_error = exc
+                except Exception as exc:
+                    last_engine_error = exc
+
+            if raw_output is not None:
+                try:
+                    raw_output, validated = _validate_symai_contract(
+                        raw_output, config
+                    )
+                    break
+                except SymaiAdapterContractError as exc:
+                    last_contract_error = exc
+
+            if cache_hit:
+                break
+            if attempt < attempts - 1:
+                retries += 1
+
+        if validated is None:
+            if last_contract_error is not None:
+                code = FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
+                detail = f"SyMAI structured contract rejected: {last_contract_error}"
+            else:
+                code = FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
+                error_name = (
+                    type(last_engine_error).__name__
+                    if last_engine_error is not None
+                    else "UnknownError"
+                )
+                detail = f"SyMAI existing-router invocation failed: {error_name}"
+            return _symai_failure_output(
+                request,
+                config,
+                detail=detail,
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=code,
+                raw_output=raw_output,
+                metadata=metadata,
+                model_calls=model_calls,
+                retries=retries,
+                cache_hit=cache_hit,
+            )
+
+        if config.cache_enabled and not cache_hit:
+            cache[cache_key] = {
+                "raw_output": raw_output,
+                "metadata": dict(metadata),
+            }
+
+        safe_metadata = _safe_symai_metadata(metadata)
+        effective_provider = str(
+            metadata.get("effective_provider_name")
+            or metadata.get("provider")
+            or config.provider
+        )
+        effective_model = str(
+            metadata.get("effective_model_name")
+            or metadata.get("model")
+            or config.model
+        )
+        candidate_ir = validated["candidate_ir"]
+        candidate_sha256 = hashlib.sha256(
+            canonical_json(candidate_ir).encode("utf-8")
+        ).hexdigest()
+        evidence = {
+            "schema": SYMAI_EVIDENCE_SCHEMA,
+            "candidate_ir": candidate_ir,
+            "candidate_ir_sha256": candidate_sha256,
+            "normalized_predicates": validated["normalized_predicates"],
+            "quantifiers": validated["quantifiers"],
+            "entities": validated["entities"],
+            "ambiguity_flags": validated["ambiguity_flags"],
+            "confidence": validated["confidence"],
+            "validation_errors": validated["validation_errors"],
+            "raw_output": raw_output,
+            "backend_provenance": {
+                "engine": SYMAI_ROUTER_ENGINE,
+                "router": "ipfs_datasets_py.llm_router",
+                "requested_provider": config.provider,
+                "effective_provider": effective_provider,
+                "requested_model": config.model,
+                "effective_model": effective_model,
+                "router_metadata": safe_metadata,
+                "attempts": model_calls,
+                "retries": retries,
+                "dry_run": config.dry_run,
+                "starts_model_server": False,
+                "reuses_existing_model_service": True,
+            },
+            "cache": {
+                "namespace": namespace,
+                "key": cache_key,
+                "mode": request.cache_mode.value,
+                "hit": cache_hit,
+            },
+            "assurance": {
+                "semantic_hypothesis": True,
+                "raw_output_is_canonical": False,
+                "contract_validated": True,
+                "authoritative": False,
+                "kernel_checked": False,
+                "verified": False,
+            },
+        }
+        identity = {
+            **dict(request.requested_identity),
+            "implementation": "symai",
+            "requested_provider": config.provider,
+            "effective_provider": effective_provider,
+            "requested_model": config.model,
+            "effective_model": effective_model,
+            "cache_namespace": namespace,
+            "cache_key": cache_key,
+            "cache_hit": cache_hit,
+            "dry_run": config.dry_run,
+            "existing_router_engine": SYMAI_ROUTER_ENGINE,
+            "starts_model_server": False,
+        }
+        return StageOutput(
+            data=evidence,
+            effective_identity=identity,
+            telemetry=_symai_telemetry(
+                request,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                raw_output=raw_output,
+                model_calls=model_calls,
+                retries=retries,
+                cache_hit=cache_hit,
+                success=True,
+            ),
+        )
+
+    return handler
+
+
 class SymaiAdapter(StageAdapter):
-    def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
+    """Stage adapter for strict SyMAI semantics over the existing router.
+
+    With neither a handler nor config this retains the dependency-free default
+    route.  A config opts into lazy ``IPFSSyMAINeurosymbolicEngine`` execution;
+    explicitly injected handlers retain the generic adapter compatibility used
+    by earlier benchmark stages.
+    """
+
+    config: SymaiAdapterConfig | None
+
+    def __init__(
+        self,
+        handler: StageHandler | None = None,
+        *,
+        config: SymaiAdapterConfig | None = None,
+        engine_factory: SymaiEngineFactory | None = None,
+        trace_getter: SymaiTraceGetter | None = None,
+        cache: MutableMapping[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        if handler is not None and config is not None:
+            raise ProtocolContractError(
+                "SymaiAdapter accepts either an injected handler or a config"
+            )
+        if config is None and any(
+            value is not None for value in (engine_factory, trace_getter, cache)
+        ):
+            raise ProtocolContractError(
+                "SyMAI engine, trace, and cache injection require a config"
+            )
+        if config is not None:
+            if not isinstance(config, SymaiAdapterConfig):
+                raise ProtocolContractError(
+                    "config must be a SymaiAdapterConfig"
+                )
+            selected_cache = {} if cache is None else cache
+            if not isinstance(selected_cache, MutableMapping):
+                raise ProtocolContractError("cache must be a mutable mapping")
+            handler = _symai_evidence_handler(
+                config,
+                engine_factory=engine_factory or _default_symai_engine_factory,
+                trace_getter=trace_getter or _default_symai_trace_getter,
+                cache=selected_cache,
+            )
+        object.__setattr__(self, "config", config)
         super().__init__(StageName.SYMAI, handler=handler, **kwargs)
 
 
@@ -1934,6 +2878,21 @@ class LeanstralAdapter(StageAdapter):
 
         def validated(request: StageRequest) -> object:
             try:
+                # The shared route builder has always accepted generic injected
+                # handlers.  Preserve that compatibility when the caller has
+                # not supplied a Leanstral obligation contract; direct
+                # Leanstral benchmark requests still take the strict path.
+                if (
+                    handler is not None
+                    and (
+                        not isinstance(request.input_data, Mapping)
+                        or not any(
+                            key in request.input_data
+                            for key in ("obligation_id", "obligation_ids")
+                        )
+                    )
+                ):
+                    return selected(request)  # type: ignore[misc]
                 payload, obligation_id, repair_attempt = _leanstral_input(
                     request, self.config
                 )
@@ -2033,7 +2992,15 @@ def build_default_adapters(
         StageName.SPACY: SpacyAdapter(handlers.get(StageName.SPACY)),
         StageName.SYMAI: SymaiAdapter(handlers.get(StageName.SYMAI)),
         StageName.HAMMER: HammerAdapter(handlers.get(StageName.HAMMER)),
-        StageName.LEANSTRAL: LeanstralAdapter(handlers.get(StageName.LEANSTRAL)),
+        # Keep the dependency-free default route inert.  The configured
+        # LeanstralAdapter resolves a local provider lazily, so using the base
+        # adapter here is the only way for an absent handler to remain truly
+        # unconfigured as promised by this factory.
+        StageName.LEANSTRAL: (
+            LeanstralAdapter(handlers[StageName.LEANSTRAL])
+            if StageName.LEANSTRAL in handlers
+            else StageAdapter(StageName.LEANSTRAL)
+        ),
         StageName.KERNEL: KernelAdapter(handlers.get(StageName.KERNEL)),
     }
     return MappingProxyType(adapters)
@@ -2081,6 +3048,7 @@ __all__ = [
     "HSSLEV0335D9B",
     "HSSLEV0306C18",
     "HSSLEV0310F79",
+    "HSSLEV0328B3A",
     "HSSLEV0342A4C",
     "KernelAdapter",
     "LEANSTRAL_DRAFT_SCHEMA",
@@ -2106,7 +3074,20 @@ __all__ = [
     "StageRequest",
     "StageTelemetry",
     "STAGE_ORDER",
+    "SYMAI_EVIDENCE_SCHEMA",
+    "SYMAI_MAX_CANDIDATE_BYTES",
+    "SYMAI_MAX_LIST_ITEMS",
+    "SYMAI_MAX_RAW_OUTPUT_BYTES",
+    "SYMAI_MAX_RETRIES",
+    "SYMAI_MAX_TEXT_BYTES",
+    "SYMAI_PROMPT_SCHEMA",
+    "SYMAI_ROUTER_ENGINE",
     "SymaiAdapter",
+    "SymaiAdapterConfig",
+    "SymaiAdapterContractError",
+    "SymaiEngineFactory",
+    "SymaiRecursiveRoutingError",
+    "SymaiTraceGetter",
     "VersionedStageAdapter",
     "build_default_adapters",
     "run_stages",
