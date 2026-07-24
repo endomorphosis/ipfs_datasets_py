@@ -13,6 +13,12 @@ The CLI also dispatches the reproducible inferential statistics validator in
 are run-scoped analysis outputs rather than a fabricated checked-in efficacy
 snapshot.
 
+Delegation-efficiency reports use the same rule.  A measured report must embed
+complete case-result and operational-meter receipts.  Without an explicit
+results path, the efficiency section validates a structural preflight whose
+quality and resource values are null; it never turns absent measurements into
+zero-cost efficacy.
+
 The checked-in artifact records a capability-preflight execution because the
 requested Leanstral service was unavailable in the capture environment.  This
 is intentional missingness: validation proves that the analysis/reporting
@@ -50,7 +56,14 @@ from benchmarks.logic_pipeline.contracts import (
     VerificationAuthority,
     canonical_json,
 )
-from benchmarks.logic_pipeline.metrics import validate_kernel_bound_result
+from benchmarks.logic_pipeline.metrics import (
+    DEFAULT_EFFICIENCY_ESCALATIONS,
+    EfficiencyEscalation,
+    EfficiencyObservation,
+    MetricsContractError,
+    analyze_delegation_efficiency,
+    validate_kernel_bound_result,
+)
 from benchmarks.logic_pipeline.variants import (
     VARIANT_REGISTRY,
     VARIANT_REGISTRY_SHA256,
@@ -65,6 +78,9 @@ PROOF_OBSERVATION_SCHEMA: Final = (
 )
 PROOF_ANALYSIS_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.proof-overlap-analysis.v1"
+)
+EFFICIENCY_REPORT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.delegation-efficiency-report.v1"
 )
 DEFAULT_PROOF_REPORT_PATH: Final = Path(
     "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
@@ -161,6 +177,16 @@ def HSSLEV0608F63() -> str:
     )
 
     return statistics_evidence()
+
+
+def HSSLEV0615B24() -> str:
+    """Return AST-verifiable evidence for delegation-value accounting."""
+
+    from benchmarks.logic_pipeline.metrics import (
+        HSSLEV0615B24 as efficiency_evidence,
+    )
+
+    return efficiency_evidence()
 
 
 def build_statistics_report(
@@ -999,6 +1025,241 @@ def create_capability_preflight_report() -> dict[str, object]:
     return validate_proof_report(report)
 
 
+class EfficiencyReportError(ValueError):
+    """Raised when delegation-efficiency evidence is incomplete or altered."""
+
+
+def build_efficiency_report(
+    escalations: Sequence[EfficiencyEscalation],
+    observations: Sequence[EfficiencyObservation],
+    *,
+    execution_mode: str = "measured",
+    missing_reason: str | None = None,
+) -> dict[str, object]:
+    """Build a canonical report from case-result and resource receipts."""
+
+    if execution_mode not in {"measured", "capability_preflight"}:
+        raise EfficiencyReportError("unsupported efficiency execution_mode")
+    escalation_records = tuple(escalations)
+    observation_records = tuple(observations)
+    if not escalation_records or any(
+        not isinstance(item, EfficiencyEscalation) for item in escalation_records
+    ):
+        raise EfficiencyReportError(
+            "escalations must contain EfficiencyEscalation values"
+        )
+    if any(
+        not isinstance(item, EfficiencyObservation) for item in observation_records
+    ):
+        raise EfficiencyReportError(
+            "observations must contain EfficiencyObservation values"
+        )
+    if execution_mode == "measured":
+        if missing_reason is not None:
+            raise EfficiencyReportError(
+                "a measured efficiency report cannot carry missing_reason"
+            )
+        if not observation_records:
+            raise EfficiencyReportError(
+                "a measured efficiency report requires observations"
+            )
+    else:
+        if not isinstance(missing_reason, str) or not missing_reason.strip():
+            raise EfficiencyReportError(
+                "capability preflight requires a missing_reason"
+            )
+        if observation_records:
+            raise EfficiencyReportError(
+                "capability preflight cannot contain measured observations"
+            )
+    ordered_escalations = tuple(
+        sorted(escalation_records, key=lambda item: item.step_index)
+    )
+    step_order = {
+        item.variant_id: item.step_index for item in ordered_escalations
+    }
+    try:
+        ordered_observations = tuple(
+            sorted(
+                observation_records,
+                key=lambda item: (
+                    step_order[item.case_result.variant_id],
+                    item.case_result.case_id,
+                ),
+            )
+        )
+        analysis = analyze_delegation_efficiency(
+            ordered_escalations,
+            ordered_observations,
+            allow_empty=execution_mode == "capability_preflight",
+        )
+    except (MetricsContractError, KeyError) as exc:
+        raise EfficiencyReportError(str(exc)) from exc
+    value: dict[str, object] = {
+        "schema": EFFICIENCY_REPORT_SCHEMA,
+        "evidence": HSSLEV0615B24(),
+        "benchmark_id": BENCHMARK_ID,
+        "execution_mode": execution_mode,
+        "missing_reason": missing_reason,
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "escalations": [item.to_dict() for item in ordered_escalations],
+        "observations": [item.to_dict() for item in ordered_observations],
+        "analysis": analysis,
+        "artifact_sha256": "",
+    }
+    value["artifact_sha256"] = _artifact_digest(value)
+    return validate_efficiency_report(value)
+
+
+def create_efficiency_capability_preflight_report() -> dict[str, object]:
+    """Create non-efficacy evidence for environments without measured traces."""
+
+    return build_efficiency_report(
+        DEFAULT_EFFICIENCY_ESCALATIONS,
+        (),
+        execution_mode="capability_preflight",
+        missing_reason=(
+            "no complete paired A1-A4 case-result and operational-resource "
+            "receipt matrix was supplied; efficacy and cost ratios remain null"
+        ),
+    )
+
+
+def validate_efficiency_report(value: object) -> dict[str, object]:
+    """Strictly reparse and recompute a delegation-efficiency report."""
+
+    data = _mapping(value, "efficiency_report")
+    fields = {
+        "schema",
+        "evidence",
+        "benchmark_id",
+        "execution_mode",
+        "missing_reason",
+        "protocol_sha256",
+        "escalations",
+        "observations",
+        "analysis",
+        "artifact_sha256",
+    }
+    try:
+        _exact(data, fields, "efficiency_report")
+        if data["schema"] != EFFICIENCY_REPORT_SCHEMA:
+            raise EfficiencyReportError("unsupported efficiency report schema")
+        if data["evidence"] != HSSLEV0615B24():
+            raise EfficiencyReportError("efficiency evidence marker changed")
+        if data["benchmark_id"] != BENCHMARK_ID:
+            raise EfficiencyReportError("efficiency benchmark_id changed")
+        if data["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256:
+            raise EfficiencyReportError("efficiency protocol digest changed")
+        execution_mode = _string(data["execution_mode"], "execution_mode")
+        if execution_mode not in {"measured", "capability_preflight"}:
+            raise EfficiencyReportError(
+                "unsupported efficiency execution_mode"
+            )
+        raw_steps = _array(data["escalations"], "escalations")
+        steps = tuple(EfficiencyEscalation.from_dict(item) for item in raw_steps)
+        if any(item.variant_id not in VARIANT_REGISTRY for item in steps):
+            raise EfficiencyReportError(
+                "efficiency escalation references an unregistered variant"
+            )
+        if [item.step_index for item in steps] != list(range(len(steps))):
+            raise EfficiencyReportError(
+                "efficiency escalations are not in canonical order"
+            )
+        raw_observations = _array(data["observations"], "observations")
+        observations = tuple(
+            EfficiencyObservation.from_dict(item) for item in raw_observations
+        )
+        order = {item.variant_id: item.step_index for item in steps}
+        coordinates = [
+            (order[item.case_result.variant_id], item.case_result.case_id)
+            for item in observations
+        ]
+        if coordinates != sorted(coordinates):
+            raise EfficiencyReportError(
+                "efficiency observations are not in canonical order"
+            )
+        if len(coordinates) != len(set(coordinates)):
+            raise EfficiencyReportError(
+                "efficiency report contains duplicate observations"
+            )
+        missing_reason = data["missing_reason"]
+        if execution_mode == "capability_preflight":
+            if observations:
+                raise EfficiencyReportError(
+                    "capability preflight cannot contain measured observations"
+                )
+            _string(missing_reason, "missing_reason")
+        else:
+            if not observations:
+                raise EfficiencyReportError(
+                    "measured efficiency report requires observations"
+                )
+            if missing_reason is not None:
+                raise EfficiencyReportError(
+                    "measured efficiency report cannot carry missing_reason"
+                )
+        derived = analyze_delegation_efficiency(
+            steps,
+            observations,
+            allow_empty=execution_mode == "capability_preflight",
+        )
+    except (MetricsContractError, ProofReportError, KeyError) as exc:
+        if isinstance(exc, EfficiencyReportError):
+            raise
+        raise EfficiencyReportError(str(exc)) from exc
+    if data["analysis"] != derived:
+        raise EfficiencyReportError(
+            "serialized efficiency analysis differs from observations"
+        )
+    if data["artifact_sha256"] != _artifact_digest(data):
+        raise EfficiencyReportError("efficiency report artifact digest changed")
+    return dict(data)
+
+
+def load_efficiency_report(path: str | Path) -> dict[str, object]:
+    """Load strict canonical newline JSON efficiency evidence."""
+
+    report_path = Path(path)
+    try:
+        text = report_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise EfficiencyReportError(
+            f"cannot read efficiency report: {report_path}"
+        ) from exc
+    if not text.endswith("\n"):
+        raise EfficiencyReportError(
+            "efficiency report is not canonical newline JSON"
+        )
+    try:
+        value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
+    except (json.JSONDecodeError, ProofReportError) as exc:
+        raise EfficiencyReportError(
+            "efficiency report is not strict JSON"
+        ) from exc
+    if canonical_json(value) + "\n" != text:
+        raise EfficiencyReportError("efficiency report is not canonical JSON")
+    return validate_efficiency_report(value)
+
+
+def efficiency_summary(report: Mapping[str, object]) -> dict[str, object]:
+    """Return the stable one-line CLI summary for validated evidence."""
+
+    analysis = _mapping(report["analysis"], "analysis")
+    frontier = _array(analysis["frontier_variant_ids"], "frontier_variant_ids")
+    return {
+        "section": "efficiency",
+        "status": "valid",
+        "execution_mode": report["execution_mode"],
+        "artifact_sha256": report["artifact_sha256"],
+        "observation_count": len(_array(report["observations"], "observations")),
+        "measured": analysis["measured"],
+        "frontier_variant_ids": frontier,
+        "safety_is_hard_constraint": analysis["safety_is_hard_constraint"],
+        "missing_reason": report["missing_reason"],
+    }
+
+
 def _summary(report: Mapping[str, object]) -> dict[str, object]:
     analysis = _mapping(report["analysis"], "analysis")
     coverage = _mapping(analysis["coverage"], "coverage")
@@ -1027,7 +1288,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--section",
-        choices=("frontend", "proof", "statistics"),
+        choices=("frontend", "proof", "statistics", "efficiency"),
         required=True,
     )
     parser.add_argument("--validate", action="store_true", required=True)
@@ -1038,7 +1299,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="override the selected section's canonical report JSON path",
     )
     args = parser.parse_args(argv)
-    if args.section == "statistics":
+    if args.section == "efficiency":
+        try:
+            report = (
+                create_efficiency_capability_preflight_report()
+                if args.results_path is None
+                else load_efficiency_report(args.results_path)
+            )
+        except EfficiencyReportError as exc:
+            parser.error(str(exc))
+        summary = efficiency_summary(report)
+    elif args.section == "statistics":
         from benchmarks.logic_pipeline.statistics import (
             StatisticsError,
             load_statistics_report,
@@ -1087,21 +1358,29 @@ __all__ = [
     "CACHE_MODES",
     "DEFAULT_PROOF_REPORT_PATH",
     "DIAGNOSTIC_VARIANT_IDS",
+    "EFFICIENCY_REPORT_SCHEMA",
     "ELIGIBLE_CASE_IDS",
     "EXCLUDED_CASE_IDS",
+    "EfficiencyReportError",
     "HSSLEV0519C80",
     "HSSLEV0526A41",
     "HSSLEV0608F63",
+    "HSSLEV0615B24",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",
     "PROOF_REPORT_SCHEMA",
     "ProofReportError",
+    "build_efficiency_report",
     "build_statistics_report",
+    "create_efficiency_capability_preflight_report",
     "create_capability_preflight_report",
     "derive_proof_analysis",
+    "efficiency_summary",
+    "load_efficiency_report",
     "load_statistics_report",
     "load_proof_report",
     "validate_statistics_report",
+    "validate_efficiency_report",
     "validate_proof_report",
 ]
