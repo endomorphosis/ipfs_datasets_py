@@ -124,6 +124,7 @@ nl_test_output_docs/
 *.tar.gz
 *.jsonl
 !tests/fixtures/logic_pipeline_benchmark/corpus.jsonl
+!tests/fixtures/logic_pipeline_benchmark/adversarial/controls.jsonl
 !tests/fixtures/legal_ir/hammer_failure_replay.jsonl
 !tests/fixtures/legal_ir/source_copy_reward_hack_replay.jsonl
 !tests/fixtures/legal_ir/external_expert_benchmark.jsonl

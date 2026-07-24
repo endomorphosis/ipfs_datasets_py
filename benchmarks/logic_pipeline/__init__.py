@@ -408,3 +408,76 @@ __all__ += [
     "validate_holdout_prompt_isolation",
     "validate_split_integrity",
 ]
+
+# Existing-fixture adapters preserve upstream identities and expected-result
+# provenance.  Importing the contract does not read the manifest or sources;
+# loading remains an explicit caller operation.
+from .fixture_import import (  # noqa: E402
+    DEFAULT_IMPORT_MANIFEST_PATH,
+    FIXTURE_IMPORT_MANIFEST_SCHEMA,
+    FIXTURE_IMPORT_SCHEMA,
+    FROZEN_IMPORT_MANIFEST_SHA256,
+    FixtureFamily,
+    FixtureImportError,
+    FixtureImportManifest,
+    FixtureImportSpec,
+    HSSLEV0217E25,
+    ImportedFixture,
+    ImportedFixtureSet,
+    load_fixture_imports,
+)
+
+__all__ += [
+    "DEFAULT_IMPORT_MANIFEST_PATH",
+    "FIXTURE_IMPORT_MANIFEST_SCHEMA",
+    "FIXTURE_IMPORT_SCHEMA",
+    "FROZEN_IMPORT_MANIFEST_SHA256",
+    "FixtureFamily",
+    "FixtureImportError",
+    "FixtureImportManifest",
+    "FixtureImportSpec",
+    "HSSLEV0217E25",
+    "ImportedFixture",
+    "ImportedFixtureSet",
+    "load_fixture_imports",
+]
+
+# Adversarial controls are also dependency-free and side-effect-free on
+# import.  The fixture suite is authenticated only when explicitly loaded.
+from .adversarial import (  # noqa: E402
+    CONTROL_MANIFEST_SCHEMA,
+    CONTROL_SCHEMA,
+    REQUIRED_CONTROL_KINDS,
+    AdversarialContractError,
+    AdversarialControl,
+    CandidateAssessment,
+    CandidateClaim,
+    CandidateDisposition,
+    ControlKind,
+    ControlManifest,
+    ControlSuite,
+    HSSLEV0224A96,
+    classify_candidate,
+    gate_candidate,
+    load_control_suite,
+    validate_control_coverage,
+)
+
+__all__ += [
+    "CONTROL_MANIFEST_SCHEMA",
+    "CONTROL_SCHEMA",
+    "REQUIRED_CONTROL_KINDS",
+    "AdversarialContractError",
+    "AdversarialControl",
+    "CandidateAssessment",
+    "CandidateClaim",
+    "CandidateDisposition",
+    "ControlKind",
+    "ControlManifest",
+    "ControlSuite",
+    "HSSLEV0224A96",
+    "classify_candidate",
+    "gate_candidate",
+    "load_control_suite",
+    "validate_control_coverage",
+]
