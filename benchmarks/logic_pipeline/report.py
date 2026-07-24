@@ -265,6 +265,16 @@ def HSSLEV0909F29() -> str:
     return holdout_gate_evidence()
 
 
+def HSSLEV1507C49() -> str:
+    """Return AST-verifiable evidence for the reassessment holdout boundary."""
+
+    from benchmarks.logic_pipeline.holdout_reassessment import (
+        HSSLEV1507C49 as holdout_reassessment_evidence,
+    )
+
+    return holdout_reassessment_evidence()
+
+
 def build_statistics_report(
     plan: object,
     requests: Sequence[object],
@@ -3578,20 +3588,49 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.section is not None:
             parser.error("--gate and --section are mutually exclusive")
         if args.gate == "holdout":
-            from benchmarks.logic_pipeline.holdout_gate import (
-                DEFAULT_HOLDOUT_GATE_PATH,
-                HoldoutGateError,
-                holdout_gate_summary,
-                load_holdout_gate_report,
-            )
-
-            try:
-                report = load_holdout_gate_report(
-                    selected_path or DEFAULT_HOLDOUT_GATE_PATH
+            if selected_path is not None:
+                try:
+                    artifact_header = json.loads(
+                        selected_path.read_text(encoding="utf-8")
+                    )
+                except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                    parser.error(f"cannot inspect holdout artifact: {exc}")
+            else:
+                artifact_header = None
+            if (
+                isinstance(artifact_header, Mapping)
+                and artifact_header.get("schema")
+                == (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "reassessment-holdout.v1"
                 )
-            except HoldoutGateError as exc:
-                parser.error(str(exc))
-            summary = holdout_gate_summary(report)
+            ):
+                from benchmarks.logic_pipeline.holdout_reassessment import (
+                    HoldoutReassessmentError,
+                    holdout_reassessment_summary,
+                    load_holdout_reassessment_report,
+                )
+
+                try:
+                    report = load_holdout_reassessment_report(selected_path)
+                except HoldoutReassessmentError as exc:
+                    parser.error(str(exc))
+                summary = holdout_reassessment_summary(report)
+            else:
+                from benchmarks.logic_pipeline.holdout_gate import (
+                    DEFAULT_HOLDOUT_GATE_PATH,
+                    HoldoutGateError,
+                    holdout_gate_summary,
+                    load_holdout_gate_report,
+                )
+
+                try:
+                    report = load_holdout_gate_report(
+                        selected_path or DEFAULT_HOLDOUT_GATE_PATH
+                    )
+                except HoldoutGateError as exc:
+                    parser.error(str(exc))
+                summary = holdout_gate_summary(report)
             sys.stdout.write(canonical_json(summary) + "\n")
             return 0
         if selected_path is not None:
@@ -3727,7 +3766,9 @@ __all__ = [
     "HSSLEV0608F63",
     "HSSLEV0615B24",
     "HSSLEV0801D68",
+    "HSSLEV0909F29",
     "HSSLEV1006B8A",
+    "HSSLEV1507C49",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
     "PROOF_OBSERVATION_SCHEMA",

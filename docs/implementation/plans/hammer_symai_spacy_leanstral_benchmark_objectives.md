@@ -1331,6 +1331,59 @@ is never completion evidence.
 - Gap task: Execute, seal, and validate the untouched paired holdout only if the new pilot receipt authorizes it.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 4.
+- Evidence implementation:
+  `benchmarks.logic_pipeline.holdout_reassessment.HSSLEV1507C49` is the
+  stable AST-verifiable HSSL-G150 receipt.
+  `build_holdout_reassessment_report(...)`,
+  `validate_holdout_reassessment_report(...)`, the strict canonical loader,
+  atomic artifact/snapshot publisher, and `report.py` holdout schema dispatch
+  make the exact v2 phase result independently reproducible while preserving
+  the historical v1 gate. Focused integration coverage verifies source
+  recomputation, the pre-activity authorization audit, frozen future pairing
+  contract, null metrics, artifact/snapshot cross-digests, tamper rejection,
+  and the exact objective CLI.
+- Prerequisite finding: The exact source-revalidated HSSL-G140 decision has
+  semantic SHA-256
+  `2d146c1cb75eb8c2261a3e1be68ba98bf8b2a4996a1839fb36e26f9bd7f37acb`,
+  byte SHA-256
+  `21713e069e063db32763f563f0184a7d7123a5e559527d54618fadc98d286a48`,
+  and freeze SHA-256
+  `9272f193cde2c64496ed780c52c282fe88203ebffeea0b5a3c4b5f3b5897ebb9`.
+  It is `incomplete`, freezes `selected_variant_ids: []`, explicitly records
+  `holdout_authorized: false`, and retains an uninspected sealed holdout.
+  HSSL-G150 therefore must not execute A0 alone or manufacture an
+  authorization; the correct evidence-backed phase result is blocked and
+  sealed unopened.
+- Zero-activity and future execution contract: The source-first authorization
+  audit rejects before reviewed holdout inputs, semantic targets, execution
+  namespaces, per-contract access audits, filesystem execution writes, cache
+  namespaces, or backend calls are opened. The canonical result records zero
+  scheduled, observed, terminal, or failed pairs and retains every efficacy
+  and cost domain as explicitly unobserved null rather than synthetic zero.
+  It nevertheless freezes the complete authorized path: A0 and every exact
+  one-to-four-arm shortlist over the identical ten-case/source manifest;
+  separate isolated cold/warm caches; case/cache parity counterbalancing; one
+  source-bound audit per run contract before activity; exact protocol,
+  registry, source, prompt, policy, model, resource, threshold, and
+  configuration identities; native-kernel-only success; terminal accounting
+  for every pair; and no fallback, substitution, resume, tuning, or production
+  promotion.
+- Publication result: The canonical
+  `holdout-evaluation-v2.json` has semantic SHA-256
+  `e408d7364209dde32ff4f987ba2845306ab226c2f442c0a3d4abfb18521ee44d`
+  and byte SHA-256
+  `9e712b9ed1fb67c80115d12e3bc92850f23da601543fa59a4cbd700a54b0df9d`.
+  The dated public snapshot binds both identities and has byte SHA-256
+  `ff8315e79ed69d96cbf1926ea5c1f23e08507b93a5d826270c1161a4d8d4f4a5`.
+- Backlog alignment: HSSL-G150 remains one cohesive authorization and
+  execution aggregate. Source authorization, the no-side-effect rejection
+  boundary, access audits, exact pairing, terminal results, and metrics must
+  share one trust graph, so no smaller child goal or heap refinement is
+  needed. Generated todo-vector, objective-bundle, external todo, task-status,
+  and supervisor backlog metadata remain supervisor-owned and were not
+  manually edited. Reconciliation is driven by HSSLEV1507C49, the canonical
+  artifact and snapshot, this objective entry, the HSSL-BENCH-041 discovery
+  receipt, and the exact validator.
 
 ## HSSL-G160 Replay holdout evidence and publish complete reassessment reports
 
