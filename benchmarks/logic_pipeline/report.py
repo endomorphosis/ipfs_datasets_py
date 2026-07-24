@@ -1,11 +1,12 @@
-"""Strict Hammer/Leanstral proof-overlap and ordering reports.
+"""Strict logic-pipeline report CLI and proof-overlap implementation.
 
-The proof report is a trust boundary, not a presentation-only summary.  It
-requires the complete paired pilot matrix, derives every aggregate from
-case-level observations, keeps cold and warm cache modes separate, and admits
-a verified outcome only when a native-kernel receipt is present.  Legacy S1
-model claims are retained as a safety diagnostic and never enter candidate
-metrics.
+This module implements the Hammer/Leanstral proof report and dispatches the
+spaCy/SyMAI front-end report implemented in :mod:`frontend_report`.  Both are
+trust boundaries, not presentation-only summaries.  The proof path requires
+the complete paired pilot matrix, derives every aggregate from case-level
+observations, keeps cold and warm cache modes separate, and admits a verified
+outcome only when a native-kernel receipt is present.  Legacy S1 model claims
+are retained as a safety diagnostic and never enter candidate metrics.
 
 The checked-in artifact records a capability-preflight execution because the
 requested Leanstral service was unavailable in the capture environment.  This
@@ -135,6 +136,16 @@ def HSSLEV0526A41() -> str:
         "kernel-bound Hammer and Leanstral proof overlap, ordering, "
         "and missingness report"
     )
+
+
+def HSSLEV0519C80() -> str:
+    """Return AST-verifiable evidence for front-end overlap measurement."""
+
+    from benchmarks.logic_pipeline.frontend_report import (
+        HSSLEV0519C80 as frontend_evidence,
+    )
+
+    return frontend_evidence()
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
@@ -956,22 +967,45 @@ def _summary(report: Mapping[str, object]) -> dict[str, object]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate Hammer/Leanstral benchmark reports"
+        description="Validate logic-pipeline benchmark reports"
     )
-    parser.add_argument("--section", choices=("proof",), required=True)
+    parser.add_argument(
+        "--section",
+        choices=("frontend", "proof"),
+        required=True,
+    )
     parser.add_argument("--validate", action="store_true", required=True)
     parser.add_argument(
         "--results-path",
         type=Path,
-        default=DEFAULT_PROOF_REPORT_PATH,
-        help="canonical proof report JSON path",
+        default=None,
+        help="override the selected section's canonical report JSON path",
     )
     args = parser.parse_args(argv)
-    try:
-        report = load_proof_report(args.results_path)
-    except ProofReportError as exc:
-        parser.error(str(exc))
-    sys.stdout.write(canonical_json(_summary(report)) + "\n")
+    if args.section == "frontend":
+        from benchmarks.logic_pipeline.frontend_report import (
+            DEFAULT_FRONTEND_REPORT_PATH,
+            FrontendReportError,
+            frontend_summary,
+            load_frontend_report,
+        )
+
+        try:
+            report = load_frontend_report(
+                args.results_path or DEFAULT_FRONTEND_REPORT_PATH
+            )
+        except FrontendReportError as exc:
+            parser.error(str(exc))
+        summary = frontend_summary(report)
+    else:
+        try:
+            report = load_proof_report(
+                args.results_path or DEFAULT_PROOF_REPORT_PATH
+            )
+        except ProofReportError as exc:
+            parser.error(str(exc))
+        summary = _summary(report)
+    sys.stdout.write(canonical_json(summary) + "\n")
     return 0
 
 
@@ -985,6 +1019,7 @@ __all__ = [
     "DIAGNOSTIC_VARIANT_IDS",
     "ELIGIBLE_CASE_IDS",
     "EXCLUDED_CASE_IDS",
+    "HSSLEV0519C80",
     "HSSLEV0526A41",
     "PRIMARY_VARIANT_IDS",
     "PROOF_ANALYSIS_SCHEMA",
