@@ -276,7 +276,7 @@ real conflict edges.
 
 ## IRF-023 Add side-effect-free proof backend adapters
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: runtime
