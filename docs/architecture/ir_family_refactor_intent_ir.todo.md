@@ -708,7 +708,7 @@ real conflict edges.
 
 ## IRF-052 Implement Intent advisor heads and checkpoint policy
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: runtime
