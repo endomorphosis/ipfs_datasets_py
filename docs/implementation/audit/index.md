@@ -17,5 +17,5 @@ Implementation notes serve several purposes:
 
 ## Related Resources
 
-- [Developer Guide](../developer_guide.md): Guide for developers contributing to the project
-- [RAG Optimizer Documentation](../rag_optimizer/): Implementation details for the RAG Query Optimizer
+- [Developer Guide](../../developer_guide.md): Guide for developers contributing to the project
+- [RAG Optimizer Documentation](../../rag_optimizer/): Implementation details for the RAG Query Optimizer
