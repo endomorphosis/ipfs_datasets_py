@@ -453,7 +453,7 @@ Buffer:                                                          [====]
 ---
 
 **Quick Links:**
-- [Master Plan](KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md)
+- [Master Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md)
 - [Executive Summary](KNOWLEDGE_GRAPHS_EXECUTIVE_SUMMARY_2026_02_16.md)
 - [Current Status](KNOWLEDGE_GRAPHS_STATUS_2026_02_16.md)
 - [Migration Guide](KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md)
