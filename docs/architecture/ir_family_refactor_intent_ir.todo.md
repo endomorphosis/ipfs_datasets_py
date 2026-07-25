@@ -540,7 +540,7 @@ real conflict edges.
 
 ## IRF-040 Extract domain-neutral formalization contracts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
