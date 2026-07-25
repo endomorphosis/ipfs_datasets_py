@@ -120,7 +120,7 @@ llm_router = LLMRouter(
 
 ## Legal Scraper Daemon
 
-For the canonical legal scraping loop, see [docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md](../docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md).
+For the canonical legal scraping loop, see [docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md](../../docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md).
 
 For more information, see:
 - `ipfs_datasets_py/optimizers/USAGE_GUIDE.md`
