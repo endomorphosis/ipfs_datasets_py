@@ -683,11 +683,11 @@ See `logic/zkp/PRODUCTION_UPGRADE_PATH.md` for complete guide.
 
 ## References
 
-- **TDFOL Refactoring Plan:** [REFACTORING_PLAN_2026_02_18.md](./REFACTORING_PLAN_2026_02_18.md)
-- **ZKP Module:** [../zkp/README.md](../zkp/README.md)
+- **TDFOL Refactoring Plan:** [REFACTORING_PLAN_2026_02_18.md](./ARCHIVE/REFACTORING_PLAN_2026_02_18.md)
+- **ZKP Module:** [README.md](../../../ipfs_datasets_py/logic/zkp/README.md)
 - **ZKP Production Upgrade:** [../zkp/PRODUCTION_UPGRADE_PATH.md](../zkp/PRODUCTION_UPGRADE_PATH.md)
-- **Proof Caching:** [../common/proof_cache.py](../common/proof_cache.py)
-- **Custom Exceptions:** [exceptions.py](./exceptions.py)
+- **Proof Caching:** [proof_cache.py](../../../ipfs_datasets_py/logic/common/proof_cache.py)
+- **Custom Exceptions:** [exceptions.py](../../../ipfs_datasets_py/logic/TDFOL/exceptions.py)
 
 ---
 
