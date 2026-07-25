@@ -279,6 +279,6 @@ if formula.has_quantifiers():
 
 ## References
 
-- [LOGIC_IMPROVEMENT_PLAN.md](../../LOGIC_IMPROVEMENT_PLAN.md) - Phase 1 type system consolidation
-- [IMPLEMENTATION_PROGRESS.md](../../IMPLEMENTATION_PROGRESS.md) - Progress tracking
-- [CHANGELOG_LOGIC.md](../../CHANGELOG_LOGIC.md) - Change history
+- [LOGIC_IMPROVEMENT_PLAN.md](../../../docs/archive/root_status_reports/LOGIC_IMPROVEMENT_PLAN.md) - Phase 1 type system consolidation
+- [IMPLEMENTATION_PROGRESS.md](../../../docs/archive/root_status_reports/IMPLEMENTATION_PROGRESS.md) - Progress tracking
+- [CHANGELOG_LOGIC.md](../../../docs/archive/root_status_reports/CHANGELOG_LOGIC.md) - Change history
