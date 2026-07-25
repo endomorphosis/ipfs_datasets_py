@@ -355,8 +355,8 @@ This report provides a comprehensive analysis of test coverage for all MCP tools
 ## 📝 Tool Inventory Reference
 
 For the complete list of all 200+ MCP tools organized by category, see:
-- [`MCP_TOOLS_COMPLETE_CATALOG.md`](MCP_TOOLS_COMPLETE_CATALOG.md)
-- [`architecture/mcp_tools_comprehensive_documentation.md`](architecture/mcp_tools_comprehensive_documentation.md)
+- [`MCP_TOOLS_COMPLETE_CATALOG.md`](../../guides/MCP_TOOLS_COMPLETE_CATALOG.md)
+- [`architecture/mcp_tools_comprehensive_documentation.md`](../../architecture/mcp_tools_comprehensive_documentation.md)
 
 ---
 
