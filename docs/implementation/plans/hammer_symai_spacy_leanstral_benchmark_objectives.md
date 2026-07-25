@@ -1681,3 +1681,89 @@ is never completion evidence.
 - Backward-compatibility contract: Frozen protocol revision 1 continues to deserialize and report S1 as diagnostic-only and may continue to emit its existing typed-unavailable result. The new capability and bridge must be additive under a new protocol/environment identity and cannot alter A0-A12 results, the immutable diagnostic run, or either published final-decision artifact.
 - Holdout boundary: This goal may use only preregistered pilot/development diagnostic cases. S1 remains forever ineligible for the shortlist, and the currently frozen holdout remains sealed.
 - Backlog alignment: This is a bounded future diagnostic goal distinct from the modern HSSL-G032 SyMAI adapter. Generated todo-vector, objective-bundle, task-status, and discovery metadata remain supervisor-owned and must be regenerated from this heap rather than edited manually.
+
+## HSSL-G200 Establish a scoreable source-only semantic projection in a new protocol revision
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G170
+- Fib priority: 3524578
+- Track: benchmark-protocol-revision
+- Priority: P0
+- Bundle: objective/hssl/semantic-contract-revision
+- Goal: Replace the incompatible live front-end/scorer handoff with one bounded, label-blind normalized semantic projection that compiler, spaCy, and SyMAI can all emit and the independent semantic validator can score without consuming reviewed answers.
+- Evidence: HSSLEV2007A42
+- Outputs: benchmarks/logic_pipeline/contracts.py, benchmarks/logic_pipeline/ablation.py, benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/adapters.py, benchmarks/logic_pipeline/semantic_reassessment.py, tests/unit/benchmarks/logic_pipeline/test_semantic_reassessment.py, tests/integration/benchmarks/logic_pipeline/test_semantic_projection_calibration.py
+- Validation: python -m pytest tests/unit/benchmarks/logic_pipeline/test_semantic_reassessment.py tests/integration/benchmarks/logic_pipeline/test_semantic_projection_calibration.py tests/unit/benchmarks/logic_pipeline/test_symai_adapter.py -q
+- Acceptance: A new protocol, registry, prompt, and schema digest preregister one canonical semantic projection with explicit logic, target, class, predicates, entities, completeness, and content digest fields; every producer derives it only from source text and producer evidence; `StageRequest.input_data` sent to compiler, spaCy, and SyMAI contains no expected IR/class, reviewed proof obligation, required label, or kernel outcome; compiler and spaCy normalize their real nested ModalIR fields; SyMAI's structured response requires every scored field and converts a vacuous candidate into an explicit typed semantic failure rather than either success or silent upstream fallback; validation errors have defined precedence over ambiguity; raw full-ModalIR hashes are never compared with differently shaped reviewed expected-IR hashes; and a real producer-to-validator calibration over all twenty unsealed pilot/development cases proves that every scored field is representable before any measured quality artifact can become complete.
+- Gap task: Implement and test the shared semantic projection, non-vacuous producer contracts, scoreability calibration, and fail-closed pilot eligibility boundary, then run a new source-bound pilot/development matrix under the revised identities.
+- Refinement depth: 1
+- Follow-up source: The immutable diagnostic run `hssl-matrix-20260725T092337Z-3aeabda93` produced 240 source-bound semantic receipts, but none contained an observable target; live ModalIR and SyMAI schemas cannot emit the fields required by the revision 1 scorer, so its apparent `0.0` quality rate is unidentifiable rather than a valid all-model efficacy result.
+- Leakage boundary: `expected_ir`, `expected_class`, required labels, reviewed `proof_obligation`, `compiled_obligation.semantic_target`, native certificates, and kernel outcomes may enter only the post-execution evaluator or proof trust boundary explicitly assigned to them. They must never populate the producer projection, model prompt, cache key semantic content, or upstream front-end context. Adversarial tests must prove that forged reviewed fields cannot improve a producer score.
+- Revision boundary: Revision 1 receipts, prompts, registry, thresholds, and published decisions remain immutable diagnostics. Because the producer schema, SyMAI prompt, metric calibration, and eligibility behavior change, the repair requires a new protocol digest, run ID, capability freeze, cache namespace, full 560-coordinate pilot/development matrix, and independent semantic receipt graph; no revision 1 result may be relabeled or reused as revision 2 efficacy.
+- Gate boundary: Universal missing target/logic coverage or an all-zero score produced by an uncalibrated schema is `semantic_schema_incompatible`, not complete measured quality. Candidate selection requires complete calibrated semantic evidence plus a non-vacuous absolute quality condition before relative near-best comparisons can apply. Any calibration failure freezes an empty shortlist and keeps holdout closed.
+- Holdout boundary: HSSL-G200 is pilot/development-only work. It must not inspect or execute any holdout case, and it cannot authorize production routing or promotion.
+- Backlog alignment: HSSL-G200 is a prerequisite repair for any later HSSL-G140-through-G170 reassessment because scoreable front-end quality and a non-vacuous eligibility gate share one versioned trust boundary. Generated supervisor task-status, objective-bundle, todo-vector, and discovery metadata remain supervisor-owned and must be regenerated from this objective rather than manually edited.
+
+## HSSL-G210 Equalize kernel exposure and measure causal optional-component rescue
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G200
+- Fib priority: 5702887
+- Track: benchmark-protocol-revision
+- Priority: P0
+- Bundle: objective/hssl/causal-proof-revision
+- Goal: Remove the A0-versus-candidate verification confound and redesign proof escalation so Hammer and Leanstral are measured only against an identical externally kernel-checked compiler reference and can receive credit only for a distinct accepted rescue.
+- Evidence: HSSLEV2108F34
+- Outputs: benchmarks/logic_pipeline/contracts.py, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/variants.py, benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/metrics.py, benchmarks/logic_pipeline/statistics.py, tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py tests/integration/benchmarks/logic_pipeline/test_live_runtime.py tests/unit/benchmarks/logic_pipeline/test_statistics.py -q
+- Acceptance: A0 and every candidate apply the same independent native-kernel verification policy to the same compiler candidate population; an optional component's success is a causal rescue only when the identical compiler reference is absent or independently rejected and a distinct Hammer or Leanstral candidate is independently accepted; byte-identical duplicate compiler/Hammer certificates are recorded as overlap with zero marginal efficacy; route continuation after a model failure is not called recovery; Hammer and Leanstral receive a preregistered nonempty pilot/development population of valid obligations on which deterministic compilation does not already succeed; every suppression and escalation denominator is explicit; Leanstral output-limit, schema, forbidden-construct, provider, and timeout failures remain separate codes; and component-specific latency, calls, retries, memory, unique wins, and unnecessary work are source-bound without changing proof authority.
+- Gap task: Create the revised equal-verification graph and reviewed pilot/development rescue population, add causal candidate-selection receipts, split failure accounting, and rerun the exact ablations only after HSSL-G200 calibration passes.
+- Refinement depth: 1
+- Follow-up source: In `hssl-matrix-20260725T092337Z-3aeabda93`, A0 emitted the same compiler-native candidate population but never invoked the kernel, every A1-A12 arm had the identical 18-of-40 verified set, all 216 accepted receipts selected compiler candidates, and 168 Hammer results duplicated the compiler certificate. Direct Leanstral produced no selected candidate.
+- Routing boundary: Hammer runs only after a valid deterministic obligation lacks an accepted compiler proof. Leanstral runs only after the preregistered deterministic failure condition assigned to its arm. SyMAI semantic work cannot receive proof credit, and neither solver nor model verdict can replace the native-kernel receipt.
+- Model-service boundary: SyMAI and direct Leanstral share a single source-bound provider/service lease and cache coordinator when their frozen inner provider, model, and endpoint identities are identical, while retaining distinct semantic versus proof prompts, cache keys, telemetry, and stage receipts.
+- Holdout boundary: HSSL-G210 uses only a newly reviewed pilot/development rescue population. It cannot access holdout, authorize a shortlist, or change production routing.
+- Backlog alignment: HSSL-G210 is required before another pilot gate because unequal kernel exposure and duplicate-certificate credit make proof deltas non-causal even when every receipt is individually valid. Generated supervisor metadata must be regenerated from this goal and its tests.
+
+## HSSL-G220 Replace and independently reseal the benchmark holdout
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G210
+- Fib priority: 9227465
+- Track: benchmark-holdout-revision
+- Priority: P0
+- Bundle: objective/hssl/replacement-holdout
+- Goal: Retire the current holdout from future selection claims and create a newly reviewed, independently authored, access-controlled holdout only after the HSSL-G200 semantic and HSSL-G210 causal-proof protocols, prompts, metrics, routes, and thresholds are frozen.
+- Evidence: HSSLEV2205C73
+- Outputs: tests/fixtures/logic_pipeline_benchmark_v2/manifest.json, an access-controlled holdout corpus outside the tuning worktree, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/holdout_execution.py, tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py tests/integration/benchmarks/logic_pipeline/test_holdout_execution.py -q
+- Acceptance: The old holdout is permanently ineligible for a new efficacy or promotion claim; the replacement cases and labels are authored and reviewed by a party isolated from protocol tuning; only a content-addressed sealed manifest and strata/count metadata are visible before authorization; tuning agents cannot load source text, labels, expected IR, proof obligations, or outcomes; every access is append-only receipted; exact A0 and frozen-shortlist paired execution is impossible before a complete HSSL-G230 pilot artifact explicitly authorizes it; and any premature access invalidates the replacement rather than being converted into a clean seal.
+- Gap task: Arrange independent replacement-holdout authorship and review, implement an access-controlled loader and append-only access receipt, then freeze its identity after the revised protocol and before any authorized evaluation.
+- Refinement depth: 1
+- Follow-up source: During post-run diagnosis, the combined fixture layout proved capable of exposing holdout source and reviewed labels outside the holdout access logger. Even though no holdout backend execution or result artifact occurred, that confidentiality boundary is insufficient for a future blinded claim.
+- Isolation boundary: The replacement holdout must not reside in a plainly readable combined corpus inside the tuning worktree. The supervisor may schedule and verify seal mechanics, but it must not generate answer labels, summarize hidden cases, or expose them to any agent that modified HSSL-G200.
+- Publication boundary: HSSL-G220 creates no shortlist, efficacy claim, production routing change, or promotion. HSSL-G230 must later rerun pilot/development under HSSL-G200 and HSSL-G210, freeze a nonempty eligible shortlist, receive exact authorization, and only then permit a revision-2 executor to open the replacement holdout.
+- Backlog alignment: This is a separate trust-boundary goal because independent authorship, confidentiality, access logging, and invalidation cannot be satisfied by the HSSL-G200 or HSSL-G210 implementation agents. Generated supervisor metadata must be reconciled from this objective without copying hidden holdout contents into the task board.
+
+## HSSL-G230 Run the revised pilot matrix and freeze exact replacement-holdout authorization
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G220
+- Fib priority: 14930352
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/revised-pilot-authorization
+- Goal: Execute and independently validate the complete revised pilot/development ablation matrix, then freeze either an exact nonempty eligible shortlist authorization bound to the HSSL-G220 replacement seal or an empty shortlist that authorizes nothing.
+- Evidence: HSSLEV2309D46
+- Outputs: an external run-scoped capability freeze, matrix index, semantic receipt graph, paired proof/cost/statistics reports, pilot-shortlist decision, and dated validation snapshot; benchmarks/logic_pipeline/pilot_reassessment.py; tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py tests/integration/benchmarks/logic_pipeline/test_matrix_reassessment.py tests/integration/benchmarks/logic_pipeline/test_pilot_reassessment.py -q; python benchmarks/logic_pipeline/report.py --gate pilot-shortlist --artifact <external-revision-2-pilot-artifact>
+- Acceptance: One clean detached source commit binds the revised protocol, registry, unsealed corpus, prompts, backend/model identities, cache/resource policy, semantic projection, causal kernel-verification policy, and replacement-holdout seal before execution; every registered pilot/development arm/case/cache coordinate is terminal and source-bound; semantic calibration is complete and non-vacuous; A0 and candidates have identical external verification exposure; optional-component rescue is causally attributed; invalid controls have zero kernel-verified false positives; efficacy, semantic quality, cost, reliability, routing, and Pareto evidence are non-null; and only one to four candidates passing every absolute, paired, safety, and replayability gate receive a content-addressed authorization for the exact HSSL-G220 seal. Any calibration, source, completeness, safety, materiality, or shortlist failure emits an empty shortlist with no authorization digest.
+- Gap task: After HSSL-G200, HSSL-G210, and HSSL-G220 complete, run the revised capability probe and full pilot/development matrix in a new external namespace, publish independent semantic/statistical receipts, and validate the exact pilot decision without opening holdout.
+- Refinement depth: 1
+- Authorization boundary: Neither HSSL-G200 calibration, HSSL-G210 proof-route completion, nor HSSL-G220 seal completion authorizes evaluation. Only this goal's complete source-recomputed pilot artifact may authorize the exact frozen shortlist and replacement manifest; it still does not authorize production promotion.
+- Holdout boundary: Revision-1 HSSL-G150 and its old holdout must never be reused for a revision-2 claim. A future revision-2 holdout executor may run only after this artifact authorizes the exact HSSL-G220 seal and must preserve balanced A0/candidate cold/warm pairing, access receipts, native-kernel authority, and stop rules.
+- Backlog alignment: HSSL-G230 is the sole bridge from implementation and seal preparation to any revised holdout execution. Generated supervisor metadata must preserve dependencies on G200, G210, and G220 and must not infer authorization from goal completion alone.

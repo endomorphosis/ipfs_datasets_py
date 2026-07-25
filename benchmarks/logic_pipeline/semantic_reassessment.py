@@ -556,6 +556,104 @@ def _structured_projection(
     }
 
 
+def validate_normalized_semantic_stage_contract(
+    stage: StageRecord,
+) -> dict[str, object]:
+    """Return a scoreable normalized projection or fail closed.
+
+    A successful front-end payload is not automatically calibrated to the
+    semantic scorer.  In particular, a producer-specific IR can be
+    well-formed while exposing neither of the normalized observations needed
+    for a source-bound comparison.  Minting a quality receipt in that state
+    would turn a contract mismatch into a false measurement.
+
+    This boundary is deliberately label-blind: it accepts only the already
+    materialized stage record and never receives a benchmark case, expected
+    class, expected IR, proof obligation, or negative-control label.  It
+    requires explicit normalized logic and target observations from the
+    selected, graph-invoked producer.  Missing observations make the
+    coordinate unscorable and abort semantic reassessment rather than
+    assigning zero quality.
+    """
+
+    if not isinstance(stage, StageRecord):
+        raise SemanticReassessmentError(
+            "semantic contract calibration requires a StageRecord"
+        )
+    if stage.stage not in _FRONTEND_STAGES:
+        raise SemanticReassessmentError(
+            "semantic contract calibration requires a front-end stage"
+        )
+    if stage.status is not StageStatus.SUCCESS:
+        raise SemanticReassessmentError(
+            "semantic contract calibration requires a successful stage"
+        )
+    if not _stage_invoked(stage):
+        raise SemanticReassessmentError(
+            "semantic contract calibration requires a graph-invoked stage"
+        )
+    payload = _mapping(
+        stage.data,
+        f"{stage.stage.value} semantic payload",
+    )
+    projection = _structured_projection(stage, payload)
+    missing = [
+        field
+        for field in ("observed_logics", "observed_targets")
+        if not projection[field]
+    ]
+    if missing:
+        raise SemanticReassessmentError(
+            "semantic producer/scorer contract is uncalibrated for "
+            f"{stage.stage.value}: selected live payload exposes no "
+            f"normalized {', '.join(missing)}; semantic-quality receipt "
+            "cannot be minted"
+        )
+    return projection
+
+
+def validate_label_blind_semantic_input_binding(
+    stage: StageRecord,
+    case: BenchmarkCase,
+) -> str:
+    """Require the selected producer to bind the canonical source-only input.
+
+    The reviewed case is available only inside this downstream validator.  It
+    is used here solely to reconstruct ``{"text": source_text}``; no expected
+    class, expected IR, proof obligation, negative control, predicate, or
+    entity label participates in the producer-input digest.
+
+    A digest mismatch cannot reveal which extra field entered the producer
+    envelope, so it fails closed instead of attempting to infer that the
+    producer ignored any reviewed labels it may have received.
+    """
+
+    if not isinstance(stage, StageRecord):
+        raise SemanticReassessmentError(
+            "semantic input binding requires a StageRecord"
+        )
+    if not isinstance(case, BenchmarkCase):
+        raise SemanticReassessmentError(
+            "semantic input binding requires a reviewed BenchmarkCase"
+        )
+    if stage.stage not in _FRONTEND_STAGES:
+        raise SemanticReassessmentError(
+            "semantic input binding requires a front-end stage"
+        )
+    if stage.status is not StageStatus.SUCCESS or not _stage_invoked(stage):
+        raise SemanticReassessmentError(
+            "semantic input binding requires a successful graph-invoked stage"
+        )
+    expected_input_sha256 = _sha({"text": case.source_text})
+    if stage.provenance.input_sha256 != expected_input_sha256:
+        raise SemanticReassessmentError(
+            "semantic producer input is not bound to the canonical "
+            f"label-blind source-only envelope for {stage.stage.value}; "
+            "semantic-quality receipt cannot be minted"
+        )
+    return expected_input_sha256
+
+
 def _stage_invoked(stage: StageRecord) -> bool:
     value = stage.provenance.effective_identity.get("graph_invoked")
     if type(value) is not bool:
@@ -877,11 +975,13 @@ def _evaluate_coordinate(
                 "semantic signature is not bound to the selected successful "
                 "front-end stage"
             )
-        payload = _mapping(
-            selected_stage.data,
-            f"{selected_stage.stage.value} semantic payload",
+        validate_label_blind_semantic_input_binding(
+            selected_stage,
+            case,
         )
-        projection = _structured_projection(selected_stage, payload)
+        projection = validate_normalized_semantic_stage_contract(
+            selected_stage
+        )
         predicted = _predicted_class(
             projection,
             semantic_stage_failed=semantic_failed,
@@ -1713,6 +1813,8 @@ __all__ = [
     "build_semantic_reassessment",
     "evaluate_frontend_case_results",
     "execute_semantic_reassessment",
+    "validate_label_blind_semantic_input_binding",
     "validate_semantic_reassessment",
     "validate_semantic_reassessment_from_matrix",
+    "validate_normalized_semantic_stage_contract",
 ]

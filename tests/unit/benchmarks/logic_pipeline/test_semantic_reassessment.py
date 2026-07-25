@@ -48,7 +48,6 @@ from benchmarks.logic_pipeline.variants import VARIANT_REGISTRY
 
 RUN_ID = "semantic-reassessment-test"
 ENVIRONMENT_SHA256 = "e" * 64
-INPUT_SHA256 = "f" * 64
 MATRIX_SHA256 = "a" * 64
 MATRIX_BINDING = {
     "path": "results/matrix-execution-v2.json",
@@ -67,6 +66,10 @@ _LANES = {
 
 def _sha(value: object) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def _source_input_sha256(case: BenchmarkCase) -> str:
+    return _sha({"text": case.source_text})
 
 
 def _frontend_capabilities() -> dict[str, object]:
@@ -94,7 +97,7 @@ def _kernel_rejection_receipt(
         "variant_id": variant_id,
         "split": case.split.value,
         "cache_mode": cache_mode.value,
-        "input_sha256": INPUT_SHA256,
+        "input_sha256": _source_input_sha256(case),
         "environment_sha256": ENVIRONMENT_SHA256,
         "independent": True,
         "accepted": False,
@@ -235,7 +238,7 @@ def _case_result(
                     source=("semantic-reassessment-test",),
                     requested_identity={"component": stage_name.value},
                     effective_identity=effective_identity,
-                    input_sha256=INPUT_SHA256,
+                    input_sha256=_source_input_sha256(case),
                     environment_sha256=ENVIRONMENT_SHA256,
                     upstream_stage_digests=tuple(
                         stage.digest for stage in stages

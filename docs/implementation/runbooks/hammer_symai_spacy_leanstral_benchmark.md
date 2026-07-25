@@ -130,6 +130,75 @@ append-only protocol/corpus revision for an actual one-repair comparison;
 HSSL-G190 owns a distinct legacy SymbolicAI S1 capability and bridge. Neither
 future goal can rewrite revision 1 evidence or authorize production.
 
+### Repaired-path diagnostic and semantic-calibration stop
+
+The later external run
+`hssl-matrix-20260725T092337Z-3aeabda93` repaired the execution, cache,
+identity, and result-envelope defects above and completed from clean detached
+source commit `3aeabda93edbd0154d1e5f4cf02749a428cf7982`. Its immutable matrix
+index has byte SHA-256
+`5c993212327921904b032dea310ed515562e0efa1372d60ccb38c89bafff47ab`
+and semantic SHA-256
+`cd48e1013337c6cf47c754eb1196403a9bb1ca5ec232c0463333ece6d8a5d7ae`.
+It is diagnostic evidence only and is not a replacement pilot decision.
+
+The repaired run established:
+
+| Diagnostic domain | Observed result |
+|---|---|
+| Matrix coverage | 560 of 560 exact pilot/development coordinates |
+| Stage/resource accounting | 1,812 invoked stages and exactly 1,812 released leases |
+| Independent kernel | 348 invocations and 216 accepted receipts |
+| Candidate outcomes | Every A1-A12 arm had the identical 18 of 40 verified coordinate set |
+| Invalid controls | 56 coordinates and zero kernel-verified false positives |
+| SyMAI warm cache | 110 source-bound prime misses followed by 110 measured hits and zero measured-hit model calls |
+| Leanstral | 24 unselected drafts and 12 typed output-limit failures; zero selected proof candidates |
+| Holdout/production | No holdout execution and no production-routing change |
+
+Every accepted receipt selected the compiler candidate. Hammer made 168
+successful solver calls, but all 168 proof texts were identical to the
+compiler certificate and added no coverage. Direct Leanstral ran only in A6
+and A12; its drafts were never selected. The optional arms therefore do not
+yet have causal proof-efficacy evidence. A0 also omitted the kernel while
+candidates invoked it, so its apparent paired gain is confounded by unequal
+verification exposure.
+
+Post-execution semantic validation then exposed a separate protocol defect.
+All 240 scoped front-end receipts were initially scored incorrect, but the
+result is not an identifiable all-model quality estimate:
+
+- production ModalIR records semantics as nested `operator.family` and
+  `predicate.name`, while the scorer searches incompatible generic
+  `logic`/`target` keys;
+- compiler/spaCy exact-match code compares the hash of a complete ModalIR
+  document with the hash of a differently shaped two-field expected IR;
+- the strict SyMAI response schema permits only
+  `candidate_ir.propositions`, while the scorer expects logic, target, and
+  class fields; and
+- a vacuous successful SyMAI candidate can replace richer spaCy evidence.
+
+Consequently, no pilot report from this run may authorize holdout. Treat the
+semantic phase as `semantic_schema_incompatible`, mint no selection artifact,
+and stop. HSSL-G200 owns a new content-addressed, label-blind semantic
+projection, prompt/schema, scoreability calibration, and non-vacuous quality
+gate. HSSL-G210 owns equal A0/candidate kernel exposure and causal
+optional-component rescue accounting. Because those changes alter metrics,
+prompts, producer contracts, routes, and eligibility behavior, they require a
+new protocol/registry identity and a fresh complete pilot/development matrix;
+revision 1 receipts must not be relabelled.
+
+The combined fixture layout also does not provide an adequate confidentiality
+boundary for a future blinded evaluation. No holdout backend execution
+occurred in the repaired run, but the current holdout is retired from future
+selection claims. HSSL-G220 requires an independently authored replacement
+outside the tuning worktree, sealed only after HSSL-G200 and HSSL-G210 are
+frozen, with append-only access receipts. HSSL-G230 then owns the fresh
+revision-2 matrix and exact pilot authorization. Revision-1 HSSL-G150 and its
+old holdout must never be reused for the new claim; a revision-2 successor
+requires the new protocol, replacement seal, and exact fresh HSSL-G230
+authorization. Until then, do not execute any holdout, publish a replacement
+HSSL-G170 decision, or infer production responsibility.
+
 The immutable predecessor decision is:
 
 ```text

@@ -988,6 +988,14 @@ def _candidate_metrics(
             reasons.append("no kernel-verified candidate success")
         if not quality_complete:
             reasons.append("independent semantic-quality evidence unavailable")
+        elif quality_rate is None or quality_rate <= 0.0:
+            # Upstream calibration rejects incompatible producer contracts.
+            # Even after that check, a relative near-best comparison is
+            # vacuous when every measured front end has zero validated
+            # successes. Receipt completeness alone cannot create eligibility.
+            reasons.append(
+                "no independently validated semantic-quality success"
+            )
         eligible = gate.status is GateStatus.PASSED and not reasons
         candidates.append(
             {
@@ -1429,54 +1437,99 @@ def build_pilot_reassessment_report(
         and int(safety_source["invalid_control_verified_count"]) == 0
     )
     status = "complete" if eligible else "incomplete"
-    remediation = (
-        []
-        if eligible
-        else [
-            {
-                "priority": 1,
-                "scope": ["A1", "A2"],
-                "action": (
-                    "repair reviewed-obligation and proof-candidate generation "
-                    "until the independent kernel can observe eligible successes"
-                ),
-                "rerun_required": True,
-            },
-            {
-                "priority": 2,
-                "scope": ["A3"],
-                "action": (
-                    "supply the frozen nonempty Leanstral prompt and context "
-                    "capsule at the registered fallback boundary"
-                ),
-                "rerun_required": True,
-            },
-            {
-                "priority": 3,
-                "scope": list(_CANDIDATE_IDS[3:]),
-                "action": (
-                    "repair the frozen SyMAI router invocation without arm "
-                    "substitution, fallback, or selection-input changes"
-                ),
-                "rerun_required": True,
-            },
-            {
-                "priority": 4,
-                "scope": list(_CANDIDATE_IDS),
-                "action": (
-                    "publish independently reviewed semantic-quality receipts "
-                    "and rerun this exact source-bound gate"
-                ),
-                "rerun_required": True,
-            },
-        ]
-    )
-    if remediation and semantic_complete:
-        remediation = [
-            item
-            for item in remediation
-            if int(item["priority"]) != 4
-        ]
+    remediation: list[dict[str, object]] = []
+    if not eligible:
+        candidate_by_id = {
+            str(item["variant_id"]): item for item in candidates
+        }
+
+        def has_unresolved_failure(
+            variant_ids: Sequence[str], prefix: str
+        ) -> bool:
+            return any(
+                any(
+                    str(code).startswith(prefix) and int(count) > 0
+                    for code, count in _mapping(
+                        candidate_by_id[variant_id]["failure_counts"],
+                        f"{variant_id}.failure_counts",
+                    ).items()
+                )
+                for variant_id in variant_ids
+            )
+
+        if verified == 0:
+            remediation.append(
+                {
+                    "priority": 1,
+                    "scope": ["A1", "A2"],
+                    "action": (
+                        "repair reviewed-obligation and proof-candidate "
+                        "generation until the independent kernel can observe "
+                        "eligible successes"
+                    ),
+                    "rerun_required": True,
+                }
+            )
+        if has_unresolved_failure(("A3",), "leanstral_"):
+            remediation.append(
+                {
+                    "priority": 2,
+                    "scope": ["A3"],
+                    "action": (
+                        "supply the frozen nonempty Leanstral prompt and "
+                        "context capsule at the registered fallback boundary"
+                    ),
+                    "rerun_required": True,
+                }
+            )
+        if has_unresolved_failure(_CANDIDATE_IDS[3:], "symai_"):
+            remediation.append(
+                {
+                    "priority": 3,
+                    "scope": list(_CANDIDATE_IDS[3:]),
+                    "action": (
+                        "repair the frozen SyMAI router invocation without arm "
+                        "substitution, fallback, or selection-input changes"
+                    ),
+                    "rerun_required": True,
+                }
+            )
+        zero_quality_candidates: list[str] = []
+        if not semantic_complete:
+            remediation.append(
+                {
+                    "priority": 4,
+                    "scope": list(_CANDIDATE_IDS),
+                    "action": (
+                        "publish independently reviewed semantic-quality "
+                        "receipts and rerun this exact source-bound gate"
+                    ),
+                    "rerun_required": True,
+                }
+            )
+        else:
+            zero_quality_candidates = [
+                variant_id
+                for variant_id in _CANDIDATE_IDS
+                if (
+                    semantic_quality[variant_id].get("rate") is None
+                    or float(semantic_quality[variant_id]["rate"]) <= 0.0
+                )
+            ]
+        if zero_quality_candidates:
+            remediation.append(
+                {
+                    "priority": 4,
+                    "scope": zero_quality_candidates,
+                    "action": (
+                        "repair front-end semantic reconstruction until "
+                        "independently reviewed receipts record nonzero "
+                        "semantic correctness without using reviewed proof "
+                        "obligations as front-end input"
+                    ),
+                    "rerun_required": True,
+                }
+            )
     matrix_reference = (
         layout.matrix_index.as_posix()
         if run_id == PILOT_REASSESSMENT_RUN_ID
