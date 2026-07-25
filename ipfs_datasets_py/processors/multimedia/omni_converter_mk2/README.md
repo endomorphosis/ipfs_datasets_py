@@ -85,7 +85,8 @@ convert.set_config({
 })
 ```
 
-For more examples, see the [examples directory](examples/).
+For more examples, see the [example documentation](_example_docstring_format.md) and
+the [example test format](_example_test_format.md).
 
 ## Supported Formats
 
@@ -99,17 +100,17 @@ For more examples, see the [examples directory](examples/).
 
 ## Documentation
 
-Detailed documentation is available in the top level directory and the `documentation` directory:
+Detailed documentation is available in the top-level component documentation:
 - [System Architecture](SAD.md) - Architecture and implementation details
 - [Product Requirements](PRD.md) - Product requirements specification
-- [Phase 16 Implementation Plan](PHASE16_README.md) - Current implementation phase details
-- [Implementation Status](IMPLEMENTATION_STATUS.md) - Detailed implementation status report
-- [Core Documentation](documentation/index.md) - Main documentation index
+- [Current State Analysis](CURRENT_STATE_ANALYSIS.md) - Current implementation status and analysis
+- [Roadmap](ROADMAP.md) - Planned implementation phases and priorities
+- [Testing Guide](TESTING.md) - Test organization and execution guidance
 
 
 ## Project Status
 
-The project has reached version 1.7.0, with all core features implemented. Progress details are available in the [PHASE16_README.md](PHASE16_README.md) file and [CHANGELOG](CHANGELOG.md).
+The project has reached version 1.7.0, with all core features implemented. Progress details are available in the [roadmap](ROADMAP.md) and [CHANGELOG](CHANGELOG.md).
 
 Current implementation status:
 - ✅ Test Suite: All test components have been implemented and passed
