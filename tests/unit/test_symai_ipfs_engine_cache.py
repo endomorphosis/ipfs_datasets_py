@@ -70,7 +70,12 @@ def test_symai_ipfs_engine_uses_routerdeps_cache(monkeypatch, tmp_path):
 
 
 @pytest.mark.unit
-def test_symai_ipfs_engine_cache_key_separates_json_vs_text(monkeypatch, tmp_path):
+@pytest.mark.parametrize("response_type", ["json_object", "json_schema"])
+def test_symai_ipfs_engine_cache_key_separates_json_vs_text(
+    monkeypatch,
+    tmp_path,
+    response_type,
+):
     _import_symai_with_isolated_config(monkeypatch, tmp_path)
 
     monkeypatch.setenv("IPFS_DATASETS_PY_SYMAI_ROUTER_CACHE", "1")
@@ -101,7 +106,7 @@ def test_symai_ipfs_engine_cache_key_separates_json_vs_text(monkeypatch, tmp_pat
     # wants_json decision is driven by response_format.
     prompt = "Reply with OK only."
     text_arg = _Arg(prompt, response_format=None)
-    json_arg = _Arg(prompt, response_format={"type": "json_object"})
+    json_arg = _Arg(prompt, response_format={"type": response_type})
 
     out_text, meta_text = engine.forward(text_arg)
     out_json, meta_json = engine.forward(json_arg)

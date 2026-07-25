@@ -82,6 +82,13 @@ LEANSTRAL_GENERATION_BOUNDARY_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
     "leanstral-generation-boundary.v1"
 )
+LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "leanstral-strict-semantic-context.v1"
+)
+LEANSTRAL_JSON_NUMBER_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.json-number-text.v1"
+)
 LEANSTRAL_MODEL_RESOURCE_CLASS: Final = "model"
 LEANSTRAL_KERNEL_RESOURCE_CLASS: Final = "kernel"
 LEANSTRAL_MAX_REPAIR_ATTEMPTS: Final = 1
@@ -132,10 +139,70 @@ _SYMAI_CONTRACT_KEYS = frozenset(
         "validation_errors",
     }
 )
-# The frozen router lock specifies the provider-level ``json_object`` mode.
-# The exact seven-field contract remains enforced by the authored prompt and
-# by ``_validate_symai_contract`` after strict duplicate-key/NaN rejection.
-SYMAI_RESPONSE_FORMAT: Final = {"type": "json_object"}
+_SYMAI_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "candidate_ir",
+        "normalized_predicates",
+        "quantifiers",
+        "entities",
+        "ambiguity_flags",
+        "confidence",
+        "validation_errors",
+    ],
+    "properties": {
+        "candidate_ir": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["propositions"],
+            "properties": {
+                "propositions": {
+                    "type": "array",
+                    "maxItems": 12,
+                    "items": {"type": "string", "maxLength": 80},
+                }
+            },
+        },
+        "normalized_predicates": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "quantifiers": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "entities": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "ambiguity_flags": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "validation_errors": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+    },
+}
+# The HTTP endpoint converts this exact schema to a constrained grammar. The
+# independent contract validator below remains authoritative and rejects
+# duplicate keys, non-finite numbers, and proof-authority claims.
+SYMAI_RESPONSE_FORMAT: Final = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "hssl_symai_semantic_evidence",
+        "strict": True,
+        "schema": _SYMAI_RESPONSE_SCHEMA,
+    },
+}
 _SYMAI_RECURSIVE_IDENTITIES = frozenset(
     {
         "symai",
@@ -1849,6 +1916,14 @@ class SymaiAdapterContractError(ProtocolContractError):
     """Raised when SyMAI returns malformed or unsafe semantic evidence."""
 
 
+class SymaiCompletionContractError(SymaiAdapterContractError):
+    """Typed, secret-safe failure reported by the pinned completion route."""
+
+    def __init__(self, safe_failure_class: str, detail: str) -> None:
+        self.safe_failure_class = safe_failure_class
+        super().__init__(detail)
+
+
 class SymaiRecursiveRoutingError(SymaiAdapterContractError):
     """Raised when a SyMAI request would route back through SyMAI."""
 
@@ -1997,10 +2072,48 @@ def _symai_cache_key(
     return f"{namespace}/stage/symai/{digest}"
 
 
+_SYMAI_OUTPUT_TOKEN_LIMIT = "output_token_limit"
+_SYMAI_STRUCTURED_CONTRACT_FAILURE = "structured_contract_failure"
+_SYMAI_ENGINE_INVOCATION_FAILURE = "engine_invocation_failure"
+_SYMAI_REPAIR_INSTRUCTIONS = {
+    _SYMAI_OUTPUT_TOKEN_LIMIT: (
+        "The prior response reached the output-token limit. Use only the "
+        "seven required fields. candidate_ir must contain only propositions "
+        "with at most 4 short strings; use at most 8 short strings in every "
+        "other array."
+    ),
+    _SYMAI_STRUCTURED_CONTRACT_FAILURE: (
+        "The prior response violated the structured-output contract. Copy the "
+        "field names and value types from OUTPUT_SKELETON exactly, with no "
+        "additional fields or surrounding text."
+    ),
+    _SYMAI_ENGINE_INVOCATION_FAILURE: (
+        "The prior invocation did not yield a completion. Return only a "
+        "minimal instance of OUTPUT_SKELETON with short values and no "
+        "surrounding text."
+    ),
+}
+
+
+def _symai_retry_failure_class(
+    contract_error: SymaiAdapterContractError | None,
+    engine_error: Exception | None,
+) -> str:
+    if isinstance(contract_error, SymaiCompletionContractError):
+        return contract_error.safe_failure_class
+    if contract_error is not None:
+        return _SYMAI_STRUCTURED_CONTRACT_FAILURE
+    if engine_error is not None:
+        return _SYMAI_ENGINE_INVOCATION_FAILURE
+    return _SYMAI_ENGINE_INVOCATION_FAILURE
+
+
 def _symai_prompt(
     text: str,
     namespace: str,
     semantic_context: Mapping[str, object] | None = None,
+    *,
+    repair_failure_class: str | None = None,
 ) -> str:
     # Namespace and receipt-envelope fields belong to the cache/provenance
     # boundary, not to semantic inference.  Keeping them out of the prompt
@@ -2132,6 +2245,19 @@ def _symai_prompt(
         "confidence": 0.0,
         "validation_errors": [],
     }
+    repair_instruction = ""
+    if repair_failure_class is not None:
+        instruction = _SYMAI_REPAIR_INSTRUCTIONS.get(repair_failure_class)
+        if instruction is None:
+            raise SymaiAdapterContractError(
+                "SyMAI repair failure class is not allow-listed"
+            )
+        repair_instruction = (
+            "\nSAFE_REPAIR_CLASS:"
+            + repair_failure_class
+            + "\nSAFE_REPAIR_INSTRUCTION:"
+            + instruction
+        )
     return (
         "Produce one concise, untrusted semantic interpretation. Return "
         "exactly one JSON object, under 1600 UTF-8 bytes, with the seven keys "
@@ -2145,6 +2271,8 @@ def _symai_prompt(
         "artifact_sha256, or output_sha256 into the top-level output. Do not "
         "repeat the source text or evidence container. Do not claim proof, "
         "kernel acceptance, verification, or authority. No Markdown.\n"
+        + repair_instruction
+        + "\n"
         "OUTPUT_SKELETON:\n"
         + canonical_json(output_skeleton)
         + "\nSOURCE_TEXT_JSON_STRING:\n"
@@ -2510,7 +2638,27 @@ def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, ob
         args=[],
         kwargs={},
     )
-    result = forward(argument)
+    try:
+        result = forward(argument)
+    except Exception as exc:
+        try:
+            router = importlib.import_module("ipfs_datasets_py.llm_router")
+            completion_error = getattr(
+                router, "PinnedSymaiCompletionError", None
+            )
+        except (ImportError, ModuleNotFoundError):
+            completion_error = None
+        if (
+            isinstance(completion_error, type)
+            and isinstance(exc, completion_error)
+            and getattr(exc, "safe_failure_class", None)
+            == _SYMAI_OUTPUT_TOKEN_LIMIT
+        ):
+            raise SymaiCompletionContractError(
+                _SYMAI_OUTPUT_TOKEN_LIMIT,
+                "SyMAI generation reached the frozen output token limit",
+            ) from exc
+        raise
     if (
         not isinstance(result, tuple)
         or len(result) != 2
@@ -2598,6 +2746,7 @@ def _symai_failure_output(
     retries: int = 0,
     cache_hit: bool = False,
     unavailable: bool = False,
+    safe_failure_class: str | None = None,
 ) -> StageOutput:
     bounded_detail = detail.strip()[:_MAX_DETAIL_LENGTH]
     identity = {
@@ -2612,6 +2761,12 @@ def _symai_failure_output(
         "starts_model_server": False,
         "symai_failure_code": failure_code.value,
     }
+    if safe_failure_class is not None:
+        if safe_failure_class not in _SYMAI_REPAIR_INSTRUCTIONS:
+            raise ProtocolContractError(
+                "SyMAI safe failure class is not allow-listed"
+            )
+        identity["symai_safe_failure_class"] = safe_failure_class
     if metadata:
         identity.update(
             {
@@ -2625,6 +2780,7 @@ def _symai_failure_output(
         "candidate_ir": None,
         "cache_namespace": namespace,
         "cache_key": cache_key,
+        "safe_failure_class": safe_failure_class,
         "assurance": {
             "semantic_hypothesis": False,
             "authoritative": False,
@@ -2722,9 +2878,16 @@ def _symai_evidence_handler(
         last_engine_error: Exception | None = None
         attempts = 1 if cache_hit else config.max_retries + 1
         engine: object | None = None
+        repair_failure_class: str | None = None
 
         for attempt in range(attempts):
             if not cache_hit:
+                # Never let a failed attempt's untrusted output or metadata
+                # bleed into the next attempt or its eventual receipt.
+                raw_output = None
+                metadata = {}
+                last_contract_error = None
+                last_engine_error = None
                 try:
                     if config.dry_run:
                         raw_output = _symai_dry_run_raw(request)
@@ -2743,6 +2906,7 @@ def _symai_evidence_handler(
                                 text,
                                 namespace,
                                 semantic_context,
+                                repair_failure_class=repair_failure_class,
                             ),
                         )
                         try:
@@ -2823,9 +2987,17 @@ def _symai_evidence_handler(
             if cache_hit:
                 break
             if attempt < attempts - 1:
+                repair_failure_class = _symai_retry_failure_class(
+                    last_contract_error,
+                    last_engine_error,
+                )
                 retries += 1
 
         if validated is None:
+            safe_failure_class = _symai_retry_failure_class(
+                last_contract_error,
+                last_engine_error,
+            )
             if last_contract_error is not None:
                 code = FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
                 detail = f"SyMAI structured contract rejected: {last_contract_error}"
@@ -2851,6 +3023,7 @@ def _symai_evidence_handler(
                 model_calls=model_calls,
                 retries=retries,
                 cache_hit=cache_hit,
+                safe_failure_class=safe_failure_class,
             )
 
         effective_provider_value = metadata.get("effective_provider_name")
@@ -2937,6 +3110,7 @@ def _symai_evidence_handler(
                 "router_metadata": safe_metadata,
                 "attempts": model_calls,
                 "retries": retries,
+                "repair_failure_class": repair_failure_class,
                 "dry_run": config.dry_run,
                 "starts_model_server": False,
                 "reuses_existing_model_service": True,
@@ -3444,6 +3618,10 @@ class LeanstralAdapterContractError(ProtocolContractError):
     """Raised when a Leanstral request or draft crosses the benchmark boundary."""
 
 
+class LeanstralProviderRequestContractError(LeanstralAdapterContractError):
+    """Raised when the supervisor rejects a benchmark provider request."""
+
+
 @dataclass(frozen=True, slots=True)
 class LeanstralAdapterConfig:
     """Frozen limits for the benchmark's untrusted Leanstral model lane.
@@ -3521,6 +3699,41 @@ def _bounded_canonical(value: object, field_name: str, maximum: int) -> object:
             f"{field_name} exceeds the {maximum} byte bound"
         )
     return json.loads(encoded.decode("utf-8"))
+
+
+def _leanstral_strict_json_value(value: object) -> object:
+    """Encode finite JSON numbers for the supervisor's integer-only boundary.
+
+    The benchmark semantic receipts retain their original numeric values and
+    digest.  Only the untrusted copy embedded in a Leanstral prompt uses this
+    explicit, reversible representation so a confidence score cannot make the
+    strict ``ProviderRequest`` constructor fail before model generation.
+    """
+
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise LeanstralAdapterContractError(
+                "Leanstral semantic context contains a non-finite number"
+            )
+        return {
+            "schema": LEANSTRAL_JSON_NUMBER_SCHEMA,
+            "json_number": json.dumps(
+                value,
+                allow_nan=False,
+                ensure_ascii=True,
+                separators=(",", ":"),
+            ),
+        }
+    if isinstance(value, Mapping):
+        return {
+            str(key): _leanstral_strict_json_value(member)
+            for key, member in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return [_leanstral_strict_json_value(member) for member in value]
+    return value
 
 
 def _lean_declaration_binders(value: str) -> tuple[str, ...]:
@@ -3721,12 +3934,20 @@ def _compiled_leanstral_context(
                 semantic_context.get("context_sha256"),
                 "semantic_context.context_sha256",
             )
+            strict_semantic_context = {
+                "schema": LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA,
+                "source_semantic_context_sha256": semantic_digest,
+                "number_encoding": LEANSTRAL_JSON_NUMBER_SCHEMA,
+                "semantic_context": _leanstral_strict_json_value(
+                    semantic_context
+                ),
+            }
             semantic_suggestions = (
                 entry_type(
                     trust=trust_type.UNTRUSTED_SUGGESTION,
                     kind="semantic_stage_context",
                     record_id=f"semantic-context-{semantic_digest}",
-                    fields=semantic_context,
+                    fields=strict_semantic_context,
                 ),
             )
 
@@ -4065,6 +4286,7 @@ def _leanstral_failure(
     detail: str,
     *,
     unavailable: bool = False,
+    model_calls: int | None = None,
 ) -> StageOutput:
     return StageOutput(
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
@@ -4075,6 +4297,17 @@ def _leanstral_failure(
             else FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
         ),
         failure_detail=detail[:_MAX_DETAIL_LENGTH],
+        telemetry=(
+            None
+            if model_calls is None
+            else TelemetryRecord(
+                input_items=1,
+                output_items=0,
+                model_calls=model_calls,
+                bytes_in=request.input_bytes,
+                resource_lane=ResourceLane.MODEL,
+            )
+        ),
     )
 
 
@@ -4618,6 +4851,22 @@ class _AuditedLeanstralProvider:
         return draft
 
 
+class _RequestIsolatedLeanstralProvider:
+    """Create one fresh stateful supervisor provider per benchmark request."""
+
+    def __init__(self, factory: Callable[[], object]) -> None:
+        self._factory = factory
+
+    def prove(self, request: object) -> object:
+        provider = self._factory()
+        prove = getattr(provider, "prove", None)
+        if not callable(prove):
+            raise LeanstralAdapterContractError(
+                "isolated Leanstral provider factory returned no prove() method"
+            )
+        return prove(request)
+
+
 def create_pinned_leanstral_llm_generate(
     *,
     endpoint: str,
@@ -4639,9 +4888,14 @@ def create_pinned_leanstral_provider(
     endpoint: str,
     provider: str,
     model: str,
+    isolate_requests: bool = False,
 ) -> object:
     """Create the supervisor provider with exact-route audit provenance."""
 
+    if type(isolate_requests) is not bool:
+        raise LeanstralAdapterContractError(
+            "isolate_requests must be a boolean"
+        )
     module = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
     )
@@ -4650,15 +4904,19 @@ def create_pinned_leanstral_provider(
         raise LeanstralAdapterContractError(
             "Leanstral supervisor provider factory is unavailable"
         )
-    generate = _PinnedLeanstralGenerate(
-        endpoint=endpoint,
-        provider=provider,
-        model=model,
-    )
-    return _AuditedLeanstralProvider(
-        factory(provider_config, llm_generate=generate),
-        generate,
-    )
+
+    def build() -> object:
+        generate = _PinnedLeanstralGenerate(
+            endpoint=endpoint,
+            provider=provider,
+            model=model,
+        )
+        return _AuditedLeanstralProvider(
+            factory(provider_config, llm_generate=generate),
+            generate,
+        )
+
+    return _RequestIsolatedLeanstralProvider(build) if isolate_requests else build()
 
 
 def _leanstral_supervisor_request(
@@ -4688,18 +4946,23 @@ def _leanstral_supervisor_request(
         1,
         min(configured_wall_time_ms, deadline_unix_ms - now_unix_ms),
     )
-    return getattr(protocol, "ProviderRequest")(
-        operation=getattr(capabilities, "ProofProviderOperation").PROVE,
-        payload=payload,
-        request_id=_provider_request_id(request, repair_attempt),
-        resource_budget=getattr(contracts, "ResourceBudget")(
-            wall_time_ms=wall_time_ms,
-            model_token_limit=config.model_token_limit,
-            max_output_bytes=config.max_draft_bytes,
-        ),
-        network_allowed=False,
-        deadline_unix_ms=deadline_unix_ms,
-    )
+    try:
+        return getattr(protocol, "ProviderRequest")(
+            operation=getattr(capabilities, "ProofProviderOperation").PROVE,
+            payload=payload,
+            request_id=_provider_request_id(request, repair_attempt),
+            resource_budget=getattr(contracts, "ResourceBudget")(
+                wall_time_ms=wall_time_ms,
+                model_token_limit=config.model_token_limit,
+                max_output_bytes=config.max_draft_bytes,
+            ),
+            network_allowed=False,
+            deadline_unix_ms=deadline_unix_ms,
+        )
+    except ValueError as exc:
+        raise LeanstralProviderRequestContractError(
+            "Leanstral supervisor rejected the strict provider request"
+        ) from exc
 
 
 def _local_leanstral_handler(
@@ -4711,6 +4974,7 @@ def _local_leanstral_handler(
     provider_holder: dict[str, object] = {}
 
     def invoke(request: StageRequest) -> object:
+        config = adapter_config or LeanstralAdapterConfig()
         module = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
         )
@@ -4728,25 +4992,14 @@ def _local_leanstral_handler(
             factory = getattr(module, "create_leanstral_proof_provider")
             provider = factory(provider_config) if provider_config is not None else factory()
             provider_holder["provider"] = provider
-        if not isinstance(request.input_data, Mapping):
-            raise LeanstralAdapterContractError(
-                "normalized Leanstral provider payload must be an object"
-            )
-        payload = dict(request.input_data)
-        repair_attempt = payload.get("repair_attempt", 0)
-        if (
-            isinstance(repair_attempt, bool)
-            or not isinstance(repair_attempt, int)
-            or repair_attempt not in (0, 1)
-        ):
-            raise LeanstralAdapterContractError(
-                "normalized Leanstral repair_attempt is invalid"
-            )
+        payload, _obligation_id, repair_attempt = _leanstral_input(
+            request, config
+        )
         provider_request = _leanstral_supervisor_request(
             request=request,
             payload=payload,
             repair_attempt=repair_attempt,
-            config=adapter_config or LeanstralAdapterConfig(),
+            config=config,
             protocol=protocol,
             capabilities=capabilities,
             contracts=contracts,
@@ -4778,25 +5031,15 @@ class LeanstralAdapter(StageAdapter):
             raise ProtocolContractError("provide either handler or provider, not both")
         object.__setattr__(self, "config", config or LeanstralAdapterConfig())
         selected = handler
+        selected_uses_case_request = False
         if provider is not None:
             if callable(provider):
                 selected = provider  # type: ignore[assignment]
             elif callable(getattr(provider, "prove", None)):
                 def invoke(request: StageRequest) -> object:
-                    if not isinstance(request.input_data, Mapping):
-                        raise LeanstralAdapterContractError(
-                            "normalized Leanstral provider payload must be an object"
-                        )
-                    payload = dict(request.input_data)
-                    repair_attempt = payload.get("repair_attempt", 0)
-                    if (
-                        isinstance(repair_attempt, bool)
-                        or not isinstance(repair_attempt, int)
-                        or repair_attempt not in (0, 1)
-                    ):
-                        raise LeanstralAdapterContractError(
-                            "normalized Leanstral repair_attempt is invalid"
-                        )
+                    payload, _obligation_id, repair_attempt = (
+                        _leanstral_input(request, self.config)
+                    )
                     # A provider object supplied by a benchmark test follows
                     # the same supervisor ProviderRequest boundary as the
                     # local provider, without importing it at module import.
@@ -4821,10 +5064,12 @@ class LeanstralAdapter(StageAdapter):
                         )
                     )
                 selected = invoke
+                selected_uses_case_request = True
             else:
                 raise ProtocolContractError("provider must be callable or expose prove()")
         elif selected is None:
             selected = _local_leanstral_handler(provider_config, self.config)
+            selected_uses_case_request = True
 
         def validated(request: StageRequest) -> object:
             try:
@@ -4846,8 +5091,12 @@ class LeanstralAdapter(StageAdapter):
                 payload, obligation_id, repair_attempt = _leanstral_input(
                     request, self.config
                 )
-                normalized_request = replace(request, input_data=payload)
-                raw = selected(normalized_request)  # type: ignore[misc]
+                selected_request = (
+                    request
+                    if selected_uses_case_request
+                    else replace(request, input_data=payload)
+                )
+                raw = selected(selected_request)  # type: ignore[misc]
                 if isinstance(raw, StageOutput):
                     if raw.status is not StageStatus.SUCCESS:
                         return raw
@@ -4892,6 +5141,12 @@ class LeanstralAdapter(StageAdapter):
                     "resource_class": self.config.model_resource_class,
                 }
                 return replace(output, data=evidence, effective_identity=identity)
+            except LeanstralProviderRequestContractError as exc:
+                return _leanstral_failure(
+                    request,
+                    str(exc),
+                    model_calls=0,
+                )
             except LeanstralAdapterContractError as exc:
                 return _leanstral_failure(request, str(exc))
             except (ImportError, ModuleNotFoundError) as exc:
@@ -5122,6 +5377,7 @@ __all__ = [
     "LEANSTRAL_DRAFT_SCHEMA",
     "LEANSTRAL_EVIDENCE_SCHEMA",
     "LEANSTRAL_GENERATION_BOUNDARY_SCHEMA",
+    "LEANSTRAL_JSON_NUMBER_SCHEMA",
     "LEANSTRAL_KERNEL_RESOURCE_CLASS",
     "LEANSTRAL_MAX_CONTEXT_BYTES",
     "LEANSTRAL_MAX_DRAFT_BYTES",
@@ -5130,8 +5386,10 @@ __all__ = [
     "LEANSTRAL_MEASURED_TIMEOUT_SECONDS",
     "LEANSTRAL_MODEL_RESOURCE_CLASS",
     "LEANSTRAL_PROOF_OUTPUT_SCHEMA",
+    "LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA",
     "LeanstralAdapterConfig",
     "LeanstralAdapterContractError",
+    "LeanstralProviderRequestContractError",
     "LeanstralAdapter",
     "leanstral_strict_llm_generate",
     "PipelineResult",
@@ -5163,6 +5421,7 @@ __all__ = [
     "SymaiAdapter",
     "SymaiAdapterConfig",
     "SymaiAdapterContractError",
+    "SymaiCompletionContractError",
     "SymaiEngineFactory",
     "SymaiRecursiveRoutingError",
     "SymaiTraceGetter",

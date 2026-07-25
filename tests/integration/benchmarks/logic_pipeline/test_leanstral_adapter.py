@@ -248,6 +248,200 @@ def test_a3_fallback_binds_the_compiler_theorem_and_structured_schema() -> None:
     assert record.kernel_accepted is False
 
 
+def test_semantic_confidence_numbers_cross_strict_provider_boundary() -> None:
+    from ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider import (
+        LeanstralProofProvider,
+    )
+
+    source_text = (
+        "Every archivist is trained. Ada is an archivist. "
+        "Therefore Ada is trained."
+    )
+    compiled = runtime.compile_reviewed_obligation(
+        {
+            "text": source_text,
+            "obligation_id": "obl-identity",
+            "proof_obligation": {
+                "kind": "theorem",
+                "logic": "fol",
+                "target": "trained",
+            },
+        }
+    )
+    assert compiled is not None
+    compiler = adapters.StageArtifact(
+        stage=contracts.StageName.COMPILER,
+        status=contracts.StageStatus.SUCCESS,
+        data={"compiled_obligation": compiled.to_dict()},
+        output_sha256=None,
+        effective_identity={"entrypoint": "test-compiler"},
+        invocation_index=0,
+    )
+    spacy = adapters.StageArtifact(
+        stage=contracts.StageName.SPACY,
+        status=contracts.StageStatus.SUCCESS,
+        data={
+            "schema": adapters.SPACY_EVIDENCE_SCHEMA,
+            "semantic_roles": [
+                {
+                    "frame_id": "role-1",
+                    "sentence": "Ada is trained.",
+                    "predicate": "train",
+                    "predicate_span": [7, 14],
+                    "arguments": [
+                        {
+                            "role": "Agent",
+                            "text": "Ada",
+                            "span": [0, 3],
+                            "confidence": 0.8,
+                        }
+                    ],
+                    "confidence": 0.8,
+                    "source": "spacy",
+                }
+            ],
+        },
+        output_sha256=None,
+        effective_identity={
+            "graph_invoked": True,
+            "graph_invocation_index": 1,
+        },
+        invocation_index=1,
+    )
+    max_text = "x" * 77
+    candidate_ir = {
+        "propositions": [
+            f"{index:02d}-{max_text}" for index in range(12)
+        ]
+    }
+    symai = adapters.StageArtifact(
+        stage=contracts.StageName.SYMAI,
+        status=contracts.StageStatus.SUCCESS,
+        data={
+            "schema": adapters.SYMAI_EVIDENCE_SCHEMA,
+            "candidate_ir": candidate_ir,
+            "candidate_ir_sha256": hashlib.sha256(
+                contracts.canonical_json(candidate_ir).encode("utf-8")
+            ).hexdigest(),
+            "normalized_predicates": [
+                f"{index:02d}-{max_text}" for index in range(24)
+            ],
+            "quantifiers": [
+                f"{index:02d}-{max_text}" for index in range(24)
+            ],
+            "entities": [
+                f"{index:02d}-{max_text}" for index in range(24)
+            ],
+            "ambiguity_flags": [
+                f"{index:02d}-{max_text}" for index in range(24)
+            ],
+            "confidence": 0.9,
+            "validation_errors": [
+                f"{index:02d}-{max_text}" for index in range(24)
+            ],
+            "assurance": {
+                "semantic_hypothesis": True,
+                "authoritative": False,
+            },
+        },
+        output_sha256=None,
+        effective_identity={
+            "graph_invoked": True,
+            "graph_invocation_index": 2,
+        },
+        invocation_index=2,
+    )
+    prompts: list[dict[str, object]] = []
+    prompt_texts: list[str] = []
+
+    def generate(prompt: str, **_kwargs: object) -> str:
+        structured = json.loads(prompt)
+        prompt_texts.append(prompt)
+        prompts.append(structured)
+        return json.dumps(
+            {
+                "schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA,
+                "theorem_id": structured["fixed_theorem"]["theorem_id"],
+                "proposal_kind": "proof",
+                "proof_text": "exact rule witness fact",
+            }
+        )
+
+    request = replace(
+        _request(prompt=None, text=source_text),
+        variant_id="A4",
+        upstream_artifacts=(compiler, spacy, symai),
+        invocation_index=3,
+    )
+    source_context = adapters.build_upstream_semantic_context(request)
+    payload, _obligation_id, _repair_attempt = adapters._leanstral_input(
+        request,
+        adapters.LeanstralAdapterConfig(),
+    )
+    record = adapters.LeanstralAdapter(
+        provider=LeanstralProofProvider(llm_generate=generate)
+    ).run(request)
+
+    assert record.status is contracts.StageStatus.SUCCESS
+    assert len(prompts) == 1
+    fields = payload["context_capsule"]["untrusted_suggestions"][0]["fields"]
+    assert fields["schema"] == (
+        adapters.LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA
+    )
+    assert fields["source_semantic_context_sha256"] == (
+        source_context["context_sha256"]
+    )
+    encoded_role = fields["semantic_context"]["artifacts"][0]["evidence"][
+        "semantic_roles"
+    ][0]
+    assert encoded_role["confidence"] == {
+        "schema": adapters.LEANSTRAL_JSON_NUMBER_SCHEMA,
+        "json_number": "0.8",
+    }
+    assert encoded_role["arguments"][0]["confidence"] == {
+        "schema": adapters.LEANSTRAL_JSON_NUMBER_SCHEMA,
+        "json_number": "0.8",
+    }
+    encoded_symai = fields["semantic_context"]["artifacts"][1]["evidence"]
+    assert len(encoded_symai["normalized_predicates"]) == 24
+    assert encoded_symai["confidence"] == {
+        "schema": adapters.LEANSTRAL_JSON_NUMBER_SCHEMA,
+        "json_number": "0.9",
+    }
+    final_hints = prompts[0]["untrusted_semantic_hints"]
+    assert len(final_hints) == 1
+    hint = final_hints[0]
+    assert hint["semantic_context"] == fields
+    assert hint["trust"] == "untrusted_suggestion"
+    assert hint["checked_evidence"] is False
+    assert hint["authoritative"] is False
+    assert hint["usable_as_premise"] is False
+    assert hint["usable_as_proof_evidence"] is False
+    assert hint["usable_as_failure_evidence"] is False
+    assert hint["content_sha256"] == (
+        "sha256:"
+        + hashlib.sha256(
+            contracts.canonical_json(fields).encode("utf-8")
+        ).hexdigest()
+    )
+    assert len(contracts.canonical_json(hint).encode("utf-8")) > 10_002
+    assert prompts[0]["semantic_hint_policy"] == {
+        "semantic_guidance_only": True,
+        "authoritative": False,
+        "usable_as_premise": False,
+        "usable_as_trusted_receipt": False,
+        "usable_as_proof_evidence": False,
+        "usable_as_failure_evidence": False,
+    }
+    final_prompt_sha256 = hashlib.sha256(
+        prompt_texts[0].encode("utf-8")
+    ).hexdigest()
+    assert record.data["draft"]["prompt_sha256"] == final_prompt_sha256
+    assert record.data["draft"]["context_capsule_id"] == (
+        payload["context_capsule"]["capsule_id"]
+    )
+
+
 def test_non_corpus_runtime_readiness_smoke_uses_the_same_strict_boundary() -> None:
     from ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider import (
         LeanstralProofProvider,
@@ -318,11 +512,18 @@ def test_measured_supervisor_request_binds_budget_and_absolute_deadline() -> Non
         model_timeout_seconds=17.0,
         model_token_limit=321,
     )
+    case_request = _request()
+    expected_request_id = "leanstral-" + hashlib.sha256(
+        (
+            f"{case_request.run_id}:{case_request.case_id}:"
+            f"{case_request.input_sha256}:0"
+        ).encode("utf-8")
+    ).hexdigest()[:48]
     before_ms = int(time.time() * 1_000)
     record = adapters.LeanstralAdapter(
         provider=Provider(),
         config=config,
-    ).run(_request())
+    ).run(case_request)
     after_ms = int(time.time() * 1_000)
 
     assert record.status is contracts.StageStatus.SUCCESS
@@ -333,6 +534,7 @@ def test_measured_supervisor_request_binds_budget_and_absolute_deadline() -> Non
     assert provider_request.resource_budget.max_output_bytes == (
         adapters.LEANSTRAL_MAX_DRAFT_BYTES
     )
+    assert provider_request.request_id == expected_request_id
     assert before_ms + 17_000 <= provider_request.deadline_unix_ms
     assert provider_request.deadline_unix_ms <= after_ms + 17_000
     assert provider_request.network_allowed is False
@@ -401,6 +603,49 @@ def test_expired_absolute_deadline_cancels_before_model_generation() -> None:
     )
     assert "timed_out" in str(record.failure_detail)
     assert model_calls == 0
+
+
+def test_strict_provider_request_failure_is_safe_and_pre_generation() -> None:
+    provider_calls = 0
+
+    class Provider:
+        def prove(self, _request: object) -> dict[str, object]:
+            nonlocal provider_calls
+            provider_calls += 1
+            return _draft()
+
+    record = adapters.LeanstralAdapter(provider=Provider()).run(
+        _request(context_capsule={"confidence": 0.8})
+    )
+
+    assert record.status is contracts.StageStatus.FAILED
+    assert record.failure_code is (
+        contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
+    )
+    assert record.failure_detail == (
+        "Leanstral supervisor rejected the strict provider request"
+    )
+    assert record.telemetry.model_calls == 0
+    assert provider_calls == 0
+
+
+def test_request_isolated_provider_does_not_reuse_delegate_state() -> None:
+    instances: list[object] = []
+
+    class StatefulProvider:
+        def __init__(self) -> None:
+            self.calls = 0
+            instances.append(self)
+
+        def prove(self, _request: object) -> int:
+            self.calls += 1
+            return self.calls
+
+    provider = adapters._RequestIsolatedLeanstralProvider(StatefulProvider)
+
+    assert provider.prove(object()) == 1
+    assert provider.prove(object()) == 1
+    assert len(instances) == 2
 
 
 def test_strict_live_generator_pins_endpoint_model_and_json_schema(

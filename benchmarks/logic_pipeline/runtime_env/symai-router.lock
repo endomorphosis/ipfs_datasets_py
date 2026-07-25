@@ -44,7 +44,7 @@
     "max_input_bytes": 512,
     "max_output_bytes": 4096,
     "max_retries": 0,
-    "response_format": "json_object",
+    "response_format": "json_schema",
     "timeout_seconds": 30
   },
   "task_id": "HSSL-BENCH-032"

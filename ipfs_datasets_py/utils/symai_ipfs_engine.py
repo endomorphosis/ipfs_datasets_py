@@ -234,7 +234,10 @@ def _wants_json_response(argument, prompt: str) -> bool:
         if isinstance(payload, dict):
             response_format = payload.get("response_format")
 
-    if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+    if (
+        isinstance(response_format, dict)
+        and response_format.get("type") in {"json_object", "json_schema"}
+    ):
         return True
 
     lowered = str(prompt or "").lower()
@@ -548,6 +551,19 @@ def _generate_text(
             metadata.update(trace)
         return str(text), metadata
     except Exception as exc:
+        completion_error = getattr(
+            locals().get("llm_router"),
+            "PinnedSymaiCompletionError",
+            None,
+        )
+        if (
+            isinstance(completion_error, type)
+            and isinstance(exc, completion_error)
+        ):
+            # Preserve the router's typed, allow-listed completion outcome so
+            # the benchmark can classify model truncation as a contract
+            # failure rather than misreporting it as configuration drift.
+            raise
         metadata["errors"].append(str(exc))
         raise RuntimeError("SyMAI llm_router generation failed: " + "; ".join(metadata["errors"]))
 

@@ -300,7 +300,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> SymaiRouterLock:
     if (
         max_calls != 1
         or max_retries != 0
-        or smoke["response_format"] != "json_object"
+        or smoke["response_format"] != "json_schema"
         or max_input_bytes > 1024
         or max_output_bytes > 4096
         or timeout_seconds > 60

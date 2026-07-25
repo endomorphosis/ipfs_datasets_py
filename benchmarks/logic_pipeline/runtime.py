@@ -45,8 +45,8 @@ from .adapters import (
     StageRequest,
     SymaiAdapter,
     SymaiAdapterConfig,
-    _compiled_leanstral_context,
     _is_frozen_ablation_request,
+    _leanstral_input,
     _semantic_context_binding,
 )
 from .capabilities import (
@@ -1092,6 +1092,7 @@ def _leanstral_live_adapter(
             endpoint=str(identity["endpoint"]),
             provider=str(identity["provider"]),
             model=str(identity["model"]),
+            isolate_requests=True,
         ),
         config=adapter_config,
     )
@@ -1578,23 +1579,95 @@ class NativeKernelRunner:
                 "Leanstral draft fields do not match the pinned schema"
             )
         try:
-            expected_context = _compiled_leanstral_context(
-                request,
-                LeanstralAdapterConfig(),
-                compiled.obligation_id,
+            expected_payload, payload_obligation_id, payload_repair_attempt = (
+                _leanstral_input(
+                    request,
+                    LeanstralAdapterConfig(),
+                )
             )
-        except ProtocolContractError as exc:
+            context_capsule = expected_payload.get("context_capsule")
+            theorem = expected_payload.get("fixed_theorem")
+            if not isinstance(context_capsule, Mapping) or not isinstance(
+                theorem, Mapping
+            ):
+                raise RuntimeBindingError(
+                    "Leanstral provider payload omitted its fixed prompt context"
+                )
+            proof_context = import_source_bound_ipfs_accelerate(
+                "ipfs_accelerate_py.agent_supervisor.proof_context"
+            )
+            capsule_type = getattr(proof_context, "ProofContextCapsule")
+            context_type = getattr(proof_context, "LeanstralProofContext")
+            build_context = getattr(
+                proof_context,
+                "build_leanstral_proof_context",
+            )
+            capsule = capsule_type.from_dict(context_capsule)
+            final_context = build_context(
+                capsule,
+                theorem,
+                allowed_premises=tuple(
+                    expected_payload.get("allowed_premises") or ()
+                ),
+                trusted_prior_receipts=tuple(
+                    expected_payload.get("trusted_prior_receipts") or ()
+                ),
+                compact_failures=tuple(
+                    expected_payload.get("compact_failures") or ()
+                ),
+                reusable_drafts=tuple(
+                    expected_payload.get("reusable_drafts") or ()
+                ),
+                limits=(
+                    expected_payload.get("prompt_limits")
+                    if isinstance(
+                        expected_payload.get("prompt_limits"),
+                        Mapping,
+                    )
+                    else None
+                ),
+            )
+            # The deserializer independently verifies the complete V2 prompt
+            # schema and every configured count/byte/token bound.
+            final_context = context_type.from_json(final_context.to_prompt())
+        except RuntimeBindingError:
+            raise
+        except (
+            AttributeError,
+            ImportError,
+            ModuleNotFoundError,
+            ProtocolContractError,
+            TypeError,
+            ValueError,
+        ) as exc:
             raise RuntimeBindingError(
                 "Leanstral theorem context cannot be independently rebuilt"
             ) from exc
-        if expected_context is None:
+        if (
+            payload_obligation_id != compiled.obligation_id
+            or payload_repair_attempt not in (0, 1)
+        ):
             raise RuntimeBindingError(
-                "Leanstral candidate has no compiler-bound theorem context"
+                "Leanstral provider payload identity is inconsistent"
             )
-        context_capsule, theorem = expected_context
-        expected_prompt_sha256 = hashlib.sha256(
-            canonical_json(context_capsule).encode("utf-8")
-        ).hexdigest()
+        capsule_semantics = {
+            canonical_json(item.get("fields"))
+            for item in context_capsule.get("untrusted_suggestions") or ()
+            if (
+                isinstance(item, Mapping)
+                and item.get("kind") == "semantic_stage_context"
+                and isinstance(item.get("fields"), Mapping)
+            )
+        }
+        prompt_semantics = {
+            canonical_json(item.semantic_context)
+            for item in final_context.untrusted_semantic_hints
+        }
+        if capsule_semantics != prompt_semantics:
+            raise RuntimeBindingError(
+                "Leanstral final prompt omitted or changed semantic-stage input"
+            )
+        expected_prompt_sha256 = final_context.prompt_sha256
         proof_text = draft.get("proof_text")
         if not isinstance(proof_text, str) or not proof_text.strip():
             raise RuntimeBindingError("Leanstral proof candidate is empty")
@@ -1603,6 +1676,10 @@ class NativeKernelRunner:
         if isinstance(repair_attempt, bool) or repair_attempt not in (0, 1):
             raise RuntimeBindingError(
                 "Leanstral candidate repair identity is invalid"
+            )
+        if repair_attempt != payload_repair_attempt:
+            raise RuntimeBindingError(
+                "Leanstral candidate repair identity changed during projection"
             )
         expected_request_id = "leanstral-" + hashlib.sha256(
             (
@@ -1626,6 +1703,7 @@ class NativeKernelRunner:
             "theorem_equivalence_key": theorem.get("equivalence_key"),
             "context_capsule_id": context_capsule.get("capsule_id"),
             "prompt_sha256": expected_prompt_sha256,
+            "prompt_tokens": final_context.prompt_tokens,
             "proposal_kind": "proof",
             "proposal_schema": LEANSTRAL_PROOF_OUTPUT_SCHEMA,
             "decomposition": (),

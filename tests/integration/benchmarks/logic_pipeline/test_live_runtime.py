@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -320,14 +321,14 @@ else:
 def test_live_runtime_propagates_explicit_measured_leanstral_limits(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    captured: list[object] = []
+    captured: list[tuple[object, dict[str, object]]] = []
 
     class Provider:
         def prove(self, _request: object) -> object:
             raise AssertionError("runtime assembly must not invoke the provider")
 
     def create_provider(config: object, **_identity: object) -> Provider:
-        captured.append(config)
+        captured.append((config, _identity))
         return Provider()
 
     monkeypatch.setattr(
@@ -345,8 +346,10 @@ def test_live_runtime_propagates_explicit_measured_leanstral_limits(
     adapter = live.adapters["A3"][contracts.StageName.LEANSTRAL]
 
     assert len(captured) == 1
-    assert captured[0].timeout_seconds == 17.0
-    assert captured[0].max_new_tokens == 321
+    provider_config, provider_options = captured[0]
+    assert provider_config.timeout_seconds == 17.0
+    assert provider_config.max_new_tokens == 321
+    assert provider_options["isolate_requests"] is True
     assert adapter.config.model_timeout_seconds == 17.0
     assert adapter.config.model_token_limit == 321
 
@@ -669,18 +672,41 @@ def _strict_leanstral_artifact(
     boundary_overrides: dict[str, object] | None = None,
     draft_overrides: dict[str, object] | None = None,
 ) -> adapters.StageArtifact:
-    expected = adapters._compiled_leanstral_context(
-        request,
-        adapters.LeanstralAdapterConfig(),
-        compiled.obligation_id,
+    payload, payload_obligation_id, payload_repair_attempt = (
+        adapters._leanstral_input(
+            request,
+            adapters.LeanstralAdapterConfig(),
+        )
     )
-    assert expected is not None
-    context_capsule, theorem = expected
+    assert payload_obligation_id == compiled.obligation_id
+    assert payload_repair_attempt == 0
+    context_capsule = payload["context_capsule"]
+    theorem = payload["fixed_theorem"]
+    assert isinstance(context_capsule, dict)
+    assert isinstance(theorem, dict)
+    proof_context = adapters.import_source_bound_ipfs_accelerate(
+        "ipfs_accelerate_py.agent_supervisor.proof_context"
+    )
+    capsule = proof_context.ProofContextCapsule.from_dict(context_capsule)
+    final_context = proof_context.build_leanstral_proof_context(
+        capsule,
+        theorem,
+        allowed_premises=tuple(payload.get("allowed_premises") or ()),
+        trusted_prior_receipts=tuple(
+            payload.get("trusted_prior_receipts") or ()
+        ),
+        compact_failures=tuple(payload.get("compact_failures") or ()),
+        reusable_drafts=tuple(payload.get("reusable_drafts") or ()),
+        limits=(
+            payload.get("prompt_limits")
+            if isinstance(payload.get("prompt_limits"), dict)
+            else None
+        ),
+    )
     provider = "leanstral_local"
     model = "exact-test-model"
     endpoint = "http://127.0.0.1:8080/v1"
-    prompt = contracts.canonical_json(context_capsule)
-    prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+    prompt_sha256 = final_context.prompt_sha256
     proof_sha256 = hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
     normalized = json.dumps(
         {
@@ -763,7 +789,7 @@ def _strict_leanstral_artifact(
         "proposal_schema": adapters.LEANSTRAL_PROOF_OUTPUT_SCHEMA,
         "decomposition": [],
         "reused_artifact_ids": [],
-        "prompt_tokens": 1,
+        "prompt_tokens": final_context.prompt_tokens,
         "response_tokens": 1,
         "assurance": "unverified",
         "verified": False,
@@ -819,6 +845,91 @@ def _strict_leanstral_artifact(
         },
         1,
     )
+
+
+def test_leanstral_candidate_hash_binds_the_projected_semantic_prompt(
+    tmp_path: Path,
+) -> None:
+    value = {
+        "text": (
+            "Every archivist is trained. Ada is an archivist. "
+            "Therefore Ada is trained."
+        ),
+        "obligation_id": "semantic-hash-obligation",
+        "proof_obligation": {
+            "kind": "theorem",
+            "logic": "fol",
+            "target": "trained",
+        },
+    }
+    compiled, _, compiler = _strict_compiler_artifact(value)
+    spacy = adapters.StageArtifact(
+        contracts.StageName.SPACY,
+        contracts.StageStatus.SUCCESS,
+        {
+            "schema": adapters.SPACY_EVIDENCE_SCHEMA,
+            "semantic_roles": [
+                {
+                    "frame_id": "role-1",
+                    "predicate": "train",
+                    "arguments": [{"role": "Agent", "text": "Ada"}],
+                    "confidence": 1,
+                    "source": "spacy",
+                }
+            ],
+        },
+        None,
+        {"backend": "spacy"},
+        1,
+    )
+    base_request = adapters.StageRequest(
+        run_id="runtime-leanstral-semantic-hash",
+        case_id="semantic-hash-case",
+        case_manifest_sha256="a" * 64,
+        variant_id="A3",
+        input_data=value,
+        environment_sha256="b" * 64,
+        upstream_artifacts=(compiler, spacy),
+        invocation_index=2,
+    )
+    leanstral = _strict_leanstral_artifact(
+        base_request,
+        compiled,
+        proof_text="exact rule witness fact",
+    )
+    draft = leanstral.data["draft"]
+    boundary = draft["metadata"]["benchmark_generation_boundary"]
+    payload, _, _ = adapters._leanstral_input(
+        base_request,
+        adapters.LeanstralAdapterConfig(),
+    )
+    raw_capsule_sha256 = hashlib.sha256(
+        contracts.canonical_json(payload["context_capsule"]).encode("utf-8")
+    ).hexdigest()
+
+    assert boundary["prompt_sha256"] == draft["prompt_sha256"]
+    assert raw_capsule_sha256 != draft["prompt_sha256"]
+
+    runner = runtime.NativeKernelRunner(
+        "/test/lean",
+        "b" * 64,
+        tmp_path / "state",
+        expected_leanstral_identity={
+            "endpoint": "http://127.0.0.1:8080/v1",
+            "provider": "leanstral_local",
+            "model": "exact-test-model",
+        },
+    )
+    candidate_request = replace(
+        base_request,
+        upstream_artifacts=(compiler, spacy, leanstral),
+        invocation_index=3,
+    )
+
+    assert runner._validated_leanstral_candidate(
+        candidate_request,
+        compiled,
+    ) == ("exact rule witness fact", leanstral.digest)
 
 
 def _strict_hammer_artifact(

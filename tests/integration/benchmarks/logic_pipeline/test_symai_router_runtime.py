@@ -24,8 +24,9 @@ def _structured_response() -> str:
     return json.dumps(
         {
             "candidate_ir": {
-                "kind": "fol",
-                "formula": "forall x. RuntimeReceipt(x) -> HasOneIdentity(x)",
+                "propositions": [
+                    "Every runtime receipt has exactly one effective identity."
+                ],
             },
             "normalized_predicates": ["RuntimeReceipt", "HasOneIdentity"],
             "quantifiers": ["forall"],
@@ -96,6 +97,7 @@ def test_lock_is_complete_exact_and_ast_evidence_is_public() -> None:
     assert lock.max_calls == 1
     assert lock.max_retries == 0
     assert lock.timeout_seconds <= 60
+    assert lock.raw["smoke"]["response_format"] == "json_schema"
     assert lock.raw["safety"] == {
         "allow_local_fallback": False,
         "allow_model_fallback": False,
@@ -405,6 +407,23 @@ def test_actual_engine_adapter_uses_pinned_service_and_schema(
             payload = json.loads(bytes(request.data or b"{}"))
             assert payload["model"] == exact_model
             assert payload["response_format"] == adapters.SYMAI_RESPONSE_FORMAT
+            schema = payload["response_format"]["json_schema"]["schema"]
+            assert schema["additionalProperties"] is False
+            assert set(schema["required"]) == {
+                "candidate_ir",
+                "normalized_predicates",
+                "quantifiers",
+                "entities",
+                "ambiguity_flags",
+                "confidence",
+                "validation_errors",
+            }
+            assert (
+                schema["properties"]["candidate_ir"]["properties"][
+                    "propositions"
+                ]["maxItems"]
+                == 12
+            )
             assert payload["messages"][0] == {
                 "role": "system",
                 "content": (
@@ -436,6 +455,10 @@ def test_actual_engine_adapter_uses_pinned_service_and_schema(
         provision.configure_symai(lock, tmp_path)
         provision.prepare_symai_import(lock, tmp_path)
         router = importlib.import_module("ipfs_datasets_py.llm_router")
+        assert (
+            router._PINNED_SYMAI_RESPONSE_FORMAT
+            == adapters.SYMAI_RESPONSE_FORMAT
+        )
         router_deps = importlib.import_module("ipfs_datasets_py.router_deps")
         router_deps.set_default_router_deps(router_deps.RouterDeps())
         monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
@@ -546,7 +569,7 @@ def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
             allow_local_fallback=False,
             disable_model_retry=True,
             _symai_route_binding=dict(router._PINNED_SYMAI_ROUTE_BINDING),
-            response_format={"type": "json_object"},
+            response_format=router._PINNED_SYMAI_RESPONSE_FORMAT,
             temperature=0.0,
             max_tokens=64,
         )
@@ -634,7 +657,7 @@ def test_route_trace_is_thread_local_across_concurrent_calls(
             allow_local_fallback=False,
             disable_model_retry=True,
             _symai_route_binding=dict(router._PINNED_SYMAI_ROUTE_BINDING),
-            response_format={"type": "json_object"},
+            response_format=router._PINNED_SYMAI_RESPONSE_FORMAT,
             temperature=0.0,
             max_tokens=64,
         )
@@ -710,7 +733,7 @@ def test_pinned_service_envelope_rejects_duplicates_and_nonfinite_numbers(
         )
 
 
-@pytest.mark.parametrize("finish_reason", [None, "length", "tool_calls"])
+@pytest.mark.parametrize("finish_reason", [None, "tool_calls"])
 def test_pinned_service_rejects_nonterminal_finish_reason(
     monkeypatch: pytest.MonkeyPatch,
     finish_reason: str | None,
@@ -752,12 +775,120 @@ def test_pinned_service_rejects_nonterminal_finish_reason(
         router._generate_pinned_symai_leanstral(
             "prompt",
             kwargs={
-                "response_format": {"type": "json_object"},
+                "response_format": router._PINNED_SYMAI_RESPONSE_FORMAT,
                 "temperature": 0.0,
                 "max_tokens": 64,
                 "timeout": 2.0,
             },
         )
+
+
+def test_pinned_service_types_length_without_fallback_or_cache_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    manager_module = importlib.import_module(
+        "ipfs_datasets_py.ml.accelerate_integration.manager"
+    )
+    exact_model = router._PINNED_SYMAI_LEANSTRAL_MODEL
+    calls: list[str] = []
+
+    class Response:
+        def __init__(self, value: object) -> None:
+            self.body = json.dumps(value).encode("utf-8")
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return self.body if size < 0 else self.body[:size]
+
+    def urlopen(request: urllib.request.Request, *, timeout: float) -> Response:
+        assert timeout > 0
+        calls.append(request.full_url)
+        if request.full_url.endswith("/models"):
+            return Response({"data": [{"id": exact_model}]})
+        return Response(
+            {
+                "model": exact_model,
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "message": {"content": "{\"candidate_ir\":"},
+                    }
+                ],
+            }
+        )
+
+    def forbidden_fallback(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("typed completion failure must not enter fallback")
+
+    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(
+        manager_module.AccelerateManager,
+        "run_inference",
+        forbidden_fallback,
+    )
+    monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "1")
+    deps = router.RouterDeps()
+    provider = router._get_accelerate_provider(deps)
+    assert provider is not None
+
+    with pytest.raises(router.PinnedSymaiCompletionError) as exc:
+        router.generate_text(
+            "return structured semantics",
+            model_name=router._PINNED_SYMAI_LEANSTRAL_ALIAS,
+            provider="ipfs_accelerate_py",
+            provider_instance=provider,
+            deps=deps,
+            allow_local_fallback=False,
+            disable_model_retry=True,
+            _symai_route_binding=dict(router._PINNED_SYMAI_ROUTE_BINDING),
+            response_format=router._PINNED_SYMAI_RESPONSE_FORMAT,
+            temperature=0.0,
+            max_tokens=512,
+        )
+
+    assert exc.value.safe_failure_class == "output_token_limit"
+    assert str(exc.value) == (
+        "pinned SyMAI completion failed: output_token_limit"
+    )
+    assert calls == [
+        "http://127.0.0.1:8080/v1/models",
+        "http://127.0.0.1:8080/v1/chat/completions",
+    ]
+    assert deps.router_cache == {}
+
+
+def test_symai_engine_preserves_typed_completion_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    engine_module = importlib.import_module(
+        "ipfs_datasets_py.utils.symai_ipfs_engine"
+    )
+    error = router.PinnedSymaiCompletionError(
+        router.PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT
+    )
+
+    def raise_limit(*_args: object, **_kwargs: object) -> str:
+        raise error
+
+    monkeypatch.setattr(router, "generate_text", raise_limit)
+    with pytest.raises(router.PinnedSymaiCompletionError) as exc:
+        engine_module._generate_text(
+            "return structured semantics",
+            router._PINNED_SYMAI_LEANSTRAL_ALIAS,
+            provider="ipfs_accelerate_py",
+            allow_local_fallback=False,
+            response_format=router._PINNED_SYMAI_RESPONSE_FORMAT,
+            route_binding=router._PINNED_SYMAI_ROUTE_BINDING,
+        )
+
+    assert exc.value is error
 
 
 @pytest.mark.parametrize(

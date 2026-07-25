@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 from types import SimpleNamespace
 from typing import Mapping
@@ -174,6 +175,18 @@ def test_objective_evidence_and_config_bounds_are_public() -> None:
         "IPFSSyMAINeurosymbolicEngine"
     )
     assert adapters.SYMAI_MAX_RETRIES == 2
+    assert adapters.SYMAI_RESPONSE_FORMAT["type"] == "json_schema"
+    schema = adapters.SYMAI_RESPONSE_FORMAT["json_schema"]["schema"]
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == {
+        "candidate_ir",
+        "normalized_predicates",
+        "quantifiers",
+        "entities",
+        "ambiguity_flags",
+        "confidence",
+        "validation_errors",
+    }
 
     with pytest.raises(contracts.ProtocolContractError):
         adapters.SymaiAdapterConfig(provider="symai")
@@ -497,6 +510,52 @@ def test_malformed_contract_can_repair_once_with_bounded_retry() -> None:
     assert record.telemetry.model_calls == 2
     assert record.telemetry.retries == 1
     assert record.data["backend_provenance"]["retries"] == 1
+    assert (
+        record.data["backend_provenance"]["repair_failure_class"]
+        == "structured_contract_failure"
+    )
+    first_prompt = engine.calls[0].prop.prepared_input
+    repair_prompt = engine.calls[1].prop.prepared_input
+    assert first_prompt != repair_prompt
+    assert "SAFE_REPAIR_CLASS:" not in first_prompt
+    assert "SAFE_REPAIR_CLASS:structured_contract_failure" in repair_prompt
+    assert "not-json" not in repair_prompt
+
+
+def test_output_token_limit_is_typed_as_contract_failure_and_repairs_safely() -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    limit_error = router.PinnedSymaiCompletionError(
+        router.PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT
+    )
+    engine = _FakeEngine([limit_error, limit_error])
+    cache: dict[str, object] = {}
+    record = _configured(engine, cache=cache).run(_request())
+
+    assert record.status is contracts.StageStatus.FAILED
+    assert (
+        record.failure_code
+        is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
+    )
+    assert record.data["raw_output"] is None
+    assert record.data["candidate_ir"] is None
+    assert record.data["safe_failure_class"] == "output_token_limit"
+    assert (
+        record.provenance.effective_identity["symai_safe_failure_class"]
+        == "output_token_limit"
+    )
+    assert "frozen output token limit" in (record.failure_detail or "")
+    assert "RuntimeError" not in (record.failure_detail or "")
+    assert record.telemetry.model_calls == 2
+    assert record.telemetry.retries == 1
+    assert cache == {}
+
+    first_prompt = engine.calls[0].prop.prepared_input
+    repair_prompt = engine.calls[1].prop.prepared_input
+    assert first_prompt != repair_prompt
+    assert "SAFE_REPAIR_CLASS:" not in first_prompt
+    assert "SAFE_REPAIR_CLASS:output_token_limit" in repair_prompt
+    assert "at most 4 short strings" in repair_prompt
+    assert str(limit_error) not in repair_prompt
 
 
 def test_oversized_raw_output_is_explicit_contract_failure() -> None:
@@ -560,6 +619,14 @@ def test_router_configuration_failure_retries_only_to_frozen_bound() -> None:
     )
     assert len(engine.calls) == adapters.SYMAI_MAX_RETRIES + 1
     assert record.telemetry.retries == adapters.SYMAI_MAX_RETRIES
+    prompts = [call.prop.prepared_input for call in engine.calls]
+    assert "SAFE_REPAIR_CLASS:" not in prompts[0]
+    assert all(
+        "SAFE_REPAIR_CLASS:engine_invocation_failure" in prompt
+        for prompt in prompts[1:]
+    )
+    assert prompts[1] == prompts[2]
+    assert "router down" not in prompts[1]
 
 
 def test_recursive_route_stack_is_rejected_before_engine_call() -> None:

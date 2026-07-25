@@ -107,6 +107,21 @@ class LLMRouterError(RuntimeError):
     """
 
 
+class PinnedSymaiCompletionError(LLMRouterError):
+    """Secret-safe failure raised for a rejected pinned SyMAI completion."""
+
+    OUTPUT_TOKEN_LIMIT = "output_token_limit"
+    _SAFE_FAILURE_CLASSES = frozenset({OUTPUT_TOKEN_LIMIT})
+
+    def __init__(self, safe_failure_class: str) -> None:
+        if safe_failure_class not in self._SAFE_FAILURE_CLASSES:
+            raise ValueError("unsupported pinned SyMAI completion failure class")
+        self.safe_failure_class = safe_failure_class
+        super().__init__(
+            "pinned SyMAI completion failed: " + safe_failure_class
+        )
+
+
 _P2P_TASK_PREFIX = "p2p://"
 _HF_ARCH_ROUTER_MODEL_ID = "katanemo/Arch-Router-1.5B"
 _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
@@ -142,6 +157,67 @@ _PINNED_SYMAI_ROUTE_BINDING = {
     "resolved_model_name": _PINNED_SYMAI_LEANSTRAL_MODEL,
     "service_endpoint": _PINNED_SYMAI_LEANSTRAL_ENDPOINT,
     "routing_backend": "existing_leanstral_service",
+}
+_PINNED_SYMAI_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "candidate_ir",
+        "normalized_predicates",
+        "quantifiers",
+        "entities",
+        "ambiguity_flags",
+        "confidence",
+        "validation_errors",
+    ],
+    "properties": {
+        "candidate_ir": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["propositions"],
+            "properties": {
+                "propositions": {
+                    "type": "array",
+                    "maxItems": 12,
+                    "items": {"type": "string", "maxLength": 80},
+                }
+            },
+        },
+        "normalized_predicates": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "quantifiers": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "entities": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "ambiguity_flags": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "validation_errors": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+    },
+}
+_PINNED_SYMAI_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "hssl_symai_semantic_evidence",
+        "strict": True,
+        "schema": _PINNED_SYMAI_RESPONSE_SCHEMA,
+    },
 }
 
 
@@ -3435,10 +3511,10 @@ def _generate_pinned_symai_leanstral(
     response_format = kwargs.get("response_format")
     if (
         not isinstance(response_format, dict)
-        or response_format != {"type": "json_object"}
+        or response_format != _PINNED_SYMAI_RESPONSE_FORMAT
     ):
         raise RuntimeError(
-            "pinned SyMAI Leanstral route requires the frozen JSON-object mode"
+            "pinned SyMAI Leanstral route requires the frozen JSON-schema mode"
         )
 
     timeout = max(1.0, min(float(kwargs.get("timeout", 30.0)), 60.0))
@@ -3514,6 +3590,13 @@ def _generate_pinned_symai_leanstral(
     if not isinstance(choices, list) or len(choices) != 1:
         raise RuntimeError("pinned Leanstral service returned invalid choices")
     first = choices[0]
+    if (
+        isinstance(first, dict)
+        and first.get("finish_reason") == "length"
+    ):
+        raise PinnedSymaiCompletionError(
+            PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT
+        )
     if not isinstance(first, dict) or first.get("finish_reason") != "stop":
         raise RuntimeError("pinned Leanstral service returned an invalid choice")
     message = first.get("message")
