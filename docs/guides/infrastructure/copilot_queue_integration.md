@@ -339,5 +339,5 @@ Potential improvements:
 ## References
 
 - [GitHub Copilot CLI Documentation](https://docs.github.com/en/copilot/github-copilot-in-the-cli)
-- [Queue Manager Documentation](../scripts/queue_manager.py)
-- [Workflow Auto-Fix System](../.github/workflows/README.md)
+- [Queue Manager Documentation](../../../scripts/queue_manager.py)
+- [Workflow Auto-Fix System](../../../.github/workflows/README.md)
