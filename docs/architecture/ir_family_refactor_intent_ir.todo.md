@@ -204,7 +204,7 @@ real conflict edges.
 
 ## IRF-020 Define immutable Security IR v1 and a legacy adapter
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
