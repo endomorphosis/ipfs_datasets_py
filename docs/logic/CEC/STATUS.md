@@ -177,7 +177,7 @@ tests/unit_tests/logic/CEC/
 
 ### Phase Details
 
-See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) for complete roadmap details.
+See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) for complete roadmap details.
 
 ---
 
@@ -185,7 +185,7 @@ See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTOR
 
 | # | Requirement | Status | Primary Document | Phase |
 |---|-------------|--------|------------------|-------|
-| 1 | Native Python implementations | 🟢 81% Complete | [Master Plan](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) | Phases 1-4 |
+| 1 | Native Python implementations | 🟢 81% Complete | [Master Plan](./ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) | Phases 1-4 |
 | 2 | Extended NL support | 📋 Planned | [NL Roadmap](./EXTENDED_NL_SUPPORT_ROADMAP.md) | Phase 5 |
 | 3 | Additional theorem provers | 📋 Planned | [Prover Strategy](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md) | Phase 6 |
 | 4 | Performance optimizations | 📋 Planned | [Performance Plan](./PERFORMANCE_OPTIMIZATION_PLAN.md) | Phase 7 |
@@ -339,7 +339,7 @@ See [ARCHIVE/](./ARCHIVE/) for historical change logs.
 
 ### User Documentation
 
-- **[README.md](./README.md)** - Main entry point, getting started
+- **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** - Main entry point, getting started
 - **[STATUS.md](./STATUS.md)** ⭐ **YOU ARE HERE** - Implementation status (single source of truth)
 - **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute tutorial (coming soon)
 - **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** - Comprehensive system guide
@@ -352,8 +352,8 @@ See [ARCHIVE/](./ARCHIVE/) for historical change logs.
 
 ### Planning Documents
 
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** - Master plan (35KB)
-- **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** - Quick reference (10KB)
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** - Master plan (35KB)
+- **[REFACTORING_QUICK_REFERENCE.md](./ARCHIVE/REFACTORING_QUICK_REFERENCE.md)** - Quick reference (10KB)
 - **[API_INTERFACE_DESIGN.md](./API_INTERFACE_DESIGN.md)** - API design (28KB)
 - **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** - Performance plan (21KB)
 - **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** - NL roadmap (19KB)
