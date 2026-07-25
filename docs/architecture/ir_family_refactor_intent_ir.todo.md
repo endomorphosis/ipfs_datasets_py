@@ -228,7 +228,7 @@ real conflict edges.
 
 ## IRF-021 Isolate the crypto-exchange Security adapter
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
