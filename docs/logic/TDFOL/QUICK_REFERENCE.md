@@ -1,9 +1,9 @@
 # TDFOL Refactoring - Quick Reference Guide
 
 **Quick Links:**
-- 📖 [Full Plan](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Complete technical details
-- 📋 [Executive Summary](./REFACTORING_EXECUTIVE_SUMMARY.md) - High-level overview
-- 📚 [Current README](./README.md) - Module documentation
+- 📖 [Full Plan](./ARCHIVE/COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Complete technical details
+- 📋 [Executive Summary](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY.md) - High-level overview
+- 📚 [Current Module Index](./INDEX.md) - Module documentation
 - 📊 [This Document] - Quick reference and checklists
 
 ---
