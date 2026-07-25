@@ -318,7 +318,7 @@ When v3.0 is released, a new migration guide will be provided.
 - Changed `ConversionResult` structure
 - Removed legacy prover bridges
 
-**See:** [CHANGELOG.md](./CHANGELOG.md) for complete history
+**See:** [CHANGELOG.md](../CHANGELOG.md) for complete history
 
 ### v1.5.0 (2025-11-15) - Last v1.x Release
 
