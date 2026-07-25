@@ -195,14 +195,14 @@ See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_
 | application/ics | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/java-archive | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/javascript | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| application/json | ✅ Implemented | [application_handler.py](format_handlers/application_handler.py) |  |  |  |  |  |  |  |
+| application/json | ✅ Implemented | [_application_handler.py](core/content_extractor/handlers/_application_handler.py) |  |  |  |  |  |  |  |
 | application/ld+json | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/marc | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/msword | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/octet-stream | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/octetstream | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/ogg | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| application/pdf | ✅ Implemented | [application_handler.py](format_handlers/application_handler.py) with [pdf_processor.py](format_handlers/processors/pdf_processor.py) |  |  |  |  |  |  |  |
+| application/pdf | ✅ Implemented | [_application_handler.py](core/content_extractor/handlers/_application_handler.py) with [_pdf_processor.py](core/content_extractor/processors/by_mime_type/_pdf_processor.py) |  |  |  |  |  |  |  |
 | application/pgp-encrypted | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/pgp-signature | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/postscript | ❌ Not Implemented | |  |  |  |  |  |  |  |
@@ -224,8 +224,8 @@ See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_
 | application/vnd.oasis.opendocument.spreadsheet | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/vnd.oasis.opendocument.text | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/vnd.openxmlformats-officedocument.presentationml.presentation | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | ✅ Implemented | [application_handler.py](format_handlers/application_handler.py) with [xlsx_processor.py](format_handlers/processors/xlsx_processor.py) |  |  |  |  |  |  |  |
-| application/vnd.openxmlformats-officedocument.wordprocessingml.document | ✅ Implemented | [application_handler.py](format_handlers/application_handler.py) with [docx_processor.py](format_handlers/processors/docx_processor.py) |  |  |  |  |  |  |  |
+| application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | ✅ Implemented | [_application_handler.py](core/content_extractor/handlers/_application_handler.py) with [_xlsx_processor.py](core/content_extractor/processors/by_mime_type/_xlsx_processor.py) |  |  |  |  |  |  |  |
+| application/vnd.openxmlformats-officedocument.wordprocessingml.document | ✅ Implemented | [_application_handler.py](core/content_extractor/handlers/_application_handler.py) with [_python_docx_processor.py](core/content_extractor/processors/by_dependency/_python_docx_processor.py) |  |  |  |  |  |  |  |
 | application/vnd.rar | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/vnd.visio | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/vnd.wap.xhtml+xml | ❌ Not Implemented | |  |  |  |  |  |  |  |
@@ -259,44 +259,44 @@ See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_
 | application/x-zip-compressed | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/xhtml+xml | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | application/xml | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| application/zip | ✅ Implemented | [application_handler.py](format_handlers/application_handler.py) |  |  |  |  |  |  |  |
+| application/zip | ✅ Implemented | [_application_handler.py](core/content_extractor/handlers/_application_handler.py) |  |  |  |  |  |  |  |
 | audio/3gpp | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | audio/3gpp2 | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| audio/aac | ✅ Implemented | [audio_handler.py](format_handlers/audio_handler.py) with [audio_processor.py](format_handlers/processors/audio_processor.py) |  |  |  |  |  |  |  |
-| audio/flac | ✅ Implemented | [audio_handler.py](format_handlers/audio_handler.py) with [audio_processor.py](format_handlers/processors/audio_processor.py) |  |  |  |  |  |  |  |
+| audio/aac | ✅ Implemented | [_audio_handler.py](core/content_extractor/handlers/_audio_handler.py) with [_audio_processor.py](core/content_extractor/processors/by_ability/_audio_processor.py) |  |  |  |  |  |  |  |
+| audio/flac | ✅ Implemented | [_audio_handler.py](core/content_extractor/handlers/_audio_handler.py) with [_audio_processor.py](core/content_extractor/processors/by_ability/_audio_processor.py) |  |  |  |  |  |  |  |
 | audio/midi | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| audio/mpeg | ✅ Implemented | [audio_handler.py](format_handlers/audio_handler.py) with [audio_processor.py](format_handlers/processors/audio_processor.py) |  |  |  |  |  |  |  |
-| audio/ogg | ✅ Implemented | [audio_handler.py](format_handlers/audio_handler.py) with [audio_processor.py](format_handlers/processors/audio_processor.py) |  |  |  |  |  |  |  |
+| audio/mpeg | ✅ Implemented | [_audio_handler.py](core/content_extractor/handlers/_audio_handler.py) with [_audio_processor.py](core/content_extractor/processors/by_ability/_audio_processor.py) |  |  |  |  |  |  |  |
+| audio/ogg | ✅ Implemented | [_audio_handler.py](core/content_extractor/handlers/_audio_handler.py) with [_audio_processor.py](core/content_extractor/processors/by_ability/_audio_processor.py) |  |  |  |  |  |  |  |
 | audio/webm | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | audio/x-midi | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | audio/x-mpegurl | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | audio/x-scpls | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| audio/x-wav | ✅ Implemented | [audio_handler.py](format_handlers/audio_handler.py) with [audio_processor.py](format_handlers/processors/audio_processor.py) |  |  |  |  |  |  |  |
+| audio/x-wav | ✅ Implemented | [_audio_handler.py](core/content_extractor/handlers/_audio_handler.py) with [_audio_processor.py](core/content_extractor/processors/by_ability/_audio_processor.py) |  |  |  |  |  |  |  |
 | binary/octet-stream | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | image/apng | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | image/avif | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | image/bmp | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| image/gif | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) with [ocr_processor.py](format_handlers/processors/ocr_processor.py) |  |  |  |  |  |  |  |
+| image/gif | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) with [_ocr_processor.py](core/content_extractor/processors/by_ability/_ocr_processor.py) |  |  |  |  |  |  |  |
 | image/jp2 | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| image/jpeg | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) with [ocr_processor.py](format_handlers/processors/ocr_processor.py) |  |  |  |  |  |  |  |
-| image/jpg | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) with [ocr_processor.py](format_handlers/processors/ocr_processor.py) |  |  |  |  |  |  |  |
+| image/jpeg | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) with [_ocr_processor.py](core/content_extractor/processors/by_ability/_ocr_processor.py) |  |  |  |  |  |  |  |
+| image/jpg | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) with [_ocr_processor.py](core/content_extractor/processors/by_ability/_ocr_processor.py) |  |  |  |  |  |  |  |
 | image/pjpeg | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| image/png | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) with [ocr_processor.py](format_handlers/processors/ocr_processor.py) |  |  |  |  |  |  |  |
-| image/svg+xml | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) |  |  |  |  |  |  |  |
+| image/png | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) with [_ocr_processor.py](core/content_extractor/processors/by_ability/_ocr_processor.py) |  |  |  |  |  |  |  |
+| image/svg+xml | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) |  |  |  |  |  |  |  |
 | image/tiff | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | image/vnd.djvu | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | image/vnd.microsoft.icon | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| image/webp | ✅ Implemented | [image_handler.py](format_handlers/image_handler.py) with [ocr_processor.py](format_handlers/processors/ocr_processor.py) |  |  |  |  |  |  |  |
+| image/webp | ✅ Implemented | [_image_handler.py](core/content_extractor/handlers/_image_handler.py) with [_ocr_processor.py](core/content_extractor/processors/by_ability/_ocr_processor.py) |  |  |  |  |  |  |  |
 | message/rfc822 | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| text/calendar | ✅ Implemented | [text_handler.py](format_handlers/text_handler.py) |  |  |  |  |  |  |  |
+| text/calendar | ✅ Implemented | [_text_handler.py](core/content_extractor/handlers/_text_handler.py) |  |  |  |  |  |  |  |
 | text/css | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| text/csv | ✅ Implemented | [text_handler.py](format_handlers/text_handler.py) |  |  |  |  |  |  |  |
+| text/csv | ✅ Implemented | [_text_handler.py](core/content_extractor/handlers/_text_handler.py) |  |  |  |  |  |  |  |
 | text/directory | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/enriched | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| text/html | ✅ Implemented | [text_handler.py](format_handlers/text_handler.py) |  |  |  |  |  |  |  |
+| text/html | ✅ Implemented | [_text_handler.py](core/content_extractor/handlers/_text_handler.py) |  |  |  |  |  |  |  |
 | text/javascript | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/pdf | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| text/plain | ✅ Implemented | [text_handler.py](format_handlers/text_handler.py) |  |  |  |  |  |  |  |
+| text/plain | ✅ Implemented | [_text_handler.py](core/content_extractor/handlers/_text_handler.py) |  |  |  |  |  |  |  |
 | text/prs.lines.tag | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/tab-separated-values | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/turtle | ❌ Not Implemented | |  |  |  |  |  |  |  |
@@ -309,17 +309,17 @@ See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_
 | text/x-perl | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/x-vcalendar | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | text/x-vcard | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| text/xml | ✅ Implemented | [text_handler.py](format_handlers/text_handler.py) |  |  |  |  |  |  |  |
+| text/xml | ✅ Implemented | [_text_handler.py](core/content_extractor/handlers/_text_handler.py) |  |  |  |  |  |  |  |
 | video/3gpp | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | video/3gpp2 | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| video/avi | ✅ Implemented | [video_handler.py](format_handlers/video_handler.py) with [video_processor.py](format_handlers/processors/video_processor.py) |  |  |  |  |  |  |  |
-| video/mkv | ✅ Implemented | [video_handler.py](format_handlers/video_handler.py) with [video_processor.py](format_handlers/processors/video_processor.py) |  |  |  |  |  |  |  |
-| video/mov | ✅ Implemented | [video_handler.py](format_handlers/video_handler.py) with [video_processor.py](format_handlers/processors/video_processor.py) |  |  |  |  |  |  |  |
+| video/avi | ✅ Implemented | [_video_handler.py](core/content_extractor/handlers/_video_handler.py) with [_video_processor.py](core/content_extractor/processors/by_ability/_video_processor.py) |  |  |  |  |  |  |  |
+| video/mkv | ✅ Implemented | [_video_handler.py](core/content_extractor/handlers/_video_handler.py) with [_video_processor.py](core/content_extractor/processors/by_ability/_video_processor.py) |  |  |  |  |  |  |  |
+| video/mov | ✅ Implemented | [_video_handler.py](core/content_extractor/handlers/_video_handler.py) with [_video_processor.py](core/content_extractor/processors/by_ability/_video_processor.py) |  |  |  |  |  |  |  |
 | video/mp2t | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| video/mp4 | ✅ Implemented | [video_handler.py](format_handlers/video_handler.py) with [video_processor.py](format_handlers/processors/video_processor.py) |  |  |  |  |  |  |  |
+| video/mp4 | ✅ Implemented | [_video_handler.py](core/content_extractor/handlers/_video_handler.py) with [_video_processor.py](core/content_extractor/processors/by_ability/_video_processor.py) |  |  |  |  |  |  |  |
 | video/mpeg | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | video/ogg | ❌ Not Implemented | |  |  |  |  |  |  |  |
-| video/webm | ✅ Implemented | [video_handler.py](format_handlers/video_handler.py) with [video_processor.py](format_handlers/processors/video_processor.py) |  |  |  |  |  |  |  |
+| video/webm | ✅ Implemented | [_video_handler.py](core/content_extractor/handlers/_video_handler.py) with [_video_processor.py](core/content_extractor/processors/by_ability/_video_processor.py) |  |  |  |  |  |  |  |
 | video/x-ms-asf | ❌ Not Implemented | |  |  |  |  |  |  |  |
 | video/x-msvideo | ❌ Not Implemented | |  |  |  |  |  |  |  |
 
@@ -335,5 +335,4 @@ See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_
 | binary        | 1     | 0           | 1               | 0.00%      |
 | message       | 1     | 0           | 1               | 0.00%      |
 | **TOTAL**     | **137** | **26**     | **111**         | **19.00%** |
-
 
