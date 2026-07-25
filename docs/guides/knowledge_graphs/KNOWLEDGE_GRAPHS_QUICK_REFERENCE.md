@@ -586,9 +586,9 @@ for record in result:
 ## Resources
 
 ### Documentation
-- [Full Refactoring Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md)
-- [Architecture Overview](./GRAPH_DATABASE_ARCHITECTURE.md)
-- [API Reference](./api/graph_database.html)
+- [Full Refactoring Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md)
+- [Architecture Overview](../../knowledge_graphs/ARCHITECTURE.md)
+- [API Reference](../../knowledge_graphs/API_REFERENCE.md)
 
 ### External Resources
 - [Neo4j Cypher Manual](https://neo4j.com/docs/cypher-manual/)
