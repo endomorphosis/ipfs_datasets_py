@@ -428,8 +428,8 @@ pytest tests/knowledge_graphs/test_core/ --cov=ipfs_datasets_py.knowledge_graphs
 - **[Storage Module](../storage/README.md)** - IPLD storage backend
 - **[Transaction Module](../transactions/README.md)** - ACID transactions
 - **[Query Module](../query/README.md)** - High-level query interface
-- **[USER_GUIDE.md](../../../../docs/knowledge_graphs/USER_GUIDE.md)** - Complete usage guide
-- **[API_REFERENCE.md](../../../../docs/knowledge_graphs/API_REFERENCE.md)** - Full API documentation
+- **[USER_GUIDE.md](../../../docs/knowledge_graphs/USER_GUIDE.md)** - Complete usage guide
+- **[API_REFERENCE.md](../../../docs/knowledge_graphs/API_REFERENCE.md)** - Full API documentation
 
 ---
 
