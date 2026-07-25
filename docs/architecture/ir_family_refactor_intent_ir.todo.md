@@ -847,3 +847,14 @@ real conflict edges.
 - Outputs: ipfs_datasets_py/logic/security_ir/artifact_migration.py, security_ir_artifacts/migrations/manifest.json, tests/unit/logic/security_ir/test_artifact_migration.py, /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-1/discovery
 - Validation: test -f /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-1/discovery/2026-07-25-irf-064-irf-025-retry-budget.md
 - Acceptance: Retry-budget guardrail filed this from repeated validation failures in IRF-025. Use evidence in /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-1/discovery/2026-07-25-irf-064-irf-025-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release IRF-025 from strategy blocked_tasks.
+
+## IRF-065 Resolve validation retry-budget failure for IRF-034
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Depends on: IRF-011, IRF-031, IRF-032
+- Outputs: ipfs_datasets_py/logic/intent_ir/graphrag/ontology.py, ipfs_datasets_py/logic/intent_ir/graphrag/corpus_projector.py, tests/unit/logic/intent_ir/graphrag/test_corpus_projector.py, /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-0/discovery
+- Validation: test -f /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-0/discovery/2026-07-25-irf-065-irf-034-retry-budget.md
+- Acceptance: Retry-budget guardrail filed this from repeated validation failures in IRF-034. Use evidence in /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-0/discovery/2026-07-25-irf-065-irf-034-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release IRF-034 from strategy blocked_tasks.
