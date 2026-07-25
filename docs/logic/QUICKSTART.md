@@ -314,7 +314,7 @@ result = converter.convert(text)  # Shows detailed parsing steps
 
 ### Advanced Features
 - **[Performance Tuning](./PERFORMANCE_TUNING.md)** - Optimization strategies
-- **[External Provers](./external_provers/README.md)** - Z3, Lean, Coq integration
+- **[External Provers](./CONTRIBUTING.md#adding-external-provers)** - Z3, Lean, Coq integration
 - **[Batch Processing](./FEATURES.md#batch-processing)** - High-throughput processing
 
 ### Get Help
