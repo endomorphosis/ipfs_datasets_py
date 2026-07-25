@@ -179,6 +179,26 @@ def test_writer_refuses_to_write_inside_artifact_tree(tmp_path: Path) -> None:
     assert not (root / "inventory.json").exists()
 
 
+def test_migration_control_records_are_not_reinventoried_as_legacy(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "security_ir_artifacts"
+    migrations = root / "migrations"
+    migrations.mkdir(parents=True)
+    legacy = root / "source.json"
+    legacy.write_text("{}", encoding="utf-8")
+    (migrations / "manifest.json").write_text("{}", encoding="utf-8")
+
+    assert [
+        path.as_posix()
+        for path in inventory.filesystem_artifact_paths(tmp_path)
+    ] == ["security_ir_artifacts/source.json"]
+    payload = inventory.build_inventory(tmp_path, tracked_only=False)
+    assert [record["path"] for record in payload["artifacts"]] == [
+        "security_ir_artifacts/source.json"
+    ]
+
+
 def test_check_mode_is_read_only_and_detects_stale_output(tmp_path: Path) -> None:
     root = tmp_path / "security_ir_artifacts"
     root.mkdir()
