@@ -300,7 +300,7 @@ real conflict edges.
 
 ## IRF-024 Separate Security verification result families
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: quality
