@@ -43,6 +43,14 @@ _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _OBSERVATIONAL_INVENTORY_FIELDS: Final = frozenset(
     {"ambiguity_reasons", "likely_producers", "recommendations"}
 )
+_BOOLEAN_INVENTORY_FIELDS: Final = frozenset(
+    {
+        "authority_selected",
+        "is_mutable_alias",
+        "is_new_variant",
+        "is_temporary",
+    }
+)
 _REQUIRED_INVENTORY_FIELDS: Final = frozenset(
     {
         "ambiguity_reasons",
@@ -137,6 +145,25 @@ def _require_sha256(value: Any, label: str) -> str:
     return value
 
 
+def _require_bool(value: Any, label: str) -> bool:
+    if type(value) is not bool:
+        raise ArtifactMigrationError(f"{label} must be a boolean")
+    return value
+
+
+def _require_nonempty_string(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ArtifactMigrationError(f"{label} must not be empty")
+    return value
+
+
+def _require_string_sequence(value: Any, label: str) -> Sequence[str]:
+    items = _require_sequence(value, label)
+    for index, item in enumerate(items):
+        _require_nonempty_string(item, f"{label}[{index}]")
+    return items
+
+
 def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     value: dict[str, Any] = {}
     for key, item in pairs:
@@ -145,6 +172,23 @@ def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
                 f"migration manifest contains duplicate JSON key {key!r}"
             )
         value[key] = item
+    return value
+
+
+def _normalise_artifact_root(value: Any) -> str:
+    if not isinstance(value, str) or not value or "\\" in value or "\x00" in value:
+        raise ArtifactMigrationError(
+            "inventory artifact_root must be normalized POSIX text"
+        )
+    root = PurePosixPath(value)
+    if (
+        root.is_absolute()
+        or root.as_posix() != value
+        or any(part in {"", ".", ".."} for part in root.parts)
+    ):
+        raise ArtifactMigrationError(
+            "inventory artifact_root must be repository-relative"
+        )
     return value
 
 
@@ -240,6 +284,11 @@ def _build_record(
         raise ArtifactMigrationError(
             f"inventory record is missing required fields: {', '.join(missing)}"
         )
+    unexpected = sorted(set(inventory_record) - _REQUIRED_INVENTORY_FIELDS)
+    if unexpected:
+        raise ArtifactMigrationError(
+            f"inventory record has unsupported fields: {', '.join(unexpected)}"
+        )
     path = _normalise_path(inventory_record["path"], artifact_root=artifact_root)
     content_sha256 = _require_sha256(
         inventory_record["sha256"], f"{path}.sha256"
@@ -248,6 +297,28 @@ def _build_record(
     if classification not in _CLASS_MAP:
         raise ArtifactMigrationError(
             f"{path} has unsupported inventory classification {classification!r}"
+        )
+    for field_name in _BOOLEAN_INVENTORY_FIELDS:
+        _require_bool(inventory_record[field_name], f"{path}.{field_name}")
+    if inventory_record["authority_selected"]:
+        raise ArtifactMigrationError(
+            f"{path} inventory must not select artifact authority"
+        )
+    _require_nonempty_string(
+        inventory_record["detected_format"], f"{path}.detected_format"
+    )
+    _require_nonempty_string(inventory_record["file_type"], f"{path}.file_type")
+    _require_string_sequence(
+        inventory_record["variant_kinds"], f"{path}.variant_kinds"
+    )
+    variant_of = inventory_record["variant_of"]
+    if variant_of is not None:
+        _normalise_path(variant_of, artifact_root=artifact_root)
+        if variant_of == path:
+            raise ArtifactMigrationError(f"{path}.variant_of must identify another path")
+    for field_name in _OBSERVATIONAL_INVENTORY_FIELDS:
+        _require_string_sequence(
+            inventory_record[field_name], f"{path}.{field_name}"
         )
     size = inventory_record["size_bytes"]
     if isinstance(size, bool) or not isinstance(size, int) or size < 0:
@@ -295,9 +366,8 @@ def build_migration_manifest(inventory: Mapping[str, Any]) -> dict[str, Any]:
     inventory = _require_mapping(inventory, "inventory")
     if inventory.get("schema_version") != "SecurityArtifactInventory@1":
         raise ArtifactMigrationError("unsupported Security artifact inventory version")
-    artifact_root = inventory.get("artifact_root")
-    if not isinstance(artifact_root, str) or not artifact_root:
-        raise ArtifactMigrationError("inventory artifact_root must not be empty")
+    artifact_root = _normalise_artifact_root(inventory.get("artifact_root"))
+    scope = _require_nonempty_string(inventory.get("scope"), "inventory.scope")
     records = list(_require_sequence(inventory.get("artifacts"), "inventory.artifacts"))
     if inventory.get("artifact_count") != len(records):
         raise ArtifactMigrationError("inventory artifact_count does not match artifacts")
@@ -316,6 +386,11 @@ def build_migration_manifest(inventory: Mapping[str, Any]) -> dict[str, Any]:
         )
         deterministic_records.append(deterministic)
         observations.append(observational)
+    input_paths = [item["legacy"]["path"] for item in deterministic_records]
+    if input_paths != sorted(input_paths, key=lambda value: value.encode("utf-8")):
+        raise ArtifactMigrationError(
+            "inventory artifacts must be bytewise path ordered"
+        )
     deterministic_records.sort(key=lambda item: item["legacy"]["path"].encode("utf-8"))
     observations.sort(key=lambda item: item["record_id"].encode("utf-8"))
 
@@ -345,11 +420,11 @@ def build_migration_manifest(inventory: Mapping[str, Any]) -> dict[str, Any]:
             "inventory_sha256": expected_inventory_digest,
             "path": DEFAULT_INVENTORY_PATH,
             "schema_version": "SecurityArtifactInventory@1",
-            "scope": inventory.get("scope"),
+            "scope": scope,
         },
     }
     digest = _canonical_digest(deterministic_fields)
-    return {
+    manifest = {
         "deterministic_fields": deterministic_fields,
         "manifest_id": f"security-artifact-migration:sha256:{digest}",
         "manifest_sha256": digest,
@@ -357,11 +432,14 @@ def build_migration_manifest(inventory: Mapping[str, Any]) -> dict[str, Any]:
             "inventory_annotations": observations,
             "note": (
                 "Producer attributions, ambiguity explanations, and recommendations "
-                "are inventory observations excluded from migration identity."
+                "are preserved inventory observations excluded from migration identity; "
+                "they never select artifact authority."
             ),
         },
         "schema_version": SECURITY_ARTIFACT_MIGRATION_VERSION,
     }
+    validate_migration_manifest(manifest)
+    return manifest
 
 
 def render_migration_manifest(manifest: Mapping[str, Any]) -> str:
@@ -403,9 +481,7 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
     if manifest.get("manifest_id") != expected_id:
         raise ArtifactMigrationError("manifest_id does not match deterministic_fields")
 
-    artifact_root = deterministic.get("artifact_root")
-    if not isinstance(artifact_root, str) or not artifact_root:
-        raise ArtifactMigrationError("deterministic artifact_root must not be empty")
+    artifact_root = _normalise_artifact_root(deterministic.get("artifact_root"))
     records = list(
         _require_sequence(deterministic.get("records"), "deterministic_fields.records")
     )
@@ -430,6 +506,7 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
         raise ArtifactMigrationError(
             "source_inventory artifact_count does not match records"
         )
+    _require_nonempty_string(source_inventory.get("scope"), "source_inventory.scope")
 
     paths: list[str] = []
     record_ids: list[str] = []
@@ -448,6 +525,15 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
             raise ArtifactMigrationError(
                 f"records[{index}].legacy is missing fields: {', '.join(missing)}"
             )
+        unexpected = sorted(
+            set(legacy)
+            - (_REQUIRED_INVENTORY_FIELDS - _OBSERVATIONAL_INVENTORY_FIELDS)
+        )
+        if unexpected:
+            raise ArtifactMigrationError(
+                f"records[{index}].legacy has unsupported fields: "
+                f"{', '.join(unexpected)}"
+            )
         path = _normalise_path(legacy.get("path"), artifact_root=artifact_root)
         digest_value = _require_sha256(
             legacy.get("sha256"), f"records[{index}].legacy.sha256"
@@ -457,10 +543,22 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
         size = legacy.get("size_bytes")
         if isinstance(size, bool) or not isinstance(size, int) or size < 0:
             raise ArtifactMigrationError(f"{path} has an invalid legacy size")
+        for field_name in _BOOLEAN_INVENTORY_FIELDS:
+            _require_bool(legacy.get(field_name), f"{path}.{field_name}")
         if legacy.get("authority_selected") is not False:
             raise ArtifactMigrationError(
                 f"{path} legacy inventory must not select authority"
             )
+        _require_nonempty_string(legacy.get("detected_format"), f"{path}.detected_format")
+        _require_nonempty_string(legacy.get("file_type"), f"{path}.file_type")
+        _require_string_sequence(legacy.get("variant_kinds"), f"{path}.variant_kinds")
+        variant_of = legacy.get("variant_of")
+        if variant_of is not None:
+            _normalise_path(variant_of, artifact_root=artifact_root)
+            if variant_of == path:
+                raise ArtifactMigrationError(
+                    f"{path}.variant_of must identify another path"
+                )
         record_id = _record_id(path, digest_value)
         if record.get("record_id") != record_id:
             raise ArtifactMigrationError(f"{path} has an invalid record_id")
@@ -482,6 +580,10 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
             raise ArtifactMigrationError(f"{path} has an invalid target class")
         if target.get("authority_selected") is not False:
             raise ArtifactMigrationError(f"{path} must not select authority")
+        if set(flags) != {"ambiguous", "transient", "unknown"} or any(
+            type(value) is not bool for value in flags.values()
+        ):
+            raise ArtifactMigrationError(f"{path} has malformed safety flags")
         if dict(flags) != _flags(legacy):
             raise ArtifactMigrationError(f"{path} has inconsistent safety flags")
         if target.get("disposition") != _target_disposition(legacy):
@@ -523,7 +625,7 @@ def validate_migration_manifest(manifest: Mapping[str, Any]) -> None:
                 "inventory annotation record_id must not be empty"
             )
         for field_name in _OBSERVATIONAL_INVENTORY_FIELDS:
-            _require_sequence(
+            _require_string_sequence(
                 annotation[field_name],
                 f"inventory annotation {field_name}",
             )

@@ -14720,7 +14720,7 @@
         "record_id": "security-artifact:sha256:feeccdcb8a0cb516f06b11c5f705c75c0d53a8e3313df7d778f0dbc729beb9de"
       }
     ],
-    "note": "Producer attributions, ambiguity explanations, and recommendations are inventory observations excluded from migration identity."
+    "note": "Producer attributions, ambiguity explanations, and recommendations are preserved inventory observations excluded from migration identity; they never select artifact authority."
   },
   "schema_version": "SecurityArtifactMigration@1"
 }
