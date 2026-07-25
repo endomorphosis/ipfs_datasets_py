@@ -1,7 +1,7 @@
 # MCP Server Phases Status Report
 
 **Last Updated:** 2026-02-25 (All phases complete through MCP++ v39, 1,570+ tests)  
-**Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)  
+**Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](../../docs/archive/reorganization/MASTER_REFACTORING_PLAN_2026_v4.md)
 
 ## Overview
 
@@ -264,7 +264,7 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 ## Documentation Index
 
 ### Master Plan
-- **[MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)** ← Start Here!
+- **[MASTER_REFACTORING_PLAN_2026_v4.md](../../docs/archive/reorganization/MASTER_REFACTORING_PLAN_2026_v4.md)** ← Start Here!
 - **[ARCHIVE/README.md](ARCHIVE/README.md)** — Archived historical docs
 
 ### Architecture Documentation
@@ -274,15 +274,15 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ### Templates
 - [simple_tool_template.py](docs/development/tool-templates/simple_tool_template.py) ⭐
-- [test_tool_template.py](docs/development/tool-templates/test_tool_template.py)
+- [Tool testing templates](docs/development/tool-templates/README.md)
 
 ## Next Actions
 
 **All 7 phases are complete.** The MCP server refactoring is 100% done. v5 Phases A-F are also complete.
 
-Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](MASTER_IMPROVEMENT_PLAN_2026_v6.md) (v6 plan, session 39+).
+Active improvement tasks are tracked in [MASTER_IMPROVEMENT_PLAN_2026_v6.md](../../docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v6.md) (v6 plan, session 39+).
 
-Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROVEMENT_PLAN_2026_v5.md).
+Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](../../docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v5.md).
 
 **v6 Tasks — ALL COMPLETE ✅ (sessions 40-44); v7 Session 45 tasks below:**
 - ✅ `simple_server.py`: Flask import made conditional; `DeprecationWarning` on class/function use (session 45)
@@ -355,4 +355,4 @@ Completed v5 tasks tracked in [MASTER_IMPROVEMENT_PLAN_2026_v5.md](MASTER_IMPROV
 
 **Last Updated:** 2026-02-23 (Session 68 — v23 Next Steps: merge conflict detection; reload max_retries; PublishAsyncResult int/eq helpers; restore_from_bak; 36 new tests, 934+ spec tests pass)
 
-**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v24.md](MASTER_IMPROVEMENT_PLAN_2026_v24.md)**
+**For the complete plan, see [MASTER_IMPROVEMENT_PLAN_2026_v24.md](../../docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v24.md)**
