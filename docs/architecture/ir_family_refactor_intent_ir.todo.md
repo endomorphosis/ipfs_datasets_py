@@ -564,7 +564,7 @@ real conflict edges.
 
 ## IRF-041 Implement the deterministic Intent formalizer
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
