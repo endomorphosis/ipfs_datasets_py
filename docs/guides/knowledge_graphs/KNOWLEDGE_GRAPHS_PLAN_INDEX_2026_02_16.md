@@ -185,9 +185,9 @@ These documents were created previously and provide additional context:
 
 ### Core Documents (THIS PLAN)
 - [Executive Summary](KNOWLEDGE_GRAPHS_EXECUTIVE_SUMMARY_2026_02_16.md)
-- [Master Refactoring Plan](KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md)
+- [Master Refactoring Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md)
 - [Quick Reference Guide](KNOWLEDGE_GRAPHS_QUICK_REFERENCE_2026_02_16.md)
-- [Visual Roadmap](KNOWLEDGE_GRAPHS_VISUAL_ROADMAP_2026_02_16.md)
+- [Visual Roadmap](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_VISUAL_ROADMAP_2026_02_16.md)
 - [Implementation Guide](KNOWLEDGE_GRAPHS_IMPLEMENTATION_GUIDE_2026_02_16.md)
 
 ### Supporting Documents
