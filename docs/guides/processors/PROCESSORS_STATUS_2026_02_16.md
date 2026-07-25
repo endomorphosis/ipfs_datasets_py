@@ -265,7 +265,7 @@ For existing code:
 
 ## Related Documentation
 
-- [Comprehensive Plan](PROCESSORS_COMPREHENSIVE_PLAN_2026.md) - Full 92-hour plan
+- [Comprehensive Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_PLAN_2026.md) - Full 92-hour plan
 - [Engines Guide](PROCESSORS_ENGINES_GUIDE.md) - How to use engines/
 - [Quick Reference](PROCESSORS_PLAN_QUICK_REFERENCE.md) - Quick lookup
 - [Visual Summary](PROCESSORS_VISUAL_SUMMARY.md) - Architecture diagrams
