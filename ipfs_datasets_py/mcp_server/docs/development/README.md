@@ -99,7 +99,7 @@ def test_my_tool_success():
 - Use `pytest.mark.skip` (with reason) for tests requiring external services
 
 ### Test Templates
-See [tool-templates/test_tool_template.py](./tool-templates/test_tool_template.py) for a complete test template.
+See the [tool templates guide](./tool-templates/README.md) for available tool and testing templates.
 
 ## Debugging Guide
 
@@ -173,4 +173,3 @@ See existing tools for patterns:
 - [API Reference](../api/) — Tool API documentation
 - [Architecture](../architecture/) — Technical design
 - [Quick Start](../../QUICKSTART.md) — Server setup and running
-
