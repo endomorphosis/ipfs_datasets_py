@@ -742,7 +742,7 @@ pip install ipfs-datasets-py[file_conversion]
 pip install ipfs-datasets-py[file_conversion_full]
 ```
 
-See [File Conversion Guide](docs/FILE_CONVERSION_INTEGRATION.md) for details.
+See [File Conversion Guide](../../../ipfs_datasets_py/processors/file_converter/README.md) for details.
 ```
 
 ---
@@ -822,7 +822,7 @@ pytest tests/test_file_converter.py -v
 - [File Conversion Pros & Cons](file_conversion_pros_cons.md)
 - [Systems Analysis](file_conversion_systems_analysis.md)
 - [Merge Feasibility](file_conversion_merge_feasibility.md)
-- [Multimedia README](../ipfs_datasets_py/multimedia/README.md)
+- [Multimedia README](../../../ipfs_datasets_py/processors/multimedia/README.md)
 
 ---
 
