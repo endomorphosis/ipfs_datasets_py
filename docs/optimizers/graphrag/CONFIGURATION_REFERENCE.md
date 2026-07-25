@@ -756,6 +756,6 @@ config = ExtractionConfig.from_dict(config_dict)
 ## See Also
 
 - [QUICKSTART.md](./QUICKSTART.md) — Get started in 5 minutes
-- [EXTRACTION_CONFIG_GUIDE.md](./EXTRACTION_CONFIG_GUIDE.md) — Original guide (legacy)
-- [OntologyGenerator API Reference](./API_REFERENCE_GRAPHRAG.md) — Full class documentation
-- [README.md](./README.md) — Architecture overview
+- [EXTRACTION_CONFIG_GUIDE.md](../../EXTRACTION_CONFIG_GUIDE.md) — Original guide (legacy)
+- [Optimizer API Reference](../../api/OPTIMIZERS_API_REFERENCE.md) — Full optimizer API documentation
+- [GraphRAG optimizer README](../../../ipfs_datasets_py/optimizers/graphrag/README.md) — Architecture overview
