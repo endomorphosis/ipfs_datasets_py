@@ -756,7 +756,7 @@ real conflict edges.
 
 ## IRF-060 Add compatibility facades, package exports, and registry wiring
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: platform
