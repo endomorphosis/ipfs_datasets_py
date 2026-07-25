@@ -804,7 +804,7 @@ real conflict edges.
 
 ## IRF-062 Publish migration, operations, benchmark, and rollout gates
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P2
 - Track: ops
