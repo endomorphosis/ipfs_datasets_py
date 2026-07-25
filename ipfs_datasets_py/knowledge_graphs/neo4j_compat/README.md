@@ -500,8 +500,8 @@ pytest tests/knowledge_graphs/test_neo4j_compat/test_transactions.py -v
 - **[Driver Module](../core/README.md)** - Core graph engine
 - **[Cypher Module](../cypher/README.md)** - Query language
 - **[Transaction Module](../transactions/README.md)** - ACID transactions
-- **[MIGRATION_GUIDE.md](../../../../docs/knowledge_graphs/MIGRATION_GUIDE.md)** - Neo4j migration guide
-- **[API_REFERENCE.md](../../../../docs/knowledge_graphs/API_REFERENCE.md)** - Full API docs
+- **[MIGRATION_GUIDE.md](../../../docs/knowledge_graphs/MIGRATION_GUIDE.md)** - Neo4j migration guide
+- **[API_REFERENCE.md](../../../docs/knowledge_graphs/API_REFERENCE.md)** - Full API docs
 
 ---
 
