@@ -684,7 +684,7 @@ real conflict edges.
 
 ## IRF-051 Extract the generic formalization advisor core
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: runtime
