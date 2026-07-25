@@ -498,7 +498,7 @@ Removal Date: v2.0.0 (August 2026)
 
 ### For Implementers
 
-1. **Read the full plan:** [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md](PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)
+1. **Read the full plan:** [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)
 2. **Review quick reference:** [PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md](PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md)
 3. **Start with Phase 8** (Week 1)
 4. **Report progress weekly**
@@ -521,7 +521,7 @@ Removal Date: v2.0.0 (August 2026)
 
 ## 📚 Related Documentation
 
-- **[Full Plan](PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)** - Complete 45KB plan
+- **[Full Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)** - Complete 45KB plan
 - **[Quick Reference](PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md)** - Quick lookup guide
 - **[Engines Guide](PROCESSORS_ENGINES_GUIDE.md)** - How to use engines/
 - **[Migration Guide](PROCESSORS_MIGRATION_GUIDE.md)** - Migration help
