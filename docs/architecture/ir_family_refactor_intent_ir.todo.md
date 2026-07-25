@@ -780,7 +780,7 @@ real conflict edges.
 
 ## IRF-061 Add cross-domain conformance and offline Intent end-to-end tests
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: quality
