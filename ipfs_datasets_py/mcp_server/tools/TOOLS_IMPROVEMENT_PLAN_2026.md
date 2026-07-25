@@ -345,7 +345,7 @@ Each README includes:
 
 ### C2: Cross-Cutting Guides
 
-See [`../../docs/development/README.md`](../../docs/development/README.md) for:
+See [`../docs/development/README.md`](../docs/development/README.md) for:
 - Tool development guide (thin wrapper pattern)
 - Testing guide for tools
 - Debugging guide
@@ -616,4 +616,4 @@ category purpose, listing core functions, and noting key dependencies.
 ---
 
 **Last Updated:** 2026-02-20 (Phase E+F session 6: 9 more tool files thinned to ≤31 lines each; 9 new engine modules in web_archiving/, processors/discord/, processors/legal_scrapers/, processors/development/)
-**Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)
+**Related:** [MASTER_REFACTORING_PLAN_2026_v4.md](../../../docs/archive/reorganization/MASTER_REFACTORING_PLAN_2026_v4.md) · [MASTER_IMPROVEMENT_PLAN_2026_v5.md](../../../docs/archive/reorganization/MASTER_IMPROVEMENT_PLAN_2026_v5.md)
