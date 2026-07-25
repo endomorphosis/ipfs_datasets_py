@@ -42,7 +42,7 @@ A comprehensive, self-renewing work system supporting **unlimited improvement cy
 ### ✅ Phase 3: Demonstration — Batch 230 Started
 
 **Created comprehensive documentation:**
-- File: [EXTRACTION_CONFIG_GUIDE.md](../docs/EXTRACTION_CONFIG_GUIDE.md) (450+ lines)
+- File: [EXTRACTION_CONFIG_GUIDE.md](../EXTRACTION_CONFIG_GUIDE.md) (450+ lines)
 - Covers: ALL ExtractionConfig fields with types, defaults, ranges, examples
 - Includes: 3 domain-specific presets (legal, medical, financial)
 - Examples: 3 runnable code blocks + troubleshooting table
@@ -141,12 +141,12 @@ Pick one randomly from different tracks:
 
 | Batch | Track | Focus | Effort |
 |-------|-------|-------|--------|
-| [230](../TODO.md#batch-230) | [docs] | Configuration Guide, Quick-Start, Architecture | 2-4h |
-| [231](../TODO.md#batch-231) | [arch] | Base Class Unification, OptimizerConfig, Protocol | 2-3h |
-| [232](../TODO.md#batch-232) | [tests] | Property-based testing with Hypothesis | 3-4h |
-| [233](../TODO.md#batch-233) | [obs] | Structured logging, Prometheus metrics | 3-4h |
-| [234](../TODO.md#batch-234) | [perf] | Profile + optimize extract pipeline | 3-4h |
-| [235](../TODO.md#batch-235) | [arch] | Cross-track exception hierarchy | 2-3h |
+| [230](TODO.md#batch-230) | [docs] | Configuration Guide, Quick-Start, Architecture | 2-4h |
+| [231](TODO.md#batch-231) | [arch] | Base Class Unification, OptimizerConfig, Protocol | 2-3h |
+| [232](TODO.md#batch-232) | [tests] | Property-based testing with Hypothesis | 3-4h |
+| [233](TODO.md#batch-233) | [obs] | Structured logging, Prometheus metrics | 3-4h |
+| [234](TODO.md#batch-234) | [perf] | Profile + optimize extract pipeline | 3-4h |
+| [235](TODO.md#batch-235) | [arch] | Cross-track exception hierarchy | 2-3h |
 
 **For your next session:**
 1. Roll a d6 (or use `python -c "import random; print(random.randint(230, 235))"`)
