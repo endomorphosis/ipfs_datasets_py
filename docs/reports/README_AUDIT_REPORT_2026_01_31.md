@@ -292,8 +292,8 @@ docs/
 ## 🔗 Related Documentation
 
 - [README.md](../README.md) - Updated root README
-- [FEATURES.md](../docs/FEATURES.md) - New comprehensive feature list
-- [BEST_PRACTICES.md](../docs/guides/BEST_PRACTICES.md) - New best practices guide
+- [FEATURES.md](../FEATURES.md) - New comprehensive feature list
+- [BEST_PRACTICES.md](../guides/BEST_PRACTICES.md) - New best practices guide
 - [Documentation Quality Assessment](DOCUMENTATION_100_QUALITY_ACHIEVED_2026_01_31.md) - Overall docs quality
 
 ---
