@@ -59,5 +59,5 @@ IPFS Datasets Python follows a modular architecture:
 ## Related Documentation
 
 - [Developer Guide](../developer_guide.md) - Development information
-- [Implementation Notes](../implementation_notes/) - Technical details
-- [Implementation Plans](../implementation_plans/) - Future work
+- [Implementation Notes](../implementation/) - Technical details
+- [Implementation Plans](../implementation/plans/) - Future work
