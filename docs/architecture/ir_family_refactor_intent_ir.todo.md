@@ -444,7 +444,7 @@ real conflict edges.
 
 ## IRF-034 Build the corpus-evidence GraphRAG ontology and projector
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: graphrag
