@@ -839,7 +839,7 @@ real conflict edges.
 
 ## IRF-064 Resolve validation retry-budget failure for IRF-025
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
