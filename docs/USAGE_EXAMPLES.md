@@ -643,4 +643,4 @@ if original_query_key != optimized_query_key:
 5. **Set appropriate timeouts** to prevent hanging operations
 6. **Use property-based testing** to validate optimizer behavior
 
-For more information, see the [API documentation](README.md) and [architecture guide](docs/ARCHITECTURE.md).
+For more information, see the [optimizer API documentation](api/OPTIMIZERS_API_REFERENCE.md) and [optimizer architecture guide](optimizers/ARCHITECTURE_UNIFIED.md).
