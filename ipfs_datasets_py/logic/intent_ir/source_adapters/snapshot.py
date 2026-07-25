@@ -198,10 +198,15 @@ class SkillCenterSnapshot:
             raise SkillCenterSnapshotValidationError(
                 "cache_path must not use a reserved cache metadata directory"
             )
-        content_cid = self.content_cid or cid_v1_from_digest(
+        expected_content_cid = cid_v1_from_digest(
             bytes.fromhex(self.expected_sha256)
         )
+        content_cid = self.content_cid or expected_content_cid
         _require_text(content_cid, label="content_cid")
+        if content_cid != expected_content_cid:
+            raise SkillCenterSnapshotValidationError(
+                "content_cid must be the fixed-profile CID for expected_sha256"
+            )
 
         object.__setattr__(self, "dataset_id", dataset_id)
         object.__setattr__(self, "dataset_revision", revision)
@@ -285,6 +290,11 @@ class SkillCenterSnapshot:
             raise SkillCenterSnapshotValidationError(
                 f"snapshot manifest contains unknown field(s): {', '.join(unknown)}"
             )
+        for field in allowed - {"expected_size_bytes"}:
+            if field in value and not isinstance(value[field], str):
+                raise SkillCenterSnapshotValidationError(
+                    f"{field} must be a string"
+                )
         try:
             expected_size = value["expected_size_bytes"]
         except KeyError as exc:

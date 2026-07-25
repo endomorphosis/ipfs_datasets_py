@@ -56,6 +56,39 @@ def test_snapshot_is_immutable_deterministic_and_records_pilot_revision() -> Non
         first.repository_file = "other.sqlite"  # type: ignore[misc]
 
 
+def test_snapshot_rejects_cid_that_does_not_match_declared_hash() -> None:
+    other_digest = hashlib.sha256(b"other bundle").hexdigest()
+    other_cid = _snapshot(expected_sha256=other_digest).content_cid
+
+    with pytest.raises(
+        SkillCenterSnapshotValidationError, match="CID for expected_sha256"
+    ):
+        _snapshot(content_cid=other_cid)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "cache_path",
+        "content_cid",
+        "dataset_id",
+        "dataset_revision",
+        "download_producer",
+        "expected_sha256",
+        "repository_file",
+        "schema_version",
+    ),
+)
+def test_snapshot_decoder_rejects_non_string_text_fields(field: str) -> None:
+    manifest = _snapshot().to_dict()
+    manifest[field] = 123
+
+    with pytest.raises(
+        SkillCenterSnapshotValidationError, match=rf"{field} must be a string"
+    ):
+        SkillCenterSnapshot.from_dict(manifest)
+
+
 @pytest.mark.parametrize(
     "revision",
     ("main", "MAIN", "latest", "refs/heads/pilot"),
@@ -156,6 +189,7 @@ def test_stale_alias_is_rejected_instead_of_retargeted(tmp_path: Path) -> None:
         snapshot,
         expected_sha256=hashlib.sha256(b"different").hexdigest(),
         expected_size_bytes=len(b"different"),
+        content_cid="",
         cache_path="objects/other",
     )
 
