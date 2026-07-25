@@ -522,8 +522,8 @@ pytest tests/knowledge_graphs/test_indexing/test_performance.py -v --benchmark
 - **[Query Module](../query/README.md)** - Query execution with indexes
 - **[Storage Module](../storage/README.md)** - IPLD storage backend
 - **[Core Module](../core/README.md)** - Graph engine
-- **[ARCHITECTURE.md](../../../../docs/knowledge_graphs/ARCHITECTURE.md)** - System architecture
-- **[PERFORMANCE_TUNING.md](../../../../docs/knowledge_graphs/PERFORMANCE_TUNING.md)** - Tuning guide
+- **[ARCHITECTURE.md](../../../docs/knowledge_graphs/ARCHITECTURE.md)** - System architecture
+- **[Performance Tuning](../../../docs/knowledge_graphs/USER_GUIDE.md#performance-tuning)** - Tuning guide
 
 ---
 
