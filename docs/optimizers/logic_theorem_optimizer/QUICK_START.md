@@ -327,9 +327,9 @@ optimizer = LogicTheoremOptimizer(config=config, llm_backend=None)
 
 ## Next Steps
 
-- **API Reference:** See [README.md](README.md) for full API docs
-- **Theorem Database:** See [examples/](../examples/) for more complex theorems
-- **Prover Details:** See [prover_integration_adapter.py](prover_integration_adapter.py)
+- **API Reference:** See the package [README.md](../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/README.md) for full API docs
+- **Theorem Database:** See the repository [examples/](../../../examples/) for more complex theorems
+- **Prover Details:** See [prover_integration.py](../../../ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover_integration.py)
 
 ---
 
