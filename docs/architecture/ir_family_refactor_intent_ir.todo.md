@@ -420,7 +420,7 @@ real conflict edges.
 
 ## IRF-033 Normalize SkillCenter records into grounded Intent IR
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: data
