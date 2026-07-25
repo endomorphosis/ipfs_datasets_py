@@ -3,9 +3,9 @@
 **Date:** 2026-02-15  
 **Current Status:** Phase 1 COMPLETE (210/210 tests passing)  
 **Related Documents:**
-- [Current Status](./KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)
-- [Refactoring Plan](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)
-- [Implementation Summary](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
+- [Current Status](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)
+- [Refactoring Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)
+- [Implementation Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
 
 ---
 
@@ -494,10 +494,10 @@ Comprehensive documentation for user adoption.
 
 ## 📚 Related Documents
 
-1. **[KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](./KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)** - Current completion status
-2. **[KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)** - Complete 16-week plan with all tasks
-3. **[KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)** - Executive summary
-4. **[KNOWLEDGE_GRAPHS_PHASE_1_COMPLETE.md](./KNOWLEDGE_GRAPHS_PHASE_1_COMPLETE.md)** - Phase 1 completion report
+1. **[KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)** - Current completion status
+2. **[KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)** - Complete 16-week plan with all tasks
+3. **[KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)** - Executive summary
+4. **[KNOWLEDGE_GRAPHS_PHASE_1_COMPLETE.md](../../archive/knowledge_graphs/phase_reports/KNOWLEDGE_GRAPHS_PHASE_1_COMPLETE.md)** - Phase 1 completion report
 
 ---
 
