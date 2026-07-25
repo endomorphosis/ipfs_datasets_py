@@ -252,7 +252,7 @@ for record in result:
 | `DELETE` | ✅ Implemented | `DELETE n`, `DETACH DELETE n` |
 | `REMOVE` | ✅ Implemented | `REMOVE n.prop`, `REMOVE n:Label` |
 
-**See [DEFERRED_FEATURES.md](../DEFERRED_FEATURES.md) for implementation history.**
+**See [DEFERRED_FEATURES.md](../../../docs/knowledge_graphs/DEFERRED_FEATURES.md) for implementation history.**
 
 ---
 
@@ -361,9 +361,9 @@ pytest tests/unit/knowledge_graphs/test_cypher*.py -v
 
 ## See Also
 
-- [API_REFERENCE.md](/docs/knowledge_graphs/API_REFERENCE.md#cypher-language-reference) - Complete Cypher API
-- [USER_GUIDE.md](/docs/knowledge_graphs/USER_GUIDE.md#query-patterns) - Query patterns and examples
-- [MIGRATION_GUIDE.md](/docs/knowledge_graphs/MIGRATION_GUIDE.md#cypher-language-support) - Known limitations and workarounds
+- [API_REFERENCE.md](../../../docs/knowledge_graphs/API_REFERENCE.md#cypher-language-reference) - Complete Cypher API
+- [USER_GUIDE.md](../../../docs/knowledge_graphs/USER_GUIDE.md#query-patterns) - Query patterns and examples
+- [MIGRATION_GUIDE.md](../../../docs/knowledge_graphs/MIGRATION_GUIDE.md#cypher-language-support) - Known limitations and workarounds
 
 ---
 
