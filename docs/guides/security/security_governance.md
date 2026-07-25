@@ -1781,7 +1781,7 @@ security_manager.configure({
 
 ## Additional Resources
 
-- [Audit Logging Documentation](../ipfs_datasets_py/audit/README.md): Complete documentation for the audit logging system
-- [Data Provenance Guide](../ipfs_datasets_py/provenance_reporting.md): Detailed guide on data provenance tracking and reporting
-- [Security Governance Example](../examples/security_governance_example.py): Working example of security and governance features
-- [Security Provenance Example](../examples/security_provenance_example.py): Complete example of security and provenance integration
+- [Audit Logging Documentation](../../implementation/audit/README.md): Complete documentation for the audit logging system
+- [Data Provenance Guide](../provenance_reporting.md): Detailed guide on data provenance tracking and reporting
+- [Security Governance Example](../../../examples/archived/security_governance_example.py): Working example of security and governance features
+- [Security Provenance Example](../../../examples/archived/security_provenance_example.py): Complete example of security and provenance integration
