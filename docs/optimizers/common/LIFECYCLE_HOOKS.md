@@ -510,9 +510,9 @@ Planned additions (see TODO.md):
 
 ## Related Documentation
 
-- [How To Add a New Optimizer](../docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md)
-- [BaseOptimizer API Reference](./base_optimizer.py)
-- [OptimizerConfig Reference](./base_optimizer.py)
+- [How To Add a New Optimizer](../HOW_TO_ADD_NEW_OPTIMIZER.md)
+- [BaseOptimizer API Reference](../../../ipfs_datasets_py/optimizers/common/base_optimizer.py)
+- [OptimizerConfig Reference](../../../ipfs_datasets_py/optimizers/common/base_optimizer.py)
 
 ---
 
