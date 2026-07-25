@@ -348,7 +348,7 @@ real conflict edges.
 
 ## IRF-030 Harden Intent IR v1 schema and versioned decoding
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
