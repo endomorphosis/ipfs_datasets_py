@@ -2,13 +2,13 @@
 
 **Created:** 2026-02-15  
 **Purpose:** Practical checklist for implementing the refactoring plan  
-**Reference:** [Comprehensive Plan](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)
+**Reference:** [Comprehensive Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)
 
 ---
 
 ## Quick Links
 
-- 📘 [Comprehensive Plan (36KB)](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Full details
+- 📘 [Comprehensive Plan (36KB)](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Full details
 - 📗 [Quick Reference (9KB)](./PROCESSORS_REFACTORING_QUICK_REFERENCE.md) - TL;DR summary
 - 📊 [Visual Summary (16KB)](./PROCESSORS_REFACTORING_VISUAL_SUMMARY.md) - Diagrams & charts
 
