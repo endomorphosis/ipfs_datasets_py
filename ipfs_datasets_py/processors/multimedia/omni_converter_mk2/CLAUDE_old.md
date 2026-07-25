@@ -3,8 +3,8 @@
 ### Documentation
 - [SAD.md](SAD.md) - Architecture Implementation Details, including flowchart and class diagrams.
 - [PRD.md](PRD.md) - Product Requirements Document, including Minimum Viable Product specification.
-- [PHASE16_README.md](PHASE16_README.md) - Details on the current status and future of the project.
-- [TOOLS.md](claudes_toolbox/TOOLS.md) - CLI tools to help you when writing code.
+- [CURRENT_STATE_ANALYSIS.md](CURRENT_STATE_ANALYSIS.md) - Details on the current status and future of the project.
+- [README.md](README.md) - Usage and command-line interface documentation.
 - [TESTING.md](TESTING.md) - Guidelines and metrics for creating and running tests.
 - [CHANGELOG](CHANGELOG.md) - Record of changes made to the program and to tests.
 
