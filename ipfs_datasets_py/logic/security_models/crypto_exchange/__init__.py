@@ -1,4 +1,15 @@
-"""Crypto exchange security verification framework."""
+"""Crypto exchange security verification framework.
+
+This is the frozen Security IR v1 compatibility namespace.  New declarations
+and adapters live in :mod:`ipfs_datasets_py.logic.security_ir`; the legacy
+exports below retain their original objects and behavior.
+"""
+
+from __future__ import annotations
+
+import importlib
+import warnings
+from typing import Any, Final
 
 from .assumption_registry import evaluate_assumption_registry
 from .claims import default_claims
@@ -35,3 +46,53 @@ __all__ = [
     'release_policy_entries',
     'validate_ir',
 ]
+
+
+# Explicit migration metadata is intentionally outside the frozen ``__all__``.
+# Importing this module is kept quiet because the canonical legacy adapter must
+# inspect the old schema without producing a warning itself.
+__deprecated__ = True
+__deprecated_since__ = "IRFamilyExports@1"
+__replacement__ = "ipfs_datasets_py.logic.security_ir"
+
+_DEPRECATION_MESSAGE: Final = (
+    "ipfs_datasets_py.logic.security_models.crypto_exchange is a legacy "
+    "compatibility path; use ipfs_datasets_py.logic.security_ir for new "
+    "declarations and adapters."
+)
+
+_DEPRECATED_V1_EXPORTS: Final[dict[str, tuple[str, str]]] = {
+    "LegacyAdapterResult": ("ipfs_datasets_py.logic.security_ir", "LegacyAdapterResult"),
+    "LegacyVerificationData": (
+        "ipfs_datasets_py.logic.security_ir",
+        "LegacyVerificationData",
+    ),
+    "SecurityIR": ("ipfs_datasets_py.logic.security_ir", "SecurityIR"),
+    "SecurityIRLegacyAdapter": (
+        "ipfs_datasets_py.logic.security_ir",
+        "SecurityIRLegacyAdapter",
+    ),
+    "adapt_legacy_security_ir": (
+        "ipfs_datasets_py.logic.security_ir",
+        "adapt_legacy_security_ir",
+    ),
+    "to_legacy_security_ir": (
+        "ipfs_datasets_py.logic.security_ir",
+        "to_legacy_security_ir",
+    ),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Resolve transitional v1 APIs without expanding the frozen root API."""
+
+    target = _DEPRECATED_V1_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
+    module_name, attribute_name = target
+    return getattr(importlib.import_module(module_name), attribute_name)
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_DEPRECATED_V1_EXPORTS))
