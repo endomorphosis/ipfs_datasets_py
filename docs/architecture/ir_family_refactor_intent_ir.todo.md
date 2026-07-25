@@ -588,7 +588,7 @@ real conflict edges.
 
 ## IRF-042 Add Intent proof obligations and semantic decompilation
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: quality
