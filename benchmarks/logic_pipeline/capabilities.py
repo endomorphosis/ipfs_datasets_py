@@ -27,6 +27,7 @@ import platform
 import re
 import signal
 import shutil
+import stat
 import subprocess
 import threading
 import time
@@ -1891,6 +1892,92 @@ def _paths_overlap(left: Path, right: Path) -> bool:
     )
 
 
+def _logical_absolute_path(path: Path, field: str) -> Path:
+    """Return an absolute lexical path without following filesystem links."""
+
+    candidate = Path(path)
+    if ".." in candidate.parts:
+        raise CapabilityContractError(f"{field} may not contain '..'")
+    return Path(os.path.abspath(os.fspath(candidate)))
+
+
+def _reject_symlink_components(path: Path, field: str) -> Path:
+    """Reject a link in any existing component of one logical path."""
+
+    logical = _logical_absolute_path(path, field)
+    parts = logical.parts
+    current = Path(parts[0])
+    for index, component in enumerate(parts[1:], start=1):
+        current /= component
+        try:
+            metadata = os.lstat(current)
+        except FileNotFoundError:
+            # No deeper component can exist until this parent is created.
+            break
+        except OSError as exc:
+            raise CapabilityContractError(
+                f"cannot inspect {field} path component: {current}"
+            ) from exc
+        if stat.S_ISLNK(metadata.st_mode):
+            raise CapabilityContractError(
+                f"{field} may not traverse a symlink: {current}"
+            )
+        if index < len(parts) - 1 and not stat.S_ISDIR(metadata.st_mode):
+            raise CapabilityContractError(
+                f"{field} ancestor is not a directory: {current}"
+            )
+    return logical
+
+
+def _mkdir_without_following_symlinks(path: Path, *, mode: int = 0o700) -> Path:
+    """Create a directory tree with no-follow checks at every component."""
+
+    logical = _reject_symlink_components(path, "benchmark directory")
+    directory_flag = getattr(os, "O_DIRECTORY", 0)
+    nofollow_flag = getattr(os, "O_NOFOLLOW", 0)
+    cloexec_flag = getattr(os, "O_CLOEXEC", 0)
+    if (
+        os.name != "posix"
+        or not directory_flag
+        or not nofollow_flag
+        or not os.supports_dir_fd
+    ):
+        logical.mkdir(mode=mode, parents=True, exist_ok=True)
+        _reject_symlink_components(logical, "benchmark directory")
+        return logical
+
+    flags = os.O_RDONLY | directory_flag | cloexec_flag
+    parent_fd = os.open(logical.anchor, flags)
+    try:
+        for component in logical.parts[1:]:
+            try:
+                os.mkdir(component, mode=mode, dir_fd=parent_fd)
+            except FileExistsError:
+                pass
+            try:
+                child_fd = os.open(
+                    component,
+                    flags | nofollow_flag,
+                    dir_fd=parent_fd,
+                )
+            except OSError as exc:
+                raise CapabilityContractError(
+                    "benchmark directory path contains a symlink or "
+                    f"non-directory component: {logical}"
+                ) from exc
+            metadata = os.fstat(child_fd)
+            if not stat.S_ISDIR(metadata.st_mode):
+                os.close(child_fd)
+                raise CapabilityContractError(
+                    f"benchmark directory component is not a directory: {logical}"
+                )
+            os.close(parent_fd)
+            parent_fd = child_fd
+    finally:
+        os.close(parent_fd)
+    return logical
+
+
 def _submodule_gitlinks(
     repository: Path,
     commit: str,
@@ -1934,6 +2021,7 @@ def _source_snapshot(repository: Path) -> tuple[str, str | None, str]:
         "--porcelain=v1",
         "-z",
         "--untracked-files=all",
+        "--ignore-submodules=none",
     )
     status_sha256 = hashlib.sha256(status.encode("utf-8")).hexdigest()
     return head, branch, status_sha256
@@ -2120,6 +2208,16 @@ def _validate_isolation_paths(
     source_git_common_dir: Path,
     run_paths: RunPaths,
 ) -> tuple[Path, Path]:
+    _reject_symlink_components(
+        run_paths.benchmark_root,
+        "benchmark_root",
+    )
+    for directory in run_paths.directories():
+        _reject_symlink_components(directory, "fresh run directory")
+    _reject_symlink_components(
+        run_paths.worktrees / "source",
+        "isolated worktree target",
+    )
     state_root = run_paths.run_root.resolve(strict=False)
     worktree_root = (run_paths.worktrees / "source").resolve(strict=False)
     if _paths_overlap(source_checkout, state_root) or _paths_overlap(
@@ -2207,7 +2305,8 @@ def prepare_isolated_worktree(
         run_paths,
     )
 
-    run_paths.materialize()
+    for directory in run_paths.directories():
+        _mkdir_without_following_symlinks(directory)
     _git(
         source,
         "worktree",

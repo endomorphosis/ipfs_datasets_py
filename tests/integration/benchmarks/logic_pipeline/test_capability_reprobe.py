@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -11,6 +12,12 @@ import pytest
 
 from benchmarks.logic_pipeline import capabilities, runtime
 from benchmarks.logic_pipeline import capability_reprobe as reprobe
+from benchmarks.logic_pipeline.reassessment_namespace import (
+    ReassessmentRunLayout,
+)
+from benchmarks.logic_pipeline.source_reconciliation import (
+    SourceReconciliationError,
+)
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -24,6 +31,7 @@ EXPECTED_SAFETY = {
     "production_routing_changed": False,
     "secrets_serialized": False,
 }
+FRESH_TEST_RUN_ID = "post-repair-capability-freeze-test"
 
 
 def _canonical_json(value: object) -> str:
@@ -57,6 +65,89 @@ def _seal_live_receipt(value: dict[str, object]) -> None:
     value["receipt_sha256"] = hashlib.sha256(
         _canonical_json(value).encode("utf-8")
     ).hexdigest()
+
+
+def _fresh_test_reprobe(
+    published: reprobe.LiveCapabilityReprobe,
+) -> reprobe.LiveCapabilityReprobe:
+    receipts: dict[str, dict[str, object]] = {}
+    for component, frozen_receipt in published.receipts.items():
+        receipt = json.loads(_canonical_json(dict(frozen_receipt)))
+        receipt["run_id"] = FRESH_TEST_RUN_ID
+        _seal_live_receipt(receipt)
+        receipts[component] = receipt
+    records = []
+    for record in published.inventory.capabilities:
+        identity = dict(record.identity)
+        component = str(identity["live_receipt_component"])
+        identity["live_receipt_sha256"] = receipts[component]["receipt_sha256"]
+        records.append(
+            capabilities.CapabilityRecord(
+                kind=record.kind,
+                status=record.status,
+                identity=identity,
+                provenance=record.provenance,
+                reason=record.reason,
+            )
+        )
+    environment = dict(published.inventory.environment)
+    environment["run_id"] = FRESH_TEST_RUN_ID
+    inventory = capabilities.CapabilityInventory.create(
+        FRESH_TEST_RUN_ID,
+        records,
+        environment=environment,
+        source_commit=published.inventory.source_commit,
+    )
+    return reprobe.LiveCapabilityReprobe(
+        inventory,
+        receipts,
+        published.source_binding,
+    )
+
+
+def _stub_source_binding(
+    monkeypatch: pytest.MonkeyPatch,
+    source_binding: object,
+) -> None:
+    expected = dict(source_binding)  # type: ignore[arg-type]
+
+    def load_binding(
+        _repository: Path,
+        _baseline_path: Path,
+        *,
+        expected_run_id: str,
+        benchmark_root: str | Path,
+    ) -> dict[str, object]:
+        assert expected_run_id == FRESH_TEST_RUN_ID
+        assert benchmark_root
+        return dict(expected)
+
+    monkeypatch.setattr(reprobe, "_source_binding", load_binding)
+
+
+def _freeze_external_test_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[Path, Path, ReassessmentRunLayout]:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    published = reprobe.validate_frozen_capability_reprobe(
+        repository_root=ROOT,
+        receipt_directory=RECEIPTS,
+    )
+    frozen = _fresh_test_reprobe(published)
+    _stub_source_binding(monkeypatch, frozen.source_binding)
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    reprobe.freeze_live_capability_reprobe(
+        frozen,
+        repository_root=repository,
+        benchmark_root=benchmark_root,
+    )
+    return repository, benchmark_root, layout
 
 
 def test_checked_freeze_is_strict_complete_and_source_bound() -> None:
@@ -232,31 +323,251 @@ def test_live_reprobe_rejects_identity_mismatch_and_secret_bearing_receipt() -> 
         )
 
 
-def test_freeze_is_exclusive_and_refuses_a_second_write(tmp_path: Path) -> None:
-    frozen = reprobe.validate_frozen_capability_reprobe(
+def test_freeze_is_exclusive_and_refuses_a_second_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    published = reprobe.validate_frozen_capability_reprobe(
         repository_root=ROOT,
         receipt_directory=RECEIPTS,
     )
-    receipt_directory = Path("new-receipts")
-    snapshot = Path("snapshot.json")
-
+    with pytest.raises(
+        reprobe.CapabilityFreezeError,
+        match="published immutable evidence",
+    ):
+        reprobe.freeze_live_capability_reprobe(
+            published,
+            repository_root=tmp_path,
+            receipt_directory="published-copy",
+            snapshot_path="published-snapshot.json",
+        )
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    frozen = _fresh_test_reprobe(published)
+    _stub_source_binding(monkeypatch, frozen.source_binding)
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
     result = reprobe.freeze_live_capability_reprobe(
         frozen,
-        repository_root=tmp_path,
-        receipt_directory=receipt_directory,
-        snapshot_path=snapshot,
+        repository_root=repository,
+        benchmark_root=benchmark_root,
     )
     assert result["status"] == "eligible"
-    assert (tmp_path / snapshot).is_file()
+    assert layout.capability_snapshot.is_file()
+    snapshot = _load(layout.capability_snapshot)
+    captured = date.fromisoformat(str(snapshot["captured_on"]))
+    assert captured <= datetime.now(timezone.utc).date()
+    assert snapshot["results"]["inventory"]["path"] == (
+        "receipts/capability-inventory.json"
+    )
+    assert snapshot["results"]["freeze"]["path"] == (
+        "receipts/capability-freeze.json"
+    )
+    validated = reprobe.validate_capability_snapshot(
+        repository_root=repository,
+        expected_run_id=FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    assert dict(validated) == snapshot
     with pytest.raises(
         reprobe.CapabilityFreezeError,
         match="refusing to replace frozen evidence",
     ):
         reprobe.freeze_live_capability_reprobe(
             frozen,
-            repository_root=tmp_path,
-            receipt_directory=receipt_directory,
-            snapshot_path=snapshot,
+            repository_root=repository,
+            benchmark_root=benchmark_root,
+        )
+
+
+def test_freeze_revalidates_source_binding_before_any_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    published = reprobe.validate_frozen_capability_reprobe(
+        repository_root=ROOT,
+        receipt_directory=RECEIPTS,
+    )
+    frozen = _fresh_test_reprobe(published)
+    authoritative = dict(frozen.source_binding)
+    forged = {
+        **authoritative,
+        "baseline_manifest_sha256": "0" * 64,
+    }
+    supplied = reprobe.LiveCapabilityReprobe(
+        frozen.inventory,
+        frozen.receipts,
+        forged,
+    )
+    repository = (tmp_path / "repository").resolve()
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    observed: dict[str, object] = {}
+
+    def load_binding(
+        actual_repository: Path,
+        baseline_path: Path,
+        *,
+        expected_run_id: str,
+        benchmark_root: str | Path,
+    ) -> dict[str, object]:
+        observed.update(
+            {
+                "repository": actual_repository,
+                "baseline_path": baseline_path,
+                "run_id": expected_run_id,
+                "benchmark_root": benchmark_root,
+            }
+        )
+        return dict(authoritative)
+
+    monkeypatch.setattr(reprobe, "_source_binding", load_binding)
+    with pytest.raises(
+        reprobe.CapabilityFreezeError,
+        match="source binding changed before freeze",
+    ):
+        reprobe.freeze_live_capability_reprobe(
+            supplied,
+            repository_root=repository,
+            benchmark_root=benchmark_root,
+            baseline_manifest=layout.baseline_manifest,
+        )
+
+    assert observed == {
+        "repository": repository,
+        "baseline_path": layout.baseline_manifest,
+        "run_id": FRESH_TEST_RUN_ID,
+        "benchmark_root": benchmark_root,
+    }
+    assert not layout.run_paths.run_root.exists()
+    assert not layout.receipt_directory.exists()
+    assert not layout.capability_snapshot.exists()
+
+
+@pytest.mark.parametrize(
+    "escaped_reference",
+    ("../outside-inventory.json", "/tmp/outside-inventory.json"),
+)
+def test_external_snapshot_rejects_escape_references(
+    tmp_path: Path,
+    escaped_reference: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository, benchmark_root, layout = _freeze_external_test_snapshot(
+        tmp_path,
+        monkeypatch,
+    )
+    snapshot = _load(layout.capability_snapshot)
+    snapshot["results"]["inventory"]["path"] = escaped_reference
+    layout.capability_snapshot.write_text(
+        json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        reprobe.CapabilityFreezeError,
+        match="path binding|relative POSIX",
+    ):
+        reprobe.validate_capability_snapshot(
+            repository_root=repository,
+            expected_run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+        )
+
+
+@pytest.mark.parametrize(
+    "captured_on",
+    ("2026/07/25", "not-a-date", "2999-01-01"),
+)
+def test_fresh_snapshot_rejects_invalid_or_future_capture_date(
+    tmp_path: Path,
+    captured_on: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository, benchmark_root, layout = _freeze_external_test_snapshot(
+        tmp_path,
+        monkeypatch,
+    )
+    snapshot = _load(layout.capability_snapshot)
+    snapshot["captured_on"] = captured_on
+    layout.capability_snapshot.write_text(
+        json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(reprobe.CapabilityFreezeError, match="header drifted"):
+        reprobe.validate_capability_snapshot(
+            repository_root=repository,
+            expected_run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+        )
+
+
+def test_external_snapshot_rejects_symlinked_and_tampered_inventory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository, benchmark_root, layout = _freeze_external_test_snapshot(
+        tmp_path,
+        monkeypatch,
+    )
+    inventory = layout.receipt_directory / "capability-inventory.json"
+    outside = tmp_path / "outside-inventory.json"
+    inventory.rename(outside)
+    inventory.symlink_to(outside)
+    with pytest.raises(reprobe.CapabilityFreezeError, match="symlink"):
+        reprobe.validate_capability_snapshot(
+            repository_root=repository,
+            expected_run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+        )
+
+    inventory.unlink()
+    inventory.write_bytes(outside.read_bytes() + b" ")
+    with pytest.raises(reprobe.CapabilityFreezeError, match="byte binding"):
+        reprobe.validate_capability_snapshot(
+            repository_root=repository,
+            expected_run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+        )
+
+
+def test_fresh_freeze_rejects_symlinked_receipt_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    layout.run_paths.run_root.mkdir(parents=True)
+    outside = tmp_path / "outside-receipts"
+    outside.mkdir()
+    aliased = layout.run_paths.run_root / "aliased-receipts"
+    aliased.symlink_to(outside, target_is_directory=True)
+    published = reprobe.validate_frozen_capability_reprobe(
+        repository_root=ROOT,
+        receipt_directory=RECEIPTS,
+    )
+    fresh = _fresh_test_reprobe(published)
+    _stub_source_binding(monkeypatch, fresh.source_binding)
+
+    with pytest.raises(reprobe.CapabilityFreezeError, match="symlink"):
+        reprobe.freeze_live_capability_reprobe(
+            fresh,
+            repository_root=repository,
+            benchmark_root=benchmark_root,
+            receipt_directory=aliased,
         )
 
 
@@ -273,3 +584,92 @@ def test_cli_rejects_duplicate_and_unknown_requirements_before_probing(
 ) -> None:
     with pytest.raises(runtime.RuntimeBindingError, match=message):
         runtime.main(["probe", "--validate-freeze", "--require", requirement])
+
+
+def test_cli_threads_baseline_manifest_into_freeze(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    published = reprobe.validate_frozen_capability_reprobe(
+        repository_root=ROOT,
+        receipt_directory=RECEIPTS,
+    )
+    frozen = _fresh_test_reprobe(published)
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        reprobe,
+        "run_live_capability_reprobe",
+        lambda **_kwargs: frozen,
+    )
+
+    def capture_freeze(
+        _frozen: reprobe.LiveCapabilityReprobe,
+        **kwargs: object,
+    ) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"status": "eligible"}
+
+    monkeypatch.setattr(
+        reprobe,
+        "freeze_live_capability_reprobe",
+        capture_freeze,
+    )
+    baseline = tmp_path / "state" / "baseline-manifest.json"
+    exit_code = runtime.main(
+        [
+            "probe",
+            "--run-id",
+            FRESH_TEST_RUN_ID,
+            "--baseline-manifest",
+            str(baseline),
+            "--freeze",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["baseline_manifest"] == str(baseline)
+    assert json.loads(capsys.readouterr().out)["run_id"] == FRESH_TEST_RUN_ID
+
+
+def test_cli_reports_source_loader_failure_without_writing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def fail_loader(*_args: object, **_kwargs: object) -> object:
+        raise SourceReconciliationError("adversarial source drift")
+
+    monkeypatch.setattr(
+        reprobe,
+        "load_source_baseline_manifest",
+        fail_loader,
+    )
+    repository = (tmp_path / "repository").resolve()
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    exit_code = runtime.main(
+        [
+            "probe",
+            "--run-id",
+            FRESH_TEST_RUN_ID,
+            "--repository-root",
+            str(repository),
+            "--benchmark-root",
+            str(benchmark_root),
+            "--baseline-manifest",
+            str(layout.baseline_manifest),
+            "--freeze",
+        ]
+    )
+
+    failure = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert failure["status"] == "ineligible"
+    assert "source baseline revalidation failed" in failure["reason"]
+    assert not layout.run_paths.run_root.exists()

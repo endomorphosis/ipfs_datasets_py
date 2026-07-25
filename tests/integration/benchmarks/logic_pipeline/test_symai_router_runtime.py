@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 import hashlib
+import importlib
 import json
 from pathlib import Path
 import subprocess
 import sys
+import threading
 from types import SimpleNamespace
+import urllib.request
 
 import pytest
 
@@ -54,6 +58,12 @@ class _SmokeEngine:
                 "backend": "llm_router",
                 "effective_provider_name": self.provider,
                 "effective_model_name": self.model,
+                "resolved_provider_name": "leanstral_local",
+                "resolved_model_name": (
+                    "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+                ),
+                "service_endpoint": "http://127.0.0.1:8080/v1",
+                "routing_backend": "existing_leanstral_service",
             },
         )
 
@@ -351,10 +361,403 @@ def test_bounded_structured_smoke_uses_existing_router_identity_once() -> None:
     assert config.model == lock.model
     assert config.max_retries == 0
     assert config.cache_enabled is False
+    assert config.expected_inner_provider == "leanstral_local"
+    assert config.expected_inner_model == (
+        "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+    )
+    assert config.expected_inner_endpoint == "http://127.0.0.1:8080/v1"
+    assert config.expected_inner_backend == "existing_leanstral_service"
     assert len(engine.arguments) == 1
     argument = engine.arguments[0]
-    assert argument.prop.response_format == {"type": "json_object"}
+    assert argument.prop.response_format == adapters.SYMAI_RESPONSE_FORMAT
     assert provision.SMOKE_TEXT in argument.prop.prepared_input
+
+
+def test_actual_engine_adapter_uses_pinned_service_and_schema(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    lock = provision.load_lock()
+    exact_model = "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+    calls: list[urllib.request.Request] = []
+    timeouts: list[float] = []
+
+    class Response:
+        def __init__(self, value: object) -> None:
+            self.body = json.dumps(value).encode("utf-8")
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return self.body if size < 0 else self.body[:size]
+
+    def urlopen(request: urllib.request.Request, *, timeout: float) -> Response:
+        assert 0 < timeout <= lock.timeout_seconds
+        timeouts.append(timeout)
+        calls.append(request)
+        if request.full_url.endswith("/models"):
+            return Response({"data": [{"id": exact_model}]})
+        if request.full_url.endswith("/chat/completions"):
+            payload = json.loads(bytes(request.data or b"{}"))
+            assert payload["model"] == exact_model
+            assert payload["response_format"] == adapters.SYMAI_RESPONSE_FORMAT
+            assert payload["messages"][0] == {
+                "role": "system",
+                "content": (
+                    "Return exactly one valid JSON object. Do not use Markdown "
+                    "fences or emit any text before or after the object."
+                ),
+            }
+            assert payload["seed"] == 0
+            assert payload["stop"] == [
+                "<|im_end|>",
+                "<|tool_call_end|>",
+                "<|im_start|>",
+            ]
+            return Response(
+                {
+                    "model": exact_model,
+                    "choices": [
+                        {
+                            "finish_reason": "stop",
+                            "message": {"content": _structured_response()},
+                        }
+                    ],
+                }
+            )
+        raise AssertionError(f"unexpected URL: {request.full_url}")
+
+    environment = provision.pinned_environment(lock)
+    with provision.temporary_environment(environment):
+        provision.configure_symai(lock, tmp_path)
+        provision.prepare_symai_import(lock, tmp_path)
+        router = importlib.import_module("ipfs_datasets_py.llm_router")
+        router_deps = importlib.import_module("ipfs_datasets_py.router_deps")
+        router_deps.set_default_router_deps(router_deps.RouterDeps())
+        monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+        monotonic = iter((100.0, 101.0, 129.0))
+        monkeypatch.setattr(router.time, "monotonic", lambda: next(monotonic))
+
+        manager_module = importlib.import_module(
+            "ipfs_datasets_py.ml.accelerate_integration.manager"
+        )
+
+        def forbidden_fallback(*_args: object, **_kwargs: object) -> object:
+            raise AssertionError("pinned SyMAI route must not enter generic fallback")
+
+        monkeypatch.setattr(
+            manager_module.AccelerateManager,
+            "run_inference",
+            forbidden_fallback,
+        )
+        smoke = provision.run_structured_smoke(lock)
+
+    assert smoke["resolved_provider"] == "leanstral_local"
+    assert smoke["resolved_model"] == exact_model
+    assert smoke["routing_backend"] == "existing_leanstral_service"
+    assert [request.full_url for request in calls] == [
+        "http://127.0.0.1:8080/v1/models",
+        "http://127.0.0.1:8080/v1/chat/completions",
+    ]
+    assert timeouts == pytest.approx([29.0, 1.0])
+
+
+def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    manager_module = importlib.import_module(
+        "ipfs_datasets_py.ml.accelerate_integration.manager"
+    )
+    monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "1")
+
+    def forbidden_manager(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("private binding must not enter AccelerateManager")
+
+    monkeypatch.setattr(
+        manager_module.AccelerateManager,
+        "run_inference",
+        forbidden_manager,
+    )
+    provider = router._get_accelerate_provider(router.RouterDeps())
+    assert provider is not None
+
+    exact_model = router._PINNED_SYMAI_LEANSTRAL_MODEL
+    http_calls: list[str] = []
+
+    class Response:
+        def __init__(self, value: object) -> None:
+            self.body = json.dumps(value).encode("utf-8")
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return self.body if size < 0 else self.body[:size]
+
+    def urlopen(request: urllib.request.Request, *, timeout: float) -> Response:
+        assert timeout > 0
+        http_calls.append(request.full_url)
+        if request.full_url.endswith("/models"):
+            return Response({"data": [{"id": exact_model}]})
+        return Response(
+            {
+                "model": exact_model,
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"content": _structured_response()},
+                    }
+                ],
+            }
+        )
+
+    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+
+    class StaleTextCache:
+        def __init__(self) -> None:
+            self.gets = 0
+            self.sets = 0
+
+        def get(self, _key: str) -> str:
+            self.gets += 1
+            return "stale-text-without-route-receipt"
+
+        def set(self, _key: str, _value: object) -> None:
+            self.sets += 1
+
+    remote = StaleTextCache()
+    deps = router.RouterDeps(remote_cache=remote)
+    receipts: list[dict[str, str]] = []
+    for _ in range(2):
+        output = router.generate_text(
+            "return structured semantics",
+            model_name=router._PINNED_SYMAI_LEANSTRAL_ALIAS,
+            provider="ipfs_accelerate_py",
+            provider_instance=provider,
+            deps=deps,
+            allow_local_fallback=False,
+            disable_model_retry=True,
+            _symai_route_binding=dict(router._PINNED_SYMAI_ROUTE_BINDING),
+            response_format={"type": "json_object"},
+            temperature=0.0,
+            max_tokens=64,
+        )
+        assert output == _structured_response()
+        receipts.append(router.get_last_generation_trace())
+
+    assert remote.gets == remote.sets == 0
+    assert deps.router_cache == {}
+    assert len(http_calls) == 4
+    for receipt in receipts:
+        assert {
+            key: receipt[key]
+            for key in router._PINNED_SYMAI_TRACE_KEYS
+        } == router._PINNED_SYMAI_ROUTE_BINDING
+
+
+def test_route_trace_is_thread_local_across_concurrent_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    manager_module = importlib.import_module(
+        "ipfs_datasets_py.ml.accelerate_integration.manager"
+    )
+    monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "0")
+
+    class Manager:
+        def run_inference(
+            self,
+            model_name: str,
+            payload: object,
+            task_type: str | None = None,
+        ) -> dict[str, object]:
+            assert model_name == "generic-model-alias"
+            assert task_type == "text-generation"
+            return {
+                "text": "generic-output",
+                "backend": "generic-manager",
+                "model": "generic-resolved-model",
+            }
+
+    monkeypatch.setattr(manager_module, "AccelerateManager", Manager)
+    provider = router._get_accelerate_provider(router.RouterDeps())
+    assert provider is not None
+
+    exact_model = router._PINNED_SYMAI_LEANSTRAL_MODEL
+
+    class Response:
+        def __init__(self, value: object) -> None:
+            self.body = json.dumps(value).encode("utf-8")
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return self.body if size < 0 else self.body[:size]
+
+    def urlopen(request: urllib.request.Request, *, timeout: float) -> Response:
+        assert timeout > 0
+        if request.full_url.endswith("/models"):
+            return Response({"data": [{"id": exact_model}]})
+        return Response(
+            {
+                "model": exact_model,
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {"content": _structured_response()},
+                    }
+                ],
+            }
+        )
+
+    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    barrier = threading.Barrier(2)
+
+    def pinned_call() -> tuple[str, dict[str, str]]:
+        output = router.generate_text(
+            "pinned",
+            model_name=router._PINNED_SYMAI_LEANSTRAL_ALIAS,
+            provider="ipfs_accelerate_py",
+            provider_instance=provider,
+            allow_local_fallback=False,
+            disable_model_retry=True,
+            _symai_route_binding=dict(router._PINNED_SYMAI_ROUTE_BINDING),
+            response_format={"type": "json_object"},
+            temperature=0.0,
+            max_tokens=64,
+        )
+        barrier.wait(timeout=5)
+        return output, router.get_last_generation_trace()
+
+    def generic_call() -> tuple[str, dict[str, str]]:
+        output = router.generate_text(
+            "generic",
+            model_name="generic-model-alias",
+            provider="ipfs_accelerate_py",
+            provider_instance=provider,
+            allow_local_fallback=False,
+            disable_model_retry=True,
+        )
+        barrier.wait(timeout=5)
+        return output, router.get_last_generation_trace()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        pinned_future = executor.submit(pinned_call)
+        generic_future = executor.submit(generic_call)
+        pinned_output, pinned_trace = pinned_future.result(timeout=10)
+        generic_output, generic_trace = generic_future.result(timeout=10)
+
+    assert pinned_output == _structured_response()
+    assert generic_output == "generic-output"
+    assert {
+        key: pinned_trace[key]
+        for key in router._PINNED_SYMAI_TRACE_KEYS
+    } == router._PINNED_SYMAI_ROUTE_BINDING
+    assert generic_trace["routing_backend"] == "generic-manager"
+    assert generic_trace["resolved_model_name"] == "generic-resolved-model"
+    assert "service_endpoint" not in generic_trace
+    assert "resolved_provider_name" not in generic_trace
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        b'{"data":[],"data":[]}',
+        b'{"data":[{"id":"one","id":"two"}]}',
+        b'{"value":NaN}',
+        b'{"value":Infinity}',
+    ],
+)
+def test_pinned_service_envelope_rejects_duplicates_and_nonfinite_numbers(
+    monkeypatch: pytest.MonkeyPatch,
+    raw: bytes,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+
+    class Response:
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return raw if size < 0 else raw[:size]
+
+    monkeypatch.setattr(
+        router.urllib.request,
+        "urlopen",
+        lambda _request, *, timeout: Response(),
+    )
+
+    with pytest.raises(RuntimeError, match="returned invalid JSON"):
+        router._bounded_json_response(
+            urllib.request.Request("http://127.0.0.1/test"),
+            timeout=1.0,
+            max_bytes=4096,
+        )
+
+
+@pytest.mark.parametrize("finish_reason", [None, "length", "tool_calls"])
+def test_pinned_service_rejects_nonterminal_finish_reason(
+    monkeypatch: pytest.MonkeyPatch,
+    finish_reason: str | None,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    exact_model = router._PINNED_SYMAI_LEANSTRAL_MODEL
+
+    class Response:
+        def __init__(self, value: object) -> None:
+            self.body = json.dumps(value).encode("utf-8")
+
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, size: int = -1) -> bytes:
+            return self.body if size < 0 else self.body[:size]
+
+    def urlopen(request: urllib.request.Request, *, timeout: float) -> Response:
+        assert timeout > 0
+        if request.full_url.endswith("/models"):
+            return Response({"data": [{"id": exact_model}]})
+        return Response(
+            {
+                "model": exact_model,
+                "choices": [
+                    {
+                        "finish_reason": finish_reason,
+                        "message": {"content": _structured_response()},
+                    }
+                ],
+            }
+        )
+
+    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    with pytest.raises(RuntimeError, match="returned an invalid choice"):
+        router._generate_pinned_symai_leanstral(
+            "prompt",
+            kwargs={
+                "response_format": {"type": "json_object"},
+                "temperature": 0.0,
+                "max_tokens": 64,
+                "timeout": 2.0,
+            },
+        )
 
 
 @pytest.mark.parametrize(

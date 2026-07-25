@@ -1763,6 +1763,99 @@ def load_manifest(path: str | Path = DEFAULT_MANIFEST_PATH) -> CorpusManifest:
     return manifest
 
 
+def load_unsealed_pilot_development(
+    corpus_path: str | Path = DEFAULT_CORPUS_PATH,
+    manifest_path: str | Path = DEFAULT_MANIFEST_PATH,
+) -> tuple[CorpusManifest, tuple[BenchmarkCase, ...]]:
+    """Load only the manifest-bound pilot/development prefix.
+
+    This is the pre-authorization corpus boundary.  It deliberately uses
+    unbuffered, line-oriented binary I/O and stops after the last declared
+    development record, so the holdout tail is neither prefetched nor
+    deserialized.  The frozen manifest still binds every selected record and
+    proves that every remaining record belongs to the sealed holdout split.
+    """
+
+    manifest = load_manifest(manifest_path)
+    if corpus_manifest_sha256(manifest) != FROZEN_CORPUS_MANIFEST_SHA256:
+        raise CorpusContractError(
+            "unsealed corpus loader requires frozen reviewed manifest revision 1"
+        )
+    split_counts = manifest.split_counts
+    pilot_count = split_counts.get(Split.PILOT.value)
+    development_count = split_counts.get(Split.DEVELOPMENT.value)
+    holdout_count = split_counts.get(Split.HOLDOUT.value)
+    if any(
+        isinstance(value, bool) or not isinstance(value, int) or value <= 0
+        for value in (pilot_count, development_count, holdout_count)
+    ):
+        raise CorpusContractError("frozen manifest split counts are invalid")
+    assert isinstance(pilot_count, int)
+    assert isinstance(development_count, int)
+    assert isinstance(holdout_count, int)
+    selected_count = pilot_count + development_count
+    if selected_count + holdout_count != manifest.case_count:
+        raise CorpusContractError("frozen manifest split counts do not cover corpus")
+    expected_entries = manifest.cases[:selected_count]
+    sealed_entries = manifest.cases[selected_count:]
+    if (
+        tuple(entry.ordinal for entry in expected_entries)
+        != tuple(range(selected_count))
+        or tuple(entry.ordinal for entry in sealed_entries)
+        != tuple(range(selected_count, manifest.case_count))
+        or sum(entry.split is Split.PILOT for entry in expected_entries)
+        != pilot_count
+        or sum(entry.split is Split.DEVELOPMENT for entry in expected_entries)
+        != development_count
+        or any(entry.split is Split.HOLDOUT for entry in expected_entries)
+        or len(sealed_entries) != holdout_count
+        or any(entry.split is not Split.HOLDOUT for entry in sealed_entries)
+    ):
+        raise CorpusContractError("manifest split seal or ordering drifted")
+
+    path = Path(corpus_path)
+    if path.is_symlink():
+        raise CorpusContractError("unsealed corpus path must not be a symlink")
+    cases: list[BenchmarkCase] = []
+    try:
+        with path.open("rb", buffering=0) as handle:
+            for ordinal, entry in enumerate(expected_entries):
+                raw = handle.readline()
+                if not raw.endswith(b"\n") or not raw.strip():
+                    raise CorpusContractError(
+                        f"unsealed corpus line {ordinal + 1} is incomplete"
+                    )
+                try:
+                    text = raw[:-1].decode("utf-8")
+                    case = BenchmarkCase.from_dict(
+                        _decode_json(text, f"unsealed corpus line {ordinal + 1}")
+                    )
+                except (UnicodeError, ValueError, CorpusContractError) as exc:
+                    raise CorpusContractError(
+                        f"unsealed corpus line {ordinal + 1} is invalid"
+                    ) from exc
+                if canonical_json(case.to_dict()) != text:
+                    raise CorpusContractError(
+                        f"unsealed corpus line {ordinal + 1} is not canonical"
+                    )
+                if (
+                    case.case_id != entry.case_id
+                    or case.split is not entry.split
+                    or case.stratum != entry.stratum
+                    or case.source_sha256 != entry.source_sha256
+                    or case_sha256(case) != entry.case_sha256
+                ):
+                    raise CorpusContractError(
+                        f"unsealed corpus line {ordinal + 1} drifted"
+                    )
+                cases.append(case)
+    except CorpusContractError:
+        raise
+    except OSError as exc:
+        raise CorpusContractError("cannot open unsealed corpus prefix") from exc
+    return manifest, tuple(cases)
+
+
 def _counts(values: tuple[str, ...]) -> dict[str, int]:
     return {
         value: values.count(value)
@@ -1826,6 +1919,7 @@ __all__ = [
     "load_corpus",
     "load_manifest",
     "load_reviewed_corpus",
+    "load_unsealed_pilot_development",
     "normalize_source_text",
     "normalized_source_sha256",
     "source_similarity",

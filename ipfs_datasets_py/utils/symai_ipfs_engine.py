@@ -15,7 +15,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Mapping, Tuple
 
 from symai.backend.base import Engine
 from symai.backend.settings import SYMAI_CONFIG
@@ -141,6 +141,7 @@ def _symai_request_cache_key(
     prompt: str,
     wants_json: bool,
     cache_namespace: str = "",
+    route_binding: Mapping[str, str] | None = None,
 ) -> str:
     payload: Dict[str, Any] = {
         "v": 1,
@@ -149,6 +150,7 @@ def _symai_request_cache_key(
         "engine_id": str(engine_id or ""),
         "mode": str(mode or ""),
         "model": str(model_name or ""),
+        "route_binding": dict(route_binding or {}),
         "prompt": str(prompt or ""),
         "wants_json": bool(wants_json),
         "backend_policy": _symai_backend_policy(),
@@ -484,6 +486,8 @@ def _generate_text(
     deps: object | None = None,
     allow_local_fallback: bool = True,
     dry_run: bool | None = None,
+    response_format: Dict[str, Any] | None = None,
+    route_binding: Mapping[str, str] | None = None,
 ) -> Tuple[str, Dict[str, Any]]:
     metadata: Dict[str, Any] = {"backend": "llm_router", "errors": []}
 
@@ -520,6 +524,13 @@ def _generate_text(
                 selected_provider = (
                     os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
                 )
+        generation_kwargs: Dict[str, Any] = {}
+        if response_format is not None:
+            generation_kwargs["response_format"] = response_format
+            generation_kwargs["temperature"] = 0.0
+            generation_kwargs["max_tokens"] = 512
+        if route_binding is not None:
+            generation_kwargs["_symai_route_binding"] = dict(route_binding)
         text = llm_router.generate_text(
             str(prompt),
             model_name=model_name or None,
@@ -529,6 +540,7 @@ def _generate_text(
             # A pinned SyMAI benchmark route must not silently retry the same
             # provider with its default model after the requested model fails.
             disable_model_retry=not allow_local_fallback,
+            **generation_kwargs,
         )
         trace_getter = getattr(llm_router, "get_last_generation_trace", None)
         trace = trace_getter() if callable(trace_getter) else {}
@@ -556,6 +568,7 @@ class IPFSSyMAIEngine(Engine):
         dry_run: bool | None = None,
         cache_enabled: bool | None = None,
         model_name: str | None = None,
+        route_binding: Mapping[str, str] | None = None,
     ) -> None:
         super().__init__()
         self.config = deepcopy(SYMAI_CONFIG)
@@ -568,6 +581,21 @@ class IPFSSyMAIEngine(Engine):
         self.allow_local_fallback = bool(allow_local_fallback)
         self.dry_run = dry_run
         self.cache_enabled = cache_enabled
+        if route_binding is not None and (
+            not isinstance(route_binding, Mapping)
+            or not route_binding
+            or not all(
+                isinstance(key, str)
+                and isinstance(value, str)
+                and key
+                and value
+                for key, value in route_binding.items()
+            )
+        ):
+            raise ValueError("route_binding must be a nonempty string mapping")
+        self.route_binding = (
+            None if route_binding is None else dict(route_binding)
+        )
         if self.id() != engine_id:
             return
         self.model = (
@@ -603,7 +631,10 @@ class IPFSSyMAIEngine(Engine):
         if processed:
             parts.append(str(processed))
 
-        if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+        if (
+            isinstance(response_format, dict)
+            and response_format.get("type") in {"json_object", "json_schema"}
+        ):
             parts.append("\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text.")
         else:
             parts.append(
@@ -614,6 +645,11 @@ class IPFSSyMAIEngine(Engine):
 
     def forward(self, argument) -> Tuple[List[str], Dict[str, Any]]:
         prompt = argument.prop.prepared_input
+        response_format = getattr(argument.prop, "response_format", None)
+        if response_format is None:
+            payload = getattr(argument.prop, "payload", None)
+            if isinstance(payload, dict):
+                response_format = payload.get("response_format")
 
         wants_json = False
         try:
@@ -636,6 +672,7 @@ class IPFSSyMAIEngine(Engine):
                 prompt=str(prompt or ""),
                 wants_json=wants_json,
                 cache_namespace=self.cache_namespace,
+                route_binding=self.route_binding,
             )
             deps = self.deps if self.deps is not None else _get_symai_router_deps()
             getter = getattr(deps, "get_cached_or_remote", None) if deps is not None else None
@@ -675,7 +712,14 @@ class IPFSSyMAIEngine(Engine):
         ):
             # Preserve the historic two-argument call for external wrappers
             # and tests that patch this internal seam.
-            text, metadata = _generate_text(prompt, self.model)
+            text, metadata = _generate_text(
+                prompt,
+                self.model,
+                response_format=(
+                    response_format if isinstance(response_format, dict) else None
+                ),
+                route_binding=self.route_binding,
+            )
         else:
             text, metadata = _generate_text(
                 prompt,
@@ -684,6 +728,10 @@ class IPFSSyMAIEngine(Engine):
                 deps=self.deps,
                 allow_local_fallback=self.allow_local_fallback,
                 dry_run=self.dry_run,
+                response_format=(
+                    response_format if isinstance(response_format, dict) else None
+                ),
+                route_binding=self.route_binding,
             )
         if cache_key and deps is not None:
             setter = getattr(deps, "set_cached_and_remote", None)

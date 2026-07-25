@@ -53,11 +53,11 @@ import tempfile
 import time
 from typing import Final, Mapping, Protocol, Sequence, Self
 
-from benchmarks.logic_pipeline import BENCHMARK_ID
+from benchmarks.logic_pipeline import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT
 from benchmarks.logic_pipeline.capabilities import WorktreeSafetyReceipt
 from benchmarks.logic_pipeline.cases import (
+    FROZEN_CORPUS_MANIFEST_SHA256,
     FROZEN_SPLIT_SHA256,
-    load_reviewed_corpus,
 )
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL,
@@ -2119,8 +2119,7 @@ def validate_proof_report(value: object) -> dict[str, object]:
         raise ProofReportError("protocol digest changed")
     if data["registry_sha256"] != VARIANT_REGISTRY_SHA256:
         raise ProofReportError("variant registry digest changed")
-    corpus = load_reviewed_corpus()
-    if data["corpus_manifest_sha256"] != corpus.manifest_sha256:
+    if data["corpus_manifest_sha256"] != FROZEN_CORPUS_MANIFEST_SHA256:
         raise ProofReportError("corpus manifest digest changed")
     if data["pilot_split_sha256"] != FROZEN_SPLIT_SHA256[Split.PILOT]:
         raise ProofReportError("pilot split digest changed")
@@ -2358,7 +2357,7 @@ def create_capability_preflight_report() -> dict[str, object]:
         "execution_mode": "capability_preflight",
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
-        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
         "pilot_split_sha256": FROZEN_SPLIT_SHA256[Split.PILOT],
         "split": "pilot",
         "eligible_case_ids": list(ELIGIBLE_CASE_IDS),
@@ -2454,7 +2453,7 @@ def build_proof_report(
         "execution_mode": "measured",
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
-        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
         "pilot_split_sha256": FROZEN_SPLIT_SHA256[Split.PILOT],
         "split": "pilot",
         "eligible_case_ids": list(ELIGIBLE_CASE_IDS),
@@ -3406,6 +3405,328 @@ _REASSESSMENT_POLICIES: Final = (
 )
 
 
+def _build_fresh_reassessment_final_decision(
+    *,
+    repository_root: Path,
+    run_id: str,
+    benchmark_root: str | Path,
+) -> dict[str, object]:
+    """Build a run-scoped decision without assuming an empty shortlist."""
+
+    from benchmarks.logic_pipeline.reassessment_namespace import (
+        ReassessmentRunLayout,
+    )
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        load_reassessment_statistics,
+    )
+
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    load_reassessment_statistics(
+        repository_root=repository_root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    source_paths = {
+        "matrix": layout.matrix_index,
+        "pilot": layout.pilot_report,
+        "holdout": layout.holdout_report,
+        "replay": layout.replay_index,
+        "statistics": layout.statistics_report,
+        "reports": layout.reports_snapshot,
+    }
+    source_artifacts: dict[str, object] = {}
+    documents: dict[str, Mapping[str, object]] = {}
+    for name, path in source_paths.items():
+        binding, document = _replacement_source_binding(
+            repository_root,
+            path,
+        )
+        source_artifacts[name] = binding
+        documents[name] = document
+
+    legacy = load_final_decision(
+        LEGACY_FINAL_DECISION_PATH,
+        repository_root=repository_root,
+    )
+    legacy_results = _decision_mapping(legacy["results"], "legacy.results")
+    if (
+        legacy_results.get("schema") != FINAL_DECISION_SCHEMA
+        or legacy_results.get("evidence_symbol") != "HSSLEV1006B8A"
+    ):
+        raise FinalDecisionValidationError(
+            "the immutable predecessor is not the HSSL-G100 v1 decision"
+        )
+    supersedes, _ = _replacement_source_binding(
+        repository_root,
+        LEGACY_FINAL_DECISION_PATH,
+    )
+    supersedes = {
+        **supersedes,
+        "relationship": "immutable_predecessor",
+        "preserved": True,
+    }
+
+    matrix = documents["matrix"]
+    pilot = documents["pilot"]
+    holdout = documents["holdout"]
+    replay = documents["replay"]
+    publication = _decision_mapping(
+        documents["reports"].get("results"),
+        "reports.results",
+    )
+    publication_reports = _decision_mapping(
+        publication.get("reports"),
+        "reports.results.reports",
+    )
+    traceability = _decision_mapping(
+        publication.get("traceability"),
+        "reports.results.traceability",
+    )
+    shortlist = _decision_mapping(pilot.get("shortlist"), "pilot.shortlist")
+    pilot_decision = _decision_mapping(
+        pilot.get("decision"),
+        "pilot.decision",
+    )
+    holdout_decision = _decision_mapping(
+        holdout.get("decision"),
+        "holdout.decision",
+    )
+    holdout_outcomes = _decision_mapping(
+        holdout.get("outcomes"),
+        "holdout.outcomes",
+    )
+    holdout_metrics = _decision_mapping(
+        holdout.get("metrics"),
+        "holdout.metrics",
+    )
+    replay_execution = _decision_mapping(
+        replay.get("execution"),
+        "replay.execution",
+    )
+    selected = [
+        str(item)
+        for item in _decision_array(
+            shortlist.get("selected_variant_ids"),
+            "pilot.shortlist.selected_variant_ids",
+        )
+    ]
+    holdout_pairs = int(holdout_outcomes.get("observed_pair_count", 0))
+    replay_complete = (
+        replay_execution.get("all_observed_successes_replayed") is True
+        and replay_execution.get("all_sampled_failures_replayed") is True
+        and replay_execution.get("replay_claimed") is True
+    )
+    decision_complete = (
+        bool(selected)
+        and holdout_decision.get("paired_evaluation_complete") is True
+        and holdout_metrics.get("complete") is True
+        and replay_complete
+    )
+    candidate_evidence = {
+        str(_decision_mapping(item, "candidate evidence")["variant_id"]):
+        _decision_mapping(item, "candidate evidence")
+        for item in _decision_array(
+            pilot.get("candidate_evidence"),
+            "pilot.candidate_evidence",
+        )
+    }
+    delegation_matrix: list[dict[str, object]] = []
+    for variant_id in _FINAL_DECISION_VARIANTS:
+        coordinate_count, status_counts = _matrix_variant_status_counts(
+            matrix,
+            variant_id,
+        )
+        evidence = candidate_evidence.get(variant_id)
+        delegation_matrix.append(
+            {
+                "variant_id": variant_id,
+                "role": (
+                    "frozen reference"
+                    if variant_id == "A0"
+                    else "safety diagnostic"
+                    if variant_id == "S1"
+                    else "experimental ablation candidate"
+                ),
+                "evidence_scope": (
+                    "pilot_development_and_holdout"
+                    if variant_id in selected and holdout_pairs
+                    else "pilot_development_only"
+                ),
+                "measured_evidence": {
+                    "coordinate_count": coordinate_count,
+                    "status_counts": status_counts,
+                    "eligible": (
+                        None if evidence is None else evidence["eligible"]
+                    ),
+                    "ineligibility_reasons": (
+                        []
+                        if evidence is None
+                        else evidence["ineligibility_reasons"]
+                    ),
+                },
+                "holdout_observed_pair_count": (
+                    20 if variant_id in selected and holdout_pairs else 0
+                ),
+                "disposition": (
+                    "frozen_reference"
+                    if variant_id == "A0"
+                    else "diagnostic_only"
+                    if variant_id == "S1"
+                    else "shortlisted_pending_review"
+                    if variant_id in selected
+                    else "not_shortlisted"
+                ),
+                "production_authorized": False,
+            }
+        )
+    decision = {
+        "architecture_outcome": (
+            "review_complete_benchmark_evidence"
+            if decision_complete
+            else "gather_more_evidence"
+        ),
+        "current_architecture_action": "retain_a0_unchanged",
+        "evidence_status": (
+            "complete_holdout_and_replay_pending_separate_review"
+            if decision_complete
+            else "incomplete_gated_reassessment"
+        ),
+        "holdout_status": holdout_decision["seal_status"],
+        "replay_status": replay["status"],
+        "paired_holdout_evidence_available": holdout_pairs > 0,
+        "replay_claimed": replay_execution["replay_claimed"],
+        "selected_variant_id": None,
+        "selected_policy": None,
+        "production_routing_changed": False,
+        "production_promotion_authorized": False,
+        "rationale": (
+            "The benchmark source graph is complete enough for a separate "
+            "architecture review; benchmark evidence itself never promotes "
+            "a production route."
+            if decision_complete
+            else (
+                "One or more prerequisite, holdout metric, or detached replay "
+                "receipts remain incomplete. A0 is retained without treating "
+                "missing evidence as zero or success."
+            )
+        ),
+    }
+    component_decisions = [
+        {
+            "component": component,
+            "bounded_experimental_responsibility": responsibility,
+            "disposition": (
+                "review_with_complete_benchmark"
+                if decision_complete
+                else "experimental_pending_complete_evidence"
+            ),
+            "production_responsibility_added": False,
+            "production_authorized": False,
+        }
+        for component, responsibility in _REASSESSMENT_COMPONENT_ROLES
+    ]
+    policy_decisions = [
+        {
+            "policy": policy,
+            "role": role,
+            "selected": False,
+            "disposition": "requires_separate_review",
+            "production_authorized": False,
+        }
+        for policy, role in _REASSESSMENT_POLICIES
+    ]
+    results: dict[str, object] = {
+        "artifact_sha256": "",
+        "schema": REASSESSMENT_FINAL_DECISION_SCHEMA,
+        "evidence": HSSLEV1703E61(),
+        "evidence_symbol": "HSSLEV1703E61",
+        "run_id": run_id,
+        "supersedes": supersedes,
+        "source_artifacts": source_artifacts,
+        "source_graph": {
+            "validated": True,
+            "pilot_development_case_result_count": traceability[
+                "pilot_development_case_result_count"
+            ],
+            "statistics_pair_count": traceability["statistics_pair_count"],
+            "holdout_case_result_count": traceability[
+                "holdout_case_result_count"
+            ],
+            "replay_receipt_count": traceability["replay_receipt_count"],
+            "untraced_claim_count": traceability["untraced_claim_count"],
+            "independent_native_kernel_is_only_success_authority": True,
+        },
+        "decision": decision,
+        "component_decisions": component_decisions,
+        "delegation_matrix": delegation_matrix,
+        "policy_decisions": policy_decisions,
+        "tradeoffs": {
+            "evidence_scope": (
+                "run_scoped_pilot_development_holdout_and_replay"
+            ),
+            "verification_authority": "independent_native_kernel_only",
+            "required_domains": publication_reports["required_domains"],
+            "domains": publication_reports["domains"],
+            "holdout_pair_count": publication_reports["holdout_pair_count"],
+            "holdout_measured_domain_count": publication_reports[
+                "holdout_measured_domain_count"
+            ],
+            "missingness_synthesized_as_zero": publication_reports[
+                "missingness_synthesized_as_zero"
+            ],
+            "all_applicable_values_non_null": publication_reports[
+                "all_applicable_values_non_null"
+            ],
+        },
+        "rejected_alternatives": [
+            {
+                "alternative": "automatic_production_promotion",
+                "disposition": "rejected_outside_benchmark_authority",
+                "evidence_basis": (
+                    "production changes require a separate reviewed canary "
+                    "and rollback decision"
+                ),
+            }
+        ],
+        "required_follow_up": holdout["remediation"],
+        "production_change_boundary": {
+            "benchmark_changes_production": False,
+            "automatic_merge_authorized": False,
+            "separate_reviewed_change_required": True,
+            "canary_and_rollback_required": True,
+        },
+    }
+    results["artifact_sha256"] = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "benchmark_script": (
+            "python benchmarks/logic_pipeline/report.py "
+            f"--validate-final-decision --run-id {run_id} --artifact "
+            f"{layout.final_decision.as_posix()}"
+        ),
+        "captured_on": "2026-07-25",
+        "notes": [
+            "This decision is recomputed from one isolated reassessment run.",
+            (
+                "Typed missingness and pending replay remain explicit and "
+                "cannot authorize production."
+            ),
+            "Production promotion is always a separate reviewed action.",
+        ],
+        "results": results,
+    }
+
+
 def _replacement_source_binding(
     root: Path, relative_path: Path
 ) -> tuple[dict[str, object], Mapping[str, object]]:
@@ -3473,7 +3794,10 @@ def _matrix_variant_status_counts(
 
 
 def build_reassessment_final_decision(
-    *, repository_root: str | Path = "."
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     """Recompute the HSSL-G170 decision from the complete validated chain.
 
@@ -3484,6 +3808,12 @@ def build_reassessment_final_decision(
     """
 
     root = Path(repository_root).resolve()
+    if run_id != "reassessment-v2":
+        return _build_fresh_reassessment_final_decision(
+            repository_root=root,
+            run_id=run_id,
+            benchmark_root=benchmark_root,
+        )
 
     # Validate the immutable predecessor through its original trust boundary.
     legacy = load_final_decision(
@@ -3863,7 +4193,11 @@ def build_reassessment_final_decision(
 
 
 def _validate_reassessment_final_decision(
-    value: object, *, repository_root: str | Path = "."
+    value: object,
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     envelope = _decision_mapping(value, "replacement decision snapshot")
     _decision_exact(
@@ -3897,6 +4231,43 @@ def _validate_reassessment_final_decision(
         raise FinalDecisionValidationError(
             "replacement final decision artifact digest changed"
         )
+    source_run_id = results.get("run_id")
+    if source_run_id is not None:
+        if source_run_id != run_id or run_id == "reassessment-v2":
+            raise FinalDecisionValidationError(
+                "fresh final decision run identity changed"
+            )
+        decision = _decision_mapping(results.get("decision"), "decision")
+        boundary = _decision_mapping(
+            results.get("production_change_boundary"),
+            "production_change_boundary",
+        )
+        if (
+            decision.get("production_routing_changed") is not False
+            or decision.get("production_promotion_authorized") is not False
+            or boundary.get("benchmark_changes_production") is not False
+            or boundary.get("automatic_merge_authorized") is not False
+            or boundary.get("separate_reviewed_change_required") is not True
+            or boundary.get("canary_and_rollback_required") is not True
+        ):
+            raise FinalDecisionValidationError(
+                "fresh benchmark decision cannot authorize production"
+            )
+        try:
+            expected = build_reassessment_final_decision(
+                repository_root=repository_root,
+                run_id=run_id,
+                benchmark_root=benchmark_root,
+            )
+        except (OSError, ValueError) as exc:
+            raise FinalDecisionValidationError(
+                f"fresh decision source graph failed validation: {exc}"
+            ) from exc
+        if dict(envelope) != expected:
+            raise FinalDecisionValidationError(
+                "fresh final decision differs from its validated source graph"
+            )
+        return dict(envelope)
     decision = _decision_mapping(results.get("decision"), "decision")
     if (
         decision.get("production_routing_changed") is not False
@@ -4045,7 +4416,11 @@ def _validate_reassessment_final_decision(
 
 
 def validate_final_decision(
-    value: object, *, repository_root: str | Path = "."
+    value: object,
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     """Validate either immutable v1 evidence or the source-bound v2 decision."""
 
@@ -4058,7 +4433,10 @@ def validate_final_decision(
         )
     if schema == REASSESSMENT_FINAL_DECISION_SCHEMA:
         return _validate_reassessment_final_decision(
-            value, repository_root=repository_root
+            value,
+            repository_root=repository_root,
+            run_id=run_id,
+            benchmark_root=benchmark_root,
         )
     raise FinalDecisionValidationError(
         f"unsupported final decision schema: {schema!r}"
@@ -4066,15 +4444,40 @@ def validate_final_decision(
 
 
 def write_reassessment_final_decision(
-    path: str | Path = DEFAULT_FINAL_DECISION_PATH,
+    path: str | Path | None = None,
     *,
+    run_id: str,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
     repository_root: str | Path = ".",
     overwrite: bool = False,
 ) -> Path:
-    """Publish canonical v2 evidence, refusing replacement by default."""
+    """Write a fresh run decision without touching published evidence."""
+
+    from benchmarks.logic_pipeline.reassessment_namespace import (
+        ReassessmentNamespaceError,
+        ReassessmentRunLayout,
+        reject_published_write_targets,
+    )
 
     root = Path(repository_root).resolve()
-    relative = Path(path)
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+        relative = Path(layout.final_decision if path is None else path)
+        reject_published_write_targets(
+            repository_root=root,
+            run_id=run_id,
+            targets=(relative,),
+            benchmark_root=benchmark_root,
+        )
+    except (ValueError, ReassessmentNamespaceError) as exc:
+        raise FinalDecisionValidationError(str(exc)) from exc
+    if relative != layout.final_decision:
+        raise FinalDecisionValidationError(
+            "fresh final decision must use its run-scoped layout path"
+        )
     if relative.is_absolute() or ".." in relative.parts:
         raise FinalDecisionValidationError(
             "replacement decision output must be repository-relative"
@@ -4084,6 +4487,12 @@ def write_reassessment_final_decision(
     payload = (
         canonical_json(
             build_reassessment_final_decision(repository_root=root)
+            if run_id == "reassessment-v2"
+            else build_reassessment_final_decision(
+                repository_root=root,
+                run_id=run_id,
+                benchmark_root=benchmark_root,
+            )
         )
         + "\n"
     ).encode("utf-8")
@@ -4122,13 +4531,29 @@ def write_reassessment_final_decision(
 
 
 def load_final_decision(
-    path: str | Path = DEFAULT_FINAL_DECISION_PATH,
+    path: str | Path | None = None,
     *,
     repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     """Load and validate the published final architecture decision snapshot."""
 
-    decision_path = Path(path)
+    if path is None:
+        if run_id == "reassessment-v2":
+            selected_path = DEFAULT_FINAL_DECISION_PATH
+        else:
+            from benchmarks.logic_pipeline.reassessment_namespace import (
+                ReassessmentRunLayout,
+            )
+
+            selected_path = ReassessmentRunLayout.for_run(
+                run_id,
+                benchmark_root=benchmark_root,
+            ).final_decision
+    else:
+        selected_path = Path(path)
+    decision_path = Path(selected_path)
     if not decision_path.is_absolute():
         decision_path = Path(repository_root) / decision_path
     try:
@@ -4160,7 +4585,12 @@ def load_final_decision(
             raise FinalDecisionValidationError(
                 "replacement final decision is not canonical newline JSON"
             )
-    return validate_final_decision(value, repository_root=repository_root)
+    return validate_final_decision(
+        value,
+        repository_root=repository_root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
 
 
 def final_decision_summary(value: Mapping[str, object]) -> dict[str, object]:
@@ -4387,6 +4817,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             "mutually exclusive with --results-path"
         ),
     )
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help=(
+            "run-scoped reassessment identity; required to validate fresh "
+            "downstream artifacts"
+        ),
+    )
+    parser.add_argument(
+        "--benchmark-root",
+        type=Path,
+        default=DEFAULT_BENCHMARK_ROOT,
+        help="benchmark workspace root used with --run-id",
+    )
     args = parser.parse_args(argv)
     if args.artifact is not None and args.results_path is not None:
         parser.error("--artifact and --results-path are mutually exclusive")
@@ -4406,7 +4850,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.validate_final_decision:
             try:
                 value = load_final_decision(
-                    selected_path or DEFAULT_FINAL_DECISION_PATH
+                    selected_path,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
                 )
             except FinalDecisionValidationError as exc:
                 parser.error(str(exc))
@@ -4434,11 +4880,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             else:
                 artifact_header = None
             if (
-                isinstance(artifact_header, Mapping)
-                and artifact_header.get("schema")
-                == (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "reassessment-holdout.v1"
+                args.run_id is not None
+                or (
+                    isinstance(artifact_header, Mapping)
+                    and artifact_header.get("schema")
+                    == (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "reassessment-holdout.v1"
+                    )
                 )
             ):
                 from benchmarks.logic_pipeline.holdout_reassessment import (
@@ -4448,7 +4897,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
 
                 try:
-                    report = load_holdout_reassessment_report(selected_path)
+                    report = load_holdout_reassessment_report(
+                        selected_path,
+                        run_id=args.run_id or "reassessment-v2",
+                        benchmark_root=args.benchmark_root,
+                    )
                 except HoldoutReassessmentError as exc:
                     parser.error(str(exc))
                 summary = holdout_reassessment_summary(report)
@@ -4491,7 +4944,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
 
                 try:
-                    report = load_pilot_reassessment_report(selected_path)
+                    report = load_pilot_reassessment_report(
+                        selected_path,
+                        run_id=args.run_id or "reassessment-v2",
+                        benchmark_root=args.benchmark_root,
+                    )
                 except PilotReassessmentError as exc:
                     parser.error(str(exc))
                 summary = pilot_reassessment_summary(report)
@@ -4507,6 +4964,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                 except PilotGateError as exc:
                     parser.error(str(exc))
                 summary = pilot_shortlist_summary(report)
+        elif args.run_id is not None:
+            from benchmarks.logic_pipeline.pilot_reassessment import (
+                PilotReassessmentError,
+                load_pilot_reassessment_report,
+                pilot_reassessment_summary,
+            )
+
+            try:
+                report = load_pilot_reassessment_report(
+                    run_id=args.run_id,
+                    benchmark_root=args.benchmark_root,
+                )
+            except PilotReassessmentError as exc:
+                parser.error(str(exc))
+            summary = pilot_reassessment_summary(report)
         else:
             from benchmarks.logic_pipeline.pilot_gate import (
                 DEFAULT_PILOT_SHORTLIST_PATH,
@@ -4556,13 +5028,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             reassessment_statistics_summary,
         )
 
-        if selected_path.resolve() == (
+        if args.run_id is not None or selected_path.resolve() == (
             REASSESSMENT_REPOSITORY_ROOT / REASSESSMENT_STATISTICS_PATH
         ).resolve():
             try:
-                report = load_reassessment_statistics(selected_path)
+                report = load_reassessment_statistics(
+                    selected_path,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
+                )
                 summary = reassessment_statistics_summary(
-                    report, validated=True
+                    report,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
+                    validated=True,
                 )
             except ReassessmentReportsError as exc:
                 parser.error(str(exc))

@@ -39,8 +39,8 @@ from benchmarks.logic_pipeline.cases import (
     BenchmarkCase,
     FROZEN_SPLIT_SHA256,
     Split,
-    build_split_integrity_manifest,
-    load_reviewed_corpus,
+    corpus_manifest_sha256,
+    load_unsealed_pilot_development,
 )
 from benchmarks.logic_pipeline.contracts import (
     BASELINE_VARIANT,
@@ -356,20 +356,16 @@ def _validate_corpus_snapshot(corpus_value: Mapping[str, object]) -> None:
     )
     if corpus_value["split"] != Split.PILOT.value:
         raise BaselineValidationError("frozen baseline corpus must be the pilot split")
-    reviewed = load_reviewed_corpus()
-    integrity = build_split_integrity_manifest(reviewed)
-    if corpus_value["corpus_id"] != reviewed.manifest.corpus_id:
+    manifest, unsealed_cases = load_unsealed_pilot_development()
+    if corpus_value["corpus_id"] != manifest.corpus_id:
         raise BaselineValidationError("frozen corpus id drifted")
-    if corpus_value["manifest_sha256"] != reviewed.manifest_sha256:
+    if corpus_value["manifest_sha256"] != corpus_manifest_sha256(manifest):
         raise BaselineValidationError("frozen corpus manifest digest drifted")
-    pilot = next(item for item in integrity.splits if item.split is Split.PILOT)
-    if corpus_value["split_sha256"] != pilot.split_sha256:
-        raise BaselineValidationError("frozen pilot split digest drifted")
     if corpus_value["split_sha256"] != FROZEN_SPLIT_SHA256[Split.PILOT]:
         raise BaselineValidationError("pilot split is not revision 1")
 
     actual_cases = tuple(
-        case for case in reviewed.cases if case.split is Split.PILOT
+        case for case in unsealed_cases if case.split is Split.PILOT
     )
     frozen_cases = _array(corpus_value["cases"], "corpus.cases")
     expected = [
@@ -377,7 +373,7 @@ def _validate_corpus_snapshot(corpus_value: Mapping[str, object]) -> None:
             "case_id": case.case_id,
             "case_sha256": next(
                 entry.case_sha256
-                for entry in reviewed.manifest.cases
+                for entry in manifest.cases
                 if entry.case_id == case.case_id
             ),
             "source_sha256": case.source_sha256,
@@ -817,8 +813,8 @@ def _write_exclusive(path: Path, data: bytes) -> None:
 def _cases_for_manifest(
     manifest: FrozenBaselineManifest,
 ) -> tuple[BenchmarkCase, ...]:
-    reviewed = load_reviewed_corpus()
-    by_id = {case.case_id: case for case in reviewed.cases}
+    _corpus_manifest, unsealed_cases = load_unsealed_pilot_development()
+    by_id = {case.case_id: case for case in unsealed_cases}
     return tuple(by_id[case_id] for case_id in manifest.pilot_case_ids)
 
 

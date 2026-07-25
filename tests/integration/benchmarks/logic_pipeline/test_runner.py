@@ -11,7 +11,11 @@ import pytest
 from benchmarks.logic_pipeline import runner
 from benchmarks.logic_pipeline import variants
 from benchmarks.logic_pipeline.adapters import StageAdapter, StageOutput
-from benchmarks.logic_pipeline.cases import case_sha256, load_reviewed_corpus
+from benchmarks.logic_pipeline.cases import (
+    case_sha256,
+    corpus_manifest_sha256,
+    load_unsealed_pilot_development,
+)
 from benchmarks.logic_pipeline.contracts import (
     CacheMode,
     CaseResultRecord,
@@ -29,9 +33,9 @@ EXPECTED_VARIANT_IDS = tuple([*(f"A{index}" for index in range(13)), "S1"])
 
 
 def _pilot_cases(count: int = 2) -> tuple[runner.AblationCase, ...]:
-    reviewed = load_reviewed_corpus()
+    _manifest, unsealed = load_unsealed_pilot_development()
     selected = tuple(
-        case for case in reviewed.cases if case.split.value == Split.PILOT.value
+        case for case in unsealed if case.split.value == Split.PILOT.value
     )[:count]
     return tuple(
         runner.AblationCase.create(
@@ -48,7 +52,8 @@ def _pilot_cases(count: int = 2) -> tuple[runner.AblationCase, ...]:
 
 
 def _case_manifest_sha256() -> str:
-    return load_reviewed_corpus().manifest_sha256
+    manifest, _unsealed = load_unsealed_pilot_development()
+    return corpus_manifest_sha256(manifest)
 
 
 class _RecordingHandlers:

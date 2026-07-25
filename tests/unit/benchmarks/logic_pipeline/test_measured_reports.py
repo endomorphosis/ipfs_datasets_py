@@ -9,7 +9,7 @@ from typing import Mapping
 import pytest
 
 from benchmarks.logic_pipeline import frontend_report, report
-from benchmarks.logic_pipeline.cases import load_reviewed_corpus
+from benchmarks.logic_pipeline.cases import FROZEN_CORPUS_MANIFEST_SHA256
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL_SHA256,
     STAGE_PROVENANCE_SCHEMA,
@@ -31,7 +31,7 @@ from benchmarks.logic_pipeline.variants import VARIANT_REGISTRY
 RUN_ID = "measured-report-test"
 ENVIRONMENT = "e" * 64
 INPUT = "f" * 64
-MANIFEST = load_reviewed_corpus().manifest_sha256
+MANIFEST = FROZEN_CORPUS_MANIFEST_SHA256
 
 
 def _sha(value: str) -> str:
@@ -56,6 +56,7 @@ def _case_result(
     cache_mode: CacheMode,
     semantic_ir: Mapping[str, object] | None = None,
     unavailable: bool = False,
+    suppress_symai: bool = False,
 ) -> CaseResultRecord:
     stages: list[StageRecord] = []
     route = VARIANT_REGISTRY[variant_id].stages
@@ -87,6 +88,19 @@ def _case_result(
         else:
             stage_data = {"accepted": False}
         stage_unavailable = unavailable and not stages
+        graph_invoked = not (
+            stage_name is StageName.SYMAI and suppress_symai
+        )
+        if not graph_invoked:
+            stage_data = {
+                "schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "policy-decision.v1"
+                ),
+                "stage": "symai",
+                "invoked": False,
+                "reason": "frontend_ambiguity_gate_closed",
+            }
         stages.append(
             StageRecord.create(
                 protocol_sha256=DEFAULT_PROTOCOL_SHA256,
@@ -109,7 +123,10 @@ def _case_result(
                     adapter_version="1",
                     source=("measured-report-test",),
                     requested_identity={"component": stage_name.value},
-                    effective_identity={"component": stage_name.value},
+                    effective_identity={
+                        "component": stage_name.value,
+                        "graph_invoked": graph_invoked,
+                    },
                     input_sha256=INPUT,
                     environment_sha256=ENVIRONMENT,
                     upstream_stage_digests=tuple(
@@ -124,6 +141,7 @@ def _case_result(
                     output_items=0 if stage_unavailable else 1,
                     model_calls=int(
                         not stage_unavailable
+                        and graph_invoked
                         and stage_name
                         in {StageName.SYMAI, StageName.LEANSTRAL}
                     ),
@@ -160,7 +178,9 @@ def _proof_capabilities() -> dict[str, object]:
 
 
 def _frontend_observations(
-    *, unavailable_coordinate: tuple[str, str, str, str] | None = None
+    *,
+    unavailable_coordinate: tuple[str, str, str, str] | None = None,
+    suppressed_symai_coordinate: tuple[str, str, str, str] | None = None,
 ) -> list[dict[str, object]]:
     value = frontend_report.create_capability_preflight_report()
     catalog, _ = frontend_report._case_catalog()
@@ -186,6 +206,7 @@ def _frontend_observations(
             cache_mode=CacheMode(str(row["cache_mode"])),
             semantic_ir=case["expected_ir"],
             unavailable=missing,
+            suppress_symai=coordinate == suppressed_symai_coordinate,
         )
         row.update(
             {
@@ -219,11 +240,19 @@ def _frontend_observations(
                 ),
                 "spacy_invoked": any(
                     stage.stage is StageName.SPACY
+                    and stage.provenance.effective_identity.get(
+                        "graph_invoked"
+                    )
+                    is True
                     for stage in result.stages
                 ),
                 "symai_invoked": (
                     any(
                         stage.stage is StageName.SYMAI
+                        and stage.provenance.effective_identity.get(
+                            "graph_invoked"
+                        )
+                        is True
                         for stage in result.stages
                     )
                 ),
@@ -374,6 +403,35 @@ def test_frontend_builder_retains_measured_capability_missingness() -> None:
     assert metrics["unavailable_count"] == 1
     assert metrics["semantic_quality_rate"] == 1.0
     assert metrics["latency_ms_p95"] == 15.0
+
+
+def test_frontend_builder_counts_typed_gated_symai_stage_as_zero_call() -> None:
+    suppressed = ("pilot", "cold", "A4", "pilot-p01")
+    value = frontend_report.build_frontend_report(
+        RUN_ID,
+        _frontend_capabilities(),
+        _frontend_observations(
+            suppressed_symai_coordinate=suppressed,
+        ),
+    )
+
+    row = next(
+        item
+        for item in value["observations"]
+        if (
+            item["split"],
+            item["cache_mode"],
+            item["variant_id"],
+            item["case_id"],
+        )
+        == suppressed
+    )
+    assert row["symai_invoked"] is False
+    assert row["symai_model_calls"] == 0
+    assert any(
+        stage["stage"] == "symai"
+        for stage in row["case_result"]["stages"]
+    )
 
 
 def test_proof_builder_derives_latency_and_completion_from_receipts() -> None:

@@ -14,6 +14,10 @@ from benchmarks.logic_pipeline import adapters, contracts
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 TEXT = "Every licensed agency must file an annual report."
+INNER_PROVIDER = "leanstral_local"
+INNER_MODEL = "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+INNER_ENDPOINT = "http://127.0.0.1:8080/v1"
+INNER_BACKEND = "existing_leanstral_service"
 
 
 def _request(
@@ -113,6 +117,10 @@ class _FakeEngine:
             "backend": "llm_router",
             "effective_provider_name": "ipfs_accelerate_py",
             "effective_model_name": "Leanstral-119B",
+            "resolved_provider_name": INNER_PROVIDER,
+            "resolved_model_name": INNER_MODEL,
+            "service_endpoint": INNER_ENDPOINT,
+            "routing_backend": INNER_BACKEND,
             **dict(metadata or {}),
         }
         self.calls: list[object] = []
@@ -138,11 +146,19 @@ def _configured(
         or adapters.SymaiAdapterConfig(
             model="Leanstral-119B",
             max_retries=1,
+            expected_inner_provider=INNER_PROVIDER,
+            expected_inner_model=INNER_MODEL,
+            expected_inner_endpoint=INNER_ENDPOINT,
+            expected_inner_backend=INNER_BACKEND,
         ),
         engine_factory=lambda _config, _namespace: engine,
         trace_getter=lambda: {
             "effective_provider_name": "ipfs_accelerate_py",
             "effective_model_name": "Leanstral-119B",
+            "resolved_provider_name": INNER_PROVIDER,
+            "resolved_model_name": INNER_MODEL,
+            "service_endpoint": INNER_ENDPOINT,
+            "routing_backend": INNER_BACKEND,
         },
         cache={} if cache is None else cache,
     )
@@ -167,6 +183,11 @@ def test_objective_evidence_and_config_bounds_are_public() -> None:
         adapters.SymaiAdapterConfig(max_retries=adapters.SYMAI_MAX_RETRIES + 1)
     with pytest.raises(contracts.ProtocolContractError):
         adapters.SymaiAdapterConfig(dry_run=1)  # type: ignore[arg-type]
+    with pytest.raises(
+        contracts.ProtocolContractError,
+        match="must be supplied together",
+    ):
+        adapters.SymaiAdapterConfig(expected_inner_provider=INNER_PROVIDER)
 
 
 def test_valid_semantics_cross_engine_and_preserve_raw_separately() -> None:
@@ -179,7 +200,7 @@ def test_valid_semantics_cross_engine_and_preserve_raw_separately() -> None:
     assert record.telemetry.resource_lane is contracts.ResourceLane.MODEL
     assert len(engine.calls) == 1
     argument = engine.calls[0]
-    assert argument.prop.response_format == {"type": "json_object"}
+    assert argument.prop.response_format == adapters.SYMAI_RESPONSE_FORMAT
     assert "Return exactly one JSON object" in argument.prop.prepared_input
     assert TEXT in argument.prop.prepared_input
 
@@ -212,6 +233,54 @@ def test_valid_semantics_cross_engine_and_preserve_raw_separately() -> None:
     assert provenance["reuses_existing_model_service"] is True
     assert not record.kernel_accepted
     assert record.kernel_receipt_sha256 is None
+
+
+def test_prompt_is_concise_and_does_not_expose_the_cache_envelope() -> None:
+    namespace = "run-secret/protocol/variant/split/cache"
+    semantic_context = {
+        "schema": adapters.SEMANTIC_CONTEXT_SCHEMA,
+        "source_text_sha256": "1" * 64,
+        "context_sha256": "2" * 64,
+        "artifacts": [
+            {
+                "stage": "spacy",
+                "status": "success",
+                "evidence": {
+                    "execution": {
+                        "mode": "full_model",
+                        "effective_model": "en_core_web_sm",
+                        "pipeline": ["tok2vec", "tagger", "parser"],
+                        "variant_id": "A4",
+                        "configuration_sha256": "3" * 64,
+                        "expected_class": "proved",
+                    },
+                    "normalized_predicates": ["LicensedAgency"],
+                },
+            }
+        ],
+    }
+
+    prompt = adapters._symai_prompt(
+        TEXT,
+        namespace,
+        semantic_context,
+    )
+
+    assert namespace not in prompt
+    assert prompt.count(TEXT) == 1
+    assert "OUTPUT_SKELETON" in prompt
+    assert '"candidate_ir":{"propositions":[]}' in prompt
+    assert "under 1600 UTF-8 bytes" in prompt
+    assert "Never copy input-envelope or provenance keys" in prompt
+    assert "do not add wrapper keys" in prompt
+    assert '"mode":"full_model"' in prompt
+    assert '"effective_model":"en_core_web_sm"' in prompt
+    assert "variant_id" not in prompt
+    assert "configuration_sha256" not in prompt
+    assert "expected_class" not in prompt
+    assert '"A4"' not in prompt
+    assert "3" * 64 not in prompt
+    assert len(prompt.encode("utf-8")) < 4 * 1024
 
 
 def test_success_round_trip_and_digest_are_stable_for_fixed_measurement() -> None:
@@ -287,6 +356,77 @@ def test_warm_cache_uses_complete_canonical_scope_and_avoids_second_call() -> No
     assert first.telemetry.cache_misses == 1
     assert second.telemetry.cache_hits == 1
     assert second.telemetry.model_calls == 0
+
+
+def test_live_and_cached_results_require_complete_exact_inner_route_trace() -> None:
+    missing_engine = _FakeEngine(
+        [_contract()],
+        metadata={"resolved_model_name": None},
+    )
+    missing = _configured(missing_engine).run(_request())
+
+    assert missing.status is contracts.StageStatus.FAILED
+    assert (
+        missing.failure_code
+        is contracts.FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
+    )
+    assert "omitted: resolved_model_name" in (missing.failure_detail or "")
+    assert len(missing_engine.calls) == 1
+
+    drift_engine = _FakeEngine(
+        [_contract()],
+        metadata={"service_endpoint": "http://127.0.0.1:9999/v1"},
+    )
+    drifted = _configured(drift_engine).run(_request())
+    assert drifted.status is contracts.StageStatus.FAILED
+    assert "identity drifted: service_endpoint" in (
+        drifted.failure_detail or ""
+    )
+
+    shared_cache: dict[str, object] = {}
+    cached_engine = _FakeEngine([_contract()])
+    adapter = _configured(cached_engine, cache=shared_cache)
+    request = _request(cache_mode=contracts.CacheMode.WARM)
+    assert adapter.run(request).status is contracts.StageStatus.SUCCESS
+    entry = next(iter(shared_cache.values()))
+    assert isinstance(entry, dict)
+    metadata = entry["metadata"]
+    assert isinstance(metadata, dict)
+    metadata.pop("routing_backend")
+
+    cached = adapter.run(request)
+    assert cached.status is contracts.StageStatus.FAILED
+    assert "omitted: routing_backend" in (cached.failure_detail or "")
+    assert cached.telemetry.cache_hits == 1
+    assert cached.telemetry.model_calls == 0
+
+
+def test_generic_config_without_inner_expectations_does_not_require_route_trace() -> None:
+    engine = _FakeEngine(
+        [_contract()],
+        metadata={
+            "resolved_provider_name": None,
+            "resolved_model_name": None,
+            "service_endpoint": None,
+            "routing_backend": None,
+        },
+    )
+    adapter = _configured(
+        engine,
+        config=adapters.SymaiAdapterConfig(
+            model="Leanstral-119B",
+            max_retries=0,
+        ),
+    )
+
+    record = adapter.run(_request())
+
+    assert record.status is contracts.StageStatus.SUCCESS
+    assert record.data["backend_provenance"]["router_metadata"] == {
+        "backend": "llm_router",
+        "effective_model_name": "Leanstral-119B",
+        "effective_provider_name": "ipfs_accelerate_py",
+    }
 
 
 def test_cache_does_not_cross_run_variant_split_or_mode() -> None:
@@ -499,6 +639,7 @@ def test_default_factory_uses_existing_engine_without_starting_service(
     assert kwargs["model_name"] == "Leanstral-119B"
     assert kwargs["cache_namespace"] == "isolated/scope"
     assert kwargs["allow_local_fallback"] is False
+    assert kwargs["route_binding"] is None
     assert "server" not in kwargs
 
 

@@ -31,12 +31,22 @@ RECEIPT_SCHEMA = "ipfs-datasets.logic-pipeline-benchmark.symai-router-runtime.v1
 TASK_ID = "HSSL-BENCH-032"
 EVIDENCE_ID = "HSSLEV1118B52"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+_REPOSITORY_ROOT_TEXT = str(REPOSITORY_ROOT)
+if _REPOSITORY_ROOT_TEXT not in sys.path:
+    sys.path.insert(0, _REPOSITORY_ROOT_TEXT)
 DEFAULT_LOCK_PATH = (
     REPOSITORY_ROOT
     / "benchmarks"
     / "logic_pipeline"
     / "runtime_env"
     / "symai-router.lock"
+)
+DEFAULT_LEANSTRAL_LOCK_PATH = (
+    REPOSITORY_ROOT
+    / "benchmarks"
+    / "logic_pipeline"
+    / "runtime_env"
+    / "leanstral.lock"
 )
 SMOKE_TEXT = (
     "Every runtime identity receipt names exactly one configured provider and model."
@@ -681,6 +691,18 @@ def run_structured_smoke(
 
     if len(SMOKE_TEXT.encode("utf-8")) > lock.max_input_bytes:
         raise ProvisioningError("smoke_input_bound_exceeded")
+    try:
+        leanstral_lock = _mapping(
+            _strict_json(
+                DEFAULT_LEANSTRAL_LOCK_PATH.read_text(encoding="utf-8")
+            ),
+            "leanstral_lock",
+        )
+        resolved_identity = _mapping(
+            leanstral_lock["identity"], "leanstral_identity"
+        )
+    except (OSError, KeyError, UnicodeError, ProvisioningError) as exc:
+        raise ProvisioningError("smoke_resolved_identity_missing") from exc
     config = adapters.SymaiAdapterConfig(
         provider=lock.provider,
         model=lock.model,
@@ -688,6 +710,10 @@ def run_structured_smoke(
         cache_enabled=False,
         max_text_bytes=lock.max_input_bytes,
         max_raw_output_bytes=lock.max_output_bytes,
+        expected_inner_provider=str(resolved_identity.get("provider") or ""),
+        expected_inner_model=str(resolved_identity.get("model") or ""),
+        expected_inner_endpoint=str(resolved_identity.get("endpoint") or ""),
+        expected_inner_backend="existing_leanstral_service",
     )
     kwargs: dict[str, object] = {"config": config, "cache": {}}
     if engine_factory is not None:
@@ -731,6 +757,20 @@ def run_structured_smoke(
         or effective_model != lock.model
     ):
         raise ProvisioningError("smoke_identity_mismatch")
+    router_metadata = provenance.get("router_metadata")
+    if not isinstance(router_metadata, Mapping):
+        raise ProvisioningError("smoke_resolved_identity_missing")
+    resolved_provider = router_metadata.get("resolved_provider_name")
+    resolved_model = router_metadata.get("resolved_model_name")
+    service_endpoint = router_metadata.get("service_endpoint")
+    routing_backend = router_metadata.get("routing_backend")
+    if (
+        resolved_provider != resolved_identity.get("provider")
+        or resolved_model != resolved_identity.get("model")
+        or service_endpoint != resolved_identity.get("endpoint")
+        or routing_backend != "existing_leanstral_service"
+    ):
+        raise ProvisioningError("smoke_resolved_identity_mismatch")
     if (
         provenance.get("starts_model_server") is not False
         or provenance.get("reuses_existing_model_service") is not True
@@ -753,6 +793,10 @@ def run_structured_smoke(
         "effective_provider": effective_provider,
         "requested_model": requested_model,
         "effective_model": effective_model,
+        "resolved_provider": resolved_provider,
+        "resolved_model": resolved_model,
+        "service_endpoint": service_endpoint,
+        "routing_backend": routing_backend,
         "identity_verified": True,
         "structured_contract_validated": True,
         "calls": record.telemetry.model_calls,

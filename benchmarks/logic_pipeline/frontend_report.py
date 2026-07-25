@@ -18,8 +18,9 @@ from typing import Final, Mapping, Sequence
 
 from benchmarks.logic_pipeline import BENCHMARK_ID
 from benchmarks.logic_pipeline.cases import (
+    FROZEN_CORPUS_MANIFEST_SHA256,
     FROZEN_SPLIT_SHA256,
-    load_reviewed_corpus,
+    load_unsealed_pilot_development,
 )
 from benchmarks.logic_pipeline.contracts import (
     CaseResultRecord,
@@ -223,10 +224,10 @@ def _artifact_digest(value: Mapping[str, object]) -> str:
 def _case_catalog() -> tuple[
     dict[str, dict[str, object]], dict[str, list[str]]
 ]:
-    corpus = load_reviewed_corpus()
+    _manifest, cases = load_unsealed_pilot_development()
     catalog: dict[str, dict[str, object]] = {}
     by_split = {split: [] for split in SPLITS}
-    for case in corpus.cases:
+    for case in cases:
         split = case.split.value
         if split not in SPLITS:
             continue
@@ -331,12 +332,29 @@ def _validate_measured_source(
     )
     if not route_matches:
         raise FrontendReportError("case_result stages differ from requested route")
-    spacy_present = StageName.SPACY in actual_stages
-    symai_present = StageName.SYMAI in actual_stages
-    if row["spacy_invoked"] is not spacy_present:
-        raise FrontendReportError("spacy_invoked differs from case_result stages")
-    if row["symai_invoked"] is not symai_present:
-        raise FrontendReportError("symai_invoked differs from case_result stages")
+    by_stage = {item.stage: item for item in result.stages}
+
+    def graph_invoked(stage_name: StageName) -> bool:
+        stage = by_stage.get(stage_name)
+        if stage is None:
+            return False
+        invoked = stage.provenance.effective_identity.get("graph_invoked")
+        if type(invoked) is not bool:
+            raise FrontendReportError(
+                f"{stage_name.value} stage lacks an explicit graph_invoked receipt"
+            )
+        return invoked
+
+    spacy_invoked = graph_invoked(StageName.SPACY)
+    symai_invoked = graph_invoked(StageName.SYMAI)
+    if row["spacy_invoked"] is not spacy_invoked:
+        raise FrontendReportError(
+            "spacy_invoked differs from the case_result graph receipt"
+        )
+    if row["symai_invoked"] is not symai_invoked:
+        raise FrontendReportError(
+            "symai_invoked differs from the case_result graph receipt"
+        )
     total_calls = sum(item.telemetry.model_calls for item in result.stages)
     symai_calls = sum(
         item.telemetry.model_calls
@@ -932,8 +950,7 @@ def validate_frontend_report(value: object) -> dict[str, object]:
     if data["registry_sha256"] != VARIANT_REGISTRY_SHA256:
         raise FrontendReportError("variant registry identity changed")
 
-    corpus = load_reviewed_corpus()
-    if data["corpus_manifest_sha256"] != corpus.manifest_sha256:
+    if data["corpus_manifest_sha256"] != FROZEN_CORPUS_MANIFEST_SHA256:
         raise FrontendReportError("reviewed corpus identity changed")
     catalog, by_split = _case_catalog()
     split_sha = _mapping(data["split_sha256"], "split_sha256")
@@ -1184,7 +1201,7 @@ def create_capability_preflight_report() -> dict[str, object]:
         "execution_mode": "capability_preflight",
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
-        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
         "split_sha256": {
             split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
         },
@@ -1297,7 +1314,7 @@ def build_frontend_report(
         "execution_mode": "measured",
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
-        "corpus_manifest_sha256": load_reviewed_corpus().manifest_sha256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
         "split_sha256": {
             split: FROZEN_SPLIT_SHA256[Split(split)] for split in SPLITS
         },

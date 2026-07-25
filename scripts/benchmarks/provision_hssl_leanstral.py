@@ -46,8 +46,11 @@ PINNED_IDENTITY: Final = {
     "server_build": "llama.cpp",
 }
 PINNED_P2P_PORT: Final = 19001
+PINNED_DRAFT_TIMEOUT_SECONDS: Final = 30.0
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _SECRET_KEYS = ("api_key", "apikey", "authorization", "credential", "password", "secret", "token")
+_REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
+_LOCAL_IPFS_ACCELERATE_SOURCE: Final = _REPOSITORY_ROOT / "ipfs_accelerate_py"
 
 
 def HSSLEV1126C73() -> str:
@@ -325,7 +328,20 @@ def _models(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
+def _identity_token(value: object) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value).casefold())
+
+
 def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any], surface: str) -> dict[str, Any]:
+    """Bind one discovery record to the locked logical and transport identity.
+
+    llama.cpp's native model list reports ``owned_by=llamacpp`` and does not
+    know the supervisor's logical provider/service aliases.  ModelManager and
+    its MCP tool deliberately preserve that transport provider.  Treat those
+    fields as a server-build attestation while still rejecting any unrelated
+    provider, endpoint, service, build, or model substitution.
+    """
+
     model = str(record.get("id") or record.get("model_id") or record.get("model") or "")
     provider = str(record.get("provider") or record.get("owned_by") or "")
     metadata = record.get("metadata", record.get("meta", {}))
@@ -335,27 +351,34 @@ def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any]
     endpoint = record.get("endpoint")
     expected = lock.identity
     mismatches = []
-    for name, actual in (
-        ("model", model),
-        ("provider", provider),
-        ("service", service),
-        ("server_build", server_build),
+    if model != expected["model"]:
+        mismatches.append("model")
+    if provider and (
+        provider != expected["provider"]
+        and _identity_token(provider) != _identity_token(expected["server_build"])
     ):
-        if actual != expected[name]:
-            mismatches.append(name)
+        mismatches.append("provider")
+    if service and service != expected["service"]:
+        mismatches.append("service")
+    if (
+        server_build
+        and _identity_token(server_build)
+        != _identity_token(expected["server_build"])
+    ):
+        mismatches.append("server_build")
     if endpoint is not None and sanitize_endpoint(str(endpoint)) != expected["endpoint"]:
         mismatches.append("endpoint")
+    if surface in {"model manager", "MCP"} and endpoint is None:
+        mismatches.append("endpoint")
+    if "status" in record and str(record["status"]).casefold() != "available":
+        mismatches.append("status")
+    if "served" in record and record["served"] is not True:
+        mismatches.append("served")
     if mismatches:
         raise LeanstralProvisioningError(
             f"{surface} identity mismatch: {', '.join(sorted(set(mismatches)))}"
         )
-    return {
-        "endpoint": expected["endpoint"],
-        "provider": provider,
-        "model": model,
-        "service": service,
-        "server_build": server_build,
-    }
+    return dict(expected)
 
 
 def verify_proof_draft(
@@ -438,6 +461,12 @@ def verify_p2p_evidence(
 
 
 def _default_model_manager_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
+    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
+    if (
+        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
+        and source not in sys.path
+    ):
+        sys.path.insert(0, source)
     try:
         from ipfs_accelerate_py.model_manager import ModelManager
     except ImportError as exc:
@@ -460,6 +489,12 @@ def _default_model_manager_probe(lock: LeanstralRuntimeLock) -> list[dict[str, A
 
 
 def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
+    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
+    if (
+        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
+        and source not in sys.path
+    ):
+        sys.path.insert(0, source)
     try:
         import anyio
         import ipfs_accelerate_py.model_manager as manager_module
@@ -510,10 +545,18 @@ def provision_shared_leanstral(
     mcp_probe: Callable[..., Any] = _default_mcp_probe,
     p2p_evidence: Mapping[str, Any] | None = None,
     draft_probe: bool = True,
+    draft_timeout_seconds: float = PINNED_DRAFT_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     """Verify all shared-service discovery surfaces and return a safe receipt."""
 
     timeout = float(lock.http["timeout_seconds"])
+    if (
+        isinstance(draft_timeout_seconds, bool)
+        or not 1.0 <= float(draft_timeout_seconds) <= 60.0
+    ):
+        raise LeanstralProvisioningError(
+            "draft timeout must be between one and sixty seconds"
+        )
     response_limit = int(lock.http["max_response_bytes"])
     health, health_headers = _http_json(
         _endpoint_url(lock.identity["endpoint"], str(lock.http["health_path"])),
@@ -561,7 +604,7 @@ def provision_shared_leanstral(
     if draft_probe:
         completion, _completion_headers = _http_json(
             _endpoint_url(lock.identity["endpoint"], "/v1/chat/completions"),
-            timeout=timeout,
+            timeout=float(draft_timeout_seconds),
             max_bytes=response_limit,
             payload={
                 "model": lock.identity["model"],
@@ -602,6 +645,7 @@ def provision_shared_leanstral(
         "duplicate_server_started": False,
         "bounded": {
             "timeout_seconds": timeout,
+            "draft_timeout_seconds": float(draft_timeout_seconds),
             "max_response_bytes": response_limit,
             "max_draft_bytes": int(lock.http["max_draft_bytes"]),
         },

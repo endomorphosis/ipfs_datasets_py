@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import os
 import types
 
@@ -17,10 +18,21 @@ class _Arg:
         self.prop = _Prop(prepared_input, response_format=response_format, payload=payload)
 
 
-@pytest.mark.unit
-def test_symai_ipfs_engine_uses_routerdeps_cache(monkeypatch):
-    # Skip if symai isn't installed in the test environment.
+def _import_symai_with_isolated_config(monkeypatch, tmp_path) -> None:
+    """Import optional SyMAI without requiring a writable system prefix."""
+
+    if importlib.util.find_spec("symai") is None:
+        pytest.skip("symai is not installed in the test environment")
+    monkeypatch.setenv("IPFS_DATASETS_PY_SYMAI_PREFIX", str(tmp_path))
+    from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+    assert ensure_symai_config_for_import(force=True) is not None
     pytest.importorskip("symai")
+
+
+@pytest.mark.unit
+def test_symai_ipfs_engine_uses_routerdeps_cache(monkeypatch, tmp_path):
+    _import_symai_with_isolated_config(monkeypatch, tmp_path)
 
     monkeypatch.setenv("IPFS_DATASETS_PY_SYMAI_ROUTER_CACHE", "1")
     monkeypatch.delenv("IPFS_DATASETS_PY_SYMAI_ROUTER_DRY_RUN", raising=False)
@@ -38,7 +50,7 @@ def test_symai_ipfs_engine_uses_routerdeps_cache(monkeypatch):
 
     calls = {"n": 0}
 
-    def fake_generate_text(prompt: str, model_name: str):
+    def fake_generate_text(prompt: str, model_name: str, **_kwargs):
         calls["n"] += 1
         return (f"answer:{prompt}", {"backend": "fake"})
 
@@ -58,8 +70,8 @@ def test_symai_ipfs_engine_uses_routerdeps_cache(monkeypatch):
 
 
 @pytest.mark.unit
-def test_symai_ipfs_engine_cache_key_separates_json_vs_text(monkeypatch):
-    pytest.importorskip("symai")
+def test_symai_ipfs_engine_cache_key_separates_json_vs_text(monkeypatch, tmp_path):
+    _import_symai_with_isolated_config(monkeypatch, tmp_path)
 
     monkeypatch.setenv("IPFS_DATASETS_PY_SYMAI_ROUTER_CACHE", "1")
     monkeypatch.delenv("IPFS_DATASETS_PY_SYMAI_ROUTER_DRY_RUN", raising=False)
@@ -74,7 +86,7 @@ def test_symai_ipfs_engine_cache_key_separates_json_vs_text(monkeypatch):
 
     calls = {"n": 0}
 
-    def fake_generate_text(prompt: str, model_name: str):
+    def fake_generate_text(prompt: str, model_name: str, **_kwargs):
         calls["n"] += 1
         # Return different bodies to make collisions obvious.
         if "json" in prompt.lower():

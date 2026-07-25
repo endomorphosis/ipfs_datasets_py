@@ -15,6 +15,7 @@ import math
 import os
 from pathlib import Path
 import re
+import time
 from types import MappingProxyType
 from typing import Final, Mapping, Sequence
 
@@ -79,6 +80,11 @@ class AblationValidationError(ValueError):
 
 # Descriptive compatibility name used by operators and earlier plan drafts.
 AblationRunnerError = AblationValidationError
+
+
+def _unix_time_ms() -> int:
+    return int(time.time() * 1_000)
+
 
 def _safe_id(value: object, field: str) -> str:
     if (
@@ -1179,33 +1185,137 @@ _RESOURCE_LANE = MappingProxyType(
 )
 
 
-def _ambiguity_decision(artifacts: Sequence[StageArtifact]) -> bool:
-    """Return the deterministic frontend gate, defaulting open if unspecified."""
+_UNCERTAINTY_CUE = re.compile(
+    r"(?i)\b(?:whether|may|might|could|unless|except|unclear|ambiguous|"
+    r"does\s+not\s+(?:say|specify|state)|not\s+specified)\b"
+)
 
-    found_signal = False
-    ambiguous = False
+
+def _ambiguity_gate_receipt(
+    artifacts: Sequence[StageArtifact],
+) -> dict[str, object]:
+    """Return one label-blind, source-bound frontend uncertainty decision."""
+
+    found_structured_frontend = False
+    uncertainty_signals: set[str] = set()
+    confidence_signals: set[str] = set()
+    input_artifact_sha256s: list[str] = []
     for artifact in artifacts:
         if artifact.stage not in {StageName.COMPILER, StageName.SPACY}:
             continue
+        input_artifact_sha256s.append(artifact.digest)
+        if (
+            not artifact.invoked
+            or artifact.status is not StageStatus.SUCCESS
+            or not isinstance(artifact.data, Mapping)
+        ):
+            uncertainty_signals.add(
+                f"{artifact.stage.value}_evidence_unavailable"
+            )
+            continue
+        data = artifact.data
+        if artifact.stage is StageName.COMPILER:
+            if data.get("schema") == (
+                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+            ):
+                found_structured_frontend = True
+                compiled = data.get("compiled_obligation")
+                translation = data.get("entailment_translation")
+                if isinstance(translation, Mapping):
+                    confidence_signals.add(
+                        "reviewed_entailment_translation_supported"
+                    )
+                elif isinstance(compiled, Mapping):
+                    uncertainty_signals.add(
+                        "reviewed_entailment_translation_unsupported"
+                    )
+        if artifact.stage is StageName.SPACY and data.get("schema") == (
+            "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
+        ):
+            found_structured_frontend = True
+            modal_ir = data.get("modal_ir")
+            normalized_text = (
+                modal_ir.get("normalized_text")
+                if isinstance(modal_ir, Mapping)
+                else None
+            )
+            if isinstance(normalized_text, str) and _UNCERTAINTY_CUE.search(
+                normalized_text
+            ):
+                uncertainty_signals.add("lexical_uncertainty_cue")
+            modal_cues = data.get("modal_cues")
+            if isinstance(modal_cues, (list, tuple)):
+                cue_labels = {
+                    str(item.get("label", item.get("cue", ""))).casefold()
+                    for item in modal_cues
+                    if isinstance(item, Mapping)
+                }
+                if len(modal_cues) > 1:
+                    uncertainty_signals.add("multiple_modal_cues")
+                if cue_labels & {"may", "might", "could", "can"}:
+                    uncertainty_signals.add("ambiguous_modal_cue")
+            formulas = (
+                modal_ir.get("formulas")
+                if isinstance(modal_ir, Mapping)
+                else None
+            )
+            if isinstance(formulas, (list, tuple)) and any(
+                isinstance(formula, Mapping)
+                and (
+                    bool(formula.get("conditions"))
+                    or bool(formula.get("exceptions"))
+                )
+                for formula in formulas
+            ):
+                uncertainty_signals.add("conditional_or_exception_scope")
         queue: list[object] = [artifact.data]
         while queue:
             value = queue.pop()
             if isinstance(value, Mapping):
                 if "ambiguity_detected" in value:
-                    found_signal = True
-                    ambiguous = ambiguous or value["ambiguity_detected"] is True
+                    found_structured_frontend = True
+                    if value["ambiguity_detected"] is True:
+                        uncertainty_signals.add("explicit_ambiguity_detected")
+                    elif value["ambiguity_detected"] is False:
+                        confidence_signals.add("explicit_unambiguous_signal")
                 for key in ("ambiguity_flags", "ambiguities"):
                     if key in value and isinstance(
                         value[key], (list, tuple)
                     ):
-                        found_signal = True
-                        ambiguous = ambiguous or bool(value[key])
+                        found_structured_frontend = True
+                        if value[key]:
+                            uncertainty_signals.add(
+                                f"structured_{key}"
+                            )
                 queue.extend(value.values())
             elif isinstance(value, (list, tuple)):
                 queue.extend(value)
-    # An older injected adapter may not expose ambiguity evidence.  Keeping
-    # the gate open retains the requested arm instead of silently disabling it.
-    return ambiguous if found_signal else True
+    # A missing structured signal fails open so the conditional arm is not
+    # silently weakened.  A successful frontend with neither an uncertainty
+    # cue nor an unsupported reviewed translation closes deterministically.
+    if not found_structured_frontend:
+        uncertainty_signals.add("structured_frontend_signal_unavailable")
+    ambiguous = bool(uncertainty_signals)
+    body = {
+        "schema": (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "ambiguity-gate-decision.v1"
+        ),
+        "decision": "invoke_symai" if ambiguous else "skip_symai",
+        "ambiguity_detected": ambiguous,
+        "uncertainty_signals": sorted(uncertainty_signals),
+        "confidence_signals": sorted(confidence_signals),
+        "input_artifact_sha256s": input_artifact_sha256s,
+        "label_fields_consulted": [],
+        "rule": "structured-frontend-uncertainty-v1",
+    }
+    return {**body, "decision_sha256": _sha(body)}
+
+
+def _ambiguity_decision(artifacts: Sequence[StageArtifact]) -> bool:
+    """Compatibility predicate over the durable ambiguity-gate receipt."""
+
+    return bool(_ambiguity_gate_receipt(artifacts)["ambiguity_detected"])
 
 
 def _proof_succeeded(artifact: StageArtifact) -> bool:
@@ -1250,7 +1360,23 @@ def _synthetic_invocation(
     request: StageRequest,
     *,
     reason: str,
+    policy_decision: Mapping[str, object] | None = None,
 ) -> StageInvocation:
+    decision = (
+        {}
+        if policy_decision is None
+        else {"policy_decision": _thaw(policy_decision)}
+    )
+    decision_identity = (
+        {}
+        if policy_decision is None
+        else {
+            "policy_decision_sha256": policy_decision.get(
+                "decision_sha256"
+            ),
+            "policy_decision": policy_decision.get("decision"),
+        }
+    )
     output = StageOutput(
         data={
             "schema": "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1",
@@ -1261,15 +1387,18 @@ def _synthetic_invocation(
             "consumed_artifact_sha256": [
                 artifact.digest for artifact in request.upstream_artifacts
             ],
+            **decision,
         },
         effective_identity={
             **dict(request.requested_identity),
             "invoked": False,
             "policy_reason": reason,
             "graph_invocation_index": request.invocation_index,
+            "graph_invoked": False,
             "consumed_artifact_sha256": tuple(
                 artifact.digest for artifact in request.upstream_artifacts
             ),
+            **decision_identity,
         },
         telemetry=TelemetryRecord(
             input_items=1,
@@ -1350,6 +1479,10 @@ def _execute_job(
     scheduler: ResourceScheduler,
 ) -> CaseResultRecord:
     definition = get_variant_definition(job.variant_id)
+    case_deadline_unix_ms = _unix_time_ms() + max(
+        1,
+        math.ceil(plan.limits.case_timeout_seconds * 1_000),
+    )
     try:
         selected = _select_adapters(adapters, job.variant_id)
         invocations: dict[StageName, StageInvocation] = {}
@@ -1371,6 +1504,7 @@ def _execute_job(
                 source=("ablation_plan", plan.digest, job.job_id),
                 upstream_artifacts=tuple(artifacts),
                 invocation_index=invocation_index,
+                deadline_unix_ms=case_deadline_unix_ms,
             )
 
         def invoke(
@@ -1378,13 +1512,17 @@ def _execute_job(
             *,
             should_invoke: bool = True,
             reason: str = "scheduled",
+            policy_decision: Mapping[str, object] | None = None,
         ) -> StageArtifact:
             nonlocal invocation_index
             adapter = selected.get(stage, StageAdapter(stage))
             request = request_for(stage)
             if not should_invoke:
                 invocation = _synthetic_invocation(
-                    stage, request, reason=reason
+                    stage,
+                    request,
+                    reason=reason,
+                    policy_decision=policy_decision,
                 )
             else:
                 resource_class = _RESOURCE_CLASS[stage]
@@ -1401,15 +1539,46 @@ def _execute_job(
                 )
                 if model_identity in {"", ".", ".."}:
                     model_identity = "shared-model-service"
+                remaining_case_ms = (
+                    case_deadline_unix_ms - _unix_time_ms()
+                )
+                if remaining_case_ms <= 0:
+                    raise ResourceLeaseTimeout(
+                        "case deadline expired before resource lease for "
+                        f"{job.job_id}"
+                    )
                 lease_request = ResourceLeaseRequest(
                     owner_id=f"lease-{job.ordinal}-{stage.value}",
                     resource_class=resource_class,
                     model_identity=model_identity,
-                    timeout_seconds=plan.limits.case_timeout_seconds,
+                    timeout_seconds=remaining_case_ms / 1_000,
                 )
                 with scheduler.acquire(lease_request) as lease:
                     lease.assert_active()
+                    if _unix_time_ms() >= case_deadline_unix_ms:
+                        raise ResourceLeaseTimeout(
+                            "case deadline expired during resource lease for "
+                            f"{job.job_id}"
+                        )
                     invocation = adapter.invoke(request)
+                if policy_decision is not None:
+                    output = invocation.output
+                    if isinstance(output.data, Mapping):
+                        if "routing_policy" in output.data:
+                            raise AblationValidationError(
+                                "stage output collided with routing-policy receipt"
+                            )
+                        output = replace(
+                            output,
+                            data={
+                                **dict(output.data),
+                                "routing_policy": _thaw(policy_decision),
+                            },
+                        )
+                    invocation = StageInvocation(
+                        output,
+                        invocation.telemetry,
+                    )
                 identity = {
                     **dict(
                         invocation.output.effective_identity
@@ -1420,6 +1589,18 @@ def _execute_job(
                     "graph_policy_reason": reason,
                     "consumed_artifact_sha256": tuple(
                         artifact.digest for artifact in artifacts
+                    ),
+                    **(
+                        {}
+                        if policy_decision is None
+                        else {
+                            "policy_decision_sha256": policy_decision.get(
+                                "decision_sha256"
+                            ),
+                            "policy_decision": policy_decision.get(
+                                "decision"
+                            ),
+                        }
                     ),
                 }
                 invocation = StageInvocation(
@@ -1448,10 +1629,18 @@ def _execute_job(
             if stage not in proof_stages | {StageName.KERNEL}
         )
         for stage in frontend:
+            gate_receipt = (
+                _ambiguity_gate_receipt(artifacts)
+                if stage is StageName.SYMAI
+                and definition.symai_policy
+                is StagePolicy.AMBIGUITY_GATED
+                else None
+            )
             should_invoke = not (
                 stage is StageName.SYMAI
                 and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
-                and not _ambiguity_decision(artifacts)
+                and gate_receipt is not None
+                and not gate_receipt["ambiguity_detected"]
             )
             artifact = invoke(
                 stage,
@@ -1467,6 +1656,7 @@ def _execute_job(
                         else "frontend_scheduled"
                     )
                 ),
+                policy_decision=gate_receipt,
             )
             if artifact.status is not StageStatus.SUCCESS:
                 terminal_failure = True
@@ -1580,6 +1770,7 @@ def _execute_job(
                     for artifact in artifacts
                     if artifact.stage is stage
                 ),
+                deadline_unix_ms=case_deadline_unix_ms,
             )
             record = adapter.record(request, invocation)
             records.append(record)

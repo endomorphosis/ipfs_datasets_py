@@ -12,6 +12,7 @@ visible and produces a frozen empty shortlist with remediation.
 from __future__ import annotations
 
 from collections import Counter
+from datetime import date, datetime, timezone
 import hashlib
 import json
 import math
@@ -21,7 +22,7 @@ import stat
 import tempfile
 from typing import Final, Mapping, Sequence
 
-from . import BENCHMARK_ID
+from . import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT
 from .contracts import (
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
@@ -42,6 +43,12 @@ from .matrix_reassessment import (
     MatrixReassessmentError,
     validate_reassessment_matrix,
 )
+from .reassessment_namespace import (
+    PUBLISHED_REASSESSMENT_RUN_ID,
+    ReassessmentNamespaceError,
+    ReassessmentRunLayout,
+    reject_published_write_targets,
+)
 from .variants import (
     ALL_VARIANT_IDS,
     VARIANT_REGISTRY,
@@ -56,15 +63,12 @@ PILOT_REASSESSMENT_SNAPSHOT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
     "reassessment-pilot-shortlist-snapshot.v1"
 )
-PILOT_REASSESSMENT_RUN_ID: Final = "reassessment-v2"
-DEFAULT_PILOT_REASSESSMENT_PATH: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/"
-    "reassessment-v2/results/pilot-shortlist-v2.json"
+PILOT_REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
+_PUBLISHED_LAYOUT: Final = ReassessmentRunLayout.for_run(
+    PILOT_REASSESSMENT_RUN_ID
 )
-DEFAULT_PILOT_REASSESSMENT_SNAPSHOT: Final = Path(
-    "docs/performance_snapshots/"
-    "2026-07-24_hssl_reassessment_pilot_shortlist.json"
-)
+DEFAULT_PILOT_REASSESSMENT_PATH: Final = _PUBLISHED_LAYOUT.pilot_report
+DEFAULT_PILOT_REASSESSMENT_SNAPSHOT: Final = _PUBLISHED_LAYOUT.pilot_snapshot
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 VALIDATION_COMMAND: Final = (
     "python benchmarks/logic_pipeline/report.py --gate pilot-shortlist "
@@ -76,7 +80,24 @@ _CANDIDATE_IDS: Final = tuple(
 )
 _SELECTION_SPLITS: Final = ("pilot", "development")
 _CACHE_MODES: Final = ("cold", "warm")
-_MAX_ARTIFACT_BYTES: Final = 8 * 1024 * 1024
+_FRONTEND_REPRESENTATIVE: Final = {
+    "A1": "A1",
+    "A2": "A1",
+    "A3": "A1",
+    "A4": "A4",
+    "A5": "A5",
+    "A6": "A4",
+    "A7": "A7",
+    "A8": "A8",
+    "A9": "A4",
+    "A10": "A4",
+    "A11": "A4",
+    "A12": "A5",
+}
+# The optional semantic report may contain 240 bounded CaseResult-derived
+# observations.  Keep a finite aggregate ceiling consistent with its upstream
+# validator rather than rejecting a contract-valid complete fresh run.
+_MAX_ARTIFACT_BYTES: Final = 128 * 1024 * 1024
 
 
 class PilotReassessmentError(ValueError):
@@ -181,21 +202,143 @@ def _rooted(root: Path, path: str | Path) -> Path:
     return candidate if candidate.is_absolute() else root / candidate
 
 
-def _safe_result_path(root: Path, relative_path: object) -> Path:
+def _relative_reference(value: object, field: str) -> PurePosixPath:
+    if not isinstance(value, str) or not value or "\\" in value:
+        raise PilotReassessmentError(
+            f"{field} must be a canonical relative POSIX path"
+        )
+    path = PurePosixPath(value)
+    if (
+        path.is_absolute()
+        or not path.parts
+        or any(part in {"", ".", ".."} for part in path.parts)
+        or path.as_posix() != value
+    ):
+        raise PilotReassessmentError(
+            f"{field} must be a canonical relative POSIX path"
+        )
+    return path
+
+
+def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
+    logical_root = root.absolute()
+    logical_target = target.absolute()
+    for ancestor in reversed((logical_root, *logical_root.parents)):
+        if ancestor.is_symlink():
+            raise PilotReassessmentError(
+                f"{field} reference root must not use a symlink"
+            )
+    try:
+        relative = logical_target.relative_to(logical_root)
+    except ValueError as exc:
+        raise PilotReassessmentError(
+            f"{field} escaped its canonical reference root"
+        ) from exc
+    current = logical_root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise PilotReassessmentError(f"{field} must not use a symlink")
+
+
+def _fresh_reference_root(
+    repository: Path,
+    layout: ReassessmentRunLayout,
+) -> Path:
+    return _rooted(repository, layout.run_paths.run_root)
+
+
+def _fresh_artifact_reference(
+    path: Path,
+    *,
+    repository: Path,
+    layout: ReassessmentRunLayout,
+    field: str,
+    expected_kind: str | None = None,
+) -> str:
+    """Return a canonical run-root-relative reference for fresh evidence."""
+
+    reference_root = _fresh_reference_root(repository, layout)
+    target = _rooted(repository, path)
+    _assert_no_symlink_chain(reference_root, target, field)
+    try:
+        resolved_root = reference_root.resolve(strict=expected_kind is not None)
+        resolved = target.resolve(strict=expected_kind is not None)
+        relative = resolved.relative_to(resolved_root)
+    except (OSError, ValueError) as exc:
+        raise PilotReassessmentError(
+            f"{field} escaped its canonical reference root"
+        ) from exc
+    if expected_kind == "file" and not resolved.is_file():
+        raise PilotReassessmentError(f"{field} must be a regular file")
+    if expected_kind == "directory" and not resolved.is_dir():
+        raise PilotReassessmentError(f"{field} must be a directory")
+    reference = relative.as_posix()
+    _relative_reference(reference, field)
+    return reference
+
+
+def _snapshot_capture_date(
+    run_id: str,
+    value: object | None = None,
+) -> str:
+    if run_id == PILOT_REASSESSMENT_RUN_ID:
+        if value not in {None, "2026-07-24"}:
+            raise PilotReassessmentError(
+                "published pilot snapshot capture date changed"
+            )
+        return "2026-07-24"
+    captured_on = (
+        datetime.now(timezone.utc).date().isoformat()
+        if value is None
+        else value
+    )
+    if not isinstance(captured_on, str):
+        raise PilotReassessmentError(
+            "fresh pilot snapshot capture date is invalid"
+        )
+    try:
+        captured = date.fromisoformat(captured_on)
+    except ValueError as exc:
+        raise PilotReassessmentError(
+            "fresh pilot snapshot capture date is invalid"
+        ) from exc
+    if (
+        captured_on != captured.isoformat()
+        or captured > datetime.now(timezone.utc).date()
+    ):
+        raise PilotReassessmentError(
+            "fresh pilot snapshot capture date is invalid"
+        )
+    return captured_on
+
+
+def _safe_result_path(
+    root: Path,
+    relative_path: object,
+    *,
+    matrix_index: Path,
+    run_id: str,
+) -> Path:
     if not isinstance(relative_path, str):
         raise PilotReassessmentError("matrix result path must be a string")
     pure = PurePosixPath(relative_path)
+    fresh = run_id != PILOT_REASSESSMENT_RUN_ID
     if (
         pure.is_absolute()
         or any(part in {"", ".", ".."} for part in pure.parts)
+        or (fresh and pure.as_posix() != relative_path)
+        or (fresh and "\\" in relative_path)
         or not relative_path.startswith("matrix/")
     ):
         raise PilotReassessmentError("matrix result path escaped its namespace")
-    result_root = (root / DEFAULT_MATRIX_INDEX).parent.resolve()
+    result_root = _rooted(root, matrix_index).parent
     candidate = result_root.joinpath(*pure.parts)
+    if fresh:
+        _assert_no_symlink_chain(result_root, candidate, "matrix result")
     try:
         resolved = candidate.resolve(strict=True)
-        resolved.relative_to(result_root)
+        resolved.relative_to(result_root.resolve(strict=True))
     except (OSError, ValueError) as exc:
         raise PilotReassessmentError(
             f"matrix result path is unavailable: {relative_path}"
@@ -231,7 +374,11 @@ def _paired_interval(values: Sequence[int]) -> tuple[float, float, float]:
 
 
 def _result_observations(
-    root: Path, matrix: Mapping[str, object]
+    root: Path,
+    matrix: Mapping[str, object],
+    *,
+    matrix_index: Path,
+    run_id: str,
 ) -> list[dict[str, object]]:
     observations: list[dict[str, object]] = []
     seen: set[tuple[str, str, str, str]] = set()
@@ -239,7 +386,12 @@ def _result_observations(
         split = _mapping(raw_split, "matrix.split_runs[]")
         for raw_index in _array(split.get("results"), "matrix.split.results"):
             index = _mapping(raw_index, "matrix.split.results[]")
-            path = _safe_result_path(root, index.get("path"))
+            path = _safe_result_path(
+                root,
+                index.get("path"),
+                matrix_index=matrix_index,
+                run_id=run_id,
+            )
             outer_raw, raw_bytes = _read_canonical(path, "matrix case result")
             outer = _mapping(outer_raw, "matrix case result")
             try:
@@ -345,8 +497,222 @@ def _result_observations(
     return observations
 
 
+def _semantic_quality_evidence(
+    root: Path,
+    *,
+    layout: ReassessmentRunLayout,
+    benchmark_root: str | Path,
+    matrix_observations: Sequence[Mapping[str, object]],
+) -> tuple[
+    dict[str, Mapping[str, object]] | None,
+    dict[str, object] | None,
+]:
+    """Load optional semantic evidence only through its immutable receipt graph."""
+
+    report_path = _rooted(root, layout.frontend_report)
+    index_path = _rooted(root, layout.frontend_receipt_index)
+    receipt_directory = _rooted(root, layout.frontend_receipt_directory)
+    semantic_targets = (
+        report_path,
+        index_path,
+        receipt_directory,
+    )
+    if layout.run_id != PILOT_REASSESSMENT_RUN_ID:
+        reference_root = _fresh_reference_root(root, layout)
+        for target in semantic_targets:
+            _assert_no_symlink_chain(
+                reference_root,
+                target,
+                "front-end semantic artifact",
+            )
+    if not any(path.exists() for path in semantic_targets):
+        return None, None
+    try:
+        from .frontend_report import (
+            FRONTEND_REPORT_SCHEMA,
+            FrontendReportError,
+            load_frontend_report,
+        )
+        from .semantic_reassessment import (
+            SEMANTIC_RECEIPT_INDEX_SCHEMA,
+            SemanticReassessmentError,
+            validate_semantic_reassessment_from_matrix,
+        )
+
+        index = validate_semantic_reassessment_from_matrix(
+            repository_root=root,
+            run_id=layout.run_id,
+            benchmark_root=benchmark_root,
+        )
+        index_value, index_raw = _read_canonical(
+            index_path,
+            "semantic receipt index",
+        )
+        raw_value, report_raw = _read_canonical(
+            report_path,
+            "front-end semantic report",
+        )
+        report = load_frontend_report(report_path)
+    except (
+        FrontendReportError,
+        PilotReassessmentError,
+        SemanticReassessmentError,
+    ) as exc:
+        raise PilotReassessmentError(
+            "front-end semantic receipt graph failed source validation"
+        ) from exc
+    if (
+        index != index_value
+        or index.get("schema") != SEMANTIC_RECEIPT_INDEX_SCHEMA
+        or index.get("run_id") != layout.run_id
+        or report != raw_value
+        or report.get("schema") != FRONTEND_REPORT_SCHEMA
+        or report.get("run_id") != layout.run_id
+        or report.get("protocol_sha256") != DEFAULT_PROTOCOL_SHA256
+        or report.get("registry_sha256") != VARIANT_REGISTRY_SHA256
+    ):
+        raise PilotReassessmentError(
+            "front-end semantic report identity differs from this run"
+        )
+
+    matrix_receipts = {
+        (
+            str(item["split"]),
+            str(item["cache_mode"]),
+            str(item["variant_id"]),
+            str(item["case_id"]),
+        ): str(item["case_result_sha256"])
+        for item in matrix_observations
+    }
+    rows_by_variant: dict[str, list[Mapping[str, object]]] = {}
+    for raw_row in _array(report.get("observations"), "frontend.observations"):
+        row = _mapping(raw_row, "frontend.observations[]")
+        coordinate = (
+            str(row["split"]),
+            str(row["cache_mode"]),
+            str(row["variant_id"]),
+            str(row["case_id"]),
+        )
+        if (
+            coordinate not in matrix_receipts
+            or row.get("source_receipt_sha256")
+            != matrix_receipts[coordinate]
+        ):
+            raise PilotReassessmentError(
+                "front-end semantic receipt is not bound to the matrix"
+            )
+        rows_by_variant.setdefault(str(row["variant_id"]), []).append(row)
+
+    quality: dict[str, Mapping[str, object]] = {}
+    for variant_id, representative in _FRONTEND_REPRESENTATIVE.items():
+        rows = rows_by_variant.get(representative, [])
+        measured = [
+            row
+            for row in rows
+            if row.get("status")
+            not in {"unavailable", "infrastructure_failure"}
+        ]
+        receipts = [
+            str(row["semantic_validator_receipt_sha256"])
+            for row in measured
+            if isinstance(row.get("semantic_validator_receipt_sha256"), str)
+        ]
+        successes = sum(
+            bool(row.get("normalized_ir_exact_match"))
+            or bool(row.get("deterministic_semantic_equivalence"))
+            for row in measured
+        )
+        complete = len(rows) == 40 and len(measured) == 40 and len(receipts) == 40
+        quality[variant_id] = {
+            "representative_variant_id": representative,
+            "observation_count": len(measured),
+            "rate": _rate(successes, len(measured)),
+            "complete": complete,
+            "validator_receipt_set_sha256": (
+                _sha(sorted(receipts)) if receipts else None
+            ),
+        }
+    all_rows = [
+        row for rows in rows_by_variant.values() for row in rows
+    ]
+    all_measured = [
+        row
+        for row in all_rows
+        if row.get("status")
+        not in {"unavailable", "infrastructure_failure"}
+    ]
+    all_successes = sum(
+        bool(row.get("normalized_ir_exact_match"))
+        or bool(row.get("deterministic_semantic_equivalence"))
+        for row in all_measured
+    )
+    receipt_references = [
+        dict(
+            _mapping(
+                item,
+                "semantic receipt index.receipts[]",
+            )
+        )
+        for item in _array(
+            index.get("receipts"),
+            "semantic receipt index.receipts",
+        )
+    ]
+    if layout.run_id == PILOT_REASSESSMENT_RUN_ID:
+        report_reference = layout.frontend_report.as_posix()
+        index_reference = layout.frontend_receipt_index.as_posix()
+        directory_reference = layout.frontend_receipt_directory.as_posix()
+    else:
+        report_reference = _fresh_artifact_reference(
+            report_path,
+            repository=root,
+            layout=layout,
+            field="front-end semantic report",
+            expected_kind="file",
+        )
+        index_reference = _fresh_artifact_reference(
+            index_path,
+            repository=root,
+            layout=layout,
+            field="semantic receipt index",
+            expected_kind="file",
+        )
+        directory_reference = _fresh_artifact_reference(
+            receipt_directory,
+            repository=root,
+            layout=layout,
+            field="semantic receipt directory",
+            expected_kind="directory",
+        )
+    return quality, {
+        "kind": "independent_frontend_semantic_receipt_graph",
+        "path": report_reference,
+        "schema": FRONTEND_REPORT_SCHEMA,
+        "bytes_sha256": _sha_bytes(report_raw),
+        "semantic_sha256": report["artifact_sha256"],
+        "receipt_index": {
+            "path": index_reference,
+            "schema": SEMANTIC_RECEIPT_INDEX_SCHEMA,
+            "bytes_sha256": _sha_bytes(index_raw),
+            "artifact_sha256": index["artifact_sha256"],
+        },
+        "receipt_directory": directory_reference,
+        "receipt_reference_count": len(receipt_references),
+        "receipt_reference_set_sha256": _sha(
+            sorted(_sha(item) for item in receipt_references)
+        ),
+        "receipt_references": receipt_references,
+        "run_id": layout.run_id,
+        "source_validated": True,
+        "semantic_quality_observation_count": len(all_measured),
+        "semantic_quality_rate": _rate(all_successes, len(all_measured)),
+    }
+
+
 def _candidate_metrics(
-    observations: Sequence[Mapping[str, object]]
+    observations: Sequence[Mapping[str, object]],
+    *,
+    semantic_quality: Mapping[str, Mapping[str, object]] | None,
 ) -> tuple[list[dict[str, object]], dict[str, object]]:
     by_variant = {
         variant_id: [
@@ -362,6 +728,14 @@ def _candidate_metrics(
     baseline_p95 = _percentile(baseline_latencies, 0.95)
     baseline_model_calls = sum(int(item["model_calls"]) for item in baseline.values())
     baseline_verified = sum(bool(item["verified"]) for item in baseline.values())
+    complete_quality_rates = [
+        float(item["rate"])
+        for item in (semantic_quality or {}).values()
+        if item.get("complete") is True and item.get("rate") is not None
+    ]
+    best_quality_rate = (
+        max(complete_quality_rates) if complete_quality_rates else None
+    )
 
     candidates: list[dict[str, object]] = []
     for variant_id in _CANDIDATE_IDS:
@@ -448,11 +822,34 @@ def _candidate_metrics(
             if not hard_rows
             else (hard_verified - baseline_hard_verified) / len(hard_rows)
         )
+        quality = (
+            None
+            if semantic_quality is None
+            else semantic_quality.get(variant_id)
+        )
+        quality_complete = quality is not None and quality.get("complete") is True
+        quality_rate = (
+            float(quality["rate"])
+            if quality_complete and quality.get("rate") is not None
+            else None
+        )
+        quality_count = (
+            int(quality["observation_count"])
+            if quality is not None
+            else 0
+        )
+        quality_gap = (
+            0.0
+            if semantic_quality is None
+            else 1.0
+            if quality_rate is None or best_quality_rate is None
+            else max(0.0, min(1.0, best_quality_rate - quality_rate))
+        )
         observation = CandidateGateObservation(
             invalid_control_verified_count=0,
             paired_interval_low=paired_low,
             hard_case_verified_gain=hard_gain,
-            quality_gap_from_best=0.0,
+            quality_gap_from_best=quality_gap,
             p95_latency_reduction=latency_reduction,
             model_usage_reduction=model_reduction,
             baseline_solved_regression_rate=(
@@ -473,10 +870,8 @@ def _candidate_metrics(
         reasons = list(gate.reasons)
         if verified == 0:
             reasons.append("no kernel-verified candidate success")
-        # The matrix retains front-end payloads but has no independently
-        # reviewed semantic-validator receipt.  Proof outcomes cannot stand in
-        # for that missing quality dimension.
-        reasons.append("independent semantic-quality evidence unavailable")
+        if not quality_complete:
+            reasons.append("independent semantic-quality evidence unavailable")
         eligible = gate.status is GateStatus.PASSED and not reasons
         candidates.append(
             {
@@ -494,11 +889,31 @@ def _candidate_metrics(
                     "kernel_verified_rate": _rate(verified, len(rows)),
                     "hard_case_count": len(hard_rows),
                     "hard_case_verified_gain": hard_gain,
-                    "semantic_quality_observation_count": 0,
-                    "semantic_quality_rate": None,
+                    "semantic_quality_observation_count": quality_count,
+                    "semantic_quality_rate": quality_rate,
                     "semantic_quality_missing_reason": (
-                        "matrix execution has no independent reviewed "
-                        "semantic-validator receipt"
+                        None
+                        if quality_complete
+                        else (
+                            "matrix execution has no independent reviewed "
+                            "semantic-validator receipt"
+                        )
+                    ),
+                    **(
+                        {}
+                        if semantic_quality is None
+                        else {
+                            "semantic_quality_representative_variant_id": (
+                                _FRONTEND_REPRESENTATIVE[variant_id]
+                            ),
+                            "semantic_validator_receipt_set_sha256": (
+                                None
+                                if quality is None
+                                else quality.get(
+                                    "validator_receipt_set_sha256"
+                                )
+                            ),
+                        }
                     ),
                 },
                 "cost": {
@@ -665,7 +1080,9 @@ def _pareto(candidates: Sequence[Mapping[str, object]]) -> dict[str, object]:
     }
 
 
-def _freeze_inputs(matrix: Mapping[str, object]) -> dict[str, object]:
+def _freeze_inputs(
+    matrix: Mapping[str, object], *, run_id: str
+) -> dict[str, object]:
     selection = _mapping(matrix["selection_inputs"], "matrix.selection_inputs")
     source = _mapping(matrix["source_binding"], "matrix.source_binding")
     snapshots: dict[str, object] = {
@@ -685,7 +1102,7 @@ def _freeze_inputs(matrix: Mapping[str, object]) -> dict[str, object]:
             "frozen": True,
             "isolated_by_run_variant_split_and_mode": True,
             "cache_modes": list(_CACHE_MODES),
-            "run_id": PILOT_REASSESSMENT_RUN_ID,
+            "run_id": run_id,
         },
         "resource_policy": {
             "frozen": True,
@@ -703,6 +1120,11 @@ def _freeze_inputs(matrix: Mapping[str, object]) -> dict[str, object]:
             "worktree_receipt_sha256": source["worktree_receipt_sha256"],
         },
     }
+    if run_id != PUBLISHED_REASSESSMENT_RUN_ID:
+        snapshots["environment"] = {
+            "frozen": True,
+            "sha256": matrix["environment_sha256"],
+        }
     return {
         kind: {**_mapping(value, f"freeze.{kind}"), "binding_sha256": _sha(value)}
         for kind, value in snapshots.items()
@@ -710,26 +1132,49 @@ def _freeze_inputs(matrix: Mapping[str, object]) -> dict[str, object]:
 
 
 def build_pilot_reassessment_report(
-    *, repository_root: str | Path = REPOSITORY_ROOT
+    *,
+    repository_root: str | Path = REPOSITORY_ROOT,
+    run_id: str = PILOT_REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     """Recompute the HSSL-G140 decision from the complete persisted matrix."""
 
     root = _resolve_root(repository_root)
     try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ValueError as exc:
+        raise PilotReassessmentError("reassessment run_id is invalid") from exc
+    try:
         matrix = validate_reassessment_matrix(
             repository_root=root,
-            # matrix_reassessment intentionally preserves repository-relative
-            # paths in its public snapshot; pass its frozen relative defaults
-            # so recomputation compares the same portable identities.
-            output_root=DEFAULT_MATRIX_ROOT,
-            snapshot_path=DEFAULT_MATRIX_SNAPSHOT,
+            run_id=run_id,
+            benchmark_root=benchmark_root,
+            output_root=layout.matrix_root,
+            snapshot_path=layout.matrix_snapshot,
         )
     except MatrixReassessmentError as exc:
         raise PilotReassessmentError(
             "reassessment matrix failed source validation"
         ) from exc
-    observations = _result_observations(root, matrix)
-    candidates, baseline = _candidate_metrics(observations)
+    observations = _result_observations(
+        root,
+        matrix,
+        matrix_index=layout.matrix_index,
+        run_id=run_id,
+    )
+    semantic_quality, semantic_source_binding = _semantic_quality_evidence(
+        root,
+        layout=layout,
+        benchmark_root=benchmark_root,
+        matrix_observations=observations,
+    )
+    candidates, baseline = _candidate_metrics(
+        observations,
+        semantic_quality=semantic_quality,
+    )
     pareto = _pareto(candidates)
     selected = list(pareto["eligible_nondominated_candidate_ids"])
     if len(selected) > DEFAULT_PROTOCOL.thresholds.shortlist_candidate_max:
@@ -738,7 +1183,7 @@ def build_pilot_reassessment_report(
     else:
         over_limit = False
 
-    matrix_path = root / DEFAULT_MATRIX_INDEX
+    matrix_path = _rooted(root, layout.matrix_index)
     _, matrix_bytes = _read_canonical(matrix_path, "matrix index")
     totals = _mapping(matrix["totals"], "matrix.totals")
     safety_source = _mapping(matrix["safety"], "matrix.safety")
@@ -760,11 +1205,19 @@ def build_pilot_reassessment_report(
         }
     ]
     verified = sum(bool(item["verified"]) for item in measured_efficacy)
+    semantic_complete = (
+        semantic_quality is not None
+        and bool(semantic_quality)
+        and all(
+            item.get("complete") is True
+            for item in semantic_quality.values()
+        )
+    )
     model_calls = sum(int(item["model_calls"]) for item in observations)
     retries = sum(int(item["retries"]) for item in observations)
     solver_processes = sum(int(item["solver_processes"]) for item in observations)
     wall_time_ms = sum(float(item["wall_time_ms"]) for item in observations)
-    freeze_inputs = _freeze_inputs(matrix)
+    freeze_inputs = _freeze_inputs(matrix, run_id=run_id)
 
     eligible = (
         bool(selected)
@@ -814,9 +1267,26 @@ def build_pilot_reassessment_report(
             },
         ]
     )
+    if remediation and semantic_complete:
+        remediation = [
+            item
+            for item in remediation
+            if int(item["priority"]) != 4
+        ]
+    matrix_reference = (
+        layout.matrix_index.as_posix()
+        if run_id == PILOT_REASSESSMENT_RUN_ID
+        else _fresh_artifact_reference(
+            matrix_path,
+            repository=root,
+            layout=layout,
+            field="pilot matrix source",
+            expected_kind="file",
+        )
+    )
     source_binding = {
         "kind": "complete_reassessment_matrix",
-        "path": DEFAULT_MATRIX_INDEX.as_posix(),
+        "path": matrix_reference,
         "schema": MATRIX_INDEX_SCHEMA,
         "bytes_sha256": _sha_bytes(matrix_bytes),
         "semantic_sha256": matrix["artifact_sha256"],
@@ -836,6 +1306,15 @@ def build_pilot_reassessment_report(
         "registry_sha256": VARIANT_REGISTRY_SHA256,
         "inputs": freeze_inputs,
         "source_binding_sha256": _sha(source_binding),
+        **(
+            {}
+            if semantic_source_binding is None
+            else {
+                "semantic_source_binding_sha256": _sha(
+                    semantic_source_binding
+                )
+            }
+        ),
         "selected_configurations": [
             {
                 "variant_id": variant_id,
@@ -857,12 +1336,17 @@ def build_pilot_reassessment_report(
         "evidence": "HSSLEV1409B38",
         "evidence_statement": HSSLEV1409B38(),
         "benchmark_id": BENCHMARK_ID,
-        "run_id": PILOT_REASSESSMENT_RUN_ID,
+        "run_id": run_id,
         "status": status,
         "frozen": True,
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
         "registry_sha256": VARIANT_REGISTRY_SHA256,
         "source_binding": source_binding,
+        **(
+            {}
+            if semantic_source_binding is None
+            else {"semantic_source_binding": semantic_source_binding}
+        ),
         "completeness": {
             "source_validated": True,
             "matrix_status": matrix["status"],
@@ -882,11 +1366,25 @@ def build_pilot_reassessment_report(
                 "source_receipt_count": len(observations),
                 "stage_invocation_count": frontend_stage_count,
                 "model_calls": model_calls,
-                "semantic_quality_observation_count": 0,
-                "semantic_quality_rate": None,
+                "semantic_quality_observation_count": (
+                    0
+                    if semantic_source_binding is None
+                    else semantic_source_binding[
+                        "semantic_quality_observation_count"
+                    ]
+                ),
+                "semantic_quality_rate": (
+                    None
+                    if semantic_source_binding is None
+                    else semantic_source_binding["semantic_quality_rate"]
+                ),
                 "missing_reason": (
-                    "no independent reviewed semantic-validator receipt was "
-                    "published by the unchanged matrix"
+                    (
+                        "no independent reviewed semantic-validator receipt "
+                        "was published by the unchanged matrix"
+                    )
+                    if semantic_source_binding is None
+                    else None
                 ),
             },
             "proof": {
@@ -963,8 +1461,13 @@ def build_pilot_reassessment_report(
                 "complete eligible nondominated frontier frozen"
                 if eligible
                 else (
-                    "the complete matrix has measured zero proof efficacy and "
-                    "no independent semantic-quality evidence; no arm passes"
+                    (
+                        "the complete matrix has measured zero proof efficacy "
+                        "and no independent semantic-quality evidence; no arm "
+                        "passes"
+                    )
+                    if verified == 0 and semantic_source_binding is None
+                    else "no candidate passed every frozen eligibility gate"
                 )
             ),
         },
@@ -987,8 +1490,18 @@ def build_pilot_reassessment_report(
             "status": status,
             "structurally_valid": True,
             "matrix_complete": True,
-            "efficacy_status": "measured_zero",
-            "semantic_quality_status": "unavailable",
+            "efficacy_status": (
+                "measured_zero" if verified == 0 else "measured_nonzero"
+            ),
+            "semantic_quality_status": (
+                "unavailable"
+                if semantic_source_binding is None
+                else (
+                    "complete"
+                    if semantic_complete
+                    else "incomplete"
+                )
+            ),
             "shortlist_status": (
                 "frozen_nonempty" if eligible else "frozen_empty"
             ),
@@ -1006,7 +1519,7 @@ def build_pilot_reassessment_report(
         holdout = _mapping(report["holdout"], "holdout")
         holdout["authorization_sha256"] = _sha(
             {
-                "run_id": PILOT_REASSESSMENT_RUN_ID,
+                "run_id": run_id,
                 "selected_variant_ids": selected,
                 "freeze_sha256": deep_freeze["freeze_sha256"],
                 "matrix_sha256": matrix["artifact_sha256"],
@@ -1019,7 +1532,11 @@ def build_pilot_reassessment_report(
 
 
 def validate_pilot_reassessment_report(
-    value: object, *, repository_root: str | Path = REPOSITORY_ROOT
+    value: object,
+    *,
+    repository_root: str | Path = REPOSITORY_ROOT,
+    run_id: str = PILOT_REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
 ) -> dict[str, object]:
     """Reject any artifact that differs from source receipt recomputation."""
 
@@ -1034,7 +1551,11 @@ def validate_pilot_reassessment_report(
         {key: item for key, item in data.items() if key != "artifact_sha256"}
     ):
         raise PilotReassessmentError("pilot reassessment digest changed")
-    expected = build_pilot_reassessment_report(repository_root=repository_root)
+    expected = build_pilot_reassessment_report(
+        repository_root=repository_root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
     if data != expected:
         raise PilotReassessmentError(
             "pilot reassessment differs from recomputed source evidence"
@@ -1042,16 +1563,42 @@ def validate_pilot_reassessment_report(
     return data
 
 
-def _snapshot(report: Mapping[str, object], artifact: Path) -> dict[str, object]:
+def _snapshot(
+    report: Mapping[str, object],
+    artifact: Path,
+    *,
+    repository: Path,
+    benchmark_root: str | Path,
+    captured_on: object | None = None,
+) -> dict[str, object]:
     shortlist = _mapping(report["shortlist"], "shortlist")
     decision = _mapping(report["decision"], "decision")
     safety = _mapping(
         _mapping(report["reports"], "reports")["safety"], "reports.safety"
     )
-    return {
-        "benchmark_script": VALIDATION_COMMAND,
-        "captured_on": "2026-07-24",
-        "notes": [
+    run_id = str(report["run_id"])
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ValueError as exc:
+        raise PilotReassessmentError(
+            "pilot snapshot run_id is invalid"
+        ) from exc
+    artifact_reference = (
+        DEFAULT_PILOT_REASSESSMENT_PATH.as_posix()
+        if run_id == PILOT_REASSESSMENT_RUN_ID
+        else _fresh_artifact_reference(
+            artifact,
+            repository=repository,
+            layout=layout,
+            field="pilot snapshot artifact",
+            expected_kind="file",
+        )
+    )
+    if run_id == PILOT_REASSESSMENT_RUN_ID:
+        notes = [
             "The complete unchanged pilot/development matrix was source-validated.",
             (
                 "Zero kernel acceptances are measured efficacy, not missing "
@@ -1061,14 +1608,49 @@ def _snapshot(report: Mapping[str, object], artifact: Path) -> dict[str, object]
                 "No eligible arm passed; the shortlist is frozen empty and "
                 "holdout remains sealed."
             ),
-        ],
+        ]
+    else:
+        selected_count = int(shortlist["selected_count"])
+        holdout_authorized = bool(decision["holdout_authorized"])
+        notes = [
+            "The complete unchanged pilot/development matrix was source-validated.",
+            (
+                "Kernel efficacy and semantic quality remain measured receipt "
+                "evidence; missingness is not treated as success."
+            ),
+            (
+                (
+                    f"The frozen shortlist contains {selected_count} eligible "
+                    f"arm{'s' if selected_count != 1 else ''}; "
+                )
+                if selected_count
+                else "The frozen shortlist contains no eligible arm; "
+            )
+            + (
+                "paired holdout execution is authorized."
+                if holdout_authorized
+                else "holdout remains sealed."
+            ),
+        ]
+    return {
+        "benchmark_script": (
+            VALIDATION_COMMAND
+            if run_id == PILOT_REASSESSMENT_RUN_ID
+            else (
+                "python benchmarks/logic_pipeline/report.py --gate "
+                f"pilot-shortlist --run-id {run_id} --artifact "
+                f"{artifact_reference}"
+            )
+        ),
+        "captured_on": _snapshot_capture_date(run_id, captured_on),
+        "notes": notes,
         "results": {
             "schema": PILOT_REASSESSMENT_SNAPSHOT_SCHEMA,
             "evidence": "HSSLEV1409B38",
-            "run_id": report["run_id"],
+            "run_id": run_id,
             "status": report["status"],
             "artifact": {
-                "path": DEFAULT_PILOT_REASSESSMENT_PATH.as_posix(),
+                "path": artifact_reference,
                 "bytes_sha256": _sha_bytes(artifact.read_bytes()),
                 "semantic_sha256": report["artifact_sha256"],
             },
@@ -1090,23 +1672,71 @@ def _snapshot(report: Mapping[str, object], artifact: Path) -> dict[str, object]
 
 
 def load_pilot_reassessment_report(
-    path: str | Path = DEFAULT_PILOT_REASSESSMENT_PATH,
+    path: str | Path | None = None,
     *,
     repository_root: str | Path = REPOSITORY_ROOT,
+    run_id: str = PILOT_REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    snapshot_path: str | Path | None = None,
     validate_snapshot: bool = True,
 ) -> dict[str, object]:
-    """Load canonical v2 evidence and recompute it from the complete matrix."""
+    """Load run-scoped evidence and recompute it from the complete matrix."""
 
     root = _resolve_root(repository_root)
-    artifact = _rooted(root, path)
-    value, _ = _read_canonical(artifact, "pilot reassessment artifact")
-    report = validate_pilot_reassessment_report(value, repository_root=root)
-    if validate_snapshot:
-        snapshot_path = root / DEFAULT_PILOT_REASSESSMENT_SNAPSHOT
-        snapshot, _ = _read_canonical(
-            snapshot_path, "pilot reassessment snapshot"
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
         )
-        if snapshot != _snapshot(report, artifact):
+    except ValueError as exc:
+        raise PilotReassessmentError("reassessment run_id is invalid") from exc
+    artifact_reference = Path(layout.pilot_report if path is None else path)
+    artifact = _rooted(root, artifact_reference)
+    if run_id != PILOT_REASSESSMENT_RUN_ID:
+        _fresh_artifact_reference(
+            artifact,
+            repository=root,
+            layout=layout,
+            field="pilot reassessment artifact",
+            expected_kind="file",
+        )
+    value, _ = _read_canonical(artifact, "pilot reassessment artifact")
+    report = validate_pilot_reassessment_report(
+        value,
+        repository_root=root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    if validate_snapshot:
+        selected_snapshot = Path(
+            layout.pilot_snapshot
+            if snapshot_path is None
+            else snapshot_path
+        )
+        selected_snapshot_path = _rooted(root, selected_snapshot)
+        if run_id != PILOT_REASSESSMENT_RUN_ID:
+            _fresh_artifact_reference(
+                selected_snapshot_path,
+                repository=root,
+                layout=layout,
+                field="pilot reassessment snapshot",
+                expected_kind="file",
+            )
+        snapshot, _ = _read_canonical(
+            selected_snapshot_path,
+            "pilot reassessment snapshot",
+        )
+        snapshot_mapping = _mapping(
+            snapshot,
+            "pilot reassessment snapshot",
+        )
+        if snapshot != _snapshot(
+            report,
+            artifact,
+            repository=root,
+            benchmark_root=benchmark_root,
+            captured_on=snapshot_mapping.get("captured_on"),
+        ):
             raise PilotReassessmentError(
                 "pilot reassessment snapshot differs from the artifact"
             )
@@ -1154,24 +1784,68 @@ def _atomic_write(path: Path, payload: bytes, *, overwrite: bool) -> None:
 
 
 def write_pilot_reassessment_report(
-    path: str | Path = DEFAULT_PILOT_REASSESSMENT_PATH,
+    path: str | Path | None = None,
     *,
-    snapshot_path: str | Path = DEFAULT_PILOT_REASSESSMENT_SNAPSHOT,
+    run_id: str,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    snapshot_path: str | Path | None = None,
     repository_root: str | Path = REPOSITORY_ROOT,
     overwrite: bool = False,
 ) -> tuple[Path, Path]:
-    """Build and atomically publish the canonical artifact and public snapshot."""
+    """Write one fresh run's artifact and run-scoped validation snapshot."""
 
     root = _resolve_root(repository_root)
-    artifact = _rooted(root, path)
-    public_snapshot = _rooted(root, snapshot_path)
-    report = build_pilot_reassessment_report(repository_root=root)
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+        artifact_reference = Path(
+            layout.pilot_report if path is None else path
+        )
+        snapshot_reference = Path(
+            layout.pilot_snapshot
+            if snapshot_path is None
+            else snapshot_path
+        )
+        reject_published_write_targets(
+            repository_root=root,
+            run_id=run_id,
+            targets=(artifact_reference, snapshot_reference),
+            benchmark_root=benchmark_root,
+        )
+    except (ValueError, ReassessmentNamespaceError) as exc:
+        raise PilotReassessmentError(str(exc)) from exc
+    artifact = _rooted(root, artifact_reference)
+    public_snapshot = _rooted(root, snapshot_reference)
+    _fresh_artifact_reference(
+        artifact,
+        repository=root,
+        layout=layout,
+        field="pilot reassessment artifact",
+    )
+    _fresh_artifact_reference(
+        public_snapshot,
+        repository=root,
+        layout=layout,
+        field="pilot reassessment snapshot",
+    )
+    report = build_pilot_reassessment_report(
+        repository_root=root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
     _atomic_write(
         artifact,
         (canonical_json(report) + "\n").encode("utf-8"),
         overwrite=overwrite,
     )
-    snapshot = _snapshot(report, artifact)
+    snapshot = _snapshot(
+        report,
+        artifact,
+        repository=root,
+        benchmark_root=benchmark_root,
+    )
     _atomic_write(
         public_snapshot,
         (canonical_json(snapshot) + "\n").encode("utf-8"),

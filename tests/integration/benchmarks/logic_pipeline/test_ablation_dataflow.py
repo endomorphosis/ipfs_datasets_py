@@ -199,6 +199,7 @@ def test_ambiguity_gate_is_zero_call_but_retains_typed_stage_record(
     assert symai.data["invoked"] is False
     assert symai.data["reason"] == "frontend_ambiguity_gate_closed"
     assert symai.telemetry.model_calls == 0
+    assert symai.provenance.effective_identity["graph_invoked"] is False
 
 
 def test_hammer_success_suppresses_bounded_fallback_and_flows_artifacts(

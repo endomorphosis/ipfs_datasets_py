@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from datetime import date, datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -10,7 +11,12 @@ from typing import Mapping
 
 import pytest
 
-from benchmarks.logic_pipeline import ablation, capability_reprobe, runtime
+from benchmarks.logic_pipeline import (
+    ablation,
+    capabilities,
+    capability_reprobe,
+    runtime,
+)
 from benchmarks.logic_pipeline import matrix_reassessment as reassessment
 from benchmarks.logic_pipeline.adapters import StageOutput
 from benchmarks.logic_pipeline.cases import FROZEN_CORPUS_MANIFEST_SHA256
@@ -36,6 +42,7 @@ from benchmarks.logic_pipeline.variants import (
 ROOT = Path(__file__).resolve().parents[4]
 RECEIPTS = ROOT / capability_reprobe.DEFAULT_RECEIPT_DIRECTORY
 TERMINAL_OUTCOMES = frozenset(OutcomeStatus)
+FRESH_TEST_RUN_ID = "post-repair-matrix-test"
 
 
 def _load(path: Path) -> dict[str, object]:
@@ -48,12 +55,60 @@ def _canonical_sha256(value: object) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _fresh_test_reprobe(
+    published: capability_reprobe.LiveCapabilityReprobe,
+) -> capability_reprobe.LiveCapabilityReprobe:
+    """Rebind immutable checked evidence for dependency-free execution tests."""
+
+    receipts: dict[str, dict[str, object]] = {}
+    for component, frozen_receipt in published.receipts.items():
+        receipt = json.loads(canonical_json(dict(frozen_receipt)))
+        receipt["run_id"] = FRESH_TEST_RUN_ID
+        receipt.pop("receipt_sha256")
+        receipt["receipt_sha256"] = _canonical_sha256(receipt)
+        receipts[component] = receipt
+    records = []
+    for record in published.inventory.capabilities:
+        identity = dict(record.identity)
+        component = str(identity["live_receipt_component"])
+        identity["live_receipt_sha256"] = receipts[component]["receipt_sha256"]
+        records.append(
+            capabilities.CapabilityRecord(
+                kind=record.kind,
+                status=record.status,
+                identity=identity,
+                provenance=record.provenance,
+                reason=record.reason,
+            )
+        )
+    environment = dict(published.inventory.environment)
+    environment["run_id"] = FRESH_TEST_RUN_ID
+    inventory = capabilities.CapabilityInventory.create(
+        FRESH_TEST_RUN_ID,
+        records,
+        environment=environment,
+        source_commit=published.inventory.source_commit,
+    )
+    return capability_reprobe.LiveCapabilityReprobe(
+        inventory,
+        receipts,
+        published.source_binding,
+    )
+
+
 @pytest.fixture(scope="module")
 def frozen_reprobe() -> capability_reprobe.LiveCapabilityReprobe:
     return capability_reprobe.validate_frozen_capability_reprobe(
         repository_root=ROOT,
         receipt_directory=RECEIPTS,
     )
+
+
+@pytest.fixture(scope="module")
+def fresh_reprobe(
+    frozen_reprobe: capability_reprobe.LiveCapabilityReprobe,
+) -> capability_reprobe.LiveCapabilityReprobe:
+    return _fresh_test_reprobe(frozen_reprobe)
 
 
 class _DeterministicHandlers:
@@ -157,6 +212,8 @@ class _DeterministicHandlers:
             symai=self.generic(StageName.SYMAI),
             legacy_symai=self.legacy_symai,
             hammer=self.generic(StageName.HAMMER),
+            learned_hammer=self.generic(StageName.HAMMER),
+            premise_ranked_hammer=self.generic(StageName.HAMMER),
             leanstral=self.leanstral,
             kernel=self.kernel,
         )
@@ -276,6 +333,64 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
             )
 
 
+def test_published_snapshot_retains_exact_legacy_date_and_path() -> None:
+    index_path = ROOT / reassessment.DEFAULT_MATRIX_INDEX
+    index = reassessment._read_canonical(index_path, "published matrix index")
+    expected = reassessment._snapshot(
+        index,
+        index_path,
+        repository=ROOT,
+        benchmark_root=reassessment.DEFAULT_BENCHMARK_ROOT,
+    )
+
+    assert expected == _load(ROOT / reassessment.DEFAULT_MATRIX_SNAPSHOT)
+    assert expected["captured_on"] == "2026-07-24"
+    assert expected["results"]["artifact"]["path"] == (
+        reassessment.DEFAULT_MATRIX_INDEX.as_posix()
+    )
+
+
+def test_matrix_passes_frozen_case_limit_to_leanstral_runtime(
+    tmp_path: Path,
+    fresh_reprobe: capability_reprobe.LiveCapabilityReprobe,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class RuntimeCaptured(RuntimeError):
+        pass
+
+    def capture_runtime(
+        _inventory: object,
+        _handlers: object,
+        **kwargs: object,
+    ) -> object:
+        captured.update(kwargs)
+        raise RuntimeCaptured
+
+    monkeypatch.setattr(
+        reassessment,
+        "build_live_runtime",
+        capture_runtime,
+    )
+    with pytest.raises(RuntimeCaptured):
+        reassessment.execute_reassessment_matrix(
+            fresh_reprobe,
+            repository_root=ROOT,
+            output_root=tmp_path / "matrix",
+            snapshot_path=tmp_path / "snapshot.json",
+            handlers=_DeterministicHandlers().runtime_handlers(),
+            resume=False,
+        )
+
+    assert captured["leanstral_timeout_seconds"] == (
+        ablation.ResourceLimits().case_timeout_seconds
+    )
+    assert captured["leanstral_max_new_tokens"] == (
+        runtime.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+    )
+
+
 def test_non_holdout_reader_never_deserializes_the_sealed_tail(
     tmp_path: Path,
 ) -> None:
@@ -297,15 +412,21 @@ def test_non_holdout_reader_never_deserializes_the_sealed_tail(
 
 def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     tmp_path: Path,
-    frozen_reprobe: capability_reprobe.LiveCapabilityReprobe,
+    fresh_reprobe: capability_reprobe.LiveCapabilityReprobe,
 ) -> None:
-    output_root = tmp_path / "matrix"
-    snapshot_path = tmp_path / "matrix-snapshot.json"
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    layout = reassessment.ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    output_root = layout.matrix_root
+    snapshot_path = layout.matrix_snapshot
     handlers = _DeterministicHandlers()
 
     first = reassessment.execute_reassessment_matrix(
-        frozen_reprobe,
+        fresh_reprobe,
         repository_root=ROOT,
+        benchmark_root=benchmark_root,
         output_root=output_root,
         snapshot_path=snapshot_path,
         handlers=handlers.runtime_handlers(),
@@ -314,16 +435,20 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     first_call_count = len(handlers.calls)
     validated = reassessment.validate_reassessment_matrix(
         repository_root=ROOT,
+        run_id=FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
         output_root=output_root,
         snapshot_path=snapshot_path,
+        frozen_reprobe=fresh_reprobe,
     )
     # Simulate interruption after both split ledgers were durably written but
     # before the aggregate index/snapshot publication.
     (output_root.parent / "matrix-execution-v2.json").unlink()
     snapshot_path.unlink()
     replay = reassessment.execute_reassessment_matrix(
-        frozen_reprobe,
+        fresh_reprobe,
         repository_root=ROOT,
+        benchmark_root=benchmark_root,
         output_root=output_root,
         snapshot_path=snapshot_path,
         handlers=handlers.runtime_handlers(),
@@ -334,6 +459,12 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     assert first_call_count > 0
     assert len(handlers.calls) == first_call_count
     assert snapshot_path.is_file()
+    snapshot = _load(snapshot_path)
+    captured = date.fromisoformat(str(snapshot["captured_on"]))
+    assert captured <= datetime.now(timezone.utc).date()
+    assert snapshot["results"]["artifact"]["path"] == (
+        "results/matrix-execution-v2.json"
+    )
     assert first["artifact_sha256"]
     assert first["totals"]["invalid_control_coordinate_count"] == 56
     assert first["totals"]["invalid_control_verified_count"] == 0
@@ -423,13 +554,19 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
 
 def test_validator_rejects_noncanonical_index_and_result_tamper(
     tmp_path: Path,
-    frozen_reprobe: capability_reprobe.LiveCapabilityReprobe,
+    fresh_reprobe: capability_reprobe.LiveCapabilityReprobe,
 ) -> None:
-    output_root = tmp_path / "matrix"
-    snapshot_path = tmp_path / "snapshot.json"
+    benchmark_root = (tmp_path / "external-benchmark-root").resolve()
+    layout = reassessment.ReassessmentRunLayout.for_run(
+        FRESH_TEST_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    output_root = layout.matrix_root
+    snapshot_path = layout.matrix_snapshot
     reassessment.execute_reassessment_matrix(
-        frozen_reprobe,
+        fresh_reprobe,
         repository_root=ROOT,
+        benchmark_root=benchmark_root,
         output_root=output_root,
         snapshot_path=snapshot_path,
         handlers=_DeterministicHandlers().runtime_handlers(),
@@ -446,11 +583,43 @@ def test_validator_rejects_noncanonical_index_and_result_tamper(
     with pytest.raises(ValueError, match="canonical"):
         reassessment.validate_reassessment_matrix(
             repository_root=ROOT,
+            run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
             output_root=output_root,
             snapshot_path=snapshot_path,
+            frozen_reprobe=fresh_reprobe,
         )
 
     index_path.write_bytes(original_index)
+    original_snapshot = snapshot_path.read_bytes()
+    snapshot = _load(snapshot_path)
+    snapshot["results"]["artifact"]["path"] = "../matrix-execution-v2.json"
+    snapshot_path.write_text(canonical_json(snapshot) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="public matrix snapshot changed"):
+        reassessment.validate_reassessment_matrix(
+            repository_root=ROOT,
+            run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+            output_root=output_root,
+            snapshot_path=snapshot_path,
+            frozen_reprobe=fresh_reprobe,
+        )
+
+    snapshot_path.write_bytes(original_snapshot)
+    snapshot = _load(snapshot_path)
+    snapshot["captured_on"] = "2999-01-01"
+    snapshot_path.write_text(canonical_json(snapshot) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="capture date is invalid"):
+        reassessment.validate_reassessment_matrix(
+            repository_root=ROOT,
+            run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+            output_root=output_root,
+            snapshot_path=snapshot_path,
+            frozen_reprobe=fresh_reprobe,
+        )
+
+    snapshot_path.write_bytes(original_snapshot)
     result_path = next(
         path
         for path in output_root.rglob("*.json")
@@ -462,8 +631,11 @@ def test_validator_rejects_noncanonical_index_and_result_tamper(
     with pytest.raises(ValueError):
         reassessment.validate_reassessment_matrix(
             repository_root=ROOT,
+            run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
             output_root=output_root,
             snapshot_path=snapshot_path,
+            frozen_reprobe=fresh_reprobe,
         )
 
 
@@ -492,6 +664,8 @@ def test_execute_cli_forwards_complete_scope_and_resume(
     exit_code = runtime.main(
         [
             "execute",
+            "--run-id",
+            "post-repair-cli-test",
             "--splits",
             "pilot,development",
             "--cache-mode",
@@ -508,6 +682,7 @@ def test_execute_cli_forwards_complete_scope_and_resume(
     assert json.loads(capsys.readouterr().out)["coordinate_count"] == 560
     kwargs = captured["kwargs"]
     assert isinstance(kwargs, dict)
+    assert kwargs["run_id"] == "post-repair-cli-test"
     assert kwargs["splits"] == (Split.PILOT, Split.DEVELOPMENT)
     assert kwargs["cache_modes"] == (CacheMode.COLD, CacheMode.WARM)
     assert kwargs["output_root"] == output_root

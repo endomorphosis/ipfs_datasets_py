@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from benchmarks.logic_pipeline import runner
+from benchmarks.logic_pipeline import ablation, runner
 from benchmarks.logic_pipeline.adapters import StageAdapter
 from benchmarks.logic_pipeline.capabilities import (
     HSSLEV0724C07,
@@ -355,4 +355,64 @@ def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(
     assert (
         blocked.results[0].failure_code
         is FailureCode.RESOURCE_LEASE_CANCELLATION
+    )
+
+
+def test_ablation_lease_uses_remaining_case_time_and_never_invokes_after_expiry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    limits = runner.ResourceLimits(case_timeout_seconds=1)
+    plan = runner.build_ablation_plan(
+        "remaining-lease-deadline",
+        (_case("remaining-lease-case"),),
+        case_manifest_sha256=SHA_MANIFEST,
+        split=Split.PILOT,
+        seed=74,
+        variant_ids=("A0",),
+        cache_modes=(CacheMode.COLD,),
+        limits=limits,
+        environment_sha256=SHA_ENVIRONMENT,
+    )
+    requests: list[ResourceLeaseRequest] = []
+
+    class CapturingScheduler(ResourceScheduler):
+        def acquire(self, request: ResourceLeaseRequest):
+            requests.append(request)
+            return super().acquire(request)
+
+    scheduler = CapturingScheduler(
+        ResourcePolicy.from_resource_limits(limits)
+    )
+    invocations = 0
+
+    def handler(_request: object) -> dict[str, object]:
+        nonlocal invocations
+        invocations += 1
+        return {"unexpected": True}
+
+    # The case starts at 1000.000, requests its lease after 250 ms, and reaches
+    # the post-acquisition boundary exactly at its 1001.000 deadline.
+    unix_times = iter((1_000_000, 1_000_250, 1_001_000))
+    monkeypatch.setattr(ablation, "_unix_time_ms", lambda: next(unix_times))
+
+    execution = runner.execute_ablation(
+        plan,
+        {
+            StageName.COMPILER: StageAdapter(
+                StageName.COMPILER,
+                handler=handler,
+            )
+        },
+        output_root=tmp_path / "remaining-lease",
+        resume=False,
+        resource_scheduler=scheduler,
+    )
+
+    assert len(requests) == 1
+    assert requests[0].timeout_seconds == pytest.approx(0.75)
+    assert invocations == 0
+    assert execution.results[0].status is OutcomeStatus.INFRASTRUCTURE_FAILURE
+    assert execution.results[0].failure_code is (
+        FailureCode.RESOURCE_LEASE_CANCELLATION
     )

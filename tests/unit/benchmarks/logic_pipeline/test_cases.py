@@ -69,6 +69,7 @@ def test_objective_evidence_and_public_api_are_stable() -> None:
         "CorpusManifest",
         "ReviewedCorpus",
         "load_reviewed_corpus",
+        "load_unsealed_pilot_development",
     }
 
 
@@ -89,6 +90,29 @@ def test_default_corpus_is_frozen_reviewed_and_representative() -> None:
         cases.ExpectedClass
     )
     assert tuple(corpus.by_id) == tuple(case.case_id for case in corpus.cases)
+
+
+def test_unsealed_loader_stops_before_holdout_tail(tmp_path: Path) -> None:
+    source_lines = cases.DEFAULT_CORPUS_PATH.read_bytes().splitlines(
+        keepends=True
+    )
+    assert len(source_lines) == 30
+    corpus_path = tmp_path / "corpus.jsonl"
+    corpus_path.write_bytes(
+        b"".join(source_lines[:20]) + b"{sealed-holdout-not-json}\n" * 10
+    )
+
+    manifest, unsealed = cases.load_unsealed_pilot_development(
+        corpus_path,
+        cases.DEFAULT_MANIFEST_PATH,
+    )
+
+    assert cases.corpus_manifest_sha256(manifest) == FROZEN_MANIFEST_SHA256
+    assert len(unsealed) == 20
+    assert {case.split for case in unsealed} == {
+        Split.PILOT,
+        Split.DEVELOPMENT,
+    }
 
 
 def test_every_case_has_acceptance_fields_and_reviewed_ground_truth() -> None:

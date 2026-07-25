@@ -12,11 +12,12 @@ detached worktree.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime, timezone
 import hashlib
 import importlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import sys
 import tempfile
@@ -24,7 +25,7 @@ from types import MappingProxyType
 from typing import Callable, Final, Mapping
 import urllib.request
 
-from . import BENCHMARK_ID, RunPaths
+from . import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT, RunPaths
 from .capabilities import (
     CAPABILITY_INVENTORY_SCHEMA,
     CapabilityContractError,
@@ -40,10 +41,20 @@ from .capabilities import (
     canonical_capability_inventory_json,
     run_bounded_process_group,
 )
-from .source_reconciliation import load_reconciled_baseline_manifest
+from .reassessment_namespace import (
+    PUBLISHED_REASSESSMENT_RUN_ID,
+    ReassessmentNamespaceError,
+    ReassessmentRunLayout,
+    reject_published_write_targets,
+    require_fresh_reassessment_run,
+)
+from .source_reconciliation import (
+    SourceReconciliationError,
+    load_source_baseline_manifest,
+)
 
 
-REASSESSMENT_RUN_ID: Final = "reassessment-v2"
+REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
 LIVE_RECEIPT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.live-capability-smoke.v1"
 )
@@ -54,24 +65,13 @@ SNAPSHOT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.capability-reassessment-snapshot.v1"
 )
 DEFAULT_BASELINE_MANIFEST: Final = (
-    Path("workspace")
-    / "benchmarks"
-    / BENCHMARK_ID
-    / REASSESSMENT_RUN_ID
-    / "state"
-    / "baseline-manifest.json"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).baseline_manifest
 )
 DEFAULT_RECEIPT_DIRECTORY: Final = (
-    Path("workspace")
-    / "benchmarks"
-    / BENCHMARK_ID
-    / REASSESSMENT_RUN_ID
-    / "receipts"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).receipt_directory
 )
 DEFAULT_SNAPSHOT_PATH: Final = (
-    Path("docs")
-    / "performance_snapshots"
-    / "2026-07-24_hssl_reassessment_capability_inventory.json"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).capability_snapshot
 )
 REQUIRED_MATRIX_CAPABILITIES: Final = tuple(CapabilityKind)
 NATIVE_KERNEL_COMPONENT: Final = "native_kernel"
@@ -84,12 +84,6 @@ _SECRET_KEY_RE = re.compile(
 _SYMAI_SMOKE_TEXT = (
     'Return only this JSON object: {"runtime_identity":"exact","fallback":false}'
 )
-_LEANSTRAL_SMOKE_PROMPT = (
-    "Complete this non-corpus Lean identity proof draft only: "
-    "theorem hssl_identity (x : Nat) : x = x := by"
-)
-
-
 class CapabilityFreezeError(RuntimeError):
     """Raised when live evidence cannot authorize or freeze the matrix."""
 
@@ -195,7 +189,12 @@ def _seal_receipt(payload: Mapping[str, object]) -> dict[str, object]:
     return result
 
 
-def _validate_live_receipt(value: object, *, component: str) -> dict[str, object]:
+def _validate_live_receipt(
+    value: object,
+    *,
+    component: str,
+    expected_run_id: str,
+) -> dict[str, object]:
     receipt = dict(_mapping(value, f"{component} receipt"))
     _exact_keys(
         receipt,
@@ -217,7 +216,7 @@ def _validate_live_receipt(value: object, *, component: str) -> dict[str, object
     if (
         receipt["schema"] != LIVE_RECEIPT_SCHEMA
         or receipt["evidence"] != "HSSLEV1207F16"
-        or receipt["run_id"] != REASSESSMENT_RUN_ID
+        or receipt["run_id"] != expected_run_id
         or receipt["component"] != component
         or receipt["status"] != "pass"
     ):
@@ -263,6 +262,7 @@ def _base_receipt(
     identity: Mapping[str, object],
     checks: Mapping[str, object],
     *,
+    run_id: str,
     timeout_seconds: float,
     max_input_bytes: int,
     max_output_bytes: int,
@@ -271,7 +271,7 @@ def _base_receipt(
         {
             "schema": LIVE_RECEIPT_SCHEMA,
             "evidence": "HSSLEV1207F16",
-            "run_id": REASSESSMENT_RUN_ID,
+            "run_id": run_id,
             "component": component,
             "status": "pass",
             "requested_identity": dict(identity),
@@ -299,7 +299,160 @@ def _load_json(path: Path) -> Mapping[str, object]:
     return _mapping(value, path.as_posix())
 
 
-def _spacy_smoke(repository: Path) -> dict[str, object]:
+def _rooted(repository: Path, value: str | Path) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else repository / path
+
+
+def _uses_legacy_repository_references(
+    run_id: str,
+    _benchmark_root: str | Path,
+) -> bool:
+    """Keep the checked-in v2 snapshot's repository-relative wire format."""
+
+    return run_id == PUBLISHED_REASSESSMENT_RUN_ID
+
+
+def _fresh_capture_date() -> str:
+    """Return the truthful UTC calendar date for a newly frozen snapshot."""
+
+    return datetime.now(timezone.utc).date().isoformat()
+
+
+def _valid_capture_date(
+    value: object,
+    *,
+    published_legacy: bool,
+) -> bool:
+    if published_legacy:
+        return value == "2026-07-24"
+    if not isinstance(value, str):
+        return False
+    try:
+        captured = date.fromisoformat(value)
+    except ValueError:
+        return False
+    return (
+        value == captured.isoformat()
+        and captured <= datetime.now(timezone.utc).date()
+    )
+
+
+def _reference_root(
+    repository: Path,
+    *,
+    run_id: str,
+    benchmark_root: str | Path,
+) -> Path:
+    if _uses_legacy_repository_references(run_id, benchmark_root):
+        return repository
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    return _rooted(repository, layout.run_paths.run_root)
+
+
+def _relative_reference(value: object, field: str) -> PurePosixPath:
+    if not isinstance(value, str) or not value or "\\" in value:
+        raise CapabilityFreezeError(
+            f"{field} must be a canonical relative POSIX path"
+        )
+    path = PurePosixPath(value)
+    if (
+        path.is_absolute()
+        or not path.parts
+        or any(part in {"", ".", ".."} for part in path.parts)
+        or path.as_posix() != value
+    ):
+        raise CapabilityFreezeError(
+            f"{field} must be a canonical relative POSIX path"
+        )
+    return path
+
+
+def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
+    """Reject a symlink at the reference root or any selected descendant."""
+
+    logical_root = root.absolute()
+    logical_target = target.absolute()
+    for ancestor in reversed((logical_root, *logical_root.parents)):
+        if ancestor.is_symlink():
+            raise CapabilityFreezeError(
+                f"{field} reference root must not use a symlink"
+            )
+    try:
+        relative = logical_target.relative_to(logical_root)
+    except ValueError as exc:
+        raise CapabilityFreezeError(
+            f"{field} escaped its reference root"
+        ) from exc
+    current = logical_root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise CapabilityFreezeError(f"{field} must not use a symlink")
+
+
+def _canonical_artifact_reference(
+    path: Path,
+    *,
+    repository: Path,
+    run_id: str,
+    benchmark_root: str | Path,
+    field: str,
+) -> str:
+    root = _reference_root(
+        repository,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    logical_path = path if path.is_absolute() else repository / path
+    _assert_no_symlink_chain(root, logical_path, field)
+    try:
+        relative = logical_path.resolve(strict=False).relative_to(
+            root.resolve(strict=False)
+        )
+    except ValueError as exc:
+        raise CapabilityFreezeError(
+            f"{field} must remain inside its canonical reference root"
+        ) from exc
+    reference = relative.as_posix()
+    _relative_reference(reference, field)
+    return reference
+
+
+def _resolve_artifact_reference(
+    value: object,
+    *,
+    repository: Path,
+    run_id: str,
+    benchmark_root: str | Path,
+    field: str,
+) -> Path:
+    relative = _relative_reference(value, field)
+    root = _reference_root(
+        repository,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    candidate = root.joinpath(*relative.parts)
+    _assert_no_symlink_chain(root, candidate, field)
+    try:
+        resolved_root = root.resolve(strict=True)
+        target = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise CapabilityFreezeError(
+            f"{field} artifact is unavailable"
+        ) from exc
+    if not target.is_file() or not target.is_relative_to(resolved_root):
+        raise CapabilityFreezeError(
+            f"{field} escaped its canonical reference root"
+        )
+    return target
+
+
+def _spacy_smoke(repository: Path, *, run_id: str) -> dict[str, object]:
     lock = _load_json(repository / "benchmarks/logic_pipeline/runtime_env/spacy.lock")
     runtime = _mapping(lock.get("runtime"), "spacy lock runtime")
     pipeline = _mapping(lock.get("pipeline"), "spacy lock pipeline")
@@ -357,6 +510,7 @@ def _spacy_smoke(repository: Path) -> dict[str, object]:
             ),
             "token_count": len(document),
         },
+        run_id=run_id,
         timeout_seconds=30.0,
         max_input_bytes=int(smoke["max_text_bytes"]),
         max_output_bytes=64 * 1024,
@@ -404,8 +558,106 @@ def _model_id(value: Mapping[str, object]) -> str:
     return str(value.get("id") or value.get("model") or value.get("name") or "")
 
 
+def _leanstral_adapter_smoke(
+    identity: Mapping[str, object],
+    *,
+    timeout_seconds: float,
+    max_tokens: int,
+) -> dict[str, object]:
+    """Exercise the same strict adapter/provider boundary used by A3."""
+
+    try:
+        provider_module = importlib.import_module(
+            "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
+        )
+        config = getattr(provider_module, "LeanstralProofProviderConfig")(
+            llm_provider=str(identity["provider"]),
+            model=str(identity["model"]),
+            timeout_seconds=timeout_seconds,
+            max_new_tokens=max_tokens,
+            max_output_bytes=4096,
+        )
+        from .adapters import (  # imported only for the bounded live probe
+            LEANSTRAL_DRAFT_SCHEMA,
+            LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
+            create_pinned_leanstral_provider,
+            run_leanstral_runtime_readiness_smoke,
+        )
+
+        provider = create_pinned_leanstral_provider(
+            config,
+            endpoint=str(identity["endpoint"]),
+            provider=str(identity["provider"]),
+            model=str(identity["model"]),
+        )
+        record = run_leanstral_runtime_readiness_smoke(
+            provider,
+            provider_identity=identity,
+        )
+    except Exception as exc:
+        raise CapabilityFreezeError(
+            "Leanstral adapter/provider readiness smoke failed: "
+            f"{type(exc).__name__}"
+        ) from exc
+    if record.status.value != "success" or not isinstance(record.data, Mapping):
+        detail = str(record.failure_detail or record.failure_code.value)
+        raise CapabilityFreezeError(
+            "Leanstral adapter/provider readiness smoke did not produce a draft: "
+            f"{detail[:256]}"
+        )
+    draft = _mapping(record.data.get("draft"), "Leanstral readiness draft")
+    metadata = _mapping(
+        draft.get("metadata"), "Leanstral readiness draft metadata"
+    )
+    generation = _mapping(
+        metadata.get("benchmark_generation_boundary"),
+        "Leanstral generation-boundary receipt",
+    )
+    if (
+        draft.get("schema_version") != LEANSTRAL_DRAFT_SCHEMA
+        or draft.get("llm_provider") != identity["provider"]
+        or draft.get("model") != identity["model"]
+        or draft.get("verified") is not False
+        or draft.get("authoritative") is not False
+        or draft.get("kernel_checked") is not False
+        or not str(draft.get("context_capsule_id") or "").startswith(
+            "proof-context:sha256:"
+        )
+        or generation.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
+        or generation.get("endpoint") != identity["endpoint"]
+        or generation.get("provider") != identity["provider"]
+        or generation.get("requested_model") != identity["model"]
+        or generation.get("response_model") != identity["model"]
+        or not _SHA256_RE.fullmatch(
+            str(generation.get("raw_model_content_sha256") or "")
+        )
+        or generation.get("normalization")
+        not in {"none", "strip_single_leading_by"}
+    ):
+        raise CapabilityFreezeError(
+            "Leanstral readiness draft violated the frozen strict contract"
+        )
+    return {
+        "adapter_provider_boundary": True,
+        "compiler_context_bound": True,
+        "strict_draft_schema": str(draft["schema_version"]),
+        "context_capsule_id": str(draft["context_capsule_id"]),
+        "prompt_sha256": str(draft.get("prompt_sha256") or ""),
+        "draft_output_sha256": str(draft.get("output_sha256") or ""),
+        "raw_model_content_sha256": str(
+            generation["raw_model_content_sha256"]
+        ),
+        "proposal_normalization": str(generation["normalization"]),
+        "model_calls": record.telemetry.model_calls,
+        "draft_authoritative": False,
+        "kernel_checked": False,
+    }
+
+
 def _leanstral_smokes(
     repository: Path,
+    *,
+    run_id: str,
 ) -> tuple[dict[str, object], dict[str, object]]:
     symai_lock = _load_json(
         repository / "benchmarks/logic_pipeline/runtime_env/symai-router.lock"
@@ -480,24 +732,84 @@ def _leanstral_smokes(
     if len(matching) != 1:
         raise CapabilityFreezeError("Leanstral model identity is absent or ambiguous")
 
-    completion = _http_json(
-        endpoint + "/chat/completions",
-        timeout_seconds=float(symai_smoke["timeout_seconds"]),
-        max_bytes=int(symai_smoke["max_output_bytes"]),
-        payload={
-            "model": str(symai_identity["model"]),
-            "messages": [{"role": "user", "content": _SYMAI_SMOKE_TEXT}],
-            "max_tokens": 64,
-            "temperature": 0,
-            "stream": False,
-        },
+    # Exercise the actual adapter -> SyMAI engine -> existing llm_router path.
+    # A direct endpoint completion is insufficient: it cannot detect dispatch,
+    # fallback, or structured-contract wiring defects in that path.
+    from .adapters import SymaiAdapter, SymaiAdapterConfig, StageRequest
+    from .contracts import CacheMode, Split, StageStatus
+
+    symai_adapter = SymaiAdapter(
+        config=SymaiAdapterConfig(
+            provider=str(symai_identity["provider"]),
+            model=str(symai_identity["model"]),
+            max_retries=int(symai_smoke["max_retries"]),
+            cache_enabled=False,
+            max_text_bytes=int(symai_smoke["max_input_bytes"]),
+            max_raw_output_bytes=int(symai_smoke["max_output_bytes"]),
+            expected_inner_provider=str(lean_identity["provider"]),
+            expected_inner_model=str(lean_identity["model"]),
+            expected_inner_endpoint=endpoint,
+            expected_inner_backend="existing_leanstral_service",
+        ),
+        cache={},
     )
-    choices = completion.get("choices")
-    if not isinstance(choices, list) or not choices:
-        raise CapabilityFreezeError("SyMAI/router smoke returned no completion")
-    effective_service_model = str(completion.get("model") or "")
-    if effective_service_model != lean_identity["model"]:
-        raise CapabilityFreezeError("SyMAI/router smoke reached an unpinned model")
+    symai_record = symai_adapter.run(
+        StageRequest(
+            run_id=run_id,
+            case_id="non-corpus-symai-capability-smoke",
+            case_manifest_sha256=_sha_bytes(b"hssl-symai-capability-smoke"),
+            variant_id="A4",
+            split=Split.PILOT,
+            cache_mode=CacheMode.COLD,
+            input_data={"text": _SYMAI_SMOKE_TEXT},
+            requested_identity={
+                "provider": str(symai_identity["provider"]),
+                "model": str(symai_identity["model"]),
+                "routing_stack": ["capability_reprobe", "llm_router"],
+            },
+            environment_sha256=_sha_json(
+                {"symai": symai_identity, "leanstral": lean_identity}
+            ),
+        )
+    )
+    provenance = symai_record.data.get("backend_provenance")
+    router_metadata = (
+        provenance.get("router_metadata")
+        if isinstance(provenance, Mapping)
+        else None
+    )
+    if (
+        symai_record.status is not StageStatus.SUCCESS
+        or not isinstance(router_metadata, Mapping)
+        or router_metadata.get("resolved_provider_name")
+        != lean_identity["provider"]
+        or router_metadata.get("resolved_model_name") != lean_identity["model"]
+        or router_metadata.get("service_endpoint") != endpoint
+        or router_metadata.get("routing_backend")
+        != "existing_leanstral_service"
+    ):
+        raise CapabilityFreezeError(
+            "SyMAI actual engine/adapter route failed or drifted"
+        )
+    raw_symai_output = symai_record.data.get("raw_output")
+    if not isinstance(raw_symai_output, str):
+        raise CapabilityFreezeError("SyMAI actual route omitted structured output")
+    effective_service_model = str(router_metadata["resolved_model_name"])
+    completion = {
+        "model": effective_service_model,
+        "structured_output_sha256": _sha_bytes(
+            raw_symai_output.encode("utf-8")
+        ),
+    }
+    boundary_checks = _leanstral_adapter_smoke(
+        lean_identity,
+        timeout_seconds=float(symai_smoke["timeout_seconds"]),
+        max_tokens=int(
+            _mapping(lean_lock.get("smoke"), "Leanstral lock smoke")[
+                "max_tokens"
+            ]
+        ),
+    )
     symai_effective = {
         "provider": str(symai_identity["provider"]),
         "model": str(symai_identity["model"]),
@@ -515,10 +827,14 @@ def _leanstral_smokes(
             "provider_calls": 1,
             "retries": int(symai_smoke["max_retries"]),
             "structured_output": True,
+            "actual_adapter_route": True,
+            "resolved_provider": str(router_metadata["resolved_provider_name"]),
+            "routing_backend": str(router_metadata["routing_backend"]),
             "input_sha256": _sha_bytes(_SYMAI_SMOKE_TEXT.encode("utf-8")),
             "output_sha256": _sha_json(completion),
             "served_model": effective_service_model,
         },
+        run_id=run_id,
         timeout_seconds=float(symai_smoke["timeout_seconds"]),
         max_input_bytes=int(symai_smoke["max_input_bytes"]),
         max_output_bytes=int(symai_smoke["max_output_bytes"]),
@@ -527,6 +843,7 @@ def _leanstral_smokes(
         "endpoint": endpoint,
         "provider": str(lean_identity["provider"]),
         "model": str(lean_identity["model"]),
+        "routing_backend": "existing_leanstral_service",
         "service": str(lean_identity["service"]),
         "server_build": str(lean_identity["server_build"]),
     }
@@ -538,17 +855,21 @@ def _leanstral_smokes(
             "model_list_verified": True,
             "bounded_model_smoke": True,
             "response_sha256": _sha_json(completion),
-            "draft_authoritative": False,
-            "kernel_checked": False,
+            **boundary_checks,
         },
-        timeout_seconds=timeout,
-        max_input_bytes=len(_LEANSTRAL_SMOKE_PROMPT.encode("utf-8")),
-        max_output_bytes=max_response,
+        run_id=run_id,
+        timeout_seconds=float(symai_smoke["timeout_seconds"]),
+        max_input_bytes=int(lean_http["max_draft_bytes"]),
+        max_output_bytes=min(max_response, 4096),
     )
     return symai_receipt, lean_receipt
 
 
-def _hammer_smoke(base: CapabilityInventory) -> dict[str, object]:
+def _hammer_smoke(
+    base: CapabilityInventory,
+    *,
+    run_id: str,
+) -> dict[str, object]:
     record = base.by_kind[CapabilityKind.HAMMER]
     if record.status is not CapabilityStatus.AVAILABLE:
         raise CapabilityFreezeError("Hammer metadata probe is not available")
@@ -598,13 +919,18 @@ def _hammer_smoke(base: CapabilityInventory) -> dict[str, object]:
             "smoke_input_sha256": _sha_bytes(script.encode("utf-8")),
             "stdout_sha256": _sha_bytes(result.stdout.encode("utf-8")),
         },
+        run_id=run_id,
         timeout_seconds=5,
         max_input_bytes=len(script.encode("utf-8")),
         max_output_bytes=4096,
     )
 
 
-def _lean_smokes(base: CapabilityInventory) -> tuple[dict[str, object], dict[str, object]]:
+def _lean_smokes(
+    base: CapabilityInventory,
+    *,
+    run_id: str,
+) -> tuple[dict[str, object], dict[str, object]]:
     record = base.by_kind[CapabilityKind.LEAN_TOOLCHAIN]
     if record.status is not CapabilityStatus.AVAILABLE:
         raise CapabilityFreezeError("Lean toolchain metadata probe is unavailable")
@@ -643,6 +969,7 @@ def _lean_smokes(base: CapabilityInventory) -> tuple[dict[str, object], dict[str
             "lake_version_live": True,
             "executables_distinct": str(lean["path"]) != str(lake["path"]),
         },
+        run_id=run_id,
         timeout_seconds=10,
         max_input_bytes=len(source.encode("utf-8")),
         max_output_bytes=4096,
@@ -664,6 +991,7 @@ def _lean_smokes(base: CapabilityInventory) -> tuple[dict[str, object], dict[str
             "stdout_sha256": _sha_bytes(kernel.stdout.encode("utf-8")),
             "stderr_sha256": _sha_bytes(kernel.stderr.encode("utf-8")),
         },
+        run_id=run_id,
         timeout_seconds=10,
         max_input_bytes=len(source.encode("utf-8")),
         max_output_bytes=4096,
@@ -691,7 +1019,7 @@ def _cache_smoke(run_paths: RunPaths) -> dict[str, object]:
         raise CapabilityFreezeError("run-scoped cache smoke failed")
     identity = {
         "implementation": "run-scoped-filesystem",
-        "namespace": f"{BENCHMARK_ID}/{REASSESSMENT_RUN_ID}",
+        "namespace": f"{BENCHMARK_ID}/{run_paths.run_id}",
         "root": run_paths.cache.as_posix(),
     }
     return _base_receipt(
@@ -703,13 +1031,14 @@ def _cache_smoke(run_paths: RunPaths) -> dict[str, object]:
             "payload_sha256": _sha_bytes(payload),
             "temporary_probe_removed": True,
         },
+        run_id=run_paths.run_id,
         timeout_seconds=5,
         max_input_bytes=len(payload),
         max_output_bytes=len(payload),
     )
 
 
-def _scheduler_smoke() -> dict[str, object]:
+def _scheduler_smoke(*, run_id: str) -> dict[str, object]:
     policy = ResourcePolicy(
         max_workers=1,
         max_memory_bytes=64 * 1024 * 1024,
@@ -759,6 +1088,7 @@ def _scheduler_smoke() -> dict[str, object]:
             "process_group_reaped": process.process_group_reaped,
             "stdout_sha256": _sha_bytes(process.stdout.encode("utf-8")),
         },
+        run_id=run_id,
         timeout_seconds=5,
         max_input_bytes=256,
         max_output_bytes=1024,
@@ -774,8 +1104,10 @@ class LiveCapabilityReprobe:
     source_binding: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        if self.inventory.run_id != REASSESSMENT_RUN_ID:
-            raise CapabilityFreezeError("reprobe run_id is not reassessment-v2")
+        try:
+            ReassessmentRunLayout.for_run(self.inventory.run_id)
+        except ValueError as exc:
+            raise CapabilityFreezeError("reprobe run_id is invalid") from exc
         if any(
             record.status is not CapabilityStatus.AVAILABLE
             for record in self.inventory.capabilities
@@ -798,7 +1130,13 @@ class LiveCapabilityReprobe:
                 f"expected={sorted(expected)}, actual={sorted(receipts)}"
             )
         validated = {
-            name: MappingProxyType(_validate_live_receipt(value, component=name))
+            name: MappingProxyType(
+                _validate_live_receipt(
+                    value,
+                    component=name,
+                    expected_run_id=self.inventory.run_id,
+                )
+            )
             for name, value in receipts.items()
         }
         object.__setattr__(self, "receipts", MappingProxyType(validated))
@@ -809,13 +1147,29 @@ class LiveCapabilityReprobe:
         )
 
 
-def _source_binding(repository: Path, baseline_path: Path) -> dict[str, object]:
-    baseline = load_reconciled_baseline_manifest(baseline_path)
+def _source_binding(
+    repository: Path,
+    baseline_path: Path,
+    *,
+    expected_run_id: str,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+) -> dict[str, object]:
+    try:
+        baseline = load_source_baseline_manifest(
+            baseline_path,
+            expected_run_id=expected_run_id,
+            repository_root=repository,
+            benchmark_root=benchmark_root,
+        )
+        manifest_bytes = baseline_path.read_bytes()
+    except (OSError, SourceReconciliationError) as exc:
+        raise CapabilityFreezeError(
+            f"source baseline revalidation failed: {exc}"
+        ) from exc
     payload = baseline.to_dict()
     source = _mapping(payload["source"], "baseline source")
-    manifest_bytes = baseline_path.read_bytes()
     if (
-        payload.get("run_id") != REASSESSMENT_RUN_ID
+        payload.get("run_id") != expected_run_id
         or payload.get("frozen") is not True
         or source.get("detached") is not True
         or source.get("active_checkout_unchanged") is not True
@@ -825,7 +1179,13 @@ def _source_binding(repository: Path, baseline_path: Path) -> dict[str, object]:
             "source baseline does not prove a fresh detached reassessment worktree"
         )
     return {
-        "baseline_manifest_path": baseline_path.relative_to(repository).as_posix(),
+        "baseline_manifest_path": _canonical_artifact_reference(
+            baseline_path,
+            repository=repository,
+            run_id=expected_run_id,
+            benchmark_root=benchmark_root,
+            field="source baseline",
+        ),
         "baseline_manifest_sha256": _sha_bytes(manifest_bytes),
         "baseline_semantic_sha256": baseline.digest,
         "source_commit": str(source["worktree_commit"]),
@@ -840,30 +1200,58 @@ def _source_binding(repository: Path, baseline_path: Path) -> dict[str, object]:
 def run_live_capability_reprobe(
     *,
     repository_root: str | Path = ".",
-    run_id: str = REASSESSMENT_RUN_ID,
+    run_id: str,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    baseline_manifest: str | Path | None = None,
     legacy_probe: Callable[..., CapabilityInventory],
 ) -> LiveCapabilityReprobe:
     """Execute every bounded non-corpus smoke and return an eligible inventory."""
 
     repository = Path(repository_root).resolve()
-    if run_id != REASSESSMENT_RUN_ID:
-        raise CapabilityFreezeError(
-            f"live capability freeze requires run_id {REASSESSMENT_RUN_ID!r}"
+    try:
+        layout = require_fresh_reassessment_run(
+            run_id,
+            benchmark_root=benchmark_root,
         )
-    baseline_path = repository / DEFAULT_BASELINE_MANIFEST
-    source_binding = _source_binding(repository, baseline_path)
-    run_paths = RunPaths.for_run(run_id)
+    except ReassessmentNamespaceError as exc:
+        raise CapabilityFreezeError(str(exc)) from exc
+    baseline_path = (
+        layout.baseline_manifest
+        if baseline_manifest is None
+        else Path(baseline_manifest)
+    )
+    if not baseline_path.is_absolute():
+        baseline_path = repository / baseline_path
+    try:
+        reject_published_write_targets(
+            repository_root=repository,
+            run_id=run_id,
+            targets=(baseline_path,),
+            benchmark_root=benchmark_root,
+        )
+    except ReassessmentNamespaceError as exc:
+        raise CapabilityFreezeError(str(exc)) from exc
+    source_binding = _source_binding(
+        repository,
+        baseline_path,
+        expected_run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    run_paths = layout.run_paths
     base = legacy_probe(
         run_id,
         run_paths,
         source_commit=source_binding["source_commit"],
     )
-    spacy = _spacy_smoke(repository)
-    symai_router, leanstral = _leanstral_smokes(repository)
-    hammer = _hammer_smoke(base)
-    toolchain, native_kernel = _lean_smokes(base)
+    spacy = _spacy_smoke(repository, run_id=run_id)
+    symai_router, leanstral = _leanstral_smokes(
+        repository,
+        run_id=run_id,
+    )
+    hammer = _hammer_smoke(base, run_id=run_id)
+    toolchain, native_kernel = _lean_smokes(base, run_id=run_id)
     cache = _cache_smoke(run_paths)
-    scheduler = _scheduler_smoke()
+    scheduler = _scheduler_smoke(run_id=run_id)
     receipts: dict[str, Mapping[str, object]] = {
         CapabilityKind.SPACY_PIPELINE.value: spacy,
         "symai_router": symai_router,
@@ -960,21 +1348,82 @@ def freeze_live_capability_reprobe(
     reprobe: LiveCapabilityReprobe,
     *,
     repository_root: str | Path = ".",
-    receipt_directory: str | Path = DEFAULT_RECEIPT_DIRECTORY,
-    snapshot_path: str | Path = DEFAULT_SNAPSHOT_PATH,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    baseline_manifest: str | Path | None = None,
+    receipt_directory: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
 ) -> Mapping[str, object]:
-    """Exclusively persist component receipts, inventory, freeze, and snapshot."""
+    """Revalidate the source binding, then exclusively persist frozen evidence."""
 
     repository = Path(repository_root).resolve()
-    receipt_root = Path(receipt_directory)
-    if not receipt_root.is_absolute():
-        receipt_root = repository / receipt_root
-    snapshot = Path(snapshot_path)
-    if not snapshot.is_absolute():
-        snapshot = repository / snapshot
-    receipt_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    run_id = reprobe.inventory.run_id
+    try:
+        layout = require_fresh_reassessment_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ReassessmentNamespaceError as exc:
+        raise CapabilityFreezeError(str(exc)) from exc
+    baseline_path = Path(
+        layout.baseline_manifest
+        if baseline_manifest is None
+        else baseline_manifest
+    )
+    if not baseline_path.is_absolute():
+        baseline_path = repository / baseline_path
+    expected_source_binding = _source_binding(
+        repository,
+        baseline_path,
+        expected_run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    if dict(reprobe.source_binding) != expected_source_binding:
+        raise CapabilityFreezeError(
+            "live reprobe source binding changed before freeze"
+        )
+    receipt_root = Path(
+        layout.receipt_directory
+        if receipt_directory is None
+        else receipt_directory
+    )
+    receipt_root = _rooted(repository, receipt_root)
+    snapshot = Path(
+        layout.capability_snapshot if snapshot_path is None else snapshot_path
+    )
+    snapshot = _rooted(repository, snapshot)
     inventory_path = receipt_root / "capability-inventory.json"
     freeze_path = receipt_root / "capability-freeze.json"
+    inventory_reference = _canonical_artifact_reference(
+        inventory_path,
+        repository=repository,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+        field="snapshot inventory",
+    )
+    freeze_reference = _canonical_artifact_reference(
+        freeze_path,
+        repository=repository,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+        field="snapshot freeze",
+    )
+    _canonical_artifact_reference(
+        snapshot,
+        repository=repository,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+        field="capability snapshot",
+    )
+    try:
+        reject_published_write_targets(
+            repository_root=repository,
+            run_id=run_id,
+            targets=(receipt_root, snapshot),
+            benchmark_root=benchmark_root,
+        )
+    except ReassessmentNamespaceError as exc:
+        raise CapabilityFreezeError(str(exc)) from exc
+    receipt_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     targets = [inventory_path, freeze_path, snapshot]
     targets.extend(
         receipt_root / _receipt_filename(component)
@@ -1005,7 +1454,7 @@ def freeze_live_capability_reprobe(
     freeze: dict[str, object] = {
         "schema": CAPABILITY_FREEZE_SCHEMA,
         "evidence": "HSSLEV1207F16",
-        "run_id": REASSESSMENT_RUN_ID,
+        "run_id": run_id,
         "status": "eligible",
         "frozen": True,
         "inventory": {
@@ -1031,11 +1480,12 @@ def freeze_live_capability_reprobe(
     _exclusive_write(freeze_path, freeze_raw)
     snapshot_payload = {
         "benchmark_script": (
-            "python -m benchmarks.logic_pipeline.runtime probe --require "
+            "python -m benchmarks.logic_pipeline.runtime probe "
+            f"--run-id {run_id} --require "
             "spacy_pipeline,symai,llm_router,hammer,leanstral_service,"
             "lean_toolchain"
         ),
-        "captured_on": "2026-07-24",
+        "captured_on": _fresh_capture_date(),
         "notes": [
             "This snapshot authorizes only the unchanged pilot/development reassessment matrix.",
             "Every capability and the independent native kernel passed a bounded non-corpus live smoke.",
@@ -1044,16 +1494,16 @@ def freeze_live_capability_reprobe(
         "results": {
             "schema": SNAPSHOT_SCHEMA,
             "evidence": "HSSLEV1207F16",
-            "run_id": REASSESSMENT_RUN_ID,
+            "run_id": run_id,
             "status": "eligible",
             "frozen": True,
             "inventory": {
-                "path": inventory_path.relative_to(repository).as_posix(),
+                "path": inventory_reference,
                 "bytes_sha256": _sha_bytes(inventory_raw),
                 "semantic_sha256": capability_inventory_sha256(reprobe.inventory),
             },
             "freeze": {
-                "path": freeze_path.relative_to(repository).as_posix(),
+                "path": freeze_reference,
                 "bytes_sha256": _sha_bytes(freeze_raw),
                 "semantic_sha256": freeze["freeze_sha256"],
             },
@@ -1081,15 +1531,38 @@ def freeze_live_capability_reprobe(
 def validate_frozen_capability_reprobe(
     *,
     repository_root: str | Path = ".",
-    receipt_directory: str | Path = DEFAULT_RECEIPT_DIRECTORY,
+    expected_run_id: str = REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    baseline_manifest: str | Path | None = None,
+    receipt_directory: str | Path | None = None,
 ) -> LiveCapabilityReprobe:
     """Strictly reparse and cross-validate the committed freeze evidence."""
 
     repository = Path(repository_root).resolve()
-    root = Path(receipt_directory)
-    if not root.is_absolute():
-        root = repository / root
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            expected_run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ValueError as exc:
+        raise CapabilityFreezeError("expected run_id is invalid") from exc
+    root = Path(
+        layout.receipt_directory
+        if receipt_directory is None
+        else receipt_directory
+    )
+    root = _rooted(repository, root)
     freeze_path = root / "capability-freeze.json"
+    if _uses_legacy_repository_references(expected_run_id, benchmark_root):
+        _assert_no_symlink_chain(root, freeze_path, "capability freeze")
+    else:
+        _canonical_artifact_reference(
+            freeze_path,
+            repository=repository,
+            run_id=expected_run_id,
+            benchmark_root=benchmark_root,
+            field="capability freeze",
+        )
     freeze_raw = freeze_path.read_bytes()
     freeze = dict(
         _mapping(_strict_json(freeze_raw, source=freeze_path.as_posix()), "freeze")
@@ -1118,7 +1591,7 @@ def validate_frozen_capability_reprobe(
     if (
         freeze["schema"] != CAPABILITY_FREEZE_SCHEMA
         or freeze["evidence"] != "HSSLEV1207F16"
-        or freeze["run_id"] != REASSESSMENT_RUN_ID
+        or freeze["run_id"] != expected_run_id
         or freeze["status"] != "eligible"
         or freeze["frozen"] is not True
         or freeze["native_kernel_required"] is not True
@@ -1145,8 +1618,7 @@ def validate_frozen_capability_reprobe(
     if inventory_name != "capability-inventory.json":
         raise CapabilityFreezeError("inventory path is not the canonical basename")
     inventory_path = root / str(inventory_name)
-    if inventory_path.is_symlink():
-        raise CapabilityFreezeError("inventory evidence must not be a symlink")
+    _assert_no_symlink_chain(root, inventory_path, "inventory evidence")
     inventory_raw = inventory_path.read_bytes()
     if _sha_bytes(inventory_raw) != inventory_ref.get("bytes_sha256"):
         raise CapabilityFreezeError("inventory byte digest mismatch")
@@ -1156,7 +1628,7 @@ def validate_frozen_capability_reprobe(
     inventory = CapabilityInventory.from_dict(inventory_value)
     if (
         inventory.schema != CAPABILITY_INVENTORY_SCHEMA
-        or inventory.run_id != REASSESSMENT_RUN_ID
+        or inventory.run_id != expected_run_id
         or capability_inventory_sha256(inventory)
         != inventory_ref.get("semantic_sha256")
         or inventory_raw
@@ -1177,13 +1649,18 @@ def validate_frozen_capability_reprobe(
         if reference["path"] != expected_name:
             raise CapabilityFreezeError(f"{component} receipt path drifted")
         path = root / expected_name
-        if path.is_symlink() or path.parent.resolve() != root.resolve():
+        _assert_no_symlink_chain(root, path, f"{component} receipt")
+        if path.parent.resolve() != root.resolve():
             raise CapabilityFreezeError(f"{component} receipt escaped its directory")
         raw = path.read_bytes()
         if _sha_bytes(raw) != reference["bytes_sha256"]:
             raise CapabilityFreezeError(f"{component} receipt byte digest mismatch")
         value = _strict_json(raw, source=path.as_posix())
-        receipt = _validate_live_receipt(value, component=component)
+        receipt = _validate_live_receipt(
+            value,
+            component=component,
+            expected_run_id=expected_run_id,
+        )
         if (
             raw != (_canonical_json(receipt) + "\n").encode("utf-8")
             or receipt["receipt_sha256"] != reference["receipt_sha256"]
@@ -1192,8 +1669,18 @@ def validate_frozen_capability_reprobe(
         receipts[component] = receipt
 
     source_binding = dict(_mapping(freeze["source_binding"], "source binding"))
+    baseline_path = Path(
+        layout.baseline_manifest
+        if baseline_manifest is None
+        else baseline_manifest
+    )
+    if not baseline_path.is_absolute():
+        baseline_path = repository / baseline_path
     expected_source = _source_binding(
-        repository, repository / DEFAULT_BASELINE_MANIFEST
+        repository,
+        baseline_path,
+        expected_run_id=expected_run_id,
+        benchmark_root=benchmark_root,
     )
     if source_binding != expected_source:
         raise CapabilityFreezeError("detached source/worktree binding drifted")
@@ -1219,14 +1706,35 @@ def validate_frozen_capability_reprobe(
 def validate_capability_snapshot(
     *,
     repository_root: str | Path = ".",
-    snapshot_path: str | Path = DEFAULT_SNAPSHOT_PATH,
+    expected_run_id: str = REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    receipt_directory: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
 ) -> Mapping[str, object]:
     """Validate the public wrapper against the canonical inventory and freeze."""
 
     repository = Path(repository_root).resolve()
-    path = Path(snapshot_path)
-    if not path.is_absolute():
-        path = repository / path
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            expected_run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ValueError as exc:
+        raise CapabilityFreezeError("expected run_id is invalid") from exc
+    path = Path(
+        layout.capability_snapshot if snapshot_path is None else snapshot_path
+    )
+    path = _rooted(repository, path)
+    if _uses_legacy_repository_references(expected_run_id, benchmark_root):
+        _assert_no_symlink_chain(repository, path, "capability snapshot")
+    else:
+        _canonical_artifact_reference(
+            path,
+            repository=repository,
+            run_id=expected_run_id,
+            benchmark_root=benchmark_root,
+            field="capability snapshot",
+        )
     value = dict(
         _mapping(_strict_json(path.read_bytes(), source=path.as_posix()), "snapshot")
     )
@@ -1254,35 +1762,61 @@ def validate_capability_snapshot(
         "snapshot results",
     )
     if (
-        value["captured_on"] != "2026-07-24"
+        not _valid_capture_date(
+            value["captured_on"],
+            published_legacy=_uses_legacy_repository_references(
+                expected_run_id,
+                benchmark_root,
+            ),
+        )
         or results["schema"] != SNAPSHOT_SCHEMA
         or results["evidence"] != "HSSLEV1207F16"
-        or results["run_id"] != REASSESSMENT_RUN_ID
+        or results["run_id"] != expected_run_id
         or results["status"] != "eligible"
         or results["frozen"] is not True
     ):
         raise CapabilityFreezeError("public capability snapshot header drifted")
     inventory_ref = _mapping(results["inventory"], "snapshot inventory")
     freeze_ref = _mapping(results["freeze"], "snapshot freeze")
-    inventory_candidate = repository / str(inventory_ref.get("path"))
-    freeze_candidate = repository / str(freeze_ref.get("path"))
-    inventory_path = inventory_candidate.resolve()
-    freeze_path = freeze_candidate.resolve()
-    for field, reference, candidate, target in (
-        ("inventory", inventory_ref, inventory_candidate, inventory_path),
-        ("freeze", freeze_ref, freeze_candidate, freeze_path),
+    receipt_root = _rooted(
+        repository,
+        layout.receipt_directory
+        if receipt_directory is None
+        else receipt_directory,
+    )
+    targets: dict[str, Path] = {}
+    for field, reference, filename in (
+        ("inventory", inventory_ref, "capability-inventory.json"),
+        ("freeze", freeze_ref, "capability-freeze.json"),
     ):
         _exact_keys(
             reference,
             {"path", "bytes_sha256", "semantic_sha256"},
             f"snapshot {field}",
         )
-        if (
-            candidate.is_symlink()
-            or not target.is_relative_to(repository)
-            or _sha_bytes(target.read_bytes()) != reference["bytes_sha256"]
-        ):
+        expected_reference = _canonical_artifact_reference(
+            receipt_root / filename,
+            repository=repository,
+            run_id=expected_run_id,
+            benchmark_root=benchmark_root,
+            field=f"snapshot {field}",
+        )
+        if reference["path"] != expected_reference:
+            raise CapabilityFreezeError(
+                f"snapshot {field} path binding drifted"
+            )
+        target = _resolve_artifact_reference(
+            reference["path"],
+            repository=repository,
+            run_id=expected_run_id,
+            benchmark_root=benchmark_root,
+            field=f"snapshot {field}",
+        )
+        if _sha_bytes(target.read_bytes()) != reference["bytes_sha256"]:
             raise CapabilityFreezeError(f"snapshot {field} byte binding drifted")
+        targets[field] = target
+    inventory_path = targets["inventory"]
+    freeze_path = targets["freeze"]
     inventory = CapabilityInventory.from_dict(
         _strict_json(inventory_path.read_bytes(), source=inventory_path.as_posix())
     )
@@ -1291,7 +1825,9 @@ def validate_capability_snapshot(
         "snapshot freeze artifact",
     )
     if (
-        capability_inventory_sha256(inventory)
+        inventory.run_id != expected_run_id
+        or freeze.get("run_id") != expected_run_id
+        or capability_inventory_sha256(inventory)
         != inventory_ref["semantic_sha256"]
         or freeze.get("freeze_sha256") != freeze_ref["semantic_sha256"]
         or results["source_binding"] != freeze.get("source_binding")

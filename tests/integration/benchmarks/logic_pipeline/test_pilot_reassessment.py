@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -12,6 +13,9 @@ import pytest
 
 from benchmarks.logic_pipeline.contracts import canonical_json
 from benchmarks.logic_pipeline import pilot_reassessment as gate
+from benchmarks.logic_pipeline.reassessment_namespace import (
+    ReassessmentRunLayout,
+)
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
@@ -171,6 +175,188 @@ def test_artifact_and_snapshot_are_strict_canonical_json(
         == report["artifact_sha256"]
     )
     assert snapshot["results"]["holdout_authorized"] is False
+
+
+def test_published_snapshot_recomputation_preserves_checked_in_bytes(
+    report: dict[str, object],
+) -> None:
+    expected = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+
+    assert gate._snapshot(
+        report,
+        ARTIFACT,
+        repository=REPOSITORY_ROOT,
+        benchmark_root=gate.DEFAULT_BENCHMARK_ROOT,
+        captured_on=expected["captured_on"],
+    ) == expected
+
+
+def _fresh_snapshot_report(
+    run_id: str,
+    *,
+    selected_variant_ids: tuple[str, ...] = (),
+    holdout_authorized: bool = False,
+) -> dict[str, object]:
+    return {
+        "run_id": run_id,
+        "status": "incomplete",
+        "artifact_sha256": "a" * 64,
+        "source_binding": {
+            "kind": "complete_reassessment_matrix",
+            "path": "results/matrix-execution-v2.json",
+        },
+        "shortlist": {
+            "frozen": True,
+            "selected_variant_ids": list(selected_variant_ids),
+            "selected_count": len(selected_variant_ids),
+            "reason": (
+                "eligible shortlist frozen"
+                if selected_variant_ids
+                else "no candidate passed"
+            ),
+        },
+        "decision": {
+            "holdout_authorized": holdout_authorized,
+            "production_promotion_authorized": False,
+        },
+        "reports": {
+            "safety": {
+                "holdout_accessed": False,
+            },
+        },
+        "remediation": [],
+    }
+
+
+def test_fresh_external_snapshot_is_portable_and_truthfully_dated(
+    tmp_path: Path,
+) -> None:
+    run_id = "fresh-pilot-portability"
+    repository = tmp_path / "detached-source"
+    repository.mkdir()
+    benchmark_root = tmp_path / "external-evidence"
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    layout.pilot_report.parent.mkdir(parents=True)
+    layout.pilot_report.write_text("{}\n", encoding="utf-8")
+
+    snapshot = gate._snapshot(
+        _fresh_snapshot_report(run_id),
+        layout.pilot_report,
+        repository=repository,
+        benchmark_root=benchmark_root,
+    )
+
+    assert snapshot["captured_on"] == (
+        datetime.now(timezone.utc).date().isoformat()
+    )
+    assert snapshot["results"]["artifact"]["path"] == (
+        "results/pilot-shortlist-v2.json"
+    )
+    assert str(tmp_path) not in canonical_json(snapshot)
+    assert "--artifact results/pilot-shortlist-v2.json" in (
+        snapshot["benchmark_script"]
+    )
+
+    future = (
+        datetime.now(timezone.utc).date() + timedelta(days=1)
+    ).isoformat()
+    with pytest.raises(
+        gate.PilotReassessmentError,
+        match="capture date is invalid",
+    ):
+        gate._snapshot(
+            _fresh_snapshot_report(run_id),
+            layout.pilot_report,
+            repository=repository,
+            benchmark_root=benchmark_root,
+            captured_on=future,
+        )
+
+
+def test_fresh_success_snapshot_notes_match_nonempty_shortlist(
+    tmp_path: Path,
+) -> None:
+    run_id = "fresh-pilot-success"
+    repository = tmp_path / "detached-source"
+    repository.mkdir()
+    benchmark_root = tmp_path / "external-evidence"
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    layout.pilot_report.parent.mkdir(parents=True)
+    layout.pilot_report.write_text("{}\n", encoding="utf-8")
+
+    snapshot = gate._snapshot(
+        _fresh_snapshot_report(
+            run_id,
+            selected_variant_ids=("A1", "A4"),
+            holdout_authorized=True,
+        ),
+        layout.pilot_report,
+        repository=repository,
+        benchmark_root=benchmark_root,
+    )
+
+    assert snapshot["results"]["shortlist"]["selected_variant_ids"] == [
+        "A1",
+        "A4",
+    ]
+    assert snapshot["results"]["holdout_authorized"] is True
+    assert snapshot["notes"][-1] == (
+        "The frozen shortlist contains 2 eligible arms; "
+        "paired holdout execution is authorized."
+    )
+    assert all(
+        "No eligible arm passed" not in note
+        and "Zero kernel acceptances" not in note
+        for note in snapshot["notes"]
+    )
+
+
+def test_fresh_snapshot_rejects_escape_and_symlink_redirection(
+    tmp_path: Path,
+) -> None:
+    run_id = "fresh-pilot-confinement"
+    repository = tmp_path / "detached-source"
+    repository.mkdir()
+    benchmark_root = tmp_path / "external-evidence"
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    outside_artifact = outside / "pilot-shortlist-v2.json"
+    outside_artifact.write_text("{}\n", encoding="utf-8")
+    report = _fresh_snapshot_report(run_id)
+
+    with pytest.raises(
+        gate.PilotReassessmentError,
+        match="escaped its canonical reference root",
+    ):
+        gate._snapshot(
+            report,
+            outside_artifact,
+            repository=repository,
+            benchmark_root=benchmark_root,
+        )
+
+    layout.run_paths.run_root.mkdir(parents=True)
+    layout.run_paths.results.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(
+        gate.PilotReassessmentError,
+        match="must not use a symlink",
+    ):
+        gate._snapshot(
+            report,
+            layout.pilot_report,
+            repository=repository,
+            benchmark_root=benchmark_root,
+        )
 
 
 def test_digest_tampering_is_rejected_before_source_recomputation(

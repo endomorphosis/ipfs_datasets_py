@@ -281,7 +281,7 @@ def test_attach_only_probe_binds_every_discovery_surface_and_safe_receipt(
     assert [timeout for _request, timeout in transport.calls] == [
         lock.http["timeout_seconds"],
         lock.http["timeout_seconds"],
-        lock.http["timeout_seconds"],
+        provision.PINNED_DRAFT_TIMEOUT_SECONDS,
     ]
     completion = transport.calls[-1][0]
     assert completion.get_header("Authorization") == "Bearer never-serialize-this-secret"
@@ -293,6 +293,53 @@ def test_attach_only_probe_binds_every_discovery_surface_and_safe_receipt(
         "stream": False,
         "temperature": lock.smoke["temperature"],
     }
+
+
+def test_real_llamacpp_and_model_manager_discovery_shapes_bind_logical_identity() -> None:
+    lock = provision.load_lock(LOCK_PATH)
+
+    class LlamaCppTransport(_RuntimeTransport):
+        def __call__(
+            self,
+            request: urllib.request.Request,
+            *,
+            timeout: float,
+        ) -> _JSONResponse:
+            if request.full_url.endswith("/v1/models"):
+                self.calls.append((request, timeout))
+                return _JSONResponse(
+                    {
+                        "data": [
+                            {
+                                "id": lock.identity["model"],
+                                "owned_by": "llamacpp",
+                                "meta": {"n_ctx": 8192},
+                            }
+                        ]
+                    }
+                )
+            return super().__call__(request, timeout=timeout)
+
+    discovered = {
+        "id": lock.identity["model"],
+        "model_id": lock.identity["model"],
+        "provider": "llama_cpp",
+        "endpoint": lock.identity["endpoint"],
+        "status": "available",
+        "served": True,
+        "metadata": {"n_ctx": 8192},
+    }
+    receipt = provision.provision_shared_leanstral(
+        lock,
+        opener=LlamaCppTransport(lock),
+        model_manager_probe=lambda _lock: [discovered],
+        mcp_probe=lambda _lock: [discovered],
+    )
+
+    assert receipt["http_model_list"] == dict(lock.identity)
+    assert receipt["model_manager"] == dict(lock.identity)
+    assert receipt["mcp"]["model"] == dict(lock.identity)
+    provision.validate_receipt(lock, receipt)
 
 
 @pytest.mark.parametrize("surface", ["http", "model_manager", "mcp"])

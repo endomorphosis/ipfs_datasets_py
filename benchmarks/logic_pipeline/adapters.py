@@ -23,9 +23,13 @@ import importlib
 import json
 import math
 import re
+import textwrap
+import threading
 import time
 from types import MappingProxyType, SimpleNamespace
 from typing import Any, Callable, Final, Mapping, MutableMapping, Sequence
+import urllib.parse
+import urllib.request
 
 from .contracts import (
     BASELINE_VARIANT,
@@ -70,10 +74,19 @@ LEANSTRAL_EVIDENCE_SCHEMA: Final = (
 LEANSTRAL_DRAFT_SCHEMA: Final = (
     "ipfs_accelerate_py/agent-supervisor/leanstral-proof-draft@1"
 )
+LEANSTRAL_PROOF_OUTPUT_SCHEMA: Final = (
+    "ipfs_accelerate_py.agent_supervisor.leanstral-proof-proposal@1"
+)
+LEANSTRAL_GENERATION_BOUNDARY_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "leanstral-generation-boundary.v1"
+)
 LEANSTRAL_MODEL_RESOURCE_CLASS: Final = "model"
 LEANSTRAL_KERNEL_RESOURCE_CLASS: Final = "kernel"
 LEANSTRAL_MAX_REPAIR_ATTEMPTS: Final = 1
 LEANSTRAL_MAX_CONTEXT_BYTES: Final = 64 * 1024
+LEANSTRAL_MEASURED_TIMEOUT_SECONDS: Final = 120.0
+LEANSTRAL_MEASURED_MAX_NEW_TOKENS: Final = 1_400
 # StageRecord also bounds individual strings to 4096 characters.  Keep the
 # provider output within that durable wire-contract limit.
 LEANSTRAL_MAX_DRAFT_BYTES: Final = 4 * 1024
@@ -88,6 +101,10 @@ SYMAI_EVIDENCE_SCHEMA: Final = (
 SYMAI_PROMPT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v1"
 )
+SEMANTIC_CONTEXT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
+)
+SEMANTIC_CONTEXT_MAX_BYTES: Final = 48 * 1024
 SYMAI_MAX_TEXT_BYTES: Final = 8 * 1024
 SYMAI_MAX_RAW_OUTPUT_BYTES: Final = 4 * 1024
 SYMAI_MAX_CANDIDATE_BYTES: Final = 24 * 1024
@@ -100,6 +117,9 @@ SYMAI_ROUTER_ENGINE: Final = (
 _LEANSTRAL_FORBIDDEN_CONSTRUCT = re.compile(
     r"(?i)(?<![A-Za-z0-9_'])(?:sorry|admit|sorryAx|axiom|unsafe)(?![A-Za-z0-9_'])"
 )
+_LEANSTRAL_NON_TACTIC_BODY = re.compile(
+    r"(?im)^\s*(?:(?:import|namespace|section|theorem|lemma|def|opaque|example)\b|```)"
+)
 _SYMAI_CONTRACT_KEYS = frozenset(
     {
         "candidate_ir",
@@ -111,6 +131,10 @@ _SYMAI_CONTRACT_KEYS = frozenset(
         "validation_errors",
     }
 )
+# The frozen router lock specifies the provider-level ``json_object`` mode.
+# The exact seven-field contract remains enforced by the authored prompt and
+# by ``_validate_symai_contract`` after strict duplicate-key/NaN rejection.
+SYMAI_RESPONSE_FORMAT: Final = {"type": "json_object"}
 _SYMAI_RECURSIVE_IDENTITIES = frozenset(
     {
         "symai",
@@ -250,6 +274,10 @@ class SymaiAdapterConfig:
     cache_enabled: bool = True
     max_text_bytes: int = SYMAI_MAX_TEXT_BYTES
     max_raw_output_bytes: int = SYMAI_MAX_RAW_OUTPUT_BYTES
+    expected_inner_provider: str | None = None
+    expected_inner_model: str | None = None
+    expected_inner_endpoint: str | None = None
+    expected_inner_backend: str | None = None
 
     def __post_init__(self) -> None:
         _safe_id(self.provider, "provider")
@@ -270,6 +298,43 @@ class SymaiAdapterConfig:
             raise ProtocolContractError("dry_run must be a boolean")
         if type(self.cache_enabled) is not bool:
             raise ProtocolContractError("cache_enabled must be a boolean")
+        inner_bindings = (
+            self.expected_inner_provider,
+            self.expected_inner_model,
+            self.expected_inner_endpoint,
+            self.expected_inner_backend,
+        )
+        if any(value is not None for value in inner_bindings):
+            if not all(
+                isinstance(value, str)
+                and value
+                and value == value.strip()
+                for value in inner_bindings
+            ):
+                raise ProtocolContractError(
+                    "SyMAI inner route bindings must be supplied together"
+                )
+            _safe_id(self.expected_inner_provider, "expected_inner_provider")
+            _safe_id(self.expected_inner_backend, "expected_inner_backend")
+            if (
+                len(self.expected_inner_model) > SYMAI_MAX_ITEM_LENGTH
+                or any(ord(char) < 32 for char in self.expected_inner_model)
+            ):
+                raise ProtocolContractError(
+                    "expected_inner_model must be a bounded model identity"
+                )
+            endpoint = urllib.parse.urlsplit(self.expected_inner_endpoint)
+            if (
+                endpoint.scheme not in {"http", "https"}
+                or not endpoint.netloc
+                or endpoint.username is not None
+                or endpoint.password is not None
+                or endpoint.query
+                or endpoint.fragment
+            ):
+                raise ProtocolContractError(
+                    "expected_inner_endpoint must be an absolute HTTP endpoint"
+                )
         if (
             not isinstance(self.max_text_bytes, int)
             or isinstance(self.max_text_bytes, bool)
@@ -471,6 +536,7 @@ class StageRequest:
     upstream_artifacts: tuple[StageArtifact, ...] = ()
     invocation_index: int = 0
     protocol_sha256: str = DEFAULT_PROTOCOL_SHA256
+    deadline_unix_ms: int | None = None
 
     def __post_init__(self) -> None:
         _safe_id(self.run_id, "run_id")
@@ -523,6 +589,17 @@ class StageRequest:
             raise ProtocolContractError(
                 "invocation_index must be a bounded integer"
             )
+        if (
+            self.deadline_unix_ms is not None
+            and (
+                isinstance(self.deadline_unix_ms, bool)
+                or not isinstance(self.deadline_unix_ms, int)
+                or self.deadline_unix_ms < 0
+            )
+        ):
+            raise ProtocolContractError(
+                "deadline_unix_ms must be a nonnegative integer or null"
+            )
         identity = _freeze_mapping(
             self.requested_identity, "requested_identity"
         )
@@ -563,6 +640,309 @@ class StageRequest:
             ),
             None,
         )
+
+
+def _mapping_subset(
+    value: object,
+    keys: Sequence[str],
+) -> dict[str, object]:
+    """Return a detached allowlisted projection of one evidence mapping."""
+
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        key: _thaw_json(value[key])
+        for key in keys
+        if key in value
+    }
+
+
+def _mapping_sequence_prefix(
+    value: object,
+    keys: Sequence[str],
+    *,
+    maximum: int,
+) -> list[dict[str, object]]:
+    """Bound one sequence of evidence records without using evaluator labels."""
+
+    if not isinstance(value, Sequence) or isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return []
+    return [
+        _mapping_subset(item, keys)
+        for item in value[:maximum]
+        if isinstance(item, Mapping)
+    ]
+
+
+def _semantic_artifact_projection(
+    artifact: StageArtifact,
+) -> dict[str, object]:
+    """Project one upstream semantic artifact into a label-blind model input.
+
+    The projection deliberately allowlists only stage-generated linguistic or
+    semantic evidence.  Benchmark evaluator fields such as ``expected_class``,
+    ``expected_ir``, difficulty, and negative controls never enter this
+    function and therefore cannot cross either model boundary.
+    """
+
+    projection: dict[str, object] = {
+        "stage": artifact.stage.value,
+        "artifact_sha256": artifact.digest,
+        "output_sha256": artifact.output_sha256,
+        "invoked": artifact.invoked,
+        "status": artifact.status.value,
+        "policy_reason": artifact.policy_reason,
+    }
+    if (
+        not artifact.invoked
+        or artifact.status is not StageStatus.SUCCESS
+        or not isinstance(artifact.data, Mapping)
+    ):
+        return projection
+    data = artifact.data
+    if artifact.stage is StageName.SPACY:
+        if data.get("schema") != SPACY_EVIDENCE_SCHEMA:
+            raise ProtocolContractError(
+                "spaCy semantic context used an unsupported evidence schema"
+            )
+        modal_ir = data.get("modal_ir")
+        modal_projection: dict[str, object] = {}
+        if isinstance(modal_ir, Mapping):
+            modal_projection = _mapping_subset(
+                modal_ir,
+                (
+                    "version",
+                    "document_id",
+                    "source",
+                    "normalized_text",
+                    "metadata",
+                    "frame_candidates",
+                    "frame_logic",
+                ),
+            )
+            modal_projection["formulas"] = _mapping_sequence_prefix(
+                modal_ir.get("formulas"),
+                (
+                    "formula_id",
+                    "operator",
+                    "predicate",
+                    "conditions",
+                    "exceptions",
+                    "provenance",
+                    "metadata",
+                ),
+                maximum=16,
+            )
+            modal_projection["modal_ir_sha256"] = hashlib.sha256(
+                canonical_json(_thaw_json(modal_ir)).encode("utf-8")
+            ).hexdigest()
+        projection["evidence"] = {
+            "schema": data.get("schema"),
+            "document": _mapping_subset(
+                data.get("document"),
+                (
+                    "document_id",
+                    "text_sha256",
+                    "normalized_text",
+                    "citation",
+                    "source",
+                ),
+            ),
+            "execution": _mapping_subset(
+                data.get("execution"),
+                (
+                    "mode",
+                    "requested_model",
+                    "effective_model",
+                    "used_fallback_model",
+                    "language",
+                    "pipeline",
+                    "parser_backend",
+                    "srl_backend",
+                    "model_version",
+                    "model_meta_sha256",
+                    "configuration_sha256",
+                    "variant_id",
+                ),
+            ),
+            "sentences": _mapping_sequence_prefix(
+                data.get("sentences"),
+                ("text", "start_char", "end_char"),
+                maximum=16,
+            ),
+            "tokens": _mapping_sequence_prefix(
+                data.get("tokens"),
+                (
+                    "text",
+                    "lemma",
+                    "lower",
+                    "pos",
+                    "dep",
+                    "start_char",
+                    "end_char",
+                ),
+                maximum=96,
+            ),
+            "entities": _mapping_sequence_prefix(
+                data.get("entities"),
+                ("text", "label", "start_char", "end_char"),
+                maximum=32,
+            ),
+            "semantic_roles": _mapping_sequence_prefix(
+                data.get("semantic_roles"),
+                (
+                    "frame_id",
+                    "sentence",
+                    "predicate",
+                    "predicate_span",
+                    "arguments",
+                    "confidence",
+                    "source",
+                ),
+                maximum=24,
+            ),
+            "modal_cues": _mapping_sequence_prefix(
+                data.get("modal_cues"),
+                (
+                    "cue",
+                    "family",
+                    "system",
+                    "symbol",
+                    "label",
+                    "start_char",
+                    "end_char",
+                    "token_indices",
+                ),
+                maximum=32,
+            ),
+            "modal_ir": modal_projection,
+        }
+    elif artifact.stage is StageName.SYMAI:
+        if data.get("schema") == SYMAI_EVIDENCE_SCHEMA:
+            projection["evidence"] = _mapping_subset(
+                data,
+                (
+                    "schema",
+                    "candidate_ir",
+                    "candidate_ir_sha256",
+                    "normalized_predicates",
+                    "quantifiers",
+                    "entities",
+                    "ambiguity_flags",
+                    "confidence",
+                    "validation_errors",
+                    "assurance",
+                ),
+            )
+        elif data.get("schema") == (
+            "ipfs-datasets.logic-pipeline-benchmark.policy-decision.v1"
+        ):
+            projection["evidence"] = _mapping_subset(
+                data,
+                ("schema", "stage", "invoked", "reason", "invocation_index"),
+            )
+        else:
+            raise ProtocolContractError(
+                "SyMAI semantic context used an unsupported evidence schema"
+            )
+    else:
+        raise ProtocolContractError(
+            "semantic context accepts only spaCy and SyMAI artifacts"
+        )
+    return projection
+
+
+def build_upstream_semantic_context(
+    request: StageRequest,
+    *,
+    stages: Sequence[StageName] = (
+        StageName.SPACY,
+        StageName.SYMAI,
+    ),
+    require_present: Sequence[StageName] = (),
+    require_success: Sequence[StageName] = (),
+) -> dict[str, object]:
+    """Build the exact compact semantic input consumed by model/proof stages."""
+
+    required = set(require_success)
+    present = set(require_present) | required
+    if not present.issubset(set(stages)):
+        raise ProtocolContractError(
+            "required semantic stages must be included in the projection"
+        )
+    artifacts: list[dict[str, object]] = []
+    measured_request = _is_frozen_ablation_request(request)
+    for stage in stages:
+        if stage not in {StageName.SPACY, StageName.SYMAI}:
+            raise ProtocolContractError(
+                "semantic context stages must be spaCy or SyMAI"
+            )
+        artifact = request.artifact(stage)
+        if artifact is None:
+            if stage in present:
+                raise ProtocolContractError(
+                    f"required {stage.value} semantic artifact is missing"
+                )
+            continue
+        graph_invoked = artifact.effective_identity.get("graph_invoked")
+        if measured_request and type(graph_invoked) is not bool:
+            raise ProtocolContractError(
+                f"{stage.value} semantic artifact omitted graph_invoked"
+            )
+        if (
+            graph_invoked is not None
+            and (
+                type(graph_invoked) is not bool
+                or graph_invoked is not artifact.invoked
+            )
+        ):
+            raise ProtocolContractError(
+                f"{stage.value} semantic artifact invocation receipt is inconsistent"
+            )
+        if (
+            not artifact.invoked
+            and (
+                not isinstance(artifact.data, Mapping)
+                or artifact.data.get("invoked") is not False
+            )
+        ):
+            raise ProtocolContractError(
+                f"{stage.value} gated artifact omitted invoked=false"
+            )
+        if stage in required and (
+            not artifact.invoked
+            or artifact.status is not StageStatus.SUCCESS
+        ):
+            raise ProtocolContractError(
+                f"required {stage.value} semantic artifact is not successful"
+            )
+        artifacts.append(_semantic_artifact_projection(artifact))
+    source_text = None
+    if isinstance(request.input_data, Mapping):
+        source_text = request.input_data.get(
+            "text", request.input_data.get("source_text")
+        )
+    source_sha256 = (
+        hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+        if isinstance(source_text, str)
+        else None
+    )
+    context_without_digest = {
+        "schema": SEMANTIC_CONTEXT_SCHEMA,
+        "source_text_sha256": source_sha256,
+        "artifacts": artifacts,
+    }
+    encoded = canonical_json(context_without_digest).encode("utf-8")
+    if len(encoded) > SEMANTIC_CONTEXT_MAX_BYTES:
+        raise ProtocolContractError(
+            "upstream semantic context exceeds its byte bound"
+        )
+    return {
+        **context_without_digest,
+        "context_sha256": hashlib.sha256(encoded).hexdigest(),
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -1579,7 +1959,11 @@ def _symai_cache_key(
     request: StageRequest,
     config: SymaiAdapterConfig,
     namespace: str,
+    semantic_context: Mapping[str, object] | None = None,
 ) -> str:
+    artifact_digests = [
+        artifact.digest for artifact in request.upstream_artifacts
+    ]
     digest = hashlib.sha256(
         canonical_json(
             {
@@ -1587,9 +1971,24 @@ def _symai_cache_key(
                 "namespace": namespace,
                 "case_id": request.case_id,
                 "input_sha256": request.input_sha256,
-                "upstream_stage_digests": list(request.upstream_stage_digests),
+                # During graph invocation the typed artifacts, rather than the
+                # later durable-record chain, are the available inputs.  Hash
+                # those exact artifacts so changing spaCy evidence cannot hit
+                # a stale SyMAI cache entry.
+                "upstream_artifact_sha256": artifact_digests,
+                "semantic_context_sha256": (
+                    None
+                    if semantic_context is None
+                    else semantic_context.get("context_sha256")
+                ),
                 "provider": config.provider,
                 "model": config.model,
+                "inner_route": {
+                    "resolved_provider_name": config.expected_inner_provider,
+                    "resolved_model_name": config.expected_inner_model,
+                    "service_endpoint": config.expected_inner_endpoint,
+                    "routing_backend": config.expected_inner_backend,
+                },
                 "dry_run": config.dry_run,
             }
         ).encode("utf-8")
@@ -1597,23 +1996,214 @@ def _symai_cache_key(
     return f"{namespace}/stage/symai/{digest}"
 
 
-def _symai_prompt(text: str, namespace: str) -> str:
-    request_payload = {
-        "schema": SYMAI_PROMPT_SCHEMA,
-        "cache_namespace": namespace,
-        "task": "semantic_interpretation",
-        "text": text,
+def _symai_prompt(
+    text: str,
+    namespace: str,
+    semantic_context: Mapping[str, object] | None = None,
+) -> str:
+    # Namespace and receipt-envelope fields belong to the cache/provenance
+    # boundary, not to semantic inference.  Keeping them out of the prompt
+    # avoids encouraging instruction-following models to reproduce the whole
+    # request container instead of returning the seven-field contract.
+    del namespace
+    evidence: object = None
+    if semantic_context is not None:
+        concise_artifacts: list[dict[str, object]] = []
+        raw_artifacts = semantic_context.get("artifacts", ())
+        if isinstance(raw_artifacts, Sequence) and not isinstance(
+            raw_artifacts, (str, bytes, bytearray)
+        ):
+            for artifact in raw_artifacts[:2]:
+                if not isinstance(artifact, Mapping):
+                    continue
+                item: dict[str, object] = {
+                    "stage": artifact.get("stage"),
+                    "status": artifact.get("status"),
+                    "invoked": artifact.get("invoked"),
+                    "policy_reason": artifact.get("policy_reason"),
+                }
+                raw_linguistic = artifact.get("evidence")
+                if isinstance(raw_linguistic, Mapping):
+                    modal_ir = raw_linguistic.get("modal_ir")
+                    formulas: list[dict[str, object]] = []
+                    if isinstance(modal_ir, Mapping):
+                        raw_formulas = modal_ir.get("formulas", ())
+                        if isinstance(
+                            raw_formulas, Sequence
+                        ) and not isinstance(
+                            raw_formulas, (str, bytes, bytearray)
+                        ):
+                            for formula in raw_formulas[:8]:
+                                if not isinstance(formula, Mapping):
+                                    continue
+                                formulas.append(
+                                    {
+                                        "operator": _thaw_json(
+                                            formula.get("operator")
+                                        ),
+                                        "predicate": _thaw_json(
+                                            formula.get("predicate")
+                                        ),
+                                        "has_conditions": bool(
+                                            formula.get("conditions")
+                                        ),
+                                        "has_exceptions": bool(
+                                            formula.get("exceptions")
+                                        ),
+                                    }
+                                )
+                    roles: list[dict[str, object]] = []
+                    raw_roles = raw_linguistic.get("semantic_roles", ())
+                    if isinstance(raw_roles, Sequence) and not isinstance(
+                        raw_roles, (str, bytes, bytearray)
+                    ):
+                        for role in raw_roles[:12]:
+                            if not isinstance(role, Mapping):
+                                continue
+                            arguments = role.get("arguments", ())
+                            roles.append(
+                                {
+                                    "predicate": role.get("predicate"),
+                                    "arguments": (
+                                        _thaw_json(arguments[:8])
+                                        if isinstance(arguments, Sequence)
+                                        and not isinstance(
+                                            arguments,
+                                            (str, bytes, bytearray),
+                                        )
+                                        else []
+                                    ),
+                                    "confidence": role.get("confidence"),
+                                }
+                            )
+                    item["linguistic_evidence"] = {
+                        # The model needs to know which linguistic backend
+                        # produced the evidence, but it must not see the
+                        # benchmark arm id or its configuration digest.  Those
+                        # are provenance fields and would let otherwise
+                        # identical semantic inputs vary by experimental arm.
+                        "execution": _mapping_subset(
+                            raw_linguistic.get("execution"),
+                            (
+                                "mode",
+                                "requested_model",
+                                "effective_model",
+                                "used_fallback_model",
+                                "language",
+                                "pipeline",
+                                "parser_backend",
+                                "srl_backend",
+                                "model_version",
+                            ),
+                        ),
+                        "entities": _thaw_json(
+                            raw_linguistic.get("entities", ())[:24]
+                            if isinstance(
+                                raw_linguistic.get("entities", ()),
+                                Sequence,
+                            )
+                            else ()
+                        ),
+                        "semantic_roles": roles,
+                        "modal_cues": _thaw_json(
+                            raw_linguistic.get("modal_cues", ())[:24]
+                            if isinstance(
+                                raw_linguistic.get("modal_cues", ()),
+                                Sequence,
+                            )
+                            else ()
+                        ),
+                        "modal_formulas": formulas,
+                    }
+                concise_artifacts.append(item)
+        evidence = concise_artifacts
+    evidence_json = canonical_json(evidence)
+    if len(evidence_json.encode("utf-8")) > 12 * 1024:
+        raise SymaiAdapterContractError(
+            "concise SyMAI semantic evidence exceeds 12 KiB"
+        )
+    output_skeleton = {
+        "candidate_ir": {"propositions": []},
+        "normalized_predicates": [],
+        "quantifiers": [],
+        "entities": [],
+        "ambiguity_flags": [],
+        "confidence": 0.0,
+        "validation_errors": [],
     }
     return (
-        "Interpret the supplied text as an untrusted semantic candidate. "
-        "Return exactly one JSON object with exactly these keys: candidate_ir "
-        "(object), normalized_predicates (array of strings), quantifiers "
-        "(array of strings), entities (array of strings), ambiguity_flags "
-        "(array of strings), confidence (number from 0 to 1), and "
-        "validation_errors (array of strings). Do not claim proof, kernel "
-        "acceptance, verification, or authority.\n\n"
-        + canonical_json(request_payload)
+        "Produce one concise, untrusted semantic interpretation. Return "
+        "exactly one JSON object, under 1600 UTF-8 bytes, with the seven keys "
+        "and value types shown in OUTPUT_SKELETON. Fill the skeleton; do not "
+        "add wrapper keys. candidate_ir must be a small object with at most "
+        "6 keys, nesting depth at most 3, and at most 12 items in any array. "
+        "Each other array may contain at most 24 strings of at most 80 "
+        "characters. confidence must be a number from 0 to 1. Never copy "
+        "input-envelope or provenance keys such as schema, cache_namespace, "
+        "task, upstream_semantic_context, source_text_sha256, artifacts, "
+        "artifact_sha256, or output_sha256 into the top-level output. Do not "
+        "repeat the source text or evidence container. Do not claim proof, "
+        "kernel acceptance, verification, or authority. No Markdown.\n"
+        "OUTPUT_SKELETON:\n"
+        + canonical_json(output_skeleton)
+        + "\nSOURCE_TEXT_JSON_STRING:\n"
+        + canonical_json(text)
+        + "\nOPTIONAL_READ_ONLY_SEMANTIC_EVIDENCE_JSON:\n"
+        + evidence_json
     )
+
+
+def _is_frozen_ablation_request(request: StageRequest) -> bool:
+    """Return whether a request binds the exact registered arm definition."""
+
+    try:
+        from .variants import get_variant_definition
+
+        definition = get_variant_definition(request.variant_id)
+    except (ImportError, ProtocolContractError):
+        return False
+    return (
+        request.requested_identity.get("variant_id") == request.variant_id
+        and request.requested_identity.get("configuration_sha256")
+        == definition.digest
+    )
+
+
+def _symai_input_semantic_context(
+    request: StageRequest,
+) -> dict[str, object]:
+    measured_semantic_arm = (
+        _is_frozen_ablation_request(request)
+        and request.variant_id in {f"A{index}" for index in range(4, 13)}
+    )
+    return build_upstream_semantic_context(
+        request,
+        stages=(StageName.SPACY,),
+        require_success=(
+            (StageName.SPACY,) if measured_semantic_arm else ()
+        ),
+    )
+
+
+def _semantic_context_binding(
+    semantic_context: Mapping[str, object],
+) -> dict[str, object]:
+    artifacts = semantic_context.get("artifacts", ())
+    artifact_sha256s: list[str] = []
+    if isinstance(artifacts, Sequence) and not isinstance(
+        artifacts, (str, bytes, bytearray)
+    ):
+        for artifact in artifacts:
+            if isinstance(artifact, Mapping):
+                digest = artifact.get("artifact_sha256")
+                if isinstance(digest, str):
+                    artifact_sha256s.append(digest)
+    return {
+        "schema": SEMANTIC_CONTEXT_SCHEMA,
+        "context_sha256": semantic_context.get("context_sha256"),
+        "source_text_sha256": semantic_context.get("source_text_sha256"),
+        "artifact_sha256s": artifact_sha256s,
+    }
 
 
 def _symai_dry_run_raw(request: StageRequest) -> str:
@@ -1834,6 +2424,7 @@ def _default_symai_engine_factory(
             config.cache_enabled and namespace.endswith("/cache/warm")
         ),
         model_name=config.model,
+        route_binding=_symai_route_binding(config),
     )
 
 
@@ -1846,6 +2437,62 @@ def _default_symai_trace_getter() -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
 
 
+def _symai_route_binding(
+    config: SymaiAdapterConfig,
+) -> dict[str, str] | None:
+    values = (
+        config.expected_inner_provider,
+        config.expected_inner_model,
+        config.expected_inner_endpoint,
+        config.expected_inner_backend,
+    )
+    if not all(isinstance(value, str) and value for value in values):
+        return None
+    return {
+        "resolved_provider_name": config.expected_inner_provider,
+        "resolved_model_name": config.expected_inner_model,
+        "service_endpoint": config.expected_inner_endpoint,
+        "routing_backend": config.expected_inner_backend,
+    }
+
+
+def _validate_symai_inner_route(
+    config: SymaiAdapterConfig,
+    metadata: Mapping[str, object],
+) -> None:
+    # Generic SyMAI integrations may not have a benchmark-frozen inner route.
+    # The all-or-none config validation means ``None`` here is unambiguous:
+    # no exact inner identity was requested. Benchmark-bound configurations
+    # always provide all four values and remain strictly receipt-gated.
+    if _symai_route_binding(config) is None:
+        return
+    fields = {
+        "resolved_provider_name": config.expected_inner_provider,
+        "resolved_model_name": config.expected_inner_model,
+        "service_endpoint": config.expected_inner_endpoint,
+        "routing_backend": config.expected_inner_backend,
+    }
+    missing = sorted(
+        key
+        for key in fields
+        if not isinstance(metadata.get(key), str)
+        or not str(metadata.get(key)).strip()
+    )
+    if missing:
+        raise SymaiAdapterContractError(
+            "SyMAI inner route trace omitted: " + ", ".join(missing)
+        )
+    drifted = sorted(
+        key
+        for key, expected in fields.items()
+        if expected is not None and metadata.get(key) != expected
+    )
+    if drifted:
+        raise SymaiAdapterContractError(
+            "SyMAI inner route identity drifted: " + ", ".join(drifted)
+        )
+
+
 def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, object]]:
     forward = getattr(engine, "forward", None)
     if not callable(forward):
@@ -1856,8 +2503,8 @@ def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, ob
             processed_input="",
             prompt="",
             raw_input=False,
-            response_format={"type": "json_object"},
-            payload={"response_format": {"type": "json_object"}},
+            response_format=SYMAI_RESPONSE_FORMAT,
+            payload={"response_format": SYMAI_RESPONSE_FORMAT},
         ),
         args=[],
         kwargs={},
@@ -1890,7 +2537,11 @@ def _safe_symai_metadata(value: Mapping[str, object]) -> dict[str, object]:
         "format",
         "model",
         "provider",
+        "resolved_model_name",
+        "resolved_provider_name",
         "router_provider",
+        "routing_backend",
+        "service_endpoint",
     ):
         item = value.get(key)
         if item is None or isinstance(item, (bool, int, float)):
@@ -2012,6 +2663,7 @@ def _symai_evidence_handler(
         started_wall = time.perf_counter()
         started_cpu = time.process_time()
         namespace = _symai_cache_namespace(request)
+        semantic_context: dict[str, object] | None = None
         cache_key = _symai_cache_key(request, config, namespace)
         raw_output: str | None = None
         metadata: dict[str, object] = {}
@@ -2022,6 +2674,13 @@ def _symai_evidence_handler(
         try:
             _reject_symai_recursion(request)
             text = _symai_request_text(request, config)
+            semantic_context = _symai_input_semantic_context(request)
+            cache_key = _symai_cache_key(
+                request,
+                config,
+                namespace,
+                semantic_context,
+            )
         except SymaiRecursiveRoutingError as exc:
             return _symai_failure_output(
                 request,
@@ -2033,7 +2692,7 @@ def _symai_evidence_handler(
                 started_cpu=started_cpu,
                 failure_code=FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR,
             )
-        except SymaiAdapterContractError as exc:
+        except ProtocolContractError as exc:
             return _symai_failure_output(
                 request,
                 config,
@@ -2078,7 +2737,12 @@ def _symai_evidence_handler(
                             engine = engine_factory(config, namespace)
                         model_calls += 1
                         raw_output, metadata = _invoke_symai_engine(
-                            engine, _symai_prompt(text, namespace)
+                            engine,
+                            _symai_prompt(
+                                text,
+                                namespace,
+                                semantic_context,
+                            ),
                         )
                         try:
                             trace = trace_getter()
@@ -2126,6 +2790,27 @@ def _symai_evidence_handler(
                     last_engine_error = exc
 
             if raw_output is not None:
+                if not config.dry_run:
+                    try:
+                        _validate_symai_inner_route(config, metadata)
+                    except SymaiAdapterContractError as exc:
+                        return _symai_failure_output(
+                            request,
+                            config,
+                            detail=str(exc),
+                            namespace=namespace,
+                            cache_key=cache_key,
+                            started_wall=started_wall,
+                            started_cpu=started_cpu,
+                            failure_code=(
+                                FailureCode.SYMAI_IMPORT_OR_CONFIGURATION_ERROR
+                            ),
+                            raw_output=raw_output,
+                            metadata=metadata,
+                            model_calls=model_calls,
+                            retries=retries,
+                            cache_hit=cache_hit,
+                        )
                 try:
                     raw_output, validated = _validate_symai_contract(
                         raw_output, config
@@ -2261,6 +2946,9 @@ def _symai_evidence_handler(
                 "mode": request.cache_mode.value,
                 "hit": cache_hit,
             },
+            "semantic_context": _semantic_context_binding(
+                semantic_context or _symai_input_semantic_context(request)
+            ),
             "assurance": {
                 "semantic_hypothesis": True,
                 "raw_output_is_canonical": False,
@@ -2283,6 +2971,11 @@ def _symai_evidence_handler(
             "dry_run": config.dry_run,
             "existing_router_engine": SYMAI_ROUTER_ENGINE,
             "starts_model_server": False,
+            "semantic_context_sha256": (
+                None
+                if semantic_context is None
+                else semantic_context.get("context_sha256")
+            ),
         }
         return StageOutput(
             data=evidence,
@@ -2762,6 +3455,8 @@ class LeanstralAdapterConfig:
     max_context_bytes: int = LEANSTRAL_MAX_CONTEXT_BYTES
     max_draft_bytes: int = LEANSTRAL_MAX_DRAFT_BYTES
     max_repair_attempts: int = LEANSTRAL_MAX_REPAIR_ATTEMPTS
+    model_timeout_seconds: float = LEANSTRAL_MEASURED_TIMEOUT_SECONDS
+    model_token_limit: int = LEANSTRAL_MEASURED_MAX_NEW_TOKENS
     model_resource_class: str = LEANSTRAL_MODEL_RESOURCE_CLASS
     kernel_resource_class: str = LEANSTRAL_KERNEL_RESOURCE_CLASS
 
@@ -2777,6 +3472,27 @@ class LeanstralAdapterConfig:
         if self.max_repair_attempts != LEANSTRAL_MAX_REPAIR_ATTEMPTS:
             raise LeanstralAdapterContractError(
                 "Leanstral benchmark repair is fixed to exactly one bounded attempt"
+            )
+        if (
+            isinstance(self.model_timeout_seconds, bool)
+            or not isinstance(self.model_timeout_seconds, (int, float))
+            or not math.isfinite(float(self.model_timeout_seconds))
+            or not 0 < float(self.model_timeout_seconds)
+            <= LEANSTRAL_MEASURED_TIMEOUT_SECONDS
+        ):
+            raise LeanstralAdapterContractError(
+                "model_timeout_seconds must be positive and cannot exceed "
+                f"{LEANSTRAL_MEASURED_TIMEOUT_SECONDS:g}"
+            )
+        if (
+            isinstance(self.model_token_limit, bool)
+            or not isinstance(self.model_token_limit, int)
+            or not 0 < self.model_token_limit
+            <= LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+        ):
+            raise LeanstralAdapterContractError(
+                "model_token_limit must be positive and cannot exceed "
+                f"{LEANSTRAL_MEASURED_MAX_NEW_TOKENS}"
             )
         for name in ("model_resource_class", "kernel_resource_class"):
             value = getattr(self, name)
@@ -2806,6 +3522,291 @@ def _bounded_canonical(value: object, field_name: str, maximum: int) -> object:
     return json.loads(encoded.decode("utf-8"))
 
 
+def _lean_declaration_binders(value: str) -> tuple[str, ...]:
+    """Return ordered top-level binders from a frozen Lean declaration."""
+
+    pairs = {"(": ")", "{": "}", "[": "]"}
+    binders: list[str] = []
+    cursor = 0
+    while cursor < len(value):
+        while cursor < len(value) and value[cursor].isspace():
+            cursor += 1
+        if cursor == len(value):
+            break
+        opener = value[cursor]
+        if opener not in pairs:
+            raise LeanstralAdapterContractError(
+                "compiled theorem contains an unsupported binder declaration"
+            )
+        stack = [pairs[opener]]
+        end = cursor + 1
+        while end < len(value) and stack:
+            character = value[end]
+            if character in pairs:
+                stack.append(pairs[character])
+            elif character == stack[-1]:
+                stack.pop()
+            end += 1
+        if stack:
+            raise LeanstralAdapterContractError(
+                "compiled theorem contains an unbalanced binder"
+            )
+        binders.append(" ".join(value[cursor:end].split()))
+        cursor = end
+    return tuple(binders)
+
+
+def _leanstral_input_semantic_context(
+    request: StageRequest,
+) -> dict[str, object]:
+    measured_proof_arm = (
+        _is_frozen_ablation_request(request)
+        and request.variant_id in {f"A{index}" for index in range(3, 13)}
+    )
+    requires_symai = (
+        measured_proof_arm
+        and request.variant_id in {f"A{index}" for index in range(4, 13)}
+    )
+    required_present: tuple[StageName, ...] = ()
+    required_success: tuple[StageName, ...] = ()
+    if measured_proof_arm:
+        required_present = (StageName.SPACY,)
+        required_success = (StageName.SPACY,)
+    if requires_symai:
+        required_present = (*required_present, StageName.SYMAI)
+    return build_upstream_semantic_context(
+        request,
+        require_present=required_present,
+        require_success=required_success,
+    )
+
+
+def _compiled_leanstral_context(
+    request: StageRequest,
+    config: LeanstralAdapterConfig,
+    obligation_id: str,
+) -> tuple[dict[str, object], dict[str, object]] | None:
+    """Bind one live fallback request to the compiler's fixed theorem."""
+
+    compiler = request.artifact(StageName.COMPILER)
+    if compiler is None:
+        return None
+    if (
+        not compiler.invoked
+        or compiler.status is not StageStatus.SUCCESS
+        or not isinstance(compiler.data, Mapping)
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback requires a successful compiler artifact"
+        )
+    compiled = compiler.data.get("compiled_obligation")
+    if not isinstance(compiled, Mapping):
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback requires a compiled proof obligation"
+        )
+    if (
+        compiled.get("schema")
+        != "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback received an unsupported compiled obligation"
+        )
+    if compiled.get("obligation_id") != obligation_id:
+        raise LeanstralAdapterContractError(
+            "Leanstral obligation does not match the compiler artifact"
+        )
+
+    theorem_name = compiled.get("theorem_name")
+    source_template = compiled.get("source_template")
+    compiler_version = compiled.get("compiler_version")
+    semantic_target = compiled.get("semantic_target")
+    if (
+        not isinstance(theorem_name, str)
+        or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_']{0,127}", theorem_name)
+        or not isinstance(source_template, str)
+        or not source_template.strip()
+        or source_template.count("{{PROOF}}") != 1
+        or not isinstance(compiler_version, str)
+        or not compiler_version.strip()
+        or not isinstance(semantic_target, str)
+        or not semantic_target.strip()
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback received an incomplete compiled obligation"
+        )
+    source_template_sha256 = _digest(
+        compiled.get("source_template_sha256"), "source_template_sha256"
+    )
+    if hashlib.sha256(source_template.encode("utf-8")).hexdigest() != source_template_sha256:
+        raise LeanstralAdapterContractError(
+            "Leanstral compiled source template digest changed"
+        )
+    obligation_sha256 = _digest(
+        compiled.get("obligation_sha256"), "obligation_sha256"
+    )
+    declaration = re.search(
+        rf"(?ms)^theorem\s+{re.escape(theorem_name)}\b"
+        rf"(?P<declaration>.*?)\s*:=\s*by\s*$",
+        source_template,
+    )
+    declaration_body = (
+        "" if declaration is None else declaration.group("declaration").strip()
+    )
+    if ":" not in declaration_body:
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback cannot identify the compiled theorem conclusion"
+        )
+    # Binder annotations also contain colons.  The final declaration colon is
+    # the one that introduces the theorem result, for both one-line opaque
+    # targets and the compiler's multiline translated entailments.
+    raw_binders, conclusion = declaration_body.rsplit(":", 1)
+    assumptions = _lean_declaration_binders(raw_binders)
+    conclusion = conclusion.strip()
+    if not conclusion:
+        raise LeanstralAdapterContractError(
+            "Leanstral fallback compiled theorem conclusion is empty"
+        )
+    source_digest = f"sha256:{source_template_sha256}"
+    template_id = (
+        "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
+    )
+
+    # Import the supervisor contract only when a real compiler-bound
+    # Leanstral request is executed.  Importing this adapter module remains
+    # side-effect free and dependency tolerant.
+    proof_context = importlib.import_module(
+        "ipfs_accelerate_py.agent_supervisor.proof_context"
+    )
+    try:
+        query_type = getattr(proof_context, "ProofContextQuery")
+        limits_type = getattr(proof_context, "ProofContextLimits")
+        entry_type = getattr(proof_context, "ContextEntry")
+        source_type = getattr(proof_context, "SourceExcerpt")
+        usage_type = getattr(proof_context, "ProofContextUsage")
+        capsule_type = getattr(proof_context, "ProofContextCapsule")
+        target_type = getattr(proof_context, "ProofContextTarget")
+        trust_type = getattr(proof_context, "ContextTrust")
+        theorem_type = getattr(proof_context, "FixedTheoremIdentity")
+        token_counter = getattr(proof_context, "estimate_context_tokens")
+
+        source_symbol = f"{request.case_id}.reviewed_source"
+        source_text = (
+            request.input_data.get("text")
+            if isinstance(request.input_data, Mapping)
+            else None
+        )
+        source_excerpts = [
+            source_type(
+                symbol=theorem_name,
+                path="",
+                text=source_template,
+            )
+        ]
+        symbols = [theorem_name]
+        if isinstance(source_text, str) and source_text.strip():
+            source_excerpts.append(
+                source_type(
+                    symbol=source_symbol,
+                    path="",
+                    text=source_text,
+                )
+            )
+            symbols.append(source_symbol)
+        semantic_context = _leanstral_input_semantic_context(request)
+        semantic_artifacts = semantic_context.get("artifacts", ())
+        semantic_suggestions = ()
+        if isinstance(semantic_artifacts, Sequence) and semantic_artifacts:
+            semantic_digest = _digest(
+                semantic_context.get("context_sha256"),
+                "semantic_context.context_sha256",
+            )
+            semantic_suggestions = (
+                entry_type(
+                    trust=trust_type.UNTRUSTED_SUGGESTION,
+                    kind="semantic_stage_context",
+                    record_id=f"semantic-context-{semantic_digest}",
+                    fields=semantic_context,
+                ),
+            )
+
+        theorem = theorem_type(
+            theorem_id=theorem_name,
+            obligation_id=obligation_id,
+            declaration_name=theorem_name,
+            assumptions=assumptions,
+            conclusion=conclusion,
+            template_id=template_id,
+            template_version=compiler_version,
+            template_semantic_hash=f"sha256:{obligation_sha256}",
+            source_scope=(theorem_name,),
+            allowed_premise_ids=(),
+            canonical_source_digest=source_digest,
+        )
+        obligation = entry_type(
+            trust=trust_type.TRUSTED_FACT,
+            kind="obligation",
+            record_id=obligation_id,
+            fields={
+                "obligation_id": obligation_id,
+                "declaration_name": theorem_name,
+                "assumptions": list(assumptions),
+                "conclusion": conclusion,
+                "statement": source_template,
+                "semantic_target": semantic_target,
+                "template_id": template_id,
+                "template_version": compiler_version,
+                "template_semantic_hash": f"sha256:{obligation_sha256}",
+                "source_scope": [theorem_name],
+                "allowed_premise_ids": [],
+                "canonical_source_digest": source_digest,
+            },
+        )
+        limits = limits_type(
+            max_bytes=config.max_context_bytes,
+            max_tokens=max(1, config.max_context_bytes // 4),
+            max_graph_hops=0,
+        )
+        capsule = capsule_type(
+            target=target_type.LEANSTRAL,
+            query=query_type(
+                task_id=request.case_id,
+                symbols=tuple(symbols),
+                obligation_ids=(obligation_id,),
+            ),
+            limits=limits,
+            trusted_facts=(obligation,),
+            untrusted_suggestions=semantic_suggestions,
+            source_excerpts=tuple(source_excerpts),
+        )
+        for _ in range(8):
+            encoded = capsule.to_json()
+            usage = usage_type(
+                rows=1 + len(semantic_suggestions),
+                bytes=len(encoded.encode("utf-8")),
+                tokens=int(token_counter(encoded)),
+                graph_hops=0,
+                source_excerpts=len(source_excerpts),
+                source_bytes=sum(item.byte_count for item in source_excerpts),
+            )
+            updated = replace(capsule, usage=usage)
+            if updated.usage == capsule.usage:
+                capsule = updated
+                break
+            capsule = updated
+        # Reparse the final wire object so the supervisor independently checks
+        # its identity, exact usage counters, and byte/token limits.
+        capsule = capsule_type.from_dict(capsule.to_dict())
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise LeanstralAdapterContractError(
+            "Leanstral fixed theorem context construction failed"
+        ) from exc
+
+    return (
+        dict(capsule.to_dict()),
+        dict(theorem.to_dict()),
+    )
+
+
 def _leanstral_input(
     request: StageRequest,
     config: LeanstralAdapterConfig,
@@ -2814,7 +3815,29 @@ def _leanstral_input(
 
     if not isinstance(request.input_data, Mapping):
         raise LeanstralAdapterContractError("Leanstral input_data must be an object")
-    raw = dict(request.input_data)
+    # The benchmark case object also carries evaluator-only labels and control
+    # metadata.  Start from an explicit provider allowlist instead of copying
+    # the whole case.  This prevents expected outcomes, expected IR, difficulty
+    # strata, and negative-control annotations from influencing generation.
+    provider_input_keys = {
+        "text",
+        "source_text",
+        "obligation_id",
+        "obligation_ids",
+        "proof_obligation",
+        "prompt",
+        "context",
+        "context_capsule",
+        "proof_context_capsule",
+        "proof_context",
+        "repair",
+        "repair_attempt",
+    }
+    raw = {
+        str(key): _thaw_json(value)
+        for key, value in request.input_data.items()
+        if key in provider_input_keys
+    }
     raw_ids = raw.get("obligation_ids", raw.get("obligation_id"))
     if isinstance(raw_ids, str):
         obligation_ids = (raw_ids.strip(),)
@@ -2864,7 +3887,14 @@ def _leanstral_input(
         raw.get("proof_context_capsule", raw.get("proof_context")),
     )
     prompt = raw.get("prompt")
-    if prompt is None:
+    if prompt is None and context_capsule is None:
+        compiled_context = _compiled_leanstral_context(
+            request, config, obligation_id
+        )
+        if compiled_context is not None:
+            context_capsule, fixed_theorem = compiled_context
+            raw["fixed_theorem"] = fixed_theorem
+    if prompt is None and context_capsule is None:
         context = raw.get("context")
         if isinstance(context, str):
             prompt = context
@@ -2872,6 +3902,11 @@ def _leanstral_input(
             # Keep generic benchmark callers useful while still sending a
             # strict string prompt to the provider.
             prompt = canonical_json(_bounded_canonical(context, "context", config.max_context_bytes))
+        elif context_capsule is None:
+            # Frozen corpus cases name their reviewed source input ``text``.
+            # Preserve that exact source at the registered Leanstral boundary
+            # instead of requiring a second, divergent copy under ``prompt``.
+            prompt = raw.get("text")
     if context_capsule is None and (not isinstance(prompt, str) or not prompt.strip()):
         raise LeanstralAdapterContractError(
             "Leanstral input requires a non-empty prompt or context_capsule"
@@ -2889,6 +3924,7 @@ def _leanstral_input(
         payload["context_capsule"] = _bounded_canonical(
             context_capsule, "context_capsule", config.max_context_bytes
         )
+        payload.pop("prompt", None)
         payload.pop("proof_context_capsule", None)
         payload.pop("proof_context", None)
     else:
@@ -2962,6 +3998,14 @@ def _validate_leanstral_draft(
     text = text.strip()
     if len(text.encode("utf-8")) > config.max_draft_bytes:
         raise LeanstralAdapterContractError("Leanstral draft exceeds the byte bound")
+    if re.match(r"^by(?:\s|$)", text):
+        raise LeanstralAdapterContractError(
+            "Leanstral proof_text must be a tactic body without a leading by"
+        )
+    if _LEANSTRAL_NON_TACTIC_BODY.search(text):
+        raise LeanstralAdapterContractError(
+            "Leanstral proof_text must not contain imports or declarations"
+        )
     if "proof_text" in draft and draft["proof_text"] != text:
         raise LeanstralAdapterContractError("draft_text and proof_text disagree")
     forbidden = _LEANSTRAL_FORBIDDEN_CONSTRUCT.search(text)
@@ -3042,6 +4086,621 @@ def _provider_request_id(request: StageRequest, repair_attempt: int) -> str:
     return f"leanstral-{digest}"
 
 
+def _strict_leanstral_http_object(
+    request: urllib.request.Request,
+    *,
+    timeout_seconds: float,
+    max_response_bytes: int,
+) -> dict[str, object]:
+    """Read one bounded strict-JSON response from the frozen model service."""
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            raw = response.read(max_response_bytes + 1)
+    except Exception as exc:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral service request failed "
+            f"({type(exc).__name__})"
+        ) from exc
+    if len(raw) > max_response_bytes:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral service response exceeded its byte bound"
+        )
+
+    def no_duplicates(pairs: Sequence[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise LeanstralAdapterContractError(
+                    f"pinned Leanstral response contains duplicate key {key!r}"
+                )
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=no_duplicates,
+            parse_constant=lambda item: (_ for _ in ()).throw(
+                LeanstralAdapterContractError(
+                    f"pinned Leanstral response contains non-finite value {item}"
+                )
+            ),
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral service returned invalid JSON"
+        ) from exc
+    if not isinstance(value, dict):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral service returned a non-object response"
+        )
+    return value
+
+
+def _leanstral_model_ids(value: Mapping[str, object]) -> tuple[str, ...]:
+    raw = value.get("data", value.get("models"))
+    if not isinstance(raw, list):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral service omitted its served-model array"
+        )
+    identities: list[str] = []
+    for item in raw:
+        if isinstance(item, str):
+            model_id = item
+        elif isinstance(item, Mapping):
+            model_id = str(
+                item.get("id") or item.get("model") or item.get("name") or ""
+            )
+        else:
+            continue
+        if model_id:
+            identities.append(model_id)
+    return tuple(identities)
+
+
+def leanstral_strict_llm_generate(
+    prompt: str,
+    *,
+    endpoint: str,
+    expected_provider: str,
+    expected_model: str,
+    audit_receipt: MutableMapping[str, object] | None = None,
+    **kwargs: object,
+) -> str:
+    """Call one exact endpoint/model with strict JSON and no router fallback."""
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise LeanstralAdapterContractError(
+            "Leanstral strict generation requires a non-empty prompt"
+        )
+    if (
+        not isinstance(endpoint, str)
+        or not endpoint.strip()
+        or not isinstance(expected_provider, str)
+        or not expected_provider.strip()
+        or not isinstance(expected_model, str)
+        or not expected_model.strip()
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral strict generation requires a complete frozen identity"
+        )
+    endpoint = endpoint.strip().rstrip("/")
+    parsed_endpoint = urllib.parse.urlsplit(endpoint)
+    if (
+        parsed_endpoint.scheme not in {"http", "https"}
+        or not parsed_endpoint.hostname
+        or parsed_endpoint.username is not None
+        or parsed_endpoint.password is not None
+        or parsed_endpoint.query
+        or parsed_endpoint.fragment
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral frozen endpoint must be an uncredentialed HTTP(S) origin/path"
+        )
+    if (
+        kwargs.get("provider") != expected_provider
+        or kwargs.get("model_name") != expected_model
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral provider invocation drifted from the frozen identity"
+        )
+    if (
+        kwargs.get("allow_local_fallback") is not False
+        or kwargs.get("disable_model_retry") is not True
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral provider invocation did not disable fallback and model retry"
+        )
+    timeout = kwargs.get("timeout")
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not math.isfinite(float(timeout))
+        or not 0 < float(timeout) <= 300
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral provider invocation has an invalid timeout"
+        )
+    max_tokens = kwargs.get("max_new_tokens")
+    if (
+        isinstance(max_tokens, bool)
+        or not isinstance(max_tokens, int)
+        or not 1 <= max_tokens <= 1_400
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral provider invocation has an invalid token budget"
+        )
+    temperature = kwargs.get("temperature")
+    if (
+        isinstance(temperature, bool)
+        or not isinstance(temperature, (int, float))
+        or float(temperature) != 0.0
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral pinned route requires temperature zero"
+        )
+    deadline = time.monotonic() + float(timeout)
+
+    def remaining_timeout() -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(
+                "pinned Leanstral aggregate HTTP timeout expired"
+            )
+        return remaining
+
+    def no_duplicates(pairs: Sequence[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise LeanstralAdapterContractError(
+                    f"Leanstral prompt contains duplicate key {key!r}"
+                )
+            result[key] = value
+        return result
+
+    try:
+        structured = json.loads(
+            prompt,
+            object_pairs_hook=no_duplicates,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                LeanstralAdapterContractError(
+                    f"Leanstral prompt contains non-finite value {value}"
+                )
+            ),
+        )
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise LeanstralAdapterContractError(
+            "Leanstral strict generation prompt is not JSON"
+        ) from exc
+    if not isinstance(structured, Mapping):
+        raise LeanstralAdapterContractError(
+            "Leanstral strict generation prompt must be an object"
+        )
+    fixed = structured.get("fixed_theorem")
+    output_schema = structured.get("output_schema")
+    if not isinstance(fixed, Mapping) or not isinstance(output_schema, Mapping):
+        raise LeanstralAdapterContractError(
+            "Leanstral strict generation requires fixed theorem and output schema"
+        )
+    theorem_id = _safe_id(fixed.get("theorem_id"), "fixed_theorem.theorem_id")
+    if output_schema.get("schema") != LEANSTRAL_PROOF_OUTPUT_SCHEMA:
+        raise LeanstralAdapterContractError(
+            "Leanstral prompt output schema identity changed"
+        )
+
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "leanstral_fixed_theorem_proof",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "schema": {"const": LEANSTRAL_PROOF_OUTPUT_SCHEMA},
+                    "theorem_id": {"const": theorem_id},
+                    "proposal_kind": {"const": "proof"},
+                    "proof_text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": (
+                            "Lean tactic body inserted after an existing `by`; "
+                            "do not prefix the body with `by`, and do not include "
+                            "imports, declarations, markdown, or a complete Lean "
+                            "source file"
+                        ),
+                    },
+                },
+                "required": [
+                    "schema",
+                    "theorem_id",
+                    "proposal_kind",
+                    "proof_text",
+                ],
+                "additionalProperties": False,
+            },
+        },
+    }
+
+    models_request = urllib.request.Request(
+        f"{endpoint}/models",
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+    models = _strict_leanstral_http_object(
+        models_request,
+        timeout_seconds=remaining_timeout(),
+        max_response_bytes=1024 * 1024,
+    )
+    if _leanstral_model_ids(models).count(expected_model) != 1:
+        raise LeanstralAdapterContractError(
+            "frozen Leanstral model is absent or ambiguous at the pinned endpoint"
+        )
+
+    payload = {
+        "model": expected_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "Return exactly one JSON object matching the response schema. "
+                    "proof_text is only the Lean tactic body inserted after an "
+                    "existing `by`. Never emit markdown, imports, declarations, "
+                    "a complete theorem, a leading `by`, or explanatory comments. "
+                    "When an `exact ...` term suffices, return only that one line."
+                    " Every binder listed in fixed_theorem.assumptions is already "
+                    "in scope at the proof start; do not introduce those binders "
+                    "again, and use their exact names and types."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.0,
+        "stream": False,
+        "response_format": response_format,
+        "stop": [
+            "<|tool_call_end|>",
+            "<|im_end|>",
+            "<|im_start|>",
+        ],
+        "seed": 0,
+    }
+    completion_request = urllib.request.Request(
+        f"{endpoint}/chat/completions",
+        data=json.dumps(
+            payload,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8"),
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    completion = _strict_leanstral_http_object(
+        completion_request,
+        timeout_seconds=remaining_timeout(),
+        max_response_bytes=64 * 1024,
+    )
+    if completion.get("model") != expected_model:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion reported a different model"
+        )
+    choices = completion.get("choices")
+    if not isinstance(choices, list) or len(choices) != 1:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion returned invalid choices"
+        )
+    choice = choices[0]
+    if not isinstance(choice, Mapping) or choice.get("finish_reason") != "stop":
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion did not terminate cleanly"
+        )
+    message = choice.get("message")
+    output = message.get("content") if isinstance(message, Mapping) else None
+    if not isinstance(output, str) or not output.strip():
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion returned empty text"
+        )
+    try:
+        proposal = json.loads(
+            output,
+            object_pairs_hook=no_duplicates,
+            parse_constant=lambda item: (_ for _ in ()).throw(
+                LeanstralAdapterContractError(
+                    f"Leanstral proposal contains non-finite value {item}"
+                )
+            ),
+        )
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion did not return a strict JSON proposal"
+        ) from exc
+    if (
+        not isinstance(proposal, dict)
+        or set(proposal)
+        != {"schema", "theorem_id", "proposal_kind", "proof_text"}
+        or proposal.get("schema") != LEANSTRAL_PROOF_OUTPUT_SCHEMA
+        or proposal.get("theorem_id") != theorem_id
+        or proposal.get("proposal_kind") != "proof"
+    ):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion violated the fixed proposal identity"
+        )
+    proof_text = proposal.get("proof_text")
+    if not isinstance(proof_text, str) or not proof_text.strip():
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion returned an empty proof body"
+        )
+    proof_text = proof_text.strip()
+    normalization = "none"
+    if re.match(r"^by(?:\s|$)", proof_text):
+        # Leanstral sometimes wraps an otherwise valid tactic sequence in the
+        # declaration-level ``by`` requested by its training format.  Remove
+        # exactly that outer wrapper; nested tactic terms remain untouched.
+        proof_text = textwrap.dedent(proof_text[2:]).strip()
+        normalization = "strip_single_leading_by"
+    if (
+        not proof_text
+        or len(proof_text.encode("utf-8")) > LEANSTRAL_MAX_DRAFT_BYTES
+        or re.match(r"^by(?:\s|$)", proof_text)
+        or _LEANSTRAL_NON_TACTIC_BODY.search(proof_text)
+        or _LEANSTRAL_FORBIDDEN_CONSTRUCT.search(proof_text)
+    ):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral completion did not contain an admissible tactic body"
+        )
+    proposal["proof_text"] = proof_text
+    normalized_output = json.dumps(
+        proposal,
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    if audit_receipt is not None:
+        audit_receipt.clear()
+        audit_receipt.update(
+            {
+                "schema": LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
+                "endpoint": endpoint,
+                "provider": expected_provider,
+                "requested_model": expected_model,
+                "response_model": str(completion["model"]),
+                "prompt_sha256": hashlib.sha256(
+                    prompt.encode("utf-8")
+                ).hexdigest(),
+                "raw_model_content_sha256": hashlib.sha256(
+                    output.encode("utf-8")
+                ).hexdigest(),
+                "raw_model_content_bytes": len(output.encode("utf-8")),
+                "normalized_proposal_sha256": hashlib.sha256(
+                    normalized_output.encode("utf-8")
+                ).hexdigest(),
+                "normalized_proposal_bytes": len(
+                    normalized_output.encode("utf-8")
+                ),
+                "normalization": normalization,
+            }
+        )
+    return normalized_output
+
+
+class _PinnedLeanstralGenerate:
+    """Callable exact-route generator with prompt-keyed audit receipts."""
+
+    def __init__(self, *, endpoint: str, provider: str, model: str) -> None:
+        self.endpoint = endpoint
+        self.provider = provider
+        self.model = model
+        self._receipt_local = threading.local()
+
+    def __call__(self, prompt: str, **kwargs: object) -> str:
+        if getattr(self._receipt_local, "pending", None) is not None:
+            # A delegate can fail after generation but before returning its
+            # parsed draft.  Drop that call's unusable receipt so it can never
+            # be attached to a later same-prompt proposal on this thread.
+            del self._receipt_local.pending
+        receipt: dict[str, object] = {}
+        output = leanstral_strict_llm_generate(
+            prompt,
+            endpoint=self.endpoint,
+            expected_provider=self.provider,
+            expected_model=self.model,
+            audit_receipt=receipt,
+            **kwargs,
+        )
+        prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        self._receipt_local.pending = (prompt_sha256, receipt)
+        return output
+
+    def consume_receipt(self, prompt_sha256: str) -> dict[str, object] | None:
+        pending = getattr(self._receipt_local, "pending", None)
+        if pending is None:
+            return None
+        del self._receipt_local.pending
+        pending_prompt_sha256, receipt = pending
+        if pending_prompt_sha256 != prompt_sha256:
+            return None
+        return receipt
+
+
+class _AuditedLeanstralProvider:
+    """Attach the direct-service receipt to the supervisor's untrusted draft."""
+
+    def __init__(
+        self,
+        delegate: object,
+        generator: _PinnedLeanstralGenerate,
+    ) -> None:
+        self._delegate = delegate
+        self._generator = generator
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._delegate, name)
+
+    def prove(self, request: object) -> Mapping[str, object]:
+        result = getattr(self._delegate, "prove")(request)
+        if not isinstance(result, Mapping):
+            raise LeanstralAdapterContractError(
+                "Leanstral supervisor provider returned a non-object draft"
+            )
+        draft = dict(result)
+        prompt_sha256 = draft.get("prompt_sha256")
+        proof_text = draft.get("proof_text")
+        proposal = {
+            "schema": draft.get("proposal_schema"),
+            "theorem_id": draft.get("theorem_id"),
+            "proposal_kind": draft.get("proposal_kind"),
+            "proof_text": proof_text,
+        }
+        if (
+            proposal["schema"] != LEANSTRAL_PROOF_OUTPUT_SCHEMA
+            or not isinstance(proposal["theorem_id"], str)
+            or not proposal["theorem_id"]
+            or proposal["proposal_kind"] != "proof"
+            or not isinstance(proof_text, str)
+            or not proof_text
+            or draft.get("draft_text") != proof_text
+        ):
+            raise LeanstralAdapterContractError(
+                "Leanstral draft cannot be bound to the four-field proposal"
+            )
+        normalized_proposal = json.dumps(
+            proposal,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        normalized_proposal_sha256 = hashlib.sha256(
+            normalized_proposal
+        ).hexdigest()
+        receipt = (
+            self._generator.consume_receipt(prompt_sha256)
+            if isinstance(prompt_sha256, str)
+            else None
+        )
+        if receipt is None:
+            raise LeanstralAdapterContractError(
+                "Leanstral draft omitted its generation-boundary receipt"
+            )
+        if (
+            receipt.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
+            or receipt.get("prompt_sha256") != prompt_sha256
+            or receipt.get("normalized_proposal_sha256")
+            != normalized_proposal_sha256
+            or receipt.get("normalized_proposal_bytes")
+            != len(normalized_proposal)
+        ):
+            raise LeanstralAdapterContractError(
+                "Leanstral generation receipt does not match the returned draft"
+            )
+        metadata = draft.get("metadata") or {}
+        if not isinstance(metadata, Mapping):
+            raise LeanstralAdapterContractError(
+                "Leanstral draft metadata is not an object"
+            )
+        if "benchmark_generation_boundary" in metadata:
+            raise LeanstralAdapterContractError(
+                "Leanstral draft metadata collided with boundary provenance"
+            )
+        draft["metadata"] = {
+            **dict(metadata),
+            "benchmark_generation_boundary": receipt,
+        }
+        return draft
+
+
+def create_pinned_leanstral_llm_generate(
+    *,
+    endpoint: str,
+    provider: str,
+    model: str,
+) -> Callable[..., str]:
+    """Bind the strict generator to one capability-frozen service identity."""
+
+    return _PinnedLeanstralGenerate(
+        endpoint=endpoint,
+        provider=provider,
+        model=model,
+    )
+
+
+def create_pinned_leanstral_provider(
+    provider_config: object,
+    *,
+    endpoint: str,
+    provider: str,
+    model: str,
+) -> object:
+    """Create the supervisor provider with exact-route audit provenance."""
+
+    module = importlib.import_module(
+        "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
+    )
+    factory = getattr(module, "create_leanstral_proof_provider", None)
+    if not callable(factory):
+        raise LeanstralAdapterContractError(
+            "Leanstral supervisor provider factory is unavailable"
+        )
+    generate = _PinnedLeanstralGenerate(
+        endpoint=endpoint,
+        provider=provider,
+        model=model,
+    )
+    return _AuditedLeanstralProvider(
+        factory(provider_config, llm_generate=generate),
+        generate,
+    )
+
+
+def _leanstral_supervisor_request(
+    *,
+    request: StageRequest,
+    payload: Mapping[str, object],
+    repair_attempt: int,
+    config: LeanstralAdapterConfig,
+    protocol: object,
+    capabilities: object,
+    contracts: object,
+) -> object:
+    """Bind one provider invocation to measured and enclosing-case caps."""
+
+    configured_wall_time_ms = max(
+        1,
+        math.ceil(float(config.model_timeout_seconds) * 1_000),
+    )
+    now_unix_ms = int(time.time() * 1_000)
+    deadline_unix_ms = now_unix_ms + configured_wall_time_ms
+    if request.deadline_unix_ms is not None:
+        deadline_unix_ms = min(
+            deadline_unix_ms,
+            request.deadline_unix_ms,
+        )
+    wall_time_ms = max(
+        1,
+        min(configured_wall_time_ms, deadline_unix_ms - now_unix_ms),
+    )
+    return getattr(protocol, "ProviderRequest")(
+        operation=getattr(capabilities, "ProofProviderOperation").PROVE,
+        payload=payload,
+        request_id=_provider_request_id(request, repair_attempt),
+        resource_budget=getattr(contracts, "ResourceBudget")(
+            wall_time_ms=wall_time_ms,
+            model_token_limit=config.model_token_limit,
+            max_output_bytes=config.max_draft_bytes,
+        ),
+        network_allowed=False,
+        deadline_unix_ms=deadline_unix_ms,
+    )
+
+
 def _local_leanstral_handler(
     provider_config: object | None = None,
     adapter_config: LeanstralAdapterConfig | None = None,
@@ -3068,19 +4727,28 @@ def _local_leanstral_handler(
             factory = getattr(module, "create_leanstral_proof_provider")
             provider = factory(provider_config) if provider_config is not None else factory()
             provider_holder["provider"] = provider
-        payload, _, repair_attempt = _leanstral_input(
-            request, adapter_config or LeanstralAdapterConfig()
-        )
-        provider_request = getattr(protocol, "ProviderRequest")(
-            operation=getattr(capabilities, "ProofProviderOperation").PROVE,
+        if not isinstance(request.input_data, Mapping):
+            raise LeanstralAdapterContractError(
+                "normalized Leanstral provider payload must be an object"
+            )
+        payload = dict(request.input_data)
+        repair_attempt = payload.get("repair_attempt", 0)
+        if (
+            isinstance(repair_attempt, bool)
+            or not isinstance(repair_attempt, int)
+            or repair_attempt not in (0, 1)
+        ):
+            raise LeanstralAdapterContractError(
+                "normalized Leanstral repair_attempt is invalid"
+            )
+        provider_request = _leanstral_supervisor_request(
+            request=request,
             payload=payload,
-            request_id=_provider_request_id(request, repair_attempt),
-            resource_budget=getattr(contracts, "ResourceBudget")(
-                wall_time_ms=0,
-                model_token_limit=0,
-                max_output_bytes=LEANSTRAL_MAX_DRAFT_BYTES,
-            ),
-            network_allowed=False,
+            repair_attempt=repair_attempt,
+            config=adapter_config or LeanstralAdapterConfig(),
+            protocol=protocol,
+            capabilities=capabilities,
+            contracts=contracts,
         )
         return getattr(provider, "prove")(provider_request)
 
@@ -3114,7 +4782,20 @@ class LeanstralAdapter(StageAdapter):
                 selected = provider  # type: ignore[assignment]
             elif callable(getattr(provider, "prove", None)):
                 def invoke(request: StageRequest) -> object:
-                    payload, _, repair_attempt = _leanstral_input(request, self.config)
+                    if not isinstance(request.input_data, Mapping):
+                        raise LeanstralAdapterContractError(
+                            "normalized Leanstral provider payload must be an object"
+                        )
+                    payload = dict(request.input_data)
+                    repair_attempt = payload.get("repair_attempt", 0)
+                    if (
+                        isinstance(repair_attempt, bool)
+                        or not isinstance(repair_attempt, int)
+                        or repair_attempt not in (0, 1)
+                    ):
+                        raise LeanstralAdapterContractError(
+                            "normalized Leanstral repair_attempt is invalid"
+                        )
                     # A provider object supplied by a benchmark test follows
                     # the same supervisor ProviderRequest boundary as the
                     # local provider, without importing it at module import.
@@ -3128,14 +4809,14 @@ class LeanstralAdapter(StageAdapter):
                         "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts"
                     )
                     return provider.prove(
-                        protocol.ProviderRequest(
-                            operation=capabilities.ProofProviderOperation.PROVE,
+                        _leanstral_supervisor_request(
+                            request=request,
                             payload=payload,
-                            request_id=_provider_request_id(request, repair_attempt),
-                            resource_budget=verification_contracts.ResourceBudget(
-                                max_output_bytes=self.config.max_draft_bytes,
-                            ),
-                            network_allowed=False,
+                            repair_attempt=repair_attempt,
+                            config=self.config,
+                            protocol=protocol,
+                            capabilities=capabilities,
+                            contracts=verification_contracts,
                         )
                     )
                 selected = invoke
@@ -3241,6 +4922,95 @@ class LeanstralAdapter(StageAdapter):
         super().__init__(StageName.LEANSTRAL, handler=validated, **kwargs)
 
 
+def run_leanstral_runtime_readiness_smoke(
+    provider: object,
+    *,
+    provider_identity: Mapping[str, object],
+) -> StageRecord:
+    """Exercise the non-corpus A3 adapter/provider boundary end to end.
+
+    The caller owns the provider and therefore decides whether this is a
+    deterministic injected test or a bounded live-router probe.  Either way,
+    the exact same compiler-bound context and strict draft validation used by
+    the measured A3 fallback are exercised.
+    """
+
+    requested_provider = provider_identity.get("provider")
+    requested_model = provider_identity.get("model")
+    if not all(
+        isinstance(value, str) and value.strip()
+        for value in (requested_provider, requested_model)
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral readiness identity requires provider and model"
+        )
+    obligation_id = "leanstral-runtime-smoke-obligation"
+    proof_obligation = {
+        "kind": "theorem",
+        "logic": "fol",
+        "target": "identity",
+    }
+    obligation_sha256 = hashlib.sha256(
+        canonical_json(proof_obligation).encode("utf-8")
+    ).hexdigest()
+    theorem_name = "hssl_leanstral_runtime_smoke"
+    source_template = (
+        "namespace HSSLBenchmark\n"
+        f"theorem {theorem_name} (x : Nat) : x = x := by\n"
+        "  {{PROOF}}\n"
+        "end HSSLBenchmark\n"
+    )
+    compiled = {
+        "schema": (
+            "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
+        ),
+        "compiler_version": "1",
+        "obligation_id": obligation_id,
+        "kind": "theorem",
+        "logic": "fol",
+        "semantic_target": "identity",
+        "obligation_sha256": obligation_sha256,
+        "theorem_name": theorem_name,
+        "source_template": source_template,
+        "source_template_sha256": hashlib.sha256(
+            source_template.encode("utf-8")
+        ).hexdigest(),
+    }
+    compiler = StageArtifact(
+        stage=StageName.COMPILER,
+        status=StageStatus.SUCCESS,
+        data={"compiled_obligation": compiled},
+        output_sha256=None,
+        effective_identity={"entrypoint": "leanstral-readiness-smoke"},
+        invocation_index=0,
+    )
+    request = StageRequest(
+        run_id="leanstral-runtime-smoke",
+        case_id="non-corpus-identity",
+        case_manifest_sha256=hashlib.sha256(
+            b"hssl-leanstral-runtime-readiness-smoke-v1"
+        ).hexdigest(),
+        variant_id="A3",
+        input_data={
+            "text": (
+                "Non-corpus readiness theorem: for every natural number x, "
+                "x equals x."
+            ),
+            "obligation_id": obligation_id,
+            "proof_obligation": proof_obligation,
+        },
+        requested_identity={
+            "provider": requested_provider,
+            "model": requested_model,
+            "policy": "proof_failure_fallback",
+        },
+        source=("leanstral_runtime_readiness_smoke",),
+        upstream_artifacts=(compiler,),
+        invocation_index=1,
+    )
+    return LeanstralAdapter(provider=provider).run(request)
+
+
 class KernelAdapter(StageAdapter):
     def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
         super().__init__(StageName.KERNEL, handler=handler, **kwargs)
@@ -3301,7 +5071,11 @@ def run_stages(
                 status=record.status,
                 data=record.data,
                 output_sha256=record.output_sha256,
-                effective_identity=record.provenance.effective_identity,
+                effective_identity={
+                    **dict(record.provenance.effective_identity),
+                    "graph_invoked": True,
+                    "graph_invocation_index": index,
+                },
                 invocation_index=index,
                 invoked=True,
                 policy_reason="explicit_stage_sequence",
@@ -3333,6 +5107,8 @@ __all__ = [
     "ADAPTER_VERSION",
     "CaseResultRecord",
     "CompilerAdapter",
+    "create_pinned_leanstral_llm_generate",
+    "create_pinned_leanstral_provider",
     "HAMMER_EVIDENCE_SCHEMA",
     "HammerAdapter",
     "HammerAdapterContractError",
@@ -3344,15 +5120,22 @@ __all__ = [
     "KernelAdapter",
     "LEANSTRAL_DRAFT_SCHEMA",
     "LEANSTRAL_EVIDENCE_SCHEMA",
+    "LEANSTRAL_GENERATION_BOUNDARY_SCHEMA",
     "LEANSTRAL_KERNEL_RESOURCE_CLASS",
     "LEANSTRAL_MAX_CONTEXT_BYTES",
     "LEANSTRAL_MAX_DRAFT_BYTES",
     "LEANSTRAL_MAX_REPAIR_ATTEMPTS",
+    "LEANSTRAL_MEASURED_MAX_NEW_TOKENS",
+    "LEANSTRAL_MEASURED_TIMEOUT_SECONDS",
     "LEANSTRAL_MODEL_RESOURCE_CLASS",
+    "LEANSTRAL_PROOF_OUTPUT_SCHEMA",
     "LeanstralAdapterConfig",
     "LeanstralAdapterContractError",
     "LeanstralAdapter",
+    "leanstral_strict_llm_generate",
     "PipelineResult",
+    "SEMANTIC_CONTEXT_MAX_BYTES",
+    "SEMANTIC_CONTEXT_SCHEMA",
     "SPACY_EVIDENCE_SCHEMA",
     "SPACY_MAX_EVIDENCE_BYTES",
     "SPACY_MAX_TEXT_BYTES",
@@ -3374,6 +5157,7 @@ __all__ = [
     "SYMAI_MAX_RETRIES",
     "SYMAI_MAX_TEXT_BYTES",
     "SYMAI_PROMPT_SCHEMA",
+    "SYMAI_RESPONSE_FORMAT",
     "SYMAI_ROUTER_ENGINE",
     "SymaiAdapter",
     "SymaiAdapterConfig",
@@ -3382,6 +5166,7 @@ __all__ = [
     "SymaiRecursiveRoutingError",
     "SymaiTraceGetter",
     "VersionedStageAdapter",
+    "build_upstream_semantic_context",
     "build_default_adapters",
     "run_stages",
 ]

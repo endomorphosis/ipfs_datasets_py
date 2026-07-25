@@ -1,14 +1,16 @@
 """Source-bound pilot/development execution for the HSSL reassessment.
 
 The aggregate in this module is deliberately narrower than the generic
-ablation runner: it accepts only the frozen ``reassessment-v2`` capability
-freeze, parses only the unsealed pilot and development corpus records, and
-publishes one strict receipt over the complete 560-coordinate matrix.
+ablation runner: it accepts one frozen, run-bound capability freeze, parses
+only the unsealed pilot and development corpus records, and publishes one
+strict receipt over the complete 560-coordinate matrix.  The published
+``reassessment-v2`` evidence remains validation-only.
 """
 
 from __future__ import annotations
 
 from collections import Counter
+from datetime import date, datetime, timezone
 import hashlib
 import json
 import os
@@ -16,6 +18,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Mapping, Sequence
 
+from . import DEFAULT_BENCHMARK_ROOT
 from .ablation import (
     ABLATION_RESULT_SCHEMA,
     AblationPlan,
@@ -31,10 +34,16 @@ from .capabilities import (
     ResourceLeaseReceipt,
 )
 from .capability_reprobe import (
-    DEFAULT_RECEIPT_DIRECTORY,
     LiveCapabilityReprobe,
     REASSESSMENT_RUN_ID,
     validate_frozen_capability_reprobe,
+)
+from .reassessment_namespace import (
+    PUBLISHED_REASSESSMENT_RUN_ID,
+    ReassessmentNamespaceError,
+    ReassessmentRunLayout,
+    reject_published_write_targets,
+    require_fresh_reassessment_run,
 )
 from .cases import (
     DEFAULT_CORPUS_PATH,
@@ -45,9 +54,8 @@ from .cases import (
     CorpusContractError,
     ExpectedClass,
     Split,
-    case_sha256,
     corpus_manifest_sha256,
-    load_manifest,
+    load_unsealed_pilot_development,
 )
 from .contracts import (
     DEFAULT_PROTOCOL_SHA256,
@@ -57,7 +65,11 @@ from .contracts import (
     StageName,
     canonical_json,
 )
-from .runtime import RuntimeBackendHandlers, build_live_runtime
+from .runtime import (
+    LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
+    RuntimeBackendHandlers,
+    build_live_runtime,
+)
 from .variants import (
     ALL_VARIANT_IDS,
     VARIANT_REGISTRY_SHA256,
@@ -78,15 +90,13 @@ MATRIX_SEED: Final = 2737
 EXPECTED_CASES_PER_SPLIT: Final = 10
 EXPECTED_COORDINATE_COUNT: Final = 560
 DEFAULT_MATRIX_ROOT: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/"
-    "reassessment-v2/results/matrix"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_root
 )
 DEFAULT_MATRIX_INDEX: Final = Path(
-    "workspace/benchmarks/hammer-symai-spacy-leanstral/"
-    "reassessment-v2/results/matrix-execution-v2.json"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_index
 )
 DEFAULT_MATRIX_SNAPSHOT: Final = Path(
-    "docs/performance_snapshots/2026-07-24_hssl_reassessment_matrix.json"
+    ReassessmentRunLayout.for_run(REASSESSMENT_RUN_ID).matrix_snapshot
 )
 FROZEN_SELECTION_PATH: Final = Path(
     "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
@@ -222,85 +232,26 @@ def _sealed_non_holdout_cases(
     corpus_path: str | Path = DEFAULT_CORPUS_PATH,
     manifest_path: str | Path = DEFAULT_MANIFEST_PATH,
 ) -> tuple[object, tuple[BenchmarkCase, ...]]:
-    """Load exactly the first twenty manifest-bound, unsealed corpus records.
+    """Load the shared pre-authorization pilot/development corpus boundary."""
 
-    The frozen manifest exposes holdout identifiers and digests, but not
-    semantic targets.  Reading stops after the declared pilot/development
-    count, so no holdout JSON object is read or deserialized.
-    """
-
-    manifest = load_manifest(manifest_path)
+    try:
+        manifest, cases = load_unsealed_pilot_development(
+            corpus_path=corpus_path,
+            manifest_path=manifest_path,
+        )
+    except CorpusContractError as exc:
+        raise MatrixReassessmentError(
+            "frozen unsealed corpus prefix is invalid"
+        ) from exc
     if (
-        corpus_manifest_sha256(manifest) != FROZEN_CORPUS_MANIFEST_SHA256
-        or manifest.split_counts.get(Split.PILOT.value)
+        manifest.split_counts.get(Split.PILOT.value)
         != EXPECTED_CASES_PER_SPLIT
         or manifest.split_counts.get(Split.DEVELOPMENT.value)
         != EXPECTED_CASES_PER_SPLIT
-        or manifest.split_counts.get(Split.HOLDOUT.value)
-        != EXPECTED_CASES_PER_SPLIT
+        or len(cases) != 2 * EXPECTED_CASES_PER_SPLIT
     ):
-        raise MatrixReassessmentError("frozen reviewed manifest identity drifted")
-    selected_count = 2 * EXPECTED_CASES_PER_SPLIT
-    expected_entries = manifest.cases[:selected_count]
-    if (
-        tuple(entry.ordinal for entry in expected_entries)
-        != tuple(range(selected_count))
-        or {entry.split for entry in expected_entries} != set(_MATRIX_SPLITS)
-        or any(
-            entry.split is Split.HOLDOUT
-            for entry in expected_entries
-        )
-        or any(
-            entry.split is not Split.HOLDOUT
-            for entry in manifest.cases[selected_count:]
-        )
-    ):
-        raise MatrixReassessmentError("manifest split seal or ordering drifted")
-
-    cases: list[BenchmarkCase] = []
-    try:
-        # Unbuffered binary IO ensures this boundary requests only the twenty
-        # unsealed newline records, rather than prefetching the holdout tail.
-        with Path(corpus_path).open("rb", buffering=0) as handle:
-            for ordinal, entry in enumerate(expected_entries):
-                raw = handle.readline()
-                if not raw.endswith(b"\n") or not raw.strip():
-                    raise MatrixReassessmentError(
-                        f"unsealed corpus line {ordinal + 1} is incomplete"
-                    )
-                try:
-                    text = raw[:-1].decode("utf-8")
-                    value = json.loads(
-                        text, object_pairs_hook=_reject_duplicate_pairs
-                    )
-                    case = BenchmarkCase.from_dict(value)
-                except (
-                    UnicodeError,
-                    json.JSONDecodeError,
-                    ValueError,
-                    CorpusContractError,
-                ) as exc:
-                    raise MatrixReassessmentError(
-                        f"unsealed corpus line {ordinal + 1} is invalid"
-                    ) from exc
-                if canonical_json(case.to_dict()) != text:
-                    raise MatrixReassessmentError(
-                        f"unsealed corpus line {ordinal + 1} is not canonical"
-                    )
-                if (
-                    case.case_id != entry.case_id
-                    or case.split is not entry.split
-                    or case.stratum != entry.stratum
-                    or case.source_sha256 != entry.source_sha256
-                    or case_sha256(case) != entry.case_sha256
-                ):
-                    raise MatrixReassessmentError(
-                        f"unsealed corpus line {ordinal + 1} drifted"
-                    )
-                cases.append(case)
-    except OSError as exc:
-        raise MatrixReassessmentError("cannot open unsealed corpus prefix") from exc
-    return manifest, tuple(cases)
+        raise MatrixReassessmentError("frozen reviewed split cardinality drifted")
+    return manifest, cases
 
 
 def _normalize_splits(splits: Sequence[Split]) -> tuple[Split, ...]:
@@ -345,6 +296,7 @@ def _validate_counterbalance(plan: AblationPlan) -> None:
 def build_reassessment_plans(
     frozen_reprobe: LiveCapabilityReprobe,
     *,
+    run_id: str | None = None,
     splits: Sequence[Split] = _MATRIX_SPLITS,
     cache_modes: Sequence[CacheMode] = _MATRIX_CACHE_MODES,
     seed: int = MATRIX_SEED,
@@ -354,14 +306,21 @@ def build_reassessment_plans(
 
     if not isinstance(frozen_reprobe, LiveCapabilityReprobe):
         raise MatrixReassessmentError("frozen_reprobe is invalid")
-    if frozen_reprobe.inventory.run_id != REASSESSMENT_RUN_ID:
+    selected_run_id = (
+        frozen_reprobe.inventory.run_id if run_id is None else run_id
+    )
+    try:
+        ReassessmentRunLayout.for_run(selected_run_id)
+    except ValueError as exc:
+        raise MatrixReassessmentError("matrix run_id is invalid") from exc
+    if frozen_reprobe.inventory.run_id != selected_run_id:
         raise MatrixReassessmentError("capability run identity drifted")
     selected_splits = _normalize_splits(splits)
     selected_modes = _normalize_modes(cache_modes)
     manifest, cases = _sealed_non_holdout_cases()
     plans = tuple(
         build_ablation_plan(
-            REASSESSMENT_RUN_ID,
+            selected_run_id,
             tuple(case for case in cases if case.split is split),
             case_manifest_sha256=corpus_manifest_sha256(manifest),
             split=split,
@@ -759,7 +718,7 @@ def _build_index(
     without_digest = {
         "schema": MATRIX_INDEX_SCHEMA,
         "evidence": "HSSLEV1305A27",
-        "run_id": REASSESSMENT_RUN_ID,
+        "run_id": frozen.inventory.run_id,
         "status": "complete",
         "frozen": True,
         "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
@@ -805,11 +764,108 @@ def _build_index(
     return {**without_digest, "artifact_sha256": _sha(without_digest)}
 
 
-def _snapshot(index: Mapping[str, object], index_path: Path) -> dict[str, object]:
+def _rooted(repository: Path, path: Path) -> Path:
+    return path if path.is_absolute() else repository / path
+
+
+def _assert_no_symlink_chain(root: Path, target: Path, field: str) -> None:
+    logical_root = root.absolute()
+    logical_target = target.absolute()
+    try:
+        relative = logical_target.relative_to(logical_root)
+    except ValueError as exc:
+        raise MatrixReassessmentError(f"{field} escaped its reference root") from exc
+    current = logical_root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise MatrixReassessmentError(f"{field} must not use a symlink")
+
+
+def _snapshot_artifact_reference(
+    index_path: Path,
+    *,
+    repository: Path,
+    run_id: str,
+    benchmark_root: str | Path,
+) -> str:
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    root = (
+        repository
+        if run_id == PUBLISHED_REASSESSMENT_RUN_ID
+        else _rooted(repository, layout.run_paths.run_root)
+    )
+    target = _rooted(repository, index_path)
+    _assert_no_symlink_chain(root, target, "matrix snapshot artifact")
+    try:
+        relative = target.resolve(strict=True).relative_to(
+            root.resolve(strict=True)
+        )
+    except (OSError, ValueError) as exc:
+        raise MatrixReassessmentError(
+            "matrix snapshot artifact is outside its canonical reference root"
+        ) from exc
+    reference = relative.as_posix()
+    if (
+        not reference
+        or reference == "."
+        or Path(reference).is_absolute()
+        or any(part in {"", ".", ".."} for part in relative.parts)
+    ):
+        raise MatrixReassessmentError(
+            "matrix snapshot artifact path is not canonical"
+        )
+    return reference
+
+
+def _snapshot_capture_date(run_id: str, value: object | None = None) -> str:
+    if run_id == PUBLISHED_REASSESSMENT_RUN_ID:
+        if value not in {None, "2026-07-24"}:
+            raise MatrixReassessmentError(
+                "published matrix snapshot capture date changed"
+            )
+        return "2026-07-24"
+    captured_on = (
+        datetime.now(timezone.utc).date().isoformat()
+        if value is None
+        else value
+    )
+    if not isinstance(captured_on, str):
+        raise MatrixReassessmentError(
+            "fresh matrix snapshot capture date is invalid"
+        )
+    try:
+        captured = date.fromisoformat(captured_on)
+    except ValueError as exc:
+        raise MatrixReassessmentError(
+            "fresh matrix snapshot capture date is invalid"
+        ) from exc
+    if (
+        captured_on != captured.isoformat()
+        or captured > datetime.now(timezone.utc).date()
+    ):
+        raise MatrixReassessmentError(
+            "fresh matrix snapshot capture date is invalid"
+        )
+    return captured_on
+
+
+def _snapshot(
+    index: Mapping[str, object],
+    index_path: Path,
+    *,
+    repository: Path,
+    benchmark_root: str | Path,
+    captured_on: object | None = None,
+) -> dict[str, object]:
     source = _mapping(index["source_binding"], "source binding")
+    run_id = str(index["run_id"])
     return {
         "benchmark_script": REQUIRED_COMMAND,
-        "captured_on": "2026-07-24",
+        "captured_on": _snapshot_capture_date(run_id, captured_on),
         "notes": [
             "This snapshot contains the unchanged A0-A12 and S1 pilot/development matrix.",
             "Cold and warm routes are isolated and counterbalanced; failures remain typed evidence.",
@@ -818,12 +874,19 @@ def _snapshot(index: Mapping[str, object], index_path: Path) -> dict[str, object
         "results": {
             "schema": MATRIX_SNAPSHOT_SCHEMA,
             "evidence": "HSSLEV1305A27",
-            "run_id": REASSESSMENT_RUN_ID,
+            "run_id": index["run_id"],
             "status": "complete",
             "frozen": True,
             "artifact": {
-                "path": index_path.as_posix(),
-                "bytes_sha256": _sha_bytes(index_path.read_bytes()),
+                "path": _snapshot_artifact_reference(
+                    index_path,
+                    repository=repository,
+                    run_id=run_id,
+                    benchmark_root=benchmark_root,
+                ),
+                "bytes_sha256": _sha_bytes(
+                    _rooted(repository, index_path).read_bytes()
+                ),
                 "semantic_sha256": index["artifact_sha256"],
             },
             "scope": {
@@ -847,6 +910,7 @@ def _validate_index_payload(
     repository: Path,
     index_path: Path,
     output_root: Path,
+    expected_run_id: str,
 ) -> Mapping[str, object]:
     data = _mapping(value, "matrix index")
     _exact(
@@ -874,7 +938,7 @@ def _validate_index_payload(
     if (
         data["schema"] != MATRIX_INDEX_SCHEMA
         or data["evidence"] != "HSSLEV1305A27"
-        or data["run_id"] != REASSESSMENT_RUN_ID
+        or data["run_id"] != expected_run_id
         or data["status"] != "complete"
         or data["frozen"] is not True
         or data["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256
@@ -892,7 +956,7 @@ def _validate_index_payload(
     if not isinstance(raw_runs, list) or len(raw_runs) != 2:
         raise MatrixReassessmentError("matrix split run set is incomplete")
 
-    plans = build_reassessment_plans(frozen)
+    plans = build_reassessment_plans(frozen, run_id=expected_run_id)
     summaries: list[Mapping[str, object]] = []
     for raw, plan in zip(raw_runs, plans, strict=True):
         split_root = output_root / plan.split.value
@@ -927,28 +991,60 @@ def _validate_index_payload(
 def validate_reassessment_matrix(
     *,
     repository_root: str | Path = ".",
-    output_root: str | Path = DEFAULT_MATRIX_ROOT,
-    snapshot_path: str | Path = DEFAULT_MATRIX_SNAPSHOT,
+    run_id: str = REASSESSMENT_RUN_ID,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    receipt_directory: str | Path | None = None,
+    baseline_manifest: str | Path | None = None,
+    output_root: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
+    frozen_reprobe: LiveCapabilityReprobe | None = None,
 ) -> Mapping[str, object]:
     """Read-only, strict validation of the complete persisted matrix."""
 
     repository = Path(repository_root).resolve()
-    root = Path(output_root)
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ValueError as exc:
+        raise MatrixReassessmentError("matrix run_id is invalid") from exc
+    root = Path(layout.matrix_root if output_root is None else output_root)
+    snapshot = Path(
+        layout.matrix_snapshot if snapshot_path is None else snapshot_path
+    )
     index_path = _index_path(root)
     try:
-        frozen = validate_frozen_capability_reprobe(
+        frozen = frozen_reprobe or validate_frozen_capability_reprobe(
             repository_root=repository,
-            receipt_directory=repository / DEFAULT_RECEIPT_DIRECTORY,
+            expected_run_id=run_id,
+            benchmark_root=benchmark_root,
+            baseline_manifest=baseline_manifest,
+            receipt_directory=receipt_directory,
         )
+        if frozen.inventory.run_id != run_id:
+            raise MatrixReassessmentError("capability run identity drifted")
         index = _validate_index_payload(
             _read_canonical(index_path, "matrix index"),
             frozen=frozen,
             repository=repository,
             index_path=index_path,
             output_root=root,
+            expected_run_id=run_id,
         )
-        expected_snapshot = _snapshot(index, index_path)
-        if _read_canonical(Path(snapshot_path), "matrix snapshot") != expected_snapshot:
+        actual_snapshot = _read_canonical(snapshot, "matrix snapshot")
+        actual_snapshot_mapping = _mapping(
+            actual_snapshot,
+            "matrix snapshot",
+        )
+        expected_snapshot = _snapshot(
+            index,
+            index_path,
+            repository=repository,
+            benchmark_root=benchmark_root,
+            captured_on=actual_snapshot_mapping.get("captured_on"),
+        )
+        if actual_snapshot != expected_snapshot:
             raise MatrixReassessmentError("public matrix snapshot changed")
     except (CapabilityContractError, CorpusContractError) as exc:
         raise MatrixReassessmentError("matrix prerequisite is invalid") from exc
@@ -959,8 +1055,12 @@ def execute_reassessment_matrix(
     frozen_reprobe: LiveCapabilityReprobe | None = None,
     *,
     repository_root: str | Path = ".",
-    output_root: str | Path = DEFAULT_MATRIX_ROOT,
-    snapshot_path: str | Path = DEFAULT_MATRIX_SNAPSHOT,
+    run_id: str | None = None,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    receipt_directory: str | Path | None = None,
+    baseline_manifest: str | Path | None = None,
+    output_root: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
     splits: Sequence[Split] = _MATRIX_SPLITS,
     cache_modes: Sequence[CacheMode] = _MATRIX_CACHE_MODES,
     seed: int = MATRIX_SEED,
@@ -972,22 +1072,64 @@ def execute_reassessment_matrix(
     if type(resume) is not bool:
         raise MatrixReassessmentError("resume must be a boolean")
     repository = Path(repository_root).resolve()
-    root = Path(output_root)
+    selected_run_id = (
+        frozen_reprobe.inventory.run_id
+        if run_id is None and frozen_reprobe is not None
+        else run_id
+    )
+    if selected_run_id is None:
+        raise MatrixReassessmentError(
+            "fresh matrix execution requires an explicit run_id"
+        )
+    try:
+        layout = require_fresh_reassessment_run(
+            selected_run_id,
+            benchmark_root=benchmark_root,
+        )
+    except ReassessmentNamespaceError as exc:
+        raise MatrixReassessmentError(str(exc)) from exc
+    if (
+        frozen_reprobe is not None
+        and frozen_reprobe.inventory.run_id != selected_run_id
+    ):
+        raise MatrixReassessmentError("capability run identity drifted")
+    root = Path(layout.matrix_root if output_root is None else output_root)
+    snapshot = Path(
+        layout.matrix_snapshot if snapshot_path is None else snapshot_path
+    )
     index_path = _index_path(root)
+    try:
+        reject_published_write_targets(
+            repository_root=repository,
+            run_id=selected_run_id,
+            targets=(root, index_path, snapshot),
+            benchmark_root=benchmark_root,
+        )
+    except ReassessmentNamespaceError as exc:
+        raise MatrixReassessmentError(str(exc)) from exc
     if index_path.exists():
         if not resume:
             raise MatrixReassessmentError("matrix evidence already exists")
         return validate_reassessment_matrix(
             repository_root=repository,
+            run_id=selected_run_id,
+            benchmark_root=benchmark_root,
+            receipt_directory=receipt_directory,
+            baseline_manifest=baseline_manifest,
             output_root=root,
-            snapshot_path=snapshot_path,
+            snapshot_path=snapshot,
+            frozen_reprobe=frozen_reprobe,
         )
     frozen = frozen_reprobe or validate_frozen_capability_reprobe(
         repository_root=repository,
-        receipt_directory=repository / DEFAULT_RECEIPT_DIRECTORY,
+        expected_run_id=selected_run_id,
+        benchmark_root=benchmark_root,
+        baseline_manifest=baseline_manifest,
+        receipt_directory=receipt_directory,
     )
     plans = build_reassessment_plans(
         frozen,
+        run_id=selected_run_id,
         splits=splits,
         cache_modes=cache_modes,
         seed=seed,
@@ -996,6 +1138,8 @@ def execute_reassessment_matrix(
         frozen.inventory,
         handlers or RuntimeBackendHandlers(),
         state_directory=root / "processes",
+        leanstral_timeout_seconds=plans[0].limits.case_timeout_seconds,
+        leanstral_max_new_tokens=LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
     )
     summaries: list[Mapping[str, object]] = []
     try:
@@ -1054,11 +1198,24 @@ def execute_reassessment_matrix(
         live.close()
     index = _build_index(frozen, summaries, repository)
     _write_once(index_path, index)
-    _write_once(Path(snapshot_path), _snapshot(index, index_path))
+    _write_once(
+        snapshot,
+        _snapshot(
+            index,
+            index_path,
+            repository=repository,
+            benchmark_root=benchmark_root,
+        ),
+    )
     return validate_reassessment_matrix(
         repository_root=repository,
+        run_id=selected_run_id,
+        benchmark_root=benchmark_root,
+        receipt_directory=receipt_directory,
+        baseline_manifest=baseline_manifest,
         output_root=root,
-        snapshot_path=snapshot_path,
+        snapshot_path=snapshot,
+        frozen_reprobe=frozen,
     )
 
 
