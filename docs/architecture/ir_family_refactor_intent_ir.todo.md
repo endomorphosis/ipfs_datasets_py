@@ -372,7 +372,7 @@ real conflict edges.
 
 ## IRF-031 Implement pinned SkillCenter snapshots and offline cache
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: data
