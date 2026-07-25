@@ -54,6 +54,28 @@ from .graphrag import (
     TemplateMatch,
     UnsafeSlotBindingError,
 )
+from .dataset_manager import (
+    AbbyVoiceDatasetManager,
+    AbbyVoiceDatasetManagerResult,
+    DatasetDisposition,
+    PinnedVoiceSource,
+)
+from .legacy_sources import (
+    LegacyAudioCandidate,
+    LegacyAudioDisposition,
+    LegacyAudioReconciliation,
+    LegacyDispositionReason,
+    LegacyDispositionStatus,
+    reconcile_legacy_audio_candidates,
+)
+from .workset import (
+    AudioArtifactDescriptor,
+    AudioWorkItem,
+    AudioWorkManifest,
+    AudioWorkOperation,
+    AudioWorkReason,
+    VoiceAudioWorkset,
+)
 
 __all__ = [
     "ABBY_VOICE_AUDIO_V2",
@@ -83,6 +105,22 @@ __all__ = [
     "TemplateGraphSnapshot",
     "TemplateMatch",
     "UnsafeSlotBindingError",
+    "AbbyVoiceDatasetManager",
+    "AbbyVoiceDatasetManagerResult",
+    "DatasetDisposition",
+    "PinnedVoiceSource",
+    "LegacyAudioCandidate",
+    "LegacyAudioDisposition",
+    "LegacyAudioReconciliation",
+    "LegacyDispositionReason",
+    "LegacyDispositionStatus",
+    "reconcile_legacy_audio_candidates",
+    "AudioArtifactDescriptor",
+    "AudioWorkItem",
+    "AudioWorkManifest",
+    "AudioWorkOperation",
+    "AudioWorkReason",
+    "VoiceAudioWorkset",
     "build_slotted_response_dag",
     "deduplicate_voice_response_chunks",
     "deterministic_split",
