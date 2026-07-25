@@ -113,7 +113,7 @@ Lightweight, production-ready MIME-based file converter with async support.
 - Real-time document pipelines
 - Memory-efficient batch processing
 
-**See Also:** [File Conversion Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md) for comprehensive comparison and integration recommendations.
+**See Also:** [File Conversion Systems Analysis](../../../docs/implementation/plans/file_conversion_systems_analysis.md) for comprehensive comparison and integration recommendations.
 
 ### DiscordWrapper (`discord_wrapper.py`)
 Discord chat history export and analysis with DiscordChatExporter integration.
@@ -424,7 +424,7 @@ processor_config = {
 - ZIP (.zip), TAR (.tar), RAR (.rar)
 - 7-Zip (.7z), GZip (.gz), BZip2 (.bz2)
 
-**See:** [FILE_CONVERSION_SYSTEMS_ANALYSIS.md](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md) for complete format list and capabilities.
+**See:** [FILE_CONVERSION_SYSTEMS_ANALYSIS.md](../../../docs/implementation/plans/file_conversion_systems_analysis.md) for complete format list and capabilities.
 
 ## Advanced Features
 
@@ -552,14 +552,14 @@ pip install ipfs-datasets-py[multimedia]
 
 ## See Also
 
-- **[File Conversion Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md)** - Comprehensive comparison of conversion systems
-- [Discord Usage Examples](../../docs/discord_usage_examples.md) - Comprehensive Discord integration guide
-- [PDF Processing](../processors/pdf_processing.py) - Document processing capabilities
-- [Utils](../utils/README.md) - Text processing utilities
-- [Embeddings](../embeddings/README.md) - Generate embeddings from media content
-- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - GraphRAG and knowledge graph capabilities
-- [IPFS Integration Guide](../../docs/distributed_features.md) - Decentralized storage
-- [Performance Guide](../../docs/performance_optimization.md) - Media processing optimization
+- **[File Conversion Systems Analysis](../../../docs/implementation/plans/file_conversion_systems_analysis.md)** - Comprehensive comparison of conversion systems
+- [Discord Usage Examples](../../../docs/examples/discord_usage_examples.md) - Comprehensive Discord integration guide
+- [PDF Processing](../pdf_processing.py) - Document processing capabilities
+- [Utils](../../utils/README.md) - Text processing utilities
+- [Embeddings](../../ml/embeddings/README.md) - Generate embeddings from media content
+- [GraphRAG Optimizers](../../optimizers/graphrag/README.md) - GraphRAG and knowledge graph capabilities
+- [IPFS Integration Guide](../../../docs/guides/distributed_features.md) - Decentralized storage
+- [Performance Guide](../../../docs/guides/performance_optimization.md) - Media processing optimization
 - [DiscordChatExporter Repository](https://github.com/Tyrrrz/DiscordChatExporter) - Upstream project
 - [omni_converter_mk2 Repository](https://github.com/endomorphosis/omni_converter_mk2) - Submodule
 - [convert_to_txt_based_on_mime_type Repository](https://github.com/endomorphosis/convert_to_txt_based_on_mime_type) - Submodule
