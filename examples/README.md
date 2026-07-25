@@ -218,7 +218,7 @@ pip install -e ".[all]"
 ### Missing Dependencies
 ```bash
 # Check what's installed
-python examples/01_getting_started.py
+python examples/basic/01_getting_started.py
 
 # Install specific features
 pip install transformers torch              # For embeddings
@@ -237,7 +237,7 @@ ipfs init
 ipfs daemon
 
 # Then run the example
-python examples/06_ipfs_storage.py
+python examples/basic/06_ipfs_storage.py
 ```
 
 
@@ -322,7 +322,7 @@ These focus on the MCP server rather than package integration:
 ## 🔗 Related Documentation
 
 - **[Main README](../README.md)** - Project overview and installation
-- **[CLAUDE.md](../CLAUDE.md)** - Development coordination (for contributors)
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Development coordination (for contributors)
 - **[API Documentation](../docs/)** - Detailed API references
 - **[Tests](../tests/)** - Test suite for reference implementations
 
