@@ -53,4 +53,4 @@ For the workspace dataset bundle tooling (export, packaging, and chain-loadable 
 
 - [guides/](../guides/) - Feature guides and how-tos
 - [reports/](../reports/) - Project completion reports
-- [implementation_plans/](../implementation_plans/) - Implementation strategies
+- [implementation/plans/](../implementation/plans/) - Implementation strategies
