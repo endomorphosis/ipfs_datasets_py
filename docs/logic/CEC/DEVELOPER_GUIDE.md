@@ -990,7 +990,7 @@ def test_liberty_conversion():
 
 ### Internal Documentation
 
-- **[README.md](./README.md)** - Main entry point
+- **[CEC README](../../../ipfs_datasets_py/logic/CEC/README.md)** - Main entry point
 - **[STATUS.md](./STATUS.md)** - Implementation status
 - **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute tutorial
 - **[API_REFERENCE.md](./API_REFERENCE.md)** - Complete API
