@@ -252,7 +252,7 @@ real conflict edges.
 
 ## IRF-022 Isolate the Xaman Security adapter
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
