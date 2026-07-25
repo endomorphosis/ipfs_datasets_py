@@ -866,8 +866,8 @@ async def readiness_check():
 
 - **[Performance Optimization Guide](performance_optimization.md)** - Detailed performance tuning
 - **[Security Guide](security/security_governance.md)** - Comprehensive security practices
-- **[Monitoring Guide](monitoring_guide.md)** - Complete monitoring setup
-- **[Backup & Recovery](backup_recovery.md)** - Data protection strategies
+- **[Monitoring & Observability Guide](deployment/README.md#monitoring--observability)** - Complete monitoring setup
+- **[Backup & Recovery](deployment/README.md#disaster-recovery)** - Data protection strategies
 
 ---
 
@@ -875,4 +875,4 @@ async def readiness_check():
 **⚡ Time to Production**: < 30 minutes with Docker  
 **🔧 Maintenance Overhead**: Minimal with automation  
 
-[← Back to Documentation](MASTER_DOCUMENTATION_INDEX_NEW.md) | [Security Guide →](security/security_governance.md)
+[← Back to Documentation](../DOCUMENTATION_INDEX.md) | [Security Guide →](security/security_governance.md)
