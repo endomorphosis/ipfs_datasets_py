@@ -732,7 +732,7 @@ real conflict edges.
 
 ## IRF-053 Build paired formalization benchmarks
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: quality
