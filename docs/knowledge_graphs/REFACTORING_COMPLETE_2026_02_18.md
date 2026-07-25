@@ -393,7 +393,7 @@ The user's intuition about documentation needing attention was correct. By conso
 - [COMPREHENSIVE_ANALYSIS_2026_02_18.md](./COMPREHENSIVE_ANALYSIS_2026_02_18.md) - Detailed findings
 - [MASTER_STATUS.md](./MASTER_STATUS.md) - Single source of truth for module status
 - [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md) - Documentation navigation guide
-- [archive/README.md](./archive/README.md) - Archive documentation
+- [archive/refactoring_history/VALIDATION_REPORT.md](./archive/refactoring_history/VALIDATION_REPORT.md) - Archived validation report and historical archive context
 
 ---
 
