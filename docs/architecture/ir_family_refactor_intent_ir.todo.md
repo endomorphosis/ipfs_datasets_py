@@ -660,7 +660,7 @@ real conflict edges.
 
 ## IRF-050 Build source-free features and leakage-safe splits
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: data
