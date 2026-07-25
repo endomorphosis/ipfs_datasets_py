@@ -429,6 +429,6 @@ Week 2             Week 4           Week 6         Week 8          Week 10
 ---
 
 **For full details, see:**
-- [Comprehensive Plan](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) (36KB)
+- [Comprehensive Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) (36KB)
 - [Quick Reference](./PROCESSORS_REFACTORING_QUICK_REFERENCE.md) (9KB)
-- [Documentation Index](./DOCUMENTATION_INDEX.md)
+- [Documentation Index](../../archive/processors/planning/PROCESSORS_DOCUMENTATION_INDEX.md)
