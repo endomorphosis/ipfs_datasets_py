@@ -177,8 +177,8 @@ A: The native backend maintains API compatibility with the old approach through 
 
 If you have questions or need help migrating:
 
-1. **Documentation:** See [implementation_plans/file_conversion_integration_plan.md](implementation_plans/file_conversion_integration_plan.md)
-2. **Migration Guide:** See [guides/infrastructure/anyio_migration_guide.md](guides/infrastructure/anyio_migration_guide.md)
+1. **Documentation:** See [file conversion integration plan](../implementation/plans/file_conversion_integration_plan.md)
+2. **Migration Guide:** See [AnyIO migration guide](../guides/infrastructure/anyio_migration_guide.md)
 3. **Examples:** Check `examples/` directory
 4. **Issues:** Open an issue on GitHub
 
