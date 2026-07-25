@@ -13,7 +13,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 - ✅ **LLM Router** - already exists
 - ✅ **Docker/Kubernetes** - already exist
 
-**See:** [REVISION_SUMMARY.md](./REVISION_SUMMARY.md) for complete details
+**See:** [REVISION_SUMMARY.md](./ARCHIVE/REVISION_SUMMARY.md) for complete details
 
 ---
 
@@ -23,7 +23,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 **New to TDFOL or the refactoring plan?** Start with these documents in order:
 
-1. **[REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md)** ⭐ **← NEW MASTER**
+1. **[REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md)** ⭐ **← NEW MASTER**
    - **What:** High-level overview (REVISED to reflect existing infrastructure)
    - **Who:** Managers, stakeholders, decision-makers
    - **Status:** 🟢 COMPLETE (Phases 1-12) | 📋 PLANNING (Phases 13-18)
@@ -34,7 +34,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
      - Success metrics and risk assessment
      - Investment required (14-19 weeks, 280-380 hours) ⚡ REDUCED
 
-2. **[REVISION_SUMMARY.md](./REVISION_SUMMARY.md)** 📋 **← READ THIS FIRST**
+2. **[REVISION_SUMMARY.md](./ARCHIVE/REVISION_SUMMARY.md)** 📋 **← READ THIS FIRST**
    - **What:** Explains all changes from v2.0 to v2.1
    - **Who:** Everyone planning future work
    - **Content:**
@@ -64,7 +64,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
      - Integration with existing infrastructure
      - Resource requirements
 
-5. **[IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)** 🚀
+5. **[IMPLEMENTATION_QUICK_START_2026.md](./ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md)** 🚀
    - **What:** Developer implementation guide
    - **Who:** Developers implementing Phases 13-18
    - **Content:**
@@ -82,11 +82,11 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 | Document | Purpose | Audience | Size | Priority |
 |----------|---------|----------|------|----------|
-| [REVISION_SUMMARY.md](./REVISION_SUMMARY.md) | What changed v2.0→v2.1 | Everyone | 7.6KB | ⭐ **Read First** |
-| [REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md) | Executive summary (REVISED) | Managers | 8.8KB | ⭐ **New Master** |
+| [REVISION_SUMMARY.md](./ARCHIVE/REVISION_SUMMARY.md) | What changed v2.0→v2.1 | Everyone | 7.6KB | ⭐ **Read First** |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md) | Executive summary (REVISED) | Managers | 8.8KB | ⭐ **New Master** |
 | [UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md](./UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md) | Master roadmap (REVISED) | Tech leads | 20.8KB | 📖 **New Master** |
 | [STATUS_2026.md](./STATUS_2026.md) | Single source of truth | Everyone | 17.5KB | 📍 Reference |
-| [IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md) | Implementation guide | Developers | 20.5KB | 🚀 Developer |
+| [IMPLEMENTATION_QUICK_START_2026.md](./ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md) | Implementation guide | Developers | 20.5KB | 🚀 Developer |
 | **INDEX.md** | This navigation file | Everyone | ~7KB | 📍 Navigation |
 
 ### 📊 Version History
@@ -108,34 +108,34 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 | Document | Status | Notes |
 |----------|--------|-------|
-| [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
-| [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
+| [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
 
 **Version 1.0 (Pre-Feb 18, 2026):** 🟡 Historical
 
 | Document | Status | Notes |
 |----------|--------|-------|
-| [COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) | 🟡 Historical | v1.0 - superseded by v2.1 |
-| [REFACTORING_EXECUTIVE_SUMMARY.md](./REFACTORING_EXECUTIVE_SUMMARY.md) | 🟡 Historical | v1.0 summary |
-| [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) | 🟡 Historical | Phase 7 era |
-| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | 🟡 Historical | v1.0 quick ref |
-| [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md) | 🟡 Historical | Phase 7 era |
-| [REFACTORING_PLAN_2026_02_18.md](./REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan |
-| [REFACTORING_PLAN_2026_02_18.md](./REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan - superseded by UNIFIED_REFACTORING_ROADMAP_2026.md |
+| [COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./ARCHIVE/COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) | 🟡 Historical | v1.0 - superseded by v2.1 |
+| [REFACTORING_EXECUTIVE_SUMMARY.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY.md) | 🟡 Historical | v1.0 summary |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) | 🟡 Historical | Phase 7 era |
+| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | 🟢 Current | Current quick reference |
+| [QUICK_REFERENCE_2026_02_18.md](./ARCHIVE/QUICK_REFERENCE_2026_02_18.md) | 🟡 Historical | Phase 7 era |
+| [REFACTORING_PLAN_2026_02_18.md](./ARCHIVE/REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan |
+| [REFACTORING_PLAN_2026_02_18.md](./ARCHIVE/REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan - superseded by UNIFIED_REFACTORING_ROADMAP_2026.md |
 
 ### Phase Completion Reports
 
 | Document | Phase | Status | Date |
 |----------|-------|--------|------|
-| [PHASE7_COMPLETION_REPORT.md](./PHASE7_COMPLETION_REPORT.md) | Phase 7: NL Processing | ✅ Complete | 2026-02-18 |
-| [PHASE7_PROGRESS.md](./PHASE7_PROGRESS.md) | Phase 7: Week-by-week | ✅ Complete | 2026-02-18 |
-| [SESSION_SUMMARY_2026_02_18.md](./SESSION_SUMMARY_2026_02_18.md) | Final session | ✅ Complete | 2026-02-18 |
+| [PHASE7_COMPLETION_REPORT.md](./ARCHIVE/PHASE7_COMPLETION_REPORT.md) | Phase 7: NL Processing | ✅ Complete | 2026-02-18 |
+| [PHASE7_PROGRESS.md](./ARCHIVE/PHASE7_PROGRESS.md) | Phase 7: Week-by-week | ✅ Complete | 2026-02-18 |
+| [SESSION_SUMMARY_2026_02_18.md](./ARCHIVE/SESSION_SUMMARY_2026_02_18.md) | Final session | ✅ Complete | 2026-02-18 |
 
 ### Module Documentation
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [README.md](./README.md) | Module overview and API | ✅ Current |
+| [README.md](../../../ipfs_datasets_py/logic/TDFOL/README.md) | Module overview and API | ✅ Current |
 
 ---
 
@@ -145,7 +145,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 **Goal:** Understand current status, future plans, and ROI
 
-1. **Start:** [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md)
+1. **Start:** [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026.md)
    - Read sections: TL;DR, Current State, What's Next
    - Review: Success Metrics, Risk Assessment, Investment Required
    - Note: Recommendations (fix test failures, start Phase 13)
@@ -155,7 +155,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
    - Review: Completed Phases (all metrics)
    - Note: Future Enhancements (Phases 13-17)
 
-3. **Dive Deeper (Optional):** [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)
+3. **Dive Deeper (Optional):** [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)
    - Read: Overview, Timeline & Resources
    - Skip: Technical implementation details
 
@@ -174,7 +174,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 **Goal:** Implement new features or fix issues
 
-1. **Start:** [IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)
+1. **Start:** [IMPLEMENTATION_QUICK_START_2026.md](./ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md)
    - Read sections: Getting Started, Development Workflow
    - Review: Code Style, Testing Guidelines
    - Note: Phase-specific guides for your work
@@ -184,7 +184,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
    - Review: Test Coverage table
    - Note: Current LOC and test counts
 
-3. **Dive Deeper:** [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)
+3. **Dive Deeper:** [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)
    - Find your phase (13-17)
    - Read: Detailed deliverables
    - Review: Code examples and patterns
@@ -202,7 +202,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
 
 **Goal:** Understand architecture and plan implementation
 
-1. **Start:** [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)
+1. **Start:** [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)
    - Read: Overview, Architecture Vision
    - Review: All phase deliverables (1-17)
    - Note: Timeline & Resources section
@@ -212,7 +212,7 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
    - Review: Component Status table
    - Note: Technical Debt section
 
-3. **Planning:** [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md)
+3. **Planning:** [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026.md)
    - Review: Success Metrics
    - Note: Risk Assessment
    - Plan: Immediate Actions
@@ -306,9 +306,9 @@ GPU acceleration and distributed proving for 100-1000x speedup and 10,000+ formu
 ### For Everyone
 
 - ✅ **Always start with [STATUS_2026.md](./STATUS_2026.md)** - It's the single source of truth
-- ✅ **Use [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md)** for quick overview
-- ✅ **Refer to [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** for detailed planning
-- ✅ **Check [IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)** before coding
+- ✅ **Use [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026.md)** for quick overview
+- ✅ **Refer to [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)** for detailed planning
+- ✅ **Check [IMPLEMENTATION_QUICK_START_2026.md](./ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md)** before coding
 
 ### Common Tasks
 
@@ -316,13 +316,13 @@ GPU acceleration and distributed proving for 100-1000x speedup and 10,000+ formu
 → Read [STATUS_2026.md](./STATUS_2026.md)
 
 **Want to implement Phase 13-17?**
-→ Read [IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)
+→ Read [IMPLEMENTATION_QUICK_START_2026.md](./ARCHIVE/IMPLEMENTATION_QUICK_START_2026.md)
 
 **Want detailed technical roadmap?**
-→ Read [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)
+→ Read [UNIFIED_REFACTORING_ROADMAP_2026.md](./ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)
 
 **Want executive summary?**
-→ Read [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md)
+→ Read [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026.md)
 
 ---
 
@@ -418,7 +418,7 @@ Week 17-22: Phase 12 (Hardening)          → v2.0 Production Ready
 ### How to Contribute
 
 1. **Pick a Task:**
-   - Browse [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md#-quick-wins-this-week)
+   - Browse [QUICK_REFERENCE_2026_02_18.md](./ARCHIVE/QUICK_REFERENCE_2026_02_18.md#-quick-wins-this-week)
    - Start with "Easy Tasks" (2-4 hours)
    - Move to "Medium Tasks" (4-8 hours)
 
@@ -467,13 +467,13 @@ Week 17-22: Phase 12 (Hardening)          → v2.0 Production Ready
 
 ### TDFOL Core
 
-- **Module README:** [README.md](./README.md)
+- **Module README:** [README.md](../../../ipfs_datasets_py/logic/TDFOL/README.md)
 - **API Reference:** See README.md § API Reference
 - **Usage Examples:** See README.md § Usage Examples
 
 ### Phase Reports
 
-- **Phase 7:** [PHASE7_COMPLETION_REPORT.md](./PHASE7_COMPLETION_REPORT.md)
+- **Phase 7:** [PHASE7_COMPLETION_REPORT.md](./ARCHIVE/PHASE7_COMPLETION_REPORT.md)
 - **Phase 1-6:** See README.md (reports not yet created)
 
 ### External Resources
@@ -495,22 +495,22 @@ Week 17-22: Phase 12 (Hardening)          → v2.0 Production Ready
 ### New to TDFOL?
 
 1. **Understand the Basics** (30 min)
-   - Read: [README.md](./README.md) § Overview
+   - Read: [README.md](../../../ipfs_datasets_py/logic/TDFOL/README.md) § Overview
    - Learn: What is TDFOL? (FOL + Deontic + Temporal)
    - Example: Parse and prove simple formulas
 
 2. **See Phase 7 Results** (15 min)
-   - Read: [PHASE7_COMPLETION_REPORT.md](./PHASE7_COMPLETION_REPORT.md) § Executive Summary
+   - Read: [PHASE7_COMPLETION_REPORT.md](./ARCHIVE/PHASE7_COMPLETION_REPORT.md) § Executive Summary
    - Understand: NL → TDFOL conversion pipeline
    - Try: Demo scripts in `scripts/demo/`
 
 3. **Understand Refactoring Needs** (30 min)
-   - Read: [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) § Current State
+   - Read: [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) § Current State
    - Review: Critical issues and gaps
    - Understand: Why refactoring is needed
 
 4. **Start Contributing** (2+ hours)
-   - Read: [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md) § Quick Wins
+   - Read: [QUICK_REFERENCE_2026_02_18.md](./ARCHIVE/QUICK_REFERENCE_2026_02_18.md) § Quick Wins
    - Pick: An easy task (2-4 hours)
    - Follow: Testing and documentation guidelines
    - Submit: Your first PR!
