@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.logic.ir_core.canonical import canonical_json_bytes
 from ipfs_datasets_py.logic.security_ir import artifact_migration as migration
 
 
@@ -33,6 +34,14 @@ def _inventory_digest(records: list[dict]) -> str:
         sort_keys=True,
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _rebind_manifest(manifest: dict) -> None:
+    digest = hashlib.sha256(
+        canonical_json_bytes(manifest["deterministic_fields"])
+    ).hexdigest()
+    manifest["manifest_sha256"] = digest
+    manifest["manifest_id"] = f"security-artifact-migration:sha256:{digest}"
 
 
 def test_checked_in_manifest_is_complete_and_deterministic() -> None:
@@ -153,6 +162,32 @@ def test_unknown_and_transient_fixture_records_are_archived_and_flagged() -> Non
     assert all(item["target"]["authority_selected"] is False for item in records)
 
 
+def test_builder_rejects_noncanonical_or_unsafe_inventory_metadata() -> None:
+    inventory = _inventory()
+
+    unordered = deepcopy(inventory)
+    unordered["artifacts"][:2] = reversed(unordered["artifacts"][:2])
+    unordered["inventory_sha256"] = _inventory_digest(unordered["artifacts"])
+    with pytest.raises(migration.ArtifactMigrationError, match="path ordered"):
+        migration.build_migration_manifest(unordered)
+
+    authoritative = deepcopy(inventory)
+    authoritative["artifacts"][0]["authority_selected"] = True
+    authoritative["inventory_sha256"] = _inventory_digest(
+        authoritative["artifacts"]
+    )
+    with pytest.raises(migration.ArtifactMigrationError, match="must not select"):
+        migration.build_migration_manifest(authoritative)
+
+    coerced_boolean = deepcopy(inventory)
+    coerced_boolean["artifacts"][0]["is_temporary"] = 0
+    coerced_boolean["inventory_sha256"] = _inventory_digest(
+        coerced_boolean["artifacts"]
+    )
+    with pytest.raises(migration.ArtifactMigrationError, match="must be a boolean"):
+        migration.build_migration_manifest(coerced_boolean)
+
+
 def test_deterministic_and_observational_fields_are_separate() -> None:
     manifest = _manifest()
     changed_observation = deepcopy(manifest)
@@ -169,6 +204,15 @@ def test_deterministic_and_observational_fields_are_separate() -> None:
     ] += 1
     with pytest.raises(migration.ArtifactMigrationError, match="manifest_sha256"):
         migration.validate_migration_manifest(changed_deterministic)
+
+
+def test_validator_rejects_type_coercion_even_with_a_rebound_digest() -> None:
+    manifest = deepcopy(_manifest())
+    manifest["deterministic_fields"]["records"][0]["flags"]["transient"] = 0
+    _rebind_manifest(manifest)
+
+    with pytest.raises(migration.ArtifactMigrationError, match="malformed safety flags"):
+        migration.validate_migration_manifest(manifest)
 
 
 def test_reference_migration_is_idempotent_and_reversible() -> None:
