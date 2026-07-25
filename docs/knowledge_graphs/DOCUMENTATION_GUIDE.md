@@ -42,7 +42,7 @@
 
 **Priority: HIGH** - Start here if you're new
 
-1. **[README.md](./README.md)** (11.5KB)
+1. **[README.md](../../ipfs_datasets_py/knowledge_graphs/README.md)** (11.5KB)
    - Module overview
    - Quick examples
    - Links to other documentation
@@ -314,9 +314,9 @@ Use relative links:
 ```markdown
 See [MASTER_STATUS.md](./MASTER_STATUS.md) for complete status.
 
-For API details, see [docs/knowledge_graphs/EXTRACTION_API.md](../../docs/knowledge_graphs/EXTRACTION_API.md).
+For API details, see [API_REFERENCE.md](./API_REFERENCE.md).
 
-Module documentation: [extraction/README.md](./extraction/README.md)
+Module documentation: [extraction/README.md](../../ipfs_datasets_py/knowledge_graphs/extraction/README.md)
 ```
 
 ---
@@ -532,7 +532,7 @@ Always include header row separator
 
 - [MASTER_STATUS.md](./MASTER_STATUS.md) - Single source of truth for module status
 - [INDEX.md](./INDEX.md) - Complete documentation index
-- [README.md](./README.md) - Module overview
+- [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md) - Module overview
 - [tests/knowledge_graphs/TEST_GUIDE.md](../../tests/knowledge_graphs/TEST_GUIDE.md) - Test documentation guide
 
 ---
