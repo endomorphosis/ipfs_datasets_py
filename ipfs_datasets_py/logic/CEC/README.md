@@ -7,27 +7,27 @@ A comprehensive neurosymbolic framework for Cognitive Event Calculus reasoning, 
 ## 📚 Documentation Navigation
 
 **New to CEC? Start here:**
-- **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-minute tutorial to get started
-- **[STATUS.md](./STATUS.md)** 📊 Implementation status (single source of truth)
-- **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** 📖 Comprehensive user guide
+- **[QUICKSTART.md](../../../docs/logic/CEC/QUICKSTART.md)** ⚡ 5-minute tutorial to get started
+- **[STATUS.md](../../../docs/logic/CEC/STATUS.md)** 📊 Implementation status (single source of truth)
+- **[CEC_SYSTEM_GUIDE.md](../../../docs/logic/CEC/CEC_SYSTEM_GUIDE.md)** 📖 Comprehensive user guide
 
 **For developers:**
-- **[IMPLEMENTATION_QUICK_START.md](./IMPLEMENTATION_QUICK_START.md)** 🚀 **START HERE** - Begin working on CEC phases
-- **[API_REFERENCE.md](./API_REFERENCE.md)** 📚 Complete API documentation
-- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** 💻 Development setup and contribution guide
+- **[IMPLEMENTATION_QUICK_START.md](../../../docs/logic/CEC/ARCHIVE/IMPLEMENTATION_QUICK_START.md)** 🚀 **START HERE** - Begin working on CEC phases
+- **[API_REFERENCE.md](../../../docs/logic/CEC/API_REFERENCE.md)** 📚 Complete API documentation
+- **[DEVELOPER_GUIDE.md](../../../docs/logic/CEC/DEVELOPER_GUIDE.md)** 💻 Development setup and contribution guide
 
 **Planning & roadmap:**
-- **[CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md](./CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md)** 🎯 **NEW: Code Quality Roadmap** - Comprehensive plan (12-16 weeks, 90-120h)
-- **[CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md](./CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md)** 📊 **NEW: Executive Summary** - High-level overview, ROI analysis
-- **[CEC_REFACTORING_QUICK_REFERENCE_2026.md](./CEC_REFACTORING_QUICK_REFERENCE_2026.md)** 📋 **NEW: Quick Reference** - Implementation guide with commands
-- **[VISUAL_REFACTORING_ROADMAP_2026.md](./VISUAL_REFACTORING_ROADMAP_2026.md)** 📈 **NEW: Visual Roadmap** - Mermaid diagrams and timelines
-- **[UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** 🎯 Feature Roadmap - Complete 5-enhancement plan (Phases 3-8)
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Legacy plan (8 phases, 26 weeks)
-- **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** ⚡ Phase 7 performance strategy
-- **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** 🌍 Phase 5 multi-language plan
-- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** 🔬 Phase 6 prover integration
-- **[API_INTERFACE_DESIGN.md](./API_INTERFACE_DESIGN.md)** 🌐 Phase 8 REST API design
-- **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** 📋 Quick reference guide
+- **[CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md](../../../docs/logic/CEC/CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md)** 🎯 **NEW: Code Quality Roadmap** - Comprehensive plan (12-16 weeks, 90-120h)
+- **[CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md](../../../docs/logic/CEC/ARCHIVE/CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md)** 📊 **NEW: Executive Summary** - High-level overview, ROI analysis
+- **[CEC_REFACTORING_QUICK_REFERENCE_2026.md](../../../docs/logic/CEC/ARCHIVE/CEC_REFACTORING_QUICK_REFERENCE_2026.md)** 📋 **NEW: Quick Reference** - Implementation guide with commands
+- **[VISUAL_REFACTORING_ROADMAP_2026.md](../../../docs/logic/CEC/ARCHIVE/VISUAL_REFACTORING_ROADMAP_2026.md)** 📈 **NEW: Visual Roadmap** - Mermaid diagrams and timelines
+- **[UNIFIED_REFACTORING_ROADMAP_2026.md](../../../docs/logic/CEC/ARCHIVE/UNIFIED_REFACTORING_ROADMAP_2026.md)** 🎯 Feature Roadmap - Complete 5-enhancement plan (Phases 3-8)
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](../../../docs/logic/CEC/ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Legacy plan (8 phases, 26 weeks)
+- **[PERFORMANCE_OPTIMIZATION_PLAN.md](../../../docs/logic/CEC/PERFORMANCE_OPTIMIZATION_PLAN.md)** ⚡ Phase 7 performance strategy
+- **[EXTENDED_NL_SUPPORT_ROADMAP.md](../../../docs/logic/CEC/EXTENDED_NL_SUPPORT_ROADMAP.md)** 🌍 Phase 5 multi-language plan
+- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](../../../docs/logic/CEC/ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** 🔬 Phase 6 prover integration
+- **[API_INTERFACE_DESIGN.md](../../../docs/logic/CEC/API_INTERFACE_DESIGN.md)** 🌐 Phase 8 REST API design
+- **[REFACTORING_QUICK_REFERENCE.md](../../../docs/logic/CEC/ARCHIVE/REFACTORING_QUICK_REFERENCE.md)** 📋 Quick reference guide
 
 ---
 
@@ -51,7 +51,7 @@ The CEC framework now includes a **production-ready native Python 3 implementati
 - ✅ **418+ comprehensive tests** (~80-85% coverage)
 - ✅ **Full type hints and modern Python 3 features**
 
-**See [STATUS.md](./STATUS.md) for detailed implementation status.**
+**See [STATUS.md](../../../docs/logic/CEC/STATUS.md) for detailed implementation status.**
 
 **Quick Start with Native Implementation:**
 ```python
@@ -75,10 +75,10 @@ result = prover.prove("B")
 ```
 
 **Next steps:**
-- **Beginners:** Start with [QUICKSTART.md](./QUICKSTART.md) for a 5-minute tutorial
-- **Developers:** See [API_REFERENCE.md](./API_REFERENCE.md) for complete API docs
-- **Contributors:** Read [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for development setup
-- **Comprehensive guide:** [CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)
+- **Beginners:** Start with [QUICKSTART.md](../../../docs/logic/CEC/QUICKSTART.md) for a 5-minute tutorial
+- **Developers:** See [API_REFERENCE.md](../../../docs/logic/CEC/API_REFERENCE.md) for complete API docs
+- **Contributors:** Read [DEVELOPER_GUIDE.md](../../../docs/logic/CEC/DEVELOPER_GUIDE.md) for development setup
+- **Comprehensive guide:** [CEC_SYSTEM_GUIDE.md](../../../docs/logic/CEC/CEC_SYSTEM_GUIDE.md)
 
 ---
 
@@ -314,22 +314,22 @@ The CEC module has comprehensive documentation organized as follows:
 
 ### 📚 User Documentation
 - **[README.md](./README.md)** (this file) - Main entry point and overview
-- **[STATUS.md](./STATUS.md)** - Implementation status, coverage, roadmap ⭐ **Single source of truth**
-- **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute tutorial for beginners
-- **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** - Comprehensive system guide
-- **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Guide for migrating from submodules
+- **[STATUS.md](../../../docs/logic/CEC/STATUS.md)** - Implementation status, coverage, roadmap ⭐ **Single source of truth**
+- **[QUICKSTART.md](../../../docs/logic/CEC/QUICKSTART.md)** - 5-minute tutorial for beginners
+- **[CEC_SYSTEM_GUIDE.md](../../../docs/logic/CEC/CEC_SYSTEM_GUIDE.md)** - Comprehensive system guide
+- **[MIGRATION_GUIDE.md](../../../docs/logic/CEC/MIGRATION_GUIDE.md)** - Guide for migrating from submodules
 
 ### 💻 Developer Documentation
-- **[API_REFERENCE.md](./API_REFERENCE.md)** - Complete API documentation (50+ classes, 100+ examples)
-- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** - Development setup, testing, contribution workflow
+- **[API_REFERENCE.md](../../../docs/logic/CEC/API_REFERENCE.md)** - Complete API documentation (50+ classes, 100+ examples)
+- **[DEVELOPER_GUIDE.md](../../../docs/logic/CEC/DEVELOPER_GUIDE.md)** - Development setup, testing, contribution workflow
 
 ### 🗺️ Planning Documents
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** - Master plan (8 phases, 31 weeks)
-- **[API_INTERFACE_DESIGN.md](./API_INTERFACE_DESIGN.md)** - REST API design (30+ endpoints)
-- **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** - Performance optimization strategy
-- **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** - Multi-language NL support roadmap
-- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** - Additional prover integrations
-- **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** - Quick reference guide
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](../../../docs/logic/CEC/ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** - Master plan (8 phases, 31 weeks)
+- **[API_INTERFACE_DESIGN.md](../../../docs/logic/CEC/API_INTERFACE_DESIGN.md)** - REST API design (30+ endpoints)
+- **[PERFORMANCE_OPTIMIZATION_PLAN.md](../../../docs/logic/CEC/PERFORMANCE_OPTIMIZATION_PLAN.md)** - Performance optimization strategy
+- **[EXTENDED_NL_SUPPORT_ROADMAP.md](../../../docs/logic/CEC/EXTENDED_NL_SUPPORT_ROADMAP.md)** - Multi-language NL support roadmap
+- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](../../../docs/logic/CEC/ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** - Additional prover integrations
+- **[REFACTORING_QUICK_REFERENCE.md](../../../docs/logic/CEC/ARCHIVE/REFACTORING_QUICK_REFERENCE.md)** - Quick reference guide
 
 ### 📦 Archive
 - **[ARCHIVE/](./ARCHIVE/)** - Historical documentation (superseded by current docs)
@@ -338,7 +338,7 @@ The CEC module has comprehensive documentation organized as follows:
 
 ## Future Development
 
-See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) for the complete roadmap.
+See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](../../../docs/logic/CEC/ARCHIVE/COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) for the complete roadmap.
 
 **Five key development areas:**
 1. ✅ **Native Python implementations** (81% complete - Phase 1-4)
@@ -353,9 +353,9 @@ See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTOR
 
 ## Contributing
 
-See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for detailed contribution guidelines.
+See [DEVELOPER_GUIDE.md](../../../docs/logic/CEC/DEVELOPER_GUIDE.md) for detailed contribution guidelines.
 **Quick guidelines:**
-1. Follow existing code patterns (see [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md))
+1. Follow existing code patterns (see [DEVELOPER_GUIDE.md](../../../docs/logic/CEC/DEVELOPER_GUIDE.md))
 2. Add comprehensive tests (90%+ coverage target)
 3. Update documentation (docstrings + markdown)
 4. Ensure backward compatibility
@@ -374,10 +374,10 @@ See the main repository LICENSE file for details.
 ## Support
 
 **Documentation:**
-- Start with [QUICKSTART.md](./QUICKSTART.md) for a 5-minute tutorial
-- Check [STATUS.md](./STATUS.md) for current implementation status
-- See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation
-- Review [CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md) for comprehensive guide
+- Start with [QUICKSTART.md](../../../docs/logic/CEC/QUICKSTART.md) for a 5-minute tutorial
+- Check [STATUS.md](../../../docs/logic/CEC/STATUS.md) for current implementation status
+- See [API_REFERENCE.md](../../../docs/logic/CEC/API_REFERENCE.md) for complete API documentation
+- Review [CEC_SYSTEM_GUIDE.md](../../../docs/logic/CEC/CEC_SYSTEM_GUIDE.md) for comprehensive guide
 
 **Questions or Issues:**
 - Check the test files in `tests/unit_tests/logic/CEC/` for usage examples
