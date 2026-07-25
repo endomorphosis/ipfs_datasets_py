@@ -10,6 +10,7 @@ from ipfs_datasets_py.logic.intent_ir.graphrag.corpus_projector import (
     CorpusCitation,
     CorpusEvidenceRecord,
     CorpusMention,
+    CorpusNeighborObservation,
     CorpusProjectionError,
     CorpusProjector,
     IPLDArtifactStore,
@@ -206,6 +207,45 @@ def test_deterministic_batch_projects_duplicate_and_source_family_edges() -> Non
     assert duplicate.properties["content_digest"] == (
         "sha256:" + first.content_sha256
     )
+
+
+def test_scored_neighbor_observation_is_bound_to_the_graph_edge() -> None:
+    first = _record()
+    second = replace(
+        first,
+        skill_id="skill-2",
+        source_id="source-2",
+        primary_source_id="primary-2",
+        skill_md="# Rotate\n\nRotate and verify a credential.\n",
+    )
+    graph = CorpusProjector(RecordingStore()).project(
+        (
+            CorpusEvidenceRecord(
+                first,
+                neighbor_observations=(
+                    CorpusNeighborObservation(
+                        "skill-2",
+                        score=7.25,
+                        retrieval_method="bm25-okapi",
+                        matched_terms=("credential", "rotate"),
+                    ),
+                ),
+            ),
+            second,
+        )
+    )
+
+    edge = next(
+        item
+        for item in graph.edges
+        if item.edge_type is CorpusEdgeType.NEIGHBOR_OF
+    )
+    assert edge.properties == {
+        "matched_terms": ("credential", "rotate"),
+        "retrieval_method": "bm25-okapi",
+        "score": 7.25,
+        "symmetric": True,
+    }
 
 
 def test_policy_limited_record_is_indexed_without_copying_its_body() -> None:

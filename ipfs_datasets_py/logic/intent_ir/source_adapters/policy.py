@@ -410,7 +410,7 @@ _DETECTORS = (
         FindingCategory.PERSONAL_DATA,
         "personal.payment_card",
         _pattern(
-            r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)"
+            r"(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d(?![A-Za-z0-9])"
         ),
     ),
     _Detector(
@@ -679,8 +679,14 @@ class SkillSourcePolicy:
         for detector in _DETECTORS:
             if detector.fields is not None and field not in detector.fields:
                 continue
-            for index, match in enumerate(detector.pattern.finditer(value)):
-                if index >= MAX_FINDINGS_PER_DETECTOR:
+            accepted_matches = 0
+            for match in detector.pattern.finditer(value):
+                if (
+                    detector.code == "personal.payment_card"
+                    and not _passes_luhn_check(match.group(0))
+                ):
+                    continue
+                if accepted_matches >= MAX_FINDINGS_PER_DETECTOR:
                     findings.append(
                         PolicyFinding(
                             category=FindingCategory.UNSAFE_METADATA,
@@ -691,6 +697,7 @@ class SkillSourcePolicy:
                         )
                     )
                     break
+                accepted_matches += 1
                 findings.append(
                     PolicyFinding(
                         category=detector.category,
@@ -842,6 +849,23 @@ class SkillSourcePolicy:
         # missing validation branch.
         _ = port
         return findings
+
+
+def _passes_luhn_check(value: str) -> bool:
+    """Return whether a card-shaped digit sequence has a valid checksum."""
+
+    digits = [int(character) for character in value if character.isdigit()]
+    if not 13 <= len(digits) <= 19 or len(set(digits)) == 1:
+        return False
+    checksum = 0
+    parity = len(digits) % 2
+    for index, digit in enumerate(digits):
+        if index % 2 == parity:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        checksum += digit
+    return checksum % 10 == 0
 
 
 def _license_metadata_values(metadata_yaml: str) -> dict[str, list[str]]:

@@ -5533,103 +5533,124 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
     def _find_guided_paths(self, start_node, start_similarity, query_vector,
                           target_node_types, guidance_properties, max_paths, max_depth):
-        """Helper method to find guided paths from a starting concept node"""
-        from queue import PriorityQueue
+        """Find guided paths using the canonical semantic traversal engine."""
+        from ipfs_datasets_py.knowledge_graphs.query.semantic_traversal import (
+            EmbeddingGuidedTraversal,
+            SemanticTraversalConfig,
+            TraversalEdge,
+        )
 
-        # Initialize result paths
-        paths = []
+        dataset = self
 
-        # Use priority queue for best-first search
-        queue = PriorityQueue()
+        class _DatasetNeighborProvider:
+            def get_neighbors(
+                self,
+                node_id,
+                *,
+                direction,
+                relationship_types,
+                limit,
+            ):
+                node = dataset.nodes.get(node_id)
+                if node is None:
+                    return []
+                edges = []
+                for edge_type, targets in node.edges.items():
+                    for target in targets:
+                        next_node = target["target"]
+                        edge_score = dataset._calculate_edge_score(
+                            target.get("properties", {}),
+                            guidance_properties,
+                        )
+                        edges.append(
+                            TraversalEdge(
+                                source_id=node_id,
+                                target_id=next_node.id,
+                                relationship_type=edge_type,
+                                weight=edge_score,
+                            )
+                        )
+                edges.sort(
+                    key=lambda edge: (
+                        -edge.weight,
+                        edge.target_id,
+                        edge.relationship_type or "",
+                    )
+                )
+                return edges[:limit]
 
-        # Initial path: (negative score for priority queue, path nodes, edge types, visited nodes)
-        initial_path = (-start_similarity, [start_node], [], {start_node.id})
-        queue.put(initial_path)
-
-        while not queue.empty() and len(paths) < max_paths:
-            # Get path with highest score
-            neg_score, path_nodes, edge_types, visited = queue.get()
-            score = -neg_score  # Convert back to positive score
-
-            current_node = path_nodes[-1]
-
-            # If we've reached the maximum depth, skip expansion
-            if len(path_nodes) >= max_depth:
-                continue
-
-            # If current node is a target type, add to results
-            if current_node.type in target_node_types:
-                # Check if this node has a vector embedding
-                if current_node.id in self._node_to_vector_idx:
-                    # Get vector similarity
-                    idx = self._node_to_vector_idx[current_node.id]
-                    if self.vector_index._faiss_available:
-                        node_vector = self.vector_index._index.reconstruct(idx)
+        class _DatasetEmbeddingProvider:
+            def get_embeddings(self, node_ids):
+                embeddings = {}
+                for node_id in node_ids:
+                    index = dataset._node_to_vector_idx.get(node_id)
+                    if index is None:
+                        continue
+                    if dataset.vector_index._faiss_available:
+                        vector = dataset.vector_index._index.reconstruct(index)
                     else:
-                        node_vector = np.vstack(self.vector_index._vectors)[idx]
+                        vector = np.vstack(dataset.vector_index._vectors)[index]
+                    embeddings[node_id] = vector
+                return embeddings
 
-                    # Calculate similarity
-                    node_vector_norm = node_vector / np.linalg.norm(node_vector)
-                    target_similarity = np.dot(query_vector, node_vector_norm)
-                else:
-                    # No embedding, use a default similarity
-                    target_similarity = 0.5
+        if max_paths <= 0 or max_depth <= 0:
+            return []
+        traversal = EmbeddingGuidedTraversal(
+            _DatasetNeighborProvider(),
+            _DatasetEmbeddingProvider(),
+            SemanticTraversalConfig(
+                # ``max_depth`` historically counted the seed node itself.
+                max_depth=max(0, max_depth - 1),
+                max_nodes=max(1, max_paths * max_depth * 4),
+                max_edges=max(1, max_paths * max_depth * 256),
+                max_degree=256,
+                max_backend_calls=max(1, max_paths * max_depth * 4),
+                beam_width=max(1, max_paths * 2),
+                direction="outgoing",
+            ),
+        )
+        traversal_result = traversal.traverse([start_node.id], query_vector)
 
-                # Structural score based on path
-                structural_score = self._calculate_structural_score(path_nodes, edge_types, guidance_properties)
-
-                # Overall score combining semantic and structural components
-                overall_score = 0.6 * target_similarity + 0.4 * structural_score
-
-                # Add to results
-                paths.append({
+        paths = []
+        for traversal_path in traversal_result.paths:
+            end_id = traversal_path.node_ids[-1]
+            end_node = self.nodes.get(end_id)
+            if end_node is None or end_node.type not in target_node_types:
+                continue
+            path_nodes = [
+                self.nodes[node_id]
+                for node_id in traversal_path.node_ids
+                if node_id in self.nodes
+            ]
+            edge_types = list(traversal_path.relationship_types)
+            candidate = traversal_result.candidates[end_id]
+            semantic_score = candidate.semantic_proximity
+            structural_score = self._calculate_structural_score(
+                path_nodes,
+                edge_types,
+                guidance_properties,
+            )
+            paths.append(
+                {
                     "path": path_nodes,
                     "transitions": edge_types,
-                    "overall_score": overall_score,
-                    "semantic_score": target_similarity,
+                    "overall_score": (
+                        0.6 * semantic_score + 0.4 * structural_score
+                    ),
+                    "semantic_score": semantic_score,
                     "structural_score": structural_score,
-                    "end_node": current_node
-                })
+                    "end_node": end_node,
+                    "semantic_traversal": candidate.to_dict(),
+                }
+            )
 
-            # Expand the path by exploring outgoing edges
-            for edge_type, targets in current_node.edges.items():
-                for target in targets:
-                    next_node = target["target"]
-
-                    # Skip if already visited
-                    if next_node.id in visited:
-                        continue
-
-                    # Calculate new path score
-                    edge_props = target.get("properties", {})
-                    edge_score = self._calculate_edge_score(edge_props, guidance_properties)
-
-                    # Semantic score for next node
-                    if next_node.id in self._node_to_vector_idx:
-                        idx = self._node_to_vector_idx[next_node.id]
-                        if self.vector_index._faiss_available:
-                            node_vector = self.vector_index._index.reconstruct(idx)
-                        else:
-                            node_vector = np.vstack(self.vector_index._vectors)[idx]
-
-                        node_vector_norm = node_vector / np.linalg.norm(node_vector)
-                        next_similarity = np.dot(query_vector, node_vector_norm)
-                    else:
-                        # If no embedding, inherit from current node with a discount
-                        next_similarity = score * 0.8
-
-                    # Combined score for this path step
-                    combined_score = 0.7 * next_similarity + 0.3 * edge_score
-
-                    # Create new path
-                    new_path_nodes = path_nodes + [next_node]
-                    new_edge_types = edge_types + [edge_type]
-                    new_visited = visited.union({next_node.id})
-
-                    # Add to queue
-                    queue.put((-combined_score, new_path_nodes, new_edge_types, new_visited))
-
-        return paths
+        paths.sort(
+            key=lambda path: (
+                -path["overall_score"],
+                str(path["end_node"].id),
+            )
+        )
+        return paths[:max_paths]
 
     def _calculate_edge_score(self, edge_properties: Dict[str, Any], guidance_properties: Dict[str, float]) -> float:
         """Calculate a score for an edge based on its properties and guidance weights"""

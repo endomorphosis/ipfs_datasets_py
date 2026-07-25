@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot import (
+    HuggingFaceSkillCenterFetcher,
     INSPECTED_SKILLCENTER_PILOT_REVISION,
     SkillCenterSnapshot,
     SkillCenterSnapshotCache,
@@ -145,6 +146,29 @@ def test_injected_offline_fetcher_uses_atomic_verified_promotion(
     alias = json.loads(cache.alias_path(snapshot).read_text(encoding="utf-8"))
     assert alias["snapshot_id"] == snapshot.snapshot_id
     assert alias["snapshot"]["cache_path"] == snapshot.cache_path
+
+
+def test_huggingface_fetcher_stages_symlinked_cache_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    snapshot = _snapshot()
+    blob = tmp_path / "hub-blob"
+    blob.write_bytes(_BUNDLE)
+    hub_path = tmp_path / "hub-snapshot.sqlite"
+    hub_path.symlink_to(blob)
+    destination = tmp_path / "staged.sqlite"
+
+    monkeypatch.setattr(
+        "huggingface_hub.hf_hub_download",
+        lambda **_kwargs: str(hub_path),
+    )
+
+    result = HuggingFaceSkillCenterFetcher()(snapshot, destination)
+
+    assert result == destination
+    assert destination.is_file()
+    assert not destination.is_symlink()
+    assert destination.read_bytes() == _BUNDLE
 
 
 @pytest.mark.parametrize(

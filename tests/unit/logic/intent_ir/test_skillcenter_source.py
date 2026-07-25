@@ -145,6 +145,7 @@ def test_source_ref_binds_snapshot_bundle_and_skill_body(tmp_path: Path) -> None
     assert source_ref.container_sha256
     assert "domain%20bundle.sqlite" in source_ref.container_uri
     assert source_ref.review_status is ReviewStatus.MACHINE_EXTRACTED
+    assert source_ref.content_cid == record.content_cid
 
     duplicate_body_from_another_source = replace(
         record,
@@ -156,6 +157,39 @@ def test_source_ref_binds_snapshot_bundle_and_skill_body(tmp_path: Path) -> None
         duplicate_body_from_another_source.to_source_ref().ref_id
         != source_ref.ref_id
     )
+
+
+def test_entry_cid_is_multiformats_primary_key_independent_of_container(
+    tmp_path: Path,
+) -> None:
+    from multiformats import CID
+
+    path = tmp_path / "bundle.sqlite"
+    _write_bundle(path)
+    record = next(
+        SkillCenterBundleReader(
+            path,
+            dataset_revision="revision-123",
+            repository_file="bundle.sqlite",
+        ).iter_records(limit=1)
+    )
+    repackaged = replace(
+        record,
+        dataset_revision="revision-456",
+        repository_file="repackaged.sqlite",
+        bundle_sha256="f" * 64,
+    )
+
+    assert repackaged.entry_cid == record.entry_cid
+    assert repackaged.entry_identity.multihash_bytes
+    decoded = CID.decode(record.entry_cid)
+    assert decoded.version == 1
+    assert decoded.codec.name == "raw"
+    assert decoded.hashfun.name == "sha2-256"
+    assert decoded.raw_digest.hex() == record.entry_identity.sha256
+
+    changed = replace(record, title=record.title + " changed")
+    assert changed.entry_cid != record.entry_cid
 
 
 def test_reader_requires_pinned_revision(tmp_path: Path) -> None:
@@ -222,3 +256,27 @@ def test_reader_rejects_orphaned_bundle_rows(tmp_path: Path) -> None:
         SkillCenterBundleReader(
             path, dataset_revision="revision-123"
         ).inspect()
+
+
+def test_reader_can_audit_declared_count_mismatch_without_losing_rows(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "declared-mismatch.sqlite"
+    _write_bundle(path)
+    connection = sqlite3.connect(path)
+    connection.execute(
+        "UPDATE bundle_meta SET value = '99' WHERE key = 'total_skills'"
+    )
+    connection.commit()
+    connection.close()
+
+    reader = SkillCenterBundleReader(
+        path,
+        dataset_revision="revision-123",
+        allow_declared_count_mismatch=True,
+    )
+    manifest = reader.inspect()
+
+    assert manifest.total_skills == 2
+    assert reader.declared_total_skills == 99
+    assert len(list(reader.iter_records())) == 2

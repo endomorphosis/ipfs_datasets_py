@@ -19,11 +19,18 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping
 from urllib.parse import quote
 
+from multiformats import CID
+
+from ...ir_core.identity import identity_preimage
+from ...profile_g import validate_cid
 from ..schema import ReviewStatus, SourceRef
+from ....utils.cid_utils import cid_for_bytes
 
 
 DEFAULT_SKILLCENTER_DATASET_ID = "Tommysha/skillcenter-bundles"
 SKILLCENTER_BUNDLE_SCHEMA_VERSION = "skillcenter-sqlite-bundle/v1"
+SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION = "skillcenter-entry-identity/v1"
+SKILLCENTER_ENTRY_IDENTITY_DOMAIN = "intent-ir.skillcenter-entry"
 DEFAULT_MAX_TEXT_CHARS = 1_000_000
 DEFAULT_BATCH_SIZE = 256
 MAX_BATCH_SIZE = 1_000
@@ -66,6 +73,48 @@ class SkillCenterBundleSchemaError(ValueError):
 
 class SkillCenterRecordError(ValueError):
     """Raised when a SkillCenter row is malformed or exceeds safety bounds."""
+
+
+@dataclass(frozen=True, slots=True)
+class SkillCenterEntryIdentity:
+    """Multiformats identity for one container-independent skill entry."""
+
+    cid: str
+    cid_bytes: bytes
+    multihash_bytes: bytes
+    sha256: str
+    identity_schema_version: str = SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        try:
+            decoded = CID.decode(self.cid)
+        except (TypeError, ValueError) as exc:
+            raise SkillCenterRecordError("entry identity CID is malformed") from exc
+        if (
+            decoded.version != 1
+            or decoded.codec.name != "raw"
+            or decoded.hashfun.name != "sha2-256"
+            or bytes(decoded) != self.cid_bytes
+            or bytes(decoded.digest) != self.multihash_bytes
+            or decoded.raw_digest.hex() != self.sha256
+        ):
+            raise SkillCenterRecordError(
+                "entry identity does not use CIDv1/raw/sha2-256 consistently"
+            )
+        if self.identity_schema_version != SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION:
+            raise SkillCenterRecordError(
+                "entry identity schema version is unsupported"
+            )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "cid": self.cid,
+            "identity_schema_version": self.identity_schema_version,
+            "multicodec": "raw",
+            "multihash": "sha2-256",
+            "multibase": "base32",
+            "sha256": self.sha256,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,6 +174,80 @@ class SkillCenterSkillRecord:
     def content_sha256(self) -> str:
         return hashlib.sha256(self.skill_md.encode("utf-8")).hexdigest()
 
+    def intrinsic_payload(self) -> dict[str, Any]:
+        """Return the canonical entry payload without container provenance.
+
+        Dataset revisions and bundle filenames deliberately stay outside this
+        payload. Repackaging an unchanged skill therefore preserves its
+        primary key, while any intrinsic metadata or body change produces a
+        new CID.
+        """
+
+        return {
+            "domain": self.domain,
+            "language": self.language,
+            "library_md": self.library_md,
+            "metadata_yaml": self.metadata_yaml,
+            "overall_score": self.overall_score,
+            "primary_source_id": self.primary_source_id,
+            "profile": self.profile,
+            "skill_id": self.skill_id,
+            "skill_kind": self.skill_kind,
+            "skill_md": self.skill_md,
+            "source_id": self.source_id,
+            "source_type": self.source_type,
+            "source_url": self.source_url,
+            "title": self.title,
+        }
+
+    @property
+    def entry_identity(self) -> SkillCenterEntryIdentity:
+        """Return the canonical CIDv1 primary-key identity for this entry."""
+
+        preimage = identity_preimage(
+            self.intrinsic_payload(),
+            domain=SKILLCENTER_ENTRY_IDENTITY_DOMAIN,
+            schema_version=SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION,
+        )
+        cid_text = validate_cid(
+            cid_for_bytes(
+                preimage,
+                base="base32",
+                codec="raw",
+                mh_type="sha2-256",
+                version=1,
+            ),
+            path="/entry_cid",
+        )
+        cid = CID.decode(cid_text)
+        return SkillCenterEntryIdentity(
+            cid=str(cid),
+            cid_bytes=bytes(cid),
+            multihash_bytes=bytes(cid.digest),
+            sha256=cid.raw_digest.hex(),
+        )
+
+    @property
+    def entry_cid(self) -> str:
+        """Return the canonical CID used as the corpus-wide primary key."""
+
+        return self.entry_identity.cid
+
+    @property
+    def content_cid(self) -> str:
+        """Return a raw CIDv1 for the exact UTF-8 ``skill_md`` bytes."""
+
+        return validate_cid(
+            cid_for_bytes(
+                self.skill_md.encode("utf-8"),
+                base="base32",
+                codec="raw",
+                mh_type="sha2-256",
+                version=1,
+            ),
+            path="/content_cid",
+        )
+
     @property
     def license_expression(self) -> str:
         return (
@@ -165,7 +288,7 @@ class SkillCenterSkillRecord:
             content_sha256=self.content_sha256,
             container_uri=container_uri,
             container_sha256=self.bundle_sha256,
-            content_cid=content_cid,
+            content_cid=content_cid or self.content_cid,
             license_expression=self.license_expression,
             review_status=review_status,
         )
@@ -182,12 +305,17 @@ class SkillCenterBundleReader:
         repository_file: str | None = None,
         dataset_id: str = DEFAULT_SKILLCENTER_DATASET_ID,
         max_text_chars: int = DEFAULT_MAX_TEXT_CHARS,
+        allow_declared_count_mismatch: bool = False,
     ) -> None:
         self.path = Path(path).expanduser().resolve()
         self.dataset_revision = str(dataset_revision or "").strip()
         self.repository_file = str(repository_file or self.path.name).strip()
         self.dataset_id = str(dataset_id or "").strip()
         self.max_text_chars = int(max_text_chars)
+        self.allow_declared_count_mismatch = bool(
+            allow_declared_count_mismatch
+        )
+        self.declared_total_skills: int | None = None
         self._manifest: SkillCenterBundleManifest | None = None
         if not self.dataset_revision:
             raise ValueError("dataset_revision is required; mutable 'main' is unsafe")
@@ -229,7 +357,17 @@ class SkillCenterBundleReader:
                     "INNER JOIN skills_content AS c ON c.skill_id = i.skill_id"
                 ).fetchone()[0]
             )
-            if len({total_skills, index_rows, content_rows, joined_rows}) != 1:
+            self.declared_total_skills = total_skills
+            if len({index_rows, content_rows, joined_rows}) != 1:
+                raise SkillCenterBundleSchemaError(
+                    "SkillCenter row counts disagree: "
+                    f"declared={total_skills}, index={index_rows}, "
+                    f"content={content_rows}, joined={joined_rows}"
+                )
+            if (
+                total_skills != index_rows
+                and not self.allow_declared_count_mismatch
+            ):
                 raise SkillCenterBundleSchemaError(
                     "SkillCenter row counts disagree: "
                     f"declared={total_skills}, index={index_rows}, "
@@ -244,7 +382,7 @@ class SkillCenterBundleReader:
             bundle_type=metadata.get("bundle_type", ""),
             bundle_version=metadata.get("version", ""),
             created_at=metadata.get("created_at", ""),
-            total_skills=total_skills,
+            total_skills=index_rows,
         )
         return self._manifest
 

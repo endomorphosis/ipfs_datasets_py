@@ -162,6 +162,64 @@ class CorpusCitation:
 
 
 @dataclass(frozen=True, slots=True)
+class CorpusNeighborObservation:
+    """One scored, explainable retrieval relationship between two skills."""
+
+    skill_id: str
+    score: float | None = None
+    retrieval_method: str = ""
+    matched_terms: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "skill_id",
+            _clean_text(self.skill_id, "neighbor skill id"),
+        )
+        if self.score is not None:
+            if (
+                isinstance(self.score, bool)
+                or not isinstance(self.score, (int, float))
+                or not math.isfinite(float(self.score))
+                or float(self.score) < 0.0
+            ):
+                raise CorpusProjectionError(
+                    "neighbor score must be a finite non-negative number"
+                )
+            object.__setattr__(self, "score", float(self.score))
+        method = _optional_clean_text(
+            self.retrieval_method,
+            "neighbor retrieval_method",
+        )
+        if (self.score is not None or self.matched_terms) and not method:
+            raise CorpusProjectionError(
+                "scored or explained neighbors require a retrieval_method"
+            )
+        object.__setattr__(self, "retrieval_method", method)
+        terms = tuple(
+            sorted(
+                {
+                    _clean_text(term, "neighbor matched term")
+                    for term in self.matched_terms
+                }
+            )
+        )
+        if len(terms) > _MAX_EXPLICIT_ITEMS:
+            raise CorpusProjectionError("too many neighbor matched terms")
+        object.__setattr__(self, "matched_terms", terms)
+
+    def edge_properties(self) -> dict[str, Any]:
+        properties: dict[str, Any] = {"symmetric": True}
+        if self.retrieval_method:
+            properties["retrieval_method"] = self.retrieval_method
+        if self.score is not None:
+            properties["score"] = self.score
+        if self.matched_terms:
+            properties["matched_terms"] = list(self.matched_terms)
+        return properties
+
+
+@dataclass(frozen=True, slots=True)
 class CorpusEvidenceRecord:
     """A SkillCenter row plus explicit bounded graph-extraction observations."""
 
@@ -172,6 +230,7 @@ class CorpusEvidenceRecord:
     mentions: tuple[CorpusMention, ...] = ()
     citations: tuple[CorpusCitation, ...] = ()
     neighbor_skill_ids: tuple[str, ...] = ()
+    neighbor_observations: tuple[CorpusNeighborObservation, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.record, SkillCenterSkillRecord):
@@ -191,12 +250,24 @@ class CorpusEvidenceRecord:
             raise CorpusProjectionError("too many explicit mentions")
         if len(citations) > _MAX_EXPLICIT_ITEMS:
             raise CorpusProjectionError("too many explicit citations")
-        if len(self.neighbor_skill_ids) > _MAX_EXPLICIT_ITEMS:
+        if (
+            len(self.neighbor_skill_ids) + len(self.neighbor_observations)
+            > _MAX_EXPLICIT_ITEMS
+        ):
             raise CorpusProjectionError("too many explicit neighbors")
         if any(not isinstance(item, CorpusMention) for item in mentions):
             raise TypeError("mentions must contain CorpusMention values")
         if any(not isinstance(item, CorpusCitation) for item in citations):
             raise TypeError("citations must contain CorpusCitation values")
+        neighbor_observations = tuple(self.neighbor_observations)
+        if any(
+            not isinstance(item, CorpusNeighborObservation)
+            for item in neighbor_observations
+        ):
+            raise TypeError(
+                "neighbor_observations must contain "
+                "CorpusNeighborObservation values"
+            )
         object.__setattr__(self, "mentions", mentions)
         object.__setattr__(self, "citations", citations)
         neighbors = tuple(
@@ -204,7 +275,28 @@ class CorpusEvidenceRecord:
         )
         if self.record.skill_id in neighbors:
             raise CorpusProjectionError("a record cannot be its own neighbor")
+        observation_ids = [item.skill_id for item in neighbor_observations]
+        if self.record.skill_id in observation_ids:
+            raise CorpusProjectionError("a record cannot be its own neighbor")
+        if len(set(observation_ids)) != len(observation_ids):
+            raise CorpusProjectionError(
+                "neighbor observations repeat a target skill"
+            )
+        if set(neighbors) & set(observation_ids):
+            raise CorpusProjectionError(
+                "neighbor_skill_ids and neighbor_observations overlap"
+            )
         object.__setattr__(self, "neighbor_skill_ids", neighbors)
+        object.__setattr__(
+            self,
+            "neighbor_observations",
+            tuple(
+                sorted(
+                    neighbor_observations,
+                    key=lambda item: item.skill_id,
+                )
+            ),
+        )
         if self.embedding is not None:
             vector = tuple(float(item) for item in self.embedding)
             if not vector or any(not math.isfinite(item) for item in vector):
@@ -336,6 +428,7 @@ class CorpusProjector:
         mentions: Sequence[CorpusMention] = (),
         citations: Sequence[CorpusCitation] = (),
         neighbor_skill_ids: Sequence[str] = (),
+        neighbor_observations: Sequence[CorpusNeighborObservation] = (),
     ) -> IntentCorpusGraph:
         """Return a deterministic evidence graph and persist separate blocks.
 
@@ -352,6 +445,7 @@ class CorpusProjector:
                 bool(mentions),
                 bool(citations),
                 bool(neighbor_skill_ids),
+                bool(neighbor_observations),
             )
         )
         if convenience_used:
@@ -374,6 +468,7 @@ class CorpusProjector:
                     mentions=tuple(mentions),
                     citations=tuple(citations),
                     neighbor_skill_ids=tuple(neighbor_skill_ids),
+                    neighbor_observations=tuple(neighbor_observations),
                 ),
             )
         if not evidence:
@@ -474,10 +569,21 @@ class CorpusProjector:
             body_groups,
             CorpusEdgeType.DUPLICATE_OF,
         )
+        neighbor_edge_properties: dict[
+            tuple[str, str], dict[str, Any]
+        ] = {}
         for item, _decision in prepared:
             source_id = skill_nodes[item.record.skill_id]
             source_digest = skill_source_digests[item.record.skill_id]
-            for target_skill_id in item.neighbor_skill_ids:
+            observations = (
+                *(
+                    CorpusNeighborObservation(target_skill_id)
+                    for target_skill_id in item.neighbor_skill_ids
+                ),
+                *item.neighbor_observations,
+            )
+            for observation in observations:
+                target_skill_id = observation.skill_id
                 try:
                     target_id = skill_nodes[target_skill_id]
                 except KeyError as exc:
@@ -491,12 +597,23 @@ class CorpusProjector:
                     if left == source_id
                     else skill_source_digests[target_skill_id]
                 )
+                properties = observation.edge_properties()
+                edge_key = (left, right)
+                existing_properties = neighbor_edge_properties.get(edge_key)
+                if (
+                    existing_properties is not None
+                    and existing_properties != properties
+                ):
+                    raise CorpusProjectionError(
+                        "conflicting neighbor observations for one skill pair"
+                    )
+                neighbor_edge_properties[edge_key] = properties
                 builder.add_edge(
                     CorpusEdgeType.NEIGHBOR_OF,
                     left,
                     right,
                     source_digest=edge_digest,
-                    properties={"symmetric": True},
+                    properties=properties,
                 )
 
         unbound_nodes = tuple(sorted(builder.nodes.values(), key=lambda item: item.node_id))
@@ -1170,6 +1287,7 @@ __all__ = [
     "CorpusEvidenceProjector",
     "CorpusEvidenceRecord",
     "CorpusMention",
+    "CorpusNeighborObservation",
     "CorpusProjectionError",
     "CorpusProjector",
     "CurrentIPLDStorageAdapter",

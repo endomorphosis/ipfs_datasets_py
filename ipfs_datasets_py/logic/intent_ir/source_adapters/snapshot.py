@@ -411,7 +411,18 @@ class HuggingFaceSkillCenterFetcher:
             raise SkillCenterSnapshotFetchError(
                 f"failed to fetch {snapshot.logical_source}: {exc}"
             ) from exc
-        return Path(downloaded)
+        # ``hf_hub_download`` normally returns a symlink into the Hub's
+        # content-addressed blob cache.  The snapshot cache intentionally
+        # rejects fetchers that return symlinks, so materialize those bytes at
+        # the caller-owned temporary destination.  The cache independently
+        # verifies the declared byte length and SHA-256 before promotion.
+        try:
+            shutil.copyfile(Path(downloaded), destination)
+        except OSError as exc:
+            raise SkillCenterSnapshotFetchError(
+                f"failed to stage {snapshot.logical_source}: {exc}"
+            ) from exc
+        return destination
 
 
 @dataclass(frozen=True, slots=True)

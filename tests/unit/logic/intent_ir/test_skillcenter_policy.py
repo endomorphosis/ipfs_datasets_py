@@ -178,6 +178,28 @@ def test_secrets_personal_data_prompt_injection_and_tool_directives_quarantine()
     )
 
 
+def test_payment_card_detector_requires_a_valid_luhn_checksum() -> None:
+    invalid_identifier = SkillSourcePolicy().evaluate(
+        _record(skill_md="Upstream build identifier: 1234567890123456")
+    )
+    embedded_in_hash = SkillSourcePolicy().evaluate(
+        _record(skill_md="Digest fragment: abc4111111111111111def")
+    )
+    valid_test_number = SkillSourcePolicy().evaluate(
+        _record(skill_md="Synthetic payment-card fixture: 4111 1111 1111 1111")
+    )
+
+    assert "personal.payment_card" not in {
+        finding.code for finding in invalid_identifier.findings
+    }
+    assert "personal.payment_card" not in {
+        finding.code for finding in embedded_in_hash.findings
+    }
+    assert "personal.payment_card" in {
+        finding.code for finding in valid_test_number.findings
+    }
+
+
 @pytest.mark.parametrize(
     ("metadata_yaml", "source_url", "expected_code"),
     (
