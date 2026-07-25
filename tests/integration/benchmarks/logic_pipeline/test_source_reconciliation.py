@@ -969,9 +969,30 @@ def test_common_loader_preserves_published_v2_and_rejects_it_for_fresh_runs(
 
 
 def test_fresh_generic_inventory_rejects_credential_shaped_values() -> None:
+    record = fresh_environment_inventory_record(
+        {
+            "identity": {
+                "credential_configured": False,
+                "provider": "configured-provider",
+            }
+        },
+        run_id=FRESH_TEST_RUN_ID,
+        source_commit="d" * 40,
+    )
+    assert (
+        record["inventory"]["identity"]["credential_configured"] is False
+    )
+
     with pytest.raises(SourceReconciliationError, match="credential-shaped"):
         fresh_environment_inventory_record(
             {"diagnostic": "sk-" + ("q" * 32)},
+            run_id=FRESH_TEST_RUN_ID,
+            source_commit="d" * 40,
+        )
+
+    with pytest.raises(SourceReconciliationError, match="credential field"):
+        fresh_environment_inventory_record(
+            {"credential": False},
             run_id=FRESH_TEST_RUN_ID,
             source_commit="d" * 40,
         )

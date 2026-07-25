@@ -931,9 +931,14 @@ def _redact_safe_inventory(value: object, field: str = "environment") -> object:
             if not isinstance(key, str):
                 raise SourceReconciliationError(f"{field} keys must be strings")
             if _SECRET_KEY.search(key):
-                raise SourceReconciliationError(
-                    f"{field} contains forbidden credential field {key!r}"
-                )
+                # Capability probing records only whether a credential is
+                # configured.  That boolean is useful missingness metadata,
+                # not credential material; all other secret-shaped fields
+                # remain forbidden regardless of their value.
+                if key != "credential_configured" or not isinstance(item, bool):
+                    raise SourceReconciliationError(
+                        f"{field} contains forbidden credential field {key!r}"
+                    )
             result[key] = _redact_safe_inventory(item, f"{field}.{key}")
         return result
     if isinstance(value, (list, tuple)):
