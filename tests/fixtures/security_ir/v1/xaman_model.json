@@ -1,0 +1,183 @@
+{
+  "schema_version": "security-model-ir/v1",
+  "model_id": "security-ir-v1-golden-xaman",
+  "entities": [
+    {
+      "id": "entity:xaman-user",
+      "kind": "user",
+      "name": "Xaman Wallet Holder"
+    },
+    {
+      "id": "entity:xaman-app",
+      "kind": "wallet_app",
+      "name": "Xaman App"
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset:xrp",
+      "symbol": "XRP",
+      "decimals": 6
+    }
+  ],
+  "wallets": [
+    {
+      "id": "wallet:xaman",
+      "owner": "principal:xaman-user",
+      "asset": "asset:xrp",
+      "status": "active"
+    }
+  ],
+  "accounts": [],
+  "roles": [
+    {
+      "id": "role:xaman-user",
+      "name": "xaman_user"
+    }
+  ],
+  "principals": [
+    {
+      "id": "principal:xaman-user",
+      "role": "role:xaman-user"
+    }
+  ],
+  "capabilities": [],
+  "policies": [
+    {
+      "id": "policy:xaman-biometric-required",
+      "name": "xaman_biometric_required",
+      "enabled": true
+    }
+  ],
+  "events": [
+    {
+      "id": "event:xaman-signing-request:golden",
+      "event": "signing_request",
+      "wallet_id": "wallet:xaman",
+      "timestamp": "2026-07-24T12:00:00Z"
+    }
+  ],
+  "state_machines": [],
+  "invariants": [
+    {
+      "id": "invariant:xaman-no-plaintext-secret",
+      "description": "Wallet secrets are never persisted outside the encrypted vault."
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim:xaman-vault",
+      "description": "The encrypted vault never persists a wallet secret in plaintext.",
+      "domain": "vault",
+      "severity": "blocking",
+      "required_assumptions": [
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "id": "claim:xaman-payload",
+      "description": "Signed payload bytes match the approved digest.",
+      "domain": "payload",
+      "severity": "blocking",
+      "required_assumptions": [
+        "A3"
+      ]
+    },
+    {
+      "id": "claim:xaman-ledger",
+      "description": "The submitted XRPL transaction matches approved intent.",
+      "domain": "ledger",
+      "severity": "blocking",
+      "required_assumptions": [
+        "A3",
+        "A6"
+      ]
+    },
+    {
+      "id": "claim:xaman-auth",
+      "description": "Authentication blocks unauthenticated signing.",
+      "domain": "auth_component",
+      "severity": "blocking",
+      "required_assumptions": [
+        "A2"
+      ]
+    },
+    {
+      "id": "claim:xaman-service",
+      "description": "Wallet service calls carry an authenticated session.",
+      "domain": "service",
+      "severity": "high",
+      "required_assumptions": [
+        "A9"
+      ]
+    },
+    {
+      "id": "claim:xaman-store",
+      "description": "Application state never persists a raw seed.",
+      "domain": "store",
+      "severity": "blocking",
+      "required_assumptions": [
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "id": "claim:xaman-e2e",
+      "description": "End-to-end coverage spans the signing lifecycle.",
+      "domain": "e2e_flow",
+      "severity": "medium",
+      "required_assumptions": []
+    }
+  ],
+  "proof_obligations": [
+    {
+      "id": "obligation:xaman-vault:z3",
+      "claim_id": "claim:xaman-vault",
+      "prover": "z3",
+      "status": "NOT_MODELED"
+    }
+  ],
+  "disproof_vectors": [
+    {
+      "id": "disproof:xaman-auth:bypass-biometric",
+      "claim_id": "claim:xaman-auth",
+      "tactic": "bypass_precondition:biometric_gate",
+      "status": "UNKNOWN",
+      "counterexample": null
+    }
+  ],
+  "runtime_traces": [
+    {
+      "id": "trace:xaman-signing",
+      "description": "A bounded Xaman signing request trace.",
+      "domain": "vault",
+      "events": [
+        "event:xaman-signing-request:golden"
+      ],
+      "conformance_status": "observed"
+    }
+  ],
+  "solver_results": [],
+  "assumptions": [
+    "A1",
+    "A2",
+    "A3",
+    "A6",
+    "A9"
+  ],
+  "prover_targets": [
+    "z3"
+  ],
+  "metadata": {
+    "fixture_kind": "xaman",
+    "corpus": {
+      "name": "xaman-app",
+      "pinned_commit": "942f43876265a7af44f233288ad2b1d00841d5fa",
+      "source_url": "https://github.com/XRPL-Labs/Xaman-App"
+    },
+    "review": {
+      "status": "trusted_fixture"
+    }
+  }
+}
