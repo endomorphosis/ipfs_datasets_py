@@ -11,10 +11,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum
+from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 
+from ..ir_core.canonical import CollectionSchema, CollectionSemantics
 
-INTENT_IR_SCHEMA_VERSION = "intent-ir/v0.1"
+
+INTENT_IR_SCHEMA_VERSION = "intent-ir/v1"
+LEGACY_INTENT_IR_SCHEMA_VERSION = "intent-ir/v0.1"
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -79,6 +83,72 @@ class ControlEdgeKind(str, Enum):
     JOIN = "join"
 
 
+class NodeGrounding(str, Enum):
+    """Whether a semantic node is stated by evidence or derived from it."""
+
+    GROUNDED = "grounded"
+    INFERRED = "inferred"
+
+
+# Alias retained for callers that describe this dimension as a "kind".
+GroundingKind = NodeGrounding
+
+
+# Every collection in the v1 wire contract has declared semantics.  Set-like
+# collections are unique and canonicalized by value or stable node identifier;
+# ordered collections retain their input order and may contain repeated values.
+INTENT_IR_COLLECTION_SEMANTICS: Mapping[str, CollectionSemantics] = (
+    MappingProxyType(
+        {
+            "IntentIRDocument.sources": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.statements": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.actions": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.control_edges": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.entry_action_ids": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.terminal_action_ids": CollectionSemantics.SET_LIKE,
+            "IntentIRDocument.tags": CollectionSemantics.SET_LIKE,
+            "IntentStatement.arguments": CollectionSemantics.ORDERED,
+            "IntentStatement.source_ref_ids": CollectionSemantics.SET_LIKE,
+            "IntentAction.object_refs": CollectionSemantics.SET_LIKE,
+            "IntentAction.source_ref_ids": CollectionSemantics.SET_LIKE,
+            "IntentAction.tool_refs": CollectionSemantics.SET_LIKE,
+            "IntentAction.input_refs": CollectionSemantics.SET_LIKE,
+            "IntentAction.output_refs": CollectionSemantics.SET_LIKE,
+            "IntentAction.precondition_ids": CollectionSemantics.SET_LIKE,
+            "IntentAction.effect_ids": CollectionSemantics.SET_LIKE,
+            "IntentAction.verification_ids": CollectionSemantics.SET_LIKE,
+            "IntentControlEdge.source_ref_ids": CollectionSemantics.SET_LIKE,
+        }
+    )
+)
+
+# Machine-consumable JSON-pointer rules for the shared canonical identity
+# profile.  Wildcards cover each node in the set-like top-level collections.
+INTENT_IR_COLLECTION_SCHEMA = CollectionSchema(
+    {
+        "/sources": CollectionSemantics.SET_LIKE,
+        "/statements": CollectionSemantics.SET_LIKE,
+        "/statements/*/arguments": CollectionSemantics.ORDERED,
+        "/statements/*/source_ref_ids": CollectionSemantics.SET_LIKE,
+        "/actions": CollectionSemantics.SET_LIKE,
+        "/actions/*/object_refs": CollectionSemantics.SET_LIKE,
+        "/actions/*/source_ref_ids": CollectionSemantics.SET_LIKE,
+        "/actions/*/tool_refs": CollectionSemantics.SET_LIKE,
+        "/actions/*/input_refs": CollectionSemantics.SET_LIKE,
+        "/actions/*/output_refs": CollectionSemantics.SET_LIKE,
+        "/actions/*/precondition_ids": CollectionSemantics.SET_LIKE,
+        "/actions/*/effect_ids": CollectionSemantics.SET_LIKE,
+        "/actions/*/verification_ids": CollectionSemantics.SET_LIKE,
+        "/control_edges": CollectionSemantics.SET_LIKE,
+        "/control_edges/*/source_ref_ids": CollectionSemantics.SET_LIKE,
+        "/entry_action_ids": CollectionSemantics.SET_LIKE,
+        "/terminal_action_ids": CollectionSemantics.SET_LIKE,
+        "/tags": CollectionSemantics.SET_LIKE,
+    },
+    require_declared=True,
+)
+
+
 @dataclass(frozen=True, slots=True)
 class SourceSpan:
     """Character span in a separately stored source artifact."""
@@ -125,11 +195,21 @@ class SourceRef:
         _validate_identifier("SourceRef.ref_id", self.ref_id)
         _validate_enum("SourceRef.review_status", self.review_status, ReviewStatus)
         for name in ("source_uri", "source_id", "source_revision"):
-            if not str(getattr(self, name) or "").strip():
-                raise IntentIRValidationError(f"SourceRef.{name} must not be empty")
+            _validate_non_empty_string(f"SourceRef.{name}", getattr(self, name))
+        for name in (
+            "container_uri",
+            "content_cid",
+            "license_expression",
+        ):
+            _validate_string(f"SourceRef.{name}", getattr(self, name))
         _validate_sha256("SourceRef.content_sha256", self.content_sha256)
+        _validate_string("SourceRef.container_sha256", self.container_sha256)
         if self.container_sha256:
             _validate_sha256("SourceRef.container_sha256", self.container_sha256)
+        if self.span is not None and not isinstance(self.span, SourceSpan):
+            raise IntentIRValidationError(
+                "SourceRef.span must be a SourceSpan or None"
+            )
         if self.span is not None:
             self.span.validate()
 
@@ -162,6 +242,7 @@ class IntentStatement:
     arguments: tuple[str, ...] = ()
     confidence: float = 1.0
     review_status: ReviewStatus = ReviewStatus.MACHINE_EXTRACTED
+    grounding: NodeGrounding = NodeGrounding.GROUNDED
 
     def validate(self) -> None:
         _validate_identifier("IntentStatement.statement_id", self.statement_id)
@@ -170,16 +251,22 @@ class IntentStatement:
         _validate_enum(
             "IntentStatement.review_status", self.review_status, ReviewStatus
         )
-        if not self.normalized_text.strip():
+        _validate_enum(
+            "IntentStatement.grounding", self.grounding, NodeGrounding
+        )
+        _validate_non_empty_string(
+            f"IntentStatement {self.statement_id!r}.normalized_text",
+            self.normalized_text,
+        )
+        if self.grounding is NodeGrounding.GROUNDED and not self.source_ref_ids:
             raise IntentIRValidationError(
-                f"IntentStatement {self.statement_id!r} has empty normalized_text"
-            )
-        if not self.source_ref_ids:
-            raise IntentIRValidationError(
-                f"IntentStatement {self.statement_id!r} requires source_ref_ids"
+                f"Grounded IntentStatement {self.statement_id!r} requires source_ref_ids"
             )
         _validate_confidence(
             f"IntentStatement {self.statement_id!r}.confidence", self.confidence
+        )
+        _validate_string(
+            f"IntentStatement {self.statement_id!r}.predicate", self.predicate
         )
         if self.predicate and not _IDENTIFIER_RE.fullmatch(self.predicate):
             raise IntentIRValidationError(
@@ -190,6 +277,7 @@ class IntentStatement:
         return {
             "arguments": list(self.arguments),
             "confidence": self.confidence,
+            "grounding": self.grounding.value,
             "kind": self.kind.value,
             "modality": self.modality.value,
             "normalized_text": self.normalized_text,
@@ -215,16 +303,20 @@ class IntentAction:
     precondition_ids: tuple[str, ...] = ()
     effect_ids: tuple[str, ...] = ()
     verification_ids: tuple[str, ...] = ()
+    grounding: NodeGrounding = NodeGrounding.GROUNDED
 
     def validate(self) -> None:
         _validate_identifier("IntentAction.action_id", self.action_id)
-        if not self.actor.strip() or not self.verb.strip():
+        _validate_enum("IntentAction.grounding", self.grounding, NodeGrounding)
+        _validate_non_empty_string(
+            f"IntentAction {self.action_id!r}.actor", self.actor
+        )
+        _validate_non_empty_string(
+            f"IntentAction {self.action_id!r}.verb", self.verb
+        )
+        if self.grounding is NodeGrounding.GROUNDED and not self.source_ref_ids:
             raise IntentIRValidationError(
-                f"IntentAction {self.action_id!r} requires actor and verb"
-            )
-        if not self.source_ref_ids:
-            raise IntentIRValidationError(
-                f"IntentAction {self.action_id!r} requires source_ref_ids"
+                f"Grounded IntentAction {self.action_id!r} requires source_ref_ids"
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -232,6 +324,7 @@ class IntentAction:
             "action_id": self.action_id,
             "actor": self.actor,
             "effect_ids": sorted(set(self.effect_ids)),
+            "grounding": self.grounding.value,
             "input_refs": sorted(set(self.input_refs)),
             "object_refs": sorted(set(self.object_refs)),
             "output_refs": sorted(set(self.output_refs)),
@@ -253,11 +346,15 @@ class IntentControlEdge:
     kind: ControlEdgeKind = ControlEdgeKind.NEXT
     guard_statement_id: str = ""
     source_ref_ids: tuple[str, ...] = ()
+    grounding: NodeGrounding = NodeGrounding.GROUNDED
 
     def validate(self) -> None:
         _validate_identifier("IntentControlEdge.edge_id", self.edge_id)
         _validate_enum(
             "IntentControlEdge.kind", self.kind, ControlEdgeKind
+        )
+        _validate_enum(
+            "IntentControlEdge.grounding", self.grounding, NodeGrounding
         )
         _validate_identifier(
             "IntentControlEdge.source_action_id", self.source_action_id
@@ -265,6 +362,14 @@ class IntentControlEdge:
         _validate_identifier(
             "IntentControlEdge.target_action_id", self.target_action_id
         )
+        _validate_string(
+            "IntentControlEdge.guard_statement_id", self.guard_statement_id
+        )
+        if self.guard_statement_id:
+            _validate_identifier(
+                "IntentControlEdge.guard_statement_id",
+                self.guard_statement_id,
+            )
         if (
             self.source_action_id == self.target_action_id
             and self.kind is not ControlEdgeKind.RETRY
@@ -272,11 +377,16 @@ class IntentControlEdge:
             raise IntentIRValidationError(
                 f"IntentControlEdge {self.edge_id!r} self-cycle must be a retry"
             )
+        if self.grounding is NodeGrounding.GROUNDED and not self.source_ref_ids:
+            raise IntentIRValidationError(
+                f"Grounded IntentControlEdge {self.edge_id!r} requires source_ref_ids"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "edge_id": self.edge_id,
             "guard_statement_id": self.guard_statement_id,
+            "grounding": self.grounding.value,
             "kind": self.kind.value,
             "source_action_id": self.source_action_id,
             "source_ref_ids": sorted(set(self.source_ref_ids)),
@@ -340,9 +450,8 @@ def validate_intent_ir(
 ) -> IntentIRDocument:
     """Validate and return an :class:`IntentIRDocument`.
 
-    Mapping construction is intentionally not implemented in the v0.1
-    scaffold.  Ingestion adapters must construct typed records explicitly so
-    untrusted JSON cannot silently bypass enum and reference validation.
+    Mappings must pass through :mod:`intent_ir.decoder`; accepting them here
+    would let untrusted JSON bypass exact field and type validation.
     """
 
     if not isinstance(document, IntentIRDocument):
@@ -357,8 +466,7 @@ def validate_intent_ir(
     _validate_enum(
         "IntentIRDocument.intent_kind", document.intent_kind, IntentKind
     )
-    if not document.title.strip():
-        raise IntentIRValidationError("IntentIRDocument.title must not be empty")
+    _validate_non_empty_string("IntentIRDocument.title", document.title)
     if not document.sources:
         raise IntentIRValidationError("IntentIRDocument.sources must not be empty")
     if not document.statements:
@@ -366,12 +474,27 @@ def validate_intent_ir(
             "IntentIRDocument.statements must not be empty"
         )
 
+    _validate_record_collection(
+        "IntentIRDocument.sources", document.sources, SourceRef
+    )
+    _validate_record_collection(
+        "IntentIRDocument.statements", document.statements, IntentStatement
+    )
+    _validate_record_collection(
+        "IntentIRDocument.actions", document.actions, IntentAction
+    )
+    _validate_record_collection(
+        "IntentIRDocument.control_edges",
+        document.control_edges,
+        IntentControlEdge,
+    )
     _require_unique((item.ref_id for item in document.sources), "source ref")
     _require_unique(
         (item.statement_id for item in document.statements), "statement"
     )
     _require_unique((item.action_id for item in document.actions), "action")
     _require_unique((item.edge_id for item in document.control_edges), "control edge")
+    _validate_document_collections(document)
 
     for source in document.sources:
         source.validate()
@@ -463,9 +586,103 @@ def validate_intent_ir(
     return document
 
 
+def _validate_document_collections(document: IntentIRDocument) -> None:
+    """Enforce the immutable and declared collection contract."""
+
+    _require_tuple("IntentIRDocument.sources", document.sources)
+    _require_tuple("IntentIRDocument.statements", document.statements)
+    _require_tuple("IntentIRDocument.actions", document.actions)
+    _require_tuple("IntentIRDocument.control_edges", document.control_edges)
+
+    set_collections: tuple[tuple[str, tuple[Any, ...]], ...] = (
+        ("IntentIRDocument.entry_action_ids", document.entry_action_ids),
+        ("IntentIRDocument.terminal_action_ids", document.terminal_action_ids),
+        ("IntentIRDocument.tags", document.tags),
+    )
+    for statement in document.statements:
+        _require_tuple(
+            f"IntentStatement {statement.statement_id!r}.arguments",
+            statement.arguments,
+        )
+        _validate_string_items(
+            f"IntentStatement {statement.statement_id!r}.arguments",
+            statement.arguments,
+        )
+        set_collections += (
+            (
+                f"IntentStatement {statement.statement_id!r}.source_ref_ids",
+                statement.source_ref_ids,
+            ),
+        )
+    for action in document.actions:
+        for field_name in (
+            "object_refs",
+            "source_ref_ids",
+            "tool_refs",
+            "input_refs",
+            "output_refs",
+            "precondition_ids",
+            "effect_ids",
+            "verification_ids",
+        ):
+            set_collections += (
+                (
+                    f"IntentAction {action.action_id!r}.{field_name}",
+                    getattr(action, field_name),
+                ),
+            )
+    for edge in document.control_edges:
+        set_collections += (
+            (
+                f"IntentControlEdge {edge.edge_id!r}.source_ref_ids",
+                edge.source_ref_ids,
+            ),
+        )
+
+    for name, values in set_collections:
+        _require_tuple(name, values)
+        _validate_string_items(name, values)
+        _require_unique(values, f"{name} member")
+
+
+def _validate_record_collection(
+    name: str, value: Any, item_type: type[Any]
+) -> None:
+    _require_tuple(name, value)
+    for index, item in enumerate(value):
+        if not isinstance(item, item_type):
+            raise IntentIRValidationError(
+                f"{name}[{index}] must be a {item_type.__name__}"
+            )
+
+
 def _validate_identifier(name: str, value: str) -> None:
     if not isinstance(value, str) or not _IDENTIFIER_RE.fullmatch(value):
         raise IntentIRValidationError(f"{name} is not a stable identifier")
+
+
+def _validate_string(name: str, value: Any) -> None:
+    if not isinstance(value, str):
+        raise IntentIRValidationError(f"{name} must be a string")
+
+
+def _validate_non_empty_string(name: str, value: Any) -> None:
+    _validate_string(name, value)
+    if not value.strip():
+        raise IntentIRValidationError(f"{name} must not be empty")
+
+
+def _validate_string_items(name: str, values: Iterable[Any]) -> None:
+    for index, value in enumerate(values):
+        _validate_non_empty_string(f"{name}[{index}]", value)
+
+
+def _require_tuple(name: str, value: Any) -> None:
+    if not isinstance(value, tuple):
+        raise IntentIRValidationError(
+            f"{name} must be an immutable tuple with "
+            f"{INTENT_IR_COLLECTION_SEMANTICS.get(name, 'declared')} semantics"
+        )
 
 
 def _validate_sha256(name: str, value: str) -> None:
@@ -528,8 +745,13 @@ def _require_statement_kinds(
 
 
 __all__ = [
+    "CollectionSemantics",
+    "INTENT_IR_COLLECTION_SCHEMA",
     "INTENT_IR_SCHEMA_VERSION",
+    "INTENT_IR_COLLECTION_SEMANTICS",
+    "LEGACY_INTENT_IR_SCHEMA_VERSION",
     "ControlEdgeKind",
+    "GroundingKind",
     "IntentAction",
     "IntentControlEdge",
     "IntentIRDocument",
@@ -537,6 +759,7 @@ __all__ = [
     "IntentKind",
     "IntentModality",
     "IntentStatement",
+    "NodeGrounding",
     "ReviewStatus",
     "SourceRef",
     "SourceSpan",
