@@ -553,10 +553,10 @@ Maintain accurate documentation:
 
 ## 🔗 Related Guides
 
-- **[Performance Optimization](guides/performance_optimization.md)** - Detailed optimization techniques
-- **[Security & Governance](guides/security/security_governance.md)** - Security implementation
-- **[Deployment Guide](deployment.md)** - Production deployment
-- **[Configuration Guide](configuration.md)** - Configuration options
+- **[Performance Optimization](performance_optimization.md)** - Detailed optimization techniques
+- **[Security & Governance](security/security_governance.md)** - Security implementation
+- **[Deployment Guide](../deployment.md)** - Production deployment
+- **[Configuration Guide](../configuration.md)** - Configuration options
 
 ---
 
