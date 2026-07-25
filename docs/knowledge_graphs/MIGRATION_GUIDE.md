@@ -125,7 +125,7 @@ result = manager.migrate(kg, output_path="graph.graphml")
 | **DELETE** | ✅ Implemented | `DELETE n`, `DETACH DELETE n` |
 | **REMOVE** | ✅ Implemented | `REMOVE n.prop`, `REMOVE n:Label` |
 
-See [DEFERRED_FEATURES.md](../../ipfs_datasets_py/knowledge_graphs/DEFERRED_FEATURES.md) for implementation history.
+See [DEFERRED_FEATURES.md](DEFERRED_FEATURES.md) for implementation history.
 
 ### Extraction Features
 
