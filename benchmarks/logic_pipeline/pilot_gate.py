@@ -26,6 +26,8 @@ from benchmarks.logic_pipeline import BENCHMARK_ID
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
+    CaseResultRecord,
+    ProtocolContractError,
     canonical_json,
 )
 from benchmarks.logic_pipeline.variants import (
@@ -516,6 +518,22 @@ def _proof_verified(row: Mapping[str, object] | None) -> bool | None:
     return None
 
 
+def _proof_terminal_kernel_accepted(
+    row: Mapping[str, object] | None,
+) -> bool:
+    """Project raw native-kernel acceptance for fail-closed safety."""
+
+    if row is None or not isinstance(row.get("case_result"), Mapping):
+        return False
+    try:
+        result = CaseResultRecord.from_dict(row["case_result"])
+        return result.terminal_kernel_accepted
+    except (ProtocolContractError, TypeError, ValueError) as exc:
+        raise PilotGateError(
+            "proof observation contains an invalid case result"
+        ) from exc
+
+
 def _available_frontend(row: Mapping[str, object]) -> bool:
     return row["status"] not in {"unavailable", "infrastructure_failure"}
 
@@ -718,8 +736,12 @@ def _normalize_ledger(
                     expected_class in INVALID_CONTROL_EXPECTED_CLASSES
                 )
                 invalid_false_positive = (
-                    kernel_verified
-                    if is_invalid_control and kernel_verified is not None
+                    (
+                        True
+                        if _proof_terminal_kernel_accepted(proof_row)
+                        else kernel_verified
+                    )
+                    if is_invalid_control
                     else None
                 )
                 source_rows = [
@@ -1604,14 +1626,35 @@ def _measured_safety(
     invalid = [row for row in observations if row.get("invalid_control") is True]
     false_positive_receipts: list[str] = []
     for row in invalid:
-        result = _mapping(row.get("case_result"), "case_result")
-        if result.get("status") == "verified":
-            receipt = result.get("kernel_receipt_sha256")
+        result_value = _mapping(row.get("case_result"), "case_result")
+        try:
+            result = CaseResultRecord.from_dict(result_value)
+            terminal_accepted = result.terminal_kernel_accepted
+        except (ProtocolContractError, TypeError, ValueError) as exc:
+            raise PilotGateError(
+                "invalid-control observation has an invalid case result"
+            ) from exc
+        if terminal_accepted:
+            kernel = next(
+                (
+                    stage
+                    for stage in result.stages
+                    if stage.stage.value == "kernel"
+                ),
+                None,
+            )
+            receipt = (
+                result.kernel_receipt_sha256
+                if kernel is None
+                else kernel.data.get("receipt_sha256")
+                if isinstance(kernel.data, Mapping)
+                else None
+            )
             if not isinstance(receipt, str) or not _SHA256_PATTERN.fullmatch(
                 receipt
             ):
                 raise PilotGateError(
-                    "verified invalid control has no kernel receipt"
+                    "accepted invalid control has no native-kernel receipt"
                 )
             false_positive_receipts.append(receipt)
     count = len(false_positive_receipts)

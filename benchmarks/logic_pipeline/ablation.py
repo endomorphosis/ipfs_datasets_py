@@ -26,7 +26,7 @@ from .adapters import (
     StageOutput,
     StageRequest,
 )
-from .cases import BenchmarkCase
+from .cases import BenchmarkCase, ExpectedClass
 from .capabilities import (
     ResourceClass,
     ResourceLeaseCancelled,
@@ -37,7 +37,13 @@ from .capabilities import (
     ResourcePolicy,
     ResourceScheduler,
 )
+from .cache_measurement import (
+    extract_symai_cache_prime_receipt,
+    extract_symai_cache_setup_telemetry,
+    invoke_with_symai_cache_measurement,
+)
 from .contracts import (
+    DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
     RUN_CONTRACT_SCHEMA,
     CacheMode,
@@ -52,12 +58,14 @@ from .contracts import (
     StageStatus,
     TelemetryRecord,
     canonical_json,
+    validate_native_kernel_receipt,
 )
 from .variants import (
     ALL_VARIANT_IDS,
     StagePolicy,
     VARIANT_REGISTRY,
     VARIANT_REGISTRY_SHA256,
+    VariantDefinition,
     get_variant_definition,
 )
 
@@ -65,8 +73,11 @@ from .variants import (
 ABLATION_PLAN_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.ablation-plan.v1"
 )
-ABLATION_RESULT_SCHEMA: Final = (
+LEGACY_ABLATION_RESULT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v1"
+)
+ABLATION_RESULT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v2"
 )
 ORDERING_ALGORITHM: Final = "sha256-seeded-counterbalanced-blocks-v2"
 MAX_CASE_INPUT_BYTES: Final = 64 * 1024
@@ -895,10 +906,14 @@ class AblationRunResult:
     resumed_job_ids: tuple[str, ...]
     output_root: Path
     resource_receipts: tuple[ResourceLeaseReceipt, ...] = ()
+    stop_failure_code: FailureCode | None = None
 
     @property
     def complete(self) -> bool:
-        return len(self.results) == len(self.plan.jobs)
+        return (
+            self.stop_failure_code is None
+            and len(self.results) == len(self.plan.jobs)
+        )
 
     @property
     def executed_count(self) -> int:
@@ -913,10 +928,127 @@ class AblationRunResult:
         return tuple(_result_path(self.output_root, job) for job in self.plan.jobs)
 
 
+class _ProtocolStopTracker:
+    """Apply frozen stop thresholds to the canonical scheduled result stream.
+
+    Immediate incidents invalidate the entire execution.  Thresholded process
+    failures stop conservatively when either the run-wide scheduled streak or
+    the affected variant's own observation streak reaches the preregistered
+    threshold.  A nonmatching observation resets the corresponding streak.
+    """
+
+    def __init__(self) -> None:
+        self._global: tuple[FailureCode, int] | None = None
+        self._by_variant: dict[str, tuple[FailureCode, int]] = {}
+        self._configured = frozenset(
+            condition.failure_code
+            for condition in DEFAULT_PROTOCOL.stop_conditions
+        )
+
+    @staticmethod
+    def _observed_failure(
+        job: ScheduledCase,
+        result: CaseResultRecord,
+    ) -> FailureCode | None:
+        input_data = job.input_data
+        invalid_control = (
+            isinstance(input_data, Mapping)
+            and input_data.get("expected_class")
+            == ExpectedClass.UNSUPPORTED.value
+        )
+        if invalid_control:
+            kernel = next(
+                (
+                    stage
+                    for stage in result.stages
+                    if stage.stage is StageName.KERNEL
+                ),
+                None,
+            )
+            kernel_data = (
+                kernel.data
+                if kernel is not None
+                and isinstance(kernel.data, Mapping)
+                else {}
+            )
+            claims_raw_acceptance = bool(
+                kernel is not None
+                and (
+                    kernel.kernel_accepted
+                    or kernel_data.get("accepted") is True
+                    or kernel_data.get("diagnostic_kernel_accepted") is True
+                )
+            )
+            if not claims_raw_acceptance:
+                return result.failure_code
+            try:
+                if result.terminal_kernel_accepted:
+                    return FailureCode.INVALID_CONTROL_VERIFIED
+            except ProtocolContractError:
+                # A malformed positive claim is independently fatal even
+                # though it cannot establish raw kernel acceptance.
+                return FailureCode.RECEIPT_OR_PROVENANCE_FAILURE
+        return result.failure_code
+
+    @staticmethod
+    def _advance(
+        previous: tuple[FailureCode, int] | None,
+        current: FailureCode | None,
+        configured: frozenset[FailureCode],
+    ) -> tuple[FailureCode, int] | None:
+        if current not in configured:
+            return None
+        if previous is not None and previous[0] is current:
+            return current, previous[1] + 1
+        return current, 1
+
+    def observe(
+        self,
+        job: ScheduledCase,
+        result: CaseResultRecord,
+    ) -> FailureCode | None:
+        """Return the stop code once either frozen streak reaches threshold."""
+
+        code = self._observed_failure(job, result)
+        self._global = self._advance(
+            self._global,
+            code,
+            self._configured,
+        )
+        variant_streak = self._advance(
+            self._by_variant.get(job.variant_id),
+            code,
+            self._configured,
+        )
+        if variant_streak is None:
+            self._by_variant.pop(job.variant_id, None)
+        else:
+            self._by_variant[job.variant_id] = variant_streak
+        counts = (
+            0 if self._global is None else self._global[1],
+            0 if variant_streak is None else variant_streak[1],
+        )
+        if (
+            code is not None
+            and code in self._configured
+            and any(
+                DEFAULT_PROTOCOL.stop_required(
+                    code,
+                    consecutive_occurrences=count,
+                )
+                for count in counts
+                if count > 0
+            )
+        ):
+            return code
+        return None
+
+
 def validate_ablation_evidence(
     plan: AblationPlan,
     *,
     output_root: str | Path,
+    allow_legacy_results: bool = False,
 ) -> AblationRunResult:
     """Strictly reparse one complete persisted non-holdout execution.
 
@@ -925,10 +1057,16 @@ def validate_ablation_evidence(
     previously deserialized objects.  The function intentionally validates
     the plan, every run contract and cache scope, the exact result-file set,
     and every result envelope without importing or invoking a backend.
+    Legacy v1 result envelopes are accepted only through the explicit
+    compatibility switch for immutable, already-published evidence.
     """
 
     if not isinstance(plan, AblationPlan):
         raise AblationValidationError("plan must be an AblationPlan")
+    if type(allow_legacy_results) is not bool:
+        raise AblationValidationError(
+            "allow_legacy_results must be a boolean"
+        )
     if plan.split is Split.HOLDOUT:
         raise AblationValidationError(
             "generic persisted validation is forbidden for holdout evidence"
@@ -1005,17 +1143,24 @@ def validate_ablation_evidence(
         )
 
     results: list[CaseResultRecord] = []
+    stop_tracker = _ProtocolStopTracker()
     for job in plan.jobs:
         contract = contract_map[(job.variant_id, job.cache_mode)]
         path = _result_path(root, job)
-        results.append(
-            _validate_envelope(
-                _read_canonical(path, "result"),
-                plan,
-                job,
-                contract,
-            )
+        result = _validate_envelope(
+            _read_canonical(path, "result"),
+            plan,
+            job,
+            contract,
+            allow_legacy_result=allow_legacy_results,
         )
+        results.append(result)
+        stop_code = stop_tracker.observe(job, result)
+        if stop_code is not None:
+            raise AblationValidationError(
+                "persisted evidence reaches a frozen protocol stop "
+                f"condition: {stop_code.value}"
+            )
     return AblationRunResult(
         plan=plan,
         contracts=contracts,
@@ -1184,11 +1329,53 @@ _RESOURCE_LANE = MappingProxyType(
     }
 )
 
+_RUNNER_FAILURE_CODES: Final = frozenset(
+    {
+        FailureCode.RESOURCE_LEASE_CANCELLATION,
+        FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+        FailureCode.OUT_OF_MEMORY,
+        # The persisted-stop audit restamps this fatal protocol condition
+        # through the same typed retained-job route.  It cannot contribute a
+        # success and is rejected immediately by the stop tracker.
+        FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
+    }
+)
+
 
 _UNCERTAINTY_CUE = re.compile(
     r"(?i)\b(?:whether|may|might|could|unless|except|unclear|ambiguous|"
     r"does\s+not\s+(?:say|specify|state)|not\s+specified)\b"
 )
+
+
+def _frozen_invocation_order(
+    definition: VariantDefinition,
+) -> tuple[StageName, ...]:
+    """Return the only execution order permitted by one frozen arm."""
+
+    proof_stages = set(definition.proof_order)
+    frontend = tuple(
+        stage
+        for stage in definition.stages
+        if stage not in proof_stages | {StageName.KERNEL}
+    )
+    order = (
+        *frontend,
+        *definition.proof_order,
+        *(
+            (StageName.KERNEL,)
+            if StageName.KERNEL in definition.stages
+            else ()
+        ),
+    )
+    if (
+        len(order) != len(definition.stages)
+        or set(order) != set(definition.stages)
+    ):
+        raise AblationValidationError(
+            "registered invocation order is not a complete stage permutation"
+        )
+    return tuple(order)
 
 
 def _ambiguity_gate_receipt(
@@ -1394,6 +1581,109 @@ def _compiler_translation_unsupported(
     )
 
 
+def _compiler_native_candidate_ready(
+    artifacts: Sequence[StageArtifact],
+    input_data: object,
+) -> bool:
+    """Detect an exact source-bound compiler-native proof candidate.
+
+    This predicate is intentionally stricter than the terminal kernel's
+    compatibility surface because it may suppress a paid fallback call.  It
+    recognizes only the live compiler v1 contract and binds every nested
+    digest and source identifier back to the current case.  Legacy, injected,
+    incomplete, or malformed artifacts fail open so Leanstral still runs.
+    """
+
+    compiler = next(
+        (
+            artifact
+            for artifact in artifacts
+            if artifact.stage is StageName.COMPILER
+        ),
+        None,
+    )
+    if (
+        compiler is None
+        or not compiler.invoked
+        or compiler.status is not StageStatus.SUCCESS
+        or not isinstance(compiler.data, Mapping)
+        or not isinstance(input_data, Mapping)
+        or compiler.effective_identity.get("entrypoint")
+        != (
+            "ipfs_datasets_py.logic.modal.codec."
+            "DeterministicModalLogicCodec.encode"
+        )
+        or compiler.effective_identity.get("graph_invoked") is not True
+        or compiler.effective_identity.get("graph_invocation_index") != 0
+    ):
+        return False
+    data = compiler.data
+    required_fields = {
+        "compiled_obligation",
+        "compiled_obligation_sha256",
+        "entailment_translation",
+        "entailment_translation_sha256",
+        "native_proof_candidate",
+    }
+    if (
+        data.get("schema")
+        != "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+        or not required_fields.issubset(data)
+    ):
+        return False
+    try:
+        # Import lazily to keep the ablation/runtime module boundary acyclic.
+        # Reconstructing the reviewed compiler output is intentionally the
+        # same source-bound check used by the independent kernel.
+        from .runtime import (
+            NATIVE_PROOF_CANDIDATE_SCHEMA,
+            _entailment_translation,
+            compile_reviewed_obligation,
+        )
+
+        expected_compiled = compile_reviewed_obligation(input_data)
+        if expected_compiled is None:
+            return False
+        expected_translation = _entailment_translation(
+            input_data,
+            theorem_name=expected_compiled.theorem_name,
+            obligation_sha256=expected_compiled.obligation_sha256,
+            kind=expected_compiled.kind,
+            logic=expected_compiled.logic,
+            semantic_target=expected_compiled.semantic_target,
+        )
+        if (
+            expected_translation is None
+            or expected_translation.native_proof_text is None
+        ):
+            return False
+        expected_candidate = {
+            "schema": NATIVE_PROOF_CANDIDATE_SCHEMA,
+            "translation_sha256": expected_translation.digest,
+            "obligation_sha256": expected_compiled.obligation_sha256,
+            "source_sha256": expected_translation.source_sha256,
+            "derivation": expected_translation.shape,
+            "certificate": expected_translation.native_proof_text,
+            "authoritative": False,
+            "requires_independent_kernel": True,
+        }
+    except (ImportError, ProtocolContractError, TypeError, ValueError):
+        return False
+
+    return bool(
+        _thaw(data["compiled_obligation"])
+        == expected_compiled.to_dict()
+        and data["compiled_obligation_sha256"]
+        == expected_compiled.digest
+        and _thaw(data["entailment_translation"])
+        == expected_translation.to_dict()
+        and data["entailment_translation_sha256"]
+        == expected_translation.digest
+        and _thaw(data["native_proof_candidate"])
+        == expected_candidate
+    )
+
+
 def _has_obligation(input_data: object) -> bool:
     if not isinstance(input_data, Mapping):
         return False
@@ -1499,30 +1789,117 @@ def _failure(
     detail: str,
 ) -> CaseResultRecord:
     definition = get_variant_definition(job.variant_id)
-    stage = definition.stages[0]
+    invocation_order = _frozen_invocation_order(definition)
 
-    def handler(_request: StageRequest) -> StageOutput:
-        return StageOutput(
-            status=StageStatus.FAILED,
-            failure_code=code,
-            failure_detail=(detail.strip() or "ablation failure")[:512],
+    invocations: dict[StageName, StageInvocation] = {}
+    artifacts: list[StageArtifact] = []
+    bounded_detail = (detail.strip() or "ablation failure")[:512]
+    for invocation_index, stage in enumerate(invocation_order):
+        request = StageRequest(
+            run_id=plan.run_id,
+            case_id=job.case.case_id,
+            case_manifest_sha256=plan.case_manifest_sha256,
+            variant_id=job.variant_id,
+            split=plan.split,
+            cache_mode=job.cache_mode,
+            input_data=_thaw(job.case.input_data),
+            requested_identity=definition.requested_identity(stage),
+            environment_sha256=plan.environment_sha256,
+            source=("ablation_plan", plan.digest, job.job_id),
+            upstream_artifacts=tuple(artifacts),
+            invocation_index=invocation_index,
+        )
+        reason = (
+            "retained_job_failure"
+            if invocation_index == 0
+            else "upstream_terminal_failure"
+        )
+        if invocation_index == 0:
+            consumed = tuple(
+                artifact.digest for artifact in request.upstream_artifacts
+            )
+            data = {
+                "schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "policy-decision.v1"
+                ),
+                "stage": stage.value,
+                "invoked": False,
+                "reason": reason,
+                "invocation_index": invocation_index,
+                "consumed_artifact_sha256": list(consumed),
+            }
+            telemetry = TelemetryRecord(
+                input_items=1,
+                output_items=0,
+                model_calls=0,
+                bytes_in=request.input_bytes,
+                resource_lane=_RESOURCE_LANE[stage],
+            )
+            invocation = StageInvocation(
+                StageOutput(
+                    status=StageStatus.FAILED,
+                    data=data,
+                    effective_identity={
+                        **dict(request.requested_identity),
+                        "invoked": False,
+                        "policy_reason": reason,
+                        "graph_invocation_index": invocation_index,
+                        "graph_invoked": False,
+                        "consumed_artifact_sha256": consumed,
+                    },
+                    telemetry=telemetry,
+                    failure_code=code,
+                    failure_detail=bounded_detail,
+                ),
+                telemetry,
+            )
+        else:
+            invocation = _synthetic_invocation(
+                stage,
+                request,
+                reason=reason,
+            )
+        invocations[stage] = invocation
+        artifacts.append(
+            _artifact(
+                stage,
+                invocation,
+                invocation_index=invocation_index,
+                invoked=False,
+                reason=reason,
+            )
         )
 
-    request = StageRequest(
-        run_id=plan.run_id,
-        case_id=job.case.case_id,
-        case_manifest_sha256=plan.case_manifest_sha256,
-        variant_id=job.variant_id,
-        split=plan.split,
-        cache_mode=job.cache_mode,
-        input_data=_thaw(job.case.input_data),
-        requested_identity=definition.requested_identity(stage),
-        environment_sha256=plan.environment_sha256,
-        source=("ablation_plan", plan.digest, job.job_id),
-    )
-    return CaseResultRecord.from_stages(
-        (StageAdapter(stage, handler=handler).run(request),)
-    )
+    records = []
+    canonical_upstream: tuple[str, ...] = ()
+    by_stage_artifacts = tuple(artifacts)
+    for stage in definition.stages:
+        artifact = next(
+            item for item in artifacts if item.stage is stage
+        )
+        request = StageRequest(
+            run_id=plan.run_id,
+            case_id=job.case.case_id,
+            case_manifest_sha256=plan.case_manifest_sha256,
+            variant_id=job.variant_id,
+            split=plan.split,
+            cache_mode=job.cache_mode,
+            input_data=_thaw(job.case.input_data),
+            requested_identity=definition.requested_identity(stage),
+            environment_sha256=plan.environment_sha256,
+            source=("ablation_plan", plan.digest, job.job_id),
+            upstream_stage_digests=canonical_upstream,
+            upstream_artifacts=by_stage_artifacts,
+            invocation_index=artifact.invocation_index,
+        )
+        record = StageAdapter(stage).record(
+            request,
+            invocations[stage],
+        )
+        records.append(record)
+        canonical_upstream = (*canonical_upstream, record.digest)
+    return CaseResultRecord.from_stages(tuple(records))
 
 
 def _execute_job(
@@ -1613,7 +1990,9 @@ def _execute_job(
                             "case deadline expired during resource lease for "
                             f"{job.job_id}"
                         )
-                    invocation = adapter.invoke(request)
+                    invocation = invoke_with_symai_cache_measurement(
+                        adapter, request
+                    )
                 if policy_decision is not None:
                     output = invocation.output
                     if isinstance(output.data, Mapping):
@@ -1682,6 +2061,13 @@ def _execute_job(
             if stage not in proof_stages | {StageName.KERNEL}
         )
         for stage in frontend:
+            if terminal_failure:
+                invoke(
+                    stage,
+                    should_invoke=False,
+                    reason="upstream_terminal_failure",
+                )
+                continue
             gate_receipt = (
                 _ambiguity_gate_receipt(artifacts)
                 if stage is StageName.SYMAI
@@ -1713,14 +2099,20 @@ def _execute_job(
             )
             if artifact.status is not StageStatus.SUCCESS:
                 terminal_failure = True
-                break
 
         has_obligation = _has_obligation(job.case.input_data)
         compiler_translation_unsupported = (
             _compiler_translation_unsupported(artifacts)
         )
         previous_proof: StageArtifact | None = None
-        if not terminal_failure:
+        if terminal_failure:
+            for stage in definition.proof_order:
+                invoke(
+                    stage,
+                    should_invoke=False,
+                    reason="upstream_terminal_failure",
+                )
+        else:
             for proof_index, stage in enumerate(definition.proof_order):
                 should_invoke = has_obligation
                 reason = "proof_scheduled"
@@ -1729,6 +2121,17 @@ def _execute_job(
                 elif compiler_translation_unsupported:
                     should_invoke = False
                     reason = "compiler_translation_unsupported"
+                elif (
+                    proof_index == 0
+                    and stage is StageName.LEANSTRAL
+                    and definition.leanstral_policy
+                    is StagePolicy.PROOF_FAILURE_FALLBACK
+                    and _compiler_native_candidate_ready(
+                        artifacts, job.case.input_data
+                    )
+                ):
+                    should_invoke = False
+                    reason = "proof_fallback_suppressed"
                 elif proof_index and job.variant_id != "A12":
                     should_invoke = not (
                         previous_proof is not None
@@ -1750,20 +2153,27 @@ def _execute_job(
             # terminal authority even when no proof backend produced a usable
             # candidate: its rejection is part of the complete frozen graph.
 
-        if not terminal_failure and StageName.KERNEL in definition.stages:
-            kernel_should_invoke = not (
-                definition.proof_order and not has_obligation
+        if StageName.KERNEL in definition.stages:
+            kernel_should_invoke = (
+                not terminal_failure
+                and not (
+                    definition.proof_order and not has_obligation
+                )
             )
             kernel_artifact = invoke(
                 StageName.KERNEL,
                 should_invoke=kernel_should_invoke,
                 reason=(
-                    "no_reviewed_proof_obligation"
-                    if not kernel_should_invoke
+                    "upstream_terminal_failure"
+                    if terminal_failure
                     else (
-                        "legacy_diagnostic_kernel"
-                        if definition.safety_diagnostic_only
-                        else "independent_native_kernel"
+                        "no_reviewed_proof_obligation"
+                        if not kernel_should_invoke
+                        else (
+                            "legacy_diagnostic_kernel"
+                            if definition.safety_diagnostic_only
+                            else "independent_native_kernel"
+                        )
                     )
                 ),
             )
@@ -1772,19 +2182,69 @@ def _execute_job(
                 and invocations[StageName.KERNEL].output.kernel_accepted
             ):
                 original = invocations[StageName.KERNEL]
-                data = (
+                original_data = _mapping(
+                    original.output.data,
+                    "S1 native-kernel diagnostic receipt",
+                )
+                if not validate_native_kernel_receipt(
+                    original_data,
+                    protocol_sha256=DEFAULT_PROTOCOL_SHA256,
+                    run_id=plan.run_id,
+                    case_id=job.case.case_id,
+                    case_manifest_sha256=plan.case_manifest_sha256,
+                    variant_id=job.variant_id,
+                    split=plan.split,
+                    cache_mode=job.cache_mode,
+                    input_sha256=job.input_sha256,
+                    environment_sha256=plan.environment_sha256,
+                    stage_status=original.output.status,
+                    kernel_accepted=True,
+                    kernel_receipt_sha256=(
+                        original.output.kernel_receipt_sha256
+                    ),
+                    consumed_artifact_sha256s=tuple(
+                        artifact.digest for artifact in artifacts[:-1]
+                    ),
+                    failure_code=original.output.failure_code,
+                ):
+                    raise AblationValidationError(
+                        "S1 diagnostic kernel receipt was not accepted"
+                    )
+                diagnostic_receipt = _thaw(original_data)
+                signed_rejection = {
+                    key: diagnostic_receipt[key]
+                    for key in (
+                        "schema",
+                        "protocol_sha256",
+                        "run_id",
+                        "case_id",
+                        "case_manifest_sha256",
+                        "variant_id",
+                        "split",
+                        "cache_mode",
+                        "input_sha256",
+                        "environment_sha256",
+                        "independent",
+                    )
+                }
+                signed_rejection.update(
                     {
-                        **dict(original.output.data),
+                        "accepted": False,
+                        "active_process_count": 0,
+                        "reason": "diagnostic_only_authority_withheld",
                         "diagnostic_only": True,
                         "authority_withheld": True,
-                    }
-                    if isinstance(original.output.data, Mapping)
-                    else {
-                        "diagnostic_payload": _thaw(original.output.data),
-                        "diagnostic_only": True,
-                        "authority_withheld": True,
+                        "diagnostic_kernel_accepted": True,
+                        "diagnostic_receipt_sha256": diagnostic_receipt[
+                            "receipt_sha256"
+                        ],
+                        "diagnostic_receipt": diagnostic_receipt,
                     }
                 )
+                data = {
+                    **signed_rejection,
+                    "receipt_sha256": _sha(signed_rejection),
+                }
                 invocations[StageName.KERNEL] = StageInvocation(
                     replace(
                         original.output,
@@ -1850,12 +2310,30 @@ def _execute_job(
             f"runner retained {type(exc).__name__} for {job.job_id}",
         )
 
-    wall_ms = sum(record.telemetry.wall_time_ms for record in result.stages)
+    setup_telemetry = tuple(
+        setup
+        for record in result.stages
+        if (
+            setup := extract_symai_cache_setup_telemetry(record)
+        )
+        is not None
+    )
+    wall_ms = sum(
+        record.telemetry.wall_time_ms for record in result.stages
+    ) + sum(item.wall_time_ms for item in setup_telemetry)
     peak_memory = max(
-        (record.telemetry.peak_memory_bytes for record in result.stages),
+        (
+            *(
+                record.telemetry.peak_memory_bytes
+                for record in result.stages
+            ),
+            *(item.peak_memory_bytes for item in setup_telemetry),
+        ),
         default=0,
     )
-    model_calls = sum(record.telemetry.model_calls for record in result.stages)
+    model_calls = sum(
+        record.telemetry.model_calls for record in result.stages
+    ) + sum(item.model_calls for item in setup_telemetry)
     solver_stages = sum(
         record.telemetry.resource_lane is ResourceLane.SOLVER
         for record in result.stages
@@ -1917,12 +2395,392 @@ def _envelope(
     }
 
 
+def _validate_current_policy_graph(
+    result: CaseResultRecord,
+    *,
+    plan: AblationPlan,
+    job: ScheduledCase,
+    ordered_artifacts: tuple[StageArtifact, ...],
+) -> None:
+    """Recompute every frozen routing decision in a current result graph.
+
+    Invocation markers and a valid content-addressed chain are necessary but
+    not sufficient evidence: an attacker could otherwise suppress every
+    backend, rehash the graph, and retain a structurally valid result.  This
+    validator mirrors the frozen, label-blind routing policy in
+    :func:`_execute_job` over the persisted artifacts.
+    """
+
+    definition = get_variant_definition(job.variant_id)
+    records = {record.stage: record for record in result.stages}
+    artifacts = {artifact.stage: artifact for artifact in ordered_artifacts}
+
+    retained = tuple(
+        artifact
+        for artifact in ordered_artifacts
+        if artifact.policy_reason == "retained_job_failure"
+    )
+    if retained:
+        first = ordered_artifacts[0]
+        first_record = records[first.stage]
+        later = ordered_artifacts[1:]
+        if (
+            retained != (first,)
+            or first.invoked
+            or first.status is not StageStatus.FAILED
+            or first_record.failure_code not in _RUNNER_FAILURE_CODES
+            or result.failure_code is not first_record.failure_code
+            or any(
+                artifact.invoked
+                or artifact.status is not StageStatus.SUCCESS
+                or artifact.policy_reason != "upstream_terminal_failure"
+                for artifact in later
+            )
+        ):
+            raise AblationValidationError(
+                "current result graph has a noncanonical retained runner "
+                "failure route"
+            )
+        return
+
+    def require(
+        stage: StageName,
+        *,
+        invoked: bool,
+        reason: str,
+    ) -> StageArtifact:
+        artifact = artifacts[stage]
+        record = records[stage]
+        if artifact.invoked is not invoked or artifact.policy_reason != reason:
+            raise AblationValidationError(
+                "current result graph invocation decision differs from the "
+                f"frozen policy at {stage.value}"
+            )
+        if not invoked and record.status is not StageStatus.SUCCESS:
+            raise AblationValidationError(
+                "suppressed current result stage is not a successful policy "
+                f"decision at {stage.value}"
+            )
+        return artifact
+
+    evaluated: list[StageArtifact] = []
+    proof_stages = set(definition.proof_order)
+    frontend = tuple(
+        stage
+        for stage in definition.stages
+        if stage not in proof_stages | {StageName.KERNEL}
+    )
+    terminal_failure = False
+    for stage in frontend:
+        if terminal_failure:
+            artifact = require(
+                stage,
+                invoked=False,
+                reason="upstream_terminal_failure",
+            )
+        else:
+            gate_receipt = (
+                _ambiguity_gate_receipt(evaluated)
+                if stage is StageName.SYMAI
+                and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
+                else None
+            )
+            should_invoke = not (
+                gate_receipt is not None
+                and not bool(gate_receipt["ambiguity_detected"])
+            )
+            reason = (
+                "frontend_ambiguity_gate_closed"
+                if not should_invoke
+                else (
+                    "frontend_ambiguity_gate_open"
+                    if gate_receipt is not None
+                    else "frontend_scheduled"
+                )
+            )
+            artifact = require(
+                stage,
+                invoked=should_invoke,
+                reason=reason,
+            )
+            if gate_receipt is not None:
+                receipt_field = (
+                    "routing_policy"
+                    if should_invoke
+                    else "policy_decision"
+                )
+                if (
+                    not isinstance(artifact.data, Mapping)
+                    or _thaw(artifact.data.get(receipt_field))
+                    != gate_receipt
+                    or artifact.effective_identity.get(
+                        "policy_decision_sha256"
+                    )
+                    != gate_receipt["decision_sha256"]
+                    or artifact.effective_identity.get("policy_decision")
+                    != gate_receipt["decision"]
+                ):
+                    raise AblationValidationError(
+                        "current SyMAI ambiguity gate receipt differs from "
+                        "the frozen label-blind decision"
+                    )
+            if artifact.status is not StageStatus.SUCCESS:
+                terminal_failure = True
+        evaluated.append(artifact)
+
+    has_obligation = _has_obligation(job.case.input_data)
+    compiler_translation_unsupported = (
+        _compiler_translation_unsupported(evaluated)
+    )
+    previous_proof: StageArtifact | None = None
+    for proof_index, stage in enumerate(definition.proof_order):
+        if terminal_failure:
+            artifact = require(
+                stage,
+                invoked=False,
+                reason="upstream_terminal_failure",
+            )
+        else:
+            should_invoke = has_obligation
+            reason = "proof_scheduled"
+            if not has_obligation:
+                reason = "no_reviewed_proof_obligation"
+            elif compiler_translation_unsupported:
+                should_invoke = False
+                reason = "compiler_translation_unsupported"
+            elif (
+                proof_index == 0
+                and stage is StageName.LEANSTRAL
+                and definition.leanstral_policy
+                is StagePolicy.PROOF_FAILURE_FALLBACK
+                and _compiler_native_candidate_ready(
+                    evaluated,
+                    job.case.input_data,
+                )
+            ):
+                should_invoke = False
+                reason = "proof_fallback_suppressed"
+            elif proof_index and job.variant_id != "A12":
+                should_invoke = not (
+                    previous_proof is not None
+                    and _proof_candidate_ready(previous_proof)
+                )
+                reason = (
+                    "proof_fallback_suppressed"
+                    if not should_invoke
+                    else "proof_failure_fallback"
+                )
+            artifact = require(
+                stage,
+                invoked=should_invoke,
+                reason=reason,
+            )
+        previous_proof = artifact
+        evaluated.append(artifact)
+
+    if StageName.KERNEL in definition.stages:
+        kernel_should_invoke = (
+            not terminal_failure
+            and not (definition.proof_order and not has_obligation)
+        )
+        require(
+            StageName.KERNEL,
+            invoked=kernel_should_invoke,
+            reason=(
+                "upstream_terminal_failure"
+                if terminal_failure
+                else (
+                    "no_reviewed_proof_obligation"
+                    if not kernel_should_invoke
+                    else (
+                        "legacy_diagnostic_kernel"
+                        if definition.safety_diagnostic_only
+                        else "independent_native_kernel"
+                    )
+                )
+            ),
+        )
+
+
+def validate_current_result_graph(
+    result: CaseResultRecord,
+    *,
+    plan: AblationPlan,
+    job: ScheduledCase,
+) -> None:
+    """Bind a v2 result to the complete frozen route and invocation graph."""
+
+    definition = get_variant_definition(job.variant_id)
+    if tuple(stage.stage for stage in result.stages) != definition.stages:
+        raise AblationValidationError(
+            "current result route differs from the frozen variant definition"
+        )
+
+    indexed: list[tuple[int, StageArtifact]] = []
+    for stage in result.stages:
+        if (
+            stage.provenance.requested_identity
+            != definition.requested_identity(stage.stage)
+        ):
+            raise AblationValidationError(
+                "current result stage identity differs from the frozen "
+                "variant definition"
+            )
+        identity = stage.provenance.effective_identity
+        invoked = identity.get("graph_invoked")
+        invocation_index = identity.get("graph_invocation_index")
+        if (
+            type(invoked) is not bool
+            or isinstance(invocation_index, bool)
+            or not isinstance(invocation_index, int)
+            or not 0 <= invocation_index < len(result.stages)
+        ):
+            raise AblationValidationError(
+                "current result graph invocation fields are invalid"
+            )
+        if (
+            stage.stage is StageName.SYMAI
+            and job.cache_mode is CacheMode.WARM
+            and invoked
+            and definition.symai_policy
+            is not StagePolicy.LEGACY_DIAGNOSTIC
+        ):
+            try:
+                cache_prime = extract_symai_cache_prime_receipt(stage)
+            except ProtocolContractError as exc:
+                raise AblationValidationError(
+                    "current warm SyMAI stage has an invalid cache-prime "
+                    "receipt"
+                ) from exc
+            if cache_prime is None:
+                raise AblationValidationError(
+                    "current warm graph-invoked non-legacy SyMAI stage "
+                    "omitted its cache-prime receipt"
+                )
+        reason_field = (
+            "graph_policy_reason" if invoked else "policy_reason"
+        )
+        reason = identity.get(reason_field)
+        if not isinstance(reason, str) or not reason.strip():
+            raise AblationValidationError(
+                "current result graph policy reason is missing"
+            )
+        if not invoked:
+            policy = stage.data
+            if (
+                not isinstance(policy, Mapping)
+                or policy.get("schema")
+                != (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "policy-decision.v1"
+                )
+                or policy.get("stage") != stage.stage.value
+                or policy.get("invoked") is not False
+                or policy.get("reason") != reason
+                or policy.get("invocation_index") != invocation_index
+            ):
+                raise AblationValidationError(
+                    "suppressed current result stage lacks its exact graph "
+                    "decision receipt"
+                )
+        elif (
+            isinstance(stage.data, Mapping)
+            and stage.data.get("schema")
+            == (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "policy-decision.v1"
+            )
+            and stage.data.get("invoked") is False
+        ):
+            raise AblationValidationError(
+                "invoked current result stage contains a suppression receipt"
+            )
+        try:
+            artifact = StageArtifact(
+                stage=stage.stage,
+                status=stage.status,
+                data=stage.data,
+                output_sha256=stage.output_sha256,
+                effective_identity=identity,
+                invocation_index=invocation_index,
+                invoked=invoked,
+                policy_reason=reason,
+            )
+        except ProtocolContractError as exc:
+            raise AblationValidationError(
+                "current result graph artifact is invalid"
+            ) from exc
+        indexed.append((invocation_index, artifact))
+
+    indexed.sort(key=lambda item: item[0])
+    if [index for index, _ in indexed] != list(range(len(result.stages))):
+        raise AblationValidationError(
+            "current result graph invocation order is incomplete"
+        )
+    frozen_order = _frozen_invocation_order(definition)
+    if tuple(artifact.stage for _, artifact in indexed) != frozen_order:
+        raise AblationValidationError(
+            "current result graph differs from the frozen invocation order"
+        )
+    consumed: list[str] = []
+    for _, artifact in indexed:
+        raw_consumed = artifact.effective_identity.get(
+            "consumed_artifact_sha256"
+        )
+        if (
+            not isinstance(raw_consumed, Sequence)
+            or isinstance(raw_consumed, (str, bytes, bytearray))
+            or tuple(raw_consumed) != tuple(consumed)
+        ):
+            raise AblationValidationError(
+                "current result graph artifact chain is invalid"
+            )
+        if not artifact.invoked:
+            policy_consumed = artifact.data.get(
+                "consumed_artifact_sha256"
+            )
+            if (
+                not isinstance(policy_consumed, Sequence)
+                or isinstance(
+                    policy_consumed, (str, bytes, bytearray)
+                )
+                or tuple(policy_consumed) != tuple(consumed)
+            ):
+                raise AblationValidationError(
+                    "suppressed current result stage receipt has an invalid "
+                    "artifact chain"
+                )
+        consumed.append(artifact.digest)
+
+    _validate_current_policy_graph(
+        result,
+        plan=plan,
+        job=job,
+        ordered_artifacts=tuple(artifact for _, artifact in indexed),
+    )
+
+    try:
+        result.validate_provenance(
+            expected_environment_sha256=plan.environment_sha256
+        )
+    except ProtocolContractError as exc:
+        raise AblationValidationError(
+            "current result provenance graph is invalid"
+        ) from exc
+
+
 def _validate_envelope(
     value: object,
     plan: AblationPlan,
     job: ScheduledCase,
     contract: RunContract,
+    *,
+    allow_legacy_result: bool = False,
 ) -> CaseResultRecord:
+    if type(allow_legacy_result) is not bool:
+        raise AblationValidationError(
+            "allow_legacy_result must be a boolean"
+        )
     data = _mapping(value, "ablation_result")
     _exact(
         data,
@@ -1938,8 +2796,17 @@ def _validate_envelope(
         },
         "ablation_result",
     )
+    result_schema = data["schema"]
     if (
-        data["schema"] != ABLATION_RESULT_SCHEMA
+        result_schema == LEGACY_ABLATION_RESULT_SCHEMA
+        and not allow_legacy_result
+    ):
+        raise AblationValidationError(
+            "current validation requires an ablation-result.v2 envelope"
+        )
+    if (
+        result_schema
+        not in {LEGACY_ABLATION_RESULT_SCHEMA, ABLATION_RESULT_SCHEMA}
         or data["plan_sha256"] != plan.digest
         or ScheduledCase.from_dict(data["job"]) != job
         or data["requested_configuration"]
@@ -1953,6 +2820,26 @@ def _validate_envelope(
         raise AblationValidationError("invalid result protocol record") from exc
     if restored_contract != contract or result.digest != data["case_result_sha256"]:
         raise AblationValidationError("result contract or digest changed")
+    if result_schema == ABLATION_RESULT_SCHEMA and (
+        data["run_contract"] != restored_contract.to_dict()
+        or data["case_result"] != result.to_dict()
+    ):
+        raise AblationValidationError(
+            "current result envelope contains a noncanonical wire record"
+        )
+    if (
+        result_schema == ABLATION_RESULT_SCHEMA
+        and CaseResultRecord.from_stages(result.stages) != result
+    ):
+        raise AblationValidationError(
+            "current result envelope masks its canonical terminal outcome"
+        )
+    if result_schema == ABLATION_RESULT_SCHEMA:
+        validate_current_result_graph(
+            result,
+            plan=plan,
+            job=job,
+        )
     expected_identity = (
         plan.run_id,
         job.case.case_id,
@@ -2131,6 +3018,8 @@ def _execute_ablation(
     results: list[CaseResultRecord] = []
     executed: list[str] = []
     resumed: list[str] = []
+    stop_tracker = _ProtocolStopTracker()
+    stop_failure_code: FailureCode | None = None
     for job in plan.jobs:
         path = _result_path(root, job)
         contract = contract_map[(job.variant_id, job.cache_mode)]
@@ -2147,7 +3036,6 @@ def _execute_ablation(
             result = _execute_job(plan, job, adapters, scheduler)
             try:
                 _write_once(path, _envelope(plan, job, contract, result))
-                executed.append(job.job_id)
             except AblationValidationError:
                 # A concurrent executor is accepted only after its exact
                 # immutable record passes the same resume validation.
@@ -2158,7 +3046,21 @@ def _execute_ablation(
                     contract,
                 )
                 resumed.append(job.job_id)
+            else:
+                result = _validate_envelope(
+                    _read_canonical(path, "persisted result"),
+                    plan,
+                    job,
+                    contract,
+                )
+                executed.append(job.job_id)
         results.append(result)
+        stop_failure_code = stop_tracker.observe(job, result)
+        if stop_failure_code is not None:
+            # The triggering immutable record is already reparsed above.  Do
+            # not start, resume past, or otherwise touch a later scheduled
+            # job after the frozen protocol requires termination.
+            break
     return AblationRunResult(
         plan,
         contracts,
@@ -2167,6 +3069,7 @@ def _execute_ablation(
         tuple(resumed),
         root,
         scheduler.receipts[receipt_start:],
+        stop_failure_code,
     )
 
 
@@ -2198,6 +3101,7 @@ def execute_ablation(
 __all__ = [
     "ABLATION_PLAN_SCHEMA",
     "ABLATION_RESULT_SCHEMA",
+    "LEGACY_ABLATION_RESULT_SCHEMA",
     "AblationCase",
     "AblationPlan",
     "AblationRunResult",
@@ -2209,4 +3113,5 @@ __all__ = [
     "build_ablation_plan",
     "execute_ablation",
     "validate_ablation_evidence",
+    "validate_current_result_graph",
 ]

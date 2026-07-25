@@ -282,6 +282,14 @@ is never completion evidence.
 - Refinement depth: 2
 - Evidence implementation: `benchmarks.logic_pipeline.adapters.HSSLEV0342A4C` and `LeanstralAdapter` lazily reuse the supervisor-owned local `LeanstralProofProvider`. The adapter binds exactly one fixed obligation ID, bounds the provider payload, records only draft artifacts, rejects schema drift, obligation rebinding, forbidden Lean escape hatches, and model authority claims, and maps timeout, malformed, and unavailable outcomes to explicit stage statuses.
 - Bounded repair contract: A request may carry one reviewed failure diagnostic and failed draft with `repair_attempt: 1`; the adapter forwards that context once, records `mode: repair` and `repair_attempts: 1`, and rejects a second attempt before invoking the provider. Model inference stays in the `model` lane while kernel checking is declared separately as `kernel`; no Leanstral record can set `kernel_accepted` or create a kernel receipt.
+- Scope boundary: HSSL-G034 establishes the adapter-level transport, validation,
+  and one-attempt upper bound for a repair request. It does not assert that
+  protocol revision 1 schedules a post-kernel repair, that the frozen revision
+  1 corpus contains an independently reviewed repair-trigger case, or that
+  repair efficacy has been measured. The unchanged revision 1 ablation graph
+  performs one pre-kernel Leanstral synthesis invocation when its frozen route
+  calls Leanstral; a separate protocol/corpus revision is required to feed an
+  independently kernel-rejected draft back through this transport.
 - Backlog alignment: HSSL-BENCH-016 closes the focused HSSL-G034 gap without a child goal. The focused integration suite covers synthesis, one repair, malformed/forbidden responses, timeout, unavailable backend, fixed-obligation and bound checks; generated supervisor todo/vector state remains supervisor-owned.
 
 ## HSSL-G035 Bind all claimed successes to kernel and provenance receipts
@@ -489,7 +497,7 @@ is never completion evidence.
 - Gap task: Add cache isolation, drift checks, and balanced block scheduling.
 - Refinement depth: 2
 - Evidence implementation: `benchmarks.logic_pipeline.runner.HSSLEV0717A46` is the stable AST evidence symbol for the cache-isolation and drift-comparison boundary. `CacheModePair`, `CacheIsolationReport`, and `validate_cache_isolation` require a complete cold/warm matrix before any cache effect is eligible for comparison, and retain the plan digest, pinned environment, unique cache namespaces, exact execution order, counterbalanced position counts, and both immutable result digests.
-- Cache and drift contract: Every durable cache-scope receipt binds the protocol, run, variant, split, cold-or-warm mode, plan, frozen requested configuration, pinned environment, run contract, and canonical cache root. Cache roots resolving outside the selected run output fail before an adapter is invoked. Cold and warm records occupy different namespaces and result paths. Comparative validation requires one non-null environment digest and identical requested and effective stage identities across modes, so a model, solver, backend, route, or environment change cannot be reported as a cache effect. Missing pairs, mixed schedules, namespace collisions, and drift fail closed.
+- Cache and drift contract: Every durable cache-scope receipt binds the protocol, run, variant, split, cold-or-warm mode, plan, frozen requested configuration, pinned environment, run contract, and canonical cache root. Cache roots resolving outside the selected run output fail before an adapter is invoked. Cold and warm records occupy different namespaces and result paths. Comparative validation requires one non-null environment digest, exact requested identities and routes, and equality under a strict cache-insensitive effective-identity projection that may remove only allowlisted operational cache fields such as namespace, key, hit state, prime/setup receipts, and their dependent provenance digests. Provider, model, endpoint/backend revision, solver, implementation, and every unrecognized identity field remain exact, so backend, route, or environment drift cannot be reported as a cache effect. A warm SyMAI measurement must bind a source-bound prime that is an exact run-scoped miss to the subsequent semantically identical measured hit; prime/setup telemetry remains separately receipted and is included in latency, model-call, retry, memory, and resource totals so warm cost is inclusive. Both direct Leanstral generation and the inner SyMAI-to-Leanstral provider request require `cache_prompt=false`; provider prompt-cache state is never a benchmark warm-cache effect. Missing pairs, mixed schedules, namespace collisions, incomplete setup accounting, and drift fail closed.
 - Ordering contract: The immutable plan SHA-ranks paired `(case, cache mode)` blocks, derives one seed-bound arm permutation, and rotates it by recorded block ordinal. This counterbalancing preserves identical inputs within every block while ensuring each arm occupies every thermal position equally, or within one observation when block count is not divisible by arm count. Global, block, and within-block ordinals and canonical job IDs make actual execution order replayable and tamper-evident.
 - Backlog alignment: HSSL-G071 remains the correctly bounded cache/backend-drift child of HSSL-G070 and needs no smaller child goal. Its implementation is intentionally paired with the shared resource policy in HSSL-G072 because the same recorded order and environment identity determine comparison eligibility. Generated todo-vector, objective-bundle, and task-status metadata remain supervisor-owned and are not manually edited; the supervisor can reconcile HSSLEV0717A46 from the AST symbol, focused validator, objective heap, and discovery receipt.
 
@@ -1229,6 +1237,61 @@ is never completion evidence.
   kernel-verified false positives. S1 capability missingness remains
   nonauthoritative, no fallback or production-route change occurred, and
   neither holdout cases nor holdout semantics were accessed.
+- Revision 1 repair scope: HSSL-G130 runs the unchanged frozen revision 1
+  graph, which provides one pre-kernel proof-synthesis opportunity per
+  scheduled Leanstral stage and no post-kernel feedback edge. Although the
+  HSSL-G034 adapter accepts a separately constructed first repair request, the
+  revision 1 matrix cannot create that request from a kernel failure. Its
+  repair-attempt count is therefore structurally zero, not evidence that
+  repair is ineffective or effective.
+- Immutable 2026-07-25 diagnostic run: The later run
+  `hssl-matrix-20260725T040701Z-21c385c72`, rooted outside the repository at
+  `~/.local/share/ipfs_accelerate_py/benchmarks/hssl-repaired-runs/`, is a
+  completed, source-bound diagnostic at commit
+  `21c385c72f699f2f6963af489cdd49176204f569`. Its strictly validated matrix
+  `artifact_sha256` is
+  `6e02f487c85285ff1bff56a593a270c2d90fbf5b50ae38cb37da26f2c071ac57`.
+  It retained all 560 coordinates, 1,826 invoked stages and released leases,
+  348 independent native-kernel invocations, 216 accepted kernel receipts,
+  all 56 invalid controls with zero kernel-accepted false positives, and no
+  holdout or production-routing activity. Pilot terminal statuses were 113
+  verified, 140 not verified, 7 rejected, and 20 unavailable; development
+  statuses were 91 verified, 164 not verified, 5 rejected, and 20
+  unavailable. The 40 unavailable cells are the frozen S1 typed-unavailable
+  diagnostic and the 12 rejected cells report combined Leanstral failures.
+  This run is immutable diagnostic evidence: do not modify, resume, delete,
+  reuse its namespace, publish it over the canonical v2 matrix, or treat it as
+  HSSL-G140 authorization.
+- Diagnostic findings and required rerun boundary: Raw terminal receipts
+  exposed 216 kernel acceptances while only 204 top-level results were marked
+  verified; all 12 rejected top-level results contained an accepted terminal
+  kernel receipt, showing that recoverable upstream proof-attempt failure was
+  incorrectly given precedence. A9 invoked Leanstral on 18 compiler-native
+  successes (10 pilot and 8 development) because the index-zero
+  deterministic-first gate was not applied. The 12 combined Leanstral
+  failures exposed implicit provider prompt-cache state and operational cache
+  metadata in the semantic projection. Warm SyMAI stages recorded zero cache
+  hits because no source-bound prime occurred, so cold/warm cost was not an
+  honest cache comparison. S1 used the intentional
+  `legacy_symbolicai_identity_not_in_repaired_freeze` path for all 40 cells
+  rather than a real legacy bridge. Every persisted Leanstral record retained
+  `repair_attempts: 0`. The subsequently integrated strict cache-isolation
+  gate also rejects the immutable run: it finds six pilot and four development
+  cold/warm effective-route disagreements. Eight are Leanstral
+  success-versus-typed-provider-failure pairs whose failure side omits the
+  resolved provider/model identity; two A6 disagreements include conditional
+  Hammer fallback after a warm Leanstral failure, with each A6 coordinate
+  contributing both a Leanstral and Hammer disagreement. The requested arm
+  identities and registered stage sequences did not drift, but these paired
+  paths are not eligible for cache-effect attribution. The index bytes remain
+  SHA-256
+  `24f2b86469e8a24ffc74b37ec231c2d3f34856a9396277804076a5bd7ea840fc`
+  and the public-snapshot bytes remain SHA-256
+  `03e80dfc48e3822433c7c22665ca19bfd1db0e1da9cedcf0176a2142111108ae`.
+  These are code/protocol findings, not candidate efficacy results; fixes
+  require a new clean run ID, capability freeze, unchanged
+  pilot/development rerun, and another HSSL-G140 gate while holdout remains
+  sealed.
 - Validation and recovery contract: The exact required command,
   `python -m benchmarks.logic_pipeline.runtime execute --splits
   pilot,development --cache-mode both --validate-complete`, validates every
@@ -1399,7 +1462,13 @@ is never completion evidence.
 - Outputs: workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/replay, workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json, docs/performance_snapshots/2026-07-24_hssl_reassessment_reports.json
 - Validation: python benchmarks/logic_pipeline/report.py --section statistics --validate --results-path workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/results/statistics.json
 - Acceptance: Every success and required sampled failure has a fresh-worktree, fresh-cold-cache replay bound to the same source, environment, case, route, and kernel identities; drift, stale receipts, and same-run replay fail; safety, quality, latency, resources, reliability, routing, marginal escalation value, unnecessary calls, and complexity/Pareto reports are complete and non-null where applicable; and all claims trace to case-level and independent native-kernel receipts.
-- Gap task: Complete independent replay and validate every report needed for a defensible architecture decision.
+- Gap task: Complete independent replay and validate every report needed for
+  a defensible architecture decision. In particular, implement a source-bound
+  nonempty replay orchestrator/ingestion path that executes every selected
+  success and sampled failure through `run_detached_replay`, validates each
+  receipt, and publishes completed replay counts; also implement typed
+  attachments for independently measured quality, latency, resource, safety,
+  and routing domains instead of hard-coded incomplete placeholders.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 5.
 - Evidence implementation:
@@ -1432,6 +1501,14 @@ is never completion evidence.
   identical source/environment/case/variant/route/adapter/native-kernel
   identities, unchanged terminal outcomes, and rejection of stale receipts,
   same-run reuse, configuration drift, and automatic merge.
+- Remaining nonempty-path blocker: The zero-population artifact is valid, but
+  the current builder is not yet an executable implementation of a future
+  nonempty G160 run. It always emits zero completed replays and
+  `replay_claimed=false`, and the report builder has no typed attachment API
+  for the required independent quality, latency, resource, safety, and routing
+  receipts. A later authorized holdout must not advance to G170 until those
+  APIs execute, ingest, source-bind, and revalidate real receipts. Empty
+  accounting is not evidence that this implementation work is complete.
 - Recomputed reports: The canonical `statistics.json` contains forty-eight
   A0-versus-A1-through-A12 comparisons separated by pilot/development split
   and cold/warm cache, totaling 480 case-receipt pairs. Its seeded stratified
@@ -1454,10 +1531,12 @@ is never completion evidence.
   `6cf420232c0ae432ac9f2471670916d93d7f440fc144b9adfea4509ca41a4e92`.
   The cross-bound public snapshot has byte SHA-256
   `1008b759bce54f22010316d408f7fc162a88204bf69bd18b8953119ff657d689`.
-- Backlog alignment: HSSL-G160 remains one cohesive aggregate because source
+- Backlog alignment: HSSL-G160 remains active as one cohesive aggregate because source
   authentication, replay population selection and freshness, paired
   statistics, typed holdout missingness, traceability, and publication share
-  one trust graph. No child goal or heap refinement is needed. Generated
+  one trust graph. The nonempty replay orchestrator and typed decision-domain
+  attachment APIs are required bounded tasks within this goal before G170 can
+  become executable. Generated
   external todo, objective-bundle, todo-vector, task-status, and supervisor
   backlog metadata remain supervisor-owned and were not manually edited;
   reconciliation is driven by HSSLEV1605D50, these canonical artifacts, the
@@ -1558,3 +1637,47 @@ is never completion evidence.
   remain supervisor-owned and were not manually edited; reconciliation is
   driven by HSSLEV1703E61, the canonical v2 artifact, the HSSL-BENCH-043
   discovery receipt, and the three exact validation commands.
+
+## HSSL-G180 Evaluate one bounded Leanstral post-kernel repair in a new protocol and corpus revision
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G170
+- Fib priority: 1346269
+- Track: benchmark-protocol-revision
+- Priority: P1
+- Bundle: objective/hssl/leanstral-repair-revision
+- Goal: Create an append-only protocol and reviewed corpus revision that can honestly measure one source-bound Leanstral repair after an independent native-kernel rejection without changing or reinterpreting revision 1.
+- Evidence: HSSLEV1806D24
+- Outputs: benchmarks/logic_pipeline/contracts.py, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/adapters.py, tests/fixtures/logic_pipeline_benchmark_repair/corpus.jsonl, tests/fixtures/logic_pipeline_benchmark_repair/manifest.json, tests/integration/benchmarks/logic_pipeline/test_leanstral_repair_evaluation.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_leanstral_repair_evaluation.py tests/integration/benchmarks/logic_pipeline/test_leanstral_adapter.py -q
+- Acceptance: A new content-addressed protocol/corpus revision preregisters a nonempty, independently reviewed repair-eligible population before outcomes are observed; the first frozen draft is checked by the independent native kernel; only an allowlisted, bounded, source-bound diagnostic plus the failed draft can trigger exactly one repair against the identical obligation; the repair is checked in a separate kernel invocation; one-pass and repair arms retain complete efficacy, latency, resource, reliability, and failure receipts; a missing trigger remains typed and cannot become a success; and no revision 1 artifact, holdout input, production route, or promotion state changes.
+- Gap task: Add a reviewed repair-trigger corpus extension and a post-kernel feedback edge in a new protocol revision, then run a fresh pilot/development-only comparison of one-pass synthesis against exactly one repair.
+- Refinement depth: 1
+- Follow-up source: The immutable diagnostic run `hssl-matrix-20260725T040701Z-21c385c72` retained zero repair attempts because the frozen revision 1 graph has no post-kernel feedback edge.
+- Revision boundary: HSSL-G034 remains the transport and upper-bound contract; HSSL-G130 remains the immutable one-pass revision 1 measurement. HSSL-G180 must use new protocol, registry, corpus, prompt, run, cache, and capability-freeze identities and must never retrofit repair-trigger cases or results into revision 1.
+- Scientific comparison contract: Case inclusion and the failure diagnostic schema are reviewed and frozen before model output. The exact first draft, first kernel rejection, sanitized diagnostic, repair request, second draft, and second kernel result form one provenance chain. Report the conditional conversion rate from kernel-rejected first drafts to accepted repairs and its full denominator alongside the extra model calls, tokens, wall time, memory, and failure classes; do not infer benefit from adapter support or from a zero-trigger population.
+- Holdout boundary: HSSL-G180 is pilot/development research only. Any later holdout requires its own complete source-bound gate and exact nonempty authorization; the currently frozen holdout remains sealed.
+- Backlog alignment: This is a bounded future protocol/corpus goal rather than unfinished HSSL-G034 adapter work. Generated todo-vector, objective-bundle, task-status, and discovery metadata remain supervisor-owned and must be regenerated from this heap rather than edited manually.
+
+## HSSL-G190 Add a distinct source-bound legacy SymbolicAI S1 capability, bridge, and kernel-truth diagnostic
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G170
+- Fib priority: 2178309
+- Track: benchmark-diagnostic-revision
+- Priority: P1
+- Bundle: objective/hssl/legacy-symbolicai-diagnostic
+- Goal: Determine whether the historical SymbolicAI implementation used by S1 can be recovered as a distinct pinned capability and, if so, compare its non-authoritative predictions with independent native-kernel truth without substituting modern SyMAI.
+- Evidence: HSSLEV1904F81
+- Outputs: benchmarks/logic_pipeline/capabilities.py, benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/adapters.py, benchmarks/logic_pipeline/report.py, tests/integration/benchmarks/logic_pipeline/test_legacy_symbolicai_s1.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_legacy_symbolicai_s1.py tests/integration/benchmarks/logic_pipeline/test_matrix_reassessment.py -q
+- Acceptance: A separate `legacy_symbolicai` capability records requested and effective package, engine, model/provider, configuration, source, and environment identities; a bounded bridge uses deterministic source-bound input projection, run-scoped cache isolation, resource limits, telemetry, and content-addressed receipts; predictions are joined only to an independent native-kernel truth receipt and remain excluded from primary efficacy, candidate selection, and proof authority; unavailable or unrecoverable historical identity stays typed unavailable; modern SyMAI or `llm_router` is never used as a substitute; revision 1 S1 records remain immutable; and no holdout or production activity occurs.
+- Gap task: Recover and pin the historical SymbolicAI identity if it still exists, implement its isolated S1-only bridge and kernel-truth report, and otherwise publish a source-bound typed-unavailable capability receipt explaining why it cannot be reproduced.
+- Refinement depth: 1
+- Follow-up source: The immutable diagnostic run `hssl-matrix-20260725T040701Z-21c385c72` produced 40 intentional S1 unavailable outcomes through `legacy_symbolicai_identity_not_in_repaired_freeze`; this establishes missingness, not a current SymbolicAI performance result.
+- Non-substitution contract: `SyMAI`, its current engine router, the shared Leanstral model identity, and legacy SymbolicAI are separate experimental identities even if they share ancestry or an endpoint. A current SyMAI call cannot close this goal, populate S1, or be described as legacy parity.
+- Backward-compatibility contract: Frozen protocol revision 1 continues to deserialize and report S1 as diagnostic-only and may continue to emit its existing typed-unavailable result. The new capability and bridge must be additive under a new protocol/environment identity and cannot alter A0-A12 results, the immutable diagnostic run, or either published final-decision artifact.
+- Holdout boundary: This goal may use only preregistered pilot/development diagnostic cases. S1 remains forever ineligible for the shortlist, and the currently frozen holdout remains sealed.
+- Backlog alignment: This is a bounded future diagnostic goal distinct from the modern HSSL-G032 SyMAI adapter. Generated todo-vector, objective-bundle, task-status, and discovery metadata remain supervisor-owned and must be regenerated from this heap rather than edited manually.

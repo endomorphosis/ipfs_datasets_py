@@ -242,6 +242,7 @@ def test_solver_process_group_timeout_terminates_and_reaps_children() -> None:
 
     assert result.timed_out
     assert result.process_group_reaped
+    assert result.termination_reason == "wall_clock_deadline"
     child_pid = int(result.stdout.strip().splitlines()[0])
     deadline = time.monotonic() + 1
     while time.monotonic() < deadline:
@@ -255,6 +256,41 @@ def test_solver_process_group_timeout_terminates_and_reaps_children() -> None:
         time.sleep(0.01)
     else:
         pytest.fail("solver child survived process-group cancellation")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="process groups require POSIX")
+def test_solver_process_group_reaps_descendant_after_leader_exits() -> None:
+    script = (
+        "import subprocess,sys;"
+        "p=subprocess.Popen("
+        "[sys.executable,'-c','import time;time.sleep(30)'],"
+        "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,"
+        "stderr=subprocess.DEVNULL);"
+        "print(p.pid,flush=True)"
+    )
+    result = run_bounded_process_group(
+        (sys.executable, "-c", script),
+        timeout_seconds=1,
+        cancellation_grace_seconds=0.1,
+    )
+
+    assert result.returncode == 0
+    assert not result.timed_out
+    assert result.process_group_reaped
+    assert result.termination_reason == "completed_with_descendant_cleanup"
+    child_pid = int(result.stdout.strip().splitlines()[0])
+    deadline = time.monotonic() + 1
+    while time.monotonic() < deadline:
+        stat = Path(f"/proc/{child_pid}/stat")
+        try:
+            state = stat.read_text(encoding="utf-8").split()[2]
+        except (FileNotFoundError, ProcessLookupError):
+            break
+        if state == "Z":
+            break
+        time.sleep(0.01)
+    else:
+        pytest.fail("solver child survived normal leader exit")
 
 
 def test_bounded_process_receives_binary_stdin_without_a_shell() -> None:
@@ -273,6 +309,7 @@ def test_bounded_process_receives_binary_stdin_without_a_shell() -> None:
     assert result.stdout == payload.decode("utf-8")
     assert not result.timed_out
     assert result.process_group_reaped
+    assert result.termination_reason == "completed"
 
 
 def test_ablation_acquires_each_stage_lane_and_enforces_zero_solver_cap(

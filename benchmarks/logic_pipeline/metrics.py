@@ -23,11 +23,19 @@ from typing import Final, Iterable, Mapping, Self
 from .contracts import (
     CacheMode,
     CaseResultRecord,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
     OutcomeStatus,
     ProtocolContractError,
     ResourceLane,
     Split,
+    StageName,
+    StageStatus,
     canonical_json,
+    validate_native_kernel_stage_receipt,
+)
+from .cache_measurement import (
+    extract_symai_cache_setup_telemetry,
+    symai_backend_invocation_count,
 )
 
 
@@ -473,6 +481,44 @@ def validate_kernel_bound_result(
         result.validate_provenance(
             expected_environment_sha256=expected_environment_sha256
         )
+        kernel = next(
+            (
+                stage
+                for stage in result.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        if kernel is not None:
+            graph_invoked = kernel.provenance.effective_identity.get(
+                "graph_invoked"
+            )
+            graph_bound = any(
+                type(
+                    stage.provenance.effective_identity.get(
+                        "graph_invoked"
+                    )
+                )
+                is bool
+                for stage in result.stages
+            )
+            has_native_receipt = (
+                isinstance(kernel.data, Mapping)
+                and kernel.data.get("schema")
+                == NATIVE_KERNEL_RECEIPT_SCHEMA
+            )
+            if graph_invoked is True:
+                validate_native_kernel_stage_receipt(kernel)
+            elif graph_invoked is False and (
+                kernel.kernel_accepted or has_native_receipt
+            ):
+                raise ProtocolContractError(
+                    "suppressed kernel stage contains native receipt authority"
+                )
+            elif graph_bound and graph_invoked is not False:
+                raise ProtocolContractError(
+                    "kernel stage lacks an explicit graph invocation decision"
+                )
     except (ProtocolContractError, AttributeError) as exc:
         raise MetricsContractError(
             f"case result {result.case_id!r} failed provenance validation: {exc}"
@@ -577,6 +623,20 @@ def aggregate_case_results(
             lane = lanes[stage.telemetry.resource_lane.value]
             lane["stage_count"] += 1
             _add_telemetry(lane, stage.telemetry)
+            setup = extract_symai_cache_setup_telemetry(stage)
+            if setup is not None:
+                _add_telemetry(telemetry_totals, setup)
+                setup_lane = lanes[setup.resource_lane.value]
+                try:
+                    setup_lane["stage_count"] += max(
+                        0,
+                        symai_backend_invocation_count(stage) - 1,
+                    )
+                except ProtocolContractError as exc:
+                    raise MetricsContractError(
+                        "SyMAI backend invocation accounting is invalid"
+                    ) from exc
+                _add_telemetry(setup_lane, setup)
 
     return KernelBoundAggregate(
         schema=KERNEL_BOUND_AGGREGATE_SCHEMA,
@@ -921,6 +981,40 @@ class EfficiencyObservation:
             )
 
         by_stage = {stage.stage.value: stage for stage in result.stages}
+        graph_bound = any(
+            type(
+                stage.provenance.effective_identity.get(
+                    "graph_invoked"
+                )
+            )
+            is bool
+            for stage in result.stages
+        )
+        selected_candidate_source: str | None = None
+        if graph_bound:
+            kernel = next(
+                (
+                    stage
+                    for stage in result.stages
+                    if stage.stage is StageName.KERNEL
+                ),
+                None,
+            )
+            if (
+                kernel is not None
+                and kernel.provenance.effective_identity.get(
+                    "graph_invoked"
+                )
+                is True
+            ):
+                accepted = validate_native_kernel_stage_receipt(kernel)
+                candidate_source = (
+                    kernel.data.get("candidate_source")
+                    if isinstance(kernel.data, Mapping)
+                    else None
+                )
+                if accepted and isinstance(candidate_source, str):
+                    selected_candidate_source = candidate_source
         for cost in self.resource_receipt.component_costs:
             stage = by_stage.get(cost.component_id)
             if stage is None:
@@ -937,14 +1031,62 @@ class EfficiencyObservation:
                         f"absent component {cost.component_id!r} has telemetry cost"
                     )
                 continue
+            setup = extract_symai_cache_setup_telemetry(stage)
+            inclusive_retries = stage.telemetry.retries + (
+                0 if setup is None else setup.retries
+            )
             if (
-                cost.model_calls != stage.telemetry.model_calls
-                or cost.retries != stage.telemetry.retries
+                cost.model_calls
+                != stage.telemetry.model_calls
+                + (0 if setup is None else setup.model_calls)
+                or cost.retries != inclusive_retries
             ):
                 raise MetricsContractError(
                     f"{cost.component_id} model-call/retry cost does not match "
                     "case-result telemetry"
                 )
+            if graph_bound:
+                graph_invoked = (
+                    stage.provenance.effective_identity.get(
+                        "graph_invoked"
+                    )
+                    is True
+                )
+                if stage.stage is StageName.SYMAI:
+                    try:
+                        expected_component_calls = (
+                            symai_backend_invocation_count(stage)
+                        )
+                    except ProtocolContractError as exc:
+                        raise MetricsContractError(
+                            "SyMAI backend invocation accounting is invalid"
+                        ) from exc
+                else:
+                    expected_component_calls = int(graph_invoked)
+                expected_failed_attempts = (
+                    inclusive_retries
+                    + int(
+                        graph_invoked
+                        and stage.status is not StageStatus.SUCCESS
+                    )
+                )
+                expected_useful_calls = int(
+                    graph_invoked
+                    and result.status is OutcomeStatus.VERIFIED
+                    and selected_candidate_source == cost.component_id
+                )
+                if (
+                    cost.component_calls != expected_component_calls
+                    or cost.failed_attempts
+                    != expected_failed_attempts
+                    or cost.useful_component_calls
+                    != expected_useful_calls
+                ):
+                    raise MetricsContractError(
+                        f"{cost.component_id} component-call attribution "
+                        "does not match graph, retry, failure, and terminal "
+                        "candidate receipts"
+                    )
 
     @property
     def digest(self) -> str:
@@ -1203,7 +1345,10 @@ def _failure_burden(
                 failure_codes.get(result.failure_code.value, 0) + 1
             )
         for stage in result.stages:
-            retries += stage.telemetry.retries
+            setup = extract_symai_cache_setup_telemetry(stage)
+            retries += stage.telemetry.retries + (
+                0 if setup is None else setup.retries
+            )
             if stage.failure_code is not None:
                 failed_stages += 1
     return {
@@ -1536,7 +1681,7 @@ def analyze_delegation_efficiency(
         )
         safety_count = sum(
             item.invalid_control
-            and item.case_result.status is OutcomeStatus.VERIFIED
+            and item.case_result.terminal_kernel_accepted
             for item in current.values()
         )
         row: dict[str, object] = {

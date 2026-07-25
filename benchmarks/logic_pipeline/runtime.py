@@ -9,7 +9,7 @@ benchmark arm when a requested capability is absent.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 import hashlib
 import importlib
@@ -46,6 +46,7 @@ from .adapters import (
     SymaiAdapter,
     SymaiAdapterConfig,
     _is_frozen_ablation_request,
+    _leanstral_completion_payload_bytes,
     _leanstral_input,
     _semantic_context_binding,
 )
@@ -60,12 +61,14 @@ from .capabilities import (
 )
 from .contracts import (
     FailureCode,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
     ProtocolContractError,
     ResourceLane,
     StageName,
     StageStatus,
     TelemetryRecord,
     canonical_json,
+    validate_native_kernel_receipt,
 )
 from .variants import (
     ALL_VARIANT_IDS,
@@ -82,9 +85,7 @@ RUNTIME_VERSION: Final = "1"
 COMPILED_OBLIGATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
 )
-KERNEL_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"
-)
+KERNEL_RECEIPT_SCHEMA: Final = NATIVE_KERNEL_RECEIPT_SCHEMA
 ENTAILMENT_TRANSLATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reviewed-entailment-translation.v1"
 )
@@ -1098,46 +1099,90 @@ def _leanstral_live_adapter(
     )
 
 
-def _validated_kernel_handler(handler: StageHandler) -> StageHandler:
-    """Prevent an injected kernel adapter from fabricating proof authority."""
+def _validated_kernel_handler(
+    handler: StageHandler,
+    *,
+    trusted_native_runner: NativeKernelRunner | None = None,
+) -> StageHandler:
+    """Validate receipts while reserving positive authority for our runner.
+
+    Receipt hashes establish integrity, not origin.  A custom handler sees the
+    full request and can therefore fabricate an internally consistent positive
+    receipt.  Only the exact ``NativeKernelRunner`` instance constructed by
+    :func:`build_live_runtime` is allowed to retain positive authority.
+    """
+
+    positive_authority_allowed = (
+        trusted_native_runner is handler
+        and type(trusted_native_runner) is NativeKernelRunner
+    )
 
     def invoke(request: StageRequest) -> StageOutput:
         raw = handler(request)
         output = raw if isinstance(raw, StageOutput) else StageOutput(data=raw)
-        if not output.kernel_accepted:
-            return output
-        data = output.data
-        receipt_sha256 = output.kernel_receipt_sha256
-        valid = (
-            isinstance(data, Mapping)
-            and data.get("schema") == KERNEL_RECEIPT_SCHEMA
-            and data.get("independent") is True
-            and data.get("accepted") is True
-            and data.get("active_process_count") == 0
-            and isinstance(receipt_sha256, str)
-            and data.get("receipt_sha256") == receipt_sha256
-        )
-        if valid:
-            receipt = {
-                key: value
-                for key, value in data.items()
-                if key != "receipt_sha256"
-            }
-            valid = _sha(receipt) == receipt_sha256
-        if valid:
-            return output
+        reason = "invalid_independent_kernel_receipt"
+        try:
+            accepted = validate_native_kernel_receipt(
+                output.data,
+                protocol_sha256=request.protocol_sha256,
+                run_id=request.run_id,
+                case_id=request.case_id,
+                case_manifest_sha256=request.case_manifest_sha256,
+                variant_id=request.variant_id,
+                split=request.split,
+                cache_mode=request.cache_mode,
+                input_sha256=request.input_sha256,
+                environment_sha256=request.environment_sha256,
+                stage_status=output.status,
+                kernel_accepted=output.kernel_accepted,
+                kernel_receipt_sha256=output.kernel_receipt_sha256,
+                consumed_artifact_sha256s=tuple(
+                    artifact.digest
+                    for artifact in request.upstream_artifacts
+                ),
+                failure_code=output.failure_code,
+            )
+            if accepted and not positive_authority_allowed:
+                reason = "injected_kernel_positive_authority_forbidden"
+                raise ProtocolContractError(
+                    "injected kernel handlers cannot confer proof authority"
+                )
+            return replace(
+                output,
+                effective_identity={
+                    **dict(output.effective_identity),
+                    "consumed_artifact_sha256": tuple(
+                        artifact.digest
+                        for artifact in request.upstream_artifacts
+                    ),
+                },
+            )
+        except ProtocolContractError:
+            pass
+        receipt = {
+            "schema": KERNEL_RECEIPT_SCHEMA,
+            "protocol_sha256": request.protocol_sha256,
+            "run_id": request.run_id,
+            "case_id": request.case_id,
+            "case_manifest_sha256": request.case_manifest_sha256,
+            "variant_id": request.variant_id,
+            "split": request.split.value,
+            "cache_mode": request.cache_mode.value,
+            "input_sha256": request.input_sha256,
+            "environment_sha256": request.environment_sha256,
+            "accepted": False,
+            "independent": True,
+            "active_process_count": 0,
+            "reason": reason,
+        }
         return StageOutput(
             status=StageStatus.FAILED,
-            data={
-                "schema": KERNEL_RECEIPT_SCHEMA,
-                "accepted": False,
-                "reason": "invalid_independent_kernel_receipt",
-                "independent": True,
-            },
+            data={**receipt, "receipt_sha256": _sha(receipt)},
             effective_identity=output.effective_identity,
             failure_code=FailureCode.SAFETY_CONTROL_FAILURE,
             failure_detail=(
-                "kernel authority requires an independently verifiable receipt"
+                "kernel authority requires the runtime-owned native runner "
+                "and an independently verifiable receipt"
             ),
             telemetry=output.telemetry,
         )
@@ -1375,8 +1420,10 @@ class NativeKernelRunner:
             "solver_input_sha256",
             "stdout_sha256",
             "stderr_sha256",
+            "returncode",
             "timed_out",
             "process_group_reaped",
+            "termination_reason",
             "proof_success",
             "proof_text",
             "candidate_created",
@@ -1409,6 +1456,7 @@ class NativeKernelRunner:
             "source_sha256": translation.source_sha256,
             "obligation_sha256": translation.obligation_sha256,
             "solver_status": "unsat",
+            "returncode": 0,
             "solver_input_sha256": hashlib.sha256(
                 ranked_solver_problem.encode("utf-8")
             ).hexdigest(),
@@ -1420,6 +1468,13 @@ class NativeKernelRunner:
             "native_reconstruction": expected_reconstruction,
             "efficacy_observed": False,
         }
+        if data.get("termination_reason") not in {
+            "completed",
+            "completed_with_descendant_cleanup",
+        }:
+            raise RuntimeBindingError(
+                "Hammer candidate has an unsafe process termination"
+            )
         if measured_route or "semantic_context" in data:
             exact_fields["semantic_context"] = semantic_binding
         if premise_selection is not None:
@@ -1810,12 +1865,16 @@ class NativeKernelRunner:
             "provider",
             "requested_model",
             "response_model",
+            "cache_prompt",
             "prompt_sha256",
+            "request_payload_sha256",
+            "response_envelope_sha256",
             "raw_model_content_sha256",
             "raw_model_content_bytes",
             "normalized_proposal_sha256",
             "normalized_proposal_bytes",
             "normalization",
+            "receipt_sha256",
         }
         if set(boundary) != expected_boundary_keys:
             raise RuntimeBindingError(
@@ -1833,13 +1892,25 @@ class NativeKernelRunner:
             separators=(",", ":"),
             sort_keys=True,
         ).encode("utf-8")
+        expected_completion_payload_sha256 = hashlib.sha256(
+            _leanstral_completion_payload_bytes(
+                final_context.to_prompt(),
+                model=str(frozen_model),
+                max_tokens=int(draft["token_budget"]),
+                theorem_id=compiled.theorem_name,
+            )
+        ).hexdigest()
         exact_boundary_fields = {
             "schema": LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
             "endpoint": frozen_endpoint,
             "provider": frozen_provider,
             "requested_model": frozen_model,
             "response_model": frozen_model,
+            "cache_prompt": False,
             "prompt_sha256": draft.get("prompt_sha256"),
+            "request_payload_sha256": (
+                expected_completion_payload_sha256
+            ),
             "normalized_proposal_sha256": hashlib.sha256(
                 normalized_proposal
             ).hexdigest(),
@@ -1854,6 +1925,11 @@ class NativeKernelRunner:
             )
         endpoint = boundary.get("endpoint")
         raw_content_bytes = boundary.get("raw_model_content_bytes")
+        boundary_body = {
+            key: value
+            for key, value in boundary.items()
+            if key != "receipt_sha256"
+        }
         if (
             not isinstance(endpoint, str)
             or not re.match(r"^https?://[^/?#]+(?:[/?#]|$)", endpoint)
@@ -1863,9 +1939,25 @@ class NativeKernelRunner:
                 r"[0-9a-f]{64}",
                 str(boundary.get("raw_model_content_sha256", "")),
             )
+            or not re.fullmatch(
+                r"[0-9a-f]{64}",
+                str(boundary.get("request_payload_sha256", "")),
+            )
+            or not re.fullmatch(
+                r"[0-9a-f]{64}",
+                str(boundary.get("response_envelope_sha256", "")),
+            )
             or isinstance(raw_content_bytes, bool)
             or not isinstance(raw_content_bytes, int)
             or raw_content_bytes <= 0
+            or boundary.get("receipt_sha256")
+            != hashlib.sha256(
+                canonical_json(boundary_body).encode("utf-8")
+            ).hexdigest()
+            or artifact.effective_identity.get(
+                "generation_boundary_sha256"
+            )
+            != boundary.get("receipt_sha256")
         ):
             raise RuntimeBindingError(
                 "Leanstral generation-boundary receipt is invalid"
@@ -2187,12 +2279,18 @@ class NativeKernelRunner:
             stdout_bytes = result.stdout.encode("utf-8")
             stderr_bytes = result.stderr.encode("utf-8")
             active_process_count = self.active_process_count
+            process_group_reaped = (
+                getattr(result, "process_group_reaped", False) is True
+            )
             accepted = bool(
                 result.returncode == 0
                 and not result.timed_out
                 and not result.cancelled
                 and not result.resource_exhausted
                 and result.error is None
+                and result.termination_reason
+                in {"completed", "completed_with_descendant_cleanup"}
+                and process_group_reaped
                 and active_process_count == 0
             )
             attempt_body = {
@@ -2208,6 +2306,7 @@ class NativeKernelRunner:
                 "cancelled": result.cancelled,
                 "resource_exhausted": result.resource_exhausted,
                 "termination_reason": result.termination_reason,
+                "process_group_reaped": process_group_reaped,
                 "active_process_count": active_process_count,
                 "accepted": accepted,
             }
@@ -2225,11 +2324,19 @@ class NativeKernelRunner:
                 or result.cancelled
                 or result.resource_exhausted
                 or result.error is not None
+                or result.termination_reason
+                in {"spawn_error", "monitor_error"}
+                or result.returncode is None
+                or (
+                    isinstance(result.returncode, int)
+                    and result.returncode < 0
+                )
+                or not process_group_reaped
                 or active_process_count
             ):
                 failure_code = FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
                 failure_detail = "native kernel process failed"
-                if active_process_count:
+                if active_process_count or not process_group_reaped:
                     failure_code = FailureCode.ORPHANED_CHILD
                     failure_detail = "native kernel process was not reaped"
                 elif result.resource_exhausted:
@@ -2285,6 +2392,7 @@ class NativeKernelRunner:
             "cancelled": selected["cancelled"],
             "resource_exhausted": selected["resource_exhausted"],
             "termination_reason": selected["termination_reason"],
+            "process_group_reaped": selected["process_group_reaped"],
             "active_process_count": selected["active_process_count"],
             "accepted": selected["accepted"],
             "independent": True,
@@ -3096,8 +3204,11 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             return StageOutput(
                 status=StageStatus.FAILED,
                 effective_identity=request.requested_identity,
-                failure_code=FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE,
-                failure_detail=f"Hammer solver launch failed: {type(exc).__name__}",
+                failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+                failure_detail=(
+                    "Hammer solver process could not be started or controlled: "
+                    f"{type(exc).__name__}"
+                ),
                 telemetry=TelemetryRecord(
                     wall_time_ms=(time.perf_counter() - started) * 1000,
                     bytes_in=len(source.encode("utf-8")),
@@ -3119,91 +3230,157 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             and process.returncode == 0
             and not process.timed_out
             and process.process_group_reaped
+            and process.termination_reason
+            in {"completed", "completed_with_descendant_cleanup"}
         )
         proof_text = (
             translation.hammer_proof_text if candidate_created else None
         )
-        return StageOutput(
-            data={
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "hammer-translated-entailment.v1"
-                ),
-                "case_input_sha256": request.input_sha256,
-                "translation_status": "success",
-                "translation_sha256": translation.digest,
-                "translation_shape": translation.shape,
-                "source_sha256": translation.source_sha256,
-                "obligation_sha256": translation.obligation_sha256,
-                "solver_status": solver_status,
-                "solver_command_sha256": hashlib.sha256(
-                    f"{solver_path}\0--lang=smt2".encode("utf-8")
-                ).hexdigest(),
-                "solver_input_sha256": hashlib.sha256(
-                    source.encode("utf-8")
-                ).hexdigest(),
-                "stdout_sha256": hashlib.sha256(
-                    process.stdout.encode("utf-8")
-                ).hexdigest(),
-                "stderr_sha256": hashlib.sha256(
-                    process.stderr.encode("utf-8")
-                ).hexdigest(),
-                "timed_out": process.timed_out,
-                "process_group_reaped": process.process_group_reaped,
-                "proof_success": candidate_created,
-                "proof_text": proof_text,
-                "candidate_created": candidate_created,
-                "native_reconstruction": (
-                    None
-                    if proof_text is None
-                    else {
-                        "strategy": translation.shape,
-                        "certificate_sha256": hashlib.sha256(
-                            proof_text.encode("utf-8")
-                        ).hexdigest(),
-                        "authoritative": False,
-                        "requires_independent_kernel": True,
-                    }
-                ),
-                "efficacy_observed": False,
-                "semantic_context": semantic_binding,
-                **(
-                    {}
-                    if premise_selection is None
-                    else {"premise_selection": premise_selection}
-                ),
-            },
-            effective_identity={
-                **dict(request.requested_identity),
-                "implementation": record.identity.get("implementation"),
-                "solver": record.identity.get("solver"),
-                "solver_path": solver_path,
-                "translation": "reviewed-entailment-v1",
-                "semantic_context_sha256": semantic_context[
-                    "context_sha256"
-                ],
-                **(
-                    {}
-                    if premise_selection is None
-                    else {
-                        "premise_selection_sha256": premise_selection[
-                            "receipt_sha256"
-                        ],
-                        "premise_ranking_contract": premise_selection[
-                            "ranking_contract"
-                        ],
-                    }
-                ),
-            },
-            telemetry=TelemetryRecord(
-                wall_time_ms=(time.perf_counter() - started) * 1000,
-                input_items=1,
-                output_items=1,
-                bytes_in=len(source.encode("utf-8")),
-                bytes_out=len(process.stdout.encode("utf-8"))
-                + len(process.stderr.encode("utf-8")),
-                resource_lane=ResourceLane.SOLVER,
+        data = {
+            "schema": (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "hammer-translated-entailment.v1"
             ),
+            "case_input_sha256": request.input_sha256,
+            "translation_status": "success",
+            "translation_sha256": translation.digest,
+            "translation_shape": translation.shape,
+            "source_sha256": translation.source_sha256,
+            "obligation_sha256": translation.obligation_sha256,
+            "solver_status": solver_status,
+            "solver_command_sha256": hashlib.sha256(
+                f"{solver_path}\0--lang=smt2".encode("utf-8")
+            ).hexdigest(),
+            "solver_input_sha256": hashlib.sha256(
+                source.encode("utf-8")
+            ).hexdigest(),
+            "stdout_sha256": hashlib.sha256(
+                process.stdout.encode("utf-8")
+            ).hexdigest(),
+            "stderr_sha256": hashlib.sha256(
+                process.stderr.encode("utf-8")
+            ).hexdigest(),
+            "returncode": process.returncode,
+            "timed_out": process.timed_out,
+            "process_group_reaped": process.process_group_reaped,
+            "termination_reason": process.termination_reason,
+            "proof_success": candidate_created,
+            "proof_text": proof_text,
+            "candidate_created": candidate_created,
+            "native_reconstruction": (
+                None
+                if proof_text is None
+                else {
+                    "strategy": translation.shape,
+                    "certificate_sha256": hashlib.sha256(
+                        proof_text.encode("utf-8")
+                    ).hexdigest(),
+                    "authoritative": False,
+                    "requires_independent_kernel": True,
+                }
+            ),
+            "efficacy_observed": False,
+            "semantic_context": semantic_binding,
+            **(
+                {}
+                if premise_selection is None
+                else {"premise_selection": premise_selection}
+            ),
+        }
+        effective_identity = {
+            **dict(request.requested_identity),
+            "implementation": record.identity.get("implementation"),
+            "solver": record.identity.get("solver"),
+            "solver_path": solver_path,
+            "translation": "reviewed-entailment-v1",
+            "semantic_context_sha256": semantic_context[
+                "context_sha256"
+            ],
+            **(
+                {}
+                if premise_selection is None
+                else {
+                    "premise_selection_sha256": premise_selection[
+                        "receipt_sha256"
+                    ],
+                    "premise_ranking_contract": premise_selection[
+                        "ranking_contract"
+                    ],
+                }
+            ),
+        }
+        telemetry = TelemetryRecord(
+            wall_time_ms=(time.perf_counter() - started) * 1000,
+            input_items=1,
+            output_items=1,
+            bytes_in=len(source.encode("utf-8")),
+            bytes_out=len(process.stdout.encode("utf-8"))
+            + len(process.stderr.encode("utf-8")),
+            resource_lane=ResourceLane.SOLVER,
+        )
+        if not process.process_group_reaped:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                data=data,
+                effective_identity=effective_identity,
+                failure_code=FailureCode.ORPHANED_CHILD,
+                failure_detail="Hammer solver process group was not reaped",
+                telemetry=telemetry,
+            )
+        if process.timed_out:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                data=data,
+                effective_identity=effective_identity,
+                failure_code=(
+                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
+                ),
+                failure_detail="Hammer solver exceeded its wall-clock bound",
+                telemetry=telemetry,
+            )
+        if process.returncode is None or process.returncode < 0:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                data=data,
+                effective_identity=effective_identity,
+                failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+                failure_detail=(
+                    "Hammer solver process failed before a logical result"
+                ),
+                telemetry=telemetry,
+            )
+        if process.returncode != 0:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                data=data,
+                effective_identity=effective_identity,
+                failure_code=(
+                    FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
+                ),
+                failure_detail=(
+                    "Hammer solver exited with nonzero status "
+                    f"{process.returncode}"
+                ),
+                telemetry=telemetry,
+            )
+        if process.termination_reason not in {
+            "completed",
+            "completed_with_descendant_cleanup",
+        }:
+            return StageOutput(
+                status=StageStatus.FAILED,
+                data=data,
+                effective_identity=effective_identity,
+                failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+                failure_detail=(
+                    "Hammer solver reported an unsafe process-control outcome"
+                ),
+                telemetry=telemetry,
+            )
+        return StageOutput(
+            data=data,
+            effective_identity=effective_identity,
+            telemetry=telemetry,
         )
 
     return invoke
@@ -3530,7 +3707,10 @@ def build_live_runtime(
                         None
                         if kernel_runner is None
                         else lambda runner=kernel_runner: KernelAdapter(
-                            _validated_kernel_handler(runner)
+                            _validated_kernel_handler(
+                                runner,
+                                trusted_native_runner=runner,
+                            )
                         )
                     ),
                 )

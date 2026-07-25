@@ -23,6 +23,11 @@ import tempfile
 from typing import Final, Mapping, Sequence
 
 from . import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT
+from .ablation import ABLATION_RESULT_SCHEMA
+from .cache_measurement import (
+    extract_symai_cache_setup_telemetry,
+    symai_backend_invocation_count,
+)
 from .contracts import (
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
@@ -30,6 +35,7 @@ from .contracts import (
     CaseResultRecord,
     GateStatus,
     OutcomeStatus,
+    ProtocolContractError,
     StageName,
     canonical_json,
     evaluate_candidate_gate,
@@ -422,15 +428,78 @@ def _result_observations(
                 raise PilotReassessmentError("matrix coordinate is duplicated")
             seen.add(key)
             stages = tuple(result.stages)
-            wall_time_ms = round(
-                sum(item.telemetry.wall_time_ms for item in stages), 6
+            current_envelope = (
+                outer.get("schema") == ABLATION_RESULT_SCHEMA
             )
-            model_calls = sum(item.telemetry.model_calls for item in stages)
-            retries = sum(item.telemetry.retries for item in stages)
+            cache_setups = tuple(
+                setup
+                for stage in stages
+                if (
+                    setup := extract_symai_cache_setup_telemetry(stage)
+                )
+                is not None
+            )
+            invoked_stages = (
+                tuple(
+                    stage
+                    for stage in stages
+                    if stage.provenance.effective_identity.get(
+                        "graph_invoked"
+                    )
+                    is True
+                )
+                if current_envelope
+                else stages
+            )
+            cache_setup_wall_time_ms = sum(
+                item.wall_time_ms for item in cache_setups
+            )
+            cache_setup_model_calls = sum(
+                item.model_calls for item in cache_setups
+            )
+            cache_setup_retries = sum(
+                item.retries for item in cache_setups
+            )
+            wall_time_ms = round(
+                sum(item.telemetry.wall_time_ms for item in stages)
+                + cache_setup_wall_time_ms,
+                6,
+            )
+            model_calls = (
+                sum(item.telemetry.model_calls for item in stages)
+                + cache_setup_model_calls
+            )
+            retries = (
+                sum(item.telemetry.retries for item in stages)
+                + cache_setup_retries
+            )
             proof_processes = sum(
                 item.stage in {StageName.HAMMER, StageName.LEANSTRAL}
-                for item in stages
+                for item in invoked_stages
             )
+            if current_envelope:
+                try:
+                    stage_invocations = sum(
+                        (
+                            symai_backend_invocation_count(item)
+                            if item.stage is StageName.SYMAI
+                            else int(
+                                item.provenance.effective_identity.get(
+                                    "graph_invoked"
+                                )
+                                is True
+                            )
+                        )
+                        for item in stages
+                    )
+                except ProtocolContractError as exc:
+                    raise PilotReassessmentError(
+                        "SyMAI backend invocation accounting is invalid"
+                    ) from exc
+            else:
+                stage_invocations = (
+                    len(invoked_stages) + len(cache_setups)
+                )
             input_data = _mapping(
                 _mapping(
                     _mapping(outer.get("job"), "job").get("case"), "job.case"
@@ -453,19 +522,38 @@ def _result_observations(
                     ),
                     "verified": result.status is OutcomeStatus.VERIFIED,
                     "kernel_accepted": result.kernel_accepted,
+                    "recovered_failure_codes": [
+                        code.value for code in result.recovered_failure_codes
+                    ],
                     "wall_time_ms": wall_time_ms,
                     "model_calls": model_calls,
                     "retries": retries,
+                    "cache_setup_count": len(cache_setups),
+                    "cache_setup_wall_time_ms": round(
+                        cache_setup_wall_time_ms, 6
+                    ),
+                    "cache_setup_model_calls": cache_setup_model_calls,
+                    "cache_setup_retries": cache_setup_retries,
                     "solver_processes": proof_processes,
-                    "stage_invocations": len(stages),
+                    "stage_invocations": stage_invocations,
+                    "graph_stage_invocations": len(invoked_stages),
                     "peak_memory_bytes": max(
-                        (item.telemetry.peak_memory_bytes for item in stages),
+                        (
+                            *(
+                                item.telemetry.peak_memory_bytes
+                                for item in stages
+                            ),
+                            *(
+                                item.peak_memory_bytes
+                                for item in cache_setups
+                            ),
+                        ),
                         default=0,
                     ),
                     "frontend_stage_invocations": sum(
                         item.stage
                         in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
-                        for item in stages
+                        for item in invoked_stages
                     ),
                     "proof_stage_invocations": sum(
                         item.stage
@@ -474,7 +562,7 @@ def _result_observations(
                             StageName.LEANSTRAL,
                             StageName.KERNEL,
                         }
-                        for item in stages
+                        for item in invoked_stages
                     ),
                     "case_result_sha256": result.digest,
                 }
@@ -727,6 +815,17 @@ def _candidate_metrics(
     baseline_latencies = [float(item["wall_time_ms"]) for item in baseline.values()]
     baseline_p95 = _percentile(baseline_latencies, 0.95)
     baseline_model_calls = sum(int(item["model_calls"]) for item in baseline.values())
+    baseline_cache_setup_count = sum(
+        int(item["cache_setup_count"]) for item in baseline.values()
+    )
+    baseline_cache_setup_wall_time_ms = sum(
+        float(item["cache_setup_wall_time_ms"])
+        for item in baseline.values()
+    )
+    baseline_cache_setup_model_calls = sum(
+        int(item["cache_setup_model_calls"])
+        for item in baseline.values()
+    )
     baseline_verified = sum(bool(item["verified"]) for item in baseline.values())
     complete_quality_rates = [
         float(item["rate"])
@@ -749,6 +848,11 @@ def _candidate_metrics(
             str(item["failure_code"])
             for item in rows
             if item["failure_code"] is not None
+        )
+        recovered_failure_counts = Counter(
+            str(code)
+            for item in rows
+            for code in item["recovered_failure_codes"]
         )
         verified = sum(bool(item["verified"]) for item in rows)
         hard_rows = [item for item in rows if item["difficulty"] == "hard"]
@@ -782,6 +886,18 @@ def _candidate_metrics(
         latencies = [float(item["wall_time_ms"]) for item in rows]
         p95 = _percentile(latencies, 0.95)
         total_model_calls = sum(int(item["model_calls"]) for item in rows)
+        cache_setup_count = sum(
+            int(item["cache_setup_count"]) for item in rows
+        )
+        cache_setup_wall_time_ms = sum(
+            float(item["cache_setup_wall_time_ms"]) for item in rows
+        )
+        cache_setup_model_calls = sum(
+            int(item["cache_setup_model_calls"]) for item in rows
+        )
+        cache_setup_retries = sum(
+            int(item["cache_setup_retries"]) for item in rows
+        )
         latency_reduction = (
             0.0
             if baseline_p95 == 0 and p95 == 0
@@ -883,6 +999,18 @@ def _candidate_metrics(
                 ),
                 "status_counts": dict(sorted(status_counts.items())),
                 "failure_counts": dict(sorted(failure_counts.items())),
+                **(
+                    {}
+                    if not recovered_failure_counts
+                    else {
+                        "recovered_failure_count": sum(
+                            recovered_failure_counts.values()
+                        ),
+                        "recovered_failure_counts": dict(
+                            sorted(recovered_failure_counts.items())
+                        ),
+                    }
+                ),
                 "efficacy": {
                     "measured_count": len(rows),
                     "kernel_verified_count": verified,
@@ -936,6 +1064,33 @@ def _candidate_metrics(
                     ),
                     "latency_reduction_vs_a0": latency_reduction,
                     "model_usage_reduction_vs_a0": model_reduction,
+                    **(
+                        {}
+                        if not cache_setup_count
+                        else {
+                            "cache_setup_invocations": cache_setup_count,
+                            "cache_setup_wall_time_ms_total": round(
+                                cache_setup_wall_time_ms, 6
+                            ),
+                            "cache_setup_model_calls": (
+                                cache_setup_model_calls
+                            ),
+                            "cache_setup_retries": cache_setup_retries,
+                            "graph_stage_invocations": sum(
+                                int(item["graph_stage_invocations"])
+                                for item in rows
+                            ),
+                            "measured_wall_time_ms_total": round(
+                                sum(latencies)
+                                - cache_setup_wall_time_ms,
+                                6,
+                            ),
+                            "measured_model_calls": (
+                                total_model_calls
+                                - cache_setup_model_calls
+                            ),
+                        }
+                    ),
                 },
                 "statistics": {
                     "paired_count": len(paired_values),
@@ -988,7 +1143,53 @@ def _candidate_metrics(
             sorted(str(item["case_result_sha256"]) for item in baseline.values())
         ),
     }
+    if baseline_cache_setup_count:
+        baseline_summary.update(
+            {
+                "cache_setup_invocations": baseline_cache_setup_count,
+                "cache_setup_wall_time_ms_total": round(
+                    baseline_cache_setup_wall_time_ms, 6
+                ),
+                "cache_setup_model_calls": (
+                    baseline_cache_setup_model_calls
+                ),
+                "measured_wall_time_ms_total": round(
+                    sum(baseline_latencies)
+                    - baseline_cache_setup_wall_time_ms,
+                    6,
+                ),
+                "measured_model_calls": (
+                    baseline_model_calls
+                    - baseline_cache_setup_model_calls
+                ),
+            }
+        )
+    baseline_recovered_failures = Counter(
+        str(code)
+        for item in baseline.values()
+        for code in item["recovered_failure_codes"]
+    )
+    if baseline_recovered_failures:
+        baseline_summary["recovered_failure_count"] = sum(
+            baseline_recovered_failures.values()
+        )
+        baseline_summary["recovered_failure_counts"] = dict(
+            sorted(baseline_recovered_failures.items())
+        )
     return candidates, baseline_summary
+
+
+def _candidate_failure_total(candidate: Mapping[str, object]) -> int:
+    """Return unresolved plus kernel-recovered reliability failures."""
+
+    unresolved = _mapping(candidate["failure_counts"], "failures")
+    recovered = _mapping(
+        candidate.get("recovered_failure_counts", {}),
+        "recovered failures",
+    )
+    return sum(int(value) for value in unresolved.values()) + sum(
+        int(value) for value in recovered.values()
+    )
 
 
 def _dominates(left: Mapping[str, object], right: Mapping[str, object]) -> bool:
@@ -1004,16 +1205,7 @@ def _dominates(left: Mapping[str, object], right: Mapping[str, object]) -> bool:
         int(left_cost["model_calls"]) <= int(right_cost["model_calls"]),
         int(left_cost["solver_processes"]) <= int(right_cost["solver_processes"]),
         int(left_cost["stage_invocations"]) <= int(right_cost["stage_invocations"]),
-        sum(
-            int(value)
-            for value in _mapping(
-                left["failure_counts"], "failures"
-            ).values()
-        )
-        <= sum(
-            int(value)
-            for value in _mapping(right["failure_counts"], "failures").values()
-        ),
+        _candidate_failure_total(left) <= _candidate_failure_total(right),
     )
     strict = (
         float(left_efficacy["kernel_verified_rate"])
@@ -1023,14 +1215,7 @@ def _dominates(left: Mapping[str, object], right: Mapping[str, object]) -> bool:
         or int(left_cost["model_calls"]) < int(right_cost["model_calls"])
         or int(left_cost["solver_processes"]) < int(right_cost["solver_processes"])
         or int(left_cost["stage_invocations"]) < int(right_cost["stage_invocations"])
-        or sum(
-            int(value)
-            for value in _mapping(left["failure_counts"], "failures").values()
-        )
-        < sum(
-            int(value)
-            for value in _mapping(right["failure_counts"], "failures").values()
-        )
+        or _candidate_failure_total(left) < _candidate_failure_total(right)
     )
     return all(comparisons) and strict
 
@@ -1215,8 +1400,27 @@ def build_pilot_reassessment_report(
     )
     model_calls = sum(int(item["model_calls"]) for item in observations)
     retries = sum(int(item["retries"]) for item in observations)
+    cache_setup_count = sum(
+        int(item["cache_setup_count"]) for item in observations
+    )
+    cache_setup_wall_time_ms = sum(
+        float(item["cache_setup_wall_time_ms"])
+        for item in observations
+    )
+    cache_setup_model_calls = sum(
+        int(item["cache_setup_model_calls"])
+        for item in observations
+    )
+    cache_setup_retries = sum(
+        int(item["cache_setup_retries"]) for item in observations
+    )
     solver_processes = sum(int(item["solver_processes"]) for item in observations)
     wall_time_ms = sum(float(item["wall_time_ms"]) for item in observations)
+    recovered_failure_counts = Counter(
+        str(code)
+        for item in observations
+        for code in item["recovered_failure_codes"]
+    )
     freeze_inputs = _freeze_inputs(matrix, run_id=run_id)
 
     eligible = (
@@ -1366,6 +1570,16 @@ def build_pilot_reassessment_report(
                 "source_receipt_count": len(observations),
                 "stage_invocation_count": frontend_stage_count,
                 "model_calls": model_calls,
+                **(
+                    {}
+                    if not cache_setup_count
+                    else {
+                        "cache_setup_invocations": cache_setup_count,
+                        "cache_setup_model_calls": (
+                            cache_setup_model_calls
+                        ),
+                    }
+                ),
                 "semantic_quality_observation_count": (
                     0
                     if semantic_source_binding is None
@@ -1396,6 +1610,19 @@ def build_pilot_reassessment_report(
                 "proof_stage_invocation_count": proof_stage_count,
                 "kernel_invocation_count": totals["kernel_invoked_count"],
                 "kernel_acceptance_count": totals["kernel_accepted_count"],
+                **(
+                    {}
+                    if not recovered_failure_counts
+                    else {
+                        "recovered_failure_count": sum(
+                            recovered_failure_counts.values()
+                        ),
+                        "recovered_failure_counts": dict(
+                            sorted(recovered_failure_counts.items())
+                        ),
+                        "reliability_status": "degraded_recovered",
+                    }
+                ),
             },
             "efficiency": {
                 "coordinate_count": len(observations),
@@ -1406,9 +1633,44 @@ def build_pilot_reassessment_report(
                 "model_calls": model_calls,
                 "solver_processes": solver_processes,
                 "retries": retries,
-                "stage_invocations": totals["invoked_stage_count"],
+                "stage_invocations": (
+                    sum(
+                        int(item["stage_invocations"])
+                        for item in observations
+                    )
+                    if cache_setup_count
+                    else totals["invoked_stage_count"]
+                ),
                 "resource_leases": totals["resource_lease_count"],
                 "missingness_synthesized_as_zero_cost": False,
+                **(
+                    {}
+                    if not cache_setup_count
+                    else {
+                        "cache_setup_invocations": cache_setup_count,
+                        "cache_setup_wall_time_ms_total": round(
+                            cache_setup_wall_time_ms, 6
+                        ),
+                        "cache_setup_model_calls": (
+                            cache_setup_model_calls
+                        ),
+                        "cache_setup_retries": cache_setup_retries,
+                        "graph_stage_invocations": sum(
+                            int(item["graph_stage_invocations"])
+                            for item in observations
+                        ),
+                        "measured_wall_time_ms_total": round(
+                            wall_time_ms - cache_setup_wall_time_ms,
+                            6,
+                        ),
+                        "measured_model_calls": (
+                            model_calls - cache_setup_model_calls
+                        ),
+                        "measured_retries": (
+                            retries - cache_setup_retries
+                        ),
+                    }
+                ),
             },
             "statistics": {
                 "baseline": baseline,

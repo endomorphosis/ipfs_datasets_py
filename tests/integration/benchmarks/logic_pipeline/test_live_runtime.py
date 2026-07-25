@@ -168,6 +168,12 @@ def test_available_backend_cannot_remain_inert_and_unavailable_is_not_substitute
         dishonest_record.failure_code
         is contracts.FailureCode.SAFETY_CONTROL_FAILURE
     )
+    assert dishonest_record.data["reason"] == (
+        "invalid_independent_kernel_receipt"
+    )
+    assert contracts.validate_native_kernel_stage_receipt(
+        dishonest_record
+    ) is False
 
 
 def test_default_leanstral_provider_is_bound_to_frozen_identity() -> None:
@@ -180,6 +186,20 @@ def test_default_leanstral_provider_is_bound_to_frozen_identity() -> None:
     assert config.model == "test-leanstral-model"
     assert config.timeout_seconds == runtime.LEANSTRAL_MEASURED_TIMEOUT_SECONDS
     assert config.max_new_tokens == runtime.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+
+
+def test_live_leanstral_adapter_exposes_exact_failure_route_identity() -> None:
+    inventory = _inventory()
+    adapter = runtime._leanstral_live_adapter(
+        inventory.by_kind[capabilities.CapabilityKind.LEANSTRAL_SERVICE]
+    )
+
+    assert dict(adapter.pinned_provider_identity) == {
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "provider": "leanstral_local",
+        "model": "test-leanstral-model",
+        "cache_prompt": False,
+    }
 
 
 def test_detached_layout_resolves_the_pinned_local_leanstral_provider() -> None:
@@ -720,13 +740,25 @@ def _strict_leanstral_artifact(
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
-    boundary = {
+    boundary_body = {
         "schema": adapters.LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
         "endpoint": endpoint,
         "provider": provider,
         "requested_model": model,
         "response_model": model,
+        "cache_prompt": False,
         "prompt_sha256": prompt_sha256,
+        "request_payload_sha256": hashlib.sha256(
+            adapters._leanstral_completion_payload_bytes(
+                final_context.to_prompt(),
+                model=model,
+                max_tokens=adapters.LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
+                theorem_id=compiled.theorem_name,
+            )
+        ).hexdigest(),
+        "response_envelope_sha256": hashlib.sha256(
+            b"response-envelope"
+        ).hexdigest(),
         "raw_model_content_sha256": hashlib.sha256(b"raw-model-output").hexdigest(),
         "raw_model_content_bytes": len(b"raw-model-output"),
         "normalized_proposal_sha256": hashlib.sha256(normalized).hexdigest(),
@@ -734,7 +766,8 @@ def _strict_leanstral_artifact(
         "normalization": "none",
     }
     if boundary_overrides:
-        boundary.update(boundary_overrides)
+        boundary_body.update(boundary_overrides)
+    boundary = adapters._content_addressed_receipt(boundary_body)
     identity = {
         "schema_version": adapters.LEANSTRAL_DRAFT_SCHEMA,
         "llm_provider": provider,
@@ -842,6 +875,7 @@ def _strict_leanstral_artifact(
             "backend": "leanstral",
             "provider": provider,
             "model": model,
+            "generation_boundary_sha256": boundary["receipt_sha256"],
         },
         1,
     )
@@ -957,8 +991,10 @@ def _strict_hammer_artifact(
         ).hexdigest(),
         "stdout_sha256": hashlib.sha256(b"unsat\n").hexdigest(),
         "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+        "returncode": 0,
         "timed_out": False,
         "process_group_reaped": True,
+        "termination_reason": "completed",
         "proof_success": True,
         "proof_text": proof_text,
         "candidate_created": True,
@@ -998,12 +1034,14 @@ class _FakeSupervisor:
         expected_proof: str = "exact proof_token",
         returncodes: tuple[int, ...] | None = None,
         expected_proofs: tuple[str, ...] | None = None,
+        result_overrides: dict[str, object] | None = None,
     ) -> None:
         self.root = root
         self.returncode = returncode
         self.expected_proof = expected_proof
         self.returncodes = returncodes or (returncode,)
         self.expected_proofs = expected_proofs or (expected_proof,)
+        self.result_overrides = dict(result_overrides or {})
         self.sources: list[str] = []
         self._directory_count = 0
         self.active_process_count = 0
@@ -1028,16 +1066,21 @@ class _FakeSupervisor:
         assert _kwargs["limits"].memory_mb == 4096
         self.sources.append(rendered)
         returncode = self.returncodes[attempt_index]
+        result = {
+            "returncode": returncode,
+            "stdout": "accepted" if returncode == 0 else "",
+            "stderr": "" if returncode == 0 else "rejected",
+            "timed_out": False,
+            "cancelled": False,
+            "resource_exhausted": False,
+            "error": None,
+            "termination_reason": "completed",
+            "process_group_reaped": True,
+            "wall_time_seconds": 0.01,
+        }
+        result.update(self.result_overrides)
         return SimpleNamespace(
-            returncode=returncode,
-            stdout="accepted" if returncode == 0 else "",
-            stderr="" if returncode == 0 else "rejected",
-            timed_out=False,
-            cancelled=False,
-            resource_exhausted=False,
-            error=None,
-            termination_reason="completed",
-            wall_time_seconds=0.01,
+            **result,
         )
 
     def close(self) -> None:
@@ -1143,6 +1186,192 @@ def test_independent_kernel_receipt_binds_candidate_and_reaps_owner(
     assert rejected.failure_code is contracts.FailureCode.KERNEL_REJECTION
     assert rejected.data["accepted"] is False
     rejected_runner.close()
+
+
+def test_validated_kernel_handler_preserves_typed_native_timeout(
+    tmp_path: Path,
+) -> None:
+    value = _reviewed_entailment(
+        (
+            "Every archivist is trained. Ada is an archivist. "
+            "Therefore Ada is trained."
+        ),
+        "trained",
+    )
+    _, translation, compiler = _strict_compiler_artifact(value)
+    assert translation is not None
+    runner = runtime.NativeKernelRunner(
+        "/test/lean",
+        "b" * 64,
+        tmp_path / "state",
+    )
+    runner._supervisor = _FakeSupervisor(
+        tmp_path,
+        expected_proof=translation.native_proof_text,
+        result_overrides={
+            "returncode": -9,
+            "timed_out": True,
+            "termination_reason": "wall_clock_deadline",
+        },
+    )
+    request = adapters.StageRequest(
+        run_id="runtime-kernel-timeout",
+        case_id="case-timeout",
+        case_manifest_sha256="a" * 64,
+        variant_id="A1",
+        input_data=value,
+        requested_identity={"kernel": "lean"},
+        environment_sha256="b" * 64,
+        upstream_artifacts=(compiler,),
+        invocation_index=1,
+    )
+
+    validated = runtime._validated_kernel_handler(
+        runner,
+        trusted_native_runner=runner,
+    )(request)
+
+    assert validated.status is contracts.StageStatus.FAILED
+    assert (
+        validated.failure_code
+        is contracts.FailureCode.RESOURCE_LEASE_CANCELLATION
+    )
+    assert validated.data["timed_out"] is True
+    assert validated.data["termination_reason"] == "wall_clock_deadline"
+    assert "reason" not in validated.data
+    assert contracts.validate_native_kernel_receipt(
+        validated.data,
+        protocol_sha256=request.protocol_sha256,
+        run_id=request.run_id,
+        case_id=request.case_id,
+        case_manifest_sha256=request.case_manifest_sha256,
+        variant_id=request.variant_id,
+        split=request.split,
+        cache_mode=request.cache_mode,
+        input_sha256=request.input_sha256,
+        environment_sha256=request.environment_sha256,
+        stage_status=validated.status,
+        kernel_accepted=False,
+        kernel_receipt_sha256=None,
+        consumed_artifact_sha256s=(compiler.digest,),
+        failure_code=validated.failure_code,
+    ) is False
+    runner.close()
+
+
+@pytest.mark.parametrize(
+    (
+        "returncode",
+        "termination_reason",
+        "cancelled",
+        "process_group_reaped",
+        "expected_failure_code",
+    ),
+    (
+        (
+            -11,
+            "completed",
+            False,
+            True,
+            contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+        ),
+        (
+            None,
+            "spawn_error",
+            False,
+            True,
+            contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+        ),
+        (
+            None,
+            "cancelled_before_start",
+            True,
+            True,
+            contracts.FailureCode.RESOURCE_LEASE_CANCELLATION,
+        ),
+        (
+            0,
+            "orphaned_process_group",
+            False,
+            False,
+            contracts.FailureCode.ORPHANED_CHILD,
+        ),
+    ),
+)
+def test_native_kernel_process_failures_preserve_lifecycle_authority(
+    tmp_path: Path,
+    returncode: int | None,
+    termination_reason: str,
+    cancelled: bool,
+    process_group_reaped: bool,
+    expected_failure_code: contracts.FailureCode,
+) -> None:
+    value = _reviewed_entailment(
+        (
+            "Every archivist is trained. Ada is an archivist. "
+            "Therefore Ada is trained."
+        ),
+        "trained",
+    )
+    _, translation, compiler = _strict_compiler_artifact(value)
+    assert translation is not None
+    runner = runtime.NativeKernelRunner(
+        "/test/lean",
+        "b" * 64,
+        tmp_path / "state",
+    )
+    runner._supervisor = _FakeSupervisor(
+        tmp_path,
+        expected_proof=translation.native_proof_text,
+        result_overrides={
+            "returncode": returncode,
+            "error": (
+                "FileNotFoundError: missing Lean"
+                if termination_reason == "spawn_error"
+                else None
+            ),
+            "cancelled": cancelled,
+            "termination_reason": termination_reason,
+            "process_group_reaped": process_group_reaped,
+        },
+    )
+    request = adapters.StageRequest(
+        run_id=f"runtime-kernel-{termination_reason}",
+        case_id=f"case-{termination_reason}",
+        case_manifest_sha256="a" * 64,
+        variant_id="A1",
+        input_data=value,
+        requested_identity={"kernel": "lean"},
+        environment_sha256="b" * 64,
+        upstream_artifacts=(compiler,),
+        invocation_index=1,
+    )
+
+    output = runner(request)
+
+    assert output.status is contracts.StageStatus.FAILED
+    assert output.failure_code is expected_failure_code
+    assert output.data["returncode"] == returncode
+    assert output.data["termination_reason"] == termination_reason
+    assert output.data["process_group_reaped"] is process_group_reaped
+    assert contracts.validate_native_kernel_receipt(
+        output.data,
+        protocol_sha256=request.protocol_sha256,
+        run_id=request.run_id,
+        case_id=request.case_id,
+        case_manifest_sha256=request.case_manifest_sha256,
+        variant_id=request.variant_id,
+        split=request.split,
+        cache_mode=request.cache_mode,
+        input_sha256=request.input_sha256,
+        environment_sha256=request.environment_sha256,
+        stage_status=output.status,
+        kernel_accepted=False,
+        kernel_receipt_sha256=None,
+        consumed_artifact_sha256s=(compiler.digest,),
+        failure_code=output.failure_code,
+    ) is False
+    runner.close()
 
 
 def test_kernel_continues_after_logical_rejection_and_accepts_hammer(
@@ -1286,6 +1515,137 @@ def test_compiler_native_candidate_preempts_valid_optional_backends(
     assert len(output.data["candidate_attempts"]) == 1
     assert output.data["selected_attempt"]["attempt_index"] == 0
     assert len(fake.sources) == 1
+
+
+def test_live_runtime_reserves_positive_authority_for_owned_kernel_runner(
+    tmp_path: Path,
+) -> None:
+    value = _reviewed_entailment(
+        (
+            "Every archivist is trained. Ada is an archivist. "
+            "Therefore Ada is trained."
+        ),
+        "trained",
+    )
+    _, translation, compiler = _strict_compiler_artifact(value)
+    assert translation is not None
+    assert translation.native_proof_text is not None
+    inventory = _inventory()
+    request = adapters.StageRequest(
+        run_id=inventory.run_id,
+        case_id="kernel-origin-case",
+        case_manifest_sha256="a" * 64,
+        variant_id="A1",
+        input_data=value,
+        environment_sha256=inventory.sha256,
+        upstream_artifacts=(compiler,),
+        invocation_index=1,
+    )
+
+    injected_root = tmp_path / "injected"
+    injected_root.mkdir()
+    injected_runner = runtime.NativeKernelRunner(
+        "/test/lean",
+        inventory.sha256,
+        injected_root / "state",
+    )
+    injected_runner._supervisor = _FakeSupervisor(
+        injected_root,
+        expected_proof=translation.native_proof_text,
+    )
+    injected_live = runtime.build_live_runtime(
+        inventory,
+        _handlers(kernel=injected_runner),
+        variant_ids=("A1",),
+    )
+    injected = injected_live.adapters["A1"][
+        contracts.StageName.KERNEL
+    ].run(request)
+
+    assert injected.status is contracts.StageStatus.FAILED
+    assert injected.kernel_accepted is False
+    assert injected.kernel_receipt_sha256 is None
+    assert (
+        injected.failure_code
+        is contracts.FailureCode.SAFETY_CONTROL_FAILURE
+    )
+    assert injected.data["reason"] == (
+        "injected_kernel_positive_authority_forbidden"
+    )
+    assert contracts.validate_native_kernel_stage_receipt(injected) is False
+    injected_runner.close()
+
+    trusted_root = tmp_path / "trusted"
+    trusted_root.mkdir()
+    trusted_live = runtime.build_live_runtime(
+        inventory,
+        _handlers(kernel=None),
+        variant_ids=("A1",),
+        state_directory=trusted_root / "runtime-state",
+    )
+    assert trusted_live.kernel_runner is not None
+    trusted_live.kernel_runner._supervisor = _FakeSupervisor(
+        trusted_root,
+        expected_proof=translation.native_proof_text,
+    )
+    trusted = trusted_live.adapters["A1"][
+        contracts.StageName.KERNEL
+    ].run(request)
+
+    assert trusted.status is contracts.StageStatus.SUCCESS
+    assert trusted.kernel_accepted is True
+    assert trusted.kernel_receipt_sha256 == trusted.data["receipt_sha256"]
+    assert contracts.validate_native_kernel_stage_receipt(trusted) is True
+    trusted_live.close()
+
+
+def test_live_runtime_preserves_valid_injected_kernel_rejection() -> None:
+    def reject(request: adapters.StageRequest) -> adapters.StageOutput:
+        receipt = {
+            "schema": contracts.NATIVE_KERNEL_RECEIPT_SCHEMA,
+            "protocol_sha256": request.protocol_sha256,
+            "run_id": request.run_id,
+            "case_id": request.case_id,
+            "case_manifest_sha256": request.case_manifest_sha256,
+            "variant_id": request.variant_id,
+            "split": request.split.value,
+            "cache_mode": request.cache_mode.value,
+            "input_sha256": request.input_sha256,
+            "environment_sha256": request.environment_sha256,
+            "independent": True,
+            "accepted": False,
+            "active_process_count": 0,
+            "reason": "no_proof_candidate",
+        }
+        return adapters.StageOutput(
+            data={
+                **receipt,
+                "receipt_sha256": hashlib.sha256(
+                    contracts.canonical_json(receipt).encode("utf-8")
+                ).hexdigest(),
+            },
+        )
+
+    live = runtime.build_live_runtime(
+        _inventory(),
+        _handlers(kernel=reject),
+        variant_ids=("A1",),
+    )
+    record = live.adapters["A1"][contracts.StageName.KERNEL].run(
+        adapters.StageRequest(
+            run_id="live-runtime-test",
+            case_id="kernel-negative-case",
+            case_manifest_sha256="a" * 64,
+            variant_id="A1",
+            input_data={"text": "A policy applies."},
+        )
+    )
+
+    assert record.status is contracts.StageStatus.SUCCESS
+    assert record.kernel_accepted is False
+    assert record.failure_code is None
+    assert record.data["reason"] == "no_proof_candidate"
+    assert contracts.validate_native_kernel_stage_receipt(record) is False
 
 
 def test_kernel_rejects_hammer_candidate_copied_from_another_case(
@@ -1499,6 +1859,8 @@ def test_kernel_rejects_leanstral_candidate_copied_from_another_case(
     [
         ({"normalized_proposal_sha256": "0" * 64}, None),
         ({"endpoint": "http://127.0.0.1:9999/v1"}, None),
+        ({"cache_prompt": True}, None),
+        ({"request_payload_sha256": "0" * 64}, None),
         (None, {"timeout_ms": 300_000}),
     ],
 )
@@ -1925,3 +2287,138 @@ def test_a2_hammer_emits_candidate_only_after_unsat(
     assert rejected.data["solver_status"] == "sat"
     assert rejected.data["candidate_created"] is False
     assert rejected.data["proof_text"] is None
+
+    def timed_out(
+        _arguments: object,
+        **_kwargs: object,
+    ) -> capabilities.BoundedProcessResult:
+        return capabilities.BoundedProcessResult(
+            arguments=("/test/cvc5", "--lang=smt2"),
+            returncode=0,
+            stdout="unsat\n",
+            stderr="timeout diagnostics",
+            timed_out=True,
+            process_group_reaped=True,
+            termination_reason="wall_clock_deadline",
+        )
+
+    monkeypatch.setattr(runtime, "run_bounded_process_group", timed_out)
+    timeout_output = runtime._hammer_live_handler(record)(request)
+    assert timeout_output.status is contracts.StageStatus.FAILED
+    assert (
+        timeout_output.failure_code
+        is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
+    )
+    assert timeout_output.data["solver_status"] == "unsat"
+    assert timeout_output.data["timed_out"] is True
+    assert timeout_output.data["process_group_reaped"] is True
+    assert timeout_output.data["candidate_created"] is False
+    assert timeout_output.data["proof_text"] is None
+    assert timeout_output.effective_identity["solver_path"] == "/test/cvc5"
+    assert timeout_output.telemetry.bytes_out > 0
+
+    def orphaned(
+        _arguments: object,
+        **_kwargs: object,
+    ) -> capabilities.BoundedProcessResult:
+        return capabilities.BoundedProcessResult(
+            arguments=("/test/cvc5", "--lang=smt2"),
+            returncode=0,
+            stdout="unsat\n",
+            stderr="orphan diagnostics",
+            timed_out=False,
+            process_group_reaped=False,
+            termination_reason="orphaned_process_group",
+        )
+
+    monkeypatch.setattr(runtime, "run_bounded_process_group", orphaned)
+    orphan_output = runtime._hammer_live_handler(record)(request)
+    assert orphan_output.status is contracts.StageStatus.FAILED
+    assert orphan_output.failure_code is contracts.FailureCode.ORPHANED_CHILD
+    assert orphan_output.data["solver_status"] == "unsat"
+    assert orphan_output.data["timed_out"] is False
+    assert orphan_output.data["process_group_reaped"] is False
+    assert orphan_output.data["candidate_created"] is False
+    assert orphan_output.data["proof_text"] is None
+    assert orphan_output.effective_identity["solver_path"] == "/test/cvc5"
+    assert orphan_output.telemetry.bytes_out > 0
+
+    monkeypatch.setattr(
+        runtime,
+        "run_bounded_process_group",
+        capabilities.run_bounded_process_group,
+    )
+    missing_record = capabilities.CapabilityRecord(
+        capabilities.CapabilityKind.HAMMER,
+        capabilities.CapabilityStatus.AVAILABLE,
+        {
+            "implementation": "missing-test-hammer",
+            "solver": "cvc5",
+            "solver_path": "/definitely/missing/hssl-cvc5",
+        },
+        ("integration-test",),
+    )
+    spawn_output = runtime._hammer_live_handler(missing_record)(request)
+    assert spawn_output.status is contracts.StageStatus.FAILED
+    assert (
+        spawn_output.failure_code
+        is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+    )
+    assert (
+        spawn_output.failure_code
+        not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
+    )
+
+    def signal_exit(
+        _arguments: object,
+        **_kwargs: object,
+    ) -> capabilities.BoundedProcessResult:
+        return capabilities.BoundedProcessResult(
+            arguments=("/test/cvc5", "--lang=smt2"),
+            returncode=-11,
+            stdout="",
+            stderr="segmentation fault",
+            timed_out=False,
+            process_group_reaped=True,
+            termination_reason="signal_exit",
+        )
+
+    monkeypatch.setattr(runtime, "run_bounded_process_group", signal_exit)
+    signal_output = runtime._hammer_live_handler(record)(request)
+    assert signal_output.status is contracts.StageStatus.FAILED
+    assert (
+        signal_output.failure_code
+        is contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+    )
+    assert signal_output.data["returncode"] == -11
+    assert signal_output.data["termination_reason"] == "signal_exit"
+    assert signal_output.data["candidate_created"] is False
+    assert (
+        signal_output.failure_code
+        not in contracts.RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
+    )
+
+    def nonzero_exit(
+        _arguments: object,
+        **_kwargs: object,
+    ) -> capabilities.BoundedProcessResult:
+        return capabilities.BoundedProcessResult(
+            arguments=("/test/cvc5", "--lang=smt2"),
+            returncode=2,
+            stdout="",
+            stderr="invalid solver invocation",
+            timed_out=False,
+            process_group_reaped=True,
+            termination_reason="nonzero_exit",
+        )
+
+    monkeypatch.setattr(runtime, "run_bounded_process_group", nonzero_exit)
+    nonzero_output = runtime._hammer_live_handler(record)(request)
+    assert nonzero_output.status is contracts.StageStatus.FAILED
+    assert (
+        nonzero_output.failure_code
+        is contracts.FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
+    )
+    assert nonzero_output.data["returncode"] == 2
+    assert nonzero_output.data["termination_reason"] == "nonzero_exit"
+    assert nonzero_output.data["candidate_created"] is False

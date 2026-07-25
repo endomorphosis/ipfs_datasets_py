@@ -461,7 +461,7 @@ def test_actual_engine_adapter_uses_pinned_service_and_schema(
         )
         router_deps = importlib.import_module("ipfs_datasets_py.router_deps")
         router_deps.set_default_router_deps(router_deps.RouterDeps())
-        monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+        monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
         monotonic = iter((100.0, 101.0, 129.0))
         monkeypatch.setattr(router.time, "monotonic", lambda: next(monotonic))
 
@@ -530,6 +530,8 @@ def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
         http_calls.append(request.full_url)
         if request.full_url.endswith("/models"):
             return Response({"data": [{"id": exact_model}]})
+        payload = json.loads(request.data.decode("utf-8"))
+        assert payload["cache_prompt"] is False
         return Response(
             {
                 "model": exact_model,
@@ -542,7 +544,7 @@ def test_private_binding_bypasses_text_cache_and_preserves_route_receipt(
             }
         )
 
-    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
 
     class StaleTextCache:
         def __init__(self) -> None:
@@ -645,7 +647,7 @@ def test_route_trace_is_thread_local_across_concurrent_calls(
             }
         )
 
-    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
     barrier = threading.Barrier(2)
 
     def pinned_call() -> tuple[str, dict[str, str]]:
@@ -694,6 +696,154 @@ def test_route_trace_is_thread_local_across_concurrent_calls(
     assert "resolved_provider_name" not in generic_trace
 
 
+def test_pinned_symai_http_opener_disables_ambient_proxies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    request = urllib.request.Request("http://127.0.0.1:8080/v1/models")
+    captured_handlers: list[object] = []
+
+    class Response:
+        closed = False
+
+        @staticmethod
+        def geturl() -> str:
+            return request.full_url
+
+        def close(self) -> None:
+            self.closed = True
+
+    response = Response()
+
+    class Opener:
+        @staticmethod
+        def open(
+            opened_request: urllib.request.Request,
+            *,
+            timeout: float,
+        ) -> Response:
+            assert opened_request is request
+            assert timeout == 1.0
+            return response
+
+    def build_opener(*handlers: object) -> Opener:
+        captured_handlers.extend(handlers)
+        return Opener()
+
+    monkeypatch.setattr(router.urllib.request, "build_opener", build_opener)
+
+    assert router._pinned_symai_urlopen(request, timeout=1.0) is response
+    proxy_handlers = [
+        handler
+        for handler in captured_handlers
+        if isinstance(handler, urllib.request.ProxyHandler)
+    ]
+    assert len(proxy_handlers) == 1
+    assert proxy_handlers[0].proxies == {}
+    assert response.closed is False
+
+
+def test_pinned_symai_http_opener_disables_redirects(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    request = urllib.request.Request("http://127.0.0.1:8080/v1/models")
+    captured_handlers: list[object] = []
+
+    class Response:
+        @staticmethod
+        def geturl() -> str:
+            return request.full_url
+
+        @staticmethod
+        def close() -> None:
+            return None
+
+    class Opener:
+        @staticmethod
+        def open(
+            _request: urllib.request.Request,
+            *,
+            timeout: float,
+        ) -> Response:
+            assert timeout == 1.0
+            return Response()
+
+    def build_opener(*handlers: object) -> Opener:
+        captured_handlers.extend(handlers)
+        return Opener()
+
+    monkeypatch.setattr(router.urllib.request, "build_opener", build_opener)
+    router._pinned_symai_urlopen(request, timeout=1.0)
+
+    redirect_handlers = [
+        handler
+        for handler in captured_handlers
+        if isinstance(handler, router._PinnedSymaiNoRedirect)
+    ]
+    assert len(redirect_handlers) == 1
+    assert (
+        redirect_handlers[0].redirect_request(
+            request,
+            None,
+            302,
+            "redirect",
+            {},
+            "http://different.invalid/v1/models",
+        )
+        is None
+    )
+
+
+def test_pinned_symai_bounded_response_rejects_changed_final_url_without_leak(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = importlib.import_module("ipfs_datasets_py.llm_router")
+    request = urllib.request.Request("http://127.0.0.1:8080/v1/models")
+    secret = "DO_NOT_LEAK_REDIRECT_TARGET"
+
+    class Response:
+        closed = False
+
+        @staticmethod
+        def geturl() -> str:
+            return f"http://different.invalid/{secret}"
+
+        def close(self) -> None:
+            self.closed = True
+
+    response = Response()
+
+    class Opener:
+        @staticmethod
+        def open(
+            _request: urllib.request.Request,
+            *,
+            timeout: float,
+        ) -> Response:
+            assert timeout == 1.0
+            return response
+
+    monkeypatch.setattr(
+        router.urllib.request,
+        "build_opener",
+        lambda *_handlers: Opener(),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="pinned Leanstral service request failed: RuntimeError",
+    ) as caught:
+        router._bounded_json_response(
+            request,
+            timeout=1.0,
+            max_bytes=4096,
+        )
+
+    assert response.closed is True
+    assert secret not in str(caught.value)
+
+
 @pytest.mark.parametrize(
     "raw",
     [
@@ -720,8 +870,8 @@ def test_pinned_service_envelope_rejects_duplicates_and_nonfinite_numbers(
             return raw if size < 0 else raw[:size]
 
     monkeypatch.setattr(
-        router.urllib.request,
-        "urlopen",
+        router,
+        "_pinned_symai_urlopen",
         lambda _request, *, timeout: Response(),
     )
 
@@ -770,7 +920,7 @@ def test_pinned_service_rejects_nonterminal_finish_reason(
             }
         )
 
-    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
     with pytest.raises(RuntimeError, match="returned an invalid choice"):
         router._generate_pinned_symai_leanstral(
             "prompt",
@@ -826,7 +976,7 @@ def test_pinned_service_types_length_without_fallback_or_cache_write(
     def forbidden_fallback(*_args: object, **_kwargs: object) -> object:
         raise AssertionError("typed completion failure must not enter fallback")
 
-    monkeypatch.setattr(router.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(router, "_pinned_symai_urlopen", urlopen)
     monkeypatch.setattr(
         manager_module.AccelerateManager,
         "run_inference",
@@ -865,7 +1015,11 @@ def test_pinned_service_types_length_without_fallback_or_cache_write(
 
 def test_symai_engine_preserves_typed_completion_failure(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
+    lock = provision.load_lock()
+    provision.configure_symai(lock, tmp_path)
+    provision.prepare_symai_import(lock, tmp_path)
     router = importlib.import_module("ipfs_datasets_py.llm_router")
     engine_module = importlib.import_module(
         "ipfs_datasets_py.utils.symai_ipfs_engine"

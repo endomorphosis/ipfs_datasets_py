@@ -59,19 +59,37 @@ from benchmarks.logic_pipeline.cases import (
     FROZEN_CORPUS_MANIFEST_SHA256,
     FROZEN_SPLIT_SHA256,
 )
+from benchmarks.logic_pipeline.cache_measurement import (
+    extract_symai_cache_prime_receipt,
+    extract_symai_cache_setup_telemetry,
+    symai_backend_identity,
+    symai_semantic_payload,
+    validate_symai_warm_cache_measurement,
+)
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL,
     CaseResultRecord,
     CacheMode,
     DEFAULT_PROTOCOL_SHA256,
     FailureCode,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
     OutcomeStatus,
     ProtocolContractError,
     RunContract,
     Split,
     StageName,
+    StageRecord,
     VerificationAuthority,
     canonical_json,
+    validate_native_kernel_stage_receipt,
+)
+from benchmarks.logic_pipeline.hammer_replay import (
+    HAMMER_EVIDENCE_SCHEMA as REPLAY_HAMMER_EVIDENCE_SCHEMA,
+    HAMMER_PREMISE_SELECTION_SCHEMA as REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA,
+    HAMMER_TRANSLATED_ENTAILMENT_SCHEMA as REPLAY_HAMMER_TRANSLATED_SCHEMA,
+    HAMMER_TRANSLATION_TERMINAL_SCHEMA as REPLAY_HAMMER_TERMINAL_SCHEMA,
+    project_hammer_stage_for_replay,
+    validate_hammer_premise_selection_upstream_bindings,
 )
 from benchmarks.logic_pipeline.metrics import (
     DEFAULT_EFFICIENCY_ESCALATIONS,
@@ -1221,6 +1239,856 @@ class ReplayValidationRecord:
         )
 
 
+def _stable_native_kernel_replay_projection(
+    stage: StageRecord,
+) -> Mapping[str, object] | None:
+    """Return validated proof execution without run/cache artifact bindings.
+
+    The full receipt is independently validated before anything is projected.
+    Fresh cold replay necessarily changes the run id, cache mode, upstream
+    artifact digests, and every self-digest derived from those bindings.  Those
+    values prove integrity *within* one execution; they are not proof-execution
+    semantics across executions.  The projection therefore retains the exact
+    obligation, candidate order/source, rendered source, command, stdout,
+    stderr, return code, timeout/cancellation/resource state, process state,
+    termination reason, and acceptance outcome.
+    """
+
+    if (
+        stage.stage is not StageName.KERNEL
+        or stage.provenance.effective_identity.get("graph_invoked") is not True
+        or not isinstance(stage.data, Mapping)
+        or stage.data.get("schema") != NATIVE_KERNEL_RECEIPT_SCHEMA
+    ):
+        return None
+    raw = stage.to_dict()["data"]
+    if not isinstance(raw, dict):  # pragma: no cover - contract validated
+        raise ProtocolContractError(
+            "native-kernel replay receipt must be an object"
+        )
+    raw_accepted = validate_native_kernel_stage_receipt(stage)
+
+    def project_receipt(receipt: dict[str, object]) -> dict[str, object]:
+        for field in (
+            "run_id",
+            "cache_mode",
+            "receipt_sha256",
+            "candidate_artifact_sha256",
+            "semantic_context_sha256",
+            "semantic_artifact_sha256s",
+            "candidate_attempts_sha256",
+        ):
+            receipt.pop(field, None)
+
+        attempts = receipt.get("candidate_attempts")
+        if isinstance(attempts, list):
+            for attempt in attempts:
+                if not isinstance(attempt, dict):  # pragma: no cover - validated
+                    raise ProtocolContractError(
+                        "native-kernel replay attempt must be an object"
+                    )
+                attempt.pop("candidate_artifact_sha256", None)
+                attempt.pop("attempt_sha256", None)
+
+        selected = receipt.get("selected_attempt")
+        if isinstance(selected, dict):
+            selected.pop("candidate_artifact_sha256", None)
+            selected.pop("attempt_sha256", None)
+
+        diagnostic = receipt.get("diagnostic_receipt")
+        if diagnostic is not None:
+            if not isinstance(diagnostic, dict):  # pragma: no cover - validated
+                raise ProtocolContractError(
+                    "native-kernel diagnostic replay receipt must be an object"
+                )
+            receipt["diagnostic_receipt"] = project_receipt(diagnostic)
+            receipt.pop("diagnostic_receipt_sha256", None)
+        if "routing_policy" in receipt:
+            receipt["routing_policy"] = (
+                _stable_routing_policy_replay_projection(
+                    receipt["routing_policy"]
+                )
+            )
+        return receipt
+
+    raw = project_receipt(raw)
+
+    return {
+        "raw_kernel_accepted": raw_accepted,
+        "receipt": raw,
+    }
+
+
+_REPLAY_HAMMER_TRANSLATED_SCHEMA: Final = (
+    REPLAY_HAMMER_TRANSLATED_SCHEMA
+)
+_REPLAY_HAMMER_TERMINAL_SCHEMA: Final = (
+    REPLAY_HAMMER_TERMINAL_SCHEMA
+)
+_REPLAY_HAMMER_SCHEMAS: Final = frozenset(
+    {
+        REPLAY_HAMMER_EVIDENCE_SCHEMA,
+        _REPLAY_HAMMER_TRANSLATED_SCHEMA,
+        _REPLAY_HAMMER_TERMINAL_SCHEMA,
+    }
+)
+_REPLAY_LEANSTRAL_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-evidence.v1"
+)
+_REPLAY_LEANSTRAL_FAILURE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-generation-failure.v1"
+)
+_REPLAY_LEANSTRAL_BOUNDARY_SCHEMAS: Final = frozenset(
+    {
+        (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "leanstral-generation-boundary.v1"
+        ),
+        (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "leanstral-generation-boundary.v2"
+        ),
+    }
+)
+_REPLAY_OPERATIONAL_IDENTITY_FIELDS: Final = frozenset(
+    {
+        "consumed_artifact_sha256",
+        "generation_boundary_sha256",
+        "semantic_context_sha256",
+    }
+)
+
+
+def _replay_json(value: object) -> object:
+    """Return detached canonical JSON for safe replay projection."""
+
+    if isinstance(value, Mapping):
+        if not all(isinstance(key, str) for key in value):
+            raise ProtocolContractError(
+                "replay evidence object keys must be strings"
+            )
+        return {
+            key: _replay_json(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return [_replay_json(item) for item in value]
+    if value is None or isinstance(value, (str, bool, int, float)):
+        canonical_json(value)
+        return value
+    raise ProtocolContractError("replay evidence is not canonical JSON data")
+
+
+def _validate_content_addressed_mapping(
+    value: Mapping[str, object],
+    *,
+    digest_field: str,
+    field: str,
+) -> None:
+    """Validate a self-digested mapping before projecting its digest."""
+
+    supplied = value.get(digest_field)
+    if not isinstance(supplied, str) or re.fullmatch(
+        r"[0-9a-f]{64}", supplied
+    ) is None:
+        raise ProtocolContractError(f"{field} has an invalid {digest_field}")
+    body = {
+        key: _replay_json(item)
+        for key, item in value.items()
+        if key != digest_field
+    }
+    expected = hashlib.sha256(
+        canonical_json(body).encode("utf-8")
+    ).hexdigest()
+    if supplied != expected:
+        raise ProtocolContractError(
+            f"{field} {digest_field} does not match its payload"
+        )
+
+
+def _stable_routing_policy_replay_projection(value: object) -> object:
+    """Validate and normalize one graph-routing decision receipt."""
+
+    if not isinstance(value, Mapping):
+        raise ProtocolContractError(
+            "routing-policy replay evidence must be an object"
+        )
+    _validate_content_addressed_mapping(
+        value,
+        digest_field="decision_sha256",
+        field="routing-policy receipt",
+    )
+    projected = _replay_json(value)
+    if not isinstance(projected, dict):  # pragma: no cover - canonical JSON
+        raise ProtocolContractError(
+            "routing-policy replay evidence must be an object"
+        )
+    projected.pop("decision_sha256")
+    projected.pop("input_artifact_sha256s", None)
+    return projected
+
+
+def _stable_provenance_source_replay_projection(
+    source: Sequence[str],
+) -> tuple[str, ...]:
+    """Remove only the known plan/job bindings from adapter provenance."""
+
+    normalized = tuple(source)
+    if (
+        len(normalized) == 4
+        and normalized[0] == "benchmarks.logic_pipeline.adapters"
+        and normalized[1] == "ablation_plan"
+        and re.fullmatch(r"[0-9a-f]{64}", normalized[2]) is not None
+        and normalized[3].startswith("j-")
+    ):
+        return normalized[:2]
+    return normalized
+
+
+def _stage_graph_projection(stage: StageRecord) -> Mapping[str, object]:
+    """Return exact graph routing fields hidden by backend projections."""
+
+    identity = stage.provenance.effective_identity
+    invoked = identity.get("graph_invoked")
+    invocation_index = identity.get("graph_invocation_index")
+    if invoked is None and invocation_index is None:
+        return {}
+    if (
+        type(invoked) is not bool
+        or isinstance(invocation_index, bool)
+        or not isinstance(invocation_index, int)
+    ):
+        raise ProtocolContractError(
+            "stage replay graph invocation fields are invalid"
+        )
+    reason = (
+        identity.get("graph_policy_reason")
+        if invoked
+        else identity.get("policy_reason")
+    )
+    if not isinstance(reason, str) or not reason.strip():
+        raise ProtocolContractError(
+            "stage replay graph policy reason is missing"
+        )
+    projection: dict[str, object] = {
+        "graph_invocation_index": invocation_index,
+        "graph_invoked": invoked,
+        "graph_policy_reason": reason,
+    }
+    policy = stage.data.get("routing_policy") if isinstance(
+        stage.data, Mapping
+    ) else None
+    if policy is not None:
+        projection["routing_policy"] = (
+            _stable_routing_policy_replay_projection(policy)
+        )
+    return projection
+
+
+def _stage_artifact_digest_from_record(
+    stage: StageRecord,
+    *,
+    invocation_index: int,
+    invoked: bool,
+    policy_reason: str,
+) -> str:
+    """Reconstruct the exact in-graph StageArtifact content address."""
+
+    payload = {
+        "stage": stage.stage.value,
+        "status": stage.status.value,
+        "data": _replay_json(stage.data),
+        "output_sha256": stage.output_sha256,
+        "effective_identity": _replay_json(
+            stage.provenance.effective_identity
+        ),
+        "invocation_index": invocation_index,
+        "invoked": invoked,
+        "policy_reason": policy_reason,
+    }
+    return hashlib.sha256(
+        canonical_json(payload).encode("utf-8")
+    ).hexdigest()
+
+
+def _validate_native_kernel_upstream_bindings(
+    receipt: Mapping[str, object],
+    *,
+    artifacts_by_stage: Mapping[str, str],
+    consumed: tuple[str, ...],
+) -> None:
+    """Bind every projected kernel artifact reference to the actual graph."""
+
+    attempts = receipt.get("candidate_attempts")
+    if attempts is not None:
+        if not isinstance(attempts, Sequence) or isinstance(
+            attempts, (str, bytes, bytearray)
+        ):
+            raise ProtocolContractError(
+                "native-kernel attempts must be an array"
+            )
+        for attempt in attempts:
+            if not isinstance(attempt, Mapping):
+                raise ProtocolContractError(
+                    "native-kernel attempt must be an object"
+                )
+            source = attempt.get("candidate_source")
+            artifact = attempt.get("candidate_artifact_sha256")
+            if (
+                not isinstance(source, str)
+                or artifacts_by_stage.get(source) != artifact
+            ):
+                raise ProtocolContractError(
+                    "native-kernel attempt does not bind its source artifact"
+                )
+        source = receipt.get("candidate_source")
+        artifact = receipt.get("candidate_artifact_sha256")
+        if (
+            not isinstance(source, str)
+            or artifacts_by_stage.get(source) != artifact
+        ):
+            raise ProtocolContractError(
+                "native-kernel receipt does not bind its source artifact"
+            )
+        semantic = receipt.get("semantic_artifact_sha256s")
+        if (
+            not isinstance(semantic, Sequence)
+            or isinstance(semantic, (str, bytes, bytearray))
+            or len(set(semantic)) != len(semantic)
+            or any(item not in consumed for item in semantic)
+        ):
+            raise ProtocolContractError(
+                "native-kernel semantic artifacts do not bind the graph"
+            )
+
+    diagnostic = receipt.get("diagnostic_receipt")
+    if diagnostic is not None:
+        if not isinstance(diagnostic, Mapping):
+            raise ProtocolContractError(
+                "native-kernel diagnostic receipt must be an object"
+            )
+        _validate_native_kernel_upstream_bindings(
+            diagnostic,
+            artifacts_by_stage=artifacts_by_stage,
+            consumed=consumed,
+        )
+
+
+def _validate_result_graph_bindings(result: CaseResultRecord) -> None:
+    """Rebuild the invocation graph and reject copied artifact bindings."""
+
+    graph_marked = any(
+        "graph_invocation_index" in stage.provenance.effective_identity
+        or "graph_invoked" in stage.provenance.effective_identity
+        for stage in result.stages
+    )
+    if not graph_marked:
+        if any(
+            stage.stage is StageName.HAMMER
+            and isinstance(stage.data, Mapping)
+            and isinstance(stage.data.get("premise_selection"), Mapping)
+            and stage.data["premise_selection"].get("schema")
+            == REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA
+            and stage.data["premise_selection"].get("policy") == "symai_llm"
+            for stage in result.stages
+        ):
+            raise ProtocolContractError(
+                "Hammer A11 replay requires a graph-bound SyMAI artifact"
+            )
+        return
+
+    indexed: list[tuple[int, StageRecord, bool, str]] = []
+    for stage in result.stages:
+        graph = _stage_graph_projection(stage)
+        if not graph:
+            raise ProtocolContractError(
+                "replay result mixes graph-marked and legacy stages"
+            )
+        indexed.append(
+            (
+                int(graph["graph_invocation_index"]),
+                stage,
+                bool(graph["graph_invoked"]),
+                str(graph["graph_policy_reason"]),
+            )
+        )
+    indexed.sort(key=lambda item: item[0])
+    if [item[0] for item in indexed] != list(range(len(indexed))):
+        raise ProtocolContractError(
+            "replay result graph invocation order is incomplete"
+        )
+
+    artifact_digests: list[str] = []
+    artifacts_by_stage: dict[str, str] = {}
+    for invocation_index, stage, invoked, reason in indexed:
+        consumed_value = stage.provenance.effective_identity.get(
+            "consumed_artifact_sha256"
+        )
+        if (
+            not isinstance(consumed_value, Sequence)
+            or isinstance(consumed_value, (str, bytes, bytearray))
+            or tuple(consumed_value) != tuple(artifact_digests)
+        ):
+            raise ProtocolContractError(
+                f"{stage.stage.value} replay artifact chain is invalid"
+            )
+        digest = _stage_artifact_digest_from_record(
+            stage,
+            invocation_index=invocation_index,
+            invoked=invoked,
+            policy_reason=reason,
+        )
+        artifact_digests.append(digest)
+        artifacts_by_stage[stage.stage.value] = digest
+
+    for stage in result.stages:
+        if stage.stage is not StageName.HAMMER or not isinstance(
+            stage.data, Mapping
+        ):
+            continue
+        context = stage.data.get("semantic_context")
+        if context is None:
+            continue
+        if (
+            not isinstance(context, Mapping)
+            or context.get("schema")
+            != (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "semantic-stage-context.v1"
+            )
+            or not isinstance(context.get("artifact_sha256s"), Sequence)
+            or re.fullmatch(
+                r"[0-9a-f]{64}",
+                str(context.get("context_sha256", "")),
+            )
+            is None
+            or (
+                context.get("source_text_sha256") is not None
+                and re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    str(context.get("source_text_sha256")),
+                )
+                is None
+            )
+        ):
+            raise ProtocolContractError(
+                "Hammer semantic context binding is invalid"
+            )
+        expected_semantic = tuple(
+            artifacts_by_stage[name.value]
+            for name in (StageName.SPACY, StageName.SYMAI)
+            if name.value in artifacts_by_stage
+        )
+        if (
+            tuple(context["artifact_sha256s"]) != expected_semantic
+            or stage.provenance.effective_identity.get(
+                "semantic_context_sha256"
+            )
+            != context.get("context_sha256")
+        ):
+            raise ProtocolContractError(
+                "Hammer semantic context does not bind its upstream graph"
+            )
+        premise = stage.data.get("premise_selection")
+        if premise is not None:
+            if (
+                not isinstance(premise, Mapping)
+                or stage.provenance.effective_identity.get(
+                    "premise_selection_sha256"
+                )
+                != premise.get("receipt_sha256")
+                or stage.provenance.effective_identity.get(
+                    "premise_ranking_contract"
+                )
+                != premise.get("ranking_contract")
+            ):
+                raise ProtocolContractError(
+                    "Hammer premise selection does not bind its identity"
+                )
+            if (
+                premise.get("schema")
+                == REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA
+                and premise.get("policy") == "symai_llm"
+            ):
+                symai_stage = next(
+                    (
+                        candidate
+                        for candidate in result.stages
+                        if candidate.stage is StageName.SYMAI
+                    ),
+                    None,
+                )
+                if (
+                    symai_stage is None
+                    or StageName.SYMAI.value not in artifacts_by_stage
+                ):
+                    raise ProtocolContractError(
+                        "Hammer A11 premise ranking has no consumed SyMAI stage"
+                    )
+                symai_graph = _stage_graph_projection(symai_stage)
+                validate_hammer_premise_selection_upstream_bindings(
+                    premise,
+                    symai_artifact_sha256=artifacts_by_stage[
+                        StageName.SYMAI.value
+                    ],
+                    symai_output_sha256=symai_stage.output_sha256,
+                    symai_effective_identity=(
+                        symai_stage.provenance.effective_identity
+                    ),
+                    symai_invoked=bool(symai_graph["graph_invoked"]),
+                )
+
+    kernel = next(
+        (
+            stage
+            for stage in result.stages
+            if stage.stage is StageName.KERNEL
+            and isinstance(stage.data, Mapping)
+            and stage.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
+        ),
+        None,
+    )
+    if kernel is not None:
+        consumed_value = kernel.provenance.effective_identity[
+            "consumed_artifact_sha256"
+        ]
+        _validate_native_kernel_upstream_bindings(
+            kernel.data,
+            artifacts_by_stage=artifacts_by_stage,
+            consumed=tuple(consumed_value),  # type: ignore[arg-type]
+        )
+
+
+def _stable_premise_selection_replay_projection(
+    value: object,
+) -> object:
+    """Remove only upstream artifact bindings from a Hammer ranking receipt."""
+
+    if not isinstance(value, Mapping):
+        raise ProtocolContractError(
+            "Hammer premise-selection replay evidence must be an object"
+        )
+    _validate_content_addressed_mapping(
+        value,
+        digest_field="receipt_sha256",
+        field="Hammer premise-selection receipt",
+    )
+    projected = _replay_json(value)
+    if not isinstance(projected, dict):  # pragma: no cover - canonical JSON
+        raise ProtocolContractError(
+            "Hammer premise-selection replay evidence must be an object"
+        )
+    for field in (
+        "receipt_sha256",
+        "symai_artifact_sha256",
+        "symai_output_sha256",
+    ):
+        projected.pop(field, None)
+    return projected
+
+
+def _stable_leanstral_replay_projection(
+    stage: StageRecord,
+) -> object:
+    """Return source/proof-bound Leanstral evidence without fresh request ids."""
+
+    raw = _replay_json(stage.data)
+    if not isinstance(raw, dict):  # pragma: no cover - StageRecord validated
+        raise ProtocolContractError("Leanstral replay evidence must be an object")
+    raw.pop("consumed_artifact_sha256", None)
+    schema = raw.get("schema")
+    if schema == _REPLAY_LEANSTRAL_FAILURE_SCHEMA:
+        boundary = raw.get("generation_failure_boundary")
+        if not isinstance(boundary, Mapping):
+            raise ProtocolContractError(
+                "Leanstral failure replay omitted its boundary receipt"
+            )
+        _validate_content_addressed_mapping(
+            boundary,
+            digest_field="receipt_sha256",
+            field="Leanstral failure boundary",
+        )
+        return raw
+    if schema != _REPLAY_LEANSTRAL_EVIDENCE_SCHEMA:
+        return raw
+
+    _validate_content_addressed_mapping(
+        raw,
+        digest_field="evidence_id",
+        field="Leanstral evidence",
+    )
+    draft = raw.get("draft")
+    if not isinstance(draft, dict):
+        raise ProtocolContractError("Leanstral replay evidence omitted its draft")
+    repair_attempt = draft.get("repair_attempt")
+    if isinstance(repair_attempt, bool) or repair_attempt not in (0, 1):
+        raise ProtocolContractError(
+            "Leanstral replay draft has an invalid repair attempt"
+        )
+    expected_request_id = "leanstral-" + hashlib.sha256(
+        (
+            f"{stage.run_id}:{stage.case_id}:"
+            f"{stage.provenance.input_sha256}:{repair_attempt}"
+        ).encode("utf-8")
+    ).hexdigest()[:48]
+    if (
+        draft.get("request_id") != expected_request_id
+        or draft.get("benchmark_request_id")
+        != f"{stage.run_id}:{stage.case_id}"
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft is not bound to its source execution"
+        )
+    timeout_ms = draft.get("timeout_ms")
+    if (
+        isinstance(timeout_ms, bool)
+        or not isinstance(timeout_ms, int)
+        or not 0 < timeout_ms <= 120_000
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft has an invalid dispatch budget"
+        )
+    proof_text = draft.get("proof_text")
+    prompt_sha256 = draft.get("prompt_sha256")
+    proof_sha256 = (
+        None
+        if not isinstance(proof_text, str)
+        else hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
+    )
+    if (
+        not isinstance(proof_text, str)
+        or not proof_text.strip()
+        or draft.get("draft_text") != proof_text
+        or draft.get("output_sha256") != proof_sha256
+        or not isinstance(prompt_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", prompt_sha256) is None
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft proof binding is invalid"
+        )
+    stable_artifact_identity = {
+        key: draft.get(key)
+        for key in (
+            "schema_version",
+            "llm_provider",
+            "model",
+            "obligation_ids",
+            "canonical_source_digest",
+            "theorem_id",
+            "theorem_equivalence_key",
+            "context_capsule_id",
+            "proposal_kind",
+            "prompt_sha256",
+            "output_sha256",
+        )
+    }
+    expected_artifact_id = "leanstral-draft-" + hashlib.sha256(
+        json.dumps(
+            stable_artifact_identity,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    if draft.get("artifact_id") != expected_artifact_id:
+        raise ProtocolContractError(
+            "Leanstral replay draft content identity is invalid"
+        )
+
+    metadata = draft.get("metadata")
+    if isinstance(metadata, dict):
+        boundary = metadata.get("benchmark_generation_boundary")
+        if boundary is not None:
+            if not isinstance(boundary, dict):
+                raise ProtocolContractError(
+                    "Leanstral generation replay boundary must be an object"
+                )
+            if (
+                boundary.get("schema")
+                not in _REPLAY_LEANSTRAL_BOUNDARY_SCHEMAS
+            ):
+                raise ProtocolContractError(
+                    "Leanstral generation replay boundary used a stale schema"
+                )
+            if boundary.get("schema") == (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "leanstral-generation-boundary.v2"
+            ):
+                _validate_content_addressed_mapping(
+                    boundary,
+                    digest_field="receipt_sha256",
+                    field="Leanstral generation boundary",
+                )
+            elif "receipt_sha256" in boundary:
+                _validate_content_addressed_mapping(
+                    boundary,
+                    digest_field="receipt_sha256",
+                    field="Leanstral generation boundary",
+                )
+            proposal = json.dumps(
+                {
+                    "schema": draft.get("proposal_schema"),
+                    "theorem_id": draft.get("theorem_id"),
+                    "proposal_kind": draft.get("proposal_kind"),
+                    "proof_text": proof_text,
+                },
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+            if (
+                boundary.get("provider") != draft.get("llm_provider")
+                or boundary.get("requested_model") != draft.get("model")
+                or boundary.get("response_model") != draft.get("model")
+                or (
+                    boundary.get("schema")
+                    == (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "leanstral-generation-boundary.v2"
+                    )
+                    and boundary.get("cache_prompt") is not False
+                )
+                or (
+                    "cache_prompt" in boundary
+                    and boundary.get("cache_prompt") is not False
+                )
+                or boundary.get("prompt_sha256") != prompt_sha256
+                or boundary.get("normalized_proposal_sha256")
+                != hashlib.sha256(proposal).hexdigest()
+                or boundary.get("normalized_proposal_bytes")
+                != len(proposal)
+                or (
+                    boundary.get("receipt_sha256") is not None
+                    and stage.provenance.effective_identity.get(
+                        "generation_boundary_sha256"
+                    )
+                    != boundary.get("receipt_sha256")
+                )
+            ):
+                raise ProtocolContractError(
+                    "Leanstral replay boundary is not bound to its draft"
+                )
+            # Server envelopes include response ids/timings.  Raw content and
+            # its normalized proof remain compared exactly below.
+            boundary.pop("response_envelope_sha256", None)
+            boundary.pop("receipt_sha256", None)
+
+    raw.pop("evidence_id")
+    draft.pop("request_id")
+    draft.pop("benchmark_request_id")
+    draft.pop("timeout_ms")
+    return raw
+
+
+def _stable_stage_replay_projection(stage: StageRecord) -> Mapping[str, object]:
+    """Return one fail-closed semantic/backend projection for fresh replay."""
+
+    symai_receipt = None
+    hammer_projection: Mapping[str, object] | None = None
+    if stage.stage is StageName.SYMAI:
+        symai_receipt = extract_symai_cache_prime_receipt(stage)
+        if symai_receipt is not None:
+            validate_symai_warm_cache_measurement(stage)
+        elif (
+            stage.cache_mode is CacheMode.WARM
+            and stage.status.value == "success"
+            and isinstance(stage.data, Mapping)
+            and isinstance(stage.data.get("cache"), Mapping)
+            and stage.data["cache"].get("hit") is True
+        ):
+            raise ProtocolContractError(
+                "warm SyMAI replay hit omitted its cache-prime receipt"
+            )
+
+    native = _stable_native_kernel_replay_projection(stage)
+    if native is not None:
+        data: object = native
+    elif stage.stage is StageName.SYMAI:
+        data = {
+            "semantic_payload": symai_semantic_payload(stage),
+            "routing": _stage_graph_projection(stage).get(
+                "routing_policy"
+            ),
+        }
+    elif stage.stage is StageName.LEANSTRAL:
+        data = _stable_leanstral_replay_projection(stage)
+    elif (
+        stage.stage is StageName.HAMMER
+        and isinstance(stage.data, Mapping)
+        and stage.data.get("schema") in _REPLAY_HAMMER_SCHEMAS
+    ):
+        hammer_projection = project_hammer_stage_for_replay(stage)
+        data = hammer_projection["data"]
+    else:
+        data = _replay_json(stage.data)
+        if isinstance(data, dict):
+            data.pop("consumed_artifact_sha256", None)
+            if (
+                stage.stage is StageName.HAMMER
+                and data.get("schema")
+                in {
+                    _REPLAY_HAMMER_TRANSLATED_SCHEMA,
+                    _REPLAY_HAMMER_TERMINAL_SCHEMA,
+                }
+            ):
+                # The complete spaCy/SyMAI stage projections are compared
+                # independently; these are their per-run artifact bindings.
+                semantic_context = data.get("semantic_context")
+                if semantic_context is not None:
+                    if not isinstance(semantic_context, dict):
+                        raise ProtocolContractError(
+                            "Hammer semantic replay context must be an object"
+                        )
+                    data["semantic_context"] = {
+                        key: semantic_context[key]
+                        for key in ("schema", "source_text_sha256")
+                        if key in semantic_context
+                    }
+                if "premise_selection" in data:
+                    data["premise_selection"] = (
+                        _stable_premise_selection_replay_projection(
+                            data["premise_selection"]
+                        )
+                    )
+
+    if stage.stage is StageName.SYMAI:
+        effective_identity = symai_backend_identity(stage)
+    elif hammer_projection is not None:
+        effective_identity = hammer_projection["effective_identity"]
+    else:
+        effective_identity = _replay_json(
+            stage.provenance.effective_identity
+        )
+        if not isinstance(effective_identity, dict):  # pragma: no cover
+            raise ProtocolContractError(
+                "stage replay effective identity must be an object"
+            )
+        for field in _REPLAY_OPERATIONAL_IDENTITY_FIELDS:
+            effective_identity.pop(field, None)
+        if stage.stage is StageName.HAMMER:
+            effective_identity.pop("premise_selection_sha256", None)
+
+    requested_identity = (
+        hammer_projection["requested_identity"]
+        if hammer_projection is not None
+        else _replay_json(stage.provenance.requested_identity)
+    )
+    return {
+        "data": data,
+        "requested_identity": requested_identity,
+        "effective_identity": effective_identity,
+        "adapter_id": stage.provenance.adapter_id,
+        "source": _stable_provenance_source_replay_projection(
+            stage.provenance.source
+        ),
+        "environment_sha256": stage.provenance.environment_sha256,
+        "graph": _stage_graph_projection(stage),
+    }
+
+
 def validate_replay(
     original: CaseResultRecord,
     replayed: CaseResultRecord,
@@ -1259,6 +2127,42 @@ def validate_replay(
         )
         validate_kernel_bound_result(original, expected_environment)
         validate_kernel_bound_result(replayed, expected_environment)
+        _validate_result_graph_bindings(original)
+        _validate_result_graph_bindings(replayed)
+        original_kernel = next(
+            (
+                stage
+                for stage in original.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        replay_kernel = next(
+            (
+                stage
+                for stage in replayed.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        original_kernel_projection = (
+            None
+            if original_kernel is None
+            else _stable_native_kernel_replay_projection(original_kernel)
+        )
+        replay_kernel_projection = (
+            None
+            if replay_kernel is None
+            else _stable_native_kernel_replay_projection(replay_kernel)
+        )
+        original_stage_projections = tuple(
+            _stable_stage_replay_projection(stage)
+            for stage in original.stages
+        )
+        replay_stage_projections = tuple(
+            _stable_stage_replay_projection(stage)
+            for stage in replayed.stages
+        )
     except (
         ProtocolContractError,
         MetricsContractError,
@@ -1303,28 +2207,60 @@ def validate_replay(
     )
     if stable_identity != replay_identity:
         raise RobustnessValidationError("replay changed the stable case identity")
+    if (original_kernel_projection is None) != (
+        replay_kernel_projection is None
+    ):
+        raise RobustnessValidationError(
+            "backend or output drift at kernel"
+        )
+    strict_native_kernel_pair = (
+        original_kernel_projection is not None
+        and replay_kernel_projection is not None
+    )
     if (
         original.status is not replayed.status
         or original.failure_code is not replayed.failure_code
         or original.kernel_accepted != replayed.kernel_accepted
-        or original.kernel_receipt_sha256 != replayed.kernel_receipt_sha256
+        or (
+            not strict_native_kernel_pair
+            and original.kernel_receipt_sha256
+            != replayed.kernel_receipt_sha256
+        )
     ):
         raise RobustnessValidationError("replay changed the terminal outcome")
     if len(original.stages) != len(replayed.stages):
         raise RobustnessValidationError("replay changed the stage route")
-    for source_stage, replay_stage in zip(original.stages, replayed.stages):
+    for (
+        source_stage,
+        replay_stage,
+        source_projection,
+        replay_projection,
+    ) in zip(
+        original.stages,
+        replayed.stages,
+        original_stage_projections,
+        replay_stage_projections,
+    ):
+        strict_kernel_stage = (
+            strict_native_kernel_pair
+            and source_stage.stage is StageName.KERNEL
+            and replay_stage.stage is StageName.KERNEL
+        )
+        if (
+            strict_kernel_stage
+            and source_projection != replay_projection
+        ):
+            raise RobustnessValidationError(
+                "proof execution drift at kernel"
+            )
         if (
             source_stage.stage is not replay_stage.stage
             or source_stage.status is not replay_stage.status
             or source_stage.adapter_version != replay_stage.adapter_version
-            or source_stage.output_sha256 != replay_stage.output_sha256
             or source_stage.failure_code is not replay_stage.failure_code
             or source_stage.provenance.input_sha256
             != replay_stage.provenance.input_sha256
-            or source_stage.provenance.requested_identity
-            != replay_stage.provenance.requested_identity
-            or source_stage.provenance.effective_identity
-            != replay_stage.provenance.effective_identity
+            or source_projection != replay_projection
         ):
             raise RobustnessValidationError(
                 f"backend or output drift at {source_stage.stage.value}"
@@ -1332,8 +2268,8 @@ def validate_replay(
     if original.receipt is None or replayed.receipt is None:  # pragma: no cover
         raise RobustnessValidationError("case result is missing its receipt")
     if (
-        original.receipt.reconstruction_sha256
-        != replayed.receipt.reconstruction_sha256
+        (original.receipt.reconstruction_sha256 is None)
+        != (replayed.receipt.reconstruction_sha256 is None)
     ):
         raise RobustnessValidationError("reconstruction receipt changed on replay")
     return ReplayValidationRecord(
@@ -1781,8 +2717,29 @@ def _validate_measured_source(
         raise ProofReportError(
             "measured case-result route differs from the frozen variant"
         )
+    symai_stage = next(
+        (
+            stage
+            for stage in result.stages
+            if stage.stage is StageName.SYMAI
+        ),
+        None,
+    )
+    symai_setup = (
+        None
+        if symai_stage is None
+        else extract_symai_cache_setup_telemetry(symai_stage)
+    )
+    setup_wall_time_ms = (
+        0.0 if symai_setup is None else symai_setup.wall_time_ms
+    )
+    setup_model_calls = (
+        0 if symai_setup is None else symai_setup.model_calls
+    )
     total_wall_time_ms = round(
-        sum(stage.telemetry.wall_time_ms for stage in result.stages), 6
+        sum(stage.telemetry.wall_time_ms for stage in result.stages)
+        + setup_wall_time_ms,
+        6,
     )
     if not math.isclose(
         float(row["total_wall_time_ms"]),
@@ -1793,7 +2750,10 @@ def _validate_measured_source(
         raise ProofReportError(
             "measured proof latency differs from stage telemetry"
         )
-    model_calls = sum(stage.telemetry.model_calls for stage in result.stages)
+    model_calls = (
+        sum(stage.telemetry.model_calls for stage in result.stages)
+        + setup_model_calls
+    )
     if row["model_calls"] != model_calls:
         raise ProofReportError(
             "measured proof model calls differ from stage telemetry"
@@ -1901,6 +2861,22 @@ def _rate(numerator: int, denominator: int) -> float | None:
     return None if denominator == 0 else numerator / denominator
 
 
+def _recovered_failure_counts(
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, int]:
+    """Project kernel-recovered proof failures from durable case results."""
+
+    counts: dict[str, int] = {}
+    for row in observations:
+        value = row.get("case_result")
+        if not isinstance(value, Mapping):
+            continue
+        result = CaseResultRecord.from_dict(value)
+        for code in result.recovered_failure_codes:
+            counts[code.value] = counts.get(code.value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
 def _variant_metric(
     variant_id: str,
     cache_mode: str,
@@ -1938,7 +2914,8 @@ def _variant_metric(
     repairs = sum(bool(row["repair_attempted"]) for row in lean)
     repair_successes = sum(bool(row["repair_succeeded"]) for row in lean)
     total_latency = sum(float(row["total_wall_time_ms"]) for row in rows)
-    return {
+    recovered_failures = _recovered_failure_counts(rows)
+    metric = {
         "variant_id": variant_id,
         "cache_mode": cache_mode,
         "attempt_count": len(rows),
@@ -1984,6 +2961,13 @@ def _variant_metric(
         "mean_wall_time_ms": total_latency / len(rows),
         "model_calls": sum(int(row["model_calls"]) for row in rows),
     }
+    if recovered_failures:
+        metric["recovered_failure_count"] = sum(
+            recovered_failures.values()
+        )
+        metric["recovered_failure_counts"] = recovered_failures
+        metric["reliability_status"] = "degraded_recovered"
+    return metric
 
 
 def _pairwise(
@@ -2823,6 +3807,49 @@ def _repository_file(root: Path, relative_path: str, field: str) -> Path:
     return resolved
 
 
+def _external_run_file(
+    candidate: Path,
+    *,
+    run_root: Path,
+    field: str,
+) -> Path:
+    """Resolve one regular, nonsymlinked artifact inside a fresh run root."""
+
+    if not candidate.is_absolute():
+        raise FinalDecisionValidationError(
+            f"{field} must be an absolute fresh-run path"
+        )
+    resolved_root = run_root.resolve()
+    try:
+        lexical = candidate.absolute()
+        relative = lexical.relative_to(run_root.absolute())
+    except ValueError as exc:
+        raise FinalDecisionValidationError(
+            f"{field} escapes the fresh run root"
+        ) from exc
+    cursor = run_root.absolute()
+    for part in relative.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            raise FinalDecisionValidationError(
+                f"{field} must not traverse a symlink"
+            )
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise FinalDecisionValidationError(
+            f"{field} does not exist: {candidate}"
+        ) from exc
+    if (
+        not resolved.is_relative_to(resolved_root)
+        or not resolved.is_file()
+    ):
+        raise FinalDecisionValidationError(
+            f"{field} is not a regular file inside the fresh run root"
+        )
+    return resolved
+
+
 def _strict_json_file(path: Path, description: str) -> tuple[object, bytes]:
     try:
         raw = path.read_bytes()
@@ -3443,6 +4470,7 @@ def _build_fresh_reassessment_final_decision(
         binding, document = _replacement_source_binding(
             repository_root,
             path,
+            external_run_root=layout.run_paths.run_root,
         )
         source_artifacts[name] = binding
         documents[name] = document
@@ -3728,11 +4756,28 @@ def _build_fresh_reassessment_final_decision(
 
 
 def _replacement_source_binding(
-    root: Path, relative_path: Path
+    root: Path,
+    relative_path: Path,
+    *,
+    external_run_root: Path | None = None,
 ) -> tuple[dict[str, object], Mapping[str, object]]:
-    path = _repository_file(
-        root, relative_path.as_posix(), f"source {relative_path.as_posix()}"
-    )
+    if relative_path.is_absolute():
+        if external_run_root is None:
+            raise FinalDecisionValidationError(
+                f"source {relative_path.as_posix()} is outside the repository "
+                "without an explicit fresh run root"
+            )
+        path = _external_run_file(
+            relative_path,
+            run_root=external_run_root,
+            field=f"source {relative_path.as_posix()}",
+        )
+    else:
+        path = _repository_file(
+            root,
+            relative_path.as_posix(),
+            f"source {relative_path.as_posix()}",
+        )
     value, raw = _strict_json_file(path, relative_path.as_posix())
     document = _decision_mapping(value, relative_path.as_posix())
     results = document.get("results")
@@ -4478,12 +5523,40 @@ def write_reassessment_final_decision(
         raise FinalDecisionValidationError(
             "fresh final decision must use its run-scoped layout path"
         )
-    if relative.is_absolute() or ".." in relative.parts:
+    if ".." in relative.parts:
         raise FinalDecisionValidationError(
-            "replacement decision output must be repository-relative"
+            "replacement decision output contains parent traversal"
         )
     destination = root / relative
+    run_root = (
+        layout.run_paths.run_root
+        if layout.run_paths.run_root.is_absolute()
+        else root / layout.run_paths.run_root
+    )
+    resolved_run_root = run_root.resolve(strict=False)
+    resolved_destination = destination.resolve(strict=False)
+    if (
+        not resolved_destination.is_relative_to(resolved_run_root)
+        or resolved_destination
+        != (root / layout.final_decision).resolve(strict=False)
+    ):
+        raise FinalDecisionValidationError(
+            "replacement decision output escapes its exact fresh run layout"
+        )
+    cursor = destination.parent
+    while cursor != cursor.parent and cursor.exists():
+        if cursor.is_symlink():
+            raise FinalDecisionValidationError(
+                "replacement decision output must not traverse a symlink"
+            )
+        if cursor.resolve() == resolved_run_root:
+            break
+        cursor = cursor.parent
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.parent.resolve() != resolved_destination.parent:
+        raise FinalDecisionValidationError(
+            "replacement decision output parent changed through a symlink"
+        )
     payload = (
         canonical_json(
             build_reassessment_final_decision(repository_root=root)

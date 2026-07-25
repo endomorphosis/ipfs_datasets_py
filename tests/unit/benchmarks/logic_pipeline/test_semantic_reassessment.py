@@ -19,6 +19,7 @@ from benchmarks.logic_pipeline.cases import (
 )
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL_SHA256,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
     STAGE_PROVENANCE_SCHEMA,
     CacheMode,
     CaseResultRecord,
@@ -77,6 +78,30 @@ def _frontend_capabilities() -> dict[str, object]:
 
 def _semantic_terms(case: BenchmarkCase) -> tuple[str, ...]:
     return (*case.required_predicates, *case.required_entities)
+
+
+def _kernel_rejection_receipt(
+    case: BenchmarkCase,
+    variant_id: str,
+    cache_mode: CacheMode,
+) -> dict[str, object]:
+    body: dict[str, object] = {
+        "schema": NATIVE_KERNEL_RECEIPT_SCHEMA,
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "run_id": RUN_ID,
+        "case_id": case.case_id,
+        "case_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
+        "variant_id": variant_id,
+        "split": case.split.value,
+        "cache_mode": cache_mode.value,
+        "input_sha256": INPUT_SHA256,
+        "environment_sha256": ENVIRONMENT_SHA256,
+        "independent": True,
+        "accepted": False,
+        "active_process_count": 0,
+        "reason": "semantic_reassessment_fixture_not_verified",
+    }
+    return {**body, "receipt_sha256": _sha(body)}
 
 
 def _stage_payload(
@@ -233,6 +258,15 @@ def _case_result(
                 data=(
                     {}
                     if terminal
+                    else _kernel_rejection_receipt(
+                        case,
+                        variant_id,
+                        cache_mode,
+                    )
+                    if (
+                        stage_name is StageName.KERNEL
+                        and not omit_graph_invoked
+                    )
                     else _stage_payload(
                         stage_name,
                         case,
@@ -360,6 +394,82 @@ def test_builds_complete_source_bound_receipts_with_gated_zero_calls(
         if binding["stage"] == "symai"
     )
     assert symai_binding["graph_invoked"] is False
+
+
+def test_semantic_observations_include_symai_setup_cost_once(
+    results: tuple[CaseResultRecord, ...],
+    monkeypatch,
+) -> None:
+    setup = TelemetryRecord(
+        wall_time_ms=11.0,
+        model_calls=2,
+        cache_misses=1,
+        resource_lane=ResourceLane.MODEL,
+    )
+
+    def setup_for(stage: StageRecord) -> TelemetryRecord | None:
+        return (
+            setup
+            if stage.stage is StageName.SYMAI
+            and stage.cache_mode is CacheMode.WARM
+            and stage.provenance.effective_identity.get("graph_invoked")
+            is True
+            else None
+        )
+
+    monkeypatch.setattr(
+        semantic,
+        "extract_symai_cache_setup_telemetry",
+        setup_for,
+    )
+    monkeypatch.setattr(
+        frontend_report,
+        "extract_symai_cache_setup_telemetry",
+        setup_for,
+    )
+    evidence = _evaluate(results)
+    warm = next(
+        row
+        for row in evidence.observations
+        if (
+            row["split"],
+            row["cache_mode"],
+            row["variant_id"],
+            row["case_id"],
+        )
+        == ("pilot", "warm", "A5", "pilot-p01")
+    )
+    warm_result = CaseResultRecord.from_dict(warm["case_result"])
+    assert warm["symai_model_calls"] == 3
+    assert warm["model_calls"] == (
+        sum(
+            stage.telemetry.model_calls
+            for stage in warm_result.stages
+        )
+        + 2
+    )
+    assert warm["total_wall_time_ms"] == (
+        sum(
+            stage.telemetry.wall_time_ms
+            for stage in warm_result.stages
+        )
+        + 11.0
+    )
+    cold = next(
+        row
+        for row in evidence.observations
+        if (
+            row["split"],
+            row["cache_mode"],
+            row["variant_id"],
+            row["case_id"],
+        )
+        == ("pilot", "cold", "A5", "pilot-p01")
+    )
+    cold_result = CaseResultRecord.from_dict(cold["case_result"])
+    assert cold["model_calls"] == sum(
+        stage.telemetry.model_calls for stage in cold_result.stages
+    )
 
 
 def test_distinguishes_incorrect_semantics_from_capability_missingness(

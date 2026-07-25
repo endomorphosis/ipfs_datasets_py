@@ -52,7 +52,12 @@ def _plan(
     )
 
 
-def _adapters(*, drift_warm: bool = False) -> dict[StageName, StageAdapter]:
+def _adapters(
+    *,
+    drift_warm: bool = False,
+    operational_cache_identity: bool = False,
+    unrecognized_cache_prime_drift: bool = False,
+) -> dict[StageName, StageAdapter]:
     adapters: dict[StageName, StageAdapter] = {}
     for stage in StageName:
         def handler(request, current=stage):
@@ -62,6 +67,46 @@ def _adapters(*, drift_warm: bool = False) -> dict[StageName, StageAdapter]:
                 if drift_warm and request.cache_mode is CacheMode.WARM
                 else "pinned"
             )
+            if operational_cache_identity:
+                identity.update(
+                    {
+                        "cache_namespace": (
+                            f"{request.run_id}/{request.cache_mode.value}"
+                        ),
+                        "cache_key": (
+                            f"{request.case_id}/{request.cache_mode.value}"
+                        ),
+                        "cache_hit": request.cache_mode is CacheMode.WARM,
+                        "router_cache": request.cache_mode.value,
+                        "router_cache_key": request.cache_mode.value,
+                        "router_cached_backend": (
+                            "pinned"
+                            if request.cache_mode is CacheMode.WARM
+                            else None
+                        ),
+                        "semantic_context_sha256": hashlib.sha256(
+                            f"semantic:{request.cache_mode.value}".encode(
+                                "utf-8"
+                            )
+                        ).hexdigest(),
+                        "premise_selection_sha256": hashlib.sha256(
+                            f"premises:{request.cache_mode.value}".encode(
+                                "utf-8"
+                            )
+                        ).hexdigest(),
+                        "generation_boundary_sha256": hashlib.sha256(
+                            f"generation:{request.cache_mode.value}".encode(
+                                "utf-8"
+                            )
+                        ).hexdigest(),
+                    }
+                )
+            if unrecognized_cache_prime_drift:
+                identity["cache_prime_effective_provider"] = (
+                    "drifted"
+                    if request.cache_mode is CacheMode.WARM
+                    else "pinned"
+                )
             return StageOutput(
                 data={"case_id": request.case_id, "stage": current.value},
                 effective_identity=identity,
@@ -147,6 +192,36 @@ def test_backend_or_model_drift_invalidates_cache_comparison(
     execution = runner.execute_ablation(
         plan,
         _adapters(drift_warm=True),
+        output_root=tmp_path,
+        resume=False,
+    )
+
+    with pytest.raises(runner.CacheIsolationError, match="identity drifted"):
+        runner.validate_cache_isolation(execution)
+
+
+def test_operational_cache_envelopes_do_not_look_like_backend_drift(
+    tmp_path: Path,
+) -> None:
+    plan = _plan(variants=("A0",))
+    execution = runner.execute_ablation(
+        plan,
+        _adapters(operational_cache_identity=True),
+        output_root=tmp_path,
+        resume=False,
+    )
+
+    report = runner.validate_cache_isolation(execution)
+    assert len(report.pairs) == len(plan.case_ids)
+
+
+def test_unrecognized_cache_prime_identity_field_cannot_mask_backend_drift(
+    tmp_path: Path,
+) -> None:
+    plan = _plan(variants=("A0",))
+    execution = runner.execute_ablation(
+        plan,
+        _adapters(unrecognized_cache_prime_drift=True),
         output_root=tmp_path,
         resume=False,
     )

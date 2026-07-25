@@ -15,7 +15,7 @@ import json
 import math
 import re
 from types import MappingProxyType
-from typing import Final, Mapping, Self, TypeVar
+from typing import Final, Mapping, Self, Sequence, TypeVar
 
 from . import BENCHMARK_ID
 
@@ -188,6 +188,19 @@ IMMEDIATE_STOP_CODES: Final = frozenset(
         FailureCode.HOLDOUT_LEAK,
         FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
         FailureCode.ORPHANED_CHILD,
+    }
+)
+
+# A proof backend is an advisory candidate producer, not the verification
+# authority.  These two failures mean that an invoked proof attempt did not
+# produce a usable candidate.  They remain durable reliability evidence, but
+# they cannot override a later, independent native-kernel acceptance of a
+# different source-bound candidate (for example the deterministic compiler
+# candidate).  All other failures remain blocking.
+RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES: Final = frozenset(
+    {
+        FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE,
+        FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
     }
 )
 
@@ -2005,6 +2018,752 @@ class StageRecord:
         )
 
 
+NATIVE_KERNEL_RECEIPT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"
+)
+
+
+_NATIVE_KERNEL_ATTEMPT_FIELDS: Final = frozenset(
+    {
+        "attempt_index",
+        "candidate_source",
+        "candidate_artifact_sha256",
+        "source_sha256",
+        "command_sha256",
+        "stdout_sha256",
+        "stderr_sha256",
+        "returncode",
+        "timed_out",
+        "cancelled",
+        "resource_exhausted",
+        "termination_reason",
+        "process_group_reaped",
+        "active_process_count",
+        "accepted",
+        "attempt_sha256",
+    }
+)
+_NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS: Final = frozenset(
+    {
+        "attempt_index",
+        "candidate_source",
+        "candidate_artifact_sha256",
+        "attempt_sha256",
+        "accepted",
+    }
+)
+_NATIVE_KERNEL_EXECUTED_RECEIPT_FIELDS: Final = frozenset(
+    {
+        "compiled_obligation_sha256",
+        "obligation_sha256",
+        "candidate_source",
+        "candidate_artifact_sha256",
+        "source_sha256",
+        "semantic_context_sha256",
+        "semantic_artifact_sha256s",
+        "command_sha256",
+        "stdout_sha256",
+        "stderr_sha256",
+        "returncode",
+        "timed_out",
+        "cancelled",
+        "resource_exhausted",
+        "termination_reason",
+        "process_group_reaped",
+        "candidate_attempts",
+        "candidate_attempts_sha256",
+        "selected_attempt",
+    }
+)
+_NATIVE_KERNEL_CANDIDATE_SOURCES: Final = frozenset(
+    {StageName.COMPILER.value, StageName.HAMMER.value, StageName.LEANSTRAL.value}
+)
+_NATIVE_KERNEL_SAFE_COMPLETION_REASONS: Final = frozenset(
+    {"completed", "completed_with_descendant_cleanup"}
+)
+_NATIVE_KERNEL_PROCESS_ERROR_REASONS: Final = frozenset(
+    {"monitor_error", "spawn_error"}
+)
+_NATIVE_KERNEL_TERMINATION_REASONS: Final = frozenset(
+    {
+        *_NATIVE_KERNEL_SAFE_COMPLETION_REASONS,
+        *_NATIVE_KERNEL_PROCESS_ERROR_REASONS,
+        "cancelled",
+        "cancelled_before_start",
+        "orphaned_process_group",
+        "resource_deadline",
+        "wall_clock_deadline",
+    }
+)
+_NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS: Final = frozenset(
+    {"routing_policy"}
+)
+
+
+def _native_kernel_process_count(value: object, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ProtocolContractError(
+            f"{field} must be a nonnegative integer"
+        )
+    return value
+
+
+def _native_kernel_candidate_source(value: object, field: str) -> str:
+    if value not in _NATIVE_KERNEL_CANDIDATE_SOURCES:
+        raise ProtocolContractError(
+            f"{field} is not a native-kernel candidate source"
+        )
+    return str(value)
+
+
+def _validate_native_kernel_attempt_lifecycle(
+    attempt: Mapping[str, object],
+    *,
+    active_process_count: int,
+    process_group_reaped: bool,
+) -> None:
+    """Require the durable decision to match the reviewed process taxonomy."""
+
+    reason = _nonempty(
+        attempt["termination_reason"],
+        "native kernel attempt termination_reason",
+    )
+    if reason not in _NATIVE_KERNEL_TERMINATION_REASONS:
+        raise ProtocolContractError(
+            "native kernel attempt termination reason is not reviewed"
+        )
+    returncode = attempt["returncode"]
+    if reason in {"spawn_error", "cancelled_before_start"}:
+        if returncode is not None:
+            raise ProtocolContractError(
+                "native kernel pre-spawn returncode must be null"
+            )
+    elif isinstance(returncode, bool) or not isinstance(returncode, int):
+        raise ProtocolContractError(
+            "native kernel attempt returncode must be an integer after spawn"
+        )
+    timed_out = attempt["timed_out"] is True
+    cancelled = attempt["cancelled"] is True
+    resource_exhausted = attempt["resource_exhausted"] is True
+    lifecycle_flags = (timed_out, cancelled, resource_exhausted)
+    flags_match = (
+        (
+            reason in _NATIVE_KERNEL_SAFE_COMPLETION_REASONS
+            and lifecycle_flags == (False, False, False)
+            and process_group_reaped
+        )
+        or (
+            reason == "wall_clock_deadline"
+            and lifecycle_flags == (True, False, False)
+        )
+        or (
+            reason in {"cancelled", "cancelled_before_start"}
+            and lifecycle_flags == (False, True, False)
+        )
+        or (
+            reason == "resource_deadline"
+            and not timed_out
+            and cancelled is not resource_exhausted
+        )
+        or (
+            reason in _NATIVE_KERNEL_PROCESS_ERROR_REASONS
+            and lifecycle_flags == (False, False, False)
+        )
+        or (
+            reason == "orphaned_process_group"
+            and lifecycle_flags == (False, False, False)
+            and not process_group_reaped
+        )
+    )
+    if not flags_match:
+        raise ProtocolContractError(
+            "native kernel attempt termination reason disagrees with "
+            "lifecycle flags"
+        )
+    process_accepted = (
+        reason in _NATIVE_KERNEL_SAFE_COMPLETION_REASONS
+        and returncode == 0
+        and process_group_reaped
+        and active_process_count == 0
+    )
+    if attempt["accepted"] is not process_accepted:
+        raise ProtocolContractError(
+            "native kernel attempt acceptance disagrees with its reviewed "
+            "process outcome"
+        )
+
+
+def _validate_native_kernel_outer_attachments(
+    data: Mapping[str, object],
+    *,
+    variant_id: str,
+) -> bool:
+    """Validate graph metadata attached after the kernel signs its receipt.
+
+    The graph runner may attach a separately self-digested routing decision,
+    and S1 may withhold authority from an otherwise accepted diagnostic
+    receipt.  These fields remain covered by the enclosing StageRecord and
+    CaseResult digests, but are deliberately outside the native process
+    receipt's own self-digest.
+    """
+
+    if "routing_policy" in data:
+        policy = _mapping(
+            data["routing_policy"], "native kernel routing_policy"
+        )
+        decision_sha256 = _digest(
+            policy.get("decision_sha256"),
+            "native kernel routing_policy decision_sha256",
+        )
+        _nonempty(
+            policy.get("schema"), "native kernel routing_policy schema"
+        )
+        _nonempty(
+            policy.get("decision"), "native kernel routing_policy decision"
+        )
+        policy_body = {
+            key: _thaw_bounded_json(value)
+            for key, value in policy.items()
+            if key != "decision_sha256"
+        }
+        if _record_digest(policy_body) != decision_sha256:
+            raise ProtocolContractError(
+                "native kernel routing-policy self-digest changed"
+            )
+
+    diagnostic_only = data.get("diagnostic_only")
+    authority_withheld = data.get("authority_withheld")
+    if diagnostic_only is None and authority_withheld is None:
+        return False
+    if (
+        variant_id != "S1"
+        or diagnostic_only is not True
+        or authority_withheld is not True
+    ):
+        raise ProtocolContractError(
+            "native kernel diagnostic authority attachment is invalid"
+        )
+    return True
+
+
+def _validate_native_kernel_attempts(
+    data: Mapping[str, object],
+) -> bool:
+    """Validate executed Lean evidence and return its selected decision."""
+
+    missing = _NATIVE_KERNEL_EXECUTED_RECEIPT_FIELDS - set(data)
+    if missing:
+        raise ProtocolContractError(
+            "executed native-kernel receipt is incomplete: "
+            + ", ".join(sorted(missing))
+        )
+    for field in (
+        "compiled_obligation_sha256",
+        "obligation_sha256",
+        "candidate_artifact_sha256",
+        "source_sha256",
+        "semantic_context_sha256",
+        "command_sha256",
+        "stdout_sha256",
+        "stderr_sha256",
+        "candidate_attempts_sha256",
+    ):
+        _digest(data[field], f"native kernel {field}")
+    _native_kernel_candidate_source(
+        data["candidate_source"], "native kernel candidate_source"
+    )
+    semantic_artifacts = data["semantic_artifact_sha256s"]
+    if not isinstance(semantic_artifacts, Sequence) or isinstance(
+        semantic_artifacts, (str, bytes, bytearray)
+    ):
+        raise ProtocolContractError(
+            "native kernel semantic_artifact_sha256s must be an array"
+        )
+    for value in semantic_artifacts:
+        _digest(value, "native kernel semantic_artifact_sha256s[]")
+
+    attempts_value = data["candidate_attempts"]
+    if (
+        not isinstance(attempts_value, Sequence)
+        or isinstance(attempts_value, (str, bytes, bytearray))
+        or not attempts_value
+        or len(attempts_value) > len(StageName)
+    ):
+        raise ProtocolContractError(
+            "native kernel candidate_attempts must be a bounded nonempty array"
+        )
+    attempts: list[dict[str, object]] = []
+    for index, raw_attempt in enumerate(attempts_value):
+        attempt = _mapping(
+            raw_attempt, f"native kernel candidate_attempts[{index}]"
+        )
+        if set(attempt) != _NATIVE_KERNEL_ATTEMPT_FIELDS:
+            raise ProtocolContractError(
+                "native kernel candidate attempt has an invalid shape"
+            )
+        if (
+            isinstance(attempt["attempt_index"], bool)
+            or attempt["attempt_index"] != index
+        ):
+            raise ProtocolContractError(
+                "native kernel candidate attempt index changed"
+            )
+        _native_kernel_candidate_source(
+            attempt["candidate_source"],
+            "native kernel attempt candidate_source",
+        )
+        for field in (
+            "candidate_artifact_sha256",
+            "source_sha256",
+            "command_sha256",
+            "stdout_sha256",
+            "stderr_sha256",
+            "attempt_sha256",
+        ):
+            _digest(
+                attempt[field],
+                f"native kernel attempt {field}",
+            )
+        for field in (
+            "timed_out",
+            "cancelled",
+            "resource_exhausted",
+            "process_group_reaped",
+            "accepted",
+        ):
+            _bool(attempt[field], f"native kernel attempt {field}")
+        active_process_count = _native_kernel_process_count(
+            attempt["active_process_count"],
+            "native kernel attempt active_process_count",
+        )
+        attempt_body = {
+            key: _thaw_bounded_json(value)
+            for key, value in attempt.items()
+            if key != "attempt_sha256"
+        }
+        if _record_digest(attempt_body) != attempt["attempt_sha256"]:
+            raise ProtocolContractError(
+                "native kernel candidate attempt self-digest changed"
+            )
+        _validate_native_kernel_attempt_lifecycle(
+            attempt,
+            active_process_count=active_process_count,
+            process_group_reaped=(
+                attempt["process_group_reaped"] is True
+            ),
+        )
+        attempts.append(
+            {
+                key: _thaw_bounded_json(value)
+                for key, value in attempt.items()
+            }
+        )
+    if _record_digest(attempts) != data["candidate_attempts_sha256"]:
+        raise ProtocolContractError(
+            "native kernel candidate-attempt collection changed"
+        )
+    if any(
+        attempt["accepted"] is True
+        for attempt in attempts[:-1]
+    ):
+        raise ProtocolContractError(
+            "native kernel continued after an accepted candidate"
+        )
+    if any(
+        attempt["timed_out"] is True
+        or attempt["cancelled"] is True
+        or attempt["resource_exhausted"] is True
+        or attempt["process_group_reaped"] is not True
+        or attempt["active_process_count"] != 0
+        or attempt["termination_reason"]
+        in _NATIVE_KERNEL_PROCESS_ERROR_REASONS
+        for attempt in attempts[:-1]
+    ):
+        raise ProtocolContractError(
+            "native kernel continued after an unsafe process outcome"
+        )
+
+    selected = _mapping(
+        data["selected_attempt"], "native kernel selected_attempt"
+    )
+    if set(selected) != _NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS:
+        raise ProtocolContractError(
+            "native kernel selected attempt has an invalid shape"
+        )
+    last = attempts[-1]
+    expected_selected = {
+        key: last[key]
+        for key in _NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS
+    }
+    if {
+        key: _thaw_bounded_json(value)
+        for key, value in selected.items()
+    } != expected_selected:
+        raise ProtocolContractError(
+            "native kernel selected attempt changed"
+        )
+    selected_bindings = {
+        "candidate_source": "candidate_source",
+        "candidate_artifact_sha256": "candidate_artifact_sha256",
+        "source_sha256": "source_sha256",
+        "command_sha256": "command_sha256",
+        "stdout_sha256": "stdout_sha256",
+        "stderr_sha256": "stderr_sha256",
+        "returncode": "returncode",
+        "timed_out": "timed_out",
+        "cancelled": "cancelled",
+        "resource_exhausted": "resource_exhausted",
+        "termination_reason": "termination_reason",
+        "process_group_reaped": "process_group_reaped",
+        "active_process_count": "active_process_count",
+        "accepted": "accepted",
+    }
+    if any(
+        data[receipt_field] != last[attempt_field]
+        for receipt_field, attempt_field in selected_bindings.items()
+    ):
+        raise ProtocolContractError(
+            "native kernel receipt differs from its selected attempt"
+        )
+    return selected["accepted"] is True
+
+
+def validate_native_kernel_receipt(
+    value: object,
+    *,
+    protocol_sha256: str,
+    run_id: str,
+    case_id: str,
+    case_manifest_sha256: str,
+    variant_id: str,
+    split: Split,
+    cache_mode: CacheMode,
+    input_sha256: str,
+    environment_sha256: str | None,
+    stage_status: StageStatus,
+    kernel_accepted: bool,
+    kernel_receipt_sha256: str | None,
+    consumed_artifact_sha256s: Sequence[str] | None = None,
+    failure_code: FailureCode | None = None,
+) -> bool:
+    """Validate one canonical, source-bound native-kernel receipt.
+
+    The return value is the authority decision carried by this receipt.  An
+    S1 diagnostic rejection may bind a separately validated accepted receipt;
+    callers that need that raw safety projection use
+    :func:`validate_native_kernel_stage_receipt`.
+    """
+
+    data = _mapping(value, "native kernel receipt")
+    if (
+        data.get("schema") != NATIVE_KERNEL_RECEIPT_SCHEMA
+        or data.get("independent") is not True
+        or type(data.get("accepted")) is not bool
+    ):
+        raise ProtocolContractError(
+            "kernel stage lacks an independent native receipt"
+        )
+    receipt_sha256 = _digest(
+        data.get("receipt_sha256"), "native kernel receipt_sha256"
+    )
+    diagnostic_authority_withheld = (
+        _validate_native_kernel_outer_attachments(
+            data,
+            variant_id=variant_id,
+        )
+    )
+    body = {
+        key: _thaw_bounded_json(value)
+        for key, value in data.items()
+        if key != "receipt_sha256"
+        and key not in _NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS
+    }
+    if _record_digest(body) != receipt_sha256:
+        # Immutable S1 evidence predates normalized diagnostic rejection
+        # receipts: its runner attached these two flags after the native
+        # process receipt was signed.  Accept only that exact, validated
+        # compatibility shape; current negative receipts sign both fields.
+        legacy_diagnostic_body = {
+            key: value
+            for key, value in body.items()
+            if key not in {"diagnostic_only", "authority_withheld"}
+        }
+        if (
+            not diagnostic_authority_withheld
+            or data["accepted"] is not True
+            or _record_digest(legacy_diagnostic_body) != receipt_sha256
+        ):
+            raise ProtocolContractError(
+                "native-kernel receipt self-digest changed"
+            )
+    if not isinstance(split, Split) or not isinstance(cache_mode, CacheMode):
+        raise ProtocolContractError(
+            "native-kernel receipt split/cache binding is invalid"
+        )
+    if not isinstance(stage_status, StageStatus):
+        raise ProtocolContractError(
+            "native-kernel receipt stage status is invalid"
+        )
+    if failure_code is not None and not isinstance(
+        failure_code, FailureCode
+    ):
+        raise ProtocolContractError(
+            "native-kernel receipt failure code is invalid"
+        )
+    if (
+        stage_status is StageStatus.SUCCESS
+        and failure_code is not None
+    ) or (
+        stage_status is not StageStatus.SUCCESS
+        and failure_code is None
+    ):
+        raise ProtocolContractError(
+            "native-kernel stage status and failure code disagree"
+        )
+    _bool(kernel_accepted, "native kernel stage authority")
+    expected_identity = {
+        "protocol_sha256": protocol_sha256,
+        "run_id": run_id,
+        "case_id": case_id,
+        "case_manifest_sha256": case_manifest_sha256,
+        "variant_id": variant_id,
+        "split": split.value,
+        "cache_mode": cache_mode.value,
+        "input_sha256": input_sha256,
+        "environment_sha256": environment_sha256,
+    }
+    if any(
+        data.get(field) != expected
+        for field, expected in expected_identity.items()
+    ):
+        raise ProtocolContractError(
+            "native-kernel receipt coordinate or source binding changed"
+        )
+    active_process_count = _native_kernel_process_count(
+        data.get("active_process_count"),
+        "native kernel active_process_count",
+    )
+    accepted = data["accepted"] is True
+    executed = "candidate_attempts" in data
+    consumed: tuple[str, ...] | None = None
+    if consumed_artifact_sha256s is not None:
+        if not isinstance(consumed_artifact_sha256s, Sequence) or isinstance(
+            consumed_artifact_sha256s, (str, bytes, bytearray)
+        ):
+            raise ProtocolContractError(
+                "native-kernel consumed-artifact binding is invalid"
+            )
+        consumed = tuple(
+            _digest(
+                item,
+                "native kernel consumed_artifact_sha256s[]",
+            )
+            for item in consumed_artifact_sha256s
+        )
+    if accepted and not executed:
+        raise ProtocolContractError(
+            "accepted native-kernel receipt lacks executed Lean evidence"
+        )
+    if executed:
+        selected_accepted = _validate_native_kernel_attempts(data)
+        if selected_accepted is not accepted:
+            raise ProtocolContractError(
+                "native kernel decision differs from its selected attempt"
+            )
+        if consumed is None:
+            raise ProtocolContractError(
+                "executed native-kernel receipt lacks consumed-artifact binding"
+            )
+        if data["candidate_artifact_sha256"] not in consumed:
+            raise ProtocolContractError(
+                "native kernel candidate is not one of the consumed artifacts"
+            )
+    elif (
+        accepted
+        or not isinstance(data.get("reason"), str)
+        or not str(data["reason"]).strip()
+    ):
+        raise ProtocolContractError(
+            "pre-execution native-kernel rejection lacks a bounded reason"
+        )
+    if diagnostic_authority_withheld and not accepted:
+        if (
+            data.get("reason") != "diagnostic_only_authority_withheld"
+            or data.get("diagnostic_kernel_accepted") is not True
+        ):
+            raise ProtocolContractError(
+                "normalized S1 diagnostic rejection is incomplete"
+            )
+        diagnostic_receipt_sha256 = _digest(
+            data.get("diagnostic_receipt_sha256"),
+            "native kernel diagnostic_receipt_sha256",
+        )
+        diagnostic_receipt = _mapping(
+            data.get("diagnostic_receipt"),
+            "native kernel diagnostic_receipt",
+        )
+        if (
+            diagnostic_receipt.get("receipt_sha256")
+            != diagnostic_receipt_sha256
+            or diagnostic_receipt.get("accepted") is not True
+            or diagnostic_receipt.get("diagnostic_receipt") is not None
+        ):
+            raise ProtocolContractError(
+                "normalized S1 diagnostic receipt binding is invalid"
+            )
+        if not validate_native_kernel_receipt(
+            diagnostic_receipt,
+            protocol_sha256=protocol_sha256,
+            run_id=run_id,
+            case_id=case_id,
+            case_manifest_sha256=case_manifest_sha256,
+            variant_id=variant_id,
+            split=split,
+            cache_mode=cache_mode,
+            input_sha256=input_sha256,
+            environment_sha256=environment_sha256,
+            stage_status=stage_status,
+            kernel_accepted=True,
+            kernel_receipt_sha256=diagnostic_receipt_sha256,
+            consumed_artifact_sha256s=consumed,
+            failure_code=None,
+        ):
+            raise ProtocolContractError(
+                "normalized S1 diagnostic receipt was not accepted"
+            )
+    if (
+        not diagnostic_authority_withheld
+        and kernel_accepted is not accepted
+    ):
+        raise ProtocolContractError(
+            "kernel stage authority differs from its native receipt"
+        )
+    if diagnostic_authority_withheld and kernel_accepted:
+        raise ProtocolContractError(
+            "native kernel diagnostic receipt retained stage authority"
+        )
+    if accepted:
+        if (
+            stage_status is not StageStatus.SUCCESS
+            or data["process_group_reaped"] is not True
+            or active_process_count != 0
+            or (
+                diagnostic_authority_withheld
+                and kernel_receipt_sha256 is not None
+            )
+            or (
+                not diagnostic_authority_withheld
+                and kernel_receipt_sha256 != receipt_sha256
+            )
+        ):
+            raise ProtocolContractError(
+                "accepted native-kernel receipt lacks stage authority"
+            )
+    elif executed:
+        expected_failure_code = (
+            FailureCode.ORPHANED_CHILD
+            if (
+                active_process_count
+                or data["process_group_reaped"] is not True
+            )
+            else (
+                FailureCode.OUT_OF_MEMORY
+                if data["resource_exhausted"] is True
+                else (
+                    FailureCode.RESOURCE_LEASE_CANCELLATION
+                    if (
+                        data["timed_out"] is True
+                        or data["cancelled"] is True
+                    )
+                    else (
+                        FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+                        if (
+                            data["termination_reason"]
+                            in {"spawn_error", "monitor_error"}
+                            or (
+                                isinstance(data["returncode"], int)
+                                and data["returncode"] < 0
+                            )
+                        )
+                        else FailureCode.KERNEL_REJECTION
+                    )
+                )
+            )
+        )
+        if (
+            stage_status is not StageStatus.FAILED
+            or failure_code is not expected_failure_code
+            or kernel_receipt_sha256 is not None
+        ):
+            raise ProtocolContractError(
+                "rejected native-kernel execution has invalid lifecycle "
+                "failure authority"
+            )
+    elif active_process_count != 0:
+        raise ProtocolContractError(
+            "pre-execution native-kernel rejection left active processes"
+        )
+    elif (
+        stage_status not in {StageStatus.SUCCESS, StageStatus.FAILED}
+        or kernel_receipt_sha256 is not None
+    ):
+        raise ProtocolContractError(
+            "rejected native-kernel receipt has invalid stage authority"
+        )
+    return accepted
+
+
+def validate_native_kernel_stage_receipt(stage: StageRecord) -> bool:
+    """Validate and return the raw source-bound kernel safety decision.
+
+    Ordinarily this is the stage authority decision.  S1 is deliberately
+    nonauthoritative, so its signed outer rejection returns the acceptance of
+    the centrally revalidated nested diagnostic receipt instead.
+    """
+
+    if not isinstance(stage, StageRecord) or stage.stage is not StageName.KERNEL:
+        raise ProtocolContractError(
+            "native-kernel receipt validation requires a kernel stage"
+        )
+    consumed = stage.provenance.effective_identity.get(
+        "consumed_artifact_sha256"
+    )
+    accepted = validate_native_kernel_receipt(
+        stage.data,
+        protocol_sha256=stage.protocol_sha256,
+        run_id=stage.run_id,
+        case_id=stage.case_id,
+        case_manifest_sha256=stage.case_manifest_sha256,
+        variant_id=stage.variant_id,
+        split=stage.split,
+        cache_mode=stage.cache_mode,
+        input_sha256=stage.provenance.input_sha256,
+        environment_sha256=stage.provenance.environment_sha256,
+        stage_status=stage.status,
+        kernel_accepted=stage.kernel_accepted,
+        kernel_receipt_sha256=stage.kernel_receipt_sha256,
+        consumed_artifact_sha256s=(
+            consumed
+            if isinstance(consumed, Sequence)
+            and not isinstance(consumed, (str, bytes, bytearray))
+            else None
+        ),
+        failure_code=stage.failure_code,
+    )
+    if accepted:
+        return True
+    if (
+        isinstance(stage.data, Mapping)
+        and stage.data.get("diagnostic_only") is True
+        and stage.data.get("authority_withheld") is True
+        and stage.data.get("diagnostic_kernel_accepted") is True
+    ):
+        # The low-level validator above has already recursively validated the
+        # nested accepted receipt and its source/candidate bindings.
+        return True
+    return False
+
+
 _STAGE_RESOURCE_LANES: Final[Mapping[StageName, ResourceLane]] = MappingProxyType(
     {
         StageName.COMPILER: ResourceLane.CPU,
@@ -2019,6 +2778,16 @@ _STAGE_RESOURCE_LANES: Final[Mapping[StageName, ResourceLane]] = MappingProxyTyp
 
 def _record_digest(value: object) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def _is_recoverable_proof_attempt_failure(stage: StageRecord) -> bool:
+    """Return whether ``stage`` is a non-authoritative failed proof attempt."""
+
+    return (
+        stage.stage in {StageName.HAMMER, StageName.LEANSTRAL}
+        and stage.status is StageStatus.FAILED
+        and stage.failure_code in RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES
+    )
 
 
 def _optional_mapping_member(
@@ -2455,10 +3224,52 @@ class CaseResultRecord:
             raise ProtocolContractError("verification_authority must be a VerificationAuthority")
         _bool(self.kernel_accepted, "kernel_accepted")
         kernel = next((item for item in self.stages if item.stage is StageName.KERNEL), None)
-        all_success = all(item.status is StageStatus.SUCCESS for item in self.stages)
+        has_native_kernel_receipt = (
+            kernel is not None
+            and isinstance(kernel.data, Mapping)
+            and kernel.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
+        )
+        if has_native_kernel_receipt:
+            assert kernel is not None
+            graph_invoked = kernel.provenance.effective_identity.get(
+                "graph_invoked"
+            )
+            if graph_invoked is not True:
+                raise ProtocolContractError(
+                    "native kernel receipt requires an explicit graph invocation"
+                )
+            validate_native_kernel_stage_receipt(kernel)
+        elif kernel is not None and kernel.kernel_accepted:
+            graph_invoked = kernel.provenance.effective_identity.get(
+                "graph_invoked"
+            )
+            if graph_invoked is False:
+                raise ProtocolContractError(
+                    "kernel authority cannot come from a suppressed graph stage"
+                )
+            if graph_invoked is not None and type(graph_invoked) is not bool:
+                raise ProtocolContractError(
+                    "kernel graph invocation marker must be boolean"
+                )
+        blocking_stage_failure = next(
+            (
+                item
+                for item in self.stages
+                if item.status is not StageStatus.SUCCESS
+                and not _is_recoverable_proof_attempt_failure(item)
+            ),
+            None,
+        )
         if self.status is OutcomeStatus.VERIFIED:
-            if not all_success or kernel is None or not kernel.kernel_accepted:
-                raise ProtocolContractError("verified case results require successful stages and kernel acceptance")
+            if (
+                blocking_stage_failure is not None
+                or kernel is None
+                or not kernel.kernel_accepted
+            ):
+                raise ProtocolContractError(
+                    "verified case results require kernel acceptance without "
+                    "a blocking stage failure"
+                )
             expected_upstream: tuple[str, ...] = ()
             for stage in self.stages:
                 if stage.provenance.upstream_stage_digests != expected_upstream:
@@ -2523,25 +3334,77 @@ class CaseResultRecord:
         if not records:
             raise ProtocolContractError("cannot build a case result without stages")
         first = records[0]
-        unavailable = next((item for item in records if item.status is StageStatus.UNAVAILABLE), None)
-        failed = next((item for item in records if item.status in {StageStatus.FAILED, StageStatus.SKIPPED}), None)
+        unavailable = next(
+            (
+                item
+                for item in records
+                if item.status is StageStatus.UNAVAILABLE
+            ),
+            None,
+        )
+        failed = tuple(
+            item
+            for item in records
+            if item.status in {StageStatus.FAILED, StageStatus.SKIPPED}
+        )
+        immediate_stop = next(
+            (
+                item
+                for item in failed
+                if item.failure_code in IMMEDIATE_STOP_CODES
+            ),
+            None,
+        )
+        infrastructure_failure = next(
+            (
+                item
+                for item in failed
+                if item.failure_code in INFRASTRUCTURE_FAILURE_CODES
+            ),
+            None,
+        )
+        blocking_failure = next(
+            (
+                item
+                for item in failed
+                if not _is_recoverable_proof_attempt_failure(item)
+            ),
+            None,
+        )
+        recovered_candidate_failure = next(
+            (
+                item
+                for item in failed
+                if _is_recoverable_proof_attempt_failure(item)
+            ),
+            None,
+        )
         kernel = next((item for item in records if item.stage is StageName.KERNEL), None)
-        if unavailable is not None:
-            status = OutcomeStatus.UNAVAILABLE
-            failure_code = unavailable.failure_code
-            detail = unavailable.failure_detail
-        elif failed is not None:
-            status = (
-                OutcomeStatus.INFRASTRUCTURE_FAILURE
-                if failed.failure_code in INFRASTRUCTURE_FAILURE_CODES
-                else OutcomeStatus.REJECTED
-            )
-            failure_code = failed.failure_code
-            detail = failed.failure_detail
+        terminal_failure = (
+            immediate_stop
+            or infrastructure_failure
+            or unavailable
+            or blocking_failure
+        )
+        if terminal_failure is not None:
+            if terminal_failure.status is StageStatus.UNAVAILABLE:
+                status = OutcomeStatus.UNAVAILABLE
+            elif terminal_failure.failure_code in INFRASTRUCTURE_FAILURE_CODES:
+                status = OutcomeStatus.INFRASTRUCTURE_FAILURE
+            elif terminal_failure.failure_code in EXCLUSION_FAILURE_CODES:
+                status = OutcomeStatus.EXCLUDED
+            else:
+                status = OutcomeStatus.REJECTED
+            failure_code = terminal_failure.failure_code
+            detail = terminal_failure.failure_detail
         elif kernel is not None and kernel.kernel_accepted:
             status = OutcomeStatus.VERIFIED
             failure_code = None
             detail = None
+        elif recovered_candidate_failure is not None:
+            status = OutcomeStatus.REJECTED
+            failure_code = recovered_candidate_failure.failure_code
+            detail = recovered_candidate_failure.failure_detail
         else:
             status = OutcomeStatus.NOT_VERIFIED
             failure_code = None
@@ -2568,6 +3431,58 @@ class CaseResultRecord:
     @property
     def stage_digests(self) -> tuple[str, ...]:
         return tuple(stage.digest for stage in self.stages)
+
+    @property
+    def recovered_failures(self) -> tuple[StageRecord, ...]:
+        """Proof-attempt failures recovered by terminal kernel acceptance."""
+
+        if self.status is not OutcomeStatus.VERIFIED:
+            return ()
+        return tuple(
+            stage
+            for stage in self.stages
+            if _is_recoverable_proof_attempt_failure(stage)
+        )
+
+    @property
+    def recovered_failure_codes(self) -> tuple[FailureCode, ...]:
+        """Stable reliability projection of recovered proof-attempt failures."""
+
+        return tuple(
+            stage.failure_code
+            for stage in self.recovered_failures
+            if stage.failure_code is not None
+        )
+
+    @property
+    def terminal_kernel_accepted(self) -> bool:
+        """Return raw terminal acceptance independently of top-level status.
+
+        A legacy result may retain an accepted native-kernel stage while an
+        earlier blocking failure prevents the case-level outcome from claiming
+        verification.  Safety controls must still see that raw acceptance.
+        """
+
+        kernel = next(
+            (
+                stage
+                for stage in self.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        if kernel is None:
+            return False
+        graph_invoked = kernel.provenance.effective_identity.get(
+            "graph_invoked"
+        )
+        if graph_invoked is False:
+            return False
+        if graph_invoked is True:
+            return validate_native_kernel_stage_receipt(kernel)
+        # Dependency-free protocol fixtures predate graph receipts. Persisted
+        # ablation evidence is graph-marked and always takes the strict path.
+        return kernel.kernel_accepted
 
     @property
     def digest(self) -> str:
@@ -2603,6 +3518,41 @@ class CaseResultRecord:
                     "case result mixes stage input identities"
                 )
             expected_upstream = (*expected_upstream, stage.digest)
+        kernel = next(
+            (
+                stage
+                for stage in self.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        if kernel is not None:
+            graph_invoked = kernel.provenance.effective_identity.get(
+                "graph_invoked"
+            )
+            has_native_receipt = (
+                isinstance(kernel.data, Mapping)
+                and kernel.data.get("schema")
+                == NATIVE_KERNEL_RECEIPT_SCHEMA
+            )
+            if graph_invoked is True and (
+                kernel.kernel_accepted or has_native_receipt
+            ):
+                validate_native_kernel_stage_receipt(kernel)
+            elif graph_invoked is False and (
+                kernel.kernel_accepted or has_native_receipt
+            ):
+                raise ProtocolContractError(
+                    "suppressed kernel stage contains native receipt authority"
+                )
+            elif graph_invoked is not None and type(graph_invoked) is not bool:
+                raise ProtocolContractError(
+                    "kernel graph invocation marker must be boolean"
+                )
+            elif graph_invoked is None and has_native_receipt:
+                raise ProtocolContractError(
+                    "native kernel receipt lacks an explicit graph invocation"
+                )
         if expected_environment_sha256 is not None:
             expected = _digest(
                 expected_environment_sha256, "expected_environment_sha256"
@@ -2904,6 +3854,7 @@ __all__ = [
     "MetricCategory",
     "MetricDirection",
     "MetricSpec",
+    "NATIVE_KERNEL_RECEIPT_SCHEMA",
     "OUTCOME_RECORD_SCHEMA",
     "OutcomeRecord",
     "OutcomeStatus",
@@ -2913,6 +3864,7 @@ __all__ = [
     "PROTOCOL_VERSION",
     "ProtocolContractError",
     "ProtocolRecord",
+    "RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES",
     "ResourceLane",
     "RUN_CONTRACT_SCHEMA",
     "RunContract",
@@ -2935,4 +3887,6 @@ __all__ = [
     "evaluate_candidate_gate",
     "protocol_sha256",
     "validate_paired_outcomes",
+    "validate_native_kernel_receipt",
+    "validate_native_kernel_stage_receipt",
 ]

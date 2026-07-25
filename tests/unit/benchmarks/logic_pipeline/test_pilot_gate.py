@@ -13,11 +13,21 @@ import pytest
 
 from benchmarks.logic_pipeline import pilot_gate, report
 from benchmarks.logic_pipeline.contracts import (
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
+    STAGE_PROVENANCE_SCHEMA,
     CacheMode,
     CacheScope,
+    CaseResultRecord,
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
+    FailureCode,
+    ResourceLane,
     Split,
+    StageName,
+    StageProvenance,
+    StageRecord,
+    StageStatus,
+    TelemetryRecord,
     canonical_json,
 )
 from benchmarks.logic_pipeline.variants import (
@@ -728,17 +738,207 @@ def test_legacy_report_validation_clis_remain_accepted(
     assert summary[expected_count_key] == expected_count
 
 
+def _canonical_invalid_control_result(
+    *,
+    run_id: str,
+    accepted: bool,
+    masked_by_blocking_failure: bool,
+) -> CaseResultRecord:
+    case_id = "measured-invalid-control"
+    case_manifest_sha256 = hashlib.sha256(
+        b"measured invalid-control manifest"
+    ).hexdigest()
+    input_sha256 = hashlib.sha256(
+        b"measured invalid-control input"
+    ).hexdigest()
+    environment_sha256 = hashlib.sha256(
+        b"measured invalid-control environment"
+    ).hexdigest()
+    common = {
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "run_id": run_id,
+        "case_id": case_id,
+        "case_manifest_sha256": case_manifest_sha256,
+        "variant_id": "A0",
+        "split": Split.PILOT,
+        "cache_mode": CacheMode.COLD,
+        "adapter_version": "v1",
+    }
+    stages: list[StageRecord] = []
+    if masked_by_blocking_failure:
+        stages.append(
+            StageRecord.create(
+                **common,
+                stage=StageName.COMPILER,
+                status=StageStatus.FAILED,
+                provenance=StageProvenance(
+                    schema=STAGE_PROVENANCE_SCHEMA,
+                    adapter_id="synthetic-compiler",
+                    adapter_version="v1",
+                    source=("measured-pilot-safety-fixture",),
+                    requested_identity={"component": "compiler"},
+                    effective_identity={"graph_invoked": True},
+                    input_sha256=input_sha256,
+                    environment_sha256=environment_sha256,
+                ),
+                telemetry=TelemetryRecord(
+                    resource_lane=ResourceLane.CPU
+                ),
+                failure_code=FailureCode.CANONICAL_IR_REJECTION,
+                failure_detail="blocking compiler failure",
+            )
+        )
+
+    upstream_stage_digests = tuple(stage.digest for stage in stages)
+    candidate_artifact_sha256 = hashlib.sha256(
+        b"measured-pilot-safety-candidate"
+    ).hexdigest()
+    receipt_body = {
+        "schema": NATIVE_KERNEL_RECEIPT_SCHEMA,
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "run_id": run_id,
+        "case_id": case_id,
+        "case_manifest_sha256": case_manifest_sha256,
+        "variant_id": "A0",
+        "split": Split.PILOT.value,
+        "cache_mode": CacheMode.COLD.value,
+        "input_sha256": input_sha256,
+        "environment_sha256": environment_sha256,
+        "independent": True,
+        "accepted": accepted,
+        "active_process_count": 0,
+        "consumed": list(upstream_stage_digests),
+    }
+    if accepted:
+        attempt_body = {
+            "attempt_index": 0,
+            "candidate_source": StageName.COMPILER.value,
+            "candidate_artifact_sha256": candidate_artifact_sha256,
+            "source_sha256": hashlib.sha256(b"source").hexdigest(),
+            "command_sha256": hashlib.sha256(b"command").hexdigest(),
+            "stdout_sha256": hashlib.sha256(b"accepted").hexdigest(),
+            "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+            "returncode": 0,
+            "timed_out": False,
+            "cancelled": False,
+            "resource_exhausted": False,
+            "termination_reason": "completed",
+            "process_group_reaped": True,
+            "active_process_count": 0,
+            "accepted": True,
+        }
+        attempt = {
+            **attempt_body,
+            "attempt_sha256": _sha256_json(attempt_body),
+        }
+        receipt_body.update(
+            {
+                "compiled_obligation_sha256": hashlib.sha256(
+                    b"compiled"
+                ).hexdigest(),
+                "obligation_sha256": hashlib.sha256(
+                    b"obligation"
+                ).hexdigest(),
+                "candidate_source": attempt["candidate_source"],
+                "candidate_artifact_sha256": candidate_artifact_sha256,
+                "source_sha256": attempt["source_sha256"],
+                "semantic_context_sha256": hashlib.sha256(
+                    b"semantic-context"
+                ).hexdigest(),
+                "semantic_artifact_sha256s": [
+                    candidate_artifact_sha256
+                ],
+                "command_sha256": attempt["command_sha256"],
+                "stdout_sha256": attempt["stdout_sha256"],
+                "stderr_sha256": attempt["stderr_sha256"],
+                "returncode": attempt["returncode"],
+                "timed_out": attempt["timed_out"],
+                "cancelled": attempt["cancelled"],
+                "resource_exhausted": attempt["resource_exhausted"],
+                "termination_reason": attempt["termination_reason"],
+                "process_group_reaped": attempt[
+                    "process_group_reaped"
+                ],
+                "candidate_attempts": [attempt],
+                "candidate_attempts_sha256": _sha256_json([attempt]),
+                "selected_attempt": {
+                    key: attempt[key]
+                    for key in (
+                        "attempt_index",
+                        "candidate_source",
+                        "candidate_artifact_sha256",
+                        "attempt_sha256",
+                        "accepted",
+                    )
+                },
+            }
+        )
+    else:
+        receipt_body["reason"] = "no_proof_candidate"
+    receipt_sha256 = _sha256_json(receipt_body)
+    stages.append(
+        StageRecord.create(
+            **common,
+            stage=StageName.KERNEL,
+            status=StageStatus.SUCCESS,
+            provenance=StageProvenance(
+                schema=STAGE_PROVENANCE_SCHEMA,
+                adapter_id="synthetic-kernel",
+                adapter_version="v1",
+                source=("measured-pilot-safety-fixture",),
+                requested_identity={"component": "kernel"},
+                effective_identity={
+                    "graph_invoked": True,
+                    "consumed_artifact_sha256": [
+                        candidate_artifact_sha256
+                    ],
+                },
+                input_sha256=input_sha256,
+                environment_sha256=environment_sha256,
+                upstream_stage_digests=upstream_stage_digests,
+            ),
+            telemetry=TelemetryRecord(
+                resource_lane=ResourceLane.KERNEL
+            ),
+            data={
+                **receipt_body,
+                "receipt_sha256": receipt_sha256,
+            },
+            kernel_accepted=accepted,
+            kernel_receipt_sha256=(
+                receipt_sha256 if accepted else None
+            ),
+        )
+    )
+    result = CaseResultRecord.from_stages(stages)
+    result.validate_provenance(
+        expected_environment_sha256=environment_sha256
+    )
+    return CaseResultRecord.from_dict(result.to_dict())
+
+
 def _measured_gate_sources(
     *,
     frontier: list[str] | None = None,
     candidate_ids: list[str] | None = None,
     missing_cost: bool = False,
     invalid_control_verified: bool = False,
+    invalid_control_masked_kernel_acceptance: bool = False,
 ) -> dict[str, dict[str, object]]:
     run_id = "measured-pilot-test"
     candidates = candidate_ids or ["A1", "A2"]
     selected = frontier if frontier is not None else ["A1"]
-    baseline_receipt = hashlib.sha256(b"case-A0").hexdigest()
+    invalid_result = _canonical_invalid_control_result(
+        run_id=run_id,
+        accepted=(
+            invalid_control_verified
+            or invalid_control_masked_kernel_acceptance
+        ),
+        masked_by_blocking_failure=(
+            invalid_control_masked_kernel_acceptance
+        ),
+    )
+    baseline_receipt = invalid_result.digest
     candidate_receipts = {
         candidate_id: hashlib.sha256(
             f"case-{candidate_id}".encode()
@@ -818,20 +1018,7 @@ def _measured_gate_sources(
             {
                 "invalid_control": True,
                 "case_result_sha256": baseline_receipt,
-                "case_result": {
-                    "status": (
-                        "verified"
-                        if invalid_control_verified
-                        else "rejected"
-                    ),
-                    "kernel_receipt_sha256": (
-                        hashlib.sha256(
-                            b"invalid-kernel-receipt"
-                        ).hexdigest()
-                        if invalid_control_verified
-                        else None
-                    ),
-                },
+                "case_result": invalid_result.to_dict(),
             },
             *[
                 {
@@ -1036,6 +1223,42 @@ def test_measured_gate_invalid_control_forces_rejection(
     assert value["safety"][
         "kernel_verified_invalid_control_false_positive_count"
     ] == 1
+    assert value["safety"]["fatal_safety_incident"] is True
+    assert value["decision"]["status"] == "rejected"
+    assert value["shortlist"]["selected_variant_ids"] == []
+    assert value["holdout"]["authorized"] is False
+
+
+def test_measured_gate_rejects_masked_raw_kernel_acceptance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sources = _measured_gate_sources(
+        invalid_control_masked_kernel_acceptance=True
+    )
+    invalid_observation = sources["efficiency"]["observations"][0]
+    result = CaseResultRecord.from_dict(
+        invalid_observation["case_result"]
+    )
+    kernel = result.stages[-1]
+
+    assert result.status.value == "rejected"
+    assert result.kernel_accepted is False
+    assert result.kernel_receipt_sha256 is None
+    assert result.terminal_kernel_accepted is True
+    assert kernel.data["schema"] == NATIVE_KERNEL_RECEIPT_SCHEMA
+    assert kernel.data["receipt_sha256"] == kernel.kernel_receipt_sha256
+
+    value, _, _ = _build_synthetic_measured_gate(
+        monkeypatch,
+        sources,
+    )
+
+    assert value["safety"][
+        "kernel_verified_invalid_control_false_positive_count"
+    ] == 1
+    assert value["safety"]["kernel_receipt_sha256s"] == [
+        kernel.kernel_receipt_sha256
+    ]
     assert value["safety"]["fatal_safety_incident"] is True
     assert value["decision"]["status"] == "rejected"
     assert value["shortlist"]["selected_variant_ids"] == []

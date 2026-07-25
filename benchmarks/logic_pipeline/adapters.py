@@ -29,6 +29,7 @@ import time
 from types import MappingProxyType, SimpleNamespace
 from typing import Any, Callable, Final, Mapping, MutableMapping, Sequence
 import urllib.parse
+import urllib.error
 import urllib.request
 
 from .contracts import (
@@ -80,7 +81,11 @@ LEANSTRAL_PROOF_OUTPUT_SCHEMA: Final = (
 )
 LEANSTRAL_GENERATION_BOUNDARY_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-generation-boundary.v1"
+    "leanstral-generation-boundary.v2"
+)
+LEANSTRAL_GENERATION_FAILURE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "leanstral-generation-failure.v1"
 )
 LEANSTRAL_REPAIR_CONTEXT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
@@ -88,7 +93,11 @@ LEANSTRAL_REPAIR_CONTEXT_SCHEMA: Final = (
 )
 LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
-    "leanstral-strict-semantic-context.v1"
+    "leanstral-strict-semantic-context.v2"
+)
+LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "leanstral-model-semantic-context.v1"
 )
 LEANSTRAL_JSON_NUMBER_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.json-number-text.v1"
@@ -1026,6 +1035,8 @@ def _mapping_sequence_prefix(
 
 def _semantic_artifact_projection(
     artifact: StageArtifact,
+    *,
+    model_facing: bool = False,
 ) -> dict[str, object]:
     """Project one upstream semantic artifact into a label-blind model input.
 
@@ -1037,12 +1048,21 @@ def _semantic_artifact_projection(
 
     projection: dict[str, object] = {
         "stage": artifact.stage.value,
-        "artifact_sha256": artifact.digest,
-        "output_sha256": artifact.output_sha256,
         "invoked": artifact.invoked,
         "status": artifact.status.value,
-        "policy_reason": artifact.policy_reason,
     }
+    if not model_facing:
+        # Content-addressed stage identities and routing/cache receipts belong
+        # in durable benchmark evidence, not in an LLM prompt.  In particular,
+        # a warm cache hit can change the artifact digest while leaving every
+        # semantic field below byte-for-byte identical.
+        projection.update(
+            {
+                "artifact_sha256": artifact.digest,
+                "output_sha256": artifact.output_sha256,
+                "policy_reason": artifact.policy_reason,
+            }
+        )
     if (
         not artifact.invoked
         or artifact.status is not StageStatus.SUCCESS
@@ -1065,6 +1085,15 @@ def _semantic_artifact_projection(
                     "document_id",
                     "source",
                     "normalized_text",
+                    "frame_candidates",
+                    "frame_logic",
+                )
+                if model_facing
+                else (
+                    "version",
+                    "document_id",
+                    "source",
+                    "normalized_text",
                     "metadata",
                     "frame_candidates",
                     "frame_logic",
@@ -1078,41 +1107,39 @@ def _semantic_artifact_projection(
                     "predicate",
                     "conditions",
                     "exceptions",
+                )
+                if model_facing
+                else (
+                    "formula_id",
+                    "operator",
+                    "predicate",
+                    "conditions",
+                    "exceptions",
                     "provenance",
                     "metadata",
                 ),
                 maximum=16,
             )
-            modal_projection["modal_ir_sha256"] = hashlib.sha256(
-                canonical_json(_thaw_json(modal_ir)).encode("utf-8")
-            ).hexdigest()
+            if not model_facing:
+                modal_projection["modal_ir_sha256"] = hashlib.sha256(
+                    canonical_json(_thaw_json(modal_ir)).encode("utf-8")
+                ).hexdigest()
         projection["evidence"] = {
             "schema": data.get("schema"),
             "document": _mapping_subset(
                 data.get("document"),
                 (
+                    "normalized_text",
+                    "citation",
+                    "source",
+                )
+                if model_facing
+                else (
                     "document_id",
                     "text_sha256",
                     "normalized_text",
                     "citation",
                     "source",
-                ),
-            ),
-            "execution": _mapping_subset(
-                data.get("execution"),
-                (
-                    "mode",
-                    "requested_model",
-                    "effective_model",
-                    "used_fallback_model",
-                    "language",
-                    "pipeline",
-                    "parser_backend",
-                    "srl_backend",
-                    "model_version",
-                    "model_meta_sha256",
-                    "configuration_sha256",
-                    "variant_id",
                 ),
             ),
             "sentences": _mapping_sequence_prefix(
@@ -1167,11 +1194,41 @@ def _semantic_artifact_projection(
             ),
             "modal_ir": modal_projection,
         }
+        if not model_facing:
+            projection["evidence"]["execution"] = _mapping_subset(
+                data.get("execution"),
+                (
+                    "mode",
+                    "requested_model",
+                    "effective_model",
+                    "used_fallback_model",
+                    "language",
+                    "pipeline",
+                    "parser_backend",
+                    "srl_backend",
+                    "model_version",
+                    "model_meta_sha256",
+                    "configuration_sha256",
+                    "variant_id",
+                ),
+            )
     elif artifact.stage is StageName.SYMAI:
         if data.get("schema") == SYMAI_EVIDENCE_SCHEMA:
             projection["evidence"] = _mapping_subset(
                 data,
                 (
+                    "schema",
+                    "candidate_ir",
+                    "normalized_predicates",
+                    "quantifiers",
+                    "entities",
+                    "ambiguity_flags",
+                    "confidence",
+                    "validation_errors",
+                    "assurance",
+                )
+                if model_facing
+                else (
                     "schema",
                     "candidate_ir",
                     "candidate_ir_sha256",
@@ -3902,6 +3959,156 @@ class LeanstralProviderRequestContractError(LeanstralAdapterContractError):
     """Raised when the supervisor rejects a benchmark provider request."""
 
 
+class LeanstralDraftAdmissibilityError(LeanstralAdapterContractError):
+    """Raised when model text is well-formed but forbidden as a proof body."""
+
+
+_LEANSTRAL_SAFE_FAILURE_CLASSES: Final = frozenset(
+    {
+        "length_exhausted",
+        "resource_exhausted",
+        "malformed_request",
+        "malformed_response",
+        "inadmissible_proposal",
+        "timed_out",
+        "provider_error",
+        "unavailable",
+    }
+)
+_LEANSTRAL_FAILURE_DETAILS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "length_exhausted": (
+            "Leanstral generation reached the configured output limit"
+        ),
+        "resource_exhausted": (
+            "Leanstral generation exceeded a configured resource bound"
+        ),
+        "malformed_request": (
+            "Leanstral request violated the strict provider contract"
+        ),
+        "malformed_response": (
+            "Leanstral service returned a malformed response"
+        ),
+        "inadmissible_proposal": (
+            "Leanstral response violated the proof admissibility contract"
+        ),
+        "timed_out": "Leanstral provider timed out",
+        "provider_error": "Leanstral provider failed",
+        "unavailable": "Leanstral provider is unavailable",
+    }
+)
+_LEANSTRAL_PINNED_IDENTITY_FIELDS: Final = frozenset(
+    {"endpoint", "provider", "model", "cache_prompt"}
+)
+_LEANSTRAL_FAILURE_ROUTE_FIELDS: Final = frozenset(
+    {"endpoint", "provider", "requested_model", "cache_prompt"}
+)
+
+
+def _leanstral_pinned_identity(
+    value: Mapping[str, object],
+) -> Mapping[str, object]:
+    """Validate the exact secret-free identity of one pinned model route."""
+
+    if (
+        not isinstance(value, Mapping)
+        or set(value) != _LEANSTRAL_PINNED_IDENTITY_FIELDS
+        or any(
+            not isinstance(value.get(field), str)
+            or not str(value[field]).strip()
+            for field in ("endpoint", "provider", "model")
+        )
+        or value.get("cache_prompt") is not False
+    ):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral provider identity is invalid"
+        )
+    return MappingProxyType(dict(value))
+
+
+def _leanstral_route_identity(
+    *,
+    endpoint: str,
+    provider: str,
+    model: str,
+) -> Mapping[str, object]:
+    return _leanstral_pinned_identity(
+        {
+            "endpoint": endpoint,
+            "provider": provider,
+            "model": model,
+            "cache_prompt": False,
+        }
+    )
+
+
+def _content_addressed_receipt(
+    body: Mapping[str, object],
+) -> dict[str, object]:
+    normalized = dict(
+        _bounded_canonical(body, "content-addressed receipt", 16 * 1024)
+    )
+    normalized["receipt_sha256"] = hashlib.sha256(
+        canonical_json(normalized).encode("utf-8")
+    ).hexdigest()
+    return normalized
+
+
+class LeanstralGenerationFailure(LeanstralAdapterContractError):
+    """Typed, bounded generation failure that never stores provider text."""
+
+    def __init__(
+        self,
+        safe_failure_class: str,
+        *,
+        phase: str,
+        http_status: int | None = None,
+        request_payload_sha256: str | None = None,
+    ) -> None:
+        if safe_failure_class not in _LEANSTRAL_SAFE_FAILURE_CLASSES:
+            raise LeanstralAdapterContractError(
+                "Leanstral generation failure class is not allow-listed"
+            )
+        if phase not in {
+            "request_validation",
+            "model_registry",
+            "completion_pre_dispatch",
+            "completion_request",
+            "completion_response",
+            "proposal_validation",
+            "provider",
+        }:
+            raise LeanstralAdapterContractError(
+                "Leanstral generation failure phase is not allow-listed"
+            )
+        if (
+            http_status is not None
+            and (
+                isinstance(http_status, bool)
+                or not isinstance(http_status, int)
+                or not 100 <= http_status <= 599
+            )
+        ):
+            raise LeanstralAdapterContractError(
+                "Leanstral generation HTTP status is invalid"
+            )
+        if request_payload_sha256 is not None:
+            _digest(
+                request_payload_sha256,
+                "Leanstral generation request_payload_sha256",
+            )
+        body = {
+            "schema": LEANSTRAL_GENERATION_FAILURE_SCHEMA,
+            "safe_failure_class": safe_failure_class,
+            "phase": phase,
+            "http_status": http_status,
+            "request_payload_sha256": request_payload_sha256,
+        }
+        self.safe_failure_class = safe_failure_class
+        self.boundary_receipt = _content_addressed_receipt(body)
+        super().__init__(_LEANSTRAL_FAILURE_DETAILS[safe_failure_class])
+
+
 @dataclass(frozen=True, slots=True)
 class LeanstralAdapterConfig:
     """Frozen limits for the benchmark's untrusted Leanstral model lane.
@@ -4053,6 +4260,8 @@ def _lean_declaration_binders(value: str) -> tuple[str, ...]:
 def _leanstral_input_semantic_context(
     request: StageRequest,
 ) -> dict[str, object]:
+    """Return the durable semantic receipt with full upstream provenance."""
+
     measured_proof_arm = (
         _is_frozen_ablation_request(request)
         and request.variant_id in {f"A{index}" for index in range(3, 13)}
@@ -4073,6 +4282,62 @@ def _leanstral_input_semantic_context(
         require_present=required_present,
         require_success=required_success,
     )
+
+
+def _leanstral_model_semantic_context(
+    request: StageRequest,
+    durable_context: Mapping[str, object],
+) -> dict[str, object]:
+    """Project semantic evidence without cache/provenance metadata.
+
+    ``durable_context`` is deliberately accepted and checked here so every
+    model projection remains paired with the complete content-addressed receipt
+    retained by the benchmark.  Only the allowlisted semantic projection is
+    placed in the context capsule and therefore in the model prompt.
+    """
+
+    durable_artifacts = durable_context.get("artifacts")
+    if not isinstance(durable_artifacts, Sequence) or isinstance(
+        durable_artifacts, (str, bytes, bytearray)
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral durable semantic context is malformed"
+        )
+    projected: list[dict[str, object]] = []
+    for durable in durable_artifacts:
+        if not isinstance(durable, Mapping):
+            raise LeanstralAdapterContractError(
+                "Leanstral durable semantic artifact is malformed"
+            )
+        stage_value = durable.get("stage")
+        try:
+            stage = StageName(str(stage_value))
+        except ValueError as exc:
+            raise LeanstralAdapterContractError(
+                "Leanstral durable semantic stage is invalid"
+            ) from exc
+        artifact = request.artifact(stage)
+        if artifact is None:
+            raise LeanstralAdapterContractError(
+                "Leanstral durable semantic artifact is missing"
+            )
+        if durable.get("artifact_sha256") != artifact.digest:
+            raise LeanstralAdapterContractError(
+                "Leanstral durable semantic artifact identity changed"
+            )
+        projected.append(
+            _semantic_artifact_projection(artifact, model_facing=True)
+        )
+    model_context = {
+        "schema": LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA,
+        "artifacts": projected,
+    }
+    encoded = canonical_json(model_context).encode("utf-8")
+    if len(encoded) > SEMANTIC_CONTEXT_MAX_BYTES:
+        raise LeanstralAdapterContractError(
+            "Leanstral model semantic context exceeds its byte bound"
+        )
+    return model_context
 
 
 def _compiled_leanstral_context(
@@ -4210,23 +4475,25 @@ def _compiled_leanstral_context(
         semantic_artifacts = semantic_context.get("artifacts", ())
         semantic_suggestions = ()
         if isinstance(semantic_artifacts, Sequence) and semantic_artifacts:
-            semantic_digest = _digest(
-                semantic_context.get("context_sha256"),
-                "semantic_context.context_sha256",
+            model_semantic_context = _leanstral_model_semantic_context(
+                request,
+                semantic_context,
             )
+            model_semantic_digest = hashlib.sha256(
+                canonical_json(model_semantic_context).encode("utf-8")
+            ).hexdigest()
             strict_semantic_context = {
                 "schema": LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA,
-                "source_semantic_context_sha256": semantic_digest,
                 "number_encoding": LEANSTRAL_JSON_NUMBER_SCHEMA,
                 "semantic_context": _leanstral_strict_json_value(
-                    semantic_context
+                    model_semantic_context
                 ),
             }
             semantic_suggestions = (
                 entry_type(
                     trust=trust_type.UNTRUSTED_SUGGESTION,
                     kind="semantic_stage_context",
-                    record_id=f"semantic-context-{semantic_digest}",
+                    record_id=f"semantic-context-{model_semantic_digest}",
                     fields=strict_semantic_context,
                 ),
             )
@@ -4523,20 +4790,23 @@ def _validate_leanstral_draft(
         raise LeanstralAdapterContractError("Leanstral draft text is empty or missing")
     text = text.strip()
     if len(text.encode("utf-8")) > config.max_draft_bytes:
-        raise LeanstralAdapterContractError("Leanstral draft exceeds the byte bound")
+        raise LeanstralGenerationFailure(
+            "resource_exhausted",
+            phase="proposal_validation",
+        )
     if re.match(r"^by(?:\s|$)", text):
-        raise LeanstralAdapterContractError(
+        raise LeanstralDraftAdmissibilityError(
             "Leanstral proof_text must be a tactic body without a leading by"
         )
     if _LEANSTRAL_NON_TACTIC_BODY.search(text):
-        raise LeanstralAdapterContractError(
+        raise LeanstralDraftAdmissibilityError(
             "Leanstral proof_text must not contain imports or declarations"
         )
     if "proof_text" in draft and draft["proof_text"] != text:
         raise LeanstralAdapterContractError("draft_text and proof_text disagree")
     forbidden = _LEANSTRAL_FORBIDDEN_CONSTRUCT.search(text)
     if forbidden:
-        raise LeanstralAdapterContractError(
+        raise LeanstralDraftAdmissibilityError(
             f"Leanstral draft contains forbidden construct {forbidden.group(0)!r}"
         )
     raw_ids = draft.get("obligation_ids")
@@ -4563,11 +4833,13 @@ def _validate_leanstral_draft(
         "can_mutate_obligations",
     ):
         if field_name in draft and draft[field_name] is not False:
-            raise LeanstralAdapterContractError(
+            raise LeanstralDraftAdmissibilityError(
                 f"Leanstral model draft cannot claim {field_name}"
             )
     if draft.get("assurance", "unverified") not in {"unverified", "none"}:
-        raise LeanstralAdapterContractError("Leanstral model draft must be unverified")
+        raise LeanstralDraftAdmissibilityError(
+            "Leanstral model draft must be unverified"
+        )
     supplied_digest = draft.get("output_sha256")
     calculated_digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if supplied_digest is not None and supplied_digest != calculated_digest:
@@ -4585,34 +4857,252 @@ def _validate_leanstral_draft(
     return draft
 
 
+def _bind_leanstral_failure_route(
+    boundary: Mapping[str, object],
+    pinned_identity: Mapping[str, object],
+) -> dict[str, object]:
+    """Bind an internal typed failure to the exact pinned live route."""
+
+    pinned = _leanstral_pinned_identity(pinned_identity)
+    expected = {
+        "endpoint": pinned["endpoint"],
+        "provider": pinned["provider"],
+        "requested_model": pinned["model"],
+        "cache_prompt": False,
+    }
+    present = _LEANSTRAL_FAILURE_ROUTE_FIELDS.intersection(boundary)
+    if present:
+        if present != _LEANSTRAL_FAILURE_ROUTE_FIELDS or any(
+            boundary.get(field) != expected[field]
+            for field in _LEANSTRAL_FAILURE_ROUTE_FIELDS
+        ):
+            raise LeanstralAdapterContractError(
+                "Leanstral failure receipt drifted from the pinned route"
+            )
+        return dict(boundary)
+    if "provider_failure_receipt_sha256" in boundary:
+        raise LeanstralAdapterContractError(
+            "Leanstral failure receipt has incomplete pinned provenance"
+        )
+    body = {
+        key: value
+        for key, value in boundary.items()
+        if key != "receipt_sha256"
+    }
+    body.update(expected)
+    body["provider_failure_receipt_sha256"] = boundary["receipt_sha256"]
+    return _content_addressed_receipt(body)
+
+
+def _validate_pinned_leanstral_failure_output(
+    output: StageOutput,
+    *,
+    request: StageRequest,
+    pinned_identity: Mapping[str, object],
+) -> None:
+    """Reject a provider-supplied failure with missing or drifted identity."""
+
+    pinned = _leanstral_pinned_identity(pinned_identity)
+    if not isinstance(output.data, Mapping):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral failure evidence is not an object"
+        )
+    data = output.data
+    safe_failure_class = data.get("safe_failure_class")
+    boundary = data.get("generation_failure_boundary")
+    if (
+        safe_failure_class not in _LEANSTRAL_SAFE_FAILURE_CLASSES
+        or data.get("schema") != LEANSTRAL_GENERATION_FAILURE_SCHEMA
+        or data.get("request_input_sha256") != request.input_sha256
+        or not isinstance(boundary, Mapping)
+    ):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral failure evidence is incomplete"
+        )
+    boundary_body = {
+        key: value
+        for key, value in boundary.items()
+        if key != "receipt_sha256"
+    }
+    expected_route = {
+        "endpoint": pinned["endpoint"],
+        "provider": pinned["provider"],
+        "requested_model": pinned["model"],
+        "cache_prompt": False,
+    }
+    expected_status = (
+        StageStatus.UNAVAILABLE
+        if safe_failure_class == "unavailable"
+        else StageStatus.FAILED
+    )
+    expected_code = (
+        FailureCode.CAPABILITY_UNAVAILABLE
+        if safe_failure_class == "unavailable"
+        else FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
+    )
+    identity = output.effective_identity
+    if (
+        boundary.get("schema") != LEANSTRAL_GENERATION_FAILURE_SCHEMA
+        or boundary.get("safe_failure_class") != safe_failure_class
+        or boundary.get("receipt_sha256")
+        != hashlib.sha256(
+            canonical_json(boundary_body).encode("utf-8")
+        ).hexdigest()
+        or any(
+            boundary.get(field) != expected
+            for field, expected in expected_route.items()
+        )
+        or output.status is not expected_status
+        or output.failure_code is not expected_code
+        or any(
+            identity.get(field) != expected
+            for field, expected in pinned.items()
+        )
+        or identity.get("leanstral_safe_failure_class")
+        != safe_failure_class
+        or identity.get("leanstral_failure_boundary_sha256")
+        != boundary.get("receipt_sha256")
+    ):
+        raise LeanstralAdapterContractError(
+            "pinned Leanstral failure identity or receipt changed"
+        )
+
+
 def _leanstral_failure(
     request: StageRequest,
-    detail: str,
     *,
-    unavailable: bool = False,
+    safe_failure_class: str,
+    boundary_receipt: Mapping[str, object] | None = None,
+    pinned_identity: Mapping[str, object] | None = None,
     model_calls: int | None = None,
+    started_wall: float | None = None,
+    started_cpu: float | None = None,
 ) -> StageOutput:
+    if safe_failure_class not in _LEANSTRAL_SAFE_FAILURE_CLASSES:
+        raise LeanstralAdapterContractError(
+            "Leanstral safe failure class is not allow-listed"
+        )
+    unavailable = safe_failure_class == "unavailable"
+    if boundary_receipt is None:
+        boundary_receipt = LeanstralGenerationFailure(
+            safe_failure_class,
+            phase=(
+                "request_validation"
+                if model_calls == 0
+                else "provider"
+            ),
+        ).boundary_receipt
+    boundary = dict(
+        _bounded_canonical(
+            boundary_receipt,
+            "Leanstral generation failure receipt",
+            16 * 1024,
+        )
+    )
+    boundary_body = {
+        key: value
+        for key, value in boundary.items()
+        if key != "receipt_sha256"
+    }
+    if (
+        boundary.get("schema") != LEANSTRAL_GENERATION_FAILURE_SCHEMA
+        or boundary.get("safe_failure_class") != safe_failure_class
+        or boundary.get("receipt_sha256")
+        != hashlib.sha256(
+            canonical_json(boundary_body).encode("utf-8")
+        ).hexdigest()
+    ):
+        raise LeanstralAdapterContractError(
+            "Leanstral generation failure receipt is invalid"
+        )
+    if pinned_identity is not None:
+        boundary = _bind_leanstral_failure_route(
+            boundary,
+            pinned_identity,
+        )
+    failure_boundary_sha256 = str(boundary["receipt_sha256"])
+    if model_calls is None:
+        model_calls = (
+            0
+            if boundary.get("phase")
+            in {
+                "request_validation",
+                "model_registry",
+                "completion_pre_dispatch",
+            }
+            else 1
+        )
+    identity = {
+        **dict(request.requested_identity),
+        **(
+            {}
+            if pinned_identity is None
+            else dict(_leanstral_pinned_identity(pinned_identity))
+        ),
+        "leanstral_safe_failure_class": safe_failure_class,
+        "leanstral_failure_boundary_sha256": failure_boundary_sha256,
+    }
     return StageOutput(
+        data={
+            "schema": LEANSTRAL_GENERATION_FAILURE_SCHEMA,
+            "safe_failure_class": safe_failure_class,
+            "request_input_sha256": request.input_sha256,
+            "generation_failure_boundary": boundary,
+        },
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
-        effective_identity=request.requested_identity,
+        effective_identity=identity,
         failure_code=(
             FailureCode.CAPABILITY_UNAVAILABLE
             if unavailable
             else FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
         ),
-        failure_detail=detail[:_MAX_DETAIL_LENGTH],
-        telemetry=(
-            None
-            if model_calls is None
-            else TelemetryRecord(
-                input_items=1,
-                output_items=0,
-                model_calls=model_calls,
-                bytes_in=request.input_bytes,
-                resource_lane=ResourceLane.MODEL,
-            )
+        failure_detail=_LEANSTRAL_FAILURE_DETAILS[safe_failure_class],
+        telemetry=TelemetryRecord(
+            wall_time_ms=round(
+                0.0
+                if started_wall is None
+                else max(0.0, time.perf_counter() - started_wall)
+                * 1_000,
+                6,
+            ),
+            cpu_time_ms=round(
+                0.0
+                if started_cpu is None
+                else max(0.0, time.process_time() - started_cpu)
+                * 1_000,
+                6,
+            ),
+            input_items=1,
+            output_items=0,
+            model_calls=model_calls,
+            bytes_in=request.input_bytes,
+            resource_lane=ResourceLane.MODEL,
         ),
     )
+
+
+def _leanstral_provider_model_calls(
+    error: BaseException,
+    safe_failure_class: str,
+) -> int:
+    """Infer dispatch only from source-bound provider contract messages."""
+
+    if safe_failure_class in {
+        "malformed_request",
+        "unavailable",
+    }:
+        return 0
+    failure = getattr(error, "failure", None)
+    message = getattr(failure, "message", None)
+    if message in {
+        (
+            "Leanstral request has no positive model time budget "
+            "before its deadline"
+        ),
+        "Leanstral request has no positive model token budget",
+    }:
+        return 0
+    return 1
 
 
 def _provider_request_id(request: StageRequest, repair_attempt: int) -> str:
@@ -4624,33 +5114,122 @@ def _provider_request_id(request: StageRequest, repair_attempt: int) -> str:
     return f"leanstral-{digest}"
 
 
+class _LeanstralNoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject redirects so endpoint provenance cannot cross an origin."""
+
+    def redirect_request(
+        self,
+        request: urllib.request.Request,
+        file_pointer: object,
+        code: int,
+        message: str,
+        headers: object,
+        new_url: str,
+    ) -> None:
+        del request, file_pointer, code, message, headers, new_url
+        return None
+
+
+def _leanstral_urlopen(
+    request: urllib.request.Request,
+    *,
+    timeout: float,
+) -> object:
+    """Open one exact URL without ambient proxy or redirect behavior."""
+
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _LeanstralNoRedirect(),
+    )
+    return opener.open(request, timeout=timeout)
+
+
 def _strict_leanstral_http_object(
     request: urllib.request.Request,
     *,
+    phase: str,
     timeout_seconds: float,
     max_response_bytes: int,
 ) -> dict[str, object]:
     """Read one bounded strict-JSON response from the frozen model service."""
 
+    request_payload_sha256 = (
+        None
+        if request.data is None
+        else hashlib.sha256(request.data).hexdigest()
+    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        with _leanstral_urlopen(
+            request, timeout=timeout_seconds
+        ) as response:
+            if response.geturl() != request.full_url:
+                raise LeanstralGenerationFailure(
+                    "provider_error",
+                    phase=phase,
+                    request_payload_sha256=request_payload_sha256,
+                )
             raw = response.read(max_response_bytes + 1)
+    except LeanstralGenerationFailure:
+        raise
+    except urllib.error.HTTPError as exc:
+        status = int(exc.code)
+        if status in {408, 504}:
+            failure_class = "timed_out"
+        elif status in {413, 429}:
+            failure_class = "resource_exhausted"
+        elif status in {404, 410}:
+            failure_class = "unavailable"
+        else:
+            failure_class = "provider_error"
+        raise LeanstralGenerationFailure(
+            failure_class,
+            phase=phase,
+            http_status=status,
+            request_payload_sha256=request_payload_sha256,
+        ) from exc
+    except TimeoutError as exc:
+        raise LeanstralGenerationFailure(
+            "timed_out",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
+        ) from exc
+    except urllib.error.URLError as exc:
+        if isinstance(exc.reason, TimeoutError):
+            failure_class = "timed_out"
+        else:
+            failure_class = "unavailable"
+        raise LeanstralGenerationFailure(
+            failure_class,
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
+        ) from exc
+    except OSError as exc:
+        raise LeanstralGenerationFailure(
+            "unavailable",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
+        ) from exc
     except Exception as exc:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral service request failed "
-            f"({type(exc).__name__})"
+        raise LeanstralGenerationFailure(
+            "provider_error",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
         ) from exc
     if len(raw) > max_response_bytes:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral service response exceeded its byte bound"
+        raise LeanstralGenerationFailure(
+            "resource_exhausted",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
         )
 
     def no_duplicates(pairs: Sequence[tuple[str, object]]) -> dict[str, object]:
         result: dict[str, object] = {}
         for key, value in pairs:
             if key in result:
-                raise LeanstralAdapterContractError(
-                    f"pinned Leanstral response contains duplicate key {key!r}"
+                raise LeanstralGenerationFailure(
+                    "malformed_response",
+                    phase=phase,
+                    request_payload_sha256=request_payload_sha256,
                 )
             result[key] = value
         return result
@@ -4660,18 +5239,24 @@ def _strict_leanstral_http_object(
             raw.decode("utf-8"),
             object_pairs_hook=no_duplicates,
             parse_constant=lambda item: (_ for _ in ()).throw(
-                LeanstralAdapterContractError(
-                    f"pinned Leanstral response contains non-finite value {item}"
+                LeanstralGenerationFailure(
+                    "malformed_response",
+                    phase=phase,
+                    request_payload_sha256=request_payload_sha256,
                 )
             ),
         )
     except (UnicodeError, json.JSONDecodeError) as exc:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral service returned invalid JSON"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
         ) from exc
     if not isinstance(value, dict):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral service returned a non-object response"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase=phase,
+            request_payload_sha256=request_payload_sha256,
         )
     return value
 
@@ -4679,8 +5264,9 @@ def _strict_leanstral_http_object(
 def _leanstral_model_ids(value: Mapping[str, object]) -> tuple[str, ...]:
     raw = value.get("data", value.get("models"))
     if not isinstance(raw, list):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral service omitted its served-model array"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="model_registry",
         )
     identities: list[str] = []
     for item in raw:
@@ -4697,136 +5283,14 @@ def _leanstral_model_ids(value: Mapping[str, object]) -> tuple[str, ...]:
     return tuple(identities)
 
 
-def leanstral_strict_llm_generate(
+def _leanstral_completion_payload_bytes(
     prompt: str,
     *,
-    endpoint: str,
-    expected_provider: str,
-    expected_model: str,
-    audit_receipt: MutableMapping[str, object] | None = None,
-    **kwargs: object,
-) -> str:
-    """Call one exact endpoint/model with strict JSON and no router fallback."""
-
-    if not isinstance(prompt, str) or not prompt.strip():
-        raise LeanstralAdapterContractError(
-            "Leanstral strict generation requires a non-empty prompt"
-        )
-    if (
-        not isinstance(endpoint, str)
-        or not endpoint.strip()
-        or not isinstance(expected_provider, str)
-        or not expected_provider.strip()
-        or not isinstance(expected_model, str)
-        or not expected_model.strip()
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral strict generation requires a complete frozen identity"
-        )
-    endpoint = endpoint.strip().rstrip("/")
-    parsed_endpoint = urllib.parse.urlsplit(endpoint)
-    if (
-        parsed_endpoint.scheme not in {"http", "https"}
-        or not parsed_endpoint.hostname
-        or parsed_endpoint.username is not None
-        or parsed_endpoint.password is not None
-        or parsed_endpoint.query
-        or parsed_endpoint.fragment
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral frozen endpoint must be an uncredentialed HTTP(S) origin/path"
-        )
-    if (
-        kwargs.get("provider") != expected_provider
-        or kwargs.get("model_name") != expected_model
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral provider invocation drifted from the frozen identity"
-        )
-    if (
-        kwargs.get("allow_local_fallback") is not False
-        or kwargs.get("disable_model_retry") is not True
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral provider invocation did not disable fallback and model retry"
-        )
-    timeout = kwargs.get("timeout")
-    if (
-        isinstance(timeout, bool)
-        or not isinstance(timeout, (int, float))
-        or not math.isfinite(float(timeout))
-        or not 0 < float(timeout) <= 300
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral provider invocation has an invalid timeout"
-        )
-    max_tokens = kwargs.get("max_new_tokens")
-    if (
-        isinstance(max_tokens, bool)
-        or not isinstance(max_tokens, int)
-        or not 1 <= max_tokens <= 1_400
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral provider invocation has an invalid token budget"
-        )
-    temperature = kwargs.get("temperature")
-    if (
-        isinstance(temperature, bool)
-        or not isinstance(temperature, (int, float))
-        or float(temperature) != 0.0
-    ):
-        raise LeanstralAdapterContractError(
-            "Leanstral pinned route requires temperature zero"
-        )
-    deadline = time.monotonic() + float(timeout)
-
-    def remaining_timeout() -> float:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise TimeoutError(
-                "pinned Leanstral aggregate HTTP timeout expired"
-            )
-        return remaining
-
-    def no_duplicates(pairs: Sequence[tuple[str, object]]) -> dict[str, object]:
-        result: dict[str, object] = {}
-        for key, value in pairs:
-            if key in result:
-                raise LeanstralAdapterContractError(
-                    f"Leanstral prompt contains duplicate key {key!r}"
-                )
-            result[key] = value
-        return result
-
-    try:
-        structured = json.loads(
-            prompt,
-            object_pairs_hook=no_duplicates,
-            parse_constant=lambda value: (_ for _ in ()).throw(
-                LeanstralAdapterContractError(
-                    f"Leanstral prompt contains non-finite value {value}"
-                )
-            ),
-        )
-    except (TypeError, json.JSONDecodeError) as exc:
-        raise LeanstralAdapterContractError(
-            "Leanstral strict generation prompt is not JSON"
-        ) from exc
-    if not isinstance(structured, Mapping):
-        raise LeanstralAdapterContractError(
-            "Leanstral strict generation prompt must be an object"
-        )
-    fixed = structured.get("fixed_theorem")
-    output_schema = structured.get("output_schema")
-    if not isinstance(fixed, Mapping) or not isinstance(output_schema, Mapping):
-        raise LeanstralAdapterContractError(
-            "Leanstral strict generation requires fixed theorem and output schema"
-        )
-    theorem_id = _safe_id(fixed.get("theorem_id"), "fixed_theorem.theorem_id")
-    if output_schema.get("schema") != LEANSTRAL_PROOF_OUTPUT_SCHEMA:
-        raise LeanstralAdapterContractError(
-            "Leanstral prompt output schema identity changed"
-        )
+    model: str,
+    max_tokens: int,
+    theorem_id: str,
+) -> bytes:
+    """Return the exact direct llama.cpp request body for independent hashing."""
 
     response_format = {
         "type": "json_schema",
@@ -4860,24 +5324,8 @@ def leanstral_strict_llm_generate(
             },
         },
     }
-
-    models_request = urllib.request.Request(
-        f"{endpoint}/models",
-        headers={"Accept": "application/json"},
-        method="GET",
-    )
-    models = _strict_leanstral_http_object(
-        models_request,
-        timeout_seconds=remaining_timeout(),
-        max_response_bytes=1024 * 1024,
-    )
-    if _leanstral_model_ids(models).count(expected_model) != 1:
-        raise LeanstralAdapterContractError(
-            "frozen Leanstral model is absent or ambiguous at the pinned endpoint"
-        )
-
     payload = {
-        "model": expected_model,
+        "model": model,
         "messages": [
             {
                 "role": "system",
@@ -4897,6 +5345,9 @@ def leanstral_strict_llm_generate(
         "max_tokens": max_tokens,
         "temperature": 0.0,
         "stream": False,
+        # llama.cpp otherwise reuses a server-side prefix cache whose state is
+        # outside the benchmark's cold/warm namespaces.
+        "cache_prompt": False,
         "response_format": response_format,
         "stop": [
             "<|tool_call_end|>",
@@ -4905,15 +5356,202 @@ def leanstral_strict_llm_generate(
         ],
         "seed": 0,
     }
+    return json.dumps(
+        payload,
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+def leanstral_strict_llm_generate(
+    prompt: str,
+    *,
+    endpoint: str,
+    expected_provider: str,
+    expected_model: str,
+    audit_receipt: MutableMapping[str, object] | None = None,
+    **kwargs: object,
+) -> str:
+    """Call one exact endpoint/model with strict JSON and no router fallback."""
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    if (
+        not isinstance(endpoint, str)
+        or not endpoint.strip()
+        or not isinstance(expected_provider, str)
+        or not expected_provider.strip()
+        or not isinstance(expected_model, str)
+        or not expected_model.strip()
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    endpoint = endpoint.strip().rstrip("/")
+    parsed_endpoint = urllib.parse.urlsplit(endpoint)
+    if (
+        parsed_endpoint.scheme not in {"http", "https"}
+        or not parsed_endpoint.hostname
+        or parsed_endpoint.username is not None
+        or parsed_endpoint.password is not None
+        or parsed_endpoint.query
+        or parsed_endpoint.fragment
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    if (
+        kwargs.get("provider") != expected_provider
+        or kwargs.get("model_name") != expected_model
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    if (
+        kwargs.get("allow_local_fallback") is not False
+        or kwargs.get("disable_model_retry") is not True
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    timeout = kwargs.get("timeout")
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not math.isfinite(float(timeout))
+        or not 0 < float(timeout) <= 300
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    max_tokens = kwargs.get("max_new_tokens")
+    if (
+        isinstance(max_tokens, bool)
+        or not isinstance(max_tokens, int)
+        or not 1 <= max_tokens <= 1_400
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    temperature = kwargs.get("temperature")
+    if (
+        isinstance(temperature, bool)
+        or not isinstance(temperature, (int, float))
+        or float(temperature) != 0.0
+    ):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    deadline = time.monotonic() + float(timeout)
+
+    def remaining_timeout(
+        phase: str,
+        *,
+        request_payload_sha256: str | None = None,
+    ) -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise LeanstralGenerationFailure(
+                "timed_out",
+                phase=phase,
+                request_payload_sha256=request_payload_sha256,
+            )
+        return remaining
+
+    def no_duplicates(pairs: Sequence[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise LeanstralGenerationFailure(
+                    "malformed_request",
+                    phase="request_validation",
+                )
+            result[key] = value
+        return result
+
+    try:
+        structured = json.loads(
+            prompt,
+            object_pairs_hook=no_duplicates,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                LeanstralGenerationFailure(
+                    "malformed_request",
+                    phase="request_validation",
+                )
+            ),
+        )
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        ) from exc
+    if not isinstance(structured, Mapping):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    fixed = structured.get("fixed_theorem")
+    output_schema = structured.get("output_schema")
+    if not isinstance(fixed, Mapping) or not isinstance(output_schema, Mapping):
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+    try:
+        theorem_id = _safe_id(
+            fixed.get("theorem_id"),
+            "fixed_theorem.theorem_id",
+        )
+    except ProtocolContractError as exc:
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        ) from exc
+    if output_schema.get("schema") != LEANSTRAL_PROOF_OUTPUT_SCHEMA:
+        raise LeanstralGenerationFailure(
+            "malformed_request",
+            phase="request_validation",
+        )
+
+    models_request = urllib.request.Request(
+        f"{endpoint}/models",
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+    models = _strict_leanstral_http_object(
+        models_request,
+        phase="model_registry",
+        timeout_seconds=remaining_timeout("model_registry"),
+        max_response_bytes=1024 * 1024,
+    )
+    if _leanstral_model_ids(models).count(expected_model) != 1:
+        raise LeanstralGenerationFailure(
+            "unavailable",
+            phase="model_registry",
+        )
+
+    payload_bytes = _leanstral_completion_payload_bytes(
+        prompt,
+        model=expected_model,
+        max_tokens=max_tokens,
+        theorem_id=theorem_id,
+    )
+    request_payload_sha256 = hashlib.sha256(payload_bytes).hexdigest()
     completion_request = urllib.request.Request(
         f"{endpoint}/chat/completions",
-        data=json.dumps(
-            payload,
-            allow_nan=False,
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8"),
+        data=payload_bytes,
         headers={
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -4922,42 +5560,86 @@ def leanstral_strict_llm_generate(
     )
     completion = _strict_leanstral_http_object(
         completion_request,
-        timeout_seconds=remaining_timeout(),
+        phase="completion_request",
+        timeout_seconds=remaining_timeout(
+            "completion_pre_dispatch",
+            request_payload_sha256=request_payload_sha256,
+        ),
         max_response_bytes=64 * 1024,
     )
     if completion.get("model") != expected_model:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion reported a different model"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
         )
     choices = completion.get("choices")
     if not isinstance(choices, list) or len(choices) != 1:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion returned invalid choices"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
         )
     choice = choices[0]
-    if not isinstance(choice, Mapping) or choice.get("finish_reason") != "stop":
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion did not terminate cleanly"
+    if not isinstance(choice, Mapping):
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
+        )
+    finish_reason = choice.get("finish_reason")
+    if finish_reason in {"length", "max_tokens"}:
+        raise LeanstralGenerationFailure(
+            "length_exhausted",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
+        )
+    if finish_reason != "stop":
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
         )
     message = choice.get("message")
     output = message.get("content") if isinstance(message, Mapping) else None
     if not isinstance(output, str) or not output.strip():
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion returned empty text"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="completion_response",
+            request_payload_sha256=request_payload_sha256,
         )
+
+    def no_response_duplicates(
+        pairs: Sequence[tuple[str, object]],
+    ) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise LeanstralGenerationFailure(
+                    "malformed_response",
+                    phase="proposal_validation",
+                    request_payload_sha256=request_payload_sha256,
+                )
+            result[key] = value
+        return result
+
     try:
         proposal = json.loads(
             output,
-            object_pairs_hook=no_duplicates,
+            object_pairs_hook=no_response_duplicates,
             parse_constant=lambda item: (_ for _ in ()).throw(
-                LeanstralAdapterContractError(
-                    f"Leanstral proposal contains non-finite value {item}"
+                LeanstralGenerationFailure(
+                    "malformed_response",
+                    phase="proposal_validation",
+                    request_payload_sha256=request_payload_sha256,
                 )
             ),
         )
     except (TypeError, json.JSONDecodeError) as exc:
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion did not return a strict JSON proposal"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="proposal_validation",
+            request_payload_sha256=request_payload_sha256,
         ) from exc
     if (
         not isinstance(proposal, dict)
@@ -4967,13 +5649,17 @@ def leanstral_strict_llm_generate(
         or proposal.get("theorem_id") != theorem_id
         or proposal.get("proposal_kind") != "proof"
     ):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion violated the fixed proposal identity"
+        raise LeanstralGenerationFailure(
+            "malformed_response",
+            phase="proposal_validation",
+            request_payload_sha256=request_payload_sha256,
         )
     proof_text = proposal.get("proof_text")
     if not isinstance(proof_text, str) or not proof_text.strip():
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion returned an empty proof body"
+        raise LeanstralGenerationFailure(
+            "inadmissible_proposal",
+            phase="proposal_validation",
+            request_payload_sha256=request_payload_sha256,
         )
     proof_text = proof_text.strip()
     normalization = "none"
@@ -4983,15 +5669,22 @@ def leanstral_strict_llm_generate(
         # exactly that outer wrapper; nested tactic terms remain untouched.
         proof_text = textwrap.dedent(proof_text[2:]).strip()
         normalization = "strip_single_leading_by"
+    if len(proof_text.encode("utf-8")) > LEANSTRAL_MAX_DRAFT_BYTES:
+        raise LeanstralGenerationFailure(
+            "resource_exhausted",
+            phase="proposal_validation",
+            request_payload_sha256=request_payload_sha256,
+        )
     if (
         not proof_text
-        or len(proof_text.encode("utf-8")) > LEANSTRAL_MAX_DRAFT_BYTES
         or re.match(r"^by(?:\s|$)", proof_text)
         or _LEANSTRAL_NON_TACTIC_BODY.search(proof_text)
         or _LEANSTRAL_FORBIDDEN_CONSTRUCT.search(proof_text)
     ):
-        raise LeanstralAdapterContractError(
-            "pinned Leanstral completion did not contain an admissible tactic body"
+        raise LeanstralGenerationFailure(
+            "inadmissible_proposal",
+            phase="proposal_validation",
+            request_payload_sha256=request_payload_sha256,
         )
     proposal["proof_text"] = proof_text
     normalized_output = json.dumps(
@@ -5004,27 +5697,34 @@ def leanstral_strict_llm_generate(
     if audit_receipt is not None:
         audit_receipt.clear()
         audit_receipt.update(
-            {
-                "schema": LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
-                "endpoint": endpoint,
-                "provider": expected_provider,
-                "requested_model": expected_model,
-                "response_model": str(completion["model"]),
-                "prompt_sha256": hashlib.sha256(
-                    prompt.encode("utf-8")
-                ).hexdigest(),
-                "raw_model_content_sha256": hashlib.sha256(
-                    output.encode("utf-8")
-                ).hexdigest(),
-                "raw_model_content_bytes": len(output.encode("utf-8")),
-                "normalized_proposal_sha256": hashlib.sha256(
-                    normalized_output.encode("utf-8")
-                ).hexdigest(),
-                "normalized_proposal_bytes": len(
-                    normalized_output.encode("utf-8")
-                ),
-                "normalization": normalization,
-            }
+            _content_addressed_receipt(
+                {
+                    "schema": LEANSTRAL_GENERATION_BOUNDARY_SCHEMA,
+                    "endpoint": endpoint,
+                    "provider": expected_provider,
+                    "requested_model": expected_model,
+                    "response_model": str(completion["model"]),
+                    "cache_prompt": False,
+                    "prompt_sha256": hashlib.sha256(
+                        prompt.encode("utf-8")
+                    ).hexdigest(),
+                    "request_payload_sha256": request_payload_sha256,
+                    "response_envelope_sha256": hashlib.sha256(
+                        canonical_json(completion).encode("utf-8")
+                    ).hexdigest(),
+                    "raw_model_content_sha256": hashlib.sha256(
+                        output.encode("utf-8")
+                    ).hexdigest(),
+                    "raw_model_content_bytes": len(output.encode("utf-8")),
+                    "normalized_proposal_sha256": hashlib.sha256(
+                        normalized_output.encode("utf-8")
+                    ).hexdigest(),
+                    "normalized_proposal_bytes": len(
+                        normalized_output.encode("utf-8")
+                    ),
+                    "normalization": normalization,
+                }
+            )
         )
     return normalized_output
 
@@ -5033,10 +5733,20 @@ class _PinnedLeanstralGenerate:
     """Callable exact-route generator with prompt-keyed audit receipts."""
 
     def __init__(self, *, endpoint: str, provider: str, model: str) -> None:
-        self.endpoint = endpoint
-        self.provider = provider
-        self.model = model
+        identity = _leanstral_route_identity(
+            endpoint=endpoint,
+            provider=provider,
+            model=model,
+        )
+        self.endpoint = str(identity["endpoint"])
+        self.provider = str(identity["provider"])
+        self.model = str(identity["model"])
+        self._pinned_identity = identity
         self._receipt_local = threading.local()
+
+    @property
+    def pinned_identity(self) -> Mapping[str, object]:
+        return self._pinned_identity
 
     def __call__(self, prompt: str, **kwargs: object) -> str:
         if getattr(self._receipt_local, "pending", None) is not None:
@@ -5078,12 +5788,31 @@ class _AuditedLeanstralProvider:
     ) -> None:
         self._delegate = delegate
         self._generator = generator
+        self._pinned_identity = generator.pinned_identity
+
+    @property
+    def pinned_identity(self) -> Mapping[str, object]:
+        return self._pinned_identity
 
     def __getattr__(self, name: str) -> object:
         return getattr(self._delegate, name)
 
     def prove(self, request: object) -> Mapping[str, object]:
-        result = getattr(self._delegate, "prove")(request)
+        try:
+            result = getattr(self._delegate, "prove")(request)
+        except Exception as exc:
+            # The supervisor deliberately translates backend exceptions to its
+            # stable provider taxonomy.  Recover only our typed, secret-safe
+            # direct-boundary failure so the benchmark can retain the more
+            # precise failure class without exposing the provider exception.
+            cause: BaseException | None = exc
+            visited: set[int] = set()
+            while cause is not None and id(cause) not in visited:
+                visited.add(id(cause))
+                if isinstance(cause, LeanstralGenerationFailure):
+                    raise cause from exc
+                cause = cause.__cause__ or cause.__context__
+            raise
         if not isinstance(result, Mapping):
             raise LeanstralAdapterContractError(
                 "Leanstral supervisor provider returned a non-object draft"
@@ -5128,13 +5857,58 @@ class _AuditedLeanstralProvider:
             raise LeanstralAdapterContractError(
                 "Leanstral draft omitted its generation-boundary receipt"
             )
+        expected_receipt_keys = {
+            "schema",
+            "endpoint",
+            "provider",
+            "requested_model",
+            "response_model",
+            "cache_prompt",
+            "prompt_sha256",
+            "request_payload_sha256",
+            "response_envelope_sha256",
+            "raw_model_content_sha256",
+            "raw_model_content_bytes",
+            "normalized_proposal_sha256",
+            "normalized_proposal_bytes",
+            "normalization",
+            "receipt_sha256",
+        }
+        receipt_body = {
+            key: value
+            for key, value in receipt.items()
+            if key != "receipt_sha256"
+        }
         if (
-            receipt.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
+            set(receipt) != expected_receipt_keys
+            or receipt.get("schema") != LEANSTRAL_GENERATION_BOUNDARY_SCHEMA
+            or receipt.get("endpoint") != self._generator.endpoint
+            or receipt.get("provider") != self._generator.provider
+            or receipt.get("requested_model") != self._generator.model
+            or receipt.get("response_model") != self._generator.model
+            or receipt.get("cache_prompt") is not False
             or receipt.get("prompt_sha256") != prompt_sha256
             or receipt.get("normalized_proposal_sha256")
             != normalized_proposal_sha256
             or receipt.get("normalized_proposal_bytes")
             != len(normalized_proposal)
+            or receipt.get("receipt_sha256")
+            != hashlib.sha256(
+                canonical_json(receipt_body).encode("utf-8")
+            ).hexdigest()
+            or receipt.get("normalization")
+            not in {"none", "strip_single_leading_by"}
+            or isinstance(receipt.get("raw_model_content_bytes"), bool)
+            or not isinstance(receipt.get("raw_model_content_bytes"), int)
+            or int(receipt["raw_model_content_bytes"]) <= 0
+            or any(
+                not re.fullmatch(r"[0-9a-f]{64}", str(receipt.get(key, "")))
+                for key in (
+                    "request_payload_sha256",
+                    "response_envelope_sha256",
+                    "raw_model_content_sha256",
+                )
+            )
         ):
             raise LeanstralAdapterContractError(
                 "Leanstral generation receipt does not match the returned draft"
@@ -5158,8 +5932,22 @@ class _AuditedLeanstralProvider:
 class _RequestIsolatedLeanstralProvider:
     """Create one fresh stateful supervisor provider per benchmark request."""
 
-    def __init__(self, factory: Callable[[], object]) -> None:
+    def __init__(
+        self,
+        factory: Callable[[], object],
+        *,
+        pinned_identity: Mapping[str, object] | None = None,
+    ) -> None:
         self._factory = factory
+        self._pinned_identity = (
+            None
+            if pinned_identity is None
+            else _leanstral_pinned_identity(pinned_identity)
+        )
+
+    @property
+    def pinned_identity(self) -> Mapping[str, object] | None:
+        return self._pinned_identity
 
     def prove(self, request: object) -> object:
         provider = self._factory()
@@ -5208,19 +5996,31 @@ def create_pinned_leanstral_provider(
         raise LeanstralAdapterContractError(
             "Leanstral supervisor provider factory is unavailable"
         )
+    pinned_identity = _leanstral_route_identity(
+        endpoint=endpoint,
+        provider=provider,
+        model=model,
+    )
 
     def build() -> object:
         generate = _PinnedLeanstralGenerate(
-            endpoint=endpoint,
-            provider=provider,
-            model=model,
+            endpoint=str(pinned_identity["endpoint"]),
+            provider=str(pinned_identity["provider"]),
+            model=str(pinned_identity["model"]),
         )
         return _AuditedLeanstralProvider(
             factory(provider_config, llm_generate=generate),
             generate,
         )
 
-    return _RequestIsolatedLeanstralProvider(build) if isolate_requests else build()
+    return (
+        _RequestIsolatedLeanstralProvider(
+            build,
+            pinned_identity=pinned_identity,
+        )
+        if isolate_requests
+        else build()
+    )
 
 
 def _leanstral_supervisor_request(
@@ -5334,6 +6134,21 @@ class LeanstralAdapter(StageAdapter):
         if handler is not None and provider is not None:
             raise ProtocolContractError("provide either handler or provider, not both")
         object.__setattr__(self, "config", config or LeanstralAdapterConfig())
+        pinned_provider_identity: Mapping[str, object] | None = None
+        if type(provider) in {
+            _AuditedLeanstralProvider,
+            _RequestIsolatedLeanstralProvider,
+        }:
+            candidate_identity = getattr(provider, "pinned_identity", None)
+            if candidate_identity is not None:
+                pinned_provider_identity = _leanstral_pinned_identity(
+                    candidate_identity
+                )
+        object.__setattr__(
+            self,
+            "pinned_provider_identity",
+            pinned_provider_identity,
+        )
         selected = handler
         selected_uses_case_request = False
         if provider is not None:
@@ -5376,6 +6191,8 @@ class LeanstralAdapter(StageAdapter):
             selected_uses_case_request = True
 
         def validated(request: StageRequest) -> object:
+            started_wall = time.perf_counter()
+            started_cpu = time.process_time()
             try:
                 # The shared route builder has always accepted generic injected
                 # handlers.  Preserve that compatibility when the caller has
@@ -5392,9 +6209,16 @@ class LeanstralAdapter(StageAdapter):
                     )
                 ):
                     return selected(request)  # type: ignore[misc]
-                payload, obligation_id, repair_attempt = _leanstral_input(
-                    request, self.config
-                )
+                try:
+                    payload, obligation_id, repair_attempt = _leanstral_input(
+                        request, self.config
+                    )
+                except LeanstralGenerationFailure:
+                    raise
+                except LeanstralAdapterContractError as exc:
+                    raise LeanstralProviderRequestContractError(
+                        "Leanstral provider request is invalid"
+                    ) from exc
                 selected_request = (
                     request
                     if selected_uses_case_request
@@ -5407,6 +6231,12 @@ class LeanstralAdapter(StageAdapter):
                 raw = selected(selected_request)  # type: ignore[misc]
                 if isinstance(raw, StageOutput):
                     if raw.status is not StageStatus.SUCCESS:
+                        if self.pinned_provider_identity is not None:
+                            _validate_pinned_leanstral_failure_output(
+                                raw,
+                                request=request,
+                                pinned_identity=self.pinned_provider_identity,
+                            )
                         return raw
                     output = raw
                 else:
@@ -5440,41 +6270,165 @@ class LeanstralAdapter(StageAdapter):
                     canonical_json(evidence_without_id).encode("utf-8")
                 ).hexdigest()
                 evidence = {"evidence_id": evidence_id, **evidence_without_id}
+                metadata = data.get("metadata")
+                generation_boundary = (
+                    metadata.get("benchmark_generation_boundary")
+                    if isinstance(metadata, Mapping)
+                    else None
+                )
+                if self.pinned_provider_identity is not None:
+                    pinned = self.pinned_provider_identity
+                    expected_route = {
+                        "endpoint": pinned["endpoint"],
+                        "provider": pinned["provider"],
+                        "requested_model": pinned["model"],
+                        "response_model": pinned["model"],
+                        "cache_prompt": False,
+                    }
+                    if (
+                        data.get("llm_provider") != pinned["provider"]
+                        or data.get("model") != pinned["model"]
+                        or not isinstance(generation_boundary, Mapping)
+                        or any(
+                            generation_boundary.get(field) != expected
+                            for field, expected in expected_route.items()
+                        )
+                    ):
+                        raise LeanstralAdapterContractError(
+                            "Leanstral success evidence drifted from the pinned route"
+                        )
                 identity = {
                     **dict(output.effective_identity),
-                    "provider": data.get("llm_provider", "leanstral"),
-                    "model": data.get("model", "Leanstral"),
+                    **(
+                        {}
+                        if self.pinned_provider_identity is None
+                        else dict(self.pinned_provider_identity)
+                    ),
+                    "provider": (
+                        data.get("llm_provider", "leanstral")
+                        if self.pinned_provider_identity is None
+                        else self.pinned_provider_identity["provider"]
+                    ),
+                    "model": (
+                        data.get("model", "Leanstral")
+                        if self.pinned_provider_identity is None
+                        else self.pinned_provider_identity["model"]
+                    ),
                     "obligation_id": obligation_id,
                     "repair_attempt": repair_attempt,
                     "resource_class": self.config.model_resource_class,
                 }
+                if isinstance(generation_boundary, Mapping):
+                    generation_boundary_sha256 = generation_boundary.get(
+                        "receipt_sha256"
+                    )
+                    if not isinstance(generation_boundary_sha256, str):
+                        raise LeanstralAdapterContractError(
+                            "Leanstral generation boundary is not content-addressed"
+                        )
+                    _digest(
+                        generation_boundary_sha256,
+                        "Leanstral generation boundary receipt_sha256",
+                    )
+                    identity["generation_boundary_sha256"] = (
+                        generation_boundary_sha256
+                    )
                 return replace(output, data=evidence, effective_identity=identity)
-            except LeanstralProviderRequestContractError as exc:
+            except LeanstralProviderRequestContractError:
                 return _leanstral_failure(
                     request,
-                    str(exc),
+                    safe_failure_class="malformed_request",
+                    pinned_identity=self.pinned_provider_identity,
                     model_calls=0,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
                 )
-            except LeanstralAdapterContractError as exc:
-                return _leanstral_failure(request, str(exc))
-            except (ImportError, ModuleNotFoundError) as exc:
+            except LeanstralGenerationFailure as exc:
                 return _leanstral_failure(
                     request,
-                    f"Leanstral provider unavailable: {type(exc).__name__}",
-                    unavailable=True,
+                    safe_failure_class=exc.safe_failure_class,
+                    boundary_receipt=exc.boundary_receipt,
+                    pinned_identity=self.pinned_provider_identity,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
                 )
-            except TimeoutError as exc:
-                return _leanstral_failure(request, f"Leanstral provider timed out: {exc}")
+            except LeanstralDraftAdmissibilityError:
+                return _leanstral_failure(
+                    request,
+                    safe_failure_class="inadmissible_proposal",
+                    pinned_identity=self.pinned_provider_identity,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                )
+            except LeanstralAdapterContractError:
+                return _leanstral_failure(
+                    request,
+                    safe_failure_class="malformed_response",
+                    pinned_identity=self.pinned_provider_identity,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                )
+            except (ImportError, ModuleNotFoundError):
+                return _leanstral_failure(
+                    request,
+                    safe_failure_class="unavailable",
+                    pinned_identity=self.pinned_provider_identity,
+                    model_calls=0,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                )
+            except TimeoutError:
+                return _leanstral_failure(
+                    request,
+                    safe_failure_class="timed_out",
+                    pinned_identity=self.pinned_provider_identity,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                )
             except Exception as exc:
-                provider_code = str(getattr(getattr(exc, "code", None), "value", getattr(exc, "code", "")))
+                provider_code = str(
+                    getattr(
+                        getattr(exc, "code", None),
+                        "value",
+                        getattr(exc, "code", ""),
+                    )
+                )
                 if provider_code in {"unavailable", "optional_dependency"}:
                     return _leanstral_failure(
-                        request, "Leanstral provider is unavailable", unavailable=True
+                        request,
+                        safe_failure_class="unavailable",
+                        pinned_identity=self.pinned_provider_identity,
+                        model_calls=0,
+                        started_wall=started_wall,
+                        started_cpu=started_cpu,
                     )
-                if provider_code in {"timed_out", "resource_exhausted", "malformed_response", "malformed_request", "unsupported", "provider_error"}:
+                safe_failure_class = {
+                    "timed_out": "timed_out",
+                    "resource_exhausted": "resource_exhausted",
+                    "malformed_response": "malformed_response",
+                    "malformed_request": "malformed_request",
+                    "unsupported": "inadmissible_proposal",
+                    "provider_error": "provider_error",
+                }.get(provider_code)
+                if safe_failure_class is not None:
                     return _leanstral_failure(
                         request,
-                        f"Leanstral provider rejected the request ({provider_code})",
+                        safe_failure_class=safe_failure_class,
+                        pinned_identity=self.pinned_provider_identity,
+                        model_calls=_leanstral_provider_model_calls(
+                            exc,
+                            safe_failure_class,
+                        ),
+                        started_wall=started_wall,
+                        started_cpu=started_cpu,
+                    )
+                if self.pinned_provider_identity is not None:
+                    return _leanstral_failure(
+                        request,
+                        safe_failure_class="provider_error",
+                        pinned_identity=self.pinned_provider_identity,
+                        started_wall=started_wall,
+                        started_cpu=started_cpu,
                     )
                 return StageOutput(
                     status=StageStatus.FAILED,
@@ -5685,6 +6639,7 @@ __all__ = [
     "LEANSTRAL_DRAFT_SCHEMA",
     "LEANSTRAL_EVIDENCE_SCHEMA",
     "LEANSTRAL_GENERATION_BOUNDARY_SCHEMA",
+    "LEANSTRAL_GENERATION_FAILURE_SCHEMA",
     "LEANSTRAL_JSON_NUMBER_SCHEMA",
     "LEANSTRAL_KERNEL_RESOURCE_CLASS",
     "LEANSTRAL_MAX_CONTEXT_BYTES",
@@ -5696,11 +6651,13 @@ __all__ = [
     "LEANSTRAL_MEASURED_MAX_NEW_TOKENS",
     "LEANSTRAL_MEASURED_TIMEOUT_SECONDS",
     "LEANSTRAL_MODEL_RESOURCE_CLASS",
+    "LEANSTRAL_MODEL_SEMANTIC_CONTEXT_SCHEMA",
     "LEANSTRAL_PROOF_OUTPUT_SCHEMA",
     "LEANSTRAL_REPAIR_CONTEXT_SCHEMA",
     "LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA",
     "LeanstralAdapterConfig",
     "LeanstralAdapterContractError",
+    "LeanstralGenerationFailure",
     "LeanstralProviderRequestContractError",
     "LeanstralAdapter",
     "leanstral_strict_llm_generate",

@@ -447,6 +447,93 @@ def build_holdout_access_audits(
     return audits
 
 
+def validate_holdout_access_audits(
+    authorization: PilotAuthorizationReceipt,
+    corpus: ReviewedCorpus,
+    plan: AblationPlan,
+    access_audits: Sequence[HoldoutAccessAudit],
+    *,
+    purpose: str = "evaluation",
+) -> tuple[HoldoutAccessAudit, ...]:
+    """Revalidate canonical audits against corpus, plan, and frozen inputs."""
+
+    try:
+        authorization = PilotAuthorizationReceipt.from_dict(
+            authorization.to_dict()
+        )
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise HoldoutExecutionError("pilot authorization is invalid") from exc
+    if not isinstance(corpus, ReviewedCorpus):
+        raise HoldoutExecutionError("corpus must be a ReviewedCorpus")
+    if not isinstance(plan, AblationPlan) or plan.split is not Split.HOLDOUT:
+        raise HoldoutExecutionError(
+            "access-audit validation requires a holdout plan"
+        )
+    integrity = build_split_integrity_manifest(corpus)
+    if (
+        corpus.manifest_sha256 != authorization.corpus_manifest_sha256
+        or integrity.holdout.split_sha256
+        != authorization.holdout_split_sha256
+        or plan.case_manifest_sha256 != corpus.manifest_sha256
+        or plan.protocol_sha256 != authorization.protocol_sha256
+        or plan.environment_sha256 != authorization.environment_sha256
+        or plan.case_ids != integrity.holdout.case_ids
+        or plan.variant_ids
+        != ("A0", *authorization.shortlist_variant_ids)
+        or plan.cache_modes != (CacheMode.COLD, CacheMode.WARM)
+        or plan.holdout_access_log_id is None
+    ):
+        raise HoldoutExecutionError(
+            "access audits do not bind the authorized holdout plan"
+        )
+    contracts = plan.run_contracts
+    try:
+        audits = tuple(
+            HoldoutAccessAudit.from_dict(item.to_dict())
+            for item in access_audits
+        )
+        validate_holdout_access_log(corpus, audits)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise HoldoutExecutionError(
+            "holdout access audit log is invalid"
+        ) from exc
+    if len(audits) != len(contracts):
+        raise HoldoutExecutionError(
+            "one holdout access audit is required per run contract"
+        )
+    for sequence, (contract, audit) in enumerate(
+        zip(contracts, audits, strict=True)
+    ):
+        expected_run_digest = _sha(contract.to_dict())
+        if (
+            audit.sequence != sequence
+            or audit.purpose != purpose
+            or audit.audit_id != contract.holdout_access_log_id
+            or audit.run_contract_sha256 != expected_run_digest
+            or audit.run_id != contract.run_id
+            or audit.protocol_sha256 != contract.protocol_sha256
+            or audit.variant_id != contract.requested_variant_id
+            or audit.cache_namespace != contract.cache_namespace
+            or audit.cache_mode != contract.cache_mode.value
+            or audit.configuration_sha256 != contract.configuration_sha256
+            or audit.configuration_sha256
+            != authorization.configuration_sha256s[
+                contract.requested_variant_id
+            ]
+            or audit.prompts_sha256 != authorization.prompts_sha256
+            or audit.policy_sha256 != authorization.policy_sha256
+            or audit.model_identities_sha256
+            != authorization.model_identities_sha256
+            or audit.thresholds_sha256 != authorization.thresholds_sha256
+            or audit.accessed_case_ids != integrity.holdout.case_ids
+            or audit.tuning_permitted is not False
+        ):
+            raise HoldoutExecutionError(
+                "holdout access audit differs from its frozen run contract"
+            )
+    return audits
+
+
 def _validate_execution_boundary(
     authorization: PilotAuthorizationReceipt,
     corpus: ReviewedCorpus,
@@ -504,48 +591,13 @@ def _validate_execution_boundary(
     if plan.holdout_access_log_id is None:
         raise HoldoutExecutionError("holdout plan has no access ledger identity")
 
-    contracts = plan.run_contracts
-    audits: tuple[HoldoutAccessAudit, ...]
-    try:
-        audits = tuple(
-            HoldoutAccessAudit.from_dict(item.to_dict())
-            for item in access_audits
-        )
-        validate_holdout_access_log(corpus, audits)
-    except (AttributeError, TypeError, ValueError) as exc:
-        raise HoldoutExecutionError("holdout access audit log is invalid") from exc
-    if len(audits) != len(contracts):
-        raise HoldoutExecutionError(
-            "one holdout access audit is required per run contract"
-        )
-    for sequence, (contract, audit) in enumerate(zip(contracts, audits)):
-        expected_run_digest = _sha(contract.to_dict())
-        if (
-            audit.sequence != sequence
-            or audit.purpose != purpose
-            or audit.audit_id != contract.holdout_access_log_id
-            or audit.run_contract_sha256 != expected_run_digest
-            or audit.run_id != contract.run_id
-            or audit.protocol_sha256 != contract.protocol_sha256
-            or audit.variant_id != contract.requested_variant_id
-            or audit.cache_namespace != contract.cache_namespace
-            or audit.cache_mode != contract.cache_mode.value
-            or audit.configuration_sha256 != contract.configuration_sha256
-            or audit.configuration_sha256
-            != authorization.configuration_sha256s[
-                contract.requested_variant_id
-            ]
-            or audit.prompts_sha256 != authorization.prompts_sha256
-            or audit.policy_sha256 != authorization.policy_sha256
-            or audit.model_identities_sha256
-            != authorization.model_identities_sha256
-            or audit.thresholds_sha256 != authorization.thresholds_sha256
-            or audit.accessed_case_ids != integrity.holdout.case_ids
-            or audit.tuning_permitted is not False
-        ):
-            raise HoldoutExecutionError(
-                "holdout access audit differs from its frozen run contract"
-            )
+    audits = validate_holdout_access_audits(
+        authorization,
+        corpus,
+        plan,
+        access_audits,
+        purpose=purpose,
+    )
 
     root = Path(output_root)
     if isinstance(output_root, str) and not output_root.strip():
@@ -665,6 +717,27 @@ class AuthorizedHoldoutRun:
 
     execution: AblationRunResult
     receipt: HoldoutExecutionReceipt
+    access_audits: tuple[HoldoutAccessAudit, ...]
+
+    def __post_init__(self) -> None:
+        audits = tuple(self.access_audits)
+        if not audits or any(
+            not isinstance(item, HoldoutAccessAudit) for item in audits
+        ):
+            raise HoldoutExecutionError(
+                "authorized holdout run requires canonical access audits"
+            )
+        if not isinstance(self.receipt, HoldoutExecutionReceipt):
+            raise HoldoutExecutionError(
+                "authorized holdout run requires an execution receipt"
+            )
+        if tuple(
+            item.audit_sha256 for item in audits
+        ) != self.receipt.access_audit_sha256s:
+            raise HoldoutExecutionError(
+                "authorized holdout receipt does not bind its access audits"
+            )
+        object.__setattr__(self, "access_audits", audits)
 
 
 def _write_once(path: Path, value: object) -> None:
@@ -782,7 +855,7 @@ def execute_authorized_holdout(
         root / "receipts" / HOLDOUT_EXECUTION_RECEIPT_FILE,
         receipt.to_dict(),
     )
-    return AuthorizedHoldoutRun(execution, receipt)
+    return AuthorizedHoldoutRun(execution, receipt, audits)
 
 
 __all__ = [
@@ -800,4 +873,5 @@ __all__ = [
     "build_authorized_holdout_plan",
     "build_holdout_access_audits",
     "execute_authorized_holdout",
+    "validate_holdout_access_audits",
 ]

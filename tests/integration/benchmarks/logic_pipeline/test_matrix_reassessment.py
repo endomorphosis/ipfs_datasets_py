@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import replace
 from datetime import date, datetime, timezone
 import hashlib
 import json
@@ -13,12 +14,21 @@ import pytest
 
 from benchmarks.logic_pipeline import (
     ablation,
+    cache_measurement,
     capabilities,
     capability_reprobe,
     runtime,
 )
 from benchmarks.logic_pipeline import matrix_reassessment as reassessment
-from benchmarks.logic_pipeline.adapters import StageOutput
+from benchmarks.logic_pipeline.adapters import (
+    SpacyAdapter,
+    SpacyAdapterConfig,
+    SpacyAdapterMode,
+    StageAdapter,
+    StageOutput,
+    SymaiAdapter,
+    SymaiAdapterConfig,
+)
 from benchmarks.logic_pipeline.cases import FROZEN_CORPUS_MANIFEST_SHA256
 from benchmarks.logic_pipeline.cases import DEFAULT_CORPUS_PATH, DEFAULT_MANIFEST_PATH
 from benchmarks.logic_pipeline.contracts import (
@@ -45,6 +55,64 @@ TERMINAL_OUTCOMES = frozenset(OutcomeStatus)
 FRESH_TEST_RUN_ID = "post-repair-matrix-test"
 
 
+def _structured_symai_response() -> str:
+    return canonical_json(
+        {
+            "candidate_ir": {
+                "kind": "fol",
+                "propositions": ["DeterministicMatrixReceipt"],
+            },
+            "normalized_predicates": ["DeterministicMatrixReceipt"],
+            "quantifiers": [],
+            "entities": ["matrix receipt"],
+            "ambiguity_flags": [],
+            "confidence": 1.0,
+            "validation_errors": [],
+        }
+    )
+
+
+class _DeterministicSymaiEngine:
+    def __init__(self, config: SymaiAdapterConfig) -> None:
+        self.config = config
+
+    def forward(self, _argument: object):
+        return (
+            [_structured_symai_response()],
+            {
+                "backend": "llm_router",
+                "effective_provider_name": self.config.provider,
+                "effective_model_name": self.config.model,
+                "resolved_provider_name": (
+                    self.config.expected_inner_provider
+                ),
+                "resolved_model_name": self.config.expected_inner_model,
+                "service_endpoint": self.config.expected_inner_endpoint,
+                "routing_backend": self.config.expected_inner_backend,
+            },
+        )
+
+
+@pytest.fixture(autouse=True)
+def _dependency_free_configured_symai(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def configured_factory(_state_directory: Path):
+        def factory(
+            config: SymaiAdapterConfig,
+            _namespace: str,
+        ) -> _DeterministicSymaiEngine:
+            return _DeterministicSymaiEngine(config)
+
+        return factory
+
+    monkeypatch.setattr(
+        runtime,
+        "_configured_symai_engine_factory",
+        configured_factory,
+    )
+
+
 def _load(path: Path) -> dict[str, object]:
     value = json.loads(path.read_text(encoding="utf-8"))
     assert isinstance(value, dict)
@@ -64,6 +132,14 @@ def _fresh_test_reprobe(
     for component, frozen_receipt in published.receipts.items():
         receipt = json.loads(canonical_json(dict(frozen_receipt)))
         receipt["run_id"] = FRESH_TEST_RUN_ID
+        if component == "leanstral_service":
+            for identity_field in (
+                "requested_identity",
+                "effective_identity",
+            ):
+                receipt[identity_field]["routing_backend"] = (
+                    "existing_leanstral_service"
+                )
         receipt.pop("receipt_sha256")
         receipt["receipt_sha256"] = _canonical_sha256(receipt)
         receipts[component] = receipt
@@ -71,6 +147,10 @@ def _fresh_test_reprobe(
     for record in published.inventory.capabilities:
         identity = dict(record.identity)
         component = str(identity["live_receipt_component"])
+        if component == "leanstral_service":
+            identity["routing_backend"] = (
+                "existing_leanstral_service"
+            )
         identity["live_receipt_sha256"] = receipts[component]["receipt_sha256"]
         records.append(
             capabilities.CapabilityRecord(
@@ -186,30 +266,117 @@ class _DeterministicHandlers:
         invalid_control = (
             request.input_data.get("expected_class") == "unsupported"  # type: ignore[attr-defined]
         )
-        receipt = {
+        # These are injected runtime handlers, so they may exercise canonical
+        # rejections but must never mint positive native-kernel authority.
+        # Positive dependency-free graph fixtures live in
+        # test_ablation_dataflow and bypass the live-runtime trust boundary.
+        accepted = False
+        receipt: dict[str, object] = {
             "schema": runtime.KERNEL_RECEIPT_SCHEMA,
-            "independent": True,
-            "accepted": not invalid_control,
-            "active_process_count": 0,
+            "protocol_sha256": request.protocol_sha256,  # type: ignore[attr-defined]
+            "run_id": request.run_id,  # type: ignore[attr-defined]
             "case_id": request.case_id,  # type: ignore[attr-defined]
+            "case_manifest_sha256": request.case_manifest_sha256,  # type: ignore[attr-defined]
             "variant_id": request.variant_id,  # type: ignore[attr-defined]
+            "split": request.split.value,  # type: ignore[attr-defined]
             "cache_mode": request.cache_mode.value,  # type: ignore[attr-defined]
+            "input_sha256": request.input_sha256,  # type: ignore[attr-defined]
+            "environment_sha256": request.environment_sha256,  # type: ignore[attr-defined]
+            "independent": True,
+            "accepted": accepted,
+            "active_process_count": 0,
         }
+        if accepted:
+            candidate_sha256 = request.upstream_artifacts[0].digest  # type: ignore[attr-defined]
+            attempt_body = {
+                "attempt_index": 0,
+                "candidate_source": StageName.COMPILER.value,
+                "candidate_artifact_sha256": candidate_sha256,
+                "source_sha256": hashlib.sha256(b"source").hexdigest(),
+                "command_sha256": hashlib.sha256(b"command").hexdigest(),
+                "stdout_sha256": hashlib.sha256(b"accepted").hexdigest(),
+                "stderr_sha256": hashlib.sha256(b"").hexdigest(),
+                "returncode": 0,
+                "timed_out": False,
+                "cancelled": False,
+                "resource_exhausted": False,
+                "termination_reason": "completed",
+                "process_group_reaped": True,
+                "active_process_count": 0,
+                "accepted": True,
+            }
+            attempt = {
+                **attempt_body,
+                "attempt_sha256": _canonical_sha256(attempt_body),
+            }
+            receipt.update(
+                {
+                    "compiled_obligation_sha256": hashlib.sha256(
+                        b"compiled"
+                    ).hexdigest(),
+                    "obligation_sha256": hashlib.sha256(
+                        b"obligation"
+                    ).hexdigest(),
+                    "candidate_source": attempt["candidate_source"],
+                    "candidate_artifact_sha256": candidate_sha256,
+                    "source_sha256": attempt["source_sha256"],
+                    "semantic_context_sha256": hashlib.sha256(
+                        b"semantic-context"
+                    ).hexdigest(),
+                    "semantic_artifact_sha256s": [
+                        artifact.digest
+                        for artifact in request.upstream_artifacts  # type: ignore[attr-defined]
+                    ],
+                    "command_sha256": attempt["command_sha256"],
+                    "stdout_sha256": attempt["stdout_sha256"],
+                    "stderr_sha256": attempt["stderr_sha256"],
+                    "returncode": attempt["returncode"],
+                    "timed_out": attempt["timed_out"],
+                    "cancelled": attempt["cancelled"],
+                    "resource_exhausted": attempt["resource_exhausted"],
+                    "termination_reason": attempt["termination_reason"],
+                    "process_group_reaped": attempt[
+                        "process_group_reaped"
+                    ],
+                    "candidate_attempts": [attempt],
+                    "candidate_attempts_sha256": _canonical_sha256(
+                        [attempt]
+                    ),
+                    "selected_attempt": {
+                        key: attempt[key]
+                        for key in (
+                            "attempt_index",
+                            "candidate_source",
+                            "candidate_artifact_sha256",
+                            "attempt_sha256",
+                            "accepted",
+                        )
+                    },
+                }
+            )
+        else:
+            receipt["reason"] = (
+                "invalid_control"
+                if invalid_control
+                else "injected_test_kernel_non_authoritative"
+            )
         digest = _canonical_sha256(receipt)
         return StageOutput(
             data={**receipt, "receipt_sha256": digest},
             effective_identity=dict(
                 request.requested_identity  # type: ignore[attr-defined]
             ),
-            kernel_accepted=not invalid_control,
-            kernel_receipt_sha256=None if invalid_control else digest,
+            kernel_accepted=accepted,
+            kernel_receipt_sha256=None,
         )
 
     def runtime_handlers(self) -> RuntimeBackendHandlers:
         return RuntimeBackendHandlers(
             compiler=self.compiler,
             spacy=self.generic(StageName.SPACY),
-            symai=self.generic(StageName.SYMAI),
+            # Leave the current SyMAI route configured so cold misses and
+            # warm setup->hit receipts exercise the production wrapper.
+            symai=None,
             legacy_symai=self.legacy_symai,
             hammer=self.generic(StageName.HAMMER),
             learned_hammer=self.generic(StageName.HAMMER),
@@ -236,6 +403,272 @@ def _case_result_envelopes(root: Path) -> tuple[dict[str, object], ...]:
         if value.get("schema") == ablation.ABLATION_RESULT_SCHEMA:
             envelopes.append(value)
     return tuple(envelopes)
+
+
+def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
+    case = ablation.AblationCase.create(
+        "matrix-cache-case",
+        {"text": "cache isolation"},
+        split=Split.PILOT,
+    )
+    plan = ablation.build_ablation_plan(
+        "matrix-cache-isolation",
+        (case,),
+        case_manifest_sha256="a" * 64,
+        split=Split.PILOT,
+        seed=71,
+        variant_ids=("A12",),
+        cache_modes=(CacheMode.COLD, CacheMode.WARM),
+        environment_sha256="b" * 64,
+        limits=ablation.ResourceLimits(
+            max_workers=1,
+            case_timeout_seconds=2,
+            max_memory_bytes=64 * 1024 * 1024,
+            max_model_calls_per_case=4,
+            max_solver_processes_per_case=2,
+        ),
+    )
+    adapters: dict[StageName, StageAdapter] = {}
+    for stage in StageName:
+        def handler(request: object, current: StageName = stage) -> StageOutput:
+            mode = request.cache_mode.value  # type: ignore[attr-defined]
+            identity = dict(
+                request.requested_identity  # type: ignore[attr-defined]
+            )
+            identity.update(
+                {
+                    "provider": "pinned-provider",
+                    "model": "pinned-model",
+                    "solver": "pinned-solver",
+                    "backend_revision": "pinned",
+                    "cache_mode": mode,
+                    "cache_namespace": (
+                        f"matrix-cache-isolation/{current.value}/{mode}"
+                    ),
+                    "cache_key": (
+                        f"matrix-cache-case/{current.value}/{mode}"
+                    ),
+                    "cache_hit": (
+                        request.cache_mode is CacheMode.WARM  # type: ignore[attr-defined]
+                    ),
+                    "router_cache": mode,
+                    "semantic_context_sha256": hashlib.sha256(
+                        f"{current.value}:{mode}".encode("utf-8")
+                    ).hexdigest(),
+                }
+            )
+            if (
+                current is StageName.SYMAI
+                and request.cache_mode is CacheMode.WARM  # type: ignore[attr-defined]
+            ):
+                prime_receipt = {
+                    "schema": "test-symai-cache-prime.v1",
+                    "cache_mode": CacheMode.WARM.value,
+                }
+                identity.update(
+                    {
+                        "cache_prime": True,
+                        "cache_prime_receipt": prime_receipt,
+                        "cache_prime_receipt_sha256": _canonical_sha256(
+                            prime_receipt
+                        ),
+                        "cache_prime_setup_attempts": 1,
+                        "cache_prime_setup_model_calls": 1,
+                        "cache_prime_setup_wall_time_ms": 0.25,
+                    }
+                )
+            return StageOutput(
+                data={
+                    "stage": current.value,
+                    "ambiguity_detected": True,
+                    "proof_success": False,
+                },
+                effective_identity=identity,
+            )
+
+        adapters[stage] = StageAdapter(stage, handler)
+    adapters[StageName.SPACY] = SpacyAdapter(
+        config=SpacyAdapterConfig(
+            mode=SpacyAdapterMode.REGEX_LEGAL
+        )
+    )
+    adapters[StageName.SYMAI] = SymaiAdapter(
+        config=SymaiAdapterConfig(
+            provider="ipfs_accelerate_py",
+            model="Leanstral-119B",
+            max_retries=0,
+            cache_enabled=True,
+        ),
+        engine_factory=lambda config, _namespace: (
+            _DeterministicSymaiEngine(config)
+        ),
+        trace_getter=lambda: {},
+        cache={},
+    )
+    return ablation.execute_ablation(
+        plan,
+        adapters,
+        output_root=tmp_path,
+        resume=False,
+    )
+
+
+def _replace_warm_result(
+    run: ablation.AblationRunResult,
+    replacement: CaseResultRecord,
+) -> ablation.AblationRunResult:
+    return replace(
+        run,
+        results=tuple(
+            replacement
+            if result.cache_mode is CacheMode.WARM
+            else result
+            for result in run.results
+        ),
+    )
+
+
+def _warm_stage_identity_drift(
+    run: ablation.AblationRunResult,
+    *,
+    identity: str,
+) -> ablation.AblationRunResult:
+    warm = next(
+        result
+        for result in run.results
+        if result.cache_mode is CacheMode.WARM
+    )
+    symai = next(
+        stage for stage in warm.stages if stage.stage is StageName.SYMAI
+    )
+    provenance = symai.provenance
+    if identity == "requested":
+        provenance = replace(
+            provenance,
+            requested_identity={
+                **dict(provenance.requested_identity),
+                "backend_identity": "warm-drift",
+            },
+        )
+    else:
+        provenance = replace(
+            provenance,
+            effective_identity={
+                **dict(provenance.effective_identity),
+                "backend_revision": "warm-drift",
+            },
+        )
+    replacement_stage = replace(symai, provenance=provenance)
+    replacement = CaseResultRecord.from_stages(
+        tuple(
+            replacement_stage if stage is symai else stage
+            for stage in warm.stages
+        )
+    )
+    return _replace_warm_result(run, replacement)
+
+
+def test_matrix_cache_isolation_accepts_canonical_warm_symai_prime_receipt(
+    tmp_path: Path,
+) -> None:
+    run = _cache_isolation_run(tmp_path)
+    warm_symai = next(
+        stage
+        for result in run.results
+        if result.cache_mode is CacheMode.WARM
+        for stage in result.stages
+        if stage.stage is StageName.SYMAI
+    )
+
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(
+        warm_symai
+    )
+    assert (
+        warm_symai.provenance.effective_identity[
+            "cache_prime_receipt_sha256"
+        ]
+        == receipt.receipt_sha256
+    )
+    reassessment._validate_split_cache_isolation(run)
+
+
+def test_matrix_cache_isolation_rejects_route_drift(tmp_path: Path) -> None:
+    run = _cache_isolation_run(tmp_path)
+    warm = next(
+        result
+        for result in run.results
+        if result.cache_mode is CacheMode.WARM
+    )
+    replacement = CaseResultRecord.from_stages(
+        tuple(
+            stage
+            for stage in warm.stages
+            if stage.stage is not StageName.SPACY
+        )
+    )
+
+    with pytest.raises(
+        reassessment.MatrixReassessmentError,
+        match="cache isolation failed: cold and warm results executed "
+        "different routes",
+    ):
+        reassessment._validate_split_cache_isolation(
+            _replace_warm_result(run, replacement)
+        )
+
+
+def test_resource_ledger_rejects_a_receipt_for_forged_suppression(
+    tmp_path: Path,
+) -> None:
+    run = _cache_isolation_run(tmp_path)
+    first = run.results[0]
+    symai = next(
+        stage for stage in first.stages if stage.stage is StageName.SYMAI
+    )
+    forged_stage = replace(
+        symai,
+        provenance=replace(
+            symai.provenance,
+            effective_identity={
+                **dict(symai.provenance.effective_identity),
+                "graph_invoked": False,
+                "policy_reason": "forged_suppression",
+            },
+        ),
+    )
+    forged_result = CaseResultRecord.from_stages(
+        tuple(
+            forged_stage if stage is symai else stage
+            for stage in first.stages
+        )
+    )
+    forged_run = replace(
+        run,
+        results=(forged_result, *run.results[1:]),
+    )
+
+    with pytest.raises(
+        reassessment.MatrixReassessmentError,
+        match="receipts differ from the invoked stage graph",
+    ):
+        reassessment._build_ledger(forged_run)
+
+
+@pytest.mark.parametrize("identity", ("requested", "effective"))
+def test_matrix_cache_isolation_rejects_backend_identity_drift(
+    tmp_path: Path,
+    identity: str,
+) -> None:
+    run = _cache_isolation_run(tmp_path)
+
+    with pytest.raises(
+        reassessment.MatrixReassessmentError,
+        match="cache isolation failed: backend, model, or solver identity "
+        "drifted across modes",
+    ):
+        reassessment._validate_split_cache_isolation(
+            _warm_stage_identity_drift(run, identity=identity)
+        )
 
 
 def test_evidence_symbol_is_ast_visible_and_describes_exact_scope() -> None:
@@ -543,8 +976,7 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
         for stage in record.stages
         if stage.stage is StageName.KERNEL and stage.kernel_accepted
     )
-    assert kernel_stages
-    assert all(stage.kernel_receipt_sha256 for stage in kernel_stages)
+    assert kernel_stages == ()
     assert all(
         record.status is not OutcomeStatus.VERIFIED
         for record in records
@@ -625,6 +1057,24 @@ def test_validator_rejects_noncanonical_index_and_result_tamper(
         for path in output_root.rglob("*.json")
         if _load(path).get("schema") == ablation.ABLATION_RESULT_SCHEMA
     )
+    original_result = result_path.read_bytes()
+    payload = _load(result_path)
+    payload["schema"] = ablation.LEGACY_ABLATION_RESULT_SCHEMA
+    result_path.write_text(canonical_json(payload) + "\n", encoding="utf-8")
+    with pytest.raises(
+        ValueError,
+        match="current validation requires an ablation-result.v2 envelope",
+    ):
+        reassessment.validate_reassessment_matrix(
+            repository_root=ROOT,
+            run_id=FRESH_TEST_RUN_ID,
+            benchmark_root=benchmark_root,
+            output_root=output_root,
+            snapshot_path=snapshot_path,
+            frozen_reprobe=fresh_reprobe,
+        )
+
+    result_path.write_bytes(original_result)
     payload = _load(result_path)
     payload["case_result_sha256"] = "0" * 64
     result_path.write_text(canonical_json(payload) + "\n", encoding="utf-8")

@@ -13,6 +13,7 @@ import time
 
 import pytest
 
+from ipfs_datasets_py.logic.hammers import process_lifecycle
 from ipfs_datasets_py.logic.hammers.process_lifecycle import (
     PROCESS_MANIFEST_SCHEMA,
     TEMP_DIRECTORY_MARKER,
@@ -74,6 +75,7 @@ def test_short_process_is_group_owned_heartbeated_and_unregistered(tmp_path: Pat
     assert result.returncode == 0
     assert result.stdout.strip() == "ready"
     assert result.kind == "translator"
+    assert result.process_group_reaped
     assert supervisor.active_process_count == 0
     assert not manifest.exists()
     supervisor.close()
@@ -87,6 +89,7 @@ def test_wall_deadline_gracefully_terminates_cooperative_process(tmp_path: Path)
     assert result.graceful_termination
     assert not result.forced_cleanup
     assert result.termination_reason == "wall_clock_deadline"
+    assert result.process_group_reaped
     _wait_dead(result.pid or -1)
 
 
@@ -101,9 +104,57 @@ def test_wall_deadline_forces_cleanup_of_term_ignoring_process_tree(tmp_path: Pa
     with ProcessSupervisor(state_directory=tmp_path, recover=False) as supervisor:
         result = supervisor.run([PYTHON, "-c", code], kind=ProcessKind.ATP, limits=_limits(0.15))
     assert result.timed_out and result.forced_cleanup
+    assert result.process_group_reaped
     child_pid = int(result.stdout.strip())
     _wait_dead(result.pid or -1)
     _wait_dead(child_pid)
+
+
+def test_failed_descendant_cleanup_is_an_orphan_and_preserves_manifest(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_group_exists = process_lifecycle._group_exists
+    monkeypatch.setattr(
+        process_lifecycle,
+        "_group_exists",
+        lambda _process_group_id: True,
+    )
+    supervisor = ProcessSupervisor(
+        state_directory=tmp_path,
+        recover=False,
+    )
+    result = supervisor.run(
+        [PYTHON, "-c", "pass"],
+        kind=ProcessKind.LEAN,
+        limits=ProcessLimits(
+            wall_time_seconds=1,
+            graceful_shutdown_seconds=0.01,
+            forced_cleanup_seconds=0.01,
+        ),
+    )
+
+    assert result.returncode == 0
+    assert result.termination_reason == "orphaned_process_group"
+    assert result.process_group_reaped is False
+    assert result.error is not None
+    manifest = (
+        supervisor.manifest_directory
+        / f"{result.managed_process_id}.json"
+    )
+    assert manifest.exists()
+    retained = json.loads(manifest.read_text(encoding="utf-8"))
+    assert retained["cleanup_failed"] is True
+    assert supervisor.active_process_count == 0
+
+    monkeypatch.setattr(
+        process_lifecycle,
+        "_group_exists",
+        original_group_exists,
+    )
+    supervisor.recover_orphaned_processes()
+    assert not manifest.exists()
+    supervisor.close()
 
 
 def test_external_cancellation_cleans_group(tmp_path: Path) -> None:
@@ -302,6 +353,78 @@ def test_supervisor_restart_recovers_exact_token_owned_orphan(tmp_path: Path) ->
             process.wait()
 
 
+@pytest.mark.skipif(
+    os.name != "posix" or not Path("/proc").is_dir(),
+    reason="dead-leader recovery requires Linux process-group evidence",
+)
+def test_recovery_reaps_owned_descendants_after_group_leader_exits(
+    tmp_path: Path,
+) -> None:
+    managed_id = "dead-leader-owned-descendant"
+    env = dict(os.environ)
+    env["IPFS_DATASETS_MANAGED_PROCESS_ID"] = managed_id
+    leader = subprocess.Popen(
+        [
+            PYTHON,
+            "-c",
+            (
+                "import subprocess,sys,time;"
+                "p=subprocess.Popen("
+                "[sys.executable,'-c','import time;time.sleep(60)'],"
+                "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,"
+                "stderr=subprocess.DEVNULL);"
+                "print(p.pid,flush=True);time.sleep(.2)"
+            ),
+        ],
+        env=env,
+        stdout=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    birth = (
+        Path(f"/proc/{leader.pid}/stat")
+        .read_text(encoding="utf-8")
+        .rsplit(")", 1)[1]
+        .split()[19]
+    )
+    process_group_id = os.getpgid(leader.pid)
+    assert leader.stdout is not None
+    child_pid = int(leader.stdout.readline().strip())
+    leader.wait(timeout=3)
+    processes = tmp_path / "processes"
+    processes.mkdir(parents=True)
+    manifest = processes / f"{managed_id}.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema": PROCESS_MANIFEST_SCHEMA,
+                "managed_process_id": managed_id,
+                "supervisor_pid": 999_999_999,
+                "supervisor_birth_marker": "linux:missing",
+                "pid": leader.pid,
+                "pid_birth_marker": f"linux:{birth}",
+                "process_group_id": process_group_id,
+                "heartbeat_at": 0,
+                "cleanup_failed": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    try:
+        supervisor = ProcessSupervisor(
+            state_directory=tmp_path,
+            recover=False,
+        )
+        report = supervisor.recover_orphaned_processes()
+        assert report.recovered_process_ids == [managed_id]
+        _wait_dead(child_pid)
+        assert not manifest.exists()
+        supervisor.close()
+    finally:
+        if _alive(child_pid):
+            os.kill(child_pid, signal.SIGKILL)
+
+
 def test_lean_runtime_uses_supervisor_owned_kind(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
 
@@ -309,7 +432,12 @@ def test_lean_runtime_uses_supervisor_owned_kind(monkeypatch: pytest.MonkeyPatch
         def run(self, command, **kwargs):
             calls.append((command, kwargs))
             from ipfs_datasets_py.logic.hammers.process_lifecycle import ProcessExecutionResult
-            return ProcessExecutionResult(command=list(command), kind=kwargs["kind"].value, returncode=0)
+            return ProcessExecutionResult(
+                command=list(command),
+                kind=kwargs["kind"].value,
+                returncode=0,
+                process_group_reaped=True,
+            )
 
     monkeypatch.setattr("ipfs_datasets_py.logic.modal.lean_runtime.get_process_supervisor", lambda: FakeSupervisor())
     result = run_lean_process(["/tools/lake", "env", "lean", "Task.lean"], timeout=3)

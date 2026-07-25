@@ -22,6 +22,9 @@ from benchmarks.logic_pipeline.cases import (
     FROZEN_SPLIT_SHA256,
     load_unsealed_pilot_development,
 )
+from benchmarks.logic_pipeline.cache_measurement import (
+    extract_symai_cache_setup_telemetry,
+)
 from benchmarks.logic_pipeline.contracts import (
     CaseResultRecord,
     DEFAULT_PROTOCOL_SHA256,
@@ -355,14 +358,27 @@ def _validate_measured_source(
         raise FrontendReportError(
             "symai_invoked differs from the case_result graph receipt"
         )
-    total_calls = sum(item.telemetry.model_calls for item in result.stages)
+    symai_stage = by_stage.get(StageName.SYMAI)
+    symai_setup = (
+        None
+        if symai_stage is None
+        else extract_symai_cache_setup_telemetry(symai_stage)
+    )
+    setup_calls = 0 if symai_setup is None else symai_setup.model_calls
+    setup_time = 0.0 if symai_setup is None else symai_setup.wall_time_ms
+    total_calls = (
+        sum(item.telemetry.model_calls for item in result.stages)
+        + setup_calls
+    )
     symai_calls = sum(
         item.telemetry.model_calls
         for item in result.stages
         if item.stage is StageName.SYMAI
-    )
+    ) + setup_calls
     total_time = round(
-        sum(item.telemetry.wall_time_ms for item in result.stages), 6
+        sum(item.telemetry.wall_time_ms for item in result.stages)
+        + setup_time,
+        6,
     )
     if row["model_calls"] != total_calls or row["symai_model_calls"] != symai_calls:
         raise FrontendReportError("model-call telemetry differs from case_result")

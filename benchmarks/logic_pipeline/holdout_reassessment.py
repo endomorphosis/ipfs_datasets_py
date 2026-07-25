@@ -20,26 +20,46 @@ import tempfile
 from typing import Final, Mapping
 
 from . import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT
-from .ablation import AblationPlan, AblationRunResult
+from .ablation import (
+    AblationPlan,
+    AblationRunResult,
+    AblationValidationError,
+    validate_current_result_graph,
+)
 from .cases import (
+    DEFAULT_CORPUS_PATH,
     DEFAULT_MANIFEST_PATH,
     FROZEN_CORPUS_MANIFEST_SHA256,
     FROZEN_SPLIT_SHA256,
+    HoldoutAccessAudit,
+    ReviewedCorpus,
     corpus_manifest_sha256,
     load_manifest,
+    load_reviewed_corpus,
+)
+from .cache_measurement import (
+    extract_symai_cache_prime_receipt,
+    extract_symai_cache_setup_telemetry,
+    symai_backend_invocation_count,
 )
 from .contracts import (
+    CacheMode,
     CaseResultRecord,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
     OutcomeStatus,
+    ProtocolContractError,
     Split,
     StageName,
+    TelemetryRecord,
     canonical_json,
+    validate_native_kernel_stage_receipt,
 )
 from .holdout_execution import (
     AuthorizedHoldoutRun,
     HoldoutExecutionError,
     HoldoutExecutionReceipt,
     PilotAuthorizationReceipt,
+    validate_holdout_access_audits,
 )
 from .pilot_reassessment import (
     DEFAULT_PILOT_REASSESSMENT_PATH,
@@ -47,12 +67,14 @@ from .pilot_reassessment import (
     PilotReassessmentError,
     load_pilot_reassessment_report,
 )
+from .pilot_gate import INVALID_CONTROL_EXPECTED_CLASSES
 from .reassessment_namespace import (
     PUBLISHED_REASSESSMENT_RUN_ID,
     ReassessmentNamespaceError,
     ReassessmentRunLayout,
     reject_published_write_targets,
 )
+from .runner import CacheIsolationError, validate_cache_isolation
 HOLDOUT_REASSESSMENT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.reassessment-holdout.v1"
 )
@@ -415,6 +437,116 @@ def _p95(values: list[float]) -> float | None:
     return round(ordered[max(0, (95 * len(ordered) + 99) // 100 - 1)], 6)
 
 
+def _raw_terminal_kernel_accepted(result: CaseResultRecord) -> bool:
+    """Read safety truth from the independent terminal kernel receipt.
+
+    A blocking earlier stage can correctly keep the case-level outcome from
+    claiming efficacy while the already-invoked kernel still reports an
+    unsafe acceptance.  Invalid-control accounting must retain that raw
+    terminal signal.
+    """
+
+    kernel = result.stages[-1]
+    if kernel.stage is not StageName.KERNEL:
+        return False
+    graph_invoked = kernel.provenance.effective_identity.get(
+        "graph_invoked"
+    )
+    has_native_receipt = (
+        isinstance(kernel.data, Mapping)
+        and kernel.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
+    )
+    if graph_invoked is False:
+        if kernel.kernel_accepted or has_native_receipt:
+            raise HoldoutReassessmentError(
+                "suppressed kernel stage contains native receipt authority"
+            )
+        return False
+    if graph_invoked is not True:
+        raise HoldoutReassessmentError(
+            "kernel stage lacks an explicit graph invocation decision"
+        )
+    try:
+        return validate_native_kernel_stage_receipt(kernel)
+    except ProtocolContractError as exc:
+        raise HoldoutReassessmentError(
+            "invoked kernel lacks a valid source-bound terminal receipt"
+        ) from exc
+
+
+def _holdout_execution_accounting(
+    results: tuple[CaseResultRecord, ...],
+) -> tuple[
+    dict[str, tuple[TelemetryRecord, ...]],
+    tuple[TelemetryRecord, ...],
+    int,
+]:
+    """Return setup telemetry and actual non-kernel backend invocations.
+
+    Current ablation envelopes materialize a StageRecord for every registered
+    graph node, including policy-suppressed nodes.  Record presence therefore
+    is not execution evidence: only ``graph_invoked=true`` counts as a stage
+    backend call.  A validated warm SyMAI prime is a separate setup invocation
+    and is counted once in addition to the measured SyMAI graph invocation.
+    """
+
+    setup_by_result: dict[str, tuple[TelemetryRecord, ...]] = {}
+    setup_telemetry: list[TelemetryRecord] = []
+    backend_calls = 0
+    for result in results:
+        setups: list[TelemetryRecord] = []
+        for stage in result.stages:
+            graph_invoked = stage.provenance.effective_identity.get(
+                "graph_invoked"
+            )
+            if type(graph_invoked) is not bool:
+                raise HoldoutReassessmentError(
+                    "holdout stage lacks an explicit graph invocation decision"
+                )
+            if stage.stage is StageName.SYMAI:
+                try:
+                    cache_prime = extract_symai_cache_prime_receipt(stage)
+                except ProtocolContractError as exc:
+                    raise HoldoutReassessmentError(
+                        "holdout SyMAI cache-prime receipt is invalid"
+                    ) from exc
+                if (
+                    graph_invoked
+                    and stage.cache_mode is CacheMode.WARM
+                    and stage.variant_id != "S1"
+                    and cache_prime is None
+                ):
+                    raise HoldoutReassessmentError(
+                        "warm graph-invoked non-legacy holdout SyMAI stage "
+                        "omitted its cache-prime receipt"
+                    )
+            if graph_invoked and stage.stage is not StageName.KERNEL:
+                if stage.stage is StageName.SYMAI:
+                    try:
+                        backend_calls += symai_backend_invocation_count(
+                            stage
+                        )
+                    except ProtocolContractError as exc:
+                        raise HoldoutReassessmentError(
+                            "SyMAI backend invocation accounting is invalid"
+                        ) from exc
+                else:
+                    backend_calls += 1
+            if stage.stage is not StageName.SYMAI:
+                continue
+            setup = extract_symai_cache_setup_telemetry(stage)
+            if setup is None:
+                continue
+            if not graph_invoked:
+                raise HoldoutReassessmentError(
+                    "suppressed SyMAI stage contains cache-prime setup activity"
+                )
+            setups.append(setup)
+            setup_telemetry.append(setup)
+        setup_by_result[result.digest] = tuple(setups)
+    return setup_by_result, tuple(setup_telemetry), backend_calls
+
+
 def _build_authorized_holdout_report(
     *,
     pilot: Mapping[str, object],
@@ -422,7 +554,7 @@ def _build_authorized_holdout_report(
     layout: ReassessmentRunLayout,
     audit: Mapping[str, object],
     authorized_run: AuthorizedHoldoutRun,
-    holdout_manifest: tuple[object, ...],
+    reviewed_corpus: ReviewedCorpus,
 ) -> dict[str, object]:
     """Project an authenticated execution into the persisted G150 report."""
 
@@ -445,6 +577,11 @@ def _build_authorized_holdout_report(
         )
     plan = execution.plan
     results = tuple(execution.results)
+    holdout_manifest = tuple(
+        item
+        for item in reviewed_corpus.manifest.cases
+        if item.split is Split.HOLDOUT
+    )
     shortlist = _mapping(pilot["shortlist"], "pilot.shortlist")
     selected = tuple(
         str(item)
@@ -494,6 +631,16 @@ def _build_authorized_holdout_report(
         or not receipt.complete
         or len(results) != expected_coordinates
         or any(
+            item.case_id != job.case_id
+            or item.variant_id != job.variant_id
+            or item.cache_mode is not job.cache_mode
+            or any(
+                stage.provenance.input_sha256 != job.input_sha256
+                for stage in item.stages
+            )
+            for job, item in zip(plan.jobs, results, strict=True)
+        )
+        or any(
             item.run_id != plan.run_id
             or item.protocol_sha256 != plan.protocol_sha256
             or item.case_manifest_sha256 != plan.case_manifest_sha256
@@ -520,7 +667,41 @@ def _build_authorized_holdout_report(
         raise HoldoutReassessmentError(
             "authorized execution differs from the frozen pilot handoff"
         )
+    try:
+        access_audits = validate_holdout_access_audits(
+            authorization,
+            reviewed_corpus,
+            plan,
+            authorized_run.access_audits,
+            purpose="evaluation",
+        )
+    except HoldoutExecutionError as exc:
+        raise HoldoutReassessmentError(
+            "authorized execution access audits are invalid"
+        ) from exc
+    if tuple(
+        item.audit_sha256 for item in access_audits
+    ) != receipt.access_audit_sha256s:
+        raise HoldoutReassessmentError(
+            "authorized execution receipt does not bind its access audits"
+        )
+    try:
+        for job, result in zip(plan.jobs, results, strict=True):
+            validate_current_result_graph(
+                result,
+                plan=plan,
+                job=job,
+            )
+        validate_cache_isolation(execution)
+    except (AblationValidationError, CacheIsolationError) as exc:
+        raise HoldoutReassessmentError(
+            "authorized execution graph or cache isolation is invalid"
+        ) from exc
 
+    raw_terminal_kernel_acceptance = {
+        item.digest: _raw_terminal_kernel_accepted(item)
+        for item in results
+    }
     by_coordinate = {
         (item.case_id, item.cache_mode.value, item.variant_id): item
         for item in results
@@ -576,33 +757,44 @@ def _build_authorized_holdout_report(
         if _mapping(job.input_data, "holdout case input").get(
             "expected_class"
         )
-        in {"disproved", "unsupported"}
+        in INVALID_CONTROL_EXPECTED_CLASSES
     }
     invalid_false_positives = sum(
-        item.kernel_accepted and item.case_id in invalid_case_ids
+        item.case_id in invalid_case_ids
+        and raw_terminal_kernel_acceptance[item.digest]
         for item in results
+    )
+    (
+        setup_by_result,
+        setup_telemetry,
+        backend_calls,
+    ) = _holdout_execution_accounting(
+        results
     )
     latencies = [
         sum(stage.telemetry.wall_time_ms for stage in item.stages)
+        + sum(
+            setup.wall_time_ms
+            for setup in setup_by_result[item.digest]
+        )
         for item in candidate_results
     ]
-    peak_memory = max(
-        (
-            stage.telemetry.peak_memory_bytes
+    peak_values = [
+        stage.telemetry.peak_memory_bytes
+        for item in results
+        for stage in item.stages
+    ]
+    peak_values.extend(
+        setup.peak_memory_bytes for setup in setup_telemetry
+    )
+    peak_memory = max(peak_values, default=0)
+    model_calls = (
+        sum(
+            stage.telemetry.model_calls
             for item in results
             for stage in item.stages
-        ),
-        default=0,
-    )
-    model_calls = sum(
-        stage.telemetry.model_calls
-        for item in results
-        for stage in item.stages
-    )
-    backend_calls = sum(
-        stage.stage is not StageName.KERNEL
-        for item in results
-        for stage in item.stages
+        )
+        + sum(setup.model_calls for setup in setup_telemetry)
     )
     observed_pairs = 10 * len(CACHE_MODES) * len(selected)
     explicit_failures = sum(
@@ -846,6 +1038,9 @@ def _build_authorized_holdout_report(
             "authorization": authorization.to_dict(),
             "plan": plan.to_dict(),
             "receipt": receipt.to_dict(),
+            "access_audits": [
+                item.to_dict() for item in access_audits
+            ],
             "case_results": [item.to_dict() for item in results],
         },
         "access": {
@@ -980,13 +1175,26 @@ def build_holdout_reassessment_report(
                 "authorized HSSL-G140 evidence requires a real holdout "
                 "execution receipt; refusing to synthesize an executed result"
             )
+        try:
+            reviewed_corpus = load_reviewed_corpus(
+                root / DEFAULT_CORPUS_PATH,
+                root / DEFAULT_MANIFEST_PATH,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise HoldoutReassessmentError(
+                "authorized holdout corpus failed source validation"
+            ) from exc
+        if reviewed_corpus.manifest != manifest:
+            raise HoldoutReassessmentError(
+                "authorized reviewed corpus differs from the public manifest"
+            )
         return _build_authorized_holdout_report(
             pilot=pilot,
             pilot_bytes=pilot_bytes,
             layout=layout,
             audit=audit,
             authorized_run=authorized_run,
-            holdout_manifest=holdout_cases,
+            reviewed_corpus=reviewed_corpus,
         )
     if authorized_run is not None:
         raise HoldoutReassessmentError(
@@ -1227,6 +1435,13 @@ def validate_holdout_reassessment_report(
             )
             plan = AblationPlan.from_dict(evidence["plan"])
             receipt = HoldoutExecutionReceipt.from_dict(evidence["receipt"])
+            access_audits = tuple(
+                HoldoutAccessAudit.from_dict(item)
+                for item in _array(
+                    evidence["access_audits"],
+                    "holdout execution access_audits",
+                )
+            )
             raw_results = _array(
                 evidence["case_results"],
                 "holdout execution case_results",
@@ -1246,7 +1461,11 @@ def validate_holdout_reassessment_report(
                 resumed_job_ids=(),
                 output_root=Path("."),
             )
-            authorized = AuthorizedHoldoutRun(execution, receipt)
+            authorized = AuthorizedHoldoutRun(
+                execution,
+                receipt,
+                access_audits,
+            )
         except HoldoutReassessmentError:
             raise
         except (KeyError, TypeError, ValueError) as exc:

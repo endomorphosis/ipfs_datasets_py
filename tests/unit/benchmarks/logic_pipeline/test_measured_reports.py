@@ -86,7 +86,31 @@ def _case_result(
                 "repair_attempts": 0,
             }
         else:
-            stage_data = {"accepted": False}
+            receipt_body = {
+                "schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "native-kernel-receipt.v1"
+                ),
+                "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+                "run_id": RUN_ID,
+                "case_id": case_id,
+                "case_manifest_sha256": MANIFEST,
+                "variant_id": variant_id,
+                "split": split.value,
+                "cache_mode": cache_mode.value,
+                "input_sha256": INPUT,
+                "environment_sha256": ENVIRONMENT,
+                "independent": True,
+                "accepted": False,
+                "active_process_count": 0,
+                "reason": "no_proof_candidate",
+            }
+            stage_data = {
+                **receipt_body,
+                "receipt_sha256": hashlib.sha256(
+                    canonical_json(receipt_body).encode("utf-8")
+                ).hexdigest(),
+            }
         stage_unavailable = unavailable and not stages
         graph_invoked = not (
             stage_name is StageName.SYMAI and suppress_symai
@@ -449,6 +473,70 @@ def test_proof_builder_derives_latency_and_completion_from_receipts() -> None:
     assert metric["attempt_count"] == 7
     assert metric["kernel_verified_rate"] == 0.0
     assert metric["mean_wall_time_ms"] == 10.0
+    assert report.validate_proof_report(value) == value
+
+
+def test_proof_validator_includes_symai_setup_in_totals_only(
+    monkeypatch,
+) -> None:
+    setup = TelemetryRecord(
+        wall_time_ms=7.0,
+        model_calls=2,
+        cache_misses=1,
+        resource_lane=ResourceLane.MODEL,
+    )
+
+    def setup_for(stage: StageRecord) -> TelemetryRecord | None:
+        return (
+            setup
+            if stage.stage is StageName.SYMAI
+            and stage.cache_mode is CacheMode.WARM
+            else None
+        )
+
+    monkeypatch.setattr(
+        report,
+        "extract_symai_cache_setup_telemetry",
+        setup_for,
+    )
+    rows = _proof_observations()
+    for row in rows:
+        result = CaseResultRecord.from_dict(row["case_result"])
+        if result.cache_mode is CacheMode.WARM and any(
+            stage.stage is StageName.SYMAI for stage in result.stages
+        ):
+            row["total_wall_time_ms"] += 7.0
+            row["model_calls"] += 2
+    value = report.build_proof_report(
+        RUN_ID,
+        _proof_capabilities(),
+        rows,
+    )
+
+    measured = next(
+        row
+        for row in value["observations"]
+        if row["cache_mode"] == "warm"
+        and row["variant_id"] == "A4"
+        and row["case_id"] == "pilot-p01"
+    )
+    measured_result = CaseResultRecord.from_dict(measured["case_result"])
+    assert measured["total_wall_time_ms"] == (
+        sum(
+            stage.telemetry.wall_time_ms
+            for stage in measured_result.stages
+        )
+        + 7.0
+    )
+    assert measured["model_calls"] == (
+        sum(
+            stage.telemetry.model_calls
+            for stage in measured_result.stages
+        )
+        + 2
+    )
+    assert measured["hammer"]["wall_time_ms"] == 2.5
+    assert measured["leanstral"]["wall_time_ms"] == 2.5
     assert report.validate_proof_report(value) == value
 
 

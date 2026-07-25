@@ -1156,6 +1156,47 @@ class CacheIsolationReport:
         ).hexdigest()
 
 
+_OPERATIONAL_CACHE_IDENTITY_KEYS: Final = frozenset(
+    {
+        "cache_hit",
+        "cache_key",
+        "cache_mode",
+        "cache_namespace",
+        "cache_prime",
+        "cache_prime_receipt",
+        "cache_prime_receipt_sha256",
+        "consumed_artifact_sha256",
+        "generation_boundary_sha256",
+        "leanstral_failure_boundary_sha256",
+        "policy_decision_sha256",
+        "premise_selection_sha256",
+        "router_cache",
+        "router_cache_key",
+        "router_cached_backend",
+        "semantic_context_sha256",
+    }
+)
+
+
+def _effective_backend_identity(
+    identity: Mapping[str, object],
+) -> Mapping[str, object]:
+    """Project backend identity away from measured cache-operation receipts.
+
+    Cold and warm executions must use the same implementation, model, solver,
+    and route.  Their cache namespaces, keys, hit state, priming receipts, and
+    content/provenance digests are expected to differ by design and therefore
+    are not backend drift.  Requested configuration identity remains compared
+    separately and backend-specific fields not listed here remain fail-closed.
+    """
+
+    return {
+        key: value
+        for key, value in identity.items()
+        if key not in _OPERATIONAL_CACHE_IDENTITY_KEYS
+    }
+
+
 def validate_cache_isolation(
     execution: AblationRunResult,
 ) -> CacheIsolationReport:
@@ -1238,8 +1279,12 @@ def validate_cache_isolation(
                 if (
                     cold_stage.provenance.requested_identity
                     != warm_stage.provenance.requested_identity
-                    or cold_stage.provenance.effective_identity
-                    != warm_stage.provenance.effective_identity
+                    or _effective_backend_identity(
+                        cold_stage.provenance.effective_identity
+                    )
+                    != _effective_backend_identity(
+                        warm_stage.provenance.effective_identity
+                    )
                 ):
                     raise CacheIsolationError(
                         "backend, model, or solver identity drifted across modes"

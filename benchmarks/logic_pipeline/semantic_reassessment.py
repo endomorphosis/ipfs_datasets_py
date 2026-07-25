@@ -43,6 +43,7 @@ from .cases import (
     case_sha256,
     load_unsealed_pilot_development,
 )
+from .cache_measurement import extract_symai_cache_setup_telemetry
 from .contracts import (
     DEFAULT_PROTOCOL_SHA256,
     CaseResultRecord,
@@ -1016,6 +1017,17 @@ def _evaluate_coordinate(
     by_stage = {stage.stage: stage for stage in stages}
     spacy_stage = by_stage.get(StageName.SPACY)
     symai_stage = by_stage.get(StageName.SYMAI)
+    symai_setup = (
+        None
+        if symai_stage is None
+        else extract_symai_cache_setup_telemetry(symai_stage)
+    )
+    setup_model_calls = (
+        0 if symai_setup is None else symai_setup.model_calls
+    )
+    setup_wall_time_ms = (
+        0.0 if symai_setup is None else symai_setup.wall_time_ms
+    )
     observation = {
         "schema": (
             "ipfs-datasets.logic-pipeline-benchmark.frontend-observation.v1"
@@ -1048,11 +1060,17 @@ def _evaluate_coordinate(
             stage.telemetry.model_calls
             for stage in stages
             if stage.stage is StageName.SYMAI
-        ),
+        )
+        + setup_model_calls,
         "total_wall_time_ms": round(
-            sum(stage.telemetry.wall_time_ms for stage in stages), 6
+            sum(stage.telemetry.wall_time_ms for stage in stages)
+            + setup_wall_time_ms,
+            6,
         ),
-        "model_calls": sum(stage.telemetry.model_calls for stage in stages),
+        "model_calls": (
+            sum(stage.telemetry.model_calls for stage in stages)
+            + setup_model_calls
+        ),
         "missing_reason": missing_reason,
     }
     return receipt, observation

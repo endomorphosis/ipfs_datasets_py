@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -61,6 +62,61 @@ def repository(tmp_path: Path) -> tuple[Path, str]:
         "untracked operator work\n", encoding="utf-8"
     )
     return checkout, commit
+
+
+@pytest.fixture
+def repository_with_submodule(
+    tmp_path: Path,
+) -> tuple[Path, str, str]:
+    dependency = tmp_path / "dependency-source"
+    dependency.mkdir()
+    _git(dependency, "init", "--initial-branch=main")
+    _git(dependency, "config", "user.name", "Replay Tests")
+    _git(dependency, "config", "user.email", "replay@example.invalid")
+    (dependency / "dependency.txt").write_text(
+        "pinned dependency\n",
+        encoding="utf-8",
+    )
+    _git(dependency, "add", "--all")
+    _git(
+        dependency,
+        "commit",
+        "--no-gpg-sign",
+        "-m",
+        "pinned dependency",
+    )
+
+    checkout = tmp_path / "active-checkout-with-submodule"
+    checkout.mkdir()
+    _git(checkout, "init", "--initial-branch=main")
+    _git(checkout, "config", "user.name", "Replay Tests")
+    _git(checkout, "config", "user.email", "replay@example.invalid")
+    (checkout / "source.txt").write_text("pinned source\n", encoding="utf-8")
+    _git(checkout, "add", "--all")
+    _git(checkout, "commit", "--no-gpg-sign", "-m", "pinned source")
+    _git(
+        checkout,
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        "--name",
+        "fixture-dependency",
+        dependency.as_posix(),
+        "vendor/dependency",
+    )
+    _git(checkout, "commit", "--no-gpg-sign", "-am", "pin dependency")
+    commit = _git(checkout, "rev-parse", "HEAD").stdout.strip()
+    pinned_dependency = _git(
+        checkout / "vendor" / "dependency",
+        "rev-parse",
+        "HEAD",
+    ).stdout.strip()
+    (checkout / "operator-notes.txt").write_text(
+        "untracked operator work\n",
+        encoding="utf-8",
+    )
+    return checkout, commit, pinned_dependency
 
 
 def _execution_receipt(
@@ -130,18 +186,20 @@ def _request(
     source_cache: str,
     *,
     replay_run_id: str = "detached-replay-v2",
+    script: str | None = None,
 ) -> ReplayRequest:
     replay_cache = source_cache.replace(
         f"/run/{source_receipt.run_id}/", f"/run/{replay_run_id}/"
     )
-    script = (
-        "import json, os; from pathlib import Path; "
-        "Path(os.environ['HSSL_REPLAY_EVIDENCE_PATH']).write_text("
-        "json.dumps({'cache': os.environ['HSSL_CACHE_NAMESPACE'], "
-        "'process': os.environ['HSSL_PROCESS_NAMESPACE'], "
-        "'run': os.environ['HSSL_RUN_ID']}, sort_keys=True) + '\\n', "
-        "encoding='utf-8')"
-    )
+    if script is None:
+        script = (
+            "import json, os; from pathlib import Path; "
+            "Path(os.environ['HSSL_REPLAY_EVIDENCE_PATH']).write_text("
+            "json.dumps({'cache': os.environ['HSSL_CACHE_NAMESPACE'], "
+            "'process': os.environ['HSSL_PROCESS_NAMESPACE'], "
+            "'run': os.environ['HSSL_RUN_ID']}, sort_keys=True) + '\\n', "
+            "encoding='utf-8')"
+        )
     return ReplayRequest.create(
         source_run_id=source_receipt.run_id,
         replay_run_id=replay_run_id,
@@ -372,3 +430,254 @@ def test_stale_source_worktree_and_reused_replay_run_fail_closed(
             actual_environment_sha256=ENVIRONMENT_SHA256,
         )
     assert not (replay_root / stale_request.replay_run_id).exists()
+
+
+def test_replay_rejects_source_mutation_after_command(
+    repository: tuple[Path, str],
+    tmp_path: Path,
+) -> None:
+    checkout, commit = repository
+    source, source_worktree, source_cache = _source_evidence(
+        checkout,
+        commit,
+        tmp_path,
+    )
+    script = (
+        "import json, os; from pathlib import Path; "
+        "Path(os.environ['HSSL_REPLAY_EVIDENCE_PATH']).write_text("
+        "json.dumps({'produced': True}) + '\\n', encoding='utf-8'); "
+        "Path('source.txt').write_text('mutated replay source\\n', "
+        "encoding='utf-8')"
+    )
+    request = _request(
+        source,
+        source_worktree,
+        source_cache,
+        replay_run_id="source-mutating-replay",
+        script=script,
+    )
+    replay_root = tmp_path / "source-mutating-state"
+
+    with pytest.raises(ReplayError, match="stale or dirty"):
+        run_detached_replay(
+            checkout,
+            source,
+            source_worktree,
+            request,
+            benchmark_root=replay_root,
+            actual_environment_sha256=ENVIRONMENT_SHA256,
+        )
+
+    assert not (
+        replay_root
+        / request.replay_run_id
+        / "receipts"
+        / "detached-replay-receipt.json"
+    ).exists()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires POSIX process groups")
+def test_replay_reaps_and_rejects_lingering_descendant(
+    repository: tuple[Path, str],
+    tmp_path: Path,
+) -> None:
+    checkout, commit = repository
+    source, source_worktree, source_cache = _source_evidence(
+        checkout,
+        commit,
+        tmp_path,
+    )
+    script = (
+        "import json, os, subprocess, sys; from pathlib import Path; "
+        "child = subprocess.Popen("
+        "[sys.executable, '-c', 'import time; time.sleep(60)'], "
+        "stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, "
+        "stderr=subprocess.DEVNULL); "
+        "Path(os.environ['HSSL_REPLAY_EVIDENCE_PATH']).write_text("
+        "json.dumps({'child_pid': child.pid}) + '\\n', encoding='utf-8')"
+    )
+    request = _request(
+        source,
+        source_worktree,
+        source_cache,
+        replay_run_id="lingering-child-replay",
+        script=script,
+    )
+    replay_root = tmp_path / "lingering-child-state"
+
+    with pytest.raises(ReplayError, match="lingering process-group"):
+        run_detached_replay(
+            checkout,
+            source,
+            source_worktree,
+            request,
+            benchmark_root=replay_root,
+            actual_environment_sha256=ENVIRONMENT_SHA256,
+        )
+
+    evidence = json.loads(
+        (
+            replay_root
+            / request.replay_run_id
+            / "results"
+            / "replay-evidence.json"
+        ).read_text(encoding="utf-8")
+    )
+    child_stat = Path("/proc") / str(evidence["child_pid"]) / "stat"
+    deadline = time.monotonic() + 2
+    while child_stat.exists() and time.monotonic() < deadline:
+        try:
+            state = child_stat.read_text(encoding="utf-8").rsplit(
+                ") ",
+                maxsplit=1,
+            )[1].split()[0]
+        except (IndexError, OSError):
+            break
+        if state == "Z":
+            break
+        time.sleep(0.01)
+    if child_stat.exists():
+        state = child_stat.read_text(encoding="utf-8").rsplit(
+            ") ",
+            maxsplit=1,
+        )[1].split()[0]
+        assert state == "Z"
+    assert not (
+        replay_root
+        / request.replay_run_id
+        / "receipts"
+        / "detached-replay-receipt.json"
+    ).exists()
+
+
+def test_replay_materializes_exact_pinned_local_gitlinks(
+    repository_with_submodule: tuple[Path, str, str],
+    tmp_path: Path,
+) -> None:
+    checkout, commit, pinned_dependency = repository_with_submodule
+    source, source_worktree, source_cache = _source_evidence(
+        checkout,
+        commit,
+        tmp_path,
+    )
+    source_dependency = checkout / "vendor" / "dependency"
+    replay_source_dependency = (
+        source_worktree.worktree_root / "vendor" / "dependency"
+    )
+    _git(
+        source_worktree.worktree_root,
+        "-c",
+        "protocol.file.allow=always",
+        "-c",
+        f"submodule.fixture-dependency.url={source_dependency}",
+        "submodule",
+        "update",
+        "--init",
+        "--checkout",
+        "--no-fetch",
+        "--",
+        "vendor/dependency",
+    )
+    assert (
+        _git(replay_source_dependency, "rev-parse", "HEAD").stdout.strip()
+        == pinned_dependency
+    )
+
+    _git(source_dependency, "config", "user.name", "Replay Tests")
+    _git(
+        source_dependency,
+        "config",
+        "user.email",
+        "replay@example.invalid",
+    )
+    (source_dependency / "dependency.txt").write_text(
+        "newer local dependency\n",
+        encoding="utf-8",
+    )
+    _git(source_dependency, "add", "--all")
+    _git(
+        source_dependency,
+        "commit",
+        "--no-gpg-sign",
+        "-m",
+        "advance local dependency",
+    )
+    assert (
+        _git(source_dependency, "rev-parse", "HEAD").stdout.strip()
+        != pinned_dependency
+    )
+
+    request = _request(
+        source,
+        source_worktree,
+        source_cache,
+        replay_run_id="local-gitlink-replay",
+    )
+    receipt, worktree = run_detached_replay(
+        checkout,
+        source,
+        source_worktree,
+        request,
+        benchmark_root=tmp_path / "local-gitlink-state",
+        actual_environment_sha256=ENVIRONMENT_SHA256,
+    )
+
+    materialized = worktree.worktree_root / "vendor" / "dependency"
+    assert receipt.replay_worktree_receipt_sha256 == worktree.sha256
+    assert materialized.joinpath("dependency.txt").read_text(
+        encoding="utf-8"
+    ) == "pinned dependency\n"
+    assert _git(materialized, "rev-parse", "HEAD").stdout.strip() == (
+        pinned_dependency
+    )
+    assert (
+        _git(
+            materialized,
+            "symbolic-ref",
+            "--quiet",
+            "HEAD",
+            check=False,
+        ).returncode
+        != 0
+    )
+    assert (
+        _git(
+            worktree.worktree_root,
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+            "--ignore-submodules=none",
+        ).stdout
+        == ""
+    )
+
+    mutating_script = (
+        "import json, os; from pathlib import Path; "
+        "Path(os.environ['HSSL_REPLAY_EVIDENCE_PATH']).write_text("
+        "json.dumps({'produced': True}) + '\\n', encoding='utf-8'); "
+        "Path('vendor/dependency/dependency.txt').write_text("
+        "'mutated materialized dependency\\n', encoding='utf-8')"
+    )
+    mutating_request = _request(
+        source,
+        source_worktree,
+        source_cache,
+        replay_run_id="dirty-gitlink-replay",
+        script=mutating_script,
+    )
+    mutating_root = tmp_path / "dirty-gitlink-state"
+    with pytest.raises(ReplayError, match="stale or dirty"):
+        run_detached_replay(
+            checkout,
+            source,
+            source_worktree,
+            mutating_request,
+            benchmark_root=mutating_root,
+            actual_environment_sha256=ENVIRONMENT_SHA256,
+        )
+    assert not (
+        mutating_root
+        / mutating_request.replay_run_id
+        / "receipts"
+        / "detached-replay-receipt.json"
+    ).exists()

@@ -638,6 +638,97 @@ class BoundedProcessResult:
     stderr: str
     timed_out: bool
     process_group_reaped: bool
+    termination_reason: str = "completed"
+
+
+def _active_process_group_members(process_group_id: int) -> tuple[int, ...]:
+    """Return live members of a POSIX process group.
+
+    ``Popen.poll()`` only observes the group leader.  On Linux, inspect every
+    process' kernel-reported group and exclude zombies, which no longer
+    execute and can only be collected by their current parent.  The fallback
+    is conservative on other POSIX systems because ``killpg(..., 0)`` cannot
+    distinguish a live member from a zombie.
+    """
+
+    if os.name != "posix" or process_group_id <= 0:
+        return ()
+    proc_root = Path("/proc")
+    if proc_root.is_dir():
+        members: list[int] = []
+        try:
+            process_entries = tuple(proc_root.iterdir())
+        except OSError:
+            process_entries = ()
+        for entry in process_entries:
+            if not entry.name.isdigit():
+                continue
+            try:
+                raw_stat = (entry / "stat").read_text(encoding="utf-8")
+                closing_parenthesis = raw_stat.rfind(")")
+                if closing_parenthesis < 0:
+                    continue
+                fields = raw_stat[closing_parenthesis + 2 :].split()
+                state = fields[0]
+                member_group_id = int(fields[2])
+            except (OSError, IndexError, ValueError):
+                continue
+            if member_group_id == process_group_id and state != "Z":
+                members.append(int(entry.name))
+        return tuple(sorted(members))
+    try:  # pragma: no cover - Linux provides the stronger branch above.
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return ()
+    except PermissionError:
+        return (process_group_id,)
+    else:
+        return (process_group_id,)
+
+
+def _wait_for_process_group_exit(
+    process_group_id: int,
+    timeout_seconds: float,
+) -> bool:
+    """Wait a bounded interval for every executable group member to exit."""
+
+    deadline = time.monotonic() + timeout_seconds
+    while _active_process_group_members(process_group_id):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(0.01, remaining))
+    return True
+
+
+def _reap_bounded_process_group(
+    process_group_id: int,
+    *,
+    cancellation_grace_seconds: float,
+) -> bool:
+    """Terminate surviving descendants and prove that the group is quiescent."""
+
+    if os.name != "posix":
+        return True
+    if not _active_process_group_members(process_group_id):
+        return True
+    try:
+        os.killpg(process_group_id, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        pass
+    if _wait_for_process_group_exit(
+        process_group_id,
+        cancellation_grace_seconds,
+    ):
+        return True
+    try:
+        os.killpg(process_group_id, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    return _wait_for_process_group_exit(
+        process_group_id,
+        cancellation_grace_seconds,
+    )
 
 
 def run_bounded_process_group(
@@ -733,13 +824,39 @@ def run_bounded_process_group(
             except (AttributeError, ProcessLookupError, PermissionError):
                 process.kill()
             stdout, stderr = process.communicate()
+    surviving_descendants = bool(
+        _active_process_group_members(process.pid)
+    )
+    process_group_reaped = (
+        _reap_bounded_process_group(
+            process.pid,
+            cancellation_grace_seconds=float(cancellation_grace_seconds),
+        )
+        if os.name == "posix"
+        else process.poll() is not None
+    )
+    if not process_group_reaped:
+        termination_reason = "orphaned_process_group"
+    elif timed_out:
+        termination_reason = "wall_clock_deadline"
+    elif process.returncode is None:
+        termination_reason = "process_error"
+    elif process.returncode < 0:
+        termination_reason = "signal_exit"
+    elif process.returncode > 0:
+        termination_reason = "nonzero_exit"
+    elif surviving_descendants:
+        termination_reason = "completed_with_descendant_cleanup"
+    else:
+        termination_reason = "completed"
     return BoundedProcessResult(
         arguments=command,
         returncode=process.returncode,
         stdout=stdout[:max_output_bytes].decode("utf-8", errors="replace"),
         stderr=stderr[:max_output_bytes].decode("utf-8", errors="replace"),
         timed_out=timed_out,
-        process_group_reaped=process.poll() is not None,
+        process_group_reaped=process_group_reaped,
+        termination_reason=termination_reason,
     )
 
 

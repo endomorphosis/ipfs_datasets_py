@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -243,4 +244,93 @@ def test_all_downstream_writers_reject_published_run_before_source_loading(
         report.write_reassessment_final_decision(
             repository_root=tmp_path,
             run_id=PUBLISHED_REASSESSMENT_RUN_ID,
+        )
+
+
+def test_fresh_final_decision_writer_supports_external_absolute_layout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    benchmark_root = (tmp_path / "external-benchmark").resolve()
+    layout = ReassessmentRunLayout.for_run(
+        FRESH_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+    payload = {
+        "results": {
+            "schema": "test.fresh-final-decision.v1",
+            "artifact_sha256": "a" * 64,
+        }
+    }
+    monkeypatch.setattr(
+        report,
+        "build_reassessment_final_decision",
+        lambda **_kwargs: payload,
+    )
+
+    written = report.write_reassessment_final_decision(
+        repository_root=repository,
+        run_id=FRESH_RUN_ID,
+        benchmark_root=benchmark_root,
+    )
+
+    assert written == layout.final_decision
+    assert json.loads(written.read_text(encoding="utf-8")) == payload
+    assert written.is_relative_to(layout.run_paths.run_root)
+
+
+def test_fresh_source_binding_accepts_only_regular_files_in_external_run_root(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    run_root = (tmp_path / "external-run").resolve()
+    source = run_root / "results" / "source.json"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        json.dumps(
+            {
+                "schema": "test.external-source.v1",
+                "artifact_sha256": "b" * 64,
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    binding, document = report._replacement_source_binding(
+        repository,
+        source,
+        external_run_root=run_root,
+    )
+
+    assert binding["path"] == source.as_posix()
+    assert binding["semantic_sha256"] == "b" * 64
+    assert document["schema"] == "test.external-source.v1"
+
+    outside = tmp_path / "outside.json"
+    outside.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    with pytest.raises(
+        report.FinalDecisionValidationError,
+        match="escapes the fresh run root",
+    ):
+        report._replacement_source_binding(
+            repository,
+            outside.resolve(),
+            external_run_root=run_root,
+        )
+
+    linked = run_root / "results" / "linked.json"
+    linked.symlink_to(outside)
+    with pytest.raises(
+        report.FinalDecisionValidationError,
+        match="must not traverse a symlink",
+    ):
+        report._replacement_source_binding(
+            repository,
+            linked,
+            external_run_root=run_root,
         )

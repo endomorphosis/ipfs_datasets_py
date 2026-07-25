@@ -3437,6 +3437,45 @@ def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMPro
     return _MistralVibeProvider()
 
 
+class _PinnedSymaiNoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject redirects so the pinned service cannot change endpoints."""
+
+    def redirect_request(
+        self,
+        request: urllib.request.Request,
+        file_pointer: object,
+        code: int,
+        message: str,
+        headers: object,
+        new_url: str,
+    ) -> None:
+        del request, file_pointer, code, message, headers, new_url
+        return None
+
+
+def _pinned_symai_urlopen(
+    request: urllib.request.Request,
+    *,
+    timeout: float,
+) -> object:
+    """Open one exact URL without ambient proxy or redirect behavior."""
+
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _PinnedSymaiNoRedirect(),
+    )
+    response = opener.open(request, timeout=timeout)
+    try:
+        final_url = response.geturl()
+    except Exception:
+        response.close()
+        raise
+    if final_url != request.full_url:
+        response.close()
+        raise RuntimeError("pinned Leanstral service changed its final URL")
+    return response
+
+
 def _bounded_json_response(
     request: urllib.request.Request,
     *,
@@ -3444,7 +3483,7 @@ def _bounded_json_response(
     max_bytes: int,
 ) -> dict[str, object]:
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with _pinned_symai_urlopen(request, timeout=timeout) as response:
             raw = response.read(max_bytes + 1)
     except Exception as exc:
         raise RuntimeError(
@@ -3565,6 +3604,9 @@ def _generate_pinned_symai_leanstral(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": False,
+        # llama.cpp otherwise reuses a server-side prefix cache outside the
+        # benchmark's run-scoped SyMAI cold/warm cache contract.
+        "cache_prompt": False,
         "response_format": response_format,
         "seed": 0,
         "stop": ["<|im_end|>", "<|tool_call_end|>", "<|im_start|>"],

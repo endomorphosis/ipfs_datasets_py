@@ -22,6 +22,8 @@ from typing import Final, Mapping, Sequence
 from . import RunPaths
 from .capabilities import (
     WorktreeSafetyReceipt,
+    _active_process_group_members,
+    _reap_bounded_process_group,
     prepare_isolated_worktree,
 )
 from .contracts import (
@@ -35,6 +37,13 @@ from .holdout_execution import (
     HoldoutExecutionReceipt,
 )
 from .report import ReplayValidationRecord, validate_replay
+from .source_reconciliation import (
+    GitlinkIdentity,
+    SourceReconciliationError,
+    _capture_benchmark_bounded_gitlinks,
+    _materialize_recursive_local_gitlinks,
+    _validate_live_detached_source,
+)
 
 
 REPLAY_REQUEST_SCHEMA: Final = (
@@ -401,31 +410,48 @@ def _git_value(repository: Path, *arguments: str) -> str:
 
 
 def _validate_live_worktree(
-    receipt: WorktreeSafetyReceipt, expected_commit: str
+    receipt: WorktreeSafetyReceipt,
+    expected_commit: str,
+    expected_gitlinks: Sequence[GitlinkIdentity],
 ) -> None:
-    head = _git_value(receipt.worktree_root, "rev-parse", "--verify", "HEAD^{commit}")
-    branch = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(receipt.worktree_root),
-            "symbolic-ref",
-            "--quiet",
-            "HEAD",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=20,
-        env={
-            "PATH": os.environ.get("PATH", ""),
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_TERMINAL_PROMPT": "0",
-            "LC_ALL": "C",
-        },
-    )
-    if head != expected_commit or branch.returncode == 0:
-        raise ReplayError("replay worktree is stale or no longer detached")
+    expected = tuple(expected_gitlinks)
+    expected_top_level = {
+        item.path: item.commit for item in expected if item.depth == 1
+    }
+    if dict(receipt.submodule_commits) != expected_top_level:
+        raise ReplayError(
+            "replay worktree receipt gitlinks differ from the pinned inventory"
+        )
+    try:
+        actual = _capture_benchmark_bounded_gitlinks(
+            receipt.worktree_root,
+            expected_commit,
+        )
+        if actual != expected:
+            raise ReplayError(
+                "replay worktree recursive gitlink inventory drifted"
+            )
+        _validate_live_detached_source(
+            receipt.worktree_root,
+            commit=expected_commit,
+            gitlinks=expected,
+        )
+        porcelain = _git_value(
+            receipt.worktree_root,
+            "status",
+            "--porcelain=v1",
+            "-z",
+            "--untracked-files=all",
+            "--ignore-submodules=none",
+        )
+    except SourceReconciliationError as exc:
+        raise ReplayError(
+            "replay worktree or a pinned submodule is stale or dirty"
+        ) from exc
+    if porcelain:
+        raise ReplayError(
+            "replay worktree or a pinned submodule is not clean"
+        )
 
 
 def _evidence_path(run_paths: RunPaths, relative_path: str) -> Path:
@@ -490,18 +516,70 @@ def _run_process(
             stderr=subprocess.PIPE,
             start_new_session=True,
         )
-        try:
-            stdout, stderr = process.communicate(timeout=request.timeout_seconds)
-        except subprocess.TimeoutExpired as exc:
-            os.killpg(process.pid, signal.SIGTERM)
-            try:
-                process.communicate(timeout=2)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.communicate()
-            raise ReplayError("detached replay exceeded its timeout") from exc
     except OSError as exc:
         raise ReplayError("cannot start detached replay process") from exc
+
+    timed_out: subprocess.TimeoutExpired | None = None
+    communication_error: OSError | None = None
+    stdout = b""
+    stderr = b""
+    try:
+        try:
+            stdout, stderr = process.communicate(
+                timeout=request.timeout_seconds
+            )
+        except subprocess.TimeoutExpired as exc:
+            timed_out = exc
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except (AttributeError, ProcessLookupError, PermissionError):
+                process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=2)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except (
+                    AttributeError,
+                    ProcessLookupError,
+                    PermissionError,
+                ):
+                    process.kill()
+                stdout, stderr = process.communicate()
+    except OSError as exc:
+        communication_error = exc
+    finally:
+        surviving_descendants = bool(
+            _active_process_group_members(process.pid)
+        )
+        process_group_reaped = _reap_bounded_process_group(
+            process.pid,
+            cancellation_grace_seconds=2.0,
+        )
+        if process.poll() is None:
+            process.kill()
+            process.communicate()
+        process_group_reaped = (
+            process_group_reaped
+            and _reap_bounded_process_group(
+                process.pid,
+                cancellation_grace_seconds=2.0,
+            )
+        )
+    if not process_group_reaped:
+        raise ReplayError(
+            "detached replay process group could not be fully reaped"
+        )
+    if communication_error is not None:
+        raise ReplayError(
+            "detached replay process communication failed"
+        ) from communication_error
+    if timed_out is not None:
+        raise ReplayError("detached replay exceeded its timeout") from timed_out
+    if surviving_descendants:
+        raise ReplayError(
+            "detached replay left a lingering process-group member"
+        )
     if len(stdout) > _MAX_OUTPUT_BYTES or len(stderr) > _MAX_OUTPUT_BYTES:
         raise ReplayError("detached replay output exceeded the retained bound")
     if process.returncode != 0:
@@ -555,7 +633,20 @@ def run_detached_replay(
     requested_source = Path(source_checkout).resolve()
     if source_worktree.source_checkout != requested_source:
         raise ReplayError("source worktree receipt belongs to another checkout")
-    _validate_live_worktree(source_worktree, request.source_commit)
+    try:
+        expected_gitlinks = _capture_benchmark_bounded_gitlinks(
+            requested_source,
+            request.source_commit,
+        )
+    except SourceReconciliationError as exc:
+        raise ReplayError(
+            "cannot bind the pinned local recursive gitlink inventory"
+        ) from exc
+    _validate_live_worktree(
+        source_worktree,
+        request.source_commit,
+        expected_gitlinks,
+    )
     run_paths = RunPaths.for_run(
         request.replay_run_id, benchmark_root=benchmark_root
     )
@@ -571,15 +662,38 @@ def run_detached_replay(
         run_paths=run_paths,
         base_revision=request.source_commit,
     )
-    _validate_live_worktree(replay_worktree, request.source_commit)
-    evidence_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    stdout, stderr = _run_process(
-        request,
-        worktree=replay_worktree.worktree_root,
-        run_paths=run_paths,
-        evidence_path=evidence_path,
-        environment=environment,
+    try:
+        _materialize_recursive_local_gitlinks(
+            requested_source,
+            replay_worktree.worktree_root,
+            tuple(
+                item for item in expected_gitlinks if item.depth == 1
+            ),
+        )
+    except SourceReconciliationError as exc:
+        raise ReplayError(
+            "cannot materialize pinned submodules from local repositories"
+        ) from exc
+    _validate_live_worktree(
+        replay_worktree,
+        request.source_commit,
+        expected_gitlinks,
     )
+    evidence_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        stdout, stderr = _run_process(
+            request,
+            worktree=replay_worktree.worktree_root,
+            run_paths=run_paths,
+            evidence_path=evidence_path,
+            environment=environment,
+        )
+    finally:
+        _validate_live_worktree(
+            replay_worktree,
+            request.source_commit,
+            expected_gitlinks,
+        )
     evidence = _read_evidence(evidence_path)
     payload = {
         "schema": REPLAY_RECEIPT_SCHEMA,
