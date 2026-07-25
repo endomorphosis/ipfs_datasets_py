@@ -138,7 +138,7 @@ print(f"Cache hit rate: {stats['cache_hit_rate']:.1%}")
 
 ### Learn More
 
-1. **[README.md](./README.md)** - Comprehensive overview with all features
+1. **[README.md](../../../ipfs_datasets_py/logic/zkp/README.md)** - Comprehensive overview with all features
 2. **[EXAMPLES.md](./EXAMPLES.md)** - Detailed usage examples
 3. **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)** - How it works internally
 
@@ -150,7 +150,7 @@ print(f"Cache hit rate: {stats['cache_hit_rate']:.1%}")
 ### Integration
 
 6. **[INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md)** - Use with other logic modules
-7. **[Full API Reference](./README.md#api-reference)** - Complete API documentation
+7. **[Full API Reference](../../../ipfs_datasets_py/logic/zkp/README.md#api-reference)** - Complete API documentation
 
 ---
 
@@ -320,7 +320,7 @@ print("✓ Mathematical proof verified!")
 
 ## Getting Help
 
-- **Documentation:** [README.md](./README.md)
+- **Documentation:** [README.md](../../../ipfs_datasets_py/logic/zkp/README.md)
 - **Examples:** [EXAMPLES.md](./EXAMPLES.md)
 - **Issues:** [GitHub Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
 
