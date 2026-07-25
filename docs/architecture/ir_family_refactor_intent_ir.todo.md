@@ -396,7 +396,7 @@ real conflict edges.
 
 ## IRF-032 Enforce SkillCenter license and hostile-content policy
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: privacy
