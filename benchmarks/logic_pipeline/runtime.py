@@ -1930,25 +1930,46 @@ class NativeKernelRunner:
             )
         return proof_text, artifact.digest
 
-    def _validated_proof_candidate(
+    def _validated_proof_candidates(
         self,
         request: StageRequest,
         compiled: CompiledObligation,
         translation: ReviewedEntailmentTranslation | None,
         compiler_candidate: Mapping[str, object] | None,
-    ) -> tuple[str, str] | None:
-        leanstral = self._validated_leanstral_candidate(request, compiled)
-        if leanstral is not None:
-            return leanstral
-        hammer = self._validated_hammer_candidate(request, translation)
-        if hammer is not None:
-            return hammer
+    ) -> tuple[tuple[str, str, str], ...]:
+        """Return all present candidates in their frozen source-bound order."""
+
+        candidates: list[tuple[str, str, str]] = []
         compiler = request.artifact(StageName.COMPILER)
         if compiler is not None and compiler_candidate is not None:
             proof = compiler_candidate.get("certificate")
             if isinstance(proof, str) and proof.strip():
-                return proof, compiler.digest
-        return None
+                # The deterministic translator explicitly exposes every proof
+                # it already knows. Optional backends must earn marginal value
+                # beyond that subset, not preempt a known deterministic proof.
+                candidates.append(
+                    (StageName.COMPILER.value, proof, compiler.digest)
+                )
+
+        for stage in get_variant_definition(request.variant_id).proof_order:
+            if stage is StageName.HAMMER:
+                candidate = self._validated_hammer_candidate(
+                    request, translation
+                )
+            elif stage is StageName.LEANSTRAL:
+                candidate = self._validated_leanstral_candidate(
+                    request, compiled
+                )
+            else:  # pragma: no cover - guarded by VariantDefinition
+                raise RuntimeBindingError(
+                    f"unsupported proof candidate source: {stage.value}"
+                )
+            if candidate is not None:
+                proof, artifact_sha256 = candidate
+                candidates.append(
+                    (stage.value, proof, artifact_sha256)
+                )
+        return tuple(candidates)
 
     def __call__(self, request: StageRequest) -> StageOutput:
         try:
@@ -2027,14 +2048,33 @@ class NativeKernelRunner:
             ],
         }
         try:
-            candidate = (
-                None
+            candidates = (
+                ()
                 if compiled is None
-                else self._validated_proof_candidate(
+                else self._validated_proof_candidates(
                     request,
                     compiled,
                     translation,
                     compiler_candidate,
+                )
+            )
+            # Validate and render the complete present portfolio before
+            # starting Lean. A later provenance failure must not be hidden by
+            # an earlier accepted candidate.
+            rendered_candidates = (
+                ()
+                if compiled is None
+                else tuple(
+                    (
+                        candidate_source,
+                        candidate_sha256,
+                        compiled.render(proof_text),
+                    )
+                    for (
+                        candidate_source,
+                        proof_text,
+                        candidate_sha256,
+                    ) in candidates
                 )
             )
         except RuntimeBindingError as exc:
@@ -2068,7 +2108,7 @@ class NativeKernelRunner:
                 failure_detail=str(exc)[:512],
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             )
-        if compiled is None or candidate is None:
+        if compiled is None or not rendered_candidates:
             reason = (
                 "no_compiled_obligation"
                 if compiled is None
@@ -2101,54 +2141,123 @@ class NativeKernelRunner:
                 },
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             )
-        proof_text, candidate_sha256 = candidate
-        try:
-            source = compiled.render(proof_text)
-        except RuntimeBindingError as exc:
-            return StageOutput(
-                status=StageStatus.FAILED,
-                effective_identity=request.requested_identity,
-                failure_code=FailureCode.KERNEL_REJECTION,
-                failure_detail=str(exc)[:512],
-                telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
-            )
+        assert compiled is not None
         from ipfs_datasets_py.logic.hammers.process_lifecycle import (
             ProcessKind,
             ProcessLimits,
         )
 
-        with self.supervisor.temporary_directory(
-            prefix=f"hssl-{request.case_id}-"
-        ) as temporary:
-            source_path = Path(temporary) / "Main.lean"
-            source_path.write_text(source, encoding="utf-8")
-            # Lean otherwise sizes its worker pool from the host CPU count.
-            # Under the benchmark's RLIMIT_AS that can fail before parsing
-            # with "failed to create thread", even for a tiny valid proof.
-            # One worker is deterministic and keeps the native-kernel process
-            # inside the frozen memory and process bounds.
-            command = (self.lean_path, "-j", "1", str(source_path))
-            result = self.supervisor.run(
-                command,
-                kind=ProcessKind.LEAN,
-                limits=ProcessLimits(
-                    wall_time_seconds=self.timeout_seconds,
-                    cpu_seconds=self.timeout_seconds,
-                    memory_mb=self.memory_mb,
-                ),
-                cwd=temporary,
+        command_sha256 = hashlib.sha256(
+            "\0".join(
+                (self.lean_path, "-j", "1", "Main.lean")
+            ).encode("utf-8")
+        ).hexdigest()
+        attempts: list[dict[str, object]] = []
+        total_wall_time_ms = 0.0
+        total_bytes_in = 0
+        total_bytes_out = 0
+        infrastructure_failure: tuple[FailureCode, str] | None = None
+        for attempt_index, (
+            candidate_source,
+            candidate_sha256,
+            source,
+        ) in enumerate(rendered_candidates):
+            with self.supervisor.temporary_directory(
+                prefix=f"hssl-{request.case_id}-a{attempt_index}-"
+            ) as temporary:
+                source_path = Path(temporary) / "Main.lean"
+                source_path.write_text(source, encoding="utf-8")
+                # Lean otherwise sizes its worker pool from the host CPU count.
+                # Under the benchmark's RLIMIT_AS that can fail before parsing
+                # with "failed to create thread", even for a tiny valid proof.
+                # One worker is deterministic and keeps the native-kernel
+                # process inside the frozen memory and process bounds.
+                command = (self.lean_path, "-j", "1", str(source_path))
+                result = self.supervisor.run(
+                    command,
+                    kind=ProcessKind.LEAN,
+                    limits=ProcessLimits(
+                        wall_time_seconds=self.timeout_seconds,
+                        cpu_seconds=self.timeout_seconds,
+                        memory_mb=self.memory_mb,
+                    ),
+                    cwd=temporary,
+                )
+            source_bytes = source.encode("utf-8")
+            stdout_bytes = result.stdout.encode("utf-8")
+            stderr_bytes = result.stderr.encode("utf-8")
+            active_process_count = self.active_process_count
+            accepted = bool(
+                result.returncode == 0
+                and not result.timed_out
+                and not result.cancelled
+                and not result.resource_exhausted
+                and result.error is None
+                and active_process_count == 0
             )
-        source_sha256 = hashlib.sha256(source.encode("utf-8")).hexdigest()
-        stdout_sha256 = hashlib.sha256(result.stdout.encode("utf-8")).hexdigest()
-        stderr_sha256 = hashlib.sha256(result.stderr.encode("utf-8")).hexdigest()
-        accepted = bool(
-            result.returncode == 0
-            and not result.timed_out
-            and not result.cancelled
-            and not result.resource_exhausted
-            and result.error is None
-            and self.active_process_count == 0
-        )
+            attempt_body = {
+                "attempt_index": attempt_index,
+                "candidate_source": candidate_source,
+                "candidate_artifact_sha256": candidate_sha256,
+                "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
+                "command_sha256": command_sha256,
+                "stdout_sha256": hashlib.sha256(stdout_bytes).hexdigest(),
+                "stderr_sha256": hashlib.sha256(stderr_bytes).hexdigest(),
+                "returncode": result.returncode,
+                "timed_out": result.timed_out,
+                "cancelled": result.cancelled,
+                "resource_exhausted": result.resource_exhausted,
+                "termination_reason": result.termination_reason,
+                "active_process_count": active_process_count,
+                "accepted": accepted,
+            }
+            attempt = {
+                **attempt_body,
+                "attempt_sha256": _sha(attempt_body),
+            }
+            attempts.append(attempt)
+            total_wall_time_ms += result.wall_time_seconds * 1_000
+            total_bytes_in += len(source_bytes)
+            total_bytes_out += len(stdout_bytes) + len(stderr_bytes)
+
+            if (
+                result.timed_out
+                or result.cancelled
+                or result.resource_exhausted
+                or result.error is not None
+                or active_process_count
+            ):
+                failure_code = FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+                failure_detail = "native kernel process failed"
+                if active_process_count:
+                    failure_code = FailureCode.ORPHANED_CHILD
+                    failure_detail = "native kernel process was not reaped"
+                elif result.resource_exhausted:
+                    failure_code = FailureCode.OUT_OF_MEMORY
+                    failure_detail = (
+                        "native kernel resource bound was exhausted"
+                    )
+                elif result.timed_out or result.cancelled:
+                    failure_code = FailureCode.RESOURCE_LEASE_CANCELLATION
+                    failure_detail = (
+                        "native kernel execution timed out or was cancelled"
+                    )
+                infrastructure_failure = (failure_code, failure_detail)
+                break
+            if accepted:
+                break
+
+        selected = attempts[-1]
+        selected_attempt = {
+            key: selected[key]
+            for key in (
+                "attempt_index",
+                "candidate_source",
+                "candidate_artifact_sha256",
+                "attempt_sha256",
+                "accepted",
+            )
+        }
         receipt = {
             "schema": KERNEL_RECEIPT_SCHEMA,
             "run_id": request.run_id,
@@ -2161,47 +2270,37 @@ class NativeKernelRunner:
             "cache_mode": request.cache_mode.value,
             "compiled_obligation_sha256": compiled.digest,
             "obligation_sha256": compiled.obligation_sha256,
-            "candidate_artifact_sha256": candidate_sha256,
-            "source_sha256": source_sha256,
+            "candidate_source": selected["candidate_source"],
+            "candidate_artifact_sha256": selected[
+                "candidate_artifact_sha256"
+            ],
+            "source_sha256": selected["source_sha256"],
             **semantic_receipt_fields,
             "environment_sha256": self.environment_sha256,
-            "command_sha256": hashlib.sha256(
-                "\0".join(
-                    (self.lean_path, "-j", "1", "Main.lean")
-                ).encode("utf-8")
-            ).hexdigest(),
-            "stdout_sha256": stdout_sha256,
-            "stderr_sha256": stderr_sha256,
-            "returncode": result.returncode,
-            "timed_out": result.timed_out,
-            "cancelled": result.cancelled,
-            "resource_exhausted": result.resource_exhausted,
-            "termination_reason": result.termination_reason,
-            "active_process_count": self.active_process_count,
-            "accepted": accepted,
+            "command_sha256": selected["command_sha256"],
+            "stdout_sha256": selected["stdout_sha256"],
+            "stderr_sha256": selected["stderr_sha256"],
+            "returncode": selected["returncode"],
+            "timed_out": selected["timed_out"],
+            "cancelled": selected["cancelled"],
+            "resource_exhausted": selected["resource_exhausted"],
+            "termination_reason": selected["termination_reason"],
+            "active_process_count": selected["active_process_count"],
+            "accepted": selected["accepted"],
             "independent": True,
+            "candidate_attempts": attempts,
+            "candidate_attempts_sha256": _sha(attempts),
+            "selected_attempt": selected_attempt,
         }
         receipt_sha256 = _sha(receipt)
-        if (
-            result.timed_out
-            or result.cancelled
-            or result.resource_exhausted
-            or result.error is not None
-            or self.active_process_count
-        ):
-            failure_code = FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
-            failure_detail = "native kernel process failed"
-            if self.active_process_count:
-                failure_code = FailureCode.ORPHANED_CHILD
-                failure_detail = "native kernel process was not reaped"
-            elif result.resource_exhausted:
-                failure_code = FailureCode.OUT_OF_MEMORY
-                failure_detail = "native kernel resource bound was exhausted"
-            elif result.timed_out or result.cancelled:
-                failure_code = FailureCode.RESOURCE_LEASE_CANCELLATION
-                failure_detail = (
-                    "native kernel execution timed out or was cancelled"
-                )
+        telemetry = TelemetryRecord(
+            wall_time_ms=total_wall_time_ms,
+            bytes_in=total_bytes_in,
+            bytes_out=total_bytes_out,
+            resource_lane=ResourceLane.KERNEL,
+        )
+        if infrastructure_failure is not None:
+            failure_code, failure_detail = infrastructure_failure
             return StageOutput(
                 status=StageStatus.FAILED,
                 data={**receipt, "receipt_sha256": receipt_sha256},
@@ -2212,12 +2311,9 @@ class NativeKernelRunner:
                 },
                 failure_code=failure_code,
                 failure_detail=failure_detail,
-                telemetry=TelemetryRecord(
-                    wall_time_ms=result.wall_time_seconds * 1000,
-                    resource_lane=ResourceLane.KERNEL,
-                ),
+                telemetry=telemetry,
             )
-        if result.returncode != 0:
+        if selected["accepted"] is not True:
             return StageOutput(
                 status=StageStatus.FAILED,
                 data={**receipt, "receipt_sha256": receipt_sha256},
@@ -2228,13 +2324,7 @@ class NativeKernelRunner:
                 },
                 failure_code=FailureCode.KERNEL_REJECTION,
                 failure_detail="native kernel rejected the proof candidate",
-                telemetry=TelemetryRecord(
-                    wall_time_ms=result.wall_time_seconds * 1000,
-                    bytes_in=len(source.encode("utf-8")),
-                    bytes_out=len(result.stdout.encode("utf-8"))
-                    + len(result.stderr.encode("utf-8")),
-                    resource_lane=ResourceLane.KERNEL,
-                ),
+                telemetry=telemetry,
             )
         return StageOutput(
             data={**receipt, "receipt_sha256": receipt_sha256},
@@ -2243,15 +2333,9 @@ class NativeKernelRunner:
                 "implementation": "lean-native-kernel",
                 "executable": self.lean_path,
             },
-            telemetry=TelemetryRecord(
-                wall_time_ms=result.wall_time_seconds * 1000,
-                bytes_in=len(source.encode("utf-8")),
-                bytes_out=len(result.stdout.encode("utf-8"))
-                + len(result.stderr.encode("utf-8")),
-                resource_lane=ResourceLane.KERNEL,
-            ),
-            kernel_accepted=accepted,
-            kernel_receipt_sha256=receipt_sha256 if accepted else None,
+            telemetry=telemetry,
+            kernel_accepted=True,
+            kernel_receipt_sha256=receipt_sha256,
         )
 
 

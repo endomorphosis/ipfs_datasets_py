@@ -57,6 +57,74 @@ def _run(handler, request: adapters.StageRequest | None = None):
     return adapters.LeanstralAdapter(handler).run(request or _request())
 
 
+def _repair_source_artifacts(
+    *,
+    failed_draft: dict[str, object] | None = None,
+) -> tuple[adapters.StageArtifact, adapters.StageArtifact]:
+    leanstral = adapters.StageArtifact(
+        stage=contracts.StageName.LEANSTRAL,
+        status=contracts.StageStatus.SUCCESS,
+        data={
+            "schema": adapters.LEANSTRAL_EVIDENCE_SCHEMA,
+            "draft": failed_draft or _draft("exact wrong_lemma"),
+        },
+        output_sha256=None,
+        effective_identity={"graph_invoked": True},
+        invocation_index=0,
+    )
+    kernel_body = {
+        "schema": (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "native-kernel-receipt.v1"
+        ),
+        "accepted": False,
+        "independent": True,
+        "active_process_count": 0,
+        "returncode": 1,
+    }
+    kernel = adapters.StageArtifact(
+        stage=contracts.StageName.KERNEL,
+        status=contracts.StageStatus.FAILED,
+        data={
+            **kernel_body,
+            "receipt_sha256": hashlib.sha256(
+                contracts.canonical_json(kernel_body).encode("utf-8")
+            ).hexdigest(),
+        },
+        output_sha256=None,
+        effective_identity={"graph_invoked": True},
+        invocation_index=1,
+    )
+    return leanstral, kernel
+
+
+def _source_bound_repair_request(
+    base: adapters.StageRequest | None = None,
+    *,
+    failure_text: str = "unknown constant wrong_lemma",
+) -> tuple[
+    adapters.StageRequest,
+    adapters.StageRequest,
+    adapters.StageArtifact,
+    adapters.StageArtifact,
+]:
+    original = base or _request()
+    leanstral, kernel = _repair_source_artifacts()
+    context = adapters.build_leanstral_repair_context(
+        case_input_sha256=original.input_sha256,
+        failed_leanstral_artifact=leanstral,
+        kernel_rejection_artifact=kernel,
+        failure_text=failure_text,
+    )
+    repair = replace(
+        original,
+        repair_context=context,
+        upstream_artifacts=(leanstral, kernel),
+        invocation_index=2,
+    )
+    return original, repair, leanstral, kernel
+
+
 def test_objective_receipt_and_successful_draft_are_explicitly_unverified() -> None:
     assert adapters.HSSLEV0342A4C() == (
         "Leanstral proof drafts use strict schemas and one bounded unverified repair"
@@ -111,6 +179,263 @@ def test_repair_is_one_explicit_attempt_and_preserves_failure_context() -> None:
     assert seen[0]["compact_failures"] == [
         {"message": "unknown constant wrong_lemma"}
     ]
+
+
+def test_out_of_band_repair_is_source_bound_without_changing_case_identity() -> None:
+    seen: list[adapters.StageRequest] = []
+    original, repair, leanstral, kernel = _source_bound_repair_request(
+        failure_text=" unknown\nconstant\x00wrong_lemma "
+    )
+    original_input_sha256 = original.input_sha256
+    original_input_data = original.input_data
+
+    def handler(request: adapters.StageRequest) -> dict[str, object]:
+        seen.append(request)
+        return _draft("simp")
+
+    record = _run(handler, repair)
+
+    assert record.status is contracts.StageStatus.SUCCESS
+    assert record.data["mode"] == "repair"
+    assert record.data["repair_attempts"] == 1
+    assert repair.input_data is original_input_data
+    assert repair.input_sha256 == original_input_sha256
+    assert record.provenance.input_sha256 == original_input_sha256
+    assert repair.repair_context is not None
+    assert repair.repair_context["failure_text"] == (
+        "unknown constant wrong_lemma"
+    )
+    assert repair.repair_context["failed_leanstral_artifact_sha256"] == (
+        leanstral.digest
+    )
+    assert repair.repair_context["kernel_rejection_receipt_sha256"] == (
+        kernel.data["receipt_sha256"]
+    )
+    with pytest.raises(TypeError):
+        repair.repair_context["failure_text"] = "mutated"  # type: ignore[index]
+    with pytest.raises(TypeError):
+        repair.repair_context["failed_draft"]["proof_text"] = "mutated"  # type: ignore[index]
+
+    assert len(seen) == 1
+    projected = seen[0]
+    assert projected.repair_context is None
+    assert isinstance(projected.input_data, dict)
+    assert projected.input_data["repair_attempt"] == 1
+    assert projected.input_data["compact_failures"] == [
+        {"message": "unknown constant wrong_lemma"}
+    ]
+    assert projected.input_data["reusable_drafts"] == [
+        adapters._thaw_json(repair.repair_context["failed_draft"])
+    ]
+    projected_repair = projected.input_data["repair"]
+    assert projected_repair["case_input_sha256"] == original_input_sha256
+    assert projected_repair["failed_leanstral_artifact_sha256"] == (
+        leanstral.digest
+    )
+    assert projected_repair["kernel_rejection_receipt_sha256"] == (
+        kernel.data["receipt_sha256"]
+    )
+    expected_provider_id = "leanstral-" + hashlib.sha256(
+        (
+            f"{repair.run_id}:{repair.case_id}:"
+            f"{original_input_sha256}:1"
+        ).encode("utf-8")
+    ).hexdigest()[:48]
+    assert adapters._provider_request_id(repair, 1) == expected_provider_id
+
+
+@pytest.mark.parametrize(
+    ("field_name", "replacement", "message"),
+    [
+        (
+            "case_input_sha256",
+            "c" * 64,
+            "current case input",
+        ),
+        (
+            "attempt",
+            0,
+            "attempt must be exactly one",
+        ),
+        (
+            "failed_leanstral_artifact_sha256",
+            "c" * 64,
+            "failed Leanstral artifact",
+        ),
+        (
+            "kernel_rejection_receipt_sha256",
+            "c" * 64,
+            "kernel rejection receipt",
+        ),
+        (
+            "failure_text_sha256",
+            "c" * 64,
+            "failure_text digest",
+        ),
+        (
+            "failed_draft_sha256",
+            "c" * 64,
+            "failed_draft digest",
+        ),
+    ],
+)
+def test_out_of_band_repair_context_rejects_tampered_bindings(
+    field_name: str,
+    replacement: object,
+    message: str,
+) -> None:
+    original, repair, leanstral, kernel = _source_bound_repair_request()
+    assert repair.repair_context is not None
+    tampered = adapters._thaw_json(repair.repair_context)
+    assert isinstance(tampered, dict)
+    tampered[field_name] = replacement
+
+    with pytest.raises(contracts.ProtocolContractError, match=message):
+        replace(
+            original,
+            repair_context=tampered,
+            upstream_artifacts=(leanstral, kernel),
+            invocation_index=2,
+        )
+
+
+def test_out_of_band_repair_context_rejects_draft_and_receipt_source_tampering() -> None:
+    original, repair, leanstral, kernel = _source_bound_repair_request()
+    assert repair.repair_context is not None
+    changed = adapters._thaw_json(repair.repair_context)
+    assert isinstance(changed, dict)
+    changed["failed_draft"]["draft_text"] = "exact other"
+    changed["failed_draft"]["proof_text"] = "exact other"
+    changed["failed_draft_sha256"] = hashlib.sha256(
+        contracts.canonical_json(changed["failed_draft"]).encode("utf-8")
+    ).hexdigest()
+
+    with pytest.raises(
+        contracts.ProtocolContractError,
+        match="failed Leanstral artifact",
+    ):
+        replace(
+            original,
+            repair_context=changed,
+            upstream_artifacts=(leanstral, kernel),
+            invocation_index=2,
+        )
+
+    kernel_data = dict(kernel.data)
+    kernel_data["returncode"] = 2
+    changed_kernel = replace(kernel, data=kernel_data)
+    with pytest.raises(
+        contracts.ProtocolContractError,
+        match="kernel rejection receipt",
+    ):
+        replace(
+            original,
+            repair_context=repair.repair_context,
+            upstream_artifacts=(leanstral, changed_kernel),
+            invocation_index=2,
+        )
+
+
+def test_repair_context_can_reconstruct_payload_for_downstream_kernel_check() -> None:
+    original, repair, _failed_leanstral, kernel = (
+        _source_bound_repair_request()
+    )
+    assert repair.repair_context is not None
+    repaired_leanstral = adapters.StageArtifact(
+        stage=contracts.StageName.LEANSTRAL,
+        status=contracts.StageStatus.SUCCESS,
+        data={
+            "schema": adapters.LEANSTRAL_EVIDENCE_SCHEMA,
+            "mode": "repair",
+            "repair_attempts": 1,
+            "draft": _draft("simp"),
+        },
+        output_sha256=None,
+        effective_identity={"graph_invoked": True},
+        invocation_index=2,
+    )
+    downstream = replace(
+        original,
+        repair_context=repair.repair_context,
+        upstream_artifacts=(repaired_leanstral, kernel),
+        invocation_index=3,
+    )
+
+    payload, obligation_id, repair_attempt = adapters._leanstral_input(
+        downstream,
+        adapters.LeanstralAdapterConfig(),
+    )
+
+    assert downstream.input_sha256 == original.input_sha256
+    assert obligation_id == "obl-identity"
+    assert repair_attempt == 1
+    assert payload["repair"]["failed_leanstral_artifact_sha256"] == (
+        repair.repair_context["failed_leanstral_artifact_sha256"]
+    )
+    assert payload["repair"]["kernel_rejection_receipt_sha256"] == (
+        kernel.data["receipt_sha256"]
+    )
+
+
+def test_out_of_band_repair_context_enforces_failure_and_draft_bounds() -> None:
+    original = _request()
+    leanstral, kernel = _repair_source_artifacts()
+    with pytest.raises(
+        contracts.ProtocolContractError,
+        match="failure_text exceeds",
+    ):
+        adapters.build_leanstral_repair_context(
+            case_input_sha256=original.input_sha256,
+            failed_leanstral_artifact=leanstral,
+            kernel_rejection_artifact=kernel,
+            failure_text="x" * (
+                adapters.LEANSTRAL_MAX_REPAIR_FAILURE_BYTES + 1
+            ),
+        )
+
+    oversized = _draft(
+        "x" * (adapters.LEANSTRAL_MAX_REPAIR_DRAFT_BYTES + 1)
+    )
+    large_leanstral, kernel = _repair_source_artifacts(
+        failed_draft=oversized
+    )
+    with pytest.raises(
+        contracts.ProtocolContractError,
+        match="failed_draft exceeds",
+    ):
+        adapters.build_leanstral_repair_context(
+            case_input_sha256=original.input_sha256,
+            failed_leanstral_artifact=large_leanstral,
+            kernel_rejection_artifact=kernel,
+            failure_text="kernel rejected candidate",
+        )
+
+
+def test_out_of_band_and_legacy_repair_sources_cannot_conflict() -> None:
+    legacy = _request(
+        repair_attempt=1,
+        repair={
+            "failure": "legacy failure",
+            "failed_draft": "exact legacy",
+        },
+    )
+    _original, repair, _leanstral, _kernel = (
+        _source_bound_repair_request(legacy)
+    )
+    calls = 0
+
+    def handler(_request: adapters.StageRequest) -> dict[str, object]:
+        nonlocal calls
+        calls += 1
+        return _draft("simp")
+
+    record = _run(handler, repair)
+
+    assert record.status is contracts.StageStatus.FAILED
+    assert calls == 0
+    assert "both input_data and repair_context" in (
+        record.failure_detail or ""
+    )
 
 
 def test_frozen_case_text_is_the_prompt_at_the_leanstral_boundary() -> None:

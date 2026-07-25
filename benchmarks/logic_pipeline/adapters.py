@@ -82,6 +82,10 @@ LEANSTRAL_GENERATION_BOUNDARY_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
     "leanstral-generation-boundary.v1"
 )
+LEANSTRAL_REPAIR_CONTEXT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "leanstral-repair-context.v1"
+)
 LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
     "leanstral-strict-semantic-context.v1"
@@ -93,6 +97,9 @@ LEANSTRAL_MODEL_RESOURCE_CLASS: Final = "model"
 LEANSTRAL_KERNEL_RESOURCE_CLASS: Final = "kernel"
 LEANSTRAL_MAX_REPAIR_ATTEMPTS: Final = 1
 LEANSTRAL_MAX_CONTEXT_BYTES: Final = 64 * 1024
+LEANSTRAL_MAX_REPAIR_CONTEXT_BYTES: Final = 24 * 1024
+LEANSTRAL_MAX_REPAIR_FAILURE_BYTES: Final = 512
+LEANSTRAL_MAX_REPAIR_DRAFT_BYTES: Final = 16 * 1024
 LEANSTRAL_MEASURED_TIMEOUT_SECONDS: Final = 120.0
 LEANSTRAL_MEASURED_MAX_NEW_TOKENS: Final = 1_400
 # StageRecord also bounds individual strings to 4096 characters.  Keep the
@@ -584,6 +591,268 @@ class StageArtifact:
         }
 
 
+_LEANSTRAL_REPAIR_CONTEXT_FIELDS: Final = frozenset(
+    {
+        "schema",
+        "case_input_sha256",
+        "attempt",
+        "failed_leanstral_artifact_sha256",
+        "kernel_rejection_receipt_sha256",
+        "failure_text",
+        "failure_text_sha256",
+        "failed_draft",
+        "failed_draft_sha256",
+    }
+)
+_NATIVE_KERNEL_RECEIPT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.native-kernel-receipt.v1"
+)
+
+
+def _leanstral_repair_failure_text(value: object) -> str:
+    """Return one bounded, single-line diagnostic safe for prompt projection."""
+
+    if not isinstance(value, str):
+        raise ProtocolContractError(
+            "Leanstral repair failure_text must be a string"
+        )
+    printable = "".join(char if char.isprintable() else " " for char in value)
+    sanitized = " ".join(printable.split())
+    if not sanitized:
+        raise ProtocolContractError(
+            "Leanstral repair failure_text must be nonempty"
+        )
+    if len(sanitized.encode("utf-8")) > LEANSTRAL_MAX_REPAIR_FAILURE_BYTES:
+        raise ProtocolContractError(
+            "Leanstral repair failure_text exceeds its byte bound"
+        )
+    return sanitized
+
+
+def _leanstral_repair_json_digest(value: object) -> str:
+    return hashlib.sha256(
+        canonical_json(_thaw_json(value)).encode("utf-8")
+    ).hexdigest()
+
+
+def _validate_leanstral_repair_context(
+    value: object,
+    *,
+    case_input_sha256: str,
+    upstream_artifacts: tuple[StageArtifact, ...],
+) -> Mapping[str, object]:
+    """Validate and deeply freeze a source-bound, out-of-band repair context."""
+
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise ProtocolContractError(
+            "repair_context must be an object with string keys"
+        )
+    if set(value) != _LEANSTRAL_REPAIR_CONTEXT_FIELDS:
+        raise ProtocolContractError(
+            "repair_context fields do not match the exact schema"
+        )
+    try:
+        encoded = canonical_json(_thaw_json(value)).encode("utf-8")
+    except ProtocolContractError:
+        raise
+    normalized = json.loads(encoded)
+    if normalized["schema"] != LEANSTRAL_REPAIR_CONTEXT_SCHEMA:
+        raise ProtocolContractError("repair_context uses the wrong schema")
+    if normalized["case_input_sha256"] != case_input_sha256:
+        raise ProtocolContractError(
+            "repair_context is not bound to the current case input"
+        )
+    if type(normalized["attempt"]) is not int or normalized["attempt"] != 1:
+        raise ProtocolContractError(
+            "repair_context attempt must be exactly one"
+        )
+    for field_name in (
+        "case_input_sha256",
+        "failed_leanstral_artifact_sha256",
+        "kernel_rejection_receipt_sha256",
+        "failure_text_sha256",
+        "failed_draft_sha256",
+    ):
+        _digest(normalized[field_name], f"repair_context.{field_name}")
+
+    failure_text = _leanstral_repair_failure_text(
+        normalized["failure_text"]
+    )
+    if failure_text != normalized["failure_text"]:
+        raise ProtocolContractError(
+            "repair_context failure_text is not canonically sanitized"
+        )
+    if hashlib.sha256(failure_text.encode("utf-8")).hexdigest() != normalized[
+        "failure_text_sha256"
+    ]:
+        raise ProtocolContractError(
+            "repair_context failure_text digest does not match"
+        )
+
+    failed_draft = normalized["failed_draft"]
+    if not isinstance(failed_draft, dict) or not failed_draft:
+        raise ProtocolContractError(
+            "repair_context failed_draft must be a nonempty object"
+        )
+    failed_draft_bytes = canonical_json(failed_draft).encode("utf-8")
+    if len(failed_draft_bytes) > LEANSTRAL_MAX_REPAIR_DRAFT_BYTES:
+        raise ProtocolContractError(
+            "repair_context failed_draft exceeds its byte bound"
+        )
+    if hashlib.sha256(failed_draft_bytes).hexdigest() != normalized[
+        "failed_draft_sha256"
+    ]:
+        raise ProtocolContractError(
+            "repair_context failed_draft digest does not match"
+        )
+    if len(encoded) > LEANSTRAL_MAX_REPAIR_CONTEXT_BYTES:
+        raise ProtocolContractError("repair_context exceeds its byte bound")
+
+    leanstral = next(
+        (
+            artifact
+            for artifact in upstream_artifacts
+            if artifact.stage is StageName.LEANSTRAL
+        ),
+        None,
+    )
+    if (
+        leanstral is None
+        or not leanstral.invoked
+        or leanstral.status is not StageStatus.SUCCESS
+        or not isinstance(leanstral.data, Mapping)
+        or leanstral.data.get("schema") != LEANSTRAL_EVIDENCE_SCHEMA
+        or not isinstance(leanstral.data.get("draft"), Mapping)
+    ):
+        raise ProtocolContractError(
+            "repair_context is not bound to the failed Leanstral artifact"
+        )
+    if leanstral.digest == normalized["failed_leanstral_artifact_sha256"]:
+        if (
+            canonical_json(_thaw_json(leanstral.data["draft"]))
+            != canonical_json(failed_draft)
+        ):
+            raise ProtocolContractError(
+                "repair_context is not bound to the failed Leanstral artifact"
+            )
+    elif not (
+        leanstral.data.get("mode") == "repair"
+        and leanstral.data.get("repair_attempts") == 1
+        and canonical_json(_thaw_json(leanstral.data["draft"]))
+        != canonical_json(failed_draft)
+    ):
+        # A downstream kernel request carries the newly repaired Leanstral
+        # artifact, not a duplicate copy of the failed artifact.  Permit that
+        # one exact role while retaining the failed artifact digest and draft
+        # in the immutable context for independent prompt reconstruction.
+        raise ProtocolContractError(
+            "repair_context is not bound to the failed Leanstral artifact"
+        )
+
+    kernel = next(
+        (
+            artifact
+            for artifact in upstream_artifacts
+            if artifact.stage is StageName.KERNEL
+        ),
+        None,
+    )
+    if (
+        kernel is None
+        or not kernel.invoked
+        or kernel.status is not StageStatus.FAILED
+        or not isinstance(kernel.data, Mapping)
+    ):
+        raise ProtocolContractError(
+            "repair_context requires a failed kernel artifact"
+        )
+    kernel_receipt = _thaw_json(kernel.data)
+    if not isinstance(kernel_receipt, dict):  # pragma: no cover - mapping above
+        raise ProtocolContractError(
+            "repair_context kernel receipt must be an object"
+        )
+    receipt_sha256 = kernel_receipt.get("receipt_sha256")
+    receipt_body = {
+        key: member
+        for key, member in kernel_receipt.items()
+        if key != "receipt_sha256"
+    }
+    if (
+        kernel_receipt.get("schema") != _NATIVE_KERNEL_RECEIPT_SCHEMA
+        or kernel_receipt.get("independent") is not True
+        or kernel_receipt.get("accepted") is not False
+        or receipt_sha256
+        != normalized["kernel_rejection_receipt_sha256"]
+        or receipt_sha256 != _leanstral_repair_json_digest(receipt_body)
+    ):
+        raise ProtocolContractError(
+            "repair_context is not bound to an independent kernel rejection receipt"
+        )
+
+    frozen = _freeze_json(normalized)
+    if not isinstance(frozen, Mapping):  # pragma: no cover - object above
+        raise ProtocolContractError("repair_context did not remain an object")
+    return frozen
+
+
+def build_leanstral_repair_context(
+    *,
+    case_input_sha256: str,
+    failed_leanstral_artifact: StageArtifact,
+    kernel_rejection_artifact: StageArtifact,
+    failure_text: str,
+) -> Mapping[str, object]:
+    """Build the exact out-of-band context for one kernel-driven repair."""
+
+    _digest(case_input_sha256, "case_input_sha256")
+    if (
+        not isinstance(failed_leanstral_artifact, StageArtifact)
+        or not isinstance(kernel_rejection_artifact, StageArtifact)
+    ):
+        raise ProtocolContractError(
+            "repair context requires typed Leanstral and kernel artifacts"
+        )
+    if not isinstance(failed_leanstral_artifact.data, Mapping):
+        raise ProtocolContractError(
+            "failed Leanstral artifact is not an evidence object"
+        )
+    failed_draft = failed_leanstral_artifact.data.get("draft")
+    if not isinstance(failed_draft, Mapping):
+        raise ProtocolContractError(
+            "failed Leanstral artifact omitted its draft"
+        )
+    sanitized_failure = _leanstral_repair_failure_text(failure_text)
+    context = {
+        "schema": LEANSTRAL_REPAIR_CONTEXT_SCHEMA,
+        "case_input_sha256": case_input_sha256,
+        "attempt": 1,
+        "failed_leanstral_artifact_sha256": (
+            failed_leanstral_artifact.digest
+        ),
+        "kernel_rejection_receipt_sha256": (
+            kernel_rejection_artifact.data.get("receipt_sha256")
+            if isinstance(kernel_rejection_artifact.data, Mapping)
+            else None
+        ),
+        "failure_text": sanitized_failure,
+        "failure_text_sha256": hashlib.sha256(
+            sanitized_failure.encode("utf-8")
+        ).hexdigest(),
+        "failed_draft": _thaw_json(failed_draft),
+        "failed_draft_sha256": _leanstral_repair_json_digest(failed_draft),
+    }
+    return _validate_leanstral_repair_context(
+        context,
+        case_input_sha256=case_input_sha256,
+        upstream_artifacts=(
+            failed_leanstral_artifact,
+            kernel_rejection_artifact,
+        ),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class StageRequest:
     """Immutable invocation context shared by all stage handlers."""
@@ -605,6 +874,7 @@ class StageRequest:
     invocation_index: int = 0
     protocol_sha256: str = DEFAULT_PROTOCOL_SHA256
     deadline_unix_ms: int | None = None
+    repair_context: Mapping[str, object] | None = None
 
     def __post_init__(self) -> None:
         _safe_id(self.run_id, "run_id")
@@ -672,7 +942,17 @@ class StageRequest:
             self.requested_identity, "requested_identity"
         )
         object.__setattr__(self, "requested_identity", identity)
-        _input_digest(self.input_data)
+        input_sha256, _input_bytes = _input_digest(self.input_data)
+        if self.repair_context is not None:
+            object.__setattr__(
+                self,
+                "repair_context",
+                _validate_leanstral_repair_context(
+                    self.repair_context,
+                    case_input_sha256=input_sha256,
+                    upstream_artifacts=self.upstream_artifacts,
+                ),
+            )
 
     @property
     def input_sha256(self) -> str:
@@ -4060,6 +4340,30 @@ def _leanstral_input(
         for key, value in request.input_data.items()
         if key in provider_input_keys
     }
+    if request.repair_context is not None:
+        if "repair" in raw or "repair_attempt" in raw:
+            raise LeanstralAdapterContractError(
+                "Leanstral repair cannot use both input_data and repair_context"
+            )
+        repair_context = request.repair_context
+        raw["repair_attempt"] = repair_context["attempt"]
+        raw["repair"] = {
+            "failure": repair_context["failure_text"],
+            "failed_draft": _thaw_json(repair_context["failed_draft"]),
+            "case_input_sha256": repair_context["case_input_sha256"],
+            "failed_leanstral_artifact_sha256": repair_context[
+                "failed_leanstral_artifact_sha256"
+            ],
+            "kernel_rejection_receipt_sha256": repair_context[
+                "kernel_rejection_receipt_sha256"
+            ],
+            "failure_text_sha256": repair_context[
+                "failure_text_sha256"
+            ],
+            "failed_draft_sha256": repair_context[
+                "failed_draft_sha256"
+            ],
+        }
     raw_ids = raw.get("obligation_ids", raw.get("obligation_id"))
     if isinstance(raw_ids, str):
         obligation_ids = (raw_ids.strip(),)
@@ -5094,7 +5398,11 @@ class LeanstralAdapter(StageAdapter):
                 selected_request = (
                     request
                     if selected_uses_case_request
-                    else replace(request, input_data=payload)
+                    else replace(
+                        request,
+                        input_data=payload,
+                        repair_context=None,
+                    )
                 )
                 raw = selected(selected_request)  # type: ignore[misc]
                 if isinstance(raw, StageOutput):
@@ -5381,11 +5689,15 @@ __all__ = [
     "LEANSTRAL_KERNEL_RESOURCE_CLASS",
     "LEANSTRAL_MAX_CONTEXT_BYTES",
     "LEANSTRAL_MAX_DRAFT_BYTES",
+    "LEANSTRAL_MAX_REPAIR_CONTEXT_BYTES",
+    "LEANSTRAL_MAX_REPAIR_DRAFT_BYTES",
+    "LEANSTRAL_MAX_REPAIR_FAILURE_BYTES",
     "LEANSTRAL_MAX_REPAIR_ATTEMPTS",
     "LEANSTRAL_MEASURED_MAX_NEW_TOKENS",
     "LEANSTRAL_MEASURED_TIMEOUT_SECONDS",
     "LEANSTRAL_MODEL_RESOURCE_CLASS",
     "LEANSTRAL_PROOF_OUTPUT_SCHEMA",
+    "LEANSTRAL_REPAIR_CONTEXT_SCHEMA",
     "LEANSTRAL_STRICT_SEMANTIC_CONTEXT_SCHEMA",
     "LeanstralAdapterConfig",
     "LeanstralAdapterContractError",
@@ -5426,6 +5738,7 @@ __all__ = [
     "SymaiRecursiveRoutingError",
     "SymaiTraceGetter",
     "VersionedStageAdapter",
+    "build_leanstral_repair_context",
     "build_upstream_semantic_context",
     "build_default_adapters",
     "run_stages",

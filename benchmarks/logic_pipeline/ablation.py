@@ -1318,7 +1318,14 @@ def _ambiguity_decision(artifacts: Sequence[StageArtifact]) -> bool:
     return bool(_ambiguity_gate_receipt(artifacts)["ambiguity_detected"])
 
 
-def _proof_succeeded(artifact: StageArtifact) -> bool:
+def _proof_candidate_ready(artifact: StageArtifact) -> bool:
+    """Return whether a proof backend produced a usable unverified candidate.
+
+    This predicate controls only the frozen one-fallback routing policy.  It
+    does not confer proof authority: Hammer evidence and Leanstral drafts stay
+    unverified until the independent terminal kernel accepts them.
+    """
+
     if not artifact.invoked or artifact.status is not StageStatus.SUCCESS:
         return False
     if not isinstance(artifact.data, Mapping):
@@ -1339,6 +1346,52 @@ def _proof_succeeded(artifact: StageArtifact) -> bool:
             draft.get("proof_text", draft.get("draft_text"))
         )
     return False
+
+
+def _compiler_translation_unsupported(
+    artifacts: Sequence[StageArtifact],
+) -> bool:
+    """Detect the real compiler's explicit opaque no-candidate contract.
+
+    Legacy and injected compiler handlers predate these runtime fields.  The
+    gate therefore fails open unless the successful compiler artifact exposes
+    the exact compiler-output and compiled-obligation schemas together with
+    explicit null translation and native-candidate fields.
+    """
+
+    compiler = next(
+        (
+            artifact
+            for artifact in artifacts
+            if artifact.stage is StageName.COMPILER
+        ),
+        None,
+    )
+    if (
+        compiler is None
+        or not compiler.invoked
+        or compiler.status is not StageStatus.SUCCESS
+        or not isinstance(compiler.data, Mapping)
+    ):
+        return False
+    data = compiler.data
+    required_fields = {
+        "compiled_obligation",
+        "entailment_translation",
+        "native_proof_candidate",
+    }
+    if not required_fields.issubset(data):
+        return False
+    compiled = data["compiled_obligation"]
+    return bool(
+        data.get("schema")
+        == "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+        and isinstance(compiled, Mapping)
+        and compiled.get("schema")
+        == "ipfs-datasets.logic-pipeline-benchmark.compiled-obligation.v1"
+        and data["entailment_translation"] is None
+        and data["native_proof_candidate"] is None
+    )
 
 
 def _has_obligation(input_data: object) -> bool:
@@ -1663,6 +1716,9 @@ def _execute_job(
                 break
 
         has_obligation = _has_obligation(job.case.input_data)
+        compiler_translation_unsupported = (
+            _compiler_translation_unsupported(artifacts)
+        )
         previous_proof: StageArtifact | None = None
         if not terminal_failure:
             for proof_index, stage in enumerate(definition.proof_order):
@@ -1670,10 +1726,13 @@ def _execute_job(
                 reason = "proof_scheduled"
                 if not has_obligation:
                     reason = "no_reviewed_proof_obligation"
+                elif compiler_translation_unsupported:
+                    should_invoke = False
+                    reason = "compiler_translation_unsupported"
                 elif proof_index and job.variant_id != "A12":
                     should_invoke = not (
                         previous_proof is not None
-                        and _proof_succeeded(previous_proof)
+                        and _proof_candidate_ready(previous_proof)
                     )
                     reason = (
                         "proof_fallback_suppressed"

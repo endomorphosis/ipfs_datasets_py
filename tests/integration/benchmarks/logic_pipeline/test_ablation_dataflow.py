@@ -7,7 +7,13 @@ from types import MappingProxyType
 
 import pytest
 
-from benchmarks.logic_pipeline import ablation, adapters, contracts, variants
+from benchmarks.logic_pipeline import (
+    ablation,
+    adapters,
+    contracts,
+    runtime,
+    variants,
+)
 
 
 def _case(
@@ -54,10 +60,18 @@ def _plan(
 
 
 class _GraphHandlers:
-    def __init__(self, *, hammer_success: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        hammer_success: bool = False,
+        compiler_data: dict[str, object] | None = None,
+        kernel_accepts: bool = True,
+    ) -> None:
         self.calls: list[contracts.StageName] = []
         self.requests: dict[contracts.StageName, adapters.StageRequest] = {}
         self.hammer_success = hammer_success
+        self.compiler_data = compiler_data
+        self.kernel_accepts = kernel_accepts
 
     def mapping(self) -> MappingProxyType:
         return MappingProxyType(
@@ -80,6 +94,7 @@ class _GraphHandlers:
                         "ambiguity_detected": request.input_data[
                             "ambiguity_detected"
                         ],
+                        **(self.compiler_data or {}),
                     }
                 )
             if stage is contracts.StageName.HAMMER:
@@ -99,6 +114,17 @@ class _GraphHandlers:
                     }
                 )
             if stage is contracts.StageName.KERNEL:
+                if not self.kernel_accepts:
+                    return adapters.StageOutput(
+                        data={
+                            "accepted": False,
+                            "reason": "no_proof_candidate",
+                            "consumed": [
+                                artifact.digest
+                                for artifact in request.upstream_artifacts
+                            ],
+                        },
+                    )
                 return adapters.StageOutput(
                     data={
                         "accepted": True,
@@ -113,6 +139,22 @@ class _GraphHandlers:
             return adapters.StageOutput(data={"stage": stage.value})
 
         return invoke
+
+
+def _unsupported_runtime_compiler_data() -> dict[str, object]:
+    compiled = runtime.compile_reviewed_obligation(_case().input_data)
+    assert compiled is not None
+    assert "translation:unsupported" in compiled.source_template
+    return {
+        "schema": (
+            "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
+        ),
+        "compiled_obligation": compiled.to_dict(),
+        "compiled_obligation_sha256": compiled.digest,
+        "entailment_translation": None,
+        "entailment_translation_sha256": None,
+        "native_proof_candidate": None,
+    }
 
 
 @pytest.mark.parametrize(
@@ -306,6 +348,70 @@ def test_failed_lean_first_attempt_executes_registered_hammer_fallback(
     assert contracts.StageName.KERNEL in graph.calls
     assert run.results[0].stages[-1].kernel_accepted
     assert run.results[0].status is contracts.OutcomeStatus.UNAVAILABLE
+
+
+def test_explicit_unsupported_compiler_translation_suppresses_proof_calls_but_not_kernel(
+    tmp_path: Path,
+) -> None:
+    graph = _GraphHandlers(
+        compiler_data=_unsupported_runtime_compiler_data(),
+        kernel_accepts=False,
+    )
+    result = ablation.execute_ablation(
+        _plan("A12"),
+        graph.mapping(),
+        output_root=tmp_path,
+        resume=False,
+    ).results[0]
+
+    assert contracts.StageName.HAMMER not in graph.calls
+    assert contracts.StageName.LEANSTRAL not in graph.calls
+    assert contracts.StageName.KERNEL in graph.calls
+    proof_records = [
+        stage
+        for stage in result.stages
+        if stage.stage
+        in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
+    ]
+    assert {stage.stage for stage in proof_records} == {
+        contracts.StageName.HAMMER,
+        contracts.StageName.LEANSTRAL,
+    }
+    for stage in proof_records:
+        assert stage.status is contracts.StageStatus.SUCCESS
+        assert stage.data["invoked"] is False
+        assert stage.data["reason"] == "compiler_translation_unsupported"
+        assert stage.provenance.effective_identity["graph_invoked"] is False
+        assert stage.telemetry.model_calls == 0
+    kernel = result.stages[-1]
+    assert kernel.stage is contracts.StageName.KERNEL
+    assert kernel.provenance.effective_identity["graph_invoked"] is True
+    assert kernel.data["reason"] == "no_proof_candidate"
+    assert result.status is contracts.OutcomeStatus.NOT_VERIFIED
+    assert result.validate_provenance() is None
+
+
+def test_incomplete_compiler_contract_fails_open_for_injected_handlers(
+    tmp_path: Path,
+) -> None:
+    partial = _unsupported_runtime_compiler_data()
+    partial.pop("native_proof_candidate")
+    graph = _GraphHandlers(compiler_data=partial)
+    result = ablation.execute_ablation(
+        _plan("A9"),
+        graph.mapping(),
+        output_root=tmp_path,
+        resume=False,
+    ).results[0]
+
+    assert contracts.StageName.LEANSTRAL in graph.calls
+    leanstral = next(
+        stage
+        for stage in result.stages
+        if stage.stage is contracts.StageName.LEANSTRAL
+    )
+    assert leanstral.provenance.effective_identity["graph_invoked"] is True
+    assert result.status is contracts.OutcomeStatus.VERIFIED
 
 
 def test_explicit_no_proof_target_records_zero_call_proof_and_kernel_gates(

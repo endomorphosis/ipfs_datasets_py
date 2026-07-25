@@ -996,28 +996,42 @@ class _FakeSupervisor:
         *,
         returncode: int = 0,
         expected_proof: str = "exact proof_token",
+        returncodes: tuple[int, ...] | None = None,
+        expected_proofs: tuple[str, ...] | None = None,
     ) -> None:
         self.root = root
         self.returncode = returncode
         self.expected_proof = expected_proof
+        self.returncodes = returncodes or (returncode,)
+        self.expected_proofs = expected_proofs or (expected_proof,)
+        self.sources: list[str] = []
+        self._directory_count = 0
         self.active_process_count = 0
         self.closed = False
 
     @contextmanager
     def temporary_directory(self, **_kwargs: object):
-        directory = self.root / "kernel"
+        directory = self.root / f"kernel-{self._directory_count}"
+        self._directory_count += 1
         directory.mkdir()
         yield str(directory)
 
     def run(self, command: object, **_kwargs: object) -> object:
-        source = Path(self.root / "kernel" / "Main.lean").read_text()
-        assert f"by\n  {self.expected_proof}" in source
+        attempt_index = len(self.sources)
+        source = Path(str(_kwargs["cwd"])) / "Main.lean"
+        rendered = source.read_text()
+        assert (
+            f"by\n  {self.expected_proofs[attempt_index]}"
+            in rendered
+        )
         assert tuple(command)[1:3] == ("-j", "1")
         assert _kwargs["limits"].memory_mb == 4096
+        self.sources.append(rendered)
+        returncode = self.returncodes[attempt_index]
         return SimpleNamespace(
-            returncode=self.returncode,
-            stdout="accepted" if self.returncode == 0 else "",
-            stderr="" if self.returncode == 0 else "rejected",
+            returncode=returncode,
+            stdout="accepted" if returncode == 0 else "",
+            stderr="" if returncode == 0 else "rejected",
             timed_out=False,
             cancelled=False,
             resource_exhausted=False,
@@ -1093,6 +1107,21 @@ def test_independent_kernel_receipt_binds_candidate_and_reaps_owner(
     assert output.kernel_receipt_sha256 == output.data["receipt_sha256"]
     assert output.data["independent"] is True
     assert output.data["candidate_artifact_sha256"] == leanstral.digest
+    assert output.data["candidate_source"] == "leanstral"
+    assert output.data["candidate_attempts_sha256"] == hashlib.sha256(
+        contracts.canonical_json(
+            output.data["candidate_attempts"]
+        ).encode("utf-8")
+    ).hexdigest()
+    assert output.data["selected_attempt"] == {
+        "attempt_index": 0,
+        "candidate_source": "leanstral",
+        "candidate_artifact_sha256": leanstral.digest,
+        "attempt_sha256": output.data["candidate_attempts"][0][
+            "attempt_sha256"
+        ],
+        "accepted": True,
+    }
     assert output.data["active_process_count"] == 0
     runner.close()
     assert fake.closed
@@ -1116,7 +1145,7 @@ def test_independent_kernel_receipt_binds_candidate_and_reaps_owner(
     rejected_runner.close()
 
 
-def test_independent_kernel_accepts_exact_hammer_candidate(
+def test_kernel_continues_after_logical_rejection_and_accepts_hammer(
     tmp_path: Path,
 ) -> None:
     value = _reviewed_entailment(
@@ -1151,7 +1180,11 @@ def test_independent_kernel_accepts_exact_hammer_candidate(
     )
     runner._supervisor = _FakeSupervisor(
         tmp_path,
-        expected_proof=translation.hammer_proof_text,
+        returncodes=(1, 0),
+        expected_proofs=(
+            translation.native_proof_text,
+            translation.hammer_proof_text,
+        ),
     )
 
     output = runner(
@@ -1171,6 +1204,88 @@ def test_independent_kernel_accepts_exact_hammer_candidate(
     assert output.status is contracts.StageStatus.SUCCESS
     assert output.kernel_accepted
     assert output.data["candidate_artifact_sha256"] == hammer.digest
+    assert output.data["candidate_source"] == "hammer"
+    assert [
+        (attempt["candidate_source"], attempt["accepted"])
+        for attempt in output.data["candidate_attempts"]
+    ] == [("compiler", False), ("hammer", True)]
+    assert output.data["selected_attempt"]["attempt_index"] == 1
+    assert output.data["selected_attempt"]["attempt_sha256"] == (
+        output.data["candidate_attempts"][1]["attempt_sha256"]
+    )
+    assert output.telemetry.wall_time_ms == pytest.approx(20)
+
+
+def test_compiler_native_candidate_preempts_valid_optional_backends(
+    tmp_path: Path,
+) -> None:
+    value = _reviewed_entailment(
+        (
+            "Every archivist is trained. Ada is an archivist. "
+            "Therefore Ada is trained."
+        ),
+        "trained",
+    )
+    compiled, translation, compiler = _strict_compiler_artifact(value)
+    assert translation is not None
+    assert translation.native_proof_text is not None
+    base_request = adapters.StageRequest(
+        run_id="runtime-native-preemption",
+        case_id="case-1",
+        case_manifest_sha256="a" * 64,
+        variant_id="A3",
+        input_data=value,
+        environment_sha256="b" * 64,
+        upstream_artifacts=(compiler,),
+        invocation_index=1,
+    )
+    hammer = _strict_hammer_artifact(base_request, translation)
+    leanstral = _strict_leanstral_artifact(
+        base_request,
+        compiled,
+        proof_text="exact rule witness fact",
+    )
+    runner = runtime.NativeKernelRunner(
+        "/test/lean",
+        "b" * 64,
+        tmp_path / "state",
+        expected_hammer_identity={
+            "implementation": "test-hammer",
+            "solver": "cvc5",
+            "solver_path": "/test/cvc5",
+        },
+        expected_leanstral_identity={
+            "endpoint": "http://127.0.0.1:8080/v1",
+            "provider": "leanstral_local",
+            "model": "exact-test-model",
+        },
+    )
+    fake = _FakeSupervisor(
+        tmp_path,
+        expected_proof=translation.native_proof_text,
+    )
+    runner._supervisor = fake
+
+    output = runner(
+        adapters.StageRequest(
+            run_id=base_request.run_id,
+            case_id=base_request.case_id,
+            case_manifest_sha256=base_request.case_manifest_sha256,
+            variant_id="A3",
+            input_data=value,
+            environment_sha256="b" * 64,
+            upstream_artifacts=(compiler, hammer, leanstral),
+            invocation_index=3,
+        )
+    )
+
+    assert output.status is contracts.StageStatus.SUCCESS
+    assert output.kernel_accepted
+    assert output.data["candidate_source"] == "compiler"
+    assert output.data["candidate_artifact_sha256"] == compiler.digest
+    assert len(output.data["candidate_attempts"]) == 1
+    assert output.data["selected_attempt"]["attempt_index"] == 0
+    assert len(fake.sources) == 1
 
 
 def test_kernel_rejects_hammer_candidate_copied_from_another_case(
