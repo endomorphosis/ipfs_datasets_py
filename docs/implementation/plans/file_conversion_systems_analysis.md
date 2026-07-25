@@ -576,8 +576,8 @@ ipfs_datasets_py/multimedia/
 
 - **Quick Reference:** [file_conversion_pros_cons.md](file_conversion_pros_cons.md) - Concise pros/cons comparison
 - **Merge Feasibility:** [file_conversion_merge_feasibility.md](file_conversion_merge_feasibility.md) - Can these be merged?
-- **Multimedia README:** [../ipfs_datasets_py/multimedia/README.md](../ipfs_datasets_py/multimedia/README.md)
-- **Documentation Index:** [index.md](index.md) | [archive/deprecated/master_documentation_index.md](archive/deprecated/master_documentation_index.md)
+- **Multimedia README:** [ipfs_datasets_py/processors/multimedia/README.md](../../../ipfs_datasets_py/processors/multimedia/README.md)
+- **Documentation Index:** [docs/index.md](../../index.md)
 
 ---
 
