@@ -255,8 +255,8 @@ python examples/accelerate_integration_demo.py
 ## Documentation References
 
 - **Integration Plan**: [ACCELERATE_INTEGRATION_PLAN.md](ACCELERATE_INTEGRATION_PLAN.md)
-- **Module README**: [ipfs_datasets_py/accelerate_integration/README.md](ipfs_datasets_py/accelerate_integration/README.md)
-- **Main README**: [README.md](README.md) - See "Distributed AI Compute" section
+- **Module README**: [ipfs_datasets_py/ml/accelerate_integration/README.md](../../../ipfs_datasets_py/ml/accelerate_integration/README.md)
+- **Main README**: [README.md](../../../README.md) - See "Distributed AI Compute" section
 - **ipfs_accelerate_py**: [GitHub Repository](https://github.com/endomorphosis/ipfs_accelerate_py)
 
 ## Quick Reference
