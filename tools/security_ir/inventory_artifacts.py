@@ -25,6 +25,9 @@ from typing import Any, Iterable, Sequence
 SCHEMA_VERSION = "SecurityArtifactInventory@1"
 DEFAULT_ARTIFACT_ROOT = "security_ir_artifacts"
 DEFAULT_OUTPUT = "docs/security_verification/security_ir_artifact_inventory.json"
+# v1 migration metadata describes the frozen legacy tree and cannot itself be
+# part of that tree: including it would create an inventory/manifest hash cycle.
+NON_LEGACY_PATH_PREFIXES = ("security_ir_artifacts/migrations/",)
 
 CLASSIFICATIONS = (
     "source",
@@ -232,7 +235,11 @@ def tracked_artifact_paths(
         path = _normalise_relative_path(decoded)
         if path.parts[: len(prefix)] != prefix:
             raise RuntimeError(f"git returned an out-of-scope artifact path: {decoded}")
-        paths.append(path)
+        if not any(
+            path.as_posix().startswith(prefix)
+            for prefix in NON_LEGACY_PATH_PREFIXES
+        ):
+            paths.append(path)
     return sorted(set(paths), key=lambda item: item.as_posix().encode("utf-8"))
 
 
@@ -248,11 +255,17 @@ def filesystem_artifact_paths(
     if not absolute_root.is_dir():
         raise FileNotFoundError(f"artifact root does not exist: {relative_root}")
 
-    paths = [
-        PurePosixPath(path.relative_to(repo_root).as_posix())
-        for path in absolute_root.rglob("*")
-        if path.is_file() or path.is_symlink()
-    ]
+    paths = []
+    for path in absolute_root.rglob("*"):
+        if not (path.is_file() or path.is_symlink()):
+            continue
+        relative = PurePosixPath(path.relative_to(repo_root).as_posix())
+        if any(
+            relative.as_posix().startswith(prefix)
+            for prefix in NON_LEGACY_PATH_PREFIXES
+        ):
+            continue
+        paths.append(relative)
     return sorted(set(paths), key=lambda item: item.as_posix().encode("utf-8"))
 
 
