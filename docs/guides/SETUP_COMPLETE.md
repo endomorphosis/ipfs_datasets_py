@@ -52,8 +52,8 @@ I've successfully set up Docker support and GitHub Actions CI/CD for your `ipfs_
 
 **New Files:**
 1. `DOCKER_GITHUB_ACTIONS_SETUP.md` - Complete overview of the setup
-2. `docs/RUNNER_SETUP.md` - Detailed self-hosted runner guide
-3. `RUNNER_QUICKSTART.md` - Quick start guide for runner setup
+2. `docs/guides/deployment/runner_setup.md` - Detailed self-hosted runner guide
+3. `docs/guides/infrastructure/runners/RUNNER_QUICKSTART.md` - Quick start guide for runner setup
 4. `test_docker_x86.sh` - Automated Docker testing script
 5. `verify_setup.sh` - Setup verification script
 
@@ -83,7 +83,7 @@ I've successfully set up Docker support and GitHub Actions CI/CD for your `ipfs_
 
 3. **Set Up Self-Hosted Runner (x86_64)**
    
-   Follow the quick guide in `RUNNER_QUICKSTART.md`:
+   Follow the quick guide in `docs/guides/infrastructure/runners/RUNNER_QUICKSTART.md`:
    
    ```bash
    # On your x86_64 machine
@@ -131,9 +131,9 @@ docker compose -f docker-compose.mcp.yml up -d
 
 ## 🔗 Quick Links
 
-- **Runner Setup Guide**: [RUNNER_QUICKSTART.md](./RUNNER_QUICKSTART.md)
+- **Runner Setup Guide**: [RUNNER_QUICKSTART.md](infrastructure/runners/RUNNER_QUICKSTART.md)
 - **Complete Documentation**: [DOCKER_GITHUB_ACTIONS_SETUP.md](./DOCKER_GITHUB_ACTIONS_SETUP.md)
-- **Detailed Runner Guide**: [docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)
+- **Detailed Runner Guide**: [runner_setup.md](deployment/runner_setup.md)
 
 ## 📋 Files Created/Modified
 
@@ -141,8 +141,8 @@ docker compose -f docker-compose.mcp.yml up -d
 - `.github/workflows/docker-build-test.yml`
 - `Dockerfile.minimal-test`
 - `DOCKER_GITHUB_ACTIONS_SETUP.md`
-- `RUNNER_QUICKSTART.md`
-- `docs/RUNNER_SETUP.md`
+- `docs/guides/infrastructure/runners/RUNNER_QUICKSTART.md`
+- `docs/guides/deployment/runner_setup.md`
 - `test_docker_x86.sh`
 - `verify_setup.sh`
 - `.env` (from example)
