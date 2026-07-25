@@ -262,6 +262,6 @@ The tool provides comprehensive error handling:
 
 ## See Also
 
-- [scrape_the_law_mk3 Documentation](../mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3/README.md)
-- [Legal Dataset Tools](./legal_dataset_mcp_tools.py)
+- [Legal Dataset Tools documentation](../../../ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/README.md)
+- [Legal Dataset Tools implementation](../../../ipfs_datasets_py/mcp_server/tools/legacy_mcp_tools/legal_dataset_mcp_tools.py)
 - [MCP Tools README](../README.md)
