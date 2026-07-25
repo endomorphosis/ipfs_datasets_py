@@ -49,6 +49,6 @@ When working on the codebase:
 ## Related Documentation
 
 - [Architecture](../architecture/) - System architecture docs
-- [Implementation Notes](../implementation_notes/) - Implementation details
+- [Implementation](../implementation/) - Implementation details
 - [Reports](../reports/) - Project reports
 - [Developer Guide](../developer_guide.md) - Development information
