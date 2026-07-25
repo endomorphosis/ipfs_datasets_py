@@ -180,7 +180,7 @@ real conflict edges.
 
 ## IRF-014 Implement immutable artifact and run manifests
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: data
