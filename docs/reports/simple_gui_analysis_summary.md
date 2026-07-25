@@ -7,35 +7,9 @@
 
 ## Screenshots
 
-![Screenshot of news_analysis_dashboard](gui_analysis_screenshots/news_analysis_dashboard_screenshot.png)
-*Screenshot of news_analysis_dashboard*
-
-![Screenshot of enhanced_news_analysis_dashboard](gui_analysis_screenshots/enhanced_news_analysis_dashboard_screenshot.png)
-*Screenshot of enhanced_news_analysis_dashboard*
-
-![Screenshot of news_analysis_dashboard_improved](gui_analysis_screenshots/news_analysis_dashboard_improved_screenshot.png)
-*Screenshot of news_analysis_dashboard_improved*
-
-![Screenshot of enhanced_news_analysis_dashboard_improved](gui_analysis_screenshots/enhanced_news_analysis_dashboard_improved_screenshot.png)
-*Screenshot of enhanced_news_analysis_dashboard_improved*
-
-![Screenshot of overview_tab](gui_analysis_screenshots/overview_tab_screenshot.png)
-*Screenshot of overview_tab*
-
-![Screenshot of enhanced_overview_tab](gui_analysis_screenshots/enhanced_overview_tab_screenshot.png)
-*Screenshot of enhanced_overview_tab*
-
-![Screenshot of query_tab](gui_analysis_screenshots/query_tab_screenshot.png)
-*Screenshot of query_tab*
-
-![Screenshot of enhanced_query_tab](gui_analysis_screenshots/enhanced_query_tab_screenshot.png)
-*Screenshot of enhanced_query_tab*
-
-![Screenshot of historian_theme](gui_analysis_screenshots/historian_theme_screenshot.png)
-*Screenshot of historian_theme*
-
-![Screenshot of enhanced_historian_theme](gui_analysis_screenshots/enhanced_historian_theme_screenshot.png)
-*Screenshot of enhanced_historian_theme*
+The ten screenshots captured for this analysis were generated artifacts and are not
+maintained in this repository. Their findings are recorded below so the report does
+not depend on unavailable local image files.
 
 ## Issues Found
 
@@ -156,4 +130,3 @@ Optimize dashboard performance
 - Add loading states and progress indicators
 
 **Implementation:** Add performance optimization techniques and monitoring
-
