@@ -50,9 +50,9 @@ When adding new features:
 
 ## Related Documentation
 
-- [Module README](../README.md) - Overview and project structure
+- [Module README](../../../ipfs_datasets_py/optimizers/README.md) - Overview and project structure
 - [Comprehensive Refactoring Plan](../COMPREHENSIVE_REFACTOR_PLAN.md) - Strategic roadmap
-- [Test Documentation](./test_docs/) - Test suite documentation (if available)
+- [Optimizer Tests](../../../tests/unit/optimizers/) - Optimizer test suite
 
 ---
 
