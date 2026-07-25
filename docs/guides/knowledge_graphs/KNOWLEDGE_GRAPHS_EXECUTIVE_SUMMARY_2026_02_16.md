@@ -458,7 +458,7 @@ Contact: Development Team via GitHub Issues (tag: `knowledge-graphs`)
 ---
 
 **Related Documents:**
-- [Master Plan](KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md) - Comprehensive 39KB plan
+- [Master Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md) - Comprehensive 39KB plan
 - [Quick Reference](KNOWLEDGE_GRAPHS_QUICK_REFERENCE_2026_02_16.md) - Developer quick reference
 - [Current Status](KNOWLEDGE_GRAPHS_STATUS_2026_02_16.md) - Current state assessment
 - [Migration Guide](KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md) - User migration instructions
