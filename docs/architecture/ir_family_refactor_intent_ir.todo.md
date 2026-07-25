@@ -324,7 +324,7 @@ real conflict edges.
 
 ## IRF-025 Create the Security artifact migration manifest
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: data
