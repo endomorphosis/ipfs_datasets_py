@@ -536,9 +536,9 @@ while True:
 ## 📚 Additional Resources
 
 ### Documentation
-- [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Full implementation plan
+- [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Full implementation plan
 - [KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md](./KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md) - Legacy API migration
-- [API Reference](./API_REFERENCE.md) - Complete API documentation (coming soon)
+- [API Reference](../../knowledge_graphs/API_REFERENCE.md) - Complete API documentation
 
 ### Examples
 - `examples/knowledge_graphs/social_network/` - Social network example
