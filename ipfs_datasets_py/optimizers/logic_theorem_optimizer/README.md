@@ -78,7 +78,7 @@ See [MIGRATION_GUIDE.md](#migration-guide) below for migrating from:
 - ✅ 1 RAG System (LogicEnhancedRAG)
 - ✅ 1 Unified Optimizer (BaseOptimizer integration)
 
-See [PHASE2_COMPLETE.md](PHASE2_COMPLETE.md) for full Phase 2 details.
+See the [optimizer package documentation](../README.md) for related Phase 2 integration details.
 
 ## Overview
 
@@ -781,6 +781,6 @@ print(f"Average score: {avg_score}")
 
 - [Deterministic Modal Legal Parser Improvement Plan](../../../docs/optimizers/logic_theorem_optimizer/MODAL_LEGAL_PARSER_IMPROVEMENT_PLAN.md) - Roadmap for modal-family parsing, BM25 frame selection, and U.S. Code encoder/decoder training
 - [complaint-generator](https://github.com/endomorphosis/complaint-generator) - Original adversarial harness inspiration
-- [Logic Integration](/ipfs_datasets_py/logic/README.md) - Existing logic frameworks
-- [GraphRAG Integration](/ipfs_datasets_py/rag/README.md) - Knowledge graph integration
-- [Theorem Provers](/ipfs_datasets_py/logic/external_provers/README.md) - Integrated provers
+- [Logic Integration](../../logic/README.md) - Existing logic frameworks
+- [GraphRAG Integration](../../../docs/rag_optimizer/README.md) - Knowledge graph integration
+- [Theorem Provers](../../logic/external_provers/README.md) - Integrated provers
