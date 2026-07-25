@@ -18,7 +18,7 @@ This folder contains the complete planning documentation for transforming the `i
 ## 🗂️ Document Navigation
 
 ### 1️⃣ START HERE: Summary & Index
-**File**: [`KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md`](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (13KB)
+**File**: [`KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md`](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (13KB)
 
 📋 **What it is**: Executive summary and navigation guide  
 🎯 **Read this for**: High-level overview, project vision, key decisions  
@@ -38,7 +38,7 @@ This folder contains the complete planning documentation for transforming the `i
 ---
 
 ### 2️⃣ DETAILED PLAN: Comprehensive Refactoring Plan
-**File**: [`KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md`](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (34KB)
+**File**: [`KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md`](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (34KB)
 
 📋 **What it is**: Complete technical specification  
 🎯 **Read this for**: Architecture details, implementation strategy  
@@ -69,7 +69,7 @@ This folder contains the complete planning documentation for transforming the `i
 ---
 
 ### 3️⃣ IMPLEMENTATION: Detailed Roadmap
-**File**: [`KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md`](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (21KB)
+**File**: [`KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md`](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (21KB)
 
 📋 **What it is**: Week-by-week execution plan  
 🎯 **Read this for**: Task breakdown, dependencies, acceptance criteria  
@@ -177,8 +177,8 @@ This folder contains the complete planning documentation for transforming the `i
 ## 🎯 Reading Paths by Role
 
 ### For Project Stakeholders
-1. ⭐ Start: [Summary](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (13KB)
-2. Dive deeper: [Comprehensive Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Executive Summary section)
+1. ⭐ Start: [Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (13KB)
+2. Dive deeper: [Comprehensive Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Executive Summary section)
 3. Check features: [Feature Matrix](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) (Summary Statistics section)
 
 **Total time**: 20-30 minutes  
@@ -187,8 +187,8 @@ This folder contains the complete planning documentation for transforming the `i
 ---
 
 ### For Technical Architects
-1. ⭐ Start: [Summary](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Architecture section)
-2. Deep dive: [Comprehensive Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Full read)
+1. ⭐ Start: [Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Architecture section)
+2. Deep dive: [Comprehensive Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Full read)
 3. Reference: [Feature Matrix](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) (Technical features)
 
 **Total time**: 90-120 minutes  
@@ -197,8 +197,8 @@ This folder contains the complete planning documentation for transforming the `i
 ---
 
 ### For Developers/Implementers
-1. ⭐ Start: [Roadmap](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (Full read)
-2. Reference: [Comprehensive Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Component details)
+1. ⭐ Start: [Roadmap](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (Full read)
+2. Reference: [Comprehensive Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Component details)
 3. Track: [Feature Matrix](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) (Implementation phases)
 4. Quick lookup: [Quick Reference](./KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md) (API examples)
 
@@ -208,8 +208,8 @@ This folder contains the complete planning documentation for transforming the `i
 ---
 
 ### For Project Managers
-1. ⭐ Start: [Summary](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Timeline section)
-2. Plan: [Roadmap](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (Task breakdown)
+1. ⭐ Start: [Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Timeline section)
+2. Plan: [Roadmap](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) (Task breakdown)
 3. Track: [Feature Matrix](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) (Progress metrics)
 
 **Total time**: 60-90 minutes  
@@ -219,8 +219,8 @@ This folder contains the complete planning documentation for transforming the `i
 
 ### For End Users (Post-Implementation)
 1. ⭐ Start: [Quick Reference](./KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md) (Full read)
-2. Context: [Summary](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Overview section)
-3. Migration: [Comprehensive Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Migration Guide section)
+2. Context: [Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) (Overview section)
+3. Migration: [Comprehensive Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) (Migration Guide section)
 
 **Total time**: 30-45 minutes  
 **Goal**: Learn to use the graph database, migrate from Neo4j
@@ -284,9 +284,9 @@ This folder contains the complete planning documentation for transforming the `i
 ## ⚡ Quick Links
 
 ### Planning Documents
-- [Summary](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) - Executive overview
-- [Comprehensive Plan](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) - Full specification
-- [Implementation Roadmap](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) - Task breakdown
+- [Summary](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md) - Executive overview
+- [Comprehensive Plan](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md) - Full specification
+- [Implementation Roadmap](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md) - Task breakdown
 - [Feature Matrix](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) - Feature comparison
 - [Quick Reference](./KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md) - Usage guide
 
