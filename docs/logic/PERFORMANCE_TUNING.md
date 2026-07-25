@@ -771,7 +771,7 @@ print(f"Mean: {stats['mean']:.2f}ms, P95: {stats['p95']:.2f}ms")
 - Real-time metrics
 
 **For more details:**
-- [PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md](./PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md) - Performance roadmap
+- [Archived Phase 7 performance optimization plan](./docs/archive/phases_2026/ARCHIVED_PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md) - Historical performance roadmap
 - [CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md) - Cache design
 - [API_REFERENCE.md](./API_REFERENCE.md) - API documentation
 
