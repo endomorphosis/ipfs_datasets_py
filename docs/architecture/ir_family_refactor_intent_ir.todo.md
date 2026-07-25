@@ -825,3 +825,14 @@ real conflict edges.
 - Token class: medium
 - Estimated tokens: 7500
 - Acceptance: Define off/shadow/assist/canary stages, license approval, snapshot pinning, solver capability, source-group split, benchmark thresholds, zero false-proof/authority-violation gates, artifact promotion, Security deprecation window, monitoring, rollback, and explicit decisions requiring human approval.
+
+## IRF-063 Resolve validation retry-budget failure for IRF-031
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Depends on: IRF-014
+- Outputs: ipfs_datasets_py/logic/intent_ir/source_adapters/snapshot.py, tests/unit/logic/intent_ir/test_skillcenter_snapshot.py, /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-3/discovery
+- Validation: test -f /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-3/discovery/2026-07-25-irf-063-irf-031-retry-budget.md
+- Acceptance: Retry-budget guardrail filed this from repeated validation failures in IRF-031. Use evidence in /home/barberb/.local/share/ipfs_accelerate_py/agent-supervisor/ir-family-v1/shard-3/discovery/2026-07-25-irf-063-irf-031-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release IRF-031 from strategy blocked_tasks.
