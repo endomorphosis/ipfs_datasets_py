@@ -52,6 +52,7 @@ from .source_reconciliation import (
     SourceReconciliationError,
     load_source_baseline_manifest,
 )
+from .source_bound_import import import_source_bound_ipfs_accelerate
 
 
 REASSESSMENT_RUN_ID: Final = PUBLISHED_REASSESSMENT_RUN_ID
@@ -567,7 +568,7 @@ def _leanstral_adapter_smoke(
     """Exercise the same strict adapter/provider boundary used by A3."""
 
     try:
-        provider_module = importlib.import_module(
+        provider_module = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
         )
         config = getattr(provider_module, "LeanstralProofProviderConfig")(

@@ -49,6 +49,7 @@ from .contracts import (
     TelemetryRecord,
     canonical_json,
 )
+from .source_bound_import import import_source_bound_ipfs_accelerate
 
 
 ADAPTER_VERSION: Final = "1"
@@ -3674,7 +3675,7 @@ def _compiled_leanstral_context(
     # Import the supervisor contract only when a real compiler-bound
     # Leanstral request is executed.  Importing this adapter module remains
     # side-effect free and dependency tolerant.
-    proof_context = importlib.import_module(
+    proof_context = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.proof_context"
     )
     try:
@@ -4641,7 +4642,7 @@ def create_pinned_leanstral_provider(
 ) -> object:
     """Create the supervisor provider with exact-route audit provenance."""
 
-    module = importlib.import_module(
+    module = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
     )
     factory = getattr(module, "create_leanstral_proof_provider", None)
@@ -4710,16 +4711,16 @@ def _local_leanstral_handler(
     provider_holder: dict[str, object] = {}
 
     def invoke(request: StageRequest) -> object:
-        module = importlib.import_module(
+        module = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
         )
-        protocol = importlib.import_module(
+        protocol = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.formal_verification_provider"
         )
-        capabilities = importlib.import_module(
+        capabilities = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.formal_verification_capabilities"
         )
-        contracts = importlib.import_module(
+        contracts = import_source_bound_ipfs_accelerate(
             "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts"
         )
         provider = provider_holder.get("provider")
@@ -4799,13 +4800,13 @@ class LeanstralAdapter(StageAdapter):
                     # A provider object supplied by a benchmark test follows
                     # the same supervisor ProviderRequest boundary as the
                     # local provider, without importing it at module import.
-                    protocol = importlib.import_module(
+                    protocol = import_source_bound_ipfs_accelerate(
                         "ipfs_accelerate_py.agent_supervisor.formal_verification_provider"
                     )
-                    capabilities = importlib.import_module(
+                    capabilities = import_source_bound_ipfs_accelerate(
                         "ipfs_accelerate_py.agent_supervisor.formal_verification_capabilities"
                     )
-                    verification_contracts = importlib.import_module(
+                    verification_contracts = import_source_bound_ipfs_accelerate(
                         "ipfs_accelerate_py.agent_supervisor.formal_verification_contracts"
                     )
                     return provider.prove(

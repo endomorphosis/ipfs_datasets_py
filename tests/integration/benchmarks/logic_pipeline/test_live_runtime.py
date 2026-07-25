@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from types import SimpleNamespace
 from typing import Callable
 
@@ -178,6 +179,142 @@ def test_default_leanstral_provider_is_bound_to_frozen_identity() -> None:
     assert config.model == "test-leanstral-model"
     assert config.timeout_seconds == runtime.LEANSTRAL_MEASURED_TIMEOUT_SECONDS
     assert config.max_new_tokens == runtime.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
+
+
+def test_detached_layout_resolves_the_pinned_local_leanstral_provider() -> None:
+    """Runtime assembly must not depend on an ambient package or import order."""
+
+    repository = Path(__file__).resolve().parents[4]
+    script = r"""
+import json
+from pathlib import Path
+import sys
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+
+# Reproduce the failed-import order: the checkout root first makes the outer
+# submodule directory look like an empty canonical namespace.
+import ipfs_accelerate_py
+assert ipfs_accelerate_py.__file__ is None
+
+from benchmarks.logic_pipeline import capabilities, contracts, runtime
+
+records = []
+for kind in capabilities.CapabilityKind:
+    available = kind is capabilities.CapabilityKind.LEANSTRAL_SERVICE
+    identity = {"implementation": "detached-layout-test"}
+    if available:
+        identity.update(
+            endpoint="http://127.0.0.1:8080/v1",
+            provider="leanstral_local",
+            model="test-leanstral-model",
+            routing_backend="existing_leanstral_service",
+        )
+    records.append(
+        capabilities.CapabilityRecord(
+            kind,
+            (
+                capabilities.CapabilityStatus.AVAILABLE
+                if available
+                else capabilities.CapabilityStatus.UNAVAILABLE
+            ),
+            identity,
+            ("detached-layout-test",),
+            None if available else "absent",
+        )
+    )
+inventory = capabilities.CapabilityInventory.create(
+    "detached-layout-test",
+    records,
+    environment={"suite": "detached-layout-test"},
+)
+live = runtime.build_live_runtime(inventory, variant_ids=("A3",))
+adapter = live.adapters["A3"][contracts.StageName.LEANSTRAL]
+provider_module = sys.modules[
+    "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
+]
+canonical_package = sys.modules["ipfs_accelerate_py"]
+supervisor_package = canonical_package.agent_supervisor
+print(json.dumps({
+    "canonical_path": list(canonical_package.__path__),
+    "dotted_module_access": (
+        supervisor_package.leanstral_proof_provider is provider_module
+    ),
+    "handler_bound": adapter.handler is not None,
+    "provider_file": str(Path(provider_module.__file__).resolve()),
+}))
+"""
+    completed = subprocess.run(
+        (sys.executable, "-I", "-c", script, str(repository)),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+    assert result == {
+        "canonical_path": [
+            str(repository / "ipfs_accelerate_py" / "ipfs_accelerate_py")
+        ],
+        "dotted_module_access": True,
+        "handler_bound": True,
+        "provider_file": str(
+            (
+                repository
+                / "ipfs_accelerate_py"
+                / "ipfs_accelerate_py"
+                / "agent_supervisor"
+                / "leanstral_proof_provider.py"
+            ).resolve()
+        ),
+    }
+
+
+def test_source_bound_provider_rejects_unrelated_canonical_package() -> None:
+    repository = Path(__file__).resolve().parents[4]
+    script = r"""
+from pathlib import Path
+import sys
+from types import ModuleType
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from benchmarks.logic_pipeline import capabilities, runtime
+from benchmarks.logic_pipeline.source_bound_import import SourceBoundImportError
+
+unrelated = ModuleType("ipfs_accelerate_py")
+unrelated.__path__ = ["/unrelated/ipfs_accelerate_py"]
+sys.modules["ipfs_accelerate_py"] = unrelated
+record = capabilities.CapabilityRecord(
+    capabilities.CapabilityKind.LEANSTRAL_SERVICE,
+    capabilities.CapabilityStatus.AVAILABLE,
+    {
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "provider": "leanstral_local",
+        "model": "test-leanstral-model",
+    },
+    ("unrelated-package-test",),
+)
+try:
+    runtime._leanstral_provider_config(record)
+except SourceBoundImportError:
+    print("rejected")
+else:
+    raise AssertionError("unrelated canonical package was accepted")
+"""
+    completed = subprocess.run(
+        (sys.executable, "-I", "-c", script, str(repository)),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "rejected"
 
 
 def test_live_runtime_propagates_explicit_measured_leanstral_limits(

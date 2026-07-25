@@ -75,6 +75,7 @@ from .variants import (
     StagePolicy,
     get_variant_definition,
 )
+from .source_bound_import import import_source_bound_ipfs_accelerate
 
 
 RUNTIME_VERSION: Final = "1"
@@ -1051,7 +1052,7 @@ def _leanstral_provider_config(
         raise RuntimeBindingError(
             "available Leanstral capability identity is incomplete"
         )
-    module = importlib.import_module(
+    module = import_source_bound_ipfs_accelerate(
         "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
     )
     config_type = getattr(module, "LeanstralProofProviderConfig", None)
