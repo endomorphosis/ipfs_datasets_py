@@ -265,9 +265,9 @@ START HERE
 ## 🔗 External Links
 
 ### Related Documentation
-- [PROCESSORS_MASTER_PLAN.md](./PROCESSORS_MASTER_PLAN.md) - Original processors plan
-- [PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md](./PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md) - Earlier refactoring plan
-- [KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md](./KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md) - Migration guide example
+- [PROCESSORS_MASTER_PLAN.md](../../archive/processors/planning/PROCESSORS_MASTER_PLAN.md) - Original processors plan
+- [PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_PLAN.md) - Earlier refactoring plan
+- [KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md](../knowledge_graphs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md) - Migration guide example
 
 ### Repository Structure
 - `ipfs_datasets_py/processors/` - Processors directory
