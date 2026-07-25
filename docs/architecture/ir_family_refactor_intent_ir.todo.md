@@ -36,7 +36,7 @@ real conflict edges.
 
 ## IRF-002 Create the Security IR v1 golden corpus
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: quality
