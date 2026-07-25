@@ -516,7 +516,7 @@ real conflict edges.
 
 ## IRF-037 Add bounded GraphRAG retrieval and partition isolation
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: graphrag
