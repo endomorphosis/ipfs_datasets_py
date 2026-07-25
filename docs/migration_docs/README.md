@@ -41,7 +41,7 @@ Before upgrading or migrating:
 
 ## Related Documentation
 
-- [Implementation Plans](../implementation_plans/) - Future migrations
+- [Implementation Plans](../implementation/plans/) - Future migrations
 - [Reports](../reports/) - Migration reports
 - [Developer Guide](../developer_guide.md) - Development information
 
