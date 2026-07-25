@@ -37,8 +37,8 @@ This document provides a **unified, comprehensive roadmap** for the TDFOL (Tempo
 ### Document Navigation
 
 - **Current Status:** See [STATUS_2026.md](./STATUS_2026.md)
-- **Quick Start:** See [README.md](./README.md)
-- **API Reference:** See [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md)
+- **Quick Start:** See [README.md](../../../ipfs_datasets_py/logic/TDFOL/README.md)
+- **API Reference:** See [QUICK_REFERENCE_2026_02_18.md](./ARCHIVE/QUICK_REFERENCE_2026_02_18.md)
 - **This Document:** Master planning and roadmap (REVISED)
 
 ---
