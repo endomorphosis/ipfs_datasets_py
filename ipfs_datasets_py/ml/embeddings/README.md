@@ -169,8 +169,8 @@ The embeddings module integrates with:
 
 ## See Also
 
-- [Vector Stores](../vector_stores/README.md) - Storage backends for embeddings
-- [Search Module](../search/README.md) - Search and retrieval using embeddings
-- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
-- [Utils Module](../utils/README.md) - Text processing utilities
-- [Performance Guide](../../docs/performance_optimization.md) - Optimization strategies
+- [Vector Stores](../../vector_stores/README.md) - Storage backends for embeddings
+- [Search Module](../../search/README.md) - Search and retrieval using embeddings
+- [GraphRAG Optimizers](../../optimizers/graphrag/README.md) - Graph-enhanced retrieval
+- [Utils Module](../../utils/README.md) - Text processing utilities
+- [Performance Guide](../../../docs/guides/performance_optimization.md) - Optimization strategies
