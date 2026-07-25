@@ -597,7 +597,7 @@ processor = UnifiedGraphRAGProcessor(config=config)
 
 ### Complete Migration Guide
 
-See [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md) for comprehensive migration instructions.
+See [MIGRATION_GUIDE_V2.md](../../MIGRATION_GUIDE_V2.md) for comprehensive migration instructions.
 
 ---
 
@@ -743,11 +743,11 @@ class MyCustomProcessor:
 
 ## Related Documentation
 
-- [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md) - Complete v2.0 migration guide
-- [DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md) - Deprecation schedule
-- [GRAPHRAG_CONSOLIDATION_GUIDE.md](./GRAPHRAG_CONSOLIDATION_GUIDE.md) - GraphRAG migration
-- [MULTIMEDIA_MIGRATION_GUIDE.md](./MULTIMEDIA_MIGRATION_GUIDE.md) - Multimedia migration
-- [PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md](./PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md) - Implementation details
+- [MIGRATION_GUIDE_V2.md](../../MIGRATION_GUIDE_V2.md) - Complete v2.0 migration guide
+- [DEPRECATION_TIMELINE.md](../../DEPRECATION_TIMELINE.md) - Deprecation schedule
+- [GRAPHRAG_CONSOLIDATION_GUIDE.md](../../GRAPHRAG_CONSOLIDATION_GUIDE.md) - GraphRAG migration
+- [MULTIMEDIA_MIGRATION_GUIDE.md](../../MULTIMEDIA_MIGRATION_GUIDE.md) - Multimedia migration
+- [PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md](../../archive/completion_reports/phases/PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md) - Implementation details
 
 ---
 
@@ -763,8 +763,8 @@ The IPFS Datasets Python architecture provides a **clean, maintainable, and exte
 6. **Production-Ready:** 182+ tests, comprehensive documentation
 
 **Next Steps:**
-1. Review [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md) for migration planning
-2. Check [DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md) for important dates
+1. Review [MIGRATION_GUIDE_V2.md](../../MIGRATION_GUIDE_V2.md) for migration planning
+2. Check [DEPRECATION_TIMELINE.md](../../DEPRECATION_TIMELINE.md) for important dates
 3. Start migrating deprecated imports to unified APIs
 4. Plan for v2.0 upgrade within 6 months
 
