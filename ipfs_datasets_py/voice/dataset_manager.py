@@ -27,6 +27,7 @@ from .schema import (
     ABBY_VOICE_TEMPLATE_V2,
     AbbyVoiceDatasetBundle,
     validate_bundle,
+    validate_publishable,
 )
 from .workset import VoiceAudioWorkset
 
@@ -42,8 +43,32 @@ def _canonical_bytes(value: Any) -> bytes:
 
 
 def _jsonl(values: Iterable[Mapping[str, Any]]) -> bytes:
-    rows = sorted((_canonical_bytes(value) for value in values))
+    rows = sorted(_canonical_bytes(value) for value in values)
     return b"".join(row + b"\n" for row in rows)
+
+
+def _validate_evaluation_support(value: bytes | bytearray | memoryview) -> bytes:
+    payload = bytes(value)
+    try:
+        lines = payload.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise ValueError("evaluation support must be UTF-8 JSONL") from exc
+    if not lines:
+        raise ValueError("evaluation support must contain at least one JSONL record")
+    record_count = 0
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except ValueError as exc:
+            raise ValueError("evaluation support must be valid JSONL") from exc
+        if not isinstance(record, Mapping):
+            raise ValueError("evaluation support JSONL records must be objects")
+        record_count += 1
+    if not record_count:
+        raise ValueError("evaluation support must contain at least one JSONL record")
+    return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,7 +105,7 @@ class PinnedVoiceSource:
         dataset_revision: str,
         repository_file: str,
         download_producer: str = "producer:abby-voice-fixture",
-    ) -> "PinnedVoiceSource":
+    ) -> PinnedVoiceSource:
         """Create an exact snapshot for deterministic offline callers and tests."""
 
         raw = _canonical_bytes(payload)
@@ -200,8 +225,34 @@ class AbbyVoiceDatasetManager:
         )
         if not source_rows:
             raise ValueError("at least one pinned voice source is required")
+        source_keys = [
+            (item.snapshot.logical_source, item.snapshot.expected_sha256)
+            for item in source_rows
+        ]
+        if len(source_keys) != len(set(source_keys)):
+            raise ValueError("pinned voice source identities must be unique")
+        candidate_rows = tuple(
+            sorted(legacy_candidates, key=lambda item: item.candidate_id)
+        )
+        corrupt_ids = tuple(sorted(set(corrupt_subject_ids)))
+        stale_ids = tuple(sorted(set(stale_policy_subject_ids)))
+        revalidate_ids = tuple(sorted(set(revalidate_subject_ids)))
+        text_only_ids = tuple(sorted(set(intentionally_text_only_subject_ids)))
+        evaluation_payload = (
+            _validate_evaluation_support(evaluation_support_bytes)
+            if evaluation_support_bytes is not None
+            else None
+        )
         source_identity = {
             "inventory_sha256": inventory.inventory_sha256,
+            "legacy_candidates": [item.to_dict() for item in candidate_rows],
+            "planning_policy": {
+                "corrupt_subject_ids": list(corrupt_ids),
+                "intentionally_text_only_subject_ids": list(text_only_ids),
+                "policy_id": self.policy_id,
+                "revalidate_subject_ids": list(revalidate_ids),
+                "stale_policy_subject_ids": list(stale_ids),
+            },
             "snapshots": [item.snapshot.to_dict() for item in source_rows],
         }
         source_identity_bytes = _canonical_bytes(source_identity)
@@ -210,7 +261,7 @@ class AbbyVoiceDatasetManager:
             + sha256(source_identity_bytes).hexdigest()
         )
         normalization = self.normalizer.normalize_sources(
-            (
+
                 (
                     item.payload,
                     item.snapshot.logical_source,
@@ -218,7 +269,7 @@ class AbbyVoiceDatasetManager:
                     None,
                 )
                 for item in source_rows
-            )
+
         )
         normalized_bundle = validate_bundle(
             responses=normalization.responses,
@@ -228,15 +279,19 @@ class AbbyVoiceDatasetManager:
         )
         legacy = reconcile_legacy_audio_candidates(
             subjects=(*normalized_bundle.responses, *normalized_bundle.templates),
-            candidates=legacy_candidates,
+            candidates=candidate_rows,
             inventory=inventory,
             byte_resolver=byte_resolver,
             decode_validator=decode_validator,
         )
-        audio_by_id = {
-            row.audio_id: row
-            for row in (*normalized_bundle.audio, *legacy.linked_audio)
-        }
+        audio_by_id = {row.audio_id: row for row in normalized_bundle.audio}
+        for row in legacy.linked_audio:
+            existing = audio_by_id.get(row.audio_id)
+            if existing is not None and existing.to_dict() != row.to_dict():
+                raise ValueError(
+                    f"legacy audio conflicts with normalized audio ID {row.audio_id!r}"
+                )
+            audio_by_id[row.audio_id] = row
         linked_by_response: dict[str, set[str]] = {}
         for row in legacy.linked_audio:
             if row.response_id:
@@ -253,9 +308,15 @@ class AbbyVoiceDatasetManager:
         bundle = validate_bundle(
             responses=responses,
             templates=normalized_bundle.templates,
-            audio=audio_by_id.values(),
-            provenance=normalized_bundle.provenance,
+            audio=tuple(sorted(audio_by_id.values(), key=lambda row: row.audio_id)),
+            provenance=tuple(
+                sorted(
+                    (*normalized_bundle.provenance, *legacy.provenance),
+                    key=lambda row: row.provenance_id,
+                )
+            ),
         )
+        validate_publishable(bundle)
         index = self.index_factory(
             templates=bundle.templates,
             responses=bundle.responses,
@@ -268,10 +329,10 @@ class AbbyVoiceDatasetManager:
             audio=bundle.audio,
             source_manifest_id=source_manifest_id,
             policy_id=self.policy_id,
-            corrupt_subject_ids=corrupt_subject_ids,
-            stale_policy_subject_ids=stale_policy_subject_ids,
-            revalidate_subject_ids=revalidate_subject_ids,
-            intentionally_text_only_subject_ids=intentionally_text_only_subject_ids,
+            corrupt_subject_ids=corrupt_ids,
+            stale_policy_subject_ids=stale_ids,
+            revalidate_subject_ids=revalidate_ids,
+            intentionally_text_only_subject_ids=text_only_ids,
         )
         dispositions = self._dispositions(normalization, legacy)
         payloads = self._artifact_payloads(
@@ -280,17 +341,13 @@ class AbbyVoiceDatasetManager:
             normalization=normalization,
             dispositions=dispositions,
             workset=workset,
-            evaluation_support_bytes=(
-                bytes(evaluation_support_bytes)
-                if evaluation_support_bytes is not None
-                else None
-            ),
+            evaluation_support_bytes=evaluation_payload,
         )
         manifest, evaluation_artifact = self._artifact_manifest(
             payloads=payloads,
             source_identity_bytes=source_identity_bytes,
             source_manifest_id=source_manifest_id,
-            evaluation_included=evaluation_support_bytes is not None,
+            evaluation_included=evaluation_payload is not None,
         )
         return AbbyVoiceDatasetManagerResult(
             normalization=normalization,
@@ -310,42 +367,28 @@ class AbbyVoiceDatasetManager:
         normalization: NormalizationResult,
         legacy: LegacyAudioReconciliation,
     ) -> tuple[DatasetDisposition, ...]:
-        values: dict[str, DatasetDisposition] = {}
-        quarantined = {item.source_ref: item for item in normalization.quarantine}
-        warnings = {item.source_ref: item for item in normalization.warnings}
-        duplicate_refs = {
-            ref
-            for entry in normalization.duplicates
-            for ref in entry.duplicate_source_refs
-        }
-        for item in normalization.provenance:
-            if item.source_uri:
-                values[item.source_uri] = DatasetDisposition(
-                    item.source_uri,
-                    item.source_sha256 or sha256(item.source_uri.encode()).hexdigest(),
-                    "accepted",
-                    "canonical_normalization",
-                )
-        for ref in duplicate_refs:
-            warning = warnings.get(ref)
-            values[ref] = DatasetDisposition(
-                ref,
-                warning.source_sha256 if warning else sha256(ref.encode()).hexdigest(),
-                "quarantined",
-                "duplicate_text",
-            )
-        for ref, item in quarantined.items():
-            values[ref] = DatasetDisposition(
-                ref, item.source_sha256, "quarantined", ",".join(item.reason_codes)
-            )
-        for item in legacy.dispositions:
-            values[item.source_ref] = DatasetDisposition(
+        values = [
+            DatasetDisposition(
                 item.source_ref,
                 item.source_sha256,
-                item.status.value,
-                item.reason.value,
+                item.status,
+                ",".join(item.reason_codes),
             )
-        return tuple(sorted(values.values(), key=lambda item: item.source_ref))
+            for item in normalization.input_dispositions
+        ]
+        for item in legacy.dispositions:
+            values.append(
+                DatasetDisposition(
+                    item.source_ref,
+                    item.source_sha256,
+                    item.status.value,
+                    item.reason.value,
+                )
+            )
+        refs = [item.source_ref for item in values]
+        if len(refs) != len(set(refs)):
+            raise ValueError("dataset disposition source_ref values must be unique")
+        return tuple(sorted(values, key=lambda item: item.source_ref))
 
     @staticmethod
     def _artifact_payloads(

@@ -19,14 +19,18 @@ from typing import Any
 from ..huggingface.bucket import HuggingFaceBucketInventory, HuggingFaceBucketObject
 from .normalize import normalize_indextts_spoken_text, normalized_text_identity
 from .schema import (
+    ABBY_VOICE_AUDIO_V2,
     AbbyVoiceAudio,
+    AbbyVoiceProvenance,
     AbbyVoiceResponse,
     AbbyVoiceTemplate,
     sha256_text,
     stable_audio_id,
+    stable_provenance_id,
 )
 
 LEGACY_AUDIO_RECONCILIATION_SCHEMA_VERSION = "abby_voice_legacy_audio_reconciliation_v1"
+LEGACY_AUDIO_RECONCILIATION_VERSION = "1.0.0"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ALLOWED_MEDIA = frozenset({"audio/mpeg", "audio/wav", "audio/x-wav", "audio/ogg", "audio/flac"})
 
@@ -70,11 +74,13 @@ class LegacyDispositionReason(StrEnum):
     AMBIGUOUS_PATH_REVIEW_REQUIRED = "ambiguous_path_review_required"
     UNKNOWN_SUBJECT = "unknown_subject"
     TEXT_IDENTITY_MISMATCH = "text_identity_mismatch"
+    LOCALE_MISMATCH = "locale_mismatch"
     INVENTORY_OBJECT_MISSING = "inventory_object_missing"
     SHA256_MISMATCH = "sha256_mismatch"
     SIZE_MISMATCH = "size_mismatch"
     UNSUPPORTED_MEDIA = "unsupported_media"
     MEDIA_MISMATCH = "media_mismatch"
+    DECODE_VALIDATOR_UNAVAILABLE = "decode_validator_unavailable"
     DECODE_FAILED = "decode_failed"
     BYTES_UNAVAILABLE = "bytes_unavailable"
     NON_AUDIO_INVENTORY_OBJECT = "non_audio_inventory_object"
@@ -164,6 +170,7 @@ class LegacyAudioDisposition:
 @dataclass(frozen=True, slots=True)
 class LegacyAudioReconciliation:
     linked_audio: tuple[AbbyVoiceAudio, ...] = ()
+    provenance: tuple[AbbyVoiceProvenance, ...] = ()
     dispositions: tuple[LegacyAudioDisposition, ...] = ()
     inventory_sha256: str = ""
     schema_version: str = LEGACY_AUDIO_RECONCILIATION_SCHEMA_VERSION
@@ -171,7 +178,17 @@ class LegacyAudioReconciliation:
 
     def __post_init__(self) -> None:
         linked = tuple(sorted(self.linked_audio, key=lambda row: row.audio_id))
+        provenance = tuple(sorted(self.provenance, key=lambda row: row.provenance_id))
         dispositions = tuple(sorted(self.dispositions, key=lambda item: item.source_ref))
+        audio_ids = [item.audio_id for item in linked]
+        if len(audio_ids) != len(set(audio_ids)):
+            raise ValueError("linked legacy audio IDs must be unique")
+        provenance_ids = {item.provenance_id for item in provenance}
+        if any(
+            set(item.provenance_ids) - provenance_ids
+            for item in linked
+        ):
+            raise ValueError("linked legacy audio has missing provenance")
         refs = [item.source_ref for item in dispositions]
         if len(refs) != len(set(refs)):
             raise ValueError("every legacy source must have exactly one disposition")
@@ -180,11 +197,13 @@ class LegacyAudioReconciliation:
         if self.schema_version != LEGACY_AUDIO_RECONCILIATION_SCHEMA_VERSION:
             raise ValueError("unsupported legacy reconciliation schema")
         object.__setattr__(self, "linked_audio", linked)
+        object.__setattr__(self, "provenance", provenance)
         object.__setattr__(self, "dispositions", dispositions)
         identity = {
             "dispositions": [item.to_dict() for item in dispositions],
             "inventory_sha256": self.inventory_sha256,
             "linked_audio": [row.to_dict() for row in linked],
+            "provenance": [row.to_dict() for row in provenance],
             "schema_version": self.schema_version,
         }
         computed = f"abby-voice-legacy:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
@@ -204,6 +223,7 @@ class LegacyAudioReconciliation:
             "dispositions": [item.to_dict() for item in self.dispositions],
             "inventory_sha256": self.inventory_sha256,
             "linked_audio": [row.to_dict() for row in self.linked_audio],
+            "provenance": [row.to_dict() for row in self.provenance],
             "reconciliation_id": self.reconciliation_id,
             "schema_version": self.schema_version,
         }
@@ -238,13 +258,27 @@ def reconcile_legacy_audio_candidates(
 ) -> LegacyAudioReconciliation:
     """Reconcile candidates without inference, network access, or fuzzy promotion."""
 
-    subject_map: dict[str, tuple[str, str, str, str]] = {}
+    subject_map: dict[str, tuple[str, str, str, str, str, str]] = {}
     for row in subjects:
         if isinstance(row, AbbyVoiceResponse):
-            values = (row.schema_version, row.spoken_text, row.locale, "response")
+            values = (
+                row.schema_version,
+                row.spoken_text,
+                row.locale,
+                "response",
+                row.license_id,
+                row.consent_status,
+            )
             subject_id = row.response_id
         elif isinstance(row, AbbyVoiceTemplate):
-            values = (row.schema_version, row.spoken_template or row.template_text, row.locale, "template")
+            values = (
+                row.schema_version,
+                row.spoken_template or row.template_text,
+                row.locale,
+                "template",
+                row.license_id,
+                row.consent_status,
+            )
             subject_id = row.template_id
         else:
             raise TypeError("subjects must contain canonical response or template rows")
@@ -265,9 +299,20 @@ def reconcile_legacy_audio_candidates(
         if len(group) > 1
         for candidate in group
     }
+    path_groups: dict[str, list[LegacyAudioCandidate]] = {}
+    for candidate in candidate_rows:
+        if len(candidate.paths) == 1:
+            path_groups.setdefault(candidate.paths[0], []).append(candidate)
+    ambiguous_candidate_ids.update(
+        candidate.candidate_id
+        for group in path_groups.values()
+        if len(group) > 1
+        for candidate in group
+    )
     objects = {item.path: item for item in inventory.objects}
     dispositions: dict[str, LegacyAudioDisposition] = {}
     linked: list[AbbyVoiceAudio] = []
+    provenance: list[AbbyVoiceProvenance] = []
     def candidate_disposition(
         candidate: LegacyAudioCandidate,
         status: LegacyDispositionStatus,
@@ -292,9 +337,17 @@ def reconcile_legacy_audio_candidates(
         if subject is None:
             candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.UNKNOWN_SUBJECT)
             continue
-        _, subject_text, locale, subject_kind = subject
-        if _spoken_identity(candidate.spoken_text) != _spoken_identity(subject_text):
+        _, subject_text, locale, subject_kind, license_id, consent_status = subject
+        candidate_identity = _spoken_identity(candidate.spoken_text)
+        subject_identity = _spoken_identity(subject_text)
+        if not candidate_identity or not subject_identity:
+            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.TEXT_IDENTITY_MISMATCH)
+            continue
+        if candidate_identity != subject_identity:
             candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.FUZZY_MATCH_REVIEW_REQUIRED)
+            continue
+        if candidate.locale != locale:
+            candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.LOCALE_MISMATCH)
             continue
         if len(candidate.paths) != 1 or candidate.candidate_id in ambiguous_candidate_ids:
             candidate_disposition(candidate, LegacyDispositionStatus.REVIEW, LegacyDispositionReason.AMBIGUOUS_PATH_REVIEW_REQUIRED)
@@ -347,14 +400,21 @@ def reconcile_legacy_audio_candidates(
         ):
             candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.MEDIA_MISMATCH, path=path)
             continue
-        if decode_validator is not None:
-            try:
-                decoded = decode_validator(payload, detected)
-            except Exception:
-                decoded = False
-            if decoded is not True:
-                candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.DECODE_FAILED, path=path)
-                continue
+        if decode_validator is None:
+            candidate_disposition(
+                candidate,
+                LegacyDispositionStatus.QUARANTINED,
+                LegacyDispositionReason.DECODE_VALIDATOR_UNAVAILABLE,
+                path=path,
+            )
+            continue
+        try:
+            decoded = decode_validator(payload, detected)
+        except Exception:
+            decoded = False
+        if decoded is not True:
+            candidate_disposition(candidate, LegacyDispositionStatus.QUARANTINED, LegacyDispositionReason.DECODE_FAILED, path=path)
+            continue
         kwargs = {
             "spoken_text": subject_text,
             "content_sha256": digest,
@@ -365,11 +425,35 @@ def reconcile_legacy_audio_candidates(
             "segment_kind": "response" if subject_kind == "response" else "template_shell",
             "response_id": candidate.subject_id if subject_kind == "response" else None,
             "template_id": candidate.subject_id if subject_kind == "template" else None,
+            "license_id": license_id,
+            "consent_status": consent_status,
         }
+        audio_id = stable_audio_id(digest, segment_kind=kwargs["segment_kind"])
+        provenance_id = stable_provenance_id(
+            audio_id,
+            _inventory_ref(inventory, item),
+            "reconcile_legacy_abby_audio",
+            item.sha256,
+        )
+        provenance_row = AbbyVoiceProvenance(
+            provenance_id=provenance_id,
+            subject_id=audio_id,
+            subject_schema_version=ABBY_VOICE_AUDIO_V2,
+            transformation_name="reconcile_legacy_abby_audio",
+            transformation_version=LEGACY_AUDIO_RECONCILIATION_VERSION,
+            source_uri=_inventory_ref(inventory, item),
+            source_revision=inventory.inventory_sha256,
+            source_sha256=item.sha256,
+            locale=locale,
+            license_id=license_id,
+            consent_status=consent_status,
+        )
         audio = AbbyVoiceAudio(
-            audio_id=stable_audio_id(digest, segment_kind=kwargs["segment_kind"]),
+            audio_id=audio_id,
+            provenance_ids=(provenance_id,),
             **kwargs,
         )
+        provenance.append(provenance_row)
         linked.append(audio)
         candidate_disposition(
             candidate, LegacyDispositionStatus.LINKED,
@@ -409,6 +493,7 @@ def reconcile_legacy_audio_candidates(
         )
     return LegacyAudioReconciliation(
         linked_audio=tuple(linked),
+        provenance=tuple(provenance),
         dispositions=tuple(dispositions.values()),
         inventory_sha256=inventory.inventory_sha256,
     )

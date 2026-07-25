@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
 from typing import Any
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 from .schema import AbbyVoiceAudio, AbbyVoiceResponse, AbbyVoiceTemplate, sha256_text
 
@@ -35,6 +36,55 @@ def _stable_id(prefix: str, value: Mapping[str, Any]) -> str:
 def _require_identity(name: str, value: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
         raise ValueError(f"{name} must be a stable non-empty identity")
+    return value
+
+
+def _require_external_uri(value: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+        or any(character.isspace() for character in value)
+    ):
+        raise ValueError("audio uri must be a non-empty external artifact URI")
+    try:
+        parsed = urlsplit(value)
+        username = parsed.username
+        password = parsed.password
+    except ValueError as exc:
+        raise ValueError("audio uri must be a valid external artifact URI") from exc
+    scheme = parsed.scheme.casefold()
+    if len(scheme) < 2 or scheme in {"data", "file"}:
+        raise ValueError("audio uri must not contain raw audio or a local path")
+    if username is not None or password is not None:
+        raise ValueError("audio uri must not contain credentials")
+    decoded_path = unquote(parsed.path)
+    if (
+        "\\" in decoded_path
+        or any(part == ".." for part in decoded_path.split("/"))
+        or parsed.fragment
+    ):
+        raise ValueError("audio uri must not contain a local or ambiguous path")
+    secret_markers = ("credential", "key", "password", "secret", "signature", "token")
+    if any(
+        any(marker in key.casefold() for marker in secret_markers)
+        for key, _value in parse_qsl(parsed.query, keep_blank_values=True)
+    ):
+        raise ValueError("audio uri must not contain credentials")
+    if scheme in {"gs", "hf", "http", "https", "ipfs", "s3"} and not parsed.netloc:
+        raise ValueError("audio uri must identify an external artifact")
+    return value
+
+
+def _require_ipfs_cid(value: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+        or any(character.isspace() for character in value)
+        or any(character in value for character in "/\\:")
+    ):
+        raise ValueError("ipfs_cid must be a bare content identifier")
     return value
 
 
@@ -72,9 +122,13 @@ class AudioArtifactDescriptor:
             raise ValueError("media_type must be audio/*")
         if not self.uri and not self.ipfs_cid:
             raise ValueError("audio descriptor requires uri or ipfs_cid")
+        if self.uri:
+            _require_external_uri(self.uri)
+        if self.ipfs_cid:
+            _require_ipfs_cid(self.ipfs_cid)
 
     @classmethod
-    def from_audio(cls, row: AbbyVoiceAudio) -> "AudioArtifactDescriptor":
+    def from_audio(cls, row: AbbyVoiceAudio) -> AudioArtifactDescriptor:
         if row.byte_length is None:
             raise ValueError(f"audio {row.audio_id!r} has no verified byte_length")
         return cls(
@@ -199,12 +253,17 @@ class VoiceAudioWorkset:
     validation_manifest: AudioWorkManifest
     source_manifest_id: str
     policy_id: str
+    intentionally_text_only_subject_ids: tuple[str, ...] = ()
     schema_version: str = VOICE_AUDIO_WORKSET_SCHEMA_VERSION
     workset_id: str = ""
 
     def __post_init__(self) -> None:
         _require_identity("source_manifest_id", self.source_manifest_id)
         _require_identity("policy_id", self.policy_id)
+        text_only = tuple(sorted(set(self.intentionally_text_only_subject_ids)))
+        if any(not isinstance(item, str) or not item for item in text_only):
+            raise ValueError("text-only subject IDs must be non-empty strings")
+        object.__setattr__(self, "intentionally_text_only_subject_ids", text_only)
         expected = (
             (self.tts_manifest, AudioWorkOperation.TTS),
             (self.asr_manifest, AudioWorkOperation.ASR),
@@ -212,6 +271,47 @@ class VoiceAudioWorkset:
         )
         if any(manifest.operation is not operation for manifest, operation in expected):
             raise ValueError("workset manifest operation mismatch")
+        items = (
+            *self.tts_manifest.items,
+            *self.asr_manifest.items,
+            *self.validation_manifest.items,
+        )
+        if any(
+            item.source_manifest_id != self.source_manifest_id
+            or item.policy_id != self.policy_id
+            for item in items
+        ):
+            raise ValueError("work item lineage does not match workset envelope")
+        for manifest in (
+            self.tts_manifest,
+            self.asr_manifest,
+            self.validation_manifest,
+        ):
+            subject_ids = [item.subject_id for item in manifest.items]
+            if len(subject_ids) != len(set(subject_ids)):
+                raise ValueError("manifest subjects must be unique")
+        tts_by_id = {item.work_id: item for item in self.tts_manifest.items}
+        asr_by_id = {item.work_id: item for item in self.asr_manifest.items}
+        if any(item.depends_on for item in self.tts_manifest.items):
+            raise ValueError("TTS work must not depend on another work item")
+        for item in self.asr_manifest.items:
+            if item.depends_on:
+                if len(item.depends_on) != 1:
+                    raise ValueError("ASR work must have exactly one TTS dependency")
+                parent = tts_by_id.get(item.depends_on[0])
+                if parent is None or parent.subject_id != item.subject_id:
+                    raise ValueError("ASR work has an invalid TTS dependency")
+            elif (
+                item.reason is not AudioWorkReason.EXPLICIT_REVALIDATION
+                or item.audio is None
+            ):
+                raise ValueError("ASR work without TTS requires existing revalidation audio")
+        for item in self.validation_manifest.items:
+            if len(item.depends_on) != 1:
+                raise ValueError("validation work must have exactly one ASR dependency")
+            parent = asr_by_id.get(item.depends_on[0])
+            if parent is None or parent.subject_id != item.subject_id:
+                raise ValueError("validation work has an invalid ASR dependency")
         if self.schema_version != VOICE_AUDIO_WORKSET_SCHEMA_VERSION:
             raise ValueError("unsupported voice audio workset schema")
         computed = _stable_id("abby-voice-workset", self.identity_dict())
@@ -232,7 +332,7 @@ class VoiceAudioWorkset:
         stale_policy_subject_ids: Iterable[str] = (),
         revalidate_subject_ids: Iterable[str] = (),
         intentionally_text_only_subject_ids: Iterable[str] = (),
-    ) -> "VoiceAudioWorkset":
+    ) -> VoiceAudioWorkset:
         subjects = [
             (row.response_id, row.schema_version, row.spoken_text, row.locale)
             for row in responses
@@ -241,8 +341,15 @@ class VoiceAudioWorkset:
             for row in templates
         ]
         subjects.sort(key=lambda item: (item[1], item[0]))
+        subject_ids = [item[0] for item in subjects]
+        if len(subject_ids) != len(set(subject_ids)):
+            raise ValueError("response and template subject IDs must be unique")
         by_subject: dict[str, list[AbbyVoiceAudio]] = {}
-        for row in audio:
+        audio_rows = tuple(audio)
+        audio_ids = [row.audio_id for row in audio_rows]
+        if len(audio_ids) != len(set(audio_ids)):
+            raise ValueError("audio IDs must be unique")
+        for row in audio_rows:
             subject_id = row.response_id or row.template_id
             if subject_id:
                 by_subject.setdefault(subject_id, []).append(row)
@@ -250,6 +357,9 @@ class VoiceAudioWorkset:
         stale = set(stale_policy_subject_ids)
         revalidate = set(revalidate_subject_ids)
         text_only = set(intentionally_text_only_subject_ids)
+        classified = (corrupt, stale, revalidate, text_only)
+        if sum(len(values) for values in classified) != len(set().union(*classified)):
+            raise ValueError("audio work policy subject classifications must not overlap")
         unknown = (corrupt | stale | revalidate | text_only) - {item[0] for item in subjects}
         if unknown:
             raise ValueError(f"work policy names unknown subject IDs: {sorted(unknown)}")
@@ -261,17 +371,26 @@ class VoiceAudioWorkset:
             if subject_id in text_only:
                 continue
             existing = sorted(by_subject.get(subject_id, ()), key=lambda row: row.audio_id)
+            text_digest = sha256_text(spoken_text)
+            matching = [
+                row
+                for row in existing
+                if row.text_sha256 == text_digest and row.locale == locale
+            ]
             descriptor: AudioArtifactDescriptor | None = None
-            for row in existing:
+            for row in matching:
                 try:
                     descriptor = AudioArtifactDescriptor.from_audio(row)
                     break
                 except ValueError:
                     continue
+            incompatible_audio = bool(existing) and descriptor is None
             if subject_id in corrupt:
                 reason = AudioWorkReason.CORRUPT
             elif subject_id in stale:
                 reason = AudioWorkReason.STALE_POLICY
+            elif incompatible_audio:
+                reason = AudioWorkReason.CORRUPT
             elif descriptor is None:
                 reason = AudioWorkReason.MISSING
             elif subject_id in revalidate:
@@ -279,7 +398,6 @@ class VoiceAudioWorkset:
             else:
                 continue
 
-            text_digest = sha256_text(spoken_text)
             if reason is AudioWorkReason.EXPLICIT_REVALIDATION:
                 asr_item = AudioWorkItem(
                     AudioWorkOperation.ASR, reason, subject_id, schema_version,
@@ -312,6 +430,7 @@ class VoiceAudioWorkset:
             validation_manifest=AudioWorkManifest(AudioWorkOperation.VALIDATE, tuple(validation)),
             source_manifest_id=source_manifest_id,
             policy_id=policy_id,
+            intentionally_text_only_subject_ids=tuple(sorted(text_only)),
         )
 
     @property
@@ -328,6 +447,9 @@ class VoiceAudioWorkset:
             "policy_id": self.policy_id,
             "schema_version": self.schema_version,
             "source_manifest_id": self.source_manifest_id,
+            "intentionally_text_only_subject_ids": list(
+                self.intentionally_text_only_subject_ids
+            ),
             "tts_manifest": self.tts_manifest.to_dict(),
             "validation_manifest": self.validation_manifest.to_dict(),
         }

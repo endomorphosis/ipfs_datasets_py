@@ -27,6 +27,7 @@ from ipfs_datasets_py.voice.schema import (
     ABBY_VOICE_RESPONSE_V2,
     ABBY_VOICE_TEMPLATE_V2,
     AbbyVoiceAudio,
+    AbbyVoiceProvenance,
     AbbyVoiceResponse,
     sha256_text,
     stable_audio_id,
@@ -34,6 +35,7 @@ from ipfs_datasets_py.voice.schema import (
     validate_bundle,
 )
 from ipfs_datasets_py.voice.workset import (
+    AudioArtifactDescriptor,
     AudioWorkOperation,
     AudioWorkReason,
     VoiceAudioWorkset,
@@ -74,10 +76,29 @@ def _audio_object(path="audio/exact.wav", **changes):
 
 def _canonical_response(identifier="one", text="This is an exact response."):
     payload = {
-        "responses": [{"id": identifier, "text": text, "sourceIds": [f"doc-{identifier}"]}]
+        "responses": [
+            {
+                "id": identifier,
+                "text": text,
+                "sourceIds": [f"doc-{identifier}"],
+                "license_id": "CC0-1.0",
+                "consent_status": "granted",
+            }
+        ]
     }
     row = normalize_manifest(payload, source_uri="fixture://identity").responses[0]
     return payload, row
+
+
+def test_package_level_dataset_manager_exports_preserve_direct_module_identity():
+    import ipfs_datasets_py.voice as voice
+    from ipfs_datasets_py.voice.legacy_sources import LegacyAudioCandidate as DirectCandidate
+    from ipfs_datasets_py.voice.workset import VoiceAudioWorkset as DirectWorkset
+
+    assert voice.AbbyVoiceDatasetManager is AbbyVoiceDatasetManager
+    assert voice.LegacyAudioCandidate is DirectCandidate
+    assert voice.VoiceAudioWorkset is DirectWorkset
+    assert voice.reconcile_legacy_audio_candidates is reconcile_legacy_audio_candidates
 
 
 def test_manager_composes_strict_four_config_bundle_and_artifact_evidence():
@@ -124,6 +145,10 @@ def test_manager_composes_strict_four_config_bundle_and_artifact_evidence():
         ABBY_VOICE_PROVENANCE_V2,
     }
     assert result.bundle.responses[0].audio_ids == (result.bundle.audio[0].audio_id,)
+    assert result.bundle.audio[0].provenance_ids
+    assert set(result.bundle.audio[0].provenance_ids) <= {
+        item.provenance_id for item in result.bundle.provenance
+    }
     assert result.graphrag_index.bundle == result.bundle
     assert result.artifact_manifest.manifest_id
     assert result.evaluation_support_artifact is not None
@@ -137,6 +162,73 @@ def test_manager_composes_strict_four_config_bundle_and_artifact_evidence():
     assert len(refs) == len(set(refs)) == 4  # input row + candidate + two inventory objects
     assert any(item.reason == "exact_verified_link" for item in result.dispositions)
     assert any(item.reason == "non_audio_inventory_object" for item in result.dispositions)
+
+
+def test_manager_dispositions_use_pinned_identity_for_canonical_provenance_input():
+    payload, row = _canonical_response()
+    provenance = AbbyVoiceProvenance(
+        provenance_id="provenance-upstream",
+        subject_id=row.response_id,
+        subject_schema_version=ABBY_VOICE_RESPONSE_V2,
+        transformation_name="upstream_import",
+        transformation_version="1",
+        source_uri="external://upstream",
+        source_revision="revision:upstream",
+        source_sha256="c" * 64,
+        license_id="CC0-1.0",
+        consent_status="granted",
+    )
+    payload["provenance"] = [provenance.to_dict()]
+    source = _source(payload, "bundle.json")
+
+    result = AbbyVoiceDatasetManager(repository_commit="commit:test").build(
+        sources=(source,),
+        inventory=_inventory(),
+    )
+
+    expected_ref = (
+        f"{source.snapshot.logical_source}#"
+        f"{ABBY_VOICE_PROVENANCE_V2}/{provenance.provenance_id}"
+    )
+    refs = {item.source_ref for item in result.dispositions}
+    assert expected_ref in refs
+    assert provenance.source_uri not in refs
+    assert len(refs) == result.normalization.input_record_count
+
+
+def test_manager_rejects_duplicate_pinned_source_identities():
+    source, _ = _canonical_response()
+    source = _source(source)
+
+    with pytest.raises(ValueError, match="source identities must be unique"):
+        AbbyVoiceDatasetManager(repository_commit="commit:test").build(
+            sources=(source, source),
+            inventory=_inventory(),
+        )
+
+
+def test_manager_rejects_nonpublishable_canonical_rows():
+    source = _source({"responses": [{"id": "one", "text": "Safe useful response."}]})
+
+    with pytest.raises(ValueError, match="not publishable|publication-ready"):
+        AbbyVoiceDatasetManager(repository_commit="commit:test").build(
+            sources=(source,),
+            inventory=_inventory(),
+        )
+
+
+@pytest.mark.parametrize(
+    "payload", (b"", b"\n", b"\xff", b"not-json\n", b"[1,2,3]\n")
+)
+def test_manager_rejects_mislabeled_evaluation_support(payload):
+    source, _ = _canonical_response()
+
+    with pytest.raises(ValueError, match="evaluation support"):
+        AbbyVoiceDatasetManager(repository_commit="commit:test").build(
+            sources=(_source(source),),
+            inventory=_inventory(),
+            evaluation_support_bytes=payload,
+        )
 
 
 @pytest.mark.parametrize(
@@ -255,6 +347,94 @@ def test_multiple_exact_paths_for_one_subject_remain_ambiguous_review():
     }
 
 
+def test_one_inventory_path_cannot_link_to_multiple_subjects():
+    spoken_text = "The exact shared spoken text."
+    subjects = (
+        AbbyVoiceResponse("response-one", spoken_text, spoken_text),
+        AbbyVoiceResponse("response-two", spoken_text, spoken_text),
+    )
+    item = _audio_object()
+    candidates = tuple(
+        LegacyAudioCandidate(
+            f"candidate-{index}",
+            row.response_id,
+            row.spoken_text,
+            (item.path,),
+            item.sha256,
+            item.media_type,
+        )
+        for index, row in enumerate(subjects)
+    )
+
+    result = reconcile_legacy_audio_candidates(
+        subjects=subjects,
+        candidates=candidates,
+        inventory=_inventory(item),
+        byte_resolver=lambda _path: _WAV,
+        decode_validator=lambda *_args: True,
+    )
+
+    assert not result.linked_audio
+    candidate_dispositions = [item for item in result.dispositions if item.candidate_id]
+    assert len(candidate_dispositions) == 2
+    assert {item.reason for item in candidate_dispositions} == {
+        LegacyDispositionReason.AMBIGUOUS_PATH_REVIEW_REQUIRED
+    }
+
+
+def test_empty_normalized_text_and_locale_mismatch_never_link():
+    item = _audio_object()
+    subject = AbbyVoiceResponse(
+        "response-url",
+        "https://example.test/one",
+        "https://example.test/one",
+        locale="en-US",
+    )
+    locale_subject = AbbyVoiceResponse(
+        "response-locale",
+        "Exact locale-sensitive text.",
+        "Exact locale-sensitive text.",
+        locale="en-US",
+    )
+    candidates = (
+        LegacyAudioCandidate(
+            "candidate-empty-identity",
+            subject.response_id,
+            "https://example.test/two",
+            (item.path,),
+            item.sha256,
+            item.media_type,
+        ),
+        LegacyAudioCandidate(
+            "candidate-locale",
+            locale_subject.response_id,
+            locale_subject.spoken_text,
+            ("audio/locale.wav",),
+            item.sha256,
+            item.media_type,
+            locale="fr-FR",
+        ),
+    )
+    locale_item = _audio_object(path="audio/locale.wav")
+
+    result = reconcile_legacy_audio_candidates(
+        subjects=(subject, locale_subject),
+        candidates=candidates,
+        inventory=_inventory(item, locale_item),
+        byte_resolver=lambda _path: _WAV,
+        decode_validator=lambda *_args: True,
+    )
+
+    assert not result.linked_audio
+    reasons = {
+        item.candidate_id: item.reason
+        for item in result.dispositions
+        if item.candidate_id
+    }
+    assert reasons["candidate-empty-identity"] is LegacyDispositionReason.TEXT_IDENTITY_MISMATCH
+    assert reasons["candidate-locale"] is LegacyDispositionReason.LOCALE_MISMATCH
+
+
 @pytest.mark.parametrize(
     ("object_changes", "payload", "decode", "expected_reason"),
     [
@@ -289,6 +469,55 @@ def test_integrity_failures_never_auto_link(
     assert not result.linked_audio
     disposition = next(item for item in result.dispositions if item.candidate_id)
     assert disposition.reason.value == expected_reason
+
+
+def test_missing_decode_validator_never_auto_links_verified_magic_bytes():
+    _, row = _canonical_response()
+    item = _audio_object()
+    candidate = LegacyAudioCandidate(
+        "candidate-without-decoder",
+        row.response_id,
+        row.spoken_text,
+        (item.path,),
+        _WAV_SHA,
+        "audio/wav",
+    )
+
+    result = reconcile_legacy_audio_candidates(
+        subjects=(row,),
+        candidates=(candidate,),
+        inventory=_inventory(item),
+        byte_resolver=lambda _path: _WAV,
+    )
+
+    assert not result.linked_audio
+    disposition = next(item for item in result.dispositions if item.candidate_id)
+    assert disposition.status is LegacyDispositionStatus.QUARANTINED
+    assert disposition.reason is LegacyDispositionReason.DECODE_VALIDATOR_UNAVAILABLE
+
+
+@pytest.mark.parametrize(
+    "uri",
+    (
+        "/tmp/audio.wav",
+        "audio/local.wav",
+        "file:///tmp/audio.wav",
+        "data:audio/wav;base64,UklGRg==",
+        "https://user:password@example.test/audio.wav",
+        "https://example.test/audio.wav?access_token=secret",
+        "https://example.test/../private/audio.wav",
+        "https://example.test/audio.wav#local-fragment",
+    ),
+)
+def test_audio_work_descriptors_reject_local_raw_or_credentialed_uris(uri):
+    with pytest.raises(ValueError, match="audio uri"):
+        AudioArtifactDescriptor(
+            audio_id="audio:test",
+            content_sha256=_WAV_SHA,
+            byte_length=len(_WAV),
+            media_type="audio/wav",
+            uri=uri,
+        )
 
 
 def test_deterministic_tts_asr_and_validation_work_manifests_cover_selection_matrix():
@@ -364,6 +593,68 @@ def test_deterministic_tts_asr_and_validation_work_manifests_cover_selection_mat
     assert all(item.operation is AudioWorkOperation.TTS for item in workset.tts_manifest.items)
     assert b"audio_validation" in workset.validation_manifest.canonical_bytes()
     assert _WAV not in workset.canonical_bytes()
+
+
+def test_stale_text_audio_is_corrupt_work_not_current_audio():
+    text = "Current response text."
+    row = AbbyVoiceResponse(
+        response_id=stable_response_id(text, text),
+        text=text,
+        spoken_text=text,
+    )
+    stale_audio = AbbyVoiceAudio(
+        audio_id="audio-stale-text",
+        spoken_text="Stale response text.",
+        content_sha256="d" * 64,
+        response_id=row.response_id,
+        uri="ipfs://bafy-stale",
+        byte_length=12,
+    )
+
+    workset = VoiceAudioWorkset.build(
+        responses=(row,),
+        audio=(stale_audio,),
+        source_manifest_id="manifest:source",
+        policy_id="policy:audio",
+    )
+
+    assert len(workset.tts_manifest.items) == 1
+    assert workset.tts_manifest.items[0].reason is AudioWorkReason.CORRUPT
+    assert {item.subject_id for item in workset.items} == {row.response_id}
+
+
+def test_workset_rejects_duplicate_audio_ids_and_overlapping_policy():
+    text = "Current response text."
+    row = AbbyVoiceResponse(
+        response_id=stable_response_id(text, text),
+        text=text,
+        spoken_text=text,
+    )
+    audio_rows = tuple(
+        AbbyVoiceAudio(
+            audio_id="audio-conflict",
+            spoken_text=text,
+            content_sha256=character * 64,
+            response_id=row.response_id,
+            uri=f"ipfs://bafy-{character}",
+            byte_length=12,
+        )
+        for character in ("a", "b")
+    )
+    kwargs = {
+        "responses": (row,),
+        "source_manifest_id": "manifest:source",
+        "policy_id": "policy:audio",
+    }
+
+    with pytest.raises(ValueError, match="audio IDs must be unique"):
+        VoiceAudioWorkset.build(audio=audio_rows, **kwargs)
+    with pytest.raises(ValueError, match="must not overlap"):
+        VoiceAudioWorkset.build(
+            corrupt_subject_ids=(row.response_id,),
+            intentionally_text_only_subject_ids=(row.response_id,),
+            **kwargs,
+        )
 
 
 def test_manager_rebuild_is_byte_identical_and_input_order_independent():
