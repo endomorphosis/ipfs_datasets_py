@@ -119,21 +119,21 @@ print(f"Retrieved graph with {len(data.get('entities', {}))} entities")
 ## Where to Go Next
 
 ### Learn More
-- **[README.md](README.md)** - Full module overview and capabilities
-- **[User Guide](../../docs/knowledge_graphs/USER_GUIDE.md)** - 40+ examples covering all features
-- **[API Reference](../../docs/knowledge_graphs/API_REFERENCE.md)** - Complete API documentation
+- **[README.md](../../ipfs_datasets_py/knowledge_graphs/README.md)** - Full module overview and capabilities
+- **[User Guide](USER_GUIDE.md)** - 40+ examples covering all features
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
 
 ### Common Tasks
-- **Extract from documents:** See [extraction/README.md](extraction/README.md)
-- **Query graphs:** See [query/README.md](query/README.md)  
-- **Migrate from Neo4j:** See [MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)
-- **Store in IPFS:** See [storage/README.md](storage/README.md)
+- **Extract from documents:** See [extraction/README.md](../../ipfs_datasets_py/knowledge_graphs/extraction/README.md)
+- **Query graphs:** See [query/README.md](../../ipfs_datasets_py/knowledge_graphs/query/README.md)
+- **Migrate from Neo4j:** See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
+- **Store in IPFS:** See [storage/README.md](../../ipfs_datasets_py/knowledge_graphs/storage/README.md)
 
 ### Advanced Features
-- **Cross-document reasoning:** [lineage/README.md](lineage/README.md)
-- **Transactions:** [transactions/README.md](transactions/README.md)
-- **Neo4j compatibility:** [neo4j_compat/README.md](neo4j_compat/README.md)
-- **JSON-LD support:** [jsonld/README.md](jsonld/README.md)
+- **Cross-document reasoning:** [lineage/README.md](../../ipfs_datasets_py/knowledge_graphs/lineage/README.md)
+- **Transactions:** [transactions/README.md](../../ipfs_datasets_py/knowledge_graphs/transactions/README.md)
+- **Neo4j compatibility:** [neo4j_compat/README.md](../../ipfs_datasets_py/knowledge_graphs/neo4j_compat/README.md)
+- **JSON-LD support:** [jsonld/README.md](../../ipfs_datasets_py/knowledge_graphs/jsonld/README.md)
 
 ---
 
@@ -212,7 +212,7 @@ for result in results:
 ## Need Help?
 
 - **Documentation:** [INDEX.md](INDEX.md) - Complete documentation index
-- **Examples:** [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - 40+ examples
+- **Examples:** [USER_GUIDE.md](USER_GUIDE.md) - 40+ examples
 - **Issues:** [GitHub Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
 - **Status:** [MASTER_STATUS.md](./MASTER_STATUS.md) - Current capabilities
 
@@ -220,4 +220,4 @@ for result in results:
 
 **Ready to build knowledge graphs!** 🚀
 
-Start with the examples above, then explore the [User Guide](../../docs/knowledge_graphs/USER_GUIDE.md) for more advanced features.
+Start with the examples above, then explore the [User Guide](USER_GUIDE.md) for more advanced features.
