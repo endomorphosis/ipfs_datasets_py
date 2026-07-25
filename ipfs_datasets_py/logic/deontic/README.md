@@ -279,10 +279,10 @@ pytest tests/unit_tests/logic/deontic/ --cov=ipfs_datasets_py.logic.deontic
 
 ## References
 
-- [UNIFIED_CONVERTER_GUIDE.md](../UNIFIED_CONVERTER_GUIDE.md) - Converter architecture
-- [CACHING_ARCHITECTURE.md](../CACHING_ARCHITECTURE.md) - Caching strategies
-- [FEATURES.md](../FEATURES.md) - Complete feature catalog
-- [DOCUMENTATION_INDEX.md](../DOCUMENTATION_INDEX.md) - All documentation
+- [UNIFIED_CONVERTER_GUIDE.md](../../../docs/logic/UNIFIED_CONVERTER_GUIDE.md) - Converter architecture
+- [CACHING_ARCHITECTURE.md](../../../docs/logic/CACHING_ARCHITECTURE.md) - Caching strategies
+- [FEATURES.md](../../../docs/FEATURES.md) - Complete feature catalog
+- [DOCUMENTATION_INDEX.md](../../../docs/DOCUMENTATION_INDEX.md) - All documentation
 
 ## Migration from Legacy
 
@@ -299,4 +299,4 @@ converter = DeonticConverter()
 result = converter.convert("text")
 ```
 
-See [MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md) for complete migration instructions.
+See [MIGRATION_GUIDE.md](../../../docs/logic/MIGRATION_GUIDE.md) for complete migration instructions.
