@@ -325,9 +325,9 @@ After:
 ## References
 
 **Documentation:**
-- [Complete Setup Guide](guides/deployment/runner_authentication_setup.md)
-- [Quick Reference](RUNNER_AUTH_QUICKSTART.md)
-- [Workflow README](.github/workflows/README.md)
+- [Complete Setup Guide](deployment/runner_authentication_setup.md)
+- [Quick Reference](infrastructure/runners/RUNNER_AUTH_QUICKSTART.md)
+- [Workflow README](../../.github/workflows/README.md)
 
 **GitHub Resources:**
 - [GitHub CLI Authentication](https://cli.github.com/manual/gh_auth_login)
