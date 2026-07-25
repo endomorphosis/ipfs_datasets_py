@@ -206,6 +206,6 @@ result = await manager.dispatch_tool('cat', 'tool', {'param': 'value'})
 
 ## See Also
 
-- [Architecture Diagram](../../MCP_ARCHITECTURE_DIAGRAM.md)
+- [Architecture Diagram](../MCP_ARCHITECTURE_DIAGRAM.md)
 - [Developer Guide](../developer_guides/CREATING_TOOLS.md)
 - [API Reference](../api/CORE_OPERATIONS_API.md)
