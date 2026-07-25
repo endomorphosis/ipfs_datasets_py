@@ -99,8 +99,8 @@ The common module will grow to include:
 
 ## References
 
-- [ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md](../../ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md) - Full roadmap
-- [Phase 2 Task 7](../../ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md#phase-2-quality-improvements-weeks-3-4---p1) - Extract common logic
+- [ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md](../../../docs/archive/root_status_reports/ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md) - Full roadmap
+- [Phase 2 Task 7](../../../docs/archive/root_status_reports/ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md#phase-2-quality-improvements-weeks-3-4---p1) - Extract common logic
 
 ## Converter Base Classes (`converters.py`)
 
