@@ -612,7 +612,7 @@ real conflict edges.
 
 ## IRF-043 Adapt Legal IR to shared formalization contracts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: platform
