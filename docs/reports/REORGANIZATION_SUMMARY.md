@@ -166,9 +166,9 @@ git revert <commit-hash-phase-2>
 
 ## Related Documentation
 
-- [Detailed Guide](archive/reorganization/root_reorganization.md)
-- [Main README](README.md)
-- [Project Structure](archive/deprecated/claude.md)
+- [Detailed Guide](../archive/reorganization/root_reorganization.md)
+- [Main README](../../README.md)
+- [Project Structure](../architecture/project_structure.md)
 
 ---
 
