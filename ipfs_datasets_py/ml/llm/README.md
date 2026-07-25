@@ -250,8 +250,8 @@ The LLM module integrates seamlessly with:
 
 ## See Also
 
-- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval workflows
-- [MCP Tools](../mcp_tools/README.md) - AI assistant tool integration
+- [GraphRAG Optimizers](../../optimizers/graphrag/README.md) - Graph-enhanced retrieval workflows
+- [MCP Tools](../../mcp_server/README.md) - AI assistant tool integration
 - [Embeddings](../embeddings/README.md) - Embedding generation for LLM context
-- [Vector Stores](../vector_stores/README.md) - Context storage and retrieval
-- [Developer Guide](../../docs/developer_guide.md) - LLM integration development guidelines
+- [Vector Stores](../../vector_stores/README.md) - Context storage and retrieval
+- [Developer Guide](../../../docs/developer_guide.md) - LLM integration development guidelines
