@@ -25,6 +25,9 @@ from typing import Any, Iterable, Sequence
 SCHEMA_VERSION = "SecurityArtifactInventory@1"
 DEFAULT_ARTIFACT_ROOT = "security_ir_artifacts"
 DEFAULT_OUTPUT = "docs/security_verification/security_ir_artifact_inventory.json"
+# Versioned migration metadata describes the frozen legacy inventory and must
+# not recursively become a legacy input after it is committed.
+MIGRATION_METADATA_DIRECTORY = "migrations"
 
 CLASSIFICATIONS = (
     "source",
@@ -232,6 +235,10 @@ def tracked_artifact_paths(
         path = _normalise_relative_path(decoded)
         if path.parts[: len(prefix)] != prefix:
             raise RuntimeError(f"git returned an out-of-scope artifact path: {decoded}")
+        if path.parts[: len(prefix) + 1] == prefix + (
+            MIGRATION_METADATA_DIRECTORY,
+        ):
+            continue
         paths.append(path)
     return sorted(set(paths), key=lambda item: item.as_posix().encode("utf-8"))
 
@@ -252,6 +259,8 @@ def filesystem_artifact_paths(
         PurePosixPath(path.relative_to(repo_root).as_posix())
         for path in absolute_root.rglob("*")
         if path.is_file() or path.is_symlink()
+        if path.relative_to(absolute_root).parts[:1]
+        != (MIGRATION_METADATA_DIRECTORY,)
     ]
     return sorted(set(paths), key=lambda item: item.as_posix().encode("utf-8"))
 
