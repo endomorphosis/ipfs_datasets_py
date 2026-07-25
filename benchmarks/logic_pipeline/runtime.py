@@ -23,7 +23,10 @@ from typing import Callable, Final, Mapping, Sequence
 
 from .content_addressing import (
     canonical_dag_json_bytes,
+    cid_for_bytes,
     cid_for_dag_json,
+    sha256_digest_for_cid,
+    validate_cid,
 )
 
 from .adapters import (
@@ -41,6 +44,7 @@ from .adapters import (
     LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
     LEANSTRAL_MEASURED_TIMEOUT_SECONDS,
     LEANSTRAL_PROOF_OUTPUT_SCHEMA,
+    SEMANTIC_CONTEXT_SCHEMA_V2,
     SpacyAdapter,
     SpacyAdapterConfig,
     SpacyAdapterMode,
@@ -54,7 +58,7 @@ from .adapters import (
     _is_frozen_ablation_request,
     _leanstral_completion_payload_bytes,
     _leanstral_input,
-    _semantic_context_binding,
+    semantic_context_binding,
 )
 from .capabilities import (
     CapabilityContractError,
@@ -66,6 +70,11 @@ from .capabilities import (
     run_bounded_process_group,
 )
 from .contracts import (
+    CAUSAL_PROOF_CANDIDATE_SOURCES_V2,
+    CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2,
+    CAUSAL_PROOF_PROTOCOL_V2_CID,
+    CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2,
+    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
     FailureCode,
     NATIVE_KERNEL_RECEIPT_SCHEMA,
     ProtocolContractError,
@@ -79,10 +88,12 @@ from .contracts import (
 )
 from .variants import (
     ALL_VARIANT_IDS,
+    CausalProofVariantProfile,
     HammerPolicy,
     PremiseRanking,
     SpacyMode,
     StagePolicy,
+    get_causal_proof_variant_profile,
     get_variant_definition,
 )
 from .source_bound_import import import_source_bound_ipfs_accelerate
@@ -260,6 +271,33 @@ def _sha(value: object) -> str:
     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _semantic_context_identity(
+    semantic_binding: Mapping[str, object],
+) -> dict[str, str]:
+    """Return the primary context identity for legacy or semantic-v2 data."""
+
+    if semantic_binding.get("schema") == SEMANTIC_CONTEXT_SCHEMA_V2:
+        value = semantic_binding.get("context_cid")
+        try:
+            return {
+                "semantic_context_cid": validate_cid(
+                    value, codecs=("dag-json",)
+                )
+            }
+        except (TypeError, ValueError) as exc:
+            raise RuntimeBindingError(
+                "semantic-v2 context lacks a canonical DAG-JSON CID"
+            ) from exc
+    value = semantic_binding.get("context_sha256")
+    if not isinstance(value, str) or not re.fullmatch(
+        r"[0-9a-f]{64}", value
+    ):
+        raise RuntimeBindingError(
+            "legacy semantic context lacks its SHA-256 identity"
+        )
+    return {"semantic_context_sha256": value}
+
+
 def _thaw_artifact_json(value: object) -> object:
     """Restore frozen stage-artifact data to canonical JSON containers."""
 
@@ -270,7 +308,28 @@ def _thaw_artifact_json(value: object) -> object:
         }
     if isinstance(value, tuple):
         return [_thaw_artifact_json(member) for member in value]
+    if isinstance(value, list):
+        return [_thaw_artifact_json(member) for member in value]
     return value
+
+
+def _freeze_runtime_json(value: object) -> object:
+    """Detach and deeply freeze one already validated JSON value."""
+
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                str(key): _freeze_runtime_json(member)
+                for key, member in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_runtime_json(member) for member in value)
+    if value is None or type(value) in {str, bool, int, float}:
+        return value
+    raise RuntimeBindingError(
+        "causal runtime evidence contains a non-JSON value"
+    )
 
 
 def _safe_theorem_name(obligation_id: str) -> str:
@@ -1304,6 +1363,687 @@ def _validated_kernel_handler(
     return invoke
 
 
+CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2: Final = (
+    "hammer_candidate_absent",
+    "hammer_solver_failure",
+    "hammer_timeout",
+    "hammer_schema_invalid",
+    "hammer_premise_selection_miss",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class CausalProofCandidate:
+    """One exact, non-authoritative certificate proposed to G210."""
+
+    source: str
+    certificate: bytes | str
+    artifact_cid: str
+    candidate_cid: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.source not in CAUSAL_PROOF_CANDIDATE_SOURCES_V2:
+            raise RuntimeBindingError("unsupported causal candidate source")
+        certificate = self.certificate
+        if isinstance(certificate, str):
+            certificate = certificate.encode("utf-8")
+            object.__setattr__(self, "certificate", certificate)
+        if not isinstance(certificate, bytes) or not certificate:
+            raise RuntimeBindingError(
+                "causal proof certificate must be nonempty exact bytes"
+            )
+        try:
+            certificate.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise RuntimeBindingError(
+                "causal proof certificate must be exact UTF-8 bytes"
+            ) from exc
+        try:
+            validate_cid(self.artifact_cid, codecs=("raw", "dag-json"))
+        except (TypeError, ValueError) as exc:
+            raise RuntimeBindingError(
+                "causal proof artifact CID is invalid"
+            ) from exc
+        expected = cid_for_bytes(certificate)
+        if self.candidate_cid is None:
+            object.__setattr__(self, "candidate_cid", expected)
+        else:
+            try:
+                validate_cid(self.candidate_cid, codecs=("raw",))
+            except (TypeError, ValueError) as exc:
+                raise RuntimeBindingError(
+                    "causal proof candidate CID is invalid"
+                ) from exc
+            if self.candidate_cid != expected:
+                raise RuntimeBindingError(
+                    "causal proof candidate CID changed from exact bytes"
+                )
+
+
+@dataclass(frozen=True, slots=True)
+class CausalProofFailure:
+    """Typed optional-producer failure that can never claim proof credit."""
+
+    source: str
+    failure_code: str
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        if self.source not in {"hammer", "leanstral"}:
+            raise RuntimeBindingError("causal proof failure source is invalid")
+        allowed = (
+            CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2
+            if self.source == "hammer"
+            else CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2
+        )
+        if self.failure_code not in allowed:
+            raise RuntimeBindingError(
+                f"{self.source} causal failure code is not preregistered"
+            )
+        if not isinstance(self.detail, str) or len(self.detail) > 512:
+            raise RuntimeBindingError(
+                "causal proof failure detail must be a bounded string"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class CausalKernelCheck:
+    """One complete independent-kernel sidecar returned by a checker."""
+
+    candidate_cid: str
+    accepted: bool
+    receipt: Mapping[str, object]
+    receipt_cid: str | None = None
+    stage_status: StageStatus | None = None
+    failure_code: FailureCode | None = None
+    consumed_artifact_sha256s: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        try:
+            validate_cid(self.candidate_cid, codecs=("raw",))
+        except (TypeError, ValueError) as exc:
+            raise RuntimeBindingError(
+                "causal kernel check candidate CID is invalid"
+            ) from exc
+        if type(self.accepted) is not bool:
+            raise RuntimeBindingError(
+                "causal kernel acceptance must be a boolean"
+            )
+        if not isinstance(self.receipt, Mapping):
+            raise RuntimeBindingError(
+                "causal kernel check requires its complete receipt"
+            )
+        receipt_value = _thaw_artifact_json(self.receipt)
+        if not isinstance(receipt_value, dict):
+            raise RuntimeBindingError(
+                "causal kernel check receipt did not remain an object"
+            )
+        receipt = receipt_value
+        if (
+            receipt.get("independent") is not True
+            or receipt.get("accepted") is not self.accepted
+        ):
+            raise RuntimeBindingError(
+                "causal kernel sidecar is not an independent matching receipt"
+            )
+        frozen_receipt = _freeze_runtime_json(receipt)
+        assert isinstance(frozen_receipt, Mapping)
+        object.__setattr__(self, "receipt", frozen_receipt)
+        status = self.stage_status
+        if status is None:
+            status = (
+                StageStatus.SUCCESS
+                if self.accepted
+                else StageStatus.FAILED
+            )
+            object.__setattr__(self, "stage_status", status)
+        if not isinstance(status, StageStatus):
+            raise RuntimeBindingError(
+                "causal kernel stage status is invalid"
+            )
+        if self.accepted:
+            if status is not StageStatus.SUCCESS or self.failure_code is not None:
+                raise RuntimeBindingError(
+                    "accepted causal kernel check has failure state"
+                )
+        elif status is StageStatus.SUCCESS:
+            raise RuntimeBindingError(
+                "rejected causal kernel check cannot have success status"
+            )
+        elif self.failure_code is None:
+            raise RuntimeBindingError(
+                "rejected causal kernel check requires a typed failure code"
+            )
+        if self.failure_code is not None and not isinstance(
+            self.failure_code, FailureCode
+        ):
+            raise RuntimeBindingError(
+                "causal kernel failure code is invalid"
+            )
+        if (
+            not isinstance(self.consumed_artifact_sha256s, tuple)
+            or not all(
+                isinstance(value, str)
+                and re.fullmatch(r"[0-9a-f]{64}", value)
+                for value in self.consumed_artifact_sha256s
+            )
+        ):
+            raise RuntimeBindingError(
+                "causal kernel consumed-artifact digests are invalid"
+            )
+        expected = cid_for_dag_json(receipt)
+        if self.receipt_cid is None:
+            object.__setattr__(self, "receipt_cid", expected)
+        else:
+            try:
+                validate_cid(self.receipt_cid, codecs=("dag-json",))
+            except (TypeError, ValueError) as exc:
+                raise RuntimeBindingError(
+                    "causal kernel receipt CID is invalid"
+                ) from exc
+            if self.receipt_cid != expected:
+                raise RuntimeBindingError(
+                    "causal kernel receipt CID changed from its body"
+                )
+
+
+@dataclass(frozen=True, slots=True)
+class CausalProofGraphResult:
+    """Immutable G210 selection receipt and its DAG-JSON CID."""
+
+    receipt: Mapping[str, object]
+    receipt_cid: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.receipt, Mapping):
+            raise RuntimeBindingError("causal proof result receipt is invalid")
+        receipt_value = _thaw_artifact_json(self.receipt)
+        if not isinstance(receipt_value, dict):
+            raise RuntimeBindingError(
+                "causal proof result receipt did not remain an object"
+            )
+        body = {
+            key: value
+            for key, value in receipt_value.items()
+            if key != "receipt_cid"
+        }
+        if receipt_value.get("receipt_cid") != self.receipt_cid:
+            raise RuntimeBindingError("causal proof result CID is inconsistent")
+        if cid_for_dag_json(body) != self.receipt_cid:
+            raise RuntimeBindingError("causal proof result CID changed")
+        frozen_receipt = _freeze_runtime_json(receipt_value)
+        assert isinstance(frozen_receipt, Mapping)
+        object.__setattr__(self, "receipt", frozen_receipt)
+
+    @property
+    def selected_source(self) -> str | None:
+        value = self.receipt.get("selected_source")
+        return value if isinstance(value, str) else None
+
+    def to_dict(self) -> dict[str, object]:
+        value = _thaw_artifact_json(self.receipt)
+        if not isinstance(value, dict):  # pragma: no cover - post-init guard
+            raise RuntimeBindingError(
+                "causal proof result did not remain an object"
+            )
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class CausalProofGraphController:
+    """Execute the lazy G210 compiler-first causal proof graph.
+
+    The controller, rather than a producer, owns route continuation.  It calls
+    the compiler reference checker first for every arm and never evaluates an
+    optional factory before the exact preregistered failure trigger is known.
+    """
+
+    kernel_checker: Callable[[CausalProofCandidate], CausalKernelCheck]
+    kernel_receipt_validator: Callable[
+        [CausalProofCandidate, CausalKernelCheck], bool
+    ]
+    protocol_cid: str = CAUSAL_PROOF_PROTOCOL_V2_CID
+
+    def __post_init__(self) -> None:
+        if self.protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID:
+            raise RuntimeBindingError("unsupported causal proof protocol CID")
+        if not callable(self.kernel_checker) or not callable(
+            self.kernel_receipt_validator
+        ):
+            raise RuntimeBindingError(
+                "causal proof controller requires kernel callables"
+            )
+
+    def _check(
+        self,
+        candidate: CausalProofCandidate,
+        sidecars: list[dict[str, object]],
+        *,
+        run_id: str,
+        case_id: str,
+        variant_id: str,
+        source_cid: str,
+    ) -> CausalKernelCheck:
+        check = self.kernel_checker(candidate)
+        if not isinstance(check, CausalKernelCheck):
+            raise RuntimeBindingError(
+                "kernel checker returned no typed causal check"
+            )
+        if check.candidate_cid != candidate.candidate_cid:
+            raise RuntimeBindingError(
+                "kernel check is bound to a different candidate"
+            )
+        if self.kernel_receipt_validator(candidate, check) is not True:
+            raise RuntimeBindingError(
+                "independent kernel receipt failed replay validation"
+            )
+        for field, expected in (
+            ("run_id", run_id),
+            ("case_id", case_id),
+            ("variant_id", variant_id),
+        ):
+            if check.receipt.get(field) != expected:
+                raise RuntimeBindingError(
+                    f"kernel receipt {field} differs from causal coordinate"
+                )
+        sidecars.append(
+            {
+                "run_id": run_id,
+                "case_id": case_id,
+                "variant_id": variant_id,
+                "source_cid": source_cid,
+                "protocol_cid": self.protocol_cid,
+                "variant_profile_cid": (
+                    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+                ),
+                "candidate_cid": check.candidate_cid,
+                "candidate_bytes_utf8": candidate.certificate.decode(
+                    "utf-8"
+                ),
+                "candidate_bytes_length": len(candidate.certificate),
+                "receipt_cid": check.receipt_cid,
+                "stage_status": check.stage_status.value,
+                "failure_code": (
+                    None
+                    if check.failure_code is None
+                    else check.failure_code.value
+                ),
+                "kernel_accepted": check.accepted,
+                "consumed_artifact_sha256s": list(
+                    check.consumed_artifact_sha256s
+                ),
+                "receipt": _thaw_artifact_json(check.receipt),
+            }
+        )
+        return check
+
+    @staticmethod
+    def _optional_record(
+        *,
+        source: str,
+        route_index: int,
+        predecessor: str,
+        trigger_eligible: bool,
+        invoked: bool,
+        candidate: CausalProofCandidate | None = None,
+        check: CausalKernelCheck | None = None,
+        overlap: bool = False,
+        duplicate_of: str | None = None,
+        failure: CausalProofFailure | None = None,
+        continuation_kind: str,
+        zero_credit_reason: str | None,
+        causal_credit_eligible: bool = True,
+    ) -> dict[str, object]:
+        accepted = check.accepted if check is not None else False
+        rescue = bool(
+            causal_credit_eligible
+            and trigger_eligible
+            and invoked
+            and candidate is not None
+            and check is not None
+            and accepted
+            and not overlap
+        )
+        return {
+            "source": source,
+            "route_index": route_index,
+            "trigger_condition": f"after_{predecessor}_not_accepted",
+            "trigger_eligible": trigger_eligible,
+            "causal_credit_eligible": causal_credit_eligible,
+            "invoked": invoked,
+            "candidate_cid": (
+                None if candidate is None else candidate.candidate_cid
+            ),
+            "artifact_cid": (
+                None if candidate is None else candidate.artifact_cid
+            ),
+            "kernel_checked": check is not None,
+            "kernel_receipt_cid": (
+                None if check is None else check.receipt_cid
+            ),
+            "accepted": accepted,
+            "overlap": overlap,
+            "duplicate_of_candidate_cid": duplicate_of,
+            "causal_rescue": rescue,
+            "marginal_credit_millionths": 1_000_000 if rescue else 0,
+            "zero_credit_reason": (
+                None if rescue else zero_credit_reason
+            ),
+            "failure_code": (
+                None if failure is None else failure.failure_code
+            ),
+            "continuation_kind": continuation_kind,
+        }
+
+    def execute(
+        self,
+        *,
+        run_id: str,
+        case_id: str,
+        variant_id: str,
+        source_text: str,
+        compiler_candidate: CausalProofCandidate | None,
+        optional_producers: Mapping[
+            str,
+            Callable[[], CausalProofCandidate | CausalProofFailure],
+        ],
+    ) -> CausalProofGraphResult:
+        """Execute one source-bound compiler-first selection graph."""
+
+        if (
+            not isinstance(run_id, str)
+            or not run_id.strip()
+            or not isinstance(case_id, str)
+            or not case_id.strip()
+        ):
+            raise RuntimeBindingError(
+                "causal proof run and case identifiers must be nonempty"
+            )
+        if not isinstance(source_text, str) or not source_text:
+            raise RuntimeBindingError(
+                "causal proof source text must be nonempty"
+            )
+        profile: CausalProofVariantProfile = (
+            get_causal_proof_variant_profile(variant_id)
+        )
+        expected_optional = tuple(
+            stage.value for stage in profile.optional_order
+        )
+        if (
+            not isinstance(optional_producers, Mapping)
+            or set(optional_producers) != set(expected_optional)
+            or not all(callable(value) for value in optional_producers.values())
+        ):
+            raise RuntimeBindingError(
+                "causal optional producers differ from the variant profile"
+            )
+        if (
+            compiler_candidate is not None
+            and compiler_candidate.source != "compiler"
+        ):
+            raise RuntimeBindingError(
+                "compiler reference has a non-compiler source"
+            )
+
+        sidecars: list[dict[str, object]] = []
+        seen: dict[str, str] = {}
+        source_cid = cid_for_bytes(source_text.encode("utf-8"))
+        compiler_check: CausalKernelCheck | None = None
+        if compiler_candidate is None:
+            compiler_state = "absent"
+        else:
+            assert compiler_candidate.candidate_cid is not None
+            seen[compiler_candidate.candidate_cid] = "compiler"
+            compiler_check = self._check(
+                compiler_candidate,
+                sidecars,
+                run_id=run_id,
+                case_id=case_id,
+                variant_id=variant_id,
+                source_cid=source_cid,
+            )
+            compiler_state = (
+                "accepted" if compiler_check.accepted else "rejected"
+            )
+        compiler_reference = {
+            "state": compiler_state,
+            "candidate_cid": (
+                None
+                if compiler_candidate is None
+                else compiler_candidate.candidate_cid
+            ),
+            "artifact_cid": (
+                None
+                if compiler_candidate is None
+                else compiler_candidate.artifact_cid
+            ),
+            "invoked": compiler_candidate is not None,
+            "kernel_checked": compiler_check is not None,
+            "kernel_receipt_cid": (
+                None
+                if compiler_check is None
+                else compiler_check.receipt_cid
+            ),
+            "accepted": (
+                False if compiler_check is None else compiler_check.accepted
+            ),
+        }
+        selected_source = (
+            "compiler"
+            if compiler_check is not None and compiler_check.accepted
+            else None
+        )
+        selected_candidate_cid = (
+            compiler_candidate.candidate_cid
+            if selected_source is not None and compiler_candidate is not None
+            else None
+        )
+        selected_kernel_receipt_cid = (
+            compiler_check.receipt_cid
+            if selected_source is not None and compiler_check is not None
+            else None
+        )
+
+        records: list[dict[str, object]] = []
+        previous_source = "compiler"
+        prior_model_failure = False
+        for route_index, source in enumerate(expected_optional):
+            if selected_source is not None:
+                reason = (
+                    "compiler_reference_accepted"
+                    if selected_source == "compiler"
+                    else "predecessor_candidate_accepted"
+                )
+                records.append(
+                    self._optional_record(
+                        source=source,
+                        route_index=route_index,
+                        predecessor=previous_source,
+                        trigger_eligible=False,
+                        causal_credit_eligible=False,
+                        invoked=False,
+                        continuation_kind="suppressed",
+                        zero_credit_reason=reason,
+                    )
+                )
+                previous_source = source
+                continue
+
+            produced = optional_producers[source]()
+            if isinstance(produced, CausalProofFailure):
+                if produced.source != source:
+                    raise RuntimeBindingError(
+                        "causal producer failure source changed"
+                    )
+                continuation = (
+                    "post_model_failure_continuation"
+                    if source == "leanstral"
+                    and route_index + 1 < len(expected_optional)
+                    else (
+                        "post_solver_failure_continuation"
+                        if route_index + 1 < len(expected_optional)
+                        else "terminal_producer_failure"
+                    )
+                )
+                records.append(
+                    self._optional_record(
+                        source=source,
+                        route_index=route_index,
+                        predecessor=previous_source,
+                        trigger_eligible=True,
+                        causal_credit_eligible=not prior_model_failure,
+                        invoked=True,
+                        failure=produced,
+                        continuation_kind=continuation,
+                        zero_credit_reason="candidate_failed",
+                    )
+                )
+                if source == "leanstral":
+                    prior_model_failure = True
+                previous_source = source
+                continue
+            if (
+                not isinstance(produced, CausalProofCandidate)
+                or produced.source != source
+            ):
+                raise RuntimeBindingError(
+                    "causal producer returned an invalid candidate"
+                )
+            assert produced.candidate_cid is not None
+            duplicate_source = seen.get(produced.candidate_cid)
+            if duplicate_source is not None:
+                records.append(
+                    self._optional_record(
+                        source=source,
+                        route_index=route_index,
+                        predecessor=previous_source,
+                        trigger_eligible=True,
+                        causal_credit_eligible=not prior_model_failure,
+                        invoked=True,
+                        candidate=produced,
+                        overlap=True,
+                        duplicate_of=produced.candidate_cid,
+                        continuation_kind="post_overlap_continuation",
+                        zero_credit_reason="duplicate_certificate",
+                    )
+                )
+                previous_source = source
+                continue
+            seen[produced.candidate_cid] = source
+            check = self._check(
+                produced,
+                sidecars,
+                run_id=run_id,
+                case_id=case_id,
+                variant_id=variant_id,
+                source_cid=source_cid,
+            )
+            if check.accepted:
+                selected_source = source
+                selected_candidate_cid = produced.candidate_cid
+                selected_kernel_receipt_cid = check.receipt_cid
+            records.append(
+                self._optional_record(
+                    source=source,
+                    route_index=route_index,
+                    predecessor=previous_source,
+                    trigger_eligible=True,
+                    invoked=True,
+                    candidate=produced,
+                    check=check,
+                    causal_credit_eligible=not prior_model_failure,
+                    continuation_kind=(
+                        (
+                            "selected_post_model_failure_continuation"
+                            if prior_model_failure
+                            else "selected_causal_rescue"
+                        )
+                        if check.accepted
+                        else "post_kernel_rejection_continuation"
+                    ),
+                    zero_credit_reason=(
+                        (
+                            "post_model_failure_continuation"
+                            if prior_model_failure
+                            else None
+                        )
+                        if check.accepted
+                        else "kernel_rejected"
+                    ),
+                )
+            )
+            previous_source = source
+
+        denominators = {
+            "compiler_reference": True,
+            "compiler_candidate_present": compiler_candidate is not None,
+            "hammer_optional_route": "hammer" in expected_optional,
+            "leanstral_optional_route": "leanstral" in expected_optional,
+            "hammer_escalation": any(
+                record["source"] == "hammer"
+                and record["trigger_eligible"] is True
+                for record in records
+            ),
+            "leanstral_escalation": any(
+                record["source"] == "leanstral"
+                and record["trigger_eligible"] is True
+                for record in records
+            ),
+            "hammer_suppression": any(
+                record["source"] == "hammer"
+                and record["trigger_eligible"] is False
+                for record in records
+            ),
+            "leanstral_suppression": any(
+                record["source"] == "leanstral"
+                and record["trigger_eligible"] is False
+                for record in records
+            ),
+            "hammer_unique_rescue": any(
+                record["source"] == "hammer"
+                and record["causal_credit_eligible"] is True
+                and record["kernel_checked"] is True
+                and record["overlap"] is False
+                for record in records
+            ),
+            "leanstral_unique_rescue": any(
+                record["source"] == "leanstral"
+                and record["causal_credit_eligible"] is True
+                and record["kernel_checked"] is True
+                and record["overlap"] is False
+                for record in records
+            ),
+            "overlap": any(record["overlap"] is True for record in records),
+            "unnecessary_work": any(
+                record["invoked"] is True
+                and record["causal_rescue"] is False
+                for record in records
+            ),
+        }
+        body = {
+            "schema": CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2,
+            "protocol_cid": self.protocol_cid,
+            "variant_profile_cid": CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
+            "run_id": run_id,
+            "case_id": case_id,
+            "variant_id": variant_id,
+            "source_cid": source_cid,
+            "compiler_reference": compiler_reference,
+            "optional_candidates": records,
+            "selected_source": selected_source,
+            "selected_candidate_cid": selected_candidate_cid,
+            "selected_kernel_receipt_cid": (
+                selected_kernel_receipt_cid
+            ),
+            "proof_authority": "native_kernel",
+            "denominators": denominators,
+            "kernel_receipts": sidecars,
+        }
+        receipt_cid = cid_for_dag_json(body)
+        receipt = {**body, "receipt_cid": receipt_cid}
+        return CausalProofGraphResult(receipt, receipt_cid)
+
+
 @dataclass(slots=True)
 class NativeKernelRunner:
     """Independent Lean kernel handler with owned process-group lifecycle."""
@@ -1384,7 +2124,16 @@ class NativeKernelRunner:
         """
 
         compiler = request.artifact(StageName.COMPILER)
-        expected_compiled = compile_reviewed_obligation(request.input_data)
+        # The reviewed obligation is intentionally invisible to G200 semantic
+        # producers.  Only the proof boundary receives the explicit merged
+        # view; the source-only ``input_data`` remains unchanged and can still
+        # be audited independently.
+        proof_input_data = request.proof_input_data
+        if not isinstance(proof_input_data, Mapping):
+            raise RuntimeBindingError(
+                "kernel proof input must be an object"
+            )
+        expected_compiled = compile_reviewed_obligation(proof_input_data)
         if compiler is None:
             if expected_compiled is not None:
                 raise RuntimeBindingError(
@@ -1431,7 +2180,7 @@ class NativeKernelRunner:
             )
 
         translation = _entailment_translation(
-            request.input_data,
+            proof_input_data,
             theorem_name=compiled.theorem_name,
             obligation_sha256=compiled.obligation_sha256,
             kind=compiled.kind,
@@ -1514,7 +2263,7 @@ class NativeKernelRunner:
             raise RuntimeBindingError(
                 "Hammer semantic context cannot be independently rebuilt"
             ) from exc
-        semantic_binding = _semantic_context_binding(semantic_context)
+        semantic_binding = semantic_context_binding(semantic_context)
         premise_selection = _hammer_premise_selection(
             request, translation
         )
@@ -1627,14 +2376,17 @@ class NativeKernelRunner:
                     "Hammer candidate drifted from the frozen capability "
                     f"{field_name}"
                 )
-        if (
-            measured_route or "semantic_context" in data
-        ) and artifact.effective_identity.get(
-            "semantic_context_sha256"
-        ) != semantic_context.get("context_sha256"):
-            raise RuntimeBindingError(
-                "Hammer candidate semantic context digest is mismatched"
+        if measured_route or "semantic_context" in data:
+            expected_semantic_identity = _semantic_context_identity(
+                semantic_binding
             )
+            if any(
+                artifact.effective_identity.get(field) != expected
+                for field, expected in expected_semantic_identity.items()
+            ):
+                raise RuntimeBindingError(
+                    "Hammer candidate semantic context identity is mismatched"
+                )
         if premise_selection is not None and (
             artifact.effective_identity.get("premise_selection_sha256")
             != premise_selection.get("receipt_sha256")
@@ -2175,7 +2927,69 @@ class NativeKernelRunner:
                 candidates.append(
                     (stage.value, proof, artifact_sha256)
                 )
-        return tuple(candidates)
+        target_fields = {
+            "causal_target_candidate_source",
+            "causal_target_candidate_cid",
+            "causal_target_candidate_artifact_cid",
+            "causal_target_candidate_artifact_sha256",
+        }
+        identity = request.requested_identity
+        present_target_fields = target_fields.intersection(identity)
+        if not present_target_fields:
+            return tuple(candidates)
+        if (
+            identity.get("causal_proof_protocol_cid")
+            != CAUSAL_PROOF_PROTOCOL_V2_CID
+            or present_target_fields != target_fields
+        ):
+            raise RuntimeBindingError(
+                "causal kernel target binding is incomplete or unreviewed"
+            )
+        target_source = identity["causal_target_candidate_source"]
+        target_candidate_cid = identity["causal_target_candidate_cid"]
+        target_artifact_cid = identity[
+            "causal_target_candidate_artifact_cid"
+        ]
+        target_artifact_sha256 = identity[
+            "causal_target_candidate_artifact_sha256"
+        ]
+        if target_source not in CAUSAL_PROOF_CANDIDATE_SOURCES_V2:
+            raise RuntimeBindingError(
+                "causal kernel target source is unsupported"
+            )
+        try:
+            validate_cid(target_candidate_cid, codecs=("raw",))
+            validate_cid(target_artifact_cid, codecs=("raw",))
+            artifact_multihash = sha256_digest_for_cid(
+                target_artifact_cid, codecs=("raw",)
+            )
+        except (TypeError, ValueError) as exc:
+            raise RuntimeBindingError(
+                "causal kernel target content identity is invalid"
+            ) from exc
+        if target_artifact_sha256 != artifact_multihash:
+            raise RuntimeBindingError(
+                "causal kernel target artifact CID and digest disagree"
+            )
+        matches = tuple(
+            candidate
+            for candidate in candidates
+            if candidate[0] == target_source
+        )
+        if len(matches) != 1:
+            raise RuntimeBindingError(
+                "causal kernel target does not identify one present candidate"
+            )
+        source, proof, artifact_sha256 = matches[0]
+        if (
+            cid_for_bytes(proof.encode("utf-8"))
+            != target_candidate_cid
+            or artifact_sha256 != target_artifact_sha256
+        ):
+            raise RuntimeBindingError(
+                "causal kernel target differs from exact candidate bytes"
+            )
+        return ((source, proof, artifact_sha256),)
 
     def __call__(self, request: StageRequest) -> StageOutput:
         try:
@@ -2215,7 +3029,7 @@ class NativeKernelRunner:
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             )
         try:
-            semantic_context = _kernel_input_semantic_context(request)
+            semantic_context = kernel_input_semantic_context(request)
         except ProtocolContractError as exc:
             receipt = {
                 "schema": KERNEL_RECEIPT_SCHEMA,
@@ -2246,13 +3060,44 @@ class NativeKernelRunner:
                 failure_detail=str(exc)[:512],
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.KERNEL),
             )
-        semantic_binding = _semantic_context_binding(semantic_context)
-        semantic_receipt_fields = {
-            "semantic_context_sha256": semantic_binding["context_sha256"],
-            "semantic_artifact_sha256s": semantic_binding[
-                "artifact_sha256s"
-            ],
-        }
+        semantic_binding = semantic_context_binding(semantic_context)
+        if semantic_binding["schema"] == SEMANTIC_CONTEXT_SCHEMA_V2:
+            context_cid = semantic_binding.get("context_cid")
+            artifact_cids = semantic_binding.get("artifact_cids")
+            if (
+                not isinstance(context_cid, str)
+                or not isinstance(artifact_cids, list)
+                or not all(
+                    isinstance(value, str) for value in artifact_cids
+                )
+            ):
+                raise RuntimeBindingError(
+                    "semantic-v2 kernel context lacks CID-bound artifacts"
+                )
+            semantic_receipt_fields = {
+                # Frozen native receipts retain these legacy join names.
+                # Their values are extracted only from validated sha2-256
+                # multihashes; the full CIDs remain primary in the enclosing
+                # semantic context and G210 evidence.
+                "semantic_context_sha256": sha256_digest_for_cid(
+                    context_cid, codecs=("dag-json",)
+                ),
+                "semantic_artifact_sha256s": [
+                    sha256_digest_for_cid(
+                        value, codecs=("dag-json",)
+                    )
+                    for value in artifact_cids
+                ],
+            }
+        else:
+            semantic_receipt_fields = {
+                "semantic_context_sha256": semantic_binding[
+                    "context_sha256"
+                ],
+                "semantic_artifact_sha256s": semantic_binding[
+                    "artifact_sha256s"
+                ],
+            }
         try:
             candidates = (
                 ()
@@ -2568,16 +3413,35 @@ class LiveRuntime:
     inventory: CapabilityInventory
     adapters: Mapping[str, Mapping[StageName, StageAdapter]]
     kernel_runner: NativeKernelRunner | None = None
+    causal_proof_protocol_cid: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.inventory, CapabilityInventory):
             raise RuntimeBindingError("inventory must be a CapabilityInventory")
+        if (
+            self.causal_proof_protocol_cid is not None
+            and self.causal_proof_protocol_cid
+            != CAUSAL_PROOF_PROTOCOL_V2_CID
+        ):
+            raise RuntimeBindingError(
+                "live runtime causal proof protocol CID is unsupported"
+            )
         frozen: dict[str, Mapping[StageName, StageAdapter]] = {}
         for variant_id, route in self.adapters.items():
             definition = get_variant_definition(variant_id)
             if not isinstance(route, Mapping):
                 raise RuntimeBindingError("runtime routes must be mappings")
-            if set(route) != set(definition.stages):
+            expected_stages = (
+                get_causal_proof_variant_profile(
+                    variant_id
+                ).effective_stages
+                if (
+                    self.causal_proof_protocol_cid is not None
+                    and variant_id != "S1"
+                )
+                else definition.stages
+            )
+            if set(route) != set(expected_stages):
                 raise RuntimeBindingError(
                     f"{variant_id} live route does not exactly match frozen stages"
                 )
@@ -2708,7 +3572,7 @@ def _hammer_input_semantic_context(
     )
 
 
-def _kernel_input_semantic_context(
+def kernel_input_semantic_context(
     request: StageRequest,
 ) -> dict[str, object]:
     """Return semantic evidence the terminal kernel receipt must bind."""
@@ -3208,7 +4072,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                 failure_detail=str(exc)[:512],
                 telemetry=TelemetryRecord(resource_lane=ResourceLane.SOLVER),
             )
-        semantic_binding = _semantic_context_binding(semantic_context)
+        semantic_binding = semantic_context_binding(semantic_context)
         compiler = request.artifact(StageName.COMPILER)
         compiled: CompiledObligation | None = None
         if (
@@ -3234,7 +4098,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             None
             if compiled is None
             else _entailment_translation(
-                request.input_data,
+                request.proof_input_data,
                 theorem_name=compiled.theorem_name,
                 obligation_sha256=compiled.obligation_sha256,
                 kind=compiled.kind,
@@ -3263,9 +4127,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
                     "solver": record.identity.get("solver"),
                     "solver_path": solver_path,
                     "translation": "reviewed-entailment-v1",
-                    "semantic_context_sha256": semantic_context[
-                        "context_sha256"
-                    ],
+                    **_semantic_context_identity(semantic_binding),
                 },
                 telemetry=TelemetryRecord(
                     input_items=1,
@@ -3415,9 +4277,7 @@ def _hammer_live_handler(record: CapabilityRecord) -> StageHandler:
             "solver": record.identity.get("solver"),
             "solver_path": solver_path,
             "translation": "reviewed-entailment-v1",
-            "semantic_context_sha256": semantic_context[
-                "context_sha256"
-            ],
+            **_semantic_context_identity(semantic_binding),
             **(
                 {}
                 if premise_selection is None
@@ -3614,6 +4474,7 @@ def build_live_runtime(
     leanstral_timeout_seconds: float = LEANSTRAL_MEASURED_TIMEOUT_SECONDS,
     leanstral_max_new_tokens: int = LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
     semantic_protocol_cid: str | None = None,
+    causal_proof_protocol_cid: str | None = None,
 ) -> LiveRuntime:
     """Build exact live adapters for every requested frozen arm.
 
@@ -3634,6 +4495,13 @@ def build_live_runtime(
     ):
         raise RuntimeBindingError(
             "runtime semantic protocol CID is unsupported"
+        )
+    if (
+        causal_proof_protocol_cid is not None
+        and causal_proof_protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID
+    ):
+        raise RuntimeBindingError(
+            "runtime causal proof protocol CID is unsupported"
         )
     frontend_adapter_version = (
         "2" if semantic_protocol_cid is not None else "1"
@@ -3686,8 +4554,13 @@ def build_live_runtime(
     routes: dict[str, Mapping[StageName, StageAdapter]] = {}
     for variant_id in variants:
         definition = get_variant_definition(variant_id)
+        stages = (
+            get_causal_proof_variant_profile(variant_id).effective_stages
+            if causal_proof_protocol_cid is not None and variant_id != "S1"
+            else definition.stages
+        )
         route: dict[StageName, StageAdapter] = {}
-        for stage in definition.stages:
+        for stage in stages:
             if stage is StageName.COMPILER:
                 route[stage] = CompilerAdapter(
                     handlers.compiler or _current_compiler_handler,
@@ -3875,7 +4748,12 @@ def build_live_runtime(
                     ),
                 )
         routes[variant_id] = MappingProxyType(route)
-    return LiveRuntime(inventory, MappingProxyType(routes), kernel_runner)
+    return LiveRuntime(
+        inventory,
+        MappingProxyType(routes),
+        kernel_runner,
+        causal_proof_protocol_cid,
+    )
 
 
 def build_live_adapters(
@@ -4095,6 +4973,12 @@ if __name__ == "__main__":  # pragma: no cover - exercised by operator CLI
 
 
 __all__ = [
+    "CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2",
+    "CausalKernelCheck",
+    "CausalProofCandidate",
+    "CausalProofFailure",
+    "CausalProofGraphController",
+    "CausalProofGraphResult",
     "COMPILED_OBLIGATION_SCHEMA",
     "CompiledObligation",
     "ENTAILMENT_TRANSLATION_SCHEMA",
@@ -4118,5 +5002,6 @@ __all__ = [
     "build_live_adapters",
     "build_live_runtime",
     "compile_reviewed_obligation",
+    "kernel_input_semantic_context",
     "main",
 ]

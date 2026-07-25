@@ -282,9 +282,45 @@ def validate_cid(
     return value
 
 
+def sha256_digest_for_cid(
+    value: Any,
+    *,
+    codecs: Iterable[str] = ("raw", "dag-json"),
+) -> str:
+    """Return the SHA-256 multihash digest carried by a validated CID.
+
+    This is a compatibility bridge for frozen receipt schemas that still use
+    a bare SHA-256 field.  New identities should retain the full CID because
+    it also commits to version, codec, and multihash algorithm.
+    """
+
+    canonical = validate_cid(value, codecs=codecs)
+    try:
+        from multiformats import CID
+    except ImportError:
+        payload = canonical[1:]
+        padding = "=" * ((8 - len(payload) % 8) % 8)
+        binary = base64.b32decode(
+            (payload.upper() + padding).encode("ascii"),
+            casefold=False,
+        )
+        offset = 0
+        _version, offset = _decode_uvarint(binary, offset)
+        _codec, offset = _decode_uvarint(binary, offset)
+        _hash_code, offset = _decode_uvarint(binary, offset)
+        digest_size, offset = _decode_uvarint(binary, offset)
+        digest = binary[offset:]
+        if len(digest) != digest_size:
+            raise ValueError("CID multihash digest length changed")
+        return digest.hex()
+
+    return CID.decode(canonical).raw_digest.hex()
+
+
 __all__ = [
     "canonical_dag_json_bytes",
     "cid_for_bytes",
     "cid_for_dag_json",
+    "sha256_digest_for_cid",
     "validate_cid",
 ]

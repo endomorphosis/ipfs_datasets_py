@@ -14,15 +14,23 @@ small deterministic accounting layer on which those analyses can safely rely.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import math
 import re
 from types import MappingProxyType
 from typing import Final, Iterable, Mapping, Self
 
+from . import contracts as _contracts
+from .content_addressing import (
+    cid_for_dag_json,
+    sha256_digest_for_cid,
+    validate_cid,
+)
 from .contracts import (
     CacheMode,
     CaseResultRecord,
+    FailureCode,
     NATIVE_KERNEL_RECEIPT_SCHEMA,
     OutcomeStatus,
     ProtocolContractError,
@@ -31,6 +39,7 @@ from .contracts import (
     StageName,
     StageStatus,
     canonical_json,
+    validate_native_kernel_receipt,
     validate_native_kernel_stage_receipt,
 )
 from .cache_measurement import (
@@ -53,6 +62,12 @@ EFFICIENCY_OBSERVATION_SCHEMA: Final = (
 )
 EFFICIENCY_ESCALATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.efficiency-escalation.v1"
+)
+CAUSAL_RESCUE_CASE_RECEIPT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-case-receipt.v2"
+)
+CAUSAL_RESCUE_AGGREGATE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-aggregate.v2"
 )
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -78,6 +93,57 @@ class MetricsContractError(ProtocolContractError):
     """Raised when result evidence cannot support an aggregate claim."""
 
 
+class LeanstralFailureClass(str, Enum):
+    """Non-collapsed G210 model failure classes used by causal accounting."""
+
+    NONE = "none"
+    OUTPUT_LIMIT = "output_limit"
+    SCHEMA = "schema"
+    FORBIDDEN_CONSTRUCT = "forbidden_construct"
+    PROVIDER = "provider"
+    TIMEOUT = "timeout"
+
+
+_LEANSTRAL_FAILURE_CLASS_BY_SAFE_CLASS: Final = MappingProxyType(
+    {
+        "length_exhausted": LeanstralFailureClass.OUTPUT_LIMIT,
+        "malformed_request": LeanstralFailureClass.SCHEMA,
+        "malformed_response": LeanstralFailureClass.SCHEMA,
+        "inadmissible_proposal": LeanstralFailureClass.FORBIDDEN_CONSTRUCT,
+        "provider_error": LeanstralFailureClass.PROVIDER,
+        "unavailable": LeanstralFailureClass.PROVIDER,
+        "timed_out": LeanstralFailureClass.TIMEOUT,
+        "resource_exhausted": LeanstralFailureClass.PROVIDER,
+    }
+)
+_LEANSTRAL_FAILURE_CLASS_BY_G210_CODE: Final = MappingProxyType(
+    {
+        "leanstral_output_limit": LeanstralFailureClass.OUTPUT_LIMIT,
+        "leanstral_schema_invalid": LeanstralFailureClass.SCHEMA,
+        "leanstral_forbidden_construct": (
+            LeanstralFailureClass.FORBIDDEN_CONSTRUCT
+        ),
+        "leanstral_provider_failure": LeanstralFailureClass.PROVIDER,
+        "leanstral_timeout": LeanstralFailureClass.TIMEOUT,
+    }
+)
+
+
+def classify_leanstral_failure_code(
+    failure_code: str | None,
+) -> LeanstralFailureClass:
+    """Return the exact non-collapsed G210 Leanstral failure class."""
+
+    if failure_code is None:
+        return LeanstralFailureClass.NONE
+    failure_class = _LEANSTRAL_FAILURE_CLASS_BY_G210_CODE.get(failure_code)
+    if failure_class is None:
+        raise MetricsContractError(
+            "Leanstral G210 failure code is not split and preregistered"
+        )
+    return failure_class
+
+
 def HSSLEV0357C0D() -> str:
     """Return AST-verifiable evidence for kernel-bound result aggregation."""
 
@@ -93,6 +159,12 @@ def HSSLEV0615B24() -> str:
         "and operational component with failure burden and a safety-gated "
         "multiobjective complexity Pareto frontier"
     )
+
+
+def HSSLEV2108F34() -> str:
+    """Return the G210 causal-rescue accounting evidence marker."""
+
+    return _contracts.HSSLEV2108F34()
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
@@ -136,6 +208,33 @@ def _digest(value: object, field_name: str) -> str:
         raise MetricsContractError(
             f"{field_name} must be a lowercase SHA-256 digest"
         )
+    return value
+
+
+def _cid(
+    value: object,
+    field_name: str,
+    *,
+    codecs: tuple[str, ...] = ("dag-json",),
+) -> str:
+    try:
+        return validate_cid(value, codecs=codecs)
+    except ValueError as exc:
+        raise MetricsContractError(
+            f"{field_name} must be a canonical CIDv1"
+        ) from exc
+
+
+def _plain_json(value: object) -> object:
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, Mapping):
+        return {
+            str(key): _plain_json(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_plain_json(item) for item in value]
     return value
 
 
@@ -1766,12 +1865,1281 @@ def analyze_delegation_efficiency(
     }
 
 
+def _validated_causal_selection_receipt(
+    value: object,
+) -> Mapping[str, object]:
+    validator = getattr(
+        _contracts,
+        "validate_causal_proof_selection_receipt",
+        None,
+    )
+    if not callable(validator):
+        raise MetricsContractError(
+            "the G210 causal proof selection contract is unavailable"
+        )
+    try:
+        validated = validator(value)
+    except ProtocolContractError as exc:
+        raise MetricsContractError(
+            f"invalid causal proof selection receipt: {exc}"
+        ) from exc
+    return _mapping(validated, "causal proof selection receipt")
+
+
+def _causal_optional_candidates(
+    selection: Mapping[str, object],
+) -> tuple[Mapping[str, object], ...]:
+    raw = selection.get("optional_candidates")
+    if not isinstance(raw, (list, tuple)):
+        raise MetricsContractError(
+            "causal proof optional_candidates must be an array"
+        )
+    candidates = tuple(
+        _mapping(item, "causal proof optional candidate") for item in raw
+    )
+    sources = tuple(item.get("source") for item in candidates)
+    route_indexes = tuple(item.get("route_index") for item in candidates)
+    if (
+        route_indexes != tuple(range(len(candidates)))
+        or len(sources) != len(set(sources))
+        or any(source not in {"hammer", "leanstral"} for source in sources)
+    ):
+        raise MetricsContractError(
+            "causal proof optional candidates must be unique and in route order"
+        )
+    return candidates
+
+
+def _leanstral_failure_class(
+    result: CaseResultRecord,
+    candidate: Mapping[str, object] | None,
+) -> LeanstralFailureClass:
+    stage = next(
+        (
+            item
+            for item in result.stages
+            if item.stage is StageName.LEANSTRAL
+        ),
+        None,
+    )
+    invoked = candidate is not None and candidate.get("invoked") is True
+    selection_failure_code = (
+        None if candidate is None else candidate.get("failure_code")
+    )
+    if stage is None:
+        if invoked:
+            raise MetricsContractError(
+                "invoked Leanstral candidate lacks a stage receipt"
+            )
+        return LeanstralFailureClass.NONE
+    if not invoked:
+        if selection_failure_code is not None:
+            raise MetricsContractError(
+                "suppressed Leanstral route carries a failure claim"
+            )
+        return LeanstralFailureClass.NONE
+    if stage.status is StageStatus.SUCCESS:
+        if selection_failure_code is not None:
+            raise MetricsContractError(
+                "successful Leanstral stage carries a failure claim"
+            )
+        return LeanstralFailureClass.NONE
+    if selection_failure_code is None:
+        raise MetricsContractError(
+            "failed Leanstral stage lacks its selection failure code"
+        )
+    data = (
+        stage.data
+        if isinstance(stage.data, Mapping)
+        else MappingProxyType({})
+    )
+    safe_class = data.get("safe_failure_class")
+    failure_class = _LEANSTRAL_FAILURE_CLASS_BY_SAFE_CLASS.get(safe_class)
+    if failure_class is None:
+        raise MetricsContractError(
+            "invoked failed Leanstral stage lacks a split G210 failure class"
+        )
+    selection_class = classify_leanstral_failure_code(
+        str(selection_failure_code)
+    )
+    if selection_class is not failure_class:
+        raise MetricsContractError(
+            "Leanstral selection and stage failure classes disagree"
+        )
+    return failure_class
+
+
+def _stage_component_measurement(
+    result: CaseResultRecord,
+    *,
+    component_id: str,
+    invoked: bool,
+    kernel_checked: bool,
+    causal_rescue: bool,
+    overlap: bool,
+    continuation_kind: str,
+    failure_class: LeanstralFailureClass,
+) -> dict[str, object]:
+    stage_name = StageName(component_id)
+    stage = next(
+        (item for item in result.stages if item.stage is stage_name),
+        None,
+    )
+    if stage is None:
+        if invoked:
+            raise MetricsContractError(
+                f"invoked {component_id} lacks a stage receipt"
+            )
+        wall_time_ms = 0.0
+        model_calls = 0
+        retries = 0
+        peak_memory_bytes = 0
+    else:
+        graph_invoked = stage.provenance.effective_identity.get(
+            "graph_invoked"
+        )
+        if type(graph_invoked) is not bool:
+            raise MetricsContractError(
+                f"{component_id} stage lacks an exact graph_invoked marker"
+            )
+        if graph_invoked is not invoked:
+            raise MetricsContractError(
+                f"{component_id} selection invocation disagrees with graph receipt"
+            )
+        if not invoked:
+            if stage.telemetry.model_calls or stage.telemetry.retries:
+                raise MetricsContractError(
+                    f"suppressed {component_id} stage recorded component work"
+                )
+            wall_time_ms = 0.0
+            model_calls = 0
+            retries = 0
+            peak_memory_bytes = 0
+        else:
+            setup = extract_symai_cache_setup_telemetry(stage)
+            wall_time_ms = stage.telemetry.wall_time_ms + (
+                0.0 if setup is None else setup.wall_time_ms
+            )
+            model_calls = stage.telemetry.model_calls + (
+                0 if setup is None else setup.model_calls
+            )
+            retries = stage.telemetry.retries + (
+                0 if setup is None else setup.retries
+            )
+            peak_memory_bytes = max(
+                stage.telemetry.peak_memory_bytes,
+                0 if setup is None else setup.peak_memory_bytes,
+            )
+    unnecessary = invoked and not causal_rescue
+    return {
+        "component_id": component_id,
+        "invoked": invoked,
+        "component_calls": int(invoked),
+        "model_calls": model_calls,
+        "retries": retries,
+        "wall_time_ms": wall_time_ms,
+        "peak_memory_bytes": peak_memory_bytes,
+        "kernel_checks": int(kernel_checked),
+        "unique_wins": int(causal_rescue),
+        "unnecessary_work": unnecessary,
+        "unnecessary_component_calls": int(unnecessary),
+        "overlap_zero_marginal": overlap,
+        "continuation_kind": continuation_kind,
+        "leanstral_failure_class": failure_class.value,
+    }
+
+
+def _replay_causal_kernel_sidecars(
+    result: CaseResultRecord,
+    selection: Mapping[str, object],
+    kernel_stage: object,
+) -> Mapping[str, Mapping[str, object]]:
+    raw_sidecars = selection.get("kernel_receipts")
+    if not isinstance(raw_sidecars, (list, tuple)):
+        raise MetricsContractError(
+            "causal selection kernel_receipts must be an array"
+        )
+    stage = kernel_stage
+    if not isinstance(stage, _contracts.StageRecord):
+        raise MetricsContractError(
+            "causal sidecar replay requires a kernel StageRecord"
+        )
+    expected_environment = _result_environment_sha256(result)
+    candidate_bindings: dict[str, tuple[str, str]] = {}
+    compiler = _mapping(
+        selection.get("compiler_reference"),
+        "causal compiler reference",
+    )
+    if compiler.get("kernel_checked") is True:
+        compiler_cid = _cid(
+            compiler.get("candidate_cid"),
+            "causal compiler candidate_cid",
+            codecs=("raw",),
+        )
+        compiler_artifact_cid = _cid(
+            compiler.get("artifact_cid"),
+            "causal compiler artifact_cid",
+            codecs=("raw", "dag-json"),
+        )
+        candidate_bindings[compiler_cid] = (
+            StageName.COMPILER.value,
+            compiler_artifact_cid,
+        )
+    for candidate in _causal_optional_candidates(selection):
+        if candidate.get("kernel_checked") is not True:
+            continue
+        candidate_cid = _cid(
+            candidate.get("candidate_cid"),
+            "causal optional candidate_cid",
+            codecs=("raw",),
+        )
+        artifact_cid = _cid(
+            candidate.get("artifact_cid"),
+            "causal optional artifact_cid",
+            codecs=("raw", "dag-json"),
+        )
+        if candidate_cid in candidate_bindings:
+            raise MetricsContractError(
+                "causal checked candidate identity is duplicated"
+            )
+        candidate_bindings[candidate_cid] = (
+            str(candidate["source"]),
+            artifact_cid,
+        )
+    by_candidate: dict[str, Mapping[str, object]] = {}
+    receipt_cids: set[str] = set()
+    for raw in raw_sidecars:
+        sidecar = _mapping(raw, "causal kernel sidecar")
+        expected_fields = {
+            "run_id": result.run_id,
+            "case_id": result.case_id,
+            "variant_id": result.variant_id,
+            "source_cid": selection["source_cid"],
+            "protocol_cid": selection["protocol_cid"],
+            "variant_profile_cid": selection["variant_profile_cid"],
+        }
+        if any(
+            sidecar.get(field) != expected
+            for field, expected in expected_fields.items()
+        ):
+            raise MetricsContractError(
+                "causal kernel sidecar coordinate or profile binding changed"
+            )
+        candidate_cid = _cid(
+            sidecar.get("candidate_cid"),
+            "causal sidecar candidate_cid",
+            codecs=("raw",),
+        )
+        receipt_cid = _cid(
+            sidecar.get("receipt_cid"),
+            "causal sidecar receipt_cid",
+        )
+        if candidate_cid in by_candidate or receipt_cid in receipt_cids:
+            raise MetricsContractError(
+                "causal kernel sidecars repeat a candidate or receipt"
+            )
+        binding = candidate_bindings.get(candidate_cid)
+        if binding is None:
+            raise MetricsContractError(
+                "causal kernel sidecar lacks a selected candidate binding"
+            )
+        expected_source, artifact_cid = binding
+        artifact_sha256 = sha256_digest_for_cid(
+            artifact_cid, codecs=("raw", "dag-json")
+        )
+        receipt = _mapping(
+            sidecar.get("receipt"), "causal sidecar native receipt"
+        )
+        if cid_for_dag_json(_plain_json(receipt)) != receipt_cid:
+            raise MetricsContractError(
+                "causal sidecar native receipt CID changed"
+            )
+        try:
+            stage_status = StageStatus(sidecar.get("stage_status"))
+        except (TypeError, ValueError) as exc:
+            raise MetricsContractError(
+                "causal sidecar stage_status is invalid"
+            ) from exc
+        raw_failure_code = sidecar.get("failure_code")
+        try:
+            failure_code = (
+                None
+                if raw_failure_code is None
+                else FailureCode(raw_failure_code)
+            )
+        except (TypeError, ValueError) as exc:
+            raise MetricsContractError(
+                "causal sidecar failure_code is invalid"
+            ) from exc
+        accepted = sidecar.get("kernel_accepted")
+        if type(accepted) is not bool:
+            raise MetricsContractError(
+                "causal sidecar kernel_accepted must be boolean"
+            )
+        raw_consumed = sidecar.get("consumed_artifact_sha256s")
+        if not isinstance(raw_consumed, (list, tuple)):
+            raise MetricsContractError(
+                "causal sidecar consumed artifacts must be an array"
+            )
+        consumed = tuple(
+            _digest(item, "causal sidecar consumed_artifact_sha256s[]")
+            for item in raw_consumed
+        )
+        if len(consumed) != len(set(consumed)):
+            raise MetricsContractError(
+                "causal sidecar consumed artifacts contain duplicates"
+            )
+        if (
+            receipt.get("candidate_source") != expected_source
+            or receipt.get("candidate_artifact_sha256") != artifact_sha256
+            or artifact_sha256 not in consumed
+        ):
+            raise MetricsContractError(
+                "causal candidate CID/artifact differs from native-kernel input"
+            )
+        attempts = receipt.get("candidate_attempts")
+        if (
+            not isinstance(attempts, list)
+            or len(attempts) != 1
+            or not isinstance(attempts[0], Mapping)
+            or attempts[0].get("attempt_index") != 0
+            or attempts[0].get("candidate_source") != expected_source
+            or attempts[0].get("candidate_artifact_sha256")
+            != artifact_sha256
+        ):
+            raise MetricsContractError(
+                "causal native sidecar must contain one targeted candidate "
+                "attempt"
+            )
+        if (
+            receipt.get("protocol_sha256") != result.protocol_sha256
+            or receipt.get("run_id") != result.run_id
+            or receipt.get("case_id") != result.case_id
+            or receipt.get("case_manifest_sha256")
+            != result.case_manifest_sha256
+            or receipt.get("variant_id") != result.variant_id
+            or receipt.get("split") != result.split.value
+            or receipt.get("cache_mode") != result.cache_mode.value
+            or receipt.get("input_sha256")
+            != stage.provenance.input_sha256
+            or receipt.get("environment_sha256") != expected_environment
+        ):
+            raise MetricsContractError(
+                "causal native receipt differs from the CaseResult binding"
+            )
+        receipt_sha256 = receipt.get("receipt_sha256")
+        try:
+            replayed = validate_native_kernel_receipt(
+                receipt,
+                protocol_sha256=result.protocol_sha256,
+                run_id=result.run_id,
+                case_id=result.case_id,
+                case_manifest_sha256=result.case_manifest_sha256,
+                variant_id=result.variant_id,
+                split=result.split,
+                cache_mode=result.cache_mode,
+                input_sha256=stage.provenance.input_sha256,
+                environment_sha256=expected_environment,
+                stage_status=stage_status,
+                kernel_accepted=accepted,
+                kernel_receipt_sha256=(
+                    _digest(
+                        receipt_sha256,
+                        "causal native receipt_sha256",
+                    )
+                    if accepted
+                    else None
+                ),
+                consumed_artifact_sha256s=consumed,
+                failure_code=failure_code,
+            )
+        except ProtocolContractError as exc:
+            raise MetricsContractError(
+                f"causal native sidecar failed replay: {exc}"
+            ) from exc
+        if replayed is not accepted:
+            raise MetricsContractError(
+                "causal native sidecar authority changed during replay"
+            )
+        by_candidate[candidate_cid] = MappingProxyType(
+            {
+                "candidate_cid": candidate_cid,
+                "receipt_cid": receipt_cid,
+                "accepted": accepted,
+                "receipt": receipt,
+            }
+        )
+        receipt_cids.add(receipt_cid)
+    if set(by_candidate) != set(candidate_bindings):
+        raise MetricsContractError(
+            "causal checked candidate lacks a native-kernel sidecar"
+        )
+    return MappingProxyType(by_candidate)
+
+
+def _causal_case_body(
+    result: CaseResultRecord,
+    selection: Mapping[str, object],
+) -> dict[str, object]:
+    validated_result = validate_kernel_bound_result(result)
+    if selection.get("proof_authority") != "native_kernel":
+        raise MetricsContractError(
+            "causal rescue accounting requires native-kernel proof authority"
+        )
+    for field, expected in (
+        ("run_id", validated_result.run_id),
+        ("case_id", validated_result.case_id),
+        ("variant_id", validated_result.variant_id),
+    ):
+        if selection.get(field) != expected:
+            raise MetricsContractError(
+                f"causal selection {field} differs from the case result"
+            )
+    source_cid = _cid(
+        selection.get("source_cid"),
+        "causal selection source_cid",
+        codecs=("raw",),
+    )
+    proof_stages = {
+        StageName.COMPILER,
+        StageName.HAMMER,
+        StageName.LEANSTRAL,
+        StageName.KERNEL,
+    }
+    for stage in validated_result.stages:
+        if stage.stage not in proof_stages:
+            continue
+        for identity_name, identity in (
+            ("requested", stage.provenance.requested_identity),
+            ("effective", stage.provenance.effective_identity),
+        ):
+            if identity.get("source_cid") != source_cid:
+                raise MetricsContractError(
+                    f"{stage.stage.value} {identity_name} identity is not "
+                    "bound to the causal source CID"
+                )
+
+    selection_cid = _cid(
+        selection.get("receipt_cid"),
+        "causal selection receipt_cid",
+    )
+    selection_body = {
+        key: _plain_json(item)
+        for key, item in selection.items()
+        if key != "receipt_cid"
+    }
+    if cid_for_dag_json(selection_body) != selection_cid:
+        raise MetricsContractError(
+            "causal selection receipt CID does not match its body"
+        )
+
+    kernel = next(
+        (
+            stage
+            for stage in validated_result.stages
+            if stage.stage is StageName.KERNEL
+        ),
+        None,
+    )
+    if kernel is None:
+        raise MetricsContractError(
+            "causal rescue accounting requires a native-kernel stage"
+        )
+    try:
+        kernel_accepted = validate_native_kernel_stage_receipt(kernel)
+    except ProtocolContractError as exc:
+        raise MetricsContractError(
+            f"causal native-kernel receipt is invalid: {exc}"
+        ) from exc
+    sidecars = _replay_causal_kernel_sidecars(
+        validated_result,
+        selection,
+        kernel,
+    )
+    native_receipt_cids = sorted(
+        str(item["receipt_cid"]) for item in sidecars.values()
+    )
+
+    compiler = _mapping(
+        selection.get("compiler_reference"),
+        "causal compiler reference",
+    )
+    compiler_state = compiler.get("state")
+    if compiler_state not in {"absent", "rejected", "accepted"}:
+        raise MetricsContractError(
+            "causal compiler reference state is invalid"
+        )
+    compiler_candidate_cid = compiler.get("candidate_cid")
+    if compiler_candidate_cid is not None:
+        compiler_candidate_cid = _cid(
+            compiler_candidate_cid,
+            "compiler candidate_cid",
+            codecs=("raw",),
+        )
+    compiler_check = (
+        None
+        if compiler_candidate_cid is None
+        else sidecars.get(compiler_candidate_cid)
+    )
+    expected_compiler_state = (
+        "absent"
+        if compiler_candidate_cid is None
+        else (
+            "accepted"
+            if compiler_check is not None
+            and compiler_check.get("accepted") is True
+            else "rejected"
+        )
+    )
+    if compiler_state != expected_compiler_state:
+        raise MetricsContractError(
+            "compiler reference state disagrees with native-kernel evidence"
+        )
+    if compiler_candidate_cid is not None and compiler_check is None:
+        raise MetricsContractError(
+            "compiler reference lacks its replayed native sidecar"
+        )
+    if (
+        compiler_check is not None
+        and _mapping(
+            compiler_check["receipt"], "compiler native receipt"
+        ).get("candidate_source")
+        != StageName.COMPILER.value
+    ):
+        raise MetricsContractError(
+            "compiler sidecar validated a non-compiler candidate"
+        )
+    if compiler.get("kernel_checked") is not (compiler_check is not None):
+        raise MetricsContractError(
+            "compiler kernel-check flag disagrees with native-kernel evidence"
+        )
+    if compiler.get("kernel_receipt_cid") != (
+        None if compiler_check is None else compiler_check["receipt_cid"]
+    ):
+        raise MetricsContractError(
+            "compiler kernel receipt CID disagrees with its sidecar"
+        )
+    if compiler.get("accepted") is not (
+        compiler_state == "accepted"
+    ):
+        raise MetricsContractError(
+            "compiler acceptance disagrees with its reference state"
+        )
+
+    optionals = _causal_optional_candidates(selection)
+    component_measurements: list[dict[str, object]] = []
+    compiler_stage = next(
+        (
+            item
+            for item in validated_result.stages
+            if item.stage is StageName.COMPILER
+        ),
+        None,
+    )
+    if compiler_stage is None:
+        raise MetricsContractError(
+            "causal compiler reference lacks its immutable stage receipt"
+        )
+    compiler_process_invoked = (
+        compiler_stage.provenance.effective_identity.get(
+            "graph_invoked"
+        )
+    )
+    if compiler_process_invoked is not True:
+        raise MetricsContractError(
+            "causal compiler reference lacks explicit process exposure"
+        )
+    if (
+        compiler.get("invoked") is True
+    ) is not (compiler_candidate_cid is not None):
+        raise MetricsContractError(
+            "compiler candidate-presence marker disagrees with its bytes"
+        )
+    component_measurements.append(
+        _stage_component_measurement(
+            validated_result,
+            component_id=StageName.COMPILER.value,
+            invoked=compiler_process_invoked,
+            kernel_checked=compiler_check is not None,
+            causal_rescue=False,
+            overlap=False,
+            continuation_kind="none",
+            failure_class=LeanstralFailureClass.NONE,
+        )
+    )
+
+    selected_source = selection.get("selected_source")
+    selected_candidate_cid = selection.get("selected_candidate_cid")
+    selected_kernel_receipt_cid = selection.get(
+        "selected_kernel_receipt_cid"
+    )
+    selected_check: Mapping[str, object] | None = None
+    if selected_candidate_cid is not None:
+        selected_candidate_cid = _cid(
+            selected_candidate_cid,
+            "selected_candidate_cid",
+            codecs=("raw",),
+        )
+        selected_check = sidecars.get(selected_candidate_cid)
+    if kernel_accepted:
+        if (
+            selected_source not in {
+                StageName.COMPILER.value,
+                StageName.HAMMER.value,
+                StageName.LEANSTRAL.value,
+            }
+            or selected_check is None
+            or selected_check.get("accepted") is not True
+            or selected_kernel_receipt_cid
+            != selected_check.get("receipt_cid")
+        ):
+            raise MetricsContractError(
+                "selected causal candidate differs from native-kernel authority"
+            )
+    elif any(
+        item is not None
+        for item in (
+            selected_source,
+            selected_candidate_cid,
+            selected_kernel_receipt_cid,
+        )
+    ):
+        raise MetricsContractError(
+            "rejected native-kernel result cannot select a proof candidate"
+        )
+    terminal_selection_cid = kernel.provenance.effective_identity.get(
+        "causal_selection_receipt_cid"
+    )
+    terminal_body = (
+        {
+            key: _plain_json(item)
+            for key, item in _mapping(
+                kernel.data, "causal terminal kernel receipt"
+            ).items()
+            if key != "routing_policy"
+        }
+    )
+    if terminal_selection_cid != selection_cid:
+        raise MetricsContractError(
+            "terminal CaseResult is not bound to the causal selection receipt"
+        )
+    raw_sidecars = selection["kernel_receipts"]
+    assert isinstance(raw_sidecars, list)
+    if raw_sidecars:
+        expected_terminal_cid = (
+            selected_kernel_receipt_cid
+            if selected_kernel_receipt_cid is not None
+            else _mapping(
+                raw_sidecars[-1], "terminal causal sidecar"
+            )["receipt_cid"]
+        )
+        expected_terminal = next(
+            (
+                item
+                for item in sidecars.values()
+                if item["receipt_cid"] == expected_terminal_cid
+            ),
+            None,
+        )
+        if (
+            expected_terminal is None
+            or terminal_body != _plain_json(expected_terminal["receipt"])
+        ):
+            raise MetricsContractError(
+                "terminal native receipt differs from the causal check sequence"
+            )
+
+    eligible_reference = compiler_state in {"absent", "rejected"}
+    case_rescues: list[str] = []
+    overlaps: list[str] = []
+    continuation_after_model_failure: list[str] = []
+    prior_candidate_cids = (
+        set()
+        if compiler_candidate_cid is None
+        else {compiler_candidate_cid}
+    )
+    prior_model_failure = False
+    prior_accepted = compiler_state == "accepted"
+    for route_index, candidate in enumerate(optionals):
+        source = str(candidate["source"])
+        invoked = candidate.get("invoked") is True
+        checked = candidate.get("kernel_checked") is True
+        accepted = candidate.get("accepted") is True
+        trigger_eligible = candidate.get("trigger_eligible") is True
+        causal_credit_eligible = (
+            candidate.get("causal_credit_eligible") is True
+        )
+        candidate_cid = candidate.get("candidate_cid")
+        if candidate_cid is not None:
+            candidate_cid = _cid(
+                candidate_cid,
+                f"{source} candidate_cid",
+                codecs=("raw",),
+            )
+        check = (
+            sidecars.get(candidate_cid)
+            if checked and candidate_cid is not None
+            else None
+        )
+        if checked and check is None:
+            raise MetricsContractError(
+                f"{source} kernel-check flag disagrees with native receipt"
+            )
+        if accepted is not (
+            check is not None and check.get("accepted") is True
+        ):
+            raise MetricsContractError(
+                f"{source} acceptance disagrees with native receipt"
+            )
+        if (
+            check is not None
+            and _mapping(
+                check["receipt"], f"{source} native receipt"
+            ).get("candidate_source")
+            != source
+        ):
+            raise MetricsContractError(
+                f"{source} sidecar validated a different candidate source"
+            )
+        if candidate.get("kernel_receipt_cid") != (
+            None if check is None else check["receipt_cid"]
+        ):
+            raise MetricsContractError(
+                f"{source} kernel receipt CID disagrees with its sidecar"
+            )
+        if checked and not invoked:
+            raise MetricsContractError(
+                f"{source} cannot be kernel checked without invocation"
+            )
+        if trigger_eligible and not eligible_reference:
+            raise MetricsContractError(
+                f"{source} escalation was eligible after compiler acceptance"
+            )
+        if causal_credit_eligible is not (
+            eligible_reference
+            and not prior_model_failure
+            and not prior_accepted
+        ):
+            raise MetricsContractError(
+                f"{source} causal-credit eligibility is not route-derived"
+            )
+        overlap = (
+            candidate_cid is not None
+            and candidate_cid in prior_candidate_cids
+        )
+        if candidate.get("overlap") is not overlap:
+            raise MetricsContractError(
+                f"{source} overlap differs from raw candidate CIDs"
+            )
+        continuation_kind = _text(
+            candidate.get("continuation_kind"),
+            f"{source} continuation_kind",
+        )
+        failure_code = candidate.get("failure_code")
+        expected_continuation = (
+            "suppressed"
+            if not invoked
+            else (
+                (
+                    "post_model_failure_continuation"
+                    if source == StageName.LEANSTRAL.value
+                    else "post_solver_failure_continuation"
+                )
+                if failure_code is not None
+                and route_index + 1 < len(optionals)
+                else (
+                    "terminal_producer_failure"
+                    if failure_code is not None
+                    else (
+                        "post_overlap_continuation"
+                        if overlap
+                        else (
+                            (
+                                "selected_post_model_failure_continuation"
+                                if prior_model_failure
+                                else "selected_causal_rescue"
+                            )
+                            if accepted
+                            else "post_kernel_rejection_continuation"
+                        )
+                    )
+                )
+            )
+        )
+        if continuation_kind != expected_continuation:
+            raise MetricsContractError(
+                f"{source} continuation classification is not recomputable"
+            )
+        after_model_failure = continuation_kind in {
+            "after_model_failure",
+            "model_failure_continuation",
+            "post_model_failure_continuation",
+            "selected_post_model_failure_continuation",
+        }
+        causal_rescue = (
+            eligible_reference
+            and causal_credit_eligible
+            and trigger_eligible
+            and invoked
+            and checked
+            and accepted
+            and candidate_cid is not None
+            and not overlap
+            and not after_model_failure
+            and not prior_model_failure
+        )
+        if candidate.get("causal_rescue") is not causal_rescue:
+            raise MetricsContractError(
+                f"{source} causal-rescue claim is not source causal"
+            )
+        expected_credit = 1_000_000 if causal_rescue else 0
+        if candidate.get("marginal_credit_millionths") != expected_credit:
+            raise MetricsContractError(
+                f"{source} marginal credit disagrees with causal rescue"
+            )
+        if overlap and expected_credit:
+            raise MetricsContractError(
+                "byte-identical overlap cannot receive marginal efficacy"
+            )
+        if causal_rescue:
+            case_rescues.append(source)
+        if overlap:
+            overlaps.append(source)
+        if after_model_failure:
+            continuation_after_model_failure.append(source)
+        if candidate_cid is not None:
+            prior_candidate_cids.add(candidate_cid)
+        if source == StageName.LEANSTRAL.value and failure_code is not None:
+            prior_model_failure = True
+        prior_accepted = bool(prior_accepted or accepted)
+        failure_class = (
+            _leanstral_failure_class(validated_result, candidate)
+            if source == StageName.LEANSTRAL.value
+            else LeanstralFailureClass.NONE
+        )
+        component_measurements.append(
+            _stage_component_measurement(
+                validated_result,
+                component_id=source,
+                invoked=invoked,
+                kernel_checked=checked,
+                causal_rescue=causal_rescue,
+                overlap=overlap,
+                continuation_kind=continuation_kind,
+                failure_class=failure_class,
+            )
+        )
+
+    if len(case_rescues) > 1:
+        raise MetricsContractError(
+            "one case cannot credit more than one causal rescue"
+        )
+    if case_rescues and selected_source != case_rescues[0]:
+        raise MetricsContractError(
+            "causal rescue does not match the native-kernel selected source"
+        )
+    case_result_value = _plain_json(validated_result.to_dict())
+    case_result_cid = cid_for_dag_json(case_result_value)
+    return {
+        "schema": CAUSAL_RESCUE_CASE_RECEIPT_SCHEMA,
+        "protocol_cid": selection["protocol_cid"],
+        "variant_profile_cid": selection["variant_profile_cid"],
+        "run_id": validated_result.run_id,
+        "case_id": validated_result.case_id,
+        "variant_id": validated_result.variant_id,
+        "source_cid": source_cid,
+        "case_result": case_result_value,
+        "case_result_cid": case_result_cid,
+        "selection_receipt": _plain_json(selection),
+        "selection_receipt_cid": selection_cid,
+        "native_kernel_receipt_cids": native_receipt_cids,
+        "compiler_reference_state": compiler_state,
+        "eligible_reference": eligible_reference,
+        "causal_rescue_source": (
+            None if not case_rescues else case_rescues[0]
+        ),
+        "overlap_sources": overlaps,
+        "model_failure_continuation_sources": (
+            continuation_after_model_failure
+        ),
+        "component_measurements": component_measurements,
+    }
+
+
+def build_causal_rescue_case_receipt(
+    case_result: CaseResultRecord,
+    selection_receipt: object,
+) -> dict[str, object]:
+    """Build a source- and native-kernel-bound G210 case measurement."""
+
+    if not isinstance(case_result, CaseResultRecord):
+        raise MetricsContractError(
+            "causal rescue accounting requires a CaseResultRecord"
+        )
+    selection = _validated_causal_selection_receipt(selection_receipt)
+    body = _causal_case_body(case_result, selection)
+    return {**body, "receipt_cid": cid_for_dag_json(body)}
+
+
+def validate_causal_rescue_case_receipt(
+    value: object,
+) -> dict[str, object]:
+    """Recompute every causal classification and resource field."""
+
+    data = _mapping(value, "causal rescue case receipt")
+    expected = {
+        "schema",
+        "protocol_cid",
+        "variant_profile_cid",
+        "run_id",
+        "case_id",
+        "variant_id",
+        "source_cid",
+        "case_result",
+        "case_result_cid",
+        "selection_receipt",
+        "selection_receipt_cid",
+        "native_kernel_receipt_cids",
+        "compiler_reference_state",
+        "eligible_reference",
+        "causal_rescue_source",
+        "overlap_sources",
+        "model_failure_continuation_sources",
+        "component_measurements",
+        "receipt_cid",
+    }
+    _exact_keys(data, expected, "causal rescue case receipt")
+    if data.get("schema") != CAUSAL_RESCUE_CASE_RECEIPT_SCHEMA:
+        raise MetricsContractError(
+            "unsupported causal rescue case-receipt schema"
+        )
+    try:
+        result = CaseResultRecord.from_dict(data["case_result"])
+    except ProtocolContractError as exc:
+        raise MetricsContractError(
+            f"invalid causal rescue case result: {exc}"
+        ) from exc
+    rebuilt = build_causal_rescue_case_receipt(
+        result,
+        data["selection_receipt"],
+    )
+    if _plain_json(data) != rebuilt:
+        raise MetricsContractError(
+            "causal rescue case receipt fields or CID changed"
+        )
+    return rebuilt
+
+
+def _causal_component_aggregate(
+    receipts: tuple[Mapping[str, object], ...],
+    component_id: str,
+) -> dict[str, object]:
+    rows: list[tuple[str, Mapping[str, object], Mapping[str, object]]] = []
+    for receipt in receipts:
+        selection = _mapping(
+            receipt["selection_receipt"], "selection_receipt"
+        )
+        optional = {
+            str(item["source"]): item
+            for item in _causal_optional_candidates(selection)
+        }
+        measurements = {
+            str(item["component_id"]): item
+            for item in (
+                _mapping(raw, "component_measurement")
+                for raw in receipt["component_measurements"]  # type: ignore[union-attr]
+            )
+        }
+        rows.append(
+            (
+                str(receipt["receipt_cid"]),
+                optional[component_id],
+                measurements[component_id],
+            )
+        )
+
+    def cids(predicate) -> list[str]:
+        return sorted(
+            receipt_cid
+            for receipt_cid, candidate, measurement in rows
+            if predicate(candidate, measurement)
+        )
+
+    eligible = cids(
+        lambda candidate, measurement: candidate["trigger_eligible"] is True
+    )
+    credit_eligible = cids(
+        lambda candidate, measurement: (
+            candidate["causal_credit_eligible"] is True
+        )
+    )
+    invoked = cids(
+        lambda candidate, measurement: measurement["invoked"] is True
+    )
+    escalated = sorted(set(eligible).intersection(invoked))
+    suppressed = cids(
+        lambda candidate, measurement: (
+            candidate["trigger_eligible"] is False
+            and measurement["invoked"] is False
+        )
+    )
+    checked = cids(
+        lambda candidate, measurement: measurement["kernel_checks"] == 1
+    )
+    accepted = cids(
+        lambda candidate, measurement: candidate["accepted"] is True
+    )
+    rescued = cids(
+        lambda candidate, measurement: measurement["unique_wins"] == 1
+    )
+    overlap = cids(
+        lambda candidate, measurement: (
+            measurement["overlap_zero_marginal"] is True
+        )
+    )
+    unnecessary = cids(
+        lambda candidate, measurement: (
+            measurement["unnecessary_work"] is True
+        )
+    )
+    continuations = cids(
+        lambda candidate, measurement: measurement["continuation_kind"]
+        in {
+            "after_model_failure",
+            "model_failure_continuation",
+            "post_model_failure_continuation",
+            "selected_post_model_failure_continuation",
+        }
+    )
+    failure_classes = {
+        member.value: cids(
+            lambda candidate, measurement, value=member.value: (
+                measurement["leanstral_failure_class"] == value
+            )
+        )
+        for member in LeanstralFailureClass
+        if member is not LeanstralFailureClass.NONE
+    }
+    return {
+        "component_id": component_id,
+        "scheduled_receipt_cids": sorted(item[0] for item in rows),
+        "eligible_receipt_cids": eligible,
+        "causal_credit_eligible_receipt_cids": credit_eligible,
+        "invoked_receipt_cids": invoked,
+        "escalated_receipt_cids": escalated,
+        "suppressed_receipt_cids": suppressed,
+        "kernel_checked_receipt_cids": checked,
+        "kernel_accepted_receipt_cids": accepted,
+        "unique_win_receipt_cids": rescued,
+        "overlap_receipt_cids": overlap,
+        "unnecessary_work_receipt_cids": unnecessary,
+        "model_failure_continuation_receipt_cids": continuations,
+        "failure_class_receipt_cids": failure_classes,
+        "scheduled_count": len(rows),
+        "eligible_count": len(eligible),
+        "causal_credit_eligible_count": len(credit_eligible),
+        "invoked_count": len(invoked),
+        "escalated_count": len(escalated),
+        "suppressed_count": len(suppressed),
+        "kernel_checked_count": len(checked),
+        "kernel_accepted_count": len(accepted),
+        "unique_win_count": len(rescued),
+        "overlap_count": len(overlap),
+        "unnecessary_work_count": len(unnecessary),
+        "model_failure_continuation_count": len(continuations),
+        "failure_class_counts": {
+            key: len(value) for key, value in failure_classes.items()
+        },
+        "wall_time_ms": math.fsum(
+            float(measurement["wall_time_ms"])
+            for _, _, measurement in rows
+        ),
+        "component_calls": sum(
+            int(measurement["component_calls"])
+            for _, _, measurement in rows
+        ),
+        "model_calls": sum(
+            int(measurement["model_calls"])
+            for _, _, measurement in rows
+        ),
+        "retries": sum(
+            int(measurement["retries"])
+            for _, _, measurement in rows
+        ),
+        "peak_memory_bytes": max(
+            (
+                int(measurement["peak_memory_bytes"])
+                for _, _, measurement in rows
+            ),
+            default=0,
+        ),
+        "rate_populations": {
+            "escalation": {
+                "event_receipt_cids": escalated,
+                "population_receipt_cids": eligible,
+            },
+            "suppression": {
+                "event_receipt_cids": suppressed,
+                "population_receipt_cids": sorted(
+                    item[0] for item in rows
+                ),
+            },
+            "causal_rescue": {
+                "event_receipt_cids": rescued,
+                "population_receipt_cids": credit_eligible,
+            },
+            "kernel_acceptance": {
+                "event_receipt_cids": accepted,
+                "population_receipt_cids": checked,
+            },
+            "overlap": {
+                "event_receipt_cids": overlap,
+                "population_receipt_cids": invoked,
+            },
+            "unnecessary_work": {
+                "event_receipt_cids": unnecessary,
+                "population_receipt_cids": invoked,
+            },
+        },
+    }
+
+
+def aggregate_causal_rescue_receipts(
+    values: Iterable[object],
+) -> dict[str, object]:
+    """Aggregate G210 receipts without changing native proof authority."""
+
+    receipts = tuple(
+        validate_causal_rescue_case_receipt(value) for value in values
+    )
+    if not receipts:
+        raise MetricsContractError(
+            "causal rescue aggregation requires case receipts"
+        )
+    identities = {
+        (
+            item["protocol_cid"],
+            item["variant_profile_cid"],
+            item["run_id"],
+            item["variant_id"],
+        )
+        for item in receipts
+    }
+    if len(identities) != 1:
+        raise MetricsContractError(
+            "causal rescue aggregation cannot pool protocol, profile, run, "
+            "or variant identities"
+        )
+    case_ids = [str(item["case_id"]) for item in receipts]
+    if len(case_ids) != len(set(case_ids)):
+        raise MetricsContractError(
+            "causal rescue aggregation contains duplicate cases"
+        )
+    ordered = tuple(sorted(receipts, key=lambda item: str(item["case_id"])))
+    protocol_cid, profile_cid, run_id, variant_id = identities.pop()
+    optional_sources = tuple(
+        str(item["source"])
+        for item in _causal_optional_candidates(
+            _mapping(
+                ordered[0]["selection_receipt"],
+                "selection_receipt",
+            )
+        )
+    )
+    for receipt in ordered[1:]:
+        current_sources = tuple(
+            str(item["source"])
+            for item in _causal_optional_candidates(
+                _mapping(
+                    receipt["selection_receipt"],
+                    "selection_receipt",
+                )
+            )
+        )
+        if current_sources != optional_sources:
+            raise MetricsContractError(
+                "causal aggregate mixed optional route profiles"
+            )
+    body = {
+        "schema": CAUSAL_RESCUE_AGGREGATE_SCHEMA,
+        "protocol_cid": protocol_cid,
+        "variant_profile_cid": profile_cid,
+        "run_id": run_id,
+        "variant_id": variant_id,
+        "case_count": len(ordered),
+        "case_ids": [item["case_id"] for item in ordered],
+        "case_receipt_cids": sorted(
+            str(item["receipt_cid"]) for item in ordered
+        ),
+        "case_receipts": [_plain_json(item) for item in ordered],
+        "proof_authority": "native_kernel",
+        "components": {
+            source: _causal_component_aggregate(ordered, source)
+            for source in sorted(optional_sources)
+        },
+    }
+    return {**body, "aggregate_cid": cid_for_dag_json(body)}
+
+
+def validate_causal_rescue_aggregate(
+    value: object,
+) -> dict[str, object]:
+    """Validate an aggregate when its complete case sidecars are present."""
+
+    data = _mapping(value, "causal rescue aggregate")
+    expected = {
+        "schema",
+        "protocol_cid",
+        "variant_profile_cid",
+        "run_id",
+        "variant_id",
+        "case_count",
+        "case_ids",
+        "case_receipt_cids",
+        "case_receipts",
+        "proof_authority",
+        "components",
+        "aggregate_cid",
+    }
+    _exact_keys(data, expected, "causal rescue aggregate")
+    if data.get("schema") != CAUSAL_RESCUE_AGGREGATE_SCHEMA:
+        raise MetricsContractError(
+            "unsupported causal rescue aggregate schema"
+        )
+    aggregate_cid = _cid(
+        data.get("aggregate_cid"),
+        "causal rescue aggregate_cid",
+    )
+    body = {
+        key: _plain_json(item)
+        for key, item in data.items()
+        if key != "aggregate_cid"
+    }
+    if cid_for_dag_json(body) != aggregate_cid:
+        raise MetricsContractError(
+            "causal rescue aggregate CID does not match its body"
+        )
+    case_receipts = data.get("case_receipts")
+    if not isinstance(case_receipts, list):
+        raise MetricsContractError(
+            "causal rescue case_receipts must be an array"
+        )
+    rebuilt = aggregate_causal_rescue_receipts(case_receipts)
+    if _plain_json(data) != rebuilt:
+        raise MetricsContractError(
+            "causal rescue aggregate fields, denominators, costs, or CID changed"
+        )
+    return rebuilt
+
+
 # Descriptive alias for callers that discover this boundary through the
 # objective title rather than the lower-level case-result vocabulary.
 aggregate_kernel_bound_results = aggregate_case_results
 
 
 __all__ = [
+    "CAUSAL_RESCUE_AGGREGATE_SCHEMA",
+    "CAUSAL_RESCUE_CASE_RECEIPT_SCHEMA",
     "DEFAULT_EFFICIENCY_ESCALATIONS",
     "EFFICIENCY_COMPONENT_COST_SCHEMA",
     "EFFICIENCY_ESCALATION_SCHEMA",
@@ -1783,11 +3151,18 @@ __all__ = [
     "EfficiencyResourceReceipt",
     "HSSLEV0357C0D",
     "HSSLEV0615B24",
+    "HSSLEV2108F34",
     "KERNEL_BOUND_AGGREGATE_SCHEMA",
     "KernelBoundAggregate",
+    "LeanstralFailureClass",
     "MetricsContractError",
+    "aggregate_causal_rescue_receipts",
     "analyze_delegation_efficiency",
     "aggregate_case_results",
     "aggregate_kernel_bound_results",
+    "build_causal_rescue_case_receipt",
+    "classify_leanstral_failure_code",
+    "validate_causal_rescue_aggregate",
+    "validate_causal_rescue_case_receipt",
     "validate_kernel_bound_result",
 ]

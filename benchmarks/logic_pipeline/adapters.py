@@ -4132,7 +4132,7 @@ def _symai_input_semantic_context(
     )
 
 
-def _semantic_context_binding(
+def semantic_context_binding(
     semantic_context: Mapping[str, object],
 ) -> dict[str, object]:
     if "context_cid" in semantic_context:
@@ -5235,7 +5235,7 @@ def _symai_evidence_handler(
                     "mode": request.cache_mode.value,
                     "hit": cache_hit,
                 },
-                "semantic_context": _semantic_context_binding(
+                "semantic_context": semantic_context_binding(
                     semantic_context
                     or _symai_input_semantic_context(request)
                 ),
@@ -5329,7 +5329,7 @@ def _symai_evidence_handler(
                 "mode": request.cache_mode.value,
                 "hit": cache_hit,
             },
-            "semantic_context": _semantic_context_binding(
+            "semantic_context": semantic_context_binding(
                 semantic_context or _symai_input_semantic_context(request)
             ),
             "assurance": {
@@ -6455,7 +6455,12 @@ def _leanstral_input(
 ) -> tuple[dict[str, object], str, int]:
     """Build one fixed-obligation provider request from benchmark input."""
 
-    if not isinstance(request.input_data, Mapping):
+    # G200 keeps the semantic producer envelope source-only.  G210 reveals the
+    # independently reviewed obligation only at this proof boundary, so the
+    # proof adapter must consume the explicit merged view rather than forcing
+    # evaluator context back into ``input_data``.
+    proof_input_data = request.proof_input_data
+    if not isinstance(proof_input_data, Mapping):
         raise LeanstralAdapterContractError("Leanstral input_data must be an object")
     # The benchmark case object also carries evaluator-only labels and control
     # metadata.  Start from an explicit provider allowlist instead of copying
@@ -6477,7 +6482,7 @@ def _leanstral_input(
     }
     raw = {
         str(key): _thaw_json(value)
-        for key, value in request.input_data.items()
+        for key, value in proof_input_data.items()
         if key in provider_input_keys
     }
     if request.repair_context is not None:
@@ -8074,9 +8079,9 @@ class LeanstralAdapter(StageAdapter):
                 if (
                     handler is not None
                     and (
-                        not isinstance(request.input_data, Mapping)
+                        not isinstance(request.proof_input_data, Mapping)
                         or not any(
-                            key in request.input_data
+                            key in request.proof_input_data
                             for key in ("obligation_id", "obligation_ids")
                         )
                     )
@@ -8577,4 +8582,5 @@ __all__ = [
     "build_upstream_semantic_context",
     "build_default_adapters",
     "run_stages",
+    "semantic_context_binding",
 ]

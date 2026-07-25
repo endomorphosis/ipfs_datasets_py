@@ -7,6 +7,7 @@ tests do not load the combined benchmark corpus or any sealed holdout data.
 from __future__ import annotations
 
 from dataclasses import replace
+import hashlib
 from itertools import permutations
 import string
 
@@ -17,6 +18,7 @@ from benchmarks.logic_pipeline.content_addressing import (
     canonical_dag_json_bytes,
     cid_for_bytes,
     cid_for_dag_json,
+    sha256_digest_for_cid,
     validate_cid,
 )
 
@@ -198,6 +200,20 @@ def test_codec_substitution_cannot_cross_raw_and_dag_json_boundaries() -> None:
         match="source_cid is not a canonical CID",
     ):
         contracts.SemanticProjection.from_dict(substituted)
+
+
+def test_cid_multihash_digest_bridges_frozen_sha256_receipts() -> None:
+    raw = b"exact candidate artifact bytes"
+    structured = {"candidate": "exact structured artifact"}
+
+    assert sha256_digest_for_cid(
+        cid_for_bytes(raw), codecs=("raw",)
+    ) == hashlib.sha256(raw).hexdigest()
+    assert sha256_digest_for_cid(
+        cid_for_dag_json(structured), codecs=("dag-json",)
+    ) == hashlib.sha256(
+        canonical_dag_json_bytes(structured)
+    ).hexdigest()
 
 
 def test_logic_alias_implementation_exactly_matches_frozen_spec() -> None:

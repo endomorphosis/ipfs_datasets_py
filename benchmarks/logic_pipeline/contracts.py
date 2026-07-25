@@ -200,13 +200,14 @@ IMMEDIATE_STOP_CODES: Final = frozenset(
 )
 
 # A proof backend is an advisory candidate producer, not the verification
-# authority.  These two failures mean that an invoked proof attempt did not
+# authority.  These failures mean that an invoked proof attempt did not
 # produce a usable candidate.  They remain durable reliability evidence, but
 # they cannot override a later, independent native-kernel acceptance of a
 # different source-bound candidate (for example the deterministic compiler
 # candidate).  All other failures remain blocking.
 RECOVERABLE_PROOF_ATTEMPT_FAILURE_CODES: Final = frozenset(
     {
+        FailureCode.PREMISE_SELECTION_MISS,
         FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE,
         FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
     }
@@ -2301,6 +2302,1122 @@ SEMANTIC_PROTOCOL_V2: Final = SemanticProtocolSpec(
 SEMANTIC_PROTOCOL_V2_CID: Final = cid_for_dag_json(
     SEMANTIC_PROTOCOL_V2.to_dict()
 )
+
+
+CAUSAL_PROOF_PROTOCOL_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-protocol.v2"
+)
+CAUSAL_PROOF_PROTOCOL_ID_V2: Final = (
+    "hammer-symai-spacy-leanstral-causal-proof-v2"
+)
+CAUSAL_PROOF_PROTOCOL_VERSION_V2: Final = 2
+CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-variant-profile.v2"
+)
+CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "causal-proof-selection-receipt.v2"
+)
+CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA: Final = (
+    CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
+)
+CAUSAL_PROOF_SELECTION_SPEC_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "causal-proof-selection-spec.v2"
+)
+CAUSAL_PROOF_RESCUE_POPULATION_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "causal-proof-rescue-population-policy.v2"
+)
+CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1: Final = (
+    SEMANTIC_PARENT_PROTOCOL_SHA256_V1
+)
+CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2: Final = (
+    SEMANTIC_PROTOCOL_V2_CID
+)
+CAUSAL_PROOF_CANDIDATE_SOURCES_V2: Final = (
+    "compiler",
+    "hammer",
+    "leanstral",
+)
+CAUSAL_PROOF_COMPILER_STATES_V2: Final = (
+    "absent",
+    "rejected",
+    "accepted",
+)
+CAUSAL_PROOF_ZERO_CREDIT_REASONS_V2: Final = (
+    "compiler_reference_accepted",
+    "predecessor_candidate_accepted",
+    "duplicate_certificate",
+    "candidate_absent",
+    "candidate_failed",
+    "kernel_rejected",
+    "not_routed_by_variant",
+    "post_model_failure_continuation",
+)
+CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2: Final = (
+    "leanstral_output_limit",
+    "leanstral_schema_invalid",
+    "leanstral_forbidden_construct",
+    "leanstral_provider_failure",
+    "leanstral_timeout",
+)
+
+
+def HSSLEV2108F34() -> str:
+    """Return AST-verifiable evidence for causal proof attribution."""
+
+    return (
+        "equal compiler-kernel exposure and distinct optional-component "
+        "rescue attribution"
+    )
+
+
+def causal_proof_variant_profile_v2() -> dict[str, object]:
+    """Return the preregistered G210 route and trigger profile.
+
+    The profile is additive: it does not reinterpret the frozen revision-1
+    registry.  In particular, A0 gains an independent terminal kernel check
+    only when a caller explicitly selects :data:`CAUSAL_PROOF_PROTOCOL_V2_CID`.
+    Optional stages are lazy and may be invoked only after the preceding
+    independently checked candidate was absent, rejected, or an exact
+    duplicate.
+    """
+
+    routes = (
+        ("A0", ("compiler", "kernel"), ()),
+        ("A1", ("compiler", "spacy", "kernel"), ()),
+        (
+            "A2",
+            ("compiler", "spacy", "hammer", "kernel"),
+            ("hammer",),
+        ),
+        (
+            "A3",
+            ("compiler", "spacy", "hammer", "leanstral", "kernel"),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A4",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A5",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A6",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("leanstral", "hammer"),
+        ),
+        (
+            "A7",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A8",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A9",
+            ("compiler", "spacy", "symai", "leanstral", "kernel"),
+            ("leanstral",),
+        ),
+        (
+            "A10",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A11",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("hammer", "leanstral"),
+        ),
+        (
+            "A12",
+            (
+                "compiler",
+                "spacy",
+                "symai",
+                "hammer",
+                "leanstral",
+                "kernel",
+            ),
+            ("leanstral", "hammer"),
+        ),
+    )
+    profiles: list[dict[str, object]] = []
+    for variant_id, stages, optional_order in routes:
+        optional: list[dict[str, object]] = []
+        for route_index, source in enumerate(optional_order):
+            predecessor = (
+                "compiler" if route_index == 0 else optional_order[route_index - 1]
+            )
+            optional.append(
+                {
+                    "source": source,
+                    "route_index": route_index,
+                    "requires_compiler_reference_not_accepted": True,
+                    "requires_predecessor_not_accepted": predecessor,
+                    "allowed_predecessor_states": [
+                        "candidate_absent",
+                        "kernel_rejected",
+                        "duplicate_certificate",
+                        "producer_failed",
+                    ],
+                }
+            )
+        profiles.append(
+            {
+                "variant_id": variant_id,
+                "effective_stages": list(stages),
+                "compiler_reference_kernel_policy": (
+                    "identical_independent_check"
+                ),
+                "optional_order": list(optional_order),
+                "optional_routes": optional,
+                "symai_can_receive_proof_credit": False,
+                "terminal_proof_authority": "native_kernel",
+            }
+        )
+    return {
+        "schema": CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2,
+        "protocol_scope": "pilot_and_development_only",
+        "variant_ids": [f"A{index}" for index in range(13)],
+        "profiles": profiles,
+        "compiler_reference_population": (
+            "identical_valid_compiled_obligations_for_every_variant"
+        ),
+        "optional_producers_are_lazy": True,
+        "post_hoc_trigger_selection": False,
+        "holdout_included": False,
+    }
+
+
+CAUSAL_PROOF_VARIANT_PROFILE_V2_CID: Final = cid_for_dag_json(
+    causal_proof_variant_profile_v2()
+)
+
+
+def causal_proof_selection_spec_v2() -> dict[str, object]:
+    """Return the exact candidate identity and marginal-credit rules."""
+
+    return {
+        "schema": CAUSAL_PROOF_SELECTION_SPEC_SCHEMA_V2,
+        "receipt_schema": CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2,
+        "candidate_identity": {
+            "codec": "raw",
+            "multihash": "sha2-256",
+            "bytes": "exact_utf8_certificate_bytes",
+            "exact_bytes_embedded_in_kernel_sidecar": True,
+            "kernel_validator_receives_candidate_and_check": True,
+        },
+        "structured_identity": {
+            "codec": "dag-json",
+            "multihash": "sha2-256",
+        },
+        "selection": [
+            "check_present_compiler_reference_first",
+            "stop_when_compiler_reference_is_accepted",
+            "invoke_only_the_next_preregistered_optional_producer",
+            "suppress_byte_identical_candidates_without_a_second_kernel_call",
+            "stop_after_the_first_distinct_independently_accepted_candidate",
+        ],
+        "causal_rescue_requires": [
+            "compiler_reference_absent_or_independently_rejected",
+            "optional_candidate_distinct_from_every_prior_candidate",
+            "optional_candidate_independently_kernel_accepted",
+            "no_prior_model_failure_in_the_route",
+        ],
+        "overlap_rule": {
+            "same_raw_candidate_cid_is_duplicate": True,
+            "marginal_credit_millionths": 0,
+            "kernel_recheck_permitted": False,
+        },
+        "continuation_rule": {
+            "producer_failure_is_recovery": False,
+            "later_route_after_model_failure": (
+                "post_model_failure_continuation"
+            ),
+            "accepted_later_candidate_credit_millionths": 0,
+        },
+        "proof_authority": "native_kernel",
+        "solver_or_model_verdict_is_authority": False,
+        "per_case_denominators_are_explicit_booleans": True,
+        "per_case_denominators": [
+            "compiler_reference",
+            "compiler_candidate_present",
+            "hammer_optional_route",
+            "leanstral_optional_route",
+            "hammer_escalation",
+            "leanstral_escalation",
+            "hammer_suppression",
+            "leanstral_suppression",
+            "hammer_unique_rescue",
+            "leanstral_unique_rescue",
+            "overlap",
+            "unnecessary_work",
+        ],
+        "leanstral_failure_codes": list(
+            CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2
+        ),
+    }
+
+
+CAUSAL_PROOF_SELECTION_SPEC_V2_CID: Final = cid_for_dag_json(
+    causal_proof_selection_spec_v2()
+)
+
+
+def causal_proof_rescue_population_policy_v2() -> dict[str, object]:
+    """Return the fail-closed policy for the new reviewed rescue population."""
+
+    return {
+        "schema": CAUSAL_PROOF_RESCUE_POPULATION_SCHEMA_V2,
+        "allowed_splits": ["pilot", "development"],
+        "holdout_permitted": False,
+        "new_independent_review_required": True,
+        "source_bound_manifest_cid_required_at_execution": True,
+        "manifest_codec": "dag-json",
+        "minimum_cases": 1,
+        "minimum_cases_per_optional_component": {
+            "hammer": 1,
+            "leanstral": 1,
+        },
+        "case_requirements": [
+            "valid_reviewed_obligation",
+            "deterministic_compilation_does_not_kernel_accept",
+            "selected_before_optional_component_outcomes",
+        ],
+        "reuse_revision_1_holdout": False,
+        "shortlist_or_production_authority": False,
+    }
+
+
+CAUSAL_PROOF_RESCUE_POPULATION_V2_CID: Final = cid_for_dag_json(
+    causal_proof_rescue_population_policy_v2()
+)
+
+
+@dataclass(frozen=True, slots=True)
+class CausalProofProtocolSpec:
+    """Additive G210 proof protocol with equal external kernel exposure."""
+
+    schema: str
+    protocol_id: str
+    protocol_version: int
+    frozen: bool
+    parent_protocol_sha256: str
+    parent_semantic_protocol_cid: str
+    variant_profile_cid: str
+    selection_spec_cid: str
+    rescue_population_policy_cid: str
+    selection_receipt_schema: str
+    candidate_sources: tuple[str, ...]
+    proof_authority: str
+    holdout_permitted: bool
+
+    def __post_init__(self) -> None:
+        if (
+            self.schema != CAUSAL_PROOF_PROTOCOL_SCHEMA_V2
+            or self.protocol_id != CAUSAL_PROOF_PROTOCOL_ID_V2
+            or self.protocol_version != CAUSAL_PROOF_PROTOCOL_VERSION_V2
+        ):
+            raise ProtocolContractError("unsupported causal proof protocol")
+        if self.frozen is not True:
+            raise ProtocolContractError("causal proof protocol must be frozen")
+        _digest(self.parent_protocol_sha256, "parent_protocol_sha256")
+        for field in (
+            "parent_semantic_protocol_cid",
+            "variant_profile_cid",
+            "selection_spec_cid",
+            "rescue_population_policy_cid",
+        ):
+            _semantic_cid(getattr(self, field), field, codecs=("dag-json",))
+        if (
+            self.parent_protocol_sha256
+            != CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1
+            or self.parent_semantic_protocol_cid
+            != CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2
+            or self.variant_profile_cid
+            != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+            or self.selection_spec_cid
+            != CAUSAL_PROOF_SELECTION_SPEC_V2_CID
+            or self.rescue_population_policy_cid
+            != CAUSAL_PROOF_RESCUE_POPULATION_V2_CID
+        ):
+            raise ProtocolContractError(
+                "causal proof protocol component identity drifted"
+            )
+        if (
+            self.selection_receipt_schema
+            != CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
+            or self.candidate_sources != CAUSAL_PROOF_CANDIDATE_SOURCES_V2
+            or self.proof_authority != "native_kernel"
+            or self.holdout_permitted is not False
+        ):
+            raise ProtocolContractError(
+                "causal proof protocol trust boundary drifted"
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "protocol_id": self.protocol_id,
+            "protocol_version": self.protocol_version,
+            "frozen": self.frozen,
+            "parent_protocol_sha256": self.parent_protocol_sha256,
+            "parent_semantic_protocol_cid": (
+                self.parent_semantic_protocol_cid
+            ),
+            "variant_profile_cid": self.variant_profile_cid,
+            "selection_spec_cid": self.selection_spec_cid,
+            "rescue_population_policy_cid": (
+                self.rescue_population_policy_cid
+            ),
+            "selection_receipt_schema": self.selection_receipt_schema,
+            "candidate_sources": list(self.candidate_sources),
+            "proof_authority": self.proof_authority,
+            "holdout_permitted": self.holdout_permitted,
+        }
+
+
+CAUSAL_PROOF_PROTOCOL_V2: Final = CausalProofProtocolSpec(
+    schema=CAUSAL_PROOF_PROTOCOL_SCHEMA_V2,
+    protocol_id=CAUSAL_PROOF_PROTOCOL_ID_V2,
+    protocol_version=CAUSAL_PROOF_PROTOCOL_VERSION_V2,
+    frozen=True,
+    parent_protocol_sha256=CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1,
+    parent_semantic_protocol_cid=(
+        CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2
+    ),
+    variant_profile_cid=CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
+    selection_spec_cid=CAUSAL_PROOF_SELECTION_SPEC_V2_CID,
+    rescue_population_policy_cid=CAUSAL_PROOF_RESCUE_POPULATION_V2_CID,
+    selection_receipt_schema=CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2,
+    candidate_sources=CAUSAL_PROOF_CANDIDATE_SOURCES_V2,
+    proof_authority="native_kernel",
+    holdout_permitted=False,
+)
+CAUSAL_PROOF_PROTOCOL_V2_CID: Final = cid_for_dag_json(
+    CAUSAL_PROOF_PROTOCOL_V2.to_dict()
+)
+
+
+def validate_causal_proof_selection_receipt(
+    value: object,
+) -> dict[str, object]:
+    """Validate and return one complete G210 selection receipt.
+
+    This validates the causal classification and the content identities of
+    every embedded kernel sidecar.  A report consumer must additionally replay
+    :func:`validate_native_kernel_receipt` against its source-bound case result;
+    a selection receipt cannot create proof authority by itself.
+    """
+
+    # Typed runtime receipts are deeply frozen after their CID is established.
+    # Replay always validates the detached DAG-JSON form so immutable tuples
+    # and mapping proxies cannot change the wire contract.
+    data = _mapping(
+        _thaw_bounded_json(value),
+        "causal proof selection receipt",
+    )
+    expected_top = {
+        "schema",
+        "protocol_cid",
+        "variant_profile_cid",
+        "run_id",
+        "case_id",
+        "variant_id",
+        "source_cid",
+        "compiler_reference",
+        "optional_candidates",
+        "selected_source",
+        "selected_candidate_cid",
+        "selected_kernel_receipt_cid",
+        "proof_authority",
+        "denominators",
+        "kernel_receipts",
+        "receipt_cid",
+    }
+    _exact_keys(data, expected_top, "causal proof selection receipt")
+    if data["schema"] != CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2:
+        raise ProtocolContractError(
+            "unsupported causal proof selection receipt schema"
+        )
+    if data["protocol_cid"] != CAUSAL_PROOF_PROTOCOL_V2_CID:
+        raise ProtocolContractError(
+            "causal proof selection protocol CID drifted"
+        )
+    if (
+        data["variant_profile_cid"]
+        != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+    ):
+        raise ProtocolContractError(
+            "causal proof selection profile CID drifted"
+        )
+    if data["proof_authority"] != "native_kernel":
+        raise ProtocolContractError(
+            "causal proof selection changed proof authority"
+        )
+    _nonempty(data["run_id"], "causal proof run_id")
+    _nonempty(data["case_id"], "causal proof case_id")
+    variant_id = _nonempty(data["variant_id"], "causal proof variant_id")
+    if variant_id not in {f"A{index}" for index in range(13)}:
+        raise ProtocolContractError(
+            "causal proof variant is outside A0-A12"
+        )
+    source_cid = _semantic_cid(
+        data["source_cid"], "causal proof source_cid", codecs=("raw",)
+    )
+
+    profiles = causal_proof_variant_profile_v2()["profiles"]
+    assert isinstance(profiles, list)
+    profile = next(
+        item
+        for item in profiles
+        if isinstance(item, Mapping)
+        and item.get("variant_id") == variant_id
+    )
+    expected_optional = profile["optional_order"]
+    assert isinstance(expected_optional, list)
+
+    compiler = _mapping(
+        data["compiler_reference"], "causal compiler reference"
+    )
+    _exact_keys(
+        compiler,
+        {
+            "state",
+            "candidate_cid",
+            "artifact_cid",
+            "invoked",
+            "kernel_checked",
+            "kernel_receipt_cid",
+            "accepted",
+        },
+        "causal compiler reference",
+    )
+    state = compiler["state"]
+    if state not in CAUSAL_PROOF_COMPILER_STATES_V2:
+        raise ProtocolContractError("causal compiler state is invalid")
+    for field in ("invoked", "kernel_checked", "accepted"):
+        _bool(compiler[field], f"causal compiler {field}")
+    compiler_candidate_cid: str | None = None
+    if state == "absent":
+        if any(
+            compiler[field] is not expected
+            for field, expected in (
+                ("candidate_cid", None),
+                ("artifact_cid", None),
+                ("invoked", False),
+                ("kernel_checked", False),
+                ("kernel_receipt_cid", None),
+                ("accepted", False),
+            )
+        ):
+            raise ProtocolContractError(
+                "absent causal compiler reference has execution evidence"
+            )
+    else:
+        compiler_candidate_cid = _semantic_cid(
+            compiler["candidate_cid"],
+            "causal compiler candidate_cid",
+            codecs=("raw",),
+        )
+        _semantic_cid(
+            compiler["artifact_cid"],
+            "causal compiler artifact_cid",
+        )
+        _semantic_cid(
+            compiler["kernel_receipt_cid"],
+            "causal compiler kernel_receipt_cid",
+            codecs=("dag-json",),
+        )
+        if (
+            compiler["invoked"] is not True
+            or compiler["kernel_checked"] is not True
+            or compiler["accepted"] is not (state == "accepted")
+        ):
+            raise ProtocolContractError(
+                "causal compiler state disagrees with its kernel check"
+            )
+
+    raw_optional = data["optional_candidates"]
+    if (
+        not isinstance(raw_optional, Sequence)
+        or isinstance(raw_optional, (str, bytes, bytearray))
+        or len(raw_optional) != len(expected_optional)
+    ):
+        raise ProtocolContractError(
+            "causal optional candidate route is incomplete"
+        )
+    optional: list[Mapping[str, object]] = []
+    seen_candidate_cids = (
+        set() if compiler_candidate_cid is None else {compiler_candidate_cid}
+    )
+    predecessor = "compiler"
+    predecessor_accepted = compiler["accepted"] is True
+    prior_model_failure = False
+    accepted_source: str | None = (
+        "compiler" if predecessor_accepted else None
+    )
+    for index, raw in enumerate(raw_optional):
+        record = _mapping(raw, "causal optional candidate")
+        _exact_keys(
+            record,
+            {
+                "source",
+                "route_index",
+                "trigger_condition",
+                "trigger_eligible",
+                "causal_credit_eligible",
+                "invoked",
+                "candidate_cid",
+                "artifact_cid",
+                "kernel_checked",
+                "kernel_receipt_cid",
+                "accepted",
+                "overlap",
+                "duplicate_of_candidate_cid",
+                "causal_rescue",
+                "marginal_credit_millionths",
+                "zero_credit_reason",
+                "failure_code",
+                "continuation_kind",
+            },
+            "causal optional candidate",
+        )
+        source = record["source"]
+        if source != expected_optional[index] or source not in {
+            "hammer",
+            "leanstral",
+        }:
+            raise ProtocolContractError(
+                "causal optional source/order differs from its profile"
+            )
+        if record["route_index"] != index:
+            raise ProtocolContractError(
+                "causal optional route index changed"
+            )
+        if record["trigger_condition"] != (
+            f"after_{predecessor}_not_accepted"
+        ):
+            raise ProtocolContractError(
+                "causal optional trigger condition changed"
+            )
+        for field in (
+            "trigger_eligible",
+            "causal_credit_eligible",
+            "invoked",
+            "kernel_checked",
+            "accepted",
+            "overlap",
+            "causal_rescue",
+        ):
+            _bool(record[field], f"causal optional {field}")
+        if predecessor_accepted:
+            if (
+                record["trigger_eligible"] is not False
+                or record["invoked"] is not False
+            ):
+                raise ProtocolContractError(
+                "causal optional producer ran after an accepted predecessor"
+            )
+        elif (
+            record["trigger_eligible"] is not True
+            or record["invoked"] is not True
+        ):
+            raise ProtocolContractError(
+                "causal optional producer was suppressed after a failure trigger"
+            )
+        expected_credit_eligibility = bool(
+            not predecessor_accepted and not prior_model_failure
+        )
+        if (
+            record["causal_credit_eligible"]
+            is not expected_credit_eligibility
+        ):
+            raise ProtocolContractError(
+                "causal optional credit eligibility is not route-derived"
+            )
+        candidate_cid = record["candidate_cid"]
+        if candidate_cid is not None:
+            candidate_cid = _semantic_cid(
+                candidate_cid,
+                "causal optional candidate_cid",
+                codecs=("raw",),
+            )
+            _semantic_cid(
+                record["artifact_cid"],
+                "causal optional artifact_cid",
+            )
+        elif record["artifact_cid"] is not None:
+            raise ProtocolContractError(
+                "causal optional artifact lacks a candidate CID"
+            )
+        receipt_cid = record["kernel_receipt_cid"]
+        if receipt_cid is not None:
+            _semantic_cid(
+                receipt_cid,
+                "causal optional kernel_receipt_cid",
+                codecs=("dag-json",),
+            )
+        if (
+            record["kernel_checked"]
+            is not (receipt_cid is not None)
+            or record["accepted"] is True
+            and record["kernel_checked"] is not True
+        ):
+            raise ProtocolContractError(
+                "causal optional kernel fields disagree"
+            )
+        overlap = record["overlap"]
+        duplicate_of = record["duplicate_of_candidate_cid"]
+        if overlap:
+            if (
+                candidate_cid is None
+                or candidate_cid not in seen_candidate_cids
+                or duplicate_of != candidate_cid
+                or record["kernel_checked"] is not False
+                or record["zero_credit_reason"] != "duplicate_certificate"
+            ):
+                raise ProtocolContractError(
+                    "causal duplicate-certificate classification is invalid"
+                )
+        elif duplicate_of is not None:
+            raise ProtocolContractError(
+                "non-overlap causal candidate has a duplicate binding"
+            )
+        rescue = bool(
+            compiler["accepted"] is False
+            and record["causal_credit_eligible"] is True
+            and record["trigger_eligible"] is True
+            and record["invoked"] is True
+            and candidate_cid is not None
+            and record["kernel_checked"] is True
+            and record["accepted"] is True
+            and overlap is False
+        )
+        if (
+            record["causal_rescue"] is not rescue
+            or record["marginal_credit_millionths"]
+            != (1_000_000 if rescue else 0)
+            or (record["zero_credit_reason"] is None) is not rescue
+        ):
+            raise ProtocolContractError(
+                "causal rescue or marginal credit is inconsistent"
+            )
+        failure_code = record["failure_code"]
+        if failure_code is not None:
+            allowed = (
+                {
+                    "hammer_candidate_absent",
+                    "hammer_solver_failure",
+                    "hammer_timeout",
+                    "hammer_schema_invalid",
+                    "hammer_premise_selection_miss",
+                }
+                if source == "hammer"
+                else set(CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2)
+            )
+            if failure_code not in allowed:
+                raise ProtocolContractError(
+                    "causal optional failure code is not preregistered"
+                )
+            if (
+                candidate_cid is not None
+                or record["accepted"] is True
+                or record["causal_rescue"] is True
+            ):
+                raise ProtocolContractError(
+                    "failed causal producer received candidate credit"
+                )
+        if record["invoked"] is False:
+            if any(
+                record[field] != expected
+                for field, expected in (
+                    ("candidate_cid", None),
+                    ("artifact_cid", None),
+                    ("kernel_checked", False),
+                    ("kernel_receipt_cid", None),
+                    ("accepted", False),
+                    ("overlap", False),
+                    ("duplicate_of_candidate_cid", None),
+                    ("causal_rescue", False),
+                    ("failure_code", None),
+                    ("continuation_kind", "suppressed"),
+                )
+            ):
+                raise ProtocolContractError(
+                    "suppressed causal producer contains execution evidence"
+                )
+        elif candidate_cid is None and failure_code is None:
+            raise ProtocolContractError(
+                "invoked causal producer has neither candidate nor failure"
+            )
+        elif candidate_cid is not None and failure_code is not None:
+            raise ProtocolContractError(
+                "causal producer has both a candidate and failure"
+            )
+        if record["invoked"] is False:
+            expected_continuation = "suppressed"
+            expected_zero_credit = (
+                "compiler_reference_accepted"
+                if accepted_source == "compiler"
+                else "predecessor_candidate_accepted"
+            )
+        elif failure_code is not None:
+            expected_continuation = (
+                (
+                    "post_model_failure_continuation"
+                    if source == "leanstral"
+                    else "post_solver_failure_continuation"
+                )
+                if index + 1 < len(raw_optional)
+                else "terminal_producer_failure"
+            )
+            expected_zero_credit = "candidate_failed"
+        elif overlap:
+            expected_continuation = "post_overlap_continuation"
+            expected_zero_credit = "duplicate_certificate"
+        elif record["accepted"] is True:
+            expected_continuation = (
+                "selected_post_model_failure_continuation"
+                if prior_model_failure
+                else "selected_causal_rescue"
+            )
+            expected_zero_credit = (
+                "post_model_failure_continuation"
+                if prior_model_failure
+                else None
+            )
+        else:
+            expected_continuation = (
+                "post_kernel_rejection_continuation"
+            )
+            expected_zero_credit = "kernel_rejected"
+        if (
+            record["continuation_kind"] != expected_continuation
+            or record["zero_credit_reason"] != expected_zero_credit
+        ):
+            raise ProtocolContractError(
+                "causal continuation or zero-credit reason is inconsistent"
+            )
+        if candidate_cid is not None:
+            seen_candidate_cids.add(candidate_cid)
+        optional.append(record)
+        if source == "leanstral" and failure_code is not None:
+            prior_model_failure = True
+        predecessor = str(source)
+        if record["accepted"] is True:
+            accepted_source = str(source)
+        predecessor_accepted = bool(
+            predecessor_accepted or record["accepted"] is True
+        )
+
+    raw_sidecars = data["kernel_receipts"]
+    if (
+        not isinstance(raw_sidecars, Sequence)
+        or isinstance(raw_sidecars, (str, bytes, bytearray))
+    ):
+        raise ProtocolContractError("causal kernel sidecars must be an array")
+    sidecars: dict[str, Mapping[str, object]] = {}
+    for raw in raw_sidecars:
+        sidecar = _mapping(raw, "causal kernel sidecar")
+        _exact_keys(
+            sidecar,
+            {
+                "run_id",
+                "case_id",
+                "variant_id",
+                "source_cid",
+                "protocol_cid",
+                "variant_profile_cid",
+                "candidate_cid",
+                "candidate_bytes_utf8",
+                "candidate_bytes_length",
+                "receipt_cid",
+                "stage_status",
+                "failure_code",
+                "kernel_accepted",
+                "consumed_artifact_sha256s",
+                "receipt",
+            },
+            "causal kernel sidecar",
+        )
+        if any(
+            sidecar[field] != data[field]
+            for field in ("run_id", "case_id", "variant_id", "source_cid")
+        ) or (
+            sidecar["protocol_cid"] != CAUSAL_PROOF_PROTOCOL_V2_CID
+            or sidecar["variant_profile_cid"]
+            != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+        ):
+            raise ProtocolContractError(
+                "causal kernel sidecar coordinate binding changed"
+            )
+        candidate_cid = _semantic_cid(
+            sidecar["candidate_cid"],
+            "causal sidecar candidate_cid",
+            codecs=("raw",),
+        )
+        candidate_text = sidecar["candidate_bytes_utf8"]
+        candidate_length = sidecar["candidate_bytes_length"]
+        if (
+            not isinstance(candidate_text, str)
+            or not isinstance(candidate_length, int)
+            or isinstance(candidate_length, bool)
+            or candidate_length <= 0
+        ):
+            raise ProtocolContractError(
+                "causal sidecar candidate bytes are invalid"
+            )
+        candidate_bytes = candidate_text.encode("utf-8")
+        if (
+            len(candidate_bytes) != candidate_length
+            or cid_for_bytes(candidate_bytes) != candidate_cid
+        ):
+            raise ProtocolContractError(
+                "causal sidecar raw candidate CID changed from exact bytes"
+            )
+        receipt_cid = _semantic_cid(
+            sidecar["receipt_cid"],
+            "causal sidecar receipt_cid",
+            codecs=("dag-json",),
+        )
+        receipt = _mapping(sidecar["receipt"], "causal native receipt")
+        if cid_for_dag_json(dict(receipt)) != receipt_cid:
+            raise ProtocolContractError(
+                "causal native receipt CID changed from its body"
+            )
+        accepted = _bool(
+            sidecar["kernel_accepted"], "causal sidecar kernel_accepted"
+        )
+        if (
+            receipt.get("independent") is not True
+            or receipt.get("accepted") is not accepted
+            or receipt.get("run_id") != data["run_id"]
+            or receipt.get("case_id") != data["case_id"]
+            or receipt.get("variant_id") != data["variant_id"]
+        ):
+            raise ProtocolContractError(
+                "causal native receipt body is not source-coordinate bound"
+            )
+        status = _enum(
+            StageStatus, sidecar["stage_status"], "causal sidecar stage_status"
+        )
+        failure_code = sidecar["failure_code"]
+        if failure_code is not None:
+            _enum(
+                FailureCode,
+                failure_code,
+                "causal sidecar failure_code",
+            )
+        if accepted is not (status is StageStatus.SUCCESS):
+            raise ProtocolContractError(
+                "causal sidecar status disagrees with kernel acceptance"
+            )
+        consumed = sidecar["consumed_artifact_sha256s"]
+        if (
+            not isinstance(consumed, Sequence)
+            or isinstance(consumed, (str, bytes, bytearray))
+        ):
+            raise ProtocolContractError(
+                "causal sidecar consumed artifacts must be an array"
+            )
+        for digest in consumed:
+            _digest(digest, "causal sidecar consumed artifact")
+        if candidate_cid in sidecars:
+            raise ProtocolContractError(
+                "causal candidate was checked more than once"
+            )
+        sidecars[candidate_cid] = sidecar
+
+    checked_candidate_cids: list[str] = []
+    if compiler["kernel_checked"]:
+        assert compiler_candidate_cid is not None
+        checked_candidate_cids.append(compiler_candidate_cid)
+        if (
+            compiler_candidate_cid not in sidecars
+            or sidecars[compiler_candidate_cid]["receipt_cid"]
+            != compiler["kernel_receipt_cid"]
+        ):
+            raise ProtocolContractError(
+                "causal compiler check lacks its native sidecar"
+            )
+    for record in optional:
+        if record["kernel_checked"]:
+            candidate_cid = record["candidate_cid"]
+            assert isinstance(candidate_cid, str)
+            checked_candidate_cids.append(candidate_cid)
+            if (
+                candidate_cid not in sidecars
+                or sidecars[candidate_cid]["receipt_cid"]
+                != record["kernel_receipt_cid"]
+            ):
+                raise ProtocolContractError(
+                    "causal optional check lacks its native sidecar"
+                )
+    if set(checked_candidate_cids) != set(sidecars):
+        raise ProtocolContractError(
+            "causal kernel sidecar collection has an orphan"
+        )
+
+    accepted_entries: list[tuple[str, object, object]] = []
+    if compiler["accepted"]:
+        accepted_entries.append(
+            (
+                "compiler",
+                compiler["candidate_cid"],
+                compiler["kernel_receipt_cid"],
+            )
+        )
+    accepted_entries.extend(
+        (
+            str(record["source"]),
+            record["candidate_cid"],
+            record["kernel_receipt_cid"],
+        )
+        for record in optional
+        if record["accepted"] is True
+    )
+    if len(accepted_entries) > 1:
+        raise ProtocolContractError(
+            "causal graph continued after an accepted candidate"
+        )
+    selected = (
+        (None, None, None)
+        if not accepted_entries
+        else accepted_entries[0]
+    )
+    if (
+        data["selected_source"],
+        data["selected_candidate_cid"],
+        data["selected_kernel_receipt_cid"],
+    ) != selected:
+        raise ProtocolContractError(
+            "causal selected candidate differs from kernel evidence"
+        )
+
+    denominators = _mapping(
+        data["denominators"], "causal proof denominators"
+    )
+    expected_denominators = {
+        "compiler_reference": True,
+        "compiler_candidate_present": compiler_candidate_cid is not None,
+        "hammer_optional_route": "hammer" in expected_optional,
+        "leanstral_optional_route": "leanstral" in expected_optional,
+        "hammer_escalation": any(
+            item["source"] == "hammer"
+            and item["trigger_eligible"] is True
+            for item in optional
+        ),
+        "leanstral_escalation": any(
+            item["source"] == "leanstral"
+            and item["trigger_eligible"] is True
+            for item in optional
+        ),
+        "hammer_suppression": any(
+            item["source"] == "hammer"
+            and item["trigger_eligible"] is False
+            for item in optional
+        ),
+        "leanstral_suppression": any(
+            item["source"] == "leanstral"
+            and item["trigger_eligible"] is False
+            for item in optional
+        ),
+        "hammer_unique_rescue": any(
+            item["source"] == "hammer"
+            and item["causal_credit_eligible"] is True
+            and item["kernel_checked"] is True
+            and item["overlap"] is False
+            for item in optional
+        ),
+        "leanstral_unique_rescue": any(
+            item["source"] == "leanstral"
+            and item["causal_credit_eligible"] is True
+            and item["kernel_checked"] is True
+            and item["overlap"] is False
+            for item in optional
+        ),
+        "overlap": any(item["overlap"] is True for item in optional),
+        "unnecessary_work": any(
+            item["invoked"] is True
+            and item["causal_rescue"] is False
+            for item in optional
+        ),
+    }
+    if dict(denominators) != expected_denominators:
+        raise ProtocolContractError(
+            "causal proof denominators are not recomputable"
+        )
+
+    receipt_cid = _semantic_cid(
+        data["receipt_cid"],
+        "causal proof receipt_cid",
+        codecs=("dag-json",),
+    )
+    body = {key: item for key, item in data.items() if key != "receipt_cid"}
+    if cid_for_dag_json(body) != receipt_cid:
+        raise ProtocolContractError(
+            "causal proof receipt CID changed from its body"
+        )
+    return dict(data)
 
 
 @dataclass(frozen=True, slots=True)
@@ -5292,6 +6409,25 @@ _FROZEN_PROTOCOL_SHA256 = DEFAULT_PROTOCOL_SHA256
 __all__ = [
     "BASELINE_VARIANT",
     "BenchmarkProtocol",
+    "CAUSAL_PROOF_CANDIDATE_SOURCES_V2",
+    "CAUSAL_PROOF_COMPILER_STATES_V2",
+    "CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2",
+    "CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1",
+    "CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2",
+    "CAUSAL_PROOF_PROTOCOL_ID_V2",
+    "CAUSAL_PROOF_PROTOCOL_SCHEMA_V2",
+    "CAUSAL_PROOF_PROTOCOL_V2",
+    "CAUSAL_PROOF_PROTOCOL_V2_CID",
+    "CAUSAL_PROOF_PROTOCOL_VERSION_V2",
+    "CAUSAL_PROOF_RESCUE_POPULATION_SCHEMA_V2",
+    "CAUSAL_PROOF_RESCUE_POPULATION_V2_CID",
+    "CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA",
+    "CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2",
+    "CAUSAL_PROOF_SELECTION_SPEC_SCHEMA_V2",
+    "CAUSAL_PROOF_SELECTION_SPEC_V2_CID",
+    "CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2",
+    "CAUSAL_PROOF_VARIANT_PROFILE_V2_CID",
+    "CAUSAL_PROOF_ZERO_CREDIT_REASONS_V2",
     "CASE_RESULT_SCHEMA",
     "CASE_RESULT_RECEIPT_SCHEMA",
     "CaseResultRecord",
@@ -5308,6 +6444,7 @@ __all__ = [
     "HSSLEV0306C18",
     "HSSLEV0357C0D",
     "HSSLEV0103C72",
+    "HSSLEV2108F34",
     "HoldoutRules",
     "HypothesisSpec",
     "IMMEDIATE_STOP_CODES",
@@ -5368,6 +6505,7 @@ __all__ = [
     "SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2",
     "SemanticProjection",
     "SemanticProtocolSpec",
+    "CausalProofProtocolSpec",
     "STAGE_PROVENANCE_SCHEMA",
     "STAGE_RECORD_SCHEMA",
     "StageName",
@@ -5383,6 +6521,9 @@ __all__ = [
     "build_default_protocol",
     "canonical_json",
     "canonical_protocol_json",
+    "causal_proof_rescue_population_policy_v2",
+    "causal_proof_selection_spec_v2",
+    "causal_proof_variant_profile_v2",
     "evaluate_candidate_gate",
     "normalize_semantic_term",
     "protocol_sha256",
@@ -5397,4 +6538,5 @@ __all__ = [
     "validate_paired_outcomes",
     "validate_native_kernel_receipt",
     "validate_native_kernel_stage_receipt",
+    "validate_causal_proof_selection_receipt",
 ]

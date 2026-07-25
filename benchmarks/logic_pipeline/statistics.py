@@ -32,6 +32,7 @@ import re
 from types import MappingProxyType
 from typing import Callable, Final, Iterable, Mapping, Self, Sequence
 
+from .content_addressing import cid_for_dag_json, validate_cid
 from .contracts import (
     DEFAULT_PROTOCOL,
     DEFAULT_PROTOCOL_SHA256,
@@ -67,6 +68,12 @@ PARETO_RESULT_SCHEMA: Final = (
 STATISTICS_REPORT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.statistics-report.v1"
 )
+CAUSAL_BINOMIAL_RATE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-binomial-rate.v2"
+)
+CAUSAL_RESCUE_RATE_BUNDLE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.causal-rescue-rate-bundle.v2"
+)
 
 DEFAULT_BOOTSTRAP_SAMPLES: Final = 10_000
 DEFAULT_BOOTSTRAP_SEED: Final = 17_291
@@ -76,6 +83,7 @@ MAX_REPORT_OBSERVATIONS: Final = 1_000_000
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+_WILSON_95_Z: Final = 1.959963984540054
 
 
 class StatisticsError(ValueError):
@@ -158,6 +166,28 @@ def _digest(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
         raise StatisticsError(f"{field} must be a lowercase SHA-256 digest")
     return value
+
+
+def _dag_json_cid(value: object, field: str) -> str:
+    try:
+        return validate_cid(value, codecs=("dag-json",))
+    except ValueError as exc:
+        raise StatisticsError(
+            f"{field} must be a canonical DAG-JSON CIDv1"
+        ) from exc
+
+
+def _cid_tuple(value: object, field: str) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)):
+        raise StatisticsError(f"{field} must be an array")
+    result = tuple(
+        _dag_json_cid(item, f"{field}[]") for item in value
+    )
+    if result != tuple(sorted(result)) or len(result) != len(set(result)):
+        raise StatisticsError(
+            f"{field} must be unique and in canonical CID order"
+        )
+    return result
 
 
 def _number(value: object, field: str) -> float:
@@ -268,6 +298,297 @@ def _statistic(values: Sequence[float], estimator: Estimator) -> float:
     if len(ordered) % 2:
         return ordered[midpoint]
     return (ordered[midpoint - 1] + ordered[midpoint]) / 2.0
+
+
+def _wilson_interval_95(
+    numerator: int,
+    denominator: int,
+) -> tuple[float | None, float | None]:
+    """Return the two-sided 95% Wilson score interval.
+
+    Empty populations stay undefined.  They are never silently converted to a
+    zero rate, which is particularly important for rescue and suppression
+    populations whose eligibility predicates may legitimately select no
+    cases.
+    """
+
+    if denominator == 0:
+        return None, None
+    estimate = numerator / denominator
+    z_squared = _WILSON_95_Z * _WILSON_95_Z
+    scale = 1.0 + z_squared / denominator
+    center = (
+        estimate + z_squared / (2.0 * denominator)
+    ) / scale
+    radius = (
+        _WILSON_95_Z
+        * math.sqrt(
+            estimate * (1.0 - estimate) / denominator
+            + z_squared / (4.0 * denominator * denominator)
+        )
+        / scale
+    )
+    return max(0.0, center - radius), min(1.0, center + radius)
+
+
+@dataclass(frozen=True, slots=True)
+class CausalBinomialRate:
+    """CID-bound numerator and denominator for one G210 causal rate.
+
+    Both populations contain the CIDs of the validated per-case accounting
+    receipts that contribute to them.  Consequently a percentage cannot be
+    relabelled from "all scheduled cases" to "escalation-eligible cases", or
+    vice versa, without changing this receipt's CID.  The event population is
+    required to be a subset of the denominator population.
+    """
+
+    metric_id: str
+    event_label: str
+    population_label: str
+    event_receipt_cids: tuple[str, ...]
+    population_receipt_cids: tuple[str, ...]
+    confidence_millionths: int = 950_000
+    schema: str = CAUSAL_BINOMIAL_RATE_SCHEMA
+
+    def __post_init__(self) -> None:
+        if self.schema != CAUSAL_BINOMIAL_RATE_SCHEMA:
+            raise StatisticsError("unsupported causal-binomial-rate schema")
+        _safe_id(self.metric_id, "metric_id")
+        _safe_id(self.event_label, "event_label")
+        _safe_id(self.population_label, "population_label")
+        events = _cid_tuple(
+            self.event_receipt_cids, "event_receipt_cids"
+        )
+        population = _cid_tuple(
+            self.population_receipt_cids, "population_receipt_cids"
+        )
+        if not set(events).issubset(population):
+            raise StatisticsError(
+                "causal-rate events must be a subset of its population"
+            )
+        if (
+            isinstance(self.confidence_millionths, bool)
+            or self.confidence_millionths != 950_000
+        ):
+            raise StatisticsError(
+                "G210 causal rates require the frozen 95% confidence level"
+            )
+        object.__setattr__(self, "event_receipt_cids", events)
+        object.__setattr__(self, "population_receipt_cids", population)
+
+    @property
+    def numerator(self) -> int:
+        return len(self.event_receipt_cids)
+
+    @property
+    def denominator(self) -> int:
+        return len(self.population_receipt_cids)
+
+    @property
+    def estimate(self) -> float | None:
+        if self.denominator == 0:
+            return None
+        return self.numerator / self.denominator
+
+    @property
+    def interval(self) -> tuple[float | None, float | None]:
+        return _wilson_interval_95(self.numerator, self.denominator)
+
+    def _body_dict(self) -> dict[str, object]:
+        lower, upper = self.interval
+        return {
+            "schema": self.schema,
+            "metric_id": self.metric_id,
+            "event_label": self.event_label,
+            "population_label": self.population_label,
+            "event_receipt_cids": list(self.event_receipt_cids),
+            "population_receipt_cids": list(
+                self.population_receipt_cids
+            ),
+            "numerator": self.numerator,
+            "denominator": self.denominator,
+            "estimate": self.estimate,
+            "confidence_millionths": self.confidence_millionths,
+            "wilson_lower": lower,
+            "wilson_upper": upper,
+        }
+
+    @property
+    def receipt_cid(self) -> str:
+        return cid_for_dag_json(self._body_dict())
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self._body_dict(), "receipt_cid": self.receipt_cid}
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "causal_binomial_rate")
+        expected = {
+            "schema",
+            "metric_id",
+            "event_label",
+            "population_label",
+            "event_receipt_cids",
+            "population_receipt_cids",
+            "numerator",
+            "denominator",
+            "estimate",
+            "confidence_millionths",
+            "wilson_lower",
+            "wilson_upper",
+            "receipt_cid",
+        }
+        _exact_keys(data, expected, "causal_binomial_rate")
+        events = _array(data["event_receipt_cids"], "event_receipt_cids")
+        population = _array(
+            data["population_receipt_cids"],
+            "population_receipt_cids",
+        )
+        record = cls(
+            schema=str(data["schema"]),
+            metric_id=str(data["metric_id"]),
+            event_label=str(data["event_label"]),
+            population_label=str(data["population_label"]),
+            event_receipt_cids=tuple(events),  # type: ignore[arg-type]
+            population_receipt_cids=tuple(population),  # type: ignore[arg-type]
+            confidence_millionths=_integer(
+                data["confidence_millionths"],
+                "confidence_millionths",
+                maximum=1_000_000,
+            ),
+        )
+        if dict(data) != record.to_dict():
+            raise StatisticsError(
+                "causal-binomial-rate derived fields or CID changed"
+            )
+        return record
+
+
+_CAUSAL_RATE_LABELS: Final = MappingProxyType(
+    {
+        "escalation": (
+            "eligible_and_invoked",
+            "escalation_eligible",
+        ),
+        "suppression": (
+            "scheduled_route_suppressed",
+            "scheduled_optional_route",
+        ),
+        "causal_rescue": (
+            "distinct_kernel_accepted_rescue",
+            "escalation_eligible",
+        ),
+        "kernel_acceptance": (
+            "kernel_accepted",
+            "kernel_checked",
+        ),
+        "overlap": (
+            "byte_identical_overlap",
+            "component_invoked",
+        ),
+        "unnecessary_work": (
+            "invoked_without_causal_rescue",
+            "component_invoked",
+        ),
+    }
+)
+
+
+def build_causal_rescue_rate_bundle(
+    aggregate: object,
+) -> dict[str, object]:
+    """Build all preregistered rates from one validated G210 aggregate."""
+
+    # Local import preserves the existing metrics -> contracts dependency
+    # direction while keeping this statistical analysis replayable.
+    from .metrics import validate_causal_rescue_aggregate
+
+    validated = validate_causal_rescue_aggregate(aggregate)
+    components = _mapping(validated["components"], "causal components")
+    rates: list[CausalBinomialRate] = []
+    for component_id in sorted(components):
+        component = _mapping(
+            components[component_id],
+            f"causal component {component_id}",
+        )
+        populations = _mapping(
+            component["rate_populations"],
+            f"{component_id} rate_populations",
+        )
+        if set(populations) != set(_CAUSAL_RATE_LABELS):
+            raise StatisticsError(
+                f"{component_id} causal rate population set changed"
+            )
+        for rate_id in sorted(populations):
+            population = _mapping(
+                populations[rate_id],
+                f"{component_id}.{rate_id}",
+            )
+            _exact_keys(
+                population,
+                {"event_receipt_cids", "population_receipt_cids"},
+                f"{component_id}.{rate_id}",
+            )
+            event_label, population_label = _CAUSAL_RATE_LABELS[rate_id]
+            event_cids = _array(
+                population["event_receipt_cids"],
+                f"{component_id}.{rate_id}.event_receipt_cids",
+            )
+            population_cids = _array(
+                population["population_receipt_cids"],
+                f"{component_id}.{rate_id}.population_receipt_cids",
+            )
+            rates.append(
+                CausalBinomialRate(
+                    metric_id=f"{component_id}_{rate_id}_rate",
+                    event_label=event_label,
+                    population_label=f"{component_id}_{population_label}",
+                    event_receipt_cids=tuple(event_cids),  # type: ignore[arg-type]
+                    population_receipt_cids=tuple(
+                        population_cids
+                    ),  # type: ignore[arg-type]
+                )
+            )
+    body = {
+        "schema": CAUSAL_RESCUE_RATE_BUNDLE_SCHEMA,
+        "aggregate": validated,
+        "aggregate_cid": validated["aggregate_cid"],
+        "proof_authority": "native_kernel",
+        "rates": [item.to_dict() for item in rates],
+    }
+    return {**body, "bundle_cid": cid_for_dag_json(body)}
+
+
+def validate_causal_rescue_rate_bundle(
+    value: object,
+) -> dict[str, object]:
+    """Recompute every G210 rate, interval, denominator, and CID."""
+
+    data = _mapping(value, "causal rescue rate bundle")
+    expected = {
+        "schema",
+        "aggregate",
+        "aggregate_cid",
+        "proof_authority",
+        "rates",
+        "bundle_cid",
+    }
+    _exact_keys(data, expected, "causal rescue rate bundle")
+    if data.get("schema") != CAUSAL_RESCUE_RATE_BUNDLE_SCHEMA:
+        raise StatisticsError(
+            "unsupported causal rescue rate-bundle schema"
+        )
+    try:
+        rebuilt = build_causal_rescue_rate_bundle(data["aggregate"])
+    except ProtocolContractError as exc:
+        raise StatisticsError(
+            f"causal rescue aggregate is invalid: {exc}"
+        ) from exc
+    if dict(data) != rebuilt:
+        raise StatisticsError(
+            "causal rescue rate bundle fields or CID changed"
+        )
+    return rebuilt
 
 
 @dataclass(frozen=True, slots=True)
@@ -1841,6 +2162,8 @@ def statistics_summary(value: object) -> dict[str, object]:
 
 
 __all__ = [
+    "CAUSAL_BINOMIAL_RATE_SCHEMA",
+    "CAUSAL_RESCUE_RATE_BUNDLE_SCHEMA",
     "COMPARISON_SPEC_SCHEMA",
     "DEFAULT_BOOTSTRAP_SAMPLES",
     "DEFAULT_BOOTSTRAP_SEED",
@@ -1852,6 +2175,7 @@ __all__ = [
     "AnalysisRequest",
     "AnalysisDomain",
     "AnalysisRole",
+    "CausalBinomialRate",
     "ComparisonSpec",
     "Estimator",
     "HSSLEV0608F63",
@@ -1870,10 +2194,12 @@ __all__ = [
     "analyze_paired_results",
     "analyze_requests",
     "build_statistics_report",
+    "build_causal_rescue_rate_bundle",
     "load_statistics_report",
     "observation_from_case_results",
     "observation_from_outcomes",
     "pareto_frontier",
     "statistics_summary",
     "validate_statistics_report",
+    "validate_causal_rescue_rate_bundle",
 ]

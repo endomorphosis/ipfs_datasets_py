@@ -14,6 +14,7 @@ from enum import Enum
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 from types import MappingProxyType
@@ -26,6 +27,7 @@ from .contracts import (
     RunContract,
     Split,
 )
+from .content_addressing import cid_for_dag_json, validate_cid
 
 
 CASE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.case.v1"
@@ -41,6 +43,23 @@ SPLIT_INTEGRITY_SCHEMA: Final = (
 )
 HOLDOUT_ACCESS_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.holdout-access.v1"
+)
+REPLACEMENT_HOLDOUT_SEAL_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.replacement-holdout-seal.v2"
+)
+REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "replacement-holdout-ledger-authority.v1"
+)
+REPLACEMENT_HOLDOUT_PROTOCOL_KEYS: Final = frozenset(
+    {
+        "access_policy",
+        "causal_proof",
+        "holdout_execution",
+        "independent_authorship",
+        "independent_review",
+        "semantic",
+    }
 )
 CORPUS_ID: Final = "hammer-symai-spacy-leanstral-reviewed-v1"
 CORPUS_VERSION: Final = 1
@@ -612,6 +631,279 @@ def _count_mapping(value: object, field_name: str) -> Mapping[str, int]:
     if not frozen:
         raise CorpusContractError(f"{field_name} must not be empty")
     return MappingProxyType(frozen)
+
+
+def _cid(
+    value: object,
+    field_name: str,
+    *,
+    codecs: tuple[str, ...],
+) -> str:
+    try:
+        return validate_cid(value, codecs=codecs)
+    except (TypeError, ValueError) as exc:
+        raise CorpusContractError(
+            f"{field_name} must be a canonical CIDv1/base32/sha2-256 "
+            f"using one of {codecs!r}"
+        ) from exc
+
+
+def replacement_holdout_ledger_authority_cid(
+    sealed_manifest_cid: str,
+    ledger_path: str | Path,
+) -> str:
+    """Commit one sealed manifest to one canonical access-ledger authority.
+
+    The public seal exposes only this CID, not the ledger path.  The path is
+    deliberately lexical rather than filesystem-resolved: seal construction
+    may precede directory creation, while the append path separately rejects
+    symbolic links and aliases before opening the ledger.
+    """
+
+    manifest_cid = _cid(
+        sealed_manifest_cid,
+        "sealed_manifest_cid",
+        codecs=("raw",),
+    )
+    try:
+        raw_path = os.fspath(ledger_path)
+    except TypeError as exc:
+        raise CorpusContractError(
+            "replacement access ledger path must be path-like"
+        ) from exc
+    if not isinstance(raw_path, str) or not raw_path:
+        raise CorpusContractError(
+            "replacement access ledger path must be a nonempty string"
+        )
+    path = Path(raw_path)
+    if not path.is_absolute():
+        raise CorpusContractError(
+            "replacement access ledger path must be absolute"
+        )
+    if ".." in path.parts:
+        raise CorpusContractError(
+            "replacement access ledger path must not contain '..'"
+        )
+    canonical_path = Path(os.path.normpath(str(path)))
+    if str(path) != str(canonical_path):
+        raise CorpusContractError(
+            "replacement access ledger path must use canonical absolute "
+            "spelling"
+        )
+    return cid_for_dag_json(
+        {
+            "schema": REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA,
+            "sealed_manifest_cid": manifest_cid,
+            "canonical_absolute_ledger_path": str(canonical_path),
+        }
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ReplacementHoldoutSeal:
+    """Opaque public metadata for an independently held revision-2 holdout.
+
+    This object intentionally has no filename, case identifiers, source text,
+    labels, expected IR, proof obligations, or outcomes.  The sealed manifest
+    remains an uninterpreted raw block outside the tuning worktree.  Only the
+    independently published count/strata metadata and protocol identities are
+    visible before a later HSSL-G230 authorization.
+
+    Constructing a value validates metadata but does not create a replacement
+    holdout, attest independent authorship, or authorize access.
+    """
+
+    schema: str
+    sealed_manifest_cid: str
+    case_count: int
+    strata_counts: Mapping[str, int]
+    protocol_cids: Mapping[str, str]
+    access_ledger_authority_cid: str
+    seal_contract_cid: str
+
+    def __post_init__(self) -> None:
+        if self.schema != REPLACEMENT_HOLDOUT_SEAL_SCHEMA:
+            raise CorpusContractError(
+                "unsupported replacement-holdout seal schema"
+            )
+        object.__setattr__(
+            self,
+            "sealed_manifest_cid",
+            _cid(
+                self.sealed_manifest_cid,
+                "sealed_manifest_cid",
+                codecs=("raw",),
+            ),
+        )
+        case_count = _positive_int(self.case_count, "case_count")
+        strata_counts = _count_mapping(self.strata_counts, "strata_counts")
+        if sum(strata_counts.values()) != case_count:
+            raise CorpusContractError(
+                "replacement-holdout strata counts must sum to case_count"
+            )
+        object.__setattr__(self, "case_count", case_count)
+        object.__setattr__(self, "strata_counts", strata_counts)
+
+        protocols = _mapping(self.protocol_cids, "protocol_cids")
+        if set(protocols) != REPLACEMENT_HOLDOUT_PROTOCOL_KEYS:
+            raise CorpusContractError(
+                "replacement-holdout protocol identities must exactly bind "
+                f"{sorted(REPLACEMENT_HOLDOUT_PROTOCOL_KEYS)!r}"
+            )
+        normalized_protocols = {
+            key: _cid(
+                protocols[key],
+                f"protocol_cids.{key}",
+                codecs=("dag-json",),
+            )
+            for key in sorted(protocols)
+        }
+        object.__setattr__(
+            self,
+            "protocol_cids",
+            MappingProxyType(normalized_protocols),
+        )
+        object.__setattr__(
+            self,
+            "access_ledger_authority_cid",
+            _cid(
+                self.access_ledger_authority_cid,
+                "access_ledger_authority_cid",
+                codecs=("dag-json",),
+            ),
+        )
+        object.__setattr__(
+            self,
+            "seal_contract_cid",
+            _cid(
+                self.seal_contract_cid,
+                "seal_contract_cid",
+                codecs=("dag-json",),
+            ),
+        )
+        if self.seal_contract_cid != cid_for_dag_json(
+            self.identity_payload()
+        ):
+            raise CorpusContractError(
+                "seal_contract_cid does not match public replacement seal "
+                "metadata"
+            )
+
+    def identity_payload(self) -> dict[str, object]:
+        """Return only the metadata permitted before G230 authorization."""
+
+        return {
+            "schema": self.schema,
+            "sealed_manifest_cid": self.sealed_manifest_cid,
+            "case_count": self.case_count,
+            "strata_counts": dict(self.strata_counts),
+            "protocol_cids": dict(self.protocol_cids),
+            "access_ledger_authority_cid": (
+                self.access_ledger_authority_cid
+            ),
+        }
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            **self.identity_payload(),
+            "seal_contract_cid": self.seal_contract_cid,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "replacement holdout seal")
+        _exact_keys(
+            data,
+            set(cls.__dataclass_fields__),
+            "replacement holdout seal",
+        )
+        return cls(
+            schema=data["schema"],  # type: ignore[arg-type]
+            sealed_manifest_cid=data["sealed_manifest_cid"],  # type: ignore[arg-type]
+            case_count=data["case_count"],  # type: ignore[arg-type]
+            strata_counts=_mapping(
+                data["strata_counts"], "strata_counts"
+            ),  # type: ignore[arg-type]
+            protocol_cids=_mapping(
+                data["protocol_cids"], "protocol_cids"
+            ),  # type: ignore[arg-type]
+            access_ledger_authority_cid=data[
+                "access_ledger_authority_cid"
+            ],  # type: ignore[arg-type]
+            seal_contract_cid=data["seal_contract_cid"],  # type: ignore[arg-type]
+        )
+
+
+def validate_replacement_holdout_external_path(
+    sealed_manifest_path: str | Path,
+    *,
+    tuning_worktree: str | Path,
+) -> Path:
+    """Validate an opaque sealed block without opening or decoding it.
+
+    The replacement must be a private regular file at an absolute path outside
+    the tuning worktree.  A later authorized executor still receives bytes
+    only through its external custodian; this function performs metadata-only
+    path validation and is not a loader.
+    """
+
+    path = Path(sealed_manifest_path)
+    worktree = Path(tuning_worktree)
+    if not path.is_absolute() or not worktree.is_absolute():
+        raise CorpusContractError(
+            "replacement holdout and tuning worktree paths must be absolute"
+        )
+    if path.is_symlink():
+        raise CorpusContractError(
+            "replacement holdout path must not be a symbolic link"
+        )
+    try:
+        path.relative_to(worktree)
+    except ValueError:
+        pass
+    else:
+        raise CorpusContractError(
+            "replacement holdout path must not be addressable inside the "
+            "tuning worktree"
+        )
+    if any(parent.is_symlink() for parent in path.parents):
+        raise CorpusContractError(
+            "replacement holdout path must not traverse symbolic links"
+        )
+    try:
+        resolved_path = path.resolve(strict=True)
+        resolved_worktree = worktree.resolve(strict=True)
+    except OSError as exc:
+        raise CorpusContractError(
+            "replacement holdout path boundary cannot be resolved"
+        ) from exc
+    try:
+        resolved_path.relative_to(resolved_worktree)
+    except ValueError:
+        pass
+    else:
+        raise CorpusContractError(
+            "replacement holdout must remain outside the tuning worktree"
+        )
+    if not resolved_path.is_file():
+        raise CorpusContractError(
+            "replacement holdout path must identify a regular file"
+        )
+    try:
+        metadata = resolved_path.stat()
+    except OSError as exc:
+        raise CorpusContractError(
+            "replacement holdout path metadata is inaccessible"
+        ) from exc
+    if metadata.st_nlink != 1:
+        raise CorpusContractError(
+            "replacement holdout file must not have hard-link aliases"
+        )
+    if metadata.st_mode & 0o077:
+        raise CorpusContractError(
+            "replacement holdout file must deny group and other access"
+        )
+    return resolved_path
 
 
 @dataclass(frozen=True, slots=True)
@@ -1894,6 +2186,9 @@ __all__ = [
     "FROZEN_SPLIT_SHA256",
     "HOLDOUT_ACCESS_SCHEMA",
     "NEAR_DUPLICATE_JACCARD_THRESHOLD",
+    "REPLACEMENT_HOLDOUT_PROTOCOL_KEYS",
+    "REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA",
+    "REPLACEMENT_HOLDOUT_SEAL_SCHEMA",
     "REVIEW_SCHEMA",
     "SOURCE_NORMALIZATION_VERSION",
     "SPLIT_INTEGRITY_SCHEMA",
@@ -1908,6 +2203,7 @@ __all__ = [
     "HoldoutAccessAudit",
     "ManifestCase",
     "ReviewAttestation",
+    "ReplacementHoldoutSeal",
     "ReviewedCorpus",
     "SplitIntegrityManifest",
     "SplitManifest",
@@ -1922,8 +2218,10 @@ __all__ = [
     "load_unsealed_pilot_development",
     "normalize_source_text",
     "normalized_source_sha256",
+    "replacement_holdout_ledger_authority_cid",
     "source_similarity",
     "validate_holdout_access_log",
     "validate_holdout_prompt_isolation",
+    "validate_replacement_holdout_external_path",
     "validate_split_integrity",
 ]

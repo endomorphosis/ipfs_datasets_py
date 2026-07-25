@@ -280,6 +280,8 @@ __all__ = [
 # multiformats stack beyond the standard library.  These imports live at the
 # end so it can reuse ``BENCHMARK_ID`` without creating an initialization cycle.
 from .contracts import (  # noqa: E402
+    CAUSAL_PROOF_PROTOCOL_V2_CID,
+    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
     CASE_RESULT_RECEIPT_SCHEMA,
     CASE_RESULT_SCHEMA,
     CaseResultRecord,
@@ -319,6 +321,8 @@ from .contracts import (  # noqa: E402
 
 __all__ += [
     "BenchmarkProtocol",
+    "CAUSAL_PROOF_PROTOCOL_V2_CID",
+    "CAUSAL_PROOF_VARIANT_PROFILE_V2_CID",
     "CASE_RESULT_RECEIPT_SCHEMA",
     "CASE_RESULT_SCHEMA",
     "CaseResultRecord",
@@ -507,8 +511,14 @@ __all__ += [
 # Live runtime construction is explicit and remains side-effect free until a
 # stage is invoked.
 from .runtime import (  # noqa: E402
+    CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2,
     COMPILED_OBLIGATION_SCHEMA,
     KERNEL_RECEIPT_SCHEMA,
+    CausalKernelCheck,
+    CausalProofCandidate,
+    CausalProofFailure,
+    CausalProofGraphController,
+    CausalProofGraphResult,
     CompiledObligation,
     HSSLEV1142E95,
     HSSLEV1207F16,
@@ -523,8 +533,14 @@ from .runtime import (  # noqa: E402
 )
 
 __all__ += [
+    "CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2",
     "COMPILED_OBLIGATION_SCHEMA",
     "KERNEL_RECEIPT_SCHEMA",
+    "CausalKernelCheck",
+    "CausalProofCandidate",
+    "CausalProofFailure",
+    "CausalProofGraphController",
+    "CausalProofGraphResult",
     "CompiledObligation",
     "HSSLEV1142E95",
     "HSSLEV1207F16",
@@ -549,6 +565,9 @@ from .cases import (  # noqa: E402
     FROZEN_SPLIT_INTEGRITY_SHA256,
     FROZEN_SPLIT_SHA256,
     HOLDOUT_ACCESS_SCHEMA,
+    REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA,
+    REPLACEMENT_HOLDOUT_PROTOCOL_KEYS,
+    REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
     SPLIT_INTEGRITY_SCHEMA,
     SPLIT_MANIFEST_SCHEMA,
     BenchmarkCase,
@@ -560,6 +579,7 @@ from .cases import (  # noqa: E402
     HSSLEV0232D57,
     HoldoutAccessAudit,
     ReviewAttestation,
+    ReplacementHoldoutSeal,
     ReviewedCorpus,
     SplitIntegrityManifest,
     SplitManifest,
@@ -572,6 +592,8 @@ from .cases import (  # noqa: E402
     load_reviewed_corpus,
     load_unsealed_pilot_development,
     normalize_source_text,
+    replacement_holdout_ledger_authority_cid,
+    validate_replacement_holdout_external_path,
     validate_holdout_access_log,
     validate_holdout_prompt_isolation,
     validate_split_integrity,
@@ -586,6 +608,9 @@ __all__ += [
     "FROZEN_SPLIT_INTEGRITY_SHA256",
     "FROZEN_SPLIT_SHA256",
     "HOLDOUT_ACCESS_SCHEMA",
+    "REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA",
+    "REPLACEMENT_HOLDOUT_PROTOCOL_KEYS",
+    "REPLACEMENT_HOLDOUT_SEAL_SCHEMA",
     "SPLIT_INTEGRITY_SCHEMA",
     "SPLIT_MANIFEST_SCHEMA",
     "BenchmarkCase",
@@ -597,6 +622,7 @@ __all__ += [
     "HSSLEV0232D57",
     "HoldoutAccessAudit",
     "ReviewAttestation",
+    "ReplacementHoldoutSeal",
     "ReviewedCorpus",
     "SplitIntegrityManifest",
     "SplitManifest",
@@ -609,6 +635,8 @@ __all__ += [
     "load_reviewed_corpus",
     "load_unsealed_pilot_development",
     "normalize_source_text",
+    "replacement_holdout_ledger_authority_cid",
+    "validate_replacement_holdout_external_path",
     "validate_holdout_access_log",
     "validate_holdout_prompt_isolation",
     "validate_split_integrity",
@@ -720,4 +748,60 @@ __all__ += [
     "evaluate_semantic_ablation_calibration_v2",
     "execute_semantic_ablation",
     "validate_semantic_ablation_evidence",
+]
+
+# Revision-2 causal execution and readiness are additive, side-effect-free
+# boundaries.  They expose no positive holdout authorization until their
+# source-recomputed prerequisites exist.
+from .causal_ablation import (  # noqa: E402
+    CausalAblationError,
+    CausalAblationRunResultV2,
+    CausalExecutionProfileV2,
+    CausalRescueCaseV2,
+    CausalRescueManifestV2,
+    build_causal_rescue_manifest_v2,
+    revalidate_semantic_calibration_prerequisite_v2,
+)
+from .causal_runtime import (  # noqa: E402
+    CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2,
+    COMPILER_REFERENCE_EXPOSURE_SCHEMA_V2,
+    CausalRuntimeBridgeError,
+    CausalRuntimeEvidenceV2,
+    CompilerReferenceExposureV2,
+    execute_causal_runtime_case_v2,
+    validate_causal_runtime_evidence_v2,
+)
+
+from .revised_pilot_authorization import (  # noqa: E402
+    G210ReceiptMatrix,
+    G230AuthorizationResult,
+    G230ExecutionIdentities,
+    G230RevisedPilotDecision,
+    G230SourceFreezeReceipt,
+    RevisedPilotAuthorizationError,
+    evaluate_revised_pilot_authorization,
+)
+
+__all__ += [
+    "CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2",
+    "COMPILER_REFERENCE_EXPOSURE_SCHEMA_V2",
+    "CausalAblationError",
+    "CausalAblationRunResultV2",
+    "CausalExecutionProfileV2",
+    "CausalRescueCaseV2",
+    "CausalRescueManifestV2",
+    "CausalRuntimeBridgeError",
+    "CausalRuntimeEvidenceV2",
+    "CompilerReferenceExposureV2",
+    "G210ReceiptMatrix",
+    "G230AuthorizationResult",
+    "G230ExecutionIdentities",
+    "G230RevisedPilotDecision",
+    "G230SourceFreezeReceipt",
+    "RevisedPilotAuthorizationError",
+    "build_causal_rescue_manifest_v2",
+    "execute_causal_runtime_case_v2",
+    "evaluate_revised_pilot_authorization",
+    "revalidate_semantic_calibration_prerequisite_v2",
+    "validate_causal_runtime_evidence_v2",
 ]

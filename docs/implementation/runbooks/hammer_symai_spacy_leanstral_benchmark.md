@@ -199,6 +199,93 @@ requires the new protocol, replacement seal, and exact fresh HSSL-G230
 authorization. Until then, do not execute any holdout, publish a replacement
 HSSL-G170 decision, or infer production responsibility.
 
+### Revision-2 implementation boundary
+
+The HSSL-G200 through HSSL-G230 code scaffold is additive and data-free. It
+does not mean that the revised benchmark has run or that any candidate has
+passed:
+
+- HSSL-G200 defines the source-only semantic protocol and validator, but G210
+  execution now replays the complete persisted 20-case/100-coordinate
+  pilot/development calibration sources. A caller-supplied report CID is not
+  authority: a CID proves byte integrity, not independent review or truth.
+- HSSL-G210 defines compiler-first causal selection, raw-CID certificate
+  identity, duplicate suppression, native-kernel sidecars, explicit
+  denominators, and component cost/rate receipts. The live
+  `execute_causal_runtime_case_v2` bridge now emits one shared A0 compiler
+  exposure, immutable source-only frontend records, proof-context-isolated
+  candidate attempts, candidate-specific native-kernel checks, CaseResult,
+  telemetry/resource receipts, and causal metrics as one
+  `CausalRuntimeEvidenceV2`. Build the shared exposure with
+  `CompilerReferenceExposureV2.from_compiler_record(...)`; the paired
+  `validate_causal_runtime_evidence_v2` entry point replays its source,
+  protocol, artifact, selection, kernel, and accounting bindings. The executor
+  accepts either the exact optional-plus-kernel adapter subset or the exact
+  per-variant adapter mapping, for example
+  `live_runtime.adapters[semantic_result.variant_id]`; in both forms it
+  consumes the shared frontend evidence without re-invoking frontend
+  adapters. Enum-safe DAG-JSON
+  identities, CID-multihash joins to frozen legacy native-receipt SHA fields,
+  exactly one targeted native attempt per candidate, and typed optional-failure
+  replay close the live receipt boundary. An accepted
+  candidate after a Leanstral model failure remains a terminal proof
+  continuation with zero rescue credit. Synthetic tests validate this live
+  bridge, but that is implementation evidence, not a benchmark result:
+  operational execution still requires the real reviewed rescue population
+  and a complete source-replayed matrix.
+- HSSL-G220 defines only the external-seal and custody mechanics. The seal
+  commits to the raw replacement-manifest CID, protocol/attestation CIDs,
+  public counts/strata, and one canonical access-ledger authority. Premature,
+  mismatched, dangling, or post-crash access invalidates or blocks that seal.
+  Independent authorship, review, custodian-owned append-only storage (or
+  signed checkpoints), storage ACLs, and the actual replacement manifest
+  remain external work; a tuning principal with direct same-path write access
+  is outside the current local ledger's trust model.
+- HSSL-G230 consumes full G210 manifests, execution profiles, case receipts,
+  and causal aggregates. It is intentionally negative-only until independent
+  revision-2 safety, paired-efficacy, resource, replay, and statistical gate
+  validators can recompute every claim from source. It cannot currently mint
+  a shortlist or replacement-holdout authorization. There is not yet an
+  authoritative batch/persistence bridge from every full
+  `CausalRuntimeEvidenceV2` receipt into `G210ReceiptMatrix`: the retired
+  selection-only batch wrapper is fail-closed, while the current matrix stores
+  reduced manifests, profiles, case receipts, and aggregates. A future
+  positive G230 gate must ingest source-revalidated G200 authority and bind and
+  replay every complete `CausalRuntimeEvidenceV2.receipt_cid`, not accept only
+  the reduced causal receipt or aggregate.
+
+The compatibility bridge from an IPFS CID to a frozen legacy SHA-256 receipt
+field extracts the CID's `sha2-256` multihash digest. New structured and raw
+identities retain their complete CIDv1/base32 codec identity rather than
+introducing new bare hashes.
+
+Safe implementation validation does not load benchmark fixtures or holdout
+content:
+
+```bash
+python -m pytest -q \
+  tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py \
+  tests/integration/benchmarks/logic_pipeline/test_causal_rescue_manifest.py \
+  tests/integration/benchmarks/logic_pipeline/test_causal_rescue_metrics.py \
+  tests/integration/benchmarks/logic_pipeline/test_causal_runtime.py \
+  tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py \
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py \
+  tests/unit/benchmarks/logic_pipeline/test_statistics.py
+```
+
+The synthetic causal-runtime and focused revision-2 suites must pass together
+with the broader safely selected live/runtime/kernel regressions. These tests
+establish implementation coverage only and do not include a reviewed
+benchmark run; report exact counts from the current commit rather than
+preserving counts from an earlier revision in this runbook.
+
+Do not advance to a revised pilot run until the real G200 source replay passes
+and this bridge has produced and revalidated the complete G210 matrix over the
+real reviewed rescue population; the current evidence is synthetic only. Do
+not advance to replacement-holdout access until independent G220 authorship,
+review, custody, and append-only storage exist and a future source-recomputed
+G230 gate produces a nonempty exact authorization.
+
 The immutable predecessor decision is:
 
 ```text

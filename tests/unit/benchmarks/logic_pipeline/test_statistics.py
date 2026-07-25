@@ -13,6 +13,7 @@ import sys
 import pytest
 
 from benchmarks.logic_pipeline import report, statistics
+from benchmarks.logic_pipeline.content_addressing import cid_for_dag_json
 from benchmarks.logic_pipeline.contracts import (
     DEFAULT_PROTOCOL_SHA256,
     OUTCOME_RECORD_SCHEMA,
@@ -33,6 +34,10 @@ ROOT = Path(__file__).resolve().parents[4]
 
 def _sha(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _cid(value: str) -> str:
+    return cid_for_dag_json({"synthetic_receipt": value})
 
 
 def _spec(
@@ -816,3 +821,82 @@ def test_report_builder_is_canonical_for_request_and_pareto_input_order() -> Non
     )
 
     assert first == second
+
+
+def test_causal_rate_binds_explicit_event_and_population_receipts() -> None:
+    population = tuple(sorted(_cid(f"case-{index}") for index in range(4)))
+    events = tuple(sorted(population[1:3]))
+    rate = statistics.CausalBinomialRate(
+        metric_id="hammer_causal_rescue_rate",
+        event_label="distinct_kernel_accepted_rescue",
+        population_label="hammer_escalation_eligible",
+        event_receipt_cids=events,
+        population_receipt_cids=population,
+    )
+
+    assert rate.numerator == 2
+    assert rate.denominator == 4
+    assert rate.estimate == 0.5
+    lower, upper = rate.interval
+    assert lower == pytest.approx(0.150038989, abs=1e-8)
+    assert upper == pytest.approx(0.849961011, abs=1e-8)
+    assert statistics.CausalBinomialRate.from_dict(rate.to_dict()) == rate
+    assert rate.receipt_cid.startswith("baguqeera")
+
+    relabelled = statistics.CausalBinomialRate(
+        metric_id=rate.metric_id,
+        event_label=rate.event_label,
+        population_label="all_scheduled_cases",
+        event_receipt_cids=events,
+        population_receipt_cids=population,
+    )
+    assert relabelled.receipt_cid != rate.receipt_cid
+
+
+def test_causal_rate_empty_denominator_is_unidentifiable_not_zero() -> None:
+    rate = statistics.CausalBinomialRate(
+        metric_id="leanstral_causal_rescue_rate",
+        event_label="distinct_kernel_accepted_rescue",
+        population_label="leanstral_escalation_eligible",
+        event_receipt_cids=(),
+        population_receipt_cids=(),
+    )
+
+    assert rate.numerator == 0
+    assert rate.denominator == 0
+    assert rate.estimate is None
+    assert rate.interval == (None, None)
+    assert statistics.CausalBinomialRate.from_dict(rate.to_dict()) == rate
+
+
+def test_causal_rate_rejects_forged_or_ambiguous_denominators() -> None:
+    one, two = sorted((_cid("one"), _cid("two")))
+    outside = _cid("outside")
+    with pytest.raises(statistics.StatisticsError, match="subset"):
+        statistics.CausalBinomialRate(
+            metric_id="hammer_suppression_rate",
+            event_label="eligible_but_suppressed",
+            population_label="hammer_escalation_eligible",
+            event_receipt_cids=(outside,),
+            population_receipt_cids=(one, two),
+        )
+    with pytest.raises(statistics.StatisticsError, match="canonical CID order"):
+        statistics.CausalBinomialRate(
+            metric_id="hammer_escalation_rate",
+            event_label="eligible_and_invoked",
+            population_label="hammer_escalation_eligible",
+            event_receipt_cids=(),
+            population_receipt_cids=(two, one),
+        )
+
+    rate = statistics.CausalBinomialRate(
+        metric_id="hammer_overlap_rate",
+        event_label="byte_identical_overlap",
+        population_label="hammer_invoked",
+        event_receipt_cids=(one,),
+        population_receipt_cids=(one, two),
+    )
+    forged = copy.deepcopy(rate.to_dict())
+    forged["numerator"] = 2
+    with pytest.raises(statistics.StatisticsError, match="derived fields"):
+        statistics.CausalBinomialRate.from_dict(forged)

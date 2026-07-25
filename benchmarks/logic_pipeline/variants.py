@@ -20,16 +20,55 @@ from types import MappingProxyType
 from typing import Final, Mapping
 
 from .contracts import (
+    CAUSAL_PROOF_PROTOCOL_V2_CID,
+    CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2,
+    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
     DEFAULT_PROTOCOL,
     ProtocolContractError,
     StageName,
     canonical_json,
+    causal_proof_variant_profile_v2,
 )
+from .content_addressing import cid_for_dag_json
 
 
 VARIANT_REGISTRY_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.variant-registry.v1"
 )
+
+
+def _freeze_profile_json(value: object) -> object:
+    """Deeply detach and freeze the small causal-route JSON documents."""
+
+    if isinstance(value, Mapping):
+        if not all(isinstance(key, str) for key in value):
+            raise ProtocolContractError(
+                "causal profile route keys must be strings"
+            )
+        return MappingProxyType(
+            {
+                str(key): _freeze_profile_json(member)
+                for key, member in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_profile_json(member) for member in value)
+    if value is None or type(value) in {str, bool, int, float}:
+        return value
+    raise ProtocolContractError(
+        "causal profile route contains a non-JSON value"
+    )
+
+
+def _thaw_profile_json(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _thaw_profile_json(member)
+            for key, member in value.items()
+        }
+    if isinstance(value, tuple):
+        return [_thaw_profile_json(member) for member in value]
+    return value
 
 
 class StagePolicy(str, Enum):
@@ -426,8 +465,180 @@ def get_variant_definition(variant_id: str) -> VariantDefinition:
         ) from exc
 
 
+@dataclass(frozen=True, slots=True)
+class CausalProofVariantProfile:
+    """Typed view of one additive G210 route.
+
+    This profile never mutates :class:`VariantDefinition`; callers must opt in
+    with the exact causal-proof protocol CID before using ``effective_stages``.
+    """
+
+    variant_id: str
+    effective_stages: tuple[StageName, ...]
+    optional_order: tuple[StageName, ...]
+    optional_routes: tuple[Mapping[str, object], ...]
+    compiler_reference_kernel_policy: str
+    proof_authority: str
+
+    def __post_init__(self) -> None:
+        base = get_variant_definition(self.variant_id)
+        if (
+            not isinstance(self.optional_routes, tuple)
+            or not all(
+                isinstance(route, Mapping)
+                for route in self.optional_routes
+            )
+        ):
+            raise ProtocolContractError(
+                "causal optional routes must be an immutable mapping tuple"
+            )
+        frozen_routes = tuple(
+            _freeze_profile_json(route) for route in self.optional_routes
+        )
+        object.__setattr__(self, "optional_routes", frozen_routes)
+        if self.variant_id == "S1":
+            raise ProtocolContractError("S1 is outside the causal proof profile")
+        if not self.effective_stages or self.effective_stages[-1] is not _K:
+            raise ProtocolContractError(
+                "causal proof routes require a terminal kernel stage"
+            )
+        expected_stages = (
+            (*base.stages, _K) if self.variant_id == "A0" else base.stages
+        )
+        if self.effective_stages != expected_stages:
+            raise ProtocolContractError(
+                f"{self.variant_id} causal route changed a non-kernel v1 stage"
+            )
+        if set(self.optional_order) != {
+            stage
+            for stage in base.proof_order
+        } or len(self.optional_order) != len(base.proof_order):
+            raise ProtocolContractError(
+                f"{self.variant_id} causal optional stages drifted"
+            )
+        if tuple(route.get("source") for route in self.optional_routes) != tuple(
+            stage.value for stage in self.optional_order
+        ):
+            raise ProtocolContractError(
+                f"{self.variant_id} causal trigger order drifted"
+            )
+        if (
+            self.compiler_reference_kernel_policy
+            != "identical_independent_check"
+            or self.proof_authority != "native_kernel"
+        ):
+            raise ProtocolContractError(
+                f"{self.variant_id} causal proof authority drifted"
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2,
+            "variant_id": self.variant_id,
+            "effective_stages": [
+                stage.value for stage in self.effective_stages
+            ],
+            "compiler_reference_kernel_policy": (
+                self.compiler_reference_kernel_policy
+            ),
+            "optional_order": [
+                stage.value for stage in self.optional_order
+            ],
+            "optional_routes": [
+                _thaw_profile_json(route)
+                for route in self.optional_routes
+            ],
+            "symai_can_receive_proof_credit": False,
+            "terminal_proof_authority": self.proof_authority,
+        }
+
+    @property
+    def cid(self) -> str:
+        return cid_for_dag_json(self.to_dict())
+
+
+def _build_causal_proof_variant_profiles() -> Mapping[
+    str, CausalProofVariantProfile
+]:
+    document = causal_proof_variant_profile_v2()
+    profiles = document.get("profiles")
+    if not isinstance(profiles, list):
+        raise RuntimeError("causal proof profile document is invalid")
+    result: dict[str, CausalProofVariantProfile] = {}
+    for value in profiles:
+        if not isinstance(value, Mapping):
+            raise RuntimeError("causal proof variant profile is invalid")
+        variant_id = value.get("variant_id")
+        stages = value.get("effective_stages")
+        optional_order = value.get("optional_order")
+        optional_routes = value.get("optional_routes")
+        if (
+            not isinstance(variant_id, str)
+            or not isinstance(stages, list)
+            or not isinstance(optional_order, list)
+            or not isinstance(optional_routes, list)
+            or not all(isinstance(item, Mapping) for item in optional_routes)
+        ):
+            raise RuntimeError("causal proof variant profile is incomplete")
+        profile = CausalProofVariantProfile(
+            variant_id=variant_id,
+            effective_stages=tuple(StageName(item) for item in stages),
+            optional_order=tuple(StageName(item) for item in optional_order),
+            optional_routes=tuple(
+                MappingProxyType(dict(item)) for item in optional_routes
+            ),
+            compiler_reference_kernel_policy=str(
+                value.get("compiler_reference_kernel_policy")
+            ),
+            proof_authority=str(value.get("terminal_proof_authority")),
+        )
+        if variant_id in result:
+            raise RuntimeError("duplicate causal proof variant profile")
+        result[variant_id] = profile
+    expected = {f"A{index}" for index in range(13)}
+    if set(result) != expected:
+        raise RuntimeError("causal proof profile must contain exactly A0-A12")
+    if cid_for_dag_json(document) != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID:
+        raise RuntimeError("causal proof variant profile CID drifted")
+    return MappingProxyType(result)
+
+
+CAUSAL_PROOF_VARIANT_PROFILES: Final = (
+    _build_causal_proof_variant_profiles()
+)
+
+
+def get_causal_proof_variant_profile(
+    variant_id: str,
+) -> CausalProofVariantProfile:
+    """Return one exact G210 profile without falling back to revision 1."""
+
+    try:
+        return CAUSAL_PROOF_VARIANT_PROFILES[variant_id]
+    except (KeyError, TypeError) as exc:
+        raise ProtocolContractError(
+            f"variant is not in the causal proof profile: {variant_id!r}"
+        ) from exc
+
+
+def effective_variant_stages(
+    variant_id: str,
+    *,
+    causal_proof_protocol_cid: str | None = None,
+) -> tuple[StageName, ...]:
+    """Resolve stages under an explicitly selected additive protocol."""
+
+    if causal_proof_protocol_cid is None:
+        return get_variant_definition(variant_id).stages
+    if causal_proof_protocol_cid != CAUSAL_PROOF_PROTOCOL_V2_CID:
+        raise ProtocolContractError("unsupported causal proof protocol CID")
+    return get_causal_proof_variant_profile(variant_id).effective_stages
+
+
 __all__ = [
     "ALL_VARIANT_IDS",
+    "CAUSAL_PROOF_VARIANT_PROFILES",
+    "CausalProofVariantProfile",
     "HammerPolicy",
     "PremiseRanking",
     "SpacyMode",
@@ -437,5 +648,7 @@ __all__ = [
     "VARIANT_REGISTRY_SCHEMA",
     "VARIANT_REGISTRY_SHA256",
     "VariantDefinition",
+    "effective_variant_stages",
+    "get_causal_proof_variant_profile",
     "get_variant_definition",
 ]
