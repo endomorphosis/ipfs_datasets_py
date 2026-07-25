@@ -123,7 +123,7 @@ reporter = ErrorReporter(
 Run the example script:
 
 ```bash
-python examples/error_reporting_example.py
+python examples/archived/error_reporting_example.py
 ```
 
 This demonstrates all features in dry-run mode (won't create real issues).
@@ -181,7 +181,7 @@ curl -X POST http://localhost:8000/api/report-error \
 ## Next Steps
 
 - See [README.md](README.md) for detailed documentation
-- Check [examples/error_reporting_example.py](../examples/error_reporting_example.py) for code examples
+- Check [examples/archived/error_reporting_example.py](../../examples/archived/error_reporting_example.py) for code examples
 - Review [tests/](../../tests/unit/error_reporting/) for usage patterns
 
 ## Support
