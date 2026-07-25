@@ -5,7 +5,9 @@ from __future__ import annotations
 import builtins
 import importlib
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 
 import pytest
@@ -52,6 +54,9 @@ def test_package_import_does_not_load_optional_or_production_components(
         "load_control_suite",
         "load_fixture_imports",
         "manifest_sha256",
+        "SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID",
+        "SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID",
+        "SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID",
     }
 
 
@@ -70,6 +75,46 @@ def test_import_has_no_filesystem_or_routing_side_effects(
     assert {
         name for name in sys.modules if name.startswith("ipfs_datasets_py.")
     } == production_modules_before
+
+
+def test_fresh_import_does_not_enable_application_auto_installers() -> None:
+    """The CID bridge must not pull in the application package bootstrap."""
+
+    repository_root = Path(__file__).resolve().parents[4]
+    environment = dict(os.environ)
+    for name in (
+        "IPFS_DATASETS_AUTO_INSTALL",
+        "IPFS_KIT_AUTO_INSTALL_DEPS",
+        "IPFS_DATASETS_PY_BENCHMARK",
+        "IPFS_DATASETS_PY_MINIMAL_IMPORTS",
+    ):
+        environment.pop(name, None)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import json, os, sys; "
+                "import benchmarks.logic_pipeline; "
+                "print(json.dumps({"
+                "'datasets': os.environ.get('IPFS_DATASETS_AUTO_INSTALL'),"
+                "'kit': os.environ.get('IPFS_KIT_AUTO_INSTALL_DEPS'),"
+                "'package_loaded': 'ipfs_datasets_py' in sys.modules"
+                "}, sort_keys=True))"
+            ),
+        ],
+        cwd=repository_root,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert json.loads(result.stdout) == {
+        "datasets": None,
+        "kit": None,
+        "package_loaded": False,
+    }
 
 
 def test_all_mutable_defaults_are_scoped_below_the_run_root(tmp_path: Path) -> None:

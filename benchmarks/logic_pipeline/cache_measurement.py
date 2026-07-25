@@ -14,10 +14,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 import hashlib
+import json
 import re
 import time
+from types import MappingProxyType
 from typing import Final, Mapping, Sequence, Self
 
+from .content_addressing import cid_for_bytes, cid_for_dag_json, validate_cid
 from .adapters import (
     StageAdapter,
     StageInvocation,
@@ -31,6 +34,7 @@ from .contracts import (
     FailureCode,
     ProtocolContractError,
     ResourceLane,
+    SEMANTIC_PROTOCOL_V2_CID,
     StageName,
     StageRecord,
     StageStatus,
@@ -40,11 +44,14 @@ from .contracts import (
 
 
 __all__ = (
+    "SYMAI_CACHE_PRIME_CID_FIELD",
     "SYMAI_CACHE_PRIME_DIGEST_FIELD",
     "SYMAI_CACHE_PRIME_FIELD",
     "SYMAI_CACHE_PRIME_MAX_BYTES",
     "SYMAI_CACHE_PRIME_RECEIPT_SCHEMA",
+    "SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2",
     "SYMAI_CACHE_PRIME_REQUEST_SCHEMA",
+    "SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2",
     "SymaiCachePrimeReceipt",
     "extract_symai_cache_prime_receipt",
     "extract_symai_cache_setup_telemetry",
@@ -63,12 +70,26 @@ __all__ = (
 SYMAI_CACHE_PRIME_RECEIPT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.symai-cache-prime-receipt.v2"
 )
+SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "symai-cache-prime-receipt.semantic-v2.v1"
+)
 SYMAI_CACHE_PRIME_REQUEST_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.symai-cache-prime-request.v1"
 )
+SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "symai-cache-prime-request.semantic-v2.v1"
+)
 SYMAI_CACHE_PRIME_FIELD: Final = "cache_prime"
 SYMAI_CACHE_PRIME_DIGEST_FIELD: Final = "cache_prime_receipt_sha256"
+SYMAI_CACHE_PRIME_CID_FIELD: Final = "cache_prime_receipt_cid"
+# The public bound is part of the frozen legacy wire contract.  Semantic v2
+# retains the bounded semantic projection so its CID can be recomputed from
+# exact evidence; give that distinct schema enough room for the projection
+# plus its identity and telemetry peers without weakening the legacy limit.
 SYMAI_CACHE_PRIME_MAX_BYTES: Final = 32 * 1024
+_SYMAI_CACHE_PRIME_MAX_BYTES_SEMANTIC_V2: Final = 64 * 1024
 
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _CACHE_KEY_SUFFIX = re.compile(r"[0-9a-f]{64}\Z")
@@ -86,6 +107,7 @@ _OPERATIONAL_SEMANTIC_KEYS: Final = frozenset(
         "graph_invoked",
         "graph_policy_reason",
         "policy_decision",
+        "policy_decision_cid",
         "policy_decision_sha256",
         "raw_output",
         "routing_policy",
@@ -107,6 +129,7 @@ _OPERATIONAL_BACKEND_IDENTITY_KEYS: Final = frozenset(
         "cache_namespace",
         "cache_prime",
         "cache_prime_receipt",
+        "cache_prime_receipt_cid",
         "cache_prime_receipt_sha256",
         "cached_backend",
         "consumed_artifact_sha256",
@@ -117,17 +140,63 @@ _OPERATIONAL_BACKEND_IDENTITY_KEYS: Final = frozenset(
         "model_calls",
         "peak_memory_bytes",
         "policy_decision",
+        "policy_decision_cid",
         "policy_decision_sha256",
+        "proof_context_cid",
         "retries",
         "retry",
         "router_cache",
         "router_cache_key",
         "router_cached_backend",
         "routing_policy",
+        "semantic_protocol_cid",
+        "source_cid",
         "telemetry",
         "wall_time_ms",
     }
 )
+
+
+def _expected_cache_namespace(
+    *,
+    run_id: str,
+    protocol_sha256: str,
+    variant_id: str,
+    split: object,
+    semantic_protocol_cid: str | None,
+) -> str:
+    namespace = CacheScope(
+        run_id=run_id,
+        protocol_sha256=protocol_sha256,
+        variant_id=variant_id,
+        split=split,
+        mode=CacheMode.WARM,
+    ).namespace
+    if semantic_protocol_cid is None:
+        return namespace
+    if semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise ProtocolContractError(
+            "cache measurement semantic protocol CID is unsupported"
+        )
+    return (
+        f"{namespace}/semantic-protocol/{semantic_protocol_cid}"
+    )
+
+
+def _cache_key_suffix_is_valid(
+    value: object,
+    *,
+    semantic_v2: bool,
+) -> bool:
+    if not isinstance(value, str):
+        return False
+    if not semantic_v2:
+        return _CACHE_KEY_SUFFIX.fullmatch(value) is not None
+    try:
+        validate_cid(value, codecs=("dag-json",))
+    except (TypeError, ValueError):
+        return False
+    return True
 
 
 def _detached_json(value: object) -> object:
@@ -148,6 +217,68 @@ def _detached_json(value: object) -> object:
         canonical_json(value)
         return value
     raise ProtocolContractError("value is not canonical JSON data")
+
+
+def _plain_json(value: object) -> object:
+    """Return exact canonical JSON data using only built-in JSON types.
+
+    Protocol enums inherit from ``str`` and are accepted by the legacy JSON
+    encoder, while strict DAG-JSON correctly rejects Python subclasses.  The
+    canonical round trip preserves the wire value and removes those runtime
+    wrapper types before CID construction.
+    """
+
+    try:
+        return json.loads(canonical_json(_detached_json(value)))
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise ProtocolContractError(
+            "value is not canonical JSON data"
+        ) from exc
+
+
+def _freeze_json(value: object) -> object:
+    """Deeply freeze one canonical JSON value retained by a receipt."""
+
+    plain = _plain_json(value)
+
+    def freeze(item: object) -> object:
+        if isinstance(item, dict):
+            return MappingProxyType(
+                {str(key): freeze(member) for key, member in item.items()}
+            )
+        if isinstance(item, list):
+            return tuple(freeze(member) for member in item)
+        return item
+
+    return freeze(plain)
+
+
+def _dag_json_cid(value: object) -> str:
+    """CID-address the exact canonical DAG-JSON value, never a digest string."""
+
+    return cid_for_dag_json(_plain_json(value))
+
+
+def _raw_text_cid(value: str) -> str:
+    """CID-address the exact retained UTF-8 failure-detail bytes."""
+
+    if not isinstance(value, str):
+        raise ProtocolContractError("raw CID input must be text")
+    return cid_for_bytes(value.encode("utf-8"), codec="raw")
+
+
+def _require_cid(
+    value: object,
+    field: str,
+    *,
+    codecs: tuple[str, ...],
+) -> str:
+    try:
+        return validate_cid(value, codecs=codecs)
+    except (TypeError, ValueError) as exc:
+        raise ProtocolContractError(
+            f"{field} must be a canonical CIDv1/base32/sha2-256 value"
+        ) from exc
 
 
 def _digest_json(value: object) -> str:
@@ -190,6 +321,14 @@ def _optional_digest(value: object, field: str) -> str | None:
     return _require_digest(value, field)
 
 
+def _optional_exact_text(value: object, field: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ProtocolContractError(f"{field} must be text or null")
+    return value
+
+
 def _require_boolean(value: object, field: str) -> bool:
     if type(value) is not bool:
         raise ProtocolContractError(f"{field} must be a boolean")
@@ -225,6 +364,18 @@ def _without_receipt_digest(value: Mapping[str, object]) -> dict[str, object]:
         key: item
         for key, item in value.items()
         if key != "receipt_sha256"
+    }
+
+
+def _without_receipt_identities(
+    value: Mapping[str, object],
+) -> dict[str, object]:
+    """Remove both peers that content-address a semantic-v2 receipt body."""
+
+    return {
+        key: item
+        for key, item in value.items()
+        if key not in {"receipt_sha256", "receipt_cid"}
     }
 
 
@@ -342,10 +493,13 @@ def symai_semantic_payload_sha256(value: object) -> str:
 def _request_binding(
     request: StageRequest,
     *,
+    requested_identity: object,
     requested_identity_sha256: str,
+    requested_identity_cid: str | None,
     source: Sequence[str],
+    upstream_artifact_cids: Sequence[str],
 ) -> dict[str, object]:
-    return {
+    binding: dict[str, object] = {
         "schema": SYMAI_CACHE_PRIME_REQUEST_SCHEMA,
         "protocol_sha256": request.protocol_sha256,
         "run_id": request.run_id,
@@ -363,6 +517,107 @@ def _request_binding(
             artifact.digest for artifact in request.upstream_artifacts
         ],
     }
+    if request.semantic_protocol_cid is None:
+        return binding
+    binding.update(
+        {
+            "schema": SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2,
+            "semantic_protocol_cid": request.semantic_protocol_cid,
+            "source_cid": request.source_cid,
+            "requested_identity": _plain_json(requested_identity),
+            "requested_identity_cid": requested_identity_cid,
+            "upstream_artifact_cids": list(upstream_artifact_cids),
+        }
+    )
+    return binding
+
+
+def _upstream_artifact_cids(request: StageRequest) -> tuple[str, ...]:
+    """Address exact typed upstream artifact values available at invocation."""
+
+    return tuple(
+        _dag_json_cid(artifact.to_dict())
+        for artifact in request.upstream_artifacts
+    )
+
+
+def _receipt_requested_identity(
+    request: StageRequest,
+) -> dict[str, object]:
+    """Mirror the requested identity persisted by StageAdapter provenance."""
+
+    identity = dict(request.requested_identity)
+    if request.semantic_protocol_cid is not None:
+        identity.update(
+            {
+                "semantic_protocol_cid": request.semantic_protocol_cid,
+                "source_cid": request.source_cid,
+                "proof_context_cid": request.proof_context_cid,
+            }
+        )
+    return identity
+
+
+_LEGACY_RECEIPT_FIELDS: Final = frozenset(
+    {
+        "schema",
+        "protocol_sha256",
+        "run_id",
+        "case_id",
+        "case_manifest_sha256",
+        "variant_id",
+        "split",
+        "cache_mode",
+        "input_sha256",
+        "environment_sha256",
+        "requested_identity_sha256",
+        "source",
+        "upstream_stage_digests",
+        "upstream_artifact_sha256",
+        "request_sha256",
+        "cache_namespace",
+        "cache_key",
+        "prime_semantic_output_sha256",
+        "prime_effective_identity_sha256",
+        "prime_backend_identity_sha256",
+        "prime_status",
+        "prime_failure_code",
+        "prime_failure_detail_sha256",
+        "setup_telemetry",
+        "setup_telemetry_sha256",
+        "measured_invoked",
+        "measured_status",
+        "measured_failure_code",
+        "measured_failure_detail_sha256",
+        "measured_telemetry_sha256",
+        "receipt_sha256",
+    }
+)
+_SEMANTIC_V2_RECEIPT_FIELDS: Final = frozenset(
+    {
+        *_LEGACY_RECEIPT_FIELDS,
+        "semantic_protocol_cid",
+        "source_cid",
+        "requested_identity",
+        "requested_identity_cid",
+        "upstream_artifact_cids",
+        "request_cid",
+        "prime_semantic_output",
+        "prime_semantic_output_cid",
+        "prime_effective_identity",
+        "prime_effective_identity_cid",
+        "prime_backend_identity",
+        "prime_backend_identity_cid",
+        "prime_failure_detail",
+        "prime_failure_detail_cid",
+        "setup_telemetry_cid",
+        "measured_failure_detail",
+        "measured_failure_detail_cid",
+        "measured_telemetry",
+        "measured_telemetry_cid",
+        "receipt_cid",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -400,12 +655,40 @@ class SymaiCachePrimeReceipt:
     measured_failure_detail_sha256: str | None
     measured_telemetry_sha256: str | None
     receipt_sha256: str
+    # Semantic-v2 fields are absent from the legacy wire shape.  They are
+    # conditionally emitted only by ``to_dict`` for the distinct CID schema.
+    semantic_protocol_cid: str | None = None
+    source_cid: str | None = None
+    requested_identity: object | None = None
+    requested_identity_cid: str | None = None
+    upstream_artifact_cids: tuple[str, ...] = ()
+    request_cid: str | None = None
+    prime_semantic_output: object | None = None
+    prime_semantic_output_cid: str | None = None
+    prime_effective_identity: object | None = None
+    prime_effective_identity_cid: str | None = None
+    prime_backend_identity: object | None = None
+    prime_backend_identity_cid: str | None = None
+    prime_failure_detail: str | None = None
+    prime_failure_detail_cid: str | None = None
+    setup_telemetry_cid: str | None = None
+    measured_failure_detail: str | None = None
+    measured_failure_detail_cid: str | None = None
+    measured_telemetry: TelemetryRecord | None = None
+    measured_telemetry_cid: str | None = None
+    receipt_cid: str | None = None
 
     def __post_init__(self) -> None:
-        if self.schema != SYMAI_CACHE_PRIME_RECEIPT_SCHEMA:
+        if self.schema not in {
+            SYMAI_CACHE_PRIME_RECEIPT_SCHEMA,
+            SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2,
+        }:
             raise ProtocolContractError(
                 "unsupported SyMAI cache-prime receipt schema"
             )
+        semantic_v2 = (
+            self.schema == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+        )
         for field in (
             "protocol_sha256",
             "case_manifest_sha256",
@@ -460,13 +743,41 @@ class SymaiCachePrimeReceipt:
             maximum_items=_MAX_SOURCE_ITEMS,
             digests=True,
         )
-        expected_namespace = CacheScope(
+        if semantic_v2:
+            if len(self.upstream_artifact_cids) != len(
+                self.upstream_artifact_sha256
+            ):
+                raise ProtocolContractError(
+                    "semantic cache-prime upstream artifact CID/SHA peers "
+                    "differ in length"
+                )
+            for index, cid in enumerate(self.upstream_artifact_cids):
+                _require_cid(
+                    cid,
+                    f"upstream_artifact_cids[{index}]",
+                    codecs=("dag-json",),
+                )
+        elif self.upstream_artifact_cids:
+            raise ProtocolContractError(
+                "legacy cache-prime receipt cannot contain artifact CIDs"
+            )
+        revision_1_namespace = _expected_cache_namespace(
             run_id=self.run_id,
             protocol_sha256=self.protocol_sha256,
             variant_id=self.variant_id,
             split=_split_from_value(self.split),
-            mode=CacheMode.WARM,
-        ).namespace
+            semantic_protocol_cid=None,
+        )
+        semantic_namespace = _expected_cache_namespace(
+            run_id=self.run_id,
+            protocol_sha256=self.protocol_sha256,
+            variant_id=self.variant_id,
+            split=_split_from_value(self.split),
+            semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
+        )
+        expected_namespace = (
+            semantic_namespace if semantic_v2 else revision_1_namespace
+        )
         if self.cache_namespace != expected_namespace:
             raise ProtocolContractError(
                 "cache-prime namespace does not bind the exact warm scope"
@@ -475,10 +786,10 @@ class SymaiCachePrimeReceipt:
         if (
             not isinstance(self.cache_key, str)
             or not self.cache_key.startswith(prefix)
-            or _CACHE_KEY_SUFFIX.fullmatch(
-                self.cache_key[len(prefix) :]
+            or not _cache_key_suffix_is_valid(
+                self.cache_key[len(prefix) :],
+                semantic_v2=semantic_v2,
             )
-            is None
         ):
             raise ProtocolContractError(
                 "cache-prime key does not bind the exact SyMAI warm scope"
@@ -582,6 +893,224 @@ class SymaiCachePrimeReceipt:
                 raise ProtocolContractError(
                     "failed SyMAI measurement must bind its failure"
                 )
+
+        if semantic_v2:
+            if (
+                _require_cid(
+                    self.semantic_protocol_cid,
+                    "semantic_protocol_cid",
+                    codecs=("dag-json",),
+                )
+                != SEMANTIC_PROTOCOL_V2_CID
+            ):
+                raise ProtocolContractError(
+                    "semantic cache-prime protocol CID drifted"
+                )
+            _require_cid(
+                self.source_cid,
+                "source_cid",
+                codecs=("raw",),
+            )
+            exact_values = {
+                "requested_identity": self.requested_identity,
+                "prime_semantic_output": self.prime_semantic_output,
+                "prime_effective_identity": self.prime_effective_identity,
+                "prime_backend_identity": self.prime_backend_identity,
+            }
+            for field, value in exact_values.items():
+                plain = _plain_json(value)
+                if not isinstance(plain, dict):
+                    raise ProtocolContractError(
+                        f"semantic cache-prime {field} must be an object"
+                    )
+                object.__setattr__(self, field, _freeze_json(plain))
+            cid_peers = (
+                (
+                    "requested_identity",
+                    self.requested_identity,
+                    "requested_identity_sha256",
+                    self.requested_identity_sha256,
+                    "requested_identity_cid",
+                    self.requested_identity_cid,
+                ),
+                (
+                    "prime_semantic_output",
+                    self.prime_semantic_output,
+                    "prime_semantic_output_sha256",
+                    self.prime_semantic_output_sha256,
+                    "prime_semantic_output_cid",
+                    self.prime_semantic_output_cid,
+                ),
+                (
+                    "prime_effective_identity",
+                    self.prime_effective_identity,
+                    "prime_effective_identity_sha256",
+                    self.prime_effective_identity_sha256,
+                    "prime_effective_identity_cid",
+                    self.prime_effective_identity_cid,
+                ),
+                (
+                    "prime_backend_identity",
+                    self.prime_backend_identity,
+                    "prime_backend_identity_sha256",
+                    self.prime_backend_identity_sha256,
+                    "prime_backend_identity_cid",
+                    self.prime_backend_identity_cid,
+                ),
+            )
+            for (
+                value_name,
+                value,
+                digest_name,
+                digest,
+                cid_name,
+                cid,
+            ) in cid_peers:
+                if _digest_json(value) != digest:
+                    raise ProtocolContractError(
+                        f"semantic cache-prime {value_name} differs from "
+                        f"{digest_name}"
+                    )
+                if (
+                    _require_cid(cid, cid_name, codecs=("dag-json",))
+                    != _dag_json_cid(value)
+                ):
+                    raise ProtocolContractError(
+                        f"semantic cache-prime {value_name} differs from "
+                        f"{cid_name}"
+                    )
+            if (
+                _require_cid(
+                    self.setup_telemetry_cid,
+                    "setup_telemetry_cid",
+                    codecs=("dag-json",),
+                )
+                != _dag_json_cid(self.setup_telemetry.to_dict())
+            ):
+                raise ProtocolContractError(
+                    "semantic cache-prime setup telemetry CID mismatch"
+                )
+            if status is StageStatus.SUCCESS:
+                if (
+                    self.prime_failure_detail is not None
+                    or self.prime_failure_detail_cid is not None
+                ):
+                    raise ProtocolContractError(
+                        "successful semantic cache prime cannot retain a "
+                        "failure detail"
+                    )
+            else:
+                if not isinstance(self.prime_failure_detail, str):
+                    raise ProtocolContractError(
+                        "failed semantic cache prime must retain its exact "
+                        "failure detail"
+                    )
+                if (
+                    _digest_text(self.prime_failure_detail)
+                    != self.prime_failure_detail_sha256
+                    or _require_cid(
+                        self.prime_failure_detail_cid,
+                        "prime_failure_detail_cid",
+                        codecs=("raw",),
+                    )
+                    != _raw_text_cid(self.prime_failure_detail)
+                ):
+                    raise ProtocolContractError(
+                        "semantic cache-prime failure-detail CID/SHA peers "
+                        "mismatch exact bytes"
+                    )
+            if not self.measured_invoked:
+                if any(
+                    value is not None
+                    for value in (
+                        self.measured_failure_detail,
+                        self.measured_failure_detail_cid,
+                        self.measured_telemetry,
+                        self.measured_telemetry_cid,
+                    )
+                ):
+                    raise ProtocolContractError(
+                        "uninvoked semantic cache measurement retained "
+                        "measured CID evidence"
+                    )
+            else:
+                if not isinstance(
+                    self.measured_telemetry, TelemetryRecord
+                ):
+                    raise ProtocolContractError(
+                        "semantic cache measurement must retain exact telemetry"
+                    )
+                if (
+                    self.measured_telemetry.digest
+                    != self.measured_telemetry_sha256
+                    or _require_cid(
+                        self.measured_telemetry_cid,
+                        "measured_telemetry_cid",
+                        codecs=("dag-json",),
+                    )
+                    != _dag_json_cid(self.measured_telemetry.to_dict())
+                ):
+                    raise ProtocolContractError(
+                        "semantic cache measured telemetry CID/SHA peers "
+                        "mismatch"
+                    )
+                measured_status = StageStatus(self.measured_status)
+                if measured_status is StageStatus.SUCCESS:
+                    if (
+                        self.measured_failure_detail is not None
+                        or self.measured_failure_detail_cid is not None
+                    ):
+                        raise ProtocolContractError(
+                            "successful semantic cache measurement cannot "
+                            "retain a failure detail"
+                        )
+                else:
+                    if not isinstance(self.measured_failure_detail, str):
+                        raise ProtocolContractError(
+                            "failed semantic cache measurement must retain "
+                            "its exact failure detail"
+                        )
+                    if (
+                        _digest_text(self.measured_failure_detail)
+                        != self.measured_failure_detail_sha256
+                        or _require_cid(
+                            self.measured_failure_detail_cid,
+                            "measured_failure_detail_cid",
+                            codecs=("raw",),
+                        )
+                        != _raw_text_cid(self.measured_failure_detail)
+                    ):
+                        raise ProtocolContractError(
+                            "semantic measured failure-detail CID/SHA peers "
+                            "mismatch exact bytes"
+                        )
+        else:
+            semantic_only_values = (
+                self.semantic_protocol_cid,
+                self.source_cid,
+                self.requested_identity,
+                self.requested_identity_cid,
+                self.request_cid,
+                self.prime_semantic_output,
+                self.prime_semantic_output_cid,
+                self.prime_effective_identity,
+                self.prime_effective_identity_cid,
+                self.prime_backend_identity,
+                self.prime_backend_identity_cid,
+                self.prime_failure_detail,
+                self.prime_failure_detail_cid,
+                self.setup_telemetry_cid,
+                self.measured_failure_detail,
+                self.measured_failure_detail_cid,
+                self.measured_telemetry,
+                self.measured_telemetry_cid,
+                self.receipt_cid,
+            )
+            if any(value is not None for value in semantic_only_values):
+                raise ProtocolContractError(
+                    "legacy cache-prime receipt cannot contain semantic CIDs"
+                )
+
         request_binding = {
             "schema": SYMAI_CACHE_PRIME_REQUEST_SCHEMA,
             "protocol_sha256": self.protocol_sha256,
@@ -602,28 +1131,74 @@ class SymaiCachePrimeReceipt:
                 self.upstream_artifact_sha256
             ),
         }
+        if semantic_v2:
+            request_binding.update(
+                {
+                    "schema": (
+                        SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2
+                    ),
+                    "semantic_protocol_cid": self.semantic_protocol_cid,
+                    "source_cid": self.source_cid,
+                    "requested_identity": _plain_json(
+                        self.requested_identity
+                    ),
+                    "requested_identity_cid": (
+                        self.requested_identity_cid
+                    ),
+                    "upstream_artifact_cids": list(
+                        self.upstream_artifact_cids
+                    ),
+                }
+            )
         if _digest_json(request_binding) != self.request_sha256:
             raise ProtocolContractError(
                 "cache-prime request binding digest mismatch"
             )
-        encoded_without_digest = canonical_json(
-            _without_receipt_digest(self.to_dict())
-        ).encode("utf-8")
-        encoded_receipt = canonical_json(self.to_dict()).encode("utf-8")
-        if len(encoded_receipt) > SYMAI_CACHE_PRIME_MAX_BYTES:
+        if semantic_v2 and (
+            _require_cid(
+                self.request_cid,
+                "request_cid",
+                codecs=("dag-json",),
+            )
+            != _dag_json_cid(request_binding)
+        ):
+            raise ProtocolContractError(
+                "semantic cache-prime request binding CID mismatch"
+            )
+        receipt_value = self.to_dict()
+        receipt_body = (
+            _without_receipt_identities(receipt_value)
+            if semantic_v2
+            else _without_receipt_digest(receipt_value)
+        )
+        encoded_receipt = canonical_json(receipt_value).encode("utf-8")
+        receipt_maximum = (
+            _SYMAI_CACHE_PRIME_MAX_BYTES_SEMANTIC_V2
+            if semantic_v2
+            else SYMAI_CACHE_PRIME_MAX_BYTES
+        )
+        if len(encoded_receipt) > receipt_maximum:
             raise ProtocolContractError(
                 "SyMAI cache-prime receipt exceeds its byte bound"
             )
-        if (
-            hashlib.sha256(encoded_without_digest).hexdigest()
-            != self.receipt_sha256
-        ):
+        if _digest_json(receipt_body) != self.receipt_sha256:
             raise ProtocolContractError(
                 "SyMAI cache-prime receipt digest mismatch"
             )
+        if semantic_v2 and (
+            _require_cid(
+                self.receipt_cid,
+                "receipt_cid",
+                codecs=("dag-json",),
+            )
+            != _dag_json_cid(receipt_body)
+        ):
+            raise ProtocolContractError(
+                "semantic cache-prime receipt CID mismatch"
+            )
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        value: dict[str, object] = {
             "schema": self.schema,
             "protocol_sha256": self.protocol_sha256,
             "run_id": self.run_id,
@@ -674,6 +1249,62 @@ class SymaiCachePrimeReceipt:
             ),
             "receipt_sha256": self.receipt_sha256,
         }
+        if self.schema == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2:
+            value.update(
+                {
+                    "semantic_protocol_cid": self.semantic_protocol_cid,
+                    "source_cid": self.source_cid,
+                    "requested_identity": _plain_json(
+                        self.requested_identity
+                    ),
+                    "requested_identity_cid": (
+                        self.requested_identity_cid
+                    ),
+                    "upstream_artifact_cids": list(
+                        self.upstream_artifact_cids
+                    ),
+                    "request_cid": self.request_cid,
+                    "prime_semantic_output": _plain_json(
+                        self.prime_semantic_output
+                    ),
+                    "prime_semantic_output_cid": (
+                        self.prime_semantic_output_cid
+                    ),
+                    "prime_effective_identity": _plain_json(
+                        self.prime_effective_identity
+                    ),
+                    "prime_effective_identity_cid": (
+                        self.prime_effective_identity_cid
+                    ),
+                    "prime_backend_identity": _plain_json(
+                        self.prime_backend_identity
+                    ),
+                    "prime_backend_identity_cid": (
+                        self.prime_backend_identity_cid
+                    ),
+                    "prime_failure_detail": self.prime_failure_detail,
+                    "prime_failure_detail_cid": (
+                        self.prime_failure_detail_cid
+                    ),
+                    "setup_telemetry_cid": self.setup_telemetry_cid,
+                    "measured_failure_detail": (
+                        self.measured_failure_detail
+                    ),
+                    "measured_failure_detail_cid": (
+                        self.measured_failure_detail_cid
+                    ),
+                    "measured_telemetry": (
+                        None
+                        if self.measured_telemetry is None
+                        else self.measured_telemetry.to_dict()
+                    ),
+                    "measured_telemetry_cid": (
+                        self.measured_telemetry_cid
+                    ),
+                    "receipt_cid": self.receipt_cid,
+                }
+            )
+        return value
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -683,7 +1314,17 @@ class SymaiCachePrimeReceipt:
             raise ProtocolContractError(
                 "SyMAI cache-prime receipt must be an object"
             )
-        expected = set(cls.__dataclass_fields__)
+        schema = _require_string(value.get("schema"), "schema")
+        if schema == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA:
+            expected = _LEGACY_RECEIPT_FIELDS
+            semantic_v2 = False
+        elif schema == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2:
+            expected = _SEMANTIC_V2_RECEIPT_FIELDS
+            semantic_v2 = True
+        else:
+            raise ProtocolContractError(
+                "unsupported SyMAI cache-prime receipt schema"
+            )
         actual = set(value)
         if actual != expected:
             missing = sorted(expected - actual)
@@ -693,7 +1334,7 @@ class SymaiCachePrimeReceipt:
                 f"missing={missing} unknown={unknown}"
             )
         return cls(
-            schema=_require_string(value["schema"], "schema"),
+            schema=schema,
             protocol_sha256=_require_digest(
                 value["protocol_sha256"], "protocol_sha256"
             ),
@@ -812,6 +1453,174 @@ class SymaiCachePrimeReceipt:
             receipt_sha256=_require_digest(
                 value["receipt_sha256"], "receipt_sha256"
             ),
+            semantic_protocol_cid=(
+                _require_cid(
+                    value["semantic_protocol_cid"],
+                    "semantic_protocol_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            source_cid=(
+                _require_cid(
+                    value["source_cid"],
+                    "source_cid",
+                    codecs=("raw",),
+                )
+                if semantic_v2
+                else None
+            ),
+            requested_identity=(
+                _freeze_json(value["requested_identity"])
+                if semantic_v2
+                else None
+            ),
+            requested_identity_cid=(
+                _require_cid(
+                    value["requested_identity_cid"],
+                    "requested_identity_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            upstream_artifact_cids=(
+                tuple(
+                    _require_cid(
+                        item,
+                        "upstream_artifact_cids[]",
+                        codecs=("dag-json",),
+                    )
+                    for item in _string_sequence(
+                        value["upstream_artifact_cids"],
+                        "upstream_artifact_cids",
+                        maximum_items=_MAX_SOURCE_ITEMS,
+                    )
+                )
+                if semantic_v2
+                else ()
+            ),
+            request_cid=(
+                _require_cid(
+                    value["request_cid"],
+                    "request_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            prime_semantic_output=(
+                _freeze_json(value["prime_semantic_output"])
+                if semantic_v2
+                else None
+            ),
+            prime_semantic_output_cid=(
+                _require_cid(
+                    value["prime_semantic_output_cid"],
+                    "prime_semantic_output_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            prime_effective_identity=(
+                _freeze_json(value["prime_effective_identity"])
+                if semantic_v2
+                else None
+            ),
+            prime_effective_identity_cid=(
+                _require_cid(
+                    value["prime_effective_identity_cid"],
+                    "prime_effective_identity_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            prime_backend_identity=(
+                _freeze_json(value["prime_backend_identity"])
+                if semantic_v2
+                else None
+            ),
+            prime_backend_identity_cid=(
+                _require_cid(
+                    value["prime_backend_identity_cid"],
+                    "prime_backend_identity_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            prime_failure_detail=(
+                _optional_exact_text(
+                    value["prime_failure_detail"],
+                    "prime_failure_detail",
+                )
+                if semantic_v2
+                else None
+            ),
+            prime_failure_detail_cid=(
+                None
+                if not semantic_v2
+                or value["prime_failure_detail_cid"] is None
+                else _require_cid(
+                    value["prime_failure_detail_cid"],
+                    "prime_failure_detail_cid",
+                    codecs=("raw",),
+                )
+            ),
+            setup_telemetry_cid=(
+                _require_cid(
+                    value["setup_telemetry_cid"],
+                    "setup_telemetry_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
+            measured_failure_detail=(
+                _optional_exact_text(
+                    value["measured_failure_detail"],
+                    "measured_failure_detail",
+                )
+                if semantic_v2
+                else None
+            ),
+            measured_failure_detail_cid=(
+                None
+                if not semantic_v2
+                or value["measured_failure_detail_cid"] is None
+                else _require_cid(
+                    value["measured_failure_detail_cid"],
+                    "measured_failure_detail_cid",
+                    codecs=("raw",),
+                )
+            ),
+            measured_telemetry=(
+                None
+                if not semantic_v2 or value["measured_telemetry"] is None
+                else TelemetryRecord.from_dict(value["measured_telemetry"])
+            ),
+            measured_telemetry_cid=(
+                None
+                if not semantic_v2
+                or value["measured_telemetry_cid"] is None
+                else _require_cid(
+                    value["measured_telemetry_cid"],
+                    "measured_telemetry_cid",
+                    codecs=("dag-json",),
+                )
+            ),
+            receipt_cid=(
+                _require_cid(
+                    value["receipt_cid"],
+                    "receipt_cid",
+                    codecs=("dag-json",),
+                )
+                if semantic_v2
+                else None
+            ),
         )
 
 
@@ -834,18 +1643,28 @@ class _CacheObservation:
 
 
 def _fallback_cache_key(request: StageRequest, namespace: str) -> str:
-    suffix = _digest_json(
-        {
-            "schema": "symai-cache-key-fallback.v1",
-            "request_input_sha256": request.input_sha256,
-            "requested_identity_sha256": _digest_json(
-                request.requested_identity
-            ),
-            "upstream_artifact_sha256": [
-                artifact.digest for artifact in request.upstream_artifacts
-            ],
-        }
-    )
+    content = {
+        "schema": (
+            "symai-cache-key-fallback.v2"
+            if request.semantic_protocol_cid is not None
+            else "symai-cache-key-fallback.v1"
+        ),
+        "request_input_sha256": request.input_sha256,
+        "requested_identity_sha256": _digest_json(
+            request.requested_identity
+        ),
+        "upstream_artifact_sha256": [
+            artifact.digest for artifact in request.upstream_artifacts
+        ],
+    }
+    if request.semantic_protocol_cid is not None:
+        content["semantic_protocol_cid"] = (
+            request.semantic_protocol_cid
+        )
+        content["source_cid"] = request.source_cid
+        suffix = cid_for_dag_json(content)
+    else:
+        suffix = _digest_json(content)
     return f"{namespace}/stage/symai/{suffix}"
 
 
@@ -853,13 +1672,13 @@ def _cache_observation(
     output: StageOutput,
     request: StageRequest,
 ) -> _CacheObservation:
-    expected_namespace = CacheScope(
-        request.run_id,
-        request.protocol_sha256,
-        request.variant_id,
-        request.split,
-        CacheMode.WARM,
-    ).namespace
+    expected_namespace = _expected_cache_namespace(
+        run_id=request.run_id,
+        protocol_sha256=request.protocol_sha256,
+        variant_id=request.variant_id,
+        split=request.split,
+        semantic_protocol_cid=request.semantic_protocol_cid,
+    )
     namespaces: list[object] = []
     keys: list[object] = []
     hits: list[object] = []
@@ -911,7 +1730,10 @@ def _cache_observation(
         len(string_keys) != len(observed_keys)
         or len(set(string_keys)) != 1
         or not key.startswith(prefix)
-        or _CACHE_KEY_SUFFIX.fullmatch(key[len(prefix) :]) is None
+        or not _cache_key_suffix_is_valid(
+            key[len(prefix) :],
+            semantic_v2=request.semantic_protocol_cid is not None,
+        )
     ):
         errors.append("cache key drifted")
         key = fallback_key
@@ -944,27 +1766,41 @@ def _create_receipt(
     cache: _CacheObservation,
 ) -> SymaiCachePrimeReceipt:
     output = invocation.output
-    requested_identity_sha256 = _digest_json(
-        request.requested_identity
+    semantic_v2 = request.semantic_protocol_cid is not None
+    requested_identity = _receipt_requested_identity(request)
+    requested_identity_sha256 = _digest_json(requested_identity)
+    requested_identity_cid = (
+        _dag_json_cid(requested_identity) if semantic_v2 else None
+    )
+    upstream_artifact_cids = (
+        _upstream_artifact_cids(request) if semantic_v2 else ()
     )
     source = (*adapter.source, *request.source)
-    request_sha256 = _digest_json(
-        _request_binding(
-            request,
-            requested_identity_sha256=requested_identity_sha256,
-            source=source,
-        )
+    request_binding = _request_binding(
+        request,
+        requested_identity=requested_identity,
+        requested_identity_sha256=requested_identity_sha256,
+        requested_identity_cid=requested_identity_cid,
+        source=source,
+        upstream_artifact_cids=upstream_artifact_cids,
     )
+    request_sha256 = _digest_json(request_binding)
     effective_identity = (
         output.effective_identity or request.requested_identity
     )
+    semantic_output = symai_semantic_payload(output)
+    backend_identity = symai_backend_identity(effective_identity)
     failure_detail_sha256 = (
         None
         if output.failure_detail is None
         else _digest_text(output.failure_detail)
     )
     without_digest: dict[str, object] = {
-        "schema": SYMAI_CACHE_PRIME_RECEIPT_SCHEMA,
+        "schema": (
+            SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+            if semantic_v2
+            else SYMAI_CACHE_PRIME_RECEIPT_SCHEMA
+        ),
         "protocol_sha256": request.protocol_sha256,
         "run_id": request.run_id,
         "case_id": request.case_id,
@@ -986,13 +1822,13 @@ def _create_receipt(
         "cache_namespace": cache.namespace,
         "cache_key": cache.key,
         "prime_semantic_output_sha256": (
-            symai_semantic_payload_sha256(output)
+            _digest_json(semantic_output)
         ),
         "prime_effective_identity_sha256": _digest_json(
             effective_identity
         ),
         "prime_backend_identity_sha256": (
-            symai_backend_identity_sha256(effective_identity)
+            _digest_json(backend_identity)
         ),
         "prime_status": output.status.value,
         "prime_failure_code": (
@@ -1009,10 +1845,49 @@ def _create_receipt(
         "measured_failure_detail_sha256": None,
         "measured_telemetry_sha256": None,
     }
-    receipt = {
-        **without_digest,
-        "receipt_sha256": _digest_json(without_digest),
-    }
+    if semantic_v2:
+        without_digest.update(
+            {
+                "semantic_protocol_cid": request.semantic_protocol_cid,
+                "source_cid": request.source_cid,
+                "requested_identity": _plain_json(requested_identity),
+                "requested_identity_cid": requested_identity_cid,
+                "upstream_artifact_cids": list(
+                    upstream_artifact_cids
+                ),
+                "request_cid": _dag_json_cid(request_binding),
+                "prime_semantic_output": _plain_json(semantic_output),
+                "prime_semantic_output_cid": _dag_json_cid(
+                    semantic_output
+                ),
+                "prime_effective_identity": _plain_json(
+                    effective_identity
+                ),
+                "prime_effective_identity_cid": _dag_json_cid(
+                    effective_identity
+                ),
+                "prime_backend_identity": _plain_json(backend_identity),
+                "prime_backend_identity_cid": _dag_json_cid(
+                    backend_identity
+                ),
+                "prime_failure_detail": output.failure_detail,
+                "prime_failure_detail_cid": (
+                    None
+                    if output.failure_detail is None
+                    else _raw_text_cid(output.failure_detail)
+                ),
+                "setup_telemetry_cid": _dag_json_cid(
+                    invocation.telemetry.to_dict()
+                ),
+                "measured_failure_detail": None,
+                "measured_failure_detail_cid": None,
+                "measured_telemetry": None,
+                "measured_telemetry_cid": None,
+            }
+        )
+    receipt = {**without_digest, "receipt_sha256": _digest_json(without_digest)}
+    if semantic_v2:
+        receipt["receipt_cid"] = _dag_json_cid(without_digest)
     return SymaiCachePrimeReceipt.from_dict(receipt)
 
 
@@ -1041,9 +1916,32 @@ def _bind_measured_invocation(
             "measured_telemetry_sha256": invocation.telemetry.digest,
         }
     )
-    value["receipt_sha256"] = _digest_json(
-        _without_receipt_digest(value)
+    semantic_v2 = (
+        receipt.schema
+        == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
     )
+    if semantic_v2:
+        value.update(
+            {
+                "measured_failure_detail": output.failure_detail,
+                "measured_failure_detail_cid": (
+                    None
+                    if output.failure_detail is None
+                    else _raw_text_cid(output.failure_detail)
+                ),
+                "measured_telemetry": invocation.telemetry.to_dict(),
+                "measured_telemetry_cid": _dag_json_cid(
+                    invocation.telemetry.to_dict()
+                ),
+            }
+        )
+        body = _without_receipt_identities(value)
+        value["receipt_sha256"] = _digest_json(body)
+        value["receipt_cid"] = _dag_json_cid(body)
+    else:
+        value["receipt_sha256"] = _digest_json(
+            _without_receipt_digest(value)
+        )
     return SymaiCachePrimeReceipt.from_dict(value)
 
 
@@ -1067,11 +1965,17 @@ def validate_symai_cache_prime_receipt(
             raise ProtocolContractError(
                 "request must be a StageRequest"
             )
-        expected_identity_sha256 = _digest_json(
-            request.requested_identity
-        )
+        expected_identity = _receipt_requested_identity(request)
+        expected_identity_sha256 = _digest_json(expected_identity)
+        semantic_v2 = request.semantic_protocol_cid is not None
         if (
-            receipt.protocol_sha256 != request.protocol_sha256
+            receipt.schema
+            != (
+                SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+                if semantic_v2
+                else SYMAI_CACHE_PRIME_RECEIPT_SCHEMA
+            )
+            or receipt.protocol_sha256 != request.protocol_sha256
             or receipt.run_id != request.run_id
             or receipt.case_id != request.case_id
             or receipt.case_manifest_sha256
@@ -1093,6 +1997,20 @@ def validate_symai_cache_prime_receipt(
                 artifact.digest
                 for artifact in request.upstream_artifacts
             )
+            or (
+                semantic_v2
+                and (
+                    receipt.semantic_protocol_cid
+                    != request.semantic_protocol_cid
+                    or receipt.source_cid != request.source_cid
+                    or _plain_json(receipt.requested_identity)
+                    != _plain_json(expected_identity)
+                    or receipt.requested_identity_cid
+                    != _dag_json_cid(expected_identity)
+                    or receipt.upstream_artifact_cids
+                    != _upstream_artifact_cids(request)
+                )
+            )
         ):
             raise ProtocolContractError(
                 "cache-prime receipt does not bind the supplied request"
@@ -1113,7 +2031,10 @@ def _receipt_value(value: object) -> object | None:
         raise ProtocolContractError(
             "cache-prime evidence must be a stage output or object"
         )
-    if value.get("schema") == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA:
+    if value.get("schema") in {
+        SYMAI_CACHE_PRIME_RECEIPT_SCHEMA,
+        SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2,
+    }:
         return value
     return value.get(SYMAI_CACHE_PRIME_FIELD)
 
@@ -1124,16 +2045,39 @@ def _validate_receipt_against_stage_record(
 ) -> None:
     """Reject receipts copied across records, coordinates, or cache modes."""
 
-    expected_namespace = CacheScope(
-        record.run_id,
-        record.protocol_sha256,
-        record.variant_id,
-        record.split,
-        record.cache_mode,
-    ).namespace
+    semantic_protocol_cid = (
+        record.provenance.requested_identity.get(
+            "semantic_protocol_cid"
+        )
+    )
+    semantic_v2 = (
+        receipt.schema
+        == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+    )
+    if semantic_protocol_cid is not None and (
+        semantic_protocol_cid
+        != record.provenance.effective_identity.get(
+            "semantic_protocol_cid"
+        )
+    ):
+        raise ProtocolContractError(
+            "semantic cache protocol identity drifted in provenance"
+        )
+    expected_namespace = _expected_cache_namespace(
+        run_id=record.run_id,
+        protocol_sha256=record.protocol_sha256,
+        variant_id=record.variant_id,
+        split=record.split,
+        semantic_protocol_cid=semantic_protocol_cid,
+    )
     effective_receipt_sha256 = (
         record.provenance.effective_identity.get(
             SYMAI_CACHE_PRIME_DIGEST_FIELD
+        )
+    )
+    effective_receipt_cid = (
+        record.provenance.effective_identity.get(
+            SYMAI_CACHE_PRIME_CID_FIELD
         )
     )
     data_cache_namespace: object = None
@@ -1177,8 +2121,28 @@ def _validate_receipt_against_stage_record(
     mismatches: list[str] = []
     comparisons = {
         "stage": record.stage is StageName.SYMAI,
+        "receipt_schema": semantic_v2
+        is (semantic_protocol_cid is not None),
         "protocol": (
             receipt.protocol_sha256 == record.protocol_sha256
+        ),
+        "semantic_protocol": (
+            not semantic_v2
+            or (
+                receipt.semantic_protocol_cid
+                == semantic_protocol_cid
+                == record.provenance.effective_identity.get(
+                    "semantic_protocol_cid"
+                )
+            )
+        ),
+        "source_cid": (
+            not semantic_v2
+            or (
+                receipt.source_cid
+                == record.provenance.requested_identity.get("source_cid")
+                == record.provenance.effective_identity.get("source_cid")
+            )
         ),
         "run": receipt.run_id == record.run_id,
         "case": receipt.case_id == record.case_id,
@@ -1220,9 +2184,26 @@ def _validate_receipt_against_stage_record(
         "requested_identity": (
             receipt.requested_identity_sha256
             == _digest_json(record.provenance.requested_identity)
+            and (
+                not semantic_v2
+                or (
+                    _plain_json(receipt.requested_identity)
+                    == _plain_json(
+                        record.provenance.requested_identity
+                    )
+                    and receipt.requested_identity_cid
+                    == _dag_json_cid(
+                        record.provenance.requested_identity
+                    )
+                )
+            )
         ),
         "effective_receipt_digest": (
             effective_receipt_sha256 == receipt.receipt_sha256
+        ),
+        "effective_receipt_cid": (
+            not semantic_v2
+            or effective_receipt_cid == receipt.receipt_cid
         ),
         "measured_telemetry": (
             record.telemetry.digest
@@ -1230,6 +2211,17 @@ def _validate_receipt_against_stage_record(
                 receipt.measured_telemetry_sha256
                 if receipt.measured_invoked
                 else _zero_measured_telemetry().digest
+            )
+            and (
+                not semantic_v2
+                or not receipt.measured_invoked
+                or (
+                    receipt.measured_telemetry is not None
+                    and _plain_json(receipt.measured_telemetry.to_dict())
+                    == _plain_json(record.telemetry.to_dict())
+                    and receipt.measured_telemetry_cid
+                    == _dag_json_cid(record.telemetry.to_dict())
+                )
             )
         ),
     }
@@ -1248,6 +2240,10 @@ def _validate_receipt_against_stage_output(
     output: StageOutput,
     telemetry: TelemetryRecord,
 ) -> None:
+    semantic_v2 = (
+        receipt.schema
+        == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+    )
     expected_telemetry_sha256 = (
         receipt.measured_telemetry_sha256
         if receipt.measured_invoked
@@ -1258,7 +2254,25 @@ def _validate_receipt_against_stage_output(
             SYMAI_CACHE_PRIME_DIGEST_FIELD
         )
         != receipt.receipt_sha256
+        or (
+            semantic_v2
+            and output.effective_identity.get(
+                SYMAI_CACHE_PRIME_CID_FIELD
+            )
+            != receipt.receipt_cid
+        )
         or telemetry.digest != expected_telemetry_sha256
+        or (
+            semantic_v2
+            and receipt.measured_invoked
+            and (
+                receipt.measured_telemetry is None
+                or _plain_json(receipt.measured_telemetry.to_dict())
+                != _plain_json(telemetry.to_dict())
+                or receipt.measured_telemetry_cid
+                != _dag_json_cid(telemetry.to_dict())
+            )
+        )
     ):
         raise ProtocolContractError(
             "cache-prime receipt does not bind enclosing StageOutput"
@@ -1389,6 +2403,11 @@ def _attach_receipt(
     identity[SYMAI_CACHE_PRIME_DIGEST_FIELD] = (
         receipt.receipt_sha256
     )
+    if (
+        receipt.schema
+        == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+    ):
+        identity[SYMAI_CACHE_PRIME_CID_FIELD] = receipt.receipt_cid
     measured = invocation.telemetry if telemetry is None else telemetry
     attached = replace(
         output,
@@ -1451,6 +2470,19 @@ def _measured_is_exact_hit(
         == receipt.prime_semantic_output_sha256
         and symai_backend_identity_sha256(invocation.output)
         == receipt.prime_backend_identity_sha256
+        and (
+            receipt.schema != SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+            or (
+                _dag_json_cid(
+                    symai_semantic_payload(invocation.output)
+                )
+                == receipt.prime_semantic_output_cid
+                and _dag_json_cid(
+                    symai_backend_identity(invocation.output)
+                )
+                == receipt.prime_backend_identity_cid
+            )
+        )
     )
 
 
@@ -1591,11 +2623,22 @@ def validate_symai_warm_cache_measurement(
         raise ProtocolContractError(
             "measured SyMAI cache output omitted its prime receipt"
         )
+    semantic_v2 = (
+        receipt.schema
+        == SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+    )
     setup = receipt.setup_telemetry
     if (
         receipt.prime_status != StageStatus.SUCCESS.value
         or receipt.prime_failure_code is not None
         or receipt.prime_failure_detail_sha256 is not None
+        or (
+            semantic_v2
+            and (
+                receipt.prime_failure_detail is not None
+                or receipt.prime_failure_detail_cid is not None
+            )
+        )
     ):
         raise ProtocolContractError(
             "measured SyMAI cache receipt did not bind a successful setup"
@@ -1606,6 +2649,18 @@ def validate_symai_warm_cache_measurement(
         or receipt.measured_failure_code is not None
         or receipt.measured_failure_detail_sha256 is not None
         or receipt.measured_telemetry_sha256 != telemetry.digest
+        or (
+            semantic_v2
+            and (
+                receipt.measured_failure_detail is not None
+                or receipt.measured_failure_detail_cid is not None
+                or receipt.measured_telemetry is None
+                or _plain_json(receipt.measured_telemetry.to_dict())
+                != _plain_json(telemetry.to_dict())
+                or receipt.measured_telemetry_cid
+                != _dag_json_cid(telemetry.to_dict())
+            )
+        )
     ):
         raise ProtocolContractError(
             "measured SyMAI cache receipt did not bind this successful call"
@@ -1635,19 +2690,32 @@ def validate_symai_warm_cache_measurement(
             SYMAI_CACHE_PRIME_DIGEST_FIELD
         )
         != receipt.receipt_sha256
+        or (
+            semantic_v2
+            and effective_identity.get(SYMAI_CACHE_PRIME_CID_FIELD)
+            != receipt.receipt_cid
+        )
     ):
         raise ProtocolContractError(
             "measured SyMAI identity omitted its prime receipt digest"
         )
     if symai_semantic_payload_sha256(data) != (
         receipt.prime_semantic_output_sha256
+    ) or (
+        semantic_v2
+        and _dag_json_cid(symai_semantic_payload(data))
+        != receipt.prime_semantic_output_cid
     ):
         raise ProtocolContractError(
             "measured SyMAI semantic output differs from cache setup"
         )
     if symai_backend_identity_sha256(
         effective_identity
-    ) != receipt.prime_backend_identity_sha256:
+    ) != receipt.prime_backend_identity_sha256 or (
+        semantic_v2
+        and _dag_json_cid(symai_backend_identity(effective_identity))
+        != receipt.prime_backend_identity_cid
+    ):
         raise ProtocolContractError(
             "measured SyMAI backend identity differs from cache setup"
         )

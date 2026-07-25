@@ -32,6 +32,7 @@ import urllib.parse
 import urllib.error
 import urllib.request
 
+from .content_addressing import cid_for_bytes, cid_for_dag_json, validate_cid
 from .contracts import (
     BASELINE_VARIANT,
     CacheMode,
@@ -42,6 +43,19 @@ from .contracts import (
     HSSLEV0306C18,
     ProtocolContractError,
     ResourceLane,
+    SEMANTIC_FAILURE_SCHEMA_V2,
+    SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2,
+    SEMANTIC_NORMALIZATION_V2_CID,
+    SEMANTIC_PROJECTION_CLASSES_V2,
+    SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2,
+    SEMANTIC_PROTOCOL_V2_CID,
+    SEMANTIC_PROMPT_SCHEMA_V2,
+    SEMANTIC_PROMPT_V2_CID,
+    SEMANTIC_PRODUCER_REGISTRY_V2_CID,
+    SEMANTIC_RESPONSE_SCHEMA_V2,
+    SEMANTIC_RESPONSE_SCHEMA_V2_CID,
+    SEMANTIC_PROMPT_INSTRUCTION_V2,
+    SemanticProjection,
     Split,
     StageName,
     StageProvenance,
@@ -49,6 +63,9 @@ from .contracts import (
     StageStatus,
     TelemetryRecord,
     canonical_json,
+    normalize_semantic_term,
+    semantic_normalization_spec_v2,
+    semantic_response_json_schema_v2,
 )
 from .source_bound_import import import_source_bound_ipfs_accelerate
 
@@ -117,16 +134,25 @@ LEANSTRAL_MAX_DRAFT_BYTES: Final = 4 * 1024
 SPACY_EVIDENCE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v1"
 )
+SPACY_EVIDENCE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
+)
 SPACY_MAX_EVIDENCE_BYTES: Final = 60 * 1024
 SPACY_MAX_TEXT_BYTES: Final = 4 * 1024
 SYMAI_EVIDENCE_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"
+)
+SYMAI_EVIDENCE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
 )
 SYMAI_PROMPT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v1"
 )
 SEMANTIC_CONTEXT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"
+)
+SEMANTIC_CONTEXT_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v2"
 )
 SEMANTIC_CONTEXT_MAX_BYTES: Final = 48 * 1024
 SYMAI_MAX_TEXT_BYTES: Final = 8 * 1024
@@ -217,6 +243,14 @@ SYMAI_RESPONSE_FORMAT: Final = {
         "name": "hssl_symai_semantic_evidence",
         "strict": True,
         "schema": _SYMAI_RESPONSE_SCHEMA,
+    },
+}
+SYMAI_RESPONSE_FORMAT_V2: Final = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "hssl_symai_semantic_projection_v2",
+        "strict": True,
+        "schema": semantic_response_json_schema_v2(),
     },
 }
 _SYMAI_RECURSIVE_IDENTITIES = frozenset(
@@ -312,6 +346,7 @@ class SpacyAdapterConfig:
     mode: SpacyAdapterMode = SpacyAdapterMode.FULL_MODEL
     language: str = "en"
     max_text_bytes: int = SPACY_MAX_TEXT_BYTES
+    semantic_protocol_cid: str | None = None
 
     def __post_init__(self) -> None:
         if isinstance(self.mode, str):
@@ -339,6 +374,13 @@ class SpacyAdapterConfig:
             raise ProtocolContractError(
                 f"max_text_bytes must be between 1 and {SPACY_MAX_TEXT_BYTES}"
             )
+        if (
+            self.semantic_protocol_cid is not None
+            and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+        ):
+            raise ProtocolContractError(
+                "spaCy semantic protocol CID is unsupported"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -362,6 +404,7 @@ class SymaiAdapterConfig:
     expected_inner_model: str | None = None
     expected_inner_endpoint: str | None = None
     expected_inner_backend: str | None = None
+    semantic_protocol_cid: str | None = None
 
     def __post_init__(self) -> None:
         _safe_id(self.provider, "provider")
@@ -435,6 +478,13 @@ class SymaiAdapterConfig:
             raise ProtocolContractError(
                 "max_raw_output_bytes must be between 1 and "
                 f"{SYMAI_MAX_RAW_OUTPUT_BYTES}"
+            )
+        if (
+            self.semantic_protocol_cid is not None
+            and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+        ):
+            raise ProtocolContractError(
+                "SyMAI semantic protocol CID is unsupported"
             )
 
 
@@ -882,6 +932,8 @@ class StageRequest:
     upstream_artifacts: tuple[StageArtifact, ...] = ()
     invocation_index: int = 0
     protocol_sha256: str = DEFAULT_PROTOCOL_SHA256
+    semantic_protocol_cid: str | None = None
+    proof_context: Mapping[str, object] | None = None
     deadline_unix_ms: int | None = None
     repair_context: Mapping[str, object] | None = None
 
@@ -897,6 +949,13 @@ class StageRequest:
         _digest(self.protocol_sha256, "protocol_sha256")
         if self.protocol_sha256 != DEFAULT_PROTOCOL_SHA256:
             raise ProtocolContractError("request must bind frozen protocol revision 1")
+        if (
+            self.semantic_protocol_cid is not None
+            and self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+        ):
+            raise ProtocolContractError(
+                "request semantic protocol CID is unsupported"
+            )
         if self.environment_sha256 is not None:
             _digest(self.environment_sha256, "environment_sha256")
         if not isinstance(self.source, tuple) or not self.source:
@@ -952,6 +1011,68 @@ class StageRequest:
         )
         object.__setattr__(self, "requested_identity", identity)
         input_sha256, _input_bytes = _input_digest(self.input_data)
+        if self.semantic_protocol_cid is not None:
+            if (
+                not isinstance(self.input_data, Mapping)
+                or set(self.input_data) != {"text"}
+                or not isinstance(self.input_data.get("text"), str)
+                or not str(self.input_data["text"]).strip()
+            ):
+                raise ProtocolContractError(
+                    "semantic protocol v2 requires the canonical source-only "
+                    '{"text": source_text} input envelope'
+                )
+            forbidden = set(self.input_data).intersection(
+                SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
+            )
+            if forbidden:  # pragma: no cover - exact-key check is stronger
+                raise ProtocolContractError(
+                    "semantic protocol v2 input contains evaluator fields"
+                )
+        if self.proof_context is not None:
+            if self.semantic_protocol_cid is None:
+                raise ProtocolContractError(
+                    "proof_context requires semantic protocol v2"
+                )
+            if (
+                not isinstance(self.proof_context, Mapping)
+                or set(self.proof_context)
+                != {"obligation_id", "proof_obligation"}
+            ):
+                raise ProtocolContractError(
+                    "proof_context must contain exactly obligation_id and "
+                    "proof_obligation"
+                )
+            obligation_id = self.proof_context.get("obligation_id")
+            obligation = self.proof_context.get("proof_obligation")
+            if (obligation_id is None) != (obligation is None):
+                raise ProtocolContractError(
+                    "proof_context obligation fields must be null together"
+                )
+            if obligation is not None:
+                _safe_id(obligation_id, "proof_context.obligation_id")
+                if (
+                    not isinstance(obligation, Mapping)
+                    or set(obligation) != {"kind", "logic", "target"}
+                    or obligation.get("kind")
+                    not in {"theorem", "countermodel"}
+                    or obligation.get("logic")
+                    not in {"fol", "deontic", "temporal"}
+                    or not isinstance(obligation.get("target"), str)
+                    or not str(obligation["target"]).strip()
+                    or len(str(obligation["target"])) > 256
+                ):
+                    raise ProtocolContractError(
+                        "proof_context proof_obligation is invalid"
+                    )
+            frozen_proof_context = _freeze_json(self.proof_context)
+            if not isinstance(frozen_proof_context, Mapping):
+                raise ProtocolContractError("proof_context must be an object")
+            object.__setattr__(
+                self,
+                "proof_context",
+                frozen_proof_context,
+            )
         if self.repair_context is not None:
             object.__setattr__(
                 self,
@@ -970,6 +1091,44 @@ class StageRequest:
     @property
     def input_bytes(self) -> int:
         return _input_digest(self.input_data)[1]
+
+    @property
+    def source_cid(self) -> str | None:
+        """Return the raw CID of the exact semantic-v2 source UTF-8 bytes."""
+
+        if self.semantic_protocol_cid is None:
+            return None
+        if not isinstance(self.input_data, Mapping):
+            raise ProtocolContractError(
+                "semantic protocol v2 requires an object source input"
+            )
+        source_text = self.input_data.get("text")
+        if not isinstance(source_text, str):
+            raise ProtocolContractError(
+                "semantic protocol v2 source text is unavailable"
+            )
+        return cid_for_bytes(source_text.encode("utf-8"))
+
+    @property
+    def proof_context_cid(self) -> str | None:
+        if self.proof_context is None:
+            return None
+        return cid_for_dag_json(_thaw_json(self.proof_context))
+
+    @property
+    def proof_input_data(self) -> object:
+        """Return the explicit proof-boundary input without evaluator labels."""
+
+        if self.proof_context is None:
+            return self.input_data
+        if not isinstance(self.input_data, Mapping):
+            raise ProtocolContractError(
+                "proof context requires an object source input"
+            )
+        return {
+            **_thaw_json(self.input_data),
+            **_thaw_json(self.proof_context),
+        }
 
     def with_upstream(self, digest: str) -> "StageRequest":
         _digest(digest, "upstream_stage_digest")
@@ -1033,6 +1192,25 @@ def _mapping_sequence_prefix(
     ]
 
 
+def _contains_forbidden_semantic_input_key(value: object) -> bool:
+    """Detect evaluator/proof keys at any depth before model projection."""
+
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if key in SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2:
+                return True
+            if _contains_forbidden_semantic_input_key(item):
+                return True
+    elif isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return any(
+            _contains_forbidden_semantic_input_key(item)
+            for item in value
+        )
+    return False
+
+
 def _semantic_artifact_projection(
     artifact: StageArtifact,
     *,
@@ -1070,11 +1248,23 @@ def _semantic_artifact_projection(
     ):
         return projection
     data = artifact.data
+    if (
+        model_facing
+        and _contains_forbidden_semantic_input_key(data)
+    ):
+        raise ProtocolContractError(
+            "model-facing semantic evidence contains an evaluator or "
+            "proof field"
+        )
     if artifact.stage is StageName.SPACY:
-        if data.get("schema") != SPACY_EVIDENCE_SCHEMA:
+        if data.get("schema") not in {
+            SPACY_EVIDENCE_SCHEMA,
+            SPACY_EVIDENCE_SCHEMA_V2,
+        }:
             raise ProtocolContractError(
                 "spaCy semantic context used an unsupported evidence schema"
             )
+        semantic_v2 = data.get("schema") == SPACY_EVIDENCE_SCHEMA_V2
         modal_ir = data.get("modal_ir")
         modal_projection: dict[str, object] = {}
         if isinstance(modal_ir, Mapping):
@@ -1121,9 +1311,14 @@ def _semantic_artifact_projection(
                 maximum=16,
             )
             if not model_facing:
-                modal_projection["modal_ir_sha256"] = hashlib.sha256(
-                    canonical_json(_thaw_json(modal_ir)).encode("utf-8")
-                ).hexdigest()
+                if semantic_v2:
+                    modal_projection["modal_ir_cid"] = cid_for_dag_json(
+                        _thaw_json(modal_ir)
+                    )
+                else:
+                    modal_projection["modal_ir_sha256"] = hashlib.sha256(
+                        canonical_json(_thaw_json(modal_ir)).encode("utf-8")
+                    ).hexdigest()
         projection["evidence"] = {
             "schema": data.get("schema"),
             "document": _mapping_subset(
@@ -1136,7 +1331,7 @@ def _semantic_artifact_projection(
                 if model_facing
                 else (
                     "document_id",
-                    "text_sha256",
+                    "source_cid" if semantic_v2 else "text_sha256",
                     "normalized_text",
                     "citation",
                     "source",
@@ -1213,30 +1408,50 @@ def _semantic_artifact_projection(
                 ),
             )
     elif artifact.stage is StageName.SYMAI:
-        if data.get("schema") == SYMAI_EVIDENCE_SCHEMA:
+        if data.get("schema") in {
+            SYMAI_EVIDENCE_SCHEMA,
+            SYMAI_EVIDENCE_SCHEMA_V2,
+        }:
+            semantic_v2 = data.get("schema") == SYMAI_EVIDENCE_SCHEMA_V2
             projection["evidence"] = _mapping_subset(
                 data,
                 (
                     "schema",
-                    "candidate_ir",
-                    "normalized_predicates",
-                    "quantifiers",
+                    "semantic_projection"
+                    if semantic_v2
+                    else "candidate_ir",
+                    "validated_response"
+                    if semantic_v2
+                    else "normalized_predicates",
                     "entities",
                     "ambiguity_flags",
-                    "confidence",
+                    "confidence_millionths"
+                    if semantic_v2
+                    else "confidence",
                     "validation_errors",
                     "assurance",
                 )
                 if model_facing
                 else (
                     "schema",
-                    "candidate_ir",
-                    "candidate_ir_sha256",
-                    "normalized_predicates",
-                    "quantifiers",
+                    "semantic_protocol_cid"
+                    if semantic_v2
+                    else "candidate_ir",
+                    "semantic_projection"
+                    if semantic_v2
+                    else "candidate_ir_sha256",
+                    "validated_response"
+                    if semantic_v2
+                    else "normalized_predicates",
+                    "validated_response_cid"
+                    if semantic_v2
+                    else "quantifiers",
+                    "raw_output_cid" if semantic_v2 else "entities",
                     "entities",
                     "ambiguity_flags",
-                    "confidence",
+                    "confidence_millionths"
+                    if semantic_v2
+                    else "confidence",
                     "validation_errors",
                     "assurance",
                 ),
@@ -1268,6 +1483,7 @@ def build_upstream_semantic_context(
     ),
     require_present: Sequence[StageName] = (),
     require_success: Sequence[StageName] = (),
+    model_facing: bool = False,
 ) -> dict[str, object]:
     """Build the exact compact semantic input consumed by model/proof stages."""
 
@@ -1323,20 +1539,36 @@ def build_upstream_semantic_context(
             raise ProtocolContractError(
                 f"required {stage.value} semantic artifact is not successful"
             )
-        artifacts.append(_semantic_artifact_projection(artifact))
+        artifacts.append(
+            _semantic_artifact_projection(
+                artifact,
+                model_facing=model_facing,
+            )
+        )
     source_text = None
     if isinstance(request.input_data, Mapping):
         source_text = request.input_data.get(
             "text", request.input_data.get("source_text")
         )
-    source_sha256 = (
-        hashlib.sha256(source_text.encode("utf-8")).hexdigest()
-        if isinstance(source_text, str)
-        else None
+    semantic_v2 = request.semantic_protocol_cid is not None
+    source_identity = (
+        {"source_cid": request.source_cid}
+        if semantic_v2
+        else {
+            "source_text_sha256": (
+                hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+                if isinstance(source_text, str)
+                else None
+            )
+        }
     )
     context_without_digest = {
-        "schema": SEMANTIC_CONTEXT_SCHEMA,
-        "source_text_sha256": source_sha256,
+        "schema": (
+            SEMANTIC_CONTEXT_SCHEMA_V2
+            if semantic_v2
+            else SEMANTIC_CONTEXT_SCHEMA
+        ),
+        **source_identity,
         "artifacts": artifacts,
     }
     encoded = canonical_json(context_without_digest).encode("utf-8")
@@ -1344,6 +1576,11 @@ def build_upstream_semantic_context(
         raise ProtocolContractError(
             "upstream semantic context exceeds its byte bound"
         )
+    if semantic_v2:
+        return {
+            **context_without_digest,
+            "context_cid": cid_for_dag_json(context_without_digest),
+        }
     return {
         **context_without_digest,
         "context_sha256": hashlib.sha256(encoded).hexdigest(),
@@ -1404,6 +1641,125 @@ class StageInvocation:
             raise ProtocolContractError(
                 "invocation telemetry must be a TelemetryRecord"
             )
+
+
+def _semantic_failure_receipt(
+    request: StageRequest,
+    stage: StageName,
+    subcode: str,
+    *,
+    evidence: object = None,
+) -> dict[str, object]:
+    body = {
+        "schema": SEMANTIC_FAILURE_SCHEMA_V2,
+        "semantic_protocol_cid": request.semantic_protocol_cid,
+        "stage": stage.value,
+        "failure_subcode": subcode,
+        "source_cid": request.source_cid,
+        "proof_context_cid": request.proof_context_cid,
+        "evidence": evidence,
+    }
+    return {
+        **body,
+        "receipt_cid": cid_for_dag_json(body),
+    }
+
+
+def _with_semantic_failure_receipt(
+    request: StageRequest,
+    stage: StageName,
+    result: StageOutput,
+) -> StageOutput:
+    """Attach a typed v2 receipt to every terminal frontend failure."""
+
+    if (
+        request.semantic_protocol_cid is None
+        or stage
+        not in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
+        or result.status is StageStatus.SUCCESS
+    ):
+        return result
+    if isinstance(result.data, Mapping) and (
+        result.data.get("schema") == SEMANTIC_FAILURE_SCHEMA_V2
+        or "semantic_failure" in result.data
+    ):
+        return result
+    if result.failure_code is FailureCode.SAFETY_CONTROL_FAILURE:
+        subcode = "semantic_input_leakage"
+    elif result.failure_code is FailureCode.CANONICAL_IR_REJECTION:
+        subcode = "semantic_projection_incomplete"
+    else:
+        subcode = "semantic_schema_incompatible"
+    payload = (
+        dict(result.data)
+        if isinstance(result.data, Mapping)
+        else {"retained_failure_data": None}
+    )
+    evidence: dict[str, object]
+    if stage is StageName.SYMAI:
+        raw_output = payload.get("raw_output")
+        if isinstance(raw_output, str):
+            raw_output_bytes: int | None = len(
+                raw_output.encode("utf-8")
+            )
+            raw_output_cid: str | None = cid_for_bytes(
+                raw_output.encode("utf-8")
+            )
+            retained_exactly = True
+        else:
+            raw_output = None
+            candidate_cid = payload.get("raw_output_cid")
+            candidate_bytes = payload.get("raw_output_bytes")
+            canonical_candidate_cid: str | None = None
+            canonical_candidate_bytes: int | None = None
+            if (
+                isinstance(candidate_cid, str)
+                and isinstance(candidate_bytes, int)
+                and not isinstance(candidate_bytes, bool)
+                and candidate_bytes > 0
+            ):
+                try:
+                    canonical_candidate_cid = validate_cid(
+                        candidate_cid,
+                        codecs=("raw",),
+                    )
+                    canonical_candidate_bytes = candidate_bytes
+                except (TypeError, ValueError):
+                    canonical_candidate_cid = None
+            if canonical_candidate_cid is not None:
+                raw_output_cid = canonical_candidate_cid
+                raw_output_bytes = canonical_candidate_bytes
+            else:
+                raw_output_cid = None
+                raw_output_bytes = None
+            retained_exactly = False
+        payload.update(
+            {
+                "raw_output": raw_output,
+                "raw_output_cid": raw_output_cid,
+                "raw_output_bytes": raw_output_bytes,
+                "raw_output_retained_exactly": retained_exactly,
+            }
+        )
+        evidence = {
+            "raw_output_cid": raw_output_cid,
+            "raw_output_bytes": raw_output_bytes,
+        }
+    else:
+        evidence = {
+            "failure_code": (
+                None
+                if result.failure_code is None
+                else result.failure_code.value
+            )
+        }
+    payload["semantic_failure"] = _semantic_failure_receipt(
+        request,
+        stage,
+        subcode,
+        evidence=evidence,
+    )
+    return replace(result, data=payload)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1468,13 +1824,23 @@ class StageAdapter:
     def _provenance(
         self, request: StageRequest, effective_identity: Mapping[str, object]
     ) -> StageProvenance:
+        requested = dict(request.requested_identity)
+        effective = dict(effective_identity)
+        if request.semantic_protocol_cid is not None:
+            semantic_binding = {
+                "semantic_protocol_cid": request.semantic_protocol_cid,
+                "source_cid": request.source_cid,
+                "proof_context_cid": request.proof_context_cid,
+            }
+            requested.update(semantic_binding)
+            effective.update(semantic_binding)
         return StageProvenance(
             schema="ipfs-datasets.logic-pipeline-benchmark.stage-provenance.v1",
             adapter_id=self.adapter_id or f"{self.stage.value}-adapter",
             adapter_version=self.adapter_version,
             source=tuple((*self.source, *request.source)),
-            requested_identity=request.requested_identity,
-            effective_identity=effective_identity,
+            requested_identity=requested,
+            effective_identity=effective,
             input_sha256=request.input_sha256,
             environment_sha256=request.environment_sha256,
             upstream_stage_digests=request.upstream_stage_digests,
@@ -1495,7 +1861,27 @@ class StageAdapter:
         started_wall = time.perf_counter()
         started_cpu = time.process_time()
         result: StageOutput
-        if self.handler is None:
+        if (
+            request.semantic_protocol_cid is not None
+            and self.stage
+            in {StageName.COMPILER, StageName.SPACY, StageName.SYMAI}
+            and request.proof_context is not None
+        ):
+            result = StageOutput(
+                data=_semantic_failure_receipt(
+                    request,
+                    self.stage,
+                    "semantic_input_leakage",
+                ),
+                status=StageStatus.FAILED,
+                effective_identity=request.requested_identity,
+                failure_code=FailureCode.SAFETY_CONTROL_FAILURE,
+                failure_detail=(
+                    f"{self.stage.value} semantic producer received "
+                    "proof_context"
+                ),
+            )
+        elif self.handler is None:
             result = StageOutput(
                 status=StageStatus.UNAVAILABLE,
                 effective_identity=request.requested_identity,
@@ -1513,6 +1899,11 @@ class StageAdapter:
                     failure_code=FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
                     failure_detail=f"{self.stage.value} adapter raised {type(exc).__name__}",
                 )
+        result = _with_semantic_failure_receipt(
+            request,
+            self.stage,
+            result,
+        )
         effective_identity = result.effective_identity or request.requested_identity
         encoded_output = b""
         if result.status is StageStatus.SUCCESS:
@@ -1601,8 +1992,891 @@ class StageAdapter:
 
 
 class CompilerAdapter(StageAdapter):
-    def __init__(self, handler: StageHandler | None = None, **kwargs: object) -> None:
+    def __init__(
+        self,
+        handler: StageHandler | None = None,
+        *,
+        semantic_protocol_cid: str | None = None,
+        **kwargs: object,
+    ) -> None:
+        if (
+            semantic_protocol_cid is not None
+            and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+        ):
+            raise ProtocolContractError(
+                "compiler semantic protocol CID is unsupported"
+            )
+        if semantic_protocol_cid is not None:
+            kwargs.setdefault("adapter_version", "2")
         super().__init__(StageName.COMPILER, handler=handler, **kwargs)
+
+
+_SEMANTIC_NORMALIZATION_SPEC_V2: Final = (
+    semantic_normalization_spec_v2()
+)
+if (
+    cid_for_dag_json(_SEMANTIC_NORMALIZATION_SPEC_V2)
+    != SEMANTIC_NORMALIZATION_V2_CID
+):
+    raise RuntimeError(
+        "semantic-v2 runtime normalization rules are not CID-bound"
+    )
+
+
+def _semantic_rule_mapping(
+    value: object,
+    field_name: str,
+) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise RuntimeError(
+            f"semantic-v2 normalization rule {field_name} is invalid"
+        )
+    return value
+
+
+def _semantic_rule_string(
+    value: object,
+    field_name: str,
+) -> str:
+    if not isinstance(value, str) or not value:
+        raise RuntimeError(
+            f"semantic-v2 normalization rule {field_name} is invalid"
+        )
+    return value
+
+
+def _semantic_rule_int(
+    value: object,
+    field_name: str,
+) -> int:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or not 0 <= value <= 1_000_000
+    ):
+        raise RuntimeError(
+            f"semantic-v2 normalization rule {field_name} is invalid"
+        )
+    return value
+
+
+_SEMANTIC_LOGIC_ALIASES_RULE_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_NORMALIZATION_SPEC_V2.get("logic_aliases"),
+    "logic_aliases",
+)
+if not all(
+    isinstance(key, str) and isinstance(value, str)
+    for key, value in _SEMANTIC_LOGIC_ALIASES_RULE_V2.items()
+):
+    raise RuntimeError("semantic-v2 logic aliases are invalid")
+_SEMANTIC_LOGIC_ALIASES_V2: Final = MappingProxyType(
+    dict(_SEMANTIC_LOGIC_ALIASES_RULE_V2)
+)
+_SEMANTIC_MODAL_IR_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_NORMALIZATION_SPEC_V2.get("modal_ir"),
+    "modal_ir",
+)
+_SEMANTIC_MODAL_DOCUMENT_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("document"),
+    "modal_ir.document",
+)
+_SEMANTIC_MODAL_FORMULA_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("formulas"),
+    "modal_ir.formulas",
+)
+_SEMANTIC_MODAL_OPERATOR_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("operator"),
+    "modal_ir.operator",
+)
+_SEMANTIC_MODAL_PREDICATE_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("predicate"),
+    "modal_ir.predicate",
+)
+_SEMANTIC_MODAL_ARGUMENT_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("arguments"),
+    "modal_ir.arguments",
+)
+_SEMANTIC_MODAL_PRIMARY_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("primary_formula_selection"),
+    "modal_ir.primary_formula_selection",
+)
+_SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("preferred_role"),
+    "modal_ir.primary_formula_selection.preferred_role",
+)
+_SEMANTIC_MODAL_PROJECTION_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_MODAL_IR_RULES_V2.get("projection_fields"),
+    "modal_ir.projection_fields",
+)
+_SEMANTIC_CLASS_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_NORMALIZATION_SPEC_V2.get("class_inference"),
+    "class_inference",
+)
+_SEMANTIC_CLASS_CONFLICT_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_CLASS_RULES_V2.get(
+        "conflicting_distinct_signal_classes"
+    ),
+    "class_inference.conflicting_distinct_signal_classes",
+)
+_SEMANTIC_CLASS_DEFAULT_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_CLASS_RULES_V2.get("default"),
+    "class_inference.default",
+)
+_SEMANTIC_VALIDATION_RULES_V2: Final = _semantic_rule_mapping(
+    _SEMANTIC_NORMALIZATION_SPEC_V2.get("validation"),
+    "validation",
+)
+_semantic_required_field_rules = _semantic_rule_mapping(
+    _SEMANTIC_VALIDATION_RULES_V2.get(
+        "required_projection_fields"
+    ),
+    "validation.required_projection_fields",
+)
+_SEMANTIC_REQUIRED_FIELD_RULES_V2: Final = MappingProxyType(
+    {
+        field: MappingProxyType(
+            dict(
+                _semantic_rule_mapping(
+                    rule,
+                    f"validation.required_projection_fields.{field}",
+                )
+            )
+        )
+        for field, rule in _semantic_required_field_rules.items()
+    }
+)
+del _semantic_required_field_rules
+_SEMANTIC_COMPLETENESS_RULES_V2: Final = MappingProxyType(
+    dict(
+        _semantic_rule_mapping(
+            _SEMANTIC_NORMALIZATION_SPEC_V2.get("completeness"),
+            "completeness",
+        )
+    )
+)
+
+_SEMANTIC_FORMULAS_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_DOCUMENT_RULES_V2.get("formulas_field"),
+    "modal_ir.document.formulas_field",
+)
+_SEMANTIC_OPERATOR_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("field"),
+    "modal_ir.operator.field",
+)
+_SEMANTIC_OPERATOR_FAMILY_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("mapping_family_field"),
+    "modal_ir.operator.mapping_family_field",
+)
+_SEMANTIC_PREDICATE_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("field"),
+    "modal_ir.predicate.field",
+)
+_SEMANTIC_PREDICATE_NAME_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("mapping_name_field"),
+    "modal_ir.predicate.mapping_name_field",
+)
+_SEMANTIC_PREDICATE_ARGUMENTS_FIELD_V2: Final = (
+    _semantic_rule_string(
+        _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
+            "mapping_arguments_field"
+        ),
+        "modal_ir.predicate.mapping_arguments_field",
+    )
+)
+_SEMANTIC_PREDICATE_ROLE_FIELD_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("mapping_role_field"),
+    "modal_ir.predicate.mapping_role_field",
+)
+_SEMANTIC_PRIMARY_ROLE_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get("normalized_value"),
+    "modal_ir.primary_formula_selection.preferred_role.normalized_value",
+)
+_SEMANTIC_MISSING_TERM_V2: Final = _semantic_rule_string(
+    _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("missing_term"),
+    "modal_ir.projection_fields.missing_term",
+)
+if (
+    _SEMANTIC_VALIDATION_RULES_V2.get("missing_term")
+    != _SEMANTIC_MISSING_TERM_V2
+    or set(_SEMANTIC_REQUIRED_FIELD_RULES_V2)
+    != {"logic_family", "target", "predicates"}
+    or set(_SEMANTIC_COMPLETENESS_RULES_V2)
+    != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+):
+    raise RuntimeError(
+        "semantic-v2 validation/completeness field rules are unsupported"
+    )
+
+_semantic_entity_values = _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
+    "entity_values"
+)
+if (
+    not isinstance(_semantic_entity_values, list)
+    or len(_semantic_entity_values) != 2
+    or _semantic_entity_values[0] != "exact_argument"
+    or not isinstance(_semantic_entity_values[1], str)
+    or not _semantic_entity_values[1].startswith(
+        "suffix_after_final_"
+    )
+):
+    raise RuntimeError(
+        "semantic-v2 entity extraction rules are unsupported"
+    )
+_SEMANTIC_ENTITY_QUALIFIER_V2: Final = _semantic_entity_values[
+    1
+].removeprefix("suffix_after_final_")
+if not _SEMANTIC_ENTITY_QUALIFIER_V2:
+    raise RuntimeError(
+        "semantic-v2 entity qualifier must not be empty"
+    )
+_semantic_max_persisted_items = _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
+    "maximum_persisted_items"
+)
+if (
+    isinstance(_semantic_max_persisted_items, bool)
+    or not isinstance(_semantic_max_persisted_items, int)
+    or _semantic_max_persisted_items < 1
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
+        "suffix_only_when_qualifier_present"
+    )
+    is not True
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
+        "empty_normalized_values"
+    )
+    != "omit"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("normalization")
+    != "term_normalization"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("canonicalization")
+    != "sorted_unique"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("overflow")
+    != "reject_projection"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
+        "empty_normalized_values"
+    )
+    != "omit"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get(
+        "predicate_and_entity_canonicalization"
+    )
+    != "sorted_unique"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("overflow")
+    != "reject_projection"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
+        "maximum_persisted_items"
+    )
+    != _semantic_max_persisted_items
+):
+    raise RuntimeError(
+        "semantic-v2 extraction canonicalization rules are unsupported"
+    )
+del _semantic_max_persisted_items
+
+_semantic_primary_order = _SEMANTIC_MODAL_PRIMARY_RULES_V2.get(
+    "ordered_tiebreakers"
+)
+if (
+    not isinstance(_semantic_primary_order, list)
+    or len(_semantic_primary_order) != 4
+    or any(
+        not isinstance(rule, Mapping)
+        for rule in _semantic_primary_order
+    )
+):
+    raise RuntimeError(
+        "semantic-v2 primary-formula ordering rules are invalid"
+    )
+_SEMANTIC_PRIMARY_START_PATH_V2: Final = tuple(
+    _semantic_primary_order[0].get("path", ())
+)
+_SEMANTIC_PRIMARY_END_PATH_V2: Final = tuple(
+    _semantic_primary_order[1].get("path", ())
+)
+_SEMANTIC_PRIMARY_ID_PATH_V2: Final = tuple(
+    _semantic_primary_order[2].get("path", ())
+)
+_SEMANTIC_PRIMARY_INDEX_PATH_V2: Final = tuple(
+    _semantic_primary_order[3].get("path", ())
+)
+if (
+    len(_SEMANTIC_PRIMARY_START_PATH_V2) != 2
+    or len(_SEMANTIC_PRIMARY_END_PATH_V2) != 2
+    or len(_SEMANTIC_PRIMARY_ID_PATH_V2) != 1
+    or _SEMANTIC_PRIMARY_INDEX_PATH_V2 != ("array_index",)
+    or not all(
+        isinstance(item, str)
+        for item in (
+            *_SEMANTIC_PRIMARY_START_PATH_V2,
+            *_SEMANTIC_PRIMARY_END_PATH_V2,
+            *_SEMANTIC_PRIMARY_ID_PATH_V2,
+            *_SEMANTIC_PRIMARY_INDEX_PATH_V2,
+        )
+    )
+):
+    raise RuntimeError(
+        "semantic-v2 primary-formula paths are invalid"
+    )
+_semantic_primary_role_path = tuple(
+    _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get("path", ())
+)
+if (
+    _semantic_primary_role_path
+    != (
+        _SEMANTIC_PREDICATE_FIELD_V2,
+        _SEMANTIC_PREDICATE_ROLE_FIELD_V2,
+    )
+    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("candidates")
+    != "all_accepted_mapping_formulas"
+    or _SEMANTIC_MODAL_PRIMARY_RULES_V2.get("empty_result")
+    != "no_primary_formula"
+    or _SEMANTIC_MODAL_PRIMARY_ROLE_RULES_V2.get(
+        "missing_or_non_string"
+    )
+    != "not_preferred"
+    or _semantic_primary_order[0].get("accepted_type")
+    != "integer_excluding_boolean"
+    or _semantic_primary_order[0].get("missing_or_invalid")
+    != "positive_infinity"
+    or _semantic_primary_order[1].get("accepted_type")
+    != "integer_excluding_boolean"
+    or _semantic_primary_order[1].get("missing_or_invalid")
+    != "positive_infinity"
+    or _semantic_primary_order[2].get("coercion") != "python_str"
+    or _semantic_primary_order[2].get("missing") != ""
+    or _semantic_primary_order[3].get("accepted_type") != "integer"
+):
+    raise RuntimeError(
+        "semantic-v2 primary-formula selection rules are unsupported"
+    )
+del _semantic_primary_role_path
+
+_semantic_signal_values = _SEMANTIC_CLASS_RULES_V2.get(
+    "ordered_explicit_signals"
+)
+if not isinstance(_semantic_signal_values, list):
+    raise RuntimeError(
+        "semantic-v2 explicit class signals are invalid"
+    )
+_semantic_regex_flag_names = _SEMANTIC_CLASS_RULES_V2.get(
+    "regex_flags"
+)
+if (
+    _SEMANTIC_CLASS_RULES_V2.get("regex_engine")
+    != "python_re_search"
+    or _semantic_regex_flag_names != ["IGNORECASE"]
+):
+    raise RuntimeError(
+        "semantic-v2 class-signal regex rules are unsupported"
+    )
+_SEMANTIC_CLASS_REGEX_FLAGS_V2: Final = re.IGNORECASE
+_semantic_signal_rules: list[
+    tuple[re.Pattern[str], str, str | None, int]
+] = []
+for index, raw_signal in enumerate(_semantic_signal_values):
+    signal = _semantic_rule_mapping(
+        raw_signal,
+        f"class_inference.ordered_explicit_signals[{index}]",
+    )
+    pattern = _semantic_rule_string(
+        signal.get("pattern"),
+        f"class_inference.ordered_explicit_signals[{index}].pattern",
+    )
+    semantic_class = _semantic_rule_string(
+        signal.get("class"),
+        f"class_inference.ordered_explicit_signals[{index}].class",
+    )
+    ambiguity_flag = signal.get("ambiguity_flag")
+    if ambiguity_flag is not None and not isinstance(
+        ambiguity_flag,
+        str,
+    ):
+        raise RuntimeError(
+            "semantic-v2 ambiguity flag rule is invalid"
+        )
+    confidence = _semantic_rule_int(
+        signal.get("confidence_millionths"),
+        f"class_inference.ordered_explicit_signals[{index}]."
+        "confidence_millionths",
+    )
+    _semantic_signal_rules.append(
+        (
+            re.compile(pattern, flags=_SEMANTIC_CLASS_REGEX_FLAGS_V2),
+            semantic_class,
+            ambiguity_flag,
+            confidence,
+        )
+    )
+_SEMANTIC_CLASS_SIGNAL_RULES_V2: Final = tuple(
+    _semantic_signal_rules
+)
+del _semantic_signal_rules
+del _semantic_regex_flag_names
+if _SEMANTIC_CLASS_RULES_V2.get("proved_signals") != []:
+    raise RuntimeError(
+        "semantic-v2 deterministic ModalIR projection cannot claim proved"
+    )
+if (
+    _SEMANTIC_CLASS_RULES_V2.get(
+        "validation_errors_precede_class_signals"
+    )
+    is not True
+    or _SEMANTIC_CLASS_RULES_V2.get(
+        "ambiguity_flags_retained_with_validation_errors"
+    )
+    is not True
+    or _SEMANTIC_CLASS_RULES_V2.get(
+        "multiple_matching_signals_of_one_class"
+    )
+    != "first_ordered_signal_sets_class_and_confidence"
+    or _SEMANTIC_VALIDATION_RULES_V2.get(
+        "validation_errors_take_precedence_over_ambiguity"
+    )
+    is not True
+    or _SEMANTIC_VALIDATION_RULES_V2.get("canonicalization")
+    != "sorted_unique"
+):
+    raise RuntimeError(
+        "semantic-v2 class and validation precedence rules are unsupported"
+    )
+_SEMANTIC_VALIDATION_CLASS_V2: Final = _semantic_rule_string(
+    _SEMANTIC_VALIDATION_RULES_V2.get("validation_error_class"),
+    "validation.validation_error_class",
+)
+_SEMANTIC_VALIDATION_CONFIDENCE_V2: Final = _semantic_rule_int(
+    _SEMANTIC_VALIDATION_RULES_V2.get(
+        "validation_error_confidence_millionths"
+    ),
+    "validation.validation_error_confidence_millionths",
+)
+_SEMANTIC_DEFAULT_CLASS_V2: Final = _semantic_rule_string(
+    _SEMANTIC_CLASS_DEFAULT_RULES_V2.get("class"),
+    "class_inference.default.class",
+)
+_SEMANTIC_DEFAULT_CONFIDENCE_V2: Final = _semantic_rule_int(
+    _SEMANTIC_CLASS_DEFAULT_RULES_V2.get("confidence_millionths"),
+    "class_inference.default.confidence_millionths",
+)
+_SEMANTIC_CONFLICT_CLASS_V2: Final = _semantic_rule_string(
+    _SEMANTIC_CLASS_CONFLICT_RULES_V2.get("class"),
+    "class_inference.conflicting_distinct_signal_classes.class",
+)
+_SEMANTIC_CONFLICT_ERROR_V2: Final = _semantic_rule_string(
+    _SEMANTIC_CLASS_CONFLICT_RULES_V2.get("validation_error"),
+    (
+        "class_inference.conflicting_distinct_signal_classes."
+        "validation_error"
+    ),
+)
+_SEMANTIC_CONFLICT_CONFIDENCE_V2: Final = _semantic_rule_int(
+    _SEMANTIC_CLASS_CONFLICT_RULES_V2.get("confidence_millionths"),
+    (
+        "class_inference.conflicting_distinct_signal_classes."
+        "confidence_millionths"
+    ),
+)
+if (
+    _SEMANTIC_DEFAULT_CLASS_V2 == "proved"
+    or {
+        _SEMANTIC_VALIDATION_CLASS_V2,
+        _SEMANTIC_DEFAULT_CLASS_V2,
+        _SEMANTIC_CONFLICT_CLASS_V2,
+        *(
+            signal_class
+            for _pattern, signal_class, _flag, _confidence
+            in _SEMANTIC_CLASS_SIGNAL_RULES_V2
+        ),
+    }
+    - set(SEMANTIC_PROJECTION_CLASSES_V2)
+    or (
+        _SEMANTIC_CONFLICT_CLASS_V2,
+        _SEMANTIC_CONFLICT_CONFIDENCE_V2,
+    )
+    != (
+        _SEMANTIC_VALIDATION_CLASS_V2,
+        _SEMANTIC_VALIDATION_CONFIDENCE_V2,
+    )
+):
+    raise RuntimeError(
+        "semantic-v2 fail-closed class and confidence rules are invalid"
+    )
+_semantic_operator_shapes = (
+    _SEMANTIC_MODAL_OPERATOR_RULES_V2.get("accepted_shapes")
+)
+_semantic_predicate_shapes = (
+    _SEMANTIC_MODAL_PREDICATE_RULES_V2.get("accepted_shapes")
+)
+if (
+    not isinstance(_semantic_operator_shapes, list)
+    or not isinstance(_semantic_predicate_shapes, list)
+    or any(
+        not isinstance(value, str)
+        for value in (
+            *_semantic_operator_shapes,
+            *_semantic_predicate_shapes,
+        )
+    )
+):
+    raise RuntimeError(
+        "semantic-v2 ModalIR accepted-shape rules are invalid"
+    )
+_SEMANTIC_OPERATOR_SHAPES_V2: Final = frozenset(
+    _semantic_operator_shapes
+)
+_SEMANTIC_PREDICATE_SHAPES_V2: Final = frozenset(
+    _semantic_predicate_shapes
+)
+if (
+    _SEMANTIC_MODAL_DOCUMENT_RULES_V2.get("accepted_shape")
+    != "mapping"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("accepted_container")
+    != "sequence_excluding_string_bytes_bytearray"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("accepted_item_shape")
+    != "mapping"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("invalid_items")
+    != "ignore"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get(
+        "invalid_container_result"
+    )
+    != "empty"
+    or _SEMANTIC_MODAL_FORMULA_RULES_V2.get("collection_order")
+    != "input_sequence"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("accepted_container")
+    != "sequence_excluding_string_bytes_bytearray"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("accepted_item_type")
+    != "string"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get("invalid_items")
+    != "ignore"
+    or _SEMANTIC_MODAL_ARGUMENT_RULES_V2.get(
+        "invalid_container_result"
+    )
+    != "empty"
+    or _SEMANTIC_OPERATOR_SHAPES_V2 != {"mapping", "string"}
+    or _SEMANTIC_PREDICATE_SHAPES_V2 != {"mapping", "string"}
+    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get(
+        "string_value_is_family"
+    )
+    is not True
+    or _SEMANTIC_MODAL_OPERATOR_RULES_V2.get(
+        "unsupported_or_non_string_family_result"
+    )
+    != "missing"
+    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
+        "string_value_is_name"
+    )
+    is not True
+    or _SEMANTIC_MODAL_PREDICATE_RULES_V2.get(
+        "unsupported_or_non_string_name_result"
+    )
+    != "missing"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("logic_family")
+    != (
+        "primary_formula."
+        f"{_SEMANTIC_OPERATOR_FIELD_V2}."
+        f"{_SEMANTIC_OPERATOR_FAMILY_FIELD_V2}"
+    )
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("target")
+    != (
+        "primary_formula."
+        f"{_SEMANTIC_PREDICATE_FIELD_V2}."
+        f"{_SEMANTIC_PREDICATE_NAME_FIELD_V2}"
+    )
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("predicates")
+    != "all_accepted_formula_predicate_names"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("entities")
+    != "all_accepted_predicate_arguments"
+    or _SEMANTIC_MODAL_PROJECTION_RULES_V2.get("normalization")
+    != "term_normalization"
+):
+    raise RuntimeError(
+        "semantic-v2 ModalIR shape interpreter does not match its CID"
+    )
+del _semantic_operator_shapes
+del _semantic_predicate_shapes
+
+
+def build_modal_semantic_projection_v2(
+    *,
+    producer_id: str,
+    source_text: str,
+    modal_ir: Mapping[str, object],
+) -> SemanticProjection:
+    """Apply the CID-bound ModalIR normalization rules without labels."""
+
+    if not isinstance(modal_ir, Mapping):
+        raise ProtocolContractError(
+            "semantic projection requires a ModalIR object"
+        )
+    raw_formulas = modal_ir.get(_SEMANTIC_FORMULAS_FIELD_V2, ())
+    formulas = (
+        tuple(
+            item for item in raw_formulas if isinstance(item, Mapping)
+        )
+        if isinstance(raw_formulas, Sequence)
+        and not isinstance(raw_formulas, (str, bytes, bytearray))
+        else ()
+    )
+    predicates: list[str] = []
+    entities: list[str] = []
+    for formula in formulas:
+        predicate = formula.get(_SEMANTIC_PREDICATE_FIELD_V2)
+        if (
+            isinstance(predicate, Mapping)
+            and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2
+        ):
+            raw_name = predicate.get(
+                _SEMANTIC_PREDICATE_NAME_FIELD_V2
+            )
+            if isinstance(raw_name, str):
+                predicates.append(raw_name)
+            raw_arguments = predicate.get(
+                _SEMANTIC_PREDICATE_ARGUMENTS_FIELD_V2,
+                (),
+            )
+            if isinstance(raw_arguments, Sequence) and not isinstance(
+                raw_arguments, (str, bytes, bytearray)
+            ):
+                for raw_argument in raw_arguments:
+                    if isinstance(raw_argument, str):
+                        entities.append(raw_argument)
+                        if (
+                            _SEMANTIC_ENTITY_QUALIFIER_V2
+                            in raw_argument
+                        ):
+                            entities.append(
+                                raw_argument.rsplit(
+                                    _SEMANTIC_ENTITY_QUALIFIER_V2,
+                                    1,
+                                )[-1]
+                            )
+        elif (
+            isinstance(predicate, str)
+            and "string" in _SEMANTIC_PREDICATE_SHAPES_V2
+        ):
+            predicates.append(predicate)
+
+    def primary_order(
+        indexed_formula: tuple[int, Mapping[str, object]],
+    ) -> tuple[bool, int | float, int | float, str, int]:
+        index, formula = indexed_formula
+        predicate = formula.get(_SEMANTIC_PREDICATE_FIELD_V2)
+        role = (
+            normalize_semantic_term(
+                predicate.get(_SEMANTIC_PREDICATE_ROLE_FIELD_V2)
+            )
+            if isinstance(predicate, Mapping)
+            else ""
+        )
+        provenance = formula.get(
+            _SEMANTIC_PRIMARY_START_PATH_V2[0]
+        )
+        start = (
+            provenance.get(_SEMANTIC_PRIMARY_START_PATH_V2[1])
+            if isinstance(provenance, Mapping)
+            else None
+        )
+        end = (
+            provenance.get(_SEMANTIC_PRIMARY_END_PATH_V2[1])
+            if isinstance(provenance, Mapping)
+            else None
+        )
+        return (
+            role != _SEMANTIC_PRIMARY_ROLE_V2,
+            start
+            if isinstance(start, int) and not isinstance(start, bool)
+            else math.inf,
+            end
+            if isinstance(end, int) and not isinstance(end, bool)
+            else math.inf,
+            str(
+                formula.get(
+                    _SEMANTIC_PRIMARY_ID_PATH_V2[0],
+                    "",
+                )
+            ),
+            index,
+        )
+
+    primary = (
+        min(enumerate(formulas), key=primary_order)[1]
+        if formulas
+        else None
+    )
+    primary_operator = (
+        primary.get(_SEMANTIC_OPERATOR_FIELD_V2)
+        if isinstance(primary, Mapping)
+        else None
+    )
+    primary_predicate = (
+        primary.get(_SEMANTIC_PREDICATE_FIELD_V2)
+        if isinstance(primary, Mapping)
+        else None
+    )
+    raw_logic = (
+        primary_operator.get(_SEMANTIC_OPERATOR_FAMILY_FIELD_V2)
+        if (
+            isinstance(primary_operator, Mapping)
+            and "mapping" in _SEMANTIC_OPERATOR_SHAPES_V2
+        )
+        else (
+            primary_operator
+            if isinstance(primary_operator, str)
+            and "string" in _SEMANTIC_OPERATOR_SHAPES_V2
+            else None
+        )
+    )
+    raw_target = (
+        primary_predicate.get(_SEMANTIC_PREDICATE_NAME_FIELD_V2)
+        if (
+            isinstance(primary_predicate, Mapping)
+            and "mapping" in _SEMANTIC_PREDICATE_SHAPES_V2
+        )
+        else (
+            primary_predicate
+            if isinstance(primary_predicate, str)
+            and "string" in _SEMANTIC_PREDICATE_SHAPES_V2
+            else None
+        )
+    )
+    normalized_logic = normalize_semantic_term(raw_logic)
+    normalized_predicates = [
+        value
+        for raw in predicates
+        if (value := normalize_semantic_term(raw))
+    ]
+    logic_family = (
+        _SEMANTIC_LOGIC_ALIASES_V2.get(
+            normalized_logic,
+            normalized_logic,
+        )
+        if normalized_logic
+        else _SEMANTIC_MISSING_TERM_V2
+    )
+    target = (
+        normalize_semantic_term(raw_target)
+        or _SEMANTIC_MISSING_TERM_V2
+    )
+
+    projection_values: dict[str, object] = {
+        "logic_family": logic_family,
+        "target": target,
+        "predicates": normalized_predicates,
+    }
+    validation_presence: dict[str, bool] = {}
+    validation_errors: list[str] = []
+    for field, raw_rule in _SEMANTIC_REQUIRED_FIELD_RULES_V2.items():
+        rule = _semantic_rule_mapping(
+            raw_rule,
+            f"validation.required_projection_fields.{field}",
+        )
+        presence_rule = rule.get("presence")
+        value = projection_values.get(field)
+        if presence_rule == "nonempty_nonmissing_string":
+            present = bool(
+                isinstance(value, str)
+                and value
+                and value != _SEMANTIC_MISSING_TERM_V2
+            )
+        elif presence_rule == "nonempty_collection":
+            present = bool(
+                isinstance(value, Sequence)
+                and not isinstance(
+                    value,
+                    (str, bytes, bytearray),
+                )
+                and value
+            )
+        else:
+            raise RuntimeError(
+                "semantic-v2 validation presence rule is unsupported"
+            )
+        validation_presence[field] = present
+        if not present:
+            validation_errors.append(
+                _semantic_rule_string(
+                    rule.get("error"),
+                    (
+                        "validation.required_projection_fields."
+                        f"{field}.error"
+                    ),
+                )
+            )
+
+    matched_signals: list[tuple[str, str | None, int]] = []
+    for pattern, signal_class, ambiguity_flag, confidence in (
+        _SEMANTIC_CLASS_SIGNAL_RULES_V2
+    ):
+        if pattern.search(source_text):
+            matched_signals.append(
+                (signal_class, ambiguity_flag, confidence)
+            )
+    ambiguity_flags = tuple(
+        flag
+        for _signal_class, flag, _confidence in matched_signals
+        if flag is not None
+    )
+    distinct_signal_classes = {
+        signal_class
+        for signal_class, _flag, _confidence in matched_signals
+    }
+    if len(distinct_signal_classes) > 1:
+        validation_errors.append(_SEMANTIC_CONFLICT_ERROR_V2)
+
+    if validation_errors:
+        semantic_class = _SEMANTIC_VALIDATION_CLASS_V2
+        confidence_millionths = _SEMANTIC_VALIDATION_CONFIDENCE_V2
+    elif matched_signals:
+        (
+            semantic_class,
+            _ambiguity_flag,
+            confidence_millionths,
+        ) = matched_signals[0]
+    else:
+        semantic_class = _SEMANTIC_DEFAULT_CLASS_V2
+        confidence_millionths = _SEMANTIC_DEFAULT_CONFIDENCE_V2
+    if (
+        isinstance(confidence_millionths, bool)
+        or not isinstance(confidence_millionths, int)
+        or not 0 <= confidence_millionths <= 1_000_000
+    ):
+        raise RuntimeError(
+            "semantic-v2 confidence rule is invalid"
+        )
+
+    completeness: dict[str, bool] = {}
+    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2:
+        rule = _SEMANTIC_COMPLETENESS_RULES_V2.get(field)
+        if (
+            isinstance(rule, str)
+            and rule.startswith("validation_presence.")
+        ):
+            completeness[field] = validation_presence.get(
+                rule.removeprefix("validation_presence."),
+                False,
+            )
+        elif rule == "assigned_enum_including_unsupported":
+            completeness[field] = bool(semantic_class)
+        elif rule == "observed_collection_empty_is_complete":
+            completeness[field] = True
+        else:
+            raise RuntimeError(
+                "semantic-v2 completeness rule is unsupported"
+            )
+
+    evidence_cid = cid_for_dag_json(_thaw_json(modal_ir))
+    return SemanticProjection.create(
+        producer_id=producer_id,
+        source_text=source_text,
+        logic_family=logic_family,
+        target=target,
+        semantic_class=semantic_class,
+        predicates=normalized_predicates,
+        entities=entities,
+        completeness=completeness,
+        ambiguity_flags=ambiguity_flags,
+        confidence_millionths=confidence_millionths,
+        validation_errors=validation_errors,
+        evidence_cid=evidence_cid,
+    )
 
 
 def HSSLEV0310F79() -> str:
@@ -1682,10 +2956,12 @@ def _spacy_failure(
     unavailable: bool = False,
     effective_identity: Mapping[str, object] | None = None,
     failure_code: FailureCode = FailureCode.SPACY_PARSE_OR_MODEL_FALLBACK,
+    data: object = None,
 ) -> StageOutput:
     """Build a bounded fail-closed spaCy result."""
 
     return StageOutput(
+        data={} if data is None else data,
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
         effective_identity=(
             request.requested_identity
@@ -1958,6 +3234,24 @@ def _spacy_evidence_handler(
     modal_compiler_factory: Callable[[], object],
 ) -> StageHandler:
     def handler(request: StageRequest) -> StageOutput:
+        if (
+            request.semantic_protocol_cid
+            != config.semantic_protocol_cid
+        ):
+            return _spacy_failure(
+                request,
+                "spaCy request/config semantic protocol identity mismatch",
+                failure_code=FailureCode.FIXTURE_INVALID,
+            )
+        if (
+            config.semantic_protocol_cid is not None
+            and request.proof_context is not None
+        ):
+            return _spacy_failure(
+                request,
+                "spaCy semantic producer cannot receive proof_context",
+                failure_code=FailureCode.FIXTURE_INVALID,
+            )
         try:
             text, document_id, citation, source = _spacy_request_document(
                 request, config
@@ -2134,13 +3428,25 @@ def _spacy_evidence_handler(
                 "spacy_version": package_version,
             }
             payload = {
-                "schema": SPACY_EVIDENCE_SCHEMA,
+                "schema": (
+                    SPACY_EVIDENCE_SCHEMA_V2
+                    if config.semantic_protocol_cid is not None
+                    else SPACY_EVIDENCE_SCHEMA
+                ),
                 "document": {
                     "document_id": document_id,
                     "source": source,
                     "citation": citation,
                     "normalized_text": normalized_text,
-                    "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    **(
+                        {"source_cid": request.source_cid}
+                        if config.semantic_protocol_cid is not None
+                        else {
+                            "text_sha256": hashlib.sha256(
+                                text.encode("utf-8")
+                            ).hexdigest()
+                        }
+                    ),
                 },
                 "tokens": tokens,
                 "sentences": sentences,
@@ -2157,6 +3463,28 @@ def _spacy_evidence_handler(
                     "kernel_checked": False,
                 },
             }
+            if config.semantic_protocol_cid is not None:
+                producer_id = {
+                    SpacyAdapterMode.FULL_MODEL: "spacy_full_model",
+                    SpacyAdapterMode.REGEX_LEGAL: "spacy_regex_legal",
+                    SpacyAdapterMode.BLANK_MODEL: "spacy_blank_model",
+                }[config.mode]
+                projection = build_modal_semantic_projection_v2(
+                    producer_id=producer_id,
+                    source_text=text,
+                    modal_ir=modal_ir,
+                )
+                payload["semantic_protocol_cid"] = config.semantic_protocol_cid
+                payload["modal_ir_cid"] = projection.evidence_cid
+                payload["semantic_projection"] = projection.to_dict()
+                if not projection.scoreable:
+                    return _spacy_failure(
+                        request,
+                        "spaCy semantic projection is incomplete or invalid",
+                        effective_identity=effective_identity,
+                        failure_code=FailureCode.CANONICAL_IR_REJECTION,
+                        data=payload,
+                    )
             encoded = canonical_json(payload).encode("utf-8")
             if len(encoded) > SPACY_MAX_EVIDENCE_BYTES:
                 return _spacy_failure(
@@ -2236,6 +3564,8 @@ class SpacyAdapter(StageAdapter):
                 raise ProtocolContractError(
                     "config must be a SpacyAdapterConfig"
                 )
+            if config.semantic_protocol_cid is not None:
+                kwargs.setdefault("adapter_version", "2")
             handler = _spacy_evidence_handler(
                 config,
                 encoder_factory=encoder_factory or _default_spacy_encoder,
@@ -2350,7 +3680,11 @@ def _symai_request_text(request: StageRequest, config: SymaiAdapterConfig) -> st
         raise SymaiAdapterContractError(
             "SyMAI input must contain a nonempty text or source_text string"
         )
-    normalized = text.strip()
+    normalized = (
+        text
+        if config.semantic_protocol_cid is not None
+        else text.strip()
+    )
     if len(normalized.encode("utf-8")) > config.max_text_bytes:
         raise SymaiAdapterContractError(
             f"SyMAI input exceeds {config.max_text_bytes} encoded bytes"
@@ -2359,13 +3693,19 @@ def _symai_request_text(request: StageRequest, config: SymaiAdapterConfig) -> st
 
 
 def _symai_cache_namespace(request: StageRequest) -> str:
-    return CacheScope(
+    revision_1_namespace = CacheScope(
         run_id=request.run_id,
         protocol_sha256=request.protocol_sha256,
         variant_id=request.variant_id,
         split=request.split,
         mode=request.cache_mode,
     ).namespace
+    if request.semantic_protocol_cid is None:
+        return revision_1_namespace
+    return (
+        f"{revision_1_namespace}/semantic-protocol/"
+        f"{request.semantic_protocol_cid}"
+    )
 
 
 def _symai_cache_key(
@@ -2374,9 +3714,40 @@ def _symai_cache_key(
     namespace: str,
     semantic_context: Mapping[str, object] | None = None,
 ) -> str:
-    artifact_digests = [
-        artifact.digest for artifact in request.upstream_artifacts
-    ]
+    semantic_v2 = config.semantic_protocol_cid == SEMANTIC_PROTOCOL_V2_CID
+    if semantic_v2:
+        semantic_key_content = {
+            "schema": SEMANTIC_PROMPT_SCHEMA_V2,
+            "namespace": namespace,
+            "case_id": request.case_id,
+            "source_cid": request.source_cid,
+            "semantic_context_cid": (
+                None
+                if semantic_context is None
+                else semantic_context.get("context_cid")
+            ),
+            "semantic_protocol_cid": config.semantic_protocol_cid,
+            "semantic_prompt_cid": SEMANTIC_PROMPT_V2_CID,
+            "semantic_response_schema_cid": (
+                SEMANTIC_RESPONSE_SCHEMA_V2_CID
+            ),
+            "semantic_producer_registry_cid": (
+                SEMANTIC_PRODUCER_REGISTRY_V2_CID
+            ),
+            "provider": config.provider,
+            "model": config.model,
+            "inner_route": {
+                "resolved_provider_name": config.expected_inner_provider,
+                "resolved_model_name": config.expected_inner_model,
+                "service_endpoint": config.expected_inner_endpoint,
+                "routing_backend": config.expected_inner_backend,
+            },
+            "dry_run": config.dry_run,
+        }
+        return (
+            f"{namespace}/stage/symai/"
+            f"{cid_for_dag_json(semantic_key_content)}"
+        )
     digest = hashlib.sha256(
         canonical_json(
             {
@@ -2388,7 +3759,9 @@ def _symai_cache_key(
                 # later durable-record chain, are the available inputs.  Hash
                 # those exact artifacts so changing spaCy evidence cannot hit
                 # a stale SyMAI cache entry.
-                "upstream_artifact_sha256": artifact_digests,
+                "upstream_artifact_sha256": [
+                    artifact.digest for artifact in request.upstream_artifacts
+                ],
                 "semantic_context_sha256": (
                     None
                     if semantic_context is None
@@ -2412,6 +3785,8 @@ def _symai_cache_key(
 _SYMAI_OUTPUT_TOKEN_LIMIT = "output_token_limit"
 _SYMAI_STRUCTURED_CONTRACT_FAILURE = "structured_contract_failure"
 _SYMAI_ENGINE_INVOCATION_FAILURE = "engine_invocation_failure"
+_SYMAI_SEMANTIC_PROJECTION_INCOMPLETE = "semantic_projection_incomplete"
+_SYMAI_SEMANTIC_VALIDATION_FAILED = "semantic_validation_failed"
 _SYMAI_REPAIR_INSTRUCTIONS = {
     _SYMAI_OUTPUT_TOKEN_LIMIT: (
         "The prior response reached the output-token limit. Use only the "
@@ -2428,6 +3803,16 @@ _SYMAI_REPAIR_INSTRUCTIONS = {
         "The prior invocation did not yield a completion. Return only a "
         "minimal instance of OUTPUT_SKELETON with short values and no "
         "surrounding text."
+    ),
+    _SYMAI_SEMANTIC_PROJECTION_INCOMPLETE: (
+        "The prior response was structurally valid but semantically vacuous. "
+        "Populate a source-derived logic_family, target, class, at least one "
+        "predicate including the target, and every completeness flag."
+    ),
+    _SYMAI_SEMANTIC_VALIDATION_FAILED: (
+        "The prior response reported validation errors. Repair the semantic "
+        "projection from the source; return an empty validation_errors array "
+        "only when every scored field is source-supported."
     ),
 }
 
@@ -2451,11 +3836,12 @@ def _symai_prompt(
     semantic_context: Mapping[str, object] | None = None,
     *,
     repair_failure_class: str | None = None,
+    semantic_protocol_cid: str | None = None,
 ) -> str:
     # Namespace and receipt-envelope fields belong to the cache/provenance
     # boundary, not to semantic inference.  Keeping them out of the prompt
     # avoids encouraging instruction-following models to reproduce the whole
-    # request container instead of returning the seven-field contract.
+    # request container instead of returning the strict response contract.
     del namespace
     evidence: object = None
     if semantic_context is not None:
@@ -2487,14 +3873,45 @@ def _symai_prompt(
                             for formula in raw_formulas[:8]:
                                 if not isinstance(formula, Mapping):
                                     continue
+                                raw_predicate = formula.get("predicate")
+                                predicate = _mapping_subset(
+                                    raw_predicate,
+                                    ("name", "role"),
+                                )
+                                raw_arguments = (
+                                    raw_predicate.get("arguments", ())
+                                    if isinstance(raw_predicate, Mapping)
+                                    else ()
+                                )
+                                if isinstance(
+                                    raw_arguments, Sequence
+                                ) and not isinstance(
+                                    raw_arguments,
+                                    (str, bytes, bytearray),
+                                ):
+                                    if not all(
+                                        isinstance(argument, str)
+                                        for argument in raw_arguments[:16]
+                                    ):
+                                        raise SymaiAdapterContractError(
+                                            "modal predicate arguments must "
+                                            "be strings"
+                                        )
+                                    predicate["arguments"] = list(
+                                        raw_arguments[:16]
+                                    )
                                 formulas.append(
                                     {
-                                        "operator": _thaw_json(
-                                            formula.get("operator")
+                                        "operator": _mapping_subset(
+                                            formula.get("operator"),
+                                            (
+                                                "family",
+                                                "system",
+                                                "symbol",
+                                                "label",
+                                            ),
                                         ),
-                                        "predicate": _thaw_json(
-                                            formula.get("predicate")
-                                        ),
+                                        "predicate": predicate,
                                         "has_conditions": bool(
                                             formula.get("conditions")
                                         ),
@@ -2512,18 +3929,32 @@ def _symai_prompt(
                             if not isinstance(role, Mapping):
                                 continue
                             arguments = role.get("arguments", ())
+                            safe_arguments: list[dict[str, object]] = []
+                            if isinstance(arguments, Sequence) and not isinstance(
+                                arguments,
+                                (str, bytes, bytearray),
+                            ):
+                                for argument in arguments[:8]:
+                                    if not isinstance(argument, Mapping):
+                                        raise SymaiAdapterContractError(
+                                            "semantic-role arguments must "
+                                            "be objects"
+                                        )
+                                    safe_arguments.append(
+                                        _mapping_subset(
+                                            argument,
+                                            (
+                                                "role",
+                                                "text",
+                                                "span",
+                                                "confidence",
+                                            ),
+                                        )
+                                    )
                             roles.append(
                                 {
                                     "predicate": role.get("predicate"),
-                                    "arguments": (
-                                        _thaw_json(arguments[:8])
-                                        if isinstance(arguments, Sequence)
-                                        and not isinstance(
-                                            arguments,
-                                            (str, bytes, bytearray),
-                                        )
-                                        else []
-                                    ),
+                                    "arguments": safe_arguments,
                                     "confidence": role.get("confidence"),
                                 }
                             )
@@ -2573,18 +4004,49 @@ def _symai_prompt(
         raise SymaiAdapterContractError(
             "concise SyMAI semantic evidence exceeds 12 KiB"
         )
-    output_skeleton = {
-        "candidate_ir": {"propositions": []},
-        "normalized_predicates": [],
-        "quantifiers": [],
-        "entities": [],
-        "ambiguity_flags": [],
-        "confidence": 0.0,
-        "validation_errors": [],
-    }
+    semantic_v2 = semantic_protocol_cid is not None
+    if semantic_v2 and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+        raise SymaiAdapterContractError(
+            "SyMAI prompt semantic protocol is unsupported"
+        )
+    output_skeleton = (
+        {
+            "logic_family": "",
+            "target": "",
+            "class": "unsupported",
+            "predicates": [],
+            "entities": [],
+            "completeness": {
+                field: False
+                for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+            },
+            "ambiguity_flags": [],
+            "confidence_millionths": 0,
+            "validation_errors": [],
+        }
+        if semantic_v2
+        else {
+            "candidate_ir": {"propositions": []},
+            "normalized_predicates": [],
+            "quantifiers": [],
+            "entities": [],
+            "ambiguity_flags": [],
+            "confidence": 0.0,
+            "validation_errors": [],
+        }
+    )
     repair_instruction = ""
     if repair_failure_class is not None:
-        instruction = _SYMAI_REPAIR_INSTRUCTIONS.get(repair_failure_class)
+        instruction = (
+            "The prior response reached the output-token limit. Return only "
+            "the nine semantic fields in OUTPUT_SKELETON, using short "
+            "source-derived terms and bounded arrays."
+            if (
+                semantic_v2
+                and repair_failure_class == _SYMAI_OUTPUT_TOKEN_LIMIT
+            )
+            else _SYMAI_REPAIR_INSTRUCTIONS.get(repair_failure_class)
+        )
         if instruction is None:
             raise SymaiAdapterContractError(
                 "SyMAI repair failure class is not allow-listed"
@@ -2594,6 +4056,24 @@ def _symai_prompt(
             + repair_failure_class
             + "\nSAFE_REPAIR_INSTRUCTION:"
             + instruction
+        )
+    if semantic_v2:
+        return (
+            SEMANTIC_PROMPT_INSTRUCTION_V2
+            + "\n"
+            + repair_instruction
+            + "\nSEMANTIC_PROTOCOL_CID:"
+            + SEMANTIC_PROTOCOL_V2_CID
+            + "\nPROMPT_SPEC_CID:"
+            + SEMANTIC_PROMPT_V2_CID
+            + "\nRESPONSE_SCHEMA_CID:"
+            + SEMANTIC_RESPONSE_SCHEMA_V2_CID
+            + "\nOUTPUT_SKELETON:\n"
+            + canonical_json(output_skeleton)
+            + "\nSOURCE_TEXT_JSON_STRING:\n"
+            + canonical_json(text)
+            + "\nOPTIONAL_PRODUCER_EVIDENCE_JSON:\n"
+            + evidence_json
         )
     return (
         "Produce one concise, untrusted semantic interpretation. Return "
@@ -2648,12 +4128,30 @@ def _symai_input_semantic_context(
         require_success=(
             (StageName.SPACY,) if measured_semantic_arm else ()
         ),
+        model_facing=request.semantic_protocol_cid is not None,
     )
 
 
 def _semantic_context_binding(
     semantic_context: Mapping[str, object],
 ) -> dict[str, object]:
+    if "context_cid" in semantic_context:
+        artifact_cids: list[str] = []
+        artifacts = semantic_context.get("artifacts", ())
+        if isinstance(artifacts, Sequence) and not isinstance(
+            artifacts, (str, bytes, bytearray)
+        ):
+            for artifact in artifacts:
+                if isinstance(artifact, Mapping):
+                    artifact_cids.append(
+                        cid_for_dag_json(_thaw_json(artifact))
+                    )
+        return {
+            "schema": SEMANTIC_CONTEXT_SCHEMA_V2,
+            "context_cid": semantic_context.get("context_cid"),
+            "source_cid": semantic_context.get("source_cid"),
+            "artifact_cids": artifact_cids,
+        }
     artifacts = semantic_context.get("artifacts", ())
     artifact_sha256s: list[str] = []
     if isinstance(artifacts, Sequence) and not isinstance(
@@ -2673,6 +4171,23 @@ def _semantic_context_binding(
 
 
 def _symai_dry_run_raw(request: StageRequest) -> str:
+    if request.semantic_protocol_cid is not None:
+        return canonical_json(
+            {
+                "logic_family": "unknown",
+                "target": "unknown",
+                "class": "unsupported",
+                "predicates": [],
+                "entities": [],
+                "completeness": {
+                    field: False
+                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                },
+                "ambiguity_flags": [],
+                "confidence_millionths": 0,
+                "validation_errors": ["model_call_skipped"],
+            }
+        )
     return canonical_json(
         {
             "candidate_ir": {
@@ -2799,7 +4314,10 @@ def _validate_symai_contract(
 ) -> tuple[str, dict[str, object]]:
     if not isinstance(raw_output, str) or not raw_output.strip():
         raise SymaiAdapterContractError("SyMAI output must be a nonempty JSON string")
-    raw = raw_output.strip()
+    semantic_v2 = config.semantic_protocol_cid == SEMANTIC_PROTOCOL_V2_CID
+    # Revision 2 retains and content-addresses the exact provider response.
+    # Revision 1 keeps its historical whitespace-normalizing behavior.
+    raw = raw_output if semantic_v2 else raw_output.strip()
     if len(raw.encode("utf-8")) > config.max_raw_output_bytes:
         raise SymaiAdapterContractError(
             f"SyMAI raw output exceeds {config.max_raw_output_bytes} encoded bytes"
@@ -2818,12 +4336,106 @@ def _validate_symai_contract(
         ) from exc
     if not isinstance(decoded, dict):
         raise SymaiAdapterContractError("SyMAI output must be one JSON object")
-    missing = _SYMAI_CONTRACT_KEYS - set(decoded)
-    unknown = set(decoded) - _SYMAI_CONTRACT_KEYS
+    contract_keys = (
+        frozenset(
+            {
+                "logic_family",
+                "target",
+                "class",
+                "predicates",
+                "entities",
+                "completeness",
+                "ambiguity_flags",
+                "confidence_millionths",
+                "validation_errors",
+            }
+        )
+        if semantic_v2
+        else _SYMAI_CONTRACT_KEYS
+    )
+    missing = contract_keys - set(decoded)
+    unknown = set(decoded) - contract_keys
     if missing or unknown:
         raise SymaiAdapterContractError(
             "SyMAI contract keys do not match the frozen schema"
         )
+    if semantic_v2:
+        logic_family = normalize_semantic_term(decoded["logic_family"])
+        target = normalize_semantic_term(decoded["target"])
+        semantic_class = normalize_semantic_term(decoded["class"])
+        predicates = _symai_string_list(
+            decoded["predicates"], "predicates"
+        )
+        entities = _symai_string_list(decoded["entities"], "entities")
+        ambiguity_flags = _symai_string_list(
+            decoded["ambiguity_flags"], "ambiguity_flags"
+        )
+        validation_errors = _symai_string_list(
+            decoded["validation_errors"], "validation_errors"
+        )
+        completeness = decoded["completeness"]
+        if (
+            not isinstance(completeness, dict)
+            or set(completeness)
+            != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+            or any(type(value) is not bool for value in completeness.values())
+        ):
+            raise SymaiAdapterContractError(
+                "SyMAI semantic completeness fields are invalid"
+            )
+        confidence_millionths = decoded["confidence_millionths"]
+        if (
+            isinstance(confidence_millionths, bool)
+            or not isinstance(confidence_millionths, int)
+            or not 0 <= confidence_millionths <= 1_000_000
+        ):
+            raise SymaiAdapterContractError(
+                "confidence_millionths must be an integer from zero to "
+                "one million"
+            )
+        if validation_errors:
+            raise SymaiCompletionContractError(
+                _SYMAI_SEMANTIC_VALIDATION_FAILED,
+                "SyMAI semantic response retained validation errors",
+            )
+        normalized_predicates = {
+            normalize_semantic_term(value) for value in predicates
+        }
+        if (
+            not all(completeness.values())
+            or logic_family in {"", "unknown", "unspecified", "none"}
+            or target in {"", "unknown", "unspecified", "none"}
+            or not normalized_predicates
+            or target not in normalized_predicates
+        ):
+            raise SymaiCompletionContractError(
+                _SYMAI_SEMANTIC_PROJECTION_INCOMPLETE,
+                "SyMAI semantic response is incomplete or vacuous",
+            )
+        if semantic_class not in {
+            "proved",
+            "disproved",
+            "ambiguous",
+            "unsupported",
+        }:
+            raise SymaiAdapterContractError(
+                "SyMAI semantic class is unsupported"
+            )
+        if ambiguity_flags and semantic_class != "ambiguous":
+            raise SymaiAdapterContractError(
+                "SyMAI ambiguity flags require class=ambiguous"
+            )
+        return raw, {
+            "logic_family": logic_family,
+            "target": target,
+            "class": semantic_class,
+            "predicates": predicates,
+            "entities": entities,
+            "completeness": dict(completeness),
+            "ambiguity_flags": ambiguity_flags,
+            "confidence_millionths": confidence_millionths,
+            "validation_errors": [],
+        }
     candidate_ir = decoded["candidate_ir"]
     if not isinstance(candidate_ir, dict) or not candidate_ir:
         raise SymaiAdapterContractError("candidate_ir must be a nonempty object")
@@ -2959,7 +4571,12 @@ def _validate_symai_inner_route(
         )
 
 
-def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, object]]:
+def _invoke_symai_engine(
+    engine: object,
+    prompt: str,
+    *,
+    response_format: Mapping[str, object] = SYMAI_RESPONSE_FORMAT,
+) -> tuple[str, dict[str, object]]:
     forward = getattr(engine, "forward", None)
     if not callable(forward):
         raise SymaiAdapterContractError("SyMAI engine must expose forward()")
@@ -2969,8 +4586,8 @@ def _invoke_symai_engine(engine: object, prompt: str) -> tuple[str, dict[str, ob
             processed_input="",
             prompt="",
             raw_input=False,
-            response_format=SYMAI_RESPONSE_FORMAT,
-            payload={"response_format": SYMAI_RESPONSE_FORMAT},
+            response_format=response_format,
+            payload={"response_format": response_format},
         ),
         args=[],
         kwargs={},
@@ -3111,20 +4728,81 @@ def _symai_failure_output(
                 for key, value in _safe_symai_metadata(metadata).items()
             }
         )
-    failure_data: dict[str, object] = {
-        "schema": SYMAI_EVIDENCE_SCHEMA,
-        "raw_output": raw_output,
-        "candidate_ir": None,
-        "cache_namespace": namespace,
-        "cache_key": cache_key,
-        "safe_failure_class": safe_failure_class,
-        "assurance": {
-            "semantic_hypothesis": False,
-            "authoritative": False,
-            "kernel_checked": False,
-            "verified": False,
-        },
-    }
+    failure_data: dict[str, object]
+    if config.semantic_protocol_cid is not None:
+        raw_output_bytes = (
+            None
+            if raw_output is None
+            else len(raw_output.encode("utf-8"))
+        )
+        raw_output_cid = (
+            None
+            if raw_output is None
+            else cid_for_bytes(raw_output.encode("utf-8"))
+        )
+        retained_raw_output = (
+            raw_output
+            if raw_output_bytes is not None
+            and raw_output_bytes <= config.max_raw_output_bytes
+            else None
+        )
+        identity["raw_output_cid"] = raw_output_cid
+        subcode = (
+            safe_failure_class
+            if safe_failure_class
+            in {
+                _SYMAI_SEMANTIC_PROJECTION_INCOMPLETE,
+                _SYMAI_SEMANTIC_VALIDATION_FAILED,
+            }
+            else "semantic_schema_incompatible"
+        )
+        failure_data = {
+            "schema": SYMAI_EVIDENCE_SCHEMA_V2,
+            "semantic_protocol_cid": config.semantic_protocol_cid,
+            "raw_output": retained_raw_output,
+            "raw_output_cid": raw_output_cid,
+            "raw_output_bytes": raw_output_bytes,
+            "raw_output_retained_exactly": (
+                retained_raw_output is not None
+            ),
+            "semantic_projection": None,
+            "cache_namespace": namespace,
+            "cache_key": cache_key,
+            "safe_failure_class": safe_failure_class,
+            "semantic_failure": _semantic_failure_receipt(
+                request,
+                StageName.SYMAI,
+                subcode,
+                evidence={
+                    "raw_output_cid": raw_output_cid,
+                    "raw_output_bytes": raw_output_bytes,
+                },
+            ),
+            "assurance": {
+                "semantic_hypothesis": False,
+                "raw_output_retained_exactly": (
+                    retained_raw_output is not None
+                ),
+                "authoritative": False,
+                "kernel_checked": False,
+                "verified": False,
+            },
+        }
+    else:
+        failure_data = {
+            "schema": SYMAI_EVIDENCE_SCHEMA,
+            "raw_output": raw_output,
+            "candidate_ir": None,
+            "cache_namespace": namespace,
+            "cache_key": cache_key,
+            "safe_failure_class": safe_failure_class,
+            "assurance": {
+                "semantic_hypothesis": False,
+                "authoritative": False,
+                "kernel_checked": False,
+                "verified": False,
+            },
+        }
     return StageOutput(
         data=failure_data,
         status=StageStatus.UNAVAILABLE if unavailable else StageStatus.FAILED,
@@ -3165,6 +4843,20 @@ def _symai_evidence_handler(
         model_calls = 0
         retries = 0
 
+        if (
+            request.semantic_protocol_cid
+            != config.semantic_protocol_cid
+        ):
+            return _symai_failure_output(
+                request,
+                config,
+                detail="SyMAI request/config semantic protocol mismatch",
+                namespace=namespace,
+                cache_key=cache_key,
+                started_wall=started_wall,
+                started_cpu=started_cpu,
+                failure_code=FailureCode.RECEIPT_OR_PROVENANCE_FAILURE,
+            )
         try:
             _reject_symai_recursion(request)
             text = _symai_request_text(request, config)
@@ -3244,6 +4936,15 @@ def _symai_evidence_handler(
                                 namespace,
                                 semantic_context,
                                 repair_failure_class=repair_failure_class,
+                                semantic_protocol_cid=(
+                                    config.semantic_protocol_cid
+                                ),
+                            ),
+                            response_format=(
+                                SYMAI_RESPONSE_FORMAT_V2
+                                if config.semantic_protocol_cid
+                                is not None
+                                else SYMAI_RESPONSE_FORMAT
                             ),
                         )
                         try:
@@ -3331,6 +5032,8 @@ def _symai_evidence_handler(
                 retries += 1
 
         if validated is None:
+            if cache_hit and config.semantic_protocol_cid is not None:
+                cache.pop(cache_key, None)
             safe_failure_class = _symai_retry_failure_class(
                 last_contract_error,
                 last_engine_error,
@@ -3413,6 +5116,174 @@ def _symai_evidence_handler(
                 model_calls=model_calls,
                 retries=retries,
                 cache_hit=cache_hit,
+            )
+
+        if config.semantic_protocol_cid is not None:
+            if not isinstance(raw_output, str):
+                return _symai_failure_output(
+                    request,
+                    config,
+                    detail="SyMAI semantic response bytes were not retained",
+                    namespace=namespace,
+                    cache_key=cache_key,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                    failure_code=FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE,
+                    metadata=metadata,
+                    model_calls=model_calls,
+                    retries=retries,
+                    cache_hit=cache_hit,
+                )
+            validated_response = dict(validated)
+            validated_response_cid = cid_for_dag_json(validated_response)
+            raw_output_cid = cid_for_bytes(raw_output.encode("utf-8"))
+            try:
+                projection = SemanticProjection.create(
+                    producer_id="symai",
+                    source_text=text,
+                    logic_family=validated_response["logic_family"],
+                    target=validated_response["target"],
+                    semantic_class=validated_response["class"],
+                    predicates=validated_response["predicates"],
+                    entities=validated_response["entities"],
+                    completeness=validated_response["completeness"],
+                    ambiguity_flags=validated_response["ambiguity_flags"],
+                    confidence_millionths=(
+                        validated_response["confidence_millionths"]
+                    ),
+                    validation_errors=validated_response["validation_errors"],
+                    evidence_cid=validated_response_cid,
+                )
+            except (ProtocolContractError, TypeError, ValueError) as exc:
+                if cache_hit:
+                    cache.pop(cache_key, None)
+                return _symai_failure_output(
+                    request,
+                    config,
+                    detail=(
+                        "SyMAI semantic projection materialization failed: "
+                        f"{type(exc).__name__}"
+                    ),
+                    namespace=namespace,
+                    cache_key=cache_key,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                    failure_code=FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE,
+                    raw_output=raw_output,
+                    metadata=metadata,
+                    model_calls=model_calls,
+                    retries=retries,
+                    cache_hit=cache_hit,
+                    safe_failure_class=(
+                        _SYMAI_SEMANTIC_VALIDATION_FAILED
+                    ),
+                )
+            if not projection.scoreable:
+                if cache_hit:
+                    cache.pop(cache_key, None)
+                return _symai_failure_output(
+                    request,
+                    config,
+                    detail="SyMAI semantic projection is incomplete or vacuous",
+                    namespace=namespace,
+                    cache_key=cache_key,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                    failure_code=FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE,
+                    raw_output=raw_output,
+                    metadata=metadata,
+                    model_calls=model_calls,
+                    retries=retries,
+                    cache_hit=cache_hit,
+                    safe_failure_class=(
+                        _SYMAI_SEMANTIC_PROJECTION_INCOMPLETE
+                    ),
+                )
+            if config.cache_enabled and not cache_hit:
+                cache[cache_key] = {
+                    "raw_output": raw_output,
+                    "metadata": dict(metadata),
+                }
+            safe_metadata = _safe_symai_metadata(metadata)
+            evidence = {
+                "schema": SYMAI_EVIDENCE_SCHEMA_V2,
+                "semantic_protocol_cid": config.semantic_protocol_cid,
+                "source_cid": request.source_cid,
+                "raw_output": raw_output,
+                "raw_output_cid": raw_output_cid,
+                "validated_response": validated_response,
+                "validated_response_cid": validated_response_cid,
+                "semantic_projection": projection.to_dict(),
+                "backend_provenance": {
+                    "engine": SYMAI_ROUTER_ENGINE,
+                    "router": "ipfs_datasets_py.llm_router",
+                    "requested_provider": config.provider,
+                    "effective_provider": effective_provider,
+                    "requested_model": config.model,
+                    "effective_model": effective_model,
+                    "router_metadata": safe_metadata,
+                    "attempts": model_calls,
+                    "retries": retries,
+                    "repair_failure_class": repair_failure_class,
+                    "dry_run": config.dry_run,
+                    "starts_model_server": False,
+                    "reuses_existing_model_service": True,
+                },
+                "cache": {
+                    "namespace": namespace,
+                    "key": cache_key,
+                    "mode": request.cache_mode.value,
+                    "hit": cache_hit,
+                },
+                "semantic_context": _semantic_context_binding(
+                    semantic_context
+                    or _symai_input_semantic_context(request)
+                ),
+                "assurance": {
+                    "semantic_hypothesis": True,
+                    "raw_output_retained_exactly": True,
+                    "contract_validated": True,
+                    "authoritative": False,
+                    "kernel_checked": False,
+                    "verified": False,
+                },
+            }
+            identity = {
+                **dict(request.requested_identity),
+                "implementation": "symai",
+                "requested_provider": config.provider,
+                "effective_provider": effective_provider,
+                "requested_model": config.model,
+                "effective_model": effective_model,
+                "cache_namespace": namespace,
+                "cache_key": cache_key,
+                "cache_hit": cache_hit,
+                "dry_run": config.dry_run,
+                "existing_router_engine": SYMAI_ROUTER_ENGINE,
+                "starts_model_server": False,
+                "semantic_context_cid": (
+                    None
+                    if semantic_context is None
+                    else semantic_context.get("context_cid")
+                ),
+                "raw_output_cid": raw_output_cid,
+                "validated_response_cid": validated_response_cid,
+                "semantic_content_cid": projection.semantic_content_cid,
+                "projection_cid": projection.projection_cid,
+            }
+            return StageOutput(
+                data=evidence,
+                effective_identity=identity,
+                telemetry=_symai_telemetry(
+                    request,
+                    started_wall=started_wall,
+                    started_cpu=started_cpu,
+                    raw_output=raw_output,
+                    model_calls=model_calls,
+                    retries=retries,
+                    cache_hit=cache_hit,
+                    success=True,
+                ),
             )
 
         if config.cache_enabled and not cache_hit:
@@ -3543,6 +5414,8 @@ class SymaiAdapter(StageAdapter):
                 raise ProtocolContractError(
                     "config must be a SymaiAdapterConfig"
                 )
+            if config.semantic_protocol_cid is not None:
+                kwargs.setdefault("adapter_version", "2")
             selected_cache = {} if cache is None else cache
             if not isinstance(selected_cache, MutableMapping):
                 raise ProtocolContractError("cache must be a mutable mapping")
@@ -6664,7 +8537,9 @@ __all__ = [
     "PipelineResult",
     "SEMANTIC_CONTEXT_MAX_BYTES",
     "SEMANTIC_CONTEXT_SCHEMA",
+    "SEMANTIC_CONTEXT_SCHEMA_V2",
     "SPACY_EVIDENCE_SCHEMA",
+    "SPACY_EVIDENCE_SCHEMA_V2",
     "SPACY_MAX_EVIDENCE_BYTES",
     "SPACY_MAX_TEXT_BYTES",
     "SpacyAdapter",
@@ -6679,6 +8554,7 @@ __all__ = [
     "StageTelemetry",
     "STAGE_ORDER",
     "SYMAI_EVIDENCE_SCHEMA",
+    "SYMAI_EVIDENCE_SCHEMA_V2",
     "SYMAI_MAX_CANDIDATE_BYTES",
     "SYMAI_MAX_LIST_ITEMS",
     "SYMAI_MAX_RAW_OUTPUT_BYTES",
@@ -6686,6 +8562,7 @@ __all__ = [
     "SYMAI_MAX_TEXT_BYTES",
     "SYMAI_PROMPT_SCHEMA",
     "SYMAI_RESPONSE_FORMAT",
+    "SYMAI_RESPONSE_FORMAT_V2",
     "SYMAI_ROUTER_ENGINE",
     "SymaiAdapter",
     "SymaiAdapterConfig",
@@ -6696,6 +8573,7 @@ __all__ = [
     "SymaiTraceGetter",
     "VersionedStageAdapter",
     "build_leanstral_repair_context",
+    "build_modal_semantic_projection_v2",
     "build_upstream_semantic_context",
     "build_default_adapters",
     "run_stages",

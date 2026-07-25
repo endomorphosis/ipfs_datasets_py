@@ -71,7 +71,10 @@ from benchmarks.logic_pipeline.ablation import (
     ResourceLimits,
     ScheduledCase,
     build_ablation_plan,
+    build_semantic_ablation_plan,
     execute_ablation,
+    execute_semantic_ablation,
+    validate_semantic_ablation_evidence,
 )
 from benchmarks.logic_pipeline.capabilities import (
     BoundedProcessResult,
@@ -126,6 +129,18 @@ FROZEN_BASELINE_MANIFEST_SHA256: Final = (
 
 _HEX_REVISION = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def evaluate_semantic_ablation_calibration_v2(
+    **kwargs: object,
+) -> Mapping[str, object]:
+    """Calibrate only source-bound, validated semantic-v2 graph evidence."""
+
+    from benchmarks.logic_pipeline.semantic_reassessment import (
+        evaluate_semantic_ablation_calibration_v2 as evaluate,
+    )
+
+    return evaluate(**kwargs)
 
 
 class BaselineValidationError(ValueError):

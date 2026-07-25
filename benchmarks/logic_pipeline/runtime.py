@@ -21,7 +21,13 @@ import time
 from types import MappingProxyType
 from typing import Callable, Final, Mapping, Sequence
 
+from .content_addressing import (
+    canonical_dag_json_bytes,
+    cid_for_dag_json,
+)
+
 from .adapters import (
+    build_modal_semantic_projection_v2,
     build_upstream_semantic_context,
     CompilerAdapter,
     create_pinned_leanstral_provider,
@@ -64,6 +70,7 @@ from .contracts import (
     NATIVE_KERNEL_RECEIPT_SCHEMA,
     ProtocolContractError,
     ResourceLane,
+    SEMANTIC_PROTOCOL_V2_CID,
     StageName,
     StageStatus,
     TelemetryRecord,
@@ -919,6 +926,34 @@ def _bounded_modal_ir_projection(modal_ir: object) -> object:
     }
 
 
+def _bounded_modal_ir_projection_v2(modal_ir: Mapping[str, object]) -> object:
+    """Retain semantic-v2 ModalIR without introducing bare content hashes."""
+
+    retained = {
+        key: modal_ir[key]
+        for key in (
+            "document_id",
+            "formulas",
+            "normalized_text",
+            "source",
+            "version",
+        )
+        if key in modal_ir
+    }
+    if len(canonical_dag_json_bytes(retained)) <= 32 * 1024:
+        return retained
+    return {
+        "document_id": retained.get("document_id"),
+        "normalized_text_cid": cid_for_dag_json(
+            retained.get("normalized_text")
+        ),
+        "formulas_cid": cid_for_dag_json(retained.get("formulas")),
+        "source": retained.get("source"),
+        "version": retained.get("version"),
+        "projection": "cid_only",
+    }
+
+
 def _current_compiler_handler(request: StageRequest) -> StageOutput:
     """Invoke the repository's current deterministic modal codec lazily."""
 
@@ -928,6 +963,81 @@ def _current_compiler_handler(request: StageRequest) -> StageOutput:
     if not isinstance(text, str) or not text.strip():
         raise RuntimeBindingError("compiler input requires source text")
     modal_ir, parser_name = _encode_current_modal(text, request.case_id)
+    if request.semantic_protocol_cid is not None:
+        if request.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+            raise RuntimeBindingError(
+                "compiler semantic protocol identity is unsupported"
+            )
+        if request.proof_context is not None:
+            raise RuntimeBindingError(
+                "compiler semantic producer cannot receive proof_context"
+            )
+        if not isinstance(modal_ir, Mapping):
+            raise RuntimeBindingError(
+                "compiler ModalIR output must be an object"
+            )
+        retained_modal_ir = _bounded_modal_ir_projection_v2(modal_ir)
+        if not isinstance(retained_modal_ir, Mapping):
+            raise RuntimeBindingError(
+                "compiler retained ModalIR evidence must be an object"
+            )
+        projection = build_modal_semantic_projection_v2(
+            producer_id="compiler",
+            source_text=text,
+            modal_ir=modal_ir,
+        )
+        modal_ir_cid = cid_for_dag_json(modal_ir)
+        semantic_payload: dict[str, object] = {
+            "schema": (
+                "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
+            ),
+            "semantic_protocol_cid": request.semantic_protocol_cid,
+            "source_cid": request.source_cid,
+            "modal_ir": retained_modal_ir,
+            "modal_ir_cid": modal_ir_cid,
+            "modal_ir_canonical_bytes": len(
+                canonical_dag_json_bytes(modal_ir)
+            ),
+            "retained_modal_ir_cid": cid_for_dag_json(
+                retained_modal_ir
+            ),
+            "retained_modal_ir_canonical_bytes": len(
+                canonical_dag_json_bytes(retained_modal_ir)
+            ),
+            "modal_ir_projection": "source-only-semantic-v2",
+            "parser_name": parser_name,
+            "semantic_projection": projection.to_dict(),
+        }
+        if not projection.scoreable:
+            return StageOutput(
+                data=semantic_payload,
+                status=StageStatus.FAILED,
+                effective_identity={
+                    **dict(request.requested_identity),
+                    "entrypoint": (
+                        "ipfs_datasets_py.logic.modal.codec."
+                        "DeterministicModalLogicCodec.encode"
+                    ),
+                    "semantic_protocol_cid": request.semantic_protocol_cid,
+                    "source_cid": request.source_cid,
+                },
+                failure_code=FailureCode.CANONICAL_IR_REJECTION,
+                failure_detail=(
+                    "compiler semantic projection is incomplete or invalid"
+                ),
+            )
+        return StageOutput(
+            data=semantic_payload,
+            effective_identity={
+                **dict(request.requested_identity),
+                "entrypoint": (
+                    "ipfs_datasets_py.logic.modal.codec."
+                    "DeterministicModalLogicCodec.encode"
+                ),
+                "semantic_protocol_cid": request.semantic_protocol_cid,
+                "source_cid": request.source_cid,
+            },
+        )
     modal_ir_bytes = len(canonical_json(modal_ir).encode("utf-8"))
     compiled = compile_reviewed_obligation(request.input_data)
     translation = (
@@ -1021,8 +1131,12 @@ def _available(
     )
 
 
-def _unavailable_adapter(stage: StageName) -> StageAdapter:
-    return StageAdapter(stage)
+def _unavailable_adapter(
+    stage: StageName,
+    *,
+    adapter_version: str = "1",
+) -> StageAdapter:
+    return StageAdapter(stage, adapter_version=adapter_version)
 
 
 def _spacy_mode(mode: SpacyMode) -> SpacyAdapterMode:
@@ -2538,10 +2652,14 @@ def _capability_handler(
     stage: StageName,
     injected: StageHandler | None,
     default_factory: Callable[[], StageAdapter] | None,
+    adapter_version: str = "1",
 ) -> StageAdapter:
     record = _record(inventory, kind)
     if record.status is not CapabilityStatus.AVAILABLE:
-        return _unavailable_adapter(stage)
+        return _unavailable_adapter(
+            stage,
+            adapter_version=adapter_version,
+        )
     if injected is not None:
         return {
             StageName.SPACY: SpacyAdapter,
@@ -2549,7 +2667,7 @@ def _capability_handler(
             StageName.HAMMER: HammerAdapter,
             StageName.LEANSTRAL: LeanstralAdapter,
             StageName.KERNEL: KernelAdapter,
-        }[stage](injected)
+        }[stage](injected, adapter_version=adapter_version)
     if default_factory is None:
         raise RuntimeBindingError(
             f"available {kind.value} capability has no live {stage.value} handler"
@@ -2558,6 +2676,10 @@ def _capability_handler(
     if adapter.handler is None:
         raise RuntimeBindingError(
             f"available {kind.value} capability remained inert"
+        )
+    if adapter.adapter_version != adapter_version:
+        raise RuntimeBindingError(
+            f"{stage.value} adapter version does not match runtime protocol"
         )
     return adapter
 
@@ -3458,7 +3580,17 @@ def _configured_symai_engine_factory(
             allow_local_fallback=False,
             dry_run=config.dry_run,
             cache_enabled=(
-                config.cache_enabled and namespace.endswith("/cache/warm")
+                config.cache_enabled
+                and (
+                    namespace.endswith("/cache/warm")
+                    or (
+                        config.semantic_protocol_cid is not None
+                        and namespace.endswith(
+                            "/cache/warm/semantic-protocol/"
+                            f"{config.semantic_protocol_cid}"
+                        )
+                    )
+                )
             ),
             model_name=config.model,
             route_binding={
@@ -3481,6 +3613,7 @@ def build_live_runtime(
     kernel_timeout_seconds: float = 30.0,
     leanstral_timeout_seconds: float = LEANSTRAL_MEASURED_TIMEOUT_SECONDS,
     leanstral_max_new_tokens: int = LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
+    semantic_protocol_cid: str | None = None,
 ) -> LiveRuntime:
     """Build exact live adapters for every requested frozen arm.
 
@@ -3495,6 +3628,16 @@ def build_live_runtime(
         raise RuntimeBindingError("handlers must be RuntimeBackendHandlers")
     if inventory.run_id.strip() == "":
         raise RuntimeBindingError("inventory run_id is empty")
+    if (
+        semantic_protocol_cid is not None
+        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+    ):
+        raise RuntimeBindingError(
+            "runtime semantic protocol CID is unsupported"
+        )
+    frontend_adapter_version = (
+        "2" if semantic_protocol_cid is not None else "1"
+    )
     variants = tuple(variant_ids)
     if not variants or len(set(variants)) != len(variants):
         raise RuntimeBindingError("variant_ids must be nonempty and unique")
@@ -3547,16 +3690,21 @@ def build_live_runtime(
         for stage in definition.stages:
             if stage is StageName.COMPILER:
                 route[stage] = CompilerAdapter(
-                    handlers.compiler or _current_compiler_handler
+                    handlers.compiler or _current_compiler_handler,
+                    adapter_version=frontend_adapter_version,
                 )
             elif stage is StageName.SPACY:
                 if definition.spacy_mode is SpacyMode.REGEX_LEGAL:
                     route[stage] = (
-                        SpacyAdapter(handlers.spacy)
+                        SpacyAdapter(
+                            handlers.spacy,
+                            adapter_version=frontend_adapter_version,
+                        )
                         if handlers.spacy is not None
                         else SpacyAdapter(
                             config=SpacyAdapterConfig(
-                                mode=SpacyAdapterMode.REGEX_LEGAL
+                                mode=SpacyAdapterMode.REGEX_LEGAL,
+                                semantic_protocol_cid=semantic_protocol_cid,
                             )
                         )
                     )
@@ -3573,8 +3721,10 @@ def build_live_runtime(
                             config=SpacyAdapterConfig(
                                 requested_model=str(requested),
                                 mode=_spacy_mode(mode),
+                                semantic_protocol_cid=semantic_protocol_cid,
                             )
                         ),
+                        adapter_version=frontend_adapter_version,
                     )
             elif stage is StageName.SYMAI:
                 injected = (
@@ -3593,11 +3743,20 @@ def build_live_runtime(
                     CapabilityKind.LLM_ROUTER,
                     CapabilityKind.LEANSTRAL_SERVICE,
                 ):
-                    route[stage] = _unavailable_adapter(stage)
+                    route[stage] = _unavailable_adapter(
+                        stage,
+                        adapter_version=frontend_adapter_version,
+                    )
                 elif injected is not None:
-                    route[stage] = SymaiAdapter(injected)
+                    route[stage] = SymaiAdapter(
+                        injected,
+                        adapter_version=frontend_adapter_version,
+                    )
                 elif definition.symai_policy is StagePolicy.LEGACY_DIAGNOSTIC:
-                    route[stage] = SymaiAdapter(_legacy_symai_unavailable)
+                    route[stage] = SymaiAdapter(
+                        _legacy_symai_unavailable,
+                        adapter_version=frontend_adapter_version,
+                    )
                 else:
                     provider = symai_record.identity.get(
                         "requested_provider",
@@ -3649,6 +3808,7 @@ def build_live_runtime(
                             expected_inner_model=inner_model,
                             expected_inner_endpoint=inner_endpoint,
                             expected_inner_backend=inner_backend,
+                            semantic_protocol_cid=semantic_protocol_cid,
                         ),
                         engine_factory=_configured_symai_engine_factory(
                             Path(state_directory or ".hssl-runtime-processes")

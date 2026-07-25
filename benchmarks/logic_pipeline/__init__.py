@@ -276,9 +276,9 @@ __all__ = [
     "manifest_sha256",
 ]
 
-# The protocol module is also standard-library-only and side-effect-free.  The
-# imports live at the end so it can reuse ``BENCHMARK_ID`` without creating an
-# initialization cycle.
+# The protocol module is side-effect-free and depends only on the required
+# multiformats stack beyond the standard library.  These imports live at the
+# end so it can reuse ``BENCHMARK_ID`` without creating an initialization cycle.
 from .contracts import (  # noqa: E402
     CASE_RESULT_RECEIPT_SCHEMA,
     CASE_RESULT_SCHEMA,
@@ -292,6 +292,20 @@ from .contracts import (  # noqa: E402
     BenchmarkProtocol,
     ProtocolContractError,
     ResourceLane,
+    SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID,
+    SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID,
+    SEMANTIC_NORMALIZATION_V2_CID,
+    SEMANTIC_PRODUCER_REGISTRY_V2_CID,
+    SEMANTIC_PROJECTION_SCHEMA_V2,
+    SEMANTIC_PROJECTION_SCHEMA_V2_CID,
+    SEMANTIC_PROMPT_V2_CID,
+    SEMANTIC_PROTOCOL_V2,
+    SEMANTIC_PROTOCOL_V2_CID,
+    SEMANTIC_RESPONSE_SCHEMA_V2,
+    SEMANTIC_RESPONSE_SCHEMA_V2_CID,
+    SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID,
+    SemanticProjection,
+    SemanticProtocolSpec,
     STAGE_PROVENANCE_SCHEMA,
     STAGE_RECORD_SCHEMA,
     StageName,
@@ -316,6 +330,20 @@ __all__ += [
     "HSSLEV0357C0D",
     "ProtocolContractError",
     "ResourceLane",
+    "SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID",
+    "SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID",
+    "SEMANTIC_NORMALIZATION_V2_CID",
+    "SEMANTIC_PRODUCER_REGISTRY_V2_CID",
+    "SEMANTIC_PROJECTION_SCHEMA_V2",
+    "SEMANTIC_PROJECTION_SCHEMA_V2_CID",
+    "SEMANTIC_PROMPT_V2_CID",
+    "SEMANTIC_PROTOCOL_V2",
+    "SEMANTIC_PROTOCOL_V2_CID",
+    "SEMANTIC_RESPONSE_SCHEMA_V2",
+    "SEMANTIC_RESPONSE_SCHEMA_V2_CID",
+    "SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID",
+    "SemanticProjection",
+    "SemanticProtocolSpec",
     "STAGE_PROVENANCE_SCHEMA",
     "STAGE_RECORD_SCHEMA",
     "StageName",
@@ -351,6 +379,7 @@ from .adapters import (  # noqa: E402
     LeanstralAdapter,
     PipelineResult,
     SPACY_EVIDENCE_SCHEMA,
+    SPACY_EVIDENCE_SCHEMA_V2,
     SPACY_MAX_EVIDENCE_BYTES,
     SPACY_MAX_TEXT_BYTES,
     SpacyAdapter,
@@ -364,6 +393,7 @@ from .adapters import (  # noqa: E402
     StageTelemetry,
     STAGE_ORDER,
     SYMAI_EVIDENCE_SCHEMA,
+    SYMAI_EVIDENCE_SCHEMA_V2,
     SYMAI_MAX_CANDIDATE_BYTES,
     SYMAI_MAX_LIST_ITEMS,
     SYMAI_MAX_RAW_OUTPUT_BYTES,
@@ -371,11 +401,13 @@ from .adapters import (  # noqa: E402
     SYMAI_MAX_TEXT_BYTES,
     SYMAI_PROMPT_SCHEMA,
     SYMAI_ROUTER_ENGINE,
+    SEMANTIC_CONTEXT_SCHEMA_V2,
     SymaiAdapter,
     SymaiAdapterConfig,
     SymaiAdapterContractError,
     SymaiRecursiveRoutingError,
     VersionedStageAdapter,
+    build_modal_semantic_projection_v2,
     build_default_adapters,
     run_stages,
 )
@@ -401,6 +433,7 @@ __all__ += [
     "LeanstralAdapter",
     "PipelineResult",
     "SPACY_EVIDENCE_SCHEMA",
+    "SPACY_EVIDENCE_SCHEMA_V2",
     "SPACY_MAX_EVIDENCE_BYTES",
     "SPACY_MAX_TEXT_BYTES",
     "SpacyAdapter",
@@ -414,6 +447,7 @@ __all__ += [
     "StageTelemetry",
     "STAGE_ORDER",
     "SYMAI_EVIDENCE_SCHEMA",
+    "SYMAI_EVIDENCE_SCHEMA_V2",
     "SYMAI_MAX_CANDIDATE_BYTES",
     "SYMAI_MAX_LIST_ITEMS",
     "SYMAI_MAX_RAW_OUTPUT_BYTES",
@@ -421,11 +455,13 @@ __all__ += [
     "SYMAI_MAX_TEXT_BYTES",
     "SYMAI_PROMPT_SCHEMA",
     "SYMAI_ROUTER_ENGINE",
+    "SEMANTIC_CONTEXT_SCHEMA_V2",
     "SymaiAdapter",
     "SymaiAdapterConfig",
     "SymaiAdapterContractError",
     "SymaiRecursiveRoutingError",
     "VersionedStageAdapter",
+    "build_modal_semantic_projection_v2",
     "build_default_adapters",
     "run_stages",
 ]
@@ -649,4 +685,39 @@ __all__ += [
     "gate_candidate",
     "load_control_suite",
     "validate_control_coverage",
+]
+
+# The source-only semantic-v2 flow is public while all filesystem mutations
+# remain explicit calls.  Calibration stays lazy to avoid an import cycle
+# through the legacy matrix facade.
+from .ablation import (  # noqa: E402
+    AblationPlan,
+    AblationRunResult,
+    AblationValidationError,
+    build_semantic_ablation_plan,
+    execute_semantic_ablation,
+    validate_semantic_ablation_evidence,
+)
+
+
+def evaluate_semantic_ablation_calibration_v2(
+    **kwargs: object,
+) -> object:
+    """Evaluate reviewed targets only from validated persisted v2 graphs."""
+
+    from .semantic_reassessment import (
+        evaluate_semantic_ablation_calibration_v2 as evaluate,
+    )
+
+    return evaluate(**kwargs)
+
+
+__all__ += [
+    "AblationPlan",
+    "AblationRunResult",
+    "AblationValidationError",
+    "build_semantic_ablation_plan",
+    "evaluate_semantic_ablation_calibration_v2",
+    "execute_semantic_ablation",
+    "validate_semantic_ablation_evidence",
 ]

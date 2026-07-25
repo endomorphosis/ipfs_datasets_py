@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 import hashlib
 import json
-from typing import MutableMapping
+from typing import Mapping, MutableMapping, Sequence
 
 import pytest
 
@@ -15,11 +15,51 @@ from benchmarks.logic_pipeline import (
     contracts,
     metrics,
 )
+from benchmarks.logic_pipeline.content_addressing import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 
 
 MANIFEST_SHA256 = "a" * 64
 ENVIRONMENT_SHA256 = "b" * 64
 TEXT = "Every licensed agency must file an annual report."
+
+
+def _plain(value: object) -> object:
+    def thaw(item: object) -> object:
+        if isinstance(item, Mapping):
+            return {
+                str(key): thaw(member)
+                for key, member in item.items()
+            }
+        if isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray)
+        ):
+            return [thaw(member) for member in item]
+        return item
+
+    return json.loads(contracts.canonical_json(thaw(value)))
+
+
+def _sha_json(value: object) -> str:
+    return hashlib.sha256(
+        contracts.canonical_json(value).encode("utf-8")
+    ).hexdigest()
+
+
+def _contains_key(value: object, sought: str) -> bool:
+    if isinstance(value, Mapping):
+        return sought in value or any(
+            _contains_key(member, sought)
+            for member in value.values()
+        )
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return any(_contains_key(member, sought) for member in value)
+    return False
 
 
 def _structured_response(*, proposition: str = "MustFileAnnualReport") -> str:
@@ -37,6 +77,33 @@ def _structured_response(*, proposition: str = "MustFileAnnualReport") -> str:
             "entities": ["agency", "annual report"],
             "ambiguity_flags": [],
             "confidence": 0.95,
+            "validation_errors": [],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _semantic_v2_response() -> str:
+    return json.dumps(
+        {
+            "logic_family": "deontic",
+            "target": "file_annual_report",
+            "class": "proved",
+            "predicates": [
+                "licensed_agency",
+                "file_annual_report",
+            ],
+            "entities": ["agency", "annual_report"],
+            "completeness": {
+                "logic_family": True,
+                "target": True,
+                "class": True,
+                "predicates": True,
+                "entities": True,
+            },
+            "ambiguity_flags": [],
+            "confidence_millionths": 950_000,
             "validation_errors": [],
         },
         sort_keys=True,
@@ -78,6 +145,7 @@ def _request(
     cache_mode: contracts.CacheMode = contracts.CacheMode.WARM,
     run_id: str = "symai-cache-measurement",
     deadline_unix_ms: int | None = None,
+    semantic_v2: bool = False,
 ) -> adapters.StageRequest:
     return adapters.StageRequest(
         run_id=run_id,
@@ -96,6 +164,11 @@ def _request(
         environment_sha256=ENVIRONMENT_SHA256,
         source=("benchmark_input",),
         deadline_unix_ms=deadline_unix_ms,
+        semantic_protocol_cid=(
+            contracts.SEMANTIC_PROTOCOL_V2_CID
+            if semantic_v2
+            else None
+        ),
     )
 
 
@@ -104,6 +177,7 @@ def _configured(
     *,
     cache: MutableMapping[str, object] | None = None,
     cache_enabled: bool = True,
+    semantic_v2: bool = False,
 ) -> adapters.SymaiAdapter:
     return adapters.SymaiAdapter(
         config=adapters.SymaiAdapterConfig(
@@ -111,6 +185,11 @@ def _configured(
             model="Leanstral-119B",
             max_retries=0,
             cache_enabled=cache_enabled,
+            semantic_protocol_cid=(
+                contracts.SEMANTIC_PROTOCOL_V2_CID
+                if semantic_v2
+                else None
+            ),
         ),
         engine_factory=lambda _config, _namespace: engine,
         trace_getter=lambda: {},
@@ -119,14 +198,24 @@ def _configured(
 
 
 def _rehash_receipt(value: dict[str, object]) -> dict[str, object]:
+    semantic_v2 = "receipt_cid" in value
     without_digest = {
         key: item
         for key, item in value.items()
-        if key != "receipt_sha256"
+        if key
+        not in (
+            {"receipt_sha256", "receipt_cid"}
+            if semantic_v2
+            else {"receipt_sha256"}
+        )
     }
     value["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(without_digest).encode("utf-8")
     ).hexdigest()
+    if semantic_v2:
+        value["receipt_cid"] = cid_for_dag_json(
+            json.loads(contracts.canonical_json(without_digest))
+        )
     return value
 
 
@@ -140,6 +229,10 @@ def _replace_embedded_receipt(
     identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD] = (
         receipt["receipt_sha256"]
     )
+    if "receipt_cid" in receipt:
+        identity[cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD] = (
+            receipt["receipt_cid"]
+        )
     return adapters.StageInvocation(
         replace(
             invocation.output,
@@ -164,6 +257,10 @@ def _record_with_copied_receipt(
     effective_identity[
         cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD
     ] = receipt.receipt_sha256
+    if receipt.receipt_cid is not None:
+        effective_identity[
+            cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD
+        ] = receipt.receipt_cid
     provenance = replace(
         target.provenance,
         effective_identity=effective_identity,
@@ -282,11 +379,14 @@ def _assert_metrics_backend_invocation_count(
 
 def test_public_api_is_explicit_and_importable() -> None:
     expected = {
+        "SYMAI_CACHE_PRIME_CID_FIELD",
         "SYMAI_CACHE_PRIME_DIGEST_FIELD",
         "SYMAI_CACHE_PRIME_FIELD",
         "SYMAI_CACHE_PRIME_MAX_BYTES",
         "SYMAI_CACHE_PRIME_RECEIPT_SCHEMA",
+        "SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2",
         "SYMAI_CACHE_PRIME_REQUEST_SCHEMA",
+        "SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2",
         "SymaiCachePrimeReceipt",
         "extract_symai_cache_prime_receipt",
         "extract_symai_cache_setup_telemetry",
@@ -375,6 +475,148 @@ def test_warm_setup_miss_then_measured_hit_has_source_bound_receipt() -> None:
     assert (
         cache_measurement.validate_symai_warm_cache_measurement(
             record, request=request
+        ).receipt_sha256
+        == receipt.receipt_sha256
+    )
+
+
+def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
+    raw = f"\n {_semantic_v2_response()} \t"
+    engine = _Engine([raw])
+    request = _request(
+        run_id="semantic-v2-cache-measurement",
+        semantic_v2=True,
+    )
+    adapter = _configured(engine, semantic_v2=True)
+
+    invocation = cache_measurement.invoke_with_symai_cache_measurement(
+        adapter,
+        request,
+    )
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(
+        invocation,
+        request=request,
+    )
+
+    assert receipt.schema == (
+        cache_measurement.SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
+    )
+    assert (
+        receipt.semantic_protocol_cid
+        == contracts.SEMANTIC_PROTOCOL_V2_CID
+    )
+    assert receipt.source_cid == cid_for_bytes(
+        TEXT.encode("utf-8"), codec="raw"
+    )
+    assert receipt.cache_namespace.endswith(
+        f"/semantic-protocol/{contracts.SEMANTIC_PROTOCOL_V2_CID}"
+    )
+    assert receipt.cache_key.startswith(
+        f"{receipt.cache_namespace}/stage/symai/b"
+    )
+    for field, codec in (
+        ("semantic_protocol_cid", "dag-json"),
+        ("source_cid", "raw"),
+        ("requested_identity_cid", "dag-json"),
+        ("request_cid", "dag-json"),
+        ("prime_semantic_output_cid", "dag-json"),
+        ("prime_effective_identity_cid", "dag-json"),
+        ("prime_backend_identity_cid", "dag-json"),
+        ("setup_telemetry_cid", "dag-json"),
+        ("measured_telemetry_cid", "dag-json"),
+        ("receipt_cid", "dag-json"),
+    ):
+        assert validate_cid(
+            getattr(receipt, field),
+            codecs=(codec,),
+        ) == getattr(receipt, field)
+    for value_field, sha_field, cid_field in (
+        (
+            "requested_identity",
+            "requested_identity_sha256",
+            "requested_identity_cid",
+        ),
+        (
+            "prime_semantic_output",
+            "prime_semantic_output_sha256",
+            "prime_semantic_output_cid",
+        ),
+        (
+            "prime_effective_identity",
+            "prime_effective_identity_sha256",
+            "prime_effective_identity_cid",
+        ),
+        (
+            "prime_backend_identity",
+            "prime_backend_identity_sha256",
+            "prime_backend_identity_cid",
+        ),
+    ):
+        exact = _plain(getattr(receipt, value_field))
+        assert _sha_json(exact) == getattr(receipt, sha_field)
+        assert cid_for_dag_json(exact) == getattr(receipt, cid_field)
+    assert _sha_json(receipt.setup_telemetry.to_dict()) == (
+        receipt.setup_telemetry_sha256
+    )
+    assert cid_for_dag_json(
+        _plain(receipt.setup_telemetry.to_dict())
+    ) == receipt.setup_telemetry_cid
+    assert receipt.measured_telemetry is not None
+    assert _sha_json(receipt.measured_telemetry.to_dict()) == (
+        receipt.measured_telemetry_sha256
+    )
+    assert cid_for_dag_json(
+        _plain(receipt.measured_telemetry.to_dict())
+    ) == receipt.measured_telemetry_cid
+    expected_request = {
+        "schema": (
+            cache_measurement.SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2
+        ),
+        "protocol_sha256": request.protocol_sha256,
+        "run_id": request.run_id,
+        "case_id": request.case_id,
+        "case_manifest_sha256": request.case_manifest_sha256,
+        "variant_id": request.variant_id,
+        "split": request.split.value,
+        "cache_mode": request.cache_mode.value,
+        "input_sha256": request.input_sha256,
+        "environment_sha256": request.environment_sha256,
+        "requested_identity_sha256": receipt.requested_identity_sha256,
+        "source": list(receipt.source),
+        "upstream_stage_digests": list(
+            receipt.upstream_stage_digests
+        ),
+        "upstream_artifact_sha256": list(
+            receipt.upstream_artifact_sha256
+        ),
+        "semantic_protocol_cid": receipt.semantic_protocol_cid,
+        "source_cid": receipt.source_cid,
+        "requested_identity": _plain(receipt.requested_identity),
+        "requested_identity_cid": receipt.requested_identity_cid,
+        "upstream_artifact_cids": list(
+            receipt.upstream_artifact_cids
+        ),
+    }
+    assert _sha_json(expected_request) == receipt.request_sha256
+    assert cid_for_dag_json(expected_request) == receipt.request_cid
+    receipt_value = receipt.to_dict()
+    receipt_body = {
+        key: value
+        for key, value in receipt_value.items()
+        if key not in {"receipt_sha256", "receipt_cid"}
+    }
+    assert _sha_json(receipt_body) == receipt.receipt_sha256
+    assert cid_for_dag_json(_plain(receipt_body)) == receipt.receipt_cid
+    assert invocation.output.effective_identity[
+        cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD
+    ] == receipt.receipt_cid
+    assert not _contains_key(receipt.to_dict(), "raw_output")
+    assert raw not in contracts.canonical_json(receipt.to_dict())
+    record = adapter.record(request, invocation)
+    assert (
+        cache_measurement.validate_symai_warm_cache_measurement(
+            record,
+            request=request,
         ).receipt_sha256
         == receipt.receipt_sha256
     )

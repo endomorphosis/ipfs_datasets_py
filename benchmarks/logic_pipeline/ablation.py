@@ -20,12 +20,15 @@ from types import MappingProxyType
 from typing import Final, Mapping, Sequence
 
 from .adapters import (
+    SpacyAdapter,
     StageAdapter,
     StageArtifact,
     StageInvocation,
     StageOutput,
     StageRequest,
+    SymaiAdapter,
 )
+from .content_addressing import cid_for_bytes, cid_for_dag_json
 from .cases import BenchmarkCase, ExpectedClass
 from .capabilities import (
     ResourceClass,
@@ -53,6 +56,11 @@ from .contracts import (
     ProtocolContractError,
     ResourceLane,
     RunContract,
+    SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID,
+    SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID,
+    SEMANTIC_PROTOCOL_V2_CID,
+    SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID,
+    SemanticProjection,
     Split,
     StageName,
     StageStatus,
@@ -80,6 +88,19 @@ ABLATION_RESULT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.ablation-result.v2"
 )
 ORDERING_ALGORITHM: Final = "sha256-seeded-counterbalanced-blocks-v2"
+SEMANTIC_EXECUTION_PROFILE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-execution-profile.v2"
+)
+SEMANTIC_V2_PROOF_SUPPRESSION_REASON: Final = (
+    "semantic_v2_proof_boundary_closed_until_g210"
+)
+SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "semantic-ambiguity-gate-decision.v2"
+)
+SEMANTIC_AMBIGUITY_GATE_RULE_V2: Final = (
+    "strict-semantic-projection-uncertainty-v2"
+)
 MAX_CASE_INPUT_BYTES: Final = 64 * 1024
 _SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -87,6 +108,10 @@ _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 class AblationValidationError(ValueError):
     """Raised when plan, persistence, or resume evidence fails closed."""
+
+
+class _SemanticFrontendValidationError(AblationValidationError):
+    """Raised when an invoked G200 frontend emits invalid v2 evidence."""
 
 
 # Descriptive compatibility name used by operators and earlier plan drafts.
@@ -243,6 +268,25 @@ class AblationCase:
             case.split,
             payload,
             _sha(case.to_dict()),
+        )
+
+    @classmethod
+    def from_benchmark_case_semantic_v2(
+        cls, case: BenchmarkCase
+    ) -> "AblationCase":
+        """Project a reviewed case onto the source-only G200 trust boundary.
+
+        Ground-truth labels and reviewed proof material stay on the caller's
+        evaluator-side :class:`BenchmarkCase`; they are deliberately absent
+        from both this scheduled case and every request derived from it.
+        """
+
+        if not isinstance(case, BenchmarkCase):
+            raise AblationValidationError("case must be a BenchmarkCase")
+        return cls(
+            case.case_id,
+            case.split,
+            {"text": case.source_text},
         )
 
     @property
@@ -895,6 +939,62 @@ def build_ablation_plan(
     )
 
 
+def _validate_semantic_v2_plan(plan: AblationPlan) -> None:
+    """Fail closed unless a plan contains only canonical source envelopes."""
+
+    if not isinstance(plan, AblationPlan):
+        raise AblationValidationError("plan must be an AblationPlan")
+    for job in plan.jobs:
+        value = job.case.input_data
+        if (
+            not isinstance(value, Mapping)
+            or set(value) != {"text"}
+            or not isinstance(value.get("text"), str)
+            or not str(value["text"]).strip()
+        ):
+            raise AblationValidationError(
+                "semantic protocol v2 plans must store only the canonical "
+                '{"text": source_text} case envelope'
+            )
+
+
+def build_semantic_ablation_plan(
+    run_id: str,
+    cases: Sequence[AblationCase | BenchmarkCase],
+    *,
+    case_manifest_sha256: str,
+    split: Split,
+    seed: int,
+    variant_ids: Sequence[str] = ALL_VARIANT_IDS,
+    cache_modes: Sequence[CacheMode] = (CacheMode.COLD, CacheMode.WARM),
+    limits: ResourceLimits = ResourceLimits(),
+    environment_sha256: str | None = None,
+    holdout_access_log_id: str | None = None,
+) -> AblationPlan:
+    """Build the additive G200 plan without scheduling evaluator-side fields."""
+
+    projected = tuple(
+        AblationCase.from_benchmark_case_semantic_v2(case)
+        if isinstance(case, BenchmarkCase)
+        else case
+        for case in cases
+    )
+    plan = build_ablation_plan(
+        run_id,
+        projected,
+        case_manifest_sha256=case_manifest_sha256,
+        split=split,
+        seed=seed,
+        variant_ids=variant_ids,
+        cache_modes=cache_modes,
+        limits=limits,
+        environment_sha256=environment_sha256,
+        holdout_access_log_id=holdout_access_log_id,
+    )
+    _validate_semantic_v2_plan(plan)
+    return plan
+
+
 @dataclass(frozen=True, slots=True)
 class AblationRunResult:
     """Complete execution result, including jobs validated during resume."""
@@ -1078,6 +1178,9 @@ def validate_ablation_evidence(
     restored = AblationPlan.from_dict(_read_canonical(plan_path, "plan"))
     if restored != plan or restored.digest != plan.digest:
         raise AblationValidationError("persisted plan conflicts with request")
+    semantic_protocol_cid = _read_semantic_execution_profile(root, plan)
+    if semantic_protocol_cid is not None:
+        _validate_semantic_v2_plan(plan)
 
     contracts = plan.run_contracts
     contract_map = {
@@ -1153,6 +1256,7 @@ def validate_ablation_evidence(
             job,
             contract,
             allow_legacy_result=allow_legacy_results,
+            semantic_protocol_cid=semantic_protocol_cid,
         )
         results.append(result)
         stop_code = stop_tracker.observe(job, result)
@@ -1283,6 +1387,85 @@ def _cache_scope_path(root: Path, contract: RunContract) -> Path:
     )
 
 
+def _semantic_execution_profile_path(root: Path) -> Path:
+    return root / "state" / "semantic-execution-profile.json"
+
+
+def _semantic_source_manifest_cid(plan: AblationPlan) -> str:
+    cases: dict[str, str] = {}
+    for job in plan.jobs:
+        source_text = job.case.input_data.get("text")
+        if not isinstance(source_text, str):
+            raise AblationValidationError(
+                "semantic source manifest requires exact source text"
+            )
+        source_cid = cid_for_bytes(source_text.encode("utf-8"))
+        previous = cases.setdefault(job.case.case_id, source_cid)
+        if previous != source_cid:
+            raise AblationValidationError(
+                "semantic source manifest case identity drifted"
+            )
+    return cid_for_dag_json(
+        {
+            "schema": (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "semantic-source-manifest.v2"
+            ),
+            "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
+            "split": plan.split.value,
+            "cases": [
+                {"case_id": case_id, "source_cid": cases[case_id]}
+                for case_id in sorted(cases)
+            ],
+        }
+    )
+
+
+def _semantic_execution_profile(plan: AblationPlan) -> dict[str, object]:
+    body = {
+        "schema": SEMANTIC_EXECUTION_PROFILE_SCHEMA,
+        "plan_sha256": plan.digest,
+        "plan_cid": cid_for_dag_json(plan.to_dict()),
+        "source_manifest_cid": _semantic_source_manifest_cid(plan),
+        "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
+        "calibration_route_manifest_cid": (
+            SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
+        ),
+        "calibration_metric_spec_cid": (
+            SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
+        ),
+        "reviewed_target_source_cid": (
+            SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+        ),
+        "producer_input_fields": ["text"],
+        "proof_boundary": SEMANTIC_V2_PROOF_SUPPRESSION_REASON,
+        "ambiguity_gate": {
+            "schema": SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2,
+            "rule": SEMANTIC_AMBIGUITY_GATE_RULE_V2,
+        },
+    }
+    return {**body, "profile_cid": cid_for_dag_json(body)}
+
+
+def _read_semantic_execution_profile(
+    root: Path,
+    plan: AblationPlan,
+) -> str | None:
+    path = _semantic_execution_profile_path(root)
+    if not path.exists():
+        return None
+    profile = _mapping(
+        _read_canonical(path, "semantic execution profile"),
+        "semantic execution profile",
+    )
+    expected = _semantic_execution_profile(plan)
+    if dict(profile) != expected:
+        raise AblationValidationError(
+            "semantic execution profile conflicts with plan or protocol"
+        )
+    return SEMANTIC_PROTOCOL_V2_CID
+
+
 def _select_adapters(
     adapters: Mapping[object, object], variant: str
 ) -> Mapping[StageName, StageAdapter]:
@@ -1305,6 +1488,116 @@ def _select_adapters(
             )
         result[stage] = adapter
     return MappingProxyType(result)
+
+
+def _validate_semantic_v2_adapters(
+    plan: AblationPlan,
+    adapters: Mapping[object, object],
+) -> None:
+    """Reject a revision-1 frontend map before persistence or invocation."""
+
+    frontend_stages = {
+        StageName.COMPILER,
+        StageName.SPACY,
+        StageName.SYMAI,
+    }
+    for variant_id in plan.variant_ids:
+        selected = _select_adapters(adapters, variant_id)
+        definition = get_variant_definition(variant_id)
+        for stage in definition.stages:
+            if stage not in frontend_stages:
+                continue
+            adapter = selected.get(stage)
+            if adapter is None:
+                raise AblationValidationError(
+                    f"semantic-v2 adapter map omits "
+                    f"{variant_id}/{stage.value}"
+                )
+            if adapter.adapter_version != "2":
+                raise AblationValidationError(
+                    f"semantic-v2 requires adapter version 2 for "
+                    f"{variant_id}/{stage.value}"
+                )
+            if isinstance(adapter, (SpacyAdapter, SymaiAdapter)):
+                config = adapter.config
+                if (
+                    config is not None
+                    and config.semantic_protocol_cid
+                    != SEMANTIC_PROTOCOL_V2_CID
+                ):
+                    raise AblationValidationError(
+                        f"{variant_id}/{stage.value} config is not bound "
+                        "to the semantic-v2 protocol CID"
+                    )
+                if (
+                    stage is StageName.SPACY
+                    and isinstance(adapter, SpacyAdapter)
+                    and config is not None
+                ):
+                    expected_mode = {
+                        "current_effective": "full_model",
+                        "full_model": "full_model",
+                        "regex_legal": "regex_legal",
+                        "blank_model": "blank_model",
+                    }[definition.spacy_mode.value]
+                    if config.mode.value != expected_mode:
+                        raise AblationValidationError(
+                            f"{variant_id}/spacy config mode "
+                            f"{config.mode.value!r} conflicts with the "
+                            f"frozen variant mode {expected_mode!r}"
+                        )
+
+
+def _validate_semantic_v2_result_frontends(
+    result: CaseResultRecord,
+    *,
+    source_text: str,
+) -> None:
+    """Strictly parse every invoked frontend before result persistence."""
+
+    for stage in result.stages:
+        if stage.stage not in {
+            StageName.COMPILER,
+            StageName.SPACY,
+            StageName.SYMAI,
+        }:
+            continue
+        if (
+            stage.provenance.effective_identity.get("graph_invoked")
+            is not True
+        ):
+            continue
+        _validate_semantic_v2_stage_record(
+            stage,
+            source_text=source_text,
+        )
+
+
+def _validate_semantic_v2_stage_record(
+    stage: object,
+    *,
+    source_text: str,
+) -> None:
+    """Validate one materialized frontend record at the earliest boundary."""
+
+    from .semantic_reassessment import (
+        SemanticReassessmentError,
+        validate_semantic_frontend_stage_v2,
+    )
+
+    try:
+        validate_semantic_frontend_stage_v2(stage, source_text)
+    except (
+        ProtocolContractError,
+        SemanticReassessmentError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        stage_name = getattr(getattr(stage, "stage", None), "value", "frontend")
+        raise _SemanticFrontendValidationError(
+            f"semantic-v2 {stage_name} evidence failed strict "
+            "validation"
+        ) from exc
 
 
 _RESOURCE_CLASS = MappingProxyType(
@@ -1497,6 +1790,91 @@ def _ambiguity_gate_receipt(
         "rule": "structured-frontend-uncertainty-v1",
     }
     return {**body, "decision_sha256": _sha(body)}
+
+
+def _semantic_ambiguity_gate_receipt_v2(
+    artifacts: Sequence[StageArtifact],
+    *,
+    source_cid: str,
+) -> dict[str, object]:
+    """Route only from already-validated, source-bound v2 projections."""
+
+    projections: list[SemanticProjection] = []
+    for artifact in artifacts:
+        if artifact.stage not in {
+            StageName.COMPILER,
+            StageName.SPACY,
+        }:
+            continue
+        if (
+            not artifact.invoked
+            or artifact.status is not StageStatus.SUCCESS
+            or not isinstance(artifact.data, Mapping)
+        ):
+            continue
+        raw_projection = artifact.data.get("semantic_projection")
+        try:
+            projection = SemanticProjection.from_dict(
+                _thaw(raw_projection)
+            )
+        except (ProtocolContractError, TypeError, ValueError) as exc:
+            raise AblationValidationError(
+                "semantic ambiguity gate received an invalid projection"
+            ) from exc
+        if (
+            projection.source_cid != source_cid
+            or projection.semantic_protocol_cid
+            != SEMANTIC_PROTOCOL_V2_CID
+        ):
+            raise AblationValidationError(
+                "semantic ambiguity gate projection identity drifted"
+            )
+        projections.append(projection)
+
+    uncertainty_signals: set[str] = set()
+    confidence_signals: set[str] = set()
+    if not projections:
+        uncertainty_signals.add("semantic_projection_unavailable")
+    for projection in projections:
+        prefix = projection.producer_id
+        if projection.ambiguity_flags:
+            uncertainty_signals.add(f"{prefix}:ambiguity_flags")
+        if projection.validation_errors:
+            uncertainty_signals.add(f"{prefix}:validation_errors")
+        if not all(projection.completeness.values()):
+            uncertainty_signals.add(f"{prefix}:incomplete")
+        if projection.semantic_class in {"ambiguous", "unsupported"}:
+            uncertainty_signals.add(
+                f"{prefix}:class_{projection.semantic_class}"
+            )
+        if (
+            not projection.ambiguity_flags
+            and not projection.validation_errors
+            and all(projection.completeness.values())
+            and projection.semantic_class in {"proved", "disproved"}
+        ):
+            confidence_signals.add(
+                f"{prefix}:complete_explicit_class"
+            )
+    ambiguous = bool(uncertainty_signals)
+    body = {
+        "schema": SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2,
+        "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
+        "source_cid": source_cid,
+        "decision": "invoke_symai" if ambiguous else "skip_symai",
+        "ambiguity_detected": ambiguous,
+        "uncertainty_signals": sorted(uncertainty_signals),
+        "confidence_signals": sorted(confidence_signals),
+        "input_projection_cids": [
+            projection.projection_cid for projection in projections
+        ],
+        "input_semantic_content_cids": [
+            projection.semantic_content_cid for projection in projections
+        ],
+        "label_fields_consulted": [],
+        "rule": SEMANTIC_AMBIGUITY_GATE_RULE_V2,
+    }
+    return {**body, "decision_cid": cid_for_dag_json(body)}
 
 
 def _ambiguity_decision(artifacts: Sequence[StageArtifact]) -> bool:
@@ -1698,6 +2076,18 @@ def _has_obligation(input_data: object) -> bool:
     )
 
 
+def _semantic_identity_binding(
+    request: StageRequest,
+) -> dict[str, object]:
+    if request.semantic_protocol_cid is None:
+        return {}
+    return {
+        "semantic_protocol_cid": request.semantic_protocol_cid,
+        "source_cid": request.source_cid,
+        "proof_context_cid": request.proof_context_cid,
+    }
+
+
 def _synthetic_invocation(
     stage: StageName,
     request: StageRequest,
@@ -1734,6 +2124,7 @@ def _synthetic_invocation(
         },
         effective_identity={
             **dict(request.requested_identity),
+            **_semantic_identity_binding(request),
             "invoked": False,
             "policy_reason": reason,
             "graph_invocation_index": request.invocation_index,
@@ -1787,7 +2178,18 @@ def _failure(
     job: ScheduledCase,
     code: FailureCode,
     detail: str,
+    *,
+    semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
+    if (
+        semantic_protocol_cid is not None
+        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+    ):
+        raise AblationValidationError(
+            "unsupported semantic execution protocol CID"
+        )
+    if semantic_protocol_cid is not None:
+        _validate_semantic_v2_plan(plan)
     definition = get_variant_definition(job.variant_id)
     invocation_order = _frozen_invocation_order(definition)
 
@@ -1808,6 +2210,7 @@ def _failure(
             source=("ablation_plan", plan.digest, job.job_id),
             upstream_artifacts=tuple(artifacts),
             invocation_index=invocation_index,
+            semantic_protocol_cid=semantic_protocol_cid,
         )
         reason = (
             "retained_job_failure"
@@ -1842,6 +2245,7 @@ def _failure(
                     data=data,
                     effective_identity={
                         **dict(request.requested_identity),
+                        **_semantic_identity_binding(request),
                         "invoked": False,
                         "policy_reason": reason,
                         "graph_invocation_index": invocation_index,
@@ -1892,6 +2296,7 @@ def _failure(
             upstream_stage_digests=canonical_upstream,
             upstream_artifacts=by_stage_artifacts,
             invocation_index=artifact.invocation_index,
+            semantic_protocol_cid=semantic_protocol_cid,
         )
         record = StageAdapter(stage).record(
             request,
@@ -1907,7 +2312,19 @@ def _execute_job(
     job: ScheduledCase,
     adapters: Mapping[object, object],
     scheduler: ResourceScheduler,
+    *,
+    semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
+    if (
+        semantic_protocol_cid is not None
+        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+    ):
+        raise AblationValidationError(
+            "unsupported semantic execution protocol CID"
+        )
+    if semantic_protocol_cid is not None:
+        _validate_semantic_v2_plan(plan)
+        _validate_semantic_v2_adapters(plan, adapters)
     definition = get_variant_definition(job.variant_id)
     case_deadline_unix_ms = _unix_time_ms() + max(
         1,
@@ -1934,6 +2351,7 @@ def _execute_job(
                 source=("ablation_plan", plan.digest, job.job_id),
                 upstream_artifacts=tuple(artifacts),
                 invocation_index=invocation_index,
+                semantic_protocol_cid=semantic_protocol_cid,
                 deadline_unix_ms=case_deadline_unix_ms,
             )
 
@@ -2016,6 +2434,7 @@ def _execute_job(
                         invocation.output.effective_identity
                         or request.requested_identity
                     ),
+                    **_semantic_identity_binding(request),
                     "graph_invocation_index": invocation_index,
                     "graph_invoked": True,
                     "graph_policy_reason": reason,
@@ -2026,8 +2445,20 @@ def _execute_job(
                         {}
                         if policy_decision is None
                         else {
-                            "policy_decision_sha256": policy_decision.get(
-                                "decision_sha256"
+                            **(
+                                {
+                                    "policy_decision_cid": (
+                                        policy_decision.get("decision_cid")
+                                    )
+                                }
+                                if "decision_cid" in policy_decision
+                                else {
+                                    "policy_decision_sha256": (
+                                        policy_decision.get(
+                                            "decision_sha256"
+                                        )
+                                    )
+                                }
                             ),
                             "policy_decision": policy_decision.get(
                                 "decision"
@@ -2042,6 +2473,24 @@ def _execute_job(
                     ),
                     invocation.telemetry,
                 )
+                if (
+                    semantic_protocol_cid is not None
+                    and stage
+                    in {
+                        StageName.COMPILER,
+                        StageName.SPACY,
+                        StageName.SYMAI,
+                    }
+                ):
+                    source_text = job.case.input_data.get("text")
+                    if not isinstance(source_text, str):
+                        raise _SemanticFrontendValidationError(
+                            "semantic-v2 invocation lost source text"
+                        )
+                    _validate_semantic_v2_stage_record(
+                        adapter.record(request, invocation),
+                        source_text=source_text,
+                    )
             invocations[stage] = invocation
             artifact = _artifact(
                 stage,
@@ -2069,7 +2518,16 @@ def _execute_job(
                 )
                 continue
             gate_receipt = (
-                _ambiguity_gate_receipt(artifacts)
+                (
+                    _semantic_ambiguity_gate_receipt_v2(
+                        artifacts,
+                        source_cid=cid_for_bytes(
+                            str(job.case.input_data["text"]).encode("utf-8")
+                        ),
+                    )
+                    if semantic_protocol_cid is not None
+                    else _ambiguity_gate_receipt(artifacts)
+                )
                 if stage is StageName.SYMAI
                 and definition.symai_policy
                 is StagePolicy.AMBIGUITY_GATED
@@ -2100,12 +2558,24 @@ def _execute_job(
             if artifact.status is not StageStatus.SUCCESS:
                 terminal_failure = True
 
-        has_obligation = _has_obligation(job.case.input_data)
+        semantic_v2 = semantic_protocol_cid is not None
+        has_obligation = (
+            False
+            if semantic_v2
+            else _has_obligation(job.case.input_data)
+        )
         compiler_translation_unsupported = (
             _compiler_translation_unsupported(artifacts)
         )
         previous_proof: StageArtifact | None = None
-        if terminal_failure:
+        if semantic_v2:
+            for stage in definition.proof_order:
+                invoke(
+                    stage,
+                    should_invoke=False,
+                    reason=SEMANTIC_V2_PROOF_SUPPRESSION_REASON,
+                )
+        elif terminal_failure:
             for stage in definition.proof_order:
                 invoke(
                     stage,
@@ -2155,7 +2625,8 @@ def _execute_job(
 
         if StageName.KERNEL in definition.stages:
             kernel_should_invoke = (
-                not terminal_failure
+                not semantic_v2
+                and not terminal_failure
                 and not (
                     definition.proof_order and not has_obligation
                 )
@@ -2164,15 +2635,19 @@ def _execute_job(
                 StageName.KERNEL,
                 should_invoke=kernel_should_invoke,
                 reason=(
-                    "upstream_terminal_failure"
-                    if terminal_failure
+                    SEMANTIC_V2_PROOF_SUPPRESSION_REASON
+                    if semantic_v2
                     else (
-                        "no_reviewed_proof_obligation"
-                        if not kernel_should_invoke
+                        "upstream_terminal_failure"
+                        if terminal_failure
                         else (
-                            "legacy_diagnostic_kernel"
-                            if definition.safety_diagnostic_only
-                            else "independent_native_kernel"
+                            "no_reviewed_proof_obligation"
+                            if not kernel_should_invoke
+                            else (
+                                "legacy_diagnostic_kernel"
+                                if definition.safety_diagnostic_only
+                                else "independent_native_kernel"
+                            )
                         )
                     )
                 ),
@@ -2289,18 +2764,32 @@ def _execute_job(
                     for artifact in artifacts
                     if artifact.stage is stage
                 ),
+                semantic_protocol_cid=semantic_protocol_cid,
                 deadline_unix_ms=case_deadline_unix_ms,
             )
             record = adapter.record(request, invocation)
             records.append(record)
             canonical_upstream = (*canonical_upstream, record.digest)
         result = CaseResultRecord.from_stages(tuple(records))
+        if semantic_protocol_cid is not None:
+            source_text = job.case.input_data.get("text")
+            if not isinstance(source_text, str):
+                raise _SemanticFrontendValidationError(
+                    "semantic-v2 job lost its exact source text"
+                )
+            _validate_semantic_v2_result_frontends(
+                result,
+                source_text=source_text,
+            )
+    except _SemanticFrontendValidationError:
+        raise
     except (ResourceLeaseTimeout, ResourceLeaseCancelled, ResourceLeaseError) as exc:
         return _failure(
             plan,
             job,
             FailureCode.RESOURCE_LEASE_CANCELLATION,
             f"resource lease failed for {job.job_id}: {type(exc).__name__}",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     except Exception as exc:
         return _failure(
@@ -2308,6 +2797,7 @@ def _execute_job(
             job,
             FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
             f"runner retained {type(exc).__name__} for {job.job_id}",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
 
     setup_telemetry = tuple(
@@ -2340,7 +2830,11 @@ def _execute_job(
     )
     if peak_memory > plan.limits.max_memory_bytes:
         return _failure(
-            plan, job, FailureCode.OUT_OF_MEMORY, "memory limit exceeded"
+            plan,
+            job,
+            FailureCode.OUT_OF_MEMORY,
+            "memory limit exceeded",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     if wall_ms > plan.limits.case_timeout_seconds * 1_000:
         return _failure(
@@ -2348,6 +2842,7 @@ def _execute_job(
             job,
             FailureCode.RESOURCE_LEASE_CANCELLATION,
             "case timeout exceeded",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     if model_calls > plan.limits.max_model_calls_per_case:
         return _failure(
@@ -2355,6 +2850,7 @@ def _execute_job(
             job,
             FailureCode.RESOURCE_LEASE_CANCELLATION,
             "model-call limit exceeded",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     if solver_stages > plan.limits.max_solver_processes_per_case:
         return _failure(
@@ -2362,6 +2858,7 @@ def _execute_job(
             job,
             FailureCode.RESOURCE_LEASE_CANCELLATION,
             "solver-process limit exceeded",
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     return result
 
@@ -2401,6 +2898,7 @@ def _validate_current_policy_graph(
     plan: AblationPlan,
     job: ScheduledCase,
     ordered_artifacts: tuple[StageArtifact, ...],
+    semantic_protocol_cid: str | None = None,
 ) -> None:
     """Recompute every frozen routing decision in a current result graph.
 
@@ -2480,7 +2978,16 @@ def _validate_current_policy_graph(
             )
         else:
             gate_receipt = (
-                _ambiguity_gate_receipt(evaluated)
+                (
+                    _semantic_ambiguity_gate_receipt_v2(
+                        evaluated,
+                        source_cid=cid_for_bytes(
+                            str(job.case.input_data["text"]).encode("utf-8")
+                        ),
+                    )
+                    if semantic_protocol_cid is not None
+                    else _ambiguity_gate_receipt(evaluated)
+                )
                 if stage is StageName.SYMAI
                 and definition.symai_policy is StagePolicy.AMBIGUITY_GATED
                 else None
@@ -2509,14 +3016,24 @@ def _validate_current_policy_graph(
                     if should_invoke
                     else "policy_decision"
                 )
+                decision_identity_field = (
+                    "policy_decision_cid"
+                    if semantic_protocol_cid is not None
+                    else "policy_decision_sha256"
+                )
+                decision_receipt_field = (
+                    "decision_cid"
+                    if semantic_protocol_cid is not None
+                    else "decision_sha256"
+                )
                 if (
                     not isinstance(artifact.data, Mapping)
                     or _thaw(artifact.data.get(receipt_field))
                     != gate_receipt
                     or artifact.effective_identity.get(
-                        "policy_decision_sha256"
+                        decision_identity_field
                     )
-                    != gate_receipt["decision_sha256"]
+                    != gate_receipt[decision_receipt_field]
                     or artifact.effective_identity.get("policy_decision")
                     != gate_receipt["decision"]
                 ):
@@ -2528,13 +3045,22 @@ def _validate_current_policy_graph(
                 terminal_failure = True
         evaluated.append(artifact)
 
-    has_obligation = _has_obligation(job.case.input_data)
+    semantic_v2 = semantic_protocol_cid is not None
+    has_obligation = (
+        False if semantic_v2 else _has_obligation(job.case.input_data)
+    )
     compiler_translation_unsupported = (
         _compiler_translation_unsupported(evaluated)
     )
     previous_proof: StageArtifact | None = None
     for proof_index, stage in enumerate(definition.proof_order):
-        if terminal_failure:
+        if semantic_v2:
+            artifact = require(
+                stage,
+                invoked=False,
+                reason=SEMANTIC_V2_PROOF_SUPPRESSION_REASON,
+            )
+        elif terminal_failure:
             artifact = require(
                 stage,
                 invoked=False,
@@ -2580,22 +3106,27 @@ def _validate_current_policy_graph(
 
     if StageName.KERNEL in definition.stages:
         kernel_should_invoke = (
-            not terminal_failure
+            not semantic_v2
+            and not terminal_failure
             and not (definition.proof_order and not has_obligation)
         )
         require(
             StageName.KERNEL,
             invoked=kernel_should_invoke,
             reason=(
-                "upstream_terminal_failure"
-                if terminal_failure
+                SEMANTIC_V2_PROOF_SUPPRESSION_REASON
+                if semantic_v2
                 else (
-                    "no_reviewed_proof_obligation"
-                    if not kernel_should_invoke
+                    "upstream_terminal_failure"
+                    if terminal_failure
                     else (
-                        "legacy_diagnostic_kernel"
-                        if definition.safety_diagnostic_only
-                        else "independent_native_kernel"
+                        "no_reviewed_proof_obligation"
+                        if not kernel_should_invoke
+                        else (
+                            "legacy_diagnostic_kernel"
+                            if definition.safety_diagnostic_only
+                            else "independent_native_kernel"
+                        )
                     )
                 )
             ),
@@ -2607,9 +3138,19 @@ def validate_current_result_graph(
     *,
     plan: AblationPlan,
     job: ScheduledCase,
+    semantic_protocol_cid: str | None = None,
 ) -> None:
     """Bind a v2 result to the complete frozen route and invocation graph."""
 
+    if (
+        semantic_protocol_cid is not None
+        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+    ):
+        raise AblationValidationError(
+            "unsupported semantic execution protocol CID"
+        )
+    if semantic_protocol_cid is not None:
+        _validate_semantic_v2_plan(plan)
     definition = get_variant_definition(job.variant_id)
     if tuple(stage.stage for stage in result.stages) != definition.stages:
         raise AblationValidationError(
@@ -2618,9 +3159,24 @@ def validate_current_result_graph(
 
     indexed: list[tuple[int, StageArtifact]] = []
     for stage in result.stages:
+        expected_requested_identity = dict(
+            definition.requested_identity(stage.stage)
+        )
+        if semantic_protocol_cid is not None:
+            source_text = job.case.input_data["text"]
+            assert isinstance(source_text, str)
+            expected_requested_identity.update(
+                {
+                    "semantic_protocol_cid": semantic_protocol_cid,
+                    "source_cid": cid_for_bytes(
+                        source_text.encode("utf-8")
+                    ),
+                    "proof_context_cid": None,
+                }
+            )
         if (
             stage.provenance.requested_identity
-            != definition.requested_identity(stage.stage)
+            != expected_requested_identity
         ):
             raise AblationValidationError(
                 "current result stage identity differs from the frozen "
@@ -2757,6 +3313,7 @@ def validate_current_result_graph(
         plan=plan,
         job=job,
         ordered_artifacts=tuple(artifact for _, artifact in indexed),
+        semantic_protocol_cid=semantic_protocol_cid,
     )
 
     try:
@@ -2767,6 +3324,16 @@ def validate_current_result_graph(
         raise AblationValidationError(
             "current result provenance graph is invalid"
         ) from exc
+    if semantic_protocol_cid is not None:
+        source_text = job.case.input_data.get("text")
+        if not isinstance(source_text, str):
+            raise AblationValidationError(
+                "semantic-v2 result lost its exact source text"
+            )
+        _validate_semantic_v2_result_frontends(
+            result,
+            source_text=source_text,
+        )
 
 
 def _validate_envelope(
@@ -2776,6 +3343,7 @@ def _validate_envelope(
     contract: RunContract,
     *,
     allow_legacy_result: bool = False,
+    semantic_protocol_cid: str | None = None,
 ) -> CaseResultRecord:
     if type(allow_legacy_result) is not bool:
         raise AblationValidationError(
@@ -2839,6 +3407,7 @@ def _validate_envelope(
             result,
             plan=plan,
             job=job,
+            semantic_protocol_cid=semantic_protocol_cid,
         )
     expected_identity = (
         plan.run_id,
@@ -2882,6 +3451,7 @@ def _execute_ablation(
     resume: bool = True,
     resource_scheduler: ResourceScheduler | None = None,
     authorized_holdout: bool = False,
+    semantic_protocol_cid: str | None = None,
 ) -> AblationRunResult:
     """Execute jobs after the caller has selected the appropriate trust boundary.
 
@@ -2908,6 +3478,16 @@ def _execute_ablation(
         )
     if not isinstance(adapters, Mapping):
         raise AblationValidationError("adapters must be a mapping")
+    if (
+        semantic_protocol_cid is not None
+        and semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID
+    ):
+        raise AblationValidationError(
+            "unsupported semantic execution protocol CID"
+        )
+    if semantic_protocol_cid is not None:
+        _validate_semantic_v2_plan(plan)
+        _validate_semantic_v2_adapters(plan, adapters)
     if type(resume) is not bool:
         raise AblationValidationError("resume must be a boolean")
     if isinstance(output_root, str) and not output_root.strip():
@@ -2935,6 +3515,20 @@ def _execute_ablation(
     receipt_start = len(scheduler.receipts)
     root = Path(output_root)
     plan_path = root / "state" / "ablation-plan.json"
+    profile_path = _semantic_execution_profile_path(root)
+    persisted_semantic_cid = _read_semantic_execution_profile(root, plan)
+    if semantic_protocol_cid is None:
+        if persisted_semantic_cid is not None:
+            raise AblationValidationError(
+                "revision-1 execution cannot resume a semantic-v2 namespace"
+            )
+    elif persisted_semantic_cid is None:
+        if plan_path.exists():
+            raise AblationValidationError(
+                "semantic-v2 execution cannot adopt an existing revision-1 "
+                "plan namespace"
+            )
+        _write_once(profile_path, _semantic_execution_profile(plan))
     if plan_path.exists():
         if not resume:
             raise AblationValidationError(
@@ -3029,11 +3623,21 @@ def _execute_ablation(
                     f"result exists with resume disabled: {path}"
                 )
             result = _validate_envelope(
-                _read_canonical(path, "result"), plan, job, contract
+                _read_canonical(path, "result"),
+                plan,
+                job,
+                contract,
+                semantic_protocol_cid=semantic_protocol_cid,
             )
             resumed.append(job.job_id)
         else:
-            result = _execute_job(plan, job, adapters, scheduler)
+            result = _execute_job(
+                plan,
+                job,
+                adapters,
+                scheduler,
+                semantic_protocol_cid=semantic_protocol_cid,
+            )
             try:
                 _write_once(path, _envelope(plan, job, contract, result))
             except AblationValidationError:
@@ -3044,6 +3648,7 @@ def _execute_ablation(
                     plan,
                     job,
                     contract,
+                    semantic_protocol_cid=semantic_protocol_cid,
                 )
                 resumed.append(job.job_id)
             else:
@@ -3052,6 +3657,7 @@ def _execute_ablation(
                     plan,
                     job,
                     contract,
+                    semantic_protocol_cid=semantic_protocol_cid,
                 )
                 executed.append(job.job_id)
         results.append(result)
@@ -3098,10 +3704,56 @@ def execute_ablation(
     )
 
 
+def execute_semantic_ablation(
+    plan: AblationPlan,
+    adapters: Mapping[object, object],
+    *,
+    output_root: str | Path,
+    resume: bool = True,
+    resource_scheduler: ResourceScheduler | None = None,
+) -> AblationRunResult:
+    """Execute the source-only G200 semantic protocol.
+
+    The additive profile binds every request to
+    :data:`SEMANTIC_PROTOCOL_V2_CID`.  HAMMER, Leanstral, and the independent
+    kernel remain explicit suppressed graph nodes until G210 introduces a
+    separately reviewed proof-context boundary.
+    """
+
+    return _execute_ablation(
+        plan,
+        adapters,
+        output_root=output_root,
+        resume=resume,
+        resource_scheduler=resource_scheduler,
+        authorized_holdout=False,
+        semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
+    )
+
+
+def validate_semantic_ablation_evidence(
+    plan: AblationPlan,
+    *,
+    output_root: str | Path,
+) -> AblationRunResult:
+    """Reparse G200 evidence while requiring its persisted v2 profile."""
+
+    root = Path(output_root)
+    if _read_semantic_execution_profile(root, plan) is None:
+        raise AblationValidationError(
+            "semantic-v2 evidence requires a persisted execution profile"
+        )
+    return validate_ablation_evidence(plan, output_root=root)
+
+
 __all__ = [
     "ABLATION_PLAN_SCHEMA",
     "ABLATION_RESULT_SCHEMA",
     "LEGACY_ABLATION_RESULT_SCHEMA",
+    "SEMANTIC_AMBIGUITY_GATE_RULE_V2",
+    "SEMANTIC_AMBIGUITY_GATE_SCHEMA_V2",
+    "SEMANTIC_EXECUTION_PROFILE_SCHEMA",
+    "SEMANTIC_V2_PROOF_SUPPRESSION_REASON",
     "AblationCase",
     "AblationPlan",
     "AblationRunResult",
@@ -3111,7 +3763,10 @@ __all__ = [
     "ResourceLimits",
     "ScheduledCase",
     "build_ablation_plan",
+    "build_semantic_ablation_plan",
     "execute_ablation",
+    "execute_semantic_ablation",
     "validate_ablation_evidence",
     "validate_current_result_graph",
+    "validate_semantic_ablation_evidence",
 ]

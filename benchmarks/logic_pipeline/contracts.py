@@ -1,9 +1,10 @@
 """Frozen contracts for the logic-pipeline benchmark protocol.
 
-This module is intentionally dependency-free.  It contains the preregistration
-that must be loaded and validated before a pilot, together with the small
-run/outcome records needed to enforce its safety boundary.  Backend adapters do
-not belong here and importing this module performs no I/O.
+This module contains the preregistration that must be loaded and validated
+before a pilot, together with the small run/outcome records needed to enforce
+its safety boundary.  Backend adapters do not belong here and importing this
+module does not contact a benchmark backend.  Revision-2 semantic artifacts use
+the repository's multiformats helpers for canonical IPFS content identifiers.
 """
 
 from __future__ import annotations
@@ -14,8 +15,15 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from types import MappingProxyType
 from typing import Final, Mapping, Self, Sequence, TypeVar
+
+from .content_addressing import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 
 from . import BENCHMARK_ID
 
@@ -1178,6 +1186,1460 @@ def canonical_json(value: object) -> str:
         )
     except (TypeError, ValueError) as exc:
         raise ProtocolContractError("value is not canonical JSON data") from exc
+
+
+def _semantic_cid(
+    value: object,
+    field: str,
+    *,
+    codecs: tuple[str, ...] = ("raw", "dag-json"),
+) -> str:
+    """Return one canonical CIDv1/base32/sha2-256 identity or fail closed."""
+
+    try:
+        return validate_cid(value, codecs=codecs)
+    except (TypeError, ValueError) as exc:
+        raise ProtocolContractError(f"{field} is not a canonical CID") from exc
+
+
+SEMANTIC_PROTOCOL_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-protocol.v2"
+)
+SEMANTIC_PROTOCOL_ID_V2: Final = (
+    "hammer-symai-spacy-leanstral-source-only-semantics-v2"
+)
+SEMANTIC_PROJECTION_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-projection.v2"
+)
+SEMANTIC_PROMPT_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v2"
+)
+SEMANTIC_RESPONSE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.symai-response.v2"
+)
+SEMANTIC_FAILURE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-failure.v2"
+)
+SEMANTIC_FAILURE_CODES_V2: Final = (
+    "semantic_input_leakage",
+    "semantic_schema_incompatible",
+    "semantic_projection_incomplete",
+    "semantic_validation_failed",
+    "semantic_evidence_mismatch",
+)
+SEMANTIC_PRODUCER_REGISTRY_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-producer-registry.v2"
+)
+SEMANTIC_PROTOCOL_VERSION_V2: Final = 2
+SEMANTIC_CALIBRATION_CASE_COUNT_V2: Final = 20
+SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2: Final = 100
+SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2: Final = 20
+SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2: Final = 750_000
+SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2: Final = 950_000
+SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2: Final = 500_000
+SEMANTIC_PARENT_PROTOCOL_SHA256_V1: Final = (
+    "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
+)
+SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1: Final = (
+    "53a106ddd6c68af445d0a3a912b0d7d09e04c6b23500d4c6362bb5c089f2e44f"
+)
+SEMANTIC_PROJECTION_CLASSES_V2: Final = (
+    "proved",
+    "disproved",
+    "ambiguous",
+    "unsupported",
+)
+SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2: Final = (
+    "logic_family",
+    "target",
+    "class",
+    "predicates",
+    "entities",
+)
+SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2: Final = (
+    "expected_class",
+    "expected_ir",
+    "required_predicates",
+    "required_entities",
+    "proof_obligation",
+    "obligation_id",
+    "negative_controls",
+    "kernel_outcome",
+    "kernel_receipt",
+    "compiled_obligation",
+    "semantic_target",
+)
+SEMANTIC_PRODUCER_IDS_V2: Final = (
+    "compiler",
+    "spacy_full_model",
+    "spacy_regex_legal",
+    "spacy_blank_model",
+    "symai",
+)
+SEMANTIC_CALIBRATION_ROUTE_MANIFEST_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "semantic-calibration-routes.v2"
+)
+SEMANTIC_CALIBRATION_METRIC_SPEC_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "semantic-calibration-metrics.v2"
+)
+SEMANTIC_REVIEWED_TARGET_SOURCE_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "semantic-reviewed-target-source.v2"
+)
+
+
+def semantic_calibration_route_manifest_v2() -> dict[str, object]:
+    """Return the precommitted producer-to-stage-prefix calibration routes."""
+
+    return {
+        "schema": SEMANTIC_CALIBRATION_ROUTE_MANIFEST_SCHEMA_V2,
+        "cache_mode": CacheMode.COLD.value,
+        "coordinate_count": SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2,
+        "cases_per_producer": (
+            SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+        ),
+        "routes": [
+            {
+                "producer_id": "compiler",
+                "variant_id": "A0",
+                "selected_stage": StageName.COMPILER.value,
+                "stage_prefix": [StageName.COMPILER.value],
+            },
+            {
+                "producer_id": "spacy_full_model",
+                "variant_id": "A1",
+                "selected_stage": StageName.SPACY.value,
+                "stage_prefix": [
+                    StageName.COMPILER.value,
+                    StageName.SPACY.value,
+                ],
+            },
+            {
+                "producer_id": "spacy_regex_legal",
+                "variant_id": "A7",
+                "selected_stage": StageName.SPACY.value,
+                "stage_prefix": [
+                    StageName.COMPILER.value,
+                    StageName.SPACY.value,
+                ],
+            },
+            {
+                "producer_id": "spacy_blank_model",
+                "variant_id": "A8",
+                "selected_stage": StageName.SPACY.value,
+                "stage_prefix": [
+                    StageName.COMPILER.value,
+                    StageName.SPACY.value,
+                ],
+            },
+            {
+                "producer_id": "symai",
+                "variant_id": "A5",
+                "selected_stage": StageName.SYMAI.value,
+                "stage_prefix": [
+                    StageName.COMPILER.value,
+                    StageName.SPACY.value,
+                    StageName.SYMAI.value,
+                ],
+            },
+        ],
+        "selection_time": "frozen_before_execution",
+        "post_hoc_route_or_cache_selection": False,
+        "proof_stages_permitted": False,
+        "measurement_unit": "integrated_frontend_stage_prefix",
+        "quality_attribution": (
+            "terminal_projection_with_required_upstream_dependencies"
+        ),
+        "cost_attribution": "complete_selected_stage_prefix",
+        "standalone_producer_claims_permitted": False,
+    }
+
+
+SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID: Final = cid_for_dag_json(
+    semantic_calibration_route_manifest_v2()
+)
+
+
+def semantic_calibration_metric_spec_v2() -> dict[str, object]:
+    """Return non-vacuous absolute and relative selection rules."""
+
+    return {
+        "schema": SEMANTIC_CALIBRATION_METRIC_SPEC_SCHEMA_V2,
+        "cases_per_producer": (
+            SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+        ),
+        "primary_quality": {
+            "name": "all_five_semantic_fields_exact",
+            "fields": list(
+                SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+            ),
+            "minimum_rate_millionths": (
+                SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+            ),
+            "minimum_successes": 15,
+        },
+        "uncertainty": {
+            "method": "wilson_score_interval",
+            "confidence_millionths": (
+                SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
+            ),
+            "minimum_lower_bound_millionths": (
+                SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
+            ),
+        },
+        "eligibility": {
+            "requires_all_coordinates_measured": True,
+            "schema_incompatible_coordinates_permitted": 0,
+            "vacuous_coordinates_permitted": 0,
+            "requires_recomputed_projection_evidence_cid": True,
+        },
+        "required_quality_breakdown": [
+            "logic_family_accuracy",
+            "target_accuracy",
+            "class_accuracy",
+            "predicates_accuracy",
+            "entities_accuracy",
+            "availability_rate",
+            "vacuity_rate",
+        ],
+        "required_cost_breakdown": [
+            "wall_time_ms",
+            "cpu_time_ms",
+            "peak_memory_bytes",
+            "model_calls",
+            "cache_hits",
+            "cache_misses",
+            "retries",
+        ],
+        "selection": {
+            "absolute_gate_precedes_relative_selection": True,
+            "eligible_route_terminal_producer_is_unit_of_selection": True,
+            "post_hoc_coordinate_selection": False,
+            "standalone_producer_delegation_claims_permitted": False,
+        },
+    }
+
+
+SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID: Final = cid_for_dag_json(
+    semantic_calibration_metric_spec_v2()
+)
+
+
+def semantic_reviewed_target_source_v2() -> dict[str, object]:
+    """Bind target derivation to the frozen reviewed v1 corpus roots."""
+
+    return {
+        "schema": SEMANTIC_REVIEWED_TARGET_SOURCE_SCHEMA_V2,
+        "corpus_manifest_sha256": (
+            "58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26"
+        ),
+        "split_manifest_sha256": {
+            "pilot": (
+                "a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"
+            ),
+            "development": (
+                "530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"
+            ),
+        },
+        "case_count": SEMANTIC_CALIBRATION_CASE_COUNT_V2,
+        "case_identity": [
+            "reviewed_case_cid",
+            "frozen_manifest_case_sha256_compatibility_join",
+        ],
+        "source_identity": [
+            "raw_source_cid",
+            "source_sha256_compatibility_join",
+        ],
+        "target_fields": [
+            "expected_ir.logic",
+            "expected_ir.target",
+            "expected_class",
+            "required_predicates",
+            "required_entities",
+        ],
+        "review_attestation_required": True,
+        "derive_targets_before_observing_producer_outputs": True,
+        "holdout_included": False,
+    }
+
+
+SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID: Final = cid_for_dag_json(
+    semantic_reviewed_target_source_v2()
+)
+_SEMANTIC_VACUOUS_TERMS: Final = frozenset(
+    {"", "none", "null", "unknown", "unspecified"}
+)
+_SEMANTIC_LOGIC_ALIASES: Final = MappingProxyType(
+    {
+        "first_order": "fol",
+        "first_order_logic": "fol",
+        "fol": "fol",
+        "deontic": "deontic",
+        "deontic_logic": "deontic",
+        "temporal": "temporal",
+        "temporal_logic": "temporal",
+    }
+)
+_SEMANTIC_TERM_SCHEMA_PATTERN: Final = (
+    r"^[^\W_][\w.:-]{0,255}$"
+)
+_SEMANTIC_TERM = re.compile(
+    r"[^\W_][\w.:-]{0,255}\Z",
+    flags=re.UNICODE,
+)
+_SEMANTIC_NORMALIZATION_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-normalization.v2"
+)
+_SEMANTIC_TERM_UNICODE_FORM_V2: Final = "NFKC"
+_SEMANTIC_TERM_CASE_RULE_V2: Final = "casefold"
+_SEMANTIC_TERM_SEPARATOR_V2: Final = "_"
+_SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2: Final = (".", ":", "-")
+_SEMANTIC_TERM_MAX_LENGTH_V2: Final = 256
+_SEMANTIC_PROJECTION_MAX_TERMS_V2: Final = 24
+_SEMANTIC_MODAL_IR_FORMULAS_FIELD_V2: Final = "formulas"
+_SEMANTIC_MODAL_IR_OPERATOR_FIELD_V2: Final = "operator"
+_SEMANTIC_MODAL_IR_OPERATOR_FAMILY_FIELD_V2: Final = "family"
+_SEMANTIC_MODAL_IR_PREDICATE_FIELD_V2: Final = "predicate"
+_SEMANTIC_MODAL_IR_PREDICATE_NAME_FIELD_V2: Final = "name"
+_SEMANTIC_MODAL_IR_PREDICATE_ARGUMENTS_FIELD_V2: Final = "arguments"
+_SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2: Final = "role"
+_SEMANTIC_MODAL_IR_PRIMARY_ROLE_V2: Final = "clause"
+_SEMANTIC_MODAL_IR_PROVENANCE_FIELD_V2: Final = "provenance"
+_SEMANTIC_MODAL_IR_PROVENANCE_START_FIELD_V2: Final = "start_char"
+_SEMANTIC_MODAL_IR_PROVENANCE_END_FIELD_V2: Final = "end_char"
+_SEMANTIC_MODAL_IR_FORMULA_ID_FIELD_V2: Final = "formula_id"
+_SEMANTIC_MODAL_IR_ENTITY_QUALIFIER_V2: Final = ":"
+_SEMANTIC_MISSING_TERM_V2: Final = "unknown"
+_SEMANTIC_SOURCE_UNCERTAINTY_PATTERN_V2: Final = (
+    r"(?<!not )\b(?:ambiguous|unclear)\b|"
+    r"\bnot\s+(?:specified|stated)\b"
+)
+_SEMANTIC_SOURCE_DISPROOF_PATTERN_V2: Final = (
+    r"\b(?:counterexample|disprov(?:e|ed|en|ing)|"
+    r"not\s+entailed|is\s+false)\b"
+)
+_SEMANTIC_CLASS_CONFLICT_ERROR_V2: Final = "class_evidence_conflict"
+_SEMANTIC_VALIDATION_ERROR_BY_FIELD_V2: Final = MappingProxyType(
+    {
+        "logic_family": "logic_family_missing",
+        "target": "target_missing",
+        "predicates": "predicates_missing",
+    }
+)
+_SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2: Final = 1_000_000
+_SEMANTIC_CONFIDENCE_UNSUPPORTED_V2: Final = 0
+SEMANTIC_PROMPT_INSTRUCTION_V2: Final = (
+    "Derive one untrusted semantic projection using only SOURCE_TEXT and "
+    "OPTIONAL_PRODUCER_EVIDENCE. Return exactly the strict JSON object "
+    "described by RESPONSE_SCHEMA. Populate logic_family, target, class, "
+    "predicates, entities, completeness, ambiguity_flags, "
+    "confidence_millionths, and validation_errors. Every value must be "
+    "source-derived. Validation "
+    "errors take precedence over ambiguity. Never infer or copy a reviewed "
+    "answer, proof obligation, expected IR, kernel outcome, verification, "
+    "or authority claim. Return no Markdown or wrapper object."
+)
+
+
+def normalize_semantic_term(value: object) -> str:
+    """Return the canonical label-blind spelling used by semantic protocol v2."""
+
+    if not isinstance(value, str):
+        return ""
+    normalized = unicodedata.normalize(
+        _SEMANTIC_TERM_UNICODE_FORM_V2,
+        value,
+    ).casefold()
+    return _SEMANTIC_TERM_SEPARATOR_V2.join(
+        "".join(
+            (
+                character
+                if character.isalnum()
+                or character
+                in _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
+                else " "
+            )
+            for character in normalized
+        ).split()
+    )[:_SEMANTIC_TERM_MAX_LENGTH_V2]
+
+
+def _is_semantic_term(value: object) -> bool:
+    """Return whether ``value`` is canonical under the frozen Unicode profile."""
+
+    return bool(
+        isinstance(value, str)
+        and 1 <= len(value) <= _SEMANTIC_TERM_MAX_LENGTH_V2
+        and normalize_semantic_term(value) == value
+        and value[0].isalnum()
+        and all(
+            character.isalnum()
+            or character in _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
+            or character == _SEMANTIC_TERM_SEPARATOR_V2
+            for character in value
+        )
+    )
+
+
+def _normalize_logic_family(value: object) -> str:
+    normalized = normalize_semantic_term(value)
+    return _SEMANTIC_LOGIC_ALIASES.get(normalized, normalized)
+
+
+def semantic_response_json_schema_v2() -> dict[str, object]:
+    """Return a detached strict JSON schema for the SyMAI v2 response."""
+
+    string_array = {
+        "type": "array",
+        "maxItems": _SEMANTIC_PROJECTION_MAX_TERMS_V2,
+        "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": _SEMANTIC_TERM_MAX_LENGTH_V2,
+        },
+    }
+    return {
+        "$id": SEMANTIC_RESPONSE_SCHEMA_V2,
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "logic_family",
+            "target",
+            "class",
+            "predicates",
+            "entities",
+            "completeness",
+            "ambiguity_flags",
+            "confidence_millionths",
+            "validation_errors",
+        ],
+        "properties": {
+            "logic_family": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": _SEMANTIC_TERM_MAX_LENGTH_V2,
+            },
+            "target": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": _SEMANTIC_TERM_MAX_LENGTH_V2,
+            },
+            "class": {
+                "type": "string",
+                "enum": list(SEMANTIC_PROJECTION_CLASSES_V2),
+            },
+            "predicates": dict(string_array),
+            "entities": dict(string_array),
+            "completeness": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": list(
+                    SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                ),
+                "properties": {
+                    field: {"type": "boolean"}
+                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                },
+            },
+            "ambiguity_flags": dict(string_array),
+            "confidence_millionths": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1_000_000,
+            },
+            "validation_errors": dict(string_array),
+        },
+    }
+
+
+def semantic_producer_registry_v2() -> dict[str, object]:
+    """Return the frozen set of producer identities covered by calibration."""
+
+    return {
+        "schema": SEMANTIC_PRODUCER_REGISTRY_SCHEMA_V2,
+        "producers": [
+            {
+                "producer_id": "compiler",
+                "stage": StageName.COMPILER.value,
+                "mode": "current_modal_codec",
+                "adapter_version": "2",
+                "evidence_schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
+                ),
+                "projection_evidence": "modal_ir",
+                "evidence_cid_codec": "dag-json",
+            },
+            {
+                "producer_id": "spacy_full_model",
+                "stage": StageName.SPACY.value,
+                "mode": "full_model",
+                "adapter_version": "2",
+                "evidence_schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
+                ),
+                "projection_evidence": "modal_ir",
+                "evidence_cid_codec": "dag-json",
+            },
+            {
+                "producer_id": "spacy_regex_legal",
+                "stage": StageName.SPACY.value,
+                "mode": "regex_legal",
+                "adapter_version": "2",
+                "evidence_schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
+                ),
+                "projection_evidence": "modal_ir",
+                "evidence_cid_codec": "dag-json",
+            },
+            {
+                "producer_id": "spacy_blank_model",
+                "stage": StageName.SPACY.value,
+                "mode": "blank_model",
+                "adapter_version": "2",
+                "evidence_schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
+                ),
+                "projection_evidence": "modal_ir",
+                "evidence_cid_codec": "dag-json",
+            },
+            {
+                "producer_id": "symai",
+                "stage": StageName.SYMAI.value,
+                "mode": "structured_source_only",
+                "adapter_version": "2",
+                "evidence_schema": (
+                    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
+                ),
+                "projection_evidence": "validated_response",
+                "evidence_cid_codec": "dag-json",
+                "raw_output_cid_codec": "raw",
+            },
+        ],
+    }
+
+
+def semantic_projection_json_schema_v2() -> dict[str, object]:
+    """Return the strict persisted shape shared by every v2 producer."""
+
+    cid = {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 128,
+        "pattern": "^b[a-z2-7]+$",
+    }
+    term = {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": _SEMANTIC_TERM_MAX_LENGTH_V2,
+        "pattern": _SEMANTIC_TERM_SCHEMA_PATTERN,
+    }
+    term_array = {
+        "type": "array",
+        "maxItems": _SEMANTIC_PROJECTION_MAX_TERMS_V2,
+        "uniqueItems": True,
+        "items": dict(term),
+    }
+    return {
+        "$id": SEMANTIC_PROJECTION_SCHEMA_V2,
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "schema",
+            "semantic_protocol_cid",
+            "producer_id",
+            "source_cid",
+            "logic_family",
+            "target",
+            "class",
+            "predicates",
+            "entities",
+            "completeness",
+            "ambiguity_flags",
+            "confidence_millionths",
+            "validation_errors",
+            "evidence_cid",
+            "semantic_content_cid",
+            "projection_cid",
+        ],
+        "properties": {
+            "schema": {"const": SEMANTIC_PROJECTION_SCHEMA_V2},
+            "semantic_protocol_cid": dict(cid),
+            "producer_id": {"enum": list(SEMANTIC_PRODUCER_IDS_V2)},
+            "source_cid": dict(cid),
+            "logic_family": dict(term),
+            "target": dict(term),
+            "class": {"enum": list(SEMANTIC_PROJECTION_CLASSES_V2)},
+            "predicates": dict(term_array),
+            "entities": dict(term_array),
+            "completeness": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": list(
+                    SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                ),
+                "properties": {
+                    field: {"type": "boolean"}
+                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                },
+            },
+            "ambiguity_flags": dict(term_array),
+            "confidence_millionths": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1_000_000,
+            },
+            "validation_errors": dict(term_array),
+            "evidence_cid": dict(cid),
+            "semantic_content_cid": dict(cid),
+            "projection_cid": dict(cid),
+        },
+    }
+
+
+def semantic_normalization_spec_v2() -> dict[str, object]:
+    """Return every rule used by source-only ModalIR projection revision 2.
+
+    This object is content-addressed below.  Runtime producers consume these
+    same fields, so changing an accepted shape, extraction path, class signal,
+    validation rule, completeness rule, or confidence value necessarily
+    changes :data:`SEMANTIC_NORMALIZATION_V2_CID`.
+    """
+
+    return {
+        "schema": _SEMANTIC_NORMALIZATION_SCHEMA_V2,
+        "term_normalization": {
+            "accepted_input_type": "string",
+            "non_string_result": "",
+            "unicode": _SEMANTIC_TERM_UNICODE_FORM_V2,
+            "case": _SEMANTIC_TERM_CASE_RULE_V2,
+            "token_separator": _SEMANTIC_TERM_SEPARATOR_V2,
+            "preserved_punctuation": list(
+                _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
+            ),
+            "other_characters": "replace_with_space",
+            "whitespace": "split_collapse",
+            "maximum_length": _SEMANTIC_TERM_MAX_LENGTH_V2,
+            "alphanumeric_profile": "python_str_isalnum_unicode",
+            "persisted_term_schema_pattern": (
+                _SEMANTIC_TERM_SCHEMA_PATTERN
+            ),
+            "authoritative_validation": (
+                "exact_normalization_fixed_point_and_leading_and_body_"
+                "characters_checked_with_unicode_isalnum"
+            ),
+            "noncanonical_persisted_terms": "reject_projection",
+        },
+        "logic_aliases": dict(_SEMANTIC_LOGIC_ALIASES),
+        "modal_ir": {
+            "document": {
+                "accepted_shape": "mapping",
+                "formulas_field": _SEMANTIC_MODAL_IR_FORMULAS_FIELD_V2,
+            },
+            "formulas": {
+                "accepted_container": (
+                    "sequence_excluding_string_bytes_bytearray"
+                ),
+                "accepted_item_shape": "mapping",
+                "invalid_container_result": "empty",
+                "invalid_items": "ignore",
+                "collection_order": "input_sequence",
+            },
+            "operator": {
+                "field": _SEMANTIC_MODAL_IR_OPERATOR_FIELD_V2,
+                "accepted_shapes": ["mapping", "string"],
+                "mapping_family_field": (
+                    _SEMANTIC_MODAL_IR_OPERATOR_FAMILY_FIELD_V2
+                ),
+                "string_value_is_family": True,
+                "unsupported_or_non_string_family_result": "missing",
+            },
+            "predicate": {
+                "field": _SEMANTIC_MODAL_IR_PREDICATE_FIELD_V2,
+                "accepted_shapes": ["mapping", "string"],
+                "mapping_name_field": (
+                    _SEMANTIC_MODAL_IR_PREDICATE_NAME_FIELD_V2
+                ),
+                "mapping_arguments_field": (
+                    _SEMANTIC_MODAL_IR_PREDICATE_ARGUMENTS_FIELD_V2
+                ),
+                "mapping_role_field": (
+                    _SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2
+                ),
+                "string_value_is_name": True,
+                "unsupported_or_non_string_name_result": "missing",
+            },
+            "arguments": {
+                "accepted_container": (
+                    "sequence_excluding_string_bytes_bytearray"
+                ),
+                "accepted_item_type": "string",
+                "invalid_container_result": "empty",
+                "invalid_items": "ignore",
+                "entity_values": [
+                    "exact_argument",
+                    (
+                        "suffix_after_final_"
+                        + _SEMANTIC_MODAL_IR_ENTITY_QUALIFIER_V2
+                    ),
+                ],
+                "suffix_only_when_qualifier_present": True,
+                "empty_normalized_values": "omit",
+                "normalization": "term_normalization",
+                "canonicalization": "sorted_unique",
+                "maximum_persisted_items": (
+                    _SEMANTIC_PROJECTION_MAX_TERMS_V2
+                ),
+                "overflow": "reject_projection",
+            },
+            "primary_formula_selection": {
+                "candidates": "all_accepted_mapping_formulas",
+                "preferred_role": {
+                    "path": [
+                        _SEMANTIC_MODAL_IR_PREDICATE_FIELD_V2,
+                        _SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2,
+                    ],
+                    "normalized_value": (
+                        _SEMANTIC_MODAL_IR_PRIMARY_ROLE_V2
+                    ),
+                    "missing_or_non_string": "not_preferred",
+                },
+                "ordered_tiebreakers": [
+                    {
+                        "path": [
+                            _SEMANTIC_MODAL_IR_PROVENANCE_FIELD_V2,
+                            _SEMANTIC_MODAL_IR_PROVENANCE_START_FIELD_V2,
+                        ],
+                        "accepted_type": "integer_excluding_boolean",
+                        "missing_or_invalid": "positive_infinity",
+                    },
+                    {
+                        "path": [
+                            _SEMANTIC_MODAL_IR_PROVENANCE_FIELD_V2,
+                            _SEMANTIC_MODAL_IR_PROVENANCE_END_FIELD_V2,
+                        ],
+                        "accepted_type": "integer_excluding_boolean",
+                        "missing_or_invalid": "positive_infinity",
+                    },
+                    {
+                        "path": [_SEMANTIC_MODAL_IR_FORMULA_ID_FIELD_V2],
+                        "coercion": "python_str",
+                        "missing": "",
+                    },
+                    {
+                        "path": ["array_index"],
+                        "accepted_type": "integer",
+                    },
+                ],
+                "empty_result": "no_primary_formula",
+            },
+            "projection_fields": {
+                "logic_family": (
+                    "primary_formula.operator.family"
+                ),
+                "target": "primary_formula.predicate.name",
+                "predicates": "all_accepted_formula_predicate_names",
+                "entities": "all_accepted_predicate_arguments",
+                "normalization": "term_normalization",
+                "predicate_and_entity_canonicalization": "sorted_unique",
+                "empty_normalized_values": "omit",
+                "maximum_persisted_items": (
+                    _SEMANTIC_PROJECTION_MAX_TERMS_V2
+                ),
+                "overflow": "reject_projection",
+                "missing_term": _SEMANTIC_MISSING_TERM_V2,
+            },
+        },
+        "class_inference": {
+            "input": "exact_source_text",
+            "regex_engine": "python_re_search",
+            "regex_flags": ["IGNORECASE"],
+            "validation_errors_precede_class_signals": True,
+            "ambiguity_flags_retained_with_validation_errors": True,
+            "multiple_matching_signals_of_one_class": (
+                "first_ordered_signal_sets_class_and_confidence"
+            ),
+            "conflicting_distinct_signal_classes": {
+                "class": "unsupported",
+                "validation_error": _SEMANTIC_CLASS_CONFLICT_ERROR_V2,
+                "confidence_millionths": (
+                    _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
+                ),
+            },
+            "ordered_explicit_signals": [
+                {
+                    "id": "source_uncertainty",
+                    "pattern": _SEMANTIC_SOURCE_UNCERTAINTY_PATTERN_V2,
+                    "class": "ambiguous",
+                    "ambiguity_flag": "source_uncertainty",
+                    "confidence_millionths": (
+                        _SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2
+                    ),
+                },
+                {
+                    "id": "source_disproof",
+                    "pattern": _SEMANTIC_SOURCE_DISPROOF_PATTERN_V2,
+                    "class": "disproved",
+                    "ambiguity_flag": None,
+                    "confidence_millionths": (
+                        _SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2
+                    ),
+                },
+            ],
+            "proved_signals": [],
+            "default": {
+                "class": "unsupported",
+                "reason": "no_explicit_source_derived_class_evidence",
+                "confidence_millionths": (
+                    _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
+                ),
+            },
+        },
+        "validation": {
+            "missing_term": _SEMANTIC_MISSING_TERM_V2,
+            "required_projection_fields": {
+                field: {
+                    "error": error,
+                    "presence": (
+                        "nonempty_nonmissing_string"
+                        if field in {"logic_family", "target"}
+                        else "nonempty_collection"
+                    ),
+                }
+                for field, error in _SEMANTIC_VALIDATION_ERROR_BY_FIELD_V2.items()
+            },
+            "validation_error_class": "unsupported",
+            "validation_error_confidence_millionths": (
+                _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
+            ),
+            "validation_errors_take_precedence_over_ambiguity": True,
+            "canonicalization": "sorted_unique",
+        },
+        "completeness": {
+            "logic_family": "validation_presence.logic_family",
+            "target": "validation_presence.target",
+            "class": "assigned_enum_including_unsupported",
+            "predicates": "validation_presence.predicates",
+            "entities": "observed_collection_empty_is_complete",
+        },
+        "scoreability": {
+            "requires_all_completeness_fields": True,
+            "requires_no_validation_errors": True,
+            "requires_nonvacuous_logic_family": True,
+            "requires_nonvacuous_target": True,
+            "vacuous_terms": sorted(_SEMANTIC_VACUOUS_TERMS),
+            "requires_nonempty_predicates": True,
+            "requires_target_in_predicates": True,
+            "minimum_confidence_millionths": None,
+            "unsupported_class_is_a_scoreable_observation": True,
+        },
+        "semantic_signature_fields": [
+            "logic_family",
+            "target",
+            "class",
+            "predicates",
+            "entities",
+        ],
+        "content_addressing": {
+            "cid_version": 1,
+            "base": "base32",
+            "multihash": "sha2-256",
+            "json_codec": "dag-json",
+            "bytes_codec": "raw",
+        },
+        "validation_error_precedence": True,
+        "raw_evidence_cid_is_not_semantic_signature": True,
+    }
+
+
+SEMANTIC_PROJECTION_SCHEMA_V2_CID: Final = cid_for_dag_json(
+    semantic_projection_json_schema_v2()
+)
+SEMANTIC_NORMALIZATION_V2_CID: Final = cid_for_dag_json(
+    semantic_normalization_spec_v2()
+)
+SEMANTIC_RESPONSE_SCHEMA_V2_CID: Final = cid_for_dag_json(
+    semantic_response_json_schema_v2()
+)
+SEMANTIC_PRODUCER_REGISTRY_V2_CID: Final = cid_for_dag_json(
+    semantic_producer_registry_v2()
+)
+
+
+def semantic_prompt_spec_v2() -> dict[str, object]:
+    """Return the prompt behavior frozen independently of model wording."""
+
+    return {
+        "schema": SEMANTIC_PROMPT_SCHEMA_V2,
+        "task": "source_only_normalized_semantic_projection",
+        "instruction_template": SEMANTIC_PROMPT_INSTRUCTION_V2,
+        "input_fields": ["text", "optional_producer_evidence"],
+        "response_schema_cid": SEMANTIC_RESPONSE_SCHEMA_V2_CID,
+        "required_projection_fields": list(
+            SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+        ),
+        "validation_error_precedence": True,
+        "proof_authority": False,
+        "forbidden_input_fields": list(
+            SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
+        ),
+    }
+
+
+SEMANTIC_PROMPT_V2_CID: Final = cid_for_dag_json(semantic_prompt_spec_v2())
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProtocolSpec:
+    """Additive semantic subprotocol; revision-1 benchmark records stay valid."""
+
+    schema: str
+    protocol_id: str
+    protocol_version: int
+    frozen: bool
+    projection_schema: str
+    projection_schema_cid: str
+    normalization_cid: str
+    parent_protocol_sha256: str
+    parent_variant_registry_sha256: str
+    response_schema_cid: str
+    prompt_cid: str
+    producer_registry_cid: str
+    calibration_route_manifest_cid: str
+    calibration_metric_spec_cid: str
+    reviewed_target_source_cid: str
+    calibration_case_count: int
+    calibration_coordinate_count: int
+    calibration_cases_per_producer: int
+    absolute_quality_min_millionths: int
+    wilson_confidence_millionths: int
+    wilson_lower_bound_min_millionths: int
+    required_projection_fields: tuple[str, ...]
+    forbidden_producer_input_fields: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if self.schema != SEMANTIC_PROTOCOL_SCHEMA_V2:
+            raise ProtocolContractError("unsupported semantic protocol schema")
+        if self.protocol_id != SEMANTIC_PROTOCOL_ID_V2:
+            raise ProtocolContractError("unsupported semantic protocol id")
+        if self.protocol_version != SEMANTIC_PROTOCOL_VERSION_V2:
+            raise ProtocolContractError("unsupported semantic protocol version")
+        if self.frozen is not True:
+            raise ProtocolContractError("semantic protocol must be frozen")
+        if (
+            self.calibration_case_count
+            != SEMANTIC_CALIBRATION_CASE_COUNT_V2
+            or self.calibration_coordinate_count
+            != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+            or self.calibration_cases_per_producer
+            != SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+            or self.absolute_quality_min_millionths
+            != SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+            or self.wilson_confidence_millionths
+            != SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
+            or self.wilson_lower_bound_min_millionths
+            != SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
+        ):
+            raise ProtocolContractError(
+                "semantic calibration policy drifted"
+            )
+        if self.calibration_coordinate_count != (
+            self.calibration_case_count * len(SEMANTIC_PRODUCER_IDS_V2)
+        ):
+            raise ProtocolContractError(
+                "semantic calibration coordinate count is inconsistent"
+            )
+        if self.projection_schema != SEMANTIC_PROJECTION_SCHEMA_V2:
+            raise ProtocolContractError("semantic projection schema drifted")
+        for field in (
+            "parent_protocol_sha256",
+            "parent_variant_registry_sha256",
+        ):
+            _digest(getattr(self, field), field)
+        for field in (
+            "projection_schema_cid",
+            "normalization_cid",
+            "response_schema_cid",
+            "prompt_cid",
+            "producer_registry_cid",
+            "calibration_route_manifest_cid",
+            "calibration_metric_spec_cid",
+            "reviewed_target_source_cid",
+        ):
+            _semantic_cid(
+                getattr(self, field),
+                field,
+                codecs=("dag-json",),
+            )
+        if (
+            self.parent_protocol_sha256
+            != SEMANTIC_PARENT_PROTOCOL_SHA256_V1
+            or self.parent_variant_registry_sha256
+            != SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
+            or self.projection_schema_cid
+            != SEMANTIC_PROJECTION_SCHEMA_V2_CID
+            or self.normalization_cid != SEMANTIC_NORMALIZATION_V2_CID
+            or self.response_schema_cid != SEMANTIC_RESPONSE_SCHEMA_V2_CID
+            or self.prompt_cid != SEMANTIC_PROMPT_V2_CID
+            or self.producer_registry_cid
+            != SEMANTIC_PRODUCER_REGISTRY_V2_CID
+            or self.calibration_route_manifest_cid
+            != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
+            or self.calibration_metric_spec_cid
+            != SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
+            or self.reviewed_target_source_cid
+            != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+        ):
+            raise ProtocolContractError(
+                "semantic protocol component identity drifted"
+            )
+        if self.required_projection_fields != (
+            SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+        ):
+            raise ProtocolContractError(
+                "semantic protocol required fields drifted"
+            )
+        if self.forbidden_producer_input_fields != (
+            SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
+        ):
+            raise ProtocolContractError(
+                "semantic protocol leakage boundary drifted"
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "protocol_id": self.protocol_id,
+            "protocol_version": self.protocol_version,
+            "frozen": self.frozen,
+            "projection_schema": self.projection_schema,
+            "projection_schema_cid": self.projection_schema_cid,
+            "normalization_cid": self.normalization_cid,
+            "parent_protocol_sha256": self.parent_protocol_sha256,
+            "parent_variant_registry_sha256": (
+                self.parent_variant_registry_sha256
+            ),
+            "response_schema_cid": self.response_schema_cid,
+            "prompt_cid": self.prompt_cid,
+            "producer_registry_cid": self.producer_registry_cid,
+            "calibration_route_manifest_cid": (
+                self.calibration_route_manifest_cid
+            ),
+            "calibration_metric_spec_cid": (
+                self.calibration_metric_spec_cid
+            ),
+            "reviewed_target_source_cid": (
+                self.reviewed_target_source_cid
+            ),
+            "calibration_case_count": self.calibration_case_count,
+            "calibration_coordinate_count": (
+                self.calibration_coordinate_count
+            ),
+            "calibration_cases_per_producer": (
+                self.calibration_cases_per_producer
+            ),
+            "absolute_quality_min_millionths": (
+                self.absolute_quality_min_millionths
+            ),
+            "wilson_confidence_millionths": (
+                self.wilson_confidence_millionths
+            ),
+            "wilson_lower_bound_min_millionths": (
+                self.wilson_lower_bound_min_millionths
+            ),
+            "required_projection_fields": list(
+                self.required_projection_fields
+            ),
+            "forbidden_producer_input_fields": list(
+                self.forbidden_producer_input_fields
+            ),
+        }
+
+
+SEMANTIC_PROTOCOL_V2: Final = SemanticProtocolSpec(
+    schema=SEMANTIC_PROTOCOL_SCHEMA_V2,
+    protocol_id=SEMANTIC_PROTOCOL_ID_V2,
+    protocol_version=SEMANTIC_PROTOCOL_VERSION_V2,
+    frozen=True,
+    projection_schema=SEMANTIC_PROJECTION_SCHEMA_V2,
+    projection_schema_cid=SEMANTIC_PROJECTION_SCHEMA_V2_CID,
+    normalization_cid=SEMANTIC_NORMALIZATION_V2_CID,
+    parent_protocol_sha256=SEMANTIC_PARENT_PROTOCOL_SHA256_V1,
+    parent_variant_registry_sha256=(
+        SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
+    ),
+    response_schema_cid=SEMANTIC_RESPONSE_SCHEMA_V2_CID,
+    prompt_cid=SEMANTIC_PROMPT_V2_CID,
+    producer_registry_cid=SEMANTIC_PRODUCER_REGISTRY_V2_CID,
+    calibration_route_manifest_cid=(
+        SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
+    ),
+    calibration_metric_spec_cid=SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID,
+    reviewed_target_source_cid=SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID,
+    calibration_case_count=SEMANTIC_CALIBRATION_CASE_COUNT_V2,
+    calibration_coordinate_count=(
+        SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+    ),
+    calibration_cases_per_producer=(
+        SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+    ),
+    absolute_quality_min_millionths=(
+        SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+    ),
+    wilson_confidence_millionths=(
+        SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
+    ),
+    wilson_lower_bound_min_millionths=(
+        SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
+    ),
+    required_projection_fields=SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2,
+    forbidden_producer_input_fields=(
+        SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
+    ),
+)
+SEMANTIC_PROTOCOL_V2_CID: Final = cid_for_dag_json(
+    SEMANTIC_PROTOCOL_V2.to_dict()
+)
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticProjection:
+    """Canonical, content-addressed semantic evidence shared by all producers."""
+
+    schema: str
+    semantic_protocol_cid: str
+    producer_id: str
+    source_cid: str
+    logic_family: str
+    target: str
+    semantic_class: str
+    predicates: tuple[str, ...]
+    entities: tuple[str, ...]
+    completeness: Mapping[str, bool]
+    ambiguity_flags: tuple[str, ...]
+    confidence_millionths: int
+    validation_errors: tuple[str, ...]
+    evidence_cid: str
+    semantic_content_cid: str | None = None
+    projection_cid: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.schema != SEMANTIC_PROJECTION_SCHEMA_V2:
+            raise ProtocolContractError(
+                "unsupported semantic projection schema"
+            )
+        _semantic_cid(
+            self.semantic_protocol_cid,
+            "semantic_protocol_cid",
+            codecs=("dag-json",),
+        )
+        if self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
+            raise ProtocolContractError(
+                "semantic projection protocol identity drifted"
+            )
+        if self.producer_id not in SEMANTIC_PRODUCER_IDS_V2:
+            raise ProtocolContractError(
+                "semantic projection producer is not registered"
+            )
+        _semantic_cid(self.source_cid, "source_cid", codecs=("raw",))
+        _semantic_cid(
+            self.evidence_cid,
+            "evidence_cid",
+            codecs=("dag-json",),
+        )
+        for field in ("logic_family", "target"):
+            value = getattr(self, field)
+            if (
+                not isinstance(value, str)
+                or not _is_semantic_term(value)
+            ):
+                raise ProtocolContractError(
+                    f"semantic projection {field} is not normalized"
+                )
+        if _normalize_logic_family(self.logic_family) != self.logic_family:
+            raise ProtocolContractError(
+                "semantic projection logic_family is not canonical"
+            )
+        if self.semantic_class not in SEMANTIC_PROJECTION_CLASSES_V2:
+            raise ProtocolContractError(
+                "semantic projection class is unsupported"
+            )
+        for field in (
+            "predicates",
+            "entities",
+            "ambiguity_flags",
+            "validation_errors",
+        ):
+            values = getattr(self, field)
+            if (
+                not isinstance(values, tuple)
+                or len(values) > _SEMANTIC_PROJECTION_MAX_TERMS_V2
+                or tuple(sorted(set(values))) != values
+                or any(
+                    not isinstance(value, str)
+                    or not _is_semantic_term(value)
+                    for value in values
+                )
+            ):
+                raise ProtocolContractError(
+                    f"semantic projection {field} is not canonical"
+                )
+        if (
+            not isinstance(self.completeness, Mapping)
+            or set(self.completeness)
+            != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+            or any(type(value) is not bool for value in self.completeness.values())
+        ):
+            raise ProtocolContractError(
+                "semantic projection completeness fields are invalid"
+            )
+        object.__setattr__(
+            self,
+            "completeness",
+            MappingProxyType(
+                {
+                    field: self.completeness[field]
+                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                }
+            ),
+        )
+        if (
+            isinstance(self.confidence_millionths, bool)
+            or not isinstance(self.confidence_millionths, int)
+            or not 0 <= self.confidence_millionths <= 1_000_000
+        ):
+            raise ProtocolContractError(
+                "semantic projection confidence_millionths must be an "
+                "integer from zero to one million"
+            )
+        expected_semantic = cid_for_dag_json(self._semantic_content())
+        if self.semantic_content_cid is None:
+            object.__setattr__(
+                self,
+                "semantic_content_cid",
+                expected_semantic,
+            )
+        else:
+            _semantic_cid(
+                self.semantic_content_cid,
+                "semantic_content_cid",
+                codecs=("dag-json",),
+            )
+        if self.semantic_content_cid != expected_semantic:
+            raise ProtocolContractError(
+                "semantic projection semantic-content identity changed"
+            )
+        expected_projection = cid_for_dag_json(self._projection_content())
+        if self.projection_cid is None:
+            object.__setattr__(
+                self,
+                "projection_cid",
+                expected_projection,
+            )
+        else:
+            _semantic_cid(
+                self.projection_cid,
+                "projection_cid",
+                codecs=("dag-json",),
+            )
+        if self.projection_cid != expected_projection:
+            raise ProtocolContractError(
+                "semantic projection provenance identity changed"
+            )
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        producer_id: str,
+        source_text: str,
+        logic_family: str,
+        target: str,
+        semantic_class: str,
+        predicates: Sequence[str] = (),
+        entities: Sequence[str] = (),
+        completeness: Mapping[str, bool] | None = None,
+        ambiguity_flags: Sequence[str] = (),
+        confidence_millionths: int = 1_000_000,
+        validation_errors: Sequence[str] = (),
+        evidence_cid: str,
+    ) -> Self:
+        if not isinstance(source_text, str) or not source_text.strip():
+            raise ProtocolContractError(
+                "semantic projection requires nonempty source text"
+            )
+
+        def terms(values: Sequence[str]) -> tuple[str, ...]:
+            return tuple(
+                sorted(
+                    {
+                        normalized
+                        for value in values
+                        if (normalized := normalize_semantic_term(value))
+                    }
+                )
+            )
+
+        normalized_logic = _normalize_logic_family(logic_family)
+        normalized_target = normalize_semantic_term(target)
+        return cls(
+            schema=SEMANTIC_PROJECTION_SCHEMA_V2,
+            semantic_protocol_cid=SEMANTIC_PROTOCOL_V2_CID,
+            producer_id=producer_id,
+            source_cid=cid_for_bytes(source_text.encode("utf-8")),
+            logic_family=normalized_logic,
+            target=normalized_target,
+            semantic_class=normalize_semantic_term(semantic_class),
+            predicates=terms(predicates),
+            entities=terms(entities),
+            completeness=(
+                {
+                    field: True
+                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+                }
+                if completeness is None
+                else dict(completeness)
+            ),
+            ambiguity_flags=terms(ambiguity_flags),
+            confidence_millionths=confidence_millionths,
+            validation_errors=terms(validation_errors),
+            evidence_cid=evidence_cid,
+        )
+
+    @property
+    def scoreable(self) -> bool:
+        return bool(
+            all(self.completeness.values())
+            and not self.validation_errors
+            and self.logic_family not in _SEMANTIC_VACUOUS_TERMS
+            and self.target not in _SEMANTIC_VACUOUS_TERMS
+            and self.predicates
+            and self.target in self.predicates
+        )
+
+    def _semantic_content(self) -> dict[str, object]:
+        return {
+            "logic_family": self.logic_family,
+            "target": self.target,
+            "class": self.semantic_class,
+            "predicates": list(self.predicates),
+            "entities": list(self.entities),
+        }
+
+    def _projection_content(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "semantic_protocol_cid": self.semantic_protocol_cid,
+            "producer_id": self.producer_id,
+            "source_cid": self.source_cid,
+            "logic_family": self.logic_family,
+            "target": self.target,
+            "class": self.semantic_class,
+            "predicates": list(self.predicates),
+            "entities": list(self.entities),
+            "completeness": {
+                field: self.completeness[field]
+                for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
+            },
+            "ambiguity_flags": list(self.ambiguity_flags),
+            "confidence_millionths": self.confidence_millionths,
+            "validation_errors": list(self.validation_errors),
+            "evidence_cid": self.evidence_cid,
+            "semantic_content_cid": self.semantic_content_cid,
+        }
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            **self._projection_content(),
+            "projection_cid": self.projection_cid,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _mapping(value, "semantic_projection")
+        expected = {
+            "schema",
+            "semantic_protocol_cid",
+            "producer_id",
+            "source_cid",
+            "logic_family",
+            "target",
+            "class",
+            "predicates",
+            "entities",
+            "completeness",
+            "ambiguity_flags",
+            "confidence_millionths",
+            "validation_errors",
+            "evidence_cid",
+            "semantic_content_cid",
+            "projection_cid",
+        }
+        _exact_keys(data, expected, "semantic_projection")
+        arrays: dict[str, tuple[str, ...]] = {}
+        for field in (
+            "predicates",
+            "entities",
+            "ambiguity_flags",
+            "validation_errors",
+        ):
+            raw = data[field]
+            if not isinstance(raw, list):
+                raise ProtocolContractError(
+                    f"semantic_projection.{field} must be an array"
+                )
+            arrays[field] = tuple(
+                _nonempty(item, f"semantic_projection.{field}[]")
+                for item in raw
+            )
+        return cls(
+            schema=_nonempty(data["schema"], "semantic_projection.schema"),
+            semantic_protocol_cid=_semantic_cid(
+                data["semantic_protocol_cid"],
+                "semantic_projection.semantic_protocol_cid",
+                codecs=("dag-json",),
+            ),
+            producer_id=_nonempty(
+                data["producer_id"], "semantic_projection.producer_id"
+            ),
+            source_cid=_semantic_cid(
+                data["source_cid"],
+                "semantic_projection.source_cid",
+                codecs=("raw",),
+            ),
+            logic_family=_nonempty(
+                data["logic_family"], "semantic_projection.logic_family"
+            ),
+            target=_nonempty(
+                data["target"], "semantic_projection.target"
+            ),
+            semantic_class=_nonempty(
+                data["class"], "semantic_projection.class"
+            ),
+            predicates=arrays["predicates"],
+            entities=arrays["entities"],
+            completeness=_mapping(
+                data["completeness"], "semantic_projection.completeness"
+            ),  # type: ignore[arg-type]
+            ambiguity_flags=arrays["ambiguity_flags"],
+            confidence_millionths=data["confidence_millionths"],  # type: ignore[arg-type]
+            validation_errors=arrays["validation_errors"],
+            evidence_cid=_semantic_cid(
+                data["evidence_cid"],
+                "semantic_projection.evidence_cid",
+            ),
+            semantic_content_cid=_semantic_cid(
+                data["semantic_content_cid"],
+                "semantic_projection.semantic_content_cid",
+                codecs=("dag-json",),
+            ),
+            projection_cid=_semantic_cid(
+                data["projection_cid"],
+                "semantic_projection.projection_cid",
+                codecs=("dag-json",),
+            ),
+        )
 
 
 _MAX_BOUNDED_JSON_DEPTH: Final = 8
@@ -3869,6 +5331,43 @@ __all__ = [
     "RUN_CONTRACT_SCHEMA",
     "RunContract",
     "SafetyInvariants",
+    "SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2",
+    "SEMANTIC_CALIBRATION_CASE_COUNT_V2",
+    "SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2",
+    "SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2",
+    "SEMANTIC_CALIBRATION_METRIC_SPEC_SCHEMA_V2",
+    "SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID",
+    "SEMANTIC_CALIBRATION_ROUTE_MANIFEST_SCHEMA_V2",
+    "SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID",
+    "SEMANTIC_FAILURE_CODES_V2",
+    "SEMANTIC_FAILURE_SCHEMA_V2",
+    "SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2",
+    "SEMANTIC_NORMALIZATION_V2_CID",
+    "SEMANTIC_PARENT_PROTOCOL_SHA256_V1",
+    "SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1",
+    "SEMANTIC_PRODUCER_IDS_V2",
+    "SEMANTIC_PRODUCER_REGISTRY_SCHEMA_V2",
+    "SEMANTIC_PRODUCER_REGISTRY_V2_CID",
+    "SEMANTIC_PROJECTION_CLASSES_V2",
+    "SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2",
+    "SEMANTIC_PROJECTION_SCHEMA_V2",
+    "SEMANTIC_PROJECTION_SCHEMA_V2_CID",
+    "SEMANTIC_PROMPT_INSTRUCTION_V2",
+    "SEMANTIC_PROMPT_SCHEMA_V2",
+    "SEMANTIC_PROMPT_V2_CID",
+    "SEMANTIC_PROTOCOL_ID_V2",
+    "SEMANTIC_PROTOCOL_SCHEMA_V2",
+    "SEMANTIC_PROTOCOL_VERSION_V2",
+    "SEMANTIC_PROTOCOL_V2",
+    "SEMANTIC_PROTOCOL_V2_CID",
+    "SEMANTIC_RESPONSE_SCHEMA_V2",
+    "SEMANTIC_RESPONSE_SCHEMA_V2_CID",
+    "SEMANTIC_REVIEWED_TARGET_SOURCE_SCHEMA_V2",
+    "SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID",
+    "SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2",
+    "SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2",
+    "SemanticProjection",
+    "SemanticProtocolSpec",
     "STAGE_PROVENANCE_SCHEMA",
     "STAGE_RECORD_SCHEMA",
     "StageName",
@@ -3885,7 +5384,16 @@ __all__ = [
     "canonical_json",
     "canonical_protocol_json",
     "evaluate_candidate_gate",
+    "normalize_semantic_term",
     "protocol_sha256",
+    "semantic_calibration_metric_spec_v2",
+    "semantic_calibration_route_manifest_v2",
+    "semantic_normalization_spec_v2",
+    "semantic_reviewed_target_source_v2",
+    "semantic_producer_registry_v2",
+    "semantic_projection_json_schema_v2",
+    "semantic_prompt_spec_v2",
+    "semantic_response_json_schema_v2",
     "validate_paired_outcomes",
     "validate_native_kernel_receipt",
     "validate_native_kernel_stage_receipt",
