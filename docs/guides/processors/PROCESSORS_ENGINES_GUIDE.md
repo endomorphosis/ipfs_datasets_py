@@ -320,7 +320,7 @@ pytest tests/integration/processors/test_structure_lightweight.py -v
 
 ## Related Documentation
 
-- [Comprehensive Plan](PROCESSORS_COMPREHENSIVE_PLAN_2026.md) - Full refactoring plan
+- [Comprehensive Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_PLAN_2026.md) - Full refactoring plan
 - [Quick Reference](PROCESSORS_PLAN_QUICK_REFERENCE.md) - Quick lookup guide
 - [Visual Summary](PROCESSORS_VISUAL_SUMMARY.md) - Architecture diagrams
 - [Migration Guide](PROCESSORS_MIGRATION_GUIDE.md) - Detailed migration info
