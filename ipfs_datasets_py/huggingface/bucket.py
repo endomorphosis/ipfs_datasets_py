@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 from collections.abc import Iterable, Mapping
@@ -15,7 +16,6 @@ from typing import Any
 from ..logic.ir_core.canonical import canonical_json_bytes
 
 HUGGINGFACE_BUCKET_INVENTORY_SCHEMA_VERSION = "huggingface-bucket-inventory/v1"
-_SHA256_LENGTH = 64
 
 
 class HuggingFaceBucketError(ValueError):
@@ -42,14 +42,8 @@ def _path(value: Any, *, label: str = "path") -> str:
 
 def _sha256(value: Any) -> str:
     text = _text(value, label="sha256")
-    if len(text) != _SHA256_LENGTH:
+    if re.fullmatch(r"[0-9a-f]{64}", text) is None:
         raise HuggingFaceBucketError("sha256 must be a full 64-character lowercase hexadecimal digest")
-    try:
-        bytes.fromhex(text)
-    except ValueError as exc:
-        raise HuggingFaceBucketError("sha256 must be a full 64-character lowercase hexadecimal digest") from exc
-    if text != text.casefold():
-        raise HuggingFaceBucketError("sha256 must use lowercase hexadecimal")
     return text
 
 

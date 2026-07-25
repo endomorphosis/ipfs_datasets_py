@@ -355,6 +355,13 @@ def test_bucket_store_rejects_tampered_download(
         {
             "path": "raw/a.wav",
             "size_bytes": 1,
+            "sha256": ("0" * 31) + "  " + ("0" * 31),
+            "etag": "etag",
+            "media_type": "audio/wav",
+        },
+        {
+            "path": "raw/a.wav",
+            "size_bytes": 1,
             "etag": "etag",
             "media_type": "audio/wav",
         },
