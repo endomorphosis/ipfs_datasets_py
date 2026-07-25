@@ -436,7 +436,10 @@ cover:
 
 Only one integration task edits package `__init__.py`,
 `logic/submodule_registry.py`, or shared CLI registration. Remove shims only
-after one or two releases and measured downstream migration.
+after the documented deprecation window: at least two consecutive minor
+releases and 180 days after the first published warning, whichever ends later,
+plus measured downstream migration and the removal approvals in
+`docs/security_verification/SECURITY_IR_MIGRATION.md`.
 
 ## Intent IR scaffold
 
@@ -792,6 +795,28 @@ and acceptance criteria.
 
 ## Rollout gates
 
+The operational interface is `IRFamilyRollout@1`. The detailed operator
+procedure is in `docs/guides/IR_FAMILY_OPERATIONS.md`; the legacy Security
+migration and compatibility policy is in
+`docs/security_verification/SECURITY_IR_MIGRATION.md`. A stage change is a
+reviewed configuration and manifest change, never an inference from a model
+score or a mutable `latest` artifact.
+
+The learned Intent advisor has four ordered stages:
+
+| Stage | Learned path | Consumer-visible effect | Promotion condition |
+| --- | --- | --- | --- |
+| `off` | Not loaded or invoked | Deterministic compiler output only | Default and rollback target |
+| `shadow` | Runs on an allowlisted, bounded sample | Candidate and metrics are audit-only; canonical artifacts and responses are unchanged | Gates 0-4, approved licenses, pinned snapshots, and an artifact manifest |
+| `assist` | Produces bounded candidates for named reviewers | A reviewer may accept a candidate into a new review artifact, but it has no proof, policy, trust, license, or execution authority | Shadow benchmark thresholds pass and a human approves the arm, scope, and budget |
+| `canary` | Runs for a manifest-bounded source/traffic cohort | A validated candidate may enter the formalization path; deterministic validation, configured verifier/prover, and required human review remain authoritative | All hard gates and paired thresholds pass; explicit release-owner and security approval |
+
+There is no automatic transition and no implicit general-availability stage.
+An `assist` acceptance or `canary` result is still an unverified candidate
+until the normal compiler, schema/type, source-map, obligation, backend, and
+review policies produce their own typed artifacts. Confidence, retrieval,
+`EvidenceGateResult`, and `PolicyDecision` never become theorem authority.
+
 ### Gate 0: baseline frozen
 
 - public Security API inventory exists;
@@ -813,8 +838,12 @@ and acceptance criteria.
 
 ### Gate 3: Intent pilot
 
-- both pilot bundles ingest deterministically from a pinned revision;
-- license and hostile-input policies cover every record;
+- both pilot bundles ingest deterministically from a `SkillCenterSnapshot`
+  pinned by dataset ID, full immutable revision, repository filename, byte
+  size, and SHA-256 digest; mutable `main`/`latest` references fail closed;
+- every record has a `SourcePolicyDecision`; unknown, contradictory, or
+  unapproved license terms remain quarantined, and only the human-approved
+  allowlist can enter training or publication;
 - a reviewed pilot set has source-grounded Intent IR and GraphRAG artifacts;
 - no source commands execute.
 
@@ -822,16 +851,58 @@ and acceptance criteria.
 
 - deterministic views and proof obligations pass conformance tests;
 - learned advisor runs only in shadow;
-- source-grouped evaluation and leakage checks pass;
+- examples are deduplicated and split as source groups using primary source,
+  repository/document, content/near-duplicate family, generation family, and
+  revision/time boundaries;
+- the split, graph, and embedding snapshot identities are immutable, the
+  retrieval partition fence passes, and leakage count is zero;
 - all candidate formulas retain provenance and diagnostics.
 
 ### Gate 5: canary
 
-- learned advisor materially improves a paired metric without increasing
-  false-proof, unsupported-semantics, or leakage rates;
+- the complete `deterministic_only`, `intent_from_scratch`, and
+  `legal_encoder_transfer` arm matrix runs over identical held-out examples;
+- the selected learned arm improves at least one primary metric
+  (`view_accuracy`, `modality_f1`, `control_f1`,
+  `proof_obligation_closure`, `unsupported_recall`, or
+  `round_trip_accuracy`) by at least `0.02` absolute versus
+  `deterministic_only`;
+- no primary metric regresses by more than `0.01` absolute, and
+  each primary metric remains at least `0.95`;
+- `grounding_accuracy`, `schema_validity`, `type_validity`, and
+  `round_trip_accuracy` remain `1.0`, and `semantic_mutation_rate == 0.0`;
+- `false_proof_count == 0`, `false_completion_count == 0`,
+  `authority_violation_count == 0`, and `leakage_count == 0` in every arm and
+  the aggregate receipt; none of these hard gates can be waived;
 - artifact regeneration is deterministic;
 - Security compatibility and Legal regression suites remain green;
-- human review signs off licenses, ontology, and high-risk formal semantics.
+- the selected backend declares the required logic family and `QueryKind` in
+  `BackendCapabilities`, passes an explicit availability probe, and is on the
+  human-approved proof-authority allowlist; discovery never installs a solver;
+- p95 latency, peak memory, and estimated cost stay inside the
+  human-approved canary budget;
+- human reviewers sign off licenses, ontology/view versions, the split and
+  benchmark receipt, high-risk formal semantics, canary scope, and rollback
+  owner.
+
+Canary promotion creates a content-addressed reviewed manifest. It binds the
+repository tree, source snapshot, source-policy version, split/graph/embedding
+snapshots, compiler/configuration, advisor checkpoint, backend capabilities
+and versions, benchmark receipt, approvers, scope, expiry, and parent
+artifacts. Run output remains under `runs/<run-id>/` until reviewed; only
+manifested immutable artifacts move to `promoted/`. Temporary output, mutable
+aliases, ambiguous `-new` files, stale receipts, and unmanifested evidence are
+never promotion inputs.
+
+Operators monitor stage and manifest identity, license/quarantine counts,
+snapshot/cache integrity, split and retrieval-fence violations, candidate
+rejection reasons, false-proof/false-completion and authority-violation
+counts, backend availability/result status, proof-receipt validation, p95
+latency, memory/cost, artifact digest drift, and Security compatibility
+failures. Any hard-gate event or manifest mismatch immediately returns the
+advisor to `off`, stops new canary admission, preserves the failed run for
+incident review, and resumes deterministic-only service. Rollback does not
+delete evidence or remove legacy Security shims.
 
 ## Supervisor operation
 
@@ -938,14 +1009,25 @@ bound to the current repository tree.
 ## Decisions to approve before the pilot expands
 
 The scaffold and first engineering waves can proceed with conservative
-defaults. These choices require explicit maintainer approval before broader
-training or publication:
+defaults. The following decisions require recorded human approval; automation
+may verify an approval artifact but may not create, infer, or waive one:
 
-1. the per-license allowlist and distribution policy;
-2. the v1 Intent ontology and formal view set;
-3. the authoritative CID/multicodec profile;
-4. which solver/prover receipts may carry proof authority;
-5. human-review size and sampling strategy for the gold set;
-6. acceptable source domains, secret/PII policy, and retention window;
-7. promotion thresholds for the learned advisor;
-8. Security legacy-path removal release.
+1. the per-license allowlist, exceptions, training use, and distribution
+   policy;
+2. every new source domain or bundle, immutable snapshot expansion, and the
+   secret/PII quarantine and retention policy;
+3. the v1 Intent ontology, formal view set, and high-risk semantic mappings;
+4. the authoritative CID/multicodec profile;
+5. solver/model provisioning or updates, the solver/backend/version allowlist,
+   and which receipts may carry theorem proof authority;
+6. gold-set reviewers, minimum size, sampling strategy, and corrections;
+7. the source-group split manifest and any held-out-domain or time boundary;
+8. the learned arm, paired benchmark receipt, promotion thresholds, and
+   latency/memory/cost budget;
+9. each transition to `assist` or `canary`, including cohort, duration,
+   expiry, monitoring owner, and rollback owner;
+10. promotion of an artifact used for release, training, publication, or
+    high-risk formal semantics;
+11. any incident disposition or policy exception (without waiving the zero
+    false-proof, false-completion, leakage, or authority-violation gates);
+12. the Security legacy-path removal release after its deprecation window.
