@@ -528,10 +528,10 @@ from zksnark import generate_proof, verify_proof
 - **Deployment:** See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 **For planning:**
-- **Detailed Roadmap:** See [PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md](./PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md)
-- **Testing Plan:** See [PHASE8_FINAL_TESTING_PLAN.md](./PHASE8_FINAL_TESTING_PLAN.md)
-- **Advanced Features:** See [ADVANCED_FEATURES_ROADMAP.md](./ADVANCED_FEATURES_ROADMAP.md)
-- **Refactoring Plan:** See [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)
+- **Detailed Roadmap:** See [archived Phase 7 performance optimization plan](./docs/archive/phases_2026/ARCHIVED_PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md)
+- **Testing Plan:** See [archived Phase 8 final testing plan](./docs/archive/phases_2026/ARCHIVED_PHASE8_FINAL_TESTING_PLAN.md)
+- **Advanced Features:** See [archived advanced features roadmap](./docs/archive/planning/ARCHIVED_ADVANCED_FEATURES_ROADMAP.md)
+- **Refactoring Plan:** See [evergreen improvement plan](./EVERGREEN_IMPROVEMENT_PLAN.md)
 
 **For contributing:**
 - **How to Contribute:** See [CONTRIBUTING.md](./CONTRIBUTING.md)
