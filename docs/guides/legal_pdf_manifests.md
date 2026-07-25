@@ -61,10 +61,9 @@ Field notes:
 - `packet_output_path`: merged output PDF
 - `config`: serialized `StateCourtPleadingConfig`
 
-Workspace example:
+Workspace example: `combined_state_court_packet_manifest.json`
 
-- [combined_state_court_packet_manifest.json](/home/barberb/HACC/workspace/combined_state_court_packet_manifest.json)
-- Minimal reusable example: [state_court_filing_packet_manifest.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/state_court_filing_packet_manifest.example.json)
+- Minimal reusable example: [state_court_filing_packet_manifest.example.json](../examples/legal_pdf/state_court_filing_packet_manifest.example.json)
 
 ## Exhibit Binder Manifest
 
@@ -140,10 +139,9 @@ Field notes:
 - `exhibits[].divider_markdown`: divider/tab markdown
 - `exhibits[].cover_markdown`: cover sheet markdown
 
-Workspace example:
+Workspace example: `exhibit_binder_manifest.json`
 
-- [exhibit_binder_manifest.json](/home/barberb/HACC/workspace/exhibit-binder-court-ready/exhibit_binder_manifest.json)
-- Minimal reusable example: [exhibit_binder_manifest.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/exhibit_binder_manifest.example.json)
+- Minimal reusable example: [exhibit_binder_manifest.example.json](../examples/legal_pdf/exhibit_binder_manifest.example.json)
 
 ## Full Evidence Binder Manifest
 
@@ -233,10 +231,9 @@ Field notes:
 - `families[].output_pdf`: optional per-family merged binder output
 - `lean_replacements`: optional cross-reference pages keyed by `(family, label)` for lean builds
 
-Workspace example:
+Workspace example: `full_evidence_binder_manifest.json`
 
-- [full_evidence_binder_manifest.json](/home/barberb/HACC/workspace/full_evidence_binder_manifest.json)
-- Minimal reusable example: [full_evidence_binder_manifest.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/full_evidence_binder_manifest.example.json)
+- Minimal reusable example: [full_evidence_binder_manifest.example.json](../examples/legal_pdf/full_evidence_binder_manifest.example.json)
 
 ## JSON Response Keys
 
@@ -284,16 +281,16 @@ Some reusable builders are not manifest-based but support JSON config files via
 
 Example config files:
 
-- [courtstyle_packet_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/courtstyle_packet_config.example.json)
-- [court_ready_binder_index_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/court_ready_binder_index_config.example.json)
-- [official_form_drafts_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/official_form_drafts_config.example.json)
-- [filing_specific_binders_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/filing_specific_binders_config.example.json)
+- [courtstyle_packet_config.example.json](../examples/legal_pdf/courtstyle_packet_config.example.json)
+- [court_ready_binder_index_config.example.json](../examples/legal_pdf/court_ready_binder_index_config.example.json)
+- [official_form_drafts_config.example.json](../examples/legal_pdf/official_form_drafts_config.example.json)
+- [filing_specific_binders_config.example.json](../examples/legal_pdf/filing_specific_binders_config.example.json)
 
 ## Practical Notes
 
 - Relative paths resolve from the manifest file's directory.
-- Schema files live under [docs/schemas/legal_pdf](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/schemas/legal_pdf).
-- Copy-ready examples live under [docs/examples/legal_pdf](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf).
+- Schema files live under [docs/schemas/legal_pdf](../schemas/legal_pdf).
+- Copy-ready examples live under [docs/examples/legal_pdf](../examples/legal_pdf).
 - `validate-manifest` checks a manifest without rendering any PDFs.
 - Filing packet manifests are best for motions, declarations, memoranda, and certificates.
 - Exhibit binder manifests are best for front sheets, tables of exhibits, divider pages, cover sheets, and source exhibits.
