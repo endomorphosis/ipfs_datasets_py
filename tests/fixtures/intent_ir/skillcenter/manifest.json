@@ -1,0 +1,52 @@
+{
+  "bounds": {
+    "batch_size": 128,
+    "max_bundle_count": 2,
+    "max_elapsed_seconds": 900,
+    "max_peak_memory_bytes": 2147483648,
+    "max_text_chars": 1000000,
+    "max_total_records": 2114
+  },
+  "bundles": [
+    {
+      "expected_bundle_type": "lite",
+      "expected_bundle_version": "20260227",
+      "expected_sha256": "8b763be5896b12510c38b92459325d9568770d99cf38aa53ab17485b456d82a4",
+      "expected_size_bytes": 7892992,
+      "expected_total_skills": 1182,
+      "profile": "security-lite",
+      "repository_file": "clawskills-bundle-lite-security-v20260227.sqlite",
+      "sample_limit": 16
+    },
+    {
+      "expected_bundle_type": "lite",
+      "expected_bundle_version": "v20260608",
+      "expected_sha256": "da11d77d96c734151d393ae082eb250436fe3da777258e99c9b604d7b6a35dd5",
+      "expected_size_bytes": 5332992,
+      "expected_total_skills": 932,
+      "profile": "github-lite",
+      "repository_file": "github-skillmd-bundle-lite-v20260608.sqlite",
+      "sample_limit": 16
+    }
+  ],
+  "dataset_id": "Tommysha/skillcenter-bundles",
+  "dataset_revision": "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1",
+  "expansion_policy": {
+    "allowed_repository_files": [
+      "clawskills-bundle-lite-security-v20260227.sqlite",
+      "github-skillmd-bundle-lite-v20260608.sqlite"
+    ],
+    "github_all_requires_rollout_gates": [
+      "quality",
+      "safety",
+      "license",
+      "throughput",
+      "reproducibility"
+    ],
+    "prohibited_repository_files": [
+      "github-skillmd-all-v20260608.sqlite"
+    ]
+  },
+  "interface": "SkillCenterPilot@1",
+  "schema_version": "skillcenter-pilot-manifest/v1"
+}
