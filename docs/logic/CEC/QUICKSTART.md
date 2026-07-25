@@ -524,7 +524,7 @@ def process_formulas(formulas: List[DCECFormula]) -> None:
 
 ### Beginner Level
 1. **This QUICKSTART.md** - You're reading it!
-2. **[README.md](./README.md)** - Overview and introduction
+2. **[CEC README](../../../ipfs_datasets_py/logic/CEC/README.md)** - Overview and introduction
 3. **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** sections 1-4
 
 ### Intermediate Level
