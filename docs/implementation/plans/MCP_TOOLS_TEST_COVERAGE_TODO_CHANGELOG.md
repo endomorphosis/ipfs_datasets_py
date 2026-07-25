@@ -292,7 +292,7 @@ This completion represents a **major quality and standardization milestone** tha
 
 1. **Created Import Path Validation Infrastructure**
    - **File**: `/home/kylerose1946/ipfs_datasets_py/scripts/validate_import_paths.py`
-   - **Documentation**: [`scripts/README_validate_import_paths.md`](scripts/README_validate_import_paths.md)
+   - **Documentation**: [`scripts/README_validate_import_paths.md`](../../../scripts/README_validate_import_paths.md)
    - **Functionality**: Comprehensive validation script for MCP tool imports
    - **Features**:
      - Auto-discovery of 29 tool categories with 89+ tools
@@ -302,7 +302,7 @@ This completion represents a **major quality and standardization milestone** tha
 
 1a. **Created Auto-Generated Fix Script**
    - **File**: `/home/kylerose1946/ipfs_datasets_py/scripts/fix_import_paths.py`
-   - **Documentation**: [`scripts/README_fix_import_paths.md`](scripts/README_fix_import_paths.md)
+   - **Documentation**: [`scripts/README_fix_import_paths.md`](../../../scripts/README_fix_import_paths.md)
    - **Functionality**: Automated application of import path corrections
    - **Features**:
      - Exact string replacement for 17 identified issues
