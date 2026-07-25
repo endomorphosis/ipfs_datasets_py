@@ -41,7 +41,7 @@ See [archive/README.md](./archive/README.md) for details.
 - [Getting Started with Logic Module](../../ipfs_datasets_py/logic/README.md#getting-started)
 - [FOL Converter Guide](../../ipfs_datasets_py/logic/fol/README.md)
 - [Deontic Logic Guide](../../ipfs_datasets_py/logic/deontic/README.md)
-- [Migration Guide](../../ipfs_datasets_py/logic/MIGRATION_GUIDE.md)
+- [Migration Guide](./MIGRATION_GUIDE.md)
 
 ---
 
