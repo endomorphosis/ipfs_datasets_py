@@ -29,6 +29,6 @@ The optimizer consists of several key components:
 ## Usage Examples
 
 For usage examples, see:
-- [graphrag_optimizer_example.py](/examples/graphrag_optimizer_example.py)
-- [rag_query_optimizer_example.py](/examples/rag_query_optimizer_example.py)
+- [graphrag_optimizer_example.py](../../examples/advanced/graphrag_optimizer_example.py)
+- [rag_query_optimizer_example.py](../../examples/advanced/rag_query_optimizer_example.py)
 - [Alert Visualization Integration](../examples/alert_visualization_integration.md)
