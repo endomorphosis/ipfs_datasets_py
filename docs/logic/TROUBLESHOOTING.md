@@ -812,7 +812,7 @@ print(converter.supported_types())
 
 1. **[README.md](./README.md)** - Main documentation
 2. **[KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md)** - Feature status
-3. **[FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md)** - Dependency fallbacks
+3. **[Archived fallback behaviors](./docs/archive/planning/ARCHIVED_FALLBACK_BEHAVIORS.md)** - Dependency fallbacks
 4. **[INFERENCE_RULES_INVENTORY.md](./INFERENCE_RULES_INVENTORY.md)** - Rule listing
 
 ### Run Diagnostics
@@ -879,7 +879,7 @@ If you find a bug:
 
 **Q: Do I need to install all optional dependencies?**
 
-A: No! The module works fine without them, just with reduced performance or accuracy. See [FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md).
+A: No! The module works fine without them, just with reduced performance or accuracy. See [archived fallback behavior details](./docs/archive/planning/ARCHIVED_FALLBACK_BEHAVIORS.md).
 
 **Q: Why do I see DeprecationWarnings?**
 
@@ -915,7 +915,7 @@ A: Yes, for FOL/Deontic conversion, caching, and basic theorem proving. See [KNO
 
 **Quick References:**
 - [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) - Known limitations and workarounds
-- [FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md) - Fallback behavior details
+- [Archived fallback behaviors](./docs/archive/planning/ARCHIVED_FALLBACK_BEHAVIORS.md) - Fallback behavior details
 - [API_REFERENCE.md](./API_REFERENCE.md) - Complete API documentation
 
 ---
