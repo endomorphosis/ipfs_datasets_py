@@ -290,17 +290,17 @@ When ready for deeper refactoring:
 **Documentation:**
 - [Processors Engines Guide](./PROCESSORS_ENGINES_GUIDE.md)
 - [Status Report](./PROCESSORS_STATUS_2026_02_16.md)
-- [Comprehensive Plan](./PROCESSORS_COMPREHENSIVE_PLAN_2026.md)
+- [Comprehensive Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_PLAN_2026.md)
 - [Quick Reference](./PROCESSORS_PLAN_QUICK_REFERENCE.md)
 - [Visual Summary](./PROCESSORS_VISUAL_SUMMARY.md)
 
 **Testing:**
-- [Facade Tests](../tests/integration/processors/test_engines_facade.py)
-- [Structure Tests](../tests/integration/processors/test_structure_lightweight.py)
+- [Facade Tests](../../../tests/integration/processors/test_engines_facade.py)
+- [Structure Tests](../../../tests/integration/processors/test_structure_lightweight.py)
 
 **Migration:**
 - [Migration Guide](./PROCESSORS_MIGRATION_GUIDE.md)
-- [Deprecation Timeline](./PROCESSORS_COMPREHENSIVE_PLAN_2026.md#deprecation-timeline)
+- [Deprecation Timeline](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_PLAN_2026.md#deprecation-timeline)
 
 ---
 
