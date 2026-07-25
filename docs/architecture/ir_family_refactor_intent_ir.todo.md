@@ -492,7 +492,7 @@ real conflict edges.
 
 ## IRF-036 Add a bounded two-bundle SkillCenter pilot
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: data
