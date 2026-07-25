@@ -79,7 +79,7 @@ docker compose -f docker-compose.mcp.yml up -d
 
 ### Set Up Self-Hosted Runners
 
-See **[docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)** for complete instructions.
+See **[the self-hosted runner setup guide](deployment/runner_setup.md)** for complete instructions.
 
 Quick steps:
 1. Go to Settings → Actions → Runners
@@ -224,8 +224,8 @@ newgrp docker
 ## 📞 Support
 
 If you encounter issues:
-1. Check the [Actions tab](../../actions) for build logs
-2. Review [docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)
+1. Check the [Actions tab](https://github.com/endomorphosis/ipfs_datasets_py/actions) for build logs
+2. Review [the self-hosted runner setup guide](deployment/runner_setup.md)
 3. Open an issue with:
    - Your OS and architecture
    - Docker version
