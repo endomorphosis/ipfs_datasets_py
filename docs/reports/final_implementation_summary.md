@@ -354,22 +354,22 @@ Failed:                   0
 
 ## 📚 Documentation References
 
-1. **[HOW_TO_USE_COPILOT_AUTO_FIX.md](HOW_TO_USE_COPILOT_AUTO_FIX.md)**
+1. **[HOW_TO_USE_COPILOT_AUTO_FIX.md](../guides/HOW_TO_USE_COPILOT_AUTO_FIX.md)**
    - Quick start guide
    - Step-by-step workflows
    - Common use cases
 
-2. **[guides/infrastructure/copilot_auto_fix_all_prs.md](guides/infrastructure/copilot_auto_fix_all_prs.md)**
+2. **[guides/infrastructure/copilot_auto_fix_all_prs.md](../guides/infrastructure/copilot_auto_fix_all_prs.md)**
    - Complete technical documentation
    - API reference
    - Advanced usage
 
-3. **[COPILOT_AUTO_FIX_IMPLEMENTATION.md](COPILOT_AUTO_FIX_IMPLEMENTATION.md)**
+3. **[COPILOT_AUTO_FIX_IMPLEMENTATION.md](../guides/COPILOT_AUTO_FIX_IMPLEMENTATION.md)**
    - Implementation details
    - Architecture decisions
    - Integration information
 
-4. **[examples/copilot_auto_fix_example.py](examples/copilot_auto_fix_example.py)**
+4. **[examples/copilot_auto_fix_example.py](../../examples/archived/copilot_auto_fix_example.py)**
    - Practical examples
    - Usage patterns
    - Best practices
@@ -405,8 +405,8 @@ This solution consolidates and enhances functionality from:
 ## 🚀 Next Steps for Users
 
 1. **Review the Documentation**
-   - Start with [HOW_TO_USE_COPILOT_AUTO_FIX.md](HOW_TO_USE_COPILOT_AUTO_FIX.md)
-   - Check examples in [examples/copilot_auto_fix_example.py](examples/copilot_auto_fix_example.py)
+   - Start with [HOW_TO_USE_COPILOT_AUTO_FIX.md](../guides/HOW_TO_USE_COPILOT_AUTO_FIX.md)
+   - Check examples in [examples/copilot_auto_fix_example.py](../../examples/archived/copilot_auto_fix_example.py)
 
 2. **Try Dry-Run First**
    ```bash
