@@ -383,5 +383,5 @@ For issues or questions:
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
-- [Workflow Configuration Guide](/.github/workflows/workflow-auto-fix-config.yml)
+- [Workflow Configuration Guide](/.github/config/workflow-auto-fix-config.yml)
 - [Analysis Scripts](/.github/scripts/)
