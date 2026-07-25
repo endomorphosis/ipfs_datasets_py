@@ -468,7 +468,7 @@ real conflict edges.
 
 ## IRF-035 Project validated Intent IR into a semantic graph
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: graphrag
