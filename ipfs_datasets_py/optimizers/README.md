@@ -132,12 +132,12 @@ classDiagram
 ## Quick Start
 
 > **New!** For comprehensive guides, see:
-> - [Performance Tuning Guide](../../docs/optimizers/PERFORMANCE_TUNING_GUIDE.md) - Optimize execution speed and resource usage
-> - [Troubleshooting Guide](../../docs/optimizers/TROUBLESHOOTING_GUIDE.md) - Common issues and solutions
-> - [Integration Examples](../../docs/optimizers/INTEGRATION_EXAMPLES.md) - Real-world use cases (FastAPI, Flask, CLI, batch processing)
-> - [Sandboxed Prover Policy](../../docs/optimizers/SANDBOXED_PROVER_POLICY.md) - Security baseline for untrusted external prover subprocesses
-> - [Troubleshooting Dashboards](../../docs/optimizers/TROUBLESHOOTING_DASHBOARDS.md) - Metrics/log panels for performance and quality drift triage
-> - [Alerting Examples](../../docs/optimizers/ALERTING_EXAMPLES.md) - Prometheus alert rules for score/error/latency regressions
+> - [Agentic Performance Tuning Guide](../../docs/optimizers/agentic/PERFORMANCE_TUNING.md) - Optimize execution speed and resource usage
+> - [Common Pitfalls Guide](../../docs/optimizers/COMMON_PITFALLS.md) - Troubleshoot common issues across optimizer types
+> - [Code Examples](../../docs/optimizers/CODE_EXAMPLES.md) - Public API examples for GraphRAG, logic, and agentic optimizers
+> - [Agentic Security Audit](../../docs/optimizers/agentic/SECURITY_AUDIT.md) - Security guidance for optimizer integrations
+> - [Optimizer Visualization Reference](../../docs/optimizers/optimizer_visualization_integration_stubs.md) - Metrics and visualization integration reference
+> - [Optimizer Alert System Reference](../../docs/optimizers/optimizer_alert_system_stubs.md) - Alerting and learning-metrics integration reference
 > - [Optimizer Contributing Guide](../../docs/optimizers/CONTRIBUTING.md) - PR expectations, batch commit conventions, and quality checks
 > - [How to Add a New Optimizer](../../docs/optimizers/HOW_TO_ADD_NEW_OPTIMIZER.md) - Integration checklist for new optimizer packages
 
@@ -526,9 +526,9 @@ For detailed GraphRAG usage including entity extraction, ontology refinement, an
 ## Task Guides
 
 - **TASK_GUIDE_ENTITY_EXTRACTION.md** - Practical steps for improving entity extraction quality
-- **[PERFORMANCE_TUNING_GUIDE.md](../../docs/optimizers/PERFORMANCE_TUNING_GUIDE.md)** - Performance optimization strategies and bottleneck analysis
-- **[TROUBLESHOOTING_GUIDE.md](../../docs/optimizers/TROUBLESHOOTING_GUIDE.md)** - Solutions to common issues with GraphRAG optimizers
-- **[INTEGRATION_EXAMPLES.md](../../docs/optimizers/INTEGRATION_EXAMPLES.md)** - Real-world integration examples (FastAPI, Flask, CLI, CI/CD, batch processing)
+- **[PERFORMANCE_TUNING.md](../../docs/optimizers/agentic/PERFORMANCE_TUNING.md)** - Performance optimization strategies and bottleneck analysis
+- **[COMMON_PITFALLS.md](../../docs/optimizers/COMMON_PITFALLS.md)** - Solutions to common issues across optimizer types
+- **[CODE_EXAMPLES.md](../../docs/optimizers/CODE_EXAMPLES.md)** - Real-world integration and public API examples
 
 ## Golden Fixtures
 
