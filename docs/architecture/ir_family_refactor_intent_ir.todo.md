@@ -636,7 +636,7 @@ real conflict edges.
 
 ## IRF-044 Adapt Security IR to shared formalization contracts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: platform
