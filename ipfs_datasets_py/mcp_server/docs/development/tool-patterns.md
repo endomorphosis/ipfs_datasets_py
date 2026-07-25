@@ -544,9 +544,9 @@ async def test_tool_error_handling():
 ## Related Documentation
 
 - [Thin Tool Architecture](../../THIN_TOOL_ARCHITECTURE.md) - Overall architecture
-- [Tool Template](./tool-template.py) - Copy-paste template
-- [Tool Migration Guide](./tool-migration-guide.md) - Migrating legacy tools
-- [Testing Guide](./testing.md) - Comprehensive testing guidelines
+- [Tool Template](./tool-templates/simple_tool_template.py) - Copy-paste template
+- [Tool Migration Guide](../../tools/legacy_mcp_tools/MIGRATION_GUIDE.md) - Migrating legacy tools
+- [Testing Guide](./README.md#testing-guide) - Comprehensive testing guidelines
 
 ---
 
