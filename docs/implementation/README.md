@@ -35,10 +35,10 @@ When working on a component:
 
 ## Related Documentation
 
-- [Implementation Notes](../implementation_notes/) - Detailed technical notes
-- [Implementation Plans](../implementation_plans/) - Future implementation plans
-- [Architecture](../architecture/) - System architecture
-- [Reports](../reports/) - Project reports
+- [Implementation Notes](audit/README.md) - Detailed technical notes
+- [Implementation Plans](plans/README.md) - Future implementation plans
+- [Architecture](../architecture/README.md) - System architecture
+- [Reports](../reports/README.md) - Project reports
 
 ## Contributing
 
