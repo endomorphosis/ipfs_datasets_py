@@ -265,7 +265,7 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 ## 📖 Learn More
 
 - **Comprehensive Guide**: [ACCELERATE_INTEGRATION_PLAN.md](ACCELERATE_INTEGRATION_PLAN.md)
-- **Module Documentation**: [ipfs_datasets_py/accelerate_integration/README.md](ipfs_datasets_py/accelerate_integration/README.md)
+- **Module Documentation**: [ipfs_datasets_py/ml/accelerate_integration/README.md](../../../ipfs_datasets_py/ml/accelerate_integration/README.md)
 - **Implementation Details**: [ACCELERATE_INTEGRATION_SUMMARY.md](ACCELERATE_INTEGRATION_SUMMARY.md)
 - **ipfs_accelerate_py**: [GitHub Repository](https://github.com/endomorphosis/ipfs_accelerate_py)
 
