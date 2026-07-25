@@ -404,4 +404,4 @@ logs = processor.get_processing_logs()
 
 For detailed implementation specifications, see:
 - [Architecture Documentation](../architecture/) - System design and technical specifications
-- [Implementation Plans](../implementation_plans/) - Implementation roadmaps
+- [Implementation Plans](../implementation/plans/) - Implementation roadmaps
