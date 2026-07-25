@@ -12,7 +12,7 @@ real conflict edges.
 
 ## IRF-001 Freeze the Security IR public surface
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: quality
@@ -60,7 +60,7 @@ real conflict edges.
 
 ## IRF-003 Inventory Security IR artifacts without deleting files
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: data
@@ -84,7 +84,7 @@ real conflict edges.
 
 ## IRF-010 Implement deterministic shared canonicalization and identity
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -108,7 +108,7 @@ real conflict edges.
 
 ## IRF-011 Implement core provenance, evidence, and diagnostics
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -132,7 +132,7 @@ real conflict edges.
 
 ## IRF-012 Implement the core schema and migration registry
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
@@ -156,7 +156,7 @@ real conflict edges.
 
 ## IRF-013 Implement solver-neutral claims and result authority
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: platform
