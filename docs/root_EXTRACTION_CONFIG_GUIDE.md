@@ -704,6 +704,6 @@ config = ExtractionConfig(
 
 ## See Also
 
-- [OntologyGenerator API](ipfs_datasets_py/optimizers/graphrag/ontology_generator.py)
-- [Entity Extraction Examples](tests/unit/optimizers/graphrag/)
-- [Ontology Generation Architecture](ipfs_datasets_py/optimizers/ARCHITECTURE.md)
+- [OntologyGenerator API](../ipfs_datasets_py/optimizers/graphrag/ontology_generator.py)
+- [Entity Extraction Examples](../tests/unit/optimizers/graphrag/)
+- [Ontology Generation Architecture](optimizers/ARCHITECTURE_DIAGRAM.md)
