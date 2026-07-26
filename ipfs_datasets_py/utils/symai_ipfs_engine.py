@@ -39,8 +39,6 @@ try:
 except Exception:
     GeminiCLI = None
 
-from ipfs_datasets_py.utils.cli_tools.copilot import build_standalone_copilot_command_template
-
 try:
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
 except Exception:
@@ -420,10 +418,16 @@ def _gemini_cli_generate(prompt: str) -> str:
 
 
 def _copilot_cli_generate(prompt: str) -> str:
-    command = os.environ.get(
-        "IPFS_DATASETS_PY_COPILOT_CLI_CMD",
-        build_standalone_copilot_command_template(),
-    )
+    command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD")
+    if command is None:
+        # The pinned SyMAI/Leanstral route must not import the optional CLI
+        # cache stack merely because this fallback exists.  Import it only
+        # when the Copilot CLI fallback is actually selected.
+        from ipfs_datasets_py.utils.cli_tools.copilot import (
+            build_standalone_copilot_command_template,
+        )
+
+        command = build_standalone_copilot_command_template()
     return _run_cli_command(command, prompt)
 
 

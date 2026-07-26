@@ -36,6 +36,7 @@ from typing import Callable, Final, Mapping, Sequence
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from . import BENCHMARK_ID, RunPaths
+from .content_addressing import cid_for_dag_json
 
 
 CAPABILITY_INVENTORY_SCHEMA: Final = (
@@ -731,6 +732,65 @@ def _reap_bounded_process_group(
     )
 
 
+def _cleanup_failed_process_communication(
+    process: subprocess.Popen[bytes],
+    *,
+    cancellation_grace_seconds: float,
+) -> None:
+    """Best-effort kill and reap without masking the communication failure."""
+
+    try:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGTERM)
+        else:
+            process.terminate()
+    except (OSError, AttributeError):
+        pass
+    try:
+        process.wait(timeout=cancellation_grace_seconds)
+    except (OSError, subprocess.TimeoutExpired):
+        try:
+            if os.name == "posix":
+                os.killpg(process.pid, signal.SIGKILL)
+            else:
+                process.kill()
+        except (OSError, AttributeError):
+            pass
+        try:
+            process.wait(timeout=cancellation_grace_seconds)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                process.kill()
+            except OSError:
+                pass
+            try:
+                process.wait(timeout=cancellation_grace_seconds)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+    try:
+        _reap_bounded_process_group(
+            process.pid,
+            cancellation_grace_seconds=cancellation_grace_seconds,
+        )
+    except (OSError, ValueError):
+        pass
+
+
+def _close_process_standard_streams(
+    process: subprocess.Popen[object],
+) -> None:
+    """Idempotently release parent-side stdio handles retained by tracebacks."""
+
+    for name in ("stdin", "stdout", "stderr"):
+        stream = getattr(process, name, None)
+        if stream is None:
+            continue
+        try:
+            stream.close()
+        except (OSError, ValueError):
+            pass
+
+
 def run_bounded_process_group(
     arguments: Sequence[str],
     *,
@@ -740,6 +800,7 @@ def run_bounded_process_group(
     env: Mapping[str, str] | None = None,
     input_bytes: bytes | None = None,
     max_output_bytes: int = 64 * 1024,
+    pass_fds: Sequence[int] = (),
 ) -> BoundedProcessResult:
     """Run without a shell and reap the entire child process group on timeout."""
 
@@ -778,6 +839,18 @@ def run_bounded_process_group(
         raise CapabilityContractError(
             "input_bytes must not exceed 16777216 bytes"
         )
+    inherited_descriptors = tuple(pass_fds)
+    if (
+        any(
+            type(descriptor) is not int or descriptor <= 2
+            for descriptor in inherited_descriptors
+        )
+        or len(inherited_descriptors) != len(set(inherited_descriptors))
+        or (inherited_descriptors and os.name != "posix")
+    ):
+        raise CapabilityContractError(
+            "pass_fds must contain unique POSIX descriptors above stderr"
+        )
     try:
         process = subprocess.Popen(
             command,
@@ -793,6 +866,8 @@ def run_bounded_process_group(
             text=False,
             shell=False,
             start_new_session=True,
+            close_fds=True,
+            pass_fds=inherited_descriptors,
         )
     except OSError as exc:
         raise ResourceLeaseError(
@@ -800,30 +875,49 @@ def run_bounded_process_group(
         ) from exc
     timed_out = False
     try:
-        stdout, stderr = process.communicate(
-            input=input_bytes,
-            timeout=float(timeout_seconds),
-        )
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        try:
-            if os.name != "posix":
-                raise AttributeError
-            os.killpg(process.pid, signal.SIGTERM)
-        except (AttributeError, ProcessLookupError, PermissionError):
-            process.terminate()
         try:
             stdout, stderr = process.communicate(
-                timeout=float(cancellation_grace_seconds)
+                input=input_bytes,
+                timeout=float(timeout_seconds),
             )
         except subprocess.TimeoutExpired:
+            timed_out = True
             try:
                 if os.name != "posix":
                     raise AttributeError
-                os.killpg(process.pid, signal.SIGKILL)
+                os.killpg(process.pid, signal.SIGTERM)
             except (AttributeError, ProcessLookupError, PermissionError):
-                process.kill()
-            stdout, stderr = process.communicate()
+                process.terminate()
+            try:
+                stdout, stderr = process.communicate(
+                    timeout=float(cancellation_grace_seconds)
+                )
+            except subprocess.TimeoutExpired:
+                try:
+                    if os.name != "posix":
+                        raise AttributeError
+                    os.killpg(process.pid, signal.SIGKILL)
+                except (
+                    AttributeError,
+                    ProcessLookupError,
+                    PermissionError,
+                ):
+                    process.kill()
+                stdout, stderr = process.communicate()
+    except BaseException:
+        try:
+            try:
+                _cleanup_failed_process_communication(
+                    process,
+                    cancellation_grace_seconds=float(
+                        cancellation_grace_seconds
+                    ),
+                )
+            finally:
+                _close_process_standard_streams(process)
+        except BaseException:
+            pass
+        raise
     surviving_descendants = bool(
         _active_process_group_members(process.pid)
     )
@@ -1228,7 +1322,15 @@ class CapabilityInventory:
 
     @property
     def sha256(self) -> str:
+        """Legacy raw digest retained for revision-1 receipt compatibility."""
+
         return capability_inventory_sha256(self)
+
+    @property
+    def cid(self) -> str:
+        """Canonical CIDv1/DAG-JSON identity for new receipt joins."""
+
+        return capability_inventory_cid(self)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -1283,9 +1385,19 @@ def canonical_capability_inventory_json(
 
 
 def capability_inventory_sha256(inventory: CapabilityInventory) -> str:
+    """Return the legacy revision-1 digest of canonical inventory JSON."""
+
     return hashlib.sha256(
         canonical_capability_inventory_json(inventory).encode("utf-8")
     ).hexdigest()
+
+
+def capability_inventory_cid(inventory: CapabilityInventory) -> str:
+    """Return the authoritative CIDv1/DAG-JSON inventory identity."""
+
+    if not isinstance(inventory, CapabilityInventory):
+        raise TypeError("inventory must be a CapabilityInventory")
+    return cid_for_dag_json(inventory.to_dict())
 
 
 FindSpec = Callable[[str], object | None]
@@ -1961,13 +2073,193 @@ def write_capability_inventory(
     return path
 
 
+_HARDENED_GIT_CONFIGURATION: Final = (
+    "--no-replace-objects",
+    "--no-pager",
+    "--no-optional-locks",
+    "-c",
+    "core.autocrlf=false",
+    "-c",
+    "core.attributesFile=/dev/null",
+    "-c",
+    "core.excludesFile=/dev/null",
+    "-c",
+    "core.fileMode=true",
+    "-c",
+    "core.fsmonitor=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "core.ignoreCase=false",
+    "-c",
+    "core.symlinks=true",
+    "-c",
+    "core.untrackedCache=false",
+    "-c",
+    "protocol.allow=never",
+    "-c",
+    "protocol.ext.allow=never",
+    "-c",
+    "protocol.file.allow=never",
+    "-c",
+    "protocol.fd.allow=never",
+    "-c",
+    "protocol.ftp.allow=never",
+    "-c",
+    "protocol.ftps.allow=never",
+    "-c",
+    "protocol.git.allow=never",
+    "-c",
+    "protocol.http.allow=never",
+    "-c",
+    "protocol.https.allow=never",
+    "-c",
+    "protocol.rsync.allow=never",
+    "-c",
+    "protocol.ssh.allow=never",
+)
+
+
+def _hardened_git_environment() -> dict[str, str]:
+    """Return an exact Git environment without caller-controlled overrides."""
+
+    return {
+        "PATH": os.defpath,
+        "GIT_ALLOW_PROTOCOL": "file",
+        "GIT_ATTR_NOSYSTEM": "1",
+        "GIT_CONFIG_COUNT": "0",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_SYSTEM": os.devnull,
+        "GIT_NO_LAZY_FETCH": "1",
+        "GIT_NO_REPLACE_OBJECTS": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_PROTOCOL_FROM_USER": "0",
+        "GIT_TERMINAL_PROMPT": "0",
+        "LC_ALL": "C",
+    }
+
+
+def _hardened_git_executable() -> Path:
+    """Resolve one immutable system Git without consulting caller ``PATH``."""
+
+    candidate = shutil.which("git", path=os.defpath)
+    if candidate is None:
+        raise CapabilityContractError(
+            "cannot resolve the hardened Git executable"
+        )
+    try:
+        executable = Path(candidate).resolve(strict=True)
+        metadata = executable.lstat()
+    except OSError as exc:
+        raise CapabilityContractError(
+            "cannot authenticate the hardened Git executable"
+        ) from exc
+    if (
+        stat.S_ISLNK(metadata.st_mode)
+        or not stat.S_ISREG(metadata.st_mode)
+        or stat.S_IMODE(metadata.st_mode) & 0o022
+        or not metadata.st_mode & 0o111
+    ):
+        raise CapabilityContractError(
+            "hardened Git must be a non-writable regular executable"
+        )
+    try:
+        version_result = subprocess.run(
+            [executable.as_posix(), "version"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            close_fds=True,
+            shell=False,
+            stdin=subprocess.DEVNULL,
+            env=_hardened_git_environment(),
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise CapabilityContractError(
+            "cannot probe the hardened Git version"
+        ) from exc
+    version_match = re.fullmatch(
+        r"git version ([0-9]+)\.([0-9]+)\.([0-9]+)(?:\S*)?\n?",
+        version_result.stdout,
+    )
+    if (
+        version_match is None
+        or tuple(int(value) for value in version_match.groups())
+        < (2, 40, 0)
+    ):
+        raise CapabilityContractError(
+            "hardened Git 2.40.0 or newer is required"
+        )
+    return executable
+
+
 def _git(
     repository: Path,
     *arguments: str,
     check: bool = True,
     timeout: float = 30.0,
+    child_umask: int | None = None,
+    input_text: str | None = None,
+    sanitized_environment: bool = False,
+    secure_materialization: bool = False,
+    template_directory: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    command = ["git", "-C", str(repository), *arguments]
+    hardened = sanitized_environment or secure_materialization
+    if hardened:
+        executable = _hardened_git_executable()
+        template_arguments: tuple[str, ...] = ()
+        if secure_materialization:
+            if template_directory is None:
+                raise CapabilityContractError(
+                    "secure Git materialization requires an empty template "
+                    "directory"
+                )
+            template = Path(template_directory)
+            try:
+                metadata = template.lstat()
+                resolved_template = template.resolve(strict=True)
+                populated = any(template.iterdir())
+            except OSError as exc:
+                raise CapabilityContractError(
+                    "cannot authenticate the secure Git template directory"
+                ) from exc
+            if (
+                resolved_template != template
+                or stat.S_ISLNK(metadata.st_mode)
+                or not stat.S_ISDIR(metadata.st_mode)
+                or stat.S_IMODE(metadata.st_mode) & 0o022
+                or populated
+            ):
+                raise CapabilityContractError(
+                    "secure Git template directory must be canonical, "
+                    "private, and empty"
+                )
+            template_arguments = (
+                "-c",
+                f"init.templateDir={template}",
+            )
+        command = [
+            executable.as_posix(),
+            *_HARDENED_GIT_CONFIGURATION,
+            *template_arguments,
+            "-C",
+            str(repository),
+            *arguments,
+        ]
+        environment = _hardened_git_environment()
+        effective_umask = (
+            0o022 if secure_materialization else child_umask
+        )
+    else:
+        command = ["git", "-C", str(repository), *arguments]
+        environment = {
+            **os.environ,
+            "GIT_TERMINAL_PROMPT": "0",
+            "LC_ALL": "C",
+        }
+        effective_umask = child_umask
     try:
         completed = subprocess.run(
             command,
@@ -1976,11 +2268,19 @@ def _git(
             text=True,
             timeout=timeout,
             shell=False,
-            env={
-                **os.environ,
-                "GIT_TERMINAL_PROMPT": "0",
-                "LC_ALL": "C",
-            },
+            close_fds=True,
+            input=input_text,
+            stdin=(
+                subprocess.DEVNULL
+                if hardened and input_text is None
+                else None
+            ),
+            **(
+                {}
+                if effective_umask is None
+                else {"umask": effective_umask}
+            ),
+            env=environment,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise CapabilityContractError(
@@ -1995,8 +2295,90 @@ def _git(
     return completed
 
 
-def _git_value(repository: Path, *arguments: str) -> str:
-    return _git(repository, *arguments).stdout.strip()
+def _git_value(
+    repository: Path,
+    *arguments: str,
+    sanitized_environment: bool = False,
+) -> str:
+    return _git(
+        repository,
+        *arguments,
+        sanitized_environment=sanitized_environment,
+    ).stdout.strip()
+
+
+def _reject_effective_checkout_filters(
+    repository: Path,
+    commit: str | None,
+) -> None:
+    """Fail before checkout when pinned or info attributes select a filter."""
+
+    if commit is not None and not _HEX_COMMIT.fullmatch(commit):
+        raise CapabilityContractError(
+            "checkout-filter preflight requires a full Git commit"
+        )
+    paths_result = (
+        _git(
+            repository,
+            "ls-files",
+            "-z",
+            sanitized_environment=True,
+        )
+        if commit is None
+        else _git(
+            repository,
+            "ls-tree",
+            "-r",
+            "-z",
+            "--name-only",
+            "--full-tree",
+            commit,
+            sanitized_environment=True,
+        )
+    )
+    raw_paths = paths_result.stdout
+    paths = raw_paths.split("\0")
+    if paths[-1] != "" or any(not path for path in paths[:-1]):
+        raise CapabilityContractError(
+            "Git returned malformed paths for checkout-filter preflight"
+        )
+    expected_paths = paths[:-1]
+    attribute_arguments = (
+        ("check-attr", "-z", "--stdin", "filter")
+        if commit is None
+        else (
+            "check-attr",
+            f"--source={commit}",
+            "-z",
+            "--stdin",
+            "filter",
+        )
+    )
+    attributes = _git(
+        repository,
+        *attribute_arguments,
+        input_text=raw_paths,
+        sanitized_environment=True,
+    ).stdout.split("\0")
+    if attributes[-1:] != [""]:
+        raise CapabilityContractError(
+            "Git returned malformed checkout-filter evidence"
+        )
+    attributes = attributes[:-1]
+    if len(attributes) != len(expected_paths) * 3:
+        raise CapabilityContractError(
+            "Git returned incomplete checkout-filter evidence"
+        )
+    for index, expected_path in enumerate(expected_paths):
+        path, attribute, value = attributes[index * 3 : index * 3 + 3]
+        if (
+            path != expected_path
+            or attribute != "filter"
+            or value not in {"unspecified", "unset"}
+        ):
+            raise CapabilityContractError(
+                "effective Git checkout filters are forbidden"
+            )
 
 
 def _paths_overlap(left: Path, right: Path) -> bool:
@@ -2098,8 +2480,17 @@ def _mkdir_without_following_symlinks(path: Path, *, mode: int = 0o700) -> Path:
 def _submodule_gitlinks(
     repository: Path,
     commit: str,
+    *,
+    sanitized_environment: bool = False,
 ) -> Mapping[str, str]:
-    output = _git_value(repository, "ls-tree", "-r", "-z", commit)
+    output = _git_value(
+        repository,
+        "ls-tree",
+        "-r",
+        "-z",
+        commit,
+        sanitized_environment=sanitized_environment,
+    )
     commits: dict[str, str] = {}
     for raw_entry in output.split("\0"):
         if not raw_entry:
@@ -2110,7 +2501,14 @@ def _submodule_gitlinks(
             raise CapabilityContractError("Git returned a malformed tree entry")
         mode, object_type, object_id = fields
         if mode == "160000":
-            if object_type != "commit" or not _HEX_COMMIT.fullmatch(object_id):
+            logical = Path(path)
+            if (
+                object_type != "commit"
+                or not _HEX_COMMIT.fullmatch(object_id)
+                or logical.is_absolute()
+                or ".." in logical.parts
+                or logical.as_posix() != path
+            ):
                 raise CapabilityContractError(
                     "Git returned a malformed submodule gitlink"
                 )
@@ -2118,27 +2516,172 @@ def _submodule_gitlinks(
     return MappingProxyType(dict(sorted(commits.items())))
 
 
-def _source_snapshot(repository: Path) -> tuple[str, str | None, str]:
-    head = _git_value(repository, "rev-parse", "--verify", "HEAD^{commit}")
+def _reject_initialized_submodule_filters(
+    repository: Path,
+    *,
+    seen: frozenset[Path] = frozenset(),
+) -> None:
+    """Preflight every initialized child before recursive status inspection."""
+
+    root = repository.resolve()
+    if root in seen:
+        return
+    descendants = seen | {root}
+    head = _git_value(
+        root,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        sanitized_environment=True,
+    )
+    for relative in _submodule_gitlinks(
+        root,
+        head,
+        sanitized_environment=True,
+    ):
+        child = root / relative
+        try:
+            metadata = child.lstat()
+            resolved = child.resolve(strict=True)
+        except OSError:
+            continue
+        if (
+            resolved != child
+            or stat.S_ISLNK(metadata.st_mode)
+            or not stat.S_ISDIR(metadata.st_mode)
+        ):
+            raise CapabilityContractError(
+                "initialized submodule path is not a canonical directory"
+            )
+        probe = _git(
+            child,
+            "rev-parse",
+            "--show-toplevel",
+            check=False,
+            sanitized_environment=True,
+        )
+        if probe.returncode != 0 or Path(probe.stdout.strip()).resolve() != child:
+            # An uninitialized submodule directory makes Git walk to the
+            # superproject. It cannot execute a child filter during status.
+            continue
+        _reject_effective_checkout_filters(child, None)
+        _reject_initialized_submodule_filters(
+            child,
+            seen=descendants,
+        )
+
+
+def _hardened_worktree_status(
+    repository: Path,
+    *,
+    ignore_submodules: bool,
+    seen: frozenset[Path] = frozenset(),
+) -> str:
+    """Observe dirtiness without allowing outer status to enter a child."""
+
+    root = repository.resolve()
+    if root in seen:
+        return ""
+    descendants = seen | {root}
+    _reject_effective_checkout_filters(root, None)
+    outer = _git_value(
+        root,
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignore-submodules=all",
+        sanitized_environment=True,
+    )
+    observations = [outer] if outer else []
+    if ignore_submodules:
+        return outer
+    head = _git_value(
+        root,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        sanitized_environment=True,
+    )
+    for relative, expected_commit in _submodule_gitlinks(
+        root,
+        head,
+        sanitized_environment=True,
+    ).items():
+        child = root / relative
+        try:
+            metadata = child.lstat()
+            resolved = child.resolve(strict=True)
+        except OSError:
+            continue
+        if (
+            resolved != child
+            or stat.S_ISLNK(metadata.st_mode)
+            or not stat.S_ISDIR(metadata.st_mode)
+        ):
+            raise CapabilityContractError(
+                "initialized submodule path is not a canonical directory"
+            )
+        probe = _git(
+            child,
+            "rev-parse",
+            "--show-toplevel",
+            check=False,
+            sanitized_environment=True,
+        )
+        if probe.returncode != 0 or Path(probe.stdout.strip()).resolve() != child:
+            continue
+        child_head = _git_value(
+            child,
+            "rev-parse",
+            "--verify",
+            "HEAD^{commit}",
+            sanitized_environment=True,
+        )
+        if child_head != expected_commit:
+            observations.append(
+                f"{relative}\0HEAD\0{child_head}\0{expected_commit}"
+            )
+        child_status = _hardened_worktree_status(
+            child,
+            ignore_submodules=False,
+            seen=descendants,
+        )
+        if child_status:
+            observations.append(
+                f"{relative}\0STATUS\0{child_status}"
+            )
+    return "\0".join(observations)
+
+
+def _source_snapshot(
+    repository: Path,
+    *,
+    sanitized_environment: bool = False,
+) -> tuple[str, str | None, str]:
+    head = _git_value(
+        repository,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        sanitized_environment=sanitized_environment,
+    )
     branch_result = _git(
         repository,
         "symbolic-ref",
         "--quiet",
         "HEAD",
         check=False,
+        sanitized_environment=sanitized_environment,
     )
     branch = (
         branch_result.stdout.strip()
         if branch_result.returncode == 0
         else None
     )
-    status = _git_value(
+    status = _hardened_worktree_status(
         repository,
-        "status",
-        "--porcelain=v1",
-        "-z",
-        "--untracked-files=all",
-        "--ignore-submodules=none",
+        ignore_submodules=False,
     )
     status_sha256 = hashlib.sha256(status.encode("utf-8")).hexdigest()
     return head, branch, status_sha256
@@ -2390,7 +2933,12 @@ def prepare_isolated_worktree(
             "source checkout must be an existing Git working tree"
         )
     source = Path(
-        _git_value(requested_source, "rev-parse", "--show-toplevel")
+        _git_value(
+            requested_source,
+            "rev-parse",
+            "--show-toplevel",
+            sanitized_environment=True,
+        )
     ).resolve()
     if source != requested_source:
         raise CapabilityContractError(
@@ -2401,6 +2949,7 @@ def prepare_isolated_worktree(
         "rev-parse",
         "--path-format=absolute",
         "--git-common-dir",
+        sanitized_environment=True,
     )
     common = Path(common_raw).resolve()
     base_commit = _git_value(
@@ -2409,13 +2958,22 @@ def prepare_isolated_worktree(
         "--verify",
         "--end-of-options",
         f"{base_revision}^{{commit}}",
+        sanitized_environment=True,
     )
     if not _HEX_COMMIT.fullmatch(base_commit):
         raise CapabilityContractError(
             "base_revision did not resolve to a full Git commit"
         )
-    source_before = _source_snapshot(source)
-    submodule_commits = _submodule_gitlinks(source, base_commit)
+    _reject_effective_checkout_filters(source, base_commit)
+    source_before = _source_snapshot(
+        source,
+        sanitized_environment=True,
+    )
+    submodule_commits = _submodule_gitlinks(
+        source,
+        base_commit,
+        sanitized_environment=True,
+    )
     state_root, worktree_root = _validate_isolation_paths(
         source,
         common,
@@ -2424,6 +2982,10 @@ def prepare_isolated_worktree(
 
     for directory in run_paths.directories():
         _mkdir_without_following_symlinks(directory)
+    git_template = _mkdir_without_following_symlinks(
+        run_paths.state / ".git-empty-template",
+        mode=0o700,
+    )
     _git(
         source,
         "worktree",
@@ -2431,9 +2993,15 @@ def prepare_isolated_worktree(
         "--detach",
         str(worktree_root),
         base_commit,
+        secure_materialization=True,
+        template_directory=git_template,
     )
     worktree_commit = _git_value(
-        worktree_root, "rev-parse", "--verify", "HEAD^{commit}"
+        worktree_root,
+        "rev-parse",
+        "--verify",
+        "HEAD^{commit}",
+        sanitized_environment=True,
     )
     detached = (
         _git(
@@ -2442,10 +3010,14 @@ def prepare_isolated_worktree(
             "--quiet",
             "HEAD",
             check=False,
+            sanitized_environment=True,
         ).returncode
         != 0
     )
-    source_after = _source_snapshot(source)
+    source_after = _source_snapshot(
+        source,
+        sanitized_environment=True,
+    )
     source_unchanged = source_after == source_before
     if not source_unchanged:
         raise CapabilityContractError(
@@ -2509,6 +3081,7 @@ __all__ = [
     "WorktreeSafetyReceipt",
     "canonical_capability_inventory_json",
     "canonical_worktree_safety_json",
+    "capability_inventory_cid",
     "capability_inventory_sha256",
     "prepare_isolated_worktree",
     "probe_runtime_capabilities",

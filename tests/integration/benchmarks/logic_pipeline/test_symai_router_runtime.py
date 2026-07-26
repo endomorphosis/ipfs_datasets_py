@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 import hashlib
@@ -1118,6 +1119,37 @@ def test_symai_engine_forbids_default_model_retry_on_pinned_route() -> None:
 
     assert "disable_model_retry=not allow_local_fallback" in source
     assert "allow_local_fallback=allow_local_fallback" in source
+
+
+def test_pinned_symai_route_does_not_eagerly_import_optional_cli_cache_stack(
+) -> None:
+    sources = (
+        provision.REPOSITORY_ROOT
+        / "ipfs_datasets_py"
+        / "utils"
+        / "symai_ipfs_engine.py",
+        provision.REPOSITORY_ROOT / "ipfs_datasets_py" / "llm_router.py",
+    )
+
+    for path in sources:
+        module = ast.parse(path.read_text(encoding="utf-8"))
+        top_level_imports = {
+            alias.name
+            for node in module.body
+            if isinstance(node, ast.Import)
+            for alias in node.names
+        }
+        top_level_imports.update(
+            node.module or ""
+            for node in module.body
+            if isinstance(node, ast.ImportFrom)
+        )
+
+        assert not any(
+            name.endswith("utils.cli_tools.copilot")
+            for name in top_level_imports
+        )
+        assert "cachetools" not in top_level_imports
 
 
 def test_receipt_is_canonical_create_only_and_cli_check_is_hermetic(

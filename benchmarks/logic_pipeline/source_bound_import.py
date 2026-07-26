@@ -25,13 +25,17 @@ from __future__ import annotations
 from functools import lru_cache
 import importlib
 from importlib.machinery import ModuleSpec
+import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 import threading
 from types import ModuleType
 from typing import Final
+
+from .content_addressing import cid_for_bytes, validate_cid
 
 
 _CANONICAL_PACKAGE: Final = "ipfs_accelerate_py"
@@ -46,13 +50,55 @@ class SourceBoundImportError(ImportError):
 
 
 def _git(repository: Path, *arguments: str) -> str:
+    executable_value = os.environ.get("HSSL_G240_GIT_EXECUTABLE_PATH")
+    executable_cid_value = os.environ.get("HSSL_G240_GIT_EXECUTABLE_CID")
+    if (executable_value is None) != (executable_cid_value is None):
+        raise SourceBoundImportError(
+            "partial pinned Git authority is forbidden"
+        )
+    executable = "git"
+    if executable_value is not None:
+        try:
+            requested = Path(executable_value)
+            if not requested.is_absolute():
+                raise OSError("Git path is not absolute")
+            resolved = requested.resolve(strict=True)
+            metadata = resolved.lstat()
+            payload = resolved.read_bytes()
+            expected_cid = validate_cid(
+                executable_cid_value,
+                codecs=("raw",),
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            raise SourceBoundImportError(
+                "cannot authenticate the pinned Git executable"
+            ) from exc
+        if (
+            stat.S_ISLNK(metadata.st_mode)
+            or not stat.S_ISREG(metadata.st_mode)
+            or stat.S_IMODE(metadata.st_mode) & 0o022
+            or not payload
+            or cid_for_bytes(payload) != expected_cid
+        ):
+            raise SourceBoundImportError(
+                "pinned Git executable differs from its raw CID"
+            )
+        executable = resolved.as_posix()
     try:
         completed = subprocess.run(
-            ("git", "-C", str(repository), *arguments),
+            (executable, "-C", str(repository), *arguments),
             check=False,
             capture_output=True,
             text=True,
             timeout=10,
+            env={
+                "PATH": os.defpath,
+                "GIT_CONFIG_COUNT": "0",
+                "GIT_CONFIG_NOSYSTEM": "1",
+                "GIT_OPTIONAL_LOCKS": "0",
+                "GIT_TERMINAL_PROMPT": "0",
+                "LC_ALL": "C",
+            },
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise SourceBoundImportError(
@@ -106,6 +152,38 @@ def _pinned_package_directory() -> Path:
         raise SourceBoundImportError(
             "local ipfs_accelerate_py package initializer is unavailable"
         )
+
+    bootstrap_package = os.environ.get(
+        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_PACKAGE_PATH"
+    )
+    bootstrap_gitlink = os.environ.get(
+        "HSSL_G240_SOURCE_BOUND_IPFS_ACCELERATE_GITLINK_COMMIT"
+    )
+    if (bootstrap_package is None) != (bootstrap_gitlink is None):
+        raise SourceBoundImportError(
+            "partial bootstrap source-bound authority is forbidden"
+        )
+    if bootstrap_package is not None:
+        try:
+            observed_package = Path(bootstrap_package).resolve(strict=True)
+        except OSError as exc:
+            raise SourceBoundImportError(
+                "bootstrap source-bound package is unavailable"
+            ) from exc
+        if (
+            "HSSL_G240_BOOTSTRAP_RECEIPT_JSON" not in os.environ
+            or observed_package != package
+            or not isinstance(bootstrap_gitlink, str)
+            or not _GIT_OBJECT.fullmatch(bootstrap_gitlink)
+        ):
+            raise SourceBoundImportError(
+                "bootstrap source-bound package authority changed"
+            )
+        # The tracked stage-one bootstrap performed the enclosing ls-tree,
+        # submodule HEAD, and clean-package observations before Landlock.  The
+        # stage-two process is the same process, so this branch deliberately
+        # performs no post-confinement Git or .git access.
+        return package
 
     tree_line = _git(
         repository,

@@ -57,12 +57,14 @@ from .metrics import (
 )
 from .runtime import (
     CAUSAL_PROOF_HAMMER_FAILURE_CODES_V2,
+    NATIVE_PROOF_CANDIDATE_SCHEMA,
     CausalKernelCheck,
     CausalProofCandidate,
     CausalProofFailure,
     CausalProofGraphController,
     CausalProofGraphResult,
     RuntimeBindingError,
+    _entailment_translation,
     compile_reviewed_obligation,
     kernel_input_semantic_context,
 )
@@ -75,6 +77,10 @@ COMPILER_REFERENCE_EXPOSURE_SCHEMA_V2: Final = (
 )
 CAUSAL_RUNTIME_EVIDENCE_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-runtime-evidence.v2"
+)
+G210_PROOF_COMPILER_BINDING_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "reviewed-proof-compiler-binding.v2"
 )
 _PROOF_STAGES: Final = frozenset(
     {StageName.HAMMER, StageName.LEANSTRAL}
@@ -180,6 +186,149 @@ def _artifact_cid(artifact: StageArtifact) -> str:
 
 def _artifact_sha256(artifact: StageArtifact) -> str:
     return hashlib.sha256(_artifact_bytes(artifact)).hexdigest()
+
+
+def _proof_compiler_binding(
+    compiler_exposure: "CompilerReferenceExposureV2",
+    *,
+    source_text: str,
+    proof_context: Mapping[str, object],
+) -> tuple[StageArtifact, CausalProofCandidate | None]:
+    """Build the proof-bound compiler artifact outside the G200 frontend.
+
+    The semantic-v2 compiler is intentionally source-only and therefore
+    cannot emit a reviewed obligation or a native proof candidate.  G210 owns
+    that distinct operation: it deterministically joins the exact source,
+    reviewed proof context, and source-only A0 exposure into a new artifact.
+    The helper is shared by execution and validation, so neither a caller nor
+    a persisted receipt can substitute proof-bearing bytes into the semantic
+    compiler record.
+    """
+
+    if (
+        not isinstance(compiler_exposure, CompilerReferenceExposureV2)
+        or compiler_exposure.source_cid
+        != cid_for_bytes(source_text.encode("utf-8"))
+    ):
+        raise CausalRuntimeBridgeError(
+            "proof compiler binding differs from the source-only A0 exposure"
+        )
+    proof_context_value = _mapping(
+        proof_context, "proof compiler reviewed context"
+    )
+    proof_input = {
+        "text": source_text,
+        **_plain(proof_context_value),  # type: ignore[arg-type]
+    }
+    try:
+        compiled = compile_reviewed_obligation(proof_input)
+    except RuntimeBindingError as exc:
+        raise CausalRuntimeBridgeError(
+            "reviewed proof compiler binding could not compile"
+        ) from exc
+    if compiled is None:
+        raise CausalRuntimeBridgeError(
+            "reviewed proof compiler binding lacks an obligation"
+        )
+    translation = _entailment_translation(
+        proof_input,
+        theorem_name=compiled.theorem_name,
+        obligation_sha256=compiled.obligation_sha256,
+        kind=compiled.kind,
+        logic=compiled.logic,
+        semantic_target=compiled.semantic_target,
+    )
+    native_candidate = (
+        None
+        if translation is None or translation.native_proof_text is None
+        else {
+            "schema": NATIVE_PROOF_CANDIDATE_SCHEMA,
+            "translation_sha256": translation.digest,
+            "obligation_sha256": compiled.obligation_sha256,
+            "source_sha256": translation.source_sha256,
+            "derivation": translation.shape,
+            "certificate": translation.native_proof_text,
+            "authoritative": False,
+            "requires_independent_kernel": True,
+        }
+    )
+    # Preserve replay compatibility for already-issued v2 evidence whose A0
+    # exposure contained the exact reviewed compiler fields.  New semantic-v2
+    # production execution never takes this branch: its compiler-output.v2 is
+    # source-only and contains none of these fields.  Equality against a fresh
+    # source+context compilation prevents a stale or substituted legacy
+    # exposure from acquiring proof authority.
+    exposed_data = compiler_exposure.compiler_record.data
+    exposed_candidate = compiler_exposure.compiler_candidate
+    if (
+        isinstance(exposed_data, Mapping)
+        and exposed_data.get("compiled_obligation") == compiled.to_dict()
+        and exposed_data.get("compiled_obligation_sha256") == compiled.digest
+        and exposed_data.get("entailment_translation")
+        == (None if translation is None else translation.to_dict())
+        and exposed_data.get("entailment_translation_sha256")
+        == (None if translation is None else translation.digest)
+        and exposed_data.get("native_proof_candidate") == native_candidate
+        and (
+            (native_candidate is None and exposed_candidate is None)
+            or (
+                native_candidate is not None
+                and exposed_candidate is not None
+                and exposed_candidate.certificate.decode("utf-8")
+                == native_candidate["certificate"]
+            )
+        )
+    ):
+        return compiler_exposure.artifact, exposed_candidate
+    proof_context_cid = cid_for_dag_json(_plain(proof_context_value))
+    payload = {
+        "schema": G210_PROOF_COMPILER_BINDING_SCHEMA_V2,
+        "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
+        "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
+        "source_cid": compiler_exposure.source_cid,
+        "proof_context_cid": proof_context_cid,
+        "compiler_reference_exposure_cid": (
+            compiler_exposure.receipt_cid
+        ),
+        "compiled_obligation": compiled.to_dict(),
+        "compiled_obligation_sha256": compiled.digest,
+        "entailment_translation": (
+            None if translation is None else translation.to_dict()
+        ),
+        "entailment_translation_sha256": (
+            None if translation is None else translation.digest
+        ),
+        "native_proof_candidate": native_candidate,
+    }
+    artifact = StageArtifact(
+        stage=StageName.COMPILER,
+        status=StageStatus.SUCCESS,
+        data=payload,
+        output_sha256=None,
+        effective_identity={
+            "implementation": "g210-reviewed-proof-compiler",
+            "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
+            "causal_proof_protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
+            "source_cid": compiler_exposure.source_cid,
+            "proof_context_cid": proof_context_cid,
+            "compiler_reference_exposure_cid": (
+                compiler_exposure.receipt_cid
+            ),
+        },
+        invocation_index=0,
+        invoked=True,
+        policy_reason="g210_reviewed_proof_compiler_binding",
+    )
+    candidate = (
+        None
+        if native_candidate is None
+        else CausalProofCandidate(
+            source=StageName.COMPILER.value,
+            certificate=str(native_candidate["certificate"]),
+            artifact_cid=_artifact_cid(artifact),
+        )
+    )
+    return artifact, candidate
 
 
 def _legacy_source_input_sha256(source_text: str) -> str:
@@ -1172,7 +1321,14 @@ def validate_causal_runtime_evidence_v2(
         raise CausalRuntimeBridgeError(
             "G210 evidence lacks a reviewed compiled obligation"
         )
-    semantic_artifacts: list[StageArtifact] = [exposure.artifact]
+    proof_compiler_artifact, proof_compiler_candidate = (
+        _proof_compiler_binding(
+            exposure,
+            source_text=source_text,
+            proof_context=proof_context,
+        )
+    )
+    semantic_artifacts: list[StageArtifact] = [proof_compiler_artifact]
     for record in frontend:
         if record.stage is StageName.COMPILER:
             continue
@@ -1359,7 +1515,7 @@ def validate_causal_runtime_evidence_v2(
         selection_result.receipt["compiler_reference"],
         "selection compiler reference",
     )
-    candidate = exposure.compiler_candidate
+    candidate = proof_compiler_candidate
     if (
         compiler.get("candidate_cid")
         != (None if candidate is None else candidate.candidate_cid)
@@ -1374,7 +1530,7 @@ def validate_causal_runtime_evidence_v2(
     ] = {}
     if candidate is not None:
         assert candidate.candidate_cid is not None
-        compiler_artifact = exposure.artifact
+        compiler_artifact = proof_compiler_artifact
         if (
             candidate.artifact_cid != _artifact_cid(compiler_artifact)
             or _artifact_sha256(compiler_artifact)
@@ -1720,8 +1876,15 @@ def execute_causal_runtime_case_v2(
             "causal runtime proof context contains no reviewed obligation"
         )
 
+    proof_compiler_artifact, compiler_candidate = (
+        _proof_compiler_binding(
+            compiler_exposure,
+            source_text=source_text,
+            proof_context=proof_context_value,
+        )
+    )
     runtime_artifacts: list[StageArtifact] = [
-        compiler_exposure.artifact
+        proof_compiler_artifact
     ]
     for record in frontend:
         if record.stage is StageName.COMPILER:
@@ -1736,7 +1899,6 @@ def execute_causal_runtime_case_v2(
     optional_invocations: dict[StageName, StageInvocation] = {}
     optional_artifacts: dict[StageName, StageArtifact] = {}
     candidate_artifacts: dict[str, StageArtifact] = {}
-    compiler_candidate = compiler_exposure.compiler_candidate
     if compiler_candidate is not None:
         assert compiler_candidate.candidate_cid is not None
         candidate_artifacts[

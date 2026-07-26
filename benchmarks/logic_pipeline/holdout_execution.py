@@ -1,9 +1,11 @@
 """Fail-closed authorized execution for the frozen paired holdout.
 
 The generic ablation executor deliberately refuses ``Split.HOLDOUT``.  This
-module is the only supported bridge across that boundary.  It validates a
-content-addressed, source-bound pilot authorization and every per-contract
-holdout access audit before it creates a file or invokes an adapter.
+module is the only supported bridge across that boundary.  Revision 2 treats
+G232 as a non-authorizing proposal and requires the durable, independently
+validated G241 custodian-release ledger head before it resolves the sealed
+path.  Every granted access also records that exact G241 receipt CID before
+this module creates a result file or invokes an adapter.
 """
 
 from __future__ import annotations
@@ -60,9 +62,9 @@ HOLDOUT_AUTHORIZATION_FILE: Final = "holdout-authorization.json"
 HOLDOUT_EXECUTION_RECEIPT_FILE: Final = "holdout-execution-receipt.json"
 HOLDOUT_ACCESS_AUDITS_FILE: Final = "holdout-access-audits.json"
 MAX_SHORTLIST_SIZE: Final = 4
-G230_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA: Final = (
+G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
-    "g230-replacement-holdout-authorization.v2"
+    "g232-replacement-holdout-authorization.v2"
 )
 REPLACEMENT_HOLDOUT_ACCESS_RECEIPT_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark."
@@ -425,8 +427,8 @@ class PilotAuthorizationReceipt:
 
 
 @dataclass(frozen=True, slots=True)
-class G230ReplacementHoldoutAuthorization:
-    """Fail-closed HSSL-G230 handoff for one exact replacement seal.
+class G232ReplacementHoldoutAuthorization:
+    """Fail-closed HSSL-G232 handoff for one exact replacement seal.
 
     The content address proves identity, not authority.  The external
     custodian remains the trust root and must independently allow this exact
@@ -453,13 +455,13 @@ class G230ReplacementHoldoutAuthorization:
     authorization_cid: str
 
     def __post_init__(self) -> None:
-        if self.schema != G230_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA:
+        if self.schema != G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA:
             raise HoldoutExecutionError(
-                "unsupported G230 replacement-holdout authorization schema"
+                "unsupported G232 replacement-holdout authorization schema"
             )
-        if self.goal_id != "HSSL-G230":
+        if self.goal_id != "HSSL-G232":
             raise HoldoutExecutionError(
-                "replacement-holdout authorization must come from HSSL-G230"
+                "replacement-holdout authorization must come from HSSL-G232"
             )
         object.__setattr__(
             self,
@@ -491,7 +493,7 @@ class G230ReplacementHoldoutAuthorization:
         protocols = _mapping(self.protocol_cids, "protocol_cids")
         if set(protocols) != REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS:
             raise HoldoutExecutionError(
-                "G230 authorization protocol identities must exactly bind "
+                "G232 authorization protocol identities must exactly bind "
                 f"{sorted(REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS)!r}"
             )
         normalized_protocols = {
@@ -531,14 +533,14 @@ class G230ReplacementHoldoutAuthorization:
             )
         ):
             raise HoldoutExecutionError(
-                "G230 authorization must contain A0 followed by one to four "
+                "G232 authorization must contain A0 followed by one to four "
                 "distinct registered candidate arms"
             )
         object.__setattr__(self, "authorized_variant_ids", variants)
         cache_modes = tuple(self.cache_modes)
         if cache_modes != ("cold", "warm"):
             raise HoldoutExecutionError(
-                "G230 authorization must preserve exact cold/warm pairing"
+                "G232 authorization must preserve exact cold/warm pairing"
             )
         object.__setattr__(self, "cache_modes", cache_modes)
         for name, expected in (
@@ -551,7 +553,7 @@ class G230ReplacementHoldoutAuthorization:
         ):
             if getattr(self, name) is not expected:
                 raise HoldoutExecutionError(
-                    f"G230 authorization requires {name}={expected!r}"
+                    f"G232 authorization requires {name}={expected!r}"
                 )
         object.__setattr__(
             self,
@@ -566,7 +568,7 @@ class G230ReplacementHoldoutAuthorization:
             self.identity_payload()
         ):
             raise HoldoutExecutionError(
-                "authorization_cid does not match G230 authorization content"
+                "authorization_cid does not match G232 authorization content"
             )
 
     def identity_payload(self) -> dict[str, object]:
@@ -597,7 +599,7 @@ class G230ReplacementHoldoutAuthorization:
     def validate_against(self, seal: ReplacementHoldoutSeal) -> None:
         if not isinstance(seal, ReplacementHoldoutSeal):
             raise HoldoutExecutionError(
-                "G230 authorization requires a replacement holdout seal"
+                "G232 authorization requires a replacement holdout seal"
             )
         if (
             self.seal_contract_cid != seal.seal_contract_cid
@@ -608,23 +610,23 @@ class G230ReplacementHoldoutAuthorization:
             )
         ):
             raise HoldoutExecutionError(
-                "G230 authorization does not bind the exact replacement seal "
+                "G232 authorization does not bind the exact replacement seal "
                 "and frozen protocols"
             )
 
     @classmethod
-    def from_dict(cls, value: object) -> "G230ReplacementHoldoutAuthorization":
-        data = _mapping(value, "G230 replacement-holdout authorization")
+    def from_dict(cls, value: object) -> "G232ReplacementHoldoutAuthorization":
+        data = _mapping(value, "G232 replacement-holdout authorization")
         _exact(
             data,
             set(cls.__dataclass_fields__),
-            "G230 replacement-holdout authorization",
+            "G232 replacement-holdout authorization",
         )
         variants = data["authorized_variant_ids"]
         cache_modes = data["cache_modes"]
         if not isinstance(variants, list) or not isinstance(cache_modes, list):
             raise HoldoutExecutionError(
-                "G230 authorized variants and cache modes must be arrays"
+                "G232 authorized variants and cache modes must be arrays"
             )
         return cls(
             schema=data["schema"],  # type: ignore[arg-type]
@@ -660,6 +662,7 @@ class ReplacementHoldoutAccessReceipt:
     sealed_manifest_cid: str
     authorization_cid: str | None
     pilot_artifact_cid: str | None
+    g241_release_receipt_cid: str | None
     purpose: str
     executor_id: str
     access_authorized: bool
@@ -742,6 +745,20 @@ class ReplacementHoldoutAccessReceipt:
                     codecs=("dag-json",),
                 ),
             )
+        if self.g241_release_receipt_cid is not None:
+            if self.authorization_cid is None:
+                raise HoldoutExecutionError(
+                    "G241 release receipt requires its G232 authorization"
+                )
+            object.__setattr__(
+                self,
+                "g241_release_receipt_cid",
+                _cid(
+                    self.g241_release_receipt_cid,
+                    "g241_release_receipt_cid",
+                    codecs=("dag-json",),
+                ),
+            )
         if self.purpose not in {"evaluation", "replay"}:
             raise HoldoutExecutionError(
                 "replacement holdout purpose must be evaluation or replay"
@@ -764,7 +781,10 @@ class ReplacementHoldoutAccessReceipt:
             or actual_flags != expected_flags
             or (
                 self.event != "premature_access"
-                and self.authorization_cid is None
+                and (
+                    self.authorization_cid is None
+                    or self.g241_release_receipt_cid is None
+                )
             )
         ):
             raise HoldoutExecutionError(
@@ -794,6 +814,7 @@ class ReplacementHoldoutAccessReceipt:
             "sealed_manifest_cid": self.sealed_manifest_cid,
             "authorization_cid": self.authorization_cid,
             "pilot_artifact_cid": self.pilot_artifact_cid,
+            "g241_release_receipt_cid": self.g241_release_receipt_cid,
             "purpose": self.purpose,
             "executor_id": self.executor_id,
             "access_authorized": self.access_authorized,
@@ -823,12 +844,19 @@ class ReplacementHoldoutAccessReceipt:
 class ReplacementHoldoutCustodian(Protocol):
     """External trust boundary that alone can release sealed bytes."""
 
+    @property
+    def custodian_id(self) -> str:
+        """Return the externally pinned G241 custodian identity CID."""
+
+        ...
+
     def release_sealed_manifest(
         self,
         sealed_manifest_path: Path,
         *,
         seal_contract_cid: str,
         authorization_cid: str,
+        g241_release_receipt_cid: str,
         access_grant_receipt_cid: str,
     ) -> bytes:
         """Release opaque bytes only after validating the exact grant."""
@@ -841,10 +869,20 @@ class AuthorizedReplacementHoldoutPayload:
     """Opaque post-authorization bytes and the receipts that bind release."""
 
     sealed_manifest_bytes: bytes = field(repr=False)
+    g241_release_receipt_cid: str
     grant_receipt: ReplacementHoldoutAccessReceipt
     release_receipt: ReplacementHoldoutAccessReceipt
 
     def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "g241_release_receipt_cid",
+            _cid(
+                self.g241_release_receipt_cid,
+                "g241_release_receipt_cid",
+                codecs=("dag-json",),
+            ),
+        )
         if (
             not isinstance(self.sealed_manifest_bytes, bytes)
             or not self.sealed_manifest_bytes
@@ -863,6 +901,10 @@ class AuthorizedReplacementHoldoutPayload:
             or self.release_receipt.event != "manifest_released"
             or self.release_receipt.previous_receipt_cid
             != self.grant_receipt.receipt_cid
+            or self.g241_release_receipt_cid
+            != self.grant_receipt.g241_release_receipt_cid
+            or self.g241_release_receipt_cid
+            != self.release_receipt.g241_release_receipt_cid
         ):
             raise HoldoutExecutionError(
                 "authorized replacement payload requires a linked grant and "
@@ -994,6 +1036,8 @@ def _parse_replacement_access_ledger(
                 grant.event != "access_granted"
                 or grant.authorization_cid != receipt.authorization_cid
                 or grant.pilot_artifact_cid != receipt.pilot_artifact_cid
+                or grant.g241_release_receipt_cid
+                != receipt.g241_release_receipt_cid
                 or grant.purpose != receipt.purpose
                 or grant.executor_id != receipt.executor_id
             ):
@@ -1086,7 +1130,8 @@ def _append_replacement_access_event(
     seal: ReplacementHoldoutSeal,
     *,
     event: str,
-    authorization: G230ReplacementHoldoutAuthorization | None,
+    authorization: G232ReplacementHoldoutAuthorization | None,
+    g241_release_receipt_cid: str | None,
     purpose: str,
     executor_id: str,
 ) -> ReplacementHoldoutAccessReceipt:
@@ -1145,6 +1190,11 @@ def _append_replacement_access_event(
                 handle.read(),
                 allow_pending_grant=True,
             )
+            if event == "access_granted" and records:
+                raise HoldoutExecutionError(
+                    "validated G241 release is already consumed; replacement "
+                    "holdout access is single-use"
+                )
             if (
                 event != "premature_access"
                 and any(item.invalidates_seal for item in records)
@@ -1190,6 +1240,8 @@ def _append_replacement_access_event(
                     pending_grant.authorization_cid != authorization_cid
                     or pending_grant.pilot_artifact_cid
                     != pilot_artifact_cid
+                    or pending_grant.g241_release_receipt_cid
+                    != g241_release_receipt_cid
                     or pending_grant.purpose != purpose
                     or pending_grant.executor_id != executor_id
                 ):
@@ -1235,6 +1287,7 @@ def _append_replacement_access_event(
                     if authorization is None
                     else authorization.pilot_artifact_cid
                 ),
+                "g241_release_receipt_cid": g241_release_receipt_cid,
                 "purpose": purpose,
                 "executor_id": executor_id,
                 "access_authorized": access_authorized,
@@ -1277,8 +1330,17 @@ def _append_replacement_access_event(
 
 def load_authorized_replacement_holdout(
     seal: ReplacementHoldoutSeal,
-    authorization: G230ReplacementHoldoutAuthorization | None,
+    authorization: G232ReplacementHoldoutAuthorization | None,
     *,
+    g241_release_receipt_cid: str | None = None,
+    g241_release_ledger_path: str | Path | None = None,
+    g241_authority_path: str | Path | None = None,
+    trusted_g241_authority_cid: str | None = None,
+    g241_validator_attestation_path: str | Path | None = None,
+    trusted_g241_validator_attestation_cid: str | None = None,
+    g241_custodian_trust_root_path: str | Path | None = None,
+    trusted_g241_custodian_trust_root_cid: str | None = None,
+    repo_root: str | Path | None = None,
     sealed_manifest_path: str | Path,
     tuning_worktree: str | Path,
     access_ledger_path: str | Path,
@@ -1288,10 +1350,13 @@ def load_authorized_replacement_holdout(
 ) -> AuthorizedReplacementHoldoutPayload:
     """Release an opaque replacement manifest only across every G220 gate.
 
-    Authorization and grant metadata are appended before calling the external
-    custodian.  Missing, legacy, malformed, stale, or seal-mismatched
-    authorization is a premature access and permanently invalidates the seal.
-    This function never parses or summarizes the returned opaque block.
+    The G232 object is only a proposal.  Before resolving the sealed path this
+    boundary revalidates the durable head of the independently governed G241
+    ledger, its pinned G239 authority and validator attestation, its custody
+    trust root, and the current clean source checkout.  Missing, legacy,
+    malformed, stale, or mismatched G232/G241 evidence is a premature access
+    and permanently invalidates the seal.  This function never parses or
+    summarizes the returned opaque block.
     """
 
     try:
@@ -1306,16 +1371,16 @@ def load_authorized_replacement_holdout(
             "replacement holdout purpose must be evaluation or replay"
         )
 
-    canonical_authorization: G230ReplacementHoldoutAuthorization | None = None
+    canonical_authorization: G232ReplacementHoldoutAuthorization | None = None
     try:
         if not isinstance(
-            authorization, G230ReplacementHoldoutAuthorization
+            authorization, G232ReplacementHoldoutAuthorization
         ):
             raise HoldoutExecutionError(
-                "exact HSSL-G230 authorization is required"
+                "exact HSSL-G232 authorization is required"
             )
         canonical_authorization = (
-            G230ReplacementHoldoutAuthorization.from_dict(
+            G232ReplacementHoldoutAuthorization.from_dict(
                 authorization.to_dict()
             )
         )
@@ -1326,6 +1391,7 @@ def load_authorized_replacement_holdout(
             canonical_seal,
             event="premature_access",
             authorization=canonical_authorization,
+            g241_release_receipt_cid=None,
             purpose=purpose,
             executor_id=executor_id,
         )
@@ -1334,80 +1400,201 @@ def load_authorized_replacement_holdout(
             "the seal"
         ) from exc
 
+    transaction: object | None = None
+    validated_g241_receipt_cid: str | None = None
     try:
-        external_path = validate_replacement_holdout_external_path(
-            sealed_manifest_path,
-            tuning_worktree=tuning_worktree,
+        required_g241_inputs = {
+            "g241_release_receipt_cid": g241_release_receipt_cid,
+            "g241_release_ledger_path": g241_release_ledger_path,
+            "g241_authority_path": g241_authority_path,
+            "trusted_g241_authority_cid": trusted_g241_authority_cid,
+            "g241_validator_attestation_path": (
+                g241_validator_attestation_path
+            ),
+            "trusted_g241_validator_attestation_cid": (
+                trusted_g241_validator_attestation_cid
+            ),
+            "g241_custodian_trust_root_path": (
+                g241_custodian_trust_root_path
+            ),
+            "trusted_g241_custodian_trust_root_cid": (
+                trusted_g241_custodian_trust_root_cid
+            ),
+            "repo_root": repo_root,
+        }
+        missing = sorted(
+            name
+            for name, value in required_g241_inputs.items()
+            if value is None
         )
-    except (TypeError, ValueError) as exc:
-        _append_replacement_access_event(
-            access_ledger_path,
-            canonical_seal,
-            event="premature_access",
+        if missing:
+            raise HoldoutExecutionError(
+                "validated ledger-backed HSSL-G241 release evidence is "
+                f"required (missing={missing})"
+            )
+        if Path(repo_root).resolve(strict=True) != Path(
+            tuning_worktree
+        ).resolve(strict=True):
+            raise HoldoutExecutionError(
+                "G241 source checkout must be the exact holdout execution "
+                "worktree"
+            )
+        from .custodian_release import (
+            G241CustodyAccessTransactionV1,
+            G241ExternallyGovernedCustodianReleaseReceiptV1,
+            consume_g241_release_for_access_v1,
+        )
+
+        with consume_g241_release_for_access_v1(
+            receipt_cid=g241_release_receipt_cid,  # type: ignore[arg-type]
+            ledger_path=Path(g241_release_ledger_path),  # type: ignore[arg-type]
+            access_ledger_path=Path(access_ledger_path),
+            seal=canonical_seal,
             authorization=canonical_authorization,
+            authority_path=Path(g241_authority_path),  # type: ignore[arg-type]
+            trusted_authority_cid=(
+                trusted_g241_authority_cid  # type: ignore[arg-type]
+            ),
+            validator_attestation_path=Path(
+                g241_validator_attestation_path  # type: ignore[arg-type]
+            ),
+            trusted_validator_attestation_cid=(
+                trusted_g241_validator_attestation_cid  # type: ignore[arg-type]
+            ),
+            custodian_trust_root_path=Path(
+                g241_custodian_trust_root_path  # type: ignore[arg-type]
+            ),
+            trusted_custodian_trust_root_cid=(
+                trusted_g241_custodian_trust_root_cid  # type: ignore[arg-type]
+            ),
+            repo_root=Path(repo_root),  # type: ignore[arg-type]
             purpose=purpose,
             executor_id=executor_id,
-        )
+        ) as locked_transaction:
+            transaction = locked_transaction
+            if not isinstance(
+                locked_transaction, G241CustodyAccessTransactionV1
+            ):
+                raise HoldoutExecutionError(
+                    "G241 consumer returned an unsupported custody transaction"
+                )
+            validated_g241_receipt = (
+                locked_transaction.release_receipt
+            )
+            if not isinstance(
+                validated_g241_receipt,
+                G241ExternallyGovernedCustodianReleaseReceiptV1,
+            ):
+                raise HoldoutExecutionError(
+                    "G241 consumer returned an unsupported release receipt"
+                )
+            validated_g241_receipt_cid = _cid(
+                validated_g241_receipt.receipt_cid,
+                "g241_release_receipt_cid",
+                codecs=("dag-json",),
+            )
+            # The custodian object is an active external boundary.  Do not
+            # evaluate even its identity property until the locked consumer
+            # has durably appended both the access grant and release
+            # consumption tombstone.
+            actual_custodian_id = _cid(
+                getattr(custodian, "custodian_id", None),
+                "custodian.custodian_id",
+                codecs=("dag-json",),
+            )
+            if (
+                validated_g241_receipt_cid != g241_release_receipt_cid
+                or validated_g241_receipt.g232_authorization_cid
+                != canonical_authorization.authorization_cid
+                or validated_g241_receipt.seal_contract_cid
+                != canonical_seal.seal_contract_cid
+                or validated_g241_receipt.sealed_manifest_cid
+                != canonical_seal.sealed_manifest_cid
+                or tuple(validated_g241_receipt.authorized_variant_ids)
+                != canonical_authorization.authorized_variant_ids
+                or validated_g241_receipt.custodian_id
+                != actual_custodian_id
+                or validated_g241_receipt.executor_id != executor_id
+            ):
+                raise HoldoutExecutionError(
+                    "G241 release does not bind the exact G232 proposal, "
+                    "seal, custodian, and holdout executor"
+                )
+
+            # Path resolution is deliberately after the durable access grant.
+            try:
+                external_path = validate_replacement_holdout_external_path(
+                    sealed_manifest_path,
+                    tuning_worktree=tuning_worktree,
+                )
+            except (TypeError, ValueError) as exc:
+                locked_transaction.record_custody_failure(
+                    integrity_failure=True
+                )
+                raise HoldoutExecutionError(
+                    "unsafe replacement-holdout path invalidated the seal"
+                ) from exc
+
+            try:
+                release = custodian.release_sealed_manifest
+                opaque_bytes = release(
+                    external_path,
+                    seal_contract_cid=canonical_seal.seal_contract_cid,
+                    authorization_cid=(
+                        canonical_authorization.authorization_cid
+                    ),
+                    g241_release_receipt_cid=(
+                        validated_g241_receipt_cid
+                    ),
+                    access_grant_receipt_cid=(
+                        locked_transaction.grant_receipt.receipt_cid
+                    ),
+                )
+            except Exception as exc:
+                locked_transaction.record_custody_failure()
+                raise HoldoutExecutionError(
+                    "external replacement-holdout custodian denied release"
+                ) from exc
+            if (
+                not isinstance(opaque_bytes, bytes)
+                or not opaque_bytes
+                or cid_for_bytes(opaque_bytes, codec="raw")
+                != canonical_seal.sealed_manifest_cid
+            ):
+                locked_transaction.record_custody_failure(
+                    integrity_failure=True
+                )
+                raise HoldoutExecutionError(
+                    "custodian returned a block outside the sealed CID; the "
+                    "replacement seal is invalidated"
+                )
+            released = locked_transaction.record_manifest_released()
+            grant = locked_transaction.grant_receipt
+    except (AttributeError, ImportError, OSError, TypeError, ValueError) as exc:
+        if transaction is None:
+            _append_replacement_access_event(
+                access_ledger_path,
+                canonical_seal,
+                event="premature_access",
+                authorization=canonical_authorization,
+                g241_release_receipt_cid=validated_g241_receipt_cid,
+                purpose=purpose,
+                executor_id=executor_id,
+            )
+            raise HoldoutExecutionError(
+                "premature replacement-holdout access without a validated "
+                "ledger-backed HSSL-G241 release permanently invalidated "
+                "the seal"
+            ) from exc
+        if isinstance(exc, HoldoutExecutionError):
+            raise
         raise HoldoutExecutionError(
-            "unsafe replacement-holdout path permanently invalidated the seal"
+            "locked G241 custody transaction failed closed"
         ) from exc
 
-    grant = _append_replacement_access_event(
-        access_ledger_path,
-        canonical_seal,
-        event="access_granted",
-        authorization=canonical_authorization,
-        purpose=purpose,
-        executor_id=executor_id,
-    )
-    try:
-        release = custodian.release_sealed_manifest
-        opaque_bytes = release(
-            external_path,
-            seal_contract_cid=canonical_seal.seal_contract_cid,
-            authorization_cid=canonical_authorization.authorization_cid,
-            access_grant_receipt_cid=grant.receipt_cid,
-        )
-    except Exception as exc:
-        _append_replacement_access_event(
-            access_ledger_path,
-            canonical_seal,
-            event="custody_release_failed",
-            authorization=canonical_authorization,
-            purpose=purpose,
-            executor_id=executor_id,
-        )
-        raise HoldoutExecutionError(
-            "external replacement-holdout custodian denied release"
-        ) from exc
-    if (
-        not isinstance(opaque_bytes, bytes)
-        or not opaque_bytes
-        or cid_for_bytes(opaque_bytes, codec="raw")
-        != canonical_seal.sealed_manifest_cid
-    ):
-        _append_replacement_access_event(
-            access_ledger_path,
-            canonical_seal,
-            event="custody_integrity_failure",
-            authorization=canonical_authorization,
-            purpose=purpose,
-            executor_id=executor_id,
-        )
-        raise HoldoutExecutionError(
-            "custodian returned a block outside the sealed CID; the "
-            "replacement seal is invalidated"
-        )
-    released = _append_replacement_access_event(
-        access_ledger_path,
-        canonical_seal,
-        event="manifest_released",
-        authorization=canonical_authorization,
-        purpose=purpose,
-        executor_id=executor_id,
-    )
     return AuthorizedReplacementHoldoutPayload(
         sealed_manifest_bytes=opaque_bytes,
+        g241_release_receipt_cid=validated_g241_receipt_cid,
         grant_receipt=grant,
         release_receipt=released,
     )
@@ -1898,7 +2085,7 @@ def execute_authorized_holdout(
 
 
 __all__ = [
-    "G230_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA",
+    "G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA",
     "HOLDOUT_ACCESS_AUDITS_FILE",
     "HOLDOUT_AUTHORIZATION_FILE",
     "HOLDOUT_EXECUTION_RECEIPT_FILE",
@@ -1911,7 +2098,7 @@ __all__ = [
     "REPLACEMENT_HOLDOUT_AUTHORIZED_PROTOCOL_KEYS",
     "AuthorizedReplacementHoldoutPayload",
     "AuthorizedHoldoutRun",
-    "G230ReplacementHoldoutAuthorization",
+    "G232ReplacementHoldoutAuthorization",
     "HSSLEV1167A17",
     "HoldoutExecutionError",
     "HoldoutExecutionReceipt",

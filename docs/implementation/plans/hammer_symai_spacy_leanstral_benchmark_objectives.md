@@ -5,6 +5,22 @@ This is machine-ingestible planning state for
 the named evidence receipt and the validation command; model confidence alone
 is never completion evidence.
 
+> **REVISION-2 OPERATIONAL NO-GO — 2026-07-26.** HSSL-G231 and HSSL-G240
+> now have bounded local implementation markers backed by source-safe
+> integration and adversarial validation. Those markers are implementation
+> evidence only: they do not satisfy the externally governed operational
+> joins. HSSL-G201, HSSL-G202, HSSL-G203, HSSL-G212, HSSL-G220, HSSL-G232,
+> HSSL-G241, HSSL-G242, and HSSL-G243 have no accepted operational completion
+> authority. Do not run a
+> pilot/development matrix, open a benchmark source/label/manifest/proof
+> obligation, request replacement-holdout custody, or publish a revision-2
+> decision. Only explicitly source-safe synthetic tests, non-corpus component
+> smokes, implementation-source review, and supervisor dry-run reconciliation
+> are currently permitted. Revision-1 validation commands are historical
+> reproduction instructions only; future commands that may touch benchmark
+> inputs become eligible only through the exact external gate chain declared
+> below.
+
 ## HSSL-G009 Reject empty AST symbols as objective evidence
 
 - Status: active
@@ -933,7 +949,7 @@ is never completion evidence.
 - Refinement depth: 1
 - Follow-up source: `2026-07-24_hammer_symai_spacy_leanstral_final_decision.json` required follow-up 1, plus the existing model-serving and P2P deployment contract.
 - Evidence implementation: `scripts.benchmarks.provision_hssl_leanstral.HSSLEV1126C73` binds the canonical `benchmarks/logic_pipeline/runtime_env/leanstral.lock` identity to the noninteractive attach-and-verify boundary. The focused runtime suite and live model-manager/MCP discovery suite independently exercise that boundary while the existing Leanstral adapter suite preserves the untrusted-draft and native-kernel authority separation.
-- Shared-service identity contract: Lock schema `ipfs-accelerate.hssl-leanstral-runtime-lock.v1` pins endpoint `http://127.0.0.1:8080/v1`, provider `leanstral_local`, model `Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4`, service `leanstral-119b-shared`, and server build `llama.cpp`, plus bounded health/model-list paths, model-manager advertisement, MCP tools, and the optional P2P provider/custom-port policy. Provisioning verifies the supervisor-owned endpoint and never installs, starts, or mutates a model service. HTTP, model-manager, and MCP observations must expose exactly the pinned identity; enabled P2P evidence must retain the provider and port and prove policy-approved advertised/dialed addresses before a content-addressed health receipt is accepted.
+- Shared-service identity contract: Lock schema `ipfs-accelerate.hssl-leanstral-runtime-lock.v1` pins endpoint `http://127.0.0.1:8080/v1`, logical routing provider `leanstral_local`, model `Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4`, service `leanstral-119b-shared`, and server build `llama.cpp`, plus bounded health/model-list paths, model-manager advertisement, MCP tools, and the optional P2P provider/custom-port policy. Provisioning verifies the supervisor-owned endpoint and never installs, starts, or mutates a model service. Raw HTTP, model-manager, and MCP observations must expose the exact endpoint/model and truthful `llamacpp` transport provider; the canonical lock binds that observation to the distinct logical routing provider and service identity without relabeling transport evidence. Any advertised service/build metadata must match the lock exactly. Enabled P2P evidence must retain the logical provider and configured port and prove policy-approved advertised/dialed addresses before a content-addressed health receipt is accepted.
 - Bounded trust contract: Verification performs only bounded health, model-list/discovery, and one explicitly non-corpus proof-draft probe. Secret values and benchmark inputs are excluded from the lock and receipt. A draft can prove service reachability and identity only: it remains untrusted model output and cannot claim proof verification, kernel acceptance, or native-kernel receipt authority.
 - Backlog alignment: HSSL-G112 remains one cohesive shared-runtime identity goal. Endpoint reachability, model-manager advertisement, MCP discovery, configured P2P transport, identity agreement, and the bounded untrusted smoke probe all validate the same locked service, so no smaller child goal is needed. Generated todo-vector, objective-bundle, and task-status metadata remain supervisor-owned and are not manually edited; the supervisor can reconcile HSSLEV1126C73 from the executable marker, canonical lock, provisioning validator, focused tests, objective heap, and discovery receipt.
 
@@ -1682,7 +1698,7 @@ is never completion evidence.
 - Holdout boundary: This goal may use only preregistered pilot/development diagnostic cases. S1 remains forever ineligible for the shortlist, and the currently frozen holdout remains sealed.
 - Backlog alignment: This is a bounded future diagnostic goal distinct from the modern HSSL-G032 SyMAI adapter. Generated todo-vector, objective-bundle, task-status, and discovery metadata remain supervisor-owned and must be regenerated from this heap rather than edited manually.
 
-## HSSL-G200 Establish a scoreable source-only semantic projection in a new protocol revision
+## HSSL-G200 Establish the scoreable source-only semantic projection scaffold
 
 - Status: active
 - Goal completion schema version: 1
@@ -1691,21 +1707,48 @@ is never completion evidence.
 - Track: benchmark-protocol-revision
 - Priority: P0
 - Bundle: objective/hssl/semantic-contract-revision
-- Goal: Replace the incompatible live front-end/scorer handoff with one bounded, label-blind normalized semantic projection that compiler, spaCy, and SyMAI can all emit and the independent semantic validator can score without consuming reviewed answers.
+- Goal: Establish one bounded, label-blind normalized semantic projection that compiler, spaCy, and SyMAI can all emit and the independent semantic validator can score without consuming reviewed answers.
 - Evidence: HSSLEV2007A42
 - Outputs: benchmarks/logic_pipeline/contracts.py, benchmarks/logic_pipeline/ablation.py, benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/adapters.py, benchmarks/logic_pipeline/semantic_reassessment.py, tests/unit/benchmarks/logic_pipeline/test_semantic_reassessment.py, tests/integration/benchmarks/logic_pipeline/test_semantic_projection_calibration.py
 - Validation: python -m pytest tests/unit/benchmarks/logic_pipeline/test_semantic_reassessment.py tests/integration/benchmarks/logic_pipeline/test_semantic_projection_calibration.py tests/unit/benchmarks/logic_pipeline/test_symai_adapter.py -q
-- Acceptance: A new protocol, registry, prompt, and schema digest preregister one canonical semantic projection with explicit logic, target, class, predicates, entities, completeness, and content digest fields; every producer derives it only from source text and producer evidence; `StageRequest.input_data` sent to compiler, spaCy, and SyMAI contains no expected IR/class, reviewed proof obligation, required label, or kernel outcome; compiler and spaCy normalize their real nested ModalIR fields; SyMAI's structured response requires every scored field and converts a vacuous candidate into an explicit typed semantic failure rather than either success or silent upstream fallback; validation errors have defined precedence over ambiguity; raw full-ModalIR hashes are never compared with differently shaped reviewed expected-IR hashes; and a real producer-to-validator calibration over all twenty unsealed pilot/development cases proves that every scored field is representable before any measured quality artifact can become complete.
-- Gap task: Implement and test the shared semantic projection, non-vacuous producer contracts, scoreability calibration, and fail-closed pilot eligibility boundary, then run a new source-bound pilot/development matrix under the revised identities.
+- Acceptance: A new protocol, registry, prompt, and schema digest preregister one canonical semantic projection with explicit logic, target, class, predicates, entities, completeness, and content digest fields; every producer derives it only from source text and producer evidence; `StageRequest.input_data` sent to compiler, spaCy, and SyMAI contains no expected IR/class, reviewed proof obligation, required label, or kernel outcome; compiler and spaCy normalize their real nested ModalIR fields; SyMAI's structured response requires every scored field and converts a vacuous candidate into an explicit typed semantic failure rather than either success or silent upstream fallback; validation errors have defined precedence over ambiguity; raw full-ModalIR hashes are never compared with differently shaped reviewed expected-IR hashes; and source-safe synthetic tests prove the schema, leakage, content-addressing, and fail-closed calibration boundaries without claiming that reviewed sources were executed.
+- Gap task: Maintain and validate the semantic projection scaffold. HSSL-G201 owns the real source-replayed pilot/development calibration, and later execution goals own the measured matrix.
 - Refinement depth: 1
 - Follow-up source: The immutable diagnostic run `hssl-matrix-20260725T092337Z-3aeabda93` produced 240 source-bound semantic receipts, but none contained an observable target; live ModalIR and SyMAI schemas cannot emit the fields required by the revision 1 scorer, so its apparent `0.0` quality rate is unidentifiable rather than a valid all-model efficacy result.
 - Leakage boundary: `expected_ir`, `expected_class`, required labels, reviewed `proof_obligation`, `compiled_obligation.semantic_target`, native certificates, and kernel outcomes may enter only the post-execution evaluator or proof trust boundary explicitly assigned to them. They must never populate the producer projection, model prompt, cache key semantic content, or upstream front-end context. Adversarial tests must prove that forged reviewed fields cannot improve a producer score.
-- Revision boundary: Revision 1 receipts, prompts, registry, thresholds, and published decisions remain immutable diagnostics. Because the producer schema, SyMAI prompt, metric calibration, and eligibility behavior change, the repair requires a new protocol digest, run ID, capability freeze, cache namespace, full 560-coordinate pilot/development matrix, and independent semantic receipt graph; no revision 1 result may be relabeled or reused as revision 2 efficacy.
+- Revision boundary: Revision 1 receipts, prompts, registry, thresholds, and published decisions remain immutable diagnostics. Because the producer schema, SyMAI prompt, metric calibration, and eligibility behavior change, the repair requires a new protocol digest, run ID, capability freeze, cache namespace, full 520-coordinate A0-A12 pilot/development matrix, separately identified S1 diagnostic work, and an independent semantic receipt graph; no revision 1 result may be relabeled or reused as revision 2 efficacy.
 - Gate boundary: Universal missing target/logic coverage or an all-zero score produced by an uncalibrated schema is `semantic_schema_incompatible`, not complete measured quality. Candidate selection requires complete calibrated semantic evidence plus a non-vacuous absolute quality condition before relative near-best comparisons can apply. Any calibration failure freezes an empty shortlist and keeps holdout closed.
-- Holdout boundary: HSSL-G200 is pilot/development-only work. It must not inspect or execute any holdout case, and it cannot authorize production routing or promotion.
-- Backlog alignment: HSSL-G200 is a prerequisite repair for any later HSSL-G140-through-G170 reassessment because scoreable front-end quality and a non-vacuous eligibility gate share one versioned trust boundary. Generated supervisor task-status, objective-bundle, todo-vector, and discovery metadata remain supervisor-owned and must be regenerated from this objective rather than manually edited.
+- Holdout boundary: HSSL-G200 is data-free scaffold work. It must not inspect or execute any benchmark case, and it cannot authorize production routing or promotion.
+- Backlog alignment: `HSSLEV2007A42` proves only the source-only semantic protocol scaffold. It must not suppress the separately bounded HSSL-G201 source-replay goal. Generated supervisor task-status, objective-bundle, todo-vector, and discovery metadata remain supervisor-owned and must be regenerated from this objective rather than manually edited.
 
-## HSSL-G210 Equalize kernel exposure and measure causal optional-component rescue
+## HSSL-G201 Execute and independently revalidate semantic calibration
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G202, HSSL-G220
+- Fib priority: 5702887
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/semantic-calibration-execution
+- Parallel lane: objective/hssl/semantic-calibration-execution
+- Goal: Execute the G202-frozen source-only semantic submatrix over the complete reviewed, unsealed pilot/development set and independently replay every scoreability and leakage claim without changing the frozen revision after observing results.
+- Evidence: HSSLEV2014B63
+- Completion authority: external
+- Outputs: an external run-scoped 20-case/100-coordinate calibration package, full semantic evidence index, calibration report, and independent validation receipt
+- Validation: replay every persisted producer projection and calibration observation from the isolated pilot/development source package without using a combined holdout-capable loader
+- Acceptance: Exactly the twenty reviewed pilot/development cases and every frozen calibration producer/cache coordinate are terminal and source-bound; all scored fields are representable; non-vacuous coverage and the preregistered calibration threshold pass; validation-error precedence and leakage controls replay; compiler, spaCy, and SyMAI evidence retains exact environment and provider identities; no reviewed answer enters a producer request or cache key; every record uses the revision-2 CID contract; an independent validator reproduces the complete calibration result; and no holdout path, source, label, obligation, or outcome is opened.
+- Gap task: Run and independently revalidate the real unsealed pilot/development semantic submatrix under the exact G202 freeze, preserving complete per-coordinate receipts and an explicit failure result if any source or environment binding is missing.
+- Refinement depth: 2
+- Holdout boundary: HSSL-G201 may access only the separately loaded pilot/development calibration sources. It cannot load a combined corpus, inspect holdout, freeze a shortlist, or authorize production.
+- Freeze boundary: G201 results are part of the preregistered selection evidence, not a tuning oracle. Any schema, prompt, route, threshold, or implementation change after a G201 observation retires the complete G202 run and requires a new protocol/run identity rather than a convenient rerun.
+- Backlog alignment: This operational child remains unfulfilled until the
+  independently governed HSSL-G220 replacement seal exists and the real source
+  replay and independent validation receipts exist.  Requiring G220 first
+  prevents G201 outcomes from influencing holdout authorship.  Synthetic
+  HSSL-G200 tests, the scaffold evidence marker, and a self-asserted G202
+  environment cannot satisfy it.
+
+## HSSL-G210 Establish the fail-closed causal proof runtime scaffold
 
 - Status: active
 - Goal completion schema version: 1
@@ -1714,56 +1757,649 @@ is never completion evidence.
 - Track: benchmark-protocol-revision
 - Priority: P0
 - Bundle: objective/hssl/causal-proof-revision
-- Goal: Remove the A0-versus-candidate verification confound and redesign proof escalation so Hammer and Leanstral are measured only against an identical externally kernel-checked compiler reference and can receive credit only for a distinct accepted rescue.
+- Goal: Establish the additive, data-free causal proof protocol and single-case runtime boundary that removes the A0-versus-candidate verification confound and permits Hammer or Leanstral credit only for a distinct independently accepted rescue.
 - Evidence: HSSLEV2108F34
 - Outputs: benchmarks/logic_pipeline/contracts.py, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/variants.py, benchmarks/logic_pipeline/runtime.py, benchmarks/logic_pipeline/metrics.py, benchmarks/logic_pipeline/statistics.py, tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py
 - Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py tests/integration/benchmarks/logic_pipeline/test_live_runtime.py tests/unit/benchmarks/logic_pipeline/test_statistics.py -q
-- Acceptance: A0 and every candidate apply the same independent native-kernel verification policy to the same compiler candidate population; an optional component's success is a causal rescue only when the identical compiler reference is absent or independently rejected and a distinct Hammer or Leanstral candidate is independently accepted; byte-identical duplicate compiler/Hammer certificates are recorded as overlap with zero marginal efficacy; route continuation after a model failure is not called recovery; Hammer and Leanstral receive a preregistered nonempty pilot/development population of valid obligations on which deterministic compilation does not already succeed; every suppression and escalation denominator is explicit; Leanstral output-limit, schema, forbidden-construct, provider, and timeout failures remain separate codes; and component-specific latency, calls, retries, memory, unique wins, and unnecessary work are source-bound without changing proof authority.
-- Gap task: Create the revised equal-verification graph and reviewed pilot/development rescue population, add causal candidate-selection receipts, split failure accounting, and rerun the exact ablations only after HSSL-G200 calibration passes.
+- Acceptance: The source-bound protocol, variant profiles, compiler-reference exposure, causal candidate-selection receipts, duplicate suppression, identical native-kernel policy, typed failure accounting, component telemetry, and full single-case `CausalRuntimeEvidenceV2` replay validate on synthetic inputs; the retired selection-only batch wrapper fails closed; and neither this scaffold nor its evidence marker claims that an authoritative batch matrix or reviewed rescue-population run exists.
+- Gap task: Maintain and validate the fail-closed single-case causal runtime scaffold. HSSL-G211 owns authoritative full-evidence batch persistence and HSSL-G212 owns the real reviewed rescue-matrix execution.
 - Refinement depth: 1
 - Follow-up source: In `hssl-matrix-20260725T092337Z-3aeabda93`, A0 emitted the same compiler-native candidate population but never invoked the kernel, every A1-A12 arm had the identical 18-of-40 verified set, all 216 accepted receipts selected compiler candidates, and 168 Hammer results duplicated the compiler certificate. Direct Leanstral produced no selected candidate.
 - Routing boundary: Hammer runs only after a valid deterministic obligation lacks an accepted compiler proof. Leanstral runs only after the preregistered deterministic failure condition assigned to its arm. SyMAI semantic work cannot receive proof credit, and neither solver nor model verdict can replace the native-kernel receipt.
 - Model-service boundary: SyMAI and direct Leanstral share a single source-bound provider/service lease and cache coordinator when their frozen inner provider, model, and endpoint identities are identical, while retaining distinct semantic versus proof prompts, cache keys, telemetry, and stage receipts.
-- Holdout boundary: HSSL-G210 uses only a newly reviewed pilot/development rescue population. It cannot access holdout, authorize a shortlist, or change production routing.
-- Backlog alignment: HSSL-G210 is required before another pilot gate because unequal kernel exposure and duplicate-certificate credit make proof deltas non-causal even when every receipt is individually valid. Generated supervisor metadata must be regenerated from this goal and its tests.
+- Holdout boundary: HSSL-G210 is data-free scaffold work. It cannot inspect benchmark inputs, access holdout, authorize a shortlist, or change production routing.
+- Backlog alignment: `HSSLEV2108F34` proves only the causal runtime scaffold. It must not suppress the separately bounded HSSL-G211 persistence and HSSL-G212 execution goals. Generated supervisor metadata must be regenerated from this goal and its tests.
 
-## HSSL-G220 Replace and independently reseal the benchmark holdout
+## HSSL-G211 Persist authoritative full G210 runtime evidence
 
 - Status: active
 - Goal completion schema version: 1
 - Parent: HSSL-G210
 - Fib priority: 9227465
+- Track: benchmark-protocol-revision
+- Priority: P0
+- Bundle: objective/hssl/causal-runtime-batch
+- Parallel lane: objective/hssl/causal-runtime-batch
+- Evidence: HSSLEV2116C82
+- Goal: Persist every complete `CausalRuntimeEvidenceV2` receipt and compile a source-revalidated `G210ReceiptMatrix` without reducing native-kernel, telemetry, resource, or provenance evidence.
+- Outputs: benchmarks/logic_pipeline/causal_batch.py, benchmarks/logic_pipeline/causal_runtime.py, benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_causal_runtime_batch.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_causal_runtime.py tests/integration/benchmarks/logic_pipeline/test_causal_runtime_batch.py tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py -q
+- Acceptance: Batch execution, persistence, resume, and replay bind every scheduled coordinate to its full runtime-evidence CID; the matrix binds and revalidates every complete receipt rather than only a reduced selection receipt or aggregate; G240 runtime-namespace and source-orchestration evidence sets are validated before the first write, persisted beside the canonical coordinate envelopes, reread on resume, and bound into the batch result; the output root is absolute, private, outside every Git repository/worktree, symlink-safe, and creates private run directories; missing, duplicated, reduced, source-mismatched, kernel-unreplayable, foreign, orchestration-rebased, or insecure-path evidence fails closed; and no fixture, corpus, or holdout content is required to validate the bridge.
+- Gap task: Maintain the implemented full-evidence persistence bridge and require its G240 namespace/source-orchestration sets at every operational G231 consumer; the real matrix remains HSSL-G212 work.
+- Evidence implementation: `benchmarks.logic_pipeline.causal_batch.HSSLEV2116C82` names the write-once full-evidence boundary. `persist_causal_runtime_batch_v2` replays the complete batch before its first filesystem write, derives and binds the compiler-reference population and causal aggregates, validates the associated `G240RuntimeNamespaceEvidenceSetV2` and `G240SourceOrchestrationEvidenceSetV2` against their private source inputs, and persists those sets with one canonical envelope per exact plan coordinate under advisory locks. `validate_causal_runtime_batch_v2` rereads every typed record and rejects foreign, truncated, noncanonical, source-rebased, profile-rebound, orchestration-rebound, or reduced evidence. `G210RuntimeReceiptMatrixV2` and `build_g210_runtime_receipt_matrix_v2` provide the two-split full-runtime join required by G212/G231 without treating reduced aggregates as runtime authority.
+- Implementation result: The source-safe synthetic G211 suite covers complete persistence, immutable resume, concurrent convergence, full-evidence tampering, foreign records, profile/population drift, proof-context drift, incomplete job maps, and G240 namespace/source-orchestration persistence. Compatibility callers may omit G240 sets for bounded legacy synthetic tests, but G231 requires non-null live sets for both operational split batches. This closes the persistence implementation slice only; it is not evidence that real G201 sources were replayed or that G212 executed.
+- Refinement depth: 2
+- Holdout boundary: This implementation goal uses synthetic cases only and cannot authorize or access holdout.
+- Backlog alignment: The `HSSLEV2116C82` implementation marker names the complete source-safe persistence boundary only; it cannot stand in for a real G201/G212 matrix, live G240 evidence, or external operational receipt. Generated supervisor metadata must be regenerated from this child goal rather than inferred from HSSL-G210.
+
+## HSSL-G212 Execute and revalidate the frozen causal pilot/development submatrix
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G201, HSSL-G211, HSSL-G202
+- Fib priority: 14930352
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/causal-rescue-matrix
+- Parallel lane: objective/hssl/causal-rescue-matrix
+- Evidence: HSSLEV2123D59
+- Completion authority: external
+- Goal: Continue the one G202-frozen pilot/development plan from its persisted G201 semantic evidence through the authoritative HSSL-G211 causal batch bridge, without re-invoking front ends or creating a second selection run.
+- Outputs: an external run-scoped G210 matrix, full runtime-evidence index, causal aggregates, independently measured operational-resource receipts, reviewed control-index joins, and an independent validation receipt
+- Validation: validate every persisted CausalRuntimeEvidenceV2 and the complete G210ReceiptMatrix from source in the isolated run namespace
+- Acceptance: Every required A0-A12 arm, case, split, and cache coordinate in the exact frozen plan is terminal and source-bound; every route consumes the matching immutable G201 source-only front-end record; A0 and candidates receive identical external kernel exposure; optional-component rescue is causally attributable; duplicate certificates receive zero marginal credit; every efficacy, suppression, escalation, cost, and resource denominator is complete; independent resource receipts retain solver-process and accelerator-use evidence rather than inferred zeros; the reviewed non-holdout control index covers every required safety coordinate; and the external validator replays all full evidence CIDs without inspecting holdout.
+- Gap task: Execute and independently revalidate the real reviewed pilot/development causal submatrix only after the frozen G201 semantic submatrix and HSSL-G211 persistence validate.
+- Refinement depth: 2
+- Holdout boundary: HSSL-G212 is pilot/development-only and cannot access holdout, freeze a shortlist, or authorize production.
+- Freeze boundary: G212 completes the measured execution started by G201 under the same G202 source, run plan, environment, cache policy, and namespaces. It may not reinterpret failures, change candidate routes, or trigger a fresh semantic pass.
+- Backlog alignment: Operational matrix evidence is distinct from the HSSL-G210 scaffold marker. Generated task state must retain dependencies on HSSL-G201, HSSL-G211, and HSSL-G202 and must not treat synthetic tests as a measured benchmark run.
+
+## HSSL-G220 Replace and independently reseal the benchmark holdout
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G202
+- Fib priority: 9227465
 - Track: benchmark-holdout-revision
 - Priority: P0
 - Bundle: objective/hssl/replacement-holdout
-- Goal: Retire the current holdout from future selection claims and create a newly reviewed, independently authored, access-controlled holdout only after the HSSL-G200 semantic and HSSL-G210 causal-proof protocols, prompts, metrics, routes, and thresholds are frozen.
+- Goal: Retire the current holdout from future selection claims and create a newly reviewed, independently authored, access-controlled holdout only after HSSL-G202 freezes the complete revision-2 protocol, prompts, metrics, routes, thresholds, source, and runtime identities but before pilot/development outcomes can influence its contents.
 - Evidence: HSSLEV2205C73
-- Outputs: tests/fixtures/logic_pipeline_benchmark_v2/manifest.json, an access-controlled holdout corpus outside the tuning worktree, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/holdout_execution.py, tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py
-- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py tests/integration/benchmarks/logic_pipeline/test_holdout_execution.py -q
-- Acceptance: The old holdout is permanently ineligible for a new efficacy or promotion claim; the replacement cases and labels are authored and reviewed by a party isolated from protocol tuning; only a content-addressed sealed manifest and strata/count metadata are visible before authorization; tuning agents cannot load source text, labels, expected IR, proof obligations, or outcomes; every access is append-only receipted; exact A0 and frozen-shortlist paired execution is impossible before a complete HSSL-G230 pilot artifact explicitly authorizes it; and any premature access invalidates the replacement rather than being converted into a clean seal.
+- Completion authority: external
+- Outputs: a content-addressed sealed-manifest identity and public count/strata receipt outside the tuning worktree, an access-controlled holdout corpus outside the tuning worktree, benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/holdout_execution.py, tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py tests/integration/benchmarks/logic_pipeline/test_authorized_holdout_execution.py -q
+- Acceptance: The old holdout is permanently ineligible for a new efficacy or promotion claim; the replacement cases and labels are authored and reviewed by a party isolated from protocol tuning; only a content-addressed sealed manifest and strata/count metadata are visible before authorization; tuning agents cannot load source text, labels, expected IR, proof obligations, or outcomes; every access is append-only receipted; exact A0 and frozen-shortlist paired execution is impossible before HSSL-G241 validates the complete HSSL-G232 pilot artifact and releases its exact authorization to the custodian; and any premature access invalidates the replacement rather than being converted into a clean seal.
 - Gap task: Arrange independent replacement-holdout authorship and review, implement an access-controlled loader and append-only access receipt, then freeze its identity after the revised protocol and before any authorized evaluation.
 - Refinement depth: 1
 - Follow-up source: During post-run diagnosis, the combined fixture layout proved capable of exposing holdout source and reviewed labels outside the holdout access logger. Even though no holdout backend execution or result artifact occurred, that confidentiality boundary is insufficient for a future blinded claim.
 - Isolation boundary: The replacement holdout must not reside in a plainly readable combined corpus inside the tuning worktree. The supervisor may schedule and verify seal mechanics, but it must not generate answer labels, summarize hidden cases, or expose them to any agent that modified HSSL-G200.
-- Publication boundary: HSSL-G220 creates no shortlist, efficacy claim, production routing change, or promotion. HSSL-G230 must later rerun pilot/development under HSSL-G200 and HSSL-G210, freeze a nonempty eligible shortlist, receive exact authorization, and only then permit a revision-2 executor to open the replacement holdout.
-- Backlog alignment: This is a separate trust-boundary goal because independent authorship, confidentiality, access logging, and invalidation cannot be satisfied by the HSSL-G200 or HSSL-G210 implementation agents. Generated supervisor metadata must be reconciled from this objective without copying hidden holdout contents into the task board.
+- Publication boundary: HSSL-G220 creates no shortlist, efficacy claim, production routing change, or promotion. HSSL-G232 must later join the already frozen G201/G212 pilot/development evidence and freeze a nonempty eligible shortlist, and HSSL-G241 must independently validate and release that exact authorization before a revision-2 executor may open the replacement holdout.
+- Backlog alignment: This is a separate trust-boundary goal because independent authorship, confidentiality, access logging, and invalidation cannot be satisfied by the HSSL-G200, HSSL-G210, HSSL-G211, or HSSL-G212 implementation agents. Generated supervisor metadata must be reconciled from this objective without copying hidden holdout contents into the task board.
 
-## HSSL-G230 Run the revised pilot matrix and freeze exact replacement-holdout authorization
+## HSSL-G230 Establish the negative-only revised-pilot authorization scaffold
 
 - Status: active
 - Goal completion schema version: 1
-- Parent: HSSL-G220
+- Parent: HSSL-G211
 - Fib priority: 14930352
 - Track: benchmark-reassessment-v2
 - Priority: P0
 - Bundle: objective/hssl/revised-pilot-authorization
-- Goal: Execute and independently validate the complete revised pilot/development ablation matrix, then freeze either an exact nonempty eligible shortlist authorization bound to the HSSL-G220 replacement seal or an empty shortlist that authorizes nothing.
+- Goal: Establish a persistable, source-bound negative readiness artifact over the revision-2 public schemas that is structurally incapable of minting a positive shortlist or replacement-holdout authorization until source-recomputed gate validators and operational evidence exist.
 - Evidence: HSSLEV2309D46
-- Outputs: an external run-scoped capability freeze, matrix index, semantic receipt graph, paired proof/cost/statistics reports, pilot-shortlist decision, and dated validation snapshot; benchmarks/logic_pipeline/pilot_reassessment.py; tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py
-- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py tests/integration/benchmarks/logic_pipeline/test_matrix_reassessment.py tests/integration/benchmarks/logic_pipeline/test_pilot_reassessment.py -q; python benchmarks/logic_pipeline/report.py --gate pilot-shortlist --artifact <external-revision-2-pilot-artifact>
-- Acceptance: One clean detached source commit binds the revised protocol, registry, unsealed corpus, prompts, backend/model identities, cache/resource policy, semantic projection, causal kernel-verification policy, and replacement-holdout seal before execution; every registered pilot/development arm/case/cache coordinate is terminal and source-bound; semantic calibration is complete and non-vacuous; A0 and candidates have identical external verification exposure; optional-component rescue is causally attributed; invalid controls have zero kernel-verified false positives; efficacy, semantic quality, cost, reliability, routing, and Pareto evidence are non-null; and only one to four candidates passing every absolute, paired, safety, and replayability gate receive a content-addressed authorization for the exact HSSL-G220 seal. Any calibration, source, completeness, safety, materiality, or shortlist failure emits an empty shortlist with no authorization digest.
-- Gap task: After HSSL-G200, HSSL-G210, and HSSL-G220 complete, run the revised capability probe and full pilot/development matrix in a new external namespace, publish independent semantic/statistical receipts, and validate the exact pilot decision without opening holdout.
+- Outputs: benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py -q
+- Acceptance: Malformed, incomplete, reduced, stale, source-mismatched, or self-asserted dependencies emit stable failure codes and an empty shortlist; gate receipt CIDs and positive authorization are structurally absent; holdout outcomes remain uninspected; and `HSSLEV2309D46` proves only this negative scaffold, not pilot execution or eligibility.
+- Gap task: Maintain the fail-closed negative decision boundary. HSSL-G234 through HSSL-G238 own independent validator slices, HSSL-G231 composes them, HSSL-G232 owns the final pilot evidence join, and HSSL-G241 owns the externally governed custodian-release decision.
 - Refinement depth: 1
-- Authorization boundary: Neither HSSL-G200 calibration, HSSL-G210 proof-route completion, nor HSSL-G220 seal completion authorizes evaluation. Only this goal's complete source-recomputed pilot artifact may authorize the exact frozen shortlist and replacement manifest; it still does not authorize production promotion.
-- Holdout boundary: Revision-1 HSSL-G150 and its old holdout must never be reused for a revision-2 claim. A future revision-2 holdout executor may run only after this artifact authorizes the exact HSSL-G220 seal and must preserve balanced A0/candidate cold/warm pairing, access receipts, native-kernel authority, and stop rules.
-- Backlog alignment: HSSL-G230 is the sole bridge from implementation and seal preparation to any revised holdout execution. Generated supervisor metadata must preserve dependencies on G200, G210, and G220 and must not infer authorization from goal completion alone.
+- Authorization boundary: This goal can authorize nothing. Its schema tests use only synthetic identities and do not depend on or establish actual HSSL-G201, HSSL-G212, or HSSL-G220 operational evidence.
+- Holdout boundary: Revision-1 HSSL-G150 and its old holdout must never be reused for a revision-2 claim. HSSL-G230 cannot open any replacement holdout.
+- Backlog alignment: `HSSLEV2309D46` proves only the negative scaffold and must not suppress HSSL-G231, HSSL-G232, or HSSL-G241. Generated supervisor metadata must not infer authorization from this goal's completion.
+
+## HSSL-G234 Implement full-runtime efficacy, reliability, and routing validators
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 14930352
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/full-runtime-gates
+- Parallel lane: objective/hssl/full-runtime-gates
+- Evidence: HSSLEV2343B16
+- Goal: Recompute paired proof efficacy, reliability, and routing from every full `CausalRuntimeEvidenceV2` receipt while keeping split/cache cells separate and preserving unavailable or infrastructure outcomes as null rather than zero.
+- Outputs: benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+- Validation: python -m pytest tests/integration/benchmarks/logic_pipeline/test_causal_runtime_batch.py tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py -q
+- Acceptance: Every A0/candidate pair binds the same run, case, split, cache, source, proof context, case manifest, compiler exposure, and exact runtime receipt CIDs; measured verified/nonverified outcomes remain distinct from missing outcomes; candidate wins, A0 regressions, both/neither counts, typed failures, retries, optional routing, suppression, duplicate overlap, and equal external verification exposure recompute from source; tampered or reduced evidence fails closed; and no efficacy threshold or safety classification is invented by this slice.
+- Gap task: Complete the CID-native full-runtime gate family and focused synthetic recomputation tests without claiming semantic quality, safety, cost, statistics, Pareto, or detached replay.
+- Evidence implementation: `benchmarks.logic_pipeline.revised_pilot_authorization.HSSLEV2343B16` binds this goal to the three source-recomputed full-runtime gates. The efficacy gate retains separate split/cache A0 pairs and null missing outcomes; reliability replays terminal and recovered typed failures; routing replays optional triggers, invocation, suppression, overlap, duplicate work, native checks, and the mandatory shared compiler row. Exact runtime, case-result, source, proof-context, rescue-manifest, compiler-exposure, and variant-profile CIDs are bound throughout, while the legacy case-manifest SHA field remains only as an explicit compatibility join.
+- Implementation result: Source-safe complete, partial, tamper, unequal-exposure, route-substitution, schema-boundary, and invalid-candidate tests pass. This establishes validator implementation only; no real G201/G212 evidence has passed an efficacy, reliability, or routing threshold.
+- Refinement depth: 3
+- Holdout boundary: Source-safe validator implementation cannot inspect or authorize holdout.
+- Backlog alignment: This bounded slice may complete in parallel with HSSL-G235 through HSSL-G238. Its evidence marker proves only the full-runtime gate family and cannot satisfy the HSSL-G231 composite.
+
+## HSSL-G235 Implement source-recomputed semantic-quality validation
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 24157817
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/semantic-quality-gate
+- Parallel lane: objective/hssl/semantic-quality-gate
+- Evidence: HSSLEV2350C27
+- Goal: Bind the complete G201 semantic target/projection graph and per-arm semantic observations to one source-recomputed quality gate without trusting a calibration artifact CID as truth.
+- Outputs: benchmarks/logic_pipeline/semantic_reassessment.py, benchmarks/logic_pipeline/semantic_quality.py, benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_semantic_quality_source_replay.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+- Validation: run source-safe synthetic semantic-gate tests; operational passage remains unavailable until G201 emits the real reviewed source package and receipt graph
+- Acceptance: The validator replays the reviewed target manifest, every label-blind producer projection, every runtime semantic observation, exact source/environment/protocol identities, non-vacuous absolute quality, coverage denominators, and validation-error precedence; a raw CID, reduced report, absent target, missing arm, or post-freeze prompt/schema change fails closed; and no producer receives reviewed answers.
+- Gap task: Add a portable semantic source index and per-arm semantic-quality gate that can consume G201 output without opening holdout.
+- Evidence implementation: `benchmarks.logic_pipeline.semantic_quality.HSSLEV2350C27` binds the portable full-source G201 evidence index and G235 gate. The index strictly reparses the reviewed pilot/development target and split identities, two exact source-only calibration plans, all 100 full `CaseResultRecord` values, every frozen producer route and stage prefix, and the resulting five-field observations before independently rebuilding the complete calibration report. The gate then joins that source-recomputed index to every selected A0/candidate, split, cache, and rescue-case coordinate in `G210RuntimeReceiptMatrixV2`; it never treats the report CID, a reduced aggregate, or a caller-provided score as authority.
+- Quality and leakage contract: G201 must first pass its preregistered complete 20-case absolute-quality and Wilson condition. Every selected runtime arm must separately have complete, non-vacuous observations and meet the same frozen `SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2` floor; missing evidence remains null while a validation-error-precedence result remains a measured zero. Precedence handling is source-verified on every scheduled runtime coordinate, independently of the count on which it was triggered. Producer inputs replay as exactly `{"text": source_text}`. SyMAI cache namespaces and keys are reconstructed from their complete label-blind prompt/schema/registry/source/provider/model/inner-route preimages, and requested/effective identity CIDs remain bound. Revision-1 manifest and record SHA-256 fields are compatibility joins only; the new index, source coordinates, observations, reports, variant profiles, and gate receipts are CID-addressed.
+- Implementation result: Source-safe synthetic tests cover a complete pass, complete G201 absolute-quality failure, per-arm below-floor failure, validation-error measured-zero precedence, absent reviewed targets, missing arms/coordinates, report-only and reduced inputs, forged reviewed fields, producer-label leakage, cache-key tampering, prompt/projection-schema/route drift, and derived gate rebasing. No test opens fixture, corpus, manifest-path, or holdout content, and this validator implementation does not satisfy the external operational HSSL-G201 run.
+- Refinement depth: 3
+- Holdout boundary: Synthetic validation uses no fixture, corpus, manifest, or holdout content; operational G201 input remains pilot/development-only.
+- Backlog alignment: This lane is independent of proof efficacy and resource accounting and may proceed in parallel.
+
+## HSSL-G236 Implement reviewed-control safety authority
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 39088169
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/reviewed-control-safety
+- Parallel lane: objective/hssl/reviewed-control-safety
+- Evidence: HSSLEV2367D38
+- Goal: Define a CID-addressed, independently reviewed non-holdout control index and recompute the fatal native-kernel false-positive gate from exact runtime receipts instead of caller-supplied booleans.
+- Outputs: benchmarks/logic_pipeline/cases.py, benchmarks/logic_pipeline/reviewed_control.py, benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_reviewed_control_safety.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+- Validation: run source-safe synthetic control-index and safety-gate replay tests without loading the legacy combined corpus
+- Acceptance: Every control entry binds case, split, source CID, control kind/policy classification, review attestation, source/rescue manifests, and `holdout_included=false`; every required runtime coordinate joins exactly one classification; safety counts terminal independent-kernel acceptance rather than model/solver claims; a nonempty fully observed invalid-control population with zero acceptances passes; any kernel acceptance is fatal; and missing, forged, stale, or caller-asserted classifications are incomplete.
+- Gap task: Implement the reviewed control-index schema, batch join, fatal safety validator, and tamper tests.
+- Evidence implementation: `benchmarks.logic_pipeline.reviewed_control.HSSLEV2367D38` binds typed CID-native control attestations, entries, indexes, fixed A0-A12/cold-warm coordinates, terminal native-kernel replay, and a source-recomputed safety-gate receipt. Review and execution authority identities must differ; classifications bind source and rescue manifests; and runtime or metric booleans never become classification authority.
+- Implementation result: Source-safe tests cover a complete zero-acceptance pass, fatal independently verified acceptance, missing/duplicate/unexpected coordinates, forged/stale attestations and manifest bindings, same-authority review, holdout claims, bare-SHA substitutions, raw caller assertions, and gate rebasing. Operational passage still requires an independently frozen complete control-index CID; a smaller internally valid index cannot establish that no reviewed control was omitted.
+- Refinement depth: 3
+- Holdout boundary: The control index is explicitly non-holdout and must remain independently reviewable without revealing replacement-holdout contents.
+- Backlog alignment: Safety authority is a separate trust boundary and may not be inferred from semantic class names or `EfficiencyObservation.invalid_control`.
+
+## HSSL-G237 Implement independent resource, cost, statistics, and Pareto validation
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 63245986
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/resource-statistics-gates
+- Parallel lane: objective/hssl/resource-statistics-gates
+- Evidence: HSSLEV2374E49
+- Goal: Join each full runtime receipt to independent operational-resource evidence, paired statistical strata, and a source-recomputed safety-preserving Pareto analysis without treating missing work as zero cost.
+- Outputs: benchmarks/logic_pipeline/metrics.py, benchmarks/logic_pipeline/statistics.py, benchmarks/logic_pipeline/resource_statistics.py, benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_resource_statistics_gate.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+- Validation: run source-safe synthetic resource/statistics/Pareto recomputation and tamper tests
+- Acceptance: CID-native resource receipts bind runtime receipt, environment, component wall time, peak memory, model calls, retries, solver processes, accelerator minutes, queue delay, and release/reap state; paired requests retain exact A0/candidate case/stratum links with missingness; cost and efficacy remain separate; the Pareto frontier is direction-aware and safety-feasible; null resource fields make the gate incomplete; and every aggregate and frontier identity replays from source.
+- Gap task: Extend or replace the legacy SHA-oriented resource boundary with CID-native independent receipts and implement paired statistics, cost, and Pareto validators.
+- Evidence implementation: `benchmarks.logic_pipeline.resource_statistics.HSSLEV2374E49` binds independently metered component receipts to exact full-runtime, raw-source, CID-wrapped frozen-environment, run, and coordinate identities. Producer, meter, and validator identities are pairwise distinct; missing numeric or lifecycle fields retain nonempty reasons; A0/candidate cost pairs retain source-derived strata and exact runtime/resource receipt CIDs; the existing seeded paired-bootstrap primitive is replayed through a CID-native projection; efficacy and cost have separate aggregate CIDs; and safety remains a hard, pinned G236 receipt constraint in the direction-aware Pareto recomputation.
+- Implementation result: Source-safe synthetic tests cover complete passage, CID round trips, no new bare-SHA fields, null wall-time and queue-delay preservation, missing/duplicate/stale/rebased resource populations, distinct-authority enforcement, release/reap failure, statistically unpaired evidence, G236 state/CID rebasing, direction-aware non-dominance, and aggregate/frontier tampering. G237 validates only the pinned G236 receipt reference; HSSL-G231 must separately source-replay the complete G236 control index, manifests, and runtime population before composition. Operational passage still requires an independently frozen resource-evidence-set CID and real pilot/development receipts.
+- Refinement depth: 3
+- Holdout boundary: Source-safe validator tests cannot inspect holdout; operational evidence remains pilot/development-only.
+- Backlog alignment: This lane owns operational cost authority that `CausalRuntimeEvidenceV2` telemetry alone cannot supply.
+
+## HSSL-G238 Implement fresh detached execution replay validation
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 102334155
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/detached-replay-gate
+- Parallel lane: objective/hssl/detached-replay-gate
+- Evidence: HSSLEV2381F50
+- Goal: Implement the validator and executor boundary that upgrades
+  receipt-only replay assessment into bounded fresh detached execution replay
+  over every success and a preregistered failure sample under isolated process,
+  state, and cache namespaces.
+- Outputs: benchmarks/logic_pipeline/replay.py, benchmarks/logic_pipeline/replay_gate.py, benchmarks/logic_pipeline/revised_pilot_authorization.py, tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py, tests/integration/benchmarks/logic_pipeline/test_fresh_replay_gate.py, tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py
+- Validation: run source-safe synthetic replay-gate tests plus disposable-repository detached replay tests
+- Acceptance: Replay uses the exact source commit, recursive gitlinks, environment, routes, cases, and receipts but a different detached worktree, run ID, process namespace, private state/output roots, and per-stage cache namespaces; every replay is an actual bounded process-group execution whose command and tracked entrypoint source match the G202-frozen `G240SourceExecutorContractV2`; private validation sources re-open the live source and replay worktrees and exact canonical evidence bytes; every success and the deterministic sampled failures reproduce the required semantic, kernel, status, and resource identities; same-run, attached, stale, precomputed, partial, or receipt-only replay remains incomplete; and no merge or holdout access occurs.
+- Gap task: Complete the final local G231 parent integration and full regression
+  suite for the replay implementation. HSSL-G243 separately owns supplying and
+  externally validating real G201/G212 replay inputs after the run gates permit
+  them.
+- Evidence implementation: `benchmarks.logic_pipeline.replay_gate.HSSLEV2381F50` binds a CID-native source record/index, all-success plus deterministic per-split/cache/variant failure-stratum selection, per-target detached replay receipts, and a source-recomputed positive gate. `run_g240_detached_replay_v2` performs the actual detached bounded process execution; `G240PrivateReplayValidationSourcesV2` revalidates live worktrees, requests, receipts, canonical runtime bytes, namespaces, and the frozen executor contract. Git object IDs remain explicitly typed Git identities and are separately addressed by CID instead of being presented as bare content authority.
+- Implementation result: The source-safe path requires operational private replay sources and rejects a receipt-only claim even when its public CIDs are internally consistent. Tests cover the complete population, deterministic failure sampling, exact semantic/native-kernel/status/resource equality, disposable detached Git worktrees, source/index/receipt round trips, stale source, same-run or attached execution, shared worktree/process/state/cache identities, executor-contract or entrypoint drift, partial evidence, authority overlap, holdout access, bare-digest substitution, and gate rebasing. Final parent integration and the complete regression suites remain open; no real G201/G212 result has yet undergone fresh replay.
+- Refinement depth: 3
+- Holdout boundary: Pilot/development replay remains holdout-free and cannot authorize production.
+- Backlog alignment: This implementation lane may proceed independently after
+  the negative G230 scaffold and joins locally at HSSL-G231. Its operational
+  use and completion authority join later at HSSL-G243.
+
+## HSSL-G239 Implement typed external operational-completion authority
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G230
+- Fib priority: 165580141
+- Track: benchmark-supervision
+- Priority: P0
+- Bundle: objective/hssl/external-completion-authority
+- Parallel lane: objective/hssl/external-completion-authority
+- Evidence: HSSLEV2398A61
+- Goal: Make the agent supervisor reconcile operational benchmark goals only from typed, source-bound external completion receipts instead of treating evidence-marker text or locally generated task metadata as proof that an external run completed.
+- Outputs: ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor external-completion receipt and reconciliation support, focused supervisor tests, and a documented external receipt schema
+- Validation: run focused source-safe supervisor completion/reconciliation tests with synthetic external artifact identities
+- Acceptance: A completion receipt binds the exact goal and evidence term, clean outer commit and tree, recursive gitlinks, immutable run-plan identity, parent-completion ledger, every required external artifact CID, and an independent validator receipt CID; stale, dirty, partial, duplicated, marker-only, self-asserted, or source-mismatched evidence fails closed; only canonical identities and public metadata enter supervisor storage; no external source, label, manifest, proof obligation, or holdout content is copied into the repository or task board; and completion never follows merely from finding the evidence term in source text.
+- Gap task: Preserve the typed external-completion adapter and its canonical
+  scheduler fence, then supply operational authority only through an explicit
+  out-of-repository receipt path. Marker scanning remains implementation
+  discovery and never becomes operational authority.
+- Evidence implementation: Submodule commits `cf1e8efd`, `03a90b35`,
+  `5bec6c80`, and `9c34535d` add typed canonical-CID requirements,
+  operational receipts, current-source inspection, external authority
+  evaluation, two-phase completion evidence, the bounded
+  `HSSLEV2398A61` implementation marker, explicit daemon reconciliation,
+  first-ingestion governance for goals declaring
+  `Completion authority: external`, and mandatory revalidation of every
+  asserted `verified_complete` state. Nested supervisor commit `2696e5ca`
+  hardens that provenance with four additional safety fixes: wrapped objective
+  fields and their rewrites preserve the complete goal/output/validation/
+  acceptance/gap text; current tracked source, symbols, tokens, embeddings,
+  and AST fields are fully recomputed instead of trusting a persisted AST row;
+  declaration aliases, durable authority CIDs, and typed
+  `external_operational_completion` evidence share one sticky external-
+  authority fence; and caller-supplied duplicate task CIDs merge only for
+  semantically equivalent work, while conflicts emit
+  `conflicting_duplicate_task_identity` even if either copy claims success.
+- Implementation result: Source-safe tests cover complete and absent receipts,
+  marker-only evidence, dirty objective state, dirty or wrong-HEAD recursive
+  gitlinks, stale/partial/duplicate/unexpected identities, noncanonical
+  multiformats encodings, producer/validator overlap, migration rewrites,
+  omitted authority, configured no-read exclusions, path-disclosure
+  resistance, wrapped-field preservation, poisoned persisted-AST rows, sticky
+  authority aliases, and conflicting duplicate task identities. The nested
+  implementation validates identity consistency and current Git state;
+  fetching CID payloads and verifying validator signatures remain
+  responsibilities of the separately governed authority trust root, not the
+  local supervisor or holdout custodian.
+- Refinement depth: 3
+- Holdout boundary: Synthetic tests use opaque CIDs and cannot inspect pilot/development or holdout content.
+- Backlog alignment: HSSL-G201, HSSL-G202, HSSL-G203, HSSL-G212, HSSL-G220,
+  HSSL-G232, HSSL-G241, HSSL-G242, and HSSL-G243 remain incomplete until
+  their own valid external receipts exist. This implementation marker proves
+  the completion-authority mechanism only.
+
+## HSSL-G240 Bind runtime cache, process, and state namespaces to execution evidence
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G211, HSSL-G230
+- Fib priority: 433494437
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/runtime-namespace-provenance
+- Parallel lane: objective/hssl/runtime-namespace-provenance
+- Evidence: HSSLEV2405D72
+- Goal: Implement the fail-closed source executor and detached-replay boundary
+  that can prove an operational revision-2 run's actual environment, cache
+  keys, process group, persisted state, output namespace, and confinement came
+  from the exact preregistered G202 policy rather than accepting opaque
+  caller-supplied identities.
+- Outputs: benchmarks/logic_pipeline/namespace_provenance.py,
+  benchmarks/logic_pipeline/causal_batch.py,
+  benchmarks/logic_pipeline/positive_gate_bundle.py,
+  benchmarks/logic_pipeline/runtime_confinement.py,
+  benchmarks/logic_pipeline/source_bootstrap_contract.py,
+  benchmarks/logic_pipeline/source_bootstrap.py,
+  benchmarks/logic_pipeline/source_bound_import.py,
+  benchmarks/logic_pipeline/source_executor.py,
+  benchmarks/logic_pipeline/source_orchestration.py,
+  benchmarks/logic_pipeline/replay.py,
+  benchmarks/logic_pipeline/replay_gate.py,
+  tests/integration/benchmarks/logic_pipeline/test_runtime_confinement.py,
+  tests/integration/benchmarks/logic_pipeline/test_source_orchestration.py,
+  tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py
+- Validation: run synthetic execution, resume, concurrency, tamper, and detached-replay tests without loading benchmark cases or external artifacts
+- Acceptance: Source-safe tests prove that the frozen policy derives disjoint
+  cold/warm cache, process-group, state, output, and replay namespace CIDs from
+  canonical preimages containing the source/run/plan/variant/stage/cache-mode
+  identity required for that namespace; the production child uses an explicitly
+  supplied and content-addressed pinned interpreter/runtime rather than ambient
+  user site packages; its environment is an allowlist that rejects loader,
+  Python, Git, and process-injection variables; Git and every required
+  executable are absolute and source-bound; SyMAI configuration and logs are
+  job-scoped; cache receipts distinguish actual prime/hit behavior from merely
+  reserved physical directories; replay expectations derive from authenticated
+  source execution; and a mandatory confinement policy denies protected or
+  unapproved filesystem access while allowing TCP connect only to destination
+  port 8080 for the already-running local model API and allowing no TCP bind.
+  This port rule is not an IP-address authentication claim and is distinct
+  from the separately operated G203 P2P listener on port 19001.
+  G211 persists and replays these bindings, and G238 recomputes them in a
+  different detached worktree/run namespace without requiring volatile values
+  to be byte-identical. Missing, opaque, reused, cross-run, cross-mode,
+  unscoped, path-leaking, caller-copied, unconstrained, or ambient-environment
+  claims fail closed; no secret, source text, case label, manifest content,
+  proof obligation, or holdout content enters a public receipt.
+- Gap task: Keep the locally complete implementation regression-closed and
+  supply its exact clean-source identities to G202. Operational validation of
+  the actual G201/G212 process and namespace population belongs only to
+  externally governed HSSL-G243.
+- Evidence implementation: `namespace_provenance.py` defines canonical runtime
+  and replay namespace preimages, receipts, recursive-gitlink projections, and
+  private live-worktree validation sources. `runtime_confinement.py` defines
+  the fail-closed Landlock ABI 6/7 filesystem, TCP-port, abstract-UNIX-socket,
+  and signal policy and its path-free receipt.
+  `source_bootstrap_contract.py` freezes the two-stage bootstrap profile,
+  private-policy transport, exact TCP destination-port set `(8080,)`, and
+  bootstrap receipt; `source_bootstrap.py` is the directly launched,
+  single-threaded tracked stage that authenticates source/Git observations,
+  rejects unexpected inherited descriptors, applies Landlock, emits one
+  canonical one-shot pipe receipt, and only then delegates to stage two.
+  `source_bound_import.py` resolves the exact pinned submodule modules without
+  repeating Git after confinement. `source_executor.py` owns authenticated
+  stage-two runtime import preflight and one-job execution.
+  `source_orchestration.py` owns the parent-held private allowlist, bounded
+  process group, `close_fds`/single-passed-receipt-descriptor launch, exact
+  state/output/cache roots, live receipt join, and source-orchestration
+  evidence set. `replay.py` and `replay_gate.py` consume that same contract in
+  a different detached worktree/run namespace. G211 persists the two G240
+  evidence-set families and G238 consumes the detached replay boundary.
+- Confinement boundary: Landlock is one layer, not the complete authority.
+  The parent first binds clean source, recursive gitlinks, the pinned
+  interpreter/runtime, the exact command, and private path/port policy. The
+  minimal child then verifies its inherited-descriptor set before confinement,
+  applies `no_new_privs` and the exact Landlock ruleset, and emits a receipt
+  tied by a private one-shot pipe to that actual bounded process. G211/G238 and
+  external G243 must subsequently source-replay the public CIDs against the
+  private sources. Landlock authenticates allowed filesystem objects and TCP
+  destination ports, not peer IP addresses; it does not restrict UDP or
+  pathname UNIX sockets, and it cannot revoke descriptors opened before
+  confinement. Those residuals are therefore controlled by the minimal
+  bootstrap, zero inherited sockets, `close_fds`, the child environment,
+  endpoint identity validation, and external negative tests. Any unsupported
+  ABI, broader path set, extra descriptor/socket, alternate port, or missing
+  layer fails closed.
+- Git materialization boundary: Every preparatory Git command uses a canonical
+  non-group/world-writable system executable, requires Git 2.40 or newer, and
+  runs with an exact environment that discards caller Git/config/loader
+  injection. Hooks, fsmonitor, checkout filters, inherited templates, URL
+  rewrites, protocol overrides, and network/remote-helper fallbacks fail
+  closed. Only the exact already-provisioned local `file` source is enabled
+  for a pinned `--checkout --no-fetch` submodule operation; every destination
+  child is then revalidated. The production G240 contract separately binds
+  its runtime Git executable by raw CID. This is a static malicious
+  repository/configuration threat model for a non-root actor: concurrent
+  same-user mutation between a preflight and its Git use remains a TOCTOU
+  residual controlled operationally by frozen exclusive worktrees.
+- Platform boundary: Production confinement and checkout-mode/umask claims
+  are Linux/POSIX-specific, and a supported Landlock ABI is mandatory. The
+  earlier inspection of the host `landlock.h` constants was only an ABI
+  capability check; the header is neither edited nor a build/runtime
+  dependency.
+- Implementation result: `HSSLEV2405D72` now marks the bounded local
+  implementation after 87 source/worktree/detached-replay tests, 21 source
+  reconciliation tests, 15 adversarial Git-materialization tests, and four
+  independent transport/materialization replays passed. Real production-child
+  tests cover the pinned runtime/environment, cache truth, compiler
+  source/proof joins, available-SyMAI route provenance, Landlock receipt, and
+  detached replay. No operational execution population, endpoint/model
+  identity, holdout authorization, or external HSSL-G243 completion is claimed.
+- Refinement depth: 2
+- Holdout boundary: Implementation uses synthetic identifiers only and cannot read pilot/development or holdout inputs.
+- Backlog alignment: HSSL-G240 is now explicitly the implementation-readiness
+  prerequisite for G202. HSSL-G243 separately owns external validation of the
+  actual G201/G212 namespace and process population, so implementation evidence
+  cannot be mistaken for a measured run and no dependency cycle through G202
+  remains.
+
+## HSSL-G203 Restore and independently validate the intended Leanstral P2P topology
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G112, HSSL-G239
+- Fib priority: 267914296
+- Track: benchmark-remediation
+- Priority: P0
+- Bundle: objective/hssl/leanstral-p2p-topology
+- Parallel lane: objective/hssl/leanstral-p2p-topology
+- Evidence: HSSLEV2038F96
+- Completion authority: external
+- Goal: Restore the user-requested P2P model-serving path for the exact shared Leanstral identity and independently verify its complete local advertisement, custom-port, peer-discovery, pubsub, and MCP model-manager topology before the final benchmark source freeze.
+- Outputs: any required P2P/model-manager source and lock corrections, focused source-safe tests, and an external source-bound CID receipt for listener, advertisement, peer, rendezvous, pubsub/floodsub, model-manager, and MCP discovery observations
+- Validation: perform bounded non-corpus listener, advertisement, peer-dial, rendezvous, pubsub/floodsub, model-manager, and MCP model-list checks without invoking the language model
+- Acceptance: The canonical transport lock requests P2P; the service listens on the previously assigned custom port rather than port 8000; every policy-approved active local interface is represented by a dialable advertised multiaddress while wildcard, loopback-only, stale container-only, and unrelated interfaces are rejected; the exact custom port and peer ID agree across listener and advertisement evidence; configured bootstrap and rendezvous peers are nonempty and successfully exercised; pubsub/floodsub participation is observed according to the frozen provider policy; a bounded independent dial succeeds; model-manager and MCP clients discover exactly the same logical `leanstral_local` service and Leanstral model while raw HTTP truthfully retains `llamacpp` transport; no duplicate model server is started; and every public observation is source-bound and content-addressed without secrets.
+- Gap task: Diagnose the current disabled P2P lock and single-address/custom-port mismatch, repair the existing service rather than substituting HTTP or starting a duplicate model server, add topology validators, and publish one independent external completion receipt.
+- Evidence implementation: Submodule commits `fbaa1f1b` and `1ccaf366` restore the source-side topology contract and add its bounded collector: wildcard listener port 19001, explicit active-interface advertisement policy, canonical bootstrap peers, current py-libp2p rendezvous construction and same-service-peer mounting, bounded probe receipts, truthful disabled pubsub/floodsub claims, strict external-observation decoding, CIDv1 topology receipts, and unambiguous logical-model, HTTP-transport, and P2P identities. Live review then exposed two implementation defects that synthetic topology construction had not covered: Trio rejects `stdout=subprocess.PIPE` in this API, and py-libp2p TCP cannot dial a `/dnsaddr/` address without resolving its TXT descendants. Submodule commits `f631db4c` and `5d969f28` now use Trio's capture API and resolve only same-peer plain-TCP DNSADDR descendants before dialing while retaining the configured DNSADDR identity in public evidence. Focused source-safe topology validation passes 32 tests.
+- Diagnostic result: An inference-free live collection at submodule source `5d969f284b0c0b5dbf2091ec0abc2696d6a2a441` passed all four canonical bootstrap dials, same-service rendezvous, an independent client-process dial, and exact direct-model-manager/MCP model-list agreement. It observed wildcard listener `/ip4/0.0.0.0/tcp/19001` and advertised `10.10.0.14`, `10.8.0.99`, and `172.30.4.2` on port 19001 for logical service `leanstral_local`, `llamacpp` transport, and the frozen Leanstral model identity. Its diagnostic receipt CID is `bafkreiacx2qd2ftem6cuyvx2m3eyp7ll4uhk5xs3erxn5cioydxs72wwwy`. This receipt is not final completion evidence because it predates the final outer clean source freeze; the persistent user service also remains on its older reviewed deployment until the new submodule source is separately promoted.
+- Refinement depth: 2
+- Holdout boundary: This goal uses only service identity and non-inference topology checks; it cannot open pilot/development or holdout inputs.
+- Backlog alignment: The earlier HSSL-G112 implementation marker proves attach-only HTTP/model-manager/MCP verification and an optional P2P schema, not the live user-requested P2P topology. The lock and source now request the intended topology, but HSSL-G203 remains operationally incomplete until a fresh external independent topology receipt satisfies its declared completion authority.
+
+## HSSL-G231 Compose all positive source-recomputed gate validators
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G234, HSSL-G235, HSSL-G236, HSSL-G237, HSSL-G238
+- Fib priority: 14930352
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/revised-pilot-validators
+- Parallel lane: objective/hssl/revised-pilot-validators
+- Evidence: HSSLEV2312F74
+- Goal: Implement and integrate semantic, causal, safety, paired-efficacy,
+  resource, replay, statistical, and Pareto validators into one typed
+  fail-closed gate set without trusting self-asserted gate CIDs.
+- Outputs: benchmarks/logic_pipeline/positive_gate_bundle.py,
+  benchmarks/logic_pipeline/revised_pilot_authorization.py,
+  tests/integration/benchmarks/logic_pipeline/test_positive_gate_bundle.py,
+  tests/integration/benchmarks/logic_pipeline/test_g231_operational_conformance.py,
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py,
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+- Validation: python -m pytest
+  tests/integration/benchmarks/logic_pipeline/test_positive_gate_bundle.py
+  tests/integration/benchmarks/logic_pipeline/test_g231_operational_conformance.py
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py
+  -q
+- Acceptance: Source-safe tests prove that every validator source-replays the
+  complete HSSL-G200 semantic authority, full HSSL-G211/HSSL-G212 runtime
+  evidence, exact HSSL-G220 seal identity, frozen execution identities,
+  independent safety and native-kernel authority, paired efficacy and resource
+  evidence, and replay/statistical receipts; self-asserted, reduced, stale,
+  incomplete, or mismatched evidence fails closed. Tests use only synthetic
+  identities and open no protected source or holdout. This goal proves the
+  implementation, not the existence or success of an operational gate bundle.
+- Gap task: Keep the locally complete composite regression-closed and bind it
+  into G202's exact clean-source freeze. HSSL-G242 separately owns external
+  application of this validator set to the real G201/G212 population.
+- Implementation result: The composite now source-recomputes HSSL-G234 through
+  HSSL-G238 and requires both persisted G211 split batches, non-null G240
+  runtime-namespace and source-orchestration evidence with private validation
+  sources, and G238 detached replay sources. It binds those recomputed
+  evidence-set and replay-orchestration CIDs into the positive bundle rather
+  than accepting caller-supplied summaries. `HSSLEV2312F74` now marks that
+  bounded local implementation after its exact 51-test source-safe composite
+  suite and the final G240 trust-chain regressions passed. No operational
+  positive bundle exists, and
+  `G230RevisedPilotDecision` remains structurally negative-only.
+- Refinement depth: 2
+- Holdout boundary: Validator implementation and synthetic validation cannot authorize or inspect holdout.
+- Backlog alignment: HSSL-G231 is the implementation join and retains every
+  validator child edge. HSSL-G242 is the externally governed operational join.
+  Completing HSSL-G231 can make G202 freeze-ready but can never assert that a
+  measured matrix passed or authorize evaluation.
+
+## HSSL-G202 Freeze the final revision-2 source, run plan, and live capabilities
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G200, HSSL-G203, HSSL-G211, HSSL-G231, HSSL-G239, HSSL-G240
+- Fib priority: 165580141
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/revision2-source-capability-freeze
+- Evidence: HSSLEV2021E85
+- Completion authority: external
+- Goal: Create one fresh detached source/run identity after every revision-2 implementation and validator freezes, then independently re-probe the exact live spaCy, SyMAI/router, Hammer, Leanstral, Lean/Lake, cache, scheduler, and native-kernel capabilities before any measured coordinate executes.
+- Outputs: an external source-reconciled baseline, recursive-gitlink receipt, immutable run plan, capability inventory/freeze, component smoke receipts, resource policy, process/cache namespaces, and independent validation receipt
+- Validation: validate the clean detached source and recursive gitlinks; execute bounded non-corpus component smokes; source-recompute the complete freeze without reading any benchmark source or holdout
+- Acceptance: One clean detached outer commit and every recursive gitlink match the reviewed source; the final protocol, registry, prompts, gate schemas, case-loader boundaries, routes, thresholds, model identities, cache/resource policy, and exact G201/G212 coordinate plan are frozen; requested equals effective for all eight capabilities; the exact fresh HSSL-G203 P2P topology receipt is source-revalidated; raw Leanstral service metadata truthfully distinguishes `llamacpp` transport from the logical `leanstral_local` route; no HTTP-only substitution, fallback, duplicate service, secret, dirty source, attached worktree, stale revision-1 receipt, or self-asserted health flag enters the freeze; all namespaces are fresh and disjoint; and no benchmark source or holdout is opened.
+- Gap task: After every implementation lane passes, commit a clean source tree, prepare a fresh detached recursive worktree, execute the full source-safe capability reprobe, and freeze one immutable run plan for G201/G212/G220/G232/G241.
+- Evidence implementation: The G202 constructor now derives the exact G201 semantic preflight and G210 rescue input plans only from source targets, cases, manifests, and canonical `AblationPlan` values. It binds the preregistered G240 executor-contract policy before execution. Runtime identity replay binds adapter ID/version, canonical adapter module, complete observed source provenance, environment SHA/CID, and lane/split/case/cache/variant/stage coordinates. No G202 preflight field is derived from a `CaseResult` or post-run outcome.
+- Implementation result: Source-safe synthetic tests cover the repaired preflight/provenance boundary and reject result-derived, adapter-rebased, environment-rebased, or coordinate-rebased identities. This is implementation evidence only: no valid HSSL-G202 external completion receipt, final clean detached freeze, or live capability/P2P receipt exists.
+- Refinement depth: 2
+- Holdout boundary: G202 uses only code, identities, and non-corpus smokes. It cannot inspect pilot/development or holdout sources.
+- Backlog alignment: Prior HSSL-G113/HSSL-G120 receipts bind old source commit `3e053f6edece026fef48c153aa5c4d62a50da3d2` and revision 1; they are diagnostic inputs only and cannot satisfy this goal. Any implementation change after G202 invalidates the entire run.
+
+## HSSL-G243 Externally validate the operational source-execution population
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G201, HSSL-G202, HSSL-G212, HSSL-G239, HSSL-G240
+- Fib priority: 1836311903
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/operational-runtime-namespace-evidence
+- Parallel lane: objective/hssl/operational-runtime-namespace-evidence
+- Evidence: HSSLEV2437B58
+- Completion authority: external
+- Goal: Independently source-recompute the actual G201/G212 process,
+  environment, confinement, cache, state, output, and detached-replay
+  population produced by the locally integrated HSSL-G240 executor under the
+  exact HSSL-G202 freeze.
+- Outputs: an external complete-coordinate population index; source-bound
+  runtime-namespace, source-orchestration, confinement, cache-behavior, process
+  lifecycle, and detached-replay receipt CIDs; and one typed G239-governed
+  completion receipt
+- Validation: In a fresh detached recursive worktree and isolated namespace,
+  replay every successful coordinate and the preregistered failure sample from
+  canonical receipts without invoking a front end, model, compiler, solver, or
+  kernel a second time except where the frozen G238 detached-replay protocol
+  explicitly requires it.
+- Acceptance: Every G201/G212 coordinate required by the G202 plan is present
+  exactly once and source-replays to the same clean commit, recursive gitlinks,
+  environment and toolchain CIDs, namespace policy, case/variant/split/cache
+  coordinate, actual prime/hit cache semantics, process-group lifecycle, and
+  canonical runtime bytes. The independent validator observes mandatory
+  Landlock enforcement, only the frozen local service port is connectable,
+  where that production-child rule means outbound TCP destination port 8080
+  and does not grant, probe, or validate the separate G203 P2P listener on
+  port 19001; protected paths are outside the filesystem allowlist, every
+  subprocess is
+  reaped, and no ambient environment, unbound Git executable, shared mutable
+  SyMAI prefix, reduced receipt, caller-supplied replay expectation, or
+  path-leaking public evidence is accepted. Missing, duplicated, stale,
+  rebased, unconstrained, or implementation-only evidence fails closed.
+- Gap task: Run this external population validation only after HSSL-G201 and
+  HSSL-G212 finish under the final G202 freeze. Synthetic G240 tests and the
+  HSSL-G240 implementation marker cannot satisfy it.
+- Refinement depth: 3
+- Holdout boundary: This goal validates pilot/development identities and
+  runtime receipts only. It cannot load replacement-holdout source, labels, or
+  results and cannot authorize holdout access or production.
+- Backlog alignment: HSSL-G243 is the operational half split from HSSL-G240.
+  It removes the former G202 dependency cycle while retaining external
+  completion authority for every claim about an actual measured population.
+
+## HSSL-G242 Externally apply the positive validators to the measured matrix
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G201, HSSL-G202, HSSL-G212, HSSL-G220, HSSL-G231, HSSL-G239, HSSL-G243
+- Fib priority: 1134903170
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/operational-positive-gate-bundle
+- Parallel lane: objective/hssl/operational-positive-gate-bundle
+- Evidence: HSSLEV2424C63
+- Completion authority: external
+- Goal: Apply the locally integrated HSSL-G231 validator set to the exact
+  externally validated HSSL-G201/G212/G220/G243 source graph and publish a
+  source-recomputed positive-gate bundle or an explicit negative result without
+  re-invoking any measured component.
+- Outputs: canonical source indexes, independently recomputed semantic,
+  causal, safety, quality, efficacy, reliability, routing, cost, resource,
+  statistical, Pareto, and replay gate receipts, the exact complete positive
+  bundle CID when all gates pass, and one typed G239-governed completion receipt
+- Validation: Reconstruct the HSSL-G231 bundle from canonical source records in
+  a fresh detached recursive worktree; compare the result with the frozen
+  G202 plan, HSSL-G220 seal, and HSSL-G243 population receipt; invoke no
+  benchmark producer, backend, model, compiler, solver, or native kernel.
+- Acceptance: Every declared arm and coordinate is terminal and source-bound;
+  semantic and causal denominators are complete and non-vacuous; invalid
+  controls have zero kernel-verified false positives; semantic quality,
+  efficacy, reliability, routing, cost, resources, paired statistics, Pareto,
+  and replay evidence are non-null; producer, meter, reviewer, and validator
+  authorities remain independent; and all derived CIDs recompute from the exact
+  G202/G201/G212/G220/G243 source graph. Any missing, stale, reduced,
+  self-asserted, implementation-only, source-rebased, or authority-overlapping
+  evidence yields an explicit negative bundle and no positive CID.
+- Gap task: Execute this external source join only after HSSL-G243 validates
+  the complete measured population. Local HSSL-G231 tests cannot satisfy this
+  goal.
+- Refinement depth: 3
+- Authorization boundary: A positive HSSL-G242 bundle is evidence for HSSL-G232
+  only. It does not select candidates, release holdout custody, change
+  production routing, or authorize promotion.
+- Holdout boundary: The validator may bind only the public opaque HSSL-G220
+  seal identity. It cannot open the replacement holdout.
+- Backlog alignment: HSSL-G242 is the operational half split from HSSL-G231.
+  It preserves external authority for measured claims while allowing the
+  implementation-only HSSL-G231 prerequisite to complete before G202.
+
+## HSSL-G232 Join the revised pilot evidence and freeze exact replacement-holdout authorization
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G201, HSSL-G212, HSSL-G220, HSSL-G202, HSSL-G242, HSSL-G243
+- Fib priority: 24157817
+- Track: benchmark-reassessment-v2
+- Priority: P0
+- Bundle: objective/hssl/revised-pilot-execution
+- Parallel lane: objective/hssl/revised-pilot-execution
+- Evidence: HSSLEV2329A65
+- Completion authority: external
+- Goal: Join and independently validate the already executed G201 semantic and G212 causal/resource submatrices under the identical G202 run plan, then freeze either an exact nonempty eligible shortlist proposal bound to the HSSL-G220 replacement seal or an empty shortlist that authorizes nothing.
+- Outputs: an external complete matrix index, joined semantic/proof/cost/resource/statistics gate bundle, pilot-shortlist decision, proposed G232 replacement-holdout authorization, and dated validation snapshot
+- Validation: validate the complete source-bound pilot artifact with the HSSL-G231 validators in the isolated run namespace
+- Acceptance: The exact G202 commit, gitlinks, run plan, capability freeze, namespaces, protocol, registry, prompts, backend/model identities, cache/resource policy, semantic projection, causal kernel policy, complete G201/G212 receipt graphs, and HSSL-G220 seal all agree; no backend, producer, solver, model, or kernel is re-invoked during the join; every preregistered coordinate is terminal and source-bound; calibration is complete and non-vacuous; external verification exposure is identical; causal rescue and all denominators are complete; invalid controls have zero kernel-verified false positives; efficacy, quality, cost, reliability, routing, replay, and Pareto evidence are non-null; and the deterministic source-derived eligible shortlist contains one to four candidates passing every absolute, paired, safety, resource, and replayability gate before a content-addressed `G232ReplacementHoldoutAuthorization` proposal is created for the exact replacement seal. Any failure emits an empty shortlist with no authorization digest. The proposal is evidence for HSSL-G241 and is not by itself a custodian-release authority.
+- Gap task: Join and source-recompute the frozen G201/G212/G220 evidence after all three complete, publish independent gate receipts, and validate the exact pilot decision without re-execution or holdout access.
+- Refinement depth: 2
+- Authorization boundary: This goal may propose only the exact source-recomputed shortlist and HSSL-G220 manifest. HSSL-G241 must independently source-recompute and externally authorize the custodian handoff; neither goal authorizes production promotion.
+- Holdout boundary: HSSL-G232 cannot open holdout or release access by itself. Revision-1 HSSL-G150 and its retired holdout remain ineligible.
+- Backlog alignment: HSSL-G232 is the pilot evidence join from the final G202
+  freeze, complete semantic/causal execution, independent replacement custody,
+  externally validated runtime population, and externally recomputed positive
+  bundle. HSSL-G241 is the sole release join to any future revision-2 holdout
+  executor. Generated metadata must preserve all six HSSL-G232 parent edges and
+  must never schedule a second pilot/development run.
+
+## HSSL-G241 Enforce the externally governed G232-to-custodian handoff
+
+- Status: active
+- Goal completion schema version: 1
+- Parent: HSSL-G201, HSSL-G202, HSSL-G211, HSSL-G212, HSSL-G220, HSSL-G231, HSSL-G232, HSSL-G239, HSSL-G242, HSSL-G243
+- Fib priority: 701408733
+- Track: benchmark-holdout-revision
+- Priority: P0
+- Bundle: objective/hssl/custodian-release-authority
+- Evidence: G241ExternallyGovernedCustodianReleaseReceiptV1
+- Completion authority: external
+- Goal: Add the sole operational adapter that source-recomputes the positive HSSL-G231 bundle and the exact HSSL-G202/G201/G211/G212/G220/G232 identity chain under HSSL-G239 external governance before an independent custodian may release the replacement holdout to an executor.
+- Outputs: a typed identity-only G241 custodian-release request and receipt, an exact source index for the G231/G232 decision chain, an independently controlled append-only handoff ledger, focused source-safe validator tests, and a documented external receipt schema
+- Validation: In a clean detached source tree, source-recompute the complete identity graph and exercise positive and negative synthetic handoff cases without loading a benchmark case, corpus, manifest body, proof obligation, model output, or holdout byte
+- Acceptance: The adapter reparses the complete positive HSSL-G231 bundle from its canonical source records; requires the exact HSSL-G202 clean commit, tree, recursive gitlinks, run plan, capability/environment freeze, and namespace policy; requires the exact complete HSSL-G201 semantic, HSSL-G211 persisted-runtime, and HSSL-G212 causal/resource receipt graphs; binds the exact HSSL-G220 seal and access-ledger authority; and validates a current HSSL-G239-governed external-completion receipt whose parent ledger, artifact CIDs, producer identity, and independent validator identity cover this same chain. The proposed HSSL-G232 candidate set must equal the deterministic nonempty shortlist derived by source replay, with A0 added only as the paired baseline; a cardinality of one to four is necessary but never sufficient. A constructor supplied only arbitrary canonical CIDs, booleans, or one to four caller-chosen arm IDs cannot mint a release. Missing, stale, synthetic, reduced, duplicated, source-rebased, authority-overlapping, self-signed, marker-only, or internally generated evidence produces no release receipt. The decision producer, external validator, custodian, and holdout executor identities are pairwise distinct, and the handoff records zero holdout reads, writes, schedules, backend calls, and result coordinates.
+- Gap task: Complete independent review and integration of the source-safe adapter, then obtain a valid external G239-governed receipt and custodian handoff only after every upstream operational goal passes.
+- Evidence implementation: `benchmarks/logic_pipeline/custodian_release.py` implements the identity-only source replay, exact deterministic G232 proposal reconstruction, complete G202/G201/G211/G212/G220/G231 parent and artifact joins, dedicated G239 external-authority projection, independently pinned custodian trust root, pairwise authority separation, zero-activity assertion, and private append-only handoff ledger. The only operational receipt constructor is `authorize_g241_custodian_release_v1`.
+- Implementation result: The source-safe G241 gate is implemented and rejects arbitrary shortlist CIDs, incomplete/rebased source graphs, authority overlap, synthetic self-authorization, and premature holdout activity. There is no G241 implementation marker, external completion or release receipt, custodian handoff, or holdout access.
+- Refinement depth: 2
+- Authorization boundary: Only a valid G241 receipt may release the exact HSSL-G220 seal for paired A0 plus the exact source-derived HSSL-G232 shortlist. It grants no discretion to add, remove, reorder, or substitute arms and does not authorize production.
+- Holdout boundary: HSSL-G241 validates and records the handoff but cannot load or execute holdout. Any nonzero holdout activity before the custodian validates the receipt permanently invalidates the seal instead of satisfying this goal.
+- Synthetic boundary: Synthetic tests may prove schema rejection and source replay only; they cannot create an operational receipt or satisfy external completion authority.
+- Backlog alignment: HSSL-G241 is deliberately downstream of HSSL-G232 and
+  explicitly retains every source, operational-gate, runtime-population, and
+  governance identity that the custodian must verify. Generated supervisor
+  metadata must keep all ten parent edges, must not infer completion from
+  constructing `G232ReplacementHoldoutAuthorization`, and must never treat an
+  HSSL-G239 implementation marker as external authorization.

@@ -283,6 +283,11 @@ def test_inventory_round_trip_is_strict_and_digest_is_canonical() -> None:
     assert capabilities.capability_inventory_sha256(first) == (
         capabilities.capability_inventory_sha256(reordered)
     )
+    assert capabilities.capability_inventory_cid(first) == (
+        capabilities.capability_inventory_cid(reordered)
+    )
+    assert first.cid == capabilities.capability_inventory_cid(first)
+    assert first.cid.startswith("b")
     encoded = capabilities.canonical_capability_inventory_json(first)
     restored = capabilities.CapabilityInventory.from_dict(json.loads(encoded))
     assert restored == first
@@ -498,3 +503,68 @@ def test_run_scoped_cache_and_scheduler_identities_are_accepted(
         ].status
         is capabilities.CapabilityStatus.AVAILABLE
     )
+
+
+def test_bounded_process_communication_error_reaps_owned_group(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Stream:
+        closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    class FailedCommunicationProcess:
+        pid = 424242
+        returncode: int | None = None
+        stdin = Stream()
+        stdout = Stream()
+        stderr = Stream()
+
+        def communicate(self, **_kwargs: object) -> tuple[bytes, bytes]:
+            raise OSError("injected communicate failure")
+
+        def wait(self, **_kwargs: object) -> int:
+            self.returncode = -15
+            return self.returncode
+
+        def terminate(self) -> None:
+            self.returncode = -15
+
+        def kill(self) -> None:
+            self.returncode = -9
+
+        def poll(self) -> int | None:
+            return self.returncode
+
+    process = FailedCommunicationProcess()
+    signals: list[tuple[int, int]] = []
+    reaped: list[int] = []
+    monkeypatch.setattr(
+        capabilities.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: process,
+    )
+    monkeypatch.setattr(
+        capabilities.os,
+        "killpg",
+        lambda pid, sent_signal: signals.append((pid, sent_signal)),
+    )
+    monkeypatch.setattr(
+        capabilities,
+        "_reap_bounded_process_group",
+        lambda pid, **_kwargs: reaped.append(pid) or True,
+    )
+
+    with pytest.raises(OSError, match="injected communicate failure"):
+        capabilities.run_bounded_process_group(
+            ("injected-command",),
+            timeout_seconds=1,
+        )
+
+    assert signals == [(process.pid, capabilities.signal.SIGTERM)]
+    assert process.returncode == -15
+    assert reaped == [process.pid]
+    assert process.stdin.closed is True
+    assert process.stdout.closed is True
+    assert process.stderr.closed is True

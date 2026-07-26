@@ -93,10 +93,30 @@ import base64
 import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
-from .utils.cli_tools.copilot import build_standalone_copilot_command_template, find_standalone_copilot_cli
-
 from .router_deps import RouterDeps, get_default_router_deps
 from .optimizers.common.backend_selection import canonicalize_provider
+
+
+def build_standalone_copilot_command_template(
+    cli_path: str | None = None,
+) -> str:
+    """Load the optional Copilot CLI stack only when that route is selected."""
+
+    from .utils.cli_tools.copilot import (
+        build_standalone_copilot_command_template as implementation,
+    )
+
+    return implementation(cli_path)
+
+
+def find_standalone_copilot_cli() -> str | None:
+    """Load optional Copilot discovery only when a Copilot route needs it."""
+
+    from .utils.cli_tools.copilot import (
+        find_standalone_copilot_cli as implementation,
+    )
+
+    return implementation()
 
 
 class LLMRouterError(RuntimeError):

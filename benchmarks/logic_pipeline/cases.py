@@ -707,7 +707,7 @@ class ReplacementHoldoutSeal:
     labels, expected IR, proof obligations, or outcomes.  The sealed manifest
     remains an uninterpreted raw block outside the tuning worktree.  Only the
     independently published count/strata metadata and protocol identities are
-    visible before a later HSSL-G230 authorization.
+    visible before a later HSSL-G232 authorization.
 
     Constructing a value validates metadata but does not create a replacement
     holdout, attest independent authorship, or authorize access.
@@ -790,7 +790,7 @@ class ReplacementHoldoutSeal:
             )
 
     def identity_payload(self) -> dict[str, object]:
-        """Return only the metadata permitted before G230 authorization."""
+        """Return only the metadata permitted before G232 authorization."""
 
         return {
             "schema": self.schema,

@@ -31,6 +31,12 @@ from benchmarks.logic_pipeline import (
     RunPaths,
 )
 from benchmarks.logic_pipeline.capabilities import (
+    _HARDENED_GIT_CONFIGURATION,
+    _hardened_git_environment,
+    _hardened_git_executable,
+    _hardened_worktree_status,
+    _reject_effective_checkout_filters,
+    CapabilityContractError,
     CapabilityInventory,
     WORKTREE_SAFETY_RECEIPT_NAME,
     WorktreeSafetyReceipt,
@@ -369,22 +375,92 @@ def _git(
     *arguments: str,
     check: bool = True,
     timeout: int = 30,
+    child_umask: int | None = None,
+    input_text: str | None = None,
+    sanitized_environment: bool = True,
+    secure_materialization: bool = False,
+    template_directory: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    hardened = sanitized_environment or secure_materialization
     try:
-        completed = subprocess.run(
-            ["git", "-c", "core.autocrlf=false", "-C", str(repository), *arguments],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            env={
+        if hardened:
+            template_arguments: tuple[str, ...] = ()
+            if secure_materialization:
+                if template_directory is None:
+                    raise SourceReconciliationError(
+                        "secure submodule materialization requires an empty "
+                        "template directory"
+                    )
+                template = Path(template_directory)
+                metadata = template.lstat()
+                if (
+                    template.resolve(strict=True) != template
+                    or stat.S_ISLNK(metadata.st_mode)
+                    or not stat.S_ISDIR(metadata.st_mode)
+                    or stat.S_IMODE(metadata.st_mode) & 0o022
+                    or any(template.iterdir())
+                ):
+                    raise SourceReconciliationError(
+                        "secure submodule template directory is unsafe"
+                    )
+                template_arguments = (
+                    "-c",
+                    f"init.templateDir={template}",
+                )
+            command = [
+                _hardened_git_executable().as_posix(),
+                *_HARDENED_GIT_CONFIGURATION,
+                *template_arguments,
+                "-C",
+                str(repository),
+                *arguments,
+            ]
+            environment = _hardened_git_environment()
+            effective_umask = (
+                0o022 if secure_materialization else child_umask
+            )
+        else:
+            command = [
+                "git",
+                "-c",
+                "core.autocrlf=false",
+                "-C",
+                str(repository),
+                *arguments,
+            ]
+            environment = {
                 "PATH": os.environ.get("PATH", ""),
                 "GIT_CONFIG_NOSYSTEM": "1",
                 "GIT_TERMINAL_PROMPT": "0",
                 "LC_ALL": "C",
-            },
+            }
+            effective_umask = child_umask
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            close_fds=True,
+            shell=False,
+            input=input_text,
+            stdin=(
+                subprocess.DEVNULL
+                if hardened and input_text is None
+                else None
+            ),
+            **(
+                {}
+                if effective_umask is None
+                else {"umask": effective_umask}
+            ),
+            env=environment,
         )
-    except (OSError, subprocess.SubprocessError) as exc:
+    except (
+        CapabilityContractError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as exc:
         raise SourceReconciliationError(
             f"Git command failed: {type(exc).__name__}"
         ) from exc
@@ -432,13 +508,9 @@ def _active_source_snapshot(repository: Path) -> tuple[str, str | None, str]:
         if branch_result.returncode == 0
         else None
     )
-    status = _git_value(
+    status = _worktree_status(
         repository,
-        "status",
-        "--porcelain=v1",
-        "-z",
-        "--untracked-files=all",
-        "--ignore-submodules=none",
+        ignore_submodules=False,
     )
     return head, branch, _sha256_bytes(status.encode("utf-8"))
 
@@ -448,18 +520,15 @@ def _worktree_status(
     *,
     ignore_submodules: bool,
 ) -> str:
-    return _git_value(
-        repository,
-        "status",
-        "--porcelain=v1",
-        "-z",
-        "--untracked-files=all",
-        (
-            "--ignore-submodules=all"
-            if ignore_submodules
-            else "--ignore-submodules=none"
-        ),
-    )
+    try:
+        return _hardened_worktree_status(
+            repository,
+            ignore_submodules=ignore_submodules,
+        )
+    except CapabilityContractError as exc:
+        raise SourceReconciliationError(
+            "effective Git filters are forbidden before status"
+        ) from exc
 
 
 def _require_clean_source_checkout(repository: Path) -> None:
@@ -843,6 +912,56 @@ def _submodule_name_for_path(
     return matches[0]
 
 
+def _reject_local_transport_overrides(repository: Path) -> None:
+    """Reject repository config that can rewrite or re-enable a transport."""
+
+    scopes = ["--local"]
+    worktree_config = _git(
+        repository,
+        "config",
+        "--local",
+        "--bool",
+        "--get",
+        "extensions.worktreeConfig",
+        check=False,
+    )
+    if worktree_config.returncode not in {0, 1}:
+        raise SourceReconciliationError(
+            "cannot inspect repository-local Git transport policy"
+        )
+    if worktree_config.returncode == 0:
+        if worktree_config.stdout.strip().casefold() != "true":
+            raise SourceReconciliationError(
+                "repository worktreeConfig setting is invalid"
+            )
+        scopes.append("--worktree")
+    patterns = (
+        r"^url\..*\.(insteadof|pushinsteadof)$",
+        r"^protocol\..*\.allow$",
+    )
+    for scope in scopes:
+        for pattern in patterns:
+            configured = _git(
+                repository,
+                "config",
+                scope,
+                "--includes",
+                "--null",
+                "--name-only",
+                "--get-regexp",
+                pattern,
+                check=False,
+            )
+            if configured.returncode == 0 and configured.stdout:
+                raise SourceReconciliationError(
+                    "repository-local Git transport overrides are forbidden"
+                )
+            if configured.returncode not in {0, 1}:
+                raise SourceReconciliationError(
+                    "cannot inspect repository-local Git transport overrides"
+                )
+
+
 def _materialize_recursive_local_gitlinks(
     source_repository: Path,
     worktree_repository: Path,
@@ -850,6 +969,16 @@ def _materialize_recursive_local_gitlinks(
 ) -> None:
     """Populate pinned submodules using only already-provisioned local repos."""
 
+    template = _reject_symlink_components(
+        worktree_repository.parent / ".git-empty-template",
+        "secure submodule template directory",
+    )
+    try:
+        template.mkdir(mode=0o700, exist_ok=True)
+    except OSError as exc:
+        raise SourceReconciliationError(
+            "cannot create the secure submodule template directory"
+        ) from exc
     for item in sorted(gitlinks, key=lambda record: (record.depth, record.path)):
         parent_relative = (
             Path() if item.parent_path == "." else Path(item.parent_path)
@@ -877,13 +1006,25 @@ def _materialize_recursive_local_gitlinks(
             raise SourceReconciliationError(
                 f"local submodule commit unavailable for {item.path!r}"
             )
+        try:
+            _reject_effective_checkout_filters(
+                local_child,
+                item.commit,
+            )
+        except CapabilityContractError as exc:
+            raise SourceReconciliationError(
+                f"submodule checkout filter is forbidden for {item.path!r}"
+            ) from exc
         name = _submodule_name_for_path(
             source_parent,
             item.parent_commit,
             child_relative.as_posix(),
         )
+        _reject_local_transport_overrides(worktree_parent)
         _git(
             worktree_parent,
+            "-c",
+            "protocol.allow=never",
             "-c",
             "protocol.file.allow=always",
             "-c",
@@ -896,6 +1037,8 @@ def _materialize_recursive_local_gitlinks(
             "--",
             child_relative.as_posix(),
             timeout=120,
+            secure_materialization=True,
+            template_directory=template,
         )
         materialized = _exact_submodule_repository(
             worktree_parent,
@@ -2770,19 +2913,17 @@ def reconcile_source(
         run_paths=run_paths,
         base_revision=base_revision,
     )
+    source_gitlinks = capture_recursive_gitlinks(
+        source,
+        receipt.worktree_commit,
+        require_complete=True,
+    )
     # Never fetch here: the operator must provision exact objects before the
     # reconciliation boundary, making source preparation reproducible/offline.
-    _git(
+    _materialize_recursive_local_gitlinks(
+        source,
         receipt.worktree_root,
-        "-c",
-        "protocol.file.allow=always",
-        "submodule",
-        "update",
-        "--init",
-        "--recursive",
-        "--checkout",
-        "--no-fetch",
-        timeout=120,
+        source_gitlinks,
     )
     gitlinks = capture_recursive_gitlinks(
         receipt.worktree_root,

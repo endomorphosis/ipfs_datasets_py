@@ -14,12 +14,14 @@ from functools import lru_cache
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import re
+import stat
 import sys
 import time
 from types import MappingProxyType
-from typing import Callable, Final, Mapping, Sequence
+from typing import Callable, Final, Mapping, MutableMapping, Sequence
 
 from .content_addressing import (
     canonical_dag_json_bytes,
@@ -123,6 +125,10 @@ HAMMER_GRAPH_SELECTOR_CONTRACT: Final = (
 )
 HAMMER_SYMAI_RANKING_CONTRACT: Final = (
     "hssl-symai-semantic-overlap-v1"
+)
+SYMAI_RUNTIME_CONFIGURATION_SCHEMA_V2: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark."
+    "symai-runtime-configuration.v2"
 )
 MAX_NATIVE_SOURCE_BYTES: Final = 64 * 1024
 _SAFE_THEOREM = re.compile(r"[^A-Za-z0-9_]")
@@ -3233,6 +3239,7 @@ class NativeKernelRunner:
                         memory_mb=self.memory_mb,
                     ),
                     cwd=temporary,
+                    input_text="",
                 )
             source_bytes = source.encode("utf-8")
             stdout_bytes = result.stdout.encode("utf-8")
@@ -4396,34 +4403,150 @@ def _legacy_symai_unavailable(request: StageRequest) -> StageOutput:
     )
 
 
+def resolve_symai_runtime_provider_model(
+    inventory: CapabilityInventory,
+) -> tuple[str, str]:
+    """Resolve the exact outer SyMAI router identity frozen by an inventory."""
+
+    if not isinstance(inventory, CapabilityInventory):
+        raise RuntimeBindingError(
+            "SyMAI runtime identity requires CapabilityInventory"
+        )
+    symai_record = _record(inventory, CapabilityKind.SYMAI)
+    router_record = _record(inventory, CapabilityKind.LLM_ROUTER)
+    provider = symai_record.identity.get(
+        "requested_provider",
+        symai_record.identity.get(
+            "provider",
+            router_record.identity.get(
+                "requested_provider",
+                router_record.identity.get("provider"),
+            ),
+        ),
+    )
+    model = symai_record.identity.get(
+        "requested_model",
+        symai_record.identity.get(
+            "model",
+            router_record.identity.get(
+                "requested_model",
+                router_record.identity.get("model"),
+            ),
+        ),
+    )
+    if not isinstance(provider, str) or not isinstance(model, str):
+        raise RuntimeBindingError(
+            "available SyMAI/router identity is incomplete"
+        )
+    # Reuse the adapter's frozen identifier validation.
+    SymaiAdapterConfig(provider=provider, model=model)
+    return provider, model
+
+
+def symai_runtime_configuration_payload(model: str) -> bytes:
+    """Return the exact non-secret SyMAI config projected for one model."""
+
+    SymaiAdapterConfig(model=model)
+    value = {
+        "NEUROSYMBOLIC_ENGINE_API_KEY": "ipfs",
+        "NEUROSYMBOLIC_ENGINE_MODEL": f"ipfs:{model}",
+        "SYMBOLIC_ENGINE": "ipfs",
+    }
+    return (canonical_json(value) + "\n").encode("utf-8")
+
+
+def symai_runtime_configuration_cid(model: str) -> str:
+    """Content-address the exact bytes SyMAI reads below ``sys.prefix``."""
+
+    return cid_for_bytes(symai_runtime_configuration_payload(model))
+
+
+def prepare_symai_runtime_configuration(
+    config_root: Path,
+    *,
+    model: str,
+    import_package: bool,
+) -> str:
+    """Create/authenticate a state-scoped SyMAI config and optionally import."""
+
+    root = Path(config_root)
+    if not root.is_absolute():
+        raise RuntimeBindingError(
+            "run-scoped SyMAI configuration root must be absolute"
+        )
+    config_path = root / ".symai" / "symai.config.json"
+    try:
+        config_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        parent_metadata = config_path.parent.lstat()
+        parent_resolved = config_path.parent.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeBindingError(
+            "cannot create run-scoped SyMAI configuration directory"
+        ) from exc
+    if (
+        stat.S_ISLNK(parent_metadata.st_mode)
+        or not stat.S_ISDIR(parent_metadata.st_mode)
+        or stat.S_IMODE(parent_metadata.st_mode) & 0o077
+        or parent_resolved != config_path.parent
+    ):
+        raise RuntimeBindingError(
+            "run-scoped SyMAI configuration directory is not private"
+        )
+    raw = symai_runtime_configuration_payload(model)
+    if config_path.exists():
+        try:
+            metadata = config_path.lstat()
+            observed = config_path.read_bytes()
+        except OSError as exc:
+            raise RuntimeBindingError(
+                "cannot authenticate run-scoped SyMAI configuration"
+            ) from exc
+        if (
+            stat.S_ISLNK(metadata.st_mode)
+            or not stat.S_ISREG(metadata.st_mode)
+            or stat.S_IMODE(metadata.st_mode) & 0o077
+            or observed != raw
+        ):
+            raise RuntimeBindingError(
+                "run-scoped SyMAI configuration drifted"
+            )
+    else:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        try:
+            descriptor = os.open(config_path, flags, 0o600)
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(raw)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except OSError as exc:
+            raise RuntimeBindingError(
+                "cannot exclusively write run-scoped SyMAI configuration"
+            ) from exc
+    if import_package:
+        original_prefix = sys.prefix
+        try:
+            sys.prefix = str(root)
+            importlib.import_module("symai")
+        finally:
+            sys.prefix = original_prefix
+    return cid_for_bytes(raw)
+
+
 def _configured_symai_engine_factory(
     state_directory: Path,
 ) -> Callable[[SymaiAdapterConfig, str], object]:
     """Import SyMAI against a run-scoped non-secret configuration."""
 
     config_root = state_directory / "symai-runtime"
-    config_path = config_root / ".symai" / "symai.config.json"
 
     def factory(config: SymaiAdapterConfig, namespace: str) -> object:
-        config_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        value = {
-            "NEUROSYMBOLIC_ENGINE_API_KEY": "ipfs",
-            "NEUROSYMBOLIC_ENGINE_MODEL": f"ipfs:{config.model}",
-            "SYMBOLIC_ENGINE": "ipfs",
-        }
-        raw = canonical_json(value) + "\n"
-        if config_path.exists():
-            if config_path.read_text(encoding="utf-8") != raw:
-                raise RuntimeBindingError("run-scoped SyMAI configuration drifted")
-        else:
-            with config_path.open("x", encoding="utf-8") as handle:
-                handle.write(raw)
-        original_prefix = sys.prefix
-        try:
-            sys.prefix = str(config_root)
-            importlib.import_module("symai")
-        finally:
-            sys.prefix = original_prefix
+        prepare_symai_runtime_configuration(
+            config_root,
+            model=config.model,
+            import_package=True,
+        )
         engine_module = importlib.import_module(
             "ipfs_datasets_py.utils.symai_ipfs_engine"
         )
@@ -4475,6 +4598,9 @@ def build_live_runtime(
     leanstral_max_new_tokens: int = LEANSTRAL_MEASURED_MAX_NEW_TOKENS,
     semantic_protocol_cid: str | None = None,
     causal_proof_protocol_cid: str | None = None,
+    stage_caches: (
+        Mapping[StageName, MutableMapping[str, object]] | None
+    ) = None,
 ) -> LiveRuntime:
     """Build exact live adapters for every requested frozen arm.
 
@@ -4511,6 +4637,17 @@ def build_live_runtime(
         raise RuntimeBindingError("variant_ids must be nonempty and unique")
     for variant_id in variants:
         get_variant_definition(variant_id)
+    selected_stage_caches = (
+        {} if stage_caches is None else dict(stage_caches)
+    )
+    if any(
+        stage is not StageName.SYMAI
+        or not isinstance(cache, MutableMapping)
+        for stage, cache in selected_stage_caches.items()
+    ):
+        raise RuntimeBindingError(
+            "stage_caches may bind only a mutable SyMAI cache"
+        )
 
     kernel_runner: NativeKernelRunner | None = None
     if handlers.kernel is None and _available(
@@ -4605,8 +4742,6 @@ def build_live_runtime(
                     if definition.symai_policy is StagePolicy.LEGACY_DIAGNOSTIC
                     else handlers.symai
                 )
-                symai_record = _record(inventory, CapabilityKind.SYMAI)
-                router_record = _record(inventory, CapabilityKind.LLM_ROUTER)
                 leanstral_record = _record(
                     inventory, CapabilityKind.LEANSTRAL_SERVICE
                 )
@@ -4631,30 +4766,9 @@ def build_live_runtime(
                         adapter_version=frontend_adapter_version,
                     )
                 else:
-                    provider = symai_record.identity.get(
-                        "requested_provider",
-                        symai_record.identity.get(
-                            "provider",
-                            router_record.identity.get(
-                                "requested_provider",
-                                router_record.identity.get("provider"),
-                            ),
-                        ),
+                    provider, model = resolve_symai_runtime_provider_model(
+                        inventory
                     )
-                    model = symai_record.identity.get(
-                        "requested_model",
-                        symai_record.identity.get(
-                            "model",
-                            router_record.identity.get(
-                                "requested_model",
-                                router_record.identity.get("model"),
-                            ),
-                        ),
-                    )
-                    if not isinstance(provider, str) or not isinstance(model, str):
-                        raise RuntimeBindingError(
-                            "available SyMAI/router identity is incomplete"
-                        )
                     inner_provider = leanstral_record.identity.get("provider")
                     inner_model = leanstral_record.identity.get("model")
                     inner_endpoint = leanstral_record.identity.get("endpoint")
@@ -4687,6 +4801,7 @@ def build_live_runtime(
                             Path(state_directory or ".hssl-runtime-processes")
                             / inventory.run_id
                         ),
+                        cache=selected_stage_caches.get(StageName.SYMAI),
                     )
             elif stage is StageName.HAMMER:
                 selected_hammer = handlers.hammer
@@ -4999,9 +5114,14 @@ __all__ = [
     "RUNTIME_VERSION",
     "RuntimeBackendHandlers",
     "RuntimeBindingError",
+    "SYMAI_RUNTIME_CONFIGURATION_SCHEMA_V2",
     "build_live_adapters",
     "build_live_runtime",
     "compile_reviewed_obligation",
     "kernel_input_semantic_context",
     "main",
+    "prepare_symai_runtime_configuration",
+    "resolve_symai_runtime_provider_model",
+    "symai_runtime_configuration_cid",
+    "symai_runtime_configuration_payload",
 ]

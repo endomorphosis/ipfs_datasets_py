@@ -12,75 +12,35 @@ from pathlib import Path
 import pytest
 
 from benchmarks.logic_pipeline.cases import (
-    REPLACEMENT_HOLDOUT_PROTOCOL_KEYS,
-    REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
     CorpusContractError,
     ReplacementHoldoutSeal,
-    replacement_holdout_ledger_authority_cid,
     validate_replacement_holdout_external_path,
 )
 from benchmarks.logic_pipeline.content_addressing import (
-    cid_for_bytes,
     cid_for_dag_json,
     validate_cid,
 )
 from benchmarks.logic_pipeline.holdout_execution import (
-    G230_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA,
-    G230ReplacementHoldoutAuthorization,
+    G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA,
+    G232ReplacementHoldoutAuthorization,
     HoldoutExecutionError,
     ReplacementHoldoutAccessReceipt,
     load_authorized_replacement_holdout,
     load_replacement_holdout_access_receipts,
 )
-
-
-OPAQUE_SYNTHETIC_BLOCK = b"synthetic opaque replacement seal block v2"
-
-
-def _protocol_cids() -> dict[str, str]:
-    return {
-        key: cid_for_dag_json(
-            {"synthetic_protocol": key, "revision": 2}
-        )
-        for key in sorted(REPLACEMENT_HOLDOUT_PROTOCOL_KEYS)
-    }
-
-
-def _seal(
-    *,
-    opaque_block: bytes = OPAQUE_SYNTHETIC_BLOCK,
-    protocol_cids: dict[str, str] | None = None,
-    ledger_path: str | Path = (
-        "/synthetic-independent-custody/replacement-access.jsonl"
-    ),
-) -> ReplacementHoldoutSeal:
-    protocols = protocol_cids or _protocol_cids()
-    sealed_manifest_cid = cid_for_bytes(opaque_block, codec="raw")
-    payload = {
-        "schema": REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
-        "sealed_manifest_cid": sealed_manifest_cid,
-        "case_count": 6,
-        "strata_counts": {"alpha": 2, "beta": 4},
-        "protocol_cids": protocols,
-        "access_ledger_authority_cid": (
-            replacement_holdout_ledger_authority_cid(
-                sealed_manifest_cid,
-                ledger_path,
-            )
-        ),
-    }
-    return ReplacementHoldoutSeal(
-        **payload,
-        seal_contract_cid=cid_for_dag_json(payload),
-    )
+from tests.integration.benchmarks.logic_pipeline._synthetic_seal_support import (
+    OPAQUE_SYNTHETIC_BLOCK,
+    _protocol_cids,
+    _seal,
+)
 
 
 def _authorization(
     seal: ReplacementHoldoutSeal,
-) -> G230ReplacementHoldoutAuthorization:
+) -> G232ReplacementHoldoutAuthorization:
     payload = {
-        "schema": G230_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA,
-        "goal_id": "HSSL-G230",
+        "schema": G232_REPLACEMENT_HOLDOUT_AUTHORIZATION_SCHEMA,
+        "goal_id": "HSSL-G232",
         "pilot_artifact_cid": cid_for_dag_json(
             {"synthetic_complete_pilot": True}
         ),
@@ -105,7 +65,7 @@ def _authorization(
         "authorized_variant_ids": list(payload["authorized_variant_ids"]),
         "cache_modes": list(payload["cache_modes"]),
     }
-    return G230ReplacementHoldoutAuthorization(
+    return G232ReplacementHoldoutAuthorization(
         **payload,
         authorization_cid=cid_for_dag_json(cid_payload),
     )
@@ -136,12 +96,17 @@ class _SyntheticCustodian:
         self.calls = 0
         self.grant_was_durable_before_release = False
 
+    @property
+    def custodian_id(self) -> str:
+        return cid_for_dag_json({"synthetic_actor": "custodian"})
+
     def release_sealed_manifest(
         self,
         sealed_manifest_path: Path,
         *,
         seal_contract_cid: str,
         authorization_cid: str,
+        g241_release_receipt_cid: str,
         access_grant_receipt_cid: str,
     ) -> bytes:
         self.calls += 1
@@ -155,6 +120,8 @@ class _SyntheticCustodian:
             and grant.receipt_cid == access_grant_receipt_cid
             and grant.seal_contract_cid == seal_contract_cid
             and grant.authorization_cid == authorization_cid
+            and grant.g241_release_receipt_cid
+            == g241_release_receipt_cid
             and sealed_manifest_path.is_absolute()
         )
         return self.opaque_block
@@ -164,12 +131,17 @@ class _InterruptingCustodian:
     def __init__(self) -> None:
         self.calls = 0
 
+    @property
+    def custodian_id(self) -> str:
+        return cid_for_dag_json({"synthetic_actor": "interrupting-custodian"})
+
     def release_sealed_manifest(
         self,
         sealed_manifest_path: Path,
         *,
         seal_contract_cid: str,
         authorization_cid: str,
+        g241_release_receipt_cid: str,
         access_grant_receipt_cid: str,
     ) -> bytes:
         self.calls += 1
@@ -301,7 +273,7 @@ def test_premature_request_appends_invalidation_and_never_calls_custodian(
     assert custodian.calls == 0
 
 
-def test_exact_g230_binding_releases_only_after_append_only_grant(
+def test_exact_g232_proposal_alone_is_non_authorizing(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
@@ -310,30 +282,76 @@ def test_exact_g230_binding_releases_only_after_append_only_grant(
     authorization = _authorization(seal)
     custodian = _SyntheticCustodian(OPAQUE_SYNTHETIC_BLOCK, ledger)
 
-    result = load_authorized_replacement_holdout(
-        seal,
-        authorization,
-        sealed_manifest_path=sealed_path,
-        tuning_worktree=tuning_worktree,
-        access_ledger_path=ledger,
-        executor_id="detached-executor",
-        custodian=custodian,
-    )
+    with pytest.raises(
+        HoldoutExecutionError,
+        match="G241|premature",
+    ):
+        load_authorized_replacement_holdout(
+            seal,
+            authorization,
+            sealed_manifest_path=sealed_path,
+            tuning_worktree=tuning_worktree,
+            access_ledger_path=ledger,
+            executor_id="detached-executor",
+            custodian=custodian,
+        )
 
-    assert result.sealed_manifest_bytes == OPAQUE_SYNTHETIC_BLOCK
-    assert custodian.calls == 1
-    assert custodian.grant_was_durable_before_release is True
+    assert custodian.calls == 0
+    assert custodian.grant_was_durable_before_release is False
     receipts = load_replacement_holdout_access_receipts(ledger)
-    assert [item.event for item in receipts] == [
-        "access_granted",
-        "manifest_released",
-    ]
-    assert receipts[1].previous_receipt_cid == receipts[0].receipt_cid
+    assert [item.event for item in receipts] == ["premature_access"]
     assert receipts[0].authorization_cid == authorization.authorization_cid
     assert receipts[0].pilot_artifact_cid == authorization.pilot_artifact_cid
+    assert receipts[0].g241_release_receipt_cid is None
+
+    forged_grant = receipts[0].to_dict()
+    forged_grant.update(
+        {
+            "event": "access_granted",
+            "access_authorized": True,
+            "invalidates_seal": False,
+        }
+    )
+    forged_grant["receipt_cid"] = cid_for_dag_json(
+        {
+            key: value
+            for key, value in forged_grant.items()
+            if key != "receipt_cid"
+        }
+    )
+    with pytest.raises(HoldoutExecutionError, match="event flags"):
+        ReplacementHoldoutAccessReceipt.from_dict(forged_grant)
 
 
-def test_stale_g230_seal_binding_invalidates_without_release(
+def test_g241_boundary_precedes_any_sealed_path_resolution(
+    tmp_path: Path,
+) -> None:
+    tuning_worktree = tmp_path / "tuning-worktree"
+    tuning_worktree.mkdir(mode=0o700)
+    forbidden_path = tuning_worktree / "must-not-be-opened.seal"
+    ledger = tmp_path / "receipts" / "replacement-access.jsonl"
+    seal = _seal(ledger_path=ledger)
+    authorization = _authorization(seal)
+    custodian = _SyntheticCustodian(OPAQUE_SYNTHETIC_BLOCK, ledger)
+
+    with pytest.raises(HoldoutExecutionError, match="G241"):
+        load_authorized_replacement_holdout(
+            seal,
+            authorization,
+            sealed_manifest_path=forbidden_path,
+            tuning_worktree=tuning_worktree,
+            access_ledger_path=ledger,
+            executor_id="detached-executor",
+            custodian=custodian,
+        )
+
+    assert not forbidden_path.exists()
+    assert custodian.calls == 0
+    receipts = load_replacement_holdout_access_receipts(ledger, seal=seal)
+    assert [receipt.event for receipt in receipts] == ["premature_access"]
+
+
+def test_stale_g232_seal_binding_invalidates_without_release(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
@@ -367,7 +385,7 @@ def test_stale_g230_seal_binding_invalidates_without_release(
     assert custodian.calls == 0
 
 
-def test_custody_cid_mismatch_is_receipted_and_invalidates_seal(
+def test_custody_bytes_are_not_inspected_without_g241_release(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
@@ -376,7 +394,7 @@ def test_custody_cid_mismatch_is_receipted_and_invalidates_seal(
     authorization = _authorization(seal)
     custodian = _SyntheticCustodian(b"wrong synthetic block", ledger)
 
-    with pytest.raises(HoldoutExecutionError, match="outside the sealed CID"):
+    with pytest.raises(HoldoutExecutionError, match="G241"):
         load_authorized_replacement_holdout(
             seal,
             authorization,
@@ -388,12 +406,10 @@ def test_custody_cid_mismatch_is_receipted_and_invalidates_seal(
         )
 
     receipts = load_replacement_holdout_access_receipts(ledger)
-    assert [item.event for item in receipts] == [
-        "access_granted",
-        "custody_integrity_failure",
-    ]
+    assert [item.event for item in receipts] == ["premature_access"]
     assert receipts[-1].invalidates_seal is True
-    assert receipts[-1].previous_receipt_cid == receipts[0].receipt_cid
+    assert receipts[-1].g241_release_receipt_cid is None
+    assert custodian.calls == 0
 
 
 def test_seal_invalidation_cannot_be_bypassed_with_a_fresh_ledger(
@@ -446,7 +462,7 @@ def test_seal_invalidation_cannot_be_bypassed_with_a_fresh_ledger(
     assert [item.event for item in receipts] == ["premature_access"]
 
 
-def test_interrupted_release_leaves_unresolved_grant_fail_closed(
+def test_custodian_is_not_called_before_g241_release_validation(
     tmp_path: Path,
 ) -> None:
     tuning_worktree, sealed_path = _private_external_file(tmp_path)
@@ -455,7 +471,7 @@ def test_interrupted_release_leaves_unresolved_grant_fail_closed(
     authorization = _authorization(seal)
     interrupting_custodian = _InterruptingCustodian()
 
-    with pytest.raises(KeyboardInterrupt, match="synthetic process"):
+    with pytest.raises(HoldoutExecutionError, match="G241"):
         load_authorized_replacement_holdout(
             seal,
             authorization,
@@ -466,25 +482,7 @@ def test_interrupted_release_leaves_unresolved_grant_fail_closed(
             custodian=interrupting_custodian,
         )
 
-    assert interrupting_custodian.calls == 1
-    pending = load_replacement_holdout_access_receipts(
-        ledger,
-        allow_pending_grant=True,
-        seal=seal,
-    )
-    assert [item.event for item in pending] == ["access_granted"]
-    with pytest.raises(HoldoutExecutionError, match="unresolved access grant"):
-        load_replacement_holdout_access_receipts(ledger, seal=seal)
-
-    retry_custodian = _SyntheticCustodian(OPAQUE_SYNTHETIC_BLOCK, ledger)
-    with pytest.raises(HoldoutExecutionError, match="unresolved access grant"):
-        load_authorized_replacement_holdout(
-            seal,
-            authorization,
-            sealed_manifest_path=sealed_path,
-            tuning_worktree=tuning_worktree,
-            access_ledger_path=ledger,
-            executor_id="synthetic-executor",
-            custodian=retry_custodian,
-        )
-    assert retry_custodian.calls == 0
+    assert interrupting_custodian.calls == 0
+    receipts = load_replacement_holdout_access_receipts(ledger, seal=seal)
+    assert [item.event for item in receipts] == ["premature_access"]
+    assert receipts[0].g241_release_receipt_cid is None

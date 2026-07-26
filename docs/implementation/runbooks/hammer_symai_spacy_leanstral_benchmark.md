@@ -30,6 +30,30 @@ The independent native kernel is the only proof authority. Hammer solver
 evidence, Leanstral drafts, SyMAI output, spaCy annotations, reconstruction
 records, model confidence, and legacy S1 predictions are non-authoritative.
 
+## Revision-2 operational status: NO-GO
+
+> **NO-GO — 2026-07-26.** HSSL-G231 and HSSL-G240 now have bounded local
+> implementation markers backed by source-safe integration and adversarial
+> tests. Those markers do not satisfy an operational gate. HSSL-G201,
+> HSSL-G202, HSSL-G203, HSSL-G212, HSSL-G220, HSSL-G232, HSSL-G241,
+> HSSL-G242, and HSSL-G243 still require separately governed external
+> operational receipts. Do not run a revision-2 pilot/development
+> matrix, open any benchmark source, label, manifest body, proof obligation, or
+> replacement holdout, or publish a replacement decision. The work currently
+> allowed is implementation-source review, explicitly source-safe synthetic
+> testing, non-corpus capability smokes, and a no-submit supervisor dry run.
+
+The `Protocol revision: 1` header and the published artifact commands below
+describe the immutable historical decision. They are not revision-2 execution
+instructions and cannot be relabelled as revision-2 evidence. Command blocks
+are therefore identified as one of:
+
+- **SOURCE-SAFE NOW** — permitted while this NO-GO remains active;
+- **HISTORICAL REVISION 1 ONLY** — retained only to reproduce or validate the
+  immutable predecessor and not to be run by the revision-2 readiness lane; or
+- **FUTURE AUTHORIZED** — prohibited until the named external gate explicitly
+  authorizes that exact operation.
+
 ## Published decision
 
 The 2026-07-24 replacement decision is **no architecture promotion**:
@@ -179,36 +203,66 @@ result is not an identifiable all-model quality estimate:
 
 Consequently, no pilot report from this run may authorize holdout. Treat the
 semantic phase as `semantic_schema_incompatible`, mint no selection artifact,
-and stop. HSSL-G200 owns a new content-addressed, label-blind semantic
-projection, prompt/schema, scoreability calibration, and non-vacuous quality
-gate. HSSL-G210 owns equal A0/candidate kernel exposure and causal
-optional-component rescue accounting. Because those changes alter metrics,
-prompts, producer contracts, routes, and eligibility behavior, they require a
-new protocol/registry identity and a fresh complete pilot/development matrix;
-revision 1 receipts must not be relabelled.
+and stop. HSSL-G200 owns the new content-addressed, label-blind semantic
+projection and fail-closed calibration scaffold; HSSL-G201 owns its real
+source-replayed scoreability calibration and non-vacuous quality gate.
+HSSL-G210 owns equal A0/candidate kernel exposure and causal
+optional-component rescue accounting at the data-free single-case runtime
+boundary. HSSL-G211 owns authoritative persistence of each full
+`CausalRuntimeEvidenceV2` into the G210 matrix, and HSSL-G212 owns execution
+and independent revalidation of the real reviewed rescue population. Because
+those changes alter metrics, prompts, producer contracts, routes, and
+eligibility behavior, they require a new protocol/registry identity and a
+fresh complete pilot/development matrix; revision 1 receipts must not be
+relabelled.
 
 The combined fixture layout also does not provide an adequate confidentiality
 boundary for a future blinded evaluation. No holdout backend execution
 occurred in the repaired run, but the current holdout is retired from future
 selection claims. HSSL-G220 requires an independently authored replacement
-outside the tuning worktree, sealed only after HSSL-G200 and HSSL-G210 are
-frozen, with append-only access receipts. HSSL-G230 then owns the fresh
-revision-2 matrix and exact pilot authorization. Revision-1 HSSL-G150 and its
-old holdout must never be reused for the new claim; a revision-2 successor
-requires the new protocol, replacement seal, and exact fresh HSSL-G230
-authorization. Until then, do not execute any holdout, publish a replacement
+outside the tuning worktree, sealed after the final source/run freeze but
+before pilot/development outcomes can influence its authorship, with
+append-only access receipts. HSSL-G230 owns the negative-only authorization
+scaffold. HSSL-G234 through HSSL-G238 implement independent positive
+validator families in parallel; local HSSL-G231 composes and tests those
+validator implementations. HSSL-G239 makes external operational completion
+authoritative rather than evidence-marker text. Local HSSL-G240 implements
+the pinned, confined source executor and binds actual runtime environment,
+cache, process, state, output, and replay namespaces to canonical
+preregistered preimages.
+HSSL-G203 repairs and independently validates the user-requested Leanstral P2P
+topology. HSSL-G202 then freezes the final clean source, complete run plan,
+and live capabilities. HSSL-G220 must then create the independently governed
+replacement seal before HSSL-G201 may reveal any pilot/development outcome.
+HSSL-G201 executes the semantic submatrix once and HSSL-G212 continues that
+same persisted run through the causal submatrix. External HSSL-G243 validates
+the actual source-execution/namespace/replay population; external HSSL-G242
+then applies the HSSL-G231 validators to that exact population. HSSL-G232
+only joins those externally validated receipts before freezing an exact
+proposed pilot authorization. HSSL-G241 is the separate externally governed
+join that source-recomputes that proposal and the complete upstream identity
+chain before a custodian may release the replacement holdout. Revision-1
+HSSL-G150 and its old holdout must never be reused for the new claim. Until
+all of those gates close, do not execute any holdout, publish a replacement
 HSSL-G170 decision, or infer production responsibility.
 
 ### Revision-2 implementation boundary
 
-The HSSL-G200 through HSSL-G230 code scaffold is additive and data-free. It
-does not mean that the revised benchmark has run or that any candidate has
-passed:
+The HSSL-G200, HSSL-G210, HSSL-G211, HSSL-G230, HSSL-G234 through
+HSSL-G240, local HSSL-G231, and the source-safe HSSL-G241 custodian adapter
+are additive, data-free implementation work. HSSL-G203, HSSL-G202,
+HSSL-G220, HSSL-G201, HSSL-G212, HSSL-G243, HSSL-G242, HSSL-G232, and
+HSSL-G241 still require independently controlled operational evidence. None
+of these goal records means that the revised benchmark has run, that any
+candidate has passed, or that a custodian may release holdout access:
 
-- HSSL-G200 defines the source-only semantic protocol and validator, but G210
-  execution now replays the complete persisted 20-case/100-coordinate
-  pilot/development calibration sources. A caller-supplied report CID is not
-  authority: a CID proves byte integrity, not independent review or truth.
+- HSSL-G200 defines the source-only semantic protocol, producer contracts, and
+  validator scaffold. Its marker and synthetic tests do not establish that
+  reviewed calibration sources were executed.
+- HSSL-G201 owns the complete persisted 20-case/100-coordinate
+  pilot/development calibration source replay and independent validation. A
+  caller-supplied report CID is not authority: a CID proves byte integrity,
+  not independent review or truth.
 - HSSL-G210 defines compiler-first causal selection, raw-CID certificate
   identity, duplicate suppression, native-kernel sidecars, explicit
   denominators, and component cost/rate receipts. The live
@@ -232,7 +286,31 @@ passed:
   continuation with zero rescue credit. Synthetic tests validate this live
   bridge, but that is implementation evidence, not a benchmark result:
   operational execution still requires the real reviewed rescue population
-  and a complete source-replayed matrix.
+  and a complete source-replayed matrix. `HSSLEV2108F34` proves only this
+  single-case scaffold; it is not evidence that the batch or benchmark ran.
+- HSSL-G211 now provides the authoritative batch/persistence bridge in
+  `causal_batch.py`. It replays all supplied `CausalRuntimeEvidenceV2` values
+  before the first write, derives the shared compiler-exposure population and
+  causal aggregates, persists canonical per-coordinate envelopes with
+  race-safe immutable resume, and rejects foreign or reduced evidence. The
+  `G210RuntimeReceiptMatrixV2` join then replays pilot and development batches,
+  requires the complete A0-A12/cold-warm Cartesian, and binds every full
+  runtime receipt back to its reduced aggregate. Its output root must be an
+  absolute private directory outside every Git repository/worktree; relative,
+  symlinked, non-directory, or group/other-accessible roots fail before a
+  receipt write, and created state/result/lock directories are mode 0700.
+  G211 now also validates, persists, rereads, and CID-binds the matching G240
+  runtime-namespace and source-orchestration evidence sets. The compatibility
+  path may omit those sets for older synthetic callers, but G231 rejects that
+  path: an operational positive bundle requires both G211 batches to carry
+  complete live G240 evidence and private source-validation inputs. This is
+  source-safe implementation evidence; it does not manufacture the real G201
+  results or execute the G212 matrix.
+- HSSL-G212 owns the real reviewed pilot/development rescue execution. It
+  continues the exact frozen G201 run from its persisted source-only
+  front-end records and cannot re-invoke those front ends. It cannot start
+  until the real G201 source replay passes and the HSSL-G211 bridge validates;
+  synthetic runtime tests cannot satisfy this goal.
 - HSSL-G220 defines only the external-seal and custody mechanics. The seal
   commits to the raw replacement-manifest CID, protocol/attestation CIDs,
   public counts/strata, and one canonical access-ledger authority. Premature,
@@ -241,18 +319,227 @@ passed:
   signed checkpoints), storage ACLs, and the actual replacement manifest
   remain external work; a tuning principal with direct same-path write access
   is outside the current local ledger's trust model.
-- HSSL-G230 consumes full G210 manifests, execution profiles, case receipts,
-  and causal aggregates. It is intentionally negative-only until independent
-  revision-2 safety, paired-efficacy, resource, replay, and statistical gate
-  validators can recompute every claim from source. It cannot currently mint
-  a shortlist or replacement-holdout authorization. There is not yet an
-  authoritative batch/persistence bridge from every full
-  `CausalRuntimeEvidenceV2` receipt into `G210ReceiptMatrix`: the retired
-  selection-only batch wrapper is fail-closed, while the current matrix stores
-  reduced manifests, profiles, case receipts, and aggregates. A future
-  positive G230 gate must ingest source-revalidated G200 authority and bind and
-  replay every complete `CausalRuntimeEvidenceV2.receipt_cid`, not accept only
-  the reduced causal receipt or aggregate.
+- HSSL-G230 uses public revision-2 schemas and synthetic identities only to
+  prove a persistable negative decision. It is intentionally incapable of
+  minting a shortlist or replacement-holdout authorization;
+  `HSSLEV2309D46` proves only that fail-closed scaffold.
+- HSSL-G234 through HSSL-G238 independently own full-runtime
+  efficacy/reliability/routing, semantic quality, reviewed-control safety,
+  resource/cost/statistics/Pareto, and detached replay validation. These
+  source-safe validator implementations are present, but their operational
+  evidence has not been produced. The G238 replay population is
+  source-derived: replay every success and the
+  lexicographically lowest source-record CID in every nonempty
+  split/cache/variant failure stratum. Each selected target requires a unique
+  detached worktree, actual bounded process-group execution, replay run,
+  process namespace, private state/output roots, and per-stage cache
+  namespaces. Its private validation sources must re-open the live worktree,
+  recompute the command and tracked entrypoint against the G202-frozen
+  `G240SourceExecutorContractV2`, and reproduce exact semantic, terminal
+  native-kernel, status, and independent-resource identities. Receipt-only,
+  precomputed, partial, attached, source-stale, shared-namespace, auto-merge,
+  or holdout-touching evidence is incomplete. The G238 operational path exists
+  in `replay.py` and `replay_gate.py`; its local parent integration and
+  source-safe regressions are complete, but no real G201/G212 record has been
+  replayed.
+- HSSL-G240 now implements canonical namespace policies, runtime namespace
+  evidence sets, frozen source-executor contracts, actual bounded source-job
+  process execution, private validation sources, source-orchestration evidence
+  sets, and the detached replay bridge. Its source layout is
+  explicit: `namespace_provenance.py` defines canonical runtime/replay
+  preimages; `runtime_confinement.py` defines the Landlock policy and
+  path-free receipt; `source_bootstrap_contract.py` freezes the two-stage
+  profile and private-policy transport; `source_bootstrap.py` is the directly
+  launched minimal stage that applies confinement before stage two;
+  `source_bound_import.py` resolves exact pinned submodule modules without
+  repeating Git after confinement; `source_executor.py` owns authenticated
+  stage-two preflight and one-job execution; `source_orchestration.py` owns
+  the parent-held allowlist, bounded child, receipt pipe, and evidence join;
+  and `replay.py`/`replay_gate.py` consume the same contract from a different
+  detached namespace. G211 persists both G240 evidence-set families, and G238
+  consumes the operational replay side. `HSSLEV2405D72` marks this bounded
+  local implementation after 87 source/worktree/detached-replay tests,
+  21 source-reconciliation tests, 15 adversarial materialization tests, and
+  four independent transport/materialization replays passed. It is not an
+  operational G243 receipt.
+- Before a worktree or submodule checkout, preparatory Git resolves an
+  absolute non-group/world-writable system executable, requires Git 2.40 or
+  newer, discards inherited Git/config/loader state, disables hooks and
+  fsmonitor, rejects effective clean/smudge/process filters, rejects local or
+  worktree URL rewrites and protocol overrides, and installs from an owned
+  empty template. All protocols default to denied; only the exact
+  already-provisioned local `file` source is enabled for the pinned
+  `--checkout --no-fetch` operation. No remote-helper or network fallback is
+  permitted. The executed G240 runtime then authenticates its separately
+  frozen Git executable by raw CID.
+- G240 confinement has four distinct authority layers. First, the parent
+  source-binds the clean outer tree, recursive gitlinks, pinned interpreter
+  and runtime artifacts, exact tracked bootstrap command, and private
+  filesystem/port policy. Second, the single-threaded bootstrap accepts only
+  standard input/output/error plus one dedicated one-shot receipt pipe,
+  authenticates the source observations before confinement, and launches with
+  `close_fds` rather than an unsafe Python `preexec_fn`. Third, the child sets
+  `no_new_privs` and applies the exact Landlock ABI 6/7 profile: all reviewed
+  filesystem rights through device `ioctl`, TCP bind/connect, abstract UNIX
+  socket scope, and signal scope are handled; read/write access is restricted
+  to exact job state/output/cache roots and TCP connect is granted only for
+  destination port 8080. Fourth, the parent joins the canonical pipe receipt
+  to the actual bounded/reaped process, and G211/G238 plus external G243 must
+  source-replay its public CIDs against the private paths and process
+  observations.
+- Landlock is not a container or endpoint-authentication authority. Its TCP
+  rule authenticates a destination **port**, not an IP address; it does not
+  restrict UDP or pathname UNIX sockets, and it cannot revoke a descriptor
+  opened before confinement. Those residuals are handled by the minimal
+  bootstrap, zero inherited sockets, exact descriptor inspection,
+  `close_fds`, the fixed child environment, endpoint-identity checks, and
+  external negative tests. Unsupported/newer ABIs, broader paths, an extra
+  inherited descriptor/socket, or any alternate TCP port fail closed. Port
+  8080 is the G240 child's outbound connection to the already-running local
+  HTTP model API. Port 19001 is the separately operated G203 P2P listener; the
+  benchmark child neither binds nor receives a Landlock grant for 19001.
+  These confinement and checkout-mode/umask claims are Linux/POSIX-specific,
+  and production fails closed without the required Landlock ABI. Inspecting
+  the host `landlock.h` constants only confirmed that ABI; the header is not a
+  project dependency. The reviewed repository/configuration threat model is
+  static and non-root. Concurrent same-user mutation between Git preflight
+  and use remains a documented TOCTOU residual controlled by frozen exclusive
+  worktrees; generic preparation Git is path/mode/version authenticated, while
+  the runtime Git in the G240 contract is separately CID-authenticated.
+- HSSL-G231 now composes the positive validator families and additionally
+  requires both persisted G211 split batches, their live G240 runtime
+  namespace/source-orchestration evidence, and operational G238 private replay
+  sources. It source-recomputes those inputs instead of accepting their CIDs as
+  assertions. `HSSLEV2312F74` marks the bounded local composite after its exact
+  51-test source-safe suite and the final G240 trust-chain regressions passed.
+  No operational positive bundle exists; external G242 remains unfulfilled.
+- HSSL-G239 owns typed external-completion authority. Marker discovery remains
+  useful for locating implemented code, but operational completion requires a
+  source-bound external receipt that binds the clean commit/tree, recursive
+  gitlinks, run plan, parent ledger, artifact CIDs, and an independent
+  validator CID. Every operational goal declares
+  `Completion authority: external`, which makes it fail closed before the
+  first authority file is supplied; a same-named source marker cannot
+  bootstrap completion. Nested supervisor commit `2696e5ca` adds four
+  defense-in-depth corrections: wrapped objective fields and field rewrites
+  retain the complete text; persisted AST rows are never evidence/cache
+  authority and every current source/symbol/token/embedding/AST field is
+  recomputed; declarations, aliases, durable authority CIDs, and typed
+  `external_operational_completion` evidence use one sticky fence; and
+  duplicate task CIDs merge only for semantically equivalent work, while
+  conflicting identities remain invalid even if one copy claims success.
+  Sensitive bytes remain outside the repository. The local supervisor
+  validates canonical structure and current Git identity; retrieval of CID
+  payloads and validator-signature verification belong to the separately
+  governed authority trust root.
+- HSSL-G203 owns the intended Leanstral P2P repair and live topology receipt.
+  It must use the existing shared service, custom port 19001, every
+  policy-approved active local address, configured bootstrap/rendezvous peers,
+  pubsub/floodsub policy, and an independently successful dial. Port 8000,
+  one container-only address, an HTTP-only substitution, or a duplicate model
+  server cannot satisfy this goal. An inference-free diagnostic collection
+  from submodule source `5d969f284b0c0b5dbf2091ec0abc2696d6a2a441`
+  now passes all four canonical bootstrap dials, same-service rendezvous, an
+  independent client-process dial, and direct-model-manager/MCP model-list
+  agreement. It advertises `10.10.0.14`, `10.8.0.99`, and `172.30.4.2` on
+  port 19001 from a wildcard listener; diagnostic receipt CID
+  `bafkreiacx2qd2ftem6cuyvx2m3eyp7ll4uhk5xs3erxn5cioydxs72wwwy`.
+  This is not the final source-bound G203 receipt because the outer source
+  freeze still follows it, and the persistent user service remains on its
+  older deployment until the reviewed submodule source is promoted.
+- HSSL-G202's implementation now constructs its G201 and G210 preflight plans
+  from source-only targets, cases, and canonical `AblationPlan` values before
+  any outcome exists. Its frozen run input binds the preregistered G240
+  executor-contract policy, and its runtime identity projection binds adapter,
+  canonical adapter module, full observed source provenance, environment, and
+  coordinate identities without deriving a preflight input from results.
+  This fixes the former circular preflight/provenance boundary; it is not an
+  external completion. The final G202 operation still runs only after all
+  implementation and validator code is clean and committed, and it still
+  requires a detached source/gitlink receipt, immutable 520-coordinate
+  A0-A12 pilot/development plan, live capability freeze, resource policy,
+  disjoint namespaces, independently authorized bounded non-corpus component
+  smokes, and a fresh HSSL-G203 P2P receipt. Leanstral evidence must
+  distinguish the logical `leanstral_local` route from `llamacpp` transport.
+- HSSL-G243 is the external operational half of local HSSL-G240. Only after
+  G201 and G212 exist may an independent validator source-recompute their
+  complete process, environment, confinement, physical cache, state, output,
+  and detached-replay population. Synthetic namespace receipts or the local
+  G240 implementation marker cannot satisfy it.
+- HSSL-G242 is the external operational half of local HSSL-G231. It applies
+  the frozen positive-validator implementation to the exact
+  G201/G212/G220/G243 source graph without re-invoking a measured component.
+  Missing or negative evidence remains an explicit negative bundle and cannot
+  be converted into a positive CID by a local task, marker, or merge receipt.
+- HSSL-G232 never invokes a producer, solver, model, or native kernel. It joins
+  the already persisted G201/G212 evidence, HSSL-G220 seal identity, G202
+  freeze, externally validated G243 runtime population, and the exact G242
+  application of the HSSL-G231 gates. Only a complete nonempty pass can
+  propose an exact replacement-holdout authorization. Constructing that
+  object, even with one to four canonical arm IDs, does not release holdout
+  access and does not authorize production.
+- HSSL-G241 is the sole custodian-release boundary. It reparses the complete
+  positive G231 implementation through the exact G242 bundle and validates the
+  G202/G201/G211/G212/G220/G243/G232 identity chain, then requires a current
+  HSSL-G239-governed external receipt with independent decision, validation,
+  custody, and execution authorities. The released arms must equal the
+  deterministic source-derived shortlist; arbitrary one-to-four arm lists,
+  canonical-CID-only constructors, booleans, source markers, or
+  self-authorization fail closed. The source-safe gate is implemented in
+  `custodian_release.py`, including exact G232 proposal replay, out-of-band
+  G239 and custodian trust roots, and append-only private-ledger checks. No
+  G241 implementation marker, external release receipt, or holdout access
+  exists. The G239 external validator and the holdout custodian are distinct
+  authorities: an external-completion receipt does not itself grant custody,
+  and the custodian does not manufacture the receipt it is required to
+  verify. G241 records no holdout activity and cannot authorize production.
+
+### G241 operational custody and rollback boundary
+
+The G241 source implementation is hardened, but it does not create the
+independent operational authorities that it requires:
+
+- The externally pinned custody trust root names a canonical absolute Git
+  executable path and a CID that binds both that path and the executable's raw
+  CID. G241 opens that regular, executable, non-symlink file with no-follow
+  descriptors and executes the already-open inode, not an ambient `git`.
+  Subprocesses receive a minimal fixed environment; ambient `PATH`, `GIT_*`,
+  `PYTHON*`, and `LD_*` injection is discarded. Every invocation overrides
+  repository configuration to disable fsmonitor, the untracked cache, and
+  hooks. Source inspection also disables replacement refs, rejects
+  source-affecting local worktree/symlink/case/sparse/attribute/exclude
+  indirection and assume-unchanged or skip-worktree entries, requires the
+  stage-zero index to equal the pinned `HEAD` tree, and hashes every live
+  tracked blob and executable mode. Ignored importable, executable, symlink,
+  or native-library files fail closed.
+- A consuming caller must use the lock-scoped G241 custody transaction. It
+  holds the cooperating source, access-ledger, and release-ledger locks from
+  validation through custody. It fsyncs the single-use `access_granted`
+  receipt and then a typed release-ledger consumption tombstone before
+  resolving the sealed path or calling the custodian. The tombstone binds the
+  release and grant CIDs, both ledger file identities, purpose, executor,
+  custodian, trust root, and external monotonic-store policy. Success or
+  failure then receives one terminal access receipt under the same locks.
+  First creation fsyncs both each ledger inode and its containing directory.
+  No property or callback on the custodian object is evaluated until the
+  grant and tombstone are durable. Read-only receipt inspection is deliberately
+  not an access authority.
+- The release-ledger tombstone makes the consumed release cease to be the
+  current head. Consequently, truncating only the access ledger back to empty
+  on the same inode cannot replay that release. Conversely, if only the
+  tombstone is truncated, the intact access ledger remains fail-closed.
+  Device/inode anchors also detect unlink, rename, and replacement-file
+  substitution.
+- Local `flock` locks are advisory, and local mutable files cannot prove
+  monotonicity against a same-UID adversary that rolls **both** ledgers back to
+  their exact earlier byte states on their original inodes. Nor can a local
+  lock prevent a noncooperating source writer. Operational G241 therefore
+  requires the release-ledger authority named by the trust root to be backed
+  by an independently governed, queried monotonic append-only store, and the
+  source/custody namespace to be externally enforced read-only for the
+  transaction. If those controls are absent, G241 must remain blocked.
+  Synthetic test identities exercise joins and failure behavior only; they
+  are not production custody or monotonic-store authority.
 
 The compatibility bridge from an IPFS CID to a frozen legacy SHA-256 receipt
 field extracts the CID's `sha2-256` multihash digest. New structured and raw
@@ -262,14 +549,25 @@ introducing new bare hashes.
 Safe implementation validation does not load benchmark fixtures or holdout
 content:
 
+**SOURCE-SAFE NOW — implementation tests only; no operational receipt:**
+
 ```bash
 python -m pytest -q \
   tests/integration/benchmarks/logic_pipeline/test_causal_proof_ablation.py \
   tests/integration/benchmarks/logic_pipeline/test_causal_rescue_manifest.py \
   tests/integration/benchmarks/logic_pipeline/test_causal_rescue_metrics.py \
   tests/integration/benchmarks/logic_pipeline/test_causal_runtime.py \
+  tests/integration/benchmarks/logic_pipeline/test_causal_runtime_batch.py \
+  tests/integration/benchmarks/logic_pipeline/test_runtime_confinement.py \
+  tests/integration/benchmarks/logic_pipeline/test_source_orchestration.py \
+  tests/integration/benchmarks/logic_pipeline/test_fresh_replay_gate.py \
+  tests/integration/benchmarks/logic_pipeline/test_fresh_worktree_replay.py \
+  tests/integration/benchmarks/logic_pipeline/test_positive_gate_bundle.py \
+  tests/integration/benchmarks/logic_pipeline/test_g231_operational_conformance.py \
+  tests/integration/benchmarks/logic_pipeline/test_custodian_release.py \
   tests/integration/benchmarks/logic_pipeline/test_replacement_holdout_seal.py \
   tests/integration/benchmarks/logic_pipeline/test_revised_pilot_authorization.py \
+  tests/integration/benchmarks/logic_pipeline/test_revised_pilot_positive_gates.py \
   tests/unit/benchmarks/logic_pipeline/test_statistics.py
 ```
 
@@ -279,12 +577,22 @@ establish implementation coverage only and do not include a reviewed
 benchmark run; report exact counts from the current commit rather than
 preserving counts from an earlier revision in this runbook.
 
-Do not advance to a revised pilot run until the real G200 source replay passes
-and this bridge has produced and revalidated the complete G210 matrix over the
-real reviewed rescue population; the current evidence is synthetic only. Do
-not advance to replacement-holdout access until independent G220 authorship,
-review, custody, and append-only storage exist and a future source-recomputed
-G230 gate produces a nonempty exact authorization.
+Do not operationally complete HSSL-G202 until every implementation lane passes
+from a clean committed source and typed external-completion reconciliation is
+available. Its source-only preflight objects are implementation prerequisites,
+not a live freeze or external receipt. After G202, independent G220 custody
+must complete before G201 may reveal pilot/development outcomes. Do not
+advance to HSSL-G212 until the real G201 source replay passes and the
+HSSL-G211 bridge validates. After G212, require HSSL-G243 to externally
+recompute the complete G240 source-execution/namespace/replay population, then
+require HSSL-G242 to externally apply every local HSSL-G231 validator to that
+exact population. Do not advance to HSSL-G232 until both external joins pass
+and G220 authorship/review/custody and append-only storage remain valid. Do
+not advance to HSSL-G241 until G232 produces a nonempty exact proposal and
+every upstream identity can be source-recomputed under the same clean run. Do
+not advance to replacement-holdout access until an independent custodian
+validates the externally governed G241 release receipt; no such receipt
+currently exists.
 
 The immutable predecessor decision is:
 
@@ -417,6 +725,8 @@ Every run must preserve all of these invariants:
 Run commands from the repository root unless a step explicitly changes into
 the detached worktree. First record the source state:
 
+**SOURCE-SAFE NOW:**
+
 ```bash
 git rev-parse --show-toplevel
 git rev-parse --verify HEAD
@@ -428,6 +738,8 @@ Choose a unique run ID and an operations root outside this checkout and its
 Git common directory. Do not use the default in-repository benchmark root for
 worktree preparation.
 
+**SOURCE-SAFE NOW:**
+
 ```bash
 export HSSL_RUN_ID=hssl-reproduce-20260724T000000Z
 export HSSL_OPERATIONS_ROOT=/var/tmp/hssl-benchmark-operations
@@ -437,6 +749,8 @@ test ! -e "$HSSL_OPERATIONS_ROOT/$HSSL_RUN_ID"
 ```
 
 Create the detached worktree and its safety receipt:
+
+**SOURCE-SAFE NOW:**
 
 ```bash
 python - <<'PY'
@@ -464,6 +778,8 @@ source checkout, the target exists, the revision is not a full commit, the
 worktree is attached to a branch, or source HEAD/branch/status changes. Review
 the receipt and set the worktree path only after it passes:
 
+**SOURCE-SAFE NOW:**
+
 ```bash
 export HSSL_WORKTREE="$HSSL_OPERATIONS_ROOT/$HSSL_RUN_ID/worktrees/source"
 cd "$HSSL_WORKTREE"
@@ -480,11 +796,46 @@ the original checkout; any change is an incident.
 
 ## Preflight and capability probe
 
-Capability probing is read-only: it does not import optional backend parents,
-install software, start services, or make inference calls. It emits a record
-for spaCy, SyMAI, `llm_router`, Hammer solvers, Leanstral, Lean/Lake, cache,
-and the resource scheduler. The implementation and trust boundary live in
-`benchmarks/logic_pipeline/capabilities.py`.
+The basic capability inventory below is read-only: it does not import optional
+backend parents, install software, start services, or make inference calls. It
+emits a diagnostic record for spaCy, SyMAI, `llm_router`, Hammer solvers,
+Leanstral, Lean/Lake, cache, and the resource scheduler. It is necessary but
+does not by itself satisfy the final HSSL-G202 live eligibility freeze. That
+freeze separately requires an approved window for bounded, non-corpus
+component smokes, including exact model-manager/MCP discovery and the frozen
+Leanstral transport scope. The implementation and basic trust boundary live
+in `benchmarks/logic_pipeline/capabilities.py`.
+
+The 2026-07-26 pre-freeze diagnostic run
+`hssl-20260726T014546Z` repaired and exercised the requested runtime without
+opening benchmark sources:
+
+- spaCy 3.8.14 loaded `en_core_web_sm` 3.8.0 with parser, lemmatizer, NER,
+  sentence, tag, dependency, and lemma annotations present and no blank-model
+  fallback;
+- SymbolicAI/SyMAI 1.14.0 used requested and effective provider
+  `ipfs_accelerate_py` and model `Leanstral-119B`; its inner router resolved
+  exactly to `leanstral_local` and
+  `Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4` on the already running
+  `http://127.0.0.1:8080/v1` service, with one call, zero retries, no fallback,
+  no recursive routing, and a valid structured result;
+- Hammer/cvc5, Lean, Lake, the exact Leanstral service, cache backend, and
+  resource scheduler also probed available, so all eight requested capability
+  classes were present; and
+- the SyMAI smoke exposed and repaired an eager import of the optional Copilot
+  CLI/cache stack on the Leanstral-only route. It also proved that SyMAI creates
+  writable configuration/log files, so an operational child must copy the
+  pinned configuration into its own state-scoped prefix and must never share
+  the provisioned environment's prefix.
+
+These observations are diagnostics from uncommitted source. They show that the
+dependencies and route can work, but they are neither a clean-source
+capability freeze nor an HSSL-G202 completion receipt. Repeat every probe and
+bounded smoke from the final clean detached recursive worktree; a differing
+package, module, route, model, endpoint, configuration, or source identity
+starts a new run rather than inheriting this result.
+
+**SOURCE-SAFE NOW — read-only/non-corpus inventory only:**
 
 ```bash
 python - <<'PY'
@@ -492,7 +843,7 @@ import os
 from pathlib import Path
 from benchmarks.logic_pipeline import RunPaths
 from benchmarks.logic_pipeline.capabilities import (
-    capability_inventory_sha256,
+    capability_inventory_cid,
     probe_runtime_capabilities,
     write_capability_inventory,
 )
@@ -509,7 +860,7 @@ inventory = probe_runtime_capabilities(
 destination = paths.receipts / "capability-inventory.json"
 write_capability_inventory(inventory, destination)
 print(destination)
-print(capability_inventory_sha256(inventory))
+print(capability_inventory_cid(inventory))
 for record in inventory.capabilities:
     print(record.kind.value, record.status.value, record.reason or "")
 PY
@@ -521,10 +872,46 @@ and begin a new run ID with a new probe. A capability identity, version,
 model, solver, kernel, source commit, or environment change invalidates
 comparison with the earlier inventory.
 
+Record Leanstral networking truthfully. The revision-2 model lock and
+submodule source request wildcard P2P on custom port 19001, policy-selected
+local-address advertisement, canonical bootstrap peers, and same-service-peer
+rendezvous. Pubsub and floodsub remain explicitly disabled because no router
+is wired into the current node. This is the separately supervised G203 P2P
+service listener; it is not the G240 benchmark child's network allowance.
+G240 may connect outward only to the existing HTTP model API's TCP destination
+port 8080, and Landlock's port-only rule does not authenticate the peer IP.
+The child may neither bind nor connect to port 19001. The live diagnostic
+exposed two real
+transport defects after the initial source-safe implementation: the installed
+Trio API requires captured output rather than `stdout=subprocess.PIPE`, and
+py-libp2p TCP requires canonical `/dnsaddr/` bootstrap peers to be resolved to
+same-peer plain-TCP descendants before dialing. Submodule commits `f631db4c`
+and `5d969f28` fix those boundaries; the configured DNSADDR identity remains
+in the public policy and attempt evidence. The focused topology suite passes
+32 tests, and the inference-free diagnostic receipt
+`bafkreiacx2qd2ftem6cuyvx2m3eyp7ll4uhk5xs3erxn5cioydxs72wwwy` exercises
+bootstrap, rendezvous, independent dialing, model-manager discovery, and MCP
+model listing. This still is not operational completion: repeat the collector
+after the final clean outer commit and obtain independent external authority
+before HSSL-G202. Do not silently substitute the HTTP endpoint or port 8000,
+reuse the serving process as the purported independent client, or treat a
+source-side synthetic or pre-freeze diagnostic receipt as completion.
+
 Before execution, validate the dependency-free contracts:
+
+**SOURCE-SAFE NOW — dependency-free unit contract only:**
 
 ```bash
 python -m pytest tests/unit/benchmarks/logic_pipeline -q
+```
+
+The following runner and report commands may load the historical benchmark
+package. They are retained only to reproduce revision 1 and are prohibited in
+the revision-2 readiness lane.
+
+**HISTORICAL REVISION 1 ONLY:**
+
+```bash
 python benchmarks/logic_pipeline/runner.py \
   --variant A0 --split pilot --validate-only
 python benchmarks/logic_pipeline/report.py --section frontend --validate
@@ -539,9 +926,12 @@ not by themselves establish an efficacy pass.
 
 Copy the seed into the run-specific operations state. Never write generated
 task state back into the seed or objective heap. The benchmark-facing
-validation boundary is `benchmarks/logic_pipeline/objective_ingestion.py`; it
-drives the repository supervisor shown below and must preserve the same
-run-scoped graph, discovery, bundle, and todo-vector identities.
+ingestion boundary is the repository's
+`ipfs_accelerate_py.agent_supervisor.objective_daemon` flow shown below; it
+must preserve the same run-scoped graph, discovery, bundle, and todo-vector
+identities.
+
+**SOURCE-SAFE NOW — no reconciliation, generation, or submission:**
 
 ```bash
 export HSSL_SUPERVISOR_ROOT="$HSSL_OPERATIONS_ROOT/$HSSL_RUN_ID/supervisor"
@@ -560,6 +950,20 @@ PYTHONPATH=ipfs_accelerate_py python -m \
   --bundle-dir "$HSSL_SUPERVISOR_ROOT/objective_bundles" \
   --dataset-dir "$HSSL_SUPERVISOR_ROOT/objective_datasets" \
   --graph-path "$HSSL_SUPERVISOR_ROOT/objective_graph.json" \
+  --todo-vector-index-path "$HSSL_SUPERVISOR_ROOT/objective_bundles/todo_vector_index.json" \
+  --plan-evaluation-path "$HSSL_SUPERVISOR_ROOT/plan_evaluations.json" \
+  --analysis-escalation-path "$HSSL_SUPERVISOR_ROOT/analysis_escalation.json" \
+  --objective-generation-path "$HSSL_SUPERVISOR_ROOT/objective_generation.json" \
+  --scan-exclude-path tests/fixtures \
+  --scan-exclude-path tests/reasoner/fixtures \
+  --scan-exclude-path tests/mcplusplus_profile_h/fixtures \
+  --scan-exclude-path tests/unit/optimizers/graphrag/fixtures \
+  --scan-exclude-path ipfs_datasets_py/tests/reasoner/fixtures \
+  --scan-exclude-path workspace/benchmarks \
+  --scan-exclude-path workspace/leanstral-smoke \
+  --scan-exclude-path security_ir_artifacts/corpora \
+  --scan-exclude-path data/agent_supervisor \
+  --scan-exclude-path docs/performance_snapshots \
   --task-prefix HSSL-BENCH- \
   --max-findings 64 \
   --surplus-findings-per-goal 1 \
@@ -567,15 +971,93 @@ PYTHONPATH=ipfs_accelerate_py python -m \
   --no-generate-bounded-work
 ```
 
-The absence of `--submit-bundles` is intentional. Inspect the todo board,
-objective graph, discovery receipts, bundle index, and
-`objective_bundles/todo_vector_index.json`. HSSL-G170 must remain downstream
-of HSSL-G160, which must retain its HSSL-G150 and HSSL-G140 source chain. Each
-of the future HSSL-G180 repair-revision and HSSL-G190 legacy-S1 goals must
-remain downstream of HSSL-G170 without becoming a prerequisite that
-retroactively changes the frozen v2 publication. Each generated task must stay
-in its bundle shard, and evidence terms must
-reconcile from validated outputs rather than descriptive prose. Do not
+The first ingestion has no external authority and therefore omits the
+completion-receipt option. A separately governed receipt producer and an
+independent external validator—not the local supervisor, and not the holdout
+custodian merely by virtue of being custodian—must produce and validate the
+identity-only authority JSON outside the repository. Only after that authority
+exists may an operator repeat the same command, remove
+`--no-reconcile-goal-completion`, and add:
+
+**FUTURE AUTHORIZED — exact typed external authority required:**
+
+```bash
+--objective-external-completion-receipt-path \
+  "$HSSL_EXTERNAL_COMPLETION_AUTHORITY"
+```
+
+That file must contain only the typed source, gitlink, parent-ledger, run-plan,
+artifact-CID, producer, and independent-validator identities defined by the
+supervisor schema. It must not contain paths, source text, labels, expected IR,
+proof obligations, manifests, holdout bytes, model output, or secrets.
+
+The absence of `--submit-bundles` is intentional. Every writable supervisor
+output above is run-scoped outside the source tree. Exclusions are resolved
+against the repository root and must remain in the scan receipt; they prevent
+content inspection, cached-AST reuse, and generated metadata from crossing
+the benchmark confidentiality boundary. Inspect the todo board, objective
+graph, discovery receipts, bundle index, and todo-vector index before any
+submission.
+
+The supervisor also enforces a mandatory source-protection policy independently
+of the repeated CLI exclusions. It rejects protected path components such as
+fixtures, corpora, holdouts, workspaces, security IR artifacts, and performance
+snapshots; the `data/agent_supervisor` pair; symlinks; and resolved paths outside
+the repository. The same component policy applies beneath initialized
+immediate submodules. Persisted AST rows are untrusted diagnostic history, not
+source, symbol, embedding, or AST-cache authority. Every current tracked
+candidate fully recomputes its source text, symbols, tokens, embedding, and
+AST fields from the current file after the mandatory path policy passes;
+prior rows may contribute only bounded deletion/rename diagnostics. Thus the
+fail-closed policy reports zero evidence-row reuse and zero saved parse time,
+and even a poisoned row that claims a benign current path and Git blob cannot
+satisfy an objective.
+
+External completion is a scheduler fence, not merely a reconciliation hint.
+The generic completion-authority fields and the revision-2 operational goal
+identities fence each external goal and its unfinished descendants from local
+task generation, successful-status shortcuts, merge receipts, and duplicate
+task-CID aliases. Reconciliation evaluates external gates before descendants,
+so a stale or reopened gate cannot let a child advance in the same pass.
+`--no-reconcile-goal-completion` deliberately trusts no recorded external
+completion: it fences those gates and descendants while leaving independent
+local implementation goals eligible for bounded work and capacity. Focused
+completion/graph tests and daemon/refill integration tests must pass before
+using this behavior to restart the board.
+
+HSSL-G170 must remain downstream of HSSL-G160, which must retain its HSSL-G150
+and HSSL-G140 source chain. Future HSSL-G180 repair-revision and HSSL-G190
+legacy-S1 work stays downstream of HSSL-G170 without retroactively changing
+the frozen v2 publication. For revision 2, verify these exact edges:
+
+- HSSL-G211 is a child of HSSL-G210 and HSSL-G230 is a child of HSSL-G211.
+- HSSL-G234 through HSSL-G239 are independent children of HSSL-G230.
+- HSSL-G231 joins HSSL-G234 through HSSL-G238.
+- HSSL-G203 joins HSSL-G112 and HSSL-G239.
+- HSSL-G240 joins HSSL-G211 and HSSL-G230.
+- HSSL-G202 joins HSSL-G200, HSSL-G203, HSSL-G211, HSSL-G231, HSSL-G239,
+  and HSSL-G240.
+- HSSL-G220 is a child of HSSL-G202 and must externally complete before G201
+  can reveal any measured outcome.
+- HSSL-G201 joins HSSL-G202 and HSSL-G220.
+- HSSL-G212 retains HSSL-G201, HSSL-G211, and HSSL-G202.
+- HSSL-G243 joins HSSL-G201, HSSL-G202, HSSL-G212, HSSL-G239, and the local
+  HSSL-G240 implementation, and externally validates the actual runtime
+  population.
+- HSSL-G242 joins HSSL-G201, HSSL-G202, HSSL-G212, HSSL-G220, the local
+  HSSL-G231 implementation, HSSL-G239, and HSSL-G243, and externally
+  recomputes the complete positive bundle.
+- HSSL-G232 retains HSSL-G201, HSSL-G212, HSSL-G220, HSSL-G202, HSSL-G242,
+  and HSSL-G243.
+- HSSL-G241 joins HSSL-G201, HSSL-G202, HSSL-G211, HSSL-G212, HSSL-G220,
+  HSSL-G231, HSSL-G232, HSSL-G239, HSSL-G242, and HSSL-G243, and is the only
+  edge to custodian release.
+
+Run ingestion only from a clean committed detached source with exact recursive
+gitlinks. Marker scanning is implementation-coverage discovery, not completion
+authority. Operational goals reconcile only from typed external receipts;
+descriptive prose, a generated task, or an evidence term found in source must
+never close them. Each generated task must stay in its bundle shard. Do not
 manually mark generated backlog tasks complete. If a genuine gap is too large,
 refine the objective heap into bounded child goals, rerun ingestion, and
 preserve the parent/child phase edge; do not split merely to bypass a failed
@@ -584,6 +1066,8 @@ gate.
 ## Baseline and ablation execution
 
 Validate the frozen A0 manifest before any comparative run:
+
+**HISTORICAL REVISION 1 ONLY:**
 
 ```bash
 python benchmarks/logic_pipeline/runner.py \
@@ -595,6 +1079,8 @@ This content address is computed from the strict manifest payload; it is not
 the raw-file SHA-256 of JSON that contains its own artifact identity. A source
 file or submodule-gitlink drift is a validation failure. Normal A0 execution
 is permitted only into a new empty run-scoped result root:
+
+**HISTORICAL REVISION 1 ONLY:**
 
 ```bash
 python benchmarks/logic_pipeline/runner.py \
@@ -646,6 +1132,8 @@ a comparison can be made.
 
 Run the canonical pilot gate:
 
+**HISTORICAL REVISION 1 ONLY:**
+
 ```bash
 python benchmarks/logic_pipeline/report.py \
   --gate pilot-shortlist \
@@ -668,8 +1156,9 @@ nonbaseline arms and may pass only when:
 - failures and exclusions are retained;
 - prompts, policies, backend identities, thresholds, and resource policy are
   frozen before holdout; and
-- the receipt explicitly sets holdout authorization for that exact nonempty
-  shortlist.
+- the G232 proposal records that exact nonempty shortlist, after which a
+  separate G241 source replay and externally governed custodian receipt must
+  authorize release.
 
 For the published reassessment the decision is `incomplete`, the shortlist is
 frozen empty, and holdout is unauthorized. All coordinates are terminal and
@@ -692,6 +1181,9 @@ another shortlist decision.
 
 Validate the unopened seal without executing a holdout:
 
+**HISTORICAL REVISION 1 ONLY — validation of the sealed predecessor, never
+revision-2 holdout access:**
+
 ```bash
 python benchmarks/logic_pipeline/report.py \
   --gate holdout \
@@ -709,10 +1201,12 @@ success, failure, or non-null holdout metric. These zero activity counts prove
 containment only; they are not efficacy, safety, latency, or resource values.
 
 A future holdout execution is allowed only when the source-validated pilot
-receipt is passed, authorizes access, and freezes an exact nonempty shortlist.
-Use A0 and only those exact arms, identical manifests, separate cold/warm
-caches, alternating frozen arm order, and the same resource ceilings. The
-generic ablation executor must reject unauthorized holdout work before any
+proposal is passed and freezes an exact nonempty shortlist, and an independent
+custodian has validated the G241 release receipt for that exact source,
+identity chain, seal, and shortlist. Use A0 and only those exact arms,
+identical manifests, separate cold/warm caches, alternating frozen arm order,
+and the same resource ceilings. The generic ablation executor must reject
+missing, mismatched, self-authorized, or synthetic G241 releases before any
 filesystem or backend activity. Never run A0 alone as a substitute for a
 paired holdout.
 
@@ -760,6 +1254,8 @@ decision.
 
 Validate every report from canonical case-level evidence:
 
+**HISTORICAL REVISION 1 ONLY:**
+
 ```bash
 python benchmarks/logic_pipeline/report.py --section frontend --validate
 python benchmarks/logic_pipeline/report.py --section proof --validate
@@ -782,6 +1278,9 @@ python benchmarks/logic_pipeline/report.py --validate-runbook
 
 For a new measured statistics report, supply its new run-scoped canonical
 JSON:
+
+**FUTURE AUTHORIZED — only after the complete G202 → G220 → G201/G212 →
+G243 → G242 → G232 → G241 chain authorizes the corresponding phase:**
 
 ```bash
 python benchmarks/logic_pipeline/report.py \

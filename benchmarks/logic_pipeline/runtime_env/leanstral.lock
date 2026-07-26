@@ -20,16 +20,56 @@
     "service": "ipfs-accelerate-mcp"
   },
   "p2p": {
+    "advertise_policy": {
+      "allowed_interfaces": [
+        "wlP9s9",
+        "tun0",
+        "tun1"
+      ],
+      "reject_container_interfaces": true,
+      "reject_down_interfaces": true,
+      "reject_loopback": true,
+      "reject_unrelated_interfaces": true,
+      "required_ipv4": [
+        "172.30.4.2",
+        "10.8.0.99",
+        "10.10.0.14"
+      ]
+    },
+    "bootstrap_peers": [
+      "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+      "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+      "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+      "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt"
+    ],
+    "capabilities": {
+      "bootstrap": true,
+      "floodsub": false,
+      "mcp_stream": true,
+      "pubsub": false,
+      "rendezvous": true
+    },
     "custom_port": 19001,
-    "enabled": false,
-    "required_provider": "leanstral_local"
+    "enabled": true,
+    "inference_allowed": false,
+    "listen_addrs": [
+      "/ip4/0.0.0.0/tcp/19001"
+    ],
+    "probe_timeout_seconds": 10.0,
+    "rendezvous": {
+      "mode": "same_as_service_peer",
+      "namespace": "leanstral-local"
+    },
+    "required_provider": "leanstral_local",
+    "server_instance_count": 1
   },
-  "schema_version": "ipfs-accelerate.hssl-leanstral-runtime-lock.v1",
+  "schema_version": "ipfs-accelerate.hssl-leanstral-runtime-lock.v2",
   "smoke": {
     "max_tokens": 64,
     "prompt": "Complete this non-corpus Lean identity proof draft only: theorem hssl_identity (x : Nat) : x = x := by",
     "temperature": 0.0,
     "uses_benchmark_inputs": false
   },
-  "task_id": "HSSL-BENCH-033"
+  "task_id": "HSSL-BENCH-033",
+  "topology_task_id": "HSSL-G203"
 }

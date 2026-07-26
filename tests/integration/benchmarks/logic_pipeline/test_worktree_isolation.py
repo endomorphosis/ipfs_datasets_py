@@ -11,6 +11,8 @@ from dataclasses import FrozenInstanceError
 import json
 import os
 from pathlib import Path
+import shutil
+import stat
 import subprocess
 from typing import Iterable
 
@@ -18,6 +20,7 @@ import pytest
 
 from benchmarks.logic_pipeline import RunPaths
 from benchmarks.logic_pipeline.capabilities import (
+    CapabilityContractError,
     HSSLEV0118D14,
     WORKTREE_SAFETY_RECEIPT_NAME,
     WorktreeSafetyReceipt,
@@ -65,6 +68,24 @@ def _commit(repository: Path, message: str) -> str:
     _git(repository, "add", "--all")
     _git(repository, "commit", "--no-gpg-sign", "-m", message)
     return _git(repository, "rev-parse", "HEAD").stdout.strip()
+
+
+def _marker_script(
+    path: Path,
+    marker: Path,
+    *,
+    pass_stdin: bool = False,
+) -> Path:
+    body = [
+        "#!/bin/sh",
+        f"printf executed > {marker.as_posix()}",
+    ]
+    if pass_stdin:
+        body.append("cat")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(body) + "\n", encoding="utf-8")
+    path.chmod(0o755)
+    return path
 
 
 @pytest.fixture
@@ -183,6 +204,210 @@ def test_pinned_detached_worktree_preserves_dirty_active_checkout(
     ) == "pinned base\n"
     assert _git(checkout, "rev-parse", "HEAD").stdout.strip() == active_head
     assert _active_checkout_snapshot(checkout) == before
+
+
+def test_worktree_checkout_uses_safe_child_umask_without_mutating_caller(
+    disposable_repository: tuple[Path, str, str, str],
+    tmp_path: Path,
+) -> None:
+    checkout, pinned_base, _active_head, _ = disposable_repository
+    paths = RunPaths.for_run(
+        "secure-checkout-modes",
+        benchmark_root=tmp_path / "benchmark-state",
+    )
+    original_umask = os.umask(0o002)
+    try:
+        receipt = _prepare(checkout, paths, pinned_base)
+        observed_umask = os.umask(0o002)
+        assert observed_umask == 0o002
+        tracked_paths = tuple(
+            value
+            for value in _git(
+                receipt.worktree_root,
+                "ls-files",
+                "-z",
+            ).stdout.split("\0")
+            if value
+        )
+        regular_modes = []
+        for relative in tracked_paths:
+            metadata = (receipt.worktree_root / relative).lstat()
+            if stat.S_ISREG(metadata.st_mode):
+                regular_modes.append(stat.S_IMODE(metadata.st_mode))
+        assert regular_modes
+        assert all(mode & 0o022 == 0 for mode in regular_modes)
+    finally:
+        os.umask(original_umask)
+
+
+def test_worktree_checkout_disables_post_checkout_hook(
+    disposable_repository: tuple[Path, str, str, str],
+    tmp_path: Path,
+) -> None:
+    checkout, pinned_base, _active_head, _ = disposable_repository
+    marker = tmp_path / "post-checkout-marker"
+    _marker_script(
+        checkout / ".git" / "hooks" / "post-checkout",
+        marker,
+    )
+
+    receipt = _prepare(
+        checkout,
+        RunPaths.for_run(
+            "hook-safe-checkout",
+            benchmark_root=tmp_path / "benchmark-state",
+        ),
+        pinned_base,
+    )
+
+    assert receipt.worktree_commit == pinned_base
+    assert not marker.exists()
+
+
+def test_worktree_prevalidation_disables_fsmonitor(
+    disposable_repository: tuple[Path, str, str, str],
+    tmp_path: Path,
+) -> None:
+    checkout, pinned_base, _active_head, _ = disposable_repository
+    marker = tmp_path / "fsmonitor-marker"
+    monitor = _marker_script(
+        tmp_path / "malicious-fsmonitor",
+        marker,
+    )
+    _git(checkout, "config", "core.fsmonitor", monitor.as_posix())
+
+    receipt = _prepare(
+        checkout,
+        RunPaths.for_run(
+            "fsmonitor-safe-checkout",
+            benchmark_root=tmp_path / "benchmark-state",
+        ),
+        pinned_base,
+    )
+
+    assert receipt.worktree_commit == pinned_base
+    assert not marker.exists()
+
+
+def test_worktree_prevalidation_ignores_caller_path_git_wrapper(
+    disposable_repository: tuple[Path, str, str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkout, pinned_base, _active_head, _ = disposable_repository
+    marker = tmp_path / "path-wrapper-marker"
+    wrapper = _marker_script(
+        tmp_path / "malicious-bin" / "git",
+        marker,
+    )
+    wrapper.write_text(
+        wrapper.read_text(encoding="utf-8")
+        + f"exec {shutil.which('git', path=os.defpath)} \"$@\"\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(
+        "PATH",
+        f"{wrapper.parent.as_posix()}:{os.defpath}",
+    )
+
+    receipt = _prepare(
+        checkout,
+        RunPaths.for_run(
+            "path-safe-checkout",
+            benchmark_root=tmp_path / "benchmark-state",
+        ),
+        pinned_base,
+    )
+
+    assert receipt.worktree_commit == pinned_base
+    assert not marker.exists()
+
+
+def test_worktree_prevalidation_ignores_inherited_git_overrides(
+    disposable_repository: tuple[Path, str, str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkout, pinned_base, _active_head, _ = disposable_repository
+    marker = tmp_path / "inherited-config-marker"
+    hooks = tmp_path / "inherited-hooks"
+    _marker_script(hooks / "post-checkout", marker)
+    foreign = tmp_path / "foreign"
+    _init_repository(foreign)
+    monkeypatch.setenv("GIT_DIR", (foreign / ".git").as_posix())
+    monkeypatch.setenv("GIT_WORK_TREE", foreign.as_posix())
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.hooksPath")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", hooks.as_posix())
+    monkeypatch.setenv(
+        "GIT_CONFIG_PARAMETERS",
+        f"'core.hooksPath'='{hooks.as_posix()}'",
+    )
+
+    receipt = _prepare(
+        checkout,
+        RunPaths.for_run(
+            "environment-safe-checkout",
+            benchmark_root=tmp_path / "benchmark-state",
+        ),
+        pinned_base,
+    )
+
+    assert receipt.worktree_commit == pinned_base
+    assert not marker.exists()
+
+
+@pytest.mark.parametrize("attribute_location", ("tracked", "info"))
+@pytest.mark.parametrize("driver_kind", ("clean", "smudge", "process"))
+def test_worktree_checkout_rejects_effective_filters_before_execution(
+    tmp_path: Path,
+    attribute_location: str,
+    driver_kind: str,
+) -> None:
+    checkout = tmp_path / "filter-checkout"
+    _init_repository(checkout)
+    (checkout / "source.txt").write_text(
+        "pinned unfiltered bytes\n",
+        encoding="utf-8",
+    )
+    if attribute_location == "tracked":
+        (checkout / ".gitattributes").write_text(
+            "*.txt filter=adversarial\n",
+            encoding="utf-8",
+        )
+    commit = _commit(checkout, "filtered source identity")
+    if attribute_location == "info":
+        attributes = checkout / ".git" / "info" / "attributes"
+        attributes.write_text(
+            "*.txt filter=adversarial\n",
+            encoding="utf-8",
+        )
+    marker = tmp_path / f"{attribute_location}-{driver_kind}-marker"
+    driver = _marker_script(
+        tmp_path / f"malicious-{driver_kind}",
+        marker,
+        pass_stdin=driver_kind in {"clean", "smudge"},
+    )
+    _git(
+        checkout,
+        "config",
+        f"filter.adversarial.{driver_kind}",
+        driver.as_posix(),
+    )
+    _git(checkout, "config", "filter.adversarial.required", "true")
+    paths = RunPaths.for_run(
+        f"reject-{attribute_location}-{driver_kind}",
+        benchmark_root=tmp_path / "benchmark-state",
+    )
+
+    with pytest.raises(
+        CapabilityContractError,
+        match="checkout filters",
+    ):
+        _prepare(checkout, paths, commit)
+
+    assert not marker.exists()
+    assert not paths.run_root.exists()
 
 
 def test_isolated_commit_does_not_merge_or_advance_active_branch(

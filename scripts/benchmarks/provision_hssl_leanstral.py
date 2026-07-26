@@ -25,11 +25,24 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# Direct ``python scripts/...`` execution places only this script directory on
+# sys.path.  Add the resolved repository root so the shared benchmark CID
+# bridge is used in both CLI and imported-test modes.
+_REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-LOCK_SCHEMA: Final = "ipfs-accelerate.hssl-leanstral-runtime-lock.v1"
-RECEIPT_SCHEMA: Final = "ipfs-accelerate.hssl-leanstral-health-receipt.v1"
+from benchmarks.logic_pipeline.content_addressing import (
+    cid_for_dag_json,
+    validate_cid,
+)
+
+
+LOCK_SCHEMA: Final = "ipfs-accelerate.hssl-leanstral-runtime-lock.v2"
+RECEIPT_SCHEMA: Final = "ipfs-accelerate.hssl-leanstral-health-receipt.v2"
 EVIDENCE_SYMBOL: Final = "HSSLEV1126C73"
 TASK_ID: Final = "HSSL-BENCH-033"
+TOPOLOGY_TASK_ID: Final = "HSSL-G203"
 DEFAULT_LOCK_PATH: Final = (
     Path(__file__).resolve().parents[2]
     / "benchmarks"
@@ -46,11 +59,60 @@ PINNED_IDENTITY: Final = {
     "server_build": "llama.cpp",
 }
 PINNED_P2P_PORT: Final = 19001
+PINNED_P2P_LISTEN_ADDRS: Final = ("/ip4/0.0.0.0/tcp/19001",)
+PINNED_P2P_INTERFACES: Final = ("wlP9s9", "tun0", "tun1")
+PINNED_P2P_IPV4: Final = ("172.30.4.2", "10.8.0.99", "10.10.0.14")
+PINNED_P2P_BOOTSTRAP_PEERS: Final = (
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+    "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+)
+PINNED_P2P_RENDEZVOUS: Final = {
+    "mode": "same_as_service_peer",
+    "namespace": "leanstral-local",
+}
+PINNED_P2P_CAPABILITIES: Final = {
+    "bootstrap": True,
+    "floodsub": False,
+    "mcp_stream": True,
+    "pubsub": False,
+    "rendezvous": True,
+}
 PINNED_DRAFT_TIMEOUT_SECONDS: Final = 30.0
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _SECRET_KEYS = ("api_key", "apikey", "authorization", "credential", "password", "secret", "token")
-_REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 _LOCAL_IPFS_ACCELERATE_SOURCE: Final = _REPOSITORY_ROOT / "ipfs_accelerate_py"
+
+
+def _lock_binding_policy() -> dict[str, Any]:
+    """Return a fresh JSON policy document for the v2 lock identity."""
+
+    return {
+        "authoritative_field": "lock_cid",
+        "cid_codec": "dag-json",
+        "cid_version": 1,
+        "multibase": "base32",
+        "multihash": "sha2-256",
+        "legacy_compatibility_fields": ["lock_sha256"],
+    }
+
+
+def _receipt_binding_policy() -> dict[str, Any]:
+    """Return a fresh JSON policy document for the v2 receipt identity."""
+
+    return {
+        "authoritative_field": "receipt_cid",
+        "cid_codec": "dag-json",
+        "cid_version": 1,
+        "multibase": "base32",
+        "multihash": "sha2-256",
+        "legacy_compatibility_fields": ["receipt_sha256"],
+        "identity_fields_excluded_from_body": [
+            "receipt_cid",
+            "receipt_sha256",
+        ],
+    }
 
 
 def HSSLEV1126C73() -> str:
@@ -83,7 +145,11 @@ def _json_bytes(value: object) -> bytes:
 
 
 def semantic_sha256(value: object) -> str:
-    """Return a deterministic SHA-256 over canonical JSON."""
+    """Return the frozen G112 compatibility digest over canonical JSON.
+
+    New v2 lock identities use ``cid_for_dag_json``.  This bare digest remains
+    only for consumers of the historical ``lock_sha256`` and receipt fields.
+    """
 
     return hashlib.sha256(_json_bytes(value)).hexdigest()
 
@@ -140,6 +206,8 @@ class LeanstralRuntimeLock:
     mcp: Mapping[str, str]
     p2p: Mapping[str, Any]
     smoke: Mapping[str, Any]
+    lock_cid: str
+    # Frozen HSSL-G112 compatibility only.  ``lock_cid`` is authoritative.
     lock_sha256: str
 
 
@@ -158,12 +226,24 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
     root = _mapping(
         document,
         "lock",
-        {"schema_version", "evidence", "task_id", "identity", "http", "mcp", "p2p", "smoke"},
+        {
+            "schema_version",
+            "evidence",
+            "task_id",
+            "topology_task_id",
+            "identity",
+            "http",
+            "mcp",
+            "p2p",
+            "smoke",
+        },
     )
     if root["schema_version"] != LOCK_SCHEMA:
         raise LeanstralProvisioningError("unsupported lock schema_version")
     if root["evidence"] != EVIDENCE_SYMBOL or root["task_id"] != TASK_ID:
         raise LeanstralProvisioningError("lock evidence/task identity mismatch")
+    if root["topology_task_id"] != TOPOLOGY_TASK_ID:
+        raise LeanstralProvisioningError("lock topology task identity mismatch")
 
     identity = _mapping(
         root["identity"],
@@ -206,14 +286,100 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
     }:
         raise LeanstralProvisioningError("MCP discovery identity differs from the pin")
 
-    p2p = _mapping(root["p2p"], "p2p", {"enabled", "required_provider", "custom_port"})
-    if not isinstance(p2p["enabled"], bool):
-        raise LeanstralProvisioningError("p2p.enabled must be boolean")
+    p2p = _mapping(
+        root["p2p"],
+        "p2p",
+        {
+            "advertise_policy",
+            "bootstrap_peers",
+            "capabilities",
+            "custom_port",
+            "enabled",
+            "inference_allowed",
+            "listen_addrs",
+            "probe_timeout_seconds",
+            "rendezvous",
+            "required_provider",
+            "server_instance_count",
+        },
+    )
+    if p2p["enabled"] is not True:
+        raise LeanstralProvisioningError("p2p.enabled must be true")
     if _nonempty(p2p["required_provider"], "p2p.required_provider") != PINNED_IDENTITY["provider"]:
         raise LeanstralProvisioningError("p2p.required_provider may not substitute another provider")
     port = p2p["custom_port"]
     if isinstance(port, bool) or not isinstance(port, int) or port != PINNED_P2P_PORT:
         raise LeanstralProvisioningError("p2p.custom_port differs from the configured pin")
+    if tuple(p2p["listen_addrs"]) != PINNED_P2P_LISTEN_ADDRS:
+        raise LeanstralProvisioningError(
+            "p2p.listen_addrs must pin the wildcard listener on custom port 19001"
+        )
+    policy = _mapping(
+        p2p["advertise_policy"],
+        "p2p.advertise_policy",
+        {
+            "allowed_interfaces",
+            "reject_container_interfaces",
+            "reject_down_interfaces",
+            "reject_loopback",
+            "reject_unrelated_interfaces",
+            "required_ipv4",
+        },
+    )
+    if tuple(policy["allowed_interfaces"]) != PINNED_P2P_INTERFACES:
+        raise LeanstralProvisioningError(
+            "p2p advertise interface policy differs from the frozen host interfaces"
+        )
+    if set(policy["required_ipv4"]) != set(PINNED_P2P_IPV4):
+        raise LeanstralProvisioningError(
+            "p2p required advertised IPv4 identities differ from the pin"
+        )
+    for key in (
+        "reject_container_interfaces",
+        "reject_down_interfaces",
+        "reject_loopback",
+        "reject_unrelated_interfaces",
+    ):
+        if policy[key] is not True:
+            raise LeanstralProvisioningError(f"p2p.advertise_policy.{key} must be true")
+    if tuple(p2p["bootstrap_peers"]) != PINNED_P2P_BOOTSTRAP_PEERS:
+        raise LeanstralProvisioningError(
+            "p2p bootstrap peer identities differ from the pin"
+        )
+    rendezvous = _mapping(
+        p2p["rendezvous"],
+        "p2p.rendezvous",
+        {"mode", "namespace"},
+    )
+    if rendezvous != PINNED_P2P_RENDEZVOUS:
+        raise LeanstralProvisioningError(
+            "p2p rendezvous identity differs from the service-peer pin"
+        )
+    capabilities = _mapping(
+        p2p["capabilities"],
+        "p2p.capabilities",
+        set(PINNED_P2P_CAPABILITIES),
+    )
+    if capabilities != PINNED_P2P_CAPABILITIES:
+        raise LeanstralProvisioningError(
+            "p2p capabilities must truthfully disable pubsub and floodsub"
+        )
+    probe_timeout = _positive_number(
+        p2p["probe_timeout_seconds"],
+        "p2p.probe_timeout_seconds",
+    )
+    if probe_timeout > 10:
+        raise LeanstralProvisioningError(
+            "p2p.probe_timeout_seconds exceeds the 10 second bound"
+        )
+    if p2p["server_instance_count"] != 1:
+        raise LeanstralProvisioningError(
+            "p2p.server_instance_count must pin one attached server"
+        )
+    if p2p["inference_allowed"] is not False:
+        raise LeanstralProvisioningError(
+            "p2p.inference_allowed must remain false"
+        )
 
     smoke = _mapping(
         root["smoke"],
@@ -240,6 +406,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
         mcp=MappingProxyType(normalized_mcp),
         p2p=MappingProxyType(dict(p2p)),
         smoke=MappingProxyType(dict(smoke)),
+        lock_cid=cid_for_dag_json(canonical_document),
         lock_sha256=semantic_sha256(canonical_document),
     )
 
@@ -343,6 +510,8 @@ def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any]
     """
 
     model = str(record.get("id") or record.get("model_id") or record.get("model") or "")
+    transport_model = str(record.get("transport_model_id") or model)
+    logical_model = str(record.get("logical_model_id") or "")
     provider = str(record.get("provider") or record.get("owned_by") or "")
     metadata = record.get("metadata", record.get("meta", {}))
     metadata = metadata if isinstance(metadata, dict) else {}
@@ -351,8 +520,16 @@ def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any]
     endpoint = record.get("endpoint")
     expected = lock.identity
     mismatches = []
-    if model != expected["model"]:
+    if transport_model != expected["model"]:
         mismatches.append("model")
+    if logical_model and logical_model != expected["provider"]:
+        mismatches.append("logical_model")
+    if (
+        surface in {"model manager", "MCP"}
+        and record.get("transport_model_id") is not None
+        and model != expected["provider"]
+    ):
+        mismatches.append("logical_model")
     if provider and (
         provider != expected["provider"]
         and _identity_token(provider) != _identity_token(expected["server_build"])
@@ -418,45 +595,94 @@ def verify_p2p_evidence(
     lock: LeanstralRuntimeLock,
     evidence: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    """Validate configured P2P advertisements and dial results, if requested."""
+    """Validate the complete CID-bound, non-inference P2P topology receipt."""
 
-    if not lock.p2p["enabled"]:
-        if evidence not in (None, {}):
-            raise LeanstralProvisioningError("P2P evidence supplied while locked transport is disabled")
-        return {
-            "enabled": False,
-            "provider": lock.p2p["required_provider"],
-            "custom_port": lock.p2p["custom_port"],
-        }
     if not isinstance(evidence, Mapping):
         raise LeanstralProvisioningError("configured P2P provider requires transport evidence")
-    if evidence.get("provider") != lock.identity["provider"]:
-        raise LeanstralProvisioningError("P2P evidence substituted another provider")
-    advertised = evidence.get("advertised_addrs")
-    dialed = evidence.get("dialed_addrs")
-    if not isinstance(advertised, list) or not isinstance(dialed, list) or not advertised or not dialed:
-        raise LeanstralProvisioningError("P2P evidence requires advertised and dialed addresses")
 
-    def validate_addr(value: object, *, dial: bool) -> str:
-        if not isinstance(value, str):
-            raise LeanstralProvisioningError("P2P address must be a string")
-        match = re.fullmatch(r"/ip4/([^/]+)/tcp/([0-9]+)(?:/p2p/[^/]+)?", value)
-        if not match or int(match.group(2)) != int(lock.p2p["custom_port"]):
-            raise LeanstralProvisioningError("P2P address does not use the configured custom port")
-        host = match.group(1)
-        if host == "0.0.0.0" or host.startswith("127."):
-            raise LeanstralProvisioningError("P2P address is not policy-approved and dialable")
-        return value
+    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
+    if (
+        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
+        and source not in sys.path
+    ):
+        sys.path.insert(0, source)
+    try:
+        from ipfs_accelerate_py.mcplusplus_module.leanstral_topology import (
+            validate_leanstral_topology_mapping,
+        )
+    except ImportError as exc:
+        raise LeanstralProvisioningError(
+            "Leanstral P2P topology validator is unavailable"
+        ) from exc
+    try:
+        validation = validate_leanstral_topology_mapping(evidence)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise LeanstralProvisioningError(
+            f"P2P topology evidence is malformed: {exc}"
+        ) from exc
+    if not validation.valid:
+        raise LeanstralProvisioningError(
+            "P2P topology evidence failed: " + ", ".join(validation.errors)
+        )
 
-    if evidence.get("dial_succeeded") is not True:
-        raise LeanstralProvisioningError("P2P evidence does not prove a successful dial")
+    observation = validation.receipt["observation"]
+    if tuple(observation["listen_addrs"]) != tuple(lock.p2p["listen_addrs"]):
+        raise LeanstralProvisioningError("P2P evidence changed the frozen listener")
+    if tuple(observation["advertise_interface_allowlist"]) != tuple(
+        lock.p2p["advertise_policy"]["allowed_interfaces"]
+    ):
+        raise LeanstralProvisioningError(
+            "P2P evidence changed the frozen advertise interface policy"
+        )
+    selected = set(validation.receipt["address_selection"]["selected"])
+    if selected != set(lock.p2p["advertise_policy"]["required_ipv4"]):
+        raise LeanstralProvisioningError(
+            "P2P evidence did not advertise every frozen active local address"
+        )
+    bootstrap_targets = {
+        item["target"] for item in observation["bootstrap_exercises"]
+    }
+    if not bootstrap_targets or not bootstrap_targets <= set(
+        lock.p2p["bootstrap_peers"]
+    ):
+        raise LeanstralProvisioningError(
+            "P2P bootstrap exercise used an unpinned peer identity"
+        )
+    for item in observation["rendezvous_exercises"]:
+        if item["namespace"] != lock.p2p["rendezvous"]["namespace"]:
+            raise LeanstralProvisioningError(
+                "P2P rendezvous exercise changed the frozen namespace"
+            )
+    expected_model = {
+        "id": lock.identity["provider"],
+        "model_id": lock.identity["provider"],
+        "logical_model_id": lock.identity["provider"],
+        "transport_model_id": lock.identity["model"],
+        "provider": "llamacpp",
+        "transport": "llamacpp",
+        "endpoint": lock.identity["endpoint"],
+    }
+    models = observation["served_models"]
+    if len(models) != 1 or any(
+        models[0].get(key) != value for key, value in expected_model.items()
+    ):
+        raise LeanstralProvisioningError(
+            "P2P evidence changed the logical or HTTP transport model identity"
+        )
+    if (
+        observation["server_instance_count"] != lock.p2p["server_instance_count"]
+        or observation["inference_attempted"] is not lock.p2p["inference_allowed"]
+    ):
+        raise LeanstralProvisioningError(
+            "P2P evidence violated the single-server/no-inference pin"
+        )
+
     return {
         "enabled": True,
         "provider": lock.identity["provider"],
         "custom_port": lock.p2p["custom_port"],
-        "advertised_addrs": [validate_addr(item, dial=False) for item in advertised],
-        "dialed_addrs": [validate_addr(item, dial=True) for item in dialed],
-        "dial_succeeded": True,
+        "topology_receipt_cid": validation.receipt_cid,
+        "topology_receipt": dict(validation.receipt),
     }
 
 
@@ -592,7 +818,13 @@ def provision_shared_leanstral(
             _assert_model_identity(lock, record, surface)
             for record in records
             if isinstance(record, Mapping)
-            and str(record.get("id") or record.get("model") or record.get("model_id") or "")
+            and str(
+                record.get("transport_model_id")
+                or record.get("id")
+                or record.get("model")
+                or record.get("model_id")
+                or ""
+            )
             == lock.identity["model"]
         ]
         if len(accepted) != 1:
@@ -638,6 +870,10 @@ def provision_shared_leanstral(
         "schema_version": RECEIPT_SCHEMA,
         "evidence": EVIDENCE_SYMBOL,
         "task_id": TASK_ID,
+        "topology_task_id": TOPOLOGY_TASK_ID,
+        "lock_cid": lock.lock_cid,
+        "lock_binding": _lock_binding_policy(),
+        # Frozen HSSL-G112 compatibility; never authoritative for schema v2.
         "lock_sha256": lock.lock_sha256,
         "identity": dict(lock.identity),
         "service_owner": "agent_supervisor",
@@ -668,10 +904,14 @@ def provision_shared_leanstral(
         "proof_draft": draft_receipt,
         "uses_benchmark_inputs": False,
         "secrets_serialized": False,
+        "receipt_binding": _receipt_binding_policy(),
     }
     if receipt["health"]["server_build"] != lock.identity["server_build"]:
         raise LeanstralProvisioningError("health server build differs from the lock")
-    receipt["receipt_sha256"] = semantic_sha256(receipt)
+    unsigned_receipt = dict(receipt)
+    receipt["receipt_cid"] = cid_for_dag_json(unsigned_receipt)
+    # Frozen HSSL-G112 compatibility over the same unsigned receipt body.
+    receipt["receipt_sha256"] = semantic_sha256(unsigned_receipt)
     return receipt
 
 
@@ -680,17 +920,63 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
 
     if receipt.get("schema_version") != RECEIPT_SCHEMA:
         raise LeanstralProvisioningError("receipt schema mismatch")
+    if receipt.get("topology_task_id") != TOPOLOGY_TASK_ID:
+        raise LeanstralProvisioningError("receipt topology task identity mismatch")
+    supplied_lock_cid = receipt.get("lock_cid")
+    try:
+        canonical_lock_cid = validate_cid(
+            supplied_lock_cid,
+            codecs=("dag-json",),
+        )
+    except (TypeError, ValueError) as exc:
+        raise LeanstralProvisioningError(
+            "receipt authoritative lock CID is missing or malformed"
+        ) from exc
+    if canonical_lock_cid != lock.lock_cid:
+        raise LeanstralProvisioningError(
+            "receipt authoritative lock CID is not bound to the canonical lock"
+        )
+    if receipt.get("lock_binding") != _lock_binding_policy():
+        raise LeanstralProvisioningError(
+            "receipt lock binding policy does not identify lock_cid as authoritative"
+        )
     if receipt.get("lock_sha256") != lock.lock_sha256:
-        raise LeanstralProvisioningError("receipt is not bound to the canonical lock")
+        raise LeanstralProvisioningError(
+            "receipt legacy compatibility lock_sha256 mismatch"
+        )
     if receipt.get("identity") != dict(lock.identity):
         raise LeanstralProvisioningError("receipt identity mismatch")
-    supplied = receipt.get("receipt_sha256")
+    if receipt.get("receipt_binding") != _receipt_binding_policy():
+        raise LeanstralProvisioningError(
+            "receipt binding policy does not identify receipt_cid as authoritative"
+        )
+    supplied_cid = receipt.get("receipt_cid")
+    supplied_sha256 = receipt.get("receipt_sha256")
     unsigned = dict(receipt)
+    unsigned.pop("receipt_cid", None)
     unsigned.pop("receipt_sha256", None)
-    if not isinstance(supplied, str) or not _SHA256_RE.fullmatch(supplied):
-        raise LeanstralProvisioningError("receipt digest is missing or malformed")
-    if semantic_sha256(unsigned) != supplied:
-        raise LeanstralProvisioningError("receipt digest mismatch")
+    try:
+        canonical_receipt_cid = validate_cid(
+            supplied_cid,
+            codecs=("dag-json",),
+        )
+    except (TypeError, ValueError) as exc:
+        raise LeanstralProvisioningError(
+            "receipt authoritative CID is missing or malformed"
+        ) from exc
+    if canonical_receipt_cid != cid_for_dag_json(unsigned):
+        raise LeanstralProvisioningError("receipt authoritative CID mismatch")
+    if (
+        not isinstance(supplied_sha256, str)
+        or not _SHA256_RE.fullmatch(supplied_sha256)
+    ):
+        raise LeanstralProvisioningError(
+            "receipt legacy compatibility SHA-256 is missing or malformed"
+        )
+    if semantic_sha256(unsigned) != supplied_sha256:
+        raise LeanstralProvisioningError(
+            "receipt legacy compatibility SHA-256 mismatch"
+        )
     serialized = json.dumps(receipt, sort_keys=True).lower()
     if any(f'"{key}"' in serialized for key in _SECRET_KEYS):
         raise LeanstralProvisioningError("receipt contains a secret-bearing field")
@@ -698,6 +984,28 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
         raise LeanstralProvisioningError("receipt does not prove attach-only provisioning")
     if receipt.get("uses_benchmark_inputs") is not False or receipt.get("secrets_serialized") is not False:
         raise LeanstralProvisioningError("receipt violates input/secret safety")
+    p2p = receipt.get("p2p")
+    topology_receipt = (
+        p2p.get("topology_receipt")
+        if isinstance(p2p, Mapping)
+        else None
+    )
+    topology_observation = (
+        topology_receipt.get("observation")
+        if isinstance(topology_receipt, Mapping)
+        else None
+    )
+    revalidated_p2p = verify_p2p_evidence(lock, topology_observation)
+    if (
+        not isinstance(p2p, Mapping)
+        or p2p.get("topology_receipt_cid")
+        != revalidated_p2p["topology_receipt_cid"]
+        or topology_receipt.get("receipt_cid")
+        != revalidated_p2p["topology_receipt_cid"]
+    ):
+        raise LeanstralProvisioningError(
+            "receipt P2P topology CID does not match its observation"
+        )
     draft = receipt.get("proof_draft")
     if (
         not isinstance(draft, Mapping)
@@ -745,7 +1053,17 @@ def main(argv: list[str] | None = None) -> int:
         lock = load_lock(args.lock)
         if args.validate_receipt:
             validate_receipt(lock, _read_json(args.validate_receipt))
-            print(json.dumps({"status": "valid", "lock_sha256": lock.lock_sha256}, sort_keys=True))
+            print(
+                json.dumps(
+                    {
+                        "status": "valid",
+                        "lock_cid": lock.lock_cid,
+                        "lock_sha256": lock.lock_sha256,
+                        "lock_sha256_role": "legacy_compatibility",
+                    },
+                    sort_keys=True,
+                )
+            )
             return 0
         if args.skip_draft and args.receipt:
             raise LeanstralProvisioningError(
@@ -762,7 +1080,9 @@ def main(argv: list[str] | None = None) -> int:
                 json.dumps(
                     {
                         "status": "healthy_diagnostic",
+                        "lock_cid": lock.lock_cid,
                         "lock_sha256": lock.lock_sha256,
+                        "lock_sha256_role": "legacy_compatibility",
                         "identity": dict(lock.identity),
                         "receipt_written": False,
                     },
