@@ -1,0 +1,95 @@
+{
+  "schema_version": "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-lock.v1",
+  "evidence": "HSSLEV1103A41",
+  "runtime": {
+    "distribution": "spacy",
+    "version": "3.8.14",
+    "python": "3.12",
+    "prerequisites": [
+      {
+        "distribution": "click",
+        "version": "8.3.2",
+        "artifact": {
+          "filename": "click-8.3.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/e4/20/71885d8b97d4f3dde17b1fdb92dbd4908b00541c5a3379787137285f602e/click-8.3.2-py3-none-any.whl",
+          "size_bytes": 108379,
+          "sha256": "1924d2c27c5653561cd2cae4548d1406039cb79b858b747cfea24924bbc1616d"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "system": "Linux",
+        "machine": "aarch64",
+        "python_tag": "cp312",
+        "abi_tag": "cp312",
+        "platform_tag": "manylinux2014_aarch64.manylinux_2_17_aarch64",
+        "filename": "spacy-3.8.14-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+        "url": "https://files.pythonhosted.org/packages/ff/e8/048d83b73b28686307bd9a60878a58de7b7b21b562ca4de8b5bd558031e9/spacy-3.8.14-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+        "size_bytes": 32725099,
+        "sha256": "daeb64b048f12c059997281aed53eb8776d26416dd313cf17ad6f63124b2b564"
+      },
+      {
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_tag": "cp312",
+        "abi_tag": "cp312",
+        "platform_tag": "manylinux2014_x86_64.manylinux_2_17_x86_64",
+        "filename": "spacy-3.8.14-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/8e/3f/1799af5f4ccc8eb7500e4a20ca301488134429dba08cda5be68ce6ab2992/spacy-3.8.14-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "size_bytes": 33205838,
+        "sha256": "6d45715a24446f23b98ec3f09409a1d4111983d1d64613250ee38c3270e21853"
+      }
+    ]
+  },
+  "pipeline": {
+    "package": "en_core_web_sm",
+    "distribution": "en-core-web-sm",
+    "version": "3.8.0",
+    "language": "en",
+    "spacy_compatibility": ">=3.8.0,<3.9.0",
+    "artifact": {
+      "filename": "en_core_web_sm-3.8.0-py3-none-any.whl",
+      "url": "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+      "size_bytes": 12806118,
+      "sha256": "1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85"
+    },
+    "meta_sha256": "7456349002fa8cf31111051bd37fdbea67a1b7f7a0a60ce235466f98a6758125",
+    "pipeline": [
+      "tok2vec",
+      "tagger",
+      "parser",
+      "attribute_ruler",
+      "lemmatizer",
+      "ner"
+    ],
+    "disabled": [
+      "senter"
+    ]
+  },
+  "smoke": {
+    "schema_version": "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-smoke.v1",
+    "text": "Ada Lovelace reviews the blue report in London.",
+    "text_sha256": "f3368f558c0fd5a57e145dd8f6d117c5d594e2f0881731b4a30039888adc8e59",
+    "max_text_bytes": 128,
+    "required_annotations": [
+      "DEP",
+      "ENT_IOB",
+      "LEMMA",
+      "POS",
+      "SENT_START",
+      "TAG"
+    ]
+  },
+  "safety": {
+    "install_phase": "pre_run_only",
+    "corpus_access": false,
+    "changes_frozen_inputs": false,
+    "allowed_effective_identity": "en_core_web_sm",
+    "forbidden_effective_identities": [
+      "spacy.blank:en",
+      "regex-legal-parser-v1"
+    ],
+    "fallback_allowed": false
+  }
+}

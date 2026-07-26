@@ -123,6 +123,7 @@ class ProcessExecutionResult:
     wall_time_seconds: float = 0.0
     error: Optional[str] = None
     termination_reason: str = ""
+    process_group_reaped: bool = False
     lease_released: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
@@ -188,9 +189,43 @@ def _process_has_token(pid: int, managed_id: str) -> bool:
     return expected in environ
 
 
+def _process_group_members(pgid: int) -> Optional[tuple[int, ...]]:
+    """Return live Linux process-group members, or ``None`` if unobservable."""
+
+    if os.name != "posix" or pgid <= 0:
+        return None
+    proc_root = Path("/proc")
+    if not proc_root.is_dir():
+        return None
+    try:
+        entries = tuple(proc_root.iterdir())
+    except OSError:
+        return None
+    members: List[int] = []
+    for entry in entries:
+        if not entry.name.isdigit():
+            continue
+        try:
+            raw = (entry / "stat").read_text(encoding="utf-8")
+            closing_parenthesis = raw.rfind(")")
+            if closing_parenthesis < 0:
+                continue
+            fields = raw[closing_parenthesis + 2 :].split()
+            state = fields[0]
+            process_group_id = int(fields[2])
+        except (OSError, IndexError, ValueError):
+            continue
+        if process_group_id == pgid and state != "Z":
+            members.append(int(entry.name))
+    return tuple(sorted(members))
+
+
 def _group_exists(pgid: int) -> bool:
     if os.name != "posix" or pgid <= 0:
         return False
+    members = _process_group_members(pgid)
+    if members is not None:
+        return bool(members)
     try:
         os.killpg(pgid, 0)
         return True
@@ -452,6 +487,7 @@ class ProcessSupervisor:
                 kind=kind_value,
                 error=f"{exc.__class__.__name__}: {exc}",
                 termination_reason="spawn_error",
+                process_group_reaped=True,
                 lease_released=released,
             )
         except RuntimeError as exc:
@@ -463,7 +499,14 @@ class ProcessSupervisor:
             released = False
             if lease is not None:
                 released = bool(lease.release()) or bool(getattr(lease, "released", False))
-            return ProcessExecutionResult(command=list(command), kind=kind_value, cancelled=True, termination_reason="cancelled_before_start", lease_released=released)
+            return ProcessExecutionResult(
+                command=list(command),
+                kind=kind_value,
+                cancelled=True,
+                termination_reason="cancelled_before_start",
+                process_group_reaped=True,
+                lease_released=released,
+            )
         try:
             return handle.wait()
         except BaseException:
@@ -481,6 +524,7 @@ class ProcessSupervisor:
         stderr = ""
         timed_out = cancelled = resource_exhausted = False
         graceful = forced = False
+        process_group_reaped = False
         reason = "completed"
         input_value = handle.input_text
         manifest: Dict[str, Any] = {}
@@ -496,12 +540,24 @@ class ProcessSupervisor:
                 if handle._cancel.is_set() or external_cancelled or lease_cancelled:
                     cancelled = True
                     reason = "resource_deadline" if lease_cancelled else "cancelled"
-                    graceful, forced, stdout, stderr = self._terminate(handle)
+                    (
+                        graceful,
+                        forced,
+                        process_group_reaped,
+                        stdout,
+                        stderr,
+                    ) = self._terminate(handle)
                     break
                 if now >= deadline:
                     timed_out = True
                     reason = "wall_clock_deadline"
-                    graceful, forced, stdout, stderr = self._terminate(handle)
+                    (
+                        graceful,
+                        forced,
+                        process_group_reaped,
+                        stdout,
+                        stderr,
+                    ) = self._terminate(handle)
                     break
                 try:
                     stdout, stderr = process.communicate(
@@ -522,7 +578,13 @@ class ProcessSupervisor:
                             if not handle.lease.heartbeat():
                                 cancelled = True
                                 reason = "resource_deadline"
-                                graceful, forced, stdout, stderr = self._terminate(handle)
+                                (
+                                    graceful,
+                                    forced,
+                                    process_group_reaped,
+                                    stdout,
+                                    stderr,
+                                ) = self._terminate(handle)
                                 break
                         except Exception:
                             # The lease's cancellation state is checked on the
@@ -532,11 +594,23 @@ class ProcessSupervisor:
             # A command may daemonise a child and then exit.  The group is
             # still ours, so complete the lifecycle before reporting success.
             if _group_exists(handle.process_group_id):
-                cleaned_gracefully, cleaned_forced, _, _ = self._terminate(handle, root_already_exited=True)
+                (
+                    cleaned_gracefully,
+                    cleaned_forced,
+                    process_group_reaped,
+                    _,
+                    _,
+                ) = self._terminate(handle, root_already_exited=True)
                 graceful = graceful or cleaned_gracefully
                 forced = forced or cleaned_forced
                 if reason == "completed":
-                    reason = "completed_with_descendant_cleanup"
+                    reason = (
+                        "completed_with_descendant_cleanup"
+                        if process_group_reaped
+                        else "orphaned_process_group"
+                    )
+            else:
+                process_group_reaped = True
             returncode = process.poll()
             if returncode is not None and returncode < 0 and not (timed_out or cancelled):
                 if -returncode in {getattr(signal, "SIGXCPU", 24), signal.SIGKILL}:
@@ -545,15 +619,39 @@ class ProcessSupervisor:
         except BaseException as exc:
             reason = "monitor_error"
             try:
-                graceful, forced, extra_out, extra_err = self._terminate(handle)
+                (
+                    graceful,
+                    forced,
+                    process_group_reaped,
+                    extra_out,
+                    extra_err,
+                ) = self._terminate(handle)
                 stdout = stdout or extra_out
                 stderr = stderr or extra_err
             except BaseException:
-                pass
+                process_group_reaped = not _group_exists(
+                    handle.process_group_id
+                )
             error = f"{exc.__class__.__name__}: {exc}"
         else:
-            error = None
+            error = (
+                None
+                if process_group_reaped
+                else (
+                    "ProcessGroupCleanupError: managed process group "
+                    "still has live descendants"
+                )
+            )
         finally:
+            process_group_reaped = not _group_exists(
+                handle.process_group_id
+            )
+            if (
+                not process_group_reaped
+                and reason
+                in {"completed", "completed_with_descendant_cleanup"}
+            ):
+                reason = "orphaned_process_group"
             released = False
             if handle.lease is not None:
                 try:
@@ -577,13 +675,28 @@ class ProcessSupervisor:
                 wall_time_seconds=max(0.0, time.monotonic() - handle.started),
                 error=error,
                 termination_reason=reason,
+                process_group_reaped=process_group_reaped,
                 lease_released=released,
             )
             handle._result = result
-            try:
-                handle.manifest_path.unlink()
-            except FileNotFoundError:
-                pass
+            if process_group_reaped:
+                try:
+                    handle.manifest_path.unlink()
+                except FileNotFoundError:
+                    pass
+            elif manifest.get("schema") == PROCESS_MANIFEST_SCHEMA:
+                manifest.update(
+                    {
+                        "cleanup_failed": True,
+                        "cleanup_failed_at": time.time(),
+                        "termination_reason": reason,
+                    }
+                )
+                try:
+                    _atomic_json(handle.manifest_path, manifest)
+                except OSError:
+                    # The original manifest remains the recovery authority.
+                    pass
             with self._lock:
                 self._active.pop(handle.managed_process_id, None)
             handle._done.set()
@@ -598,7 +711,12 @@ class ProcessSupervisor:
         except (ProcessLookupError, PermissionError, OSError):
             pass
 
-    def _terminate(self, handle: ManagedProcess, *, root_already_exited: bool = False) -> tuple[bool, bool, str, str]:
+    def _terminate(
+        self,
+        handle: ManagedProcess,
+        *,
+        root_already_exited: bool = False,
+    ) -> tuple[bool, bool, bool, str, str]:
         process = handle._process
         self._signal_process(process, handle.process_group_id, signal.SIGTERM)
         end = time.monotonic() + handle.limits.graceful_shutdown_seconds
@@ -609,7 +727,7 @@ class ProcessSupervisor:
                     stdout, stderr = process.communicate(timeout=min(0.05, max(0.001, end - time.monotonic())))
                     root_already_exited = True
                 if not _group_exists(handle.process_group_id):
-                    return True, False, stdout or "", stderr or ""
+                    return True, False, True, stdout or "", stderr or ""
             except subprocess.TimeoutExpired:
                 pass
             time.sleep(0.01)
@@ -623,7 +741,8 @@ class ProcessSupervisor:
             pass
         while _group_exists(handle.process_group_id) and time.monotonic() < forced_end:
             time.sleep(0.01)
-        return False, True, stdout or "", stderr or ""
+        reaped = not _group_exists(handle.process_group_id)
+        return False, True, reaped, stdout or "", stderr or ""
 
     def recover_orphaned_processes(self) -> RecoveryReport:
         """Recover only cryptographically-labelled process groups we own."""
@@ -641,20 +760,36 @@ class ProcessSupervisor:
                 supervisor_pid = int(record.get("supervisor_pid", 0))
                 supervisor_birth = str(record.get("supervisor_birth_marker", ""))
                 heartbeat = float(record.get("heartbeat_at", 0.0))
-                if _pid_matches(supervisor_pid, supervisor_birth) and time.time() - heartbeat <= self.stale_after_seconds:
+                cleanup_failed = record.get("cleanup_failed") is True
+                if (
+                    not cleanup_failed
+                    and _pid_matches(supervisor_pid, supervisor_birth)
+                    and time.time() - heartbeat <= self.stale_after_seconds
+                ):
                     report.skipped_active.append(managed_id)
                     continue
-                if not _pid_matches(pid, str(record.get("pid_birth_marker", ""))) or not _process_has_token(pid, managed_id):
-                    # A dead leader needs no signal.  Remove the stale record;
-                    # a live PID without both proofs of ownership is untouchable.
-                    if not _process_birth_marker(pid):
-                        path.unlink(missing_ok=True)
-                    else:
+                leader_owned = (
+                    _pid_matches(
+                        pid,
+                        str(record.get("pid_birth_marker", "")),
+                    )
+                    and _process_has_token(pid, managed_id)
+                )
+                if leader_owned:
+                    if os.name == "posix" and os.getpgid(pid) != pgid:
                         report.skipped_unowned.append(managed_id)
-                    continue
-                if os.name == "posix" and os.getpgid(pid) != pgid:
-                    report.skipped_unowned.append(managed_id)
-                    continue
+                        continue
+                else:
+                    members = _process_group_members(pgid)
+                    if members == ():
+                        path.unlink(missing_ok=True)
+                        continue
+                    if members is None or not all(
+                        _process_has_token(member_pid, managed_id)
+                        for member_pid in members
+                    ):
+                        report.skipped_unowned.append(managed_id)
+                        continue
                 try:
                     os.killpg(pgid, signal.SIGTERM)
                     deadline = time.monotonic() + 0.5
@@ -662,6 +797,17 @@ class ProcessSupervisor:
                         time.sleep(0.01)
                     if _group_exists(pgid):
                         os.killpg(pgid, signal.SIGKILL)
+                        forced_deadline = time.monotonic() + 0.5
+                        while (
+                            _group_exists(pgid)
+                            and time.monotonic() < forced_deadline
+                        ):
+                            time.sleep(0.01)
+                    if _group_exists(pgid):
+                        report.errors.append(
+                            f"{path}: managed process group survived recovery"
+                        )
+                        continue
                     report.recovered_process_ids.append(managed_id)
                     path.unlink(missing_ok=True)
                 except (OSError, ValueError) as exc:

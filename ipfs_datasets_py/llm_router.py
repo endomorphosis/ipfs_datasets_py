@@ -78,6 +78,7 @@ import signal
 import subprocess
 import tempfile
 import threading
+import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -92,10 +93,30 @@ import base64
 import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
-from .utils.cli_tools.copilot import build_standalone_copilot_command_template, find_standalone_copilot_cli
-
 from .router_deps import RouterDeps, get_default_router_deps
 from .optimizers.common.backend_selection import canonicalize_provider
+
+
+def build_standalone_copilot_command_template(
+    cli_path: str | None = None,
+) -> str:
+    """Load the optional Copilot CLI stack only when that route is selected."""
+
+    from .utils.cli_tools.copilot import (
+        build_standalone_copilot_command_template as implementation,
+    )
+
+    return implementation(cli_path)
+
+
+def find_standalone_copilot_cli() -> str | None:
+    """Load optional Copilot discovery only when a Copilot route needs it."""
+
+    from .utils.cli_tools.copilot import (
+        find_standalone_copilot_cli as implementation,
+    )
+
+    return implementation()
 
 
 class LLMRouterError(RuntimeError):
@@ -104,6 +125,21 @@ class LLMRouterError(RuntimeError):
     This is intentionally a RuntimeError subclass so existing call sites that
     catch RuntimeError continue to work.
     """
+
+
+class PinnedSymaiCompletionError(LLMRouterError):
+    """Secret-safe failure raised for a rejected pinned SyMAI completion."""
+
+    OUTPUT_TOKEN_LIMIT = "output_token_limit"
+    _SAFE_FAILURE_CLASSES = frozenset({OUTPUT_TOKEN_LIMIT})
+
+    def __init__(self, safe_failure_class: str) -> None:
+        if safe_failure_class not in self._SAFE_FAILURE_CLASSES:
+            raise ValueError("unsupported pinned SyMAI completion failure class")
+        self.safe_failure_class = safe_failure_class
+        super().__init__(
+            "pinned SyMAI completion failed: " + safe_failure_class
+        )
 
 
 _P2P_TASK_PREFIX = "p2p://"
@@ -121,6 +157,88 @@ _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
     "copilot_sdk",
 ]
 _LAST_GENERATION_TRACE = threading.local()
+_PINNED_SYMAI_LEANSTRAL_ALIAS = "Leanstral-119B"
+_PINNED_SYMAI_LEANSTRAL_INNER_PROVIDER = "leanstral_local"
+_PINNED_SYMAI_LEANSTRAL_MODEL = (
+    "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+)
+_PINNED_SYMAI_LEANSTRAL_ENDPOINT = "http://127.0.0.1:8080/v1"
+_SYMAI_ROUTE_BINDING_KWARG = "_symai_route_binding"
+_PINNED_SYMAI_TRACE_KEYS = frozenset(
+    {
+        "resolved_provider_name",
+        "resolved_model_name",
+        "service_endpoint",
+        "routing_backend",
+    }
+)
+_PINNED_SYMAI_ROUTE_BINDING = {
+    "resolved_provider_name": _PINNED_SYMAI_LEANSTRAL_INNER_PROVIDER,
+    "resolved_model_name": _PINNED_SYMAI_LEANSTRAL_MODEL,
+    "service_endpoint": _PINNED_SYMAI_LEANSTRAL_ENDPOINT,
+    "routing_backend": "existing_leanstral_service",
+}
+_PINNED_SYMAI_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "candidate_ir",
+        "normalized_predicates",
+        "quantifiers",
+        "entities",
+        "ambiguity_flags",
+        "confidence",
+        "validation_errors",
+    ],
+    "properties": {
+        "candidate_ir": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["propositions"],
+            "properties": {
+                "propositions": {
+                    "type": "array",
+                    "maxItems": 12,
+                    "items": {"type": "string", "maxLength": 80},
+                }
+            },
+        },
+        "normalized_predicates": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "quantifiers": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "entities": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "ambiguity_flags": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "validation_errors": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {"type": "string", "maxLength": 80},
+        },
+    },
+}
+_PINNED_SYMAI_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "hssl_symai_semantic_evidence",
+        "strict": True,
+        "schema": _PINNED_SYMAI_RESPONSE_SCHEMA,
+    },
+}
 
 
 def _truthy_env(name: str, *, default: bool) -> bool:
@@ -3339,6 +3457,221 @@ def _get_mistral_vibe_provider(*, auto_install: bool = False) -> Optional[LLMPro
     return _MistralVibeProvider()
 
 
+class _PinnedSymaiNoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject redirects so the pinned service cannot change endpoints."""
+
+    def redirect_request(
+        self,
+        request: urllib.request.Request,
+        file_pointer: object,
+        code: int,
+        message: str,
+        headers: object,
+        new_url: str,
+    ) -> None:
+        del request, file_pointer, code, message, headers, new_url
+        return None
+
+
+def _pinned_symai_urlopen(
+    request: urllib.request.Request,
+    *,
+    timeout: float,
+) -> object:
+    """Open one exact URL without ambient proxy or redirect behavior."""
+
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _PinnedSymaiNoRedirect(),
+    )
+    response = opener.open(request, timeout=timeout)
+    try:
+        final_url = response.geturl()
+    except Exception:
+        response.close()
+        raise
+    if final_url != request.full_url:
+        response.close()
+        raise RuntimeError("pinned Leanstral service changed its final URL")
+    return response
+
+
+def _bounded_json_response(
+    request: urllib.request.Request,
+    *,
+    timeout: float,
+    max_bytes: int,
+) -> dict[str, object]:
+    try:
+        with _pinned_symai_urlopen(request, timeout=timeout) as response:
+            raw = response.read(max_bytes + 1)
+    except Exception as exc:
+        raise RuntimeError(
+            f"pinned Leanstral service request failed: {type(exc).__name__}"
+        ) from exc
+    if len(raw) > max_bytes:
+        raise RuntimeError("pinned Leanstral service response exceeded byte limit")
+
+    def _reject_duplicate_keys(
+        pairs: list[tuple[str, object]],
+    ) -> dict[str, object]:
+        value: dict[str, object] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"duplicate JSON key: {key}")
+            value[key] = item
+        return value
+
+    def _reject_nonfinite(value: str) -> object:
+        raise ValueError(f"non-finite JSON number: {value}")
+
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_nonfinite,
+        )
+    except (UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        raise RuntimeError("pinned Leanstral service returned invalid JSON") from exc
+    if not isinstance(value, dict):
+        raise RuntimeError("pinned Leanstral service returned a non-object")
+    return value
+
+
+def _served_model_ids(value: dict[str, object]) -> list[str]:
+    records = value.get("data", value.get("models"))
+    if not isinstance(records, list):
+        raise RuntimeError("pinned Leanstral service omitted its model list")
+    model_ids: list[str] = []
+    for record in records:
+        if isinstance(record, str):
+            model_id = record
+        elif isinstance(record, dict):
+            model_id = str(
+                record.get("id")
+                or record.get("model")
+                or record.get("name")
+                or ""
+            )
+        else:
+            continue
+        if model_id:
+            model_ids.append(model_id)
+    return model_ids
+
+
+def _generate_pinned_symai_leanstral(
+    prompt: str,
+    *,
+    kwargs: dict[str, object],
+) -> tuple[str, dict[str, str]]:
+    """Use the already-running frozen Leanstral service without fallback."""
+
+    response_format = kwargs.get("response_format")
+    if (
+        not isinstance(response_format, dict)
+        or response_format != _PINNED_SYMAI_RESPONSE_FORMAT
+    ):
+        raise RuntimeError(
+            "pinned SyMAI Leanstral route requires the frozen JSON-schema mode"
+        )
+
+    timeout = max(1.0, min(float(kwargs.get("timeout", 30.0)), 60.0))
+    deadline = time.monotonic() + timeout
+
+    def remaining_timeout() -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise RuntimeError(
+                "pinned SyMAI Leanstral aggregate timeout expired"
+            )
+        return remaining
+
+    models_request = urllib.request.Request(
+        f"{_PINNED_SYMAI_LEANSTRAL_ENDPOINT}/models",
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+    models = _bounded_json_response(
+        models_request,
+        timeout=remaining_timeout(),
+        max_bytes=1024 * 1024,
+    )
+    served_ids = _served_model_ids(models)
+    if served_ids.count(_PINNED_SYMAI_LEANSTRAL_MODEL) != 1:
+        raise RuntimeError(
+            "pinned Leanstral model is absent or ambiguous at the frozen endpoint"
+        )
+
+    max_tokens = int(kwargs.get("max_tokens", kwargs.get("max_new_tokens", 512)))
+    if not 1 <= max_tokens <= 512:
+        raise RuntimeError("pinned SyMAI Leanstral token bound is invalid")
+    temperature = float(kwargs.get("temperature", 0.0))
+    if temperature != 0.0:
+        raise RuntimeError("pinned SyMAI Leanstral route requires temperature zero")
+    payload: dict[str, object] = {
+        "model": _PINNED_SYMAI_LEANSTRAL_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "Return exactly one valid JSON object. Do not use Markdown "
+                    "fences or emit any text before or after the object."
+                ),
+            },
+            {"role": "user", "content": str(prompt)},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "stream": False,
+        # llama.cpp otherwise reuses a server-side prefix cache outside the
+        # benchmark's run-scoped SyMAI cold/warm cache contract.
+        "cache_prompt": False,
+        "response_format": response_format,
+        "seed": 0,
+        "stop": ["<|im_end|>", "<|tool_call_end|>", "<|im_start|>"],
+    }
+    if kwargs.get("top_p") is not None:
+        payload["top_p"] = kwargs["top_p"]
+    completion_request = urllib.request.Request(
+        f"{_PINNED_SYMAI_LEANSTRAL_ENDPOINT}/chat/completions",
+        data=json.dumps(payload, separators=(",", ":"), sort_keys=True).encode(
+            "utf-8"
+        ),
+        headers={"Accept": "application/json", "Content-Type": "application/json"},
+        method="POST",
+    )
+    completion = _bounded_json_response(
+        completion_request,
+        timeout=remaining_timeout(),
+        max_bytes=64 * 1024,
+    )
+    if str(completion.get("model") or "") != _PINNED_SYMAI_LEANSTRAL_MODEL:
+        raise RuntimeError("pinned Leanstral service returned a different model")
+    choices = completion.get("choices")
+    if not isinstance(choices, list) or len(choices) != 1:
+        raise RuntimeError("pinned Leanstral service returned invalid choices")
+    first = choices[0]
+    if (
+        isinstance(first, dict)
+        and first.get("finish_reason") == "length"
+    ):
+        raise PinnedSymaiCompletionError(
+            PinnedSymaiCompletionError.OUTPUT_TOKEN_LIMIT
+        )
+    if not isinstance(first, dict) or first.get("finish_reason") != "stop":
+        raise RuntimeError("pinned Leanstral service returned an invalid choice")
+    message = first.get("message")
+    text = (
+        message.get("content")
+        if isinstance(message, dict)
+        else first.get("text")
+    )
+    if not isinstance(text, str) or not text.strip():
+        raise RuntimeError("pinned Leanstral service returned empty text")
+    return text.strip(), dict(_PINNED_SYMAI_ROUTE_BINDING)
+
+
 def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     enable_value = os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")
     if enable_value is not None and enable_value.strip() and not _truthy(enable_value):
@@ -3348,7 +3681,10 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     # importing the external ipfs_accelerate_py package, which may not be installed
     # or may lack the llm_router module in some configurations.
     try:
-        from ipfs_datasets_py.ml.accelerate_integration.manager import AccelerateManager as _LocalAccelerateManager
+        from ipfs_datasets_py.ml.accelerate_integration.manager import (
+            AccelerateManager as _LocalAccelerateManager,
+            _LLM_PROVIDER_NAMES as _accelerate_provider_names,
+        )
 
         manager: object = _LocalAccelerateManager()
 
@@ -3387,17 +3723,57 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
             return None
 
         class _AccelerateLLMProvider:
+            def __init__(self) -> None:
+                self._generation_trace = threading.local()
+
+            def get_last_generation_trace(self) -> dict[str, str]:
+                value = getattr(self._generation_trace, "payload", None)
+                return dict(value) if isinstance(value, dict) else {}
+
             def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-                # AccelerateManager routes through: ipfs_accelerate_py → p2p_task_queue
-                # (codex_cli/copilot_cli/hf) → http peers.  Any of those may succeed.
-                # Do NOT pass task_type here — AccelerateManager auto-detects llm.generate
-                # vs text-generation based on whether model_name is an LLM provider name.
                 effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
+                self._generation_trace.payload = {}
+                route_binding = kwargs.pop(_SYMAI_ROUTE_BINDING_KWARG, None)
+                if route_binding is not None:
+                    if effective_model != _PINNED_SYMAI_LEANSTRAL_ALIAS:
+                        raise RuntimeError(
+                            "private SyMAI route binding used with the wrong model alias"
+                        )
+                    if (
+                        not isinstance(route_binding, dict)
+                        or route_binding != _PINNED_SYMAI_ROUTE_BINDING
+                    ):
+                        raise RuntimeError(
+                            "private SyMAI route binding is incomplete or drifted"
+                        )
+                    text, trace = _generate_pinned_symai_leanstral(
+                        prompt,
+                        kwargs=dict(kwargs),
+                    )
+                    self._generation_trace.payload = trace
+                    return text
                 payload = {"prompt": prompt, **kwargs}
+                # Preserve provider-name auto-detection (Codex, Copilot, etc.),
+                # while binding actual model identities to text generation.
+                task_type = (
+                    None
+                    if effective_model.lower() in _accelerate_provider_names
+                    else "text-generation"
+                )
                 result = manager.run_inference(  # type: ignore[union-attr]
                     effective_model,
                     payload,
+                    task_type=task_type,
                 )
+                if isinstance(result, dict):
+                    backend_name = result.get("backend")
+                    resolved_model = result.get("model")
+                    if isinstance(backend_name, str) and backend_name:
+                        self._generation_trace.payload["routing_backend"] = backend_name
+                    if isinstance(resolved_model, str) and resolved_model:
+                        self._generation_trace.payload["resolved_model_name"] = (
+                            resolved_model
+                        )
                 text = _extract_generated_text(result)
                 if isinstance(text, str) and text:
                     return text
@@ -3879,11 +4255,22 @@ def _builtin_provider_by_name(name: str, *, auto_install: bool = False) -> Optio
     return None
 
 
-def _set_last_generation_trace(*, provider_name: str, model_name: Optional[str]) -> None:
-    _LAST_GENERATION_TRACE.payload = {
+def _set_last_generation_trace(
+    *,
+    provider_name: str,
+    model_name: Optional[str],
+    route_trace: Optional[dict[str, object]] = None,
+) -> None:
+    payload = {
         "effective_provider_name": str(provider_name or "").strip(),
         "effective_model_name": str(model_name or "").strip(),
     }
+    if route_trace:
+        for key in _PINNED_SYMAI_TRACE_KEYS:
+            value = route_trace.get(key)
+            if isinstance(value, str) and value.strip():
+                payload[key] = value.strip()
+    _LAST_GENERATION_TRACE.payload = payload
 
 
 def _clear_last_generation_trace() -> None:
@@ -4230,7 +4617,14 @@ def generate_text(
 
     resolved_deps = deps or get_default_router_deps()
     _clear_last_generation_trace()
-    if _response_cache_enabled():
+    # The exact SyMAI benchmark engine owns its cache together with the four
+    # inner-route receipt fields. A text-only router cache cannot reproduce
+    # those fields, so bypass it for this private binding.
+    response_cache_ok = (
+        _response_cache_enabled()
+        and kwargs.get(_SYMAI_ROUTE_BINDING_KWARG) is None
+    )
+    if response_cache_ok:
         try:
             cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
             getter = getattr(resolved_deps, "get_cached_or_remote", None)
@@ -4244,7 +4638,7 @@ def generate_text(
     effective_provider_name = _effective_llm_provider_name(provider)
 
     def _cache_result(value: str, *, used_model_name: Optional[str]) -> None:
-        if not _response_cache_enabled():
+        if not response_cache_ok:
             return
         try:
             cache_key = _response_cache_key(provider=provider, model_name=used_model_name, prompt=prompt, kwargs=dict(kwargs))
@@ -4264,7 +4658,20 @@ def generate_text(
             model_name=model_name,
             kwargs=dict(kwargs),
         )
-        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
+        route_trace: dict[str, object] = {}
+        route_trace_getter = getattr(backend, "get_last_generation_trace", None)
+        if callable(route_trace_getter):
+            try:
+                candidate_trace = route_trace_getter()
+            except Exception:
+                candidate_trace = {}
+            if isinstance(candidate_trace, dict):
+                route_trace = candidate_trace
+        _set_last_generation_trace(
+            provider_name=effective_provider_name,
+            model_name=model_name,
+            route_trace=route_trace,
+        )
         _cache_result(str(result), used_model_name=model_name)
         return result
     except Exception as initial_exc:
