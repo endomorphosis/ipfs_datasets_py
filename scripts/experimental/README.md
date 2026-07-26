@@ -78,8 +78,8 @@ Each experimental script should have:
 
 ## Related Documentation
 
-- [ROADMAP.md](../../ipfs_datasets_py/knowledge_graphs/ROADMAP.md) - Future feature plans
-- [IMPLEMENTATION_STATUS.md](../../ipfs_datasets_py/knowledge_graphs/IMPLEMENTATION_STATUS.md) - Current module status
+- [ROADMAP.md](../../docs/knowledge_graphs/ROADMAP.md) - Future feature plans
+- [IMPLEMENTATION_STATUS.md](../../docs/knowledge_graphs/archive/superseded_plans/IMPLEMENTATION_STATUS.md) - Current module status
 
 ---
 
