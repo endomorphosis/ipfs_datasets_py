@@ -131,9 +131,15 @@ def repository(tmp_path: Path) -> tuple[Path, str]:
     _git(checkout, "config", "user.name", "Replay Tests")
     _git(checkout, "config", "user.email", "replay@example.invalid")
     repository_root = Path(__file__).resolve().parents[4]
+    benchmark_package = checkout / "benchmarks"
+    benchmark_package.mkdir()
+    shutil.copy2(
+        repository_root / "benchmarks" / "__init__.py",
+        benchmark_package / "__init__.py",
+    )
     shutil.copytree(
-        repository_root / "benchmarks",
-        checkout / "benchmarks",
+        repository_root / "benchmarks" / "logic_pipeline",
+        benchmark_package / "logic_pipeline",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
     hammer_package = checkout / "ipfs_datasets_py" / "logic" / "hammers"

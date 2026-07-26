@@ -558,9 +558,15 @@ def _repository(
         "g240-source@example.invalid",
     )
     repository_root = Path(__file__).resolve().parents[4]
+    benchmark_package = checkout / "benchmarks"
+    benchmark_package.mkdir()
+    shutil.copy2(
+        repository_root / "benchmarks" / "__init__.py",
+        benchmark_package / "__init__.py",
+    )
     shutil.copytree(
-        repository_root / "benchmarks",
-        checkout / "benchmarks",
+        repository_root / "benchmarks" / "logic_pipeline",
+        benchmark_package / "logic_pipeline",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
     if include_modal_codec_stub:
