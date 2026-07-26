@@ -933,6 +933,16 @@ identities.
 
 **SOURCE-SAFE NOW — no reconciliation, generation, or submission:**
 
+The benchmark worktree initializes every recorded gitlink so source identity
+can be verified without moving any pin. Objective discovery must not treat
+those dependency and reference repositories as implementation evidence. The
+explicit exclusions below retain the two in-scope codebases—the root
+`ipfs_datasets_py` tree and `ipfs_accelerate_py`—while fencing their initialized
+dependencies. The source-safe pass also disables the optional persistent AST
+dataset. Direct tracked-source evidence scanning remains enabled, but the
+nomination-only integrated analysis cache cannot materialize or reread an
+unbounded multi-gigabyte snapshot during task-board bootstrap.
+
 ```bash
 export HSSL_SUPERVISOR_ROOT="$HSSL_OPERATIONS_ROOT/$HSSL_RUN_ID/supervisor"
 export HSSL_OBJECTIVE_PATH="$HSSL_WORKTREE/docs/implementation/plans/hammer_symai_spacy_leanstral_benchmark_objectives.md"
@@ -964,11 +974,31 @@ PYTHONPATH=ipfs_accelerate_py python -m \
   --scan-exclude-path security_ir_artifacts/corpora \
   --scan-exclude-path data/agent_supervisor \
   --scan-exclude-path docs/performance_snapshots \
+  --scan-exclude-path .tools/ipfs_kit_py \
+  --scan-exclude-path ipfs_kit_py \
+  --scan-exclude-path ipfs_datasets_py/logic/CEC/DCEC_Library \
+  --scan-exclude-path ipfs_datasets_py/logic/CEC/Eng-DCEC \
+  --scan-exclude-path ipfs_datasets_py/logic/CEC/ShadowProver \
+  --scan-exclude-path ipfs_datasets_py/logic/CEC/Talos \
+  --scan-exclude-path ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type \
+  --scan-exclude-path ipfs_datasets_py/multimedia/omni_converter_mk2 \
+  --scan-exclude-path ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine \
+  --scan-exclude-path ipfs_accelerate_py/docs/fastmcp \
+  --scan-exclude-path ipfs_accelerate_py/docs/mcp-python-sdk \
+  --scan-exclude-path ipfs_accelerate_py/ipfs_accelerate_py/mcplusplus \
+  --scan-exclude-path ipfs_accelerate_py/ipfs_datasets_py \
+  --scan-exclude-path ipfs_accelerate_py/ipfs_kit_py \
+  --scan-exclude-path ipfs_accelerate_py/ipfs_model_manager_py \
+  --scan-exclude-path ipfs_accelerate_py/ipfs_transformers_py \
+  --scan-exclude-path ipfs_accelerate_py/test/doc-builder \
+  --scan-exclude-path ipfs_accelerate_py/test/huggingface_doc_builder \
+  --scan-exclude-path ipfs_accelerate_py/test/huggingface_transformers \
   --task-prefix HSSL-BENCH- \
   --max-findings 64 \
   --surplus-findings-per-goal 1 \
   --no-reconcile-goal-completion \
-  --no-generate-bounded-work
+  --no-generate-bounded-work \
+  --no-persist-ast-dataset
 ```
 
 The first ingestion has no external authority and therefore omits the
@@ -1004,14 +1034,13 @@ of the repeated CLI exclusions. It rejects protected path components such as
 fixtures, corpora, holdouts, workspaces, security IR artifacts, and performance
 snapshots; the `data/agent_supervisor` pair; symlinks; and resolved paths outside
 the repository. The same component policy applies beneath initialized
-immediate submodules. Persisted AST rows are untrusted diagnostic history, not
-source, symbol, embedding, or AST-cache authority. Every current tracked
-candidate fully recomputes its source text, symbols, tokens, embedding, and
-AST fields from the current file after the mandatory path policy passes;
-prior rows may contribute only bounded deletion/rename diagnostics. Thus the
-fail-closed policy reports zero evidence-row reuse and zero saved parse time,
-and even a poisoned row that claims a benign current path and Git blob cannot
-satisfy an objective.
+immediate submodules. This source-safe command creates no persistent AST
+dataset. If a later bounded diagnostic run enables that optional dataset,
+persisted rows remain untrusted history, not source, symbol, embedding, or
+AST-cache authority: every current tracked candidate must be recomputed from
+the current file after the mandatory path policy passes. Prior rows may
+contribute only bounded deletion/rename diagnostics, and a poisoned row that
+claims a benign current path and Git blob cannot satisfy an objective.
 
 External completion is a scheduler fence, not merely a reconciliation hint.
 The generic completion-authority fields and the revision-2 operational goal
