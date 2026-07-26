@@ -5056,7 +5056,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="strictly validate the existing frozen evidence without live calls",
     )
-    execute = subparsers.add_parser("execute")
+    execute = subparsers.add_parser(
+        "execute",
+        help=(
+            "run or validate the frozen revision-1 diagnostic matrix; "
+            "this command does not produce G201/G212 revision-2 evidence"
+        ),
+        description=(
+            "Run or validate the frozen revision-1 A0-A12/S1 diagnostic "
+            "matrix. Its results cannot be relabelled as the source-only "
+            "G201 semantic calibration or the causal G212 matrix."
+        ),
+    )
     execute.add_argument("--run-id", required=True)
     execute.add_argument("--splits", default="pilot,development")
     execute.add_argument(

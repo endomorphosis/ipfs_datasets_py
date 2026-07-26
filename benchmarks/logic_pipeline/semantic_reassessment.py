@@ -89,6 +89,7 @@ from .frontend_report import (
     load_frontend_report,
 )
 from .matrix_reassessment import (
+    MATRIX_INDEX_SCHEMA,
     MatrixReassessmentError,
     validate_reassessment_matrix,
 )
@@ -4423,6 +4424,16 @@ def _validated_matrix_inputs(
     matrix_index = _rooted(repository, layout.matrix_index)
     run_root = _rooted(repository, layout.run_paths.run_root)
     _assert_no_symlink_chain(run_root, matrix_index, "matrix index")
+    matrix_value, matrix_raw = _read_canonical(
+        matrix_index, "matrix index"
+    )
+    matrix_header = _mapping(matrix_value, "matrix index")
+    if matrix_header.get("schema") == MATRIX_INDEX_SCHEMA:
+        raise SemanticReassessmentError(
+            "reassessment-matrix.v1 is revision-1 diagnostic evidence and "
+            "cannot mint semantic-v2 quality receipts; operators must use "
+            "the G201 source-only semantic-v2 execution path"
+        )
     try:
         frozen = validate_frozen_capability_reprobe(
             repository_root=repository,
@@ -4449,9 +4460,6 @@ def _validated_matrix_inputs(
         raise SemanticReassessmentError(
             "semantic reassessment matrix prerequisite is invalid"
         ) from exc
-    matrix_value, matrix_raw = _read_canonical(
-        matrix_index, "matrix index"
-    )
     if matrix_value != matrix:
         raise SemanticReassessmentError(
             "validated matrix differs from its index"
