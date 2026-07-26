@@ -486,9 +486,9 @@ reasoning = reasoner.reason_across_documents(
 ### Documentation
 
 - **Quick Start:** [QUICKSTART.md](./QUICKSTART.md)
-- **Full Guide:** [docs/knowledge_graphs/KNOWLEDGE_GRAPHS_INTEGRATION_GUIDE.md](../../docs/knowledge_graphs/KNOWLEDGE_GRAPHS_INTEGRATION_GUIDE.md)
-- **API Reference:** [docs/knowledge_graphs/KNOWLEDGE_GRAPHS_EXTRACTION_API.md](../../docs/knowledge_graphs/KNOWLEDGE_GRAPHS_EXTRACTION_API.md)
-- **Examples:** [docs/knowledge_graphs/KNOWLEDGE_GRAPHS_USAGE_EXAMPLES.md](../../docs/knowledge_graphs/KNOWLEDGE_GRAPHS_USAGE_EXAMPLES.md)
+- **Full Guide:** [USER_GUIDE.md](./USER_GUIDE.md)
+- **API Reference:** [API_REFERENCE.md](./API_REFERENCE.md)
+- **Examples:** [USER_GUIDE.md — Examples Gallery](./USER_GUIDE.md#examples-gallery)
 
 ---
 

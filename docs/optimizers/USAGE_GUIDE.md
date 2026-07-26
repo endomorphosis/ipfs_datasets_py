@@ -425,7 +425,7 @@ for patch in history:
 
 - Read the [Architecture Documentation](ARCHITECTURE_AGENTIC_OPTIMIZERS.md)
 - Review the [Implementation Plan](IMPLEMENTATION_PLAN.md)
-- Check the [API Reference](API_REFERENCE.md) (coming soon)
+- Check the [API Reference](../api/OPTIMIZERS_API_REFERENCE.md)
 - Try the [Examples](../../examples/agentic/) (coming soon)
 
 ## Support

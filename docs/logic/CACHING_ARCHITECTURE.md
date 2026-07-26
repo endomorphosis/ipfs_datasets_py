@@ -624,7 +624,7 @@ result = converter.convert(text)  # Automatic caching
 
 - **[README.md](./README.md)** - Module overview
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture
-- **[common/README.md](./common/README.md)** - Common utilities
+- **[common/CONVERTER_USAGE.md](./common/CONVERTER_USAGE.md)** - Common converter utilities
 - **[PERFORMANCE_TUNING.md](./PERFORMANCE_TUNING.md)** - Performance optimization
 
 ---

@@ -300,8 +300,8 @@ Risk: Medium
 ## PHASE 3C RESOURCES
 
 **Documentation:**
-- [PHASE3C_GROTH16_IMPLEMENTATION_PLAN.md](ipfs_datasets_py/ipfs_datasets_py/logic/zkp/PHASE3C_GROTH16_IMPLEMENTATION_PLAN.md) - Full implementation plan
-- [PHASE3C_CIRCUIT_SPEC.md](ipfs_datasets_py/ipfs_datasets_py/logic/zkp/PHASE3C_CIRCUIT_SPEC.md) - Circuit specification
+- [PHASE3C_GROTH16_IMPLEMENTATION_PLAN.md](logic/zkp/ARCHIVE/PHASE3C_GROTH16_IMPLEMENTATION_PLAN.md) - Full implementation plan
+- [PHASE3C_CIRCUIT_SPEC.md](logic/zkp/ARCHIVE/PHASE3C_CIRCUIT_SPEC.md) - Circuit specification
 - [PHASE3C_QUICK_START.md](PHASE3C_QUICK_START.md) - Immediate startup guide
 
 **Code Templates:**

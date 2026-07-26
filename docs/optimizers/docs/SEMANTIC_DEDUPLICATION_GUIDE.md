@@ -429,9 +429,9 @@ def get_entity_embedding(entity_name: str, domain: str) -> List[float]:
 - `test_batch_324_10k_extraction_benchmark.py` - Large-scale performance testing
 
 ### Documentation
-- [OntologyGenerator API](./ontology_generator.md)
-- [Benchmarking Guide](./benchmarking_guide.md)
-- [Configuration Reference](./configuration.md)
+- [OntologyGenerator API](../ONTOLOGY_GENERATOR_DOCTEST_REFERENCE.md)
+- [Benchmarking Guide](../../../benchmarks/BENCHMARK_SUITE_GUIDE.md)
+- [Configuration Reference](../graphrag/CONFIGURATION_REFERENCE.md)
 
 ### Academic References
 - Sentence-BERT embeddings: [ArXiv](https://arxiv.org/abs/1908.10084)

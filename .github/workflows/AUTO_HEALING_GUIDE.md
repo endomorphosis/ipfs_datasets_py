@@ -182,9 +182,9 @@ gh workflow run copilot-agent-autofix.yml \
 ```
 
 ### Monitoring Progress
-- Check the [Issues](../../issues?q=label%3Aauto-healing) page for auto-created issues
+- Check the [Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues?q=label%3Aauto-healing) page for auto-created issues
 - Filter by labels: `automated`, `workflow-failure`, `auto-healing`
-- Check [Pull Requests](../../pulls?q=label%3Aautomated-fix) for auto-generated PRs
+- Check [Pull Requests](https://github.com/endomorphosis/ipfs_datasets_py/pulls?q=label%3Aautomated-fix) for auto-generated PRs
 - Filter by labels: `automated-fix`, `workflow-fix`, `copilot-ready`
 
 ## Files and Components

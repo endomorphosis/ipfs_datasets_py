@@ -186,8 +186,8 @@ yamllint .github/workflows/*.yml
 ### 9. Getting Help
 
 1. **Documentation**:
-   - [Troubleshooting Guide](.github/workflows/COPILOT_WORKFLOW_TROUBLESHOOTING.md)
-   - [Workflow README](.github/workflows/README.md)
+   - [Troubleshooting Guide](COPILOT_WORKFLOW_TROUBLESHOOTING.md)
+   - [Workflow README](README.md)
    - [GitHub Docs](https://docs.github.com/en/actions)
 
 2. **Tools**:
@@ -212,10 +212,10 @@ yamllint .github/workflows/*.yml
 ## Quick Links
 
 - 🔧 [Troubleshooting Guide](COPILOT_WORKFLOW_TROUBLESHOOTING.md)
-- 📊 [Workflow Health Check](.github/workflows/workflow-health-check.yml)
-- ✅ [Validator Script](.github/scripts/validate_workflows.py)
-- 📚 [Full README](.github/workflows/README.md)
-- 🐛 [Report Issue](../../issues/new)
+- 📊 [Workflow Health Check](workflow-health-check.yml)
+- ✅ [Validator Script](../scripts/validate_workflows.py)
+- 📚 [Full README](README.md)
+- 🐛 [Report Issue](https://github.com/endomorphosis/ipfs_datasets_py/issues/new)
 
 ---
 

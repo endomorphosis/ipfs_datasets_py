@@ -156,8 +156,8 @@ pytest --cov=ipfs_datasets_py.knowledge_graphs \
 
 ## 📚 Related Documentation
 
-- [ROADMAP.md](../../ipfs_datasets_py/knowledge_graphs/ROADMAP.md) - Future test plans
-- [MASTER_STATUS.md](../../ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md) - Current status (single source of truth)
+- [ROADMAP.md](../../docs/knowledge_graphs/ROADMAP.md) - Future test plans
+- [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) - Current status (single source of truth)
 - [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md) - Test guidelines
 
 ---

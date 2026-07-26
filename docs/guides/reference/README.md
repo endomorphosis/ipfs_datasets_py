@@ -47,4 +47,4 @@ Scraper docs cover:
 - [Developer Guide](../../developer_guide.md) - Development information
 - [User Guide](../../user_guide.md) - Usage guide
 - [Architecture](../../architecture/) - System architecture
-- [Implementation Notes](../../implementation_notes/) - Implementation details
+- [Implementation Notes](../../implementation/) - Implementation details

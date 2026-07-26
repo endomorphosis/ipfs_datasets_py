@@ -7,7 +7,7 @@ Technical implementation details and design decisions for IPFS Datasets Python.
 This directory contains detailed technical documentation about specific implementations:
 
 ### Current Files
-- [Audit System Implementation](audit_system_implementation.md) - Audit logging system
+- [Audit System](audit_system.md) - Audit logging system
 - [Index](index.md) - Implementation notes index
 
 ## Purpose
@@ -35,10 +35,10 @@ When working on the codebase:
 
 ## Related Documentation
 
-- [Architecture](../architecture/) - System architecture
-- [Implementation Plans](../implementation_plans/) - Future implementation plans
-- [Developer Guide](../developer_guide.md) - Development guide
-- [Analysis](../analysis/) - Technical analysis documents
+- [Architecture](../../architecture/) - System architecture
+- [Implementation Plans](../plans/) - Future implementation plans
+- [Developer Guide](../../developer_guide.md) - Development guide
+- [Analysis](../../analysis/) - Technical analysis documents
 
 ## Contributing
 

@@ -1,0 +1,6259 @@
+"""Strict logic-pipeline report CLI and proof-overlap implementation.
+
+This module implements the Hammer/Leanstral proof report and dispatches the
+spaCy/SyMAI front-end report implemented in :mod:`frontend_report`.  Both are
+trust boundaries, not presentation-only summaries.  The proof path requires
+the complete paired pilot matrix, derives every aggregate from case-level
+observations, keeps cold and warm cache modes separate, and admits a verified
+outcome only when a native-kernel receipt is present.  Legacy S1 model claims
+are retained as a safety diagnostic and never enter candidate metrics.
+
+The CLI also dispatches the reproducible inferential statistics validator in
+:mod:`statistics`.  Statistics reports are supplied explicitly because they
+are run-scoped analysis outputs rather than a fabricated checked-in efficacy
+snapshot.
+
+Delegation-efficiency reports use the same rule.  A measured report must embed
+complete case-result and operational-meter receipts.  Without an explicit
+results path, the efficiency section validates a structural preflight whose
+quality and resource values are null; it never turns absent measurements into
+zero-cost efficacy.
+
+The checked-in artifact records a capability-preflight execution because the
+requested Leanstral service was unavailable in the capture environment.  This
+is intentional missingness: validation proves that the analysis/reporting
+contract is complete without manufacturing efficacy measurements.
+
+The robustness boundary additionally classifies the preregistered failure
+matrix, proves bounded process isolation, validates pinned fresh-worktree
+receipt replay, and emits canonical content-addressed robustness evidence.
+"""
+
+from __future__ import annotations
+
+if __package__ in {None, ""}:  # Support ``python benchmarks/.../report.py``.
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+import argparse
+from dataclasses import dataclass
+from enum import Enum
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Final, Mapping, Protocol, Sequence, Self
+
+from benchmarks.logic_pipeline import BENCHMARK_ID, DEFAULT_BENCHMARK_ROOT
+from benchmarks.logic_pipeline.capabilities import WorktreeSafetyReceipt
+from benchmarks.logic_pipeline.cases import (
+    FROZEN_CORPUS_MANIFEST_SHA256,
+    FROZEN_SPLIT_SHA256,
+)
+from benchmarks.logic_pipeline.cache_measurement import (
+    extract_symai_cache_prime_receipt,
+    extract_symai_cache_setup_telemetry,
+    symai_backend_identity,
+    symai_semantic_payload,
+    validate_symai_warm_cache_measurement,
+)
+from benchmarks.logic_pipeline.contracts import (
+    DEFAULT_PROTOCOL,
+    CaseResultRecord,
+    CacheMode,
+    DEFAULT_PROTOCOL_SHA256,
+    FailureCode,
+    NATIVE_KERNEL_RECEIPT_SCHEMA,
+    OutcomeStatus,
+    ProtocolContractError,
+    RunContract,
+    Split,
+    StageName,
+    StageRecord,
+    VerificationAuthority,
+    canonical_json,
+    validate_native_kernel_stage_receipt,
+)
+from benchmarks.logic_pipeline.hammer_replay import (
+    HAMMER_EVIDENCE_SCHEMA as REPLAY_HAMMER_EVIDENCE_SCHEMA,
+    HAMMER_PREMISE_SELECTION_SCHEMA as REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA,
+    HAMMER_TRANSLATED_ENTAILMENT_SCHEMA as REPLAY_HAMMER_TRANSLATED_SCHEMA,
+    HAMMER_TRANSLATION_TERMINAL_SCHEMA as REPLAY_HAMMER_TERMINAL_SCHEMA,
+    project_hammer_stage_for_replay,
+    validate_hammer_premise_selection_upstream_bindings,
+)
+from benchmarks.logic_pipeline.metrics import (
+    DEFAULT_EFFICIENCY_ESCALATIONS,
+    EfficiencyEscalation,
+    EfficiencyObservation,
+    MetricsContractError,
+    analyze_delegation_efficiency,
+    validate_kernel_bound_result,
+)
+from benchmarks.logic_pipeline.variants import (
+    VARIANT_REGISTRY,
+    VARIANT_REGISTRY_SHA256,
+)
+
+
+PROOF_REPORT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.proof-overlap-report.v1"
+)
+PROOF_OBSERVATION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.proof-observation.v1"
+)
+PROOF_ANALYSIS_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.proof-overlap-analysis.v1"
+)
+EFFICIENCY_REPORT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.delegation-efficiency-report.v1"
+)
+DEFAULT_PROOF_REPORT_PATH: Final = Path(
+    "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+    "proof-overlap-ordering-v1.json"
+)
+LEGACY_FINAL_DECISION_PATH: Final = Path(
+    "docs/performance_snapshots/"
+    "2026-07-24_hammer_symai_spacy_leanstral_final_decision.json"
+)
+DEFAULT_FINAL_DECISION_PATH: Final = Path(
+    "docs/performance_snapshots/"
+    "2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json"
+)
+DEFAULT_BENCHMARK_RUNBOOK_PATH: Final = Path(
+    "docs/implementation/runbooks/"
+    "hammer_symai_spacy_leanstral_benchmark.md"
+)
+FINAL_DECISION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.final-architecture-decision.v1"
+)
+FINAL_DECISION_EVIDENCE: Final = (
+    "evidence-bound final architecture decision, delegation matrix, "
+    "and worktree-safe reproduction runbook"
+)
+REASSESSMENT_FINAL_DECISION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.final-architecture-decision.v2"
+)
+REASSESSMENT_FINAL_DECISION_EVIDENCE: Final = (
+    "source-bound replacement architecture decision, immutable v1 "
+    "preservation, measured delegation dispositions, and worktree-safe "
+    "reassessment reproduction runbook"
+)
+PRIMARY_VARIANT_IDS: Final = (
+    "A2",
+    "A3",
+    "A4",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "A10",
+    "A11",
+    "A12",
+)
+DIAGNOSTIC_VARIANT_IDS: Final = ("S1",)
+CACHE_MODES: Final = ("cold", "warm")
+ELIGIBLE_CASE_IDS: Final = (
+    "pilot-p01",
+    "pilot-p02",
+    "pilot-p03",
+    "pilot-p04",
+    "pilot-p07",
+    "pilot-p08",
+    "pilot-p09",
+)
+EXCLUDED_CASE_IDS: Final = ("pilot-p05", "pilot-p06", "pilot-p10")
+STATUS_VALUES: Final = frozenset(
+    {
+        "verified",
+        "not_verified",
+        "rejected",
+        "unavailable",
+        "excluded",
+        "infrastructure_failure",
+    }
+)
+SOURCE_VALUES: Final = frozenset({"hammer", "leanstral", "both", "none"})
+CAPABILITY_STATUS_VALUES: Final = frozenset(
+    {"available", "unavailable", "degraded"}
+)
+CAPABILITY_KEYS: Final = (
+    "spacy",
+    "symai",
+    "llm_router",
+    "hammer",
+    "leanstral",
+    "lean_kernel",
+)
+PAIRWISE_COMPARISONS: Final = (
+    ("A2", "A3", "hammer_only_vs_fallback"),
+    ("A3", "A6", "hammer_first_vs_leanstral_first"),
+    ("A4", "A6", "conditional_hammer_first_vs_leanstral_first"),
+    ("A4", "A9", "hammer_first_vs_no_hammer"),
+    ("A4", "A10", "deterministic_vs_learned_selector"),
+    ("A4", "A11", "deterministic_vs_llm_ranking"),
+    ("A4", "A12", "conditional_vs_duplicated_work"),
+)
+
+_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+_SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+
+
+class ProofReportError(ValueError):
+    """Raised when proof evidence cannot support a report."""
+
+
+class FinalDecisionValidationError(ValueError):
+    """Raised when the published architecture decision is not trustworthy."""
+
+
+class RunbookValidationError(ValueError):
+    """Raised when the benchmark operator runbook is incomplete or unsafe."""
+
+
+def HSSLEV1006B8A() -> str:
+    """Return AST-verifiable evidence for the final architecture decision."""
+
+    return FINAL_DECISION_EVIDENCE
+
+
+def HSSLEV1703E61() -> str:
+    """Return AST-verifiable evidence for the replacement decision."""
+
+    return REASSESSMENT_FINAL_DECISION_EVIDENCE
+
+
+def HSSLEV0526A41() -> str:
+    """Return AST-verifiable evidence for proof overlap and ordering."""
+
+    return (
+        "kernel-bound Hammer and Leanstral proof overlap, ordering, "
+        "and missingness report"
+    )
+
+
+def HSSLEV0519C80() -> str:
+    """Return AST-verifiable evidence for front-end overlap measurement."""
+
+    from benchmarks.logic_pipeline.frontend_report import (
+        HSSLEV0519C80 as frontend_evidence,
+    )
+
+    return frontend_evidence()
+
+
+def HSSLEV0608F63() -> str:
+    """Return AST-verifiable evidence for reproducible statistical analysis."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        HSSLEV0608F63 as statistics_evidence,
+    )
+
+    return statistics_evidence()
+
+
+def HSSLEV0615B24() -> str:
+    """Return AST-verifiable evidence for delegation-value accounting."""
+
+    from benchmarks.logic_pipeline.metrics import (
+        HSSLEV0615B24 as efficiency_evidence,
+    )
+
+    return efficiency_evidence()
+
+
+def HSSLEV1159F06() -> str:
+    """Return AST-verifiable evidence for measured reports and authorization."""
+
+    return (
+        "receipt-driven front-end, proof, resource, and statistical reports "
+        "with typed missingness and a complete source-bound data-driven "
+        "pilot authorization gate"
+    )
+
+
+def HSSLEV0801D68() -> str:
+    """Return AST-verifiable evidence for the pilot-shortlist gate."""
+
+    from benchmarks.logic_pipeline.pilot_gate import (
+        HSSLEV0801D68 as pilot_gate_evidence,
+    )
+
+    return pilot_gate_evidence()
+
+
+def HSSLEV0909F29() -> str:
+    """Return AST-verifiable evidence for the paired holdout phase gate."""
+
+    from benchmarks.logic_pipeline.holdout_gate import (
+        HSSLEV0909F29 as holdout_gate_evidence,
+    )
+
+    return holdout_gate_evidence()
+
+
+def HSSLEV1507C49() -> str:
+    """Return AST-verifiable evidence for the reassessment holdout boundary."""
+
+    from benchmarks.logic_pipeline.holdout_reassessment import (
+        HSSLEV1507C49 as holdout_reassessment_evidence,
+    )
+
+    return holdout_reassessment_evidence()
+
+
+def HSSLEV1605D50() -> str:
+    """Return AST-verifiable evidence for reassessment replay and reports."""
+
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        HSSLEV1605D50 as reassessment_reports_evidence,
+    )
+
+    return reassessment_reports_evidence()
+
+
+def build_statistics_report(
+    plan: object,
+    requests: Sequence[object],
+    *,
+    pareto_objectives: Sequence[object] = (),
+    pareto_candidates: Sequence[object] = (),
+) -> dict[str, object]:
+    """Build a run-scoped inferential report through the shared CLI boundary."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        build_statistics_report as build,
+    )
+
+    return build(
+        plan,  # type: ignore[arg-type]
+        requests,  # type: ignore[arg-type]
+        pareto_objectives=pareto_objectives,  # type: ignore[arg-type]
+        pareto_candidates=pareto_candidates,  # type: ignore[arg-type]
+    )
+
+
+def validate_statistics_report(value: object) -> dict[str, object]:
+    """Recompute and validate a run-scoped inferential report."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        validate_statistics_report as validate,
+    )
+
+    return validate(value)
+
+
+def load_statistics_report(path: str | Path) -> dict[str, object]:
+    """Load strict canonical statistics JSON through the report entry point."""
+
+    from benchmarks.logic_pipeline.statistics import (
+        load_statistics_report as load,
+    )
+
+    return load(path)
+
+
+FAILURE_ISOLATION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.failure-isolation.v1"
+)
+REPLAY_VALIDATION_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.receipt-replay.v1"
+)
+ROBUSTNESS_REPORT_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.robustness-report.v1"
+)
+BOUNDED_PROCESS_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.bounded-process.v1"
+)
+_ROBUST_SHA256_CHARS = frozenset("0123456789abcdef")
+_MAX_DETAIL = 512
+
+
+class RobustnessValidationError(ValueError):
+    """Raised when robustness evidence is incomplete, stale, or inconsistent."""
+
+
+class FailureInjectionKind(str, Enum):
+    """Complete failure-injection matrix required by HSSL-G070."""
+
+    MISSING_TOOL = "missing_tool"
+    MALFORMED_OUTPUT = "malformed_output"
+    TIMEOUT = "timeout"
+    CANCELLATION = "cancellation"
+    CACHE_CORRUPTION = "cache_corruption"
+    BACKEND_DRIFT = "backend_drift"
+
+
+class ReplayStatus(str, Enum):
+    PASSED = "passed"
+
+
+_EXPECTED_CODES: Final[Mapping[FailureInjectionKind, frozenset[FailureCode]]] = {
+    FailureInjectionKind.MISSING_TOOL: frozenset(
+        {FailureCode.CAPABILITY_UNAVAILABLE}
+    ),
+    FailureInjectionKind.MALFORMED_OUTPUT: frozenset(
+        {
+            FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE,
+            FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
+            FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE,
+        }
+    ),
+    FailureInjectionKind.TIMEOUT: frozenset(
+        {
+            FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE,
+            FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
+            FailureCode.RESOURCE_LEASE_CANCELLATION,
+        }
+    ),
+    FailureInjectionKind.CANCELLATION: frozenset(
+        {FailureCode.RESOURCE_LEASE_CANCELLATION}
+    ),
+    FailureInjectionKind.CACHE_CORRUPTION: frozenset(
+        {FailureCode.CACHE_CONTAMINATION}
+    ),
+    FailureInjectionKind.BACKEND_DRIFT: frozenset(
+        {FailureCode.RECEIPT_OR_PROVENANCE_FAILURE}
+    ),
+}
+
+
+def HSSLEV0702E85() -> str:
+    """Return the stable AST evidence marker for the robustness objective."""
+
+    return "failure injection, bounded isolation, and pinned fresh-worktree receipt replay"
+
+
+def _robust_digest(value: object, field: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in _ROBUST_SHA256_CHARS for character in value)
+    ):
+        raise RobustnessValidationError(
+            f"{field} must be a lowercase SHA-256 digest"
+        )
+    return value
+
+
+def _robust_identifier(value: object, field: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > 128
+        or value in {".", ".."}
+        or not value[0].isalnum()
+        or any(not (character.isalnum() or character in "._-") for character in value)
+    ):
+        raise RobustnessValidationError(f"{field} is not a safe identifier")
+    return value
+
+
+def _robust_exact(
+    data: Mapping[str, object], expected: set[str], field: str
+) -> None:
+    if set(data) != expected:
+        raise RobustnessValidationError(
+            f"{field} fields changed; expected {sorted(expected)}, got {sorted(data)}"
+        )
+
+
+def _mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise ProofReportError(f"{field} must be an object with string keys")
+    return value
+
+
+def _exact(
+    value: Mapping[str, object], expected: set[str], field: str
+) -> None:
+    actual = set(value)
+    if actual == expected:
+        return
+    missing = sorted(expected - actual)
+    unknown = sorted(actual - expected)
+    raise ProofReportError(
+        f"{field} keys changed; missing={missing}, unknown={unknown}"
+    )
+
+
+def _array(value: object, field: str) -> list[object]:
+    if not isinstance(value, list):
+        raise ProofReportError(f"{field} must be an array")
+    return value
+
+
+def _string(value: object, field: str, *, allow_empty: bool = False) -> str:
+    if not isinstance(value, str) or (not allow_empty and not value.strip()):
+        raise ProofReportError(f"{field} must be a nonempty string")
+    return value
+
+
+def _safe_id(value: object, field: str) -> str:
+    result = _string(value, field)
+    if not _SAFE_ID.fullmatch(result) or result in {".", ".."}:
+        raise ProofReportError(f"{field} must be a safe identifier")
+    return result
+
+
+def _digest(value: object, field: str) -> str:
+    if not isinstance(value, str) or not _SHA256.fullmatch(value):
+        raise ProofReportError(f"{field} must be a lowercase SHA-256 digest")
+    return value
+
+
+def _boolean(value: object, field: str) -> bool:
+    if type(value) is not bool:
+        raise ProofReportError(f"{field} must be boolean")
+    return value
+
+
+def _count(value: object, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ProofReportError(f"{field} must be a nonnegative integer")
+    return value
+
+
+def _number(value: object, field: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ProofReportError(f"{field} must be a finite nonnegative number")
+    result = float(value)
+    if not math.isfinite(result) or result < 0:
+        raise ProofReportError(f"{field} must be a finite nonnegative number")
+    return result
+
+
+def _nullable_digest(value: object, field: str) -> str | None:
+    return None if value is None else _digest(value, field)
+
+
+def _reject_duplicate_pairs(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ProofReportError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _robust_mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise RobustnessValidationError(f"{field} must be an object")
+    return value
+
+
+def _robust_number(
+    value: object, field: str, *, positive: bool = False
+) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise RobustnessValidationError(f"{field} must be a finite number")
+    result = float(value)
+    if not math.isfinite(result) or result < 0 or (positive and result <= 0):
+        raise RobustnessValidationError(f"{field} is outside its allowed bound")
+    return result
+
+
+def _robust_enum(enum_type: type[Enum], value: object, field: str) -> Enum:
+    if not isinstance(value, str):
+        raise RobustnessValidationError(f"{field} must be a string")
+    try:
+        return enum_type(value)
+    except ValueError as exc:
+        raise RobustnessValidationError(f"unsupported {field}: {value!r}") from exc
+
+
+def _case_identity(record: CaseResultRecord) -> tuple[object, ...]:
+    return (
+        record.protocol_sha256,
+        record.run_id,
+        record.case_id,
+        record.case_manifest_sha256,
+        record.variant_id,
+        record.split,
+        record.cache_mode,
+    )
+
+
+def _contract_identity(contract: RunContract) -> tuple[object, ...]:
+    return (
+        contract.protocol_sha256,
+        contract.run_id,
+        contract.case_manifest_sha256,
+        contract.requested_variant_id,
+        contract.split,
+        contract.cache_mode,
+    )
+
+
+def _validate_contract_result(
+    contract: RunContract, result: CaseResultRecord
+) -> None:
+    expected = (
+        result.protocol_sha256,
+        result.run_id,
+        result.case_manifest_sha256,
+        result.variant_id,
+        result.split,
+        result.cache_mode,
+    )
+    if _contract_identity(contract) != expected:
+        raise RobustnessValidationError(
+            "run contract and case-result identities do not match"
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class BoundedProcessResult:
+    """Terminal evidence for one command executed in an isolated process group."""
+
+    schema: str
+    argv: tuple[str, ...]
+    pid: int | None
+    process_group_id: int | None
+    returncode: int | None
+    elapsed_seconds: float
+    limit_seconds: float
+    failure_code: FailureCode | None
+    timed_out: bool
+    cancelled: bool
+    stdout: str
+    stderr: str
+    output_truncated: bool
+    orphaned_child_count: int
+
+    def __post_init__(self) -> None:
+        if self.schema != BOUNDED_PROCESS_SCHEMA:
+            raise RobustnessValidationError("unsupported bounded-process schema")
+        if not isinstance(self.argv, tuple) or not self.argv:
+            raise RobustnessValidationError("argv must be a nonempty tuple")
+        if any(not isinstance(item, str) or not item for item in self.argv):
+            raise RobustnessValidationError("argv contains an invalid argument")
+        for field in ("pid", "process_group_id"):
+            value = getattr(self, field)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            ):
+                raise RobustnessValidationError(f"{field} must be a positive integer")
+        if (self.pid is None) != (self.process_group_id is None):
+            raise RobustnessValidationError(
+                "pid and process_group_id must both be present or absent"
+            )
+        if self.returncode is not None and (
+            isinstance(self.returncode, bool) or not isinstance(self.returncode, int)
+        ):
+            raise RobustnessValidationError("returncode must be an integer or null")
+        _robust_number(self.elapsed_seconds, "elapsed_seconds")
+        _robust_number(self.limit_seconds, "limit_seconds", positive=True)
+        if self.failure_code is not None and not isinstance(
+            self.failure_code, FailureCode
+        ):
+            raise RobustnessValidationError("failure_code must use FailureCode")
+        if type(self.timed_out) is not bool or type(self.cancelled) is not bool:
+            raise RobustnessValidationError("process flags must be booleans")
+        if self.timed_out and self.cancelled:
+            raise RobustnessValidationError(
+                "a process cannot be both timed out and explicitly cancelled"
+            )
+        if not isinstance(self.stdout, str) or not isinstance(self.stderr, str):
+            raise RobustnessValidationError("process output must be text")
+        if any(
+            len(value.encode("utf-8")) > 16 * 1024 * 1024
+            for value in (self.stdout, self.stderr)
+        ):
+            raise RobustnessValidationError("retained process output is too large")
+        if type(self.output_truncated) is not bool:
+            raise RobustnessValidationError("output_truncated must be a boolean")
+        if (
+            isinstance(self.orphaned_child_count, bool)
+            or not isinstance(self.orphaned_child_count, int)
+            or self.orphaned_child_count < 0
+        ):
+            raise RobustnessValidationError(
+                "orphaned_child_count must be a nonnegative integer"
+            )
+        if self.orphaned_child_count:
+            if self.failure_code is not FailureCode.ORPHANED_CHILD:
+                raise RobustnessValidationError(
+                    "unexpected or surviving children require orphaned_child classification"
+                )
+        elif self.timed_out or self.cancelled:
+            if self.failure_code is not FailureCode.RESOURCE_LEASE_CANCELLATION:
+                raise RobustnessValidationError(
+                    "timeout/cancellation requires resource-lease classification"
+                )
+
+    @property
+    def bounded(self) -> bool:
+        return self.elapsed_seconds <= self.limit_seconds
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            canonical_json(self.to_dict()).encode("utf-8")
+        ).hexdigest()
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "argv": list(self.argv),
+            "pid": self.pid,
+            "process_group_id": self.process_group_id,
+            "returncode": self.returncode,
+            "elapsed_seconds": self.elapsed_seconds,
+            "limit_seconds": self.limit_seconds,
+            "failure_code": (
+                None if self.failure_code is None else self.failure_code.value
+            ),
+            "timed_out": self.timed_out,
+            "cancelled": self.cancelled,
+            "stdout": self.stdout,
+            "stderr": self.stderr,
+            "output_truncated": self.output_truncated,
+            "orphaned_child_count": self.orphaned_child_count,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _robust_mapping(value, "bounded process")
+        _robust_exact(data, set(cls.__dataclass_fields__), "bounded process")
+        argv = data["argv"]
+        if not isinstance(argv, list):
+            raise RobustnessValidationError("argv must be an array")
+        code = data["failure_code"]
+        return cls(
+            schema=data["schema"],  # type: ignore[arg-type]
+            argv=tuple(argv),  # type: ignore[arg-type]
+            pid=data["pid"],  # type: ignore[arg-type]
+            process_group_id=data["process_group_id"],  # type: ignore[arg-type]
+            returncode=data["returncode"],  # type: ignore[arg-type]
+            elapsed_seconds=data["elapsed_seconds"],  # type: ignore[arg-type]
+            limit_seconds=data["limit_seconds"],  # type: ignore[arg-type]
+            failure_code=(  # type: ignore[arg-type]
+                None
+                if code is None
+                else _robust_enum(FailureCode, code, "failure_code")
+            ),
+            timed_out=data["timed_out"],  # type: ignore[arg-type]
+            cancelled=data["cancelled"],  # type: ignore[arg-type]
+            stdout=data["stdout"],  # type: ignore[arg-type]
+            stderr=data["stderr"],  # type: ignore[arg-type]
+            output_truncated=data["output_truncated"],  # type: ignore[arg-type]
+            orphaned_child_count=data["orphaned_child_count"],  # type: ignore[arg-type]
+        )
+
+
+class CancellationSignal(Protocol):
+    def is_set(self) -> bool: ...
+
+
+def _active_process_group_members(process_group_id: int) -> tuple[int, ...]:
+    """Return live (non-zombie) Linux processes in a process group."""
+
+    proc = Path("/proc")
+    if not proc.is_dir():
+        try:
+            os.killpg(process_group_id, 0)
+        except ProcessLookupError:
+            return ()
+        except PermissionError:
+            return (process_group_id,)
+        return (process_group_id,)
+    members: list[int] = []
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            fields = (entry / "stat").read_text(encoding="utf-8").split()
+            # /proc/<pid>/stat: state is field 3, process group is field 5.
+            if len(fields) > 4 and int(fields[4]) == process_group_id:
+                if fields[2] != "Z":
+                    members.append(int(entry.name))
+        except (FileNotFoundError, PermissionError, OSError, ValueError):
+            continue
+    return tuple(sorted(members))
+
+
+def _terminate_process_group(
+    process: subprocess.Popen[bytes], *, grace_seconds: float
+) -> tuple[int, ...]:
+    process_group_id = process.pid
+    if process.poll() is None or _active_process_group_members(process_group_id):
+        try:
+            os.killpg(process_group_id, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        if process.poll() is None:
+            try:
+                process.wait(timeout=min(0.02, max(0.001, deadline - time.monotonic())))
+            except subprocess.TimeoutExpired:
+                pass
+        if not _active_process_group_members(process_group_id):
+            break
+        time.sleep(0.005)
+    members = _active_process_group_members(process_group_id)
+    if members:
+        try:
+            os.killpg(process_group_id, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        kill_deadline = time.monotonic() + grace_seconds
+        while time.monotonic() < kill_deadline:
+            if process.poll() is None:
+                try:
+                    process.wait(timeout=0.02)
+                except subprocess.TimeoutExpired:
+                    pass
+            members = _active_process_group_members(process_group_id)
+            if not members:
+                break
+            time.sleep(0.005)
+    if process.poll() is None:
+        try:
+            process.wait(timeout=grace_seconds)
+        except subprocess.TimeoutExpired:
+            pass
+    return _active_process_group_members(process_group_id)
+
+
+def _read_bounded(stream: object, maximum: int) -> tuple[str, bool]:
+    stream.seek(0)  # type: ignore[attr-defined]
+    raw = stream.read(maximum + 1)  # type: ignore[attr-defined]
+    truncated = len(raw) > maximum
+    return raw[:maximum].decode("utf-8", errors="replace"), truncated
+
+
+def run_bounded_process(
+    argv: Sequence[str],
+    *,
+    timeout_seconds: float,
+    cwd: str | Path | None = None,
+    env: Mapping[str, str] | None = None,
+    cancellation: CancellationSignal | None = None,
+    termination_grace_seconds: float = 0.25,
+    maximum_output_bytes: int = 64 * 1024,
+) -> BoundedProcessResult:
+    """Run ``argv`` without a shell and kill/reap its whole process group.
+
+    Output is redirected to temporary files so an untrusted child cannot grow
+    the supervisor's memory.  Only ``maximum_output_bytes`` from each stream is
+    retained in the returned record.
+    """
+
+    command = tuple(argv)
+    if not command or any(not isinstance(item, str) or not item for item in command):
+        raise RobustnessValidationError("argv must be a nonempty string sequence")
+    limit = _robust_number(timeout_seconds, "timeout_seconds", positive=True)
+    grace = _robust_number(
+        termination_grace_seconds, "termination_grace_seconds", positive=True
+    )
+    if (
+        isinstance(maximum_output_bytes, bool)
+        or not isinstance(maximum_output_bytes, int)
+        or maximum_output_bytes < 1
+        or maximum_output_bytes > 16 * 1024 * 1024
+    ):
+        raise RobustnessValidationError(
+            "maximum_output_bytes must be from 1 through 16777216"
+        )
+    if cwd is not None and not Path(cwd).is_dir():
+        raise RobustnessValidationError("cwd must be an existing directory")
+    if env is not None and (
+        not isinstance(env, Mapping)
+        or any(not isinstance(key, str) or not isinstance(value, str) for key, value in env.items())
+    ):
+        raise RobustnessValidationError("env must map strings to strings")
+
+    start = time.monotonic()
+    with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+        try:
+            process = subprocess.Popen(
+                command,
+                cwd=cwd,
+                env=None if env is None else dict(env),
+                stdin=subprocess.DEVNULL,
+                stdout=stdout_file,
+                stderr=stderr_file,
+                start_new_session=True,
+                shell=False,
+            )
+        except FileNotFoundError:
+            elapsed = time.monotonic() - start
+            return BoundedProcessResult(
+                BOUNDED_PROCESS_SCHEMA,
+                command,
+                None,
+                None,
+                None,
+                elapsed,
+                limit + grace * 2,
+                FailureCode.CAPABILITY_UNAVAILABLE,
+                False,
+                False,
+                "",
+                "",
+                False,
+                0,
+            )
+        except OSError as exc:
+            raise RobustnessValidationError(
+                f"could not start bounded process: {type(exc).__name__}"
+            ) from exc
+
+        timed_out = False
+        cancelled = False
+        deadline = start + limit
+        try:
+            while process.poll() is None:
+                if cancellation is not None and cancellation.is_set():
+                    cancelled = True
+                    break
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                    break
+                time.sleep(min(0.01, max(0.001, deadline - time.monotonic())))
+        except BaseException:
+            # Even supervisor cancellation/interrupt must not leak the child
+            # group. Preserve the original exception after best-effort reap.
+            _terminate_process_group(process, grace_seconds=grace)
+            raise
+
+        survivors: tuple[int, ...] = ()
+        unexpected_children: tuple[int, ...] = ()
+        if timed_out or cancelled:
+            survivors = _terminate_process_group(process, grace_seconds=grace)
+        else:
+            # A parent can exit while leaving a same-group child holding no
+            # output descriptor. Treat that as an orphan and clean it too.
+            unexpected_children = tuple(
+                pid
+                for pid in _active_process_group_members(process.pid)
+                if pid != process.pid
+            )
+            if unexpected_children:
+                survivors = _terminate_process_group(process, grace_seconds=grace)
+        returncode = process.poll()
+        stdout, stdout_truncated = _read_bounded(stdout_file, maximum_output_bytes)
+        stderr, stderr_truncated = _read_bounded(stderr_file, maximum_output_bytes)
+        elapsed = time.monotonic() - start
+        if survivors or unexpected_children:
+            failure_code = FailureCode.ORPHANED_CHILD
+        elif timed_out or cancelled:
+            failure_code = FailureCode.RESOURCE_LEASE_CANCELLATION
+        elif returncode == 0:
+            failure_code = None
+        else:
+            failure_code = FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
+        return BoundedProcessResult(
+            BOUNDED_PROCESS_SCHEMA,
+            command,
+            process.pid,
+            process.pid,
+            returncode,
+            elapsed,
+            limit + grace * 2,
+            failure_code,
+            timed_out,
+            cancelled,
+            stdout,
+            stderr,
+            stdout_truncated or stderr_truncated,
+            len(set(survivors) | set(unexpected_children)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class FailureIsolationRecord:
+    """Validated evidence that one injected failure was bounded and local."""
+
+    schema: str
+    injection_id: str
+    kind: FailureInjectionKind
+    case_id: str
+    result_sha256: str
+    observed_failure_code: FailureCode
+    elapsed_seconds: float
+    limit_seconds: float
+    affected_case_ids: tuple[str, ...]
+    child_process_ids: tuple[int, ...] = ()
+    reaped_process_ids: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.schema != FAILURE_ISOLATION_SCHEMA:
+            raise RobustnessValidationError("unsupported failure-isolation schema")
+        _robust_identifier(self.injection_id, "injection_id")
+        if not isinstance(self.kind, FailureInjectionKind):
+            raise RobustnessValidationError("kind must use FailureInjectionKind")
+        _robust_identifier(self.case_id, "case_id")
+        _robust_digest(self.result_sha256, "result_sha256")
+        if not isinstance(self.observed_failure_code, FailureCode):
+            raise RobustnessValidationError(
+                "observed_failure_code must use FailureCode"
+            )
+        if self.observed_failure_code not in _EXPECTED_CODES[self.kind]:
+            raise RobustnessValidationError(
+                f"{self.kind.value} was misclassified as "
+                f"{self.observed_failure_code.value}"
+            )
+        elapsed = _robust_number(self.elapsed_seconds, "elapsed_seconds")
+        limit = _robust_number(
+            self.limit_seconds, "limit_seconds", positive=True
+        )
+        if elapsed > limit:
+            raise RobustnessValidationError(
+                f"{self.kind.value} exceeded its recorded time bound"
+            )
+        if (
+            not isinstance(self.affected_case_ids, tuple)
+            or self.affected_case_ids != (self.case_id,)
+        ):
+            raise RobustnessValidationError(
+                "an injected failure must affect exactly its own case"
+            )
+        for field in ("child_process_ids", "reaped_process_ids"):
+            values = getattr(self, field)
+            if (
+                not isinstance(values, tuple)
+                or len(values) != len(set(values))
+                or any(
+                    isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0
+                    for pid in values
+                )
+            ):
+                raise RobustnessValidationError(
+                    f"{field} must contain unique positive process ids"
+                )
+        if not set(self.child_process_ids).issubset(self.reaped_process_ids):
+            raise RobustnessValidationError(
+                "every child process must be terminated and reaped"
+            )
+        if DEFAULT_PROTOCOL.stop_required(self.observed_failure_code) != (
+            self.kind
+            in {
+                FailureInjectionKind.CACHE_CORRUPTION,
+                FailureInjectionKind.BACKEND_DRIFT,
+            }
+        ):
+            raise RobustnessValidationError(
+                "injected failure disagrees with the frozen immediate-stop policy"
+            )
+
+    @classmethod
+    def classify(
+        cls,
+        injection_id: str,
+        kind: FailureInjectionKind,
+        result: CaseResultRecord,
+        *,
+        elapsed_seconds: float,
+        limit_seconds: float,
+        affected_case_ids: Sequence[str],
+        child_process_ids: Sequence[int] = (),
+        reaped_process_ids: Sequence[int] = (),
+    ) -> Self:
+        if not isinstance(result, CaseResultRecord) or result.failure_code is None:
+            raise RobustnessValidationError(
+                "injected failure requires a failed CaseResultRecord"
+            )
+        try:
+            validate_kernel_bound_result(result)
+        except MetricsContractError as exc:
+            raise RobustnessValidationError(
+                "injected result failed provenance validation"
+            ) from exc
+        return cls(
+            FAILURE_ISOLATION_SCHEMA,
+            injection_id,
+            kind,
+            result.case_id,
+            result.digest,
+            result.failure_code,
+            elapsed_seconds,
+            limit_seconds,
+            tuple(affected_case_ids),
+            tuple(child_process_ids),
+            tuple(reaped_process_ids),
+        )
+
+    @property
+    def stop_required(self) -> bool:
+        return DEFAULT_PROTOCOL.stop_required(self.observed_failure_code)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "injection_id": self.injection_id,
+            "kind": self.kind.value,
+            "case_id": self.case_id,
+            "result_sha256": self.result_sha256,
+            "observed_failure_code": self.observed_failure_code.value,
+            "elapsed_seconds": self.elapsed_seconds,
+            "limit_seconds": self.limit_seconds,
+            "affected_case_ids": list(self.affected_case_ids),
+            "child_process_ids": list(self.child_process_ids),
+            "reaped_process_ids": list(self.reaped_process_ids),
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _robust_mapping(value, "failure isolation")
+        _robust_exact(data, set(cls.__dataclass_fields__), "failure isolation")
+        arrays = {}
+        for field in (
+            "affected_case_ids",
+            "child_process_ids",
+            "reaped_process_ids",
+        ):
+            member = data[field]
+            if not isinstance(member, list):
+                raise RobustnessValidationError(f"{field} must be an array")
+            arrays[field] = member
+        return cls(
+            schema=data["schema"],  # type: ignore[arg-type]
+            injection_id=data["injection_id"],  # type: ignore[arg-type]
+            kind=_robust_enum(  # type: ignore[arg-type]
+                FailureInjectionKind, data["kind"], "kind"
+            ),
+            case_id=data["case_id"],  # type: ignore[arg-type]
+            result_sha256=data["result_sha256"],  # type: ignore[arg-type]
+            observed_failure_code=_robust_enum(  # type: ignore[arg-type]
+                FailureCode, data["observed_failure_code"], "observed_failure_code"
+            ),
+            elapsed_seconds=data["elapsed_seconds"],  # type: ignore[arg-type]
+            limit_seconds=data["limit_seconds"],  # type: ignore[arg-type]
+            affected_case_ids=tuple(arrays["affected_case_ids"]),  # type: ignore[arg-type]
+            child_process_ids=tuple(arrays["child_process_ids"]),  # type: ignore[arg-type]
+            reaped_process_ids=tuple(arrays["reaped_process_ids"]),  # type: ignore[arg-type]
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ReplayValidationRecord:
+    """Content-addressed proof of one source/fresh-run receipt comparison."""
+
+    schema: str
+    status: ReplayStatus
+    case_id: str
+    original_run_id: str
+    replay_run_id: str
+    original_result_sha256: str
+    replay_result_sha256: str
+    original_receipt_sha256: str
+    replay_receipt_sha256: str
+    environment_sha256: str
+    source_commit: str
+    worktree_receipt_sha256: str
+    original_cache_namespace: str
+    replay_cache_namespace: str
+
+    def __post_init__(self) -> None:
+        if self.schema != REPLAY_VALIDATION_SCHEMA:
+            raise RobustnessValidationError("unsupported replay-validation schema")
+        if self.status is not ReplayStatus.PASSED:
+            raise RobustnessValidationError("only passed replay evidence is durable")
+        for field in ("case_id", "original_run_id", "replay_run_id"):
+            _robust_identifier(getattr(self, field), field)
+        if self.original_run_id == self.replay_run_id:
+            raise RobustnessValidationError("receipt replay requires a fresh run id")
+        for field in (
+            "original_result_sha256",
+            "replay_result_sha256",
+            "original_receipt_sha256",
+            "replay_receipt_sha256",
+            "environment_sha256",
+            "worktree_receipt_sha256",
+        ):
+            _robust_digest(getattr(self, field), field)
+        if (
+            not isinstance(self.source_commit, str)
+            or len(self.source_commit) != 40
+            or any(
+                character not in _ROBUST_SHA256_CHARS
+                for character in self.source_commit
+            )
+        ):
+            raise RobustnessValidationError(
+                "source_commit must be a full lowercase Git commit"
+            )
+        for field in ("original_cache_namespace", "replay_cache_namespace"):
+            if not isinstance(getattr(self, field), str) or not getattr(self, field):
+                raise RobustnessValidationError(f"{field} must be nonempty")
+        if self.original_cache_namespace == self.replay_cache_namespace:
+            raise RobustnessValidationError(
+                "receipt replay requires a fresh cache namespace"
+            )
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            canonical_json(self.to_dict()).encode("utf-8")
+        ).hexdigest()
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            field: (
+                getattr(self, field).value
+                if isinstance(getattr(self, field), Enum)
+                else getattr(self, field)
+            )
+            for field in self.__dataclass_fields__
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _robust_mapping(value, "replay validation")
+        _robust_exact(data, set(cls.__dataclass_fields__), "replay validation")
+        return cls(
+            schema=data["schema"],  # type: ignore[arg-type]
+            status=_robust_enum(  # type: ignore[arg-type]
+                ReplayStatus, data["status"], "status"
+            ),
+            case_id=data["case_id"],  # type: ignore[arg-type]
+            original_run_id=data["original_run_id"],  # type: ignore[arg-type]
+            replay_run_id=data["replay_run_id"],  # type: ignore[arg-type]
+            original_result_sha256=data["original_result_sha256"],  # type: ignore[arg-type]
+            replay_result_sha256=data["replay_result_sha256"],  # type: ignore[arg-type]
+            original_receipt_sha256=data["original_receipt_sha256"],  # type: ignore[arg-type]
+            replay_receipt_sha256=data["replay_receipt_sha256"],  # type: ignore[arg-type]
+            environment_sha256=data["environment_sha256"],  # type: ignore[arg-type]
+            source_commit=data["source_commit"],  # type: ignore[arg-type]
+            worktree_receipt_sha256=data["worktree_receipt_sha256"],  # type: ignore[arg-type]
+            original_cache_namespace=data["original_cache_namespace"],  # type: ignore[arg-type]
+            replay_cache_namespace=data["replay_cache_namespace"],  # type: ignore[arg-type]
+        )
+
+
+def _stable_native_kernel_replay_projection(
+    stage: StageRecord,
+) -> Mapping[str, object] | None:
+    """Return validated proof execution without run/cache artifact bindings.
+
+    The full receipt is independently validated before anything is projected.
+    Fresh cold replay necessarily changes the run id, cache mode, upstream
+    artifact digests, and every self-digest derived from those bindings.  Those
+    values prove integrity *within* one execution; they are not proof-execution
+    semantics across executions.  The projection therefore retains the exact
+    obligation, candidate order/source, rendered source, command, stdout,
+    stderr, return code, timeout/cancellation/resource state, process state,
+    termination reason, and acceptance outcome.
+    """
+
+    if (
+        stage.stage is not StageName.KERNEL
+        or stage.provenance.effective_identity.get("graph_invoked") is not True
+        or not isinstance(stage.data, Mapping)
+        or stage.data.get("schema") != NATIVE_KERNEL_RECEIPT_SCHEMA
+    ):
+        return None
+    raw = stage.to_dict()["data"]
+    if not isinstance(raw, dict):  # pragma: no cover - contract validated
+        raise ProtocolContractError(
+            "native-kernel replay receipt must be an object"
+        )
+    raw_accepted = validate_native_kernel_stage_receipt(stage)
+
+    def project_receipt(receipt: dict[str, object]) -> dict[str, object]:
+        for field in (
+            "run_id",
+            "cache_mode",
+            "receipt_sha256",
+            "candidate_artifact_sha256",
+            "semantic_context_sha256",
+            "semantic_artifact_sha256s",
+            "candidate_attempts_sha256",
+        ):
+            receipt.pop(field, None)
+
+        attempts = receipt.get("candidate_attempts")
+        if isinstance(attempts, list):
+            for attempt in attempts:
+                if not isinstance(attempt, dict):  # pragma: no cover - validated
+                    raise ProtocolContractError(
+                        "native-kernel replay attempt must be an object"
+                    )
+                attempt.pop("candidate_artifact_sha256", None)
+                attempt.pop("attempt_sha256", None)
+
+        selected = receipt.get("selected_attempt")
+        if isinstance(selected, dict):
+            selected.pop("candidate_artifact_sha256", None)
+            selected.pop("attempt_sha256", None)
+
+        diagnostic = receipt.get("diagnostic_receipt")
+        if diagnostic is not None:
+            if not isinstance(diagnostic, dict):  # pragma: no cover - validated
+                raise ProtocolContractError(
+                    "native-kernel diagnostic replay receipt must be an object"
+                )
+            receipt["diagnostic_receipt"] = project_receipt(diagnostic)
+            receipt.pop("diagnostic_receipt_sha256", None)
+        if "routing_policy" in receipt:
+            receipt["routing_policy"] = (
+                _stable_routing_policy_replay_projection(
+                    receipt["routing_policy"]
+                )
+            )
+        return receipt
+
+    raw = project_receipt(raw)
+
+    return {
+        "raw_kernel_accepted": raw_accepted,
+        "receipt": raw,
+    }
+
+
+_REPLAY_HAMMER_TRANSLATED_SCHEMA: Final = (
+    REPLAY_HAMMER_TRANSLATED_SCHEMA
+)
+_REPLAY_HAMMER_TERMINAL_SCHEMA: Final = (
+    REPLAY_HAMMER_TERMINAL_SCHEMA
+)
+_REPLAY_HAMMER_SCHEMAS: Final = frozenset(
+    {
+        REPLAY_HAMMER_EVIDENCE_SCHEMA,
+        _REPLAY_HAMMER_TRANSLATED_SCHEMA,
+        _REPLAY_HAMMER_TERMINAL_SCHEMA,
+    }
+)
+_REPLAY_LEANSTRAL_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-evidence.v1"
+)
+_REPLAY_LEANSTRAL_FAILURE_SCHEMA: Final = (
+    "ipfs-datasets.logic-pipeline-benchmark.leanstral-generation-failure.v1"
+)
+_REPLAY_LEANSTRAL_BOUNDARY_SCHEMAS: Final = frozenset(
+    {
+        (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "leanstral-generation-boundary.v1"
+        ),
+        (
+            "ipfs-datasets.logic-pipeline-benchmark."
+            "leanstral-generation-boundary.v2"
+        ),
+    }
+)
+_REPLAY_OPERATIONAL_IDENTITY_FIELDS: Final = frozenset(
+    {
+        "consumed_artifact_sha256",
+        "generation_boundary_sha256",
+        "semantic_context_sha256",
+    }
+)
+
+
+def _replay_json(value: object) -> object:
+    """Return detached canonical JSON for safe replay projection."""
+
+    if isinstance(value, Mapping):
+        if not all(isinstance(key, str) for key in value):
+            raise ProtocolContractError(
+                "replay evidence object keys must be strings"
+            )
+        return {
+            key: _replay_json(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        return [_replay_json(item) for item in value]
+    if value is None or isinstance(value, (str, bool, int, float)):
+        canonical_json(value)
+        return value
+    raise ProtocolContractError("replay evidence is not canonical JSON data")
+
+
+def _validate_content_addressed_mapping(
+    value: Mapping[str, object],
+    *,
+    digest_field: str,
+    field: str,
+) -> None:
+    """Validate a self-digested mapping before projecting its digest."""
+
+    supplied = value.get(digest_field)
+    if not isinstance(supplied, str) or re.fullmatch(
+        r"[0-9a-f]{64}", supplied
+    ) is None:
+        raise ProtocolContractError(f"{field} has an invalid {digest_field}")
+    body = {
+        key: _replay_json(item)
+        for key, item in value.items()
+        if key != digest_field
+    }
+    expected = hashlib.sha256(
+        canonical_json(body).encode("utf-8")
+    ).hexdigest()
+    if supplied != expected:
+        raise ProtocolContractError(
+            f"{field} {digest_field} does not match its payload"
+        )
+
+
+def _stable_routing_policy_replay_projection(value: object) -> object:
+    """Validate and normalize one graph-routing decision receipt."""
+
+    if not isinstance(value, Mapping):
+        raise ProtocolContractError(
+            "routing-policy replay evidence must be an object"
+        )
+    _validate_content_addressed_mapping(
+        value,
+        digest_field="decision_sha256",
+        field="routing-policy receipt",
+    )
+    projected = _replay_json(value)
+    if not isinstance(projected, dict):  # pragma: no cover - canonical JSON
+        raise ProtocolContractError(
+            "routing-policy replay evidence must be an object"
+        )
+    projected.pop("decision_sha256")
+    projected.pop("input_artifact_sha256s", None)
+    return projected
+
+
+def _stable_provenance_source_replay_projection(
+    source: Sequence[str],
+) -> tuple[str, ...]:
+    """Remove only the known plan/job bindings from adapter provenance."""
+
+    normalized = tuple(source)
+    if (
+        len(normalized) == 4
+        and normalized[0] == "benchmarks.logic_pipeline.adapters"
+        and normalized[1] == "ablation_plan"
+        and re.fullmatch(r"[0-9a-f]{64}", normalized[2]) is not None
+        and normalized[3].startswith("j-")
+    ):
+        return normalized[:2]
+    return normalized
+
+
+def _stage_graph_projection(stage: StageRecord) -> Mapping[str, object]:
+    """Return exact graph routing fields hidden by backend projections."""
+
+    identity = stage.provenance.effective_identity
+    invoked = identity.get("graph_invoked")
+    invocation_index = identity.get("graph_invocation_index")
+    if invoked is None and invocation_index is None:
+        return {}
+    if (
+        type(invoked) is not bool
+        or isinstance(invocation_index, bool)
+        or not isinstance(invocation_index, int)
+    ):
+        raise ProtocolContractError(
+            "stage replay graph invocation fields are invalid"
+        )
+    reason = (
+        identity.get("graph_policy_reason")
+        if invoked
+        else identity.get("policy_reason")
+    )
+    if not isinstance(reason, str) or not reason.strip():
+        raise ProtocolContractError(
+            "stage replay graph policy reason is missing"
+        )
+    projection: dict[str, object] = {
+        "graph_invocation_index": invocation_index,
+        "graph_invoked": invoked,
+        "graph_policy_reason": reason,
+    }
+    policy = stage.data.get("routing_policy") if isinstance(
+        stage.data, Mapping
+    ) else None
+    if policy is not None:
+        projection["routing_policy"] = (
+            _stable_routing_policy_replay_projection(policy)
+        )
+    return projection
+
+
+def _stage_artifact_digest_from_record(
+    stage: StageRecord,
+    *,
+    invocation_index: int,
+    invoked: bool,
+    policy_reason: str,
+) -> str:
+    """Reconstruct the exact in-graph StageArtifact content address."""
+
+    payload = {
+        "stage": stage.stage.value,
+        "status": stage.status.value,
+        "data": _replay_json(stage.data),
+        "output_sha256": stage.output_sha256,
+        "effective_identity": _replay_json(
+            stage.provenance.effective_identity
+        ),
+        "invocation_index": invocation_index,
+        "invoked": invoked,
+        "policy_reason": policy_reason,
+    }
+    return hashlib.sha256(
+        canonical_json(payload).encode("utf-8")
+    ).hexdigest()
+
+
+def _validate_native_kernel_upstream_bindings(
+    receipt: Mapping[str, object],
+    *,
+    artifacts_by_stage: Mapping[str, str],
+    consumed: tuple[str, ...],
+) -> None:
+    """Bind every projected kernel artifact reference to the actual graph."""
+
+    attempts = receipt.get("candidate_attempts")
+    if attempts is not None:
+        if not isinstance(attempts, Sequence) or isinstance(
+            attempts, (str, bytes, bytearray)
+        ):
+            raise ProtocolContractError(
+                "native-kernel attempts must be an array"
+            )
+        for attempt in attempts:
+            if not isinstance(attempt, Mapping):
+                raise ProtocolContractError(
+                    "native-kernel attempt must be an object"
+                )
+            source = attempt.get("candidate_source")
+            artifact = attempt.get("candidate_artifact_sha256")
+            if (
+                not isinstance(source, str)
+                or artifacts_by_stage.get(source) != artifact
+            ):
+                raise ProtocolContractError(
+                    "native-kernel attempt does not bind its source artifact"
+                )
+        source = receipt.get("candidate_source")
+        artifact = receipt.get("candidate_artifact_sha256")
+        if (
+            not isinstance(source, str)
+            or artifacts_by_stage.get(source) != artifact
+        ):
+            raise ProtocolContractError(
+                "native-kernel receipt does not bind its source artifact"
+            )
+        semantic = receipt.get("semantic_artifact_sha256s")
+        if (
+            not isinstance(semantic, Sequence)
+            or isinstance(semantic, (str, bytes, bytearray))
+            or len(set(semantic)) != len(semantic)
+            or any(item not in consumed for item in semantic)
+        ):
+            raise ProtocolContractError(
+                "native-kernel semantic artifacts do not bind the graph"
+            )
+
+    diagnostic = receipt.get("diagnostic_receipt")
+    if diagnostic is not None:
+        if not isinstance(diagnostic, Mapping):
+            raise ProtocolContractError(
+                "native-kernel diagnostic receipt must be an object"
+            )
+        _validate_native_kernel_upstream_bindings(
+            diagnostic,
+            artifacts_by_stage=artifacts_by_stage,
+            consumed=consumed,
+        )
+
+
+def _validate_result_graph_bindings(result: CaseResultRecord) -> None:
+    """Rebuild the invocation graph and reject copied artifact bindings."""
+
+    graph_marked = any(
+        "graph_invocation_index" in stage.provenance.effective_identity
+        or "graph_invoked" in stage.provenance.effective_identity
+        for stage in result.stages
+    )
+    if not graph_marked:
+        if any(
+            stage.stage is StageName.HAMMER
+            and isinstance(stage.data, Mapping)
+            and isinstance(stage.data.get("premise_selection"), Mapping)
+            and stage.data["premise_selection"].get("schema")
+            == REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA
+            and stage.data["premise_selection"].get("policy") == "symai_llm"
+            for stage in result.stages
+        ):
+            raise ProtocolContractError(
+                "Hammer A11 replay requires a graph-bound SyMAI artifact"
+            )
+        return
+
+    indexed: list[tuple[int, StageRecord, bool, str]] = []
+    for stage in result.stages:
+        graph = _stage_graph_projection(stage)
+        if not graph:
+            raise ProtocolContractError(
+                "replay result mixes graph-marked and legacy stages"
+            )
+        indexed.append(
+            (
+                int(graph["graph_invocation_index"]),
+                stage,
+                bool(graph["graph_invoked"]),
+                str(graph["graph_policy_reason"]),
+            )
+        )
+    indexed.sort(key=lambda item: item[0])
+    if [item[0] for item in indexed] != list(range(len(indexed))):
+        raise ProtocolContractError(
+            "replay result graph invocation order is incomplete"
+        )
+
+    artifact_digests: list[str] = []
+    artifacts_by_stage: dict[str, str] = {}
+    for invocation_index, stage, invoked, reason in indexed:
+        consumed_value = stage.provenance.effective_identity.get(
+            "consumed_artifact_sha256"
+        )
+        if (
+            not isinstance(consumed_value, Sequence)
+            or isinstance(consumed_value, (str, bytes, bytearray))
+            or tuple(consumed_value) != tuple(artifact_digests)
+        ):
+            raise ProtocolContractError(
+                f"{stage.stage.value} replay artifact chain is invalid"
+            )
+        digest = _stage_artifact_digest_from_record(
+            stage,
+            invocation_index=invocation_index,
+            invoked=invoked,
+            policy_reason=reason,
+        )
+        artifact_digests.append(digest)
+        artifacts_by_stage[stage.stage.value] = digest
+
+    for stage in result.stages:
+        if stage.stage is not StageName.HAMMER or not isinstance(
+            stage.data, Mapping
+        ):
+            continue
+        context = stage.data.get("semantic_context")
+        if context is None:
+            continue
+        if (
+            not isinstance(context, Mapping)
+            or context.get("schema")
+            != (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "semantic-stage-context.v1"
+            )
+            or not isinstance(context.get("artifact_sha256s"), Sequence)
+            or re.fullmatch(
+                r"[0-9a-f]{64}",
+                str(context.get("context_sha256", "")),
+            )
+            is None
+            or (
+                context.get("source_text_sha256") is not None
+                and re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    str(context.get("source_text_sha256")),
+                )
+                is None
+            )
+        ):
+            raise ProtocolContractError(
+                "Hammer semantic context binding is invalid"
+            )
+        expected_semantic = tuple(
+            artifacts_by_stage[name.value]
+            for name in (StageName.SPACY, StageName.SYMAI)
+            if name.value in artifacts_by_stage
+        )
+        if (
+            tuple(context["artifact_sha256s"]) != expected_semantic
+            or stage.provenance.effective_identity.get(
+                "semantic_context_sha256"
+            )
+            != context.get("context_sha256")
+        ):
+            raise ProtocolContractError(
+                "Hammer semantic context does not bind its upstream graph"
+            )
+        premise = stage.data.get("premise_selection")
+        if premise is not None:
+            if (
+                not isinstance(premise, Mapping)
+                or stage.provenance.effective_identity.get(
+                    "premise_selection_sha256"
+                )
+                != premise.get("receipt_sha256")
+                or stage.provenance.effective_identity.get(
+                    "premise_ranking_contract"
+                )
+                != premise.get("ranking_contract")
+            ):
+                raise ProtocolContractError(
+                    "Hammer premise selection does not bind its identity"
+                )
+            if (
+                premise.get("schema")
+                == REPLAY_HAMMER_PREMISE_SELECTION_SCHEMA
+                and premise.get("policy") == "symai_llm"
+            ):
+                symai_stage = next(
+                    (
+                        candidate
+                        for candidate in result.stages
+                        if candidate.stage is StageName.SYMAI
+                    ),
+                    None,
+                )
+                if (
+                    symai_stage is None
+                    or StageName.SYMAI.value not in artifacts_by_stage
+                ):
+                    raise ProtocolContractError(
+                        "Hammer A11 premise ranking has no consumed SyMAI stage"
+                    )
+                symai_graph = _stage_graph_projection(symai_stage)
+                validate_hammer_premise_selection_upstream_bindings(
+                    premise,
+                    symai_artifact_sha256=artifacts_by_stage[
+                        StageName.SYMAI.value
+                    ],
+                    symai_output_sha256=symai_stage.output_sha256,
+                    symai_effective_identity=(
+                        symai_stage.provenance.effective_identity
+                    ),
+                    symai_invoked=bool(symai_graph["graph_invoked"]),
+                )
+
+    kernel = next(
+        (
+            stage
+            for stage in result.stages
+            if stage.stage is StageName.KERNEL
+            and isinstance(stage.data, Mapping)
+            and stage.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
+        ),
+        None,
+    )
+    if kernel is not None:
+        consumed_value = kernel.provenance.effective_identity[
+            "consumed_artifact_sha256"
+        ]
+        _validate_native_kernel_upstream_bindings(
+            kernel.data,
+            artifacts_by_stage=artifacts_by_stage,
+            consumed=tuple(consumed_value),  # type: ignore[arg-type]
+        )
+
+
+def _stable_premise_selection_replay_projection(
+    value: object,
+) -> object:
+    """Remove only upstream artifact bindings from a Hammer ranking receipt."""
+
+    if not isinstance(value, Mapping):
+        raise ProtocolContractError(
+            "Hammer premise-selection replay evidence must be an object"
+        )
+    _validate_content_addressed_mapping(
+        value,
+        digest_field="receipt_sha256",
+        field="Hammer premise-selection receipt",
+    )
+    projected = _replay_json(value)
+    if not isinstance(projected, dict):  # pragma: no cover - canonical JSON
+        raise ProtocolContractError(
+            "Hammer premise-selection replay evidence must be an object"
+        )
+    for field in (
+        "receipt_sha256",
+        "symai_artifact_sha256",
+        "symai_output_sha256",
+    ):
+        projected.pop(field, None)
+    return projected
+
+
+def _stable_leanstral_replay_projection(
+    stage: StageRecord,
+) -> object:
+    """Return source/proof-bound Leanstral evidence without fresh request ids."""
+
+    raw = _replay_json(stage.data)
+    if not isinstance(raw, dict):  # pragma: no cover - StageRecord validated
+        raise ProtocolContractError("Leanstral replay evidence must be an object")
+    raw.pop("consumed_artifact_sha256", None)
+    schema = raw.get("schema")
+    if schema == _REPLAY_LEANSTRAL_FAILURE_SCHEMA:
+        boundary = raw.get("generation_failure_boundary")
+        if not isinstance(boundary, Mapping):
+            raise ProtocolContractError(
+                "Leanstral failure replay omitted its boundary receipt"
+            )
+        _validate_content_addressed_mapping(
+            boundary,
+            digest_field="receipt_sha256",
+            field="Leanstral failure boundary",
+        )
+        return raw
+    if schema != _REPLAY_LEANSTRAL_EVIDENCE_SCHEMA:
+        return raw
+
+    _validate_content_addressed_mapping(
+        raw,
+        digest_field="evidence_id",
+        field="Leanstral evidence",
+    )
+    draft = raw.get("draft")
+    if not isinstance(draft, dict):
+        raise ProtocolContractError("Leanstral replay evidence omitted its draft")
+    repair_attempt = draft.get("repair_attempt")
+    if isinstance(repair_attempt, bool) or repair_attempt not in (0, 1):
+        raise ProtocolContractError(
+            "Leanstral replay draft has an invalid repair attempt"
+        )
+    expected_request_id = "leanstral-" + hashlib.sha256(
+        (
+            f"{stage.run_id}:{stage.case_id}:"
+            f"{stage.provenance.input_sha256}:{repair_attempt}"
+        ).encode("utf-8")
+    ).hexdigest()[:48]
+    if (
+        draft.get("request_id") != expected_request_id
+        or draft.get("benchmark_request_id")
+        != f"{stage.run_id}:{stage.case_id}"
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft is not bound to its source execution"
+        )
+    timeout_ms = draft.get("timeout_ms")
+    if (
+        isinstance(timeout_ms, bool)
+        or not isinstance(timeout_ms, int)
+        or not 0 < timeout_ms <= 120_000
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft has an invalid dispatch budget"
+        )
+    proof_text = draft.get("proof_text")
+    prompt_sha256 = draft.get("prompt_sha256")
+    proof_sha256 = (
+        None
+        if not isinstance(proof_text, str)
+        else hashlib.sha256(proof_text.encode("utf-8")).hexdigest()
+    )
+    if (
+        not isinstance(proof_text, str)
+        or not proof_text.strip()
+        or draft.get("draft_text") != proof_text
+        or draft.get("output_sha256") != proof_sha256
+        or not isinstance(prompt_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", prompt_sha256) is None
+    ):
+        raise ProtocolContractError(
+            "Leanstral replay draft proof binding is invalid"
+        )
+    stable_artifact_identity = {
+        key: draft.get(key)
+        for key in (
+            "schema_version",
+            "llm_provider",
+            "model",
+            "obligation_ids",
+            "canonical_source_digest",
+            "theorem_id",
+            "theorem_equivalence_key",
+            "context_capsule_id",
+            "proposal_kind",
+            "prompt_sha256",
+            "output_sha256",
+        )
+    }
+    expected_artifact_id = "leanstral-draft-" + hashlib.sha256(
+        json.dumps(
+            stable_artifact_identity,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()
+    if draft.get("artifact_id") != expected_artifact_id:
+        raise ProtocolContractError(
+            "Leanstral replay draft content identity is invalid"
+        )
+
+    metadata = draft.get("metadata")
+    if isinstance(metadata, dict):
+        boundary = metadata.get("benchmark_generation_boundary")
+        if boundary is not None:
+            if not isinstance(boundary, dict):
+                raise ProtocolContractError(
+                    "Leanstral generation replay boundary must be an object"
+                )
+            if (
+                boundary.get("schema")
+                not in _REPLAY_LEANSTRAL_BOUNDARY_SCHEMAS
+            ):
+                raise ProtocolContractError(
+                    "Leanstral generation replay boundary used a stale schema"
+                )
+            if boundary.get("schema") == (
+                "ipfs-datasets.logic-pipeline-benchmark."
+                "leanstral-generation-boundary.v2"
+            ):
+                _validate_content_addressed_mapping(
+                    boundary,
+                    digest_field="receipt_sha256",
+                    field="Leanstral generation boundary",
+                )
+            elif "receipt_sha256" in boundary:
+                _validate_content_addressed_mapping(
+                    boundary,
+                    digest_field="receipt_sha256",
+                    field="Leanstral generation boundary",
+                )
+            proposal = json.dumps(
+                {
+                    "schema": draft.get("proposal_schema"),
+                    "theorem_id": draft.get("theorem_id"),
+                    "proposal_kind": draft.get("proposal_kind"),
+                    "proof_text": proof_text,
+                },
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+            if (
+                boundary.get("provider") != draft.get("llm_provider")
+                or boundary.get("requested_model") != draft.get("model")
+                or boundary.get("response_model") != draft.get("model")
+                or (
+                    boundary.get("schema")
+                    == (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "leanstral-generation-boundary.v2"
+                    )
+                    and boundary.get("cache_prompt") is not False
+                )
+                or (
+                    "cache_prompt" in boundary
+                    and boundary.get("cache_prompt") is not False
+                )
+                or boundary.get("prompt_sha256") != prompt_sha256
+                or boundary.get("normalized_proposal_sha256")
+                != hashlib.sha256(proposal).hexdigest()
+                or boundary.get("normalized_proposal_bytes")
+                != len(proposal)
+                or (
+                    boundary.get("receipt_sha256") is not None
+                    and stage.provenance.effective_identity.get(
+                        "generation_boundary_sha256"
+                    )
+                    != boundary.get("receipt_sha256")
+                )
+            ):
+                raise ProtocolContractError(
+                    "Leanstral replay boundary is not bound to its draft"
+                )
+            # Server envelopes include response ids/timings.  Raw content and
+            # its normalized proof remain compared exactly below.
+            boundary.pop("response_envelope_sha256", None)
+            boundary.pop("receipt_sha256", None)
+
+    raw.pop("evidence_id")
+    draft.pop("request_id")
+    draft.pop("benchmark_request_id")
+    draft.pop("timeout_ms")
+    return raw
+
+
+def _stable_stage_replay_projection(stage: StageRecord) -> Mapping[str, object]:
+    """Return one fail-closed semantic/backend projection for fresh replay."""
+
+    symai_receipt = None
+    hammer_projection: Mapping[str, object] | None = None
+    if stage.stage is StageName.SYMAI:
+        symai_receipt = extract_symai_cache_prime_receipt(stage)
+        if symai_receipt is not None:
+            validate_symai_warm_cache_measurement(stage)
+        elif (
+            stage.cache_mode is CacheMode.WARM
+            and stage.status.value == "success"
+            and isinstance(stage.data, Mapping)
+            and isinstance(stage.data.get("cache"), Mapping)
+            and stage.data["cache"].get("hit") is True
+        ):
+            raise ProtocolContractError(
+                "warm SyMAI replay hit omitted its cache-prime receipt"
+            )
+
+    native = _stable_native_kernel_replay_projection(stage)
+    if native is not None:
+        data: object = native
+    elif stage.stage is StageName.SYMAI:
+        data = {
+            "semantic_payload": symai_semantic_payload(stage),
+            "routing": _stage_graph_projection(stage).get(
+                "routing_policy"
+            ),
+        }
+    elif stage.stage is StageName.LEANSTRAL:
+        data = _stable_leanstral_replay_projection(stage)
+    elif (
+        stage.stage is StageName.HAMMER
+        and isinstance(stage.data, Mapping)
+        and stage.data.get("schema") in _REPLAY_HAMMER_SCHEMAS
+    ):
+        hammer_projection = project_hammer_stage_for_replay(stage)
+        data = hammer_projection["data"]
+    else:
+        data = _replay_json(stage.data)
+        if isinstance(data, dict):
+            data.pop("consumed_artifact_sha256", None)
+            if (
+                stage.stage is StageName.HAMMER
+                and data.get("schema")
+                in {
+                    _REPLAY_HAMMER_TRANSLATED_SCHEMA,
+                    _REPLAY_HAMMER_TERMINAL_SCHEMA,
+                }
+            ):
+                # The complete spaCy/SyMAI stage projections are compared
+                # independently; these are their per-run artifact bindings.
+                semantic_context = data.get("semantic_context")
+                if semantic_context is not None:
+                    if not isinstance(semantic_context, dict):
+                        raise ProtocolContractError(
+                            "Hammer semantic replay context must be an object"
+                        )
+                    data["semantic_context"] = {
+                        key: semantic_context[key]
+                        for key in ("schema", "source_text_sha256")
+                        if key in semantic_context
+                    }
+                if "premise_selection" in data:
+                    data["premise_selection"] = (
+                        _stable_premise_selection_replay_projection(
+                            data["premise_selection"]
+                        )
+                    )
+
+    if stage.stage is StageName.SYMAI:
+        effective_identity = symai_backend_identity(stage)
+    elif hammer_projection is not None:
+        effective_identity = hammer_projection["effective_identity"]
+    else:
+        effective_identity = _replay_json(
+            stage.provenance.effective_identity
+        )
+        if not isinstance(effective_identity, dict):  # pragma: no cover
+            raise ProtocolContractError(
+                "stage replay effective identity must be an object"
+            )
+        for field in _REPLAY_OPERATIONAL_IDENTITY_FIELDS:
+            effective_identity.pop(field, None)
+        if stage.stage is StageName.HAMMER:
+            effective_identity.pop("premise_selection_sha256", None)
+
+    requested_identity = (
+        hammer_projection["requested_identity"]
+        if hammer_projection is not None
+        else _replay_json(stage.provenance.requested_identity)
+    )
+    return {
+        "data": data,
+        "requested_identity": requested_identity,
+        "effective_identity": effective_identity,
+        "adapter_id": stage.provenance.adapter_id,
+        "source": _stable_provenance_source_replay_projection(
+            stage.provenance.source
+        ),
+        "environment_sha256": stage.provenance.environment_sha256,
+        "graph": _stage_graph_projection(stage),
+    }
+
+
+def validate_replay(
+    original: CaseResultRecord,
+    replayed: CaseResultRecord,
+    *,
+    original_contract: RunContract,
+    replay_contract: RunContract,
+    expected_environment_sha256: str,
+    worktree_receipt: WorktreeSafetyReceipt,
+    expected_source_commit: str,
+) -> ReplayValidationRecord:
+    """Validate semantic receipt replay in a fresh worktree and cache namespace."""
+
+    if not isinstance(original, CaseResultRecord) or not isinstance(
+        replayed, CaseResultRecord
+    ):
+        raise RobustnessValidationError("replay requires case-result records")
+    if not isinstance(original_contract, RunContract) or not isinstance(
+        replay_contract, RunContract
+    ):
+        raise RobustnessValidationError("replay requires source and replay contracts")
+    if not isinstance(worktree_receipt, WorktreeSafetyReceipt):
+        raise RobustnessValidationError(
+            "replay requires a validated worktree safety receipt"
+        )
+    expected_environment = _robust_digest(
+        expected_environment_sha256, "expected_environment_sha256"
+    )
+    try:
+        # Round-trip first so corrupt embedded receipts fail before comparison.
+        original = CaseResultRecord.from_dict(original.to_dict())
+        replayed = CaseResultRecord.from_dict(replayed.to_dict())
+        original_contract = RunContract.from_dict(original_contract.to_dict())
+        replay_contract = RunContract.from_dict(replay_contract.to_dict())
+        worktree_receipt = WorktreeSafetyReceipt.from_dict(
+            worktree_receipt.to_dict()
+        )
+        validate_kernel_bound_result(original, expected_environment)
+        validate_kernel_bound_result(replayed, expected_environment)
+        _validate_result_graph_bindings(original)
+        _validate_result_graph_bindings(replayed)
+        original_kernel = next(
+            (
+                stage
+                for stage in original.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        replay_kernel = next(
+            (
+                stage
+                for stage in replayed.stages
+                if stage.stage is StageName.KERNEL
+            ),
+            None,
+        )
+        original_kernel_projection = (
+            None
+            if original_kernel is None
+            else _stable_native_kernel_replay_projection(original_kernel)
+        )
+        replay_kernel_projection = (
+            None
+            if replay_kernel is None
+            else _stable_native_kernel_replay_projection(replay_kernel)
+        )
+        original_stage_projections = tuple(
+            _stable_stage_replay_projection(stage)
+            for stage in original.stages
+        )
+        replay_stage_projections = tuple(
+            _stable_stage_replay_projection(stage)
+            for stage in replayed.stages
+        )
+    except (
+        ProtocolContractError,
+        MetricsContractError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        raise RobustnessValidationError(
+            "corrupt or stale receipt failed replay validation"
+        ) from exc
+    _validate_contract_result(original_contract, original)
+    _validate_contract_result(replay_contract, replayed)
+    if original.run_id == replayed.run_id:
+        raise RobustnessValidationError("replay must use a fresh run id")
+    if original_contract.cache_namespace == replay_contract.cache_namespace:
+        raise RobustnessValidationError("replay must use a fresh cache namespace")
+    if replay_contract.cache_mode is not CacheMode.COLD:
+        raise RobustnessValidationError("receipt replay must start from a cold cache")
+    if worktree_receipt.run_id != replayed.run_id:
+        raise RobustnessValidationError(
+            "worktree receipt is not scoped to the replay run"
+        )
+    if (
+        worktree_receipt.base_commit != expected_source_commit
+        or worktree_receipt.worktree_commit != expected_source_commit
+    ):
+        raise RobustnessValidationError("fresh worktree uses a stale source commit")
+    if original_contract.configuration_sha256 != replay_contract.configuration_sha256:
+        raise RobustnessValidationError("backend configuration drifted during replay")
+    stable_identity = (
+        original.protocol_sha256,
+        original.case_id,
+        original.case_manifest_sha256,
+        original.variant_id,
+        original.split,
+    )
+    replay_identity = (
+        replayed.protocol_sha256,
+        replayed.case_id,
+        replayed.case_manifest_sha256,
+        replayed.variant_id,
+        replayed.split,
+    )
+    if stable_identity != replay_identity:
+        raise RobustnessValidationError("replay changed the stable case identity")
+    if (original_kernel_projection is None) != (
+        replay_kernel_projection is None
+    ):
+        raise RobustnessValidationError(
+            "backend or output drift at kernel"
+        )
+    strict_native_kernel_pair = (
+        original_kernel_projection is not None
+        and replay_kernel_projection is not None
+    )
+    if (
+        original.status is not replayed.status
+        or original.failure_code is not replayed.failure_code
+        or original.kernel_accepted != replayed.kernel_accepted
+        or (
+            not strict_native_kernel_pair
+            and original.kernel_receipt_sha256
+            != replayed.kernel_receipt_sha256
+        )
+    ):
+        raise RobustnessValidationError("replay changed the terminal outcome")
+    if len(original.stages) != len(replayed.stages):
+        raise RobustnessValidationError("replay changed the stage route")
+    for (
+        source_stage,
+        replay_stage,
+        source_projection,
+        replay_projection,
+    ) in zip(
+        original.stages,
+        replayed.stages,
+        original_stage_projections,
+        replay_stage_projections,
+    ):
+        strict_kernel_stage = (
+            strict_native_kernel_pair
+            and source_stage.stage is StageName.KERNEL
+            and replay_stage.stage is StageName.KERNEL
+        )
+        if (
+            strict_kernel_stage
+            and source_projection != replay_projection
+        ):
+            raise RobustnessValidationError(
+                "proof execution drift at kernel"
+            )
+        if (
+            source_stage.stage is not replay_stage.stage
+            or source_stage.status is not replay_stage.status
+            or source_stage.adapter_version != replay_stage.adapter_version
+            or source_stage.failure_code is not replay_stage.failure_code
+            or source_stage.provenance.input_sha256
+            != replay_stage.provenance.input_sha256
+            or source_projection != replay_projection
+        ):
+            raise RobustnessValidationError(
+                f"backend or output drift at {source_stage.stage.value}"
+            )
+    if original.receipt is None or replayed.receipt is None:  # pragma: no cover
+        raise RobustnessValidationError("case result is missing its receipt")
+    if (
+        (original.receipt.reconstruction_sha256 is None)
+        != (replayed.receipt.reconstruction_sha256 is None)
+    ):
+        raise RobustnessValidationError("reconstruction receipt changed on replay")
+    return ReplayValidationRecord(
+        REPLAY_VALIDATION_SCHEMA,
+        ReplayStatus.PASSED,
+        original.case_id,
+        original.run_id,
+        replayed.run_id,
+        original.digest,
+        replayed.digest,
+        original.provenance_receipt_sha256,
+        replayed.provenance_receipt_sha256,
+        expected_environment,
+        expected_source_commit,
+        worktree_receipt.sha256,
+        original_contract.cache_namespace,
+        replay_contract.cache_namespace,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessReport:
+    """Canonical aggregate requiring the full injection matrix and replay."""
+
+    schema: str
+    evidence: str
+    failure_isolation: tuple[FailureIsolationRecord, ...]
+    receipt_replays: tuple[ReplayValidationRecord, ...]
+
+    def __post_init__(self) -> None:
+        if self.schema != ROBUSTNESS_REPORT_SCHEMA:
+            raise RobustnessValidationError("unsupported robustness-report schema")
+        if self.evidence != HSSLEV0702E85():
+            raise RobustnessValidationError("robustness evidence marker changed")
+        if not isinstance(self.failure_isolation, tuple) or not isinstance(
+            self.receipt_replays, tuple
+        ):
+            raise RobustnessValidationError("report members must be tuples")
+        if any(
+            not isinstance(item, FailureIsolationRecord)
+            for item in self.failure_isolation
+        ) or any(
+            not isinstance(item, ReplayValidationRecord)
+            for item in self.receipt_replays
+        ):
+            raise RobustnessValidationError("report contains an invalid record")
+        kinds = tuple(item.kind for item in self.failure_isolation)
+        if len(kinds) != len(set(kinds)) or set(kinds) != set(FailureInjectionKind):
+            raise RobustnessValidationError(
+                "report must cover each preregistered failure injection exactly once"
+            )
+        if not self.receipt_replays:
+            raise RobustnessValidationError(
+                "report requires at least one fresh-worktree receipt replay"
+            )
+        replay_cases = tuple(item.case_id for item in self.receipt_replays)
+        if len(replay_cases) != len(set(replay_cases)):
+            raise RobustnessValidationError("receipt replays contain duplicate cases")
+
+    @property
+    def digest(self) -> str:
+        return hashlib.sha256(
+            canonical_json(self.to_dict()).encode("utf-8")
+        ).hexdigest()
+
+    @property
+    def stop_required(self) -> bool:
+        return any(item.stop_required for item in self.failure_isolation)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "evidence": self.evidence,
+            "failure_isolation": [
+                item.to_dict() for item in self.failure_isolation
+            ],
+            "receipt_replays": [item.to_dict() for item in self.receipt_replays],
+        }
+
+    @classmethod
+    def create(
+        cls,
+        failure_isolation: Sequence[FailureIsolationRecord],
+        receipt_replays: Sequence[ReplayValidationRecord],
+    ) -> Self:
+        return cls(
+            ROBUSTNESS_REPORT_SCHEMA,
+            HSSLEV0702E85(),
+            tuple(failure_isolation),
+            tuple(receipt_replays),
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        data = _robust_mapping(value, "robustness report")
+        _robust_exact(
+            data, set(cls.__dataclass_fields__), "robustness report"
+        )
+        failures = data["failure_isolation"]
+        replays = data["receipt_replays"]
+        if not isinstance(failures, list) or not isinstance(replays, list):
+            raise RobustnessValidationError("report members must be arrays")
+        return cls(
+            schema=data["schema"],  # type: ignore[arg-type]
+            evidence=data["evidence"],  # type: ignore[arg-type]
+            failure_isolation=tuple(
+                FailureIsolationRecord.from_dict(item) for item in failures
+            ),
+            receipt_replays=tuple(
+                ReplayValidationRecord.from_dict(item) for item in replays
+            ),
+        )
+
+
+def canonical_robustness_report_json(report: RobustnessReport) -> str:
+    if not isinstance(report, RobustnessReport):
+        raise TypeError("report must be a RobustnessReport")
+    return canonical_json(report.to_dict())
+
+
+def write_robustness_report(
+    robustness_report: RobustnessReport,
+    destination: str | Path,
+) -> Path:
+    """Persist a canonical report once, refusing accidental replacement."""
+
+    if not isinstance(robustness_report, RobustnessReport):
+        raise TypeError("robustness_report must be a RobustnessReport")
+    path = Path(destination)
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        with path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(canonical_robustness_report_json(robustness_report))
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+    except FileExistsError as exc:
+        raise RobustnessValidationError(
+            f"refusing to overwrite immutable robustness report: {path}"
+        ) from exc
+    return path
+
+
+def _robust_reject_duplicate_pairs(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise RobustnessValidationError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _artifact_digest(value: Mapping[str, object]) -> str:
+    body = {key: item for key, item in value.items() if key != "artifact_sha256"}
+    return hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
+
+
+def _proof_order(variant_id: str) -> list[str]:
+    return [
+        stage.value
+        for stage in VARIANT_REGISTRY[variant_id].proof_order
+    ]
+
+
+def _validate_capabilities(value: object) -> dict[str, dict[str, str]]:
+    data = _mapping(value, "capabilities")
+    _exact(data, set(CAPABILITY_KEYS), "capabilities")
+    result: dict[str, dict[str, str]] = {}
+    for name in CAPABILITY_KEYS:
+        record = _mapping(data[name], f"capabilities.{name}")
+        _exact(record, {"status", "reason"}, f"capabilities.{name}")
+        status = _string(record["status"], f"capabilities.{name}.status")
+        if status not in CAPABILITY_STATUS_VALUES:
+            raise ProofReportError(
+                f"unsupported capabilities.{name}.status: {status!r}"
+            )
+        reason = _string(
+            record["reason"],
+            f"capabilities.{name}.reason",
+            allow_empty=status == "available",
+        )
+        result[name] = {"status": status, "reason": reason}
+    return result
+
+
+def _required_proof_capabilities(variant_id: str) -> tuple[str, ...]:
+    stages = set(VARIANT_REGISTRY[variant_id].stages)
+    required: list[str] = []
+    if StageName.SPACY in stages:
+        required.append("spacy")
+    if StageName.SYMAI in stages:
+        required.extend(("symai", "llm_router"))
+    if StageName.HAMMER in stages:
+        required.append("hammer")
+    if StageName.LEANSTRAL in stages:
+        required.append("leanstral")
+    if StageName.KERNEL in stages:
+        required.append("lean_kernel")
+    return tuple(required)
+
+
+def _validate_observation(value: object) -> dict[str, object]:
+    data = _mapping(value, "observation")
+    fields = {
+        "schema",
+        "case_id",
+        "cache_mode",
+        "variant_id",
+        "status",
+        "source_receipt_sha256",
+        "case_result",
+        "verification_authority",
+        "kernel_accepted",
+        "kernel_receipt_sha256",
+        "verified_source",
+        "proof_order",
+        "model_claimed_verified",
+        "hammer",
+        "leanstral",
+        "total_wall_time_ms",
+        "model_calls",
+        "missing_reason",
+    }
+    _exact(data, fields, "observation")
+    if data["schema"] != PROOF_OBSERVATION_SCHEMA:
+        raise ProofReportError("unsupported observation schema")
+    case_id = _safe_id(data["case_id"], "observation.case_id")
+    if case_id not in ELIGIBLE_CASE_IDS:
+        raise ProofReportError(f"ineligible proof case: {case_id}")
+    cache_mode = _string(data["cache_mode"], "observation.cache_mode")
+    if cache_mode not in CACHE_MODES:
+        raise ProofReportError(f"unsupported cache mode: {cache_mode!r}")
+    variant_id = _safe_id(data["variant_id"], "observation.variant_id")
+    if variant_id not in {*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS}:
+        raise ProofReportError(f"unsupported proof variant: {variant_id!r}")
+    status = _string(data["status"], "observation.status")
+    if status not in STATUS_VALUES:
+        raise ProofReportError(f"unsupported observation status: {status!r}")
+    _digest(data["source_receipt_sha256"], "observation.source_receipt_sha256")
+    if data["case_result"] is not None and not isinstance(
+        data["case_result"], Mapping
+    ):
+        raise ProofReportError("observation.case_result must be an object or null")
+    authority = data["verification_authority"]
+    if authority not in {None, "native_kernel"}:
+        raise ProofReportError("verification authority must be native_kernel or null")
+    accepted = _boolean(data["kernel_accepted"], "observation.kernel_accepted")
+    receipt = _nullable_digest(
+        data["kernel_receipt_sha256"], "observation.kernel_receipt_sha256"
+    )
+    source = _string(data["verified_source"], "observation.verified_source")
+    if source not in SOURCE_VALUES:
+        raise ProofReportError(f"unsupported verified_source: {source!r}")
+    order = _array(data["proof_order"], "observation.proof_order")
+    if order != _proof_order(variant_id):
+        raise ProofReportError(
+            f"observation proof order differs from frozen {variant_id} policy"
+        )
+    model_claim = _boolean(
+        data["model_claimed_verified"], "observation.model_claimed_verified"
+    )
+
+    hammer = _mapping(data["hammer"], "observation.hammer")
+    _exact(
+        hammer,
+        {
+            "invoked",
+            "candidate_created",
+            "premise_recall_numerator",
+            "premise_recall_denominator",
+            "premise_recall_missing_reason",
+            "reconstruction_attempted",
+            "reconstruction_succeeded",
+            "wall_time_ms",
+        },
+        "observation.hammer",
+    )
+    hammer_invoked = _boolean(hammer["invoked"], "observation.hammer.invoked")
+    hammer_candidate = _boolean(
+        hammer["candidate_created"], "observation.hammer.candidate_created"
+    )
+    recall_numerator = hammer["premise_recall_numerator"]
+    recall_denominator = hammer["premise_recall_denominator"]
+    recall_reason = hammer["premise_recall_missing_reason"]
+    if (recall_numerator is None) != (recall_denominator is None):
+        raise ProofReportError("premise recall numerator and denominator pair")
+    if recall_denominator is None:
+        if not isinstance(recall_reason, str) or not recall_reason.strip():
+            raise ProofReportError("unmeasured premise recall requires a reason")
+    else:
+        numerator = _count(recall_numerator, "premise recall numerator")
+        denominator = _count(recall_denominator, "premise recall denominator")
+        if denominator == 0 or numerator > denominator or recall_reason is not None:
+            raise ProofReportError("invalid measured premise recall")
+    reconstruction_attempted = _boolean(
+        hammer["reconstruction_attempted"],
+        "observation.hammer.reconstruction_attempted",
+    )
+    reconstruction_succeeded = _boolean(
+        hammer["reconstruction_succeeded"],
+        "observation.hammer.reconstruction_succeeded",
+    )
+    _number(hammer["wall_time_ms"], "observation.hammer.wall_time_ms")
+    if hammer_candidate and not hammer_invoked:
+        raise ProofReportError("Hammer candidate requires invocation")
+    if reconstruction_attempted and not hammer_candidate:
+        raise ProofReportError("Hammer reconstruction requires a candidate")
+    if reconstruction_succeeded and not reconstruction_attempted:
+        raise ProofReportError("Hammer reconstruction success requires an attempt")
+
+    leanstral = _mapping(data["leanstral"], "observation.leanstral")
+    _exact(
+        leanstral,
+        {
+            "invoked",
+            "candidate_created",
+            "repair_attempted",
+            "repair_succeeded",
+            "wall_time_ms",
+        },
+        "observation.leanstral",
+    )
+    lean_invoked = _boolean(
+        leanstral["invoked"], "observation.leanstral.invoked"
+    )
+    lean_candidate = _boolean(
+        leanstral["candidate_created"],
+        "observation.leanstral.candidate_created",
+    )
+    repair_attempted = _boolean(
+        leanstral["repair_attempted"], "observation.leanstral.repair_attempted"
+    )
+    repair_succeeded = _boolean(
+        leanstral["repair_succeeded"], "observation.leanstral.repair_succeeded"
+    )
+    _number(leanstral["wall_time_ms"], "observation.leanstral.wall_time_ms")
+    if lean_candidate and not lean_invoked:
+        raise ProofReportError("Leanstral candidate requires invocation")
+    if repair_attempted and not lean_invoked:
+        raise ProofReportError("Leanstral repair requires invocation")
+    if repair_succeeded and not repair_attempted:
+        raise ProofReportError("Leanstral repair success requires an attempt")
+
+    _number(data["total_wall_time_ms"], "observation.total_wall_time_ms")
+    _count(data["model_calls"], "observation.model_calls")
+    missing_reason = data["missing_reason"]
+    if status in {"unavailable", "excluded", "infrastructure_failure"}:
+        _string(missing_reason, "observation.missing_reason")
+    elif missing_reason is not None:
+        raise ProofReportError("completed observations cannot have missing_reason")
+
+    verified = status == "verified"
+    if verified != (authority == "native_kernel" and accepted and receipt is not None):
+        raise ProofReportError(
+            "verified status requires native-kernel acceptance and receipt"
+        )
+    if not verified and (authority is not None or accepted or receipt is not None):
+        raise ProofReportError("nonverified observation has proof authority")
+    if source != "none" and not verified:
+        raise ProofReportError("verified_source requires a verified observation")
+    if source in {"hammer", "both"} and not reconstruction_succeeded:
+        raise ProofReportError("Hammer verified source requires reconstruction")
+    if source in {"leanstral", "both"} and not lean_candidate:
+        raise ProofReportError("Leanstral verified source requires a draft")
+    if variant_id == "S1":
+        if verified or source != "none" or authority is not None:
+            raise ProofReportError("S1 is non-authoritative safety evidence")
+        if hammer_invoked or lean_invoked:
+            raise ProofReportError("S1 cannot invoke Hammer or Leanstral")
+    elif model_claim and verified and source == "none":
+        raise ProofReportError("verified model claim has no proof source")
+    return dict(data)
+
+
+def _validate_measured_source(
+    row: Mapping[str, object], *, expected_run_id: str | None = None
+) -> None:
+    """Revalidate the complete durable result behind one measured row."""
+
+    try:
+        result = CaseResultRecord.from_dict(row["case_result"])
+        validate_kernel_bound_result(result)
+    except (ProtocolContractError, TypeError, ValueError) as exc:
+        raise ProofReportError(
+            "measured observations require a valid complete CaseResultRecord"
+        ) from exc
+    expected_identity = (
+        row["case_id"],
+        row["variant_id"],
+        row["cache_mode"],
+    )
+    actual_identity = (
+        result.case_id,
+        result.variant_id,
+        result.cache_mode.value,
+    )
+    if actual_identity != expected_identity:
+        raise ProofReportError("measured case-result identity changed")
+    if expected_run_id is not None and result.run_id != expected_run_id:
+        raise ProofReportError(
+            "measured case-result run id differs from the proof report"
+        )
+    if result.split is not Split.PILOT:
+        raise ProofReportError("measured proof results must use the pilot split")
+    if result.digest != row["source_receipt_sha256"]:
+        raise ProofReportError("measured case-result digest changed")
+    expected_status = {
+        OutcomeStatus.VERIFIED: "verified",
+        OutcomeStatus.NOT_VERIFIED: "not_verified",
+        OutcomeStatus.REJECTED: "rejected",
+        OutcomeStatus.UNAVAILABLE: "unavailable",
+        OutcomeStatus.EXCLUDED: "excluded",
+        OutcomeStatus.INFRASTRUCTURE_FAILURE: "infrastructure_failure",
+    }[result.status]
+    if row["status"] != expected_status:
+        raise ProofReportError("measured case-result status changed")
+    expected_authority = (
+        "native_kernel"
+        if result.verification_authority is VerificationAuthority.NATIVE_KERNEL
+        else None
+    )
+    if (
+        row["verification_authority"] != expected_authority
+        or row["kernel_accepted"] != result.kernel_accepted
+        or row["kernel_receipt_sha256"] != result.kernel_receipt_sha256
+    ):
+        raise ProofReportError("measured kernel authority projection changed")
+
+    definition = VARIANT_REGISTRY[result.variant_id]
+    expected_stages = tuple(definition.stages)
+    actual_stages = tuple(stage.stage for stage in result.stages)
+    terminal_missing = result.status in {
+        OutcomeStatus.UNAVAILABLE,
+        OutcomeStatus.EXCLUDED,
+        OutcomeStatus.INFRASTRUCTURE_FAILURE,
+    }
+    route_matches = (
+        actual_stages == expected_stages[: len(actual_stages)]
+        if terminal_missing
+        else actual_stages == expected_stages
+    )
+    if not route_matches:
+        raise ProofReportError(
+            "measured case-result route differs from the frozen variant"
+        )
+    symai_stage = next(
+        (
+            stage
+            for stage in result.stages
+            if stage.stage is StageName.SYMAI
+        ),
+        None,
+    )
+    symai_setup = (
+        None
+        if symai_stage is None
+        else extract_symai_cache_setup_telemetry(symai_stage)
+    )
+    setup_wall_time_ms = (
+        0.0 if symai_setup is None else symai_setup.wall_time_ms
+    )
+    setup_model_calls = (
+        0 if symai_setup is None else symai_setup.model_calls
+    )
+    total_wall_time_ms = round(
+        sum(stage.telemetry.wall_time_ms for stage in result.stages)
+        + setup_wall_time_ms,
+        6,
+    )
+    if not math.isclose(
+        float(row["total_wall_time_ms"]),
+        total_wall_time_ms,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "measured proof latency differs from stage telemetry"
+        )
+    model_calls = (
+        sum(stage.telemetry.model_calls for stage in result.stages)
+        + setup_model_calls
+    )
+    if row["model_calls"] != model_calls:
+        raise ProofReportError(
+            "measured proof model calls differ from stage telemetry"
+        )
+
+    by_stage = {stage.stage: stage for stage in result.stages}
+    hammer_stage = by_stage.get(StageName.HAMMER)
+    hammer = _mapping(row["hammer"], "observation.hammer")
+    if hammer["invoked"] is not (hammer_stage is not None):
+        raise ProofReportError(
+            "Hammer invocation differs from the case-result route"
+        )
+    expected_hammer_wall = (
+        0.0 if hammer_stage is None else hammer_stage.telemetry.wall_time_ms
+    )
+    if not math.isclose(
+        float(hammer["wall_time_ms"]),
+        expected_hammer_wall,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "Hammer latency differs from stage telemetry"
+        )
+    hammer_data = (
+        {}
+        if hammer_stage is None or not isinstance(hammer_stage.data, Mapping)
+        else hammer_stage.data
+    )
+    candidate = hammer_data.get(
+        "proof_candidate", hammer_data.get("candidate")
+    )
+    reconstruction = hammer_data.get("reconstruction")
+    if hammer["candidate_created"] is not (candidate is not None):
+        raise ProofReportError(
+            "Hammer candidate projection differs from stage evidence"
+        )
+    if hammer["reconstruction_attempted"] is not (
+        reconstruction is not None
+    ):
+        raise ProofReportError(
+            "Hammer reconstruction projection differs from stage evidence"
+        )
+    reconstruction_succeeded = bool(
+        reconstruction is not None
+        and hammer_stage is not None
+        and hammer_stage.status.value == "success"
+    )
+    if hammer["reconstruction_succeeded"] is not reconstruction_succeeded:
+        raise ProofReportError(
+            "Hammer reconstruction result differs from stage evidence"
+        )
+
+    lean_stage = by_stage.get(StageName.LEANSTRAL)
+    leanstral = _mapping(row["leanstral"], "observation.leanstral")
+    if leanstral["invoked"] is not (lean_stage is not None):
+        raise ProofReportError(
+            "Leanstral invocation differs from the case-result route"
+        )
+    expected_lean_wall = (
+        0.0 if lean_stage is None else lean_stage.telemetry.wall_time_ms
+    )
+    if not math.isclose(
+        float(leanstral["wall_time_ms"]),
+        expected_lean_wall,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise ProofReportError(
+            "Leanstral latency differs from stage telemetry"
+        )
+    lean_data = (
+        {}
+        if lean_stage is None or not isinstance(lean_stage.data, Mapping)
+        else lean_stage.data
+    )
+    lean_candidate = lean_data.get("draft")
+    if leanstral["candidate_created"] is not (lean_candidate is not None):
+        raise ProofReportError(
+            "Leanstral candidate projection differs from stage evidence"
+        )
+    repair_attempts = lean_data.get("repair_attempts", 0)
+    repair_attempted = (
+        isinstance(repair_attempts, int)
+        and not isinstance(repair_attempts, bool)
+        and repair_attempts > 0
+    )
+    if leanstral["repair_attempted"] is not repair_attempted:
+        raise ProofReportError(
+            "Leanstral repair projection differs from stage evidence"
+        )
+    repair_succeeded = bool(
+        repair_attempted
+        and lean_candidate is not None
+        and lean_stage is not None
+        and lean_stage.status.value == "success"
+    )
+    if leanstral["repair_succeeded"] is not repair_succeeded:
+        raise ProofReportError(
+            "Leanstral repair result differs from stage evidence"
+        )
+
+
+def _rate(numerator: int, denominator: int) -> float | None:
+    return None if denominator == 0 else numerator / denominator
+
+
+def _recovered_failure_counts(
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, int]:
+    """Project kernel-recovered proof failures from durable case results."""
+
+    counts: dict[str, int] = {}
+    for row in observations:
+        value = row.get("case_result")
+        if not isinstance(value, Mapping):
+            continue
+        result = CaseResultRecord.from_dict(value)
+        for code in result.recovered_failure_codes:
+            counts[code.value] = counts.get(code.value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _variant_metric(
+    variant_id: str,
+    cache_mode: str,
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    rows = [
+        row
+        for row in observations
+        if row["variant_id"] == variant_id and row["cache_mode"] == cache_mode
+    ]
+    status_counts = {
+        status: sum(row["status"] == status for row in rows)
+        for status in sorted(STATUS_VALUES)
+    }
+    eligible = (
+        status_counts["verified"]
+        + status_counts["not_verified"]
+        + status_counts["rejected"]
+    )
+    hammer = [_mapping(row["hammer"], "hammer") for row in rows]
+    lean = [_mapping(row["leanstral"], "leanstral") for row in rows]
+    recall_rows = [
+        row
+        for row in hammer
+        if row["premise_recall_denominator"] is not None
+    ]
+    recall_numerator = sum(int(row["premise_recall_numerator"]) for row in recall_rows)
+    recall_denominator = sum(int(row["premise_recall_denominator"]) for row in recall_rows)
+    hammer_candidates = sum(bool(row["candidate_created"]) for row in hammer)
+    lean_candidates = sum(bool(row["candidate_created"]) for row in lean)
+    reconstructions = sum(bool(row["reconstruction_attempted"]) for row in hammer)
+    reconstruction_successes = sum(
+        bool(row["reconstruction_succeeded"]) for row in hammer
+    )
+    repairs = sum(bool(row["repair_attempted"]) for row in lean)
+    repair_successes = sum(bool(row["repair_succeeded"]) for row in lean)
+    total_latency = sum(float(row["total_wall_time_ms"]) for row in rows)
+    recovered_failures = _recovered_failure_counts(rows)
+    metric = {
+        "variant_id": variant_id,
+        "cache_mode": cache_mode,
+        "attempt_count": len(rows),
+        "status_counts": status_counts,
+        "kernel_verified_count": status_counts["verified"],
+        "kernel_verified_rate": _rate(status_counts["verified"], eligible),
+        "premise_recall_numerator": (
+            recall_numerator if recall_denominator else None
+        ),
+        "premise_recall_denominator": (
+            recall_denominator if recall_denominator else None
+        ),
+        "premise_recall_at_budget": _rate(
+            recall_numerator, recall_denominator
+        ),
+        "premise_recall_missing_reason": (
+            None if recall_denominator else "gold_premise_set_unavailable"
+        ),
+        "hammer_candidate_count": hammer_candidates,
+        "leanstral_candidate_count": lean_candidates,
+        "candidate_overlap_count": sum(
+            bool(h["candidate_created"]) and bool(l["candidate_created"])
+            for h, l in zip(hammer, lean, strict=True)
+        ),
+        "reconstruction_attempt_count": reconstructions,
+        "reconstruction_success_count": reconstruction_successes,
+        "reconstruction_success_rate": _rate(
+            reconstruction_successes, reconstructions
+        ),
+        "repair_attempt_count": repairs,
+        "repair_success_count": repair_successes,
+        "repair_success_rate": _rate(repair_successes, repairs),
+        "hammer_unique_verified_count": sum(
+            row["verified_source"] == "hammer" for row in rows
+        ),
+        "leanstral_unique_verified_count": sum(
+            row["verified_source"] == "leanstral" for row in rows
+        ),
+        "both_source_verified_count": sum(
+            row["verified_source"] == "both" for row in rows
+        ),
+        "total_wall_time_ms": total_latency,
+        "mean_wall_time_ms": total_latency / len(rows),
+        "model_calls": sum(int(row["model_calls"]) for row in rows),
+    }
+    if recovered_failures:
+        metric["recovered_failure_count"] = sum(
+            recovered_failures.values()
+        )
+        metric["recovered_failure_counts"] = recovered_failures
+        metric["reliability_status"] = "degraded_recovered"
+    return metric
+
+
+def _pairwise(
+    left: str,
+    right: str,
+    label: str,
+    cache_mode: str,
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    keyed = {
+        (str(row["case_id"]), str(row["variant_id"])): row
+        for row in observations
+        if row["cache_mode"] == cache_mode
+    }
+    left_only: list[str] = []
+    right_only: list[str] = []
+    both: list[str] = []
+    neither: list[str] = []
+    latency_deltas: list[float] = []
+    for case_id in ELIGIBLE_CASE_IDS:
+        left_row = keyed[(case_id, left)]
+        right_row = keyed[(case_id, right)]
+        left_verified = left_row["status"] == "verified"
+        right_verified = right_row["status"] == "verified"
+        if left_verified and right_verified:
+            both.append(case_id)
+        elif left_verified:
+            left_only.append(case_id)
+        elif right_verified:
+            right_only.append(case_id)
+        else:
+            neither.append(case_id)
+        latency_deltas.append(
+            float(right_row["total_wall_time_ms"])
+            - float(left_row["total_wall_time_ms"])
+        )
+    return {
+        "label": label,
+        "cache_mode": cache_mode,
+        "left_variant_id": left,
+        "right_variant_id": right,
+        "left_only_verified_case_ids": left_only,
+        "right_only_verified_case_ids": right_only,
+        "both_verified_case_ids": both,
+        "neither_verified_case_ids": neither,
+        "right_minus_left_total_wall_time_ms": sum(latency_deltas),
+    }
+
+
+def derive_proof_analysis(
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    """Derive all report metrics from validated case-level observations."""
+
+    primary_metrics = [
+        _variant_metric(variant, mode, observations)
+        for mode in CACHE_MODES
+        for variant in PRIMARY_VARIANT_IDS
+    ]
+    comparisons = [
+        _pairwise(left, right, label, mode, observations)
+        for mode in CACHE_MODES
+        for left, right, label in PAIRWISE_COMPARISONS
+    ]
+    diagnostic_rows = [
+        row for row in observations if row["variant_id"] == "S1"
+    ]
+    return {
+        "schema": PROOF_ANALYSIS_SCHEMA,
+        "coverage": {
+            "expected_observation_count": (
+                len(ELIGIBLE_CASE_IDS)
+                * len(CACHE_MODES)
+                * (len(PRIMARY_VARIANT_IDS) + len(DIAGNOSTIC_VARIANT_IDS))
+            ),
+            "observed_observation_count": len(observations),
+            "eligible_case_count": len(ELIGIBLE_CASE_IDS),
+            "primary_variant_count": len(PRIMARY_VARIANT_IDS),
+            "diagnostic_variant_count": len(DIAGNOSTIC_VARIANT_IDS),
+            "cache_mode_count": len(CACHE_MODES),
+        },
+        "primary_metrics": primary_metrics,
+        "pairwise_comparisons": comparisons,
+        "s1_diagnostic": {
+            "attempt_count": len(diagnostic_rows),
+            "model_verified_claim_count": sum(
+                bool(row["model_claimed_verified"]) for row in diagnostic_rows
+            ),
+            "native_kernel_verified_count": 0,
+            "included_in_primary_metrics": False,
+        },
+    }
+
+
+def validate_proof_report(value: object) -> dict[str, object]:
+    """Validate a complete report and recompute every serialized aggregate."""
+
+    data = _mapping(value, "proof_report")
+    fields = {
+        "schema",
+        "evidence",
+        "benchmark_id",
+        "run_id",
+        "execution_mode",
+        "protocol_sha256",
+        "registry_sha256",
+        "corpus_manifest_sha256",
+        "pilot_split_sha256",
+        "split",
+        "eligible_case_ids",
+        "excluded_case_ids",
+        "cache_modes",
+        "primary_variant_ids",
+        "diagnostic_variant_ids",
+        "capability_inventory_sha256",
+        "capabilities",
+        "observations",
+        "analysis",
+        "artifact_sha256",
+    }
+    _exact(data, fields, "proof_report")
+    if data["schema"] != PROOF_REPORT_SCHEMA:
+        raise ProofReportError("unsupported proof report schema")
+    if data["evidence"] != HSSLEV0526A41():
+        raise ProofReportError("proof report evidence marker changed")
+    if data["benchmark_id"] != BENCHMARK_ID:
+        raise ProofReportError("benchmark_id changed")
+    _safe_id(data["run_id"], "run_id")
+    execution_mode = _string(data["execution_mode"], "execution_mode")
+    if execution_mode not in {"measured", "capability_preflight"}:
+        raise ProofReportError("unsupported execution_mode")
+    if data["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256:
+        raise ProofReportError("protocol digest changed")
+    if data["registry_sha256"] != VARIANT_REGISTRY_SHA256:
+        raise ProofReportError("variant registry digest changed")
+    if data["corpus_manifest_sha256"] != FROZEN_CORPUS_MANIFEST_SHA256:
+        raise ProofReportError("corpus manifest digest changed")
+    if data["pilot_split_sha256"] != FROZEN_SPLIT_SHA256[Split.PILOT]:
+        raise ProofReportError("pilot split digest changed")
+    if data["split"] != "pilot":
+        raise ProofReportError("proof report must use pilot split")
+    fixed_arrays = (
+        ("eligible_case_ids", ELIGIBLE_CASE_IDS),
+        ("excluded_case_ids", EXCLUDED_CASE_IDS),
+        ("cache_modes", CACHE_MODES),
+        ("primary_variant_ids", PRIMARY_VARIANT_IDS),
+        ("diagnostic_variant_ids", DIAGNOSTIC_VARIANT_IDS),
+    )
+    for field, expected in fixed_arrays:
+        if _array(data[field], field) != list(expected):
+            raise ProofReportError(f"{field} differs from frozen proof scope")
+    capabilities = _validate_capabilities(data["capabilities"])
+    capability_digest = hashlib.sha256(
+        canonical_json(capabilities).encode("utf-8")
+    ).hexdigest()
+    if data["capability_inventory_sha256"] != capability_digest:
+        raise ProofReportError("capability inventory digest changed")
+
+    raw_observations = _array(data["observations"], "observations")
+    observations = [_validate_observation(item) for item in raw_observations]
+    coordinates = [
+        (
+            str(row["case_id"]),
+            str(row["cache_mode"]),
+            str(row["variant_id"]),
+        )
+        for row in observations
+    ]
+    expected_coordinates = {
+        (case_id, mode, variant)
+        for case_id in ELIGIBLE_CASE_IDS
+        for mode in CACHE_MODES
+        for variant in (*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS)
+    }
+    if len(coordinates) != len(set(coordinates)):
+        raise ProofReportError("proof report contains duplicate observations")
+    if set(coordinates) != expected_coordinates:
+        missing = sorted(expected_coordinates - set(coordinates))
+        extra = sorted(set(coordinates) - expected_coordinates)
+        raise ProofReportError(
+            f"proof observation matrix is incomplete; missing={missing}, extra={extra}"
+        )
+    expected_order = sorted(
+        coordinates,
+        key=lambda item: (
+            CACHE_MODES.index(item[1]),
+            (*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS).index(item[2]),
+            ELIGIBLE_CASE_IDS.index(item[0]),
+        ),
+    )
+    if coordinates != expected_order:
+        raise ProofReportError("proof observations are not in canonical order")
+
+    if execution_mode == "capability_preflight":
+        if not any(
+            capabilities[name]["status"] != "available"
+            for name in CAPABILITY_KEYS
+        ):
+            raise ProofReportError("preflight missingness requires a capability gap")
+        if any(row["status"] != "unavailable" for row in observations):
+            raise ProofReportError(
+                "capability-preflight observations must remain unavailable"
+            )
+        if any(row["case_result"] is not None for row in observations):
+            raise ProofReportError(
+                "capability preflight cannot embed fabricated case results"
+            )
+    else:
+        for row in observations:
+            if row["case_result"] is None:
+                raise ProofReportError(
+                    "measured observations require full case-result evidence"
+                )
+            _validate_measured_source(
+                row, expected_run_id=str(data["run_id"])
+            )
+            if row["status"] not in {
+                "unavailable",
+                "excluded",
+                "infrastructure_failure",
+            }:
+                missing = [
+                    name
+                    for name in _required_proof_capabilities(
+                        str(row["variant_id"])
+                    )
+                    if capabilities[name]["status"] != "available"
+                ]
+                if missing:
+                    raise ProofReportError(
+                        "measured proof result conflicts with unavailable "
+                        f"capabilities: {', '.join(missing)}"
+                    )
+    derived = derive_proof_analysis(observations)
+    if data["analysis"] != derived:
+        raise ProofReportError("serialized proof analysis differs from observations")
+    expected_digest = _artifact_digest(data)
+    if data["artifact_sha256"] != expected_digest:
+        raise ProofReportError("proof report artifact digest changed")
+    return dict(data)
+
+
+def load_proof_report(path: str | Path = DEFAULT_PROOF_REPORT_PATH) -> dict[str, object]:
+    """Load canonical newline JSON and validate the full proof report."""
+
+    report_path = Path(path)
+    try:
+        text = report_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ProofReportError(f"cannot read proof report: {report_path}") from exc
+    if not text.endswith("\n"):
+        raise ProofReportError("proof report is not canonical newline JSON")
+    try:
+        value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
+    except (json.JSONDecodeError, ProofReportError) as exc:
+        raise ProofReportError("proof report is not strict JSON") from exc
+    if canonical_json(value) + "\n" != text:
+        raise ProofReportError("proof report is not canonical JSON")
+    return validate_proof_report(value)
+
+
+def create_capability_preflight_report() -> dict[str, object]:
+    """Create the canonical checked-in missingness evidence.
+
+    The capture reflects the repository preflight on 2026-07-24.  Receipt
+    digests bind each scheduled coordinate to the immutable inventory digest;
+    they are not kernel receipts and can never enter the verified numerator.
+    """
+
+    capabilities = {
+        "spacy": {
+            "status": "unavailable",
+            "reason": "requested en_core_web_sm pipeline is not installed",
+        },
+        "symai": {
+            "status": "degraded",
+            "reason": "provider and model identity are incomplete",
+        },
+        "llm_router": {
+            "status": "degraded",
+            "reason": "provider and model identity are incomplete",
+        },
+        "hammer": {
+            "status": "available",
+            "reason": "",
+        },
+        "leanstral": {
+            "status": "unavailable",
+            "reason": "endpoint and model identity are not configured",
+        },
+        "lean_kernel": {
+            "status": "available",
+            "reason": "",
+        },
+    }
+    capability_inventory_sha256 = hashlib.sha256(
+        canonical_json(capabilities).encode("utf-8")
+    ).hexdigest()
+    observations: list[dict[str, object]] = []
+    for mode in CACHE_MODES:
+        for variant in (*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS):
+            definition = VARIANT_REGISTRY[variant]
+            missing = []
+            if variant != "S1" and capabilities["spacy"]["status"] != "available":
+                missing.append("spacy")
+            if any(stage.value == "symai" for stage in definition.stages):
+                if capabilities["symai"]["status"] != "available":
+                    missing.append("symai")
+                if capabilities["llm_router"]["status"] != "available":
+                    missing.append("llm_router")
+            if any(stage.value == "leanstral" for stage in definition.stages):
+                if capabilities["leanstral"]["status"] != "available":
+                    missing.append("leanstral")
+            missing_reason = "capability unavailable or degraded: " + ", ".join(
+                dict.fromkeys(missing)
+            )
+            for case_id in ELIGIBLE_CASE_IDS:
+                coordinate = {
+                    "capability_inventory_sha256": capability_inventory_sha256,
+                    "case_id": case_id,
+                    "cache_mode": mode,
+                    "variant_id": variant,
+                    "missing_reason": missing_reason,
+                }
+                observations.append(
+                    {
+                        "schema": PROOF_OBSERVATION_SCHEMA,
+                        "case_id": case_id,
+                        "cache_mode": mode,
+                        "variant_id": variant,
+                        "status": "unavailable",
+                        "source_receipt_sha256": hashlib.sha256(
+                            canonical_json(coordinate).encode("utf-8")
+                        ).hexdigest(),
+                        "case_result": None,
+                        "verification_authority": None,
+                        "kernel_accepted": False,
+                        "kernel_receipt_sha256": None,
+                        "verified_source": "none",
+                        "proof_order": _proof_order(variant),
+                        "model_claimed_verified": False,
+                        "hammer": {
+                            "invoked": False,
+                            "candidate_created": False,
+                            "premise_recall_numerator": None,
+                            "premise_recall_denominator": None,
+                            "premise_recall_missing_reason": (
+                                "gold_premise_set_unavailable"
+                            ),
+                            "reconstruction_attempted": False,
+                            "reconstruction_succeeded": False,
+                            "wall_time_ms": 0.0,
+                        },
+                        "leanstral": {
+                            "invoked": False,
+                            "candidate_created": False,
+                            "repair_attempted": False,
+                            "repair_succeeded": False,
+                            "wall_time_ms": 0.0,
+                        },
+                        "total_wall_time_ms": 0.0,
+                        "model_calls": 0,
+                        "missing_reason": missing_reason,
+                    }
+                )
+    report: dict[str, object] = {
+        "schema": PROOF_REPORT_SCHEMA,
+        "evidence": HSSLEV0526A41(),
+        "benchmark_id": BENCHMARK_ID,
+        "run_id": "proof-overlap-ordering-v1",
+        "execution_mode": "capability_preflight",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
+        "pilot_split_sha256": FROZEN_SPLIT_SHA256[Split.PILOT],
+        "split": "pilot",
+        "eligible_case_ids": list(ELIGIBLE_CASE_IDS),
+        "excluded_case_ids": list(EXCLUDED_CASE_IDS),
+        "cache_modes": list(CACHE_MODES),
+        "primary_variant_ids": list(PRIMARY_VARIANT_IDS),
+        "diagnostic_variant_ids": list(DIAGNOSTIC_VARIANT_IDS),
+        "capability_inventory_sha256": capability_inventory_sha256,
+        "capabilities": capabilities,
+        "observations": observations,
+        "analysis": derive_proof_analysis(observations),
+        "artifact_sha256": "",
+    }
+    report["artifact_sha256"] = _artifact_digest(report)
+    return validate_proof_report(report)
+
+
+def build_proof_report(
+    run_id: str,
+    capabilities: Mapping[str, object],
+    observations: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    """Build canonical measured proof evidence from complete case receipts.
+
+    Observation rows carry descriptive proof-source fields, but their durable
+    ``CaseResultRecord`` remains authoritative.  This builder canonicalizes
+    the complete frozen pilot matrix, derives all aggregate proof and routing
+    metrics, content-addresses the artifact, and executes strict validation.
+    """
+
+    safe_run_id = _safe_id(run_id, "run_id")
+    capability_records = _validate_capabilities(capabilities)
+    if isinstance(observations, (str, bytes, Mapping)):
+        raise ProofReportError(
+            "observations must be a sequence of observation mappings"
+        )
+    try:
+        rows = [_validate_observation(item) for item in observations]
+    except TypeError as exc:
+        raise ProofReportError(
+            "observations must be a sequence of observation mappings"
+        ) from exc
+    for row in rows:
+        _validate_measured_source(row, expected_run_id=safe_run_id)
+
+    variant_order = (*PRIMARY_VARIANT_IDS, *DIAGNOSTIC_VARIANT_IDS)
+    order = {
+        (case_id, mode, variant): index
+        for index, (case_id, mode, variant) in enumerate(
+            (
+                (case_id, mode, variant)
+                for mode in CACHE_MODES
+                for variant in variant_order
+                for case_id in ELIGIBLE_CASE_IDS
+            )
+        )
+    }
+    coordinates = [
+        (
+            str(row["case_id"]),
+            str(row["cache_mode"]),
+            str(row["variant_id"]),
+        )
+        for row in rows
+    ]
+    if len(coordinates) != len(set(coordinates)):
+        raise ProofReportError(
+            "proof report contains duplicate observations"
+        )
+    if set(coordinates) != set(order):
+        raise ProofReportError(
+            "proof observation matrix is incomplete; "
+            f"missing={sorted(set(order) - set(coordinates))}, "
+            f"extra={sorted(set(coordinates) - set(order))}"
+        )
+    rows.sort(
+        key=lambda row: order[
+            (
+                str(row["case_id"]),
+                str(row["cache_mode"]),
+                str(row["variant_id"]),
+            )
+        ]
+    )
+    capability_inventory_sha256 = hashlib.sha256(
+        canonical_json(capability_records).encode("utf-8")
+    ).hexdigest()
+    value: dict[str, object] = {
+        "schema": PROOF_REPORT_SCHEMA,
+        "evidence": HSSLEV0526A41(),
+        "benchmark_id": BENCHMARK_ID,
+        "run_id": safe_run_id,
+        "execution_mode": "measured",
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "registry_sha256": VARIANT_REGISTRY_SHA256,
+        "corpus_manifest_sha256": FROZEN_CORPUS_MANIFEST_SHA256,
+        "pilot_split_sha256": FROZEN_SPLIT_SHA256[Split.PILOT],
+        "split": "pilot",
+        "eligible_case_ids": list(ELIGIBLE_CASE_IDS),
+        "excluded_case_ids": list(EXCLUDED_CASE_IDS),
+        "cache_modes": list(CACHE_MODES),
+        "primary_variant_ids": list(PRIMARY_VARIANT_IDS),
+        "diagnostic_variant_ids": list(DIAGNOSTIC_VARIANT_IDS),
+        "capability_inventory_sha256": capability_inventory_sha256,
+        "capabilities": capability_records,
+        "observations": rows,
+        "analysis": derive_proof_analysis(rows),
+        "artifact_sha256": "",
+    }
+    value["artifact_sha256"] = _artifact_digest(value)
+    return validate_proof_report(value)
+
+
+class EfficiencyReportError(ValueError):
+    """Raised when delegation-efficiency evidence is incomplete or altered."""
+
+
+def build_efficiency_report(
+    escalations: Sequence[EfficiencyEscalation],
+    observations: Sequence[EfficiencyObservation],
+    *,
+    execution_mode: str = "measured",
+    missing_reason: str | None = None,
+) -> dict[str, object]:
+    """Build a canonical report from case-result and resource receipts."""
+
+    if execution_mode not in {"measured", "capability_preflight"}:
+        raise EfficiencyReportError("unsupported efficiency execution_mode")
+    escalation_records = tuple(escalations)
+    observation_records = tuple(observations)
+    if not escalation_records or any(
+        not isinstance(item, EfficiencyEscalation) for item in escalation_records
+    ):
+        raise EfficiencyReportError(
+            "escalations must contain EfficiencyEscalation values"
+        )
+    if any(
+        not isinstance(item, EfficiencyObservation) for item in observation_records
+    ):
+        raise EfficiencyReportError(
+            "observations must contain EfficiencyObservation values"
+        )
+    if execution_mode == "measured":
+        if missing_reason is not None:
+            raise EfficiencyReportError(
+                "a measured efficiency report cannot carry missing_reason"
+            )
+        if not observation_records:
+            raise EfficiencyReportError(
+                "a measured efficiency report requires observations"
+            )
+    else:
+        if not isinstance(missing_reason, str) or not missing_reason.strip():
+            raise EfficiencyReportError(
+                "capability preflight requires a missing_reason"
+            )
+        if observation_records:
+            raise EfficiencyReportError(
+                "capability preflight cannot contain measured observations"
+            )
+    ordered_escalations = tuple(
+        sorted(escalation_records, key=lambda item: item.step_index)
+    )
+    step_order = {
+        item.variant_id: item.step_index for item in ordered_escalations
+    }
+    try:
+        ordered_observations = tuple(
+            sorted(
+                observation_records,
+                key=lambda item: (
+                    step_order[item.case_result.variant_id],
+                    item.case_result.case_id,
+                ),
+            )
+        )
+        analysis = analyze_delegation_efficiency(
+            ordered_escalations,
+            ordered_observations,
+            allow_empty=execution_mode == "capability_preflight",
+        )
+    except (MetricsContractError, KeyError) as exc:
+        raise EfficiencyReportError(str(exc)) from exc
+    value: dict[str, object] = {
+        "schema": EFFICIENCY_REPORT_SCHEMA,
+        "evidence": HSSLEV0615B24(),
+        "benchmark_id": BENCHMARK_ID,
+        "execution_mode": execution_mode,
+        "missing_reason": missing_reason,
+        "protocol_sha256": DEFAULT_PROTOCOL_SHA256,
+        "escalations": [item.to_dict() for item in ordered_escalations],
+        "observations": [item.to_dict() for item in ordered_observations],
+        "analysis": analysis,
+        "artifact_sha256": "",
+    }
+    value["artifact_sha256"] = _artifact_digest(value)
+    return validate_efficiency_report(value)
+
+
+def create_efficiency_capability_preflight_report() -> dict[str, object]:
+    """Create non-efficacy evidence for environments without measured traces."""
+
+    return build_efficiency_report(
+        DEFAULT_EFFICIENCY_ESCALATIONS,
+        (),
+        execution_mode="capability_preflight",
+        missing_reason=(
+            "no complete paired A1-A4 case-result and operational-resource "
+            "receipt matrix was supplied; efficacy and cost ratios remain null"
+        ),
+    )
+
+
+def validate_efficiency_report(value: object) -> dict[str, object]:
+    """Strictly reparse and recompute a delegation-efficiency report."""
+
+    data = _mapping(value, "efficiency_report")
+    fields = {
+        "schema",
+        "evidence",
+        "benchmark_id",
+        "execution_mode",
+        "missing_reason",
+        "protocol_sha256",
+        "escalations",
+        "observations",
+        "analysis",
+        "artifact_sha256",
+    }
+    try:
+        _exact(data, fields, "efficiency_report")
+        if data["schema"] != EFFICIENCY_REPORT_SCHEMA:
+            raise EfficiencyReportError("unsupported efficiency report schema")
+        if data["evidence"] != HSSLEV0615B24():
+            raise EfficiencyReportError("efficiency evidence marker changed")
+        if data["benchmark_id"] != BENCHMARK_ID:
+            raise EfficiencyReportError("efficiency benchmark_id changed")
+        if data["protocol_sha256"] != DEFAULT_PROTOCOL_SHA256:
+            raise EfficiencyReportError("efficiency protocol digest changed")
+        execution_mode = _string(data["execution_mode"], "execution_mode")
+        if execution_mode not in {"measured", "capability_preflight"}:
+            raise EfficiencyReportError(
+                "unsupported efficiency execution_mode"
+            )
+        raw_steps = _array(data["escalations"], "escalations")
+        steps = tuple(EfficiencyEscalation.from_dict(item) for item in raw_steps)
+        if any(item.variant_id not in VARIANT_REGISTRY for item in steps):
+            raise EfficiencyReportError(
+                "efficiency escalation references an unregistered variant"
+            )
+        if [item.step_index for item in steps] != list(range(len(steps))):
+            raise EfficiencyReportError(
+                "efficiency escalations are not in canonical order"
+            )
+        raw_observations = _array(data["observations"], "observations")
+        observations = tuple(
+            EfficiencyObservation.from_dict(item) for item in raw_observations
+        )
+        order = {item.variant_id: item.step_index for item in steps}
+        coordinates = [
+            (order[item.case_result.variant_id], item.case_result.case_id)
+            for item in observations
+        ]
+        if coordinates != sorted(coordinates):
+            raise EfficiencyReportError(
+                "efficiency observations are not in canonical order"
+            )
+        if len(coordinates) != len(set(coordinates)):
+            raise EfficiencyReportError(
+                "efficiency report contains duplicate observations"
+            )
+        missing_reason = data["missing_reason"]
+        if execution_mode == "capability_preflight":
+            if observations:
+                raise EfficiencyReportError(
+                    "capability preflight cannot contain measured observations"
+                )
+            _string(missing_reason, "missing_reason")
+        else:
+            if not observations:
+                raise EfficiencyReportError(
+                    "measured efficiency report requires observations"
+                )
+            if missing_reason is not None:
+                raise EfficiencyReportError(
+                    "measured efficiency report cannot carry missing_reason"
+                )
+        derived = analyze_delegation_efficiency(
+            steps,
+            observations,
+            allow_empty=execution_mode == "capability_preflight",
+        )
+    except (MetricsContractError, ProofReportError, KeyError) as exc:
+        if isinstance(exc, EfficiencyReportError):
+            raise
+        raise EfficiencyReportError(str(exc)) from exc
+    if data["analysis"] != derived:
+        raise EfficiencyReportError(
+            "serialized efficiency analysis differs from observations"
+        )
+    if data["artifact_sha256"] != _artifact_digest(data):
+        raise EfficiencyReportError("efficiency report artifact digest changed")
+    return dict(data)
+
+
+def load_efficiency_report(path: str | Path) -> dict[str, object]:
+    """Load strict canonical newline JSON efficiency evidence."""
+
+    report_path = Path(path)
+    try:
+        text = report_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise EfficiencyReportError(
+            f"cannot read efficiency report: {report_path}"
+        ) from exc
+    if not text.endswith("\n"):
+        raise EfficiencyReportError(
+            "efficiency report is not canonical newline JSON"
+        )
+    try:
+        value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
+    except (json.JSONDecodeError, ProofReportError) as exc:
+        raise EfficiencyReportError(
+            "efficiency report is not strict JSON"
+        ) from exc
+    if canonical_json(value) + "\n" != text:
+        raise EfficiencyReportError("efficiency report is not canonical JSON")
+    return validate_efficiency_report(value)
+
+
+def efficiency_summary(report: Mapping[str, object]) -> dict[str, object]:
+    """Return the stable one-line CLI summary for validated evidence."""
+
+    analysis = _mapping(report["analysis"], "analysis")
+    frontier = _array(analysis["frontier_variant_ids"], "frontier_variant_ids")
+    return {
+        "section": "efficiency",
+        "status": "valid",
+        "execution_mode": report["execution_mode"],
+        "artifact_sha256": report["artifact_sha256"],
+        "observation_count": len(_array(report["observations"], "observations")),
+        "measured": analysis["measured"],
+        "frontier_variant_ids": frontier,
+        "safety_is_hard_constraint": analysis["safety_is_hard_constraint"],
+        "missing_reason": report["missing_reason"],
+    }
+
+
+_FINAL_DECISION_SOURCE_ARTIFACTS: Final = {
+    "baseline": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/"
+        "a0-baseline-v1/state/baseline-manifest.json",
+        "ipfs-datasets.logic-pipeline-benchmark.frozen-baseline-manifest.v1",
+    ),
+    "frontend": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "frontend-overlap-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.frontend-overlap-report.v1",
+    ),
+    "proof": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "proof-overlap-ordering-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.proof-overlap-report.v1",
+    ),
+    "pilot": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "pilot-shortlist-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.pilot-shortlist-gate.v1",
+    ),
+    "holdout": (
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/results/"
+        "holdout-evaluation-v1.json",
+        "ipfs-datasets.logic-pipeline-benchmark.paired-holdout-gate.v1",
+    ),
+}
+_FINAL_DECISION_COMPONENTS: Final = ("spacy", "symai", "hammer", "leanstral")
+_FINAL_DECISION_VARIANTS: Final = (
+    "A0",
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "A10",
+    "A11",
+    "A12",
+    "S1",
+)
+_RUNBOOK_HEADINGS: Final = (
+    "Purpose and authority",
+    "Revision-2 operational status: NO-GO",
+    "Published decision",
+    "Ownership and delegation matrix",
+    "Trust boundaries and invariants",
+    "Clean-worktree operating flow",
+    "Preflight and capability probe",
+    "Objective ingestion and backlog alignment",
+    "Baseline and ablation execution",
+    "Pilot and shortlist gate",
+    "Holdout gate",
+    "Replay and reporting",
+    "Phase gates",
+    "Evidence inventory and freshness",
+    "Incident response",
+    "Rollback and fallback",
+    "Handoff checklist",
+    "HSSLEV1703E61 traceability",
+)
+
+
+def _decision_mapping(value: object, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping) or not all(
+        isinstance(key, str) for key in value
+    ):
+        raise FinalDecisionValidationError(f"{field} must be an object")
+    return value
+
+
+def _decision_array(value: object, field: str) -> list[object]:
+    if not isinstance(value, list):
+        raise FinalDecisionValidationError(f"{field} must be an array")
+    return value
+
+
+def _decision_exact(
+    value: Mapping[str, object], expected: set[str], field: str
+) -> None:
+    if set(value) != expected:
+        raise FinalDecisionValidationError(
+            f"{field} fields changed; expected {sorted(expected)}, "
+            f"got {sorted(value)}"
+        )
+
+
+def _decision_string(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise FinalDecisionValidationError(f"{field} must be a nonempty string")
+    return value
+
+
+def _decision_false(value: object, field: str) -> None:
+    if value is not False:
+        raise FinalDecisionValidationError(
+            f"{field} must remain false without paired holdout evidence"
+        )
+
+
+def _repository_file(root: Path, relative_path: str, field: str) -> Path:
+    candidate = Path(relative_path)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise FinalDecisionValidationError(
+            f"{field} must be a repository-relative path"
+        )
+    resolved_root = root.resolve()
+    resolved = (resolved_root / candidate).resolve()
+    if not resolved.is_relative_to(resolved_root):
+        raise FinalDecisionValidationError(f"{field} escapes the repository")
+    if not resolved.is_file():
+        raise FinalDecisionValidationError(f"{field} does not exist: {candidate}")
+    return resolved
+
+
+def _external_run_file(
+    candidate: Path,
+    *,
+    run_root: Path,
+    field: str,
+) -> Path:
+    """Resolve one regular, nonsymlinked artifact inside a fresh run root."""
+
+    if not candidate.is_absolute():
+        raise FinalDecisionValidationError(
+            f"{field} must be an absolute fresh-run path"
+        )
+    resolved_root = run_root.resolve()
+    try:
+        lexical = candidate.absolute()
+        relative = lexical.relative_to(run_root.absolute())
+    except ValueError as exc:
+        raise FinalDecisionValidationError(
+            f"{field} escapes the fresh run root"
+        ) from exc
+    cursor = run_root.absolute()
+    for part in relative.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            raise FinalDecisionValidationError(
+                f"{field} must not traverse a symlink"
+            )
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise FinalDecisionValidationError(
+            f"{field} does not exist: {candidate}"
+        ) from exc
+    if (
+        not resolved.is_relative_to(resolved_root)
+        or not resolved.is_file()
+    ):
+        raise FinalDecisionValidationError(
+            f"{field} is not a regular file inside the fresh run root"
+        )
+    return resolved
+
+
+def _strict_json_file(path: Path, description: str) -> tuple[object, bytes]:
+    try:
+        raw = path.read_bytes()
+        text = raw.decode("utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise FinalDecisionValidationError(
+            f"cannot read {description}: {path}"
+        ) from exc
+    try:
+        value = json.loads(text, object_pairs_hook=_reject_duplicate_pairs)
+    except (json.JSONDecodeError, ProofReportError) as exc:
+        raise FinalDecisionValidationError(
+            f"{description} is not strict JSON"
+        ) from exc
+    return value, raw
+
+
+def _validate_final_decision_v1(
+    value: object, *, repository_root: str | Path = "."
+) -> dict[str, object]:
+    """Validate the final decision and every immutable evidence binding.
+
+    The decision intentionally remains inconclusive while the paired holdout
+    is sealed and unopened.  This validator therefore fails if missing
+    measurements are converted to efficacy, a component is promoted, or a
+    bound source artifact changes on disk.
+    """
+
+    envelope = _decision_mapping(value, "snapshot")
+    _decision_exact(
+        envelope,
+        {"benchmark_script", "captured_on", "notes", "results"},
+        "snapshot",
+    )
+    if envelope["benchmark_script"] != (
+        "python benchmarks/logic_pipeline/report.py --validate-final-decision"
+    ):
+        raise FinalDecisionValidationError("benchmark_script changed")
+    captured_on = _decision_string(envelope["captured_on"], "captured_on")
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", captured_on) is None:
+        raise FinalDecisionValidationError("captured_on must use YYYY-MM-DD")
+    notes = _decision_array(envelope["notes"], "notes")
+    if not notes or any(
+        not isinstance(note, str) or not note.strip() for note in notes
+    ):
+        raise FinalDecisionValidationError("notes must contain nonempty strings")
+
+    results = _decision_mapping(envelope["results"], "results")
+    _decision_exact(
+        results,
+        {
+            "artifact_sha256",
+            "schema",
+            "evidence",
+            "evidence_symbol",
+            "source_artifacts",
+            "decision",
+            "component_decisions",
+            "delegation_matrix",
+            "policy_decisions",
+            "tradeoffs",
+            "rejected_alternatives",
+            "required_follow_up",
+        },
+        "results",
+    )
+    if results["schema"] != FINAL_DECISION_SCHEMA:
+        raise FinalDecisionValidationError("final decision schema changed")
+    if results["evidence"] != HSSLEV1006B8A():
+        raise FinalDecisionValidationError("final decision evidence marker changed")
+    if results["evidence_symbol"] != "HSSLEV1006B8A":
+        raise FinalDecisionValidationError("final decision evidence symbol changed")
+    artifact_sha256 = results["artifact_sha256"]
+    if not isinstance(artifact_sha256, str) or not _SHA256.fullmatch(
+        artifact_sha256
+    ):
+        raise FinalDecisionValidationError(
+            "artifact_sha256 must be a lowercase SHA-256 digest"
+        )
+    expected_artifact_sha256 = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    if artifact_sha256 != expected_artifact_sha256:
+        raise FinalDecisionValidationError("final decision artifact digest changed")
+
+    root = Path(repository_root)
+    sources = _decision_mapping(results["source_artifacts"], "source_artifacts")
+    if tuple(sources) != tuple(_FINAL_DECISION_SOURCE_ARTIFACTS):
+        raise FinalDecisionValidationError(
+            "source_artifacts must retain baseline-to-holdout order and scope"
+        )
+    for name, (expected_path, expected_schema) in (
+        _FINAL_DECISION_SOURCE_ARTIFACTS.items()
+    ):
+        binding = _decision_mapping(
+            sources[name], f"source_artifacts.{name}"
+        )
+        _decision_exact(
+            binding,
+            {"path", "content_sha256", "semantic_sha256", "schema"},
+            f"source_artifacts.{name}",
+        )
+        if binding["path"] != expected_path:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.path changed"
+            )
+        if binding["schema"] != expected_schema:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.schema changed"
+            )
+        source_path = _repository_file(
+            root, expected_path, f"source_artifacts.{name}.path"
+        )
+        source_value, source_bytes = _strict_json_file(
+            source_path, f"{name} source artifact"
+        )
+        content_sha256 = hashlib.sha256(source_bytes).hexdigest()
+        if binding["content_sha256"] != content_sha256:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.content_sha256 changed"
+            )
+        source_data = _decision_mapping(
+            source_value, f"source_artifacts.{name}.document"
+        )
+        if source_data.get("schema") != expected_schema:
+            raise FinalDecisionValidationError(
+                f"bound {name} source schema differs from its binding"
+            )
+        semantic_sha256 = source_data.get("artifact_sha256")
+        if semantic_sha256 is None:
+            semantic_sha256 = hashlib.sha256(
+                canonical_json(source_data).encode("utf-8")
+            ).hexdigest()
+        if binding["semantic_sha256"] != semantic_sha256:
+            raise FinalDecisionValidationError(
+                f"source_artifacts.{name}.semantic_sha256 changed"
+            )
+
+    # Recompute both phase gates through their own source-backed trust
+    # boundaries.  Digest agreement alone is insufficient: a coordinated
+    # rewrite of a gate and this snapshot must not turn an unopened holdout
+    # into authorization.
+    from benchmarks.logic_pipeline.holdout_gate import (
+        HoldoutGateError,
+        load_holdout_gate_report,
+    )
+    from benchmarks.logic_pipeline.pilot_gate import (
+        PilotGateError,
+        load_pilot_gate_report,
+    )
+
+    try:
+        pilot_gate = load_pilot_gate_report(repository_root=root)
+        holdout_gate = load_holdout_gate_report(repository_root=root)
+    except (PilotGateError, HoldoutGateError) as exc:
+        raise FinalDecisionValidationError(
+            f"final decision phase-gate source validation failed: {exc}"
+        ) from exc
+    pilot_shortlist = _decision_mapping(
+        pilot_gate.get("shortlist"), "pilot.shortlist"
+    )
+    pilot_decision = _decision_mapping(
+        pilot_gate.get("decision"), "pilot.decision"
+    )
+    if (
+        pilot_shortlist.get("status") != "incomplete"
+        or pilot_shortlist.get("selected_variant_ids") != []
+        or pilot_shortlist.get("selected_count") != 0
+        or pilot_shortlist.get("frozen") is not True
+        or pilot_decision.get("holdout_authorized") is not False
+        or pilot_decision.get("production_promotion_authorized") is not False
+    ):
+        raise FinalDecisionValidationError(
+            "final decision requires an incomplete, empty, frozen pilot "
+            "shortlist with no holdout or production authorization"
+        )
+    holdout_decision = _decision_mapping(
+        holdout_gate.get("decision"), "holdout.decision"
+    )
+    holdout_access = _decision_mapping(
+        holdout_gate.get("access"), "holdout.access"
+    )
+    holdout_outcomes = _decision_mapping(
+        holdout_gate.get("outcomes"), "holdout.outcomes"
+    )
+    if (
+        holdout_decision.get("status") != "blocked"
+        or holdout_decision.get("seal_status") != "sealed_unopened"
+        or holdout_decision.get("holdout_untouched") is not True
+        or holdout_decision.get("paired_evaluation_complete") is not False
+        or holdout_decision.get("production_promotion_authorized") is not False
+        or holdout_access.get("status") != "unopened"
+        or holdout_access.get("authorized") is not False
+        or holdout_access.get("outcomes_inspected") is not False
+        or holdout_outcomes.get("status") != "not_run"
+        or holdout_outcomes.get("efficacy_claimed") is not False
+        or holdout_outcomes.get("case_results") != []
+    ):
+        raise FinalDecisionValidationError(
+            "final decision requires the blocked, sealed, unopened holdout "
+            "with no access, outcomes, efficacy, or promotion"
+        )
+
+    decision = _decision_mapping(results["decision"], "decision")
+    _decision_exact(
+        decision,
+        {
+            "architecture_outcome",
+            "current_architecture_action",
+            "evidence_status",
+            "holdout_status",
+            "paired_holdout_evidence_available",
+            "production_promotion_authorized",
+            "selected_variant_id",
+            "selected_policy",
+            "rationale",
+        },
+        "decision",
+    )
+    required_decision = {
+        "architecture_outcome": "gather_more_evidence",
+        "current_architecture_action": "retain_unchanged_pending_evidence",
+        "evidence_status": "inconclusive",
+        "holdout_status": "sealed_unopened",
+        "paired_holdout_evidence_available": False,
+        "production_promotion_authorized": False,
+        "selected_variant_id": None,
+        "selected_policy": None,
+    }
+    for field, expected in required_decision.items():
+        if decision.get(field) != expected:
+            raise FinalDecisionValidationError(
+                f"decision.{field} must remain {expected!r}"
+            )
+    _decision_string(decision.get("rationale"), "decision.rationale")
+
+    components = _decision_array(
+        results["component_decisions"], "component_decisions"
+    )
+    component_names: list[str] = []
+    for index, item in enumerate(components):
+        component = _decision_mapping(item, f"component_decisions[{index}]")
+        _decision_exact(
+            component,
+            {
+                "component",
+                "current_responsibility",
+                "candidate_responsibility",
+                "disposition",
+                "promotion_authorized",
+                "evidence_basis",
+            },
+            f"component_decisions[{index}]",
+        )
+        name = _decision_string(
+            component.get("component"), f"component_decisions[{index}].component"
+        )
+        component_names.append(name)
+        _decision_false(
+            component.get("promotion_authorized"),
+            f"component_decisions[{index}].promotion_authorized",
+        )
+        _decision_string(
+            component.get("disposition"),
+            f"component_decisions[{index}].disposition",
+        )
+        _decision_string(
+            component.get("evidence_basis"),
+            f"component_decisions[{index}].evidence_basis",
+        )
+    if tuple(component_names) != _FINAL_DECISION_COMPONENTS:
+        raise FinalDecisionValidationError(
+            "component decisions must cover spaCy, SyMAI, Hammer, and Leanstral "
+            "exactly once in canonical order"
+        )
+
+    matrix = _decision_array(results["delegation_matrix"], "delegation_matrix")
+    variant_ids: list[str] = []
+    for index, item in enumerate(matrix):
+        row = _decision_mapping(item, f"delegation_matrix[{index}]")
+        _decision_exact(
+            row,
+            {
+                "variant_id",
+                "role",
+                "disposition",
+                "promotion_authorized",
+                "evidence_basis",
+            },
+            f"delegation_matrix[{index}]",
+        )
+        variant_ids.append(
+            _decision_string(
+                row.get("variant_id"),
+                f"delegation_matrix[{index}].variant_id",
+            )
+        )
+        _decision_string(
+            row.get("role"), f"delegation_matrix[{index}].role"
+        )
+        _decision_string(
+            row.get("disposition"),
+            f"delegation_matrix[{index}].disposition",
+        )
+        _decision_false(
+            row.get("promotion_authorized"),
+            f"delegation_matrix[{index}].promotion_authorized",
+        )
+        _decision_string(
+            row.get("evidence_basis"),
+            f"delegation_matrix[{index}].evidence_basis",
+        )
+    if tuple(variant_ids) != _FINAL_DECISION_VARIANTS:
+        raise FinalDecisionValidationError(
+            "delegation matrix must cover A0-A12 and S1 in canonical order"
+        )
+    if _decision_mapping(matrix[0], "delegation_matrix[0]").get(
+        "disposition"
+    ) != "current_reference_only":
+        raise FinalDecisionValidationError(
+            "A0 must remain current_reference_only"
+        )
+    if any(
+        _decision_mapping(item, "delegation_matrix row").get("disposition")
+        != "evidence_ineligible"
+        for item in matrix[1:13]
+    ):
+        raise FinalDecisionValidationError(
+            "A1-A12 must remain evidence_ineligible"
+        )
+    if _decision_mapping(matrix[-1], "delegation_matrix[-1]").get(
+        "disposition"
+    ) != "diagnostic_only_never_candidate":
+        raise FinalDecisionValidationError(
+            "S1 must remain diagnostic_only_never_candidate"
+        )
+
+    policies = _decision_array(results["policy_decisions"], "policy_decisions")
+    policy_names: list[str] = []
+    for index, item in enumerate(policies):
+        policy = _decision_mapping(item, f"policy_decisions[{index}]")
+        _decision_exact(
+            policy,
+            {
+                "policy",
+                "role",
+                "selected",
+                "production_authorized",
+                "disposition",
+            },
+            f"policy_decisions[{index}]",
+        )
+        policy_names.append(
+            _decision_string(
+                policy.get("policy"),
+                f"policy_decisions[{index}].policy",
+            )
+        )
+        _decision_false(
+            policy.get("selected"), f"policy_decisions[{index}].selected"
+        )
+        _decision_false(
+            policy.get("production_authorized"),
+            f"policy_decisions[{index}].production_authorized",
+        )
+        if (
+            policy.get("disposition")
+            != "not_selected_insufficient_paired_holdout_evidence"
+        ):
+            raise FinalDecisionValidationError(
+                f"policy_decisions[{index}] has an unsupported disposition"
+            )
+        _decision_string(policy.get("role"), f"policy_decisions[{index}].role")
+    if policy_names != [
+        "P0_ALWAYS_ON",
+        "P1_DETERMINISTIC_FIRST",
+        "P2_PROOF_FAMILY",
+        "P3_BOUNDED_LEARNED",
+    ]:
+        raise FinalDecisionValidationError(
+            "policy decisions must cover P0-P3 in canonical order"
+        )
+
+    tradeoffs = _decision_mapping(results["tradeoffs"], "tradeoffs")
+    _decision_exact(
+        tradeoffs,
+        {"verification_authority", "execution_accounting", "domains"},
+        "tradeoffs",
+    )
+    if tradeoffs.get("verification_authority") != "independent_native_kernel_only":
+        raise FinalDecisionValidationError(
+            "tradeoffs must retain independent native-kernel authority"
+        )
+    accounting = _decision_mapping(
+        tradeoffs.get("execution_accounting"), "tradeoffs.execution_accounting"
+    )
+    _decision_exact(
+        accounting,
+        {
+            "scheduled_pair_count",
+            "observed_pair_count",
+            "kernel_verified_success_count",
+            "efficacy_claimed",
+            "interpretation",
+        },
+        "tradeoffs.execution_accounting",
+    )
+    if accounting.get("scheduled_pair_count") != 0:
+        raise FinalDecisionValidationError(
+            "scheduled_pair_count must reflect the unopened holdout"
+        )
+    if accounting.get("observed_pair_count") != 0:
+        raise FinalDecisionValidationError(
+            "observed_pair_count must reflect the unopened holdout"
+        )
+    if accounting.get("kernel_verified_success_count") != 0:
+        raise FinalDecisionValidationError(
+            "kernel_verified_success_count must reflect the unopened holdout"
+        )
+    _decision_false(
+        accounting.get("efficacy_claimed"),
+        "tradeoffs.execution_accounting.efficacy_claimed",
+    )
+    _decision_string(
+        accounting.get("interpretation"),
+        "tradeoffs.execution_accounting.interpretation",
+    )
+    domains = _decision_array(tradeoffs.get("domains"), "tradeoffs.domains")
+    if [
+        _decision_mapping(item, "tradeoff domain").get("domain")
+        for item in domains
+    ] != ["quality", "resource", "complexity"]:
+        raise FinalDecisionValidationError(
+            "tradeoffs must cover quality, resource, and complexity"
+        )
+    for index, item in enumerate(domains):
+        domain = _decision_mapping(item, f"tradeoffs.domains[{index}]")
+        _decision_exact(
+            domain,
+            {"domain", "measurement_status", "values", "reason"},
+            f"tradeoffs.domains[{index}]",
+        )
+        if domain.get("measurement_status") != "not_observed":
+            raise FinalDecisionValidationError(
+                f"tradeoffs.domains[{index}] must remain not_observed"
+            )
+        values = _decision_mapping(
+            domain.get("values"), f"tradeoffs.domains[{index}].values"
+        )
+        if not values or any(item is not None for item in values.values()):
+            raise FinalDecisionValidationError(
+                f"tradeoffs.domains[{index}] must retain explicit null values"
+            )
+        _decision_string(
+            domain.get("reason"), f"tradeoffs.domains[{index}].reason"
+        )
+
+    rejected = _decision_array(
+        results["rejected_alternatives"], "rejected_alternatives"
+    )
+    if not rejected:
+        raise FinalDecisionValidationError(
+            "rejected_alternatives cannot be empty"
+        )
+    for index, item in enumerate(rejected):
+        alternative = _decision_mapping(
+            item, f"rejected_alternatives[{index}]"
+        )
+        _decision_exact(
+            alternative,
+            {"alternative", "disposition", "reason"},
+            f"rejected_alternatives[{index}]",
+        )
+        _decision_string(
+            alternative.get("alternative"),
+            f"rejected_alternatives[{index}].alternative",
+        )
+        _decision_string(
+            alternative.get("reason"),
+            f"rejected_alternatives[{index}].reason",
+        )
+    follow_up = _decision_array(
+        results["required_follow_up"], "required_follow_up"
+    )
+    if len(follow_up) < 4 or any(
+        not isinstance(step, str) or not step.strip() for step in follow_up
+    ):
+        raise FinalDecisionValidationError(
+            "required_follow_up must retain the complete gated workflow"
+        )
+    follow_up_text = " ".join(str(step).lower() for step in follow_up)
+    required_follow_up_terms = (
+        "capability",
+        "pilot",
+        "holdout",
+        "cold",
+        "warm",
+        "replay",
+        "production promotion",
+    )
+    if any(term not in follow_up_text for term in required_follow_up_terms):
+        raise FinalDecisionValidationError(
+            "required_follow_up omits a capability, gate, replay, cache, or "
+            "promotion boundary"
+        )
+    return dict(envelope)
+
+
+_REASSESSMENT_FINAL_DECISION_SOURCES: Final = {
+    "matrix": Path(
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/"
+        "results/matrix-execution-v2.json"
+    ),
+    "pilot": Path(
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/"
+        "results/pilot-shortlist-v2.json"
+    ),
+    "holdout": Path(
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/"
+        "results/holdout-evaluation-v2.json"
+    ),
+    "replay": Path(
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/"
+        "replay/replay-index.json"
+    ),
+    "statistics": Path(
+        "workspace/benchmarks/hammer-symai-spacy-leanstral/reassessment-v2/"
+        "results/statistics.json"
+    ),
+    "reports": Path(
+        "docs/performance_snapshots/"
+        "2026-07-24_hssl_reassessment_reports.json"
+    ),
+}
+_REASSESSMENT_COMPONENT_ROLES: Final = (
+    (
+        "spacy",
+        "linguistic preprocessing only; annotations never establish semantic "
+        "or proof correctness",
+    ),
+    (
+        "symai",
+        "one bounded structured semantic-routing or contract-repair attempt "
+        "through the pinned router",
+    ),
+    (
+        "hammer",
+        "bounded deterministic proof search and native reconstruction whose "
+        "claims require independent kernel acceptance",
+    ),
+    (
+        "leanstral",
+        "one bounded proof-failure draft and one reviewed repair at most; "
+        "output remains untrusted until independent kernel acceptance",
+    ),
+)
+_REASSESSMENT_POLICIES: Final = (
+    (
+        "P0_ALWAYS_ON",
+        "always-on experimental delegation",
+    ),
+    (
+        "P1_DETERMINISTIC_FIRST",
+        "deterministic-first bounded escalation",
+    ),
+    (
+        "P2_PROOF_FAMILY",
+        "pre-outcome proof-family conditional routing",
+    ),
+    (
+        "P3_BOUNDED_LEARNED",
+        "development-trained bounded routing with frozen provenance",
+    ),
+)
+
+
+def _build_fresh_reassessment_final_decision(
+    *,
+    repository_root: Path,
+    run_id: str,
+    benchmark_root: str | Path,
+) -> dict[str, object]:
+    """Build a run-scoped decision without assuming an empty shortlist."""
+
+    from benchmarks.logic_pipeline.reassessment_namespace import (
+        ReassessmentRunLayout,
+    )
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        load_reassessment_statistics,
+    )
+
+    layout = ReassessmentRunLayout.for_run(
+        run_id,
+        benchmark_root=benchmark_root,
+    )
+    load_reassessment_statistics(
+        repository_root=repository_root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+    source_paths = {
+        "matrix": layout.matrix_index,
+        "pilot": layout.pilot_report,
+        "holdout": layout.holdout_report,
+        "replay": layout.replay_index,
+        "statistics": layout.statistics_report,
+        "reports": layout.reports_snapshot,
+    }
+    source_artifacts: dict[str, object] = {}
+    documents: dict[str, Mapping[str, object]] = {}
+    for name, path in source_paths.items():
+        binding, document = _replacement_source_binding(
+            repository_root,
+            path,
+            external_run_root=layout.run_paths.run_root,
+        )
+        source_artifacts[name] = binding
+        documents[name] = document
+
+    legacy = load_final_decision(
+        LEGACY_FINAL_DECISION_PATH,
+        repository_root=repository_root,
+    )
+    legacy_results = _decision_mapping(legacy["results"], "legacy.results")
+    if (
+        legacy_results.get("schema") != FINAL_DECISION_SCHEMA
+        or legacy_results.get("evidence_symbol") != "HSSLEV1006B8A"
+    ):
+        raise FinalDecisionValidationError(
+            "the immutable predecessor is not the HSSL-G100 v1 decision"
+        )
+    supersedes, _ = _replacement_source_binding(
+        repository_root,
+        LEGACY_FINAL_DECISION_PATH,
+    )
+    supersedes = {
+        **supersedes,
+        "relationship": "immutable_predecessor",
+        "preserved": True,
+    }
+
+    matrix = documents["matrix"]
+    pilot = documents["pilot"]
+    holdout = documents["holdout"]
+    replay = documents["replay"]
+    publication = _decision_mapping(
+        documents["reports"].get("results"),
+        "reports.results",
+    )
+    publication_reports = _decision_mapping(
+        publication.get("reports"),
+        "reports.results.reports",
+    )
+    traceability = _decision_mapping(
+        publication.get("traceability"),
+        "reports.results.traceability",
+    )
+    shortlist = _decision_mapping(pilot.get("shortlist"), "pilot.shortlist")
+    pilot_decision = _decision_mapping(
+        pilot.get("decision"),
+        "pilot.decision",
+    )
+    holdout_decision = _decision_mapping(
+        holdout.get("decision"),
+        "holdout.decision",
+    )
+    holdout_outcomes = _decision_mapping(
+        holdout.get("outcomes"),
+        "holdout.outcomes",
+    )
+    holdout_metrics = _decision_mapping(
+        holdout.get("metrics"),
+        "holdout.metrics",
+    )
+    replay_execution = _decision_mapping(
+        replay.get("execution"),
+        "replay.execution",
+    )
+    selected = [
+        str(item)
+        for item in _decision_array(
+            shortlist.get("selected_variant_ids"),
+            "pilot.shortlist.selected_variant_ids",
+        )
+    ]
+    holdout_pairs = int(holdout_outcomes.get("observed_pair_count", 0))
+    replay_complete = (
+        replay_execution.get("all_observed_successes_replayed") is True
+        and replay_execution.get("all_sampled_failures_replayed") is True
+        and replay_execution.get("replay_claimed") is True
+    )
+    decision_complete = (
+        bool(selected)
+        and holdout_decision.get("paired_evaluation_complete") is True
+        and holdout_metrics.get("complete") is True
+        and replay_complete
+    )
+    candidate_evidence = {
+        str(_decision_mapping(item, "candidate evidence")["variant_id"]):
+        _decision_mapping(item, "candidate evidence")
+        for item in _decision_array(
+            pilot.get("candidate_evidence"),
+            "pilot.candidate_evidence",
+        )
+    }
+    delegation_matrix: list[dict[str, object]] = []
+    for variant_id in _FINAL_DECISION_VARIANTS:
+        coordinate_count, status_counts = _matrix_variant_status_counts(
+            matrix,
+            variant_id,
+        )
+        evidence = candidate_evidence.get(variant_id)
+        delegation_matrix.append(
+            {
+                "variant_id": variant_id,
+                "role": (
+                    "frozen reference"
+                    if variant_id == "A0"
+                    else "safety diagnostic"
+                    if variant_id == "S1"
+                    else "experimental ablation candidate"
+                ),
+                "evidence_scope": (
+                    "pilot_development_and_holdout"
+                    if variant_id in selected and holdout_pairs
+                    else "pilot_development_only"
+                ),
+                "measured_evidence": {
+                    "coordinate_count": coordinate_count,
+                    "status_counts": status_counts,
+                    "eligible": (
+                        None if evidence is None else evidence["eligible"]
+                    ),
+                    "ineligibility_reasons": (
+                        []
+                        if evidence is None
+                        else evidence["ineligibility_reasons"]
+                    ),
+                },
+                "holdout_observed_pair_count": (
+                    20 if variant_id in selected and holdout_pairs else 0
+                ),
+                "disposition": (
+                    "frozen_reference"
+                    if variant_id == "A0"
+                    else "diagnostic_only"
+                    if variant_id == "S1"
+                    else "shortlisted_pending_review"
+                    if variant_id in selected
+                    else "not_shortlisted"
+                ),
+                "production_authorized": False,
+            }
+        )
+    decision = {
+        "architecture_outcome": (
+            "review_complete_benchmark_evidence"
+            if decision_complete
+            else "gather_more_evidence"
+        ),
+        "current_architecture_action": "retain_a0_unchanged",
+        "evidence_status": (
+            "complete_holdout_and_replay_pending_separate_review"
+            if decision_complete
+            else "incomplete_gated_reassessment"
+        ),
+        "holdout_status": holdout_decision["seal_status"],
+        "replay_status": replay["status"],
+        "paired_holdout_evidence_available": holdout_pairs > 0,
+        "replay_claimed": replay_execution["replay_claimed"],
+        "selected_variant_id": None,
+        "selected_policy": None,
+        "production_routing_changed": False,
+        "production_promotion_authorized": False,
+        "rationale": (
+            "The benchmark source graph is complete enough for a separate "
+            "architecture review; benchmark evidence itself never promotes "
+            "a production route."
+            if decision_complete
+            else (
+                "One or more prerequisite, holdout metric, or detached replay "
+                "receipts remain incomplete. A0 is retained without treating "
+                "missing evidence as zero or success."
+            )
+        ),
+    }
+    component_decisions = [
+        {
+            "component": component,
+            "bounded_experimental_responsibility": responsibility,
+            "disposition": (
+                "review_with_complete_benchmark"
+                if decision_complete
+                else "experimental_pending_complete_evidence"
+            ),
+            "production_responsibility_added": False,
+            "production_authorized": False,
+        }
+        for component, responsibility in _REASSESSMENT_COMPONENT_ROLES
+    ]
+    policy_decisions = [
+        {
+            "policy": policy,
+            "role": role,
+            "selected": False,
+            "disposition": "requires_separate_review",
+            "production_authorized": False,
+        }
+        for policy, role in _REASSESSMENT_POLICIES
+    ]
+    results: dict[str, object] = {
+        "artifact_sha256": "",
+        "schema": REASSESSMENT_FINAL_DECISION_SCHEMA,
+        "evidence": HSSLEV1703E61(),
+        "evidence_symbol": "HSSLEV1703E61",
+        "run_id": run_id,
+        "supersedes": supersedes,
+        "source_artifacts": source_artifacts,
+        "source_graph": {
+            "validated": True,
+            "pilot_development_case_result_count": traceability[
+                "pilot_development_case_result_count"
+            ],
+            "statistics_pair_count": traceability["statistics_pair_count"],
+            "holdout_case_result_count": traceability[
+                "holdout_case_result_count"
+            ],
+            "replay_receipt_count": traceability["replay_receipt_count"],
+            "untraced_claim_count": traceability["untraced_claim_count"],
+            "independent_native_kernel_is_only_success_authority": True,
+        },
+        "decision": decision,
+        "component_decisions": component_decisions,
+        "delegation_matrix": delegation_matrix,
+        "policy_decisions": policy_decisions,
+        "tradeoffs": {
+            "evidence_scope": (
+                "run_scoped_pilot_development_holdout_and_replay"
+            ),
+            "verification_authority": "independent_native_kernel_only",
+            "required_domains": publication_reports["required_domains"],
+            "domains": publication_reports["domains"],
+            "holdout_pair_count": publication_reports["holdout_pair_count"],
+            "holdout_measured_domain_count": publication_reports[
+                "holdout_measured_domain_count"
+            ],
+            "missingness_synthesized_as_zero": publication_reports[
+                "missingness_synthesized_as_zero"
+            ],
+            "all_applicable_values_non_null": publication_reports[
+                "all_applicable_values_non_null"
+            ],
+        },
+        "rejected_alternatives": [
+            {
+                "alternative": "automatic_production_promotion",
+                "disposition": "rejected_outside_benchmark_authority",
+                "evidence_basis": (
+                    "production changes require a separate reviewed canary "
+                    "and rollback decision"
+                ),
+            }
+        ],
+        "required_follow_up": holdout["remediation"],
+        "production_change_boundary": {
+            "benchmark_changes_production": False,
+            "automatic_merge_authorized": False,
+            "separate_reviewed_change_required": True,
+            "canary_and_rollback_required": True,
+        },
+    }
+    results["artifact_sha256"] = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "benchmark_script": (
+            "python benchmarks/logic_pipeline/report.py "
+            f"--validate-final-decision --run-id {run_id} --artifact "
+            f"{layout.final_decision.as_posix()}"
+        ),
+        "captured_on": "2026-07-25",
+        "notes": [
+            "This decision is recomputed from one isolated reassessment run.",
+            (
+                "Typed missingness and pending replay remain explicit and "
+                "cannot authorize production."
+            ),
+            "Production promotion is always a separate reviewed action.",
+        ],
+        "results": results,
+    }
+
+
+def _replacement_source_binding(
+    root: Path,
+    relative_path: Path,
+    *,
+    external_run_root: Path | None = None,
+) -> tuple[dict[str, object], Mapping[str, object]]:
+    if relative_path.is_absolute():
+        if external_run_root is None:
+            raise FinalDecisionValidationError(
+                f"source {relative_path.as_posix()} is outside the repository "
+                "without an explicit fresh run root"
+            )
+        path = _external_run_file(
+            relative_path,
+            run_root=external_run_root,
+            field=f"source {relative_path.as_posix()}",
+        )
+    else:
+        path = _repository_file(
+            root,
+            relative_path.as_posix(),
+            f"source {relative_path.as_posix()}",
+        )
+    value, raw = _strict_json_file(path, relative_path.as_posix())
+    document = _decision_mapping(value, relative_path.as_posix())
+    results = document.get("results")
+    result_mapping = (
+        _decision_mapping(results, f"{relative_path}.results")
+        if results is not None
+        else None
+    )
+    schema = document.get("schema")
+    if schema is None and result_mapping is not None:
+        schema = result_mapping.get("schema")
+    if not isinstance(schema, str) or not schema:
+        raise FinalDecisionValidationError(
+            f"source {relative_path.as_posix()} has no schema"
+        )
+    semantic_sha256 = document.get("artifact_sha256")
+    if semantic_sha256 is None and result_mapping is not None:
+        semantic_sha256 = result_mapping.get("artifact_sha256")
+    if semantic_sha256 is None:
+        semantic_sha256 = hashlib.sha256(
+            canonical_json(document).encode("utf-8")
+        ).hexdigest()
+    if not isinstance(semantic_sha256, str) or not _SHA256.fullmatch(
+        semantic_sha256
+    ):
+        raise FinalDecisionValidationError(
+            f"source {relative_path.as_posix()} has no valid semantic digest"
+        )
+    return (
+        {
+            "path": relative_path.as_posix(),
+            "schema": schema,
+            "content_sha256": hashlib.sha256(raw).hexdigest(),
+            "semantic_sha256": semantic_sha256,
+        },
+        document,
+    )
+
+
+def _matrix_variant_status_counts(
+    matrix: Mapping[str, object], variant_id: str
+) -> tuple[int, dict[str, int]]:
+    count = 0
+    statuses: dict[str, int] = {}
+    for split_run_value in _decision_array(
+        matrix.get("split_runs"), "matrix.split_runs"
+    ):
+        split_run = _decision_mapping(split_run_value, "matrix split run")
+        for result_value in _decision_array(
+            split_run.get("results"), "matrix split run results"
+        ):
+            result = _decision_mapping(result_value, "matrix result")
+            if result.get("variant_id") != variant_id:
+                continue
+            status = _decision_string(result.get("status"), "matrix result status")
+            count += 1
+            statuses[status] = statuses.get(status, 0) + 1
+    return count, dict(sorted(statuses.items()))
+
+
+def build_reassessment_final_decision(
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+) -> dict[str, object]:
+    """Recompute the HSSL-G170 decision from the complete validated chain.
+
+    The current checked-in reassessment stopped at an empty pilot shortlist,
+    so a valid replacement decision is a measured rejection of the present
+    candidates followed by typed holdout missingness.  The builder cannot turn
+    zero holdout activity into efficacy or production authorization.
+    """
+
+    root = Path(repository_root).resolve()
+    if run_id != "reassessment-v2":
+        return _build_fresh_reassessment_final_decision(
+            repository_root=root,
+            run_id=run_id,
+            benchmark_root=benchmark_root,
+        )
+
+    # Validate the immutable predecessor through its original trust boundary.
+    legacy = load_final_decision(
+        LEGACY_FINAL_DECISION_PATH, repository_root=root
+    )
+    legacy_results = _decision_mapping(legacy["results"], "legacy.results")
+    if (
+        legacy_results.get("schema") != FINAL_DECISION_SCHEMA
+        or legacy_results.get("evidence_symbol") != "HSSLEV1006B8A"
+    ):
+        raise FinalDecisionValidationError(
+            "the immutable predecessor is not the HSSL-G100 v1 decision"
+        )
+    supersedes, _ = _replacement_source_binding(
+        root, LEGACY_FINAL_DECISION_PATH
+    )
+    supersedes = {
+        **supersedes,
+        "relationship": "immutable_predecessor",
+        "preserved": True,
+    }
+
+    # This single loader revalidates the matrix, pilot, holdout, replay,
+    # paired statistics, and dated G160 publication from case-level sources.
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        load_reassessment_statistics,
+    )
+
+    load_reassessment_statistics(repository_root=root)
+    source_artifacts: dict[str, object] = {}
+    source_documents: dict[str, Mapping[str, object]] = {}
+    for name, path in _REASSESSMENT_FINAL_DECISION_SOURCES.items():
+        binding, document = _replacement_source_binding(root, path)
+        source_artifacts[name] = binding
+        source_documents[name] = document
+
+    matrix = source_documents["matrix"]
+    pilot = source_documents["pilot"]
+    holdout = source_documents["holdout"]
+    replay = source_documents["replay"]
+    reports_snapshot = source_documents["reports"]
+    publication = _decision_mapping(
+        reports_snapshot.get("results"), "reports.results"
+    )
+    publication_decision = _decision_mapping(
+        publication.get("decision"), "reports.results.decision"
+    )
+    publication_reports = _decision_mapping(
+        publication.get("reports"), "reports.results.reports"
+    )
+    traceability = _decision_mapping(
+        publication.get("traceability"), "reports.results.traceability"
+    )
+    pilot_decision = _decision_mapping(pilot.get("decision"), "pilot.decision")
+    pilot_shortlist = _decision_mapping(
+        pilot.get("shortlist"), "pilot.shortlist"
+    )
+    holdout_decision = _decision_mapping(
+        holdout.get("decision"), "holdout.decision"
+    )
+    holdout_outcomes = _decision_mapping(
+        holdout.get("outcomes"), "holdout.outcomes"
+    )
+    replay_execution = _decision_mapping(
+        replay.get("execution"), "replay.execution"
+    )
+    if (
+        pilot_decision.get("matrix_complete") is not True
+        or pilot_decision.get("efficacy_status") != "measured_zero"
+        or pilot_shortlist.get("selected_variant_ids") != []
+        or pilot_shortlist.get("frozen") is not True
+        or pilot_decision.get("holdout_authorized") is not False
+        or holdout_decision.get("status") != "blocked"
+        or holdout_decision.get("seal_status") != "sealed_unopened"
+        or holdout_decision.get("holdout_untouched") is not True
+        or holdout_outcomes.get("observed_pair_count") != 0
+        or replay_execution.get("replay_claimed") is not False
+        or publication_decision.get("efficacy_claimed") is not False
+        or publication_decision.get("production_routing_changed") is not False
+        or publication_decision.get("production_promotion_authorized") is not False
+    ):
+        raise FinalDecisionValidationError(
+            "reassessment sources do not support the fail-closed replacement "
+            "decision"
+        )
+
+    legacy_rows = {
+        str(_decision_mapping(row, "legacy delegation row")["variant_id"]):
+        _decision_mapping(row, "legacy delegation row")
+        for row in _decision_array(
+            legacy_results.get("delegation_matrix"),
+            "legacy.results.delegation_matrix",
+        )
+    }
+    candidate_evidence = {
+        str(_decision_mapping(row, "pilot candidate evidence")["variant_id"]):
+        _decision_mapping(row, "pilot candidate evidence")
+        for row in _decision_array(
+            pilot.get("candidate_evidence"), "pilot.candidate_evidence"
+        )
+    }
+    baseline = _decision_mapping(
+        _decision_mapping(pilot.get("reports"), "pilot.reports")
+        .get("statistics"),
+        "pilot.reports.statistics",
+    ).get("baseline")
+    baseline = _decision_mapping(baseline, "pilot baseline")
+
+    delegation_matrix: list[dict[str, object]] = []
+    for variant_id in _FINAL_DECISION_VARIANTS:
+        measured_count, status_counts = _matrix_variant_status_counts(
+            matrix, variant_id
+        )
+        if variant_id == "A0":
+            measured = {
+                "coordinate_count": measured_count,
+                "status_counts": status_counts,
+                "kernel_verified_count": baseline["kernel_verified_count"],
+                "kernel_verified_rate": baseline["kernel_verified_rate"],
+                "semantic_quality_observation_count": 0,
+                "model_calls": baseline["model_calls"],
+                "solver_processes": 0,
+                "failure_counts": {},
+                "ineligibility_reasons": [
+                    "A0 is the frozen reference and is excluded from candidate selection"
+                ],
+            }
+            disposition = "retained_current_reference_not_selected"
+            evidence_basis = (
+                "A0 supplied all paired pilot/development references; retaining "
+                "it is continuity, not a measured winner or new promotion."
+            )
+        elif variant_id == "S1":
+            measured = {
+                "coordinate_count": measured_count,
+                "status_counts": status_counts,
+                "kernel_verified_count": 0,
+                "kernel_verified_rate": None,
+                "semantic_quality_observation_count": 0,
+                "model_calls": 0,
+                "solver_processes": 0,
+                "failure_counts": {},
+                "ineligibility_reasons": [
+                    "S1 is a preregistered diagnostic and can never be selected"
+                ],
+            }
+            disposition = "rejected_diagnostic_only_never_candidate"
+            evidence_basis = (
+                "S1 retains measured diagnostic coordinates but is excluded "
+                "from efficacy, policy selection, and production by design."
+            )
+        else:
+            candidate = candidate_evidence[variant_id]
+            efficacy = _decision_mapping(
+                candidate.get("efficacy"), f"{variant_id}.efficacy"
+            )
+            cost = _decision_mapping(candidate.get("cost"), f"{variant_id}.cost")
+            measured = {
+                "coordinate_count": measured_count,
+                "status_counts": status_counts,
+                "kernel_verified_count": efficacy["kernel_verified_count"],
+                "kernel_verified_rate": efficacy["kernel_verified_rate"],
+                "semantic_quality_observation_count": efficacy[
+                    "semantic_quality_observation_count"
+                ],
+                "model_calls": cost["model_calls"],
+                "solver_processes": cost["solver_processes"],
+                "failure_counts": candidate["failure_counts"],
+                "ineligibility_reasons": candidate["ineligibility_reasons"],
+            }
+            disposition = "rejected_current_reassessment_ineligible"
+            evidence_basis = (
+                f"{variant_id} has {measured_count} measured pilot/development "
+                "coordinates, zero kernel-verified successes, no independent "
+                "semantic-quality observation, and did not enter the frozen "
+                "holdout shortlist."
+            )
+        delegation_matrix.append(
+            {
+                "variant_id": variant_id,
+                "role": legacy_rows[variant_id]["role"],
+                "evidence_scope": "measured_pilot_development_only",
+                "measured_evidence": measured,
+                "holdout_observed_pair_count": 0,
+                "disposition": disposition,
+                "production_authorized": False,
+                "evidence_basis": evidence_basis,
+            }
+        )
+
+    policy_decisions = [
+        {
+            "policy": policy,
+            "role": role,
+            "selected": False,
+            "disposition": "rejected_no_eligible_variant_or_holdout_evidence",
+            "production_authorized": False,
+            "evidence_basis": (
+                "The complete measured pilot/development gate froze an empty "
+                "shortlist, and the paired holdout remained sealed unopened."
+            ),
+        }
+        for policy, role in _REASSESSMENT_POLICIES
+    ]
+    component_decisions = [
+        {
+            "component": component,
+            "bounded_experimental_responsibility": responsibility,
+            "disposition": "experimental_only_rejected_for_current_production",
+            "production_responsibility_added": False,
+            "production_authorized": False,
+            "evidence_basis": (
+                "No current candidate using this component passed every "
+                "measured eligibility gate; no paired holdout efficacy or "
+                "replay evidence exists."
+            ),
+        }
+        for component, responsibility in _REASSESSMENT_COMPONENT_ROLES
+    ]
+
+    decision_domains = _decision_array(
+        publication_reports.get("domains"), "reports.results.reports.domains"
+    )
+    required_domains = _decision_array(
+        publication_reports.get("required_domains"),
+        "reports.results.reports.required_domains",
+    )
+    results: dict[str, object] = {
+        "artifact_sha256": "",
+        "schema": REASSESSMENT_FINAL_DECISION_SCHEMA,
+        "evidence": HSSLEV1703E61(),
+        "evidence_symbol": "HSSLEV1703E61",
+        "supersedes": supersedes,
+        "source_artifacts": source_artifacts,
+        "source_graph": {
+            "validated": True,
+            "pilot_development_case_result_count": traceability[
+                "pilot_development_case_result_count"
+            ],
+            "statistics_pair_count": traceability["statistics_pair_count"],
+            "holdout_case_result_count": traceability[
+                "holdout_case_result_count"
+            ],
+            "replay_receipt_count": traceability["replay_receipt_count"],
+            "untraced_claim_count": traceability["untraced_claim_count"],
+            "independent_native_kernel_is_only_success_authority": True,
+        },
+        "decision": {
+            "architecture_outcome": "gather_more_evidence",
+            "current_architecture_action": (
+                "retain_a0_unchanged_after_measured_reassessment"
+            ),
+            "evidence_status": (
+                "measured_pilot_development_no_eligible_candidate"
+            ),
+            "holdout_status": "sealed_unopened",
+            "replay_status": "not_applicable_before_authorized_holdout",
+            "paired_holdout_evidence_available": False,
+            "replay_claimed": False,
+            "selected_variant_id": None,
+            "selected_policy": None,
+            "production_routing_changed": False,
+            "production_promotion_authorized": False,
+            "rationale": (
+                "The unchanged pilot/development matrix is complete and "
+                "measured, but every experimental arm failed the frozen "
+                "eligibility boundary. The exact pilot receipt therefore "
+                "authorized no holdout access; the holdout remained sealed, "
+                "and the source-valid replay population is empty. Retaining "
+                "A0 preserves continuity without treating it as a measured "
+                "winner or inventing holdout efficacy."
+            ),
+        },
+        "component_decisions": component_decisions,
+        "delegation_matrix": delegation_matrix,
+        "policy_decisions": policy_decisions,
+        "tradeoffs": {
+            "evidence_scope": (
+                "measured_pilot_development_with_typed_null_holdout"
+            ),
+            "verification_authority": "independent_native_kernel_only",
+            "required_domains": required_domains,
+            "domains": decision_domains,
+            "holdout_pair_count": publication_reports["holdout_pair_count"],
+            "holdout_measured_domain_count": publication_reports[
+                "holdout_measured_domain_count"
+            ],
+            "missingness_synthesized_as_zero": publication_reports[
+                "missingness_synthesized_as_zero"
+            ],
+            "all_applicable_values_non_null": publication_reports[
+                "all_applicable_values_non_null"
+            ],
+        },
+        "rejected_alternatives": [
+            {
+                "alternative": "promote_any_a1_through_a12_candidate",
+                "disposition": "rejected_current_reassessment",
+                "evidence_basis": (
+                    "All twelve candidates have measured zero kernel-verified "
+                    "pilot/development success and lack independent semantic "
+                    "quality evidence."
+                ),
+            },
+            {
+                "alternative": "select_any_p0_through_p3_policy",
+                "disposition": "rejected_current_reassessment",
+                "evidence_basis": (
+                    "No policy has an eligible candidate or paired holdout "
+                    "comparison."
+                ),
+            },
+            {
+                "alternative": "interpret_empty_holdout_or_replay_as_success",
+                "disposition": "rejected_as_invalid_inference",
+                "evidence_basis": (
+                    "Zero holdout pairs and replay receipts result from the "
+                    "closed authorization gate and are typed missingness."
+                ),
+            },
+            {
+                "alternative": "change_production_routing_automatically",
+                "disposition": "rejected_outside_benchmark_authority",
+                "evidence_basis": (
+                    "A future passed decision would still require a separate "
+                    "reviewed production change, canary, and rollback plan."
+                ),
+            },
+        ],
+        "required_follow_up": publication["remediation"],
+        "production_change_boundary": {
+            "benchmark_changes_production": False,
+            "automatic_merge_authorized": False,
+            "separate_reviewed_change_required": True,
+            "canary_and_rollback_required": True,
+        },
+    }
+    results["artifact_sha256"] = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "benchmark_script": (
+            "python benchmarks/logic_pipeline/report.py "
+            "--validate-final-decision --artifact "
+            "docs/performance_snapshots/"
+            "2026-07-24_hammer_symai_spacy_leanstral_final_decision_v2.json"
+        ),
+        "captured_on": "2026-07-24",
+        "notes": [
+            (
+                "This v2 replacement preserves the immutable v1 decision and "
+                "is recomputed from the complete reassessment source graph."
+            ),
+            (
+                "Pilot and development evidence is measured; paired holdout "
+                "and replay evidence is unavailable because the exact frozen "
+                "shortlist is empty."
+            ),
+            (
+                "Candidate and policy rejection is scoped to the current "
+                "reassessment and does not establish that components can "
+                "never be useful."
+            ),
+            (
+                "No benchmark artifact changes production routing, authorizes "
+                "promotion, or merges a worktree."
+            ),
+        ],
+        "results": results,
+    }
+
+
+def _validate_reassessment_final_decision(
+    value: object,
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+) -> dict[str, object]:
+    envelope = _decision_mapping(value, "replacement decision snapshot")
+    _decision_exact(
+        envelope,
+        {"benchmark_script", "captured_on", "notes", "results"},
+        "replacement decision snapshot",
+    )
+    results = _decision_mapping(envelope.get("results"), "results")
+    if results.get("schema") != REASSESSMENT_FINAL_DECISION_SCHEMA:
+        raise FinalDecisionValidationError(
+            "replacement final decision schema changed"
+        )
+    if (
+        results.get("evidence") != HSSLEV1703E61()
+        or results.get("evidence_symbol") != "HSSLEV1703E61"
+    ):
+        raise FinalDecisionValidationError(
+            "replacement final decision evidence marker changed"
+        )
+    artifact_sha256 = results.get("artifact_sha256")
+    expected_digest = hashlib.sha256(
+        canonical_json(
+            {
+                key: item
+                for key, item in results.items()
+                if key != "artifact_sha256"
+            }
+        ).encode("utf-8")
+    ).hexdigest()
+    if artifact_sha256 != expected_digest:
+        raise FinalDecisionValidationError(
+            "replacement final decision artifact digest changed"
+        )
+    source_run_id = results.get("run_id")
+    if source_run_id is not None:
+        if source_run_id != run_id or run_id == "reassessment-v2":
+            raise FinalDecisionValidationError(
+                "fresh final decision run identity changed"
+            )
+        decision = _decision_mapping(results.get("decision"), "decision")
+        boundary = _decision_mapping(
+            results.get("production_change_boundary"),
+            "production_change_boundary",
+        )
+        if (
+            decision.get("production_routing_changed") is not False
+            or decision.get("production_promotion_authorized") is not False
+            or boundary.get("benchmark_changes_production") is not False
+            or boundary.get("automatic_merge_authorized") is not False
+            or boundary.get("separate_reviewed_change_required") is not True
+            or boundary.get("canary_and_rollback_required") is not True
+        ):
+            raise FinalDecisionValidationError(
+                "fresh benchmark decision cannot authorize production"
+            )
+        try:
+            expected = build_reassessment_final_decision(
+                repository_root=repository_root,
+                run_id=run_id,
+                benchmark_root=benchmark_root,
+            )
+        except (OSError, ValueError) as exc:
+            raise FinalDecisionValidationError(
+                f"fresh decision source graph failed validation: {exc}"
+            ) from exc
+        if dict(envelope) != expected:
+            raise FinalDecisionValidationError(
+                "fresh final decision differs from its validated source graph"
+            )
+        return dict(envelope)
+    decision = _decision_mapping(results.get("decision"), "decision")
+    if (
+        decision.get("production_routing_changed") is not False
+        or decision.get("production_promotion_authorized") is not False
+        or decision.get("paired_holdout_evidence_available") is not False
+        or decision.get("replay_claimed") is not False
+    ):
+        raise FinalDecisionValidationError(
+            "replacement decision must not invent holdout/replay evidence or "
+            "authorize a production change"
+        )
+    boundary = _decision_mapping(
+        results.get("production_change_boundary"),
+        "production_change_boundary",
+    )
+    if (
+        boundary.get("benchmark_changes_production") is not False
+        or boundary.get("automatic_merge_authorized") is not False
+        or boundary.get("separate_reviewed_change_required") is not True
+        or boundary.get("canary_and_rollback_required") is not True
+    ):
+        raise FinalDecisionValidationError(
+            "replacement production-change boundary changed"
+        )
+    supersedes = _decision_mapping(results.get("supersedes"), "supersedes")
+    if (
+        supersedes.get("path") != LEGACY_FINAL_DECISION_PATH.as_posix()
+        or supersedes.get("schema") != FINAL_DECISION_SCHEMA
+        or supersedes.get("relationship") != "immutable_predecessor"
+        or supersedes.get("preserved") is not True
+    ):
+        raise FinalDecisionValidationError(
+            "replacement decision must preserve and link the immutable v1 "
+            "predecessor"
+        )
+    sources = _decision_mapping(
+        results.get("source_artifacts"), "source_artifacts"
+    )
+    if set(sources) != set(_REASSESSMENT_FINAL_DECISION_SOURCES):
+        raise FinalDecisionValidationError(
+            "replacement source graph scope changed"
+        )
+    components = _decision_array(
+        results.get("component_decisions"), "component_decisions"
+    )
+    if [
+        _decision_mapping(item, "component decision").get("component")
+        for item in components
+    ] != [item[0] for item in _REASSESSMENT_COMPONENT_ROLES] or any(
+        _decision_mapping(item, "component decision").get(
+            "production_authorized"
+        )
+        is not False
+        or _decision_mapping(item, "component decision").get(
+            "production_responsibility_added"
+        )
+        is not False
+        for item in components
+    ):
+        raise FinalDecisionValidationError(
+            "replacement component responsibilities or authorization changed"
+        )
+    delegation = _decision_array(
+        results.get("delegation_matrix"), "delegation_matrix"
+    )
+    if [
+        _decision_mapping(item, "delegation row").get("variant_id")
+        for item in delegation
+    ] != list(_FINAL_DECISION_VARIANTS):
+        raise FinalDecisionValidationError(
+            "replacement delegation matrix must cover A0-A12 and S1 in order"
+        )
+    if any(
+        _decision_mapping(item, "delegation row").get("production_authorized")
+        is not False
+        or _decision_mapping(item, "delegation row").get(
+            "holdout_observed_pair_count"
+        )
+        != 0
+        for item in delegation
+    ):
+        raise FinalDecisionValidationError(
+            "replacement delegation rows must retain typed holdout missingness "
+            "and no production authorization"
+        )
+    policies = _decision_array(
+        results.get("policy_decisions"), "policy_decisions"
+    )
+    if [
+        _decision_mapping(item, "policy decision").get("policy")
+        for item in policies
+    ] != [item[0] for item in _REASSESSMENT_POLICIES] or any(
+        _decision_mapping(item, "policy decision").get("selected") is not False
+        or _decision_mapping(item, "policy decision").get(
+            "production_authorized"
+        )
+        is not False
+        for item in policies
+    ):
+        raise FinalDecisionValidationError(
+            "replacement policy decisions must reject P0-P3 without "
+            "production authorization"
+        )
+    from benchmarks.logic_pipeline.reassessment_reports import (
+        REQUIRED_DECISION_DOMAINS,
+    )
+
+    tradeoffs = _decision_mapping(results.get("tradeoffs"), "tradeoffs")
+    domains = _decision_array(tradeoffs.get("domains"), "tradeoffs.domains")
+    if tradeoffs.get("required_domains") != list(REQUIRED_DECISION_DOMAINS) or [
+        _decision_mapping(item, "tradeoff domain").get("domain")
+        for item in domains
+    ] != list(REQUIRED_DECISION_DOMAINS):
+        raise FinalDecisionValidationError(
+            "replacement tradeoffs must cover every reassessment domain"
+        )
+    if (
+        tradeoffs.get("holdout_pair_count") != 0
+        or tradeoffs.get("holdout_measured_domain_count") != 0
+        or tradeoffs.get("missingness_synthesized_as_zero") is not False
+        or any(
+            _decision_mapping(item, "tradeoff domain").get("holdout_values")
+            is not None
+            or _decision_mapping(item, "tradeoff domain").get("holdout_status")
+            != "not_applicable_before_authorization"
+            for item in domains
+        )
+    ):
+        raise FinalDecisionValidationError(
+            "replacement holdout tradeoffs must remain typed null, not zero "
+            "efficacy or cost"
+        )
+    try:
+        expected = build_reassessment_final_decision(
+            repository_root=repository_root
+        )
+    except (OSError, ValueError) as exc:
+        raise FinalDecisionValidationError(
+            f"replacement decision source graph failed validation: {exc}"
+        ) from exc
+    if dict(envelope) != expected:
+        raise FinalDecisionValidationError(
+            "replacement final decision differs from the validated source graph"
+        )
+    return dict(envelope)
+
+
+def validate_final_decision(
+    value: object,
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+) -> dict[str, object]:
+    """Validate either immutable v1 evidence or the source-bound v2 decision."""
+
+    envelope = _decision_mapping(value, "snapshot")
+    results = _decision_mapping(envelope.get("results"), "results")
+    schema = results.get("schema")
+    if schema == FINAL_DECISION_SCHEMA:
+        return _validate_final_decision_v1(
+            value, repository_root=repository_root
+        )
+    if schema == REASSESSMENT_FINAL_DECISION_SCHEMA:
+        return _validate_reassessment_final_decision(
+            value,
+            repository_root=repository_root,
+            run_id=run_id,
+            benchmark_root=benchmark_root,
+        )
+    raise FinalDecisionValidationError(
+        f"unsupported final decision schema: {schema!r}"
+    )
+
+
+def write_reassessment_final_decision(
+    path: str | Path | None = None,
+    *,
+    run_id: str,
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+    repository_root: str | Path = ".",
+    overwrite: bool = False,
+) -> Path:
+    """Write a fresh run decision without touching published evidence."""
+
+    from benchmarks.logic_pipeline.reassessment_namespace import (
+        ReassessmentNamespaceError,
+        ReassessmentRunLayout,
+        reject_published_write_targets,
+    )
+
+    root = Path(repository_root).resolve()
+    try:
+        layout = ReassessmentRunLayout.for_run(
+            run_id,
+            benchmark_root=benchmark_root,
+        )
+        relative = Path(layout.final_decision if path is None else path)
+        reject_published_write_targets(
+            repository_root=root,
+            run_id=run_id,
+            targets=(relative,),
+            benchmark_root=benchmark_root,
+        )
+    except (ValueError, ReassessmentNamespaceError) as exc:
+        raise FinalDecisionValidationError(str(exc)) from exc
+    if relative != layout.final_decision:
+        raise FinalDecisionValidationError(
+            "fresh final decision must use its run-scoped layout path"
+        )
+    if ".." in relative.parts:
+        raise FinalDecisionValidationError(
+            "replacement decision output contains parent traversal"
+        )
+    destination = root / relative
+    run_root = (
+        layout.run_paths.run_root
+        if layout.run_paths.run_root.is_absolute()
+        else root / layout.run_paths.run_root
+    )
+    resolved_run_root = run_root.resolve(strict=False)
+    resolved_destination = destination.resolve(strict=False)
+    if (
+        not resolved_destination.is_relative_to(resolved_run_root)
+        or resolved_destination
+        != (root / layout.final_decision).resolve(strict=False)
+    ):
+        raise FinalDecisionValidationError(
+            "replacement decision output escapes its exact fresh run layout"
+        )
+    cursor = destination.parent
+    while cursor != cursor.parent and cursor.exists():
+        if cursor.is_symlink():
+            raise FinalDecisionValidationError(
+                "replacement decision output must not traverse a symlink"
+            )
+        if cursor.resolve() == resolved_run_root:
+            break
+        cursor = cursor.parent
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.parent.resolve() != resolved_destination.parent:
+        raise FinalDecisionValidationError(
+            "replacement decision output parent changed through a symlink"
+        )
+    payload = (
+        canonical_json(
+            build_reassessment_final_decision(repository_root=root)
+            if run_id == "reassessment-v2"
+            else build_reassessment_final_decision(
+                repository_root=root,
+                run_id=run_id,
+                benchmark_root=benchmark_root,
+            )
+        )
+        + "\n"
+    ).encode("utf-8")
+    if destination.exists() and not overwrite:
+        raise FinalDecisionValidationError(
+            f"refusing to overwrite immutable evidence: {destination}"
+        )
+    if destination.is_symlink():
+        raise FinalDecisionValidationError(
+            "refusing to overwrite a symlinked decision"
+        )
+    if not overwrite:
+        try:
+            with destination.open("xb") as handle:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except FileExistsError as exc:
+            raise FinalDecisionValidationError(
+                f"refusing to overwrite immutable evidence: {destination}"
+            ) from exc
+    else:
+        temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+        try:
+            with temporary.open("xb") as handle:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, destination)
+        finally:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+    return destination
+
+
+def load_final_decision(
+    path: str | Path | None = None,
+    *,
+    repository_root: str | Path = ".",
+    run_id: str = "reassessment-v2",
+    benchmark_root: str | Path = DEFAULT_BENCHMARK_ROOT,
+) -> dict[str, object]:
+    """Load and validate the published final architecture decision snapshot."""
+
+    if path is None:
+        if run_id == "reassessment-v2":
+            selected_path = DEFAULT_FINAL_DECISION_PATH
+        else:
+            from benchmarks.logic_pipeline.reassessment_namespace import (
+                ReassessmentRunLayout,
+            )
+
+            selected_path = ReassessmentRunLayout.for_run(
+                run_id,
+                benchmark_root=benchmark_root,
+            ).final_decision
+    else:
+        selected_path = Path(path)
+    decision_path = Path(selected_path)
+    if not decision_path.is_absolute():
+        decision_path = Path(repository_root) / decision_path
+    try:
+        if decision_path.is_symlink() or not decision_path.is_file():
+            raise FinalDecisionValidationError(
+                "final decision path must be a regular non-symlink file"
+            )
+        if not 0 < decision_path.stat().st_size <= 2 * 1024 * 1024:
+            raise FinalDecisionValidationError(
+                "final decision file size is outside the safe bound"
+            )
+    except OSError as exc:
+        raise FinalDecisionValidationError(
+            f"cannot inspect final decision snapshot: {decision_path}"
+        ) from exc
+    value, raw = _strict_json_file(decision_path, "final decision snapshot")
+    unvalidated = _decision_mapping(value, "snapshot")
+    unvalidated_results = _decision_mapping(
+        unvalidated.get("results"), "results"
+    )
+    if unvalidated_results.get("schema") == REASSESSMENT_FINAL_DECISION_SCHEMA:
+        try:
+            canonical = (canonical_json(value) + "\n").encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            raise FinalDecisionValidationError(
+                "replacement final decision is not strict finite JSON"
+            ) from exc
+        if raw != canonical:
+            raise FinalDecisionValidationError(
+                "replacement final decision is not canonical newline JSON"
+            )
+    return validate_final_decision(
+        value,
+        repository_root=repository_root,
+        run_id=run_id,
+        benchmark_root=benchmark_root,
+    )
+
+
+def final_decision_summary(value: Mapping[str, object]) -> dict[str, object]:
+    """Return the stable CLI summary for a validated final decision."""
+
+    results = _decision_mapping(value["results"], "results")
+    decision = _decision_mapping(results["decision"], "decision")
+    return {
+        "section": "final-decision",
+        "status": "valid",
+        "artifact_sha256": results["artifact_sha256"],
+        "architecture_outcome": decision["architecture_outcome"],
+        "evidence_status": decision["evidence_status"],
+        "holdout_status": decision["holdout_status"],
+        "production_promotion_authorized": False,
+        "component_decision_count": len(
+            _decision_array(
+                results["component_decisions"], "component_decisions"
+            )
+        ),
+        "delegation_row_count": len(
+            _decision_array(results["delegation_matrix"], "delegation_matrix")
+        ),
+        "policy_decision_count": len(
+            _decision_array(results["policy_decisions"], "policy_decisions")
+        ),
+    }
+
+
+def _runbook_metadata(text: str) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    for line in text.splitlines():
+        if line.startswith("## "):
+            break
+        match = re.fullmatch(r"([A-Za-z][A-Za-z -]+):\s+(.+?)\s*", line)
+        if match is not None:
+            field = match.group(1)
+            if field in metadata:
+                raise RunbookValidationError(
+                    f"runbook metadata field is duplicated: {field!r}"
+                )
+            metadata[field] = match.group(2).strip().strip("`")
+    return metadata
+
+
+def validate_runbook(
+    text: str, *, repository_root: str | Path = "."
+) -> dict[str, object]:
+    """Validate runbook traceability, coverage, ordering, and safety posture."""
+
+    if not isinstance(text, str) or not text.endswith("\n") or "\x00" in text:
+        raise RunbookValidationError(
+            "runbook must be newline-terminated UTF-8 text without NUL bytes"
+        )
+    metadata = _runbook_metadata(text)
+    expected_metadata = {
+        "Evidence": "HSSLEV1703E61",
+        "Evidence marker": HSSLEV1703E61(),
+        "Decision artifact": DEFAULT_FINAL_DECISION_PATH.as_posix(),
+        "Protocol revision": "1",
+    }
+    for field, expected in expected_metadata.items():
+        if metadata.get(field) != expected:
+            raise RunbookValidationError(
+                f"runbook metadata {field!r} must be {expected!r}"
+            )
+    headings = re.findall(r"^## (.+?)\s*$", text, flags=re.MULTILINE)
+    if tuple(headings) != _RUNBOOK_HEADINGS:
+        raise RunbookValidationError(
+            "runbook headings changed, are duplicated, or are out of order"
+        )
+
+    required_tokens = (
+        "detached worktree",
+        "benchmarks.logic_pipeline.capabilities",
+        "objective_daemon",
+        "benchmarks/logic_pipeline/runner.py",
+        "--gate pilot-shortlist",
+        "--gate holdout",
+        "--validate-final-decision",
+        "--validate-runbook",
+        "reassessment-v2",
+        "replay-index.json",
+        "statistics.json",
+        LEGACY_FINAL_DECISION_PATH.as_posix(),
+        "independent native kernel",
+        "cold",
+        "warm",
+        "fresh worktree",
+        "production promotion",
+        "active checkout",
+        "data/agent_supervisor/discovery",
+        "docs/implementation/plans/"
+        "hammer_symai_spacy_leanstral_benchmark_objectives.md",
+    )
+    lowered = text.lower()
+    missing_tokens = [token for token in required_tokens if token.lower() not in lowered]
+    if missing_tokens:
+        raise RunbookValidationError(
+            f"runbook is missing required operating evidence: {missing_tokens}"
+        )
+    for component in ("spaCy", "SyMAI", "Hammer", "Leanstral"):
+        if component not in text:
+            raise RunbookValidationError(
+                f"runbook delegation matrix does not mention {component}"
+            )
+    if re.search(
+        r"(?:production promotion|production routing change|automatic merge) "
+        r"(?:is |is automatically )?authorized",
+        lowered,
+    ):
+        raise RunbookValidationError(
+            "runbook must not authorize production promotion, routing, or merge"
+        )
+
+    try:
+        decision = load_final_decision(
+            metadata["Decision artifact"], repository_root=repository_root
+        )
+    except FinalDecisionValidationError as exc:
+        raise RunbookValidationError(
+            f"runbook decision binding is invalid: {exc}"
+        ) from exc
+    results = _decision_mapping(decision["results"], "results")
+    return {
+        "section": "runbook",
+        "status": "valid",
+        "path": DEFAULT_BENCHMARK_RUNBOOK_PATH.as_posix(),
+        "evidence_symbol": "HSSLEV1703E61",
+        "decision_artifact_sha256": results["artifact_sha256"],
+        "heading_count": len(headings),
+        "production_promotion_authorized": False,
+    }
+
+
+def load_runbook(
+    path: str | Path = DEFAULT_BENCHMARK_RUNBOOK_PATH,
+    *,
+    repository_root: str | Path = ".",
+) -> dict[str, object]:
+    """Load and validate the worktree-safe benchmark operator runbook."""
+
+    runbook_path = Path(path)
+    if not runbook_path.is_absolute():
+        runbook_path = Path(repository_root) / runbook_path
+    try:
+        if runbook_path.is_symlink() or not runbook_path.is_file():
+            raise RunbookValidationError(
+                "runbook path must be a regular non-symlink file"
+            )
+        if not 0 < runbook_path.stat().st_size <= 512 * 1024:
+            raise RunbookValidationError(
+                "runbook file size is outside the safe bound"
+            )
+        text = runbook_path.read_text(encoding="utf-8")
+    except RunbookValidationError:
+        raise
+    except (OSError, UnicodeError) as exc:
+        raise RunbookValidationError(
+            f"cannot read benchmark runbook: {runbook_path}"
+        ) from exc
+    return validate_runbook(text, repository_root=repository_root)
+
+
+def _summary(report: Mapping[str, object]) -> dict[str, object]:
+    analysis = _mapping(report["analysis"], "analysis")
+    coverage = _mapping(analysis["coverage"], "coverage")
+    metrics = _array(analysis["primary_metrics"], "primary_metrics")
+    return {
+        "section": "proof",
+        "status": "valid",
+        "execution_mode": report["execution_mode"],
+        "artifact_sha256": report["artifact_sha256"],
+        "observation_count": coverage["observed_observation_count"],
+        "kernel_verified_count": sum(
+            int(_mapping(item, "metric")["kernel_verified_count"])
+            for item in metrics
+        ),
+        "missingness_retained": any(
+            _mapping(item, "metric")["kernel_verified_rate"] is None
+            for item in metrics
+        ),
+        "s1_included_in_primary_metrics": False,
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate logic-pipeline benchmark reports"
+    )
+    parser.add_argument(
+        "--section",
+        choices=("frontend", "proof", "statistics", "efficiency"),
+        default=None,
+    )
+    parser.add_argument(
+        "--gate",
+        choices=("pilot-shortlist", "holdout"),
+        default=None,
+    )
+    parser.add_argument("--validate", action="store_true")
+    parser.add_argument(
+        "--validate-final-decision",
+        action="store_true",
+        help="validate the content-addressed final architecture decision",
+    )
+    parser.add_argument(
+        "--validate-runbook",
+        action="store_true",
+        help="validate the final decision's worktree-safe operator runbook",
+    )
+    parser.add_argument(
+        "--results-path",
+        type=Path,
+        default=None,
+        help="override the selected report, decision, or runbook path",
+    )
+    parser.add_argument(
+        "--artifact",
+        type=Path,
+        default=None,
+        help=(
+            "artifact path alias used by phase-gate validation commands; "
+            "mutually exclusive with --results-path"
+        ),
+    )
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help=(
+            "run-scoped reassessment identity; required to validate fresh "
+            "downstream artifacts"
+        ),
+    )
+    parser.add_argument(
+        "--benchmark-root",
+        type=Path,
+        default=DEFAULT_BENCHMARK_ROOT,
+        help="benchmark workspace root used with --run-id",
+    )
+    args = parser.parse_args(argv)
+    if args.artifact is not None and args.results_path is not None:
+        parser.error("--artifact and --results-path are mutually exclusive")
+    selected_path = args.artifact or args.results_path
+    final_modes = int(args.validate_final_decision) + int(args.validate_runbook)
+    if final_modes:
+        if final_modes != 1:
+            parser.error(
+                "--validate-final-decision and --validate-runbook are "
+                "mutually exclusive"
+            )
+        if args.section is not None or args.gate is not None or args.validate:
+            parser.error(
+                "final decision validators cannot be combined with "
+                "--section, --gate, or --validate"
+            )
+        if args.validate_final_decision:
+            try:
+                value = load_final_decision(
+                    selected_path,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
+                )
+            except FinalDecisionValidationError as exc:
+                parser.error(str(exc))
+            summary = final_decision_summary(value)
+        else:
+            try:
+                summary = load_runbook(
+                    selected_path or DEFAULT_BENCHMARK_RUNBOOK_PATH
+                )
+            except RunbookValidationError as exc:
+                parser.error(str(exc))
+        sys.stdout.write(canonical_json(summary) + "\n")
+        return 0
+    if args.gate is not None:
+        if args.section is not None:
+            parser.error("--gate and --section are mutually exclusive")
+        if args.gate == "holdout":
+            if selected_path is not None:
+                try:
+                    artifact_header = json.loads(
+                        selected_path.read_text(encoding="utf-8")
+                    )
+                except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                    parser.error(f"cannot inspect holdout artifact: {exc}")
+            else:
+                artifact_header = None
+            if (
+                args.run_id is not None
+                or (
+                    isinstance(artifact_header, Mapping)
+                    and artifact_header.get("schema")
+                    == (
+                        "ipfs-datasets.logic-pipeline-benchmark."
+                        "reassessment-holdout.v1"
+                    )
+                )
+            ):
+                from benchmarks.logic_pipeline.holdout_reassessment import (
+                    HoldoutReassessmentError,
+                    holdout_reassessment_summary,
+                    load_holdout_reassessment_report,
+                )
+
+                try:
+                    report = load_holdout_reassessment_report(
+                        selected_path,
+                        run_id=args.run_id or "reassessment-v2",
+                        benchmark_root=args.benchmark_root,
+                    )
+                except HoldoutReassessmentError as exc:
+                    parser.error(str(exc))
+                summary = holdout_reassessment_summary(report)
+            else:
+                from benchmarks.logic_pipeline.holdout_gate import (
+                    DEFAULT_HOLDOUT_GATE_PATH,
+                    HoldoutGateError,
+                    holdout_gate_summary,
+                    load_holdout_gate_report,
+                )
+
+                try:
+                    report = load_holdout_gate_report(
+                        selected_path or DEFAULT_HOLDOUT_GATE_PATH
+                    )
+                except HoldoutGateError as exc:
+                    parser.error(str(exc))
+                summary = holdout_gate_summary(report)
+            sys.stdout.write(canonical_json(summary) + "\n")
+            return 0
+        if selected_path is not None:
+            try:
+                artifact_header = json.loads(
+                    selected_path.read_text(encoding="utf-8")
+                )
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                parser.error(f"cannot inspect pilot gate artifact: {exc}")
+            if (
+                isinstance(artifact_header, Mapping)
+                and artifact_header.get("schema")
+                == (
+                    "ipfs-datasets.logic-pipeline-benchmark."
+                    "reassessment-pilot-shortlist.v1"
+                )
+            ):
+                from benchmarks.logic_pipeline.pilot_reassessment import (
+                    PilotReassessmentError,
+                    load_pilot_reassessment_report,
+                    pilot_reassessment_summary,
+                )
+
+                try:
+                    report = load_pilot_reassessment_report(
+                        selected_path,
+                        run_id=args.run_id or "reassessment-v2",
+                        benchmark_root=args.benchmark_root,
+                    )
+                except PilotReassessmentError as exc:
+                    parser.error(str(exc))
+                summary = pilot_reassessment_summary(report)
+            else:
+                from benchmarks.logic_pipeline.pilot_gate import (
+                    PilotGateError,
+                    load_pilot_shortlist_report,
+                    pilot_shortlist_summary,
+                )
+
+                try:
+                    report = load_pilot_shortlist_report(selected_path)
+                except PilotGateError as exc:
+                    parser.error(str(exc))
+                summary = pilot_shortlist_summary(report)
+        elif args.run_id is not None:
+            from benchmarks.logic_pipeline.pilot_reassessment import (
+                PilotReassessmentError,
+                load_pilot_reassessment_report,
+                pilot_reassessment_summary,
+            )
+
+            try:
+                report = load_pilot_reassessment_report(
+                    run_id=args.run_id,
+                    benchmark_root=args.benchmark_root,
+                )
+            except PilotReassessmentError as exc:
+                parser.error(str(exc))
+            summary = pilot_reassessment_summary(report)
+        else:
+            from benchmarks.logic_pipeline.pilot_gate import (
+                DEFAULT_PILOT_SHORTLIST_PATH,
+                PilotGateError,
+                load_pilot_shortlist_report,
+                pilot_shortlist_summary,
+            )
+
+            try:
+                report = load_pilot_shortlist_report(
+                    DEFAULT_PILOT_SHORTLIST_PATH
+                )
+            except PilotGateError as exc:
+                parser.error(str(exc))
+            summary = pilot_shortlist_summary(report)
+        sys.stdout.write(canonical_json(summary) + "\n")
+        return 0
+    if args.section is None:
+        parser.error("one of --section or --gate is required")
+    if not args.validate:
+        parser.error("--section requires --validate")
+
+    if args.section == "efficiency":
+        try:
+            report = (
+                create_efficiency_capability_preflight_report()
+                if selected_path is None
+                else load_efficiency_report(selected_path)
+            )
+        except EfficiencyReportError as exc:
+            parser.error(str(exc))
+        summary = efficiency_summary(report)
+    elif args.section == "statistics":
+        from benchmarks.logic_pipeline.statistics import (
+            StatisticsError,
+            load_statistics_report,
+            statistics_summary,
+        )
+
+        if selected_path is None:
+            parser.error("--section statistics requires --results-path")
+        from benchmarks.logic_pipeline.reassessment_reports import (
+            DEFAULT_STATISTICS_PATH as REASSESSMENT_STATISTICS_PATH,
+            REPOSITORY_ROOT as REASSESSMENT_REPOSITORY_ROOT,
+            ReassessmentReportsError,
+            load_reassessment_statistics,
+            reassessment_statistics_summary,
+        )
+
+        if args.run_id is not None or selected_path.resolve() == (
+            REASSESSMENT_REPOSITORY_ROOT / REASSESSMENT_STATISTICS_PATH
+        ).resolve():
+            try:
+                report = load_reassessment_statistics(
+                    selected_path,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
+                )
+                summary = reassessment_statistics_summary(
+                    report,
+                    run_id=args.run_id or "reassessment-v2",
+                    benchmark_root=args.benchmark_root,
+                    validated=True,
+                )
+            except ReassessmentReportsError as exc:
+                parser.error(str(exc))
+        else:
+            try:
+                report = load_statistics_report(selected_path)
+            except StatisticsError as exc:
+                parser.error(str(exc))
+            summary = statistics_summary(report)
+    elif args.section == "frontend":
+        from benchmarks.logic_pipeline.frontend_report import (
+            DEFAULT_FRONTEND_REPORT_PATH,
+            FrontendReportError,
+            frontend_summary,
+            load_frontend_report,
+        )
+
+        try:
+            report = load_frontend_report(
+                selected_path or DEFAULT_FRONTEND_REPORT_PATH
+            )
+        except FrontendReportError as exc:
+            parser.error(str(exc))
+        summary = frontend_summary(report)
+    else:
+        try:
+            report = load_proof_report(
+                selected_path or DEFAULT_PROOF_REPORT_PATH
+            )
+        except ProofReportError as exc:
+            parser.error(str(exc))
+        summary = _summary(report)
+    sys.stdout.write(canonical_json(summary) + "\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+__all__ = [
+    "CACHE_MODES",
+    "DEFAULT_BENCHMARK_RUNBOOK_PATH",
+    "DEFAULT_FINAL_DECISION_PATH",
+    "DEFAULT_PROOF_REPORT_PATH",
+    "DIAGNOSTIC_VARIANT_IDS",
+    "EFFICIENCY_REPORT_SCHEMA",
+    "ELIGIBLE_CASE_IDS",
+    "EXCLUDED_CASE_IDS",
+    "EfficiencyReportError",
+    "FINAL_DECISION_EVIDENCE",
+    "FINAL_DECISION_SCHEMA",
+    "FinalDecisionValidationError",
+    "HSSLEV0519C80",
+    "HSSLEV0526A41",
+    "HSSLEV0608F63",
+    "HSSLEV0615B24",
+    "HSSLEV0801D68",
+    "HSSLEV0909F29",
+    "HSSLEV1006B8A",
+    "HSSLEV1507C49",
+    "HSSLEV1605D50",
+    "HSSLEV1703E61",
+    "LEGACY_FINAL_DECISION_PATH",
+    "PRIMARY_VARIANT_IDS",
+    "PROOF_ANALYSIS_SCHEMA",
+    "PROOF_OBSERVATION_SCHEMA",
+    "PROOF_REPORT_SCHEMA",
+    "ProofReportError",
+    "REASSESSMENT_FINAL_DECISION_EVIDENCE",
+    "REASSESSMENT_FINAL_DECISION_SCHEMA",
+    "RunbookValidationError",
+    "build_reassessment_final_decision",
+    "build_efficiency_report",
+    "build_statistics_report",
+    "create_efficiency_capability_preflight_report",
+    "create_capability_preflight_report",
+    "derive_proof_analysis",
+    "efficiency_summary",
+    "final_decision_summary",
+    "load_efficiency_report",
+    "load_final_decision",
+    "load_runbook",
+    "load_statistics_report",
+    "load_proof_report",
+    "validate_final_decision",
+    "validate_runbook",
+    "validate_statistics_report",
+    "validate_efficiency_report",
+    "validate_proof_report",
+    "write_reassessment_final_decision",
+]
+
+
+def load_robustness_report(source: str | Path) -> RobustnessReport:
+    """Load only strict, canonical, newline-terminated report evidence."""
+
+    path = Path(source)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise RobustnessValidationError(
+            f"cannot read robustness report: {path}"
+        ) from exc
+    if not text.endswith("\n"):
+        raise RobustnessValidationError(
+            "robustness report is not canonical newline JSON"
+        )
+    try:
+        payload = json.loads(
+            text, object_pairs_hook=_robust_reject_duplicate_pairs
+        )
+    except (json.JSONDecodeError, RobustnessValidationError) as exc:
+        raise RobustnessValidationError(
+            "robustness report is not strict JSON"
+        ) from exc
+    loaded = RobustnessReport.from_dict(payload)
+    if canonical_robustness_report_json(loaded) + "\n" != text:
+        raise RobustnessValidationError("robustness report is not canonical JSON")
+    return loaded
+
+
+__all__ += [
+    "BOUNDED_PROCESS_SCHEMA",
+    "FAILURE_ISOLATION_SCHEMA",
+    "REPLAY_VALIDATION_SCHEMA",
+    "ROBUSTNESS_REPORT_SCHEMA",
+    "BoundedProcessResult",
+    "FailureInjectionKind",
+    "FailureIsolationRecord",
+    "HSSLEV0702E85",
+    "ReplayStatus",
+    "ReplayValidationRecord",
+    "RobustnessReport",
+    "RobustnessValidationError",
+    "canonical_robustness_report_json",
+    "load_robustness_report",
+    "run_bounded_process",
+    "validate_replay",
+    "write_robustness_report",
+]

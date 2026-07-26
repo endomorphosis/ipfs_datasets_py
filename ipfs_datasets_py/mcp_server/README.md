@@ -679,7 +679,7 @@ flake8 ipfs_datasets_py/mcp_server/
 | [docs/api/tool-reference.md](docs/api/tool-reference.md) | Full API reference — all 51 categories |
 | [docs/architecture/dual-runtime.md](docs/architecture/dual-runtime.md) | FastAPI + Trio dual-runtime design |
 | [docs/architecture/mcp-plus-plus-alignment.md](docs/architecture/mcp-plus-plus-alignment.md) | UCAN, event-DAG, P2P transport, compliance |
-| [docs/architecture/adr/](docs/architecture/adr/) | Architecture Decision Records (ADR-001 – ADR-006) |
+| [docs/adr/](docs/adr/) | Architecture Decision Records (ADR-001 – ADR-006) |
 | [docs/guides/cookbook.md](docs/guides/cookbook.md) | Usage recipes: parallel dispatch, streaming, batching |
 | [docs/guides/p2p-migration.md](docs/guides/p2p-migration.md) | Migrating to P2P-backed tools |
 | [docs/guides/performance-tuning.md](docs/guides/performance-tuning.md) | Connection pools, concurrency limits, caches |

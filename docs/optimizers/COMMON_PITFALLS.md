@@ -885,12 +885,12 @@ When something breaks, investigate in this order:
 
 ## See Also
 
-- [QUICK_START.md](QUICK_START.md) - Get started with optimizers
+- [GRAPHRAG_QUICK_START.md](GRAPHRAG_QUICK_START.md) - Get started with the GraphRAG optimizer
 - [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) - Visual architecture
-- [README.md](README.md) - Module overview
-- [test_edge_cases.py](../tests/unit/optimizers/test_edge_cases.py) - Edge case examples
-- [test_memory_profiling.py](../tests/unit/optimizers/test_memory_profiling.py) - Performance examples
-- [test_property_based_optimizers.py](../tests/unit/optimizers/test_property_based_optimizers.py) - Invariant testing examples
+- [README_BACKUP.md](README_BACKUP.md) - Optimizers module overview
+- [test_edge_cases.py](../../tests/unit/optimizers/test_edge_cases.py) - Edge case examples
+- [test_memory_profiling.py](../../tests/unit/optimizers/test_memory_profiling.py) - Performance examples
+- [test_property_based_optimizers.py](../../tests/unit/optimizers/test_property_based_optimizers.py) - Invariant testing examples
 
 ---
 

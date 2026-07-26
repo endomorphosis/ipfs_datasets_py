@@ -31,10 +31,10 @@ This documentation is organized into several sections:
 
 ### Component Quick Links
 - [Vector Stores](../ipfs_datasets_py/vector_stores/README.md) - Multi-backend vector databases
-- [Embeddings](../ipfs_datasets_py/embeddings/README.md) - Embedding generation and management
+- [Embeddings](guides/TOOL_REFERENCE_GUIDE.md) - Embedding generation and management
 - [Search](../ipfs_datasets_py/search/README.md) - Semantic search, RAG, and GraphRAG capabilities
-- [PDF Processing](../ipfs_datasets_py/pdf_processing/README.md) - Advanced PDF analysis
-- [MCP Tools](../ipfs_datasets_py/mcp_tools/README.md) - AI assistant integration
+- [PDF Processing](guides/pdf_processing.md) - Advanced PDF analysis
+- [MCP Tools](guides/MCP_TOOLS_COMPREHENSIVE_REFERENCE.md) - AI assistant integration
 - [Utils](../ipfs_datasets_py/utils/README.md) - Text processing utilities
 
 ## Getting Started
@@ -48,7 +48,7 @@ This documentation is organized into several sections:
 ## Core Features
 
 - **Data Processing** - Working with datasets from various sources
-- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](implementation_plans/file_conversion_pros_cons.md) | [Full Analysis](implementation_plans/file_conversion_systems_analysis.md) | [Merge Feasibility](implementation_plans/file_conversion_merge_feasibility.md) | [Integration Plan](implementation_plans/file_conversion_integration_plan.md))
+- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](implementation/plans/file_conversion_pros_cons.md) | [Full Analysis](implementation/plans/file_conversion_systems_analysis.md) | [Merge Feasibility](implementation/plans/file_conversion_merge_feasibility.md) | [Integration Plan](implementation/plans/file_conversion_integration_plan.md))
 - **PDF Processing** - Advanced PDF decomposition and LLM-optimized content extraction
 - **IPLD Integration** - Content-addressed data structures with IPLD
 - **Vector Storage** - Efficient storage and retrieval of vector embeddings
@@ -89,19 +89,19 @@ This documentation is organized into several sections:
 - **Core Components** - See individual module README files:
   - [Utils](../ipfs_datasets_py/utils/README.md) - Text processing utilities
   - [Vector Stores](../ipfs_datasets_py/vector_stores/README.md) - Vector database support
-  - [Embeddings](../ipfs_datasets_py/embeddings/README.md) - Embedding generation
+  - [Embeddings](guides/TOOL_REFERENCE_GUIDE.md) - Embedding generation
   - [Search](../ipfs_datasets_py/search/README.md) - Search, RAG, and GraphRAG capabilities
-  - [PDF Processing](../ipfs_datasets_py/pdf_processing/README.md) - PDF analysis
-  - [Multimedia](../ipfs_datasets_py/multimedia/README.md) - Media processing
-  - [LLM](../ipfs_datasets_py/llm/README.md) - Language model integration
-  - [MCP Tools](../ipfs_datasets_py/mcp_tools/README.md) - AI assistant tools
-  - [IPLD](../ipfs_datasets_py/ipld/README.md) - Content-addressed data structures
+  - [PDF Processing](guides/pdf_processing.md) - PDF analysis
+  - [Multimedia](MULTIMEDIA_MIGRATION_GUIDE.md) - Media processing
+  - [LLM](guides/MCP_TOOLS_COMPREHENSIVE_REFERENCE.md) - Language model integration
+  - [MCP Tools](guides/MCP_TOOLS_COMPREHENSIVE_REFERENCE.md) - AI assistant tools
+  - [IPLD](IPLD_VECTOR_DATABASE_GUIDE.md) - Content-addressed data structures
 
 ## Implementation Notes
 
 - [RAG Optimizer Learning Metrics](rag_optimizer/learning_metrics_implementation.md) - RAG Query Optimizer learning metrics implementation details
 - [RAG Optimizer Integration Plan](rag_optimizer/integration_plan.md) - Integration plan for RAG Query Optimizer metrics
-- [Audit System Implementation](implementation_notes/audit_system.md) - Audit logging and reporting system implementation details
+- [Audit System Implementation](implementation/audit/audit_system.md) - Audit logging and reporting system implementation details
 
 ## Examples
 

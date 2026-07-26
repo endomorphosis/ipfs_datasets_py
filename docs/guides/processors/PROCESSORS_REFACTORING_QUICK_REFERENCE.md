@@ -3,7 +3,7 @@
 **Last Updated:** 2026-02-15  
 **Status:** PLANNING PHASE  
 
-This is a quick reference for the comprehensive processors refactoring. For full details, see [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md).
+This is a quick reference for the comprehensive processors refactoring. For full details, see [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md).
 
 ---
 
@@ -291,7 +291,7 @@ python -W default::DeprecationWarning -c "from processors.protocol import Proces
 ## Key Files
 
 ### Documentation
-- [COMPREHENSIVE PLAN](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Full 36KB plan
+- [COMPREHENSIVE PLAN](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) - Full 36KB plan
 - [QUICK REFERENCE](./PROCESSORS_REFACTORING_QUICK_REFERENCE.md) - This file
 - [INTEGRATION PLAN](./PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN.md) - Data transformation migration (complete)
 
@@ -314,7 +314,7 @@ python -W default::DeprecationWarning -c "from processors.protocol import Proces
 
 ## Questions?
 
-- See full plan: [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)
+- See full plan: [PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)
 - Check CLAUDE.md for worker assignments
 - Review existing documentation in `docs/`
 

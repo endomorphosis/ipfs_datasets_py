@@ -182,9 +182,9 @@ gen = OntologyGenerator(
 
 ## Next Steps
 
-- **Validation:** See [VALIDATION.md](VALIDATION.md) for detailed validation schemas
-- **Advanced:** See [README.md](README.md) for full API documentation
-- **Examples:** See [../examples/](../examples/) for multi-domain examples
+- **Validation:** See [the validation rules](CONFIGURATION_REFERENCE.md#validation-rules) for detailed configuration validation guidance
+- **Advanced:** See the [GraphRAG optimizer README](../../../ipfs_datasets_py/optimizers/graphrag/README.md) for full API documentation
+- **Examples:** See the [repository examples](../../../examples/) for multi-domain examples
 
 ---
 

@@ -368,7 +368,7 @@ finance_context = OntologyGenerationContext(
 ```
 
 ### Custom Extraction Strategies
-See [CONFIGURATION_GUIDE.md](../CONFIGURATION.md) for detailed configuration options and advanced tuning.
+See [GraphRAG configuration reference](optimizers/graphrag/CONFIGURATION_REFERENCE.md) for detailed configuration options and advanced tuning.
 
 ## Troubleshooting
 
@@ -389,10 +389,10 @@ See [CONFIGURATION_GUIDE.md](../CONFIGURATION.md) for detailed configuration opt
 
 ## References
 
-- [CONFIGURATION_GUIDE.md](../CONFIGURATION.md) — Detailed ExtractionConfig options
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — System design and component interactions
-- [benchmarks/](../../benchmarks/) — Performance benchmarks
-- [tests/](../../tests/unit/optimizers/) — Test suite and examples
+- [GraphRAG configuration reference](optimizers/graphrag/CONFIGURATION_REFERENCE.md) — Detailed ExtractionConfig options
+- [Unified optimizer architecture](optimizers/ARCHITECTURE_UNIFIED.md) — System design and component interactions
+- [benchmarks/](../benchmarks/) — Performance benchmarks
+- [tests/](../tests/unit/optimizers/) — Test suite and examples
 
 ## Contributing
 
@@ -404,7 +404,7 @@ To extend the optimizers module:
 4. Update benchmarks for performance changes
 5. Add tests for new functionality
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full guidelines.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines.
 
 ---
 

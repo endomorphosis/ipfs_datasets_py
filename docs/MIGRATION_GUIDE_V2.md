@@ -228,7 +228,7 @@ car_data = utils.arrow_to_car(arrow_table)
 - [ ] Add `.serialization` after `data_transformation`
 - [ ] Test that serialization works identically
 
-**Detailed Report:** [PHASE_2_SERIALIZATION_COMPLETE.md](./PHASE_2_SERIALIZATION_COMPLETE.md)
+**Detailed Report:** [PHASE_2_SERIALIZATION_COMPLETE.md](./archive/completion_reports/phases/PHASE_2_SERIALIZATION_COMPLETE.md)
 
 ---
 
@@ -931,7 +931,7 @@ processor = UnifiedGraphRAGProcessor(config=config)
 
 ### Documentation
 
-- [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) - Complete architecture
+- [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./guides/processors/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) - Complete architecture
 - [DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md) - Detailed timeline
 - [GRAPHRAG_CONSOLIDATION_GUIDE.md](./GRAPHRAG_CONSOLIDATION_GUIDE.md) - GraphRAG specifics
 - [MULTIMEDIA_MIGRATION_GUIDE.md](./MULTIMEDIA_MIGRATION_GUIDE.md) - Multimedia specifics

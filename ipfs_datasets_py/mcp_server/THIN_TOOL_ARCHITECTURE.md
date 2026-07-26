@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-18  
 **Purpose:** Architectural guidelines for MCP server tools and CLI alignment  
-**Related:** [MCP Server Refactoring Plan](./MCP_SERVER_REFACTORING_PLAN_2026.md)
+**Related:** [MCP Server Refactoring Plan](./docs/history/MCP_SERVER_REFACTORING_PLAN_2026.md)
 
 ---
 
@@ -597,7 +597,7 @@ result = await loader.load("data.json", format="parquet")
 ---
 
 **Related Documentation:**
-- [MCP Server Refactoring Plan](./MCP_SERVER_REFACTORING_PLAN_2026.md)
+- [MCP Server Refactoring Plan](./docs/history/MCP_SERVER_REFACTORING_PLAN_2026.md)
 - [Hierarchical Tool Manager](./hierarchical_tool_manager.py)
 - [Tool Registry](./tool_registry.py)
 

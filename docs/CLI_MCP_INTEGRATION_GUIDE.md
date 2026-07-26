@@ -763,7 +763,7 @@ ipfs-datasets tools schema dataset_tools validate_dataset
 
 - [MCP Tools Guide](MCP_TOOLS_GUIDE.md)
 - [Core Operations Guide](CORE_OPERATIONS_GUIDE.md)
-- [Tool Refactoring Guide](TOOL_REFACTORING_GUIDE.md)
+- [Tool Reference Guide](guides/TOOL_REFERENCE_GUIDE.md)
 - [Phase 9 Completion Report](PHASE_9_COMPLETION_REPORT.md)
 
 ### Contributors

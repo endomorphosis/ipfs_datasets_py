@@ -230,9 +230,9 @@ This workflow requires:
 
 ## Related Documentation
 
-- [CLAUDE.md](../../CLAUDE.md) - Worker coordination and documentation standards
-- [TODO.md](../../TODO.md) - Project-wide task tracking
-- [CHANGELOG.md](../../CHANGELOG.md) - Project history
+- [Documentation index](../../docs/README.md) - Documentation structure and maintenance standards
+- [Developer guide](../../docs/developer_guide.md) - Development and contribution guidance
+- [CHANGELOG.md](../../docs/CHANGELOG.md) - Documentation project history
 - [scripts/dev_tools/README.md](../../scripts/dev_tools/README.md) - Adhoc tools documentation
 
 ## Support

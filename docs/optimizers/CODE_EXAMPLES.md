@@ -467,10 +467,10 @@ except ImportError:
 
 ## See Also
 
-- [QUICK_START.md](QUICK_START.md) - Fast guide for common tasks
+- [GRAPHRAG_QUICK_START.md](GRAPHRAG_QUICK_START.md) - Quick start guide for GraphRAG tasks
 - [COMMON_PITFALLS.md](COMMON_PITFALLS.md) - Troubleshooting and pitfalls
 - [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) - Visual architecture
-- [README.md](README.md) - Module overview
+- [README_BACKUP.md](README_BACKUP.md) - Optimizers module overview
 - Source code docstrings: `BaseOptimizer`, `OntologyOptimizer`, `LogicTheoremOptimizer`
 
 ---

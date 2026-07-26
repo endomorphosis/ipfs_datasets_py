@@ -102,11 +102,11 @@ Direct links to module documentation:
 - **[Embeddings](../ipfs_datasets_py/embeddings/)** - Embedding generation and management
 - **[Search](../ipfs_datasets_py/search/)** - Advanced search including RAG and GraphRAG
 - **[Knowledge Graphs](../ipfs_datasets_py/knowledge_graphs/)** - Extraction, query, and storage
-- **[PDF Processing](../ipfs_datasets_py/pdf_processing/)** - PDF analysis and processing
+- **[PDF Processing](guides/pdf_processing.md)** - PDF analysis and processing
 - **[Multimedia](../ipfs_datasets_py/multimedia/)** - Media processing capabilities
-- **[LLM](../ipfs_datasets_py/llm/)** - Language model integration
-- **[MCP Tools](../ipfs_datasets_py/mcp_tools/)** - 200+ tools for AI assistants
-- **[IPLD](../ipfs_datasets_py/ipld/)** - InterPlanetary Linked Data
+- **[LLM](guides/pdf_processing.md#llm-optimized-content-processing)** - Language model integration
+- **[MCP Tools](MCP_TOOLS_GUIDE.md)** - 200+ tools for AI assistants
+- **[IPLD](IPLD_VECTOR_DATABASE_GUIDE.md)** - InterPlanetary Linked Data
 - **[Audit](../ipfs_datasets_py/audit/)** - Security and audit logging
 
 ## 🔍 Finding Documentation

@@ -24,7 +24,7 @@ New to the knowledge graphs module? Start with these documents in order:
    - Known issues and limitations
    - **Read time:** 10-15 minutes
 
-3. **[README.md](./README.md)** 📖 MODULE OVERVIEW
+3. **[README.md](../../ipfs_datasets_py/knowledge_graphs/README.md)** 📖 MODULE OVERVIEW
    - Complete module overview
    - Directory structure guide
    - Usage patterns and examples
@@ -61,9 +61,9 @@ New to the knowledge graphs module? Start with these documents in order:
 ### For New Users
 Getting started with the knowledge graphs module:
 
-1. [README.md](./README.md) - Quick start and overview
+1. [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md) - Quick start and overview
 2. [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - Complete usage guide (30KB, 40+ examples)
-3. [extraction/README.md](./extraction/README.md) - Entity extraction guide
+3. [extraction/README.md](../../ipfs_datasets_py/knowledge_graphs/extraction/README.md) - Entity extraction guide
 
 ### For API Users
 Complete API documentation:
@@ -84,8 +84,8 @@ Contributing to the module:
 Migrating from other systems:
 
 1. [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md) - Migration guide (15KB)
-2. [neo4j_compat/README.md](./neo4j_compat/README.md) - Neo4j compatibility layer
-3. [migration/README.md](./migration/README.md) - Migration tools
+2. [neo4j_compat/README.md](../../ipfs_datasets_py/knowledge_graphs/neo4j_compat/README.md) - Neo4j compatibility layer
+3. [migration/README.md](../../ipfs_datasets_py/knowledge_graphs/migration/README.md) - Migration tools
 
 ### For Project Managers
 Tracking status and planning:
@@ -162,14 +162,14 @@ Historical documentation from 2026-02-17 refactoring effort:
 - **archive/superseded_plans/** - Old planning documents
 - **archive/README.md** - Archive index and context
 
-See [archive/README.md](./archive/README.md) for details.
+See [archive/README.md](../../ipfs_datasets_py/knowledge_graphs/archive/README.md) for details.
 
 ---
 
 ## 🎯 Quick Links by Task
 
 ### "I want to use the knowledge graphs module"
-→ [README.md](./README.md) - Quick start guide  
+→ [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md) - Quick start guide\
 → [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - Complete guide with examples
 
 ### "I want to understand the API"
@@ -181,21 +181,21 @@ See [archive/README.md](./archive/README.md) for details.
 → [ROADMAP.md](./ROADMAP.md) - See what's planned
 
 ### "I want to understand entity extraction"
-→ [extraction/README.md](./extraction/README.md) - Extraction guide  
+→ [extraction/README.md](../../ipfs_datasets_py/knowledge_graphs/extraction/README.md) - Extraction guide\
 → [../../docs/knowledge_graphs/API_REFERENCE.md](../../docs/knowledge_graphs/API_REFERENCE.md) - Extraction API section
 
 ### "I want to query knowledge graphs"
-→ [query/README.md](./query/README.md) - Query engines  
-→ [cypher/README.md](./cypher/README.md) - Cypher language (all clauses)  
+→ [query/README.md](../../ipfs_datasets_py/knowledge_graphs/query/README.md) - Query engines\
+→ [cypher/README.md](../../ipfs_datasets_py/knowledge_graphs/cypher/README.md) - Cypher language (all clauses)\
 → [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - Query examples
 
 ### "I want to do cross-document reasoning"
-→ [reasoning/README.md](./reasoning/README.md) - Cross-document reasoning subpackage  
+→ [reasoning/README.md](../../ipfs_datasets_py/knowledge_graphs/reasoning/README.md) - Cross-document reasoning subpackage\
 → `ipfs_datasets_py.knowledge_graphs.reasoning.cross_document` — canonical import path
 
 ### "I want to migrate from Neo4j"
 → [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md) - Migration guide  
-→ [neo4j_compat/README.md](./neo4j_compat/README.md) - Compatibility layer
+→ [neo4j_compat/README.md](../../ipfs_datasets_py/knowledge_graphs/neo4j_compat/README.md) - Compatibility layer
 
 ### "I want to see test coverage"
 → [MASTER_STATUS.md](./MASTER_STATUS.md) - Coverage by module  
@@ -208,7 +208,7 @@ See [archive/README.md](./archive/README.md) for details.
 
 ### "I want to understand the architecture"
 → [../../docs/knowledge_graphs/ARCHITECTURE.md](../../docs/knowledge_graphs/ARCHITECTURE.md) - System architecture  
-→ [core/README.md](./core/README.md) - Core engine details
+→ [core/README.md](../../ipfs_datasets_py/knowledge_graphs/core/README.md) - Core engine details
 
 ---
 
@@ -243,7 +243,7 @@ See [ROADMAP.md](./ROADMAP.md) for long-term vision (real-time streaming, GNNs, 
 
 ### Step 1: Understand the Module (15 minutes)
 Read in order:
-1. [README.md](./README.md) - Module overview (10 min)
+1. [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md) - Module overview (10 min)
 2. [MASTER_STATUS.md](./MASTER_STATUS.md) - Current state (5 min)
 
 ### Step 2: Try the Examples (10 minutes)
@@ -314,7 +314,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 - Search "```python" in any documentation file
 
 **Looking for specific components?**
-- Check "Module Structure" in [README.md](./README.md)
+- Check "Module Structure" in [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md)
 - Browse subdirectory READMEs (all listed above)
 
 **Looking for API details?**
@@ -323,10 +323,10 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 
 **Looking for migration help?**
 - [MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md) - Complete guide
-- [neo4j_compat/README.md](./neo4j_compat/README.md) - Neo4j compatibility
+- [neo4j_compat/README.md](../../ipfs_datasets_py/knowledge_graphs/neo4j_compat/README.md) - Neo4j compatibility
 
 **Looking for historical context?**
-- [archive/README.md](./archive/README.md) - Archive index
+- [archive/README.md](../../ipfs_datasets_py/knowledge_graphs/archive/README.md) - Archive index
 - [CHANGELOG_KNOWLEDGE_GRAPHS.md](./CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
 
 ---
@@ -334,7 +334,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 ## 📞 Support
 
 ### Questions About Usage
-- Start with [README.md](./README.md) for quick start
+- Start with [README.md](../../ipfs_datasets_py/knowledge_graphs/README.md) for quick start
 - See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for comprehensive guide
 - Check [API_REFERENCE.md](../../docs/knowledge_graphs/API_REFERENCE.md) for API details
 
@@ -345,8 +345,8 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 
 ### Questions About Migration
 - See [MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)
-- Check [neo4j_compat/README.md](./neo4j_compat/README.md) for Neo4j users
-- Review [migration/README.md](./migration/README.md) for migration tools
+- Check [neo4j_compat/README.md](../../ipfs_datasets_py/knowledge_graphs/neo4j_compat/README.md) for Neo4j users
+- Review [migration/README.md](../../ipfs_datasets_py/knowledge_graphs/migration/README.md) for migration tools
 
 ### Reporting Issues
 - GitHub Issues: [github.com/endomorphosis/ipfs_datasets_py](https://github.com/endomorphosis/ipfs_datasets_py)

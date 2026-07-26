@@ -774,6 +774,6 @@ Performance optimization is an iterative process. Start with Quick Wins, profile
 **Expected Overall Impact:** 50-80% latency reduction, 3-5x throughput increase.
 
 For further assistance, see:
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
+- [Knowledge Graphs Architecture](knowledge_graphs/ARCHITECTURE.md) - System architecture overview
 - [EXTRACTION_CONFIG_GUIDE.md](EXTRACTION_CONFIG_GUIDE.md) - Configuration reference
-- [API_REFERENCE.md](API_REFERENCE.md) - Complete API documentation
+- [Knowledge Graphs API Reference](knowledge_graphs/API_REFERENCE.md) - Complete API documentation

@@ -16,9 +16,11 @@ def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
     llm_router = importlib.import_module("ipfs_datasets_py.llm_router")
     manager_module = importlib.import_module("ipfs_datasets_py.ml.accelerate_integration.manager")
 
+    calls = []
+
     class _FakeManager:
         def run_inference(self, model_name, payload, task_type=None):
-            _ = (model_name, payload, task_type)
+            calls.append((model_name, payload, task_type))
             return {"status": "success", "result": [{"generated_text": "ok from accelerate"}]}
 
     monkeypatch.setattr(manager_module, "AccelerateManager", lambda: _FakeManager())
@@ -26,7 +28,31 @@ def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
     provider = llm_router._get_accelerate_provider(llm_router.RouterDeps())
 
     assert provider is not None
-    assert provider.generate("hello") == "ok from accelerate"
+    assert provider.generate("hello", model_name="test-model") == "ok from accelerate"
+    assert calls == [
+        (
+            "test-model",
+            {"prompt": "hello"},
+            "text-generation",
+        )
+    ]
+
+    assert provider.generate("hello", model_name="codex_cli") == "ok from accelerate"
+    assert calls[-1] == (
+        "codex_cli",
+        {"prompt": "hello"},
+        "text-generation",
+    )
+
+    assert (
+        provider.generate("hello", model_name="Leanstral-119B")
+        == "ok from accelerate"
+    )
+    assert calls[-1] == (
+        "Leanstral-119B",
+        {"prompt": "hello"},
+        "text-generation",
+    )
 
 
 def test_accelerate_provider_accepts_multimodal_payload(monkeypatch, tmp_path: Path) -> None:

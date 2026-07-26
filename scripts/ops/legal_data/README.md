@@ -158,7 +158,7 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --config-path /path/to/official_form_drafts_config.json --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --config-path /path/to/filing_specific_binders_config.json --json`
 	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
-	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
+	Manifest format guide: [docs/guides/legal_pdf_manifests.md](../../../docs/guides/legal_pdf_manifests.md)
 	JSON response highlights for manifest builders:
 	`build-court-filing-packet-from-manifest` -> `packet_path`, `rendered_paths`, `document_count`
 	`build-exhibit-binder-from-manifest` -> `output_pdf`, `front_pdf`, `table_pdf`, `packet_paths`, `exhibit_count`

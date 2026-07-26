@@ -352,7 +352,7 @@ If you run into issues:
 - [GitHub Actions Documentation](https://docs.github.com/actions)
 - [GitHub Copilot Agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent)
 - [GitHub CLI Manual](https://cli.github.com/manual/)
-- [Auto-Healing Documentation](.github/workflows/README-copilot-autohealing.md)
+- [Auto-Healing Documentation](README-copilot-autohealing.md)
 
 ---
 

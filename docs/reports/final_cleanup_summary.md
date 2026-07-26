@@ -105,9 +105,9 @@ ls archive/ | grep migration
 The IPFS Datasets Python project now has a clean, professional root directory structure with all development artifacts properly archived and organized. The project is ready for ongoing development and production use.
 
 ### Key Resources
-- **Main Documentation**: [`README.md`](../README.md)
-- **Project Structure**: [`PROJECT_STRUCTURE.md`](architecture/project_structure.md)  
-- **Logic Tools**: [`analysis/logic_tools_verification.md`](analysis/logic_tools_verification.md)
-- **Development History**: [`archive/`](../archive/)
-- **Current Tests**: [`tests/`](../tests/)
-- **Utility Scripts**: [`scripts/`](../scripts/)
+- **Main Documentation**: [`README.md`](../../README.md)
+- **Project Structure**: [`project_structure.md`](../architecture/project_structure.md)
+- **Logic Tools**: [`logic_tools_verification.md`](../analysis/logic_tools_verification.md)
+- **Development History**: [`archive/`](../../archive/)
+- **Current Tests**: [`tests/`](../../tests/)
+- **Utility Scripts**: [`scripts/`](../../scripts/)

@@ -311,5 +311,5 @@ Linear regression on execution time vs input size:
 ## See Also
 
 - [ExtractionConfig Guide](./EXTRACTION_CONFIG_GUIDE.md) — Tuning parameters
-- [OntologyGenerator Docs](./ONTOLOGY_GENERATOR.md) — API reference
+- [OntologyGenerator Docs](./optimizers/ONTOLOGY_GENERATOR_DOCTEST_REFERENCE.md) — API reference
 - Profiling script: `tests/unit/optimizers/graphrag/test_profile_extract_rule_based.py`

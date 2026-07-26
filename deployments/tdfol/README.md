@@ -116,7 +116,7 @@ kubectl apply -f kubernetes/
 - Health probes
 - Resource limits
 
-**Documentation**: [Kubernetes Guide](./kubernetes/README.md)
+**Documentation**: [Kubernetes Manifests](./kubernetes/)
 
 ### 4. Helm Charts (Recommended)
 
@@ -245,7 +245,7 @@ deployment/tdfol/
 
 1. **[Quick Start Guide](./QUICKSTART.md)** - Get running in 5 minutes
 2. **[Docker Guide](./Dockerfile)** - Build and run with Docker
-3. **[Kubernetes Guide](./kubernetes/README.md)** - Deploy to Kubernetes
+3. **[Kubernetes Manifests](./kubernetes/)** - Deploy to Kubernetes
 4. **[Helm Guide](./helm/tdfol/README.md)** - Use Helm charts
 
 ### Cloud Providers
@@ -256,7 +256,7 @@ deployment/tdfol/
 
 ### Configuration
 
-- **[Environment Variables](./.env.example)** - All configuration options
+- **[Environment Variables](../../.env.example)** - All configuration options
 - **[Helm Values](./helm/tdfol/values.yaml)** - Chart configuration
 - **[Kubernetes Configs](./kubernetes/configmap.yaml)** - K8s configuration
 

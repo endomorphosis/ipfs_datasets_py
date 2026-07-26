@@ -42,8 +42,8 @@ Welcome to the comprehensive documentation for IPFS Datasets Python - a producti
 
 ### Other Modules
 - **MCP Server:** [ipfs_datasets_py/mcp_server/README.md](../ipfs_datasets_py/mcp_server/README.md)
-- **GraphRAG:** [ipfs_datasets_py/rag/README.md](../ipfs_datasets_py/rag/README.md)
-- **Multimedia:** [ipfs_datasets_py/multimedia/README.md](../ipfs_datasets_py/multimedia/README.md)
+- **GraphRAG:** [ipfs_datasets_py/optimizers/graphrag/README.md](../ipfs_datasets_py/optimizers/graphrag/README.md)
+- **Multimedia:** [ipfs_datasets_py/processors/multimedia/README.md](../ipfs_datasets_py/processors/multimedia/README.md)
 
 ---
 

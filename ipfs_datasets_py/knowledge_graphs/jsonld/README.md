@@ -565,8 +565,8 @@ pytest tests/knowledge_graphs/test_jsonld/test_context.py -v
 - **[Extraction Module](../extraction/README.md)** - Knowledge graph extraction
 - **[Storage Module](../storage/README.md)** - IPLD storage (similar format)
 - **[Migration Module](../migration/README.md)** - Format conversion
-- **[USER_GUIDE.md](../../../../docs/knowledge_graphs/USER_GUIDE.md)** - Usage guide
-- **[API_REFERENCE.md](../../../../docs/knowledge_graphs/API_REFERENCE.md)** - Complete API
+- **[USER_GUIDE.md](../../../docs/knowledge_graphs/USER_GUIDE.md)** - Usage guide
+- **[API_REFERENCE.md](../../../docs/knowledge_graphs/API_REFERENCE.md)** - Complete API
 - **[W3C JSON-LD Spec](https://www.w3.org/TR/json-ld11/)** - Official specification
 - **[Schema.org](https://schema.org/)** - Vocabulary reference
 

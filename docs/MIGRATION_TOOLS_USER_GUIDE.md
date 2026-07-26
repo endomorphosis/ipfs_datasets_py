@@ -507,7 +507,7 @@ After successful migration:
 
 ## Additional Resources
 
-- [Knowledge Graphs Documentation](./KNOWLEDGE_GRAPHS_DOCUMENTATION_INDEX.md)
-- [Neo4j API Migration Guide](./KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md)
-- [Cypher Compatibility](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md)
-- [Performance Guide](./KNOWLEDGE_GRAPHS_PHASE_1_COMPLETE.md)
+- [Knowledge Graphs Documentation](./guides/knowledge_graphs/KNOWLEDGE_GRAPHS_DOCUMENTATION_INDEX.md)
+- [Neo4j API Migration Guide](./guides/knowledge_graphs/KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md)
+- [Cypher Compatibility](./guides/knowledge_graphs/KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md)
+- [Performance Guide](./archive/knowledge_graphs/KNOWLEDGE_GRAPHS_PERFORMANCE_OPTIMIZATION.md)

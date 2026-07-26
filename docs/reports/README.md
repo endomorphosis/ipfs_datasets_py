@@ -55,6 +55,6 @@ These reports serve as:
 
 ## Related Directories
 
-- [implementation_plans/](../implementation_plans/) - Forward-looking plans
+- [implementation plans](../implementation/plans/) - Forward-looking plans
 - [analysis/](../analysis/) - Technical analysis documents
 - [archive/](../archive/) - Archived historical documentation

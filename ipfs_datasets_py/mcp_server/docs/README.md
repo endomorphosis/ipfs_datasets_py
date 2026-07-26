@@ -57,13 +57,13 @@ docs/
 │   ├── dual-runtime.md              FastAPI + Trio design; how RuntimeRouter works
 │   ├── mcp-plus-plus-alignment.md   UCAN, event-DAG, P2P transport, compliance checker
 │   ├── DUAL_RUNTIME_ARCHITECTURE.md Detailed component diagram and latency analysis
-│   └── adr/                         Architecture Decision Records
-│       ├── ADR-001-thin-wrapper-pattern.md
-│       ├── ADR-002-dual-runtime.md
-│       ├── ADR-003-hierarchical-tool-system.md
-│       ├── ADR-004-engine-extraction-pattern.md
-│       ├── ADR-005-v6-coverage-hardening.md
-│       └── ADR-006-mcp++-alignment.md
+├── adr/                             Architecture Decision Records
+│   ├── ADR-001-thin-wrapper-pattern.md
+│   ├── ADR-002-dual-runtime.md
+│   ├── ADR-003-hierarchical-tool-system.md
+│   ├── ADR-004-engine-extraction-pattern.md
+│   ├── ADR-005-v6-coverage-hardening.md
+│   └── ADR-006-mcp++-alignment.md
 ├── guides/
 │   ├── cookbook.md                  Ready-to-run recipes (parallel dispatch, batching, error handling)
 │   ├── p2p-migration.md             Migrating to P2P-backed tools
@@ -111,18 +111,18 @@ Documents the MCP++ extension layer:
 - **Compliance checker** (`compliance_checker.py`) — rule engine, `ComplianceStatus`, backup management
 - **Policy audit log** (`policy_audit_log.py`) — ring-buffer, JSONL export/import
 
-### [architecture/adr/](./architecture/adr/)
+### [adr/](./adr/)
 
 Six Architecture Decision Records (ADRs) document the major design choices:
 
 | ADR | Title | Decision summary |
 |---|---|---|
-| [ADR-001](./architecture/adr/ADR-001-thin-wrapper-pattern.md) | Thin Wrapper Pattern | Business logic in `*_engine.py`; tool files ≤ 30 lines |
-| [ADR-002](./architecture/adr/ADR-002-dual-runtime.md) | Dual-Runtime Architecture | `anyio` compatibility shim; FastAPI + Trio runtimes |
-| [ADR-003](./architecture/adr/ADR-003-hierarchical-tool-system.md) | Hierarchical Tool System | Two-level category/tool hierarchy with 4 meta-tools |
-| [ADR-004](./architecture/adr/ADR-004-engine-extraction-pattern.md) | Engine Extraction Pattern | All domain logic extracted to reusable engine modules |
-| [ADR-005](./architecture/adr/ADR-005-v6-coverage-hardening.md) | v6 Coverage Hardening | 85%+ coverage requirement; anyio-parameterised tests |
-| [ADR-006](./architecture/adr/ADR-006-mcp++-alignment.md) | MCP++ Alignment | UCAN, event-DAG, P2P transport alignment with MCP++ spec |
+| [ADR-001](./adr/ADR-001-thin-wrapper-pattern.md) | Thin Wrapper Pattern | Business logic in `*_engine.py`; tool files ≤ 30 lines |
+| [ADR-002](./adr/ADR-002-dual-runtime.md) | Dual-Runtime Architecture | `anyio` compatibility shim; FastAPI + Trio runtimes |
+| [ADR-003](./adr/ADR-003-hierarchical-tool-system.md) | Hierarchical Tool System | Two-level category/tool hierarchy with 4 meta-tools |
+| [ADR-004](./adr/ADR-004-engine-extraction-pattern.md) | Engine Extraction Pattern | All domain logic extracted to reusable engine modules |
+| [ADR-005](./adr/ADR-005-v6-coverage-hardening.md) | v6 Coverage Hardening | 85%+ coverage requirement; anyio-parameterised tests |
+| [ADR-006](./adr/ADR-006-mcp++-alignment.md) | MCP++ Alignment | UCAN, event-DAG, P2P transport alignment with MCP++ spec |
 
 ---
 

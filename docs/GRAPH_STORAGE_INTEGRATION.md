@@ -731,10 +731,10 @@ print("Exported to RDF, GraphML, and JSON")
 ## 10. See Also
 
 - **[migration/README.md](../ipfs_datasets_py/knowledge_graphs/migration/README.md)** - Comprehensive Neo4j migration guide
-- **[USER_GUIDE.md](../ipfs_datasets_py/knowledge_graphs/USER_GUIDE.md)** - Knowledge graph usage patterns
-- **[QUICKSTART.md](../ipfs_datasets_py/knowledge_graphs/QUICKSTART.md)** - Quick start examples
-- **[complaint_phases/README.md](../complaint_phases/README.md)** - Legal knowledge graph workflows
-- **[examples/knowledge_graphs/simple_example.py](../ipfs_datasets_py/examples/knowledge_graphs/simple_example.py)** - Complete working example
+- **[Knowledge Graphs User Guide](knowledge_graphs/USER_GUIDE.md)** - Knowledge graph usage patterns
+- **[Knowledge Graphs Quick Start](knowledge_graphs/QUICKSTART.md)** - Quick start examples
+- **[Legal Knowledge Base Example](../examples/advanced/17_legal_knowledge_base.py)** - Legal knowledge graph workflow
+- **[Simple Knowledge Graph Example](../examples/knowledge_graphs/simple_example.py)** - Complete working example
 
 ---
 

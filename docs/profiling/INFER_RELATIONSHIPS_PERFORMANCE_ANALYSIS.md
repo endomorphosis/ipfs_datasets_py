@@ -112,7 +112,7 @@ xlarge           1000       4410       8.7194       505.77
 
 ### 1. Repeated String Lowercasing (33% of time)
 
-**Code Path:** [ontology_generator.py:2782-2820](../ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2782-L2820)
+**Code Path:** [ontology_generator.py:2782-2820](../../ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2782-L2820)
 
 **Problem:**
 ```python
@@ -135,7 +135,7 @@ for i, e1 in enumerate(entity_list):
 
 ### 2. Redundant Text Searching (25% of time)
 
-**Code Path:** [ontology_generator.py:2882-2885](../ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2882-L2885)
+**Code Path:** [ontology_generator.py:2882-2885](../../ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2882-L2885)
 
 **Problem:**
 ```python
@@ -159,7 +159,7 @@ for i, e1 in enumerate(entity_list):
 
 ### 3. O(n²) Loop Complexity
 
-**Code Path:** [ontology_generator.py:2880-2930](../ipfs_datasets_py/ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2880-L2930)
+**Code Path:** [ontology_generator.py:2880-2930](../../ipfs_datasets_py/optimizers/graphrag/ontology_generator.py#L2880-L2930)
 
 **Problem:**
 ```python

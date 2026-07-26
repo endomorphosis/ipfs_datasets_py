@@ -370,7 +370,7 @@ pytest tests/performance/processors/
 ## 📖 Related Documentation
 
 ### Planning Documents (This Work)
-- **[Full Plan](PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)** - Complete 45KB implementation plan
+- **[Full Plan](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_INTEGRATION_PLAN_2026_02.md)** - Complete 45KB implementation plan
 - **[Quick Reference](PROCESSORS_REFACTORING_QUICK_REFERENCE_2026.md)** - 9KB quick lookup guide
 - **[Visual Roadmap](PROCESSORS_REFACTORING_VISUAL_ROADMAP_2026.md)** - 23KB visual planning document
 
@@ -379,7 +379,7 @@ pytest tests/performance/processors/
 - **[Migration Guide](PROCESSORS_MIGRATION_GUIDE.md)** - Current migration guide (to be enhanced)
 - **[Changelog](PROCESSORS_CHANGELOG.md)** - Version history
 - **[Status 2026](PROCESSORS_STATUS_2026_02_16.md)** - Current status (Phases 1-7)
-- **[Comprehensive Plan 2026](PROCESSORS_COMPREHENSIVE_PLAN_2026.md)** - Previous planning document
+- **[Comprehensive Plan 2026](../../archive/processors/planning/PROCESSORS_COMPREHENSIVE_PLAN_2026.md)** - Previous planning document
 
 ### To Be Created (Phase 13)
 - PROCESSORS_ARCHITECTURE_GUIDE.md

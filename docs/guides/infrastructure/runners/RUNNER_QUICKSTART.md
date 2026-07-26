@@ -143,8 +143,8 @@ Once your runner is set up:
 ## Complete Documentation
 
 For more details, see:
-- [docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md) - Full guide
-- [DOCKER_GITHUB_ACTIONS_SETUP.md](./DOCKER_GITHUB_ACTIONS_SETUP.md) - Docker + Actions overview
+- [docs/guides/deployment/runner_setup.md](../../deployment/runner_setup.md) - Full guide
+- [DOCKER_GITHUB_ACTIONS_SETUP.md](../../DOCKER_GITHUB_ACTIONS_SETUP.md) - Docker + Actions overview
 
 ---
 

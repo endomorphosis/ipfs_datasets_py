@@ -254,9 +254,9 @@ docs/guides/
 ## Related Documentation
 
 - [Root Directory Reorganization](ROOT_REORGANIZATION_2026_02_16.md) - Repository root cleanup (completed earlier)
-- [Archive README](archive/completion_reports/README.md) - Completion reports archive
-- [Knowledge Graphs Archive](archive/knowledge_graphs/README.md) - KG historical docs
-- [Processors Archive](archive/processors/README.md) - Processor historical docs
+- [Archive README](../archive/completion_reports/README.md) - Completion reports archive
+- [Knowledge Graphs Archive](../archive/knowledge_graphs/README.md) - KG historical docs
+- [Processors Archive](../archive/processors/README.md) - Processor historical docs
 
 ---
 

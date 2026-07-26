@@ -264,5 +264,5 @@ async def tool2(data):
 ## See Also
 
 - [Core Operations API](../api/CORE_OPERATIONS_API.md)
-- [Testing Guidelines](TESTING_GUIDELINES.md)
-- [Architecture](../../MCP_ARCHITECTURE_DIAGRAM.md)
+- [Testing Guidelines](../MCP_TESTING_GUIDE.md)
+- [Architecture](../MCP_ARCHITECTURE_DIAGRAM.md)

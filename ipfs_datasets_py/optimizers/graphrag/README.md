@@ -17,7 +17,7 @@
 - ✅ **Phase 5:** Documentation & Examples (800 LOC + docs)
 - ✅ **Phase 6:** Production Integration (200 LOC + deployment guides)
 
-**See [PHASE5_6_COMPLETE.md](./PHASE5_6_COMPLETE.md) for complete project summary.**
+**See [PHASE5_6_COMPLETE.md](../../../docs/optimizers/graphrag/PHASE5_6_COMPLETE.md) for complete project summary.**
 
 ---
 
@@ -505,7 +505,7 @@ The critic evaluates ontologies across five dimensions:
 - Performance benchmarks
 - Real-world scenario testing
 
-**See [PHASE4_COMPLETE.md](./PHASE4_COMPLETE.md) for complete testing documentation.**
+**See [PHASE4_COMPLETE.md](../../../docs/optimizers/graphrag/PHASE4_COMPLETE.md) for complete testing documentation.**
 
 ---
 
@@ -569,7 +569,7 @@ spec:
 - Logging: Structured JSON logging
 - Alerts: Quality degradation, performance issues
 
-**See [PHASE5_6_COMPLETE.md](./PHASE5_6_COMPLETE.md) for complete deployment guides.**
+**See [PHASE5_6_COMPLETE.md](../../../docs/optimizers/graphrag/PHASE5_6_COMPLETE.md) for complete deployment guides.**
 
 ---
 
@@ -719,4 +719,3 @@ for ent in result.ontology.get("entities", [])[:3]:
 
 Use `OntologyGenerationResult.from_ontology(raw_dict, extraction_strategy=..., domain=...)`
 to wrap any existing ontology dict without re-running extraction.
-

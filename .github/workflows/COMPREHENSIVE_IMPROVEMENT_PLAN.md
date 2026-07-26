@@ -1164,11 +1164,11 @@ gh workflow run workflow-name.yml
 
 ### C. Related Documentation
 
-- [Auto-Healing System Guide](.github/workflows/AUTO_HEALING_GUIDE.md)
-- [Workflow Architecture](.github/workflows/ARCHITECTURE.md)
-- [Workflow Maintenance](.github/workflows/MAINTENANCE.md)
-- [Copilot Integration](.github/workflows/COPILOT-INTEGRATION.md)
-- [Security Best Practices](.github/workflows/SECRETS-MANAGEMENT.md)
+- [Auto-Healing System Guide](AUTO_HEALING_GUIDE.md)
+- [Workflow Architecture](ARCHITECTURE.md)
+- [Workflow Maintenance](MAINTENANCE.md)
+- [Copilot Integration](COPILOT-INTEGRATION.md)
+- [Security Best Practices](SECRETS-MANAGEMENT.md)
 
 ### D. Contact & Support
 

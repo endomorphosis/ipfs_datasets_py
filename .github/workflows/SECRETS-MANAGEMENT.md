@@ -459,7 +459,7 @@ Before deploying to production, verify:
 ## Related Documentation
 
 - [GitHub Actions Self-Hosted Runners](https://docs.github.com/en/actions/hosting-your-own-runners)
-- [Secrets Manager Script](../scripts/load_runner_secrets.py)
+- [Secrets Manager Script](../../scripts/load_runner_secrets.py)
 - [PR Completion Monitor Workflow](pr-completion-monitor.yml)
 
 ## Support

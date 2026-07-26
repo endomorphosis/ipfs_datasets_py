@@ -213,10 +213,10 @@ with open("ontology.json", "w") as f:
 
 ## Next Steps
 
-- **Advanced:** See [EXTRACTION_CONFIG_GUIDE.md](./docs/EXTRACTION_CONFIG_GUIDE.md) for full configuration options
-- **Architecture:** See [README.md](./README.md) for component overview
-- **Validation:** See [logic_validator.py](./logic_validator.py) for consistency checking
-- **Optimization:** See [ontology_optimizer.py](./ontology_optimizer.py) for SGD-based refinement cycles
+- **Advanced:** See [EXTRACTION_CONFIG_GUIDE.md](../EXTRACTION_CONFIG_GUIDE.md) for full configuration options
+- **Architecture:** See [ARCHITECTURE_UNIFIED.md](../ARCHITECTURE_UNIFIED.md) for the component overview
+- **Validation:** See [logic_validator.py](../../../ipfs_datasets_py/optimizers/graphrag/logic_validator.py) for consistency checking
+- **Optimization:** See [ontology_optimizer.py](../../../ipfs_datasets_py/optimizers/graphrag/ontology_optimizer.py) for SGD-based refinement cycles
 
 ---
 

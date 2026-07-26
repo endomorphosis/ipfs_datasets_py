@@ -15,7 +15,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Mapping, Tuple
 
 from symai.backend.base import Engine
 from symai.backend.settings import SYMAI_CONFIG
@@ -38,8 +38,6 @@ try:
     from ipfs_datasets_py.utils.gemini_cli import GeminiCLI
 except Exception:
     GeminiCLI = None
-
-from ipfs_datasets_py.utils.cli_tools.copilot import build_standalone_copilot_command_template
 
 try:
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
@@ -140,13 +138,17 @@ def _symai_request_cache_key(
     model_name: str,
     prompt: str,
     wants_json: bool,
+    cache_namespace: str = "",
+    route_binding: Mapping[str, str] | None = None,
 ) -> str:
     payload: Dict[str, Any] = {
         "v": 1,
         "kind": "symai_ipfs_engine",
+        "cache_namespace": str(cache_namespace or ""),
         "engine_id": str(engine_id or ""),
         "mode": str(mode or ""),
         "model": str(model_name or ""),
+        "route_binding": dict(route_binding or {}),
         "prompt": str(prompt or ""),
         "wants_json": bool(wants_json),
         "backend_policy": _symai_backend_policy(),
@@ -230,7 +232,10 @@ def _wants_json_response(argument, prompt: str) -> bool:
         if isinstance(payload, dict):
             response_format = payload.get("response_format")
 
-    if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+    if (
+        isinstance(response_format, dict)
+        and response_format.get("type") in {"json_object", "json_schema"}
+    ):
         return True
 
     lowered = str(prompt or "").lower()
@@ -413,10 +418,16 @@ def _gemini_cli_generate(prompt: str) -> str:
 
 
 def _copilot_cli_generate(prompt: str) -> str:
-    command = os.environ.get(
-        "IPFS_DATASETS_PY_COPILOT_CLI_CMD",
-        build_standalone_copilot_command_template(),
-    )
+    command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD")
+    if command is None:
+        # The pinned SyMAI/Leanstral route must not import the optional CLI
+        # cache stack merely because this fallback exists.  Import it only
+        # when the Copilot CLI fallback is actually selected.
+        from ipfs_datasets_py.utils.cli_tools.copilot import (
+            build_standalone_copilot_command_template,
+        )
+
+        command = build_standalone_copilot_command_template()
     return _run_cli_command(command, prompt)
 
 
@@ -474,7 +485,17 @@ def _copilot_sdk_generate(prompt: str) -> str:
         raise RuntimeError("copilot-sdk requires a non-running event loop context")
 
 
-def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
+def _generate_text(
+    prompt: str,
+    model_name: str,
+    *,
+    provider: str | None = None,
+    deps: object | None = None,
+    allow_local_fallback: bool = True,
+    dry_run: bool | None = None,
+    response_format: Dict[str, Any] | None = None,
+    route_binding: Mapping[str, str] | None = None,
+) -> Tuple[str, Dict[str, Any]]:
     metadata: Dict[str, Any] = {"backend": "llm_router", "errors": []}
 
     # NOTE:
@@ -486,7 +507,7 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
     # `ipfs_datasets_py.llm_router.generate_text` path so provider selection, caching,
     # and dependency injection are centralized.
 
-    if _dry_run_enabled():
+    if dry_run is True or (dry_run is None and _dry_run_enabled()):
         # Preserve existing dry-run behavior for deterministic/offline operation.
         if _wants_json_response(None, str(prompt)):
             return [_dry_run_json_object(str(prompt))][0], {"backend": "dry_run", "format": "json"}
@@ -495,21 +516,58 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
     try:
         from ipfs_datasets_py import llm_router
 
-        deps = _get_symai_router_deps()
+        resolved_deps = deps if deps is not None else _get_symai_router_deps()
         # Use centralized provider detection instead of ad-hoc env check
-        if detect_provider_from_environment and canonicalize_provider:
-            provider = detect_provider_from_environment(prefer_accelerate=False)
-            provider = canonicalize_provider(provider, default=None)
-        else:
-            provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
+        selected_provider = provider
+        if selected_provider is None:
+            if detect_provider_from_environment and canonicalize_provider:
+                selected_provider = detect_provider_from_environment(
+                    prefer_accelerate=False
+                )
+                selected_provider = canonicalize_provider(
+                    selected_provider, default=None
+                )
+            else:
+                selected_provider = (
+                    os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
+                )
+        generation_kwargs: Dict[str, Any] = {}
+        if response_format is not None:
+            generation_kwargs["response_format"] = response_format
+            generation_kwargs["temperature"] = 0.0
+            generation_kwargs["max_tokens"] = 512
+        if route_binding is not None:
+            generation_kwargs["_symai_route_binding"] = dict(route_binding)
         text = llm_router.generate_text(
             str(prompt),
             model_name=model_name or None,
-            provider=provider,
-            deps=deps,
+            provider=selected_provider,
+            deps=resolved_deps,
+            allow_local_fallback=allow_local_fallback,
+            # A pinned SyMAI benchmark route must not silently retry the same
+            # provider with its default model after the requested model fails.
+            disable_model_retry=not allow_local_fallback,
+            **generation_kwargs,
         )
+        trace_getter = getattr(llm_router, "get_last_generation_trace", None)
+        trace = trace_getter() if callable(trace_getter) else {}
+        if isinstance(trace, dict):
+            metadata.update(trace)
         return str(text), metadata
     except Exception as exc:
+        completion_error = getattr(
+            locals().get("llm_router"),
+            "PinnedSymaiCompletionError",
+            None,
+        )
+        if (
+            isinstance(completion_error, type)
+            and isinstance(exc, completion_error)
+        ):
+            # Preserve the router's typed, allow-listed completion outcome so
+            # the benchmark can classify model truncation as a contract
+            # failure rather than misreporting it as configuration drift.
+            raise
         metadata["errors"].append(str(exc))
         raise RuntimeError("SyMAI llm_router generation failed: " + "; ".join(metadata["errors"]))
 
@@ -517,15 +575,54 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
 class IPFSSyMAIEngine(Engine):
     """SyMAI engine router for non-neurosymbolic engines."""
 
-    def __init__(self, engine_id: str, model_key: str, mode: str = "text") -> None:
+    def __init__(
+        self,
+        engine_id: str,
+        model_key: str,
+        mode: str = "text",
+        *,
+        provider: str | None = None,
+        deps: object | None = None,
+        cache_namespace: str = "",
+        allow_local_fallback: bool = True,
+        dry_run: bool | None = None,
+        cache_enabled: bool | None = None,
+        model_name: str | None = None,
+        route_binding: Mapping[str, str] | None = None,
+    ) -> None:
         super().__init__()
         self.config = deepcopy(SYMAI_CONFIG)
         self.engine_id = engine_id
         self.model_key = model_key
         self.mode = mode
+        self.provider = provider
+        self.deps = deps
+        self.cache_namespace = str(cache_namespace or "")
+        self.allow_local_fallback = bool(allow_local_fallback)
+        self.dry_run = dry_run
+        self.cache_enabled = cache_enabled
+        if route_binding is not None and (
+            not isinstance(route_binding, Mapping)
+            or not route_binding
+            or not all(
+                isinstance(key, str)
+                and isinstance(value, str)
+                and key
+                and value
+                for key, value in route_binding.items()
+            )
+        ):
+            raise ValueError("route_binding must be a nonempty string mapping")
+        self.route_binding = (
+            None if route_binding is None else dict(route_binding)
+        )
         if self.id() != engine_id:
             return
-        self.model = _extract_model(self.config.get(model_key, ""))
+        self.model = (
+            str(model_name)
+            if model_name is not None
+            else _extract_model(self.config.get(model_key, ""))
+        )
 
     def id(self) -> str:
         model_value = self.config.get(self.model_key)
@@ -554,7 +651,10 @@ class IPFSSyMAIEngine(Engine):
         if processed:
             parts.append(str(processed))
 
-        if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+        if (
+            isinstance(response_format, dict)
+            and response_format.get("type") in {"json_object", "json_schema"}
+        ):
             parts.append("\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text.")
         else:
             parts.append(
@@ -565,6 +665,11 @@ class IPFSSyMAIEngine(Engine):
 
     def forward(self, argument) -> Tuple[List[str], Dict[str, Any]]:
         prompt = argument.prop.prepared_input
+        response_format = getattr(argument.prop, "response_format", None)
+        if response_format is None:
+            payload = getattr(argument.prop, "payload", None)
+            if isinstance(payload, dict):
+                response_format = payload.get("response_format")
 
         wants_json = False
         try:
@@ -574,15 +679,22 @@ class IPFSSyMAIEngine(Engine):
 
         cache_key: str | None = None
         deps = None
-        if self.mode != "embedding" and _symai_cache_enabled():
+        cache_is_enabled = (
+            _symai_cache_enabled()
+            if self.cache_enabled is None
+            else self.cache_enabled
+        )
+        if self.mode != "embedding" and cache_is_enabled:
             cache_key = _symai_request_cache_key(
                 engine_id=self.engine_id,
                 mode=self.mode,
                 model_name=getattr(self, "model", "") or "",
                 prompt=str(prompt or ""),
                 wants_json=wants_json,
+                cache_namespace=self.cache_namespace,
+                route_binding=self.route_binding,
             )
-            deps = _get_symai_router_deps()
+            deps = self.deps if self.deps is not None else _get_symai_router_deps()
             getter = getattr(deps, "get_cached_or_remote", None) if deps is not None else None
             if callable(getter):
                 cached = getter(cache_key)
@@ -598,7 +710,9 @@ class IPFSSyMAIEngine(Engine):
                 metadata["cache_key"] = cache_key
                 return [str(cached.get("text") or "")], metadata
 
-        if _dry_run_enabled():
+        if self.dry_run is True or (
+            self.dry_run is None and _dry_run_enabled()
+        ):
             if self.mode == "embedding":
                 return [json.dumps([0.0, 0.0, 0.0])], {"backend": "dry_run"}
             if _wants_json_response(argument, str(prompt)):
@@ -611,7 +725,34 @@ class IPFSSyMAIEngine(Engine):
             embeddings = embed_texts([prompt])
             return [json.dumps(embeddings[0])], {"backend": "embedding_adapter"}
 
-        text, metadata = _generate_text(prompt, self.model)
+        if (
+            self.provider is None
+            and self.deps is None
+            and self.allow_local_fallback
+        ):
+            # Preserve the historic two-argument call for external wrappers
+            # and tests that patch this internal seam.
+            text, metadata = _generate_text(
+                prompt,
+                self.model,
+                response_format=(
+                    response_format if isinstance(response_format, dict) else None
+                ),
+                route_binding=self.route_binding,
+            )
+        else:
+            text, metadata = _generate_text(
+                prompt,
+                self.model,
+                provider=self.provider,
+                deps=self.deps,
+                allow_local_fallback=self.allow_local_fallback,
+                dry_run=self.dry_run,
+                response_format=(
+                    response_format if isinstance(response_format, dict) else None
+                ),
+                route_binding=self.route_binding,
+            )
         if cache_key and deps is not None:
             setter = getattr(deps, "set_cached_and_remote", None)
             if callable(setter):
@@ -623,6 +764,7 @@ class IPFSSyMAIEngine(Engine):
                         "engine_id": self.engine_id,
                         "mode": self.mode,
                         "model": getattr(self, "model", "") or "",
+                        "cache_namespace": self.cache_namespace,
                         "format": "json" if wants_json else "text",
                     },
                 )
@@ -644,10 +786,21 @@ class IPFSSyMAISymbolicEngine(IPFSSyMAIEngine):
 
 class IPFSSyMAINeurosymbolicEngine(IPFSSyMAIEngine):
     """SyMAI neurosymbolic engine router (NEUROSYMBOLIC_ENGINE_MODEL)."""
-    def __init__(self, engine_id: str, model_key: str, mode: str = "text") -> None:
-        super().__init__(engine_id, model_key, mode=mode)
+    def __init__(
+        self,
+        engine_id: str,
+        model_key: str,
+        mode: str = "text",
+        **kwargs: object,
+    ) -> None:
+        super().__init__(engine_id, model_key, mode=mode, **kwargs)
         if not hasattr(self, "model"):
-            self.model = _extract_model(self.config.get(model_key, ""))
+            requested_model = kwargs.get("model_name")
+            self.model = (
+                str(requested_model)
+                if requested_model is not None
+                else _extract_model(self.config.get(model_key, ""))
+            )
 
 
 def register_ipfs_symai_engines() -> None:

@@ -163,5 +163,5 @@ server.run(host="localhost", port=8080)
 
 For complete documentation, see:
 - [README.md](README.md) - Main project documentation
-- [MCP_SERVER.md](MCP_SERVER.md) - MCP server details
+- [MCP_SERVER.md](../../archive/migration_docs/MCP_SERVER.md) - MCP server details
 - [MIGRATION_STATUS_UPDATED.md](MIGRATION_STATUS_UPDATED.md) - Latest migration status

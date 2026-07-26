@@ -88,7 +88,7 @@ This directory contains all GitHub Actions workflows for the repository, includi
 sudo ./scripts/setup_gh_copilot_auth_on_runner.sh
 ```
 
-📚 **See:** [RUNNER_AUTH_QUICKSTART.md](../../RUNNER_AUTH_QUICKSTART.md) for details
+📚 **See:** [RUNNER_AUTH_QUICKSTART.md](../../docs/guides/infrastructure/runners/RUNNER_AUTH_QUICKSTART.md) for details
 
 This configures:
 - ✅ Persistent GitHub CLI authentication
@@ -241,7 +241,7 @@ The auto-healing system monitors **every workflow** in this repository:
 - **[Complete Auto-Healing Guide](AUTO_HEALING_GUIDE.md)** - Full documentation ⭐
 - **[Quickstart Guide](QUICKSTART-copilot-autohealing.md)** - Get started in 5 minutes
 - **[Copilot Integration Docs](README-copilot-autohealing.md)** - How Copilot Agent works
-- **[Configuration](workflow-auto-fix-config.yml)** - Customize behavior
+- **[Configuration](../config/workflow-auto-fix-config.yml)** - Customize behavior
 
 #### Issue-to-Draft-PR System
 - **[Complete Issue-to-PR Guide](README-issue-to-draft-pr.md)** - Full documentation ⭐
@@ -261,9 +261,9 @@ The auto-healing system monitors **every workflow** in this repository:
 | [issue-to-draft-pr.yml](issue-to-draft-pr.yml) | **Convert ALL issues to draft PRs with Copilot** | ✅ Active | On issue created/reopened |
 | [pr-copilot-reviewer.yml](pr-copilot-reviewer.yml) | **Auto-assign Copilot to PRs for review/implementation** | ✅ Active | On PR opened/reopened/ready_for_review |
 | [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Auto-healing with Copilot Agent** | ✅ Active | On any workflow failure (17 monitored) |
-| [update-autohealing-list.yml](update-autohealing-list.yml) | **Auto-update monitored workflows** | ✅ Active | On workflow file changes |
-| [enhanced-autohealing.yml](enhanced-autohealing.yml) | Enhanced auto-healing | ⛔ Disabled | Used unsupported wildcard |
-| [workflow-auto-fix.yml](workflow-auto-fix.yml) | Legacy auto-fix system | ⛔ Disabled | Superseded by copilot-agent |
+| [update-autohealing-list.yml.disabled](update-autohealing-list.yml.disabled) | **Auto-update monitored workflows** | ⛔ Disabled | Workflow file changes require manual updates |
+| [enhanced-autohealing.yml.disabled](enhanced-autohealing.yml.disabled) | Enhanced auto-healing | ⛔ Disabled | Used unsupported wildcard |
+| [workflow-auto-fix.yml.disabled](workflow-auto-fix.yml.disabled) | Legacy auto-fix system | ⛔ Disabled | Superseded by copilot-agent |
 
 ### CI/CD Workflows
 
@@ -365,7 +365,7 @@ python .github/scripts/analyze_autohealing_metrics.py
 
 ## Configuration
 
-Edit [workflow-auto-fix-config.yml](workflow-auto-fix-config.yml) to customize:
+Edit [workflow-auto-fix-config.yml](../config/workflow-auto-fix-config.yml) to customize:
 
 ```yaml
 # Enable/disable
@@ -566,8 +566,8 @@ python .github/scripts/analyze_autohealing_metrics.py --days 7
 
 - [Auto-Healing Guide](README-copilot-autohealing.md)
 - [Quickstart](QUICKSTART-copilot-autohealing.md)
-- [Configuration](workflow-auto-fix-config.yml)
-- [Scripts Documentation](.github/scripts/README.md)
+- [Configuration](../config/workflow-auto-fix-config.yml)
+- [Scripts Documentation](../scripts/README.md)
 
 ### Getting Help
 
@@ -678,9 +678,9 @@ jobs:
 ### Auto-Healing System
 - 📖 [Full Documentation](README-copilot-autohealing.md)
 - 🚀 [Quickstart Guide](QUICKSTART-copilot-autohealing.md)
-- ⚙️ [Configuration](workflow-auto-fix-config.yml)
+- ⚙️ [Configuration](../config/workflow-auto-fix-config.yml)
 - 📊 [View Metrics](../scripts/analyze_autohealing_metrics.py)
-- 🔍 [View Auto-Healing PRs](../../pulls?q=is%3Apr+label%3Aauto-healing)
+- 🔍 [View Auto-Healing PRs](https://github.com/endomorphosis/ipfs_datasets_py/pulls?q=is%3Apr+label%3Aauto-healing)
 - 🤖 [Copilot CLI Integration](./COPILOT-CLI-INTEGRATION.md)
 
 ### Architecture & Maintenance

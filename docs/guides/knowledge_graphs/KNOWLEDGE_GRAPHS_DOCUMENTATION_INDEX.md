@@ -12,16 +12,16 @@ This directory contains comprehensive documentation for transforming `ipfs_datas
 ### 🎯 Start Here
 
 **⭐ NEW: For Current Status (2026-02-15):**
-- 👉 **[KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](./KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)** - **Phase 1 COMPLETE** - 210/210 tests passing
+- 👉 **[KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_CURRENT_STATUS.md)** - **Phase 1 COMPLETE** - 210/210 tests passing
 
 **For Developers Starting Implementation:**
-- 👉 **[KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)** - Executive summary with "First Week" guide
+- 👉 **[KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)** - Executive summary with "First Week" guide
 
 **For Neo4j Users Migrating:**
 - 👉 **[KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md](./KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md)** - Step-by-step migration guide
 
 **For Project Planning:**
-- 👉 **[KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)** - Complete 16-week refactoring plan
+- 👉 **[KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)** - Complete 16-week refactoring plan
 
 ---
 
@@ -29,7 +29,7 @@ This directory contains comprehensive documentation for transforming `ipfs_datas
 
 ### Current Status Documents
 
-#### 0. [KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](./KNOWLEDGE_GRAPHS_CURRENT_STATUS.md) ⭐ NEW
+#### 0. [KNOWLEDGE_GRAPHS_CURRENT_STATUS.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_CURRENT_STATUS.md) ⭐ NEW
 **13KB | Current Implementation Status**
 
 Complete status report as of 2026-02-15 with Phase 1 completion.
@@ -55,7 +55,7 @@ Complete status report as of 2026-02-15 with Phase 1 completion.
 
 ### Planning & Strategy Documents
 
-#### 1. [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)
+#### 1. [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md)
 **40KB | Complete 6-Phase Plan**
 
 The master blueprint for the complete refactoring initiative.
@@ -80,7 +80,7 @@ The master blueprint for the complete refactoring initiative.
 
 ---
 
-#### 2. [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
+#### 2. [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
 **21KB | Executive Summary**
 
 A focused, implementation-oriented summary for developers.
@@ -204,7 +204,7 @@ Comprehensive feature comparison and status tracking.
 
 ---
 
-#### 8. [KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md)
+#### 8. [KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md)
 **21KB | Original Roadmap**
 
 Original implementation roadmap (pre-refactoring plan).
@@ -221,7 +221,7 @@ Original implementation roadmap (pre-refactoring plan).
 
 ---
 
-#### 9. [KNOWLEDGE_GRAPHS_PHASES_4_5_COMPLETE.md](./KNOWLEDGE_GRAPHS_PHASES_4_5_COMPLETE.md)
+#### 9. [KNOWLEDGE_GRAPHS_PHASES_4_5_COMPLETE.md](../../archive/knowledge_graphs/phase_reports/KNOWLEDGE_GRAPHS_PHASES_4_5_COMPLETE.md)
 **13KB | Completion Report**
 
 Report on completion of Phases 4-5 (JSON-LD and Advanced Features).
@@ -238,7 +238,7 @@ Report on completion of Phases 4-5 (JSON-LD and Advanced Features).
 
 ---
 
-#### 10. [KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md](./KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md)
+#### 10. [KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_SUMMARY.md)
 **14KB | Refactoring Overview**
 
 Summary of previous refactoring efforts.
@@ -254,7 +254,7 @@ Summary of previous refactoring efforts.
 
 ---
 
-#### 11. [KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md)
+#### 11. [KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md)
 **37KB | Original Neo4j Plan**
 
 Original (older) Neo4j compatibility plan.
@@ -274,24 +274,24 @@ Original (older) Neo4j compatibility plan.
 ## 🎯 Quick Navigation by Use Case
 
 ### "I want to implement the graph database"
-1. Start: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - "First Week" section
-2. Reference: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Detailed task breakdowns
+1. Start: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - "First Week" section
+2. Reference: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Detailed task breakdowns
 3. Lookup: [KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md](./KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md) - Common patterns
 
 ### "I want to migrate from Neo4j"
 1. Start: [KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md](./KNOWLEDGE_GRAPHS_NEO4J_API_MIGRATION.md) - Step-by-step guide
-2. Reference: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Feature parity matrix
+2. Reference: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Feature parity matrix
 3. Tools: Phase 2, Task 2.5 - Migration tooling
 
 ### "I want to understand current status"
-1. Overview: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Current state analysis
+1. Overview: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Current state analysis
 2. Features: [KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) - Feature tracking
-3. Progress: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Phase tracking
+3. Progress: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Phase tracking
 
 ### "I want to plan resources/timeline"
-1. Planning: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Complete 16-week timeline
-2. Tasks: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Hour estimates per task
-3. Metrics: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Success metrics
+1. Planning: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Complete 16-week timeline
+2. Tasks: [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Hour estimates per task
+3. Metrics: [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Success metrics
 
 ### "I need to update legacy code"
 1. Guide: [KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md](./KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md) - Legacy API migration
@@ -343,16 +343,16 @@ Original (older) Neo4j compatibility plan.
 
 **Day 1: Understand the Current State**
 1. Read [KNOWLEDGE_GRAPHS_README.md](./KNOWLEDGE_GRAPHS_README.md) - Module overview
-2. Read [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Current status
+2. Read [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md) - Current status
 3. Browse [KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md](./KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md) - What's implemented
 
 **Day 2: Understand the Architecture**
-1. Read [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Architecture section
+1. Read [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Architecture section
 2. Study code in `knowledge_graphs/` directory
 3. Run existing tests: `pytest tests/unit/knowledge_graphs/`
 
 **Day 3-5: Start Contributing**
-1. Pick a task from [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](./KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
+1. Pick a task from [KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_IMPLEMENTATION_SUMMARY.md)
 2. Follow "First Week" guide
 3. Refer to [KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md](./KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md) for common patterns
 
@@ -364,7 +364,7 @@ Original (older) Neo4j compatibility plan.
 3. Refer to compatibility matrix for feature gaps
 
 **Understanding Differences**
-1. Review [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](./KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Feature parity matrix
+1. Review [KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md](../../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_REFACTORING_PLAN.md) - Feature parity matrix
 2. Understand IPFS-unique features (JSON-LD, content addressing, vector embeddings)
 
 ---

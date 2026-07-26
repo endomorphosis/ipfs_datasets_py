@@ -29,8 +29,8 @@ For example skeleton test stubs, see: /home/kylerose1946/ipfs_datasets_py/_examp
   - [x] Create import path validation script
   - [x] **Result**: All 1,208 imports across 562 test files now validate successfully
   - [x] **Scripts Created**: 
-    - [`scripts/validate_import_paths.py`](scripts/README_validate_import_paths.md) - Comprehensive import validation tool
-    - [`scripts/fix_import_paths.py`](scripts/README_fix_import_paths.md) - Auto-generated fix script
+    - [`scripts/validate_import_paths.py`](../../../scripts/README_validate_import_paths.md) - Comprehensive import validation tool
+    - [`scripts/fix_import_paths.py`](../../../scripts/README_fix_import_paths.md) - Auto-generated fix script
 
 - [x] **Reduce mock pollution in existing tests** ✅ PHASE 1 COMPLETED (2025-01-15)
   - [x] Identify all mocked tools that should have real tests ✅ COMPLETED (2025-01-15)
@@ -328,13 +328,13 @@ For example skeleton test stubs, see: /home/kylerose1946/ipfs_datasets_py/_examp
 
 ### Supporting Scripts
 - [x] **Import Path Validation System** ✅ COMPLETED (2025-01-15)
-  - [`scripts/validate_import_paths.py`](scripts/README_validate_import_paths.md) - Comprehensive import validation tool
+  - [`scripts/validate_import_paths.py`](../../../scripts/README_validate_import_paths.md) - Comprehensive import validation tool
     - Discovers all test files with MCP imports
     - Maps actual MCP tool structure
     - Validates import paths against real files
     - Generates auto-fix scripts
     - **Achievement**: 1,208 imports validated across 562 files
-  - [`scripts/fix_import_paths.py`](scripts/README_fix_import_paths.md) - Auto-generated fix application
+  - [`scripts/fix_import_paths.py`](../../../scripts/README_fix_import_paths.md) - Auto-generated fix application
     - Applies exact import corrections
     - Batch processes multiple files
     - Safe string replacement operations
@@ -412,7 +412,7 @@ For example skeleton test stubs, see: /home/kylerose1946/ipfs_datasets_py/_examp
 
 ### Use This Checklist To Track Progress
 - ✅ **Infrastructure Phase**: Import path validation system created and all issues resolved
-  - ✅ **Scripts Available**: [validate_import_paths.py](scripts/README_validate_import_paths.md) and [fix_import_paths.py](scripts/README_fix_import_paths.md)
+  - ✅ **Scripts Available**: [validate_import_paths.py](../../../scripts/README_validate_import_paths.md) and [fix_import_paths.py](../../../scripts/README_fix_import_paths.md)
 - ✅ **Mock Pollution Phase**: Test structure standardized and mock pollution reduced
   - ✅ **Test Stubs Created**: PDF tools (31 stubs), YT-DLP tools (39 stubs), Vector tools (46 stubs)
 - 🚨 **Current Phase**: Zero-coverage categories (highest impact)

@@ -24,7 +24,7 @@ Documentation on MCP++ alignment (v1–v39 complete). Covers:
 ### [DUAL_RUNTIME_ARCHITECTURE.md](./DUAL_RUNTIME_ARCHITECTURE.md)
 Detailed dual-runtime architecture document.
 
-### [adr/](./adr/)
+### [adr/](../adr/)
 Architecture Decision Records:
 - **ADR-001** — Thin wrapper pattern
 - **ADR-002** — Dual-runtime design

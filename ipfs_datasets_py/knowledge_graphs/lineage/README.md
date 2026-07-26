@@ -474,8 +474,8 @@ pytest tests/knowledge_graphs/test_lineage/test_metrics.py -v
 
 - **[Extraction Module](../extraction/README.md)** - Knowledge graph extraction
 - **[Query Module](../query/README.md)** - Graph querying
-- **[USER_GUIDE.md](../../../../docs/knowledge_graphs/USER_GUIDE.md)** - Usage guide
-- **[API_REFERENCE.md](../../../../docs/knowledge_graphs/API_REFERENCE.md)** - Complete API
+- **[USER_GUIDE.md](../../../docs/knowledge_graphs/USER_GUIDE.md)** - Usage guide
+- **[API_REFERENCE.md](../../../docs/knowledge_graphs/API_REFERENCE.md)** - Complete API
 
 ---
 

@@ -1307,9 +1307,9 @@ The system is ready for production deployment and real-world logic extraction ta
 
 ## References
 
-- [Phase 1 Documentation](./README.md)
+- [Phase 1 Documentation](./QUICK_START.md)
 - [Architecture Documentation](./ARCHITECTURE.md)
 - [Implementation Summary](./IMPLEMENTATION_SUMMARY.md)
-- [Demo Script](../../scripts/demo/demonstrate_logic_optimizer.py)
-- [Test Suite](../../tests/unit_tests/optimizers/test_prover_integration.py)
+- [Demo Script](../../../scripts/demo/demonstrate_logic_optimizer.py)
+- [Test Suite](../../../tests/unit_tests/optimizers/test_prover_integration.py)
 - [complaint-generator](https://github.com/endomorphosis/complaint-generator) - Original inspiration

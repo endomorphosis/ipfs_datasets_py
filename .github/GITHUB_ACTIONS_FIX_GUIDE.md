@@ -263,9 +263,9 @@ python .github/scripts/copilot_workflow_helper.py suggest "list workflow runs"
 - [Copilot CLI Agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)
 
 ### Internal Documentation
-- [Workflow README](.github/workflows/README.md)
-- [Auto-Healing Guide](.github/workflows/AUTO_HEALING_GUIDE.md)
-- [Scripts README](.github/scripts/README.md)
+- [Workflow Architecture](workflows/ARCHITECTURE.md)
+- [Auto-Healing Guide](workflows/AUTO_HEALING_GUIDE.md)
+- [Scripts README](scripts/README.md)
 
 ## Monitoring
 

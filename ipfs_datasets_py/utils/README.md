@@ -89,7 +89,7 @@ The utils module integrates seamlessly with other IPFS Datasets components:
 
 ## See Also
 
-- [Embeddings Module](../embeddings/README.md) - Embedding generation using processed text
+- [Embeddings Module](../ml/embeddings/README.md) - Embedding generation using processed text
 - [PDF Processing](../processors/pdf_processing.py) - PDF text extraction and processing
 - [Search Module](../search/README.md) - Text indexing and search capabilities
 - [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval workflows

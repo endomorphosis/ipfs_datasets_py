@@ -412,5 +412,5 @@ To add new features:
 **Quick Links**:
 - [Main README](./README.md)
 - [Improvement Plan](./FINANCE_DASHBOARD_IMPROVEMENT_PLAN.md)
-- [Implementation Summary](./FINANCE_DASHBOARD_IMPLEMENTATION_SUMMARY.md)
-- [Module Documentation](./ipfs_datasets_py/mcp_server/tools/finance_data_tools/README.md)
+- [Implementation Summary](../reports/finance_dashboard_implementation_summary.md)
+- [Module Documentation](../../ipfs_datasets_py/mcp_server/tools/finance_data_tools/README.md)

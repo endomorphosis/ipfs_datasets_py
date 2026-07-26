@@ -187,7 +187,7 @@ The search module integrates with:
 ## See Also
 
 - [Vector Stores](../vector_stores/README.md) - Backend storage systems
-- [Embeddings](../embeddings/README.md) - Embedding generation
+- [Embeddings](../ml/embeddings/README.md) - Embedding generation
 - [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
-- [IPLD Module](../ipld/README.md) - Content-addressed data structures
-- [Performance Optimization](../../docs/performance_optimization.md) - Detailed optimization guide
+- [IPLD Module](../processors/storage/ipld/README.md) - Content-addressed data structures
+- [Performance Optimization](../../docs/guides/performance_optimization.md) - Detailed optimization guide

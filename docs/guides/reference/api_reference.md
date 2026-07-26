@@ -445,10 +445,10 @@ except IPFSConnectionError as e:
 
 ## 📚 **Additional Resources**
 
-- **[Complete Examples](../examples/)** - Working code for all APIs
-- **[Testing Guide](guides/TESTING_GUIDE.md)** - How to test your code
-- **[Performance Guide](guides/performance_optimization.md)** - Optimization strategies
-- **[Troubleshooting](guides/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Complete Examples](../../examples/)** - Working code for all APIs
+- **[Testing Guide](../../TESTING_STRATEGY.md)** - How to test your code
+- **[Performance Guide](../performance_optimization.md)** - Optimization strategies
+- **[Troubleshooting](../FAQ.md)** - Common issues and solutions
 
 ---
 
@@ -456,4 +456,4 @@ except IPFSConnectionError as e:
 **📊 Coverage**: 100% documented  
 **✅ Status**: Production ready  
 
-[← Back to Documentation](MASTER_DOCUMENTATION_INDEX_NEW.md) | [Examples →](../examples/)
+[← Back to Documentation](../../index.md) | [Examples →](../../examples/)

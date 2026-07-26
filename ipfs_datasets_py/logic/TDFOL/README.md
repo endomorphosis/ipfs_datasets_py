@@ -296,7 +296,7 @@ analyze_proof_dependencies(result, output_dir="./output")
 
 **Status:** ✅ COMPLETE  
 **Delivered:** 2,721 LOC (1,703 implementation + 1,018 tests)  
-**Documentation:** [PHASE4_COMPLETE.md](PHASE4_COMPLETE.md)
+**Documentation:** [PHASE4_COMPLETE.md](../../../docs/logic/archive/PHASE4_COMPLETE.md)
 
 **Goals Achieved:**
 - ✅ Logic-aware entity extraction (7 entity types)
@@ -334,7 +334,7 @@ result = rag.query("What must Alice do?")
 
 **Status:** ✅ COMPLETE  
 **Delivered:** 1,530 LOC (940 implementation + 320 tests + 270 demo)  
-**Documentation:** [PHASE5_COMPLETE.md](PHASE5_COMPLETE.md)
+**Documentation:** [PHASE5_COMPLETE.md](../../../docs/logic/archive/PHASE5_COMPLETE.md)
 
 **Goals Achieved:**
 - ✅ Unified NeurosymbolicGraphRAG class integrating all phases
@@ -375,7 +375,7 @@ print(query_result.reasoning_chain)  # Shows complete logical reasoning
 ### ✅ Phase 6: Testing & Documentation (Weeks 11-12) - COMPLETE
 
 **Status:** ✅ COMPLETE  
-**Documentation:** [PHASE6_COMPLETE.md](PHASE6_COMPLETE.md)
+**Documentation:** [PHASE6_COMPLETE.md](../../../docs/logic/archive/PHASE6_COMPLETE.md)
 
 **Goals Achieved:**
 - ✅ 97 comprehensive tests across all phases (target: 180)
@@ -544,9 +544,9 @@ pytest tests/unit_tests/logic/TDFOL/ --cov=ipfs_datasets_py.logic.TDFOL
 ### 🔄 Planned: Phases 7-12 (Advanced Features)
 
 **See comprehensive planning documents:**
-- 📖 **[COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)** - Complete 80+ page technical plan
-- 📋 **[REFACTORING_EXECUTIVE_SUMMARY.md](./REFACTORING_EXECUTIVE_SUMMARY.md)** - High-level overview and metrics
-- 📚 **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - Checklists and quick navigation
+- 📖 **[COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](../../../docs/logic/TDFOL/ARCHIVE/COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)** - Complete 80+ page technical plan
+- 📋 **[REFACTORING_EXECUTIVE_SUMMARY.md](../../../docs/logic/TDFOL/ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY.md)** - High-level overview and metrics
+- 📚 **[QUICK_REFERENCE.md](../../../docs/logic/TDFOL/QUICK_REFERENCE.md)** - Checklists and quick navigation
 
 **Phase 7: Natural Language Processing** (3-4 weeks)  
 - Pattern-based NL → TDFOL conversion  
@@ -592,7 +592,7 @@ pytest tests/unit_tests/logic/TDFOL/ --cov=ipfs_datasets_py.logic.TDFOL
 
 ## API Reference
 
-See [`TDFOL_API.md`](./TDFOL_API.md) for complete API documentation.
+See [`INDEX.md`](../../../docs/logic/TDFOL/INDEX.md) for the maintained TDFOL API and documentation index.
 
 ## Contributing
 
@@ -619,9 +619,9 @@ Part of the ipfs_datasets_py project. See main repository for license.
 ## 📚 Documentation Index
 
 - **README.md** (this file) - Module overview and usage
-- **[COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)** - Complete Phases 7-12 technical plan (1,850+ lines)
-- **[REFACTORING_EXECUTIVE_SUMMARY.md](./REFACTORING_EXECUTIVE_SUMMARY.md)** - High-level overview and metrics (380+ lines)
-- **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - Checklists and quick navigation (500+ lines)
+- **[COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](../../../docs/logic/TDFOL/ARCHIVE/COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md)** - Complete Phases 7-12 technical plan (1,850+ lines)
+- **[REFACTORING_EXECUTIVE_SUMMARY.md](../../../docs/logic/TDFOL/ARCHIVE/REFACTORING_EXECUTIVE_SUMMARY.md)** - High-level overview and metrics (380+ lines)
+- **[QUICK_REFERENCE.md](../../../docs/logic/TDFOL/QUICK_REFERENCE.md)** - Checklists and quick navigation (500+ lines)
 
 ---
 

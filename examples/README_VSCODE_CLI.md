@@ -70,4 +70,4 @@ Examples completed!
 
 ## More Examples
 
-For more comprehensive usage examples, see the [VSCode CLI Integration Documentation](../docs/VSCODE_CLI_INTEGRATION.md).
+For more comprehensive usage examples, see the [VSCode CLI Integration Documentation](../docs/guides/infrastructure/vscode_cli_integration.md).
