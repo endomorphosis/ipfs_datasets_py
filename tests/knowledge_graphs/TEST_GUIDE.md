@@ -588,7 +588,7 @@ pytest tests/performance/knowledge_graphs/test_benchmarks.py --benchmark-only
 ## See Also
 
 - [Knowledge Graphs README](../../ipfs_datasets_py/knowledge_graphs/README.md)
-- [MASTER_STATUS.md](../../ipfs_datasets_py/knowledge_graphs/MASTER_STATUS.md) - Current status (single source of truth)
+- [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) - Current status (single source of truth)
 - [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md)
 
 ---
