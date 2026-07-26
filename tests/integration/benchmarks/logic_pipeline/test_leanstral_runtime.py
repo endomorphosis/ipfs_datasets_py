@@ -104,13 +104,27 @@ def _p2p_evidence(lock: provision.LeanstralRuntimeLock) -> dict[str, object]:
         "bootstrap_exercises": [
             {
                 "mechanism": "bootstrap",
-                "target": lock.p2p["bootstrap_peers"][0],
+                "target": target,
                 "attempted": True,
                 "success": True,
                 "timeout_s": 2.0,
                 "duration_ms": 25.0,
                 "error": None,
-                "observer_peer_id": "",
+                "observer_peer_id": peer_id,
+                "namespace": "",
+                "details": {},
+            }
+            for target in lock.p2p["bootstrap_peers"]
+        ] + [
+            {
+                "mechanism": "bootstrap",
+                "target": advertised[0],
+                "attempted": True,
+                "success": True,
+                "timeout_s": 2.0,
+                "duration_ms": 20.0,
+                "error": None,
+                "observer_peer_id": client_peer_id,
                 "namespace": "",
                 "details": {},
             }
@@ -118,7 +132,7 @@ def _p2p_evidence(lock: provision.LeanstralRuntimeLock) -> dict[str, object]:
         "rendezvous_exercises": [
             {
                 "mechanism": "rendezvous",
-                "target": peer_id,
+                "target": advertised[0],
                 "attempted": True,
                 "success": True,
                 "timeout_s": 2.0,
@@ -189,7 +203,7 @@ def _p2p_evidence(lock: provision.LeanstralRuntimeLock) -> dict[str, object]:
         ],
         "server_instance_count": 1,
         "inference_attempted": False,
-        "http_port": 8000,
+        "http_port": 8080,
         "notes": ["synthetic non-inference topology evidence"],
     }
 
@@ -615,6 +629,12 @@ def test_configured_p2p_requires_complete_cid_bound_non_inference_topology() -> 
         "valid": True,
         "errors": [],
     }
+    wrapped = provision.verify_p2p_evidence(
+        lock,
+        result["topology_receipt"],
+    )
+    assert wrapped["topology_receipt"] == result["topology_receipt"]
+    assert wrapped["topology_receipt_cid"] == result["topology_receipt_cid"]
 
     wrong_port = json.loads(json.dumps(valid))
     wrong_port["advertised_multiaddrs"][0] = (
@@ -640,6 +660,117 @@ def test_configured_p2p_requires_complete_cid_bound_non_inference_topology() -> 
     ):
         with pytest.raises(provision.LeanstralProvisioningError, match=message):
             provision.verify_p2p_evidence(lock, changed)
+
+
+def test_p2p_receipt_rejects_tampering_and_unpinned_bootstrap_peers() -> None:
+    lock = provision.load_lock(LOCK_PATH)
+    valid = _p2p_evidence(lock)
+    receipt = provision.verify_p2p_evidence(
+        lock,
+        valid,
+    )["topology_receipt"]
+
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="field names must be strings",
+    ):
+        provision.verify_p2p_evidence(lock, {1: "invalid"})
+
+    tampered_receipt = json.loads(json.dumps(receipt))
+    tampered_receipt["validation"]["valid"] = False
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="canonical CID-bound receipt",
+    ):
+        provision.verify_p2p_evidence(lock, tampered_receipt)
+
+    type_confused_receipt = json.loads(json.dumps(receipt))
+    type_confused_receipt["contract"]["inference_required"] = 0
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="canonical CID-bound receipt",
+    ):
+        provision.verify_p2p_evidence(lock, type_confused_receipt)
+
+    arbitrary_peer = json.loads(json.dumps(valid))
+    arbitrary_peer["bootstrap_exercises"][-1]["target"] = (
+        "/dnsaddr/unpinned.example/p2p/12D3KooWUnpinnedPeer"
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="unpinned peer identity",
+    ):
+        provision.verify_p2p_evidence(lock, arbitrary_peer)
+
+    missing_public_peer = json.loads(json.dumps(valid))
+    missing_public_peer["bootstrap_exercises"].pop(0)
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="every frozen public peer",
+    ):
+        provision.verify_p2p_evidence(lock, missing_public_peer)
+
+    for safe_error in ("connect_failed", "timeout"):
+        bounded_public_failure = json.loads(json.dumps(valid))
+        bounded_public_failure["bootstrap_exercises"][0]["success"] = False
+        bounded_public_failure["bootstrap_exercises"][0]["error"] = safe_error
+        provision.verify_p2p_evidence(lock, bounded_public_failure)
+
+    unsafe_public_failure = json.loads(json.dumps(valid))
+    unsafe_public_failure["bootstrap_exercises"][0]["success"] = False
+    unsafe_public_failure["bootstrap_exercises"][0]["error"] = (
+        "arbitrary/internal path"
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="inconsistent with its error",
+    ):
+        provision.verify_p2p_evidence(lock, unsafe_public_failure)
+
+
+def test_p2p_receipt_strictly_binds_the_independent_service_bootstrap() -> None:
+    lock = provision.load_lock(LOCK_PATH)
+    valid = _p2p_evidence(lock)
+
+    wrong_target = json.loads(json.dumps(valid))
+    wrong_target["bootstrap_exercises"][-1]["target"] = (
+        wrong_target["advertised_multiaddrs"][1]
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="direct-dial target",
+    ):
+        provision.verify_p2p_evidence(lock, wrong_target)
+
+    duplicate = json.loads(json.dumps(valid))
+    duplicate["bootstrap_exercises"].append(
+        json.loads(json.dumps(duplicate["bootstrap_exercises"][-1]))
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="exactly one independent client service bootstrap",
+    ):
+        provision.verify_p2p_evidence(lock, duplicate)
+
+    wrong_client = json.loads(json.dumps(valid))
+    wrong_client["bootstrap_exercises"][-1]["observer_peer_id"] = (
+        wrong_client["peer_id"]
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="independent client",
+    ):
+        provision.verify_p2p_evidence(lock, wrong_client)
+
+    successful_local_error = json.loads(json.dumps(valid))
+    successful_local_error["bootstrap_exercises"][-1]["error"] = (
+        "connect_failed"
+    )
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="independent client",
+    ):
+        provision.verify_p2p_evidence(lock, successful_local_error)
 
 
 def test_leanstral_discovery_preserves_symai_router_provenance() -> None:
@@ -865,3 +996,18 @@ def test_receipt_validation_detects_tampering_and_secret_fields() -> None:
     missing_draft["receipt_sha256"] = provision.semantic_sha256(unsigned)
     with pytest.raises(provision.LeanstralProvisioningError, match="untrusted"):
         provision.validate_receipt(lock, missing_draft)
+
+    topology_tampered = json.loads(json.dumps(receipt))
+    topology_tampered["p2p"]["topology_receipt"]["contract"]["p2p_port"] = (
+        19002
+    )
+    unsigned = dict(topology_tampered)
+    unsigned.pop("receipt_cid")
+    unsigned.pop("receipt_sha256")
+    topology_tampered["receipt_cid"] = provision.cid_for_dag_json(unsigned)
+    topology_tampered["receipt_sha256"] = provision.semantic_sha256(unsigned)
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="canonical CID-bound receipt",
+    ):
+        provision.validate_receipt(lock, topology_tampered)

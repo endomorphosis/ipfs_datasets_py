@@ -664,6 +664,36 @@ def verify_p2p_evidence(
 
     if not isinstance(evidence, Mapping):
         raise LeanstralProvisioningError("configured P2P provider requires transport evidence")
+    if any(not isinstance(field, str) for field in evidence):
+        raise LeanstralProvisioningError(
+            "P2P topology evidence field names must be strings"
+        )
+
+    receipt_fields = {
+        "address_selection",
+        "contract",
+        "observation",
+        "receipt_cid",
+        "schema",
+        "validation",
+    }
+    evidence_fields = set(evidence)
+    receipt_envelope = bool(evidence_fields & receipt_fields)
+    topology_observation: Mapping[str, Any] = evidence
+    if receipt_envelope:
+        missing = sorted(receipt_fields - evidence_fields)
+        unknown = sorted(evidence_fields - receipt_fields)
+        if missing or unknown:
+            raise LeanstralProvisioningError(
+                "P2P topology receipt fields differ "
+                f"(missing={missing}, unknown={unknown})"
+            )
+        candidate_observation = evidence.get("observation")
+        if not isinstance(candidate_observation, Mapping):
+            raise LeanstralProvisioningError(
+                "P2P topology receipt observation must be an object"
+            )
+        topology_observation = candidate_observation
 
     with _preserve_import_path():
         try:
@@ -674,14 +704,26 @@ def verify_p2p_evidence(
                 topology_module,
                 "validate_leanstral_topology_mapping",
             )
-            if not callable(validate_leanstral_topology_mapping):
+            canonical_json_cid = getattr(
+                topology_module,
+                "canonical_json_cid",
+            )
+            if not all(
+                callable(value)
+                for value in (
+                    validate_leanstral_topology_mapping,
+                    canonical_json_cid,
+                )
+            ):
                 raise AttributeError("topology validator is not callable")
         except (SourceBoundImportError, AttributeError) as exc:
             raise LeanstralProvisioningError(
                 "Leanstral P2P topology validator is unavailable"
             ) from exc
         try:
-            validation = validate_leanstral_topology_mapping(evidence)
+            validation = validate_leanstral_topology_mapping(
+                topology_observation
+            )
         except (TypeError, ValueError, RuntimeError) as exc:
             raise LeanstralProvisioningError(
                 f"P2P topology evidence is malformed: {exc}"
@@ -690,6 +732,24 @@ def verify_p2p_evidence(
         raise LeanstralProvisioningError(
             "P2P topology evidence failed: " + ", ".join(validation.errors)
         )
+    if receipt_envelope:
+        supplied_receipt = dict(evidence)
+        supplied_cid = supplied_receipt.pop("receipt_cid")
+        try:
+            recomputed_cid = canonical_json_cid(supplied_receipt)
+        except (TypeError, ValueError) as exc:
+            raise LeanstralProvisioningError(
+                "P2P topology receipt is not canonical JSON"
+            ) from exc
+        if (
+            type(supplied_cid) is not str
+            or supplied_cid != recomputed_cid
+            or supplied_cid != validation.receipt_cid
+            or dict(evidence) != dict(validation.receipt)
+        ):
+            raise LeanstralProvisioningError(
+                "P2P topology receipt is not the canonical CID-bound receipt"
+            )
 
     observation = validation.receipt["observation"]
     if tuple(observation["listen_addrs"]) != tuple(lock.p2p["listen_addrs"]):
@@ -705,15 +765,82 @@ def verify_p2p_evidence(
         raise LeanstralProvisioningError(
             "P2P evidence did not advertise every frozen active local address"
         )
-    bootstrap_targets = {
-        item["target"] for item in observation["bootstrap_exercises"]
-    }
-    if not bootstrap_targets or not bootstrap_targets <= set(
-        lock.p2p["bootstrap_peers"]
+
+    bootstrap_exercises = observation["bootstrap_exercises"]
+    pinned_bootstraps = set(lock.p2p["bootstrap_peers"])
+    public_exercises = [
+        item for item in bootstrap_exercises
+        if item["target"] in pinned_bootstraps
+    ]
+    public_targets = {item["target"] for item in public_exercises}
+    if (
+        public_targets != pinned_bootstraps
+        or len(public_exercises) != len(pinned_bootstraps)
+    ):
+        raise LeanstralProvisioningError(
+            "P2P bootstrap exercises did not match every frozen public peer"
+        )
+    if any(
+        item["observer_peer_id"] != observation["peer_id"]
+        or item["attempted"] is not True
+        for item in public_exercises
+    ):
+        raise LeanstralProvisioningError(
+            "P2P public bootstrap exercise was not attempted by the service peer"
+        )
+    if not any(item["success"] is True for item in public_exercises):
+        raise LeanstralProvisioningError(
+            "P2P evidence requires at least one successful public bootstrap"
+        )
+    if any(
+        (item["success"] is True and item["error"] is not None)
+        or (
+            item["success"] is False
+            and item["error"] not in {"connect_failed", "timeout"}
+        )
+        for item in public_exercises
+    ):
+        raise LeanstralProvisioningError(
+            "P2P public bootstrap result is inconsistent with its error"
+        )
+
+    independent_dial = observation["independent_dial"]
+    independent_target = independent_dial["target_multiaddr"]
+    if independent_target not in observation["advertised_multiaddrs"]:
+        raise LeanstralProvisioningError(
+            "P2P independent client bootstrap target was not advertised"
+        )
+    independent_exercises = [
+        item for item in bootstrap_exercises
+        if item["target"] not in pinned_bootstraps
+    ]
+    if any(
+        item["target"] not in observation["advertised_multiaddrs"]
+        for item in independent_exercises
     ):
         raise LeanstralProvisioningError(
             "P2P bootstrap exercise used an unpinned peer identity"
         )
+    if len(independent_exercises) != 1:
+        raise LeanstralProvisioningError(
+            "P2P evidence requires exactly one independent client service bootstrap"
+        )
+    independent_exercise = independent_exercises[0]
+    if independent_exercise["target"] != independent_target:
+        raise LeanstralProvisioningError(
+            "P2P independent service bootstrap did not match the direct-dial target"
+        )
+    if (
+        independent_exercise["observer_peer_id"]
+        != independent_dial["dialer_peer_id"]
+        or independent_exercise["attempted"] is not True
+        or independent_exercise["success"] is not True
+        or independent_exercise["error"] is not None
+    ):
+        raise LeanstralProvisioningError(
+            "P2P service bootstrap was not completed by the independent client"
+        )
+
     for item in observation["rendezvous_exercises"]:
         if item["namespace"] != lock.p2p["rendezvous"]["namespace"]:
             raise LeanstralProvisioningError(
@@ -1082,12 +1209,7 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
         if isinstance(p2p, Mapping)
         else None
     )
-    topology_observation = (
-        topology_receipt.get("observation")
-        if isinstance(topology_receipt, Mapping)
-        else None
-    )
-    revalidated_p2p = verify_p2p_evidence(lock, topology_observation)
+    revalidated_p2p = verify_p2p_evidence(lock, topology_receipt)
     if (
         not isinstance(p2p, Mapping)
         or p2p.get("topology_receipt_cid")
