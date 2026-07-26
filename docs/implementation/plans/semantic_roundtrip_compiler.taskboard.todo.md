@@ -46,7 +46,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-001 Freeze the fair composition protocol
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -77,7 +77,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/capabilities
 - Parallel lane: capability-probe
-- Resource class: capability-probe
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip_capabilities.py, tests/unit/benchmarks/test_semantic_roundtrip_capabilities.py, workspace/benchmarks/semantic-roundtrip-compositions/capabilities.json
 - Interfaces: SemanticRoundTripCapabilityInventory@1
 - Conflict policy: Probe existing installations and services without installing, starting, stopping, replacing, or reconfiguring them; own only the new probe, test, and run-scoped receipt.
@@ -117,7 +120,7 @@ CPU preparation and result analysis run concurrently.
 - Outputs: benchmarks/semantic_roundtrip/realizers/deterministic.py, tests/unit/benchmarks/semantic_roundtrip/test_deterministic_realizer.py
 - Validation: PYTHONPATH=ipfs_accelerate_py:. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_deterministic_realizer.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/deterministic-adapters
+- Bundle: semantic-roundtrip/deterministic-realizer
 - Parallel lane: deterministic-realizer
 - Resource class: cpu-small
 - Predicted files: benchmarks/semantic_roundtrip/realizers/deterministic.py, tests/unit/benchmarks/semantic_roundtrip/test_deterministic_realizer.py
@@ -138,7 +141,7 @@ CPU preparation and result analysis run concurrently.
 - Outputs: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/test_typed_constructor.py
 - Validation: PYTHONPATH=ipfs_accelerate_py:. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_typed_constructor.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/deterministic-adapters
+- Bundle: semantic-roundtrip/typed-deontic-constructor
 - Parallel lane: typed-constructor
 - Resource class: cpu-small
 - Predicted files: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/test_typed_constructor.py
@@ -159,9 +162,9 @@ CPU preparation and result analysis run concurrently.
 - Outputs: benchmarks/semantic_roundtrip/constructors/modal_spacy.py, tests/unit/benchmarks/semantic_roundtrip/test_modal_spacy_constructor.py
 - Validation: PYTHONPATH=ipfs_accelerate_py:. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_modal_spacy_constructor.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/deterministic-adapters
+- Bundle: semantic-roundtrip/modal-spacy-constructor
 - Parallel lane: modal-spacy-constructor
-- Resource class: cpu-spacy
+- Resource class: cpu-medium
 - Predicted files: benchmarks/semantic_roundtrip/constructors/modal_spacy.py, tests/unit/benchmarks/semantic_roundtrip/test_modal_spacy_constructor.py
 - Interfaces: ModalSpacyCanonicalConstructor@1
 - Conflict policy: Reuse the pinned full spaCy frontend and modal codec through an adapter; do not change model fallback behavior or production modal semantics.
@@ -182,7 +185,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/model-adapters
 - Parallel lane: leanstral-adapters
-- Resource class: model-leanstral-one-slot
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/constructors/leanstral.py, benchmarks/semantic_roundtrip/realizers/leanstral.py, tests/unit/benchmarks/semantic_roundtrip/test_leanstral_adapters.py
 - Interfaces: LeanstralCanonicalConstructor@1, LeanstralCanonicalRealizer@1
 - Conflict policy: Own only benchmark adapters and their tests; reuse the pinned existing service and never start, replace, or duplicate the model.
@@ -203,7 +209,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/core-matrix
 - Parallel lane: core-matrix
-- Resource class: benchmark-mixed
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/matrix.py, benchmarks/bench_semantic_roundtrip_compositions.py, tests/unit/benchmarks/semantic_roundtrip/test_matrix_runner.py
 - Interfaces: SemanticRoundTripMatrix@1
 - Conflict policy: Compose registered adapters without modifying them; retain the existing pilot runner as a historical reproduction path.
@@ -224,7 +233,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/calibration
 - Parallel lane: calibration
-- Resource class: benchmark-mixed
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/calibration.py, tests/unit/benchmarks/semantic_roundtrip/test_oracle_calibration.py, tests/unit/benchmarks/semantic_roundtrip/test_realizer_source_withholding.py
 - Interfaces: OracleReverseCalibration@1, RealizerLeakageGuard@1
 - Conflict policy: Add non-ranking calibration and adversarial tests only; do not modify candidate scores or gold fixtures.
@@ -266,7 +278,7 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/learned-adapters
 - Parallel lane: autoencoder-guidance
-- Resource class: cpu-autoencoder
+- Resource class: cpu-medium
 - Predicted files: benchmarks/semantic_roundtrip/constructors/autoencoder_guided.py, tests/unit/benchmarks/semantic_roundtrip/test_autoencoder_guided_constructor.py
 - Interfaces: AutoencoderGuidedCanonicalConstructor@1
 - Conflict policy: Benchmark the existing reviewed state as bounded guidance over a declared deterministic constructor; do not relabel the current post-compiler advisor as an independent text-to-IR model and do not mutate its state.
@@ -285,9 +297,12 @@ CPU preparation and result analysis run concurrently.
 - Outputs: benchmarks/semantic_roundtrip/constructors/symai.py, benchmarks/semantic_roundtrip/realizers/symai.py, tests/unit/benchmarks/semantic_roundtrip/test_symai_roundtrip_adapters.py
 - Validation: PYTHONPATH=ipfs_accelerate_py:. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_symai_roundtrip_adapters.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/model-adapters
+- Bundle: semantic-roundtrip/symai-adapters
 - Parallel lane: symai-adapters
-- Resource class: model-leanstral-one-slot
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/constructors/symai.py, benchmarks/semantic_roundtrip/realizers/symai.py, tests/unit/benchmarks/semantic_roundtrip/test_symai_roundtrip_adapters.py
 - Interfaces: SyMAICanonicalConstructor@1, SyMAICanonicalRealizer@1
 - Conflict policy: Extend only the benchmark-facing SyMAI contract; preserve the exact inner Leanstral identity so orchestration is not counted as independent model evidence.
@@ -306,9 +321,12 @@ CPU preparation and result analysis run concurrently.
 - Outputs: benchmarks/semantic_roundtrip/selective_repair.py, tests/unit/benchmarks/semantic_roundtrip/test_selective_repair.py
 - Validation: PYTHONPATH=ipfs_accelerate_py:. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_selective_repair.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/learned-adapters
+- Bundle: semantic-roundtrip/selective-repair
 - Parallel lane: selective-repair
-- Resource class: model-proof-mixed
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/selective_repair.py, tests/unit/benchmarks/semantic_roundtrip/test_selective_repair.py
 - Interfaces: SelectiveLeanstralRepair@1, HammerCandidateSelector@1
 - Conflict policy: Operate only on bounded missing, contradictory, or low-confidence canonical slots; do not silently rewrite confident fields or let proof validity establish source semantics.
@@ -329,7 +347,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/extended-matrix
 - Parallel lane: extended-matrix
-- Resource class: benchmark-mixed
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: benchmarks/semantic_roundtrip/extended_matrix.py, tests/unit/benchmarks/semantic_roundtrip/test_extended_matrix.py
 - Interfaces: ExtendedSemanticRoundTripMatrix@1
 - Conflict policy: Register validated adapters and policies without changing their internals; serialize all users of the one physical Leanstral slot.
@@ -350,7 +371,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/execution
 - Parallel lane: pilot-execution
-- Resource class: model-leanstral-one-slot
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json, docs/benchmarks/semantic_roundtrip_composition_results.md, workspace/benchmarks/semantic-roundtrip-compositions/run_manifest.json
 - Interfaces: SemanticRoundTripCompositionDecision@1
 - Conflict policy: Write a new run namespace and immutable report only; do not overwrite the historical pilot or promote production code.
@@ -390,9 +414,12 @@ CPU preparation and result analysis run concurrently.
 - Outputs: ipfs_datasets_py/logic/legal_ir/canonical_compiler.py, tests/unit/logic/legal_ir/test_canonical_compiler.py
 - Validation: PYTHONPATH=. python -m pytest tests/unit/logic/legal_ir/test_canonical_compiler.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/canonical-implementation
+- Bundle: semantic-roundtrip/canonical-compiler
 - Parallel lane: canonical-compiler
-- Resource class: cpu-spacy
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: ipfs_datasets_py/logic/legal_ir/canonical_compiler.py, tests/unit/logic/legal_ir/test_canonical_compiler.py
 - Interfaces: CanonicalStructuredTextCompiler@1
 - Conflict policy: Own only the new canonical compiler module and test; reuse selected reviewed components through explicit adapters and do not change their public behavior.
@@ -411,9 +438,12 @@ CPU preparation and result analysis run concurrently.
 - Outputs: ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py, tests/unit/logic/legal_ir/test_canonical_decompiler.py
 - Validation: PYTHONPATH=. python -m pytest tests/unit/logic/legal_ir/test_canonical_decompiler.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
-- Bundle: semantic-roundtrip/canonical-implementation
+- Bundle: semantic-roundtrip/canonical-decompiler
 - Parallel lane: canonical-decompiler
-- Resource class: cpu-small
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py, tests/unit/logic/legal_ir/test_canonical_decompiler.py
 - Interfaces: CanonicalStructuredTextDecompiler@1
 - Conflict policy: Own only the new canonical decompiler module and test; consume canonical IR only and never recover or query the original source.
@@ -434,7 +464,10 @@ CPU preparation and result analysis run concurrently.
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/canonical-validation
 - Parallel lane: canonical-integration
-- Resource class: benchmark-mixed
+- Resource class: llm-proof-draft
+- Resource stage: inference
+- Provider ID: leanstral-local
+- Requires provider: true
 - Predicted files: ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
 - Interfaces: CanonicalSemanticRoundTrip@1
 - Conflict policy: Integrate the two new modules without altering benchmark fixtures, gold IR, score weights, or selected component implementations.

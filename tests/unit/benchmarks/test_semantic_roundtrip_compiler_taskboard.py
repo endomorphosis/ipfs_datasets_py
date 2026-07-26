@@ -29,12 +29,20 @@ REQUIRED_METADATA = {
     "validation",
     "acceptance",
     "board namespace",
+    "bundle",
     "parallel lane",
     "resource class",
     "predicted files",
     "interfaces",
     "conflict policy",
 }
+SUPPORTED_RESOURCE_CLASSES = {
+    "cpu-small",
+    "cpu-medium",
+    "llm-proof-draft",
+}
+MODEL_RESOURCE_CLASS = "llm-proof-draft"
+LEANSTRAL_PROVIDER_ID = "leanstral-local"
 
 
 def _assert_acyclic(dependencies: dict[str, tuple[str, ...]]) -> None:
@@ -77,11 +85,18 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
         assert set(task.depends_on) <= known
         assert task.task_id not in task.depends_on
         assert task.board_namespace == task.metadata["board namespace"]
+        assert task.metadata["bundle"]
         assert task.metadata["parallel lane"]
-        assert task.metadata["resource class"]
+        assert task.metadata["resource class"] in SUPPORTED_RESOURCE_CLASSES
         assert task.metadata["predicted files"]
         assert task.metadata["interfaces"]
         assert task.metadata["conflict policy"]
+        if task.metadata["resource class"] == MODEL_RESOURCE_CLASS:
+            assert task.metadata["resource stage"] == "inference"
+            assert task.metadata["provider id"] == LEANSTRAL_PROVIDER_ID
+            assert task.metadata["requires provider"] == "true"
+        else:
+            assert "provider id" not in task.metadata
 
     dependencies = {
         task.task_id: tuple(task.depends_on)
@@ -89,12 +104,19 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
     }
     _assert_acyclic(dependencies)
 
+    completed = {
+        task.task_id
+        for task in tasks
+        if task.status == "completed"
+    }
     ready = [
         task
         for task in tasks
-        if task.status == "todo" and not task.depends_on
+        if task.status == "todo"
+        and set(task.depends_on) <= completed
     ]
     assert ready, "the supervisor needs at least one initially claimable task"
+    assert {"SRT-002", "SRT-020"} <= {task.task_id for task in ready}
     assert len({task.metadata["parallel lane"] for task in ready}) >= 2
     ready_outputs = [
         output
@@ -108,3 +130,4 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
     assert "compiler" in tracks
     assert "decompiler" in tracks
     assert len({task.metadata["parallel lane"] for task in tasks}) >= 3
+    assert len({task.metadata["bundle"] for task in tasks}) == len(tasks)
