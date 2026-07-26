@@ -3736,6 +3736,7 @@ _FINAL_DECISION_VARIANTS: Final = (
 )
 _RUNBOOK_HEADINGS: Final = (
     "Purpose and authority",
+    "Revision-2 operational status: NO-GO",
     "Published decision",
     "Ownership and delegation matrix",
     "Trust boundaries and invariants",

@@ -301,7 +301,7 @@ def test_runbook_binds_replacement_and_complete_ordered_flow(
         "path": report.DEFAULT_BENCHMARK_RUNBOOK_PATH.as_posix(),
         "evidence_symbol": "HSSLEV1703E61",
         "decision_artifact_sha256": results["artifact_sha256"],
-        "heading_count": 17,
+        "heading_count": 18,
         "production_promotion_authorized": False,
     }
 
