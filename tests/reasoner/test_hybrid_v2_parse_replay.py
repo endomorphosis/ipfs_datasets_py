@@ -8,6 +8,7 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_v2_blueprint import (
     CNLParseError,
+    ConditionNodeV2,
     LegalIRV2,
     generate_cnl_from_ir,
     parse_cnl_to_ir_with_diagnostics,
@@ -57,6 +58,26 @@ def _semantic_signature(ir: LegalIRV2) -> Dict[str, Any]:
         "temporal_start": temporal_start,
         "temporal_end": temporal_end,
         "temporal_duration": temporal_duration,
+    }
+
+
+def _condition_ast_signature(condition: ConditionNodeV2) -> Dict[str, Any]:
+    return {
+        "op": condition.op,
+        "atom": (
+            {
+                "pred": condition.atom.pred,
+                "args": list(condition.atom.args),
+            }
+            if condition.atom is not None
+            else None
+        ),
+        "children": [
+            _condition_ast_signature(child)
+            for child in condition.children
+        ],
+        "var": condition.var,
+        "var_type": condition.var_type,
     }
 
 
@@ -322,3 +343,49 @@ def test_v2_roundtrip_cnl_generation_preserves_semantics_for_norm_templates() ->
         )
 
         assert _semantic_signature(ir_roundtrip) == _semantic_signature(ir), (case["id"], regenerated)
+
+
+@pytest.mark.parametrize(
+    "sentence,forbidden",
+    [
+        (
+            "Agency shall inspect records if license is active.",
+            " if if_",
+        ),
+        (
+            "Agency shall inspect records when notice arrives.",
+            " if when_",
+        ),
+        (
+            "Vendor shall not disclose data unless consent exists.",
+            " unless unless_",
+        ),
+        (
+            "Vendor shall not disclose data except court order exists.",
+            " unless except_",
+        ),
+    ],
+)
+def test_v2_cnl_generation_does_not_repeat_condition_marker_prefixes(
+    sentence: str,
+    forbidden: str,
+) -> None:
+    ir, _ = parse_cnl_to_ir_with_diagnostics(sentence, jurisdiction="us/federal")
+    norm = next(iter(ir.norms.values()))
+
+    regenerated = generate_cnl_from_ir(norm.id.ref(), ir)
+    replay_ir, _ = parse_cnl_to_ir_with_diagnostics(
+        regenerated,
+        jurisdiction="us/federal",
+    )
+    replay_norm = next(iter(replay_ir.norms.values()))
+
+    assert forbidden not in regenerated.lower()
+    assert _condition_ast_signature(replay_norm.activation) == _condition_ast_signature(norm.activation)
+    assert [
+        _condition_ast_signature(condition)
+        for condition in replay_norm.exceptions
+    ] == [
+        _condition_ast_signature(condition)
+        for condition in norm.exceptions
+    ]
