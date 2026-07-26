@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import subprocess
-import sys
-import types
 
 from ipfs_datasets_py import llm_router
 
@@ -74,7 +72,7 @@ def test_resolve_provider_uncached_forced_alias_canonicalized(monkeypatch) -> No
 
     def fake_builtin(name: str):
         calls.append(name)
-        if name == "anthropic":
+        if name == "claude":
             return _DummyProvider()
         return None
 
@@ -88,7 +86,7 @@ def test_resolve_provider_uncached_forced_alias_canonicalized(monkeypatch) -> No
     )
 
     assert isinstance(provider, _DummyProvider)
-    assert "anthropic" in calls
+    assert "claude" in calls
 
 
 def test_run_cli_command_preserves_prompt_with_quotes_in_template(monkeypatch) -> None:
@@ -149,7 +147,6 @@ def test_mistral_vibe_provider_passes_prompt_argument_and_lets_lean_agent_select
 
 def test_explicit_mistral_vibe_provider_uses_accelerator_auto_installer(monkeypatch) -> None:
     install_calls = []
-    fake_module = types.ModuleType("ipfs_accelerate_py.utils.mistral_vibe")
 
     class Result:
         available = True
@@ -160,10 +157,7 @@ def test_explicit_mistral_vibe_provider_uses_accelerator_auto_installer(monkeypa
         install_calls.append(kwargs)
         return Result()
 
-    fake_module.ensure_mistral_vibe = fake_install
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", types.ModuleType("ipfs_accelerate_py"))
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.utils", types.ModuleType("ipfs_accelerate_py.utils"))
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.utils.mistral_vibe", fake_module)
+    monkeypatch.setattr(llm_router, "ensure_mistral_vibe", fake_install)
     monkeypatch.delenv("IPFS_DATASETS_PY_MISTRAL_VIBE_CLI_CMD", raising=False)
     monkeypatch.setattr(llm_router, "_cli_available", lambda _command: False)
 
@@ -173,50 +167,86 @@ def test_explicit_mistral_vibe_provider_uses_accelerator_auto_installer(monkeypa
     assert install_calls == [{"auto_install": True}]
 
 
-def test_explicit_llama_cpp_provider_delegates_to_accelerate_router(monkeypatch) -> None:
+def test_explicit_llama_cpp_alias_uses_canonical_provider(monkeypatch) -> None:
     calls = []
-    fake_package = types.ModuleType("ipfs_accelerate_py")
-    fake_router = types.ModuleType("ipfs_accelerate_py.llm_router")
 
-    def fake_builtin(name: str, *, auto_install: bool = False):
-        calls.append((name, auto_install))
-        if name == "llama_cpp":
-            return _DummyProvider()
-        return None
+    def fake_provider(*, auto_install: bool = False):
+        calls.append(auto_install)
+        return _DummyProvider()
 
-    fake_router._builtin_provider_by_name = fake_builtin
-    fake_package.llm_router = fake_router
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", fake_package)
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.llm_router", fake_router)
+    monkeypatch.setattr(llm_router, "_get_llama_cpp_provider", fake_provider)
 
     provider = llm_router._builtin_provider_by_name("leanstral_local", auto_install=True)
 
     assert provider is not None
     assert provider.generate("hello") == "ok"
-    assert calls == [("llama_cpp", True)]
+    assert calls == [True]
 
 
-def test_explicit_llama_cpp_native_provider_delegates_to_native_accelerate_router(monkeypatch) -> None:
+def test_explicit_llama_cpp_native_uses_canonical_provider(monkeypatch) -> None:
     calls = []
-    fake_package = types.ModuleType("ipfs_accelerate_py")
-    fake_router = types.ModuleType("ipfs_accelerate_py.llm_router")
 
-    def fake_builtin(name: str, *, auto_install: bool = False):
-        calls.append((name, auto_install))
-        if name == "llama_cpp_native":
-            return _DummyProvider()
-        return None
+    def fake_provider(*, auto_install: bool = False):
+        calls.append(auto_install)
+        return _DummyProvider()
 
-    fake_router._builtin_provider_by_name = fake_builtin
-    fake_package.llm_router = fake_router
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", fake_package)
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.llm_router", fake_router)
+    monkeypatch.setattr(llm_router, "_get_llama_cpp_native_provider", fake_provider)
 
     provider = llm_router._builtin_provider_by_name("llama_cpp_native", auto_install=True)
 
     assert provider is not None
     assert provider.generate("hello") == "ok"
-    assert calls == [("llama_cpp_native", True)]
+    assert calls == [True]
+
+
+def test_explicit_grok_cli_aliases_use_canonical_provider(monkeypatch) -> None:
+    calls = []
+
+    def fake_provider():
+        calls.append("grok_cli")
+        return _DummyProvider()
+
+    monkeypatch.setattr(llm_router, "_get_grok_cli_provider", fake_provider)
+
+    for alias in ("grok", "grok_cli", "xai_cli", "grok-build-cli"):
+        provider = llm_router._builtin_provider_by_name(alias)
+        assert provider is not None
+        assert provider.generate("hello") == "ok"
+
+    assert calls == ["grok_cli"] * 4
+
+
+def test_grok_cli_auto_discovery_requires_auth(monkeypatch) -> None:
+    calls = []
+
+    def fake_builtin(name: str):
+        calls.append(name)
+        return _DummyProvider()
+
+    monkeypatch.setattr(llm_router, "_builtin_provider_by_name", fake_builtin)
+    monkeypatch.setattr(llm_router, "_grok_cli_auth_available", lambda: False)
+    providers = llm_router._iter_unpinned_optional_providers()
+
+    assert "grok_cli" not in calls
+    assert all(name != "grok_cli" for name, _provider in providers)
+
+    calls.clear()
+    monkeypatch.setattr(llm_router, "_grok_cli_auth_available", lambda: True)
+    providers = llm_router._iter_unpinned_optional_providers()
+    assert "grok_cli" in calls
+    assert any(name == "grok_cli" for name, _provider in providers)
+
+
+def test_grok_alias_reports_canonical_generation_trace() -> None:
+    result = llm_router.generate_text(
+        "hello",
+        provider="grok",
+        provider_instance=_DummyProvider(),
+        allow_local_fallback=False,
+    )
+
+    assert result == "ok"
+    assert llm_router.get_last_generation_trace()["effective_provider_name"] == "grok_cli"
 
 
 def test_generate_text_batch_uses_native_batch_provider() -> None:
@@ -247,19 +277,19 @@ def test_generate_text_batch_uses_native_batch_provider() -> None:
     ]
 
 
-def test_generate_text_batch_delegates_leanstral_local_to_accelerate_router(monkeypatch) -> None:
+def test_generate_text_batch_resolves_leanstral_alias_canonically(monkeypatch) -> None:
     calls = []
-    fake_package = types.ModuleType("ipfs_accelerate_py")
-    fake_router = types.ModuleType("ipfs_accelerate_py.llm_router")
 
-    def fake_batch(prompts, **kwargs):
-        calls.append((list(prompts), kwargs))
-        return [f"accelerated:{prompt}" for prompt in prompts]
+    class _Provider:
+        def generate(self, prompt, *, model_name=None, **kwargs):
+            calls.append((prompt, model_name, kwargs))
+            return f"accelerated:{prompt}"
 
-    fake_router.generate_text_batch = fake_batch
-    fake_package.llm_router = fake_router
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", fake_package)
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.llm_router", fake_router)
+    monkeypatch.setattr(
+        llm_router,
+        "_get_llama_cpp_provider",
+        lambda *, auto_install=False: _Provider(),
+    )
 
     result = llm_router.generate_text_batch(
         ["a", "b"],
@@ -269,33 +299,18 @@ def test_generate_text_batch_delegates_leanstral_local_to_accelerate_router(monk
     )
 
     assert result == ["accelerated:a", "accelerated:b"]
-    assert calls == [
-        (
-            ["a", "b"],
-            {
-                "deps": None,
-                "max_workers": 2,
-                "model_name": "Leanstral",
-                "provider": "leanstral_local",
-                "use_mesh": False,
-            },
-        )
-    ]
+    assert sorted(call[0] for call in calls) == ["a", "b"]
+    assert all(call[1] == "Leanstral" for call in calls)
 
 
 def test_generate_text_batch_mesh_failure_falls_back_to_provider(monkeypatch) -> None:
     calls = []
-    fake_package = types.ModuleType("ipfs_accelerate_py")
-    fake_router = types.ModuleType("ipfs_accelerate_py.llm_router")
 
     def fail_batch(prompts, **kwargs):
         calls.append((list(prompts), kwargs))
         raise RuntimeError("mesh unavailable")
 
-    fake_router.generate_text_batch = fail_batch
-    fake_package.llm_router = fake_router
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", fake_package)
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.llm_router", fake_router)
+    monkeypatch.setattr(llm_router, "generate_text_mesh_batch", fail_batch)
 
     result = llm_router.generate_text_batch(
         ["a", "b"],
@@ -306,16 +321,15 @@ def test_generate_text_batch_mesh_failure_falls_back_to_provider(monkeypatch) ->
     )
 
     assert result == ["OK", "OK"]
-    assert calls and calls[0][1]["use_mesh"] is True
+    assert calls
 
 
 def test_resolve_llama_cpp_native_alias_reports_missing_native_binding(monkeypatch) -> None:
-    fake_package = types.ModuleType("ipfs_accelerate_py")
-    fake_router = types.ModuleType("ipfs_accelerate_py.llm_router")
-    fake_router._builtin_provider_by_name = lambda _name, *, auto_install=False: None
-    fake_package.llm_router = fake_router
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py", fake_package)
-    monkeypatch.setitem(sys.modules, "ipfs_accelerate_py.llm_router", fake_router)
+    monkeypatch.setattr(
+        llm_router,
+        "_get_llama_cpp_native_provider",
+        lambda *, auto_install=False: None,
+    )
 
     try:
         llm_router._resolve_provider_uncached(

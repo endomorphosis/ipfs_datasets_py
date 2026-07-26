@@ -41,7 +41,7 @@ def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
     assert calls[-1] == (
         "codex_cli",
         {"prompt": "hello"},
-        None,
+        "text-generation",
     )
 
     assert (

@@ -48,6 +48,7 @@ For the workspace dataset bundle tooling (export, packaging, and chain-loadable 
 
 - [CLI Tool Merge](CLI_TOOL_MERGE.md) for `ipfs-datasets workspace` examples.
 - [Unified Tools Suite](UNIFIED_TOOLS_SUITE.md) for the CLI tools catalog entry.
+- [Router Ownership](ROUTER_OWNERSHIP.md) for canonical inference-router imports.
 
 ## Related Directories
 
