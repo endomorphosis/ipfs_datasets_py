@@ -1,0 +1,408 @@
+{
+  "bindings": {
+    "direct_leanstral": {
+      "backend": "llama.cpp",
+      "endpoint": "http://127.0.0.1:8080/v1",
+      "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+      "provider": "leanstral_local",
+      "route": "direct_openai_compatible_http"
+    },
+    "same_effective_model": true,
+    "same_effective_service": true,
+    "shared_model_capacity": 1,
+    "symai_leanstral": {
+      "model_alias": "Leanstral-119B",
+      "provider": "ipfs_accelerate_py",
+      "resolved_backend": "llama.cpp",
+      "resolved_endpoint": "http://127.0.0.1:8080/v1",
+      "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+      "resolved_provider": "leanstral_local",
+      "route": "symai_router"
+    }
+  },
+  "capabilities": [
+    {
+      "checks": {
+        "identity_match": true
+      },
+      "effective_identity": {
+        "executable": "/usr/bin/python3.12",
+        "executable_sha256": "1a301bb1763139d48ae638d97b11edf56de6cd185e1b054eae6dc28c271c0c5f",
+        "implementation": "CPython",
+        "machine": "aarch64",
+        "major_minor": "3.12",
+        "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+        "version": "3.12.3"
+      },
+      "id": "python",
+      "reason": null,
+      "requested_identity": {
+        "implementation": "CPython",
+        "major_minor": "3.12",
+        "version": "3.12.x"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "cid_round_trip": true,
+        "smoke_cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+        "version_requirement_met": true
+      },
+      "effective_identity": {
+        "distribution": "multiformats",
+        "module": "multiformats",
+        "version": "0.3.1.post4"
+      },
+      "id": "multiformats",
+      "reason": null,
+      "requested_identity": {
+        "cid_version": 1,
+        "distribution": "multiformats",
+        "multibase": "base32",
+        "multihash": "sha2-256",
+        "version_requirement": ">=0.3.0"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "annotations_present": true,
+        "fallback_used": false,
+        "loaded_full_pipeline": true,
+        "missing_annotations": [],
+        "smoke_text_sha256": "f3368f558c0fd5a57e145dd8f6d117c5d594e2f0881731b4a30039888adc8e59"
+      },
+      "effective_identity": {
+        "distribution": "spacy",
+        "language": "en",
+        "model": "en_core_web_sm",
+        "model_version": "3.8.0",
+        "pipeline": [
+          "tok2vec",
+          "tagger",
+          "parser",
+          "attribute_ruler",
+          "lemmatizer",
+          "ner"
+        ],
+        "version": "3.8.14"
+      },
+      "id": "spacy_pipeline",
+      "reason": null,
+      "requested_identity": {
+        "distribution": "spacy",
+        "fallback_allowed": false,
+        "model": "en_core_web_sm",
+        "model_distribution": "en-core-web-sm",
+        "model_version": "3.8.0",
+        "pipeline": [
+          "tok2vec",
+          "tagger",
+          "parser",
+          "attribute_ruler",
+          "lemmatizer",
+          "ner"
+        ],
+        "required_annotations": [
+          "DEP",
+          "ENT_IOB",
+          "LEMMA",
+          "POS",
+          "SENT_START",
+          "TAG"
+        ],
+        "version": "3.8.14"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "descriptor_size_matches": true,
+        "identity_match": true,
+        "open_flags": [
+          "O_RDONLY",
+          "O_CLOEXEC",
+          "O_NOFOLLOW"
+        ],
+        "opened_read_only": true,
+        "state_unchanged_after_load": true,
+        "substitute_used": false,
+        "write_attempted": false
+      },
+      "effective_identity": {
+        "bytes": 25895338,
+        "cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+        "declared_architecture_version": "legacy_dense_v1",
+        "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "exists": true,
+        "loader_class": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder.ModalAutoencoderTrainingState",
+        "path": "/var/tmp/hssl-srt-dynamic-supervisor/worktrees/semantic-roundtrip-capabilities/workspace-ea37e57eb28d-0c3192a3b272/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "id": "autoencoder_state",
+      "reason": null,
+      "requested_identity": {
+        "access": "read_only",
+        "cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+        "declared_architecture_version": "legacy_dense_v1",
+        "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "state_schema_version": "modal-autoencoder-state-v1"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "backend_match": true,
+        "health_get": true,
+        "model_inference_performed": false,
+        "models_get": true,
+        "one_slot_capacity": true,
+        "props_get": true
+      },
+      "effective_identity": {
+        "backend": "llama.cpp",
+        "backend_build": "b1-571d0d5",
+        "backend_owner": "llamacpp",
+        "capacity": {
+          "model_instances": 1,
+          "parallel_slots": 1
+        },
+        "context_size": 8192,
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "health": "ok",
+        "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "model_alias": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "model_format": "NVFP4",
+        "model_metadata": {
+          "ftype": "NVFP4",
+          "n_ctx": 8192,
+          "n_ctx_train": 1048576,
+          "n_embd": 4096,
+          "n_params": 118972826624,
+          "n_vocab": 131072,
+          "size": 67126693888,
+          "vocab_type": 2
+        },
+        "model_path": "/home/barberb/.cache/huggingface/hub/models--Frosty40--Leanstral-1.5-119B-A6B-GGUF-NVFP4/snapshots/abcc5ce2528c6375148d41dac6dce20f06c339f4/Leanstral-1.5-119B-A6B-NVFP4.gguf",
+        "provider": "leanstral_local",
+        "route": "direct_openai_compatible_http",
+        "served_models": [
+          "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+        ]
+      },
+      "id": "leanstral_direct",
+      "reason": null,
+      "requested_identity": {
+        "backend": "llama.cpp",
+        "backend_owner": "llamacpp",
+        "capacity": {
+          "model_instances": 1,
+          "parallel_slots": 1
+        },
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "provider": "leanstral_local",
+        "route": "direct_openai_compatible_http"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "engine_present": true,
+        "independent_model_started": false,
+        "model_inference_performed": false,
+        "router_present": true,
+        "same_effective_model": true,
+        "same_effective_service": true,
+        "symbolicai_version_match": true
+      },
+      "effective_identity": {
+        "distribution": "symbolicai",
+        "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
+        "engine_source_identity": {
+          "module_present": true,
+          "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/utils/symai_ipfs_engine.py",
+          "source_bytes": 31520,
+          "source_sha256": "40f36aa68b7c4c5032becc234f7bc0d2fb2b763b0257cc55db8b0d140e420711"
+        },
+        "independent_model": false,
+        "model_alias": "Leanstral-119B",
+        "provider": "ipfs_accelerate_py",
+        "resolved_backend": "llama.cpp",
+        "resolved_endpoint": "http://127.0.0.1:8080/v1",
+        "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "resolved_provider": "leanstral_local",
+        "route": "symai_router",
+        "router_module": "ipfs_datasets_py.llm_router",
+        "router_source_identity": {
+          "module_present": true,
+          "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/llm_router.py",
+          "source_bytes": 446,
+          "source_sha256": "6391921f2e80eafd77b3cdbb94115e2cb97fb09a88aa2493c177c23b8cbe6103"
+        },
+        "shared_capacity": 1,
+        "symai_config_model": "ipfs:Leanstral-119B",
+        "version": "1.14.0"
+      },
+      "id": "symai_leanstral_route",
+      "reason": null,
+      "requested_identity": {
+        "distribution": "symbolicai",
+        "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
+        "independent_model": false,
+        "model_alias": "Leanstral-119B",
+        "provider": "ipfs_accelerate_py",
+        "resolved_backend": "llama.cpp",
+        "resolved_endpoint": "http://127.0.0.1:8080/v1",
+        "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "resolved_provider": "leanstral_local",
+        "route": "symai_router",
+        "router_module": "ipfs_datasets_py.llm_router",
+        "shared_capacity": 1,
+        "symai_config_model": "ipfs:Leanstral-119B",
+        "version": "1.14.0"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "bounded_smoke_passed": true,
+        "max_retained_output_bytes": 16384,
+        "smoke_input_sha256": "ead667d6f58f16a74ec89ded4d418141c6ba4f2f42cdffef08dcb25b80807f70",
+        "timeout_seconds": 5.0,
+        "version_requirement_met": true
+      },
+      "effective_identity": {
+        "hammer_distribution": "ipfs-datasets-py",
+        "hammer_module": "ipfs_datasets_py.logic.hammers",
+        "hammer_source_identity": {
+          "module_present": true,
+          "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/logic/hammers/__init__.py",
+          "source_bytes": 17135,
+          "source_sha256": "915318c85c85ab62c3ed1307f23598a4d837ae9abe4b714fe3d25e3f7080d9c0"
+        },
+        "hammer_version": "0.2.0",
+        "smoke": {
+          "arguments": [
+            "/home/barberb/.local/bin/cvc5",
+            "--lang=smt2",
+            "--tlimit=1000"
+          ],
+          "output": "sat",
+          "output_truncated": false,
+          "retained_output_sha256": "d9dbf94b05b8314af9ca7f2034e92685c33447917605a7243b1099c693a12e5e",
+          "return_code": 0,
+          "timed_out": false
+        },
+        "solver": "cvc5",
+        "solver_executable_sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419",
+        "solver_path": "/home/barberb/.local/bin/cvc5",
+        "solver_version": "1.3.3",
+        "version_probe": {
+          "arguments": [
+            "/home/barberb/.local/bin/cvc5",
+            "--version"
+          ],
+          "output": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD] compiled with GCC version 11.4.0 on Feb 26 2026 01:24:28 Copyright (c) 2009-2025 by the authors and their institutional affiliations listed at https://cvc5.github.io/people.html cvc5 is open-source and is covered by the BSD license (modified). THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES. USE AT YOUR OWN RISK. This version of cvc5 is linked against the following non-(L)GPL'ed third party libraries. CaDiCaL - Simplified Satisfiability Solver See https://github.com/arminbiere/cadical for copyright information. Editline Library See https://thrysoee.dk/editline for copyright information. SymFPU - The Symbolic Floating Point Unit See https://github.com/martin-cs/symfpu/tree/CVC4 for copyright information. This version of cvc5 is linked against the following third party libraries covered by the LGPLv3 license. See licenses/lgpl-3.0.txt for more information. GMP - Gnu Multi Precision Arithmetic Library See http://gmplib.org for copyright information. LibPoly polynomial library See https://github.com/SRI-CSL/libpoly for copyright and licensing information. cvc5 is statically linked against these libraries. To recompile this version of cvc5 with different versions of these libraries follow the instructions on https://github.com/cvc5/cvc5/blob/main/INSTALL.md See the file COPYING (distributed with the source code, and with all binaries) for the full cvc5 copyright, licensing, and (lack of) warranty information.",
+          "output_truncated": false,
+          "retained_output_sha256": "efdac7bdbd80631fd043b4120d4d0dfc02cd28397488a075d12d81b10703b7b6",
+          "return_code": 0,
+          "timed_out": false
+        }
+      },
+      "id": "hammer_cvc5",
+      "reason": null,
+      "requested_identity": {
+        "expected_result": "sat",
+        "hammer_distribution": "ipfs-datasets-py",
+        "hammer_module": "ipfs_datasets_py.logic.hammers",
+        "smoke_logic": "QF_UF",
+        "solver": "cvc5",
+        "solver_version_requirement": ">=1.0.0,<2.0.0",
+        "timeout_seconds": 5.0
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    },
+    {
+      "checks": {
+        "bounded_smoke_passed": true,
+        "max_retained_output_bytes": 16384,
+        "smoke_source_sha256": "e70053adeba8d10064fb1e2dfbc664f8085f7af24c6ccd09e5a37076b653f6b6",
+        "timeout_seconds": 5.0
+      },
+      "effective_identity": {
+        "executable_sha256": "b480595a22661f4cb22b37602b0de664ab1aaf815e243c42b7e7eb51c6163b7d",
+        "path": "/home/barberb/.elan/bin/lean",
+        "smoke": {
+          "arguments": [
+            "/home/barberb/.elan/bin/lean",
+            "<temporary>/Smoke.lean"
+          ],
+          "output": "",
+          "output_truncated": false,
+          "retained_output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "return_code": 0,
+          "timed_out": false
+        },
+        "toolchain": "Lean 4",
+        "version": "4.32.1",
+        "version_probe": {
+          "arguments": [
+            "/home/barberb/.elan/bin/lean",
+            "--version"
+          ],
+          "output": "Lean (version 4.32.1, aarch64-unknown-linux-gnu, commit f054605aea4b840552cca2e725580bffd1e1b704, Release)",
+          "output_truncated": false,
+          "retained_output_sha256": "c348262328e528889d75dcd1d480d2d3e647740178765a3cf3ea61e633488f9b",
+          "return_code": 0,
+          "timed_out": false
+        }
+      },
+      "id": "lean",
+      "reason": null,
+      "requested_identity": {
+        "executable": "lean",
+        "expected_result": "kernel accepted with empty output",
+        "smoke_theorem": "srt_identity",
+        "timeout_seconds": 5.0,
+        "toolchain": "Lean 4"
+      },
+      "status": "available",
+      "substitute_identity": null,
+      "substitute_used": false
+    }
+  ],
+  "captured_at_utc": "2026-07-26T21:10:01Z",
+  "interface_version": "SemanticRoundTripCapabilityInventory@1",
+  "probe_policy": {
+    "allows_substitutes": false,
+    "autoencoder_access": "read_only",
+    "full_spacy_pipeline_required": true,
+    "installs_packages": false,
+    "model_inference_smoke": false,
+    "reconfigures_services": false,
+    "solver_smokes": "bounded",
+    "starts_services": false,
+    "stops_services": false
+  },
+  "run_id": "semantic-roundtrip-compositions-2026-07-26",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-capability-inventory.v1"
+}
