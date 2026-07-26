@@ -79,7 +79,7 @@ Each experimental script should have:
 ## Related Documentation
 
 - [ROADMAP.md](../../docs/knowledge_graphs/ROADMAP.md) - Future feature plans
-- [IMPLEMENTATION_STATUS.md](../../docs/knowledge_graphs/archive/superseded_plans/IMPLEMENTATION_STATUS.md) - Current module status
+- [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) - Current module status
 
 ---
 
