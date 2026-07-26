@@ -20,7 +20,9 @@ try:
 except ImportError:
     nltk = None
     HAVE_NLTK = False
-    print("Info: TextProcessor using basic text processing (NLTK not available)")
+    logging.getLogger(__name__).info(
+        "TextProcessor using basic text processing (NLTK not available)"
+    )
 # from nltk.tokenize import sent_tokenize
 
 class TextProcessor:
