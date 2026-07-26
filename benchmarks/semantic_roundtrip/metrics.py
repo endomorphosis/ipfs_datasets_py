@@ -135,14 +135,38 @@ def maximum_weight_assignment(
     if any(len(row) != column_count for row in weights):
         raise ContractError("assignment matrix must be rectangular")
 
+    def finite_weight(value: object, row: int, column: int) -> float:
+        if isinstance(value, bool):
+            raise ContractError(
+                f"assignment weight [{row}][{column}] must be finite"
+            )
+        try:
+            converted = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ContractError(
+                f"assignment weight [{row}][{column}] must be finite"
+            ) from exc
+        if not math.isfinite(converted):
+            raise ContractError(
+                f"assignment weight [{row}][{column}] must be finite"
+            )
+        return converted
+
+    validated = [
+        [
+            finite_weight(value, row_index, column_index)
+            for column_index, value in enumerate(row)
+        ]
+        for row_index, row in enumerate(weights)
+    ]
     transposed = row_count > column_count
     matrix = (
         [
-            [float(weights[row][column]) for row in range(row_count)]
+            [validated[row][column] for row in range(row_count)]
             for column in range(column_count)
         ]
         if transposed
-        else [[float(value) for value in row] for row in weights]
+        else validated
     )
     n = len(matrix)
     m = len(matrix[0])

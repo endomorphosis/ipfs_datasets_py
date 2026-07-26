@@ -214,6 +214,14 @@ def test_maximum_weight_assignment_avoids_greedy_local_optimum() -> None:
     ) == pytest.approx(1.65)
 
 
+@pytest.mark.parametrize("invalid", [True, float("nan"), float("inf"), "x"])
+def test_maximum_weight_assignment_rejects_nonfinite_weights(
+    invalid: object,
+) -> None:
+    with pytest.raises(ContractError, match=r"\[0\]\[1\].*finite"):
+        maximum_weight_assignment([[1.0, invalid]])  # type: ignore[list-item]
+
+
 def test_forward_cycle_and_end_to_end_losses_remain_distinct() -> None:
     gold = _ir(_rule())
     wrong = _ir(_rule(modality="P"))
