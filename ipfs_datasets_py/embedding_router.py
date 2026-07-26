@@ -1,4 +1,4 @@
-"""Compatibility alias for the canonical accelerator embeddings router."""
+"""Singular compatibility alias for the canonical embeddings router."""
 
 from __future__ import annotations
 
