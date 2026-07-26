@@ -97,7 +97,7 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
     assert stored["task_dependency_graph"]["edges"]
 
 
-def test_dependency_schedule_initially_admits_only_srt_002_and_srt_020(
+def test_dependency_schedule_admits_the_second_wave_after_srt_002_and_srt_020(
     tmp_path: Path,
 ) -> None:
     config = load_scheduler_config(DEFAULT_CONFIG_PATH)
@@ -123,12 +123,17 @@ def test_dependency_schedule_initially_admits_only_srt_002_and_srt_020(
         for task in payload["tasks"]
     }
 
-    assert claimable_task_ids == {"SRT-002", "SRT-020"}
-    assert by_task_id["SRT-002"][1]["blocking_task_cids"] == []
-    assert by_task_id["SRT-003"][1]["claimable"] is False
-    assert by_task_id["SRT-003"][1]["blocking_task_cids"] == [
-        by_task_id["SRT-002"][1]["canonical_task_cid"]
-    ]
+    assert claimable_task_ids == {"SRT-003", "SRT-004", "SRT-005", "SRT-006"}
+    assert by_task_id["SRT-002"][1]["status"] == "completed"
+    assert by_task_id["SRT-020"][1]["status"] == "completed"
+    assert by_task_id["SRT-002"][1]["claimable"] is False
+    assert by_task_id["SRT-020"][1]["claimable"] is False
+    assert by_task_id["SRT-003"][1]["blocking_task_cids"] == []
+    assert by_task_id["SRT-007"][1]["claimable"] is False
+    assert set(by_task_id["SRT-007"][1]["blocking_task_cids"]) == {
+        by_task_id[task_id][1]["canonical_task_cid"]
+        for task_id in ("SRT-003", "SRT-004", "SRT-005", "SRT-006")
+    }
 
 
 def test_custom_resource_class_is_rejected_before_index_write(

@@ -116,7 +116,13 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
         and set(task.depends_on) <= completed
     ]
     assert ready, "the supervisor needs at least one initially claimable task"
-    assert {"SRT-002", "SRT-020"} <= {task.task_id for task in ready}
+    assert {"SRT-001", "SRT-002", "SRT-020"} <= completed
+    assert {
+        "SRT-003",
+        "SRT-004",
+        "SRT-005",
+        "SRT-006",
+    } == {task.task_id for task in ready}
     assert len({task.metadata["parallel lane"] for task in ready}) >= 2
     ready_outputs = [
         output

@@ -67,7 +67,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-020 Capture exact runnable tool and service identities
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: benchmark
@@ -91,7 +91,7 @@ CPU preparation and result analysis run concurrently.
 
 ## SRT-002 Factor canonical IR, constructor, realizer, and result contracts
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P0
 - Track: benchmark
