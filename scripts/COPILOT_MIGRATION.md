@@ -342,7 +342,7 @@ The following workflows now use the new approach:
 ## Questions?
 
 For issues or questions about the migration:
-1. Check the [Copilot Queue Integration docs](../docs/copilot_queue_integration.md)
+1. Check the [Copilot Queue Integration docs](../docs/guides/infrastructure/copilot_queue_integration.md)
 2. Review the [script source](invoke_copilot_with_queue.py)
 3. Run `python3 scripts/invoke_copilot_with_queue.py --help`
 4. Check `python3 scripts/invoke_copilot_with_queue.py --status`
