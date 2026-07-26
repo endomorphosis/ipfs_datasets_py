@@ -72,6 +72,8 @@ vector_cid = await vector_store.add_vectors(
 
 ## See Also
 
+All links below are repository-relative so they remain portable across checkouts.
+
 - [Vector Stores](../../../vector_stores/README.md) - Vector database implementations
 - [IPFS Features Guide](../../../../docs/guides/distributed_features.md) - Distributed storage
 - [Data Provenance](../../../../docs/guides/data_provenance.md) - Data lineage and verification
