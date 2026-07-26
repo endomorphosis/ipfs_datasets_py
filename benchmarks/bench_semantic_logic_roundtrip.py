@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import importlib
 import json
+import math
 import os
 import platform
 import re
@@ -32,7 +33,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import Counter
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
@@ -1263,6 +1264,40 @@ def _semantic_schema_for_case(
     return schema
 
 
+def _semantic_encode_max_tokens(
+    text: str,
+    response_schema: Mapping[str, Any],
+) -> int:
+    """Size a semantic parse from source-visible inputs only.
+
+    The response contract already bounds the rule array from modal cues in the
+    presented text.  The remaining allowance accounts for source length so
+    qualifiers and atom identifiers are not starved.  Gold annotations are
+    deliberately absent from this boundary: changing or withholding ``gold_ir``
+    must never change the model request.
+    """
+
+    try:
+        rule_capacity = response_schema["properties"]["rules"]["maxItems"]
+    except (KeyError, TypeError) as exc:
+        raise BenchmarkError(
+            "semantic response schema omits the rule-capacity contract"
+        ) from exc
+    if (
+        isinstance(rule_capacity, bool)
+        or not isinstance(rule_capacity, int)
+        or not 0 <= rule_capacity <= 16
+    ):
+        raise BenchmarkError(
+            "semantic response schema has an invalid rule capacity"
+        )
+    source_allowance = min(384, 8 * len(_tokens(text)))
+    return min(
+        3072,
+        max(768, 256 + 192 * rule_capacity + source_allowance),
+    )
+
+
 def _strict_json_object(raw: str) -> dict[str, Any]:
     def reject_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
@@ -1578,10 +1613,7 @@ def _leanstral_encode(
     evidence = _spacy_evidence(nlp, text) if nlp is not None else None
     base_prompt = _encoder_prompt(case, text, spacy_evidence=evidence)
     response_schema = _semantic_schema_for_case(case, text)
-    max_tokens = min(
-        3072,
-        max(768, 256 + 192 * len(case["gold_ir"]["rules"])),
-    )
+    max_tokens = _semantic_encode_max_tokens(text, response_schema)
     total_seconds = 0.0
     attempt_receipts: list[dict[str, Any]] = []
     final_error: BenchmarkError | None = None
@@ -1689,6 +1721,124 @@ def _leanstral_realize(
     return TimedResult(text, result.elapsed_seconds, result.metadata)
 
 
+def _symai_realization_response_format() -> dict[str, Any]:
+    """Return the strict one-field contract accepted by the pinned route."""
+
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "semantic_legal_realization",
+            "strict": True,
+            "schema": _server_grammar_schema(REALIZATION_JSON_SCHEMA),
+        },
+    }
+
+
+def _safe_symai_realizer_metadata(
+    metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Retain only bounded, non-secret routing facts in benchmark receipts."""
+
+    allowed = {
+        "backend",
+        "cache",
+        "cache_key",
+        "cached_backend",
+        "effective_model_name",
+        "effective_provider_name",
+        "format",
+        "model",
+        "provider",
+        "resolved_model_name",
+        "resolved_provider_name",
+        "router_provider",
+        "routing_backend",
+        "service_endpoint",
+    }
+    result: dict[str, Any] = {}
+    for key in sorted(allowed):
+        value = metadata.get(key)
+        if isinstance(value, str):
+            result[key] = value[:256]
+        elif isinstance(value, (bool, int)):
+            result[key] = value
+        elif isinstance(value, float) and math.isfinite(value):
+            result[key] = value
+    return result
+
+
+def _symai_realize(
+    case: Mapping[str, Any],
+    logic_ir: Mapping[str, Any],
+    *,
+    invoke: Callable[
+        [str, Mapping[str, Any]],
+        tuple[str, Mapping[str, Any]],
+    ],
+) -> TimedResult:
+    """Realize canonical IR through a bounded, source-withheld SyMAI call."""
+
+    canonical_ir = validate_semantic_ir(logic_ir, case)
+    prompt = _realizer_prompt(case, canonical_ir)
+    source = str(case["source_text"])
+    if source in prompt:
+        raise BenchmarkError(
+            "source text leaked into the source-withheld SyMAI prompt"
+        )
+    response_format = _symai_realization_response_format()
+    request_contract = {
+        "prompt": prompt,
+        "response_format": response_format,
+        "max_response_bytes": 64 * 1024,
+        "max_realization_characters": 12_000,
+    }
+    if len(canonical_dag_json_bytes(request_contract)) > 64 * 1024:
+        raise BenchmarkError("SyMAI realization request exceeds 64 KiB")
+
+    started = time.perf_counter()
+    try:
+        raw_output, metadata = invoke(prompt, response_format)
+    except BenchmarkError:
+        raise
+    except Exception as exc:
+        raise BenchmarkError(
+            "SyMAI realization invocation failed: "
+            f"{type(exc).__name__}"
+        ) from exc
+    elapsed = time.perf_counter() - started
+    if not isinstance(raw_output, str):
+        raise BenchmarkError("SyMAI realization output must be text")
+    if len(raw_output.encode("utf-8")) > 64 * 1024:
+        raise BenchmarkError("SyMAI realization output exceeds 64 KiB")
+    if not isinstance(metadata, Mapping):
+        raise BenchmarkError("SyMAI realization metadata must be an object")
+
+    value = _strict_json_object(raw_output)
+    if set(value) != {"text"} or not isinstance(value["text"], str):
+        raise BenchmarkError(
+            "SyMAI realization response must contain exactly one text string"
+        )
+    if len(value["text"]) > 12_000:
+        raise BenchmarkError("SyMAI realization text exceeds 12000 characters")
+    text = _clean_text(value["text"])
+    if not text:
+        raise BenchmarkError("SyMAI realization response is empty")
+    return TimedResult(
+        text,
+        elapsed,
+        {
+            "request_cid": cid_for_dag_json(request_contract),
+            "prompt_cid": cid_for_bytes(prompt.encode("utf-8")),
+            "raw_content_cid": cid_for_bytes(
+                raw_output.encode("utf-8")
+            ),
+            "response_format_cid": cid_for_dag_json(response_format),
+            "source_withheld": True,
+            "router_metadata": _safe_symai_realizer_metadata(metadata),
+        },
+    )
+
+
 def run_leanstral_cycle(
     case: Mapping[str, Any],
     client: LeanstralClient,
@@ -1759,7 +1909,7 @@ def run_leanstral_cycle(
 
 
 class SymaiForwardRunner:
-    """Run the repository's strict SyMAI adapter on the pinned inner route."""
+    """Run strict SyMAI forward evidence and source-withheld realization."""
 
     def __init__(self, *, endpoint: str, inner_model: str) -> None:
         self.endpoint = endpoint.rstrip("/")
@@ -1796,25 +1946,94 @@ class SymaiForwardRunner:
         self.StageRequest = adapters.StageRequest
         self.CacheMode = contracts.CacheMode
         self.Split = contracts.Split
+        self._adapters = adapters
+        self._config = adapters.SymaiAdapterConfig(
+            provider="ipfs_accelerate_py",
+            model="Leanstral-119B",
+            max_retries=1,
+            dry_run=False,
+            cache_enabled=False,
+            max_text_bytes=8192,
+            max_raw_output_bytes=4096,
+            expected_inner_provider="leanstral_local",
+            expected_inner_model=inner_model,
+            expected_inner_endpoint=self.endpoint,
+            expected_inner_backend="existing_leanstral_service",
+        )
         self.adapter = adapters.SymaiAdapter(
-            config=adapters.SymaiAdapterConfig(
-                provider="ipfs_accelerate_py",
-                model="Leanstral-119B",
-                max_retries=1,
-                dry_run=False,
-                cache_enabled=False,
-                max_text_bytes=8192,
-                max_raw_output_bytes=4096,
-                expected_inner_provider="leanstral_local",
-                expected_inner_model=inner_model,
-                expected_inner_endpoint=self.endpoint,
-                expected_inner_backend="existing_leanstral_service",
-            ),
+            config=self._config,
             cache={},
         )
 
     def close(self) -> None:
         self._temporary.cleanup()
+
+    def realize(
+        self,
+        case: Mapping[str, Any],
+        logic_ir: Mapping[str, Any],
+        *,
+        run_id: str,
+    ) -> TimedResult:
+        namespace = (
+            "semantic-roundtrip/symai-realize/"
+            + cid_for_dag_json(
+                {
+                    "run_id": run_id,
+                    "case_id": str(case["id"]),
+                    "logic_ir": logic_ir,
+                }
+            )
+        )
+        engine = self._adapters._default_symai_engine_factory(
+            self._config, namespace
+        )
+
+        def invoke(
+            prompt: str,
+            response_format: Mapping[str, Any],
+        ) -> tuple[str, Mapping[str, Any]]:
+            raw_output, metadata = self._adapters._invoke_symai_engine(
+                engine,
+                prompt,
+                response_format=response_format,
+            )
+            try:
+                trace = self._adapters._default_symai_trace_getter()
+            except Exception:
+                trace = {}
+            if isinstance(trace, Mapping):
+                for key, value in trace.items():
+                    metadata.setdefault(str(key), value)
+            try:
+                self._adapters._validate_symai_inner_route(
+                    self._config, metadata
+                )
+            except Exception as exc:
+                raise BenchmarkError(
+                    "SyMAI realization route identity was unavailable or "
+                    f"drifted: {type(exc).__name__}"
+                ) from exc
+            for key in (
+                "backend",
+                "effective_provider",
+                "effective_provider_name",
+                "provider",
+                "route",
+                "router_provider",
+            ):
+                if (
+                    key in metadata
+                    and self._adapters._is_recursive_symai_identity(
+                        metadata[key]
+                    )
+                ):
+                    raise BenchmarkError(
+                        "recursive SyMAI realization routing is forbidden"
+                    )
+            return raw_output, metadata
+
+        return _symai_realize(case, logic_ir, invoke=invoke)
 
     def run(self, case: Mapping[str, Any], *, run_id: str) -> dict[str, Any]:
         started = time.perf_counter()
@@ -1889,7 +2108,10 @@ class SymaiForwardRunner:
             "shared_model_resource": "leanstral-119b-one-slot",
             "reason": (
                 "The current pinned SyMAI contract produces forward semantic "
-                "evidence but has no logic-to-natural-language field."
+                "evidence rather than canonical benchmark rules. A separate "
+                "source-withheld reverse contract is available, but the two "
+                "cannot be presented as a pure SyMAI round trip until the "
+                "forward projection emits the canonical IR."
             ),
             "candidate_ir": data.get("candidate_ir"),
             "normalized_predicates": data.get("normalized_predicates"),
@@ -1910,6 +2132,68 @@ class SymaiForwardRunner:
             "record_cid": cid_for_dag_json(serialized),
             "timing": {"total_seconds": round(elapsed, 9)},
         }
+
+
+def run_symai_oracle_reverse_cycle(
+    case: Mapping[str, Any],
+    symai_runner: SymaiForwardRunner,
+    leanstral_client: LeanstralClient,
+    *,
+    run_id: str,
+) -> dict[str, Any]:
+    """Measure SyMAI IR realization with a separately labelled recompiler.
+
+    SyMAI's strict forward adapter emits semantic evidence rather than this
+    benchmark's canonical rule IR.  Starting from adjudicated L1 isolates the
+    newly supported reverse boundary; direct Leanstral recompilation supplies
+    L2 and is named explicitly so this diagnostic cannot be mistaken for a
+    pure SyMAI round trip.
+    """
+
+    l1 = validate_semantic_ir(case["gold_ir"], case)
+    realized = symai_runner.realize(case, l1, run_id=run_id)
+    reencoded = _leanstral_encode(
+        leanstral_client, case, realized.value
+    )
+    l2 = reencoded.value
+    total_seconds = realized.elapsed_seconds + reencoded.elapsed_seconds
+    return {
+        "status": "success",
+        "translator": "symai_reverse_plus_leanstral_recompile",
+        "shared_model_resource": "leanstral-119b-one-slot",
+        "source_withheld_from_realizer": True,
+        "oracle_l1": True,
+        "pure_symai_roundtrip": False,
+        "l1": l1,
+        "l1_cid": cid_for_dag_json(l1),
+        "realization": realized.value,
+        "realization_cid": cid_for_bytes(
+            realized.value.encode("utf-8")
+        ),
+        "l2": l2,
+        "l2_cid": cid_for_dag_json(l2),
+        "forward_vs_gold": compare_semantic_ir(case["gold_ir"], l1),
+        "cycle_l1_vs_l2": compare_semantic_ir(l1, l2),
+        "end_to_end_vs_gold": compare_semantic_ir(
+            case["gold_ir"], l2
+        ),
+        "source_copy": source_copy_metrics(
+            str(case["source_text"]), realized.value
+        ),
+        "timing": {
+            "forward_seconds": 0.0,
+            "realize_seconds": round(realized.elapsed_seconds, 9),
+            "recompile_seconds": round(reencoded.elapsed_seconds, 9),
+            "total_seconds": round(total_seconds, 9),
+        },
+        "receipts": [
+            {"operation": "realize_via_symai", **realized.metadata},
+            {
+                "operation": "reencode_via_direct_leanstral",
+                **reencoded.metadata,
+            },
+        ],
+    }
 
 
 def _rule_cids(ir: Mapping[str, Any]) -> list[str]:
@@ -2713,6 +2997,14 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 arms["symai_forward"] = _safe_arm(
                     symai_runner.run, case, run_id=run_id
                 )
+                if client is not None and not args.skip_oracle:
+                    arms["symai_oracle_reverse"] = _safe_arm(
+                        run_symai_oracle_reverse_cycle,
+                        case,
+                        symai_runner,
+                        client,
+                        run_id=run_id,
+                    )
             if not args.skip_validation:
                 for arm_id, arm in arms.items():
                     attach_validators_safely(
