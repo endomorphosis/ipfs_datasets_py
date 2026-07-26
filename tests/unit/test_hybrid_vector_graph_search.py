@@ -1,6 +1,7 @@
 import numpy as np
 
 from ipfs_datasets_py.search.graphrag_integration import HybridVectorGraphSearch, GraphRAGFactory
+from ipfs_datasets_py.knowledge_graphs.query import SemanticTraversalConfig
 
 
 class _ToyDataset:
@@ -144,6 +145,58 @@ def test_factory_wires_rescore_limit_to_hybrid_search():
     stats = search.get_last_query_stats()
     assert stats.get("vector_rescore_limit") == 1
     assert stats.get("vector_rescored") == 1
+
+
+def test_legacy_hybrid_search_delegates_opt_in_semantic_traversal():
+    class _BranchingDataset(_ToyDataset):
+        def __init__(self):
+            super().__init__()
+            self._nodes.update(
+                {
+                    "D": {"id": "D", "type": "entity"},
+                    "E": {"id": "E", "type": "entity"},
+                }
+            )
+            self._rels = {
+                "A": [
+                    {"source": "A", "target": "B", "type": "rel", "weight": 1.0},
+                    {"source": "A", "target": "C", "type": "rel", "weight": 1.0},
+                ],
+                "B": [{"source": "B", "target": "D", "type": "rel", "weight": 1.0}],
+                "C": [{"source": "C", "target": "E", "type": "rel", "weight": 1.0}],
+                "D": [],
+                "E": [],
+            }
+            self._emb.update(
+                {
+                    "A": np.array([0.0, 1.0], dtype=float),
+                    "B": np.array([0.0, 1.0], dtype=float),
+                    "C": np.array([0.8, 0.2], dtype=float),
+                    "D": np.array([0.0, 1.0], dtype=float),
+                    "E": np.array([1.0, 0.0], dtype=float),
+                }
+            )
+
+    dataset = _BranchingDataset()
+    search = GraphRAGFactory.create_hybrid_search(
+        dataset,
+        max_graph_hops=2,
+        min_score_threshold=0.0,
+        traversal_strategy="semantic-beam",
+        semantic_config=SemanticTraversalConfig(max_depth=2, beam_width=1),
+    )
+
+    results = search.hybrid_search(
+        query_embedding=np.array([1.0, 0.0], dtype=float),
+        top_k=10,
+    )
+    by_id = {result["id"]: result for result in results}
+
+    assert set(by_id) == {"A", "C", "E"}
+    assert [hop["to"] for hop in by_id["E"]["path"]] == ["C", "E"]
+    assert by_id["C"]["semantic_traversal"]["semantic_progress"] > 0
+    assert search.get_last_query_stats()["traversal_strategy"] == "semantic_beam"
+    assert search._last_semantic_traversal is not None
 
 
 def test_max_neighbors_per_node_caps_and_tiebreaks_deterministically():

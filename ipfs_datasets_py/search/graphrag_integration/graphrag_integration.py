@@ -60,9 +60,21 @@ Usage Example:
 """
 import time
 import logging
-from typing import Dict, List, Any, Optional, Union, Tuple, Callable, Set
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 import numpy as np
 from collections import deque
+from dataclasses import replace
 import hashlib
 
 # Optional LLM-related imports. These can pull in heavyweight optional
@@ -132,10 +144,99 @@ except Exception as e:  # pragma: no cover
 from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
 from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
 from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query.semantic_traversal import (
+    EmbeddingGuidedTraversal,
+    SemanticTraversalConfig,
+    SemanticTraversalResult,
+    SemanticTraversalWeights,
+    TraversalEdge,
+)
 
 # Forward references for type hints
 class GraphRAGQueryEngine: pass
 class HybridVectorGraphSearch: pass
+
+
+class _LegacyDatasetNeighborProvider:
+    """Adapt the historical dataset graph API to canonical traversal."""
+
+    def __init__(
+        self,
+        search: "HybridVectorGraphSearch",
+        entity_types: Optional[List[str]],
+    ):
+        self.search = search
+        self.entity_types = entity_types
+
+    def get_neighbors(
+        self,
+        node_id: str,
+        *,
+        direction: str,
+        relationship_types: Sequence[str],
+        limit: int,
+    ) -> List[TraversalEdge]:
+        allowed_relationships = set(relationship_types)
+        edges: List[TraversalEdge] = []
+        for relationship in self.search.dataset.get_node_relationships(node_id):
+            if not isinstance(relationship, dict):
+                continue
+            source = relationship.get("source")
+            target = relationship.get("target")
+            rel_type = relationship.get("type")
+            if source is None or target is None or rel_type is None:
+                continue
+            if source == node_id and direction in {"outgoing", "both", "adaptive"}:
+                neighbor_id = target
+            elif (
+                target == node_id
+                and direction in {"incoming", "both", "adaptive"}
+                and self.search.use_bidirectional_traversal
+            ):
+                neighbor_id = source
+            else:
+                continue
+            if allowed_relationships and rel_type not in allowed_relationships:
+                continue
+            node = self.search.dataset.get_node(neighbor_id)
+            if self.entity_types and node.get("type") not in self.entity_types:
+                continue
+            try:
+                weight = float(relationship.get("weight", 1.0))
+                weight *= float(relationship.get("confidence", 1.0))
+            except (TypeError, ValueError, OverflowError):
+                weight = 1.0
+            edges.append(
+                TraversalEdge(
+                    source_id=node_id,
+                    target_id=neighbor_id,
+                    relationship_type=rel_type,
+                    weight=weight,
+                )
+            )
+        edges.sort(
+            key=lambda edge: (
+                -float(edge.weight),
+                str(edge.target_id),
+                str(edge.relationship_type),
+            )
+        )
+        return edges[:limit]
+
+
+class _LegacyDatasetEmbeddingProvider:
+    """Batch facade over the historical one-node-at-a-time embedding API."""
+
+    def __init__(self, dataset: Any):
+        self.dataset = dataset
+
+    def get_embeddings(self, node_ids: Sequence[str]) -> Dict[str, Any]:
+        embeddings: Dict[str, Any] = {}
+        for node_id in node_ids:
+            embedding = self.dataset.get_node_embedding(node_id)
+            if embedding is not None:
+                embeddings[node_id] = embedding
+        return embeddings
 
 
 class GraphRAGIntegration:
@@ -862,7 +963,9 @@ class HybridVectorGraphSearch:
         max_nodes_visited: int = 5000,
         max_edges_traversed: int = 20000,
         max_vector_rescore: Optional[int] = None,
-        max_neighbors_per_node: Optional[int] = None
+        max_neighbors_per_node: Optional[int] = None,
+        traversal_strategy: str = "bfs",
+        semantic_config: Optional[SemanticTraversalConfig] = None,
     ):
         """
         Initialize hybrid search.
@@ -885,6 +988,9 @@ class HybridVectorGraphSearch:
         self.max_edges_traversed = max_edges_traversed
         self.max_vector_rescore = max_vector_rescore
         self.max_neighbors_per_node = max_neighbors_per_node
+        self.traversal_strategy = traversal_strategy
+        self.semantic_config = semantic_config
+        self._last_semantic_traversal: Optional[SemanticTraversalResult] = None
 
         # Normalize weights
         total_weight = self.vector_weight + self.graph_weight
@@ -922,7 +1028,9 @@ class HybridVectorGraphSearch:
         rerank_with_llm: bool = False,
         max_graph_hops: Optional[int] = None,
         max_nodes_visited: Optional[int] = None,
-        max_edges_traversed: Optional[int] = None
+        max_edges_traversed: Optional[int] = None,
+        traversal_strategy: Optional[str] = None,
+        semantic_config: Optional[SemanticTraversalConfig] = None,
     ) -> List[Dict[str, Any]]:
         """
         Perform hybrid vector + graph search.
@@ -955,6 +1063,23 @@ class HybridVectorGraphSearch:
             effective_max_hops = 0
         effective_max_nodes = self.max_nodes_visited if max_nodes_visited is None else max_nodes_visited
         effective_max_edges = self.max_edges_traversed if max_edges_traversed is None else max_edges_traversed
+        effective_strategy = (
+            self.traversal_strategy
+            if traversal_strategy is None
+            else traversal_strategy
+        )
+        normalized_strategy = effective_strategy.strip().lower().replace("-", "_")
+        bfs_strategies = {"bfs", "breadth_first", "breadth_first_search"}
+        semantic_strategies = {
+            "semantic",
+            "semantic_beam",
+            "semantic_best_first",
+            "embedding_guided",
+        }
+        if normalized_strategy not in bfs_strategies | semantic_strategies:
+            choices = ", ".join(sorted(bfs_strategies | semantic_strategies))
+            raise ValueError(f"unknown traversal_strategy; expected one of: {choices}")
+        effective_semantic_config = semantic_config or self.semantic_config
 
         def _canon_list(values: Optional[List[str]]) -> Optional[Tuple[str, ...]]:
             if not values:
@@ -970,7 +1095,8 @@ class HybridVectorGraphSearch:
         cache_key = (
             f"hybrid:{emb_digest}:topk={int(top_k)}:rels={rel_types_key}:ents={ent_types_key}:minv={float(min_vector_score)}:"
             f"hops={int(effective_max_hops)}:nodes={int(effective_max_nodes)}:edges={int(effective_max_edges)}:"
-            f"rescore={self.max_vector_rescore}:nbrcap={self.max_neighbors_per_node}"
+            f"rescore={self.max_vector_rescore}:nbrcap={self.max_neighbors_per_node}:"
+            f"strategy={normalized_strategy}:semantic={effective_semantic_config!r}"
         )
 
         # Check cache
@@ -991,13 +1117,26 @@ class HybridVectorGraphSearch:
         # Phase 2: Graph traversal to expand results
         if effective_max_hops == 0:
             expanded_results = list(vector_results)
+            self._last_semantic_traversal = None
             self._last_traversal_stats = {
                 "nodes_visited": int(len(vector_results)),
                 "edges_traversed": 0,
                 "avg_hops": 0.0,
                 "termination_reason": "max_hops=0",
             }
+        elif normalized_strategy in semantic_strategies:
+            expanded_results = self._expand_semantically(
+                query_embedding,
+                vector_results,
+                max_hops=effective_max_hops,
+                relationship_types=relationship_types,
+                entity_types=entity_types,
+                max_nodes_visited=effective_max_nodes,
+                max_edges_traversed=effective_max_edges,
+                semantic_config=effective_semantic_config,
+            )
         else:
+            self._last_semantic_traversal = None
             expanded_results = self._expand_through_graph(
                 vector_results,
                 max_hops=effective_max_hops,
@@ -1033,6 +1172,7 @@ class HybridVectorGraphSearch:
             "max_hops": effective_max_hops,
             "max_nodes_visited": effective_max_nodes,
             "max_edges_traversed": effective_max_edges,
+            "traversal_strategy": normalized_strategy,
             "relationship_types": list(rel_types_key) if rel_types_key else None,
             "entity_types": list(ent_types_key) if ent_types_key else None,
             **getattr(self, "_last_traversal_stats", {}),
@@ -1109,6 +1249,152 @@ class HybridVectorGraphSearch:
             })
 
         return results
+
+    def _expand_semantically(
+        self,
+        query_embedding: np.ndarray,
+        seed_results: List[Dict[str, Any]],
+        *,
+        max_hops: int,
+        relationship_types: Optional[List[str]],
+        entity_types: Optional[List[str]],
+        max_nodes_visited: int,
+        max_edges_traversed: int,
+        semantic_config: Optional[SemanticTraversalConfig],
+    ) -> List[Dict[str, Any]]:
+        """Delegate opt-in guided expansion to the canonical traversal engine."""
+        configured_degree = (
+            max(1, int(self.max_neighbors_per_node))
+            if self.max_neighbors_per_node is not None
+            else 256
+        )
+        if semantic_config is None:
+            active_config = SemanticTraversalConfig(
+                max_depth=max_hops,
+                max_nodes=max(1, max_nodes_visited),
+                max_edges=max(1, max_edges_traversed),
+                max_degree=configured_degree,
+                max_backend_calls=max(1, max_nodes_visited),
+                direction=(
+                    "adaptive"
+                    if self.use_bidirectional_traversal
+                    else "outgoing"
+                ),
+                relationship_types=tuple(relationship_types or ()),
+            )
+        else:
+            active_config = replace(
+                semantic_config,
+                max_depth=min(semantic_config.max_depth, max_hops),
+                max_nodes=min(
+                    semantic_config.max_nodes,
+                    max(1, max_nodes_visited),
+                ),
+                max_edges=min(
+                    semantic_config.max_edges,
+                    max(1, max_edges_traversed),
+                ),
+                max_degree=min(semantic_config.max_degree, configured_degree),
+                max_backend_calls=min(
+                    semantic_config.max_backend_calls,
+                    max(1, max_nodes_visited),
+                ),
+                relationship_types=(
+                    tuple(relationship_types)
+                    if relationship_types is not None
+                    else semantic_config.relationship_types
+                ),
+            )
+
+        traversal = EmbeddingGuidedTraversal(
+            _LegacyDatasetNeighborProvider(self, entity_types),
+            _LegacyDatasetEmbeddingProvider(self.dataset),
+            active_config,
+        )
+        self._last_semantic_traversal = traversal.traverse(
+            [seed["id"] for seed in seed_results],
+            query_embedding,
+        )
+
+        results_by_id: Dict[str, Dict[str, Any]] = {}
+        for seed in seed_results:
+            seed_id = seed["id"]
+            seed.setdefault("seed_id", seed_id)
+            seed.setdefault("seed_vector_score", seed.get("vector_score", 0.0))
+            results_by_id[seed_id] = seed
+
+        candidates = self._last_semantic_traversal.candidates
+        for node_id in self._last_semantic_traversal.ranked_node_ids:
+            if node_id in results_by_id:
+                continue
+            candidate = candidates[node_id]
+            path: List[Dict[str, Any]] = []
+            cursor = candidate
+            seen = {cursor.node_id}
+            while cursor.parent_id is not None and cursor.parent_id not in seen:
+                path.append(
+                    {
+                        "from": cursor.parent_id,
+                        "to": cursor.node_id,
+                        "relationship": cursor.relationship_type,
+                        "weight": cursor.relationship_score,
+                    }
+                )
+                seen.add(cursor.parent_id)
+                parent = candidates.get(cursor.parent_id)
+                if parent is None:
+                    break
+                cursor = parent
+            path.reverse()
+
+            seed_id = path[0]["from"] if path else candidate.parent_id
+            seed_result = results_by_id.get(seed_id or "")
+            seed_vector_score = (
+                seed_result.get("seed_vector_score", seed_result.get("vector_score", 0.0))
+                if seed_result is not None
+                else 0.0
+            )
+            graph_score = max(0.0, min(1.0, (candidate.score + 1.0) / 2.0))
+            vector_score = max(0.0, candidate.semantic_proximity)
+            results_by_id[node_id] = {
+                "id": node_id,
+                "node": self.dataset.get_node(node_id),
+                "vector_score": vector_score,
+                "seed_id": seed_id,
+                "seed_vector_score": seed_vector_score,
+                "graph_score": graph_score,
+                "combined_score": (
+                    vector_score * self.vector_weight
+                    + graph_score * self.graph_weight
+                ),
+                "path": path,
+                "hops": candidate.depth,
+                "source": "graph",
+                "semantic_traversal": candidate.to_dict(),
+            }
+
+        diagnostics = self._last_semantic_traversal.diagnostics
+        non_seed_count = max(0, len(results_by_id) - len(seed_results))
+        average_hops = (
+            sum(
+                result.get("hops", 0)
+                for result in results_by_id.values()
+                if result.get("source") == "graph"
+            )
+            / max(1, non_seed_count)
+        )
+        self.metrics["nodes_visited"] += diagnostics.nodes_visited
+        self.metrics["edges_traversed"] += diagnostics.edges_scanned
+        self.metrics["average_hops"] = average_hops
+        self._last_traversal_stats = {
+            "nodes_visited": int(diagnostics.nodes_visited),
+            "edges_traversed": int(diagnostics.edges_scanned),
+            "avg_hops": float(average_hops),
+            "termination_reason": diagnostics.stop_reason,
+            "semantic_approximate": self._last_semantic_traversal.approximate,
+            "semantic_diagnostics": diagnostics.to_dict(),
+        }
+        return list(results_by_id.values())
 
     def _expand_through_graph(
         self,
@@ -1692,7 +1978,9 @@ def enhance_dataset_with_hybrid_search(
     min_score_threshold: float = 0.5,
     use_bidirectional_traversal: bool = True,
     max_vector_rescore: Optional[int] = None,
-    max_neighbors_per_node: Optional[int] = None
+    max_neighbors_per_node: Optional[int] = None,
+    traversal_strategy: str = "bfs",
+    semantic_config: Optional[SemanticTraversalConfig] = None,
 ) -> HybridVectorGraphSearch:
     """
     Enhance a dataset with hybrid vector + graph search capabilities.
@@ -1716,7 +2004,9 @@ def enhance_dataset_with_hybrid_search(
         min_score_threshold=min_score_threshold,
         use_bidirectional_traversal=use_bidirectional_traversal,
         max_vector_rescore=max_vector_rescore,
-        max_neighbors_per_node=max_neighbors_per_node
+        max_neighbors_per_node=max_neighbors_per_node,
+        traversal_strategy=traversal_strategy,
+        semantic_config=semantic_config,
     )
 
     # For convenience, we can also attach it to the dataset as an attribute
@@ -2223,7 +2513,9 @@ class GraphRAGFactory:
         min_score_threshold: float = 0.5,
         use_bidirectional_traversal: bool = True,
         max_vector_rescore: Optional[int] = None,
-        max_neighbors_per_node: Optional[int] = None
+        max_neighbors_per_node: Optional[int] = None,
+        traversal_strategy: str = "bfs",
+        semantic_config: Optional[SemanticTraversalConfig] = None,
     ) -> HybridVectorGraphSearch:
         """
         Create a hybrid vector + graph search for a dataset.
@@ -2247,7 +2539,9 @@ class GraphRAGFactory:
             min_score_threshold=min_score_threshold,
             use_bidirectional_traversal=use_bidirectional_traversal,
             max_vector_rescore=max_vector_rescore,
-            max_neighbors_per_node=max_neighbors_per_node
+            max_neighbors_per_node=max_neighbors_per_node,
+            traversal_strategy=traversal_strategy,
+            semantic_config=semantic_config,
         )
 
     @staticmethod
@@ -2383,6 +2677,8 @@ class GraphRAGFactory:
         use_bidirectional_traversal: bool = True,
         max_vector_rescore: Optional[int] = None,
         max_neighbors_per_node: Optional[int] = None,
+        traversal_strategy: str = "bfs",
+        semantic_config: Optional[SemanticTraversalConfig] = None,
         validate_outputs: bool = True,
         enable_tracing: bool = True
     ) -> Tuple[HybridVectorGraphSearch, GraphRAGIntegration, CrossDocumentReasoner]:
@@ -2431,7 +2727,9 @@ class GraphRAGFactory:
             min_score_threshold=min_score_threshold,
             use_bidirectional_traversal=use_bidirectional_traversal,
             max_vector_rescore=max_vector_rescore,
-            max_neighbors_per_node=max_neighbors_per_node
+            max_neighbors_per_node=max_neighbors_per_node,
+            traversal_strategy=traversal_strategy,
+            semantic_config=semantic_config,
         )
 
         # Create LLM integration
@@ -2484,6 +2782,15 @@ class GraphRAGFactory:
         use_bidirectional_traversal = config.get("use_bidirectional_traversal", True)
         max_vector_rescore = config.get("max_vector_rescore")
         max_neighbors_per_node = config.get("max_neighbors_per_node")
+        traversal_strategy = config.get("traversal_strategy", "bfs")
+        semantic_config = config.get("semantic_config")
+        if isinstance(semantic_config, Mapping):
+            semantic_options = dict(semantic_config)
+            if isinstance(semantic_options.get("weights"), Mapping):
+                semantic_options["weights"] = SemanticTraversalWeights(
+                    **dict(semantic_options["weights"])
+                )
+            semantic_config = SemanticTraversalConfig(**semantic_options)
         validate_outputs = config.get("validate_outputs", True)
         enable_tracing = config.get("enable_tracing", True)
         enable_query_rewriting = config.get("enable_query_rewriting", True)
@@ -2499,6 +2806,8 @@ class GraphRAGFactory:
             use_bidirectional_traversal=use_bidirectional_traversal,
             max_vector_rescore=max_vector_rescore,
             max_neighbors_per_node=max_neighbors_per_node,
+            traversal_strategy=traversal_strategy,
+            semantic_config=semantic_config,
             validate_outputs=validate_outputs,
             enable_tracing=enable_tracing
         )

@@ -50,6 +50,7 @@ Typical call chain::
 Main Components:
 - UnifiedQueryEngine: Central query execution engine
 - HybridSearchEngine: Vector + graph search fusion
+- EmbeddingGuidedTraversal: Budgeted semantic beam traversal over graph edges
 - BudgetManager: Budget enforcement wrapper
 
 Usage:
@@ -62,7 +63,22 @@ Usage:
 """
 
 from .unified_engine import UnifiedQueryEngine
-from .hybrid_search import HybridSearchEngine  
+from .hybrid_search import HybridSearchEngine, HybridSearchResult
+from .semantic_traversal import (
+    EmbeddingGuidedTraversal,
+    GraphNeighborProvider,
+    NodeEmbeddingProvider,
+    ObjectGraphNeighborProvider,
+    ObjectNodeEmbeddingProvider,
+    SemanticTraversalConfig,
+    SemanticTraversalResult,
+    SemanticTraversalWeights,
+    TraversalCandidate,
+    TraversalDiagnostics,
+    TraversalEdge,
+    TraversalPath,
+    cosine_similarity,
+)
 from .budget_manager import BudgetManager
 from .distributed import (
     GraphPartitioner,
@@ -147,7 +163,22 @@ from .explanation import (
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
+    'HybridSearchResult',
     'BudgetManager',
+    # Reusable embedding-guided graph traversal
+    'EmbeddingGuidedTraversal',
+    'GraphNeighborProvider',
+    'NodeEmbeddingProvider',
+    'ObjectGraphNeighborProvider',
+    'ObjectNodeEmbeddingProvider',
+    'SemanticTraversalConfig',
+    'SemanticTraversalResult',
+    'SemanticTraversalWeights',
+    'TraversalCandidate',
+    'TraversalDiagnostics',
+    'TraversalEdge',
+    'TraversalPath',
+    'cosine_similarity',
     # Distributed query — Item 13 (v3.0.0)
     'GraphPartitioner',
     'DistributedGraph',
