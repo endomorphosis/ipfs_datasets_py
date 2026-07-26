@@ -10,6 +10,7 @@ draft observations, then writes a secret-free content-addressed receipt.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import inspect
@@ -19,8 +20,9 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+import threading
 from types import MappingProxyType
-from typing import Any, Callable, Final, Mapping
+from typing import Any, Callable, Final, Iterator, Mapping
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -35,6 +37,10 @@ if str(_REPOSITORY_ROOT) not in sys.path:
 from benchmarks.logic_pipeline.content_addressing import (
     cid_for_dag_json,
     validate_cid,
+)
+from benchmarks.logic_pipeline.source_bound_import import (
+    SourceBoundImportError,
+    import_source_bound_ipfs_accelerate,
 )
 
 
@@ -82,7 +88,7 @@ PINNED_P2P_CAPABILITIES: Final = {
 PINNED_DRAFT_TIMEOUT_SECONDS: Final = 30.0
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _SECRET_KEYS = ("api_key", "apikey", "authorization", "credential", "password", "secret", "token")
-_LOCAL_IPFS_ACCELERATE_SOURCE: Final = _REPOSITORY_ROOT / "ipfs_accelerate_py"
+_SOURCE_IMPORT_LOCK = threading.RLock()
 
 
 def _lock_binding_policy() -> dict[str, Any]:
@@ -123,6 +129,65 @@ def HSSLEV1126C73() -> str:
 
 class LeanstralProvisioningError(RuntimeError):
     """The shared service or its locked identity failed closed."""
+
+
+def _module_family(name: str) -> dict[str, object]:
+    prefix = name + "."
+    return {
+        module_name: module
+        for module_name, module in tuple(sys.modules.items())
+        if module_name == name or module_name.startswith(prefix)
+    }
+
+
+def _restore_module_family(
+    before: Mapping[str, object],
+    after: Mapping[str, object],
+) -> None:
+    for module_name in after:
+        if module_name not in before:
+            sys.modules.pop(module_name, None)
+    for module_name, module in before.items():
+        sys.modules[module_name] = module  # type: ignore[assignment]
+
+    sentinel = object()
+    for module_name in sorted(
+        set(before) | set(after),
+        key=lambda name: name.count("."),
+    ):
+        parent_name, separator, child_name = module_name.rpartition(".")
+        if not separator:
+            continue
+        parent = sys.modules.get(parent_name)
+        if parent is None:
+            continue
+        expected = before.get(module_name, sentinel)
+        if expected is not sentinel:
+            setattr(parent, child_name, expected)
+            continue
+        observed = after.get(module_name, sentinel)
+        if (
+            observed is not sentinel
+            and getattr(parent, child_name, sentinel) is observed
+        ):
+            delattr(parent, child_name)
+
+
+@contextmanager
+def _preserve_import_path() -> Iterator[None]:
+    """Restore sibling-package provenance after local source discovery."""
+
+    with _SOURCE_IMPORT_LOCK:
+        original_path = list(sys.path)
+        original_datasets_modules = _module_family("ipfs_datasets_py")
+        try:
+            yield
+        finally:
+            _restore_module_family(
+                original_datasets_modules,
+                _module_family("ipfs_datasets_py"),
+            )
+            sys.path[:] = original_path
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -600,26 +665,27 @@ def verify_p2p_evidence(
     if not isinstance(evidence, Mapping):
         raise LeanstralProvisioningError("configured P2P provider requires transport evidence")
 
-    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
-    if (
-        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
-        and source not in sys.path
-    ):
-        sys.path.insert(0, source)
-    try:
-        from ipfs_accelerate_py.mcplusplus_module.leanstral_topology import (
-            validate_leanstral_topology_mapping,
-        )
-    except ImportError as exc:
-        raise LeanstralProvisioningError(
-            "Leanstral P2P topology validator is unavailable"
-        ) from exc
-    try:
-        validation = validate_leanstral_topology_mapping(evidence)
-    except (TypeError, ValueError, RuntimeError) as exc:
-        raise LeanstralProvisioningError(
-            f"P2P topology evidence is malformed: {exc}"
-        ) from exc
+    with _preserve_import_path():
+        try:
+            topology_module = import_source_bound_ipfs_accelerate(
+                "ipfs_accelerate_py.mcplusplus_module.leanstral_topology"
+            )
+            validate_leanstral_topology_mapping = getattr(
+                topology_module,
+                "validate_leanstral_topology_mapping",
+            )
+            if not callable(validate_leanstral_topology_mapping):
+                raise AttributeError("topology validator is not callable")
+        except (SourceBoundImportError, AttributeError) as exc:
+            raise LeanstralProvisioningError(
+                "Leanstral P2P topology validator is unavailable"
+            ) from exc
+        try:
+            validation = validate_leanstral_topology_mapping(evidence)
+        except (TypeError, ValueError, RuntimeError) as exc:
+            raise LeanstralProvisioningError(
+                f"P2P topology evidence is malformed: {exc}"
+            ) from exc
     if not validation.valid:
         raise LeanstralProvisioningError(
             "P2P topology evidence failed: " + ", ".join(validation.errors)
@@ -687,72 +753,98 @@ def verify_p2p_evidence(
 
 
 def _default_model_manager_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
-    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
-    if (
-        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
-        and source not in sys.path
-    ):
-        sys.path.insert(0, source)
-    try:
-        from ipfs_accelerate_py.model_manager import ModelManager
-    except ImportError as exc:
-        raise LeanstralProvisioningError("model-manager discovery is unavailable") from exc
-    with tempfile.TemporaryDirectory(prefix="hssl-leanstral-model-manager-") as state_dir:
-        manager = ModelManager(
-            storage_path=str(Path(state_dir) / "models.json"),
-            use_database=False,
-            enable_ipfs=False,
-        )
+    with _preserve_import_path():
         try:
-            return manager.list_served_models(
-                endpoint_url=lock.identity["endpoint"],
-                timeout=float(lock.http["timeout_seconds"]),
+            manager_module = import_source_bound_ipfs_accelerate(
+                "ipfs_accelerate_py.model_manager"
             )
-        finally:
-            close = getattr(manager, "close", None)
-            if callable(close):
-                close()
+            ModelManager = getattr(manager_module, "ModelManager")
+            if not callable(ModelManager):
+                raise AttributeError("ModelManager is not callable")
+        except (SourceBoundImportError, AttributeError) as exc:
+            raise LeanstralProvisioningError(
+                "model-manager discovery is unavailable"
+            ) from exc
+        with tempfile.TemporaryDirectory(
+            prefix="hssl-leanstral-model-manager-"
+        ) as state_dir:
+            manager = ModelManager(
+                storage_path=str(Path(state_dir) / "models.json"),
+                use_database=False,
+                enable_ipfs=False,
+            )
+            try:
+                return manager.list_served_models(
+                    endpoint_url=lock.identity["endpoint"],
+                    timeout=float(lock.http["timeout_seconds"]),
+                )
+            finally:
+                close = getattr(manager, "close", None)
+                if callable(close):
+                    close()
 
 
 def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
-    source = str(_LOCAL_IPFS_ACCELERATE_SOURCE)
-    if (
-        (_LOCAL_IPFS_ACCELERATE_SOURCE / "ipfs_accelerate_py").is_dir()
-        and source not in sys.path
-    ):
-        sys.path.insert(0, source)
-    try:
-        import anyio
-        import ipfs_accelerate_py.model_manager as manager_module
-        from ipfs_accelerate_py.model_manager import ModelManager
-        from ipfs_accelerate_py.mcp_server.tools.model_tools.native_model_tools import model_list_served
-    except ImportError as exc:
-        raise LeanstralProvisioningError("MCP model discovery is unavailable") from exc
-
-    async def call() -> dict[str, Any]:
-        return await model_list_served(
-            endpoint_url=lock.identity["endpoint"],
-            timeout=float(lock.http["timeout_seconds"]),
-        )
-
-    with tempfile.TemporaryDirectory(prefix="hssl-leanstral-mcp-manager-") as state_dir:
-        manager = ModelManager(
-            storage_path=str(Path(state_dir) / "models.json"),
-            use_database=False,
-            enable_ipfs=False,
-        )
-        original_get_default = manager_module.get_default_model_manager
-        manager_module.get_default_model_manager = lambda: manager
+    with _preserve_import_path():
         try:
-            result = anyio.run(call)
-        finally:
-            manager_module.get_default_model_manager = original_get_default
-            close = getattr(manager, "close", None)
-            if callable(close):
-                close()
-    if result.get("status") != "success" or not isinstance(result.get("models"), list):
-        raise LeanstralProvisioningError("MCP model discovery failed")
-    return result["models"]
+            import anyio
+
+            manager_module = import_source_bound_ipfs_accelerate(
+                "ipfs_accelerate_py.model_manager"
+            )
+            tools_module = import_source_bound_ipfs_accelerate(
+                "ipfs_accelerate_py.mcp_server.tools.model_tools.native_model_tools"
+            )
+            ModelManager = getattr(manager_module, "ModelManager")
+            model_list_served = getattr(tools_module, "model_list_served")
+            get_default_model_manager = getattr(
+                manager_module,
+                "get_default_model_manager",
+            )
+            if not all(
+                callable(value)
+                for value in (
+                    ModelManager,
+                    model_list_served,
+                    get_default_model_manager,
+                )
+            ):
+                raise AttributeError(
+                    "MCP model discovery callables are unavailable"
+                )
+        except (ImportError, SourceBoundImportError, AttributeError) as exc:
+            raise LeanstralProvisioningError(
+                "MCP model discovery is unavailable"
+            ) from exc
+
+        async def call() -> dict[str, Any]:
+            return await model_list_served(
+                endpoint_url=lock.identity["endpoint"],
+                timeout=float(lock.http["timeout_seconds"]),
+            )
+
+        with tempfile.TemporaryDirectory(
+            prefix="hssl-leanstral-mcp-manager-"
+        ) as state_dir:
+            manager = ModelManager(
+                storage_path=str(Path(state_dir) / "models.json"),
+                use_database=False,
+                enable_ipfs=False,
+            )
+            original_get_default = get_default_model_manager
+            manager_module.get_default_model_manager = lambda: manager
+            try:
+                result = anyio.run(call)
+            finally:
+                manager_module.get_default_model_manager = original_get_default
+                close = getattr(manager, "close", None)
+                if callable(close):
+                    close()
+        if result.get("status") != "success" or not isinstance(
+            result.get("models"), list
+        ):
+            raise LeanstralProvisioningError("MCP model discovery failed")
+        return result["models"]
 
 
 def _call_probe(probe: Callable[..., Any], lock: LeanstralRuntimeLock) -> Any:

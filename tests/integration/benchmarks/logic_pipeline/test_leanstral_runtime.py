@@ -7,11 +7,13 @@ contract can be exercised deterministically.
 
 from __future__ import annotations
 
+import builtins
 from dataclasses import FrozenInstanceError
 import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 import urllib.request
 
@@ -638,6 +640,182 @@ def test_configured_p2p_requires_complete_cid_bound_non_inference_topology() -> 
     ):
         with pytest.raises(provision.LeanstralProvisioningError, match=message):
             provision.verify_p2p_evidence(lock, changed)
+
+
+def test_leanstral_discovery_preserves_symai_router_provenance() -> None:
+    """Leanstral source discovery must not shadow the outer SyMAI router."""
+
+    lock = provision.load_lock(LOCK_PATH)
+    program = """
+import importlib
+import json
+from pathlib import Path
+import sys
+
+from benchmarks.logic_pipeline.source_bound_import import (
+    import_source_bound_ipfs_accelerate,
+)
+from scripts.benchmarks import provision_hssl_leanstral as provision
+
+root = Path.cwd().resolve()
+original_path = tuple(sys.path)
+lock = provision.load_lock()
+evidence = json.loads(sys.stdin.read())
+
+try:
+    provision.verify_p2p_evidence(lock, {})
+except provision.LeanstralProvisioningError:
+    pass
+else:
+    raise AssertionError("malformed topology evidence was accepted")
+assert tuple(sys.path) == original_path
+
+provision.verify_p2p_evidence(lock, evidence)
+assert tuple(sys.path) == original_path
+
+provider = import_source_bound_ipfs_accelerate(
+    "ipfs_accelerate_py.agent_supervisor.leanstral_proof_provider"
+)
+assert Path(provider.__file__).resolve() == (
+    root
+    / "ipfs_accelerate_py"
+    / "ipfs_accelerate_py"
+    / "agent_supervisor"
+    / "leanstral_proof_provider.py"
+).resolve()
+assert callable(provider.LeanstralProofProviderConfig)
+
+router = importlib.import_module("ipfs_datasets_py.llm_router")
+assert Path(router.__file__).resolve() == (
+    root / "ipfs_datasets_py" / "llm_router.py"
+).resolve()
+assert router._PINNED_SYMAI_RESPONSE_FORMAT["type"] == "json_schema"
+assert issubclass(router.PinnedSymaiCompletionError, RuntimeError)
+
+vendored = (root / "ipfs_accelerate_py" / "ipfs_datasets_py").resolve()
+for name, module in tuple(sys.modules.items()):
+    if name != "ipfs_datasets_py" and not name.startswith("ipfs_datasets_py."):
+        continue
+    module_file = getattr(module, "__file__", None)
+    if not isinstance(module_file, str):
+        continue
+    try:
+        Path(module_file).resolve().relative_to(vendored)
+    except ValueError:
+        continue
+    raise AssertionError(f"vendored dataset module leaked: {name}")
+"""
+    completed = subprocess.run(
+        (sys.executable, "-c", program),
+        cwd=REPOSITORY_ROOT,
+        input=json.dumps(_p2p_evidence(lock), sort_keys=True),
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_default_manager_and_mcp_probes_preserve_source_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Default discovery paths use pinned modules without leaking import paths."""
+
+    lock = provision.load_lock(LOCK_PATH)
+    original_path = tuple(sys.path)
+    original_datasets_modules = {
+        name: module
+        for name, module in tuple(sys.modules.items())
+        if name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
+    }
+
+    def datasets_modules() -> dict[str, object]:
+        return {
+            name: module
+            for name, module in tuple(sys.modules.items())
+            if name == "ipfs_datasets_py"
+            or name.startswith("ipfs_datasets_py.")
+        }
+
+    with provision._preserve_import_path():
+        manager_module = provision.import_source_bound_ipfs_accelerate(
+            "ipfs_accelerate_py.model_manager"
+        )
+        tools_module = provision.import_source_bound_ipfs_accelerate(
+            "ipfs_accelerate_py.mcp_server.tools.model_tools.native_model_tools"
+        )
+    assert tuple(sys.path) == original_path
+    assert datasets_modules() == original_datasets_modules
+
+    created: list[object] = []
+    closed: list[object] = []
+
+    class Manager:
+        def __init__(
+            self,
+            *,
+            storage_path: str,
+            use_database: bool,
+            enable_ipfs: bool,
+        ) -> None:
+            assert storage_path.endswith("models.json")
+            assert use_database is False
+            assert enable_ipfs is False
+            created.append(self)
+
+        def list_served_models(
+            self,
+            *,
+            endpoint_url: str,
+            timeout: float,
+        ) -> list[dict[str, object]]:
+            assert endpoint_url == lock.identity["endpoint"]
+            assert timeout == lock.http["timeout_seconds"]
+            return [_model_record(lock)]
+
+        def close(self) -> None:
+            closed.append(self)
+
+    async def model_list_served(
+        *,
+        endpoint_url: str,
+        timeout: float,
+    ) -> dict[str, object]:
+        assert endpoint_url == lock.identity["endpoint"]
+        assert timeout == lock.http["timeout_seconds"]
+        assert manager_module.get_default_model_manager() is created[-1]
+        return {"status": "success", "models": [_model_record(lock)]}
+
+    original_get_default = manager_module.get_default_model_manager
+    monkeypatch.setattr(manager_module, "ModelManager", Manager)
+    monkeypatch.setattr(tools_module, "model_list_served", model_list_served)
+
+    assert provision._default_model_manager_probe(lock) == [_model_record(lock)]
+    assert tuple(sys.path) == original_path
+    assert datasets_modules() == original_datasets_modules
+    assert provision._default_mcp_probe(lock) == [_model_record(lock)]
+    assert tuple(sys.path) == original_path
+    assert datasets_modules() == original_datasets_modules
+    assert manager_module.get_default_model_manager is original_get_default
+    assert created == closed
+    assert len(created) == 2
+
+    original_import = builtins.__import__
+
+    def unavailable_anyio(name: str, *args: object, **kwargs: object) -> object:
+        if name == "anyio":
+            raise ImportError("anyio deliberately unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", unavailable_anyio)
+    with pytest.raises(
+        provision.LeanstralProvisioningError,
+        match="MCP model discovery is unavailable",
+    ):
+        provision._default_mcp_probe(lock)
+    assert tuple(sys.path) == original_path
+    assert datasets_modules() == original_datasets_modules
 
 
 def test_receipt_validation_detects_tampering_and_secret_fields() -> None:
