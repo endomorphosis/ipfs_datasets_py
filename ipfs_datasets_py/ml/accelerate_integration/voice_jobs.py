@@ -353,12 +353,22 @@ class VoiceJobBridge:
             )
 
         try:
-            submitted_id = self._queue.submit(
-                task_type=job.task_type,
-                model_name=job.model_name,
-                payload=payload,
-                task_id=job.task_id,
-            )
+            submit_with_outcome = getattr(self._queue, "submit_with_outcome", None)
+            if callable(submit_with_outcome):
+                submitted_id, replayed = submit_with_outcome(
+                    task_type=job.task_type,
+                    model_name=job.model_name,
+                    payload=payload,
+                    task_id=job.task_id,
+                )
+            else:
+                submitted_id = self._queue.submit(
+                    task_type=job.task_type,
+                    model_name=job.model_name,
+                    payload=payload,
+                    task_id=job.task_id,
+                )
+                replayed = False
         except Exception:
             # A concurrent submitter may have won the primary-key race.
             existing = self._queue.get(job.task_id)
@@ -377,12 +387,22 @@ class VoiceJobBridge:
                 f"canonical queue changed deterministic task ID {job.task_id!r} "
                 f"to {submitted_id!r}"
             )
+        if replayed:
+            existing = self._queue.get(job.task_id)
+            if existing is None:
+                raise VoiceJobBridgeError(
+                    f"canonical queue reported replay for missing task {job.task_id!r}"
+                )
+            self._assert_equivalent_existing(existing, job=job, payload=payload)
+            status = str(existing.get("status") or "")
+        else:
+            status = "queued"
         return VoiceJobSubmission(
             work_item_id=job.lineage.work_item_id,
             task_id=job.task_id,
             task_type=job.task_type,
-            status="queued",
-            replayed=False,
+            status=status,
+            replayed=replayed,
         )
 
     def submit_workset(
