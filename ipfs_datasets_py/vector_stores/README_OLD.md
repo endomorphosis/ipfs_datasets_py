@@ -150,7 +150,7 @@ The vector stores integrate with other IPFS Datasets components:
 
 ## See Also
 
-- [Embeddings Module](../embeddings/README.md) - Generate embeddings for storage
+- [Embeddings Module](../ml/embeddings/README.md) - Generate embeddings for storage
 - [Search Module](../search/README.md) - Search and retrieval operations
 - [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
-- [Performance Optimization Guide](../../docs/performance_optimization.md) - Detailed optimization strategies
+- [Performance Optimization Guide](../../docs/guides/performance_optimization.md) - Detailed optimization strategies
