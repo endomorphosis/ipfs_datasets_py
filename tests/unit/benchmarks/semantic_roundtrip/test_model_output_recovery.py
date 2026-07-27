@@ -1,0 +1,510 @@
+from __future__ import annotations
+
+import threading
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
+from benchmarks.semantic_roundtrip import (
+    AllowedAtomVocabulary,
+    CanonicalRule,
+    CanonicalRuleIR,
+    ComponentStatus,
+    ConstructorRequest,
+    ContractError,
+    FailureReason,
+    RealizerRequest,
+)
+from benchmarks.semantic_roundtrip.constructors.leanstral import (
+    LEANSTRAL_ENDPOINT,
+    LEANSTRAL_MODEL,
+    LeanstralMalformedResponseError,
+)
+from benchmarks.semantic_roundtrip.constructors.symai import SyMAICompletion
+from benchmarks.semantic_roundtrip.model_output_recovery import (
+    BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE,
+    DIRECT_ROUTE_ID,
+    LEANSTRAL_TOKENIZER_IDENTITY,
+    PREREGISTERED_SRT023_POLICY,
+    SYMAI_POLARITY_CONTRACT_INTERFACE,
+    BoundedModelOutputRecovery,
+    RecoveryPolicy,
+    RecoveryRole,
+    RecoveryRoute,
+    SyMAIPolarityContract,
+)
+from benchmarks.semantic_roundtrip_capabilities import (
+    LEANSTRAL_BACKEND,
+    LEANSTRAL_BACKEND_OWNER,
+    LEANSTRAL_CAPACITY,
+    LEANSTRAL_PROVIDER,
+)
+
+
+VOCABULARY = AllowedAtomVocabulary(
+    actors=("administrator", "controller", "processor"),
+    actions=("delete", "disclose", "retain"),
+    objects=("records",),
+    qualifiers=("after_30_days", "unless_required_by_law"),
+)
+IR = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            temporal=("after_30_days",),
+        ),
+        CanonicalRule(
+            modality="P",
+            actor="administrator",
+            action="disclose",
+            object="records",
+        ),
+        CanonicalRule(
+            modality="F",
+            actor="processor",
+            action="retain",
+            object="records",
+            exceptions=("unless_required_by_law",),
+        ),
+    )
+)
+
+
+def constructor_request(
+    source: str = "A bounded public source sentence.",
+) -> ConstructorRequest:
+    return ConstructorRequest(source, VOCABULARY, {"public_label": "case-a"})
+
+
+def realizer_request(
+    marker: str = "PRIVATE_MARKER_MUST_NOT_BE_SERIALIZED",
+) -> RealizerRequest:
+    return RealizerRequest(IR, VOCABULARY, {"display_marker": marker})
+
+
+def realization(
+    overrides: dict[int, dict[str, object]] | None = None,
+) -> dict[str, object]:
+    text = {
+        "F": "The processor must not retain records unless required by law.",
+        "O": "The controller must delete records after 30 days.",
+        "P": "The administrator may disclose records.",
+    }
+    rows: list[dict[str, object]] = []
+    for index, rule in enumerate(IR.rules):
+        row: dict[str, object] = {
+            "index": index,
+            "modality": rule.modality,
+            "polarity": {
+                "O": "obligation",
+                "P": "permission",
+                "F": "prohibition",
+            }[rule.modality],
+            "text": text[rule.modality],
+        }
+        row.update((overrides or {}).get(index, {}))
+        rows.append(row)
+    return {"rules": rows}
+
+
+ROUTE_METADATA = {
+    "resolved_provider_name": LEANSTRAL_PROVIDER,
+    "resolved_model_name": LEANSTRAL_MODEL,
+    "service_endpoint": LEANSTRAL_ENDPOINT,
+    "routing_backend": LEANSTRAL_BACKEND,
+    "attempts": 1,
+    "retries": 0,
+    "cache_enabled": False,
+    "cache_hit": False,
+}
+
+
+class RecordingClient:
+    endpoint = LEANSTRAL_ENDPOINT
+    model = LEANSTRAL_MODEL
+
+    def __init__(
+        self,
+        responses: list[object],
+        *,
+        symai: bool = False,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
+        self.responses = responses
+        self.symai = symai
+        self.metadata = metadata or ROUTE_METADATA
+        self.calls: list[dict[str, object]] = []
+
+    def complete_json(self, **kwargs: object) -> Any:
+        self.calls.append(kwargs)
+        value = self.responses.pop(0)
+        if isinstance(value, BaseException):
+            raise value
+        if self.symai:
+            return SyMAICompletion(value, self.metadata)  # type: ignore[arg-type]
+        return value
+
+
+def test_interfaces_bind_the_exact_model_envelope_and_route_identity() -> None:
+    direct = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()]), route=RecoveryRoute.DIRECT
+    )
+    symai = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()], symai=True),
+        route=RecoveryRoute.SYMAI,
+    )
+
+    assert direct.interface == BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE
+    assert SyMAIPolarityContract.interface == SYMAI_POLARITY_CONTRACT_INTERFACE
+    for wrapper in (direct, symai):
+        assert LEANSTRAL_ENDPOINT in wrapper.identity
+        assert LEANSTRAL_BACKEND in wrapper.identity
+        assert LEANSTRAL_MODEL in wrapper.identity
+        assert LEANSTRAL_TOKENIZER_IDENTITY in wrapper.identity
+        assert f"slots={LEANSTRAL_CAPACITY}" in wrapper.identity
+        assert "cache=disabled" in wrapper.identity
+    assert DIRECT_ROUTE_ID in direct.identity
+    assert "symai_router" in symai.identity
+
+    result = direct.recover_l1(constructor_request())
+    identity = result.receipt.to_dict()["identity"]
+    assert identity == {
+        "provider": LEANSTRAL_PROVIDER,
+        "endpoint": LEANSTRAL_ENDPOINT,
+        "backend": LEANSTRAL_BACKEND,
+        "backend_owner": LEANSTRAL_BACKEND_OWNER,
+        "model": LEANSTRAL_MODEL,
+        "tokenizer": LEANSTRAL_TOKENIZER_IDENTITY,
+        "route": "direct",
+        "route_id": DIRECT_ROUTE_ID,
+        "direct_and_symai_are_independent_models": False,
+        "physical_model_slots": 1,
+        "execution": "globally_serialized_one_slot",
+    }
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("endpoint", "http://127.0.0.1:9999/v1"),
+        ("model", "substitute-model"),
+        ("backend", "transformers"),
+        ("tokenizer", "substitute-tokenizer"),
+        ("parallel_slots", 2),
+        ("cache_enabled", True),
+    ],
+)
+def test_identity_cache_or_capacity_drift_is_rejected_before_a_call(
+    field: str, value: object
+) -> None:
+    client = SimpleNamespace(
+        endpoint=LEANSTRAL_ENDPOINT,
+        model=LEANSTRAL_MODEL,
+        complete_json=lambda **_: IR.to_dict(),
+    )
+    setattr(client, field, value)
+
+    with pytest.raises(ContractError, match="frozen|cache"):
+        BoundedModelOutputRecovery(client, route="direct")  # type: ignore[arg-type]
+
+
+def test_role_specific_bounded_schemas_and_explicit_polarity_instructions() -> None:
+    client = RecordingClient([IR.to_dict(), realization(), IR.to_dict()])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    l1 = recovery.recover_l1(constructor_request())
+    t1 = recovery.recover_t1(realizer_request())
+    l2 = recovery.recover_l2(
+        constructor_request(t1.text or ""), expected_ir=IR
+    )
+
+    assert l1.status is ComponentStatus.SUCCESS
+    assert t1.status is ComponentStatus.SUCCESS
+    assert l2.status is ComponentStatus.SUCCESS
+    assert l1.canonical_ir == IR
+    assert l2.canonical_ir == IR
+    assert t1.text == (
+        "The processor must not retain records unless required by law. "
+        "The controller must delete records after 30 days. "
+        "The administrator may disclose records."
+    )
+
+    assert [call["schema_name"] for call in client.calls] == [
+        "srt023_replacement_l1_canonical_ir_v1",
+        "srt023_replacement_t1_realization_v1",
+        "srt023_replacement_l2_canonical_ir_v1",
+    ]
+    for index in (0, 2):
+        canonical_rules = client.calls[index]["schema"]["properties"]["rules"]
+        assert canonical_rules["minItems"] == 1
+        assert canonical_rules["maxItems"] == 16
+    for call in client.calls:
+        system = str(call["system"])
+        assert "O means obligation" in system
+        assert "P means permission" in system
+        assert "F means prohibition" in system
+        assert "'may not'" in system
+    t1_schema = client.calls[1]["schema"]
+    rules = t1_schema["properties"]["rules"]  # type: ignore[index]
+    assert rules["minItems"] == rules["maxItems"] == len(IR.rules)
+    properties = rules["items"]["properties"]
+    assert properties["modality"]["enum"] == ["O", "P", "F"]
+    assert properties["polarity"]["enum"] == [
+        "obligation",
+        "permission",
+        "prohibition",
+    ]
+
+
+def test_t1_is_source_withheld_and_results_are_never_reused() -> None:
+    marker = "PRIVATE_SOURCE_RECOVERY_SENTINEL"
+    client = RecordingClient([realization(), realization()])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+    request = realizer_request(marker)
+
+    first = recovery.recover_t1(request)
+    second = recovery.recover_t1(request)
+
+    assert first.status is second.status is ComponentStatus.SUCCESS
+    assert len(client.calls) == 2
+    assert marker not in str(client.calls)
+    assert "CANONICAL_IR_JSON" in str(client.calls[0]["prompt"])
+    for result in (first, second):
+        receipt = result.receipt.to_dict()
+        assert receipt["boundary"] == {
+            "source_withheld": True,
+            "source_recovery_allowed": False,
+            "fallback_allowed": False,
+            "route_substitution_allowed": False,
+            "cross_call_result_reuse_allowed": False,
+        }
+        assert receipt["cache"] == {
+            "prompt_cache_enabled": False,
+            "response_cache_enabled": False,
+            "cache_hit": False,
+        }
+        assert receipt["calls"][0]["cache"]["result_reused"] is False
+
+
+@pytest.mark.parametrize(
+    ("first", "rejection"),
+    [
+        ({"rules": []}, "blank_output"),
+        ({"rules": [{"bad": "shape"}]}, "malformed_output"),
+        (
+            realization(
+                {
+                    0: {
+                        "text": "The processor may not retain records.",
+                    }
+                }
+            ),
+            "polarity_ambiguous",
+        ),
+    ],
+)
+def test_rejected_t1_gets_only_the_preregistered_bounded_retry(
+    first: object, rejection: str
+) -> None:
+    client = RecordingClient([first, realization()])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    result = recovery.recover_t1(realizer_request())
+
+    assert result.status is ComponentStatus.SUCCESS
+    assert len(client.calls) == 2
+    receipt = result.receipt
+    assert receipt.retries == 1
+    assert [call.outcome for call in receipt.calls] == [
+        "rejected",
+        "accepted",
+    ]
+    assert receipt.calls[0].rejection == rejection
+    assert receipt.calls[1].attempt_kind == "preregistered_retry"
+    assert rejection in str(client.calls[1]["prompt"])
+    assert "PRIVATE_MARKER" not in str(client.calls[1])
+
+
+def test_empty_l1_and_l2_rejections_retain_role_specific_typed_failures() -> None:
+    no_retry = RecoveryPolicy("srt-023-no-retry-negative-control", 0)
+    l1 = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}]),
+        route="direct",
+        policy=no_retry,
+    ).recover_l1(constructor_request())
+    l2 = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}]),
+        route="direct",
+        policy=no_retry,
+    ).recover_l2(constructor_request(), expected_ir=IR)
+
+    assert l1.failure_reason is FailureReason.EMPTY_L1
+    assert l2.failure_reason is FailureReason.EMPTY_L2
+    assert l1.receipt.terminal_rejection == "empty_output"
+    assert l2.receipt.terminal_rejection == "empty_output"
+    assert l1.receipt.calls[0].failure_reason is FailureReason.EMPTY_L1
+    assert l2.receipt.calls[0].failure_reason is FailureReason.EMPTY_L2
+
+
+def test_exhausted_retry_retains_both_rejections_and_terminal_typed_failure() -> None:
+    client = RecordingClient([{"rules": []}, {"rules": []}])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    result = recovery.recover_l1(constructor_request())
+
+    assert result.status is ComponentStatus.FAILED
+    assert result.failure_reason is FailureReason.RETRY_EXHAUSTED
+    assert len(client.calls) == 2
+    receipt = result.receipt.to_dict()
+    assert receipt["call_count"] == 2
+    assert receipt["rejection_count"] == 2
+    assert receipt["retry_count"] == 1
+    assert receipt["terminal_failure"] == "retry_exhausted"
+    assert receipt["terminal_rejection"] == "empty_output"
+    assert [call["failure_reason"] for call in receipt["calls"]] == [
+        "empty_l1",
+        "empty_l1",
+    ]
+
+
+def test_malformed_provider_output_is_recorded_and_can_use_only_one_retry() -> None:
+    client = RecordingClient(
+        [
+            LeanstralMalformedResponseError("bad provider envelope"),
+            IR.to_dict(),
+        ]
+    )
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    result = recovery.recover_l1(constructor_request())
+
+    assert result.status is ComponentStatus.SUCCESS
+    assert [call.outcome for call in result.receipt.calls] == [
+        "call_failed",
+        "accepted",
+    ]
+    assert result.receipt.calls[0].rejection == "malformed_output"
+    assert result.receipt.calls[0].failure_reason is FailureReason.INVALID_OUTPUT
+
+
+def test_symai_route_receipts_are_retained_and_route_drift_never_falls_back() -> None:
+    accepted_client = RecordingClient([realization()], symai=True)
+    accepted = BoundedModelOutputRecovery(
+        accepted_client, route="symai"
+    ).recover_t1(realizer_request())
+
+    assert accepted.status is ComponentStatus.SUCCESS
+    call = accepted.receipt.to_dict()["calls"][0]
+    route = call["symai_route_receipt"]["routing"]
+    assert route["route"] == "symai_router"
+    assert route["resolved_endpoint"] == LEANSTRAL_ENDPOINT
+    assert route["resolved_model"] == LEANSTRAL_MODEL
+    assert route["resolved_backend"] == LEANSTRAL_BACKEND
+    assert route["shared_capacity"] == 1
+
+    drift_client = RecordingClient(
+        [IR.to_dict()],
+        symai=True,
+        metadata={**ROUTE_METADATA, "resolved_model_name": "other-model"},
+    )
+    failed = BoundedModelOutputRecovery(
+        drift_client, route="symai"
+    ).recover_l1(constructor_request())
+
+    assert failed.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
+    assert len(drift_client.calls) == 1
+    assert failed.receipt.calls[0].outcome == "call_failed"
+    assert failed.receipt.calls[0].rejection == "route_contract_failure"
+    assert failed.receipt.retries == 0
+
+
+def test_l2_polarity_mismatch_is_rejected_instead_of_silently_accepted() -> None:
+    inverted = IR.to_dict()
+    inverted["rules"][0]["modality"] = "O"
+    client = RecordingClient([inverted, inverted])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    result = recovery.recover_l2(
+        constructor_request("Reconstructed bounded text."),
+        expected_ir=IR,
+    )
+
+    assert result.failure_reason is FailureReason.RETRY_EXHAUSTED
+    assert result.receipt.terminal_rejection == "polarity_ambiguous"
+    assert all(
+        call.rejection == "polarity_ambiguous"
+        for call in result.receipt.calls
+    )
+
+
+def test_policy_is_bounded_and_cannot_add_an_unregistered_retry_class() -> None:
+    assert PREREGISTERED_SRT023_POLICY.max_retries == 1
+    with pytest.raises(ContractError, match="at most one"):
+        RecoveryPolicy("srt-023-unbounded", 2)
+    with pytest.raises(ContractError, match="preregistration"):
+        RecoveryPolicy(
+            "srt-023-route-substitution",
+            1,
+            ("route_contract_failure",),
+        )
+    with pytest.raises(ContractError, match="replacement experiment"):
+        RecoveryPolicy("production-run", 1)
+
+
+def test_all_wrappers_share_one_serialized_physical_slot() -> None:
+    class BlockingClient:
+        endpoint = LEANSTRAL_ENDPOINT
+        model = LEANSTRAL_MODEL
+
+        def __init__(self) -> None:
+            self.lock = threading.Lock()
+            self.release = threading.Event()
+            self.first_entered = threading.Event()
+            self.active = 0
+            self.max_active = 0
+            self.call_count = 0
+
+        def complete_json(self, **_: object) -> dict[str, object]:
+            with self.lock:
+                self.call_count += 1
+                call_number = self.call_count
+                self.active += 1
+                self.max_active = max(self.max_active, self.active)
+            if call_number == 1:
+                self.first_entered.set()
+                assert self.release.wait(timeout=2)
+            with self.lock:
+                self.active -= 1
+            return IR.to_dict()
+
+    client = BlockingClient()
+    first = BoundedModelOutputRecovery(client, route="direct")
+    second = BoundedModelOutputRecovery(client, route="direct")
+    results: list[object] = []
+
+    threads = [
+        threading.Thread(
+            target=lambda wrapper=wrapper: results.append(
+                wrapper.recover_l1(constructor_request())
+            )
+        )
+        for wrapper in (first, second)
+    ]
+    threads[0].start()
+    assert client.first_entered.wait(timeout=2)
+    threads[1].start()
+    client.release.set()
+    for thread in threads:
+        thread.join(timeout=2)
+        assert not thread.is_alive()
+
+    assert client.call_count == 2
+    assert client.max_active == 1
+    assert all(
+        result.status is ComponentStatus.SUCCESS  # type: ignore[union-attr]
+        for result in results
+    )
