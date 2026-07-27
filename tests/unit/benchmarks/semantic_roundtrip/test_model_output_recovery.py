@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import json
 import threading
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
+from ipfs_datasets_py.utils.cid_utils import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 
 from benchmarks.semantic_roundtrip import (
     AllowedAtomVocabulary,
@@ -25,14 +33,22 @@ from benchmarks.semantic_roundtrip.constructors.symai import SyMAICompletion
 from benchmarks.semantic_roundtrip.model_output_recovery import (
     BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE,
     DIRECT_ROUTE_ID,
+    FROZEN_SRT021_REMEDIATION_EVIDENCE,
     LEANSTRAL_TOKENIZER_IDENTITY,
     PREREGISTERED_SRT023_POLICY,
+    SRT014_REPORT_CID,
+    SRT021_MANIFEST_CID,
+    SRT021_MANIFEST_GATE_CID,
+    SRT021_MANIFEST_RELATIVE_PATH,
     SYMAI_POLARITY_CONTRACT_INTERFACE,
     BoundedModelOutputRecovery,
+    ModelCallReceipt,
+    ModelOutputRecoveryReceipt,
     RecoveryPolicy,
     RecoveryRole,
     RecoveryRoute,
     SyMAIPolarityContract,
+    load_srt021_remediation_evidence,
 )
 from benchmarks.semantic_roundtrip_capabilities import (
     LEANSTRAL_BACKEND,
@@ -40,6 +56,8 @@ from benchmarks.semantic_roundtrip_capabilities import (
     LEANSTRAL_CAPACITY,
     LEANSTRAL_PROVIDER,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
 
 
 VOCABULARY = AllowedAtomVocabulary(
@@ -508,3 +526,195 @@ def test_all_wrappers_share_one_serialized_physical_slot() -> None:
         result.status is ComponentStatus.SUCCESS  # type: ignore[union-attr]
         for result in results
     )
+
+
+def test_frozen_srt021_evidence_binds_exact_report_gate_and_coordinates() -> None:
+    evidence = load_srt021_remediation_evidence(REPO_ROOT)
+
+    assert evidence is not None
+    assert evidence == FROZEN_SRT021_REMEDIATION_EVIDENCE
+    assert evidence.manifest_cid == SRT021_MANIFEST_CID
+    assert evidence.manifest_gate_cid == SRT021_MANIFEST_GATE_CID
+    assert evidence.report_cid == SRT014_REPORT_CID
+    assert validate_cid(evidence.manifest_cid, codecs=("dag-json",))
+    assert validate_cid(evidence.manifest_gate_cid, codecs=("dag-json",))
+    assert validate_cid(evidence.report_cid, codecs=("dag-json",))
+
+    serialized = evidence.to_dict()
+    evidence_cid = serialized.pop("evidence_cid")
+    assert evidence_cid == cid_for_dag_json(serialized)
+    assert evidence.remediation_targets == (
+        "blank_t1",
+        "empty_l1",
+        "empty_l2",
+        "polarity_ambiguous",
+        "route_contract_failure",
+    )
+    coordinates = evidence.to_dict()["coordinates"]
+    model = [
+        coordinate
+        for coordinate in coordinates
+        if str(coordinate["arm_id"]).startswith("model__")
+    ]
+    modal_spacy = [
+        coordinate
+        for coordinate in coordinates
+        if str(coordinate["arm_id"]).startswith("modal_spacy__")
+    ]
+    assert len(model) == 5
+    assert {
+        (
+            coordinate["case_id"],
+            coordinate["repeat_index"],
+            coordinate["gate_id"],
+        )
+        for coordinate in model
+    } == {
+        ("legal_doc_1", repeat, "polarity_preservation")
+        for repeat in range(5)
+    }
+    assert len(modal_spacy) == 4
+    assert {
+        coordinate["case_id"] for coordinate in modal_spacy
+    } == {
+        "construction_contract",
+        "corp_policy_1",
+        "exec_order_1",
+        "legal_doc_1",
+    }
+    assert {
+        coordinate["repeat_index"] for coordinate in modal_spacy
+    } == {0}
+
+    policy = PREREGISTERED_SRT023_POLICY.to_dict()
+    policy_cid = policy.pop("policy_cid")
+    assert policy["remediation_evidence"] == evidence.to_dict()
+    assert policy_cid == cid_for_dag_json(policy)
+
+
+def test_request_prompt_call_and_recovery_cids_are_content_sensitive() -> None:
+    first_source = "The controller shall delete records."
+    second_source = "The controller may disclose records."
+    client = RecordingClient([IR.to_dict(), IR.to_dict()])
+    recovery = BoundedModelOutputRecovery(client, route="direct")
+
+    first = recovery.recover_l1(constructor_request(first_source))
+    second = recovery.recover_l1(constructor_request(second_source))
+
+    first_receipt = first.receipt.to_dict()
+    second_receipt = second.receipt.to_dict()
+    assert first_receipt["request_cid"] == cid_for_dag_json(
+        {
+            "role": "l1",
+            "source_text": first_source,
+            "allowed_atom_vocabulary": VOCABULARY.to_dict(),
+        }
+    )
+    assert second_receipt["request_cid"] == cid_for_dag_json(
+        {
+            "role": "l1",
+            "source_text": second_source,
+            "allowed_atom_vocabulary": VOCABULARY.to_dict(),
+        }
+    )
+    first_call = first_receipt["calls"][0]
+    second_call = second_receipt["calls"][0]
+    assert first_call["prompt_cid"] == cid_for_bytes(
+        str(client.calls[0]["prompt"]).encode("utf-8")
+    )
+    assert second_call["prompt_cid"] == cid_for_bytes(
+        str(client.calls[1]["prompt"]).encode("utf-8")
+    )
+    assert validate_cid(
+        first_receipt["request_cid"], codecs=("dag-json",)
+    )
+    assert validate_cid(first_call["prompt_cid"], codecs=("raw",))
+
+    for serialized in (first_receipt, second_receipt):
+        call = dict(serialized["calls"][0])
+        call_cid = call.pop("receipt_cid")
+        assert call_cid == cid_for_dag_json(call)
+        assert ModelCallReceipt.from_dict(
+            serialized["calls"][0]
+        ).receipt_cid == call_cid
+        receipt = dict(serialized)
+        receipt_cid = receipt.pop("receipt_cid")
+        assert receipt_cid == cid_for_dag_json(receipt)
+        assert (
+            ModelOutputRecoveryReceipt.validate_dict(serialized)
+            == receipt_cid
+        )
+
+    assert first_receipt["request_cid"] != second_receipt["request_cid"]
+    assert first_call["prompt_cid"] != second_call["prompt_cid"]
+    assert first_call["receipt_cid"] != second_call["receipt_cid"]
+    assert first_receipt["receipt_cid"] != second_receipt["receipt_cid"]
+
+
+def test_frozen_manifest_and_receipts_reject_readdressed_tampering() -> None:
+    manifest_path = REPO_ROOT / SRT021_MANIFEST_RELATIVE_PATH
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    tampered_manifest = json.loads(json.dumps(manifest))
+    model_arm = (
+        "model__not_applicable__always_on__symai__leanstral_symai"
+    )
+    samples = tampered_manifest["remediation"]["arms"][model_arm][
+        "sample_coordinate_keys_by_gate"
+    ]["polarity_preservation"]
+    samples[0] = (
+        "legal_doc_1|9|"
+        "model__not_applicable__always_on__symai__leanstral_symai"
+    )
+    manifest_body = dict(tampered_manifest)
+    del manifest_body["manifest_cid"]
+    tampered_manifest["manifest_cid"] = cid_for_dag_json(manifest_body)
+
+    with pytest.raises(ContractError, match="CID|frozen"):
+        load_srt021_remediation_evidence(manifest=tampered_manifest)
+    with pytest.raises(ContractError, match="frozen gate"):
+        load_srt021_remediation_evidence(
+            manifest=manifest,
+            manifest_gate_cid=cid_for_dag_json({"forged": "gate"}),
+        )
+
+    result = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()]), route="direct"
+    ).recover_l1(constructor_request())
+    tampered_receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    tampered_receipt["boundary"]["fallback_allowed"] = True
+    receipt_body = dict(tampered_receipt)
+    del receipt_body["receipt_cid"]
+    tampered_receipt["receipt_cid"] = cid_for_dag_json(receipt_body)
+    with pytest.raises(ContractError, match="malformed|contradictory|CID"):
+        ModelOutputRecoveryReceipt.validate_dict(tampered_receipt)
+
+    tampered_evidence = json.loads(json.dumps(result.receipt.to_dict()))
+    tampered_evidence["remediation_evidence"]["coordinates"][0][
+        "case_id"
+    ] = "forged_case"
+    evidence_body = dict(tampered_evidence["remediation_evidence"])
+    del evidence_body["evidence_cid"]
+    tampered_evidence["remediation_evidence"][
+        "evidence_cid"
+    ] = cid_for_dag_json(evidence_body)
+    receipt_body = dict(tampered_evidence)
+    del receipt_body["receipt_cid"]
+    tampered_evidence["receipt_cid"] = cid_for_dag_json(receipt_body)
+    with pytest.raises(ContractError, match="frozen remediation lineage"):
+        ModelOutputRecoveryReceipt.validate_dict(tampered_evidence)
+
+
+def test_model_output_recovery_has_no_legacy_sha_fields() -> None:
+    source = (
+        REPO_ROOT
+        / "benchmarks/semantic_roundtrip/model_output_recovery.py"
+    ).read_text(encoding="utf-8")
+    result = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()]), route="direct"
+    ).recover_l1(constructor_request())
+    serialized = json.dumps(result.receipt.to_dict(), sort_keys=True)
+
+    assert "sha256" not in source.lower()
+    assert "hashlib" not in source.lower()
+    assert "sha256" not in serialized.lower()
+    assert "hashlib" not in serialized.lower()
