@@ -1,0 +1,27 @@
+{
+  "schema": "ipfs_datasets_py.benchmarks.semantic_roundtrip.scheduler_config@1",
+  "taskboard_path": "docs/implementation/plans/semantic_roundtrip_eval_harness_repair.taskboard.todo.md",
+  "task_prefix": "## EVAL-",
+  "max_lanes": 4,
+  "poll_interval_seconds": 5,
+  "daemon_interval_seconds": 300,
+  "check_interval_seconds": 60,
+  "stale_seconds": 1800,
+  "max_restarts": 3,
+  "max_task_attempts": 3,
+  "implementation_timeout_seconds": 7200,
+  "worktree_submodule_paths": [
+    "ipfs_accelerate_py"
+  ],
+  "provider": {
+    "provider_id": "leanstral-local",
+    "base_url": "http://127.0.0.1:8080",
+    "health_path": "/health",
+    "models_path": "/v1/models",
+    "props_path": "/props",
+    "slots_path": "/slots",
+    "model_id": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+    "max_concurrency": 1,
+    "timeout_seconds": 5
+  }
+}
