@@ -173,6 +173,8 @@ def test_provider_probe_binds_exact_model_and_one_slot() -> None:
     def fake_http_json(url: str, _timeout: float):
         if url.endswith("/health"):
             return {"status": "ok"}, 2
+        if url.endswith("/slots"):
+            return [{"id": 0, "is_processing": False}], 2
         if url.endswith("/props"):
             return {
                 "total_slots": 1,
@@ -197,6 +199,9 @@ def test_provider_probe_binds_exact_model_and_one_slot() -> None:
     assert provider["healthy"] is True
     assert provider["max_concurrency"] == 1
     assert provider["active_requests"] == 0
+    assert provider["available_concurrency"] == 1
+    assert provider["observed_slot_count"] == 1
+    assert provider["slot_ids"] == [0]
     assert provider["model_ids"] == [config["model_id"]]
     assert provider["reported_total_slots"] == 1
     assert provider["context_window_tokens"] == 8192
@@ -212,6 +217,8 @@ def test_provider_probe_fails_closed_on_model_identity_mismatch() -> None:
     def fake_http_json(url: str, _timeout: float):
         if url.endswith("/health"):
             return {"status": "ok"}, 1
+        if url.endswith("/slots"):
+            return [{"id": 0, "is_processing": False}], 1
         if url.endswith("/props"):
             return {
                 "total_slots": 1,
@@ -227,6 +234,102 @@ def test_provider_probe_fails_closed_on_model_identity_mismatch() -> None:
     assert "configured_model_not_served" in payload["probe_errors"]
     assert "props_model_alias_mismatch" in payload["probe_errors"]
     assert provider["max_concurrency"] == 1
+
+
+def test_provider_probe_observes_busy_llama_cpp_slot() -> None:
+    config = load_scheduler_config(DEFAULT_CONFIG_PATH)["provider"]
+    observed_timeouts: list[float] = []
+
+    def fake_http_json(url: str, timeout: float):
+        observed_timeouts.append(timeout)
+        if url.endswith("/health"):
+            return {"status": "ok"}, 1
+        if url.endswith("/slots"):
+            return [{"id": 0, "is_processing": True, "id_task": 17}], 4
+        if url.endswith("/props"):
+            return {
+                "total_slots": 1,
+                "model_alias": config["model_id"],
+                "default_generation_settings": {"n_ctx": 8192},
+            }, 2
+        return {"data": [{"id": config["model_id"]}]}, 2
+
+    payload = probe_provider_capacity(config, http_json=fake_http_json)
+    provider = payload["providers"]["leanstral-local"]
+
+    assert payload["probe_errors"] == []
+    assert provider["healthy"] is True
+    assert provider["active_requests"] == 1
+    assert provider["available_concurrency"] == 0
+    assert provider["observed_slot_count"] == 1
+    assert observed_timeouts == [5.0, 5.0, 5.0, 5.0]
+
+
+def test_provider_probe_reserves_capacity_when_slots_are_unavailable() -> None:
+    config = load_scheduler_config(DEFAULT_CONFIG_PATH)["provider"]
+
+    def fake_http_json(url: str, _timeout: float):
+        if url.endswith("/health"):
+            return {"status": "ok"}, 1
+        if url.endswith("/slots"):
+            raise TimeoutError("bounded slots timeout")
+        if url.endswith("/props"):
+            return {
+                "total_slots": 1,
+                "model_alias": config["model_id"],
+                "default_generation_settings": {"n_ctx": 8192},
+            }, 1
+        return {"data": [{"id": config["model_id"]}]}, 1
+
+    payload = probe_provider_capacity(config, http_json=fake_http_json)
+    provider = payload["providers"]["leanstral-local"]
+
+    assert provider["healthy"] is False
+    assert provider["active_requests"] == 1
+    assert provider["available_concurrency"] == 0
+    assert provider["observed_slot_count"] == -1
+    assert any(
+        error.startswith("slots_probe:TimeoutError:")
+        for error in payload["probe_errors"]
+    )
+
+
+@pytest.mark.parametrize(
+    "slots",
+    (
+        [{"id": 0}],
+        [{"id": 0, "is_processing": "false"}],
+        [],
+    ),
+)
+def test_provider_probe_rejects_ambiguous_slot_occupancy(
+    slots: object,
+) -> None:
+    config = load_scheduler_config(DEFAULT_CONFIG_PATH)["provider"]
+
+    def fake_http_json(url: str, _timeout: float):
+        if url.endswith("/health"):
+            return {"status": "ok"}, 1
+        if url.endswith("/slots"):
+            return slots, 1
+        if url.endswith("/props"):
+            return {
+                "total_slots": 1,
+                "model_alias": config["model_id"],
+                "default_generation_settings": {"n_ctx": 8192},
+            }, 1
+        return {"data": [{"id": config["model_id"]}]}, 1
+
+    payload = probe_provider_capacity(config, http_json=fake_http_json)
+    provider = payload["providers"]["leanstral-local"]
+
+    assert provider["healthy"] is False
+    assert provider["active_requests"] == 1
+    assert provider["available_concurrency"] == 0
+    assert any(
+        error.startswith("slots_probe:SchedulerPreparationError:")
+        for error in payload["probe_errors"]
+    )
 
 
 def test_resource_scheduler_admits_only_one_leanstral_lane() -> None:
@@ -318,7 +421,10 @@ def test_adaptive_inference_stage_uses_same_one_slot_ceiling() -> None:
     )
 
     assert schedule.admitted_lane_ids == ("adaptive-model-1",)
-    assert "stage_concurrency" in schedule.decisions[1].reasons
+    assert {
+        "stage_concurrency",
+        "provider_concurrency",
+    } & set(schedule.decisions[1].reasons)
 
 
 def test_launch_command_uses_dynamic_scheduler_without_unsafe_once(

@@ -137,3 +137,49 @@ def test_semantic_roundtrip_taskboard_is_supervisor_compatible() -> None:
     assert "decompiler" in tracks
     assert len({task.metadata["parallel lane"] for task in tasks}) >= 3
     assert len({task.metadata["bundle"] for task in tasks}) == len(tasks)
+
+
+def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> None:
+    tasks = {
+        task.task_id: task
+        for task in parse_task_file(TASKBOARD, TASK_PREFIX)
+    }
+
+    srt015 = tasks["SRT-015"]
+    assert set(
+        (
+            "docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json",
+            "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+            "setup.py",
+            "pyproject.toml",
+            "MANIFEST.in",
+        )
+    ) <= set(srt015.outputs)
+    assert "cid_for_dag_json" in srt015.acceptance
+    assert "noninferiority margin" in srt015.acceptance
+    assert "leave SRT-015 incomplete" in srt015.metadata["preconditions"]
+
+    assert tasks["SRT-016"].depends_on == ["SRT-015"]
+    assert tasks["SRT-017"].depends_on == ["SRT-015"]
+
+    srt018 = tasks["SRT-018"]
+    assert "ipfs_datasets_py/logic/legal_ir/__init__.py" in srt018.outputs
+    assert "exact canonical DAG-JSON parity-policy CID" in (
+        srt018.metadata["preconditions"]
+    )
+    assert set(srt018.depends_on) == {"SRT-016", "SRT-017"}
+
+    srt019 = tasks["SRT-019"]
+    assert {
+        "benchmarks/semantic_roundtrip/canonical_decision.py",
+        "benchmarks/bench_semantic_roundtrip_compositions.py",
+        (
+            "tests/unit/benchmarks/semantic_roundtrip/"
+            "test_canonical_decision.py"
+        ),
+    } <= set(srt019.outputs)
+    assert len(srt019.validation) == 2
+    assert "test_canonical_decision.py" in srt019.validation[0]
+    assert "--validate-canonical-decision" in srt019.validation[1]
+    assert srt019.depends_on == ["SRT-018"]
+    assert "explicit declined decision" in srt019.metadata["preconditions"]

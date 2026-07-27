@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import shlex
@@ -429,7 +430,7 @@ def build_taskboard_bundle_index(
     return payload
 
 
-def _http_json(url: str, timeout_seconds: float) -> tuple[dict[str, Any], int]:
+def _http_json(url: str, timeout_seconds: float) -> tuple[object, int]:
     started = time.monotonic_ns()
     request = Request(url, headers={"Accept": "application/json"})
     with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310
@@ -437,17 +438,58 @@ def _http_json(url: str, timeout_seconds: float) -> tuple[dict[str, Any], int]:
         body = response.read()
     elapsed_ms = max(0, (time.monotonic_ns() - started) // 1_000_000)
     payload = json.loads(body.decode("utf-8"))
-    if not isinstance(payload, dict):
-        raise SchedulerPreparationError(f"{url} returned non-object JSON")
     if status < 200 or status >= 300:
         raise SchedulerPreparationError(f"{url} returned HTTP {status}")
     return payload, elapsed_ms
 
 
+def _probe_mapping(value: object, endpoint: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise SchedulerPreparationError(
+            f"{endpoint} returned non-object JSON"
+        )
+    return value
+
+
+def _slot_rows(value: object) -> list[Mapping[str, Any]]:
+    """Return a strict llama.cpp ``/slots`` observation.
+
+    Current llama.cpp exposes a top-level array.  A mapping containing a
+    ``slots`` array is accepted for compatible reverse proxies, but every
+    slot must expose the authoritative boolean ``is_processing`` field.
+    Guessing from a task identifier would incorrectly reserve idle
+    prompt-cache slots.
+    """
+
+    raw_slots: object
+    if isinstance(value, list):
+        raw_slots = value
+    elif isinstance(value, Mapping):
+        raw_slots = value.get("slots")
+    else:
+        raw_slots = None
+    if not isinstance(raw_slots, list) or not raw_slots:
+        raise SchedulerPreparationError(
+            "slots probe must return a nonempty slot array"
+        )
+    slots: list[Mapping[str, Any]] = []
+    for index, raw_slot in enumerate(raw_slots):
+        if not isinstance(raw_slot, Mapping):
+            raise SchedulerPreparationError(
+                f"slots[{index}] must be an object"
+            )
+        if type(raw_slot.get("is_processing")) is not bool:
+            raise SchedulerPreparationError(
+                f"slots[{index}].is_processing must be boolean"
+            )
+        slots.append(raw_slot)
+    return slots
+
+
 def probe_provider_capacity(
     provider_config: Mapping[str, Any],
     *,
-    http_json: Callable[[str, float], tuple[dict[str, Any], int]] = _http_json,
+    http_json: Callable[[str, float], tuple[object, int]] = _http_json,
 ) -> dict[str, Any]:
     """Probe the exact local Leanstral identity and emit fail-closed telemetry."""
 
@@ -460,6 +502,14 @@ def probe_provider_capacity(
         raise SchedulerPreparationError(
             "provider capacity must bind leanstral-local at max_concurrency one"
         )
+    if (
+        not math.isfinite(timeout_seconds)
+        or timeout_seconds <= 0
+        or timeout_seconds > 10
+    ):
+        raise SchedulerPreparationError(
+            "provider probe timeout_seconds must be in the bounded range (0, 10]"
+        )
     errors: list[str] = []
     healthy = False
     latency_ms = 0
@@ -467,13 +517,17 @@ def probe_provider_capacity(
     capabilities: list[str] = []
     context_window_tokens = -1
     reported_total_slots = -1
+    observed_slot_count = -1
+    active_requests = max_concurrency
+    slot_ids: list[int] = []
     model_alias = ""
     build_info = ""
     try:
-        health, health_latency = http_json(
+        health_value, health_latency = http_json(
             base_url + str(provider_config.get("health_path") or "/health"),
             timeout_seconds,
         )
+        health = _probe_mapping(health_value, "health probe")
         latency_ms = max(latency_ms, health_latency)
         if str(health.get("status") or "").strip().lower() not in {
             "ok",
@@ -486,10 +540,11 @@ def probe_provider_capacity(
         errors.append(f"health_probe:{type(exc).__name__}:{exc}")
 
     try:
-        models, model_latency = http_json(
+        models_value, model_latency = http_json(
             base_url + str(provider_config.get("models_path") or "/v1/models"),
             timeout_seconds,
         )
+        models = _probe_mapping(models_value, "model probe")
         latency_ms = max(latency_ms, model_latency)
         raw_models = models.get("data") or models.get("models") or []
         for item in raw_models if isinstance(raw_models, list) else []:
@@ -518,10 +573,11 @@ def probe_provider_capacity(
         errors.append(f"model_probe:{type(exc).__name__}:{exc}")
 
     try:
-        props, props_latency = http_json(
+        props_value, props_latency = http_json(
             base_url + str(provider_config.get("props_path") or "/props"),
             timeout_seconds,
         )
+        props = _probe_mapping(props_value, "props probe")
         latency_ms = max(latency_ms, props_latency)
         reported_total_slots = _parse_int(props.get("total_slots"), 0)
         model_alias = str(props.get("model_alias") or "").strip()
@@ -543,6 +599,43 @@ def probe_provider_capacity(
     except Exception as exc:
         errors.append(f"props_probe:{type(exc).__name__}:{exc}")
 
+    try:
+        slots_value, slots_latency = http_json(
+            base_url + str(provider_config.get("slots_path") or "/slots"),
+            timeout_seconds,
+        )
+        latency_ms = max(latency_ms, slots_latency)
+        slots = _slot_rows(slots_value)
+        observed_slot_count = len(slots)
+        active_requests = sum(
+            1 for slot in slots if bool(slot["is_processing"])
+        )
+        if observed_slot_count != max_concurrency:
+            errors.append("observed_slot_count_mismatch")
+        if active_requests > max_concurrency:
+            errors.append("active_request_count_exceeds_capacity")
+        for index, slot in enumerate(slots):
+            raw_id = slot.get("id", index)
+            if (
+                not isinstance(raw_id, int)
+                or isinstance(raw_id, bool)
+                or raw_id < 0
+            ):
+                raise SchedulerPreparationError(
+                    f"slots[{index}].id must be a nonnegative integer"
+                )
+            slot_ids.append(raw_id)
+        if len(slot_ids) != len(set(slot_ids)):
+            errors.append("duplicate_slot_ids")
+    except Exception as exc:
+        # Unknown occupancy must reserve the whole configured capacity even
+        # though ``healthy`` also fails closed.  This prevents a downstream
+        # scheduler that inspects capacity before health from admitting work.
+        active_requests = max_concurrency
+        observed_slot_count = -1
+        slot_ids = []
+        errors.append(f"slots_probe:{type(exc).__name__}:{exc}")
+
     healthy = not errors
     observed_at_ms = int(time.time() * 1_000)
     cid_payload = {
@@ -556,7 +649,12 @@ def probe_provider_capacity(
                 "provider_id": provider_id,
                 "healthy": healthy,
                 "max_concurrency": max_concurrency,
-                "active_requests": 0,
+                "active_requests": active_requests,
+                "available_concurrency": max(
+                    0, max_concurrency - active_requests
+                ),
+                "observed_slot_count": observed_slot_count,
+                "slot_ids": slot_ids,
                 "latency_ms": latency_ms,
                 "context_window_tokens": context_window_tokens,
                 "capabilities": capabilities,
@@ -580,7 +678,7 @@ def write_provider_capacity(
     path: Path,
     provider_config: Mapping[str, Any],
     *,
-    http_json: Callable[[str, float], tuple[dict[str, Any], int]] = _http_json,
+    http_json: Callable[[str, float], tuple[object, int]] = _http_json,
 ) -> dict[str, Any]:
     payload = probe_provider_capacity(provider_config, http_json=http_json)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -599,7 +697,7 @@ def prepare_scheduler_inputs(
     config_path: Path = DEFAULT_CONFIG_PATH,
     runtime_root: Path = DEFAULT_RUNTIME_ROOT,
     taskboard_path: Path | None = None,
-    http_json: Callable[[str, float], tuple[dict[str, Any], int]] = _http_json,
+    http_json: Callable[[str, float], tuple[object, int]] = _http_json,
 ) -> dict[str, Any]:
     """Build fresh index and provider telemetry without starting workers."""
 

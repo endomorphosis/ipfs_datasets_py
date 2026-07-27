@@ -31,6 +31,10 @@ from benchmarks.semantic_roundtrip.matrix import (  # noqa: E402
 from benchmarks.semantic_roundtrip_capabilities import (  # noqa: E402
     SPACY_MODEL,
 )
+from benchmarks.semantic_roundtrip.canonical_decision import (  # noqa: E402
+    CanonicalDecisionValidationError,
+    validate_canonical_decision_file,
+)
 
 
 DEFAULT_FIXTURE = (
@@ -654,12 +658,21 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="write canonical JSON to this path instead of stdout",
     )
-    parser.add_argument(
+    validation = parser.add_mutually_exclusive_group()
+    validation.add_argument(
         "--validate-report",
         type=Path,
         help=(
             "validate a complete frozen SRT-014 decision report and exit "
             "without running model inference"
+        ),
+    )
+    validation.add_argument(
+        "--validate-canonical-decision",
+        type=Path,
+        help=(
+            "validate the source-bound SRT-019 canonical compiler decision "
+            "and exit without running model inference"
         ),
     )
     return parser
@@ -689,6 +702,31 @@ def main(argv: Sequence[str] | None = None) -> int:
                     {
                         "status": "invalid",
                         "report": str(args.validate_report),
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.validate_canonical_decision is not None:
+        try:
+            result = validate_canonical_decision_file(
+                args.validate_canonical_decision,
+                repo_root=REPO_ROOT,
+                composition_validator=lambda value: validate_composition_report(
+                    value,
+                    fixture_path=args.fixture,
+                ),
+            )
+        except CanonicalDecisionValidationError as exc:
+            print(
+                json.dumps(
+                    {
+                        "status": "invalid",
+                        "decision": str(args.validate_canonical_decision),
                         "error": str(exc),
                     },
                     sort_keys=True,

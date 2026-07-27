@@ -390,19 +390,19 @@ CPU preparation and result analysis run concurrently.
 - Priority: P0
 - Track: compiler
 - Depends on: SRT-014
-- Outputs: docs/architecture/semantic_roundtrip_canonical_compiler.md, ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json, tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py
+- Outputs: docs/architecture/semantic_roundtrip_canonical_compiler.md, docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json, ipfs_datasets_py/logic/legal_ir/canonical_contracts.py, ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json, tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py, setup.py, pyproject.toml, MANIFEST.in
 - Validation: PYTHONPATH=. python -m pytest tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/canonical-design
 - Parallel lane: canonical-design
 - Resource class: cpu-small
-- Predicted files: docs/architecture/semantic_roundtrip_canonical_compiler.md, ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json, tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py
-- Interfaces: CanonicalStructuredTextCompiler@1, CanonicalStructuredTextDecompiler@1
-- Conflict policy: Derive the specification from the frozen SRT-014 decision; do not select unmeasured tools or copy benchmark-only closed vocabularies into the production API.
-- Preconditions: The composition report names a full-coverage winner or an explicit bounded tie policy.
+- Predicted files: docs/architecture/semantic_roundtrip_canonical_compiler.md, docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json, ipfs_datasets_py/logic/legal_ir/canonical_contracts.py, ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json, tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py, setup.py, pyproject.toml, MANIFEST.in
+- Interfaces: CanonicalStructuredTextCompiler@1, CanonicalStructuredTextDecompiler@1, CanonicalRoundTripContracts@1, CanonicalRoundTripParityPolicy@1
+- Conflict policy: Derive the specification, shared compiler/decompiler contracts, packaged schema, and machine-readable parity policy from the frozen SRT-014 decision; do not select unmeasured tools or copy benchmark-only closed vocabularies into the production API. SRT-016 and SRT-017 consume canonical_contracts.py but do not modify it.
+- Preconditions: Validate SRT-014 with the authoritative report validator and proceed only when it names a full-coverage unique winner or an explicit bounded tie set. For no eligible composition, incomplete evidence, or an unbounded tie, record the reason and leave SRT-015 incomplete so implementation tasks remain dependency-blocked.
 - Effects: The measured composition becomes a stable production-facing interface plan.
 - Evidence subset: benchmark-to-canonical-design lineage receipt
-- Acceptance: Define canonical CID-addressed IR, compiler/decompiler inputs and outputs, source maps, unsupported semantics, deterministic core, any evidence-supported optional learned stages, versioning, error/abstention behavior, and exact traceability from each chosen component to the SRT-014 measured result.
+- Acceptance: Define canonical CID-addressed IR, compiler/decompiler inputs and outputs, source maps, unsupported semantics, deterministic core, any evidence-supported optional learned stages, versioning, error/abstention behavior, and exact traceability from each chosen component to the SRT-014 measured result. Freeze a canonical DAG-JSON parity policy at docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json using cid_for_dag_json; bind its policy CID to the SRT-014 report CID; declare end-to-end loss direction, per-case-first aggregation, paired case-cluster bootstrap method and confidence level, bootstrap count, and a numeric noninferiority margin before SRT-018 runs. Put shared immutable request/result/error and policy-CID contracts in canonical_contracts.py, and package the JSON schema through setup.py, pyproject.toml, and MANIFEST.in so the parallel compiler and decompiler import one contract rather than redefining it.
 
 ## SRT-016 Implement the selected canonical compiler
 
@@ -459,7 +459,7 @@ CPU preparation and result analysis run concurrently.
 - Priority: P0
 - Track: benchmark
 - Depends on: SRT-016, SRT-017
-- Outputs: ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
+- Outputs: ipfs_datasets_py/logic/legal_ir/__init__.py, ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
 - Validation: PYTHONPATH=. python -m pytest tests/integration/logic/test_canonical_semantic_roundtrip.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/canonical-validation
@@ -468,13 +468,13 @@ CPU preparation and result analysis run concurrently.
 - Resource stage: inference
 - Provider ID: leanstral-local
 - Requires provider: true
-- Predicted files: ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
+- Predicted files: ipfs_datasets_py/logic/legal_ir/__init__.py, ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
 - Interfaces: CanonicalSemanticRoundTrip@1
 - Conflict policy: Integrate the two new modules without altering benchmark fixtures, gold IR, score weights, or selected component implementations.
-- Preconditions: Canonical compiler and decompiler independently conform.
+- Preconditions: Canonical compiler and decompiler independently conform, and the exact canonical DAG-JSON parity-policy CID frozen by SRT-015 is available through canonical_contracts.py. Refuse execution if the policy is missing, changed, or not bound to the validated SRT-014 report CID.
 - Effects: The production-facing implementation is compared directly with the frozen winning benchmark composition.
 - Evidence subset: canonical-roundtrip parity receipt
-- Acceptance: Run source text through canonical compiler, source-withheld canonical decompiler, and canonical compiler again; require full nonempty coverage, no polarity hard failures, no source-copy violation, result parity within the frozen statistical tolerance, passing Hammer/cvc5 and Lean structural checks where applicable, and complete CID/config/model lineage.
+- Acceptance: Run source text through canonical compiler, source-withheld canonical decompiler, and canonical compiler again; require full nonempty coverage, no polarity hard failures, no source-copy violation, and result parity under the exact SRT-015 policy CID without estimating or changing a tolerance after seeing SRT-018 results. Recompute the per-case deltas and the frozen upper-confidence-bound noninferiority rule, preserve every case-level L1/text/L2 CID, require passing Hammer/cvc5 and Lean structural checks where applicable, expose the integrated API through legal_ir/__init__.py, and record complete implementation/config/model lineage.
 
 ## SRT-019 Publish the canonical selection and supervisor handoff
 
@@ -483,16 +483,16 @@ CPU preparation and result analysis run concurrently.
 - Priority: P1
 - Track: benchmark
 - Depends on: SRT-018
-- Outputs: docs/benchmarks/semantic_roundtrip_canonical_compiler_decision.md, docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
-- Validation: PYTHONPATH=. python benchmarks/bench_semantic_roundtrip_compositions.py --validate-canonical-decision docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
+- Outputs: benchmarks/semantic_roundtrip/canonical_decision.py, benchmarks/bench_semantic_roundtrip_compositions.py, tests/unit/benchmarks/semantic_roundtrip/test_canonical_decision.py, docs/benchmarks/semantic_roundtrip_canonical_compiler_decision.md, docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
+- Validation: PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_canonical_decision.py -q; PYTHONPATH=. python benchmarks/bench_semantic_roundtrip_compositions.py --validate-canonical-decision docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/handoff
 - Parallel lane: final-handoff
 - Resource class: cpu-small
-- Predicted files: docs/benchmarks/semantic_roundtrip_canonical_compiler_decision.md, docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
+- Predicted files: benchmarks/semantic_roundtrip/canonical_decision.py, benchmarks/bench_semantic_roundtrip_compositions.py, tests/unit/benchmarks/semantic_roundtrip/test_canonical_decision.py, docs/benchmarks/semantic_roundtrip_canonical_compiler_decision.md, docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
 - Interfaces: CanonicalCompilerDecision@1
-- Conflict policy: Summarize immutable measured and conformance artifacts; do not rewrite task statuses without supervisor validation or make deployment changes.
-- Preconditions: SRT-018 passes canonical parity.
+- Conflict policy: Own the canonical-decision validator module, its CLI dispatch and contract tests, and the two handoff artifacts. Preserve the SRT-014 report validator and benchmark execution behavior; summarize immutable measured and conformance artifacts without rewriting task statuses or making deployment changes.
+- Preconditions: Revalidate SRT-014 and its source-bound SRT-018 parity receipt. Publish a selected decision only for an SRT-014 unique winner or SRT-015 bounded co-winner whose exact frozen-policy parity passes; otherwise publish an explicit declined decision and no canonical selection.
 - Effects: Operators receive the selected tool composition, reconstruction loss, limitations, reproducible commands, and implementation identities.
 - Evidence subset: final canonical-compiler decision receipt
-- Acceptance: State the winning composition and uncertainty, distinguish deterministic and optional learned stages, report every unavailable/unscored tool, bind benchmark and implementation CIDs, include exact reproduction and supervisor commands, and decline canonical selection if the evidence or parity checks are incomplete.
+- Acceptance: State the winning composition and unchanged SRT-014 uncertainty, distinguish deterministic and bounded optional learned stages, classify typed deontic, modal, spaCy, the deterministic realizer, autoencoder, SyMAI, Leanstral, selective repair, Hammer, cvc5, Lean, and multiformats exactly once as scored, unavailable, or unscored, bind the raw CIDs of every benchmark and implementation artifact, and include exact reproduction and supervisor plan/launch commands. The validator must recompute file CIDs, SRT-014 selectability, per-case SRT-018 deltas, the exact SRT-015 policy CID and upper-confidence-bound tolerance decision, implementation/config/model lineage, coverage/polarity/source-copy gates, and structural-check disposition; malformed, incomplete, drifted, or self-asserted evidence fails closed, while nonselectable evidence can only produce an explicit declined decision.
