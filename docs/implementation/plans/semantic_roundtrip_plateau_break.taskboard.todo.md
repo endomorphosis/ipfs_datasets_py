@@ -70,7 +70,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-010 Residual forensics catalog
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: residual
@@ -93,7 +93,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-020 Prover-gated Codex packet contract
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: packets
@@ -116,7 +116,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-030 Pilot residual → selective-repair triggers
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: repair-triggers
@@ -187,7 +187,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-060 Causal autoencoder L1 adapter
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P2
 - Track: autoencoder
@@ -210,7 +210,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-070 Supervisor packet materializer
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: supervisor
@@ -233,7 +233,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-080 Dual-metric bridge (CE / cosine + structural)
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P2
 - Track: metrics-bridge
@@ -279,7 +279,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-082 Det. compiler edit wave: construction_contract
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: det-compiler
