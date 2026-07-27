@@ -167,6 +167,16 @@ class RecordingClient:
         return value
 
 
+def readdress_receipt(value: dict[str, object]) -> dict[str, object]:
+    """Deep-copy and recompute one call or recovery receipt CID."""
+
+    addressed = json.loads(json.dumps(value))
+    body = dict(addressed)
+    del body["receipt_cid"]
+    addressed["receipt_cid"] = cid_for_dag_json(body)
+    return addressed
+
+
 def test_interfaces_bind_the_exact_model_envelope_and_route_identity() -> None:
     direct = BoundedModelOutputRecovery(
         RecordingClient([IR.to_dict()]), route=RecoveryRoute.DIRECT
@@ -718,3 +728,238 @@ def test_model_output_recovery_has_no_legacy_sha_fields() -> None:
     assert "hashlib" not in source.lower()
     assert "sha256" not in serialized.lower()
     assert "hashlib" not in serialized.lower()
+
+
+def test_readdressed_accepted_then_accepted_transition_is_rejected() -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}, IR.to_dict()]),
+        route="direct",
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    first_call = receipt["calls"][0]
+    first_call.update(
+        {
+            "outcome": "accepted",
+            "rejection": None,
+            "failure_reason": None,
+            "detail": None,
+        }
+    )
+    receipt["calls"][0] = readdress_receipt(first_call)
+    receipt = readdress_receipt(receipt)
+
+    with pytest.raises(ContractError, match="transition"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+@pytest.mark.parametrize(
+    ("rejection", "failure_reason"),
+    [
+        ("call_timeout", "timeout"),
+        (
+            "route_contract_failure",
+            "post_schedule_capability_unavailable",
+        ),
+        ("call_exception", "exception"),
+    ],
+)
+def test_readdressed_nonretryable_then_accepted_transition_is_rejected(
+    rejection: str, failure_reason: str
+) -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}, IR.to_dict()]),
+        route="direct",
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    first_call = receipt["calls"][0]
+    first_call.update(
+        {
+            "outcome": "call_failed",
+            "rejection": rejection,
+            "failure_reason": failure_reason,
+            "detail": "forged nonretryable call",
+        }
+    )
+    receipt["calls"][0] = readdress_receipt(first_call)
+    receipt = readdress_receipt(receipt)
+
+    with pytest.raises(ContractError, match="policy-permitted"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+def test_readdressed_one_call_terminal_failure_must_match_call() -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}]),
+        route="direct",
+        policy=RecoveryPolicy("srt-023-no-retry-negative-control", 0),
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    assert receipt["terminal_failure"] == "empty_l1"
+    receipt["terminal_failure"] = "invalid_output"
+    receipt = readdress_receipt(receipt)
+
+    with pytest.raises(ContractError, match="one-call failure"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+def test_readdressed_two_call_terminal_failure_must_be_retry_exhausted() -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}, {"rules": []}]),
+        route="direct",
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    assert receipt["terminal_failure"] == "retry_exhausted"
+    receipt["terminal_failure"] = "empty_l1"
+    receipt = readdress_receipt(receipt)
+
+    with pytest.raises(ContractError, match="exhausted retry"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+def test_readdressed_direct_call_cannot_claim_a_symai_receipt() -> None:
+    direct = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()]), route="direct"
+    ).recover_l1(constructor_request())
+    symai = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()], symai=True), route="symai"
+    ).recover_l1(constructor_request())
+    direct_receipt = json.loads(json.dumps(direct.receipt.to_dict()))
+    direct_call = direct_receipt["calls"][0]
+    direct_call["symai_route_receipt"] = symai.receipt.to_dict()["calls"][0][
+        "symai_route_receipt"
+    ]
+    direct_call = readdress_receipt(direct_call)
+
+    with pytest.raises(ContractError, match="direct model call"):
+        ModelCallReceipt.from_dict(direct_call)
+    direct_receipt["calls"][0] = direct_call
+    direct_receipt = readdress_receipt(direct_receipt)
+    with pytest.raises(ContractError, match="direct model call"):
+        ModelOutputRecoveryReceipt.validate_dict(direct_receipt)
+
+
+@pytest.mark.parametrize("call_index", [0, 1])
+def test_readdressed_symai_rejected_or_accepted_call_needs_route_receipt(
+    call_index: int,
+) -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient(
+            [{"rules": []}, IR.to_dict()],
+            symai=True,
+        ),
+        route="symai",
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    call = receipt["calls"][call_index]
+    assert call["outcome"] in {"rejected", "accepted"}
+    call["symai_route_receipt"] = None
+    call = readdress_receipt(call)
+
+    with pytest.raises(ContractError, match="needs a route receipt"):
+        ModelCallReceipt.from_dict(call)
+    receipt["calls"][call_index] = call
+    receipt = readdress_receipt(receipt)
+    with pytest.raises(ContractError, match="needs a route receipt"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "forged"),
+    [
+        ("routing", "resolved_provider", "forged-provider"),
+        ("routing", "resolved_endpoint", "http://127.0.0.1:9999/v1"),
+        ("routing", "resolved_model", "forged-model"),
+        ("routing", "resolved_backend", "forged-backend"),
+        ("model_settings", "temperature", 1),
+        ("model_settings", "temperature", False),
+        ("model_settings", "seed", 2),
+        ("retry", "attempts", 2),
+        ("retry", "attempts", True),
+        ("cache", "enabled", True),
+        ("cache", "enabled", 0),
+    ],
+)
+def test_readdressed_symai_route_identity_or_settings_drift_is_rejected(
+    section: str, field: str, forged: object
+) -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()], symai=True), route="symai"
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    call = receipt["calls"][0]
+    call["symai_route_receipt"][section][field] = forged
+    call = readdress_receipt(call)
+
+    with pytest.raises(ContractError, match="pinned route identity"):
+        ModelCallReceipt.from_dict(call)
+    receipt["calls"][0] = call
+    receipt = readdress_receipt(receipt)
+    with pytest.raises(ContractError, match="pinned route identity"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+def test_symai_call_failure_allows_only_an_absent_route_receipt() -> None:
+    drift_client = RecordingClient(
+        [IR.to_dict()],
+        symai=True,
+        metadata={**ROUTE_METADATA, "resolved_model_name": "other-model"},
+    )
+    failed = BoundedModelOutputRecovery(
+        drift_client, route="symai"
+    ).recover_l1(constructor_request())
+    failed_receipt = json.loads(json.dumps(failed.receipt.to_dict()))
+    failed_call = failed_receipt["calls"][0]
+    assert failed_call["outcome"] == "call_failed"
+    assert failed_call["symai_route_receipt"] is None
+    assert ModelCallReceipt.from_dict(failed_call).receipt_cid == (
+        failed_call["receipt_cid"]
+    )
+    assert ModelOutputRecoveryReceipt.validate_dict(failed_receipt) == (
+        failed_receipt["receipt_cid"]
+    )
+
+    valid_symai = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()], symai=True), route="symai"
+    ).recover_l1(constructor_request())
+    forged_call = json.loads(json.dumps(failed_call))
+    forged_call["symai_route_receipt"] = valid_symai.receipt.to_dict()[
+        "calls"
+    ][0]["symai_route_receipt"]
+    forged_call = readdress_receipt(forged_call)
+    with pytest.raises(ContractError, match="failed SyMAI call"):
+        ModelCallReceipt.from_dict(forged_call)
+    forged_receipt = json.loads(json.dumps(failed_receipt))
+    forged_receipt["calls"][0] = forged_call
+    forged_receipt = readdress_receipt(forged_receipt)
+    with pytest.raises(ContractError, match="failed SyMAI call"):
+        ModelOutputRecoveryReceipt.validate_dict(forged_receipt)
+
+
+@pytest.mark.parametrize(
+    ("field", "forged"),
+    [
+        ("schema_name", "srt023_replacement_l2_canonical_ir_v1"),
+        ("max_tokens", 256),
+    ],
+)
+def test_readdressed_call_role_schema_or_token_drift_is_rejected(
+    field: str, forged: object
+) -> None:
+    result = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()], symai=True), route="symai"
+    ).recover_l1(constructor_request())
+    receipt = json.loads(json.dumps(result.receipt.to_dict()))
+    call = receipt["calls"][0]
+    call[field] = forged
+    if field == "schema_name":
+        call["symai_route_receipt"]["role"] = forged
+    else:
+        call["symai_route_receipt"]["model_settings"]["max_tokens"] = forged
+    call = readdress_receipt(call)
+
+    with pytest.raises(ContractError, match="schema or token"):
+        ModelCallReceipt.from_dict(call)
+    receipt["calls"][0] = call
+    receipt = readdress_receipt(receipt)
+    with pytest.raises(ContractError, match="schema or token"):
+        ModelOutputRecoveryReceipt.validate_dict(receipt)

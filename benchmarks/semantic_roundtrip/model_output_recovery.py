@@ -58,7 +58,9 @@ from benchmarks.semantic_roundtrip.constructors.leanstral import (
     canonical_ir_schema,
 )
 from benchmarks.semantic_roundtrip.constructors.symai import (
+    SYMAI_ORCHESTRATOR,
     SYMAI_ROUTE,
+    SyMAIGenerationSettings,
     SyMAICompletionClient,
     SyMAIMalformedResponseError,
     SyMAIRouteError,
@@ -74,6 +76,9 @@ from benchmarks.semantic_roundtrip_capabilities import (
     LEANSTRAL_BACKEND_OWNER,
     LEANSTRAL_CAPACITY,
     LEANSTRAL_PROVIDER,
+    SYMAI_MODEL_ALIAS,
+    SYMAI_PROVIDER,
+    SYMAI_VERSION,
 )
 
 
@@ -684,6 +689,95 @@ PREREGISTERED_SRT023_POLICY: Final = RecoveryPolicy(
 )
 
 
+def _expected_symai_route_receipt(
+    *, schema_name: str, max_tokens: int
+) -> dict[str, object]:
+    """Return the only SyMAI route receipt valid for one physical call."""
+
+    return {
+        "role": schema_name,
+        "routing": {
+            "route": SYMAI_ROUTE,
+            "orchestrator": SYMAI_ORCHESTRATOR,
+            "orchestrator_version": SYMAI_VERSION,
+            "router_provider": SYMAI_PROVIDER,
+            "model_alias": SYMAI_MODEL_ALIAS,
+            "resolved_provider": LEANSTRAL_PROVIDER,
+            "resolved_endpoint": LEANSTRAL_ENDPOINT,
+            "resolved_model": LEANSTRAL_MODEL,
+            "resolved_backend": LEANSTRAL_BACKEND,
+            "shared_capacity": LEANSTRAL_CAPACITY,
+        },
+        "model_settings": SyMAIGenerationSettings.for_role(
+            max_tokens
+        ).to_dict(),
+        "retry": {
+            "policy": "none",
+            "attempts": 1,
+            "retries": 0,
+        },
+        "cache": {
+            "enabled": False,
+            "hit": False,
+        },
+        "attribution": {
+            "independent_model_evidence": False,
+            "comparison_scope": "incremental_symai_orchestration_only",
+        },
+        "canonical_contract_validated": False,
+        "ranking_eligible": False,
+        "ranking_exclusion_reason": None,
+    }
+
+
+def _validate_call_route_receipt(
+    *,
+    route: RecoveryRoute,
+    outcome: str,
+    schema_name: str,
+    max_tokens: int,
+    route_receipt: object,
+) -> None:
+    """Enforce direct/SyMAI coupling and the exact pinned router identity."""
+
+    if route is RecoveryRoute.DIRECT:
+        if route_receipt is not None:
+            raise ContractError(
+                "direct model call cannot carry a SyMAI route receipt"
+            )
+        return
+    if outcome == "call_failed":
+        if route_receipt is not None:
+            raise ContractError(
+                "failed SyMAI call cannot claim a completed route receipt"
+            )
+        return
+    if route_receipt is None:
+        raise ContractError(
+            "accepted or rejected SyMAI call needs a route receipt"
+        )
+    if not isinstance(route_receipt, Mapping):
+        raise ContractError("SyMAI route receipt must be an object")
+    observed = _thaw_json(route_receipt)
+    expected = _expected_symai_route_receipt(
+        schema_name=schema_name,
+        max_tokens=max_tokens,
+    )
+    try:
+        exact = (
+            observed == expected
+            and cid_for_dag_json(observed) == cid_for_dag_json(expected)
+        )
+    except (TypeError, ValueError) as exc:
+        raise ContractError(
+            "SyMAI route receipt is not canonical DAG-JSON"
+        ) from exc
+    if not exact:
+        raise ContractError(
+            "SyMAI route receipt drifted from the pinned route identity"
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ModelCallReceipt:
     """A source-free record of one physical model call."""
@@ -726,14 +820,23 @@ class ModelCallReceipt:
             self.route, RecoveryRoute
         ):
             raise ContractError("model call role or route is invalid")
+        expected_schema_name = (
+            "srt023_replacement_t1_realization_v1"
+            if self.role is RecoveryRole.T1
+            else (
+                f"srt023_replacement_{self.role.value}_"
+                "canonical_ir_v1"
+            )
+        )
+        expected_max_tokens = (
+            REALIZER_MAX_TOKENS
+            if self.role is RecoveryRole.T1
+            else CONSTRUCTOR_MAX_TOKENS
+        )
         if (
-            not isinstance(self.schema_name, str)
-            or not self.schema_name.startswith("srt023_replacement_")
+            self.schema_name != expected_schema_name
             or type(self.max_tokens) is not int
-            or self.max_tokens not in {
-                CONSTRUCTOR_MAX_TOKENS,
-                REALIZER_MAX_TOKENS,
-            }
+            or self.max_tokens != expected_max_tokens
         ):
             raise ContractError("model call schema or token bound is invalid")
         if self.attempt_kind not in {"initial", "preregistered_retry"}:
@@ -746,6 +849,20 @@ class ModelCallReceipt:
             raise ContractError("accepted model call cannot carry a failure")
         if self.outcome != "accepted" and self.failure_reason is None:
             raise ContractError("failed model call needs a typed failure")
+        if self.outcome != "accepted" and (
+            not isinstance(self.rejection, str)
+            or not self.rejection.strip()
+        ):
+            raise ContractError(
+                "failed model call needs a nonblank rejection"
+            )
+        _validate_call_route_receipt(
+            route=self.route,
+            outcome=self.outcome,
+            schema_name=self.schema_name,
+            max_tokens=self.max_tokens,
+            route_receipt=self.symai_route_receipt,
+        )
         if self.symai_route_receipt is not None:
             object.__setattr__(
                 self,
@@ -887,6 +1004,8 @@ class ModelCallReceipt:
                 symai_route_receipt=route_receipt,
                 receipt_cid=receipt_cid,
             )
+        except ContractError:
+            raise
         except (TypeError, ValueError) as exc:
             raise ContractError("model call receipt is malformed") from exc
         if restored.to_dict() != supplied:
@@ -918,13 +1037,21 @@ class ModelOutputRecoveryReceipt:
             not isinstance(self.role, RecoveryRole)
             or not isinstance(self.route, RecoveryRoute)
             or not isinstance(self.policy, RecoveryPolicy)
+            or not isinstance(self.status, ComponentStatus)
             or self.policy.remediation_evidence
             != FROZEN_SRT021_REMEDIATION_EVIDENCE
         ):
             raise ContractError(
                 "recovery receipt identity or remediation evidence is invalid"
             )
-        if not self.calls:
+        if (
+            not isinstance(self.calls, tuple)
+            or not self.calls
+            or any(
+                not isinstance(call, ModelCallReceipt)
+                for call in self.calls
+            )
+        ):
             raise ContractError("a recovery receipt must retain a model call")
         if len(self.calls) > self.policy.max_retries + 1:
             raise ContractError("receipt exceeds the preregistered call bound")
@@ -942,6 +1069,25 @@ class ModelOutputRecoveryReceipt:
             for index, call in enumerate(self.calls, start=1)
         ):
             raise ContractError("recovery retry lineage is inconsistent")
+        if any(
+            later.serialized_call_ordinal
+            <= earlier.serialized_call_ordinal
+            for earlier, later in zip(
+                self.calls, self.calls[1:], strict=False
+            )
+        ):
+            raise ContractError(
+                "recovery serialized call order is inconsistent"
+            )
+        for call in self.calls[:-1]:
+            if (
+                call.outcome == "accepted"
+                or call.rejection is None
+                or not self.policy.permits(call.rejection)
+            ):
+                raise ContractError(
+                    "recovery retry transition is not policy-permitted"
+                )
         if self.status is ComponentStatus.SUCCESS:
             if (
                 self.terminal_failure is not None
@@ -955,6 +1101,15 @@ class ModelOutputRecoveryReceipt:
             or self.calls[-1].rejection != self.terminal_rejection
         ):
             raise ContractError("failed recovery receipt is inconsistent")
+        elif len(self.calls) == 1:
+            if self.terminal_failure is not self.calls[-1].failure_reason:
+                raise ContractError(
+                    "one-call failure must retain the call failure reason"
+                )
+        elif self.terminal_failure is not FailureReason.RETRY_EXHAUSTED:
+            raise ContractError(
+                "exhausted retry must use the retry-exhausted failure reason"
+            )
         expected_cid = cid_for_dag_json(self._payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected_cid)
@@ -1141,6 +1296,8 @@ class ModelOutputRecoveryReceipt:
                 ],
                 receipt_cid=receipt_cid,
             )
+        except ContractError:
+            raise
         except (TypeError, ValueError) as exc:
             raise ContractError(
                 "model-output recovery receipt is malformed"
