@@ -23,7 +23,7 @@ import shlex
 import subprocess
 import sys
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
@@ -60,6 +60,19 @@ BUNDLE_INDEX_SCHEMA = (
 PROVIDER_CAPACITY_SCHEMA = (
     "ipfs_datasets_py.benchmarks.semantic_roundtrip.provider_capacity@1"
 )
+SRT014_DOWNSTREAM_GATE_SCHEMA = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip.srt014_downstream_gate@1"
+)
+SRT014_REPORT_RELATIVE_PATH = Path(
+    "docs/performance_snapshots/"
+    "2026-07-26_semantic_roundtrip_composition_pilot.json"
+)
+SRT014_GATED_TASK_ID = "SRT-015"
+SRT014_SELECTION_GATE_IDS = (
+    "source_copy_exclusion",
+    "polarity_preservation",
+    "full_coverage",
+)
 DEFAULT_TASK_PREFIX = "## SRT-"
 DEFAULT_RUNTIME_ROOT = Path("/var/tmp/hssl-srt-dynamic-supervisor")
 DEFAULT_CONFIG_PATH = (
@@ -78,6 +91,467 @@ BLOCKED_STATUSES = frozenset({"blocked", "on_hold"})
 
 class SchedulerPreparationError(ValueError):
     """Raised when scheduler inputs cannot fail closed."""
+
+
+def _gate_receipt(payload: Mapping[str, Any]) -> dict[str, Any]:
+    receipt = dict(payload)
+    receipt["gate_cid"] = cid_for_dag_json(receipt)
+    receipt["gate_cid_codec"] = "dag-json"
+    receipt["gate_cid_scope"] = "payload_without_gate_cid_fields"
+    return receipt
+
+
+def _srt014_remediation_summary(
+    report: Mapping[str, Any],
+    *,
+    arm_order: Sequence[str],
+) -> dict[str, Any]:
+    """Summarize frozen failure evidence without changing its decision."""
+
+    execution = report.get("execution")
+    if not isinstance(execution, Mapping):
+        raise SchedulerPreparationError("SRT-014 execution must be an object")
+    records: list[Mapping[str, Any]] = []
+    for partition in ("deterministic", "model_backed"):
+        group = execution.get(partition)
+        if not isinstance(group, Mapping):
+            raise SchedulerPreparationError(
+                f"SRT-014 execution.{partition} must be an object"
+            )
+        values = group.get("records")
+        if not isinstance(values, list) or any(
+            not isinstance(record, Mapping) for record in values
+        ):
+            raise SchedulerPreparationError(
+                f"SRT-014 execution.{partition}.records must be an object array"
+            )
+        records.extend(values)
+
+    arm_set = set(arm_order)
+    by_arm: dict[str, list[Mapping[str, Any]]] = {
+        arm_id: [] for arm_id in arm_order
+    }
+    for record in records:
+        arm_id = record.get("arm_id", record.get("cell_id"))
+        if arm_id not in arm_set:
+            raise SchedulerPreparationError(
+                "SRT-014 remediation record identifies an unknown arm"
+            )
+        by_arm[str(arm_id)].append(record)
+
+    gate_coordinate_counts = Counter(
+        {gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS}
+    )
+    gate_arm_ids: dict[str, list[str]] = {
+        gate_id: [] for gate_id in SRT014_SELECTION_GATE_IDS
+    }
+    terminal_reason_counts: Counter[str] = Counter()
+    terminal_stage_counts: Counter[str] = Counter()
+    arm_summaries: dict[str, dict[str, Any]] = {}
+    for arm_id in arm_order:
+        arm_records = by_arm[arm_id]
+        if not arm_records:
+            raise SchedulerPreparationError(
+                f"SRT-014 remediation evidence has no records for {arm_id!r}"
+            )
+        failed_counts = Counter(
+            {gate_id: 0 for gate_id in SRT014_SELECTION_GATE_IDS}
+        )
+        affected_cases: dict[str, set[str]] = {
+            gate_id: set() for gate_id in SRT014_SELECTION_GATE_IDS
+        }
+        sample_coordinates: dict[str, list[str]] = {
+            gate_id: [] for gate_id in SRT014_SELECTION_GATE_IDS
+        }
+        arm_terminal_reasons: Counter[str] = Counter()
+        arm_terminal_stages: Counter[str] = Counter()
+        terminal_failure_count = 0
+        for record_index, record in enumerate(arm_records):
+            gates = record.get("gates")
+            if not isinstance(gates, Mapping):
+                raise SchedulerPreparationError(
+                    f"SRT-014 remediation gates are missing for {arm_id!r}"
+                )
+            case_id = str(record.get("case_id") or "")
+            coordinate_key = str(
+                record.get("coordinate_key")
+                or (
+                    f"{case_id}:{record.get('repeat_index')}:{arm_id}:"
+                    f"{record_index}"
+                )
+            )
+            for gate_id in SRT014_SELECTION_GATE_IDS:
+                if gates.get(gate_id) is False:
+                    failed_counts[gate_id] += 1
+                    gate_coordinate_counts[gate_id] += 1
+                    if case_id:
+                        affected_cases[gate_id].add(case_id)
+                    if len(sample_coordinates[gate_id]) < 5:
+                        sample_coordinates[gate_id].append(coordinate_key)
+                elif gates.get(gate_id) is not True:
+                    raise SchedulerPreparationError(
+                        f"SRT-014 remediation gate {gate_id!r} is not boolean"
+                    )
+            if record.get("status") != "failed":
+                continue
+            terminal_failure_count += 1
+            failure = record.get("failure")
+            if isinstance(failure, Mapping):
+                reason = str(
+                    failure.get("code")
+                    or failure.get("reason_code")
+                    or failure.get("reason")
+                    or failure.get("type")
+                    or "unspecified_terminal_failure"
+                )
+                stage = str(failure.get("stage") or "unspecified_stage")
+            else:
+                reason = "terminal_failure_without_reason"
+                stage = "unspecified_stage"
+            arm_terminal_reasons[reason] += 1
+            arm_terminal_stages[stage] += 1
+            terminal_reason_counts[reason] += 1
+            terminal_stage_counts[stage] += 1
+
+        failed_gate_ids = [
+            gate_id
+            for gate_id in SRT014_SELECTION_GATE_IDS
+            if failed_counts[gate_id] > 0
+        ]
+        if not failed_gate_ids:
+            raise SchedulerPreparationError(
+                f"no-eligible outcome has no failed gate for {arm_id!r}"
+            )
+        for gate_id in failed_gate_ids:
+            gate_arm_ids[gate_id].append(arm_id)
+        arm_summaries[arm_id] = {
+            "coordinate_count": len(arm_records),
+            "failed_gate_ids": failed_gate_ids,
+            "failed_coordinate_count_by_gate": {
+                gate_id: failed_counts[gate_id]
+                for gate_id in SRT014_SELECTION_GATE_IDS
+            },
+            "affected_case_ids_by_gate": {
+                gate_id: sorted(affected_cases[gate_id])
+                for gate_id in SRT014_SELECTION_GATE_IDS
+            },
+            "sample_coordinate_keys_by_gate": sample_coordinates,
+            "terminal_failure_count": terminal_failure_count,
+            "terminal_failure_reason_counts": dict(
+                sorted(arm_terminal_reasons.items())
+            ),
+            "terminal_failure_stage_counts": dict(
+                sorted(arm_terminal_stages.items())
+            ),
+        }
+
+    gate_evidence = {
+        gate_id: {
+            "affected_arm_count": len(gate_arm_ids[gate_id]),
+            "affected_arm_ids": gate_arm_ids[gate_id],
+            "failed_coordinate_count": gate_coordinate_counts[gate_id],
+        }
+        for gate_id in SRT014_SELECTION_GATE_IDS
+    }
+    systemic_gate_ids = [
+        gate_id
+        for gate_id in SRT014_SELECTION_GATE_IDS
+        if len(gate_arm_ids[gate_id]) == len(arm_order)
+    ]
+    task_inputs: list[dict[str, Any]] = [
+        {
+            "task_kind": "diagnose_and_repair_selection_gate",
+            "gate_id": gate_id,
+            **gate_evidence[gate_id],
+        }
+        for gate_id in SRT014_SELECTION_GATE_IDS
+        if gate_coordinate_counts[gate_id] > 0
+    ]
+    if terminal_reason_counts:
+        task_inputs.append(
+            {
+                "task_kind": "diagnose_and_repair_terminal_failures",
+                "failure_reason_counts": dict(
+                    sorted(terminal_reason_counts.items())
+                ),
+                "failure_stage_counts": dict(
+                    sorted(terminal_stage_counts.items())
+                ),
+            }
+        )
+    task_inputs.append(
+        {
+            "task_kind": "execute_replacement_full_matrix",
+            "protocol_action": "preserve_frozen_protocol",
+            "artifact_action": "new_immutable_run_namespace_and_report",
+            "requires_all_prior_remediation_receipts": True,
+        }
+    )
+    return {
+        "source_report_cid": report.get("report_cid"),
+        "classification": "all_preregistered_arms_failed_selection_eligibility",
+        "arm_count": len(arm_order),
+        "eligible_arm_count": 0,
+        "gate_evidence": gate_evidence,
+        "systemic_gate_ids": systemic_gate_ids,
+        "component_local_gate_ids": [
+            gate_id
+            for gate_id in SRT014_SELECTION_GATE_IDS
+            if gate_coordinate_counts[gate_id] > 0
+            and gate_id not in systemic_gate_ids
+        ],
+        "terminal_failure_reason_counts": dict(
+            sorted(terminal_reason_counts.items())
+        ),
+        "terminal_failure_stage_counts": dict(
+            sorted(terminal_stage_counts.items())
+        ),
+        "arms": arm_summaries,
+        "recommended_task_inputs": task_inputs,
+        "srt015_must_remain_fenced": True,
+        "frozen_protocol_must_not_change": True,
+    }
+
+
+def evaluate_srt014_downstream_gate(
+    repo_root: Path,
+    *,
+    report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Return the fail-closed SRT-014 selectability receipt.
+
+    A completed measurement is not necessarily an implementation input.  The
+    report must independently validate to either one unique winner or an
+    explicit exact co-winner set bounded by the 30 preregistered arms.  A
+    valid ``no_eligible_composition`` result remains useful benchmark
+    evidence, but it cannot authorize SRT-015.
+    """
+
+    repo_root = repo_root.resolve()
+    path = (
+        report_path.resolve()
+        if report_path is not None
+        else repo_root / SRT014_REPORT_RELATIVE_PATH
+    )
+    try:
+        relative_path = path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return _gate_receipt(
+            {
+                "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+                "status": "invalid",
+                "launch_authorized": False,
+                "report_path": str(path),
+                "report_cid": None,
+                "report_raw_cid": None,
+                "selection_outcome": None,
+                "selection_basis": None,
+                "selectable_arm_ids": [],
+                "implementation_representative_arm_id": None,
+                "tie_bound": 30,
+                "reason_codes": ["srt014_report_outside_repository"],
+            }
+        )
+    if not path.is_file():
+        return _gate_receipt(
+            {
+                "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+                "status": "pending",
+                "launch_authorized": False,
+                "report_path": relative_path,
+                "report_cid": None,
+                "report_raw_cid": None,
+                "selection_outcome": None,
+                "selection_basis": None,
+                "selectable_arm_ids": [],
+                "implementation_representative_arm_id": None,
+                "tie_bound": 30,
+                "reason_codes": ["srt014_report_missing"],
+            }
+        )
+
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        return _gate_receipt(
+            {
+                "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+                "status": "invalid",
+                "launch_authorized": False,
+                "report_path": relative_path,
+                "report_cid": None,
+                "report_raw_cid": None,
+                "selection_outcome": None,
+                "selection_basis": None,
+                "selectable_arm_ids": [],
+                "implementation_representative_arm_id": None,
+                "tie_bound": 30,
+                "reason_codes": [
+                    "srt014_report_read_failed",
+                    f"{type(exc).__name__}:{exc}",
+                ],
+            }
+        )
+    report: object = None
+    try:
+        report = json.loads(raw)
+        if not isinstance(report, Mapping):
+            raise SchedulerPreparationError("SRT-014 report must be an object")
+        from benchmarks.bench_semantic_roundtrip_compositions import (
+            validate_composition_report,
+        )
+
+        validated = validate_composition_report(
+            report,
+            fixture_path=(
+                repo_root / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
+            ),
+        )
+        preregistration = report.get("preregistration")
+        if not isinstance(preregistration, Mapping):
+            raise SchedulerPreparationError(
+                "SRT-014 preregistration must be an object"
+            )
+        deterministic_ids = preregistration.get("deterministic_cell_ids")
+        model_ids = preregistration.get("model_backed_cell_ids")
+        if (
+            not isinstance(deterministic_ids, list)
+            or not isinstance(model_ids, list)
+        ):
+            raise SchedulerPreparationError(
+                "SRT-014 preregistered arm IDs must be arrays"
+            )
+        arm_order = [*deterministic_ids, *model_ids]
+        if (
+            len(arm_order) != 30
+            or len(set(arm_order)) != 30
+            or any(not isinstance(arm_id, str) for arm_id in arm_order)
+        ):
+            raise SchedulerPreparationError(
+                "SRT-014 tie bound requires exactly 30 unique arm IDs"
+            )
+        outcome = str(validated["selection_outcome"])
+        if outcome == "selected":
+            selectable = [str(validated["winner_arm_id"])]
+            representative = selectable[0]
+            selection_basis = "srt014_unique_winner"
+            status = "authorized"
+            authorized = True
+            reasons = ["srt014_unique_full_coverage_winner"]
+            remediation = None
+        elif outcome == "exact_tie" and validated["bounded_tie"] is True:
+            selectable = [
+                str(arm_id) for arm_id in validated["co_winner_arm_ids"]
+            ]
+            representative = next(
+                arm_id for arm_id in arm_order if arm_id in set(selectable)
+            )
+            selection_basis = "srt015_bounded_tie_policy"
+            status = "authorized"
+            authorized = True
+            reasons = [
+                "srt014_exact_tie_bounded_by_preregistered_30_arm_universe",
+                "implementation_representative_uses_frozen_preregistered_arm_order",
+            ]
+            remediation = None
+        elif outcome == "no_eligible_composition":
+            selectable = []
+            representative = None
+            selection_basis = None
+            status = "remediation_required"
+            authorized = False
+            reasons = [
+                "srt014_no_eligible_composition",
+                "all_preregistered_arms_failed_selection_eligibility",
+            ]
+            remediation = _srt014_remediation_summary(
+                report,
+                arm_order=arm_order,
+            )
+        else:
+            selectable = []
+            representative = None
+            selection_basis = None
+            status = "invalid"
+            authorized = False
+            reasons = ["srt014_unbounded_or_unsupported_selection"]
+            remediation = None
+    except (KeyError, StopIteration, TypeError, ValueError) as exc:
+        return _gate_receipt(
+            {
+                "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+                "status": "invalid",
+                "launch_authorized": False,
+                "report_path": relative_path,
+                "report_cid": (
+                    report.get("report_cid")
+                    if isinstance(report, Mapping)
+                    else None
+                ),
+                "report_raw_cid": cid_for_bytes(raw),
+                "selection_outcome": None,
+                "selection_basis": None,
+                "selectable_arm_ids": [],
+                "implementation_representative_arm_id": None,
+                "tie_bound": 30,
+                "reason_codes": [
+                    "srt014_report_validation_failed",
+                    f"{type(exc).__name__}:{exc}",
+                ],
+            }
+        )
+
+    return _gate_receipt(
+        {
+            "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+            "status": status,
+            "launch_authorized": authorized,
+            "report_path": relative_path,
+            "report_cid": validated["report_cid"],
+            "report_raw_cid": cid_for_bytes(raw),
+            "selection_outcome": outcome,
+            "selection_basis": selection_basis,
+            "selectable_arm_ids": selectable,
+            "implementation_representative_arm_id": representative,
+            "tie_bound": len(arm_order),
+            "reason_codes": reasons,
+            "remediation": remediation,
+        }
+    )
+
+
+def _apply_srt014_downstream_gate(
+    tasks: list[dict[str, Any]],
+    gate: Mapping[str, Any],
+) -> None:
+    """Fence SRT-015 and its descendants when selection is not admissible."""
+
+    task_ids = {str(task.get("task_id") or "") for task in tasks}
+    if SRT014_GATED_TASK_ID not in task_ids:
+        return
+    blocked = {SRT014_GATED_TASK_ID}
+    changed = True
+    while changed:
+        changed = False
+        for task in tasks:
+            task_id = str(task.get("task_id") or "")
+            dependencies = set(task.get("depends_on") or ())
+            if task_id not in blocked and dependencies.intersection(blocked):
+                blocked.add(task_id)
+                changed = True
+    for task in tasks:
+        task_id = str(task.get("task_id") or "")
+        if task_id not in blocked:
+            continue
+        task["srt014_downstream_gate_cid"] = gate["gate_cid"]
+        task["srt014_downstream_gate_status"] = gate["status"]
+        task["srt014_downstream_gate_reason_codes"] = list(
+            gate["reason_codes"]
+        )
+        if gate.get("launch_authorized") is not True:
+            task["is_schedulable"] = False
+            task["preflight_blocked"] = True
+            task["preflight_blocked_by"] = SRT014_GATED_TASK_ID
 
 
 def _utc_now() -> str:
@@ -373,6 +847,8 @@ def build_taskboard_bundle_index(
             task_cids_by_id[dependency_id]
             for dependency_id in task["depends_on"]
         ]
+    srt014_gate = evaluate_srt014_downstream_gate(repo_root)
+    _apply_srt014_downstream_gate(task_payloads, srt014_gate)
     planning_graph = materialize_task_planning_graph(
         task_payloads,
         repo_root=repo_root,
@@ -418,6 +894,7 @@ def build_taskboard_bundle_index(
         "source_todo_cid_codec": "raw",
         "task_prefix": task_prefix,
         "execution_authority": "agent-supervisor/v1",
+        "srt014_downstream_gate": srt014_gate,
         "bundles": bundles,
         "task_dependency_graph": planning_graph.dependency_graph.to_dict(),
         "dependency_dag": planning_graph.dependency_graph.to_dict(),
@@ -733,6 +1210,10 @@ def prepare_scheduler_inputs(
         "provider_capacity_path": str(provider_capacity_path),
         "provider_capacity_cid": str(capacity["provider_capacity_cid"]),
         "provider_capacity_cid_codec": "dag-json",
+        "srt014_downstream_gate": dict(index["srt014_downstream_gate"]),
+        "srt015_launch_authorized": bool(
+            index["srt014_downstream_gate"]["launch_authorized"]
+        ),
         "bundle_count": len(index["bundles"]),
         "task_count": sum(
             len(bundle["tasks"]) for bundle in index["bundles"].values()

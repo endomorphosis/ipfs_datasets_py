@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
+import benchmarks.bench_semantic_roundtrip_compositions as composition_report
+import benchmarks.semantic_roundtrip_scheduler as scheduler_module
 from benchmarks.semantic_roundtrip_scheduler import (
     DEFAULT_CONFIG_PATH,
+    SRT014_REPORT_RELATIVE_PATH,
     SchedulerPreparationError,
     build_bundle_supervisor_command,
     build_taskboard_bundle_index,
+    evaluate_srt014_downstream_gate,
     load_scheduler_config,
     probe_provider_capacity,
     validate_taskboard_for_dynamic_scheduler,
@@ -95,6 +100,280 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
         tasks_by_id["SRT-002"]["canonical_task_cid"]
     ]
     assert stored["task_dependency_graph"]["edges"]
+    assert stored["srt014_downstream_gate"]["status"] == "pending"
+    assert stored["srt014_downstream_gate"]["launch_authorized"] is False
+    for task_id in ("SRT-015", "SRT-016", "SRT-017", "SRT-018", "SRT-019"):
+        assert tasks_by_id[task_id]["is_schedulable"] is False
+        assert tasks_by_id[task_id]["preflight_blocked"] is True
+
+
+def _write_gate_report(repo_root: Path) -> Path:
+    path = repo_root / SRT014_REPORT_RELATIVE_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    deterministic_ids = [f"arm-{index:02d}" for index in range(4)]
+    model_ids = [f"arm-{index:02d}" for index in range(4, 30)]
+    deterministic_records = []
+    model_records = []
+    for index, arm_id in enumerate([*deterministic_ids, *model_ids]):
+        record = {
+            "coordinate_key": f"case-{index % 5}:0:{arm_id}",
+            "case_id": f"case-{index % 5}",
+            "repeat_index": 0,
+            "arm_id": arm_id,
+            "status": "failed",
+            "failure": {
+                "code": "empty_l2" if index % 2 else "blank_t1",
+                "stage": "realization" if index % 2 else "construction",
+            },
+            "gates": {
+                "source_copy_exclusion": index % 3 != 0,
+                "polarity_preservation": index % 3 != 1,
+                "full_coverage": False,
+                "selection_eligible": False,
+            },
+        }
+        (
+            deterministic_records
+            if arm_id in deterministic_ids
+            else model_records
+        ).append(record)
+    path.write_text(
+        json.dumps(
+            {
+                "report_cid": "bafyreifakereport",
+                "preregistration": {
+                    "deterministic_cell_ids": deterministic_ids,
+                    "model_backed_cell_ids": model_ids,
+                },
+                "execution": {
+                    "deterministic": {"records": deterministic_records},
+                    "model_backed": {"records": model_records},
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+@pytest.mark.parametrize(
+    ("validated", "status", "authorized", "representative"),
+    (
+        (
+            {
+                "status": "valid",
+                "report_cid": "bafyreifakereport",
+                "selection_outcome": "selected",
+                "winner_arm_id": "arm-07",
+                "co_winner_arm_ids": ["arm-07"],
+                "bounded_tie": False,
+            },
+            "authorized",
+            True,
+            "arm-07",
+        ),
+        (
+            {
+                "status": "valid",
+                "report_cid": "bafyreifakereport",
+                "selection_outcome": "exact_tie",
+                "winner_arm_id": None,
+                "co_winner_arm_ids": ["arm-19", "arm-03"],
+                "bounded_tie": True,
+            },
+            "authorized",
+            True,
+            "arm-03",
+        ),
+        (
+            {
+                "status": "valid",
+                "report_cid": "bafyreifakereport",
+                "selection_outcome": "no_eligible_composition",
+                "winner_arm_id": None,
+                "co_winner_arm_ids": [],
+                "bounded_tie": False,
+            },
+            "remediation_required",
+            False,
+            None,
+        ),
+    ),
+)
+def test_srt014_gate_handles_every_valid_selection_outcome(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    validated: dict[str, object],
+    status: str,
+    authorized: bool,
+    representative: str | None,
+) -> None:
+    _write_gate_report(tmp_path)
+    fixture = (
+        tmp_path / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
+    )
+    fixture.parent.mkdir(parents=True, exist_ok=True)
+    fixture.write_text("[]\n", encoding="utf-8")
+    monkeypatch.setattr(
+        composition_report,
+        "validate_composition_report",
+        lambda *_args, **_kwargs: validated,
+    )
+
+    gate = evaluate_srt014_downstream_gate(tmp_path)
+
+    assert gate["status"] == status
+    assert gate["launch_authorized"] is authorized
+    assert gate["implementation_representative_arm_id"] == representative
+    assert validate_cid(gate["gate_cid"], codecs=("dag-json",)) == gate["gate_cid"]
+    if validated["selection_outcome"] == "exact_tie":
+        assert gate["selection_basis"] == "srt015_bounded_tie_policy"
+        assert gate["tie_bound"] == 30
+    if validated["selection_outcome"] == "no_eligible_composition":
+        remediation = gate["remediation"]
+        assert remediation["classification"] == (
+            "all_preregistered_arms_failed_selection_eligibility"
+        )
+        assert remediation["arm_count"] == 30
+        assert remediation["eligible_arm_count"] == 0
+        assert remediation["systemic_gate_ids"] == ["full_coverage"]
+        assert remediation["terminal_failure_reason_counts"] == {
+            "blank_t1": 15,
+            "empty_l2": 15,
+        }
+        assert remediation["srt015_must_remain_fenced"] is True
+        assert remediation["frozen_protocol_must_not_change"] is True
+        assert remediation["recommended_task_inputs"][-1] == {
+            "task_kind": "execute_replacement_full_matrix",
+            "protocol_action": "preserve_frozen_protocol",
+            "artifact_action": "new_immutable_run_namespace_and_report",
+            "requires_all_prior_remediation_receipts": True,
+        }
+
+
+def test_invalid_or_unbounded_srt014_evidence_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_gate_report(tmp_path)
+    monkeypatch.setattr(
+        composition_report,
+        "validate_composition_report",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            ValueError("forged co-winner set")
+        ),
+    )
+
+    gate = evaluate_srt014_downstream_gate(tmp_path)
+
+    assert gate["status"] == "invalid"
+    assert gate["launch_authorized"] is False
+    assert gate["selectable_arm_ids"] == []
+    assert "srt014_report_validation_failed" in gate["reason_codes"]
+
+
+def test_authorized_gate_keeps_srt015_and_descendants_schedulable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = load_scheduler_config(DEFAULT_CONFIG_PATH)
+    gate = {
+        "status": "authorized",
+        "launch_authorized": True,
+        "gate_cid": "bafyreiauthorized",
+        "reason_codes": ["srt014_unique_full_coverage_winner"],
+    }
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_srt014_downstream_gate",
+        lambda _repo_root: gate,
+    )
+
+    index = build_taskboard_bundle_index(
+        repo_root=REPO_ROOT,
+        taskboard_path=TASKBOARD,
+        bundle_index_path=tmp_path / "bundles" / "index.json",
+        task_prefix=config["task_prefix"],
+        provider_id=config["provider"]["provider_id"],
+    )
+    tasks_by_id = {
+        task["task_id"]: task
+        for bundle in index["bundles"].values()
+        for task in bundle["tasks"]
+    }
+
+    for task_id in ("SRT-015", "SRT-016", "SRT-017", "SRT-018", "SRT-019"):
+        assert tasks_by_id[task_id]["is_schedulable"] is True
+        assert "preflight_blocked" not in tasks_by_id[task_id]
+        assert tasks_by_id[task_id]["srt014_downstream_gate_cid"] == gate["gate_cid"]
+
+
+def test_completed_srt014_cannot_make_srt015_claimable_without_report(
+    tmp_path: Path,
+) -> None:
+    board = tmp_path / "gate.todo.md"
+    board.write_text(
+        """# Gate board
+
+## SRT-014 Completed benchmark
+
+- Status: completed
+- Completion: manual
+- Priority: P0
+- Track: benchmark
+- Depends on:
+- Outputs: docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json
+- Validation: true
+- Board namespace: gate-test
+- Bundle: gate/benchmark
+- Parallel lane: benchmark
+- Resource class: cpu-small
+- Predicted files: docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json
+- Acceptance: terminal measurement
+
+## SRT-015 Canonical design
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: compiler
+- Depends on: SRT-014
+- Outputs: canonical.txt
+- Validation: test -f canonical.txt
+- Board namespace: gate-test
+- Bundle: gate/design
+- Parallel lane: design
+- Resource class: cpu-small
+- Predicted files: canonical.txt
+- Acceptance: consume only selectable evidence
+""",
+        encoding="utf-8",
+    )
+    index_path = tmp_path / "bundles" / "index.json"
+
+    index = build_taskboard_bundle_index(
+        repo_root=tmp_path,
+        taskboard_path=board,
+        bundle_index_path=index_path,
+    )
+    payloads = build_bundle_task_payloads(index_path)
+    tasks = {
+        task["task_id"]: task
+        for bundle in index["bundles"].values()
+        for task in bundle["tasks"]
+    }
+
+    assert index["srt014_downstream_gate"]["status"] == "pending"
+    assert tasks["SRT-014"]["status"] == "completed"
+    assert tasks["SRT-015"]["is_schedulable"] is False
+    assert not any(
+        "SRT-015" in payload["execution_slice_task_ids"]
+        and payload["claimable"]
+        for payload in payloads
+    )
 
 
 def test_dependency_schedule_admits_the_second_wave_after_srt_002_and_srt_020(

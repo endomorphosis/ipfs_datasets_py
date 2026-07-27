@@ -6,6 +6,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.bench_semantic_roundtrip_compositions import (
     REPORT_INTERFACE,
     REPORT_SCHEMA_VERSION,
@@ -80,9 +82,21 @@ def _summary(
         "repeat_count_per_case": repeats,
         "execution_status": "complete",
         "per_case": {
-            case_id: {"status": "failed", "observed_repeats": repeats}
+            case_id: {
+                "status": "failed",
+                "observed_repeats": repeats,
+                "scheduled_repeat_count": repeats,
+                "observed_terminal_repeat_count": repeats,
+                "losses": {
+                    "forward": 1.0,
+                    "cycle": 1.0,
+                    "end_to_end": 1.0,
+                },
+                "all_repeats_selection_eligible": False,
+            }
             for case_id in case_ids
         },
+        "all_cases_selection_eligible": False,
         "cost": {"model_calls": scheduled},
         "aggregate": {
             loss: {
@@ -200,13 +214,146 @@ def _complete_report(
             "winner_manufactured": False,
         },
         "selection": {
-            "outcome": "insufficient_evidence",
+            "outcome": "no_eligible_composition",
             "winner": None,
+            "co_winner_arm_ids": [],
+            "tie": False,
             "eligible_arm_ids": [],
+            "ranked_eligible_arm_ids": [],
+            "production_promotion_allowed": False,
+            "eligibility_rule": (
+                "source-copy exclusion, polarity preservation, and full "
+                "coverage must pass for every frozen case/repeat coordinate"
+            ),
+            "selection_metric": (
+                "lowest per-case-first macro mean end-to-end loss"
+            ),
+            "reasons": ["no arm passed all frozen gates"],
         },
     }
     report["report_cid"] = cid_for_dag_json(report)
     return report
+
+
+def _refresh_report_cid(report: dict[str, object]) -> None:
+    report["report_cid"] = cid_for_dag_json(
+        {key: value for key, value in report.items() if key != "report_cid"}
+    )
+
+
+def _mark_arm_eligible(
+    report: dict[str, object],
+    arm_id: str,
+    *,
+    loss: float,
+) -> None:
+    execution = report["execution"]
+    assert isinstance(execution, dict)
+    records: list[dict[str, object]] = []
+    for partition in ("deterministic", "model_backed"):
+        group = execution[partition]
+        assert isinstance(group, dict)
+        raw_records = group["records"]
+        assert isinstance(raw_records, list)
+        records.extend(
+            record
+            for record in raw_records
+            if isinstance(record, dict) and record["arm_id"] == arm_id
+        )
+    for record in records:
+        record["status"] = "success"
+        record["losses"] = {
+            "forward": loss,
+            "cycle": loss,
+            "end_to_end": loss,
+            "primary": loss,
+        }
+        record["gates"] = {
+            "source_copy_exclusion": True,
+            "polarity_preservation": True,
+            "full_coverage": True,
+            "selection_eligible": True,
+        }
+
+    statistics = report["statistics"]
+    assert isinstance(statistics, dict)
+    summaries = statistics["arm_summaries"]
+    assert isinstance(summaries, dict)
+    summary = summaries[arm_id]
+    assert isinstance(summary, dict)
+    per_case = summary["per_case"]
+    assert isinstance(per_case, dict)
+    for case_summary in per_case.values():
+        assert isinstance(case_summary, dict)
+        case_summary["status"] = "success"
+        case_summary["losses"] = {
+            "forward": loss,
+            "cycle": loss,
+            "end_to_end": loss,
+        }
+        case_summary["all_repeats_selection_eligible"] = True
+    summary["all_cases_selection_eligible"] = True
+    aggregate = summary["aggregate"]
+    assert isinstance(aggregate, dict)
+    for loss_summary in aggregate.values():
+        assert isinstance(loss_summary, dict)
+        loss_summary["mean"] = loss
+
+
+def _set_selection(
+    report: dict[str, object],
+    *,
+    eligible: list[str],
+) -> None:
+    statistics = report["statistics"]
+    assert isinstance(statistics, dict)
+    summaries = statistics["arm_summaries"]
+    assert isinstance(summaries, dict)
+    ranked = sorted(
+        eligible,
+        key=lambda arm_id: (
+            summaries[arm_id]["aggregate"]["end_to_end"]["mean"],
+            arm_id,
+        ),
+    )
+    best = (
+        summaries[ranked[0]]["aggregate"]["end_to_end"]["mean"]
+        if ranked
+        else None
+    )
+    co_winners = [
+        arm_id
+        for arm_id in ranked
+        if summaries[arm_id]["aggregate"]["end_to_end"]["mean"] == best
+    ]
+    outcome = (
+        "selected"
+        if len(co_winners) == 1
+        else "exact_tie"
+        if co_winners
+        else "no_eligible_composition"
+    )
+    report["selection"] = {
+        "outcome": outcome,
+        "winner": (
+            {
+                "arm_id": co_winners[0],
+                "mean_end_to_end_loss": best,
+                "evidence": "complete frozen evidence",
+            }
+            if len(co_winners) == 1
+            else None
+        ),
+        "co_winner_arm_ids": co_winners,
+        "tie": len(co_winners) > 1,
+        "eligible_arm_ids": eligible,
+        "ranked_eligible_arm_ids": ranked,
+        "production_promotion_allowed": False,
+        "eligibility_rule": "all frozen gates pass",
+        "selection_metric": "lowest per-case-first macro mean end-to-end loss",
+        "reasons": ["recomputed test evidence"],
+    }
+    _refresh_report_cid(report)
 
 
 def test_complete_report_is_accepted(tmp_path: Path) -> None:
@@ -218,6 +365,81 @@ def test_complete_report_is_accepted(tmp_path: Path) -> None:
     assert validated["status"] == "valid"
     assert validated["terminal_coordinate_count"] == 670
     assert validated["model_repeat_count"] == 5
+    assert validated["selection_outcome"] == "no_eligible_composition"
+    assert validated["eligible_arm_ids"] == []
+
+
+def test_unique_selection_is_recomputed_from_terminal_records(
+    tmp_path: Path,
+) -> None:
+    fixture, case_ids, fixture_sha256 = _fixture(tmp_path)
+    report = _complete_report(fixture, case_ids, fixture_sha256)
+    _mark_arm_eligible(report, DETERMINISTIC_IDS[0], loss=0.25)
+    _set_selection(report, eligible=[DETERMINISTIC_IDS[0]])
+
+    validated = validate_composition_report(report, fixture_path=fixture)
+
+    assert validated["selection_outcome"] == "selected"
+    assert validated["winner_arm_id"] == DETERMINISTIC_IDS[0]
+
+
+def test_exact_tie_is_an_explicit_bounded_co_winner_set(
+    tmp_path: Path,
+) -> None:
+    fixture, case_ids, fixture_sha256 = _fixture(tmp_path)
+    report = _complete_report(fixture, case_ids, fixture_sha256)
+    tied = DETERMINISTIC_IDS[:2]
+    for arm_id in tied:
+        _mark_arm_eligible(report, arm_id, loss=0.25)
+    _set_selection(report, eligible=tied)
+
+    validated = validate_composition_report(report, fixture_path=fixture)
+
+    assert validated["selection_outcome"] == "exact_tie"
+    assert validated["co_winner_arm_ids"] == sorted(tied)
+    assert validated["bounded_tie"] is True
+
+
+def test_forged_selection_outcome_is_rejected(tmp_path: Path) -> None:
+    fixture, case_ids, fixture_sha256 = _fixture(tmp_path)
+    report = _complete_report(fixture, case_ids, fixture_sha256)
+    selection = report["selection"]
+    assert isinstance(selection, dict)
+    selection["outcome"] = "insufficient_evidence"
+    _refresh_report_cid(report)
+
+    with pytest.raises(
+        ValueError,
+        match="selection.outcome differs from recomputed",
+    ):
+        validate_composition_report(report, fixture_path=fixture)
+
+
+def test_forged_winner_and_summary_are_rejected(tmp_path: Path) -> None:
+    fixture, case_ids, fixture_sha256 = _fixture(tmp_path)
+    report = _complete_report(fixture, case_ids, fixture_sha256)
+    _mark_arm_eligible(report, DETERMINISTIC_IDS[0], loss=0.25)
+    _set_selection(report, eligible=[DETERMINISTIC_IDS[0]])
+    selection = report["selection"]
+    assert isinstance(selection, dict)
+    winner = selection["winner"]
+    assert isinstance(winner, dict)
+    winner["arm_id"] = DETERMINISTIC_IDS[1]
+    _refresh_report_cid(report)
+
+    with pytest.raises(ValueError, match="winner.arm_id differs"):
+        validate_composition_report(report, fixture_path=fixture)
+
+    winner["arm_id"] = DETERMINISTIC_IDS[0]
+    statistics = report["statistics"]
+    assert isinstance(statistics, dict)
+    summaries = statistics["arm_summaries"]
+    assert isinstance(summaries, dict)
+    summaries[DETERMINISTIC_IDS[0]]["aggregate"]["end_to_end"]["mean"] = 0.1
+    _refresh_report_cid(report)
+
+    with pytest.raises(ValueError, match="aggregate.end_to_end.mean differs"):
+        validate_composition_report(report, fixture_path=fixture)
 
 
 def test_missing_model_results_are_not_terminal_evidence(

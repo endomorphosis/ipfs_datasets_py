@@ -159,6 +159,14 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
     assert "noninferiority margin" in srt015.acceptance
     assert "leave SRT-015 incomplete" in srt015.metadata["preconditions"]
     assert srt015.metadata["implementation timeout seconds"] == "7200"
+    assert "SRT014DownstreamGate@1" in srt015.metadata["preconditions"]
+    assert "frozen 30-arm preregistration" in srt015.metadata["preconditions"]
+    assert "without consuming an implementation attempt" in (
+        srt015.metadata["preconditions"]
+    )
+    assert "remediation-task inputs" in srt015.metadata["preconditions"]
+    assert "downstream-gate CID" in srt015.acceptance
+    assert "tie representative is semantically superior" in srt015.acceptance
 
     assert tasks["SRT-016"].depends_on == ["SRT-015"]
     assert tasks["SRT-017"].depends_on == ["SRT-015"]
