@@ -18,7 +18,6 @@ The wrapper is fail closed:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import socket
@@ -27,8 +26,15 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from types import MappingProxyType
 from typing import Final, Protocol
+
+from ipfs_datasets_py.utils.cid_utils import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 
 from benchmarks.semantic_roundtrip.contracts import (
     AllowedAtomVocabulary,
@@ -77,6 +83,78 @@ BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE: Final = (
 SYMAI_POLARITY_CONTRACT_INTERFACE: Final = "SyMAIPolarityContract@1"
 MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION: Final = (
     "ipfs-datasets.semantic-roundtrip-model-output-recovery.v1"
+)
+SRT021_REMEDIATION_EVIDENCE_SCHEMA: Final = (
+    "ipfs-datasets.semantic-roundtrip-srt021-model-remediation-evidence.v1"
+)
+SRT021_MANIFEST_RELATIVE_PATH: Final = Path(
+    "workspace/benchmarks/semantic-roundtrip-compositions/"
+    "no_eligible_remediation_manifest.json"
+)
+SRT021_MANIFEST_CID: Final = (
+    "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
+)
+SRT021_MANIFEST_GATE_CID: Final = (
+    "baguqeera5rgixug7ukbnc6xp7a6a4rggxzxzkscoeihpmifxksi2nkgqoy7a"
+)
+SRT014_REPORT_CID: Final = (
+    "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
+)
+_SRT014_GATE_CID: Final = (
+    "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq"
+)
+_SRT014_REPORT_RAW_CID: Final = (
+    "bafkreih2qqfopijqrvxq6fda63laz5iloh227dw34s6zn7tbyk6dhcbk4e"
+)
+_SRT014_REPORT_PATH: Final = (
+    "docs/performance_snapshots/"
+    "2026-07-26_semantic_roundtrip_composition_pilot.json"
+)
+_SRT021_MANIFEST_RAW_CID: Final = (
+    "bafkreiariailns3nlwjvye7ukslov6be52el3khedit3ki2wrt6hhmrjre"
+)
+_SRT021_MANIFEST_INTERFACE: Final = (
+    "SRT014NoEligibleRemediationManifest@1"
+)
+_SRT021_MANIFEST_SCHEMA: Final = (
+    "ipfs-datasets.semantic-roundtrip-no-eligible-remediation.v1"
+)
+_SRT021_MANIFEST_GATE_SCHEMA: Final = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
+    "no_eligible_remediation_manifest_gate@1"
+)
+_SRT021_MODEL_ARM: Final = (
+    "model__not_applicable__always_on__symai__leanstral_symai"
+)
+_SRT021_MODAL_SPACY_ARM: Final = (
+    "modal_spacy__no_guidance__no_repair__not_applicable__deterministic"
+)
+_SRT021_REMEDIATION_TARGETS: Final = (
+    "blank_t1",
+    "empty_l1",
+    "empty_l2",
+    "polarity_ambiguous",
+    "route_contract_failure",
+)
+_SRT021_RELEVANT_COORDINATE_KEYS: Final = (
+    "construction_contract|0|"
+    "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+    "corp_policy_1|0|"
+    "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+    "exec_order_1|0|"
+    "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+    "legal_doc_1|0|"
+    "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+    "legal_doc_1|0|"
+    "model__not_applicable__always_on__symai__leanstral_symai",
+    "legal_doc_1|1|"
+    "model__not_applicable__always_on__symai__leanstral_symai",
+    "legal_doc_1|2|"
+    "model__not_applicable__always_on__symai__leanstral_symai",
+    "legal_doc_1|3|"
+    "model__not_applicable__always_on__symai__leanstral_symai",
+    "legal_doc_1|4|"
+    "model__not_applicable__always_on__symai__leanstral_symai",
 )
 
 DIRECT_ROUTE_ID: Final = "direct_openai_compatible_http"
@@ -136,6 +214,353 @@ class RecoveryRoute(str, Enum):
         )
 
 
+def _require_cid(value: object, *, codec: str, label: str) -> str:
+    try:
+        return validate_cid(value, codecs=(codec,))
+    except (TypeError, ValueError) as exc:
+        raise ContractError(f"{label} must be a canonical {codec} CID") from exc
+
+
+def _coordinate_payload(coordinate_key: str) -> dict[str, object]:
+    parts = coordinate_key.split("|")
+    if len(parts) != 3 or not parts[0] or not parts[2]:
+        raise ContractError("SRT-021 coordinate key is malformed")
+    try:
+        repeat_index = int(parts[1])
+    except ValueError as exc:
+        raise ContractError(
+            "SRT-021 coordinate repeat index is malformed"
+        ) from exc
+    if repeat_index < 0 or str(repeat_index) != parts[1]:
+        raise ContractError(
+            "SRT-021 coordinate repeat index is not canonical"
+        )
+    return {
+        "coordinate_key": coordinate_key,
+        "case_id": parts[0],
+        "repeat_index": repeat_index,
+        "arm_id": parts[2],
+        "gate_id": "polarity_preservation",
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class SRT021RemediationEvidence:
+    """Immutable SRT-021 lineage and the model/polarity failure coordinates."""
+
+    manifest_cid: str
+    manifest_gate_cid: str
+    report_cid: str
+    remediation_targets: tuple[str, ...]
+    coordinate_keys: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _require_cid(
+            self.manifest_cid,
+            codec="dag-json",
+            label="SRT-021 manifest CID",
+        )
+        _require_cid(
+            self.manifest_gate_cid,
+            codec="dag-json",
+            label="SRT-021 manifest gate CID",
+        )
+        _require_cid(
+            self.report_cid,
+            codec="dag-json",
+            label="SRT-014 report CID",
+        )
+        if (
+            self.remediation_targets
+            != tuple(sorted(set(self.remediation_targets)))
+            or self.coordinate_keys
+            != tuple(sorted(set(self.coordinate_keys)))
+            or not self.remediation_targets
+            or not self.coordinate_keys
+        ):
+            raise ContractError(
+                "SRT-021 targets and coordinates must be nonempty, unique, "
+                "and canonically sorted"
+            )
+        for coordinate_key in self.coordinate_keys:
+            _coordinate_payload(coordinate_key)
+
+    def _payload(self) -> dict[str, object]:
+        return {
+            "schema": SRT021_REMEDIATION_EVIDENCE_SCHEMA,
+            "manifest": {
+                "path": str(SRT021_MANIFEST_RELATIVE_PATH),
+                "manifest_cid": self.manifest_cid,
+                "manifest_gate_cid": self.manifest_gate_cid,
+                "source_report_cid": self.report_cid,
+            },
+            "remediation_targets": list(self.remediation_targets),
+            "coordinates": [
+                _coordinate_payload(value) for value in self.coordinate_keys
+            ],
+        }
+
+    @property
+    def evidence_cid(self) -> str:
+        return cid_for_dag_json(self._payload())
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self._payload(), "evidence_cid": self.evidence_cid}
+
+    @classmethod
+    def validate_dict(cls, value: object) -> str:
+        if not isinstance(value, Mapping):
+            raise ContractError("SRT-021 evidence must be an object")
+        supplied = dict(value)
+        evidence_cid = _require_cid(
+            supplied.pop("evidence_cid", None),
+            codec="dag-json",
+            label="SRT-021 evidence CID",
+        )
+        if cid_for_dag_json(supplied) != evidence_cid:
+            raise ContractError("SRT-021 evidence CID does not match payload")
+        if dict(value) != FROZEN_SRT021_REMEDIATION_EVIDENCE.to_dict():
+            raise ContractError(
+                "SRT-021 evidence differs from the frozen remediation lineage"
+            )
+        return evidence_cid
+
+
+FROZEN_SRT021_REMEDIATION_EVIDENCE: Final = SRT021RemediationEvidence(
+    manifest_cid=SRT021_MANIFEST_CID,
+    manifest_gate_cid=SRT021_MANIFEST_GATE_CID,
+    report_cid=SRT014_REPORT_CID,
+    remediation_targets=_SRT021_REMEDIATION_TARGETS,
+    coordinate_keys=_SRT021_RELEVANT_COORDINATE_KEYS,
+)
+
+
+def _manifest_mapping(value: object, label: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise ContractError(f"SRT-021 {label} must be an object")
+    return value
+
+
+def _extract_srt021_coordinate_keys(
+    manifest: Mapping[str, object],
+) -> tuple[str, ...]:
+    remediation = _manifest_mapping(
+        manifest.get("remediation"), "remediation evidence"
+    )
+    arms = _manifest_mapping(remediation.get("arms"), "arm evidence")
+
+    def polarity_coordinates(arm_id: str) -> tuple[str, ...]:
+        arm = _manifest_mapping(
+            arms.get(arm_id), f"arm {arm_id!r}"
+        )
+        if "polarity_preservation" not in arm.get("failed_gate_ids", ()):
+            raise ContractError(
+                f"SRT-021 arm {arm_id!r} lacks polarity failure evidence"
+            )
+        samples = _manifest_mapping(
+            arm.get("sample_coordinate_keys_by_gate"),
+            f"arm {arm_id!r} coordinate evidence",
+        ).get("polarity_preservation")
+        if (
+            not isinstance(samples, list)
+            or any(not isinstance(item, str) for item in samples)
+        ):
+            raise ContractError(
+                f"SRT-021 arm {arm_id!r} polarity coordinates are malformed"
+            )
+        for coordinate_key in samples:
+            coordinate = _coordinate_payload(coordinate_key)
+            if coordinate["arm_id"] != arm_id:
+                raise ContractError(
+                    "SRT-021 coordinate does not match its owning arm"
+                )
+        return tuple(samples)
+
+    model_coordinates = tuple(
+        coordinate
+        for coordinate in polarity_coordinates(_SRT021_MODEL_ARM)
+        if coordinate.startswith("legal_doc_1|")
+    )
+    modal_coordinates = polarity_coordinates(_SRT021_MODAL_SPACY_ARM)
+    observed = tuple(sorted((*model_coordinates, *modal_coordinates)))
+    if observed != _SRT021_RELEVANT_COORDINATE_KEYS:
+        raise ContractError(
+            "SRT-021 legal_doc/model or modal-spaCy polarity coordinates "
+            "differ from the frozen evidence"
+        )
+    return observed
+
+
+def load_srt021_remediation_evidence(
+    repo_root: Path | None = None,
+    *,
+    manifest: Mapping[str, object] | None = None,
+    manifest_gate_cid: str = SRT021_MANIFEST_GATE_CID,
+) -> SRT021RemediationEvidence:
+    """Load and fail-closed validate the exact checked-in SRT-021 evidence."""
+
+    gate_cid = _require_cid(
+        manifest_gate_cid,
+        codec="dag-json",
+        label="SRT-021 manifest gate CID",
+    )
+    if gate_cid != SRT021_MANIFEST_GATE_CID:
+        raise ContractError("SRT-021 manifest gate CID is not the frozen gate")
+
+    raw: bytes | None = None
+    if manifest is None:
+        root = (
+            Path(__file__).resolve().parents[2]
+            if repo_root is None
+            else Path(repo_root).resolve()
+        )
+        path = root / SRT021_MANIFEST_RELATIVE_PATH
+        try:
+            raw = path.read_bytes()
+            decoded = json.loads(raw)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ContractError(
+                "SRT-021 remediation manifest is unavailable or malformed"
+            ) from exc
+        manifest_value = _manifest_mapping(decoded, "manifest")
+    else:
+        manifest_value = _manifest_mapping(manifest, "manifest")
+
+    expected_keys = {
+        "interface",
+        "schema_version",
+        "status",
+        "source",
+        "remediation",
+        "protocol_immutable",
+        "replacement_run_required",
+        "srt015_fenced",
+        "manifest_cid",
+    }
+    if set(manifest_value) != expected_keys:
+        raise ContractError("SRT-021 remediation manifest fields changed")
+    if (
+        manifest_value.get("interface") != _SRT021_MANIFEST_INTERFACE
+        or manifest_value.get("schema_version") != _SRT021_MANIFEST_SCHEMA
+        or manifest_value.get("status") != "frozen_no_eligible"
+        or manifest_value.get("protocol_immutable") is not True
+        or manifest_value.get("replacement_run_required") is not True
+        or manifest_value.get("srt015_fenced") is not True
+    ):
+        raise ContractError("SRT-021 remediation manifest contract changed")
+
+    supplied_manifest_cid = _require_cid(
+        manifest_value.get("manifest_cid"),
+        codec="dag-json",
+        label="SRT-021 manifest CID",
+    )
+    cid_payload = dict(manifest_value)
+    del cid_payload["manifest_cid"]
+    if (
+        cid_for_dag_json(cid_payload) != supplied_manifest_cid
+        or supplied_manifest_cid != SRT021_MANIFEST_CID
+    ):
+        raise ContractError(
+            "SRT-021 remediation manifest CID or frozen identity changed"
+        )
+
+    expected_source = {
+        "srt014_report_path": _SRT014_REPORT_PATH,
+        "srt014_report_cid": SRT014_REPORT_CID,
+        "srt014_report_raw_cid": _SRT014_REPORT_RAW_CID,
+        "srt014_gate_cid": _SRT014_GATE_CID,
+    }
+    source = _manifest_mapping(manifest_value.get("source"), "source lineage")
+    if dict(source) != expected_source:
+        raise ContractError("SRT-021 source report lineage changed")
+    for field, codec in (
+        ("srt014_report_cid", "dag-json"),
+        ("srt014_report_raw_cid", "raw"),
+        ("srt014_gate_cid", "dag-json"),
+    ):
+        _require_cid(
+            source.get(field),
+            codec=codec,
+            label=f"SRT-021 source {field}",
+        )
+
+    remediation = _manifest_mapping(
+        manifest_value.get("remediation"), "remediation evidence"
+    )
+    arms = _manifest_mapping(remediation.get("arms"), "arm evidence")
+    if (
+        remediation.get("classification")
+        != "all_preregistered_arms_failed_selection_eligibility"
+        or remediation.get("arm_count") != 30
+        or remediation.get("eligible_arm_count") != 0
+        or len(arms) != 30
+        or sum(
+            int(_manifest_mapping(arm, "arm").get("coordinate_count", -1))
+            for arm in arms.values()
+        )
+        != 670
+        or remediation.get("terminal_failure_reason_counts")
+        != {
+            "empty_l2": 85,
+            "invalid_output": 5,
+            "post_schedule_capability_unavailable": 260,
+        }
+    ):
+        raise ContractError("SRT-021 aggregate remediation evidence changed")
+    gate_evidence = _manifest_mapping(
+        remediation.get("gate_evidence"), "selection gate evidence"
+    )
+    if {
+        gate: _manifest_mapping(gate_evidence.get(gate), gate).get(
+            "failed_coordinate_count"
+        )
+        for gate in (
+            "source_copy_exclusion",
+            "polarity_preservation",
+            "full_coverage",
+        )
+    } != {
+        "source_copy_exclusion": 271,
+        "polarity_preservation": 579,
+        "full_coverage": 350,
+    }:
+        raise ContractError("SRT-021 selection gate evidence changed")
+    coordinates = _extract_srt021_coordinate_keys(manifest_value)
+
+    if raw is not None:
+        raw_cid = cid_for_bytes(raw)
+        if raw_cid != _SRT021_MANIFEST_RAW_CID:
+            raise ContractError("SRT-021 manifest raw CID changed")
+        gate_payload = {
+            "schema": _SRT021_MANIFEST_GATE_SCHEMA,
+            "report_path": _SRT014_REPORT_PATH,
+            "srt014_gate_cid": _SRT014_GATE_CID,
+            "srt014_report_cid": SRT014_REPORT_CID,
+            "srt014_report_raw_cid": _SRT014_REPORT_RAW_CID,
+            "manifest_path": str(SRT021_MANIFEST_RELATIVE_PATH),
+            "manifest_cid": SRT021_MANIFEST_CID,
+            "manifest_raw_cid": raw_cid,
+            "reason_codes": ["no_eligible_remediation_manifest_valid"],
+            "status": "valid",
+            "valid": True,
+        }
+        if cid_for_dag_json(gate_payload) != gate_cid:
+            raise ContractError(
+                "SRT-021 manifest gate CID does not match repository evidence"
+            )
+
+    evidence = SRT021RemediationEvidence(
+        manifest_cid=supplied_manifest_cid,
+        manifest_gate_cid=gate_cid,
+        report_cid=str(source["srt014_report_cid"]),
+        remediation_targets=_SRT021_REMEDIATION_TARGETS,
+        coordinate_keys=coordinates,
+    )
+    if evidence != FROZEN_SRT021_REMEDIATION_EVIDENCE:
+        raise ContractError("SRT-021 remediation evidence is not frozen")
+    return evidence
+
+
 @dataclass(frozen=True, slots=True)
 class RecoveryPolicy:
     """Outcome-independent retry policy fixed before an experiment starts."""
@@ -144,6 +569,9 @@ class RecoveryPolicy:
     max_retries: int = 1
     retryable_rejections: tuple[str, ...] = tuple(
         sorted(_RETRYABLE_REJECTIONS)
+    )
+    remediation_evidence: SRT021RemediationEvidence = (
+        FROZEN_SRT021_REMEDIATION_EVIDENCE
     )
 
     def __post_init__(self) -> None:
@@ -185,6 +613,16 @@ class RecoveryPolicy:
             self, "replacement_experiment_id", experiment_id.strip()
         )
         object.__setattr__(self, "retryable_rejections", tuple(retryable))
+        if (
+            not isinstance(
+                self.remediation_evidence, SRT021RemediationEvidence
+            )
+            or self.remediation_evidence
+            != FROZEN_SRT021_REMEDIATION_EVIDENCE
+        ):
+            raise ContractError(
+                "recovery policy must bind the exact frozen SRT-021 evidence"
+            )
 
     def permits(self, rejection: str) -> bool:
         return (
@@ -192,14 +630,53 @@ class RecoveryPolicy:
             and rejection in self.retryable_rejections
         )
 
-    def to_dict(self) -> dict[str, object]:
+    def _payload(self) -> dict[str, object]:
         return {
             "replacement_experiment_id": self.replacement_experiment_id,
             "max_attempts": self.max_retries + 1,
             "max_retries": self.max_retries,
             "retryable_rejections": list(self.retryable_rejections),
             "outcome_adaptive_extension_allowed": False,
+            "remediation_evidence": self.remediation_evidence.to_dict(),
         }
+
+    @property
+    def policy_cid(self) -> str:
+        return cid_for_dag_json(self._payload())
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self._payload(), "policy_cid": self.policy_cid}
+
+    @classmethod
+    def validate_dict(cls, value: object) -> str:
+        if not isinstance(value, Mapping):
+            raise ContractError("recovery policy receipt must be an object")
+        supplied = dict(value)
+        policy_cid = _require_cid(
+            supplied.pop("policy_cid", None),
+            codec="dag-json",
+            label="recovery policy CID",
+        )
+        if cid_for_dag_json(supplied) != policy_cid:
+            raise ContractError("recovery policy CID does not match payload")
+        SRT021RemediationEvidence.validate_dict(
+            supplied.get("remediation_evidence")
+        )
+        try:
+            policy = cls(
+                replacement_experiment_id=str(
+                    supplied["replacement_experiment_id"]
+                ),
+                max_retries=int(supplied["max_retries"]),
+                retryable_rejections=tuple(
+                    supplied["retryable_rejections"]  # type: ignore[arg-type]
+                ),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ContractError("recovery policy payload is malformed") from exc
+        if policy.to_dict() != dict(value):
+            raise ContractError("recovery policy payload is contradictory")
+        return policy_cid
 
 
 PREREGISTERED_SRT023_POLICY: Final = RecoveryPolicy(
@@ -216,8 +693,8 @@ class ModelCallReceipt:
     attempt_kind: str
     role: RecoveryRole
     route: RecoveryRoute
-    request_sha256: str
-    prompt_sha256: str
+    request_cid: str
+    prompt_cid: str
     schema_name: str
     max_tokens: int
     outcome: str
@@ -225,23 +702,34 @@ class ModelCallReceipt:
     failure_reason: FailureReason | None = None
     detail: str | None = None
     symai_route_receipt: Mapping[str, object] | None = None
+    receipt_cid: str | None = None
 
     def __post_init__(self) -> None:
-        if self.call_number < 1 or self.serialized_call_ordinal < 1:
-            raise ContractError("model call ordinals must be positive")
-        for field, digest in (
-            ("request_sha256", self.request_sha256),
-            ("prompt_sha256", self.prompt_sha256),
+        if (
+            type(self.call_number) is not int
+            or type(self.serialized_call_ordinal) is not int
+            or self.call_number < 1
+            or self.serialized_call_ordinal < 1
         ):
-            if (
-                not isinstance(digest, str)
-                or len(digest) != 64
-                or any(character not in "0123456789abcdef" for character in digest)
-            ):
-                raise ContractError(f"model call {field} is invalid")
+            raise ContractError("model call ordinals must be positive")
+        _require_cid(
+            self.request_cid,
+            codec="dag-json",
+            label="model call request CID",
+        )
+        _require_cid(
+            self.prompt_cid,
+            codec="raw",
+            label="model call prompt CID",
+        )
+        if not isinstance(self.role, RecoveryRole) or not isinstance(
+            self.route, RecoveryRoute
+        ):
+            raise ContractError("model call role or route is invalid")
         if (
             not isinstance(self.schema_name, str)
             or not self.schema_name.startswith("srt023_replacement_")
+            or type(self.max_tokens) is not int
             or self.max_tokens not in {
                 CONSTRUCTOR_MAX_TOKENS,
                 REALIZER_MAX_TOKENS,
@@ -264,8 +752,22 @@ class ModelCallReceipt:
                 "symai_route_receipt",
                 _freeze_json(self.symai_route_receipt),
             )
+        expected_cid = cid_for_dag_json(self._payload())
+        if self.receipt_cid is None:
+            object.__setattr__(self, "receipt_cid", expected_cid)
+        elif (
+            _require_cid(
+                self.receipt_cid,
+                codec="dag-json",
+                label="model call receipt CID",
+            )
+            != expected_cid
+        ):
+            raise ContractError(
+                "model call receipt CID does not match payload"
+            )
 
-    def to_dict(self) -> dict[str, object]:
+    def _payload(self) -> dict[str, object]:
         return {
             "call_number": self.call_number,
             "serialized_call_ordinal": self.serialized_call_ordinal,
@@ -273,8 +775,8 @@ class ModelCallReceipt:
             "role": self.role.value,
             "route": self.route.value,
             "route_id": self.route.route_id,
-            "request_sha256": self.request_sha256,
-            "prompt_sha256": self.prompt_sha256,
+            "request_cid": self.request_cid,
+            "prompt_cid": self.prompt_cid,
             "schema_name": self.schema_name,
             "max_tokens": self.max_tokens,
             "cache": {
@@ -298,6 +800,99 @@ class ModelCallReceipt:
             ),
         }
 
+    def to_dict(self) -> dict[str, object]:
+        return {**self._payload(), "receipt_cid": self.receipt_cid}
+
+    @classmethod
+    def from_dict(cls, value: object) -> ModelCallReceipt:
+        """Validate and restore one call receipt without trusting its fields."""
+
+        if not isinstance(value, Mapping):
+            raise ContractError("model call receipt must be an object")
+        supplied = dict(value)
+        if set(supplied) != {
+            "call_number",
+            "serialized_call_ordinal",
+            "attempt_kind",
+            "role",
+            "route",
+            "route_id",
+            "request_cid",
+            "prompt_cid",
+            "schema_name",
+            "max_tokens",
+            "cache",
+            "outcome",
+            "rejection",
+            "failure_reason",
+            "detail",
+            "symai_route_receipt",
+            "receipt_cid",
+        }:
+            raise ContractError("model call receipt fields changed")
+        receipt_cid = _require_cid(
+            supplied["receipt_cid"],
+            codec="dag-json",
+            label="model call receipt CID",
+        )
+        body = dict(supplied)
+        del body["receipt_cid"]
+        if cid_for_dag_json(body) != receipt_cid:
+            raise ContractError(
+                "model call receipt CID does not match payload"
+            )
+        try:
+            role = RecoveryRole(supplied["role"])
+            route = RecoveryRoute(supplied["route"])
+        except (TypeError, ValueError) as exc:
+            raise ContractError("model call role or route is invalid") from exc
+        if supplied["route_id"] != route.route_id or supplied["cache"] != {
+            "prompt_cache_enabled": False,
+            "response_cache_enabled": False,
+            "cache_hit": False,
+            "result_reused": False,
+        }:
+            raise ContractError("model call route or cache identity changed")
+        raw_failure = supplied["failure_reason"]
+        try:
+            failure_reason = (
+                None
+                if raw_failure is None
+                else FailureReason(raw_failure)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ContractError(
+                "model call failure reason is invalid"
+            ) from exc
+        route_receipt = supplied["symai_route_receipt"]
+        if route_receipt is not None and not isinstance(route_receipt, Mapping):
+            raise ContractError("SyMAI route receipt must be an object")
+        try:
+            restored = cls(
+                call_number=supplied["call_number"],  # type: ignore[arg-type]
+                serialized_call_ordinal=supplied[  # type: ignore[arg-type]
+                    "serialized_call_ordinal"
+                ],
+                attempt_kind=supplied["attempt_kind"],  # type: ignore[arg-type]
+                role=role,
+                route=route,
+                request_cid=supplied["request_cid"],  # type: ignore[arg-type]
+                prompt_cid=supplied["prompt_cid"],  # type: ignore[arg-type]
+                schema_name=supplied["schema_name"],  # type: ignore[arg-type]
+                max_tokens=supplied["max_tokens"],  # type: ignore[arg-type]
+                outcome=supplied["outcome"],  # type: ignore[arg-type]
+                rejection=supplied["rejection"],  # type: ignore[arg-type]
+                failure_reason=failure_reason,
+                detail=supplied["detail"],  # type: ignore[arg-type]
+                symai_route_receipt=route_receipt,
+                receipt_cid=receipt_cid,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ContractError("model call receipt is malformed") from exc
+        if restored.to_dict() != supplied:
+            raise ContractError("model call receipt is contradictory")
+        return restored
+
 
 @dataclass(frozen=True, slots=True)
 class ModelOutputRecoveryReceipt:
@@ -305,14 +900,30 @@ class ModelOutputRecoveryReceipt:
 
     role: RecoveryRole
     route: RecoveryRoute
-    request_sha256: str
+    request_cid: str
     policy: RecoveryPolicy
     calls: tuple[ModelCallReceipt, ...]
     status: ComponentStatus
     terminal_failure: FailureReason | None
     terminal_rejection: str | None
+    receipt_cid: str | None = None
 
     def __post_init__(self) -> None:
+        _require_cid(
+            self.request_cid,
+            codec="dag-json",
+            label="recovery request CID",
+        )
+        if (
+            not isinstance(self.role, RecoveryRole)
+            or not isinstance(self.route, RecoveryRoute)
+            or not isinstance(self.policy, RecoveryPolicy)
+            or self.policy.remediation_evidence
+            != FROZEN_SRT021_REMEDIATION_EVIDENCE
+        ):
+            raise ContractError(
+                "recovery receipt identity or remediation evidence is invalid"
+            )
         if not self.calls:
             raise ContractError("a recovery receipt must retain a model call")
         if len(self.calls) > self.policy.max_retries + 1:
@@ -321,7 +932,7 @@ class ModelOutputRecoveryReceipt:
             call.call_number != index
             or call.role is not self.role
             or call.route is not self.route
-            or call.request_sha256 != self.request_sha256
+            or call.request_cid != self.request_cid
             for index, call in enumerate(self.calls, start=1)
         ):
             raise ContractError("recovery call lineage is inconsistent")
@@ -338,8 +949,26 @@ class ModelOutputRecoveryReceipt:
                 or self.calls[-1].outcome != "accepted"
             ):
                 raise ContractError("successful recovery receipt is inconsistent")
-        elif self.terminal_failure is None:
-            raise ContractError("failed recovery receipt needs a typed failure")
+        elif (
+            self.terminal_failure is None
+            or self.calls[-1].outcome == "accepted"
+            or self.calls[-1].rejection != self.terminal_rejection
+        ):
+            raise ContractError("failed recovery receipt is inconsistent")
+        expected_cid = cid_for_dag_json(self._payload())
+        if self.receipt_cid is None:
+            object.__setattr__(self, "receipt_cid", expected_cid)
+        elif (
+            _require_cid(
+                self.receipt_cid,
+                codec="dag-json",
+                label="model-output recovery receipt CID",
+            )
+            != expected_cid
+        ):
+            raise ContractError(
+                "model-output recovery receipt CID does not match payload"
+            )
 
     @property
     def rejections(self) -> tuple[ModelCallReceipt, ...]:
@@ -349,7 +978,7 @@ class ModelOutputRecoveryReceipt:
     def retries(self) -> int:
         return max(0, len(self.calls) - 1)
 
-    def to_dict(self) -> dict[str, object]:
+    def _payload(self) -> dict[str, object]:
         return {
             "schema_version": MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION,
             "interface": BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE,
@@ -380,7 +1009,10 @@ class ModelOutputRecoveryReceipt:
                 "response_cache_enabled": False,
                 "cache_hit": False,
             },
-            "request_sha256": self.request_sha256,
+            "request_cid": self.request_cid,
+            "remediation_evidence": (
+                self.policy.remediation_evidence.to_dict()
+            ),
             "policy": self.policy.to_dict(),
             "calls": [call.to_dict() for call in self.calls],
             "call_count": len(self.calls),
@@ -394,6 +1026,138 @@ class ModelOutputRecoveryReceipt:
             ),
             "terminal_rejection": self.terminal_rejection,
         }
+
+    def to_dict(self) -> dict[str, object]:
+        return {**self._payload(), "receipt_cid": self.receipt_cid}
+
+    @classmethod
+    def from_dict(cls, value: object) -> ModelOutputRecoveryReceipt:
+        """Fail-closed restore a receipt and verify all content links."""
+
+        if not isinstance(value, Mapping):
+            raise ContractError("model-output recovery receipt must be an object")
+        supplied = dict(value)
+        expected_fields = {
+            "schema_version",
+            "interface",
+            "polarity_interface",
+            "role",
+            "identity",
+            "boundary",
+            "cache",
+            "request_cid",
+            "remediation_evidence",
+            "policy",
+            "calls",
+            "call_count",
+            "rejection_count",
+            "retry_count",
+            "status",
+            "terminal_failure",
+            "terminal_rejection",
+            "receipt_cid",
+        }
+        if set(supplied) != expected_fields:
+            raise ContractError("model-output recovery receipt fields changed")
+        receipt_cid = _require_cid(
+            supplied["receipt_cid"],
+            codec="dag-json",
+            label="model-output recovery receipt CID",
+        )
+        body = dict(supplied)
+        del body["receipt_cid"]
+        if cid_for_dag_json(body) != receipt_cid:
+            raise ContractError(
+                "model-output recovery receipt CID does not match payload"
+            )
+        if (
+            supplied["schema_version"]
+            != MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION
+            or supplied["interface"]
+            != BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE
+            or supplied["polarity_interface"]
+            != SYMAI_POLARITY_CONTRACT_INTERFACE
+        ):
+            raise ContractError("model-output recovery interface changed")
+        SRT021RemediationEvidence.validate_dict(
+            supplied["remediation_evidence"]
+        )
+        policy_value = supplied["policy"]
+        RecoveryPolicy.validate_dict(policy_value)
+        if not isinstance(policy_value, Mapping):
+            raise ContractError("recovery policy receipt must be an object")
+        if (
+            type(policy_value.get("max_retries")) is not int
+            or not isinstance(
+                policy_value.get("replacement_experiment_id"), str
+            )
+            or not isinstance(
+                policy_value.get("retryable_rejections"), list
+            )
+        ):
+            raise ContractError("recovery policy payload is malformed")
+        policy = RecoveryPolicy(
+            replacement_experiment_id=policy_value[
+                "replacement_experiment_id"
+            ],
+            max_retries=policy_value["max_retries"],
+            retryable_rejections=tuple(
+                policy_value["retryable_rejections"]
+            ),
+        )
+        raw_calls = supplied["calls"]
+        if not isinstance(raw_calls, list):
+            raise ContractError("recovery calls must be an array")
+        calls = tuple(ModelCallReceipt.from_dict(call) for call in raw_calls)
+        try:
+            role = RecoveryRole(supplied["role"])
+            route = RecoveryRoute(
+                _manifest_mapping(
+                    supplied["identity"], "receipt identity"
+                ).get("route")
+            )
+            status = ComponentStatus(supplied["status"])
+            raw_failure = supplied["terminal_failure"]
+            terminal_failure = (
+                None
+                if raw_failure is None
+                else FailureReason(raw_failure)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ContractError(
+                "model-output recovery receipt enums are invalid"
+            ) from exc
+        try:
+            restored = cls(
+                role=role,
+                route=route,
+                request_cid=supplied["request_cid"],  # type: ignore[arg-type]
+                policy=policy,
+                calls=calls,
+                status=status,
+                terminal_failure=terminal_failure,
+                terminal_rejection=supplied[  # type: ignore[arg-type]
+                    "terminal_rejection"
+                ],
+                receipt_cid=receipt_cid,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ContractError(
+                "model-output recovery receipt is malformed"
+            ) from exc
+        if restored.to_dict() != supplied:
+            raise ContractError(
+                "model-output recovery receipt is contradictory"
+            )
+        return restored
+
+    @classmethod
+    def validate_dict(cls, value: object) -> str:
+        """Validate a serialized receipt and return its canonical CID."""
+
+        restored = cls.from_dict(value)
+        assert restored.receipt_cid is not None
+        return restored.receipt_cid
 
 
 @dataclass(frozen=True, slots=True)
@@ -424,20 +1188,6 @@ class ModelOutputRecoveryResult:
 class _Client(Protocol):
     endpoint: str
     model: str
-
-
-def _canonical_json(value: object) -> str:
-    return json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-
-
-def _sha256(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _thaw_json(value: object) -> object:
@@ -793,6 +1543,11 @@ class BoundedModelOutputRecovery:
             raise ContractError(
                 "route must be exactly direct or symai"
             ) from exc
+        observed_evidence = load_srt021_remediation_evidence()
+        if policy.remediation_evidence != observed_evidence:
+            raise ContractError(
+                "recovery policy does not match repository SRT-021 evidence"
+            )
         self._validate_client_identity(client)
         self._client = client
         self._policy = policy
@@ -862,7 +1617,7 @@ class BoundedModelOutputRecovery:
         system, prompt, schema_name, schema, max_tokens = self._call_contract(
             parsed_role, request
         )
-        request_sha256 = self._request_digest(parsed_role, request)
+        request_cid = self._request_cid(parsed_role, request)
         calls: list[ModelCallReceipt] = []
         terminal_failure: FailureReason | None = None
         terminal_rejection: str | None = None
@@ -905,7 +1660,7 @@ class BoundedModelOutputRecovery:
                         call_index=call_index,
                         ordinal=ordinal,
                         role=parsed_role,
-                        request_sha256=request_sha256,
+                        request_cid=request_cid,
                         prompt=call_prompt,
                         schema_name=schema_name,
                         max_tokens=max_tokens,
@@ -916,7 +1671,7 @@ class BoundedModelOutputRecovery:
                 receipt = ModelOutputRecoveryReceipt(
                     role=parsed_role,
                     route=self._route,
-                    request_sha256=request_sha256,
+                    request_cid=request_cid,
                     policy=self._policy,
                     calls=tuple(calls),
                     status=ComponentStatus.SUCCESS,
@@ -951,7 +1706,7 @@ class BoundedModelOutputRecovery:
                         call_index=call_index,
                         ordinal=ordinal,
                         role=parsed_role,
-                        request_sha256=request_sha256,
+                        request_cid=request_cid,
                         prompt=call_prompt,
                         schema_name=schema_name,
                         max_tokens=max_tokens,
@@ -979,7 +1734,7 @@ class BoundedModelOutputRecovery:
                         call_index=call_index,
                         ordinal=ordinal,
                         role=parsed_role,
-                        request_sha256=request_sha256,
+                        request_cid=request_cid,
                         prompt=call_prompt,
                         schema_name=schema_name,
                         max_tokens=max_tokens,
@@ -1009,7 +1764,7 @@ class BoundedModelOutputRecovery:
         receipt = ModelOutputRecoveryReceipt(
             role=parsed_role,
             route=self._route,
-            request_sha256=request_sha256,
+            request_cid=request_cid,
             policy=self._policy,
             calls=tuple(calls),
             status=ComponentStatus.FAILED,
@@ -1062,15 +1817,16 @@ class BoundedModelOutputRecovery:
             except BaseException as exc:
                 if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                     raise
+                annotated_exc: BaseException = exc
                 try:
-                    setattr(exc, "_srt023_call_ordinal", ordinal)
+                    setattr(annotated_exc, "_srt023_call_ordinal", ordinal)
                 except Exception:
-                    wrapped = RuntimeError(
+                    annotated_exc = RuntimeError(
                         f"model call raised {type(exc).__name__}"
                     )
-                    setattr(wrapped, "_srt023_call_ordinal", ordinal)
-                    raise wrapped from exc
-                raise
+                    setattr(annotated_exc, "_srt023_call_ordinal", ordinal)
+                    annotated_exc.__cause__ = exc
+                raise annotated_exc
 
     def _call_contract(
         self,
@@ -1124,14 +1880,14 @@ class BoundedModelOutputRecovery:
             CONSTRUCTOR_MAX_TOKENS,
         )
 
-    def _request_digest(
+    def _request_cid(
         self,
         role: RecoveryRole,
         request: ConstructorRequest | RealizerRequest,
     ) -> str:
         if role is RecoveryRole.T1:
             assert isinstance(request, RealizerRequest)
-            # Hash only the exact source-withheld material actually supplied.
+            # Address only the exact source-withheld material actually supplied.
             value: object = {
                 "role": role.value,
                 "canonical_ir": request.canonical_ir.to_dict(),
@@ -1142,7 +1898,7 @@ class BoundedModelOutputRecovery:
         else:
             assert isinstance(request, ConstructorRequest)
             # Config is intentionally excluded because model prompts never use
-            # it; hashing it could retain a hidden source-bearing dependency.
+            # it; addressing it could retain a hidden source-bearing dependency.
             value = {
                 "role": role.value,
                 "source_text": request.source_text,
@@ -1150,7 +1906,7 @@ class BoundedModelOutputRecovery:
                     request.allowed_atom_vocabulary.to_dict()
                 ),
             }
-        return _sha256(_canonical_json(value))
+        return cid_for_dag_json(value)
 
     def _call_receipt(
         self,
@@ -1158,7 +1914,7 @@ class BoundedModelOutputRecovery:
         call_index: int,
         ordinal: int,
         role: RecoveryRole,
-        request_sha256: str,
+        request_cid: str,
         prompt: str,
         schema_name: str,
         max_tokens: int,
@@ -1179,8 +1935,8 @@ class BoundedModelOutputRecovery:
             ),
             role=role,
             route=self._route,
-            request_sha256=request_sha256,
-            prompt_sha256=_sha256(prompt),
+            request_cid=request_cid,
+            prompt_cid=cid_for_bytes(prompt.encode("utf-8")),
             schema_name=schema_name,
             max_tokens=max_tokens,
             outcome=outcome,
@@ -1305,8 +2061,16 @@ __all__ = [
     "BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE",
     "SYMAI_POLARITY_CONTRACT_INTERFACE",
     "MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION",
+    "SRT021_REMEDIATION_EVIDENCE_SCHEMA",
+    "SRT021_MANIFEST_RELATIVE_PATH",
+    "SRT021_MANIFEST_CID",
+    "SRT021_MANIFEST_GATE_CID",
+    "SRT014_REPORT_CID",
     "DIRECT_ROUTE_ID",
     "LEANSTRAL_TOKENIZER_IDENTITY",
+    "SRT021RemediationEvidence",
+    "FROZEN_SRT021_REMEDIATION_EVIDENCE",
+    "load_srt021_remediation_evidence",
     "RecoveryRole",
     "RecoveryRoute",
     "RecoveryPolicy",
