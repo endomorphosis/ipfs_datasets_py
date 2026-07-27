@@ -7,8 +7,12 @@ promoted only through the content-verified snapshot cache.
 
 from .bucket import (
     HUGGINGFACE_BUCKET_INVENTORY_SCHEMA_VERSION,
+    HUGGINGFACE_BUCKET_LISTING_SCHEMA_VERSION,
     HuggingFaceBucketError,
+    HuggingFaceBucketHttpClient,
     HuggingFaceBucketInventory,
+    HuggingFaceBucketListing,
+    HuggingFaceBucketListingObject,
     HuggingFaceBucketObject,
     HuggingFaceBucketStore,
 )
@@ -33,9 +37,13 @@ from .snapshot import (
 
 __all__ = [
     "HUGGINGFACE_BUCKET_INVENTORY_SCHEMA_VERSION",
+    "HUGGINGFACE_BUCKET_LISTING_SCHEMA_VERSION",
     "HUGGINGFACE_REPOSITORY_REVISION_SCHEMA_VERSION",
     "HuggingFaceBucketError",
+    "HuggingFaceBucketHttpClient",
     "HuggingFaceBucketInventory",
+    "HuggingFaceBucketListing",
+    "HuggingFaceBucketListingObject",
     "HuggingFaceBucketObject",
     "HuggingFaceBucketStore",
     "HuggingFaceRepository",
