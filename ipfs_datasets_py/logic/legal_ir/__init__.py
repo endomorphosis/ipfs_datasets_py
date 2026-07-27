@@ -22,6 +22,62 @@ _EXPORT_MODULE: Final[dict[str, str]] = {
     )
 }
 
+
+_EXPORT_MODULE.update(
+    {
+        name: "canonical_contracts"
+        for name in (
+            "CANONICAL_PARITY_POLICY_CID",
+            "CanonicalAtomVocabulary",
+            "CanonicalContractError",
+            "CanonicalRoundTripIR",
+            "CanonicalRule",
+            "CompilerRequest",
+            "CompilerResult",
+            "DecompilerRequest",
+            "DecompilerResult",
+            "OperationStatus",
+            "load_parity_policy",
+        )
+    }
+)
+_EXPORT_MODULE.update(
+    {
+        name: "canonical_compiler"
+        for name in (
+            "CanonicalCompiler",
+            "TYPED_DEONTIC_COMPILER_CONFIG_CID",
+            "TypedDeonticCanonicalCompiler",
+            "compiler_configuration",
+        )
+    }
+)
+_EXPORT_MODULE.update(
+    {
+        name: "canonical_decompiler"
+        for name in (
+            "CanonicalDecompiler",
+            "SourceWithheldCanonicalDecompiler",
+            "SourceWithheldCanonicalParaphraser",
+            "frozen_decompiler_config",
+        )
+    }
+)
+_EXPORT_MODULE.update(
+    {
+        name: "canonical_roundtrip"
+        for name in (
+            "CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID",
+            "CANONICAL_SEMANTIC_ROUNDTRIP_INTERFACE",
+            "CanonicalRoundTrip",
+            "CanonicalSemanticRoundTrip",
+            "CanonicalSemanticRoundTripResult",
+            "measured_parity_compiler_request",
+            "roundtrip_configuration",
+        )
+    }
+)
+
 __all__ = sorted(_EXPORT_MODULE)
 
 
