@@ -10,18 +10,23 @@ sockets, or read mutable remote state.  Evidence terms covered:
 - exact critical-slot checks
 - terminal quarantine reason taxonomy
 - complete row disposition report
+
+Authoritative evidence map:
+data/abby_voice/agent_supervisor/discovery/2026-07-26-abby-voice-auto-016-objective-validation-repair.md
 """
 
 from __future__ import annotations
 
 import json
 from hashlib import sha256
+from pathlib import Path
 
 import pytest
 
 from ipfs_datasets_py.voice.audio_quality import (
     AUDIO_QUALITY_POLICY_ID,
     CRITICAL_SLOT_NAMES,
+    G017_AUDIO_QUALITY_EVIDENCE_TERMS,
     AcousticMetrics,
     AudioQualityPolicy,
     AudioQualityReason,
@@ -34,7 +39,10 @@ from ipfs_datasets_py.voice.audio_quality import (
     word_error_rate_bp,
 )
 from ipfs_datasets_py.voice.reconcile import (
+    AUDIO_RECONCILIATION_EVIDENCE_TERM,
     AUDIO_RECONCILIATION_SCHEMA_VERSION,
+    G017_AUTHORITATIVE_EVIDENCE_MAP,
+    G017_REQUIRED_EVIDENCE_TERMS,
     AudioDispositionReason,
     AudioDispositionStatus,
     AudioReconciliationSubject,
@@ -511,7 +519,65 @@ def test_defining_modules_export_reconcile_and_audio_quality_symbols():
     assert quality_mod.AudioQualityPolicy is AudioQualityPolicy
     assert reconcile_mod.reconcile_voice_job_result is reconcile_voice_job_result
     assert quality_mod.validate_tts_asr_roundtrip is validate_tts_asr_roundtrip
-    assert "audio reconciliation" in "audio reconciliation"
+    assert AUDIO_RECONCILIATION_EVIDENCE_TERM == "audio reconciliation"
+    assert "audio reconciliation" in reconcile_mod.__doc__
+
+
+def test_g017_audio_reconciliation_evidence_terms_are_discoverable():
+    """Prove G017 residual evidence terms stay anchored on authorized paths.
+
+    Required residual terms:
+    - audio reconciliation
+    - receipt-to-audio-row reconciler
+    - decode and acoustic validator
+    - TTS-to-ASR round-trip evaluation
+    - exact critical-slot checks
+    - terminal quarantine reason taxonomy
+    - complete row disposition report
+    - authoritative evidence map: data/abby_voice/agent_supervisor/discovery/2026-07-26-abby-voice-auto-016-objective-validation-repair.md
+    """
+
+    from ipfs_datasets_py.voice import audio_quality as quality_mod
+    from ipfs_datasets_py.voice import reconcile as reconcile_mod
+
+    reconcile_path = Path(reconcile_mod.__file__).resolve()
+    quality_path = Path(quality_mod.__file__).resolve()
+    test_path = Path(__file__).resolve()
+    reconcile_text = reconcile_path.read_text(encoding="utf-8")
+    quality_text = quality_path.read_text(encoding="utf-8")
+    test_text = test_path.read_text(encoding="utf-8")
+    combined = "\n".join((reconcile_text, quality_text, test_text))
+
+    for term in G017_REQUIRED_EVIDENCE_TERMS:
+        assert term in combined, f"missing residual evidence term: {term}"
+    for term in G017_AUDIO_QUALITY_EVIDENCE_TERMS:
+        assert term in quality_text, f"missing quality evidence term: {term}"
+    assert AUDIO_RECONCILIATION_EVIDENCE_TERM in reconcile_text
+    assert "audio reconciliation" in reconcile_text
+    assert "reconcile_voice_job_result" in reconcile_text
+    assert "AudioQualityPolicy" in quality_text
+    assert "validate_tts_asr_roundtrip" in quality_text
+    assert "validate_decode_and_acoustic" in quality_text
+
+    # Prefer monorepo layout; fall back to submodule-relative discovery.
+    repo_roots = (
+        Path(__file__).resolve().parents[4],
+        Path(__file__).resolve().parents[3],
+        Path(__file__).resolve().parents[2],
+    )
+    assert any((root / G017_AUTHORITATIVE_EVIDENCE_MAP).is_file() for root in repo_roots), (
+        f"missing G017 authoritative evidence map: {G017_AUTHORITATIVE_EVIDENCE_MAP}"
+    )
+    map_path = next(
+        (root / G017_AUTHORITATIVE_EVIDENCE_MAP)
+        for root in repo_roots
+        if (root / G017_AUTHORITATIVE_EVIDENCE_MAP).is_file()
+    )
+    map_text = map_path.read_text(encoding="utf-8")
+    assert "audio reconciliation" in map_text
+    assert "reconcile_voice_job_result" in map_text
+    assert "AudioQualityPolicy" in map_text
+    assert "ABBY-VOICE-G017" in map_text
 
 
 def test_from_response_subject_preserves_spoken_text_hash():

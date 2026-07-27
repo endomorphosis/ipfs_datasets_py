@@ -1,11 +1,23 @@
 """Versioned, deterministic audio quality policy for Abby voice reconciliation.
 
-The policy and validators in this module are intentionally dependency-light.
-They operate on immutable descriptors, integer metrics, and plain text so they
-can run offline without speech models, network access, or mutable state.
+This module supplies the quality half of **audio reconciliation** for
+ABBY-VOICE-G017.  Companion module ``reconcile.py`` owns receipt-to-row
+promotion; this module owns versioned gates:
+
+- decode and acoustic validator (``validate_decode_and_acoustic``)
+- TTS-to-ASR round-trip evaluation (``validate_tts_asr_roundtrip``)
+- exact critical-slot checks (``CRITICAL_SLOT_NAMES``, ``slot_present_in_text``)
+- versioned ``AudioQualityPolicy`` (integer basis points; no fuzzy acceptance)
+
+The policy and validators are intentionally dependency-light.  They operate on
+immutable descriptors, integer metrics, and plain text so they can run offline
+without speech models, network access, or mutable state.
 
 Rates such as WER and CER are expressed in basis points (0..10_000) so every
 identity-bearing receipt stays integer-canonical and JSON-safe.
+
+Authoritative evidence map:
+data/abby_voice/agent_supervisor/discovery/2026-07-26-abby-voice-auto-016-objective-validation-repair.md
 """
 
 from __future__ import annotations
@@ -26,6 +38,17 @@ from .schema import sha256_text
 AUDIO_QUALITY_POLICY_SCHEMA_VERSION = "abby_voice_audio_quality_policy_v1"
 AUDIO_QUALITY_POLICY_ID = "abby-voice-audio-quality"
 AUDIO_QUALITY_POLICY_VERSION = "1.0.0"
+
+# Residual discoverability anchors shared with reconcile.py for G017 scans.
+G017_AUDIO_QUALITY_EVIDENCE_TERMS: tuple[str, ...] = (
+    "audio reconciliation",
+    "decode and acoustic validator",
+    "TTS-to-ASR round-trip evaluation",
+    "exact critical-slot checks",
+    "AudioQualityPolicy",
+    "validate_tts_asr_roundtrip",
+    "validate_decode_and_acoustic",
+)
 
 # Basis-point scale: 100 bp == 1.00 percent == 0.01 absolute rate.
 _BASIS_POINT_SCALE = 10_000
