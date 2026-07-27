@@ -54,6 +54,42 @@ _CODEC_PIPELINE_ADDITIONS: Final = ("sentencizer",)
 _TOKEN_RE: Final = re.compile(r"[a-z0-9]+")
 _SHA256_RE: Final = re.compile(r"[0-9a-f]{64}")
 
+# Explicit prohibition surface cues used for source-aware polarity repair.
+# The production modal codec can map "cannot" to alethic necessity (□) with
+# positive polarity; the constructor must still project deontic F.
+_PROHIBITION_SURFACE_CUES: Final = (
+    "shall not",
+    "must not",
+    "may not",
+    "cannot",
+    "can not",
+    "is not permitted",
+    "are not permitted",
+    "not permitted to",
+    "is not allowed",
+    "are not allowed",
+    "not allowed to",
+    "is prohibited",
+    "are prohibited",
+    "is forbidden",
+    "are forbidden",
+    "is not authorized",
+    "are not authorized",
+)
+_PERMISSION_SURFACE_CUES: Final = (
+    " is permitted",
+    " are permitted",
+    "may ",
+    " may ",
+)
+# Pilot cases where residual polarity inversions may still appear after
+# source-aware repair (for example dual O/F emission on one span, or
+# missing formula spans). Empty when every pilot case preserves polarity.
+# Updated by polarity preflight tests; do not claim promotion eligibility
+# from constructor-only scores alone.
+RESIDUAL_POLARITY_INVERSION_CASE_IDS: Final[tuple[str, ...]] = ()
+POLARITY_PREFLIGHT_INTERFACE: Final = "ModalSpacyPolarityPreflight@1"
+
 
 class ModalSpacyFrontendStatus(str, Enum):
     """Effective frontend disposition for one constructor invocation."""
@@ -298,33 +334,143 @@ def _map_many(
     )
 
 
-def _modality_from_text(value: object) -> str:
-    text = _clean_text(value).lower()
-    if (
-        text in {"f", "prohibition", "forbidden"}
-        or "prohibit" in text
-        or "shall not" in text
-        or "must not" in text
+def _modality_signal_text(value: object) -> str:
+    """Flatten nested modality signals into a single lowercase string."""
+
+    pieces = _flatten_strings(value)
+    return " ".join(
+        _clean_text(piece).lower() for piece in pieces if _clean_text(piece)
+    )
+
+
+def _surface_has_prohibition_cue(surface: str) -> bool:
+    text = _clean_text(surface).lower()
+    if not text:
+        return False
+    if any(cue in text for cue in _PROHIBITION_SURFACE_CUES):
+        return True
+    # Word-boundary "cannot" is already covered; keep "prohibit*" / "forbid*".
+    if "prohibit" in text or "forbidden" in text or "forbid " in text:
+        return True
+    return False
+
+
+def _surface_has_permission_cue(surface: str) -> bool:
+    text = f" {_clean_text(surface).lower()} "
+    if not text.strip():
+        return False
+    if "may not" in text or "cannot" in text or "can not" in text:
+        return False
+    if re.search(r"\bmay\b", text):
+        return True
+    if "permission" in text or "permitted" in text:
+        return True
+    return any(cue in text for cue in _PERMISSION_SURFACE_CUES)
+
+
+def _modality_from_text(
+    value: object,
+    *,
+    surface_text: str = "",
+) -> str:
+    """Map formula modality signals (and optional surface text) to O/P/F.
+
+    Source surface cues are authoritative for common prohibition phrasing
+    such as ``cannot`` / ``shall not`` / ``must not`` when the codec emits
+    alethic necessity or positive obligation.  Without surface text this
+    remains compatible with the historical pilot projection.
+    """
+
+    signal = _modality_signal_text(value)
+    surface = _clean_text(surface_text).lower()
+    combined = f"{signal} {surface}".strip()
+
+    # Source-aware prohibition repair (fail-closed preference for F).
+    if _surface_has_prohibition_cue(surface) or any(
+        cue in signal for cue in _PROHIBITION_SURFACE_CUES
     ):
         return "F"
-    if (
-        text in {"p", "permission", "permitted"}
-        or "permission" in text
-    ):
+
+    tokens = set(signal.split()) if signal else set()
+    # Explicit operator / force tokens from the repaired modal record.
+    if tokens & {"f", "prohibition", "forbidden", "prohibit"}:
+        return "F"
+    if "prohibit" in signal or "forbidden" in signal:
+        return "F"
+    if "shall not" in signal or "must not" in signal or "may not" in signal:
+        return "F"
+    # Negative polarity on obligation/necessity is a prohibition.
+    if "negative" in tokens and tokens & {
+        "obligation",
+        "necessity",
+        "necessary",
+        "o",
+        "□",
+        "box",
+    }:
+        return "F"
+
+    if _surface_has_permission_cue(surface):
         return "P"
+    if tokens & {"p", "permission", "permitted"}:
+        return "P"
+    if "permission" in signal or "permitted" in signal:
+        return "P"
+
+    if tokens & {"o", "obligation", "required"}:
+        return "O"
     return "O"
+
+
+def _formula_surface_text(
+    formula: Mapping[str, object],
+    *,
+    source_text: str,
+    formula_spans: Mapping[str, tuple[str, int, int]] | None,
+) -> str:
+    """Recover the source span for one formula when provenance is available."""
+
+    if not source_text:
+        return ""
+    formula_id = str(formula.get("formula_id") or "")
+    if formula_spans and formula_id in formula_spans:
+        _source_id, start, end = formula_spans[formula_id]
+        if end > start:
+            return source_text[start : min(end, len(source_text))]
+    provenance = formula.get("provenance")
+    if isinstance(provenance, Mapping):
+        try:
+            start = max(0, int(provenance.get("start_char") or 0))
+            end = max(start, int(provenance.get("end_char") or 0))
+        except (TypeError, ValueError):
+            start, end = 0, 0
+        if end > start:
+            return source_text[start : min(end, len(source_text))]
+    return ""
 
 
 def project_decompiler_record(
     record: Mapping[str, object],
     vocabulary: AllowedAtomVocabulary,
+    *,
+    source_text: str = "",
+    formula_spans: Mapping[str, tuple[str, int, int]] | None = None,
 ) -> CanonicalRuleIR:
-    """Project a repaired modal record exactly as the existing pilot does."""
+    """Project a repaired modal record into scored canonical fields.
+
+    When ``source_text`` (and optional formula provenance spans) are
+    supplied, polarity is repaired from surface prohibition/permission cues
+    so common codec inversions such as ``cannot`` → □ do not silently emit
+    obligation.  Without surface evidence the projection matches the
+    historical pilot field set and vocabulary binding.
+    """
 
     if not isinstance(record, Mapping):
         raise ContractError("modal decompiler record must be an object")
     if not isinstance(vocabulary, AllowedAtomVocabulary):
         raise ContractError("vocabulary must be AllowedAtomVocabulary")
+    if source_text is not None and not isinstance(source_text, str):
+        raise ContractError("source_text must be a string")
     raw_formulas = record.get("formulas") or ()
     if not isinstance(raw_formulas, Sequence) or isinstance(
         raw_formulas, (str, bytes, bytearray)
@@ -361,6 +507,11 @@ def project_decompiler_record(
         )
         if not actor or not action:
             continue
+        surface = _formula_surface_text(
+            formula,
+            source_text=source_text or "",
+            formula_spans=formula_spans,
+        )
         rules.append(
             CanonicalRule(
                 modality=_modality_from_text(
@@ -368,7 +519,11 @@ def project_decompiler_record(
                         formula.get("operator"),
                         modality.get("force"),
                         modality.get("label"),
-                    ]
+                        modality.get("polarity"),
+                        modality.get("symbol"),
+                        modality.get("family"),
+                    ],
+                    surface_text=surface,
                 ),
                 actor=actor,
                 action=action,
@@ -387,9 +542,110 @@ def project_decompiler_record(
                 ),
             )
         )
-    result = CanonicalRuleIR(tuple(rules))
+    # Collapse exact duplicates that arise when the codec emits both O and F
+    # for a single "must not" span and both are repaired to F.
+    unique_rules: list[CanonicalRule] = []
+    for rule in rules:
+        if rule not in unique_rules:
+            unique_rules.append(rule)
+    result = CanonicalRuleIR(tuple(unique_rules))
     result.validate_vocabulary(vocabulary)
     return result
+
+
+def polarity_inversions(
+    reference: CanonicalRuleIR | Mapping[str, object],
+    candidate: CanonicalRuleIR | Mapping[str, object] | None,
+) -> tuple[dict[str, object], ...]:
+    """Return assigned-rule polarity inversions (empty when all preserved)."""
+
+    from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
+
+    if candidate is None:
+        return (
+            {
+                "reference_index": None,
+                "candidate_index": None,
+                "detail": "candidate IR is missing",
+            },
+        )
+    if isinstance(reference, Mapping):
+        reference = CanonicalRuleIR.from_dict(reference)
+    if isinstance(candidate, Mapping):
+        candidate = CanonicalRuleIR.from_dict(candidate)
+    if not isinstance(reference, CanonicalRuleIR):
+        raise ContractError("reference must be CanonicalRuleIR")
+    if not isinstance(candidate, CanonicalRuleIR):
+        raise ContractError("candidate must be CanonicalRuleIR")
+    comparison = compare_semantic_ir(reference, candidate)
+    matches = comparison["matches"]
+    assert isinstance(matches, list)
+    inversions: list[dict[str, object]] = []
+    for match in matches:
+        if bool(match["modality_preserved"]):
+            continue
+        inversions.append(
+            {
+                "reference_index": match["reference_index"],
+                "candidate_index": match["candidate_index"],
+                "detail": "modality not preserved on optimal assignment",
+            }
+        )
+    return tuple(inversions)
+
+
+def polarity_preflight(
+    reference: CanonicalRuleIR | Mapping[str, object],
+    candidate: CanonicalRuleIR | Mapping[str, object] | None,
+) -> dict[str, object]:
+    """Fail-closed polarity preflight for constructor L1 (or L2) candidates.
+
+    Any missing candidate, empty assignment with nonempty gold, or modality
+    inversion fails the gate.  Constructor-only research scores may still be
+    exported; promotion still requires the full matrix selection gates.
+    """
+
+    inversions = polarity_inversions(reference, candidate)
+    evaluated = candidate is not None
+    if isinstance(reference, Mapping):
+        reference_ir = CanonicalRuleIR.from_dict(reference)
+    else:
+        reference_ir = reference
+    assigned = 0
+    if evaluated and candidate is not None:
+        from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
+
+        comparison = compare_semantic_ir(reference_ir, candidate)
+        assigned = int(comparison["matched_rule_count"])
+    all_preserved = evaluated and not inversions and (
+        assigned > 0 or reference_ir.is_empty
+    )
+    # Nonempty gold with zero assigned matches is fail-closed for polarity.
+    if (
+        evaluated
+        and not reference_ir.is_empty
+        and assigned == 0
+    ):
+        all_preserved = False
+    return {
+        "interface": POLARITY_PREFLIGHT_INTERFACE,
+        "evaluated": evaluated,
+        "assigned_rule_count": assigned,
+        "preserved_rule_count": max(0, assigned - len(inversions)),
+        "inversion_count": len(inversions),
+        "inversions": list(inversions),
+        "all_assigned_preserved": bool(all_preserved and not inversions),
+        "gate_passed": bool(all_preserved and not inversions),
+        "promotion_requires_full_gates": True,
+        "detail": (
+            None
+            if all_preserved and not inversions
+            else (
+                "polarity preflight failed closed: modality inversion or "
+                "unassigned candidate"
+            )
+        ),
+    }
 
 
 # More explicit public name while retaining the pilot function's terminology.
@@ -848,7 +1104,10 @@ class ModalSpacyCanonicalConstructor:
                 diagnostics, source_spans=source_spans
             )
             canonical_ir = project_decompiler_record(
-                record, request.allowed_atom_vocabulary
+                record,
+                request.allowed_atom_vocabulary,
+                source_text=request.source_text,
+                formula_spans=_raw_formula_spans(modal_ir),
             )
         except ContractError as exc:
             return _failed(
@@ -907,8 +1166,12 @@ __all__ = [
     "ModalSpacyConstructor",
     "ModalSpacyConstructorDiagnostics",
     "ModalSpacyFrontendStatus",
+    "POLARITY_PREFLIGHT_INTERFACE",
     "REQUIRED_SPACY_PIPELINE",
+    "RESIDUAL_POLARITY_INVERSION_CASE_IDS",
     "SourceSpanDiagnostic",
+    "polarity_inversions",
+    "polarity_preflight",
     "project_decompiler_record",
     "project_modal_spacy_record",
 ]

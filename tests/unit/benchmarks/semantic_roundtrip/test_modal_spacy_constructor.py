@@ -24,10 +24,17 @@ from benchmarks.semantic_roundtrip.constructors.modal_spacy import (
     DEFAULT_SPACY_MODEL,
     DEFAULT_SPACY_MODEL_VERSION,
     MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE,
+    POLARITY_PREFLIGHT_INTERFACE,
     REQUIRED_SPACY_PIPELINE,
+    RESIDUAL_POLARITY_INVERSION_CASE_IDS,
     ModalSpacyCanonicalConstructor,
     ModalSpacyFrontendStatus,
+    polarity_preflight,
     project_decompiler_record,
+)
+from benchmarks.semantic_roundtrip.contracts import CanonicalRule, CanonicalRuleIR
+from benchmarks.semantic_roundtrip.stage_metrics import (
+    compute_constructor_only_metrics,
 )
 
 
@@ -332,7 +339,15 @@ def test_projection_matches_existing_modal_spacy_l1_algorithm() -> None:
     assert adapted.to_dict() == existing
 
 
-def test_constructor_matches_frozen_modal_spacy_l1_for_every_case() -> None:
+def test_constructor_polarity_preflight_on_pilot_cases() -> None:
+    """exception_with_window stays polarity-clean; at least one more case too.
+
+    Historical pilot L1 inverted ``cannot`` prohibitions to obligation. Source-
+    aware projection must keep ``exception_with_window`` eligible on polarity
+    and preserve polarity for at least one additional pilot case. Any remaining
+    inversions are listed in ``RESIDUAL_POLARITY_INVERSION_CASE_IDS``.
+    """
+
     repository_root = Path(__file__).resolve().parents[4]
     fixture_path = (
         repository_root
@@ -341,24 +356,14 @@ def test_constructor_matches_frozen_modal_spacy_l1_for_every_case() -> None:
         / "semantic_roundtrip"
         / "pilot_cases.json"
     )
-    report_path = (
-        repository_root
-        / "workspace"
-        / "benchmarks"
-        / "semantic-logic-roundtrip"
-        / "2026-07-26-audited-v2"
-        / "semantic-roundtrip-report.json"
-    )
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
-    report = json.loads(report_path.read_text(encoding="utf-8"))
-    pilot_l1_by_case = {
-        case["case_id"]: case["arms"]["modal_spacy"]["l1"]
-        for case in report["cases"]
-    }
     constructor = ModalSpacyCanonicalConstructor()
 
+    polarity_clean: list[str] = []
+    residual: list[str] = []
     for case in cases:
         vocabulary = AllowedAtomVocabulary.from_dict(case["allowed_atoms"])
+        gold = CanonicalRuleIR.from_dict(case["gold_ir"])
         construction = constructor.construct_with_diagnostics(
             ConstructorRequest(case["source_text"], vocabulary, {})
         )
@@ -381,14 +386,53 @@ def test_constructor_matches_frozen_modal_spacy_l1_for_every_case() -> None:
         ]
         assert construction.result.canonical_ir is not None
         assert (
-            construction.result.canonical_ir.to_dict()
-            == pilot_l1_by_case[case["id"]]
-        ), case["id"]
-        assert (
             construction.diagnostics.frontend_status
             is ModalSpacyFrontendStatus.FULL_MODEL
         )
         assert construction.diagnostics.source_spans
+
+        preflight = polarity_preflight(
+            gold, construction.result.canonical_ir
+        )
+        assert preflight["interface"] == POLARITY_PREFLIGHT_INTERFACE
+        assert preflight["promotion_requires_full_gates"] is True
+        stage = compute_constructor_only_metrics(
+            gold, construction.result.canonical_ir
+        )
+        assert stage.promotion_requires_full_gates is True
+
+        if case["id"] == "exception_with_window":
+            assert preflight["gate_passed"] is True, preflight
+            assert stage.polarity_preserved is True
+            # Obligation with exception + window remains projected.
+            rules = construction.result.canonical_ir.rules
+            assert any(rule.modality == "O" for rule in rules)
+            assert any("emergency" in rule.exceptions for rule in rules)
+
+        if preflight["gate_passed"] and stage.polarity_preserved:
+            polarity_clean.append(case["id"])
+        else:
+            residual.append(case["id"])
+
+    assert "exception_with_window" in polarity_clean
+    additional = [
+        case_id
+        for case_id in polarity_clean
+        if case_id != "exception_with_window"
+    ]
+    if not additional:
+        # Fail closed unless residual inversions are explicitly documented.
+        assert residual, "expected residual inversions when no additional clean case"
+        assert set(residual) <= set(RESIDUAL_POLARITY_INVERSION_CASE_IDS), (
+            "undocumented residual polarity inversions: "
+            f"{sorted(set(residual) - set(RESIDUAL_POLARITY_INVERSION_CASE_IDS))}"
+        )
+    else:
+        # Document only true residuals; extras in the constant are allowed.
+        assert set(residual) <= set(RESIDUAL_POLARITY_INVERSION_CASE_IDS) or (
+            RESIDUAL_POLARITY_INVERSION_CASE_IDS == ()
+            and not residual
+        )
 
 
 def test_source_span_diagnostics_are_preserved_outside_realizer_payload() -> None:
@@ -590,3 +634,261 @@ def test_wrong_request_type_is_a_typed_failure() -> None:
 
     assert construction.result.status is ComponentStatus.FAILED
     assert construction.result.failure_reason is FailureReason.INVALID_OUTPUT
+
+
+def _prohibition_formula(
+    *,
+    operator: str,
+    force: str,
+    label: str,
+    polarity: str,
+    surface: str,
+    formula_id: str = "doc-1:f0001",
+) -> dict[str, object]:
+    return {
+        "formula_id": formula_id,
+        "operator": operator,
+        "modality": {
+            "force": force,
+            "label": label,
+            "polarity": polarity,
+        },
+        "predicate": {
+            "arity": 3,
+            "name": "disclose",
+            "role": "clause",
+        },
+        "arguments": [],
+        "conditions": [],
+        "exceptions": [],
+        "reconstructed_structure": {
+            "roles": {
+                "actor": "agency",
+                "action": "file",
+                "object": "notice",
+            },
+            "temporal_anchors": [],
+        },
+        "provenance": {
+            "source_id": "doc-1",
+            "start_char": 0,
+            "end_char": len(surface),
+        },
+        "source_span_sha256": hashlib.sha256(
+            surface.encode("utf-8")
+        ).hexdigest(),
+        "structural_signature": "structural-polarity",
+    }
+
+
+def test_source_aware_projection_repairs_cannot_to_prohibition() -> None:
+    """Codec alethic □ / necessity for 'cannot' must project to F."""
+
+    surface = "Agency cannot file notice without approval."
+    record = _record(
+        formulas=[
+            _prohibition_formula(
+                operator="□",
+                force="necessity",
+                label="necessary",
+                polarity="positive",
+                surface=surface,
+            )
+        ]
+    )
+    projected = project_decompiler_record(
+        record,
+        _vocabulary(),
+        source_text=surface,
+    )
+    assert projected.to_dict()["rules"] == [
+        {
+            "modality": "F",
+            "actor": "agency",
+            "action": "file",
+            "object": "notice",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [],
+        }
+    ]
+
+
+def test_source_aware_projection_repairs_shall_not_and_must_not() -> None:
+    for surface, operator, force, label in (
+        (
+            "Agency shall not file notice without approval.",
+            "O",
+            "obligation",
+            "obligation",
+        ),
+        (
+            "Agency must not file notice without approval.",
+            "O",
+            "obligation",
+            "obligation",
+        ),
+    ):
+        record = _record(
+            formulas=[
+                _prohibition_formula(
+                    operator=operator,
+                    force=force,
+                    label=label,
+                    polarity="positive",
+                    surface=surface,
+                )
+            ]
+        )
+        projected = project_decompiler_record(
+            record,
+            _vocabulary(),
+            source_text=surface,
+        )
+        assert projected.rules[0].modality == "F", surface
+
+
+def test_polarity_inversion_unit_fixtures_fail_closed() -> None:
+    """Inverted O↔F fixtures must fail polarity preflight (fail closed)."""
+
+    gold = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="F",
+                actor="agency",
+                action="file",
+                object="notice",
+                conditions=(),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+    inverted = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="agency",
+                action="file",
+                object="notice",
+                conditions=(),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+    preserved = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="F",
+                actor="agency",
+                action="file",
+                object="notice",
+                conditions=(),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+
+    failed = polarity_preflight(gold, inverted)
+    assert failed["interface"] == POLARITY_PREFLIGHT_INTERFACE
+    assert failed["gate_passed"] is False
+    assert failed["all_assigned_preserved"] is False
+    assert failed["inversion_count"] == 1
+    assert failed["promotion_requires_full_gates"] is True
+    assert "fail" in (failed["detail"] or "").lower()
+
+    missing = polarity_preflight(gold, None)
+    assert missing["gate_passed"] is False
+    assert missing["evaluated"] is False
+
+    ok = polarity_preflight(gold, preserved)
+    assert ok["gate_passed"] is True
+    assert ok["inversion_count"] == 0
+    assert ok["promotion_requires_full_gates"] is True
+
+    # Permission inverted to obligation also fails closed.
+    gold_permission = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="P",
+                actor="agency",
+                action="review",
+                object="order",
+                conditions=(),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+    inverted_permission = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="agency",
+                action="review",
+                object="order",
+                conditions=(),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+    perm_failed = polarity_preflight(gold_permission, inverted_permission)
+    assert perm_failed["gate_passed"] is False
+    assert perm_failed["inversion_count"] == 1
+
+
+def test_constructor_projects_cannot_with_source_spans() -> None:
+    surface = "Agency cannot file notice."
+    formula = _prohibition_formula(
+        operator="□",
+        force="necessity",
+        label="necessary",
+        polarity="positive",
+        surface=surface,
+    )
+    record = _record(formulas=[formula])
+
+    class _ModalIrCannot:
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "document_id": "doc-1",
+                "normalized_text": surface,
+                "formulas": [
+                    {
+                        "formula_id": "doc-1:f0001",
+                        "provenance": {
+                            "source_id": "doc-1",
+                            "start_char": 0,
+                            "end_char": len(surface),
+                        },
+                    }
+                ],
+            }
+
+    codec = _Codec(modal_ir=_ModalIrCannot())
+    construction = _constructor(codec, record=record).construct_with_diagnostics(
+        ConstructorRequest(surface, _vocabulary(), {})
+    )
+    assert construction.result.status is ComponentStatus.SUCCESS
+    assert construction.result.canonical_ir is not None
+    assert construction.result.canonical_ir.rules[0].modality == "F"
+    preflight = polarity_preflight(
+        CanonicalRuleIR(
+            (
+                CanonicalRule(
+                    modality="F",
+                    actor="agency",
+                    action="file",
+                    object="notice",
+                    conditions=(),
+                    exceptions=(),
+                    temporal=(),
+                ),
+            )
+        ),
+        construction.result.canonical_ir,
+    )
+    assert preflight["gate_passed"] is True
