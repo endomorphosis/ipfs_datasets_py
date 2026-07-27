@@ -11,9 +11,15 @@ The wrapper is fail closed:
 * T1 is a bounded list of one explicitly polarised realization per input rule;
 * an output is never repaired locally, recovered from source, or borrowed from
   another call;
-* only the single retry declared by :class:`RecoveryPolicy` is possible; and
-* every provider call, rejection, retry, and terminal typed failure is retained
-  in a source-free receipt.
+* the promotion :class:`RecoveryPolicy` permits at most one retry, while an
+  explicitly named research policy may preregister a higher retry budget; and
+* every provider call records a typed rejection taxonomy (blank, schema,
+  polarity, empty_rules, timeout, other) plus retry and terminal failure
+  evidence in a source-free receipt.
+
+Arm-level ``accept_rate`` and ``retry_exhausted_rate`` are exposed separately
+from end-to-end semantic loss so reliability can be diagnosed without
+polluting leaderboard scores.
 """
 
 from __future__ import annotations
@@ -37,6 +43,7 @@ from ipfs_datasets_py.utils.cid_utils import (
 )
 
 from benchmarks.semantic_roundtrip.contracts import (
+    MAX_RULES,
     AllowedAtomVocabulary,
     CanonicalRuleIR,
     ComponentStatus,
@@ -49,13 +56,17 @@ from benchmarks.semantic_roundtrip.constructors.leanstral import (
     CONSTRUCTOR_MAX_TOKENS,
     LEANSTRAL_ENDPOINT,
     LEANSTRAL_MODEL,
+    SINGLE_RULE_RESEARCH_SCHEMA_NAME,
     CompletionClient,
     LeanstralMalformedResponseError,
     LeanstralRequestError,
     LeanstralTimeoutError,
     LeanstralUnavailableError,
+    ModelRejectionTaxonomy,
     _constructor_prompt,
     canonical_ir_schema,
+    classify_model_rejection,
+    single_rule_research_canonical_schema,
 )
 from benchmarks.semantic_roundtrip.constructors.symai import (
     SYMAI_ORCHESTRATOR,
@@ -85,10 +96,26 @@ from benchmarks.semantic_roundtrip_capabilities import (
 BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE: Final = (
     "BoundedModelOutputRecovery@1"
 )
+MODEL_OUTPUT_RECOVERY_INTERFACE: Final = "ModelOutputRecovery@1"
 SYMAI_POLARITY_CONTRACT_INTERFACE: Final = "SyMAIPolarityContract@1"
 MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION: Final = (
     "ipfs-datasets.semantic-roundtrip-model-output-recovery.v1"
 )
+PROMOTION_MAX_RETRIES: Final = 1
+RESEARCH_MAX_RETRIES_BOUND: Final = 5
+RESEARCH_DEFAULT_MAX_RETRIES: Final = 3
+RESEARCH_POLICY_ID_PREFIX: Final = "srt-eval-research-"
+SINGLE_RULE_RESEARCH_T1_SCHEMA_NAME: Final = (
+    "srt_eval_research_single_rule_t1_realization_v1"
+)
+SINGLE_RULE_RESEARCH_L1_SCHEMA_NAME: Final = (
+    "srt_eval_research_single_rule_l1_canonical_ir_v1"
+)
+SINGLE_RULE_RESEARCH_L2_SCHEMA_NAME: Final = (
+    "srt_eval_research_single_rule_l2_canonical_ir_v1"
+)
+# Backwards-compatible alias used throughout receipts and tests.
+RejectionTaxonomy = ModelRejectionTaxonomy
 SRT021_REMEDIATION_EVIDENCE_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-srt021-model-remediation-evidence.v1"
 )
@@ -566,6 +593,13 @@ def load_srt021_remediation_evidence(
     return evidence
 
 
+class RecoveryPolicyScope(str, Enum):
+    """Promotion policies stay at most one retry; research may raise budget."""
+
+    PROMOTION = "promotion"
+    RESEARCH = "research"
+
+
 @dataclass(frozen=True, slots=True)
 class RecoveryPolicy:
     """Outcome-independent retry policy fixed before an experiment starts."""
@@ -578,6 +612,7 @@ class RecoveryPolicy:
     remediation_evidence: SRT021RemediationEvidence = (
         FROZEN_SRT021_REMEDIATION_EVIDENCE
     )
+    policy_scope: RecoveryPolicyScope = RecoveryPolicyScope.PROMOTION
 
     def __post_init__(self) -> None:
         experiment_id = self.replacement_experiment_id
@@ -589,14 +624,18 @@ class RecoveryPolicy:
             raise ContractError(
                 "replacement_experiment_id must be a bounded nonblank string"
             )
+        try:
+            scope = RecoveryPolicyScope(self.policy_scope)
+        except ValueError as exc:
+            raise ContractError(
+                "policy_scope must be promotion or research"
+            ) from exc
+        object.__setattr__(self, "policy_scope", scope)
         if (
             isinstance(self.max_retries, bool)
             or not isinstance(self.max_retries, int)
-            or self.max_retries not in {0, 1}
         ):
-            raise ContractError(
-                "model-output recovery permits at most one retry"
-            )
+            raise ContractError("max_retries must be an integer")
         retryable = self.retryable_rejections
         if (
             not isinstance(retryable, Sequence)
@@ -607,13 +646,29 @@ class RecoveryPolicy:
             raise ContractError(
                 "retryable_rejections must be a unique bounded preregistration"
             )
-        if self.max_retries and not experiment_id.strip().startswith(
-            "srt-023-replacement-"
-        ):
-            raise ContractError(
-                "a retry is permitted only inside the SRT-023 replacement "
-                "experiment namespace"
-            )
+        if scope is RecoveryPolicyScope.PROMOTION:
+            if self.max_retries not in {0, 1}:
+                raise ContractError(
+                    "model-output recovery permits at most one retry"
+                )
+            if self.max_retries and not experiment_id.strip().startswith(
+                "srt-023-replacement-"
+            ):
+                raise ContractError(
+                    "a retry is permitted only inside the SRT-023 replacement "
+                    "experiment namespace"
+                )
+        else:
+            if not 1 <= self.max_retries <= RESEARCH_MAX_RETRIES_BOUND:
+                raise ContractError(
+                    "research recovery policy requires a preregistered retry "
+                    f"budget from 1 to {RESEARCH_MAX_RETRIES_BOUND}"
+                )
+            if not experiment_id.strip().startswith(RESEARCH_POLICY_ID_PREFIX):
+                raise ContractError(
+                    "research recovery policy must use the "
+                    f"{RESEARCH_POLICY_ID_PREFIX} namespace"
+                )
         object.__setattr__(
             self, "replacement_experiment_id", experiment_id.strip()
         )
@@ -629,15 +684,24 @@ class RecoveryPolicy:
                 "recovery policy must bind the exact frozen SRT-021 evidence"
             )
 
+    @property
+    def is_research(self) -> bool:
+        return self.policy_scope is RecoveryPolicyScope.RESEARCH
+
+    @property
+    def is_promotion(self) -> bool:
+        return self.policy_scope is RecoveryPolicyScope.PROMOTION
+
     def permits(self, rejection: str) -> bool:
         return (
-            self.max_retries == 1
+            self.max_retries > 0
             and rejection in self.retryable_rejections
         )
 
     def _payload(self) -> dict[str, object]:
         return {
             "replacement_experiment_id": self.replacement_experiment_id,
+            "policy_scope": self.policy_scope.value,
             "max_attempts": self.max_retries + 1,
             "max_retries": self.max_retries,
             "retryable_rejections": list(self.retryable_rejections),
@@ -668,6 +732,9 @@ class RecoveryPolicy:
             supplied.get("remediation_evidence")
         )
         try:
+            scope_raw = supplied.get(
+                "policy_scope", RecoveryPolicyScope.PROMOTION.value
+            )
             policy = cls(
                 replacement_experiment_id=str(
                     supplied["replacement_experiment_id"]
@@ -676,6 +743,7 @@ class RecoveryPolicy:
                 retryable_rejections=tuple(
                     supplied["retryable_rejections"]  # type: ignore[arg-type]
                 ),
+                policy_scope=RecoveryPolicyScope(str(scope_raw)),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise ContractError("recovery policy payload is malformed") from exc
@@ -683,9 +751,36 @@ class RecoveryPolicy:
             raise ContractError("recovery policy payload is contradictory")
         return policy_cid
 
+    @classmethod
+    def research(
+        cls,
+        *,
+        replacement_experiment_id: str = (
+            "srt-eval-research-leanstral-reliability-v1"
+        ),
+        max_retries: int = RESEARCH_DEFAULT_MAX_RETRIES,
+        retryable_rejections: Sequence[str] | None = None,
+    ) -> RecoveryPolicy:
+        """Build an explicit research policy with retry budget greater than one."""
+
+        return cls(
+            replacement_experiment_id=replacement_experiment_id,
+            max_retries=max_retries,
+            retryable_rejections=(
+                tuple(sorted(_RETRYABLE_REJECTIONS))
+                if retryable_rejections is None
+                else tuple(retryable_rejections)
+            ),
+            policy_scope=RecoveryPolicyScope.RESEARCH,
+        )
+
 
 PREREGISTERED_SRT023_POLICY: Final = RecoveryPolicy(
     replacement_experiment_id="srt-023-replacement-model-remediation-v1"
+)
+PREREGISTERED_PROMOTION_POLICY: Final = PREREGISTERED_SRT023_POLICY
+PREREGISTERED_RESEARCH_RECOVERY_POLICY: Final = RecoveryPolicy.research(
+    max_retries=RESEARCH_DEFAULT_MAX_RETRIES,
 )
 
 
@@ -778,6 +873,44 @@ def _validate_call_route_receipt(
         )
 
 
+_PROMOTION_SCHEMA_NAMES: Final = frozenset(
+    {
+        "srt023_replacement_t1_realization_v1",
+        "srt023_replacement_l1_canonical_ir_v1",
+        "srt023_replacement_l2_canonical_ir_v1",
+    }
+)
+_RESEARCH_SINGLE_RULE_SCHEMA_NAMES: Final = frozenset(
+    {
+        SINGLE_RULE_RESEARCH_T1_SCHEMA_NAME,
+        SINGLE_RULE_RESEARCH_L1_SCHEMA_NAME,
+        SINGLE_RULE_RESEARCH_L2_SCHEMA_NAME,
+        SINGLE_RULE_RESEARCH_SCHEMA_NAME,
+    }
+)
+
+
+def _expected_schema_names_for_role(role: RecoveryRole) -> frozenset[str]:
+    if role is RecoveryRole.T1:
+        return frozenset(
+            {
+                "srt023_replacement_t1_realization_v1",
+                SINGLE_RULE_RESEARCH_T1_SCHEMA_NAME,
+            }
+        )
+    return frozenset(
+        {
+            f"srt023_replacement_{role.value}_canonical_ir_v1",
+            (
+                SINGLE_RULE_RESEARCH_L1_SCHEMA_NAME
+                if role is RecoveryRole.L1
+                else SINGLE_RULE_RESEARCH_L2_SCHEMA_NAME
+            ),
+            SINGLE_RULE_RESEARCH_SCHEMA_NAME,
+        }
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ModelCallReceipt:
     """A source-free record of one physical model call."""
@@ -793,6 +926,7 @@ class ModelCallReceipt:
     max_tokens: int
     outcome: str
     rejection: str | None = None
+    rejection_taxonomy: ModelRejectionTaxonomy | None = None
     failure_reason: FailureReason | None = None
     detail: str | None = None
     symai_route_receipt: Mapping[str, object] | None = None
@@ -820,21 +954,13 @@ class ModelCallReceipt:
             self.route, RecoveryRoute
         ):
             raise ContractError("model call role or route is invalid")
-        expected_schema_name = (
-            "srt023_replacement_t1_realization_v1"
-            if self.role is RecoveryRole.T1
-            else (
-                f"srt023_replacement_{self.role.value}_"
-                "canonical_ir_v1"
-            )
-        )
         expected_max_tokens = (
             REALIZER_MAX_TOKENS
             if self.role is RecoveryRole.T1
             else CONSTRUCTOR_MAX_TOKENS
         )
         if (
-            self.schema_name != expected_schema_name
+            self.schema_name not in _expected_schema_names_for_role(self.role)
             or type(self.max_tokens) is not int
             or self.max_tokens != expected_max_tokens
         ):
@@ -843,8 +969,21 @@ class ModelCallReceipt:
             raise ContractError("model call attempt kind is invalid")
         if self.outcome not in {"accepted", "rejected", "call_failed"}:
             raise ContractError("model call outcome is invalid")
+        taxonomy = self.rejection_taxonomy
+        if taxonomy is not None and not isinstance(
+            taxonomy, ModelRejectionTaxonomy
+        ):
+            try:
+                taxonomy = ModelRejectionTaxonomy(taxonomy)
+            except ValueError as exc:
+                raise ContractError(
+                    "model call rejection taxonomy is invalid"
+                ) from exc
+            object.__setattr__(self, "rejection_taxonomy", taxonomy)
         if self.outcome == "accepted" and (
-            self.rejection is not None or self.failure_reason is not None
+            self.rejection is not None
+            or self.failure_reason is not None
+            or self.rejection_taxonomy is not None
         ):
             raise ContractError("accepted model call cannot carry a failure")
         if self.outcome != "accepted" and self.failure_reason is None:
@@ -856,6 +995,18 @@ class ModelCallReceipt:
             raise ContractError(
                 "failed model call needs a nonblank rejection"
             )
+        if self.outcome != "accepted":
+            expected_taxonomy = classify_model_rejection(
+                self.rejection, failure_reason=self.failure_reason
+            )
+            if self.rejection_taxonomy is None:
+                object.__setattr__(
+                    self, "rejection_taxonomy", expected_taxonomy
+                )
+            elif self.rejection_taxonomy is not expected_taxonomy:
+                raise ContractError(
+                    "model call rejection taxonomy does not match rejection"
+                )
         _validate_call_route_receipt(
             route=self.route,
             outcome=self.outcome,
@@ -904,6 +1055,11 @@ class ModelCallReceipt:
             },
             "outcome": self.outcome,
             "rejection": self.rejection,
+            "rejection_taxonomy": (
+                None
+                if self.rejection_taxonomy is None
+                else self.rejection_taxonomy.value
+            ),
             "failure_reason": (
                 None
                 if self.failure_reason is None
@@ -941,6 +1097,7 @@ class ModelCallReceipt:
             "cache",
             "outcome",
             "rejection",
+            "rejection_taxonomy",
             "failure_reason",
             "detail",
             "symai_route_receipt",
@@ -981,6 +1138,17 @@ class ModelCallReceipt:
             raise ContractError(
                 "model call failure reason is invalid"
             ) from exc
+        raw_taxonomy = supplied["rejection_taxonomy"]
+        try:
+            rejection_taxonomy = (
+                None
+                if raw_taxonomy is None
+                else ModelRejectionTaxonomy(raw_taxonomy)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ContractError(
+                "model call rejection taxonomy is invalid"
+            ) from exc
         route_receipt = supplied["symai_route_receipt"]
         if route_receipt is not None and not isinstance(route_receipt, Mapping):
             raise ContractError("SyMAI route receipt must be an object")
@@ -999,6 +1167,7 @@ class ModelCallReceipt:
                 max_tokens=supplied["max_tokens"],  # type: ignore[arg-type]
                 outcome=supplied["outcome"],  # type: ignore[arg-type]
                 rejection=supplied["rejection"],  # type: ignore[arg-type]
+                rejection_taxonomy=rejection_taxonomy,
                 failure_reason=failure_reason,
                 detail=supplied["detail"],  # type: ignore[arg-type]
                 symai_route_receipt=route_receipt,
@@ -1180,6 +1349,17 @@ class ModelOutputRecoveryReceipt:
                 else self.terminal_failure.value
             ),
             "terminal_rejection": self.terminal_rejection,
+            "terminal_rejection_taxonomy": (
+                None
+                if self.terminal_rejection is None
+                else (
+                    classify_model_rejection(
+                        self.terminal_rejection,
+                        failure_reason=self.terminal_failure,
+                    )
+                    or ModelRejectionTaxonomy.OTHER
+                ).value
+            ),
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -1210,6 +1390,7 @@ class ModelOutputRecoveryReceipt:
             "status",
             "terminal_failure",
             "terminal_rejection",
+            "terminal_rejection_taxonomy",
             "receipt_cid",
         }
         if set(supplied) != expected_fields:
@@ -1251,6 +1432,13 @@ class ModelOutputRecoveryReceipt:
             )
         ):
             raise ContractError("recovery policy payload is malformed")
+        scope_raw = policy_value.get(
+            "policy_scope", RecoveryPolicyScope.PROMOTION.value
+        )
+        try:
+            policy_scope = RecoveryPolicyScope(str(scope_raw))
+        except ValueError as exc:
+            raise ContractError("recovery policy scope is invalid") from exc
         policy = RecoveryPolicy(
             replacement_experiment_id=policy_value[
                 "replacement_experiment_id"
@@ -1259,6 +1447,7 @@ class ModelOutputRecoveryReceipt:
             retryable_rejections=tuple(
                 policy_value["retryable_rejections"]
             ),
+            policy_scope=policy_scope,
         )
         raw_calls = supplied["calls"]
         if not isinstance(raw_calls, list):
@@ -1340,6 +1529,148 @@ class ModelOutputRecoveryResult:
                 raise ContractError("successful recovery cannot carry failure")
         elif self.failure_reason is None:
             raise ContractError("failed recovery result needs typed failure")
+
+
+@dataclass(frozen=True, slots=True)
+class ArmReliabilityMetrics:
+    """Per-arm model reliability separate from end-to-end semantic loss."""
+
+    arm_id: str
+    invocations: int
+    accepted_invocations: int
+    retry_exhausted_invocations: int
+    model_calls: int
+    accepted_calls: int
+    rejection_taxonomy_counts: Mapping[str, int]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.arm_id, str) or not self.arm_id.strip():
+            raise ContractError("arm_id must be a nonblank string")
+        for name in (
+            "invocations",
+            "accepted_invocations",
+            "retry_exhausted_invocations",
+            "model_calls",
+            "accepted_calls",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ContractError(f"{name} must be a non-negative integer")
+        if self.accepted_invocations > self.invocations:
+            raise ContractError("accepted_invocations exceeds invocations")
+        if self.retry_exhausted_invocations > self.invocations:
+            raise ContractError(
+                "retry_exhausted_invocations exceeds invocations"
+            )
+        if self.accepted_calls > self.model_calls:
+            raise ContractError("accepted_calls exceeds model_calls")
+        counts = self.rejection_taxonomy_counts
+        if not isinstance(counts, Mapping):
+            raise ContractError("rejection_taxonomy_counts must be a mapping")
+        normalized: dict[str, int] = {}
+        for key, value in counts.items():
+            if key not in {item.value for item in ModelRejectionTaxonomy}:
+                raise ContractError(
+                    "rejection_taxonomy_counts keys must be taxonomy labels"
+                )
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ContractError(
+                    "rejection_taxonomy_counts values must be non-negative"
+                )
+            normalized[str(key)] = value
+        object.__setattr__(
+            self,
+            "rejection_taxonomy_counts",
+            MappingProxyType(normalized),
+        )
+
+    @property
+    def accept_rate(self) -> float:
+        """Fraction of physical model calls accepted (not end-to-end loss)."""
+
+        if self.model_calls == 0:
+            return 0.0
+        return float(self.accepted_calls) / float(self.model_calls)
+
+    @property
+    def retry_exhausted_rate(self) -> float:
+        """Fraction of recovery invocations that exhausted the retry budget."""
+
+        if self.invocations == 0:
+            return 0.0
+        return (
+            float(self.retry_exhausted_invocations)
+            / float(self.invocations)
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "arm_id": self.arm_id,
+            "invocations": self.invocations,
+            "accepted_invocations": self.accepted_invocations,
+            "retry_exhausted_invocations": self.retry_exhausted_invocations,
+            "model_calls": self.model_calls,
+            "accepted_calls": self.accepted_calls,
+            "accept_rate": self.accept_rate,
+            "retry_exhausted_rate": self.retry_exhausted_rate,
+            "rejection_taxonomy_counts": dict(self.rejection_taxonomy_counts),
+            "metrics_are_separate_from_end_to_end_loss": True,
+        }
+
+
+def aggregate_arm_reliability(
+    arm_id: str,
+    results: Sequence[ModelOutputRecoveryResult | ModelOutputRecoveryReceipt],
+) -> ArmReliabilityMetrics:
+    """Aggregate accept and retry-exhausted rates for one arm."""
+
+    if not isinstance(arm_id, str) or not arm_id.strip():
+        raise ContractError("arm_id must be a nonblank string")
+    if (
+        not isinstance(results, Sequence)
+        or isinstance(results, (str, bytes, bytearray))
+    ):
+        raise ContractError("results must be a sequence of recovery receipts")
+
+    invocations = 0
+    accepted_invocations = 0
+    retry_exhausted_invocations = 0
+    model_calls = 0
+    accepted_calls = 0
+    taxonomy_counts: Counter[str] = Counter()
+
+    for item in results:
+        if isinstance(item, ModelOutputRecoveryResult):
+            receipt = item.receipt
+            failure_reason = item.failure_reason
+        elif isinstance(item, ModelOutputRecoveryReceipt):
+            receipt = item
+            failure_reason = item.terminal_failure
+        else:
+            raise ContractError(
+                "results must contain ModelOutputRecoveryResult or receipts"
+            )
+        invocations += 1
+        if receipt.status is ComponentStatus.SUCCESS:
+            accepted_invocations += 1
+        if failure_reason is FailureReason.RETRY_EXHAUSTED:
+            retry_exhausted_invocations += 1
+        for call in receipt.calls:
+            model_calls += 1
+            if call.outcome == "accepted":
+                accepted_calls += 1
+            elif call.rejection_taxonomy is not None:
+                taxonomy_counts[call.rejection_taxonomy.value] += 1
+
+    return ArmReliabilityMetrics(
+        arm_id=arm_id.strip(),
+        invocations=invocations,
+        accepted_invocations=accepted_invocations,
+        retry_exhausted_invocations=retry_exhausted_invocations,
+        model_calls=model_calls,
+        accepted_calls=accepted_calls,
+        rejection_taxonomy_counts=dict(taxonomy_counts),
+    )
 
 
 class _Client(Protocol):
@@ -1433,18 +1764,34 @@ class SyMAIPolarityContract:
     def canonical_schema(
         cls,
         vocabulary: AllowedAtomVocabulary,
+        *,
+        single_rule: bool = False,
     ) -> dict[str, object]:
-        schema = canonical_ir_schema(vocabulary)
-        rules = schema["properties"]["rules"]  # type: ignore[index]
-        rules["minItems"] = 1  # type: ignore[index]
-        return schema
+        if single_rule:
+            return single_rule_research_canonical_schema(vocabulary)
+        return canonical_ir_schema(vocabulary, min_rules=1, max_rules=MAX_RULES)
+
+    @classmethod
+    def single_rule_research_canonical_schema(
+        cls,
+        vocabulary: AllowedAtomVocabulary,
+    ) -> dict[str, object]:
+        """Research-only single-rule IR schema for hybrid repair experiments."""
+
+        return single_rule_research_canonical_schema(vocabulary)
 
     @classmethod
     def realization_schema(
         cls,
         canonical_ir: CanonicalRuleIR,
+        *,
+        single_rule: bool = False,
     ) -> dict[str, object]:
-        count = len(canonical_ir.rules)
+        if single_rule and len(canonical_ir.rules) != 1:
+            raise ContractError(
+                "single-rule research realization requires exactly one rule"
+            )
+        count = 1 if single_rule else len(canonical_ir.rules)
         return {
             "type": "object",
             "additionalProperties": False,
@@ -1468,6 +1815,64 @@ class SyMAIPolarityContract:
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": max(0, count - 1),
+                            },
+                            "modality": {
+                                "type": "string",
+                                "enum": ["O", "P", "F"],
+                            },
+                            "polarity": {
+                                "type": "string",
+                                "enum": [
+                                    "obligation",
+                                    "permission",
+                                    "prohibition",
+                                ],
+                            },
+                            "text": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": REALIZATION_MAX_LENGTH,
+                            },
+                        },
+                    },
+                }
+            },
+        }
+
+    @classmethod
+    def single_rule_research_realization_schema(
+        cls,
+        canonical_ir: CanonicalRuleIR | None = None,
+    ) -> dict[str, object]:
+        """Research-only single-rule T1 schema for hybrid repair experiments."""
+
+        if canonical_ir is not None and len(canonical_ir.rules) != 1:
+            raise ContractError(
+                "single-rule research realization requires exactly one rule"
+            )
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["rules"],
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": [
+                            "index",
+                            "modality",
+                            "polarity",
+                            "text",
+                        ],
+                        "properties": {
+                            "index": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 0,
                             },
                             "modality": {
                                 "type": "string",
@@ -1683,6 +2088,7 @@ class BoundedModelOutputRecovery:
     """Replacement-experiment wrapper around one pinned Leanstral route."""
 
     interface: Final = BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE
+    recovery_interface: Final = MODEL_OUTPUT_RECOVERY_INTERFACE
     provider_id: Final = "leanstral-local"
 
     def __init__(
@@ -1691,9 +2097,20 @@ class BoundedModelOutputRecovery:
         *,
         route: RecoveryRoute | str,
         policy: RecoveryPolicy = PREREGISTERED_SRT023_POLICY,
+        research_single_rule_schema: bool = False,
     ) -> None:
         if not isinstance(policy, RecoveryPolicy):
             raise TypeError("policy must be RecoveryPolicy")
+        if not isinstance(research_single_rule_schema, bool):
+            raise TypeError("research_single_rule_schema must be bool")
+        if (
+            research_single_rule_schema
+            and policy.policy_scope is not RecoveryPolicyScope.RESEARCH
+        ):
+            raise ContractError(
+                "single-rule research schema requires an explicit research "
+                "recovery policy"
+            )
         try:
             self._route = RecoveryRoute(route)
         except ValueError as exc:
@@ -1708,15 +2125,23 @@ class BoundedModelOutputRecovery:
         self._validate_client_identity(client)
         self._client = client
         self._policy = policy
+        self._research_single_rule_schema = research_single_rule_schema
         self._last_receipt: ModelOutputRecoveryReceipt | None = None
+        self._invocation_results: list[ModelOutputRecoveryResult] = []
 
     @property
     def identity(self) -> str:
+        schema_mode = (
+            "single_rule_research"
+            if self._research_single_rule_schema
+            else "multi_rule_promotion"
+        )
         return (
             f"{self.interface}:{self._route.route_id}:"
             f"{LEANSTRAL_ENDPOINT}:{LEANSTRAL_BACKEND}:{LEANSTRAL_MODEL}:"
             f"{LEANSTRAL_TOKENIZER_IDENTITY}:slots={LEANSTRAL_CAPACITY}:"
-            "cache=disabled:fallback=forbidden"
+            f"cache=disabled:fallback=forbidden:policy={self._policy.policy_scope.value}:"
+            f"schema={schema_mode}"
         )
 
     @property
@@ -1730,6 +2155,15 @@ class BoundedModelOutputRecovery:
     @property
     def last_receipt(self) -> ModelOutputRecoveryReceipt | None:
         return self._last_receipt
+
+    @property
+    def research_single_rule_schema(self) -> bool:
+        return self._research_single_rule_schema
+
+    def arm_reliability_metrics(self, arm_id: str) -> ArmReliabilityMetrics:
+        """Accept and retry-exhausted rates for invocations on this wrapper."""
+
+        return aggregate_arm_reliability(arm_id, tuple(self._invocation_results))
 
     def recover_l1(
         self,
@@ -1812,6 +2246,18 @@ class BoundedModelOutputRecovery:
                         role=parsed_role,
                         expected_ir=expected_ir,
                     )
+                    if (
+                        self._research_single_rule_schema
+                        and len(value.rules) != 1
+                    ):
+                        raise _OutputRejected(
+                            "malformed_output",
+                            FailureReason.INVALID_OUTPUT,
+                            (
+                                f"{parsed_role.value.upper()} single-rule "
+                                "research schema requires exactly one rule"
+                            ),
+                        )
                 calls.append(
                     self._call_receipt(
                         call_index=call_index,
@@ -1838,19 +2284,22 @@ class BoundedModelOutputRecovery:
                 self._last_receipt = receipt
                 if parsed_role is RecoveryRole.T1:
                     assert isinstance(value, str)
-                    return ModelOutputRecoveryResult(
+                    result = ModelOutputRecoveryResult(
                         role=parsed_role,
                         status=ComponentStatus.SUCCESS,
                         text=value,
                         receipt=receipt,
                     )
-                assert isinstance(value, CanonicalRuleIR)
-                return ModelOutputRecoveryResult(
-                    role=parsed_role,
-                    status=ComponentStatus.SUCCESS,
-                    canonical_ir=value,
-                    receipt=receipt,
-                )
+                else:
+                    assert isinstance(value, CanonicalRuleIR)
+                    result = ModelOutputRecoveryResult(
+                        role=parsed_role,
+                        status=ComponentStatus.SUCCESS,
+                        canonical_ir=value,
+                        receipt=receipt,
+                    )
+                self._invocation_results.append(result)
+                return result
             except _OutputRejected as exc:
                 ordinal = locals().get("ordinal")
                 if not isinstance(ordinal, int):
@@ -1929,13 +2378,15 @@ class BoundedModelOutputRecovery:
             terminal_rejection=terminal_rejection,
         )
         self._last_receipt = receipt
-        return ModelOutputRecoveryResult(
+        result = ModelOutputRecoveryResult(
             role=parsed_role,
             status=ComponentStatus.FAILED,
             receipt=receipt,
             failure_reason=terminal_failure,
             failure_detail=failure_detail,
         )
+        self._invocation_results.append(result)
+        return result
 
     def _invoke(
         self,
@@ -1997,8 +2448,13 @@ class BoundedModelOutputRecovery:
         int,
     ]:
         polarity = SyMAIPolarityContract.instructions(role)
+        single_rule = self._research_single_rule_schema
         if role is RecoveryRole.T1:
             assert isinstance(request, RealizerRequest)
+            if single_rule and len(request.canonical_ir.rules) != 1:
+                raise ContractError(
+                    "single-rule research T1 recovery requires exactly one rule"
+                )
             system = (
                 "You are a source-withheld formal-logic realizer. The supplied "
                 "canonical IR is your only semantic authority. Return one "
@@ -2010,12 +2466,17 @@ class BoundedModelOutputRecovery:
                 + "\nOUTPUT_SHAPE: Return only the indexed rules array "
                 "required by the schema; do not add combined text or metadata."
             )
+            schema_name = (
+                SINGLE_RULE_RESEARCH_T1_SCHEMA_NAME
+                if single_rule
+                else "srt023_replacement_t1_realization_v1"
+            )
             return (
                 system,
                 prompt,
-                "srt023_replacement_t1_realization_v1",
+                schema_name,
                 SyMAIPolarityContract.realization_schema(
-                    request.canonical_ir
+                    request.canonical_ir, single_rule=single_rule
                 ),
                 REALIZER_MAX_TOKENS,
             )
@@ -2027,12 +2488,20 @@ class BoundedModelOutputRecovery:
             "add keys, repeat a rule, or claim generated logic is proved. "
             + polarity
         )
+        if single_rule:
+            schema_name = (
+                SINGLE_RULE_RESEARCH_L1_SCHEMA_NAME
+                if role is RecoveryRole.L1
+                else SINGLE_RULE_RESEARCH_L2_SCHEMA_NAME
+            )
+        else:
+            schema_name = f"srt023_replacement_{role.value}_canonical_ir_v1"
         return (
             system,
             _constructor_prompt(request, None),
-            f"srt023_replacement_{role.value}_canonical_ir_v1",
+            schema_name,
             SyMAIPolarityContract.canonical_schema(
-                request.allowed_atom_vocabulary
+                request.allowed_atom_vocabulary, single_rule=single_rule
             ),
             CONSTRUCTOR_MAX_TOKENS,
         )
@@ -2084,6 +2553,13 @@ class BoundedModelOutputRecovery:
         bounded_route_receipt = (
             route_receipt if isinstance(route_receipt, Mapping) else None
         )
+        taxonomy = (
+            None
+            if outcome == "accepted"
+            else classify_model_rejection(
+                rejection, failure_reason=failure_reason
+            )
+        )
         return ModelCallReceipt(
             call_number=call_index,
             serialized_call_ordinal=ordinal,
@@ -2098,6 +2574,7 @@ class BoundedModelOutputRecovery:
             max_tokens=max_tokens,
             outcome=outcome,
             rejection=rejection,
+            rejection_taxonomy=taxonomy,
             failure_reason=failure_reason,
             detail=None if detail is None else detail[:500],
             symai_route_receipt=bounded_route_receipt,
@@ -2216,6 +2693,7 @@ class BoundedModelOutputRecovery:
 
 __all__ = [
     "BOUNDED_MODEL_OUTPUT_RECOVERY_INTERFACE",
+    "MODEL_OUTPUT_RECOVERY_INTERFACE",
     "SYMAI_POLARITY_CONTRACT_INTERFACE",
     "MODEL_OUTPUT_RECOVERY_SCHEMA_VERSION",
     "SRT021_REMEDIATION_EVIDENCE_SCHEMA",
@@ -2225,16 +2703,31 @@ __all__ = [
     "SRT014_REPORT_CID",
     "DIRECT_ROUTE_ID",
     "LEANSTRAL_TOKENIZER_IDENTITY",
+    "PROMOTION_MAX_RETRIES",
+    "RESEARCH_DEFAULT_MAX_RETRIES",
+    "RESEARCH_MAX_RETRIES_BOUND",
+    "RESEARCH_POLICY_ID_PREFIX",
+    "SINGLE_RULE_RESEARCH_T1_SCHEMA_NAME",
+    "SINGLE_RULE_RESEARCH_L1_SCHEMA_NAME",
+    "SINGLE_RULE_RESEARCH_L2_SCHEMA_NAME",
+    "RejectionTaxonomy",
+    "ModelRejectionTaxonomy",
+    "classify_model_rejection",
     "SRT021RemediationEvidence",
     "FROZEN_SRT021_REMEDIATION_EVIDENCE",
     "load_srt021_remediation_evidence",
     "RecoveryRole",
     "RecoveryRoute",
+    "RecoveryPolicyScope",
     "RecoveryPolicy",
     "PREREGISTERED_SRT023_POLICY",
+    "PREREGISTERED_PROMOTION_POLICY",
+    "PREREGISTERED_RESEARCH_RECOVERY_POLICY",
     "ModelCallReceipt",
     "ModelOutputRecoveryReceipt",
     "ModelOutputRecoveryResult",
+    "ArmReliabilityMetrics",
+    "aggregate_arm_reliability",
     "SyMAIPolarityContract",
     "BoundedModelOutputRecovery",
 ]

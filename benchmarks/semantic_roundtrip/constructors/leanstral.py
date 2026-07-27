@@ -40,17 +40,80 @@ from benchmarks.semantic_roundtrip_capabilities import (
 LEANSTRAL_CANONICAL_CONSTRUCTOR_INTERFACE: Final = (
     "LeanstralCanonicalConstructor@1"
 )
+LEANSTRAL_ROUND_TRIP_ADAPTERS_INTERFACE: Final = "LeanstralRoundTripAdapters@1"
 LEANSTRAL_PROVIDER_ID: Final = "leanstral-local"
 LEANSTRAL_TIMEOUT_SECONDS: Final = 120.0
 CONSTRUCTOR_MAX_TOKENS: Final = 3072
 MAX_REQUEST_BYTES: Final = 64 * 1024
 MAX_RESPONSE_BYTES: Final = 2 * 1024 * 1024
+SINGLE_RULE_RESEARCH_SCHEMA_NAME: Final = (
+    "semantic_roundtrip_single_rule_research_canonical_ir_v1"
+)
 
 _CONSTRUCTOR_SYSTEM: Final = (
     "You are a deterministic legal semantic parser. Return one compact JSON "
     "object matching the supplied schema. Never explain, add keys, repeat a "
     "rule, or claim that generated logic is proved."
 )
+
+
+class ModelRejectionTaxonomy(str, Enum):
+    """Typed rejection reasons recorded for every model call.
+
+    Distinct from end-to-end :class:`FailureReason` loss codes.  Promotion and
+    research paths share the same six-way taxonomy so accept/reject rates are
+    comparable across arms without conflating semantic loss.
+    """
+
+    BLANK = "blank"
+    SCHEMA = "schema"
+    POLARITY = "polarity"
+    EMPTY_RULES = "empty_rules"
+    TIMEOUT = "timeout"
+    OTHER = "other"
+
+
+_DETAILED_REJECTION_TO_TAXONOMY: Final[Mapping[str, ModelRejectionTaxonomy]] = {
+    "blank_output": ModelRejectionTaxonomy.BLANK,
+    "blank": ModelRejectionTaxonomy.BLANK,
+    "empty_output": ModelRejectionTaxonomy.EMPTY_RULES,
+    "empty_rules": ModelRejectionTaxonomy.EMPTY_RULES,
+    "malformed_output": ModelRejectionTaxonomy.SCHEMA,
+    "schema": ModelRejectionTaxonomy.SCHEMA,
+    "polarity_ambiguous": ModelRejectionTaxonomy.POLARITY,
+    "polarity": ModelRejectionTaxonomy.POLARITY,
+    "call_timeout": ModelRejectionTaxonomy.TIMEOUT,
+    "timeout": ModelRejectionTaxonomy.TIMEOUT,
+    "route_contract_failure": ModelRejectionTaxonomy.OTHER,
+    "call_exception": ModelRejectionTaxonomy.OTHER,
+    "other": ModelRejectionTaxonomy.OTHER,
+}
+
+
+def classify_model_rejection(
+    rejection: str | None,
+    *,
+    failure_reason: FailureReason | None = None,
+) -> ModelRejectionTaxonomy | None:
+    """Map a detailed rejection or failure reason onto the typed taxonomy."""
+
+    if rejection is None and failure_reason is None:
+        return None
+    if isinstance(rejection, str) and rejection.strip():
+        key = rejection.strip().lower()
+        if key in _DETAILED_REJECTION_TO_TAXONOMY:
+            return _DETAILED_REJECTION_TO_TAXONOMY[key]
+        if key in {item.value for item in ModelRejectionTaxonomy}:
+            return ModelRejectionTaxonomy(key)
+    if failure_reason is FailureReason.TIMEOUT:
+        return ModelRejectionTaxonomy.TIMEOUT
+    if failure_reason in {FailureReason.EMPTY_L1, FailureReason.EMPTY_L2}:
+        return ModelRejectionTaxonomy.EMPTY_RULES
+    if failure_reason is FailureReason.BLANK_T1:
+        return ModelRejectionTaxonomy.BLANK
+    if failure_reason is FailureReason.INVALID_OUTPUT:
+        return ModelRejectionTaxonomy.SCHEMA
+    return ModelRejectionTaxonomy.OTHER
 
 
 class LeanstralConstructorArm(str, Enum):
@@ -78,6 +141,46 @@ class LeanstralMalformedResponseError(LeanstralClientError):
 
 class LeanstralRequestError(LeanstralClientError):
     """The locally constructed provider request violated its byte bound."""
+
+
+def classify_leanstral_exception(
+    exc: BaseException,
+) -> tuple[FailureReason, ModelRejectionTaxonomy, str]:
+    """Classify a provider exception into failure reason and rejection taxonomy."""
+
+    if isinstance(exc, (LeanstralTimeoutError, TimeoutError, socket.timeout)):
+        return (
+            FailureReason.TIMEOUT,
+            ModelRejectionTaxonomy.TIMEOUT,
+            "Leanstral request timed out",
+        )
+    if isinstance(exc, LeanstralUnavailableError):
+        return (
+            FailureReason.CAPABILITY_UNAVAILABLE,
+            ModelRejectionTaxonomy.OTHER,
+            str(exc) or "Leanstral capability is unavailable",
+        )
+    if isinstance(
+        exc,
+        (
+            LeanstralMalformedResponseError,
+            LeanstralRequestError,
+            ContractError,
+            json.JSONDecodeError,
+            TypeError,
+            ValueError,
+        ),
+    ):
+        return (
+            FailureReason.INVALID_OUTPUT,
+            ModelRejectionTaxonomy.SCHEMA,
+            str(exc) or "Leanstral returned malformed output",
+        )
+    return (
+        FailureReason.EXCEPTION,
+        ModelRejectionTaxonomy.OTHER,
+        f"Leanstral call failed: {type(exc).__name__}",
+    )
 
 
 class CompletionClient(Protocol):
@@ -311,8 +414,22 @@ class LeanstralClient:
 
 def canonical_ir_schema(
     vocabulary: AllowedAtomVocabulary,
+    *,
+    min_rules: int = 0,
+    max_rules: int = MAX_RULES,
 ) -> dict[str, object]:
     """Build the fixed bounded schema with only case-visible atom enums."""
+
+    if (
+        isinstance(min_rules, bool)
+        or isinstance(max_rules, bool)
+        or not isinstance(min_rules, int)
+        or not isinstance(max_rules, int)
+        or min_rules < 0
+        or max_rules < min_rules
+        or max_rules > MAX_RULES
+    ):
+        raise ContractError("canonical IR schema rule bounds are invalid")
 
     qualifier_schema = {
         "type": "array",
@@ -323,55 +440,71 @@ def canonical_ir_schema(
             "enum": list(vocabulary.qualifiers),
         },
     }
+    rules_schema: dict[str, object] = {
+        "type": "array",
+        "maxItems": max_rules,
+        "items": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "modality",
+                "actor",
+                "action",
+                "object",
+                "conditions",
+                "exceptions",
+                "temporal",
+            ],
+            "properties": {
+                "modality": {
+                    "type": "string",
+                    "enum": ["O", "P", "F"],
+                },
+                "actor": {
+                    "type": "string",
+                    "maxLength": MAX_ATOM_LENGTH,
+                    "enum": list(vocabulary.actors),
+                },
+                "action": {
+                    "type": "string",
+                    "maxLength": MAX_ATOM_LENGTH,
+                    "enum": list(vocabulary.actions),
+                },
+                "object": {
+                    "type": "string",
+                    "maxLength": MAX_ATOM_LENGTH,
+                    "enum": ["", *vocabulary.objects],
+                },
+                **{
+                    field: json.loads(json.dumps(qualifier_schema))
+                    for field in LIST_FIELDS
+                },
+            },
+        },
+    }
+    if min_rules > 0:
+        rules_schema["minItems"] = min_rules
     return {
         "type": "object",
         "additionalProperties": False,
         "required": ["rules"],
         "properties": {
-            "rules": {
-                "type": "array",
-                "maxItems": MAX_RULES,
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "modality",
-                        "actor",
-                        "action",
-                        "object",
-                        "conditions",
-                        "exceptions",
-                        "temporal",
-                    ],
-                    "properties": {
-                        "modality": {
-                            "type": "string",
-                            "enum": ["O", "P", "F"],
-                        },
-                        "actor": {
-                            "type": "string",
-                            "maxLength": MAX_ATOM_LENGTH,
-                            "enum": list(vocabulary.actors),
-                        },
-                        "action": {
-                            "type": "string",
-                            "maxLength": MAX_ATOM_LENGTH,
-                            "enum": list(vocabulary.actions),
-                        },
-                        "object": {
-                            "type": "string",
-                            "maxLength": MAX_ATOM_LENGTH,
-                            "enum": ["", *vocabulary.objects],
-                        },
-                        **{
-                            field: json.loads(json.dumps(qualifier_schema))
-                            for field in LIST_FIELDS
-                        },
-                    },
-                },
-            }
+            "rules": rules_schema,
         },
     }
+
+
+def single_rule_research_canonical_schema(
+    vocabulary: AllowedAtomVocabulary,
+) -> dict[str, object]:
+    """Return the single-rule research schema for hybrid repair experiments.
+
+    Promotion constructors keep the multi-rule matrix schema.  Hybrid repair
+    experiments may request this narrower path when repairing exactly one
+    rule in isolation without changing the promotion default.
+    """
+
+    return canonical_ir_schema(vocabulary, min_rules=1, max_rules=1)
 
 
 def _canonical_json(value: object) -> str:
@@ -462,36 +595,19 @@ def _spacy_evidence(nlp: object, text: str) -> dict[str, object]:
         ) from exc
 
 
-def _failure_result(exc: BaseException) -> ConstructorResult:
-    if isinstance(
-        exc,
-        (LeanstralTimeoutError, TimeoutError, socket.timeout),
-    ):
-        reason = FailureReason.TIMEOUT
-        detail = "Leanstral request timed out"
-    elif isinstance(exc, LeanstralUnavailableError):
-        reason = FailureReason.CAPABILITY_UNAVAILABLE
-        detail = str(exc) or "Leanstral capability is unavailable"
-    elif isinstance(
-        exc,
-        (
-            LeanstralMalformedResponseError,
-            LeanstralRequestError,
-            ContractError,
-            json.JSONDecodeError,
-            TypeError,
-            ValueError,
-        ),
-    ):
-        reason = FailureReason.INVALID_OUTPUT
-        detail = str(exc) or "Leanstral returned malformed output"
-    else:
-        reason = FailureReason.EXCEPTION
+def _failure_result(
+    exc: BaseException,
+) -> tuple[ConstructorResult, ModelRejectionTaxonomy]:
+    reason, taxonomy, detail = classify_leanstral_exception(exc)
+    if reason is FailureReason.EXCEPTION:
         detail = f"Leanstral constructor failed: {type(exc).__name__}"
-    return ConstructorResult(
-        status=ComponentStatus.FAILED,
-        failure_reason=reason,
-        failure_detail=detail[:1000],
+    return (
+        ConstructorResult(
+            status=ComponentStatus.FAILED,
+            failure_reason=reason,
+            failure_detail=detail[:1000],
+        ),
+        taxonomy,
     )
 
 
@@ -500,6 +616,7 @@ class LeanstralCanonicalConstructor:
 
     interface: Final = LEANSTRAL_CANONICAL_CONSTRUCTOR_INTERFACE
     provider_id: Final = LEANSTRAL_PROVIDER_ID
+    adapters_interface: Final = LEANSTRAL_ROUND_TRIP_ADAPTERS_INTERFACE
 
     def __init__(
         self,
@@ -507,6 +624,7 @@ class LeanstralCanonicalConstructor:
         *,
         arm: LeanstralConstructorArm | str = LeanstralConstructorArm.DIRECT,
         spacy_pipeline: object | None = None,
+        research_single_rule_schema: bool = False,
     ) -> None:
         self._client = client or LeanstralClient()
         if (
@@ -527,20 +645,61 @@ class LeanstralCanonicalConstructor:
             raise ValueError(
                 "the direct Leanstral arm may not receive spaCy evidence"
             )
+        if not isinstance(research_single_rule_schema, bool):
+            raise TypeError("research_single_rule_schema must be bool")
         self._spacy_pipeline = spacy_pipeline
+        self._research_single_rule_schema = research_single_rule_schema
+        self._last_rejection_taxonomy: ModelRejectionTaxonomy | None = None
+        self._model_calls: int = 0
+        self._accepted_calls: int = 0
 
     @property
     def identity(self) -> str:
+        schema_mode = (
+            "single_rule_research"
+            if self._research_single_rule_schema
+            else "multi_rule_promotion"
+        )
         return (
             f"{self.interface}:{self._arm.value}:"
-            f"{LEANSTRAL_ENDPOINT}:{LEANSTRAL_MODEL}"
+            f"{LEANSTRAL_ENDPOINT}:{LEANSTRAL_MODEL}:{schema_mode}"
         )
 
     @property
     def arm(self) -> LeanstralConstructorArm:
         return self._arm
 
+    @property
+    def research_single_rule_schema(self) -> bool:
+        return self._research_single_rule_schema
+
+    @property
+    def last_rejection_taxonomy(self) -> ModelRejectionTaxonomy | None:
+        """Typed rejection for the most recent model call, if any."""
+
+        return self._last_rejection_taxonomy
+
+    @property
+    def model_call_stats(self) -> Mapping[str, object]:
+        """Call-level reliability counters separate from end-to-end loss."""
+
+        total = self._model_calls
+        accepted = self._accepted_calls
+        return {
+            "model_calls": total,
+            "accepted_calls": accepted,
+            "accept_rate": (
+                float(accepted) / float(total) if total else 0.0
+            ),
+            "last_rejection_taxonomy": (
+                None
+                if self._last_rejection_taxonomy is None
+                else self._last_rejection_taxonomy.value
+            ),
+        }
+
     def construct(self, request: ConstructorRequest) -> ConstructorResult:
+        self._last_rejection_taxonomy = None
         try:
             if not isinstance(request, ConstructorRequest):
                 raise TypeError("request must be ConstructorRequest")
@@ -553,24 +712,48 @@ class LeanstralCanonicalConstructor:
                 evidence = _spacy_evidence(
                     self._spacy_pipeline, request.source_text
                 )
+            if self._research_single_rule_schema:
+                schema_name = SINGLE_RULE_RESEARCH_SCHEMA_NAME
+                schema = single_rule_research_canonical_schema(
+                    request.allowed_atom_vocabulary
+                )
+            else:
+                schema_name = "semantic_roundtrip_canonical_ir_v1"
+                schema = canonical_ir_schema(request.allowed_atom_vocabulary)
+            self._model_calls += 1
             candidate = self._client.complete_json(
                 system=_CONSTRUCTOR_SYSTEM,
                 prompt=_constructor_prompt(request, evidence),
-                schema_name="semantic_roundtrip_canonical_ir_v1",
-                schema=canonical_ir_schema(
-                    request.allowed_atom_vocabulary
-                ),
+                schema_name=schema_name,
+                schema=schema,
                 max_tokens=CONSTRUCTOR_MAX_TOKENS,
             )
             canonical_ir = CanonicalRuleIR.from_dict(
                 candidate, request.allowed_atom_vocabulary
             )
             if canonical_ir.is_empty:
+                self._last_rejection_taxonomy = (
+                    ModelRejectionTaxonomy.EMPTY_RULES
+                )
                 return ConstructorResult(
                     status=ComponentStatus.FAILED,
                     failure_reason=FailureReason.EMPTY_L1,
                     failure_detail="Leanstral returned an empty canonical IR",
                 )
+            if (
+                self._research_single_rule_schema
+                and len(canonical_ir.rules) != 1
+            ):
+                self._last_rejection_taxonomy = ModelRejectionTaxonomy.SCHEMA
+                return ConstructorResult(
+                    status=ComponentStatus.FAILED,
+                    failure_reason=FailureReason.INVALID_OUTPUT,
+                    failure_detail=(
+                        "single-rule research schema requires exactly one rule"
+                    ),
+                )
+            self._accepted_calls += 1
+            self._last_rejection_taxonomy = None
             return ConstructorResult(
                 status=ComponentStatus.SUCCESS,
                 canonical_ir=canonical_ir,
@@ -579,15 +762,22 @@ class LeanstralCanonicalConstructor:
             # KeyboardInterrupt/SystemExit must remain process control signals.
             if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                 raise
-            return _failure_result(exc)
+            result, taxonomy = _failure_result(exc)
+            self._last_rejection_taxonomy = taxonomy
+            return result
 
 
 __all__ = [
     "LEANSTRAL_CANONICAL_CONSTRUCTOR_INTERFACE",
+    "LEANSTRAL_ROUND_TRIP_ADAPTERS_INTERFACE",
     "LEANSTRAL_PROVIDER_ID",
     "LEANSTRAL_ENDPOINT",
     "LEANSTRAL_MODEL",
     "CONSTRUCTOR_MAX_TOKENS",
+    "SINGLE_RULE_RESEARCH_SCHEMA_NAME",
+    "ModelRejectionTaxonomy",
+    "classify_model_rejection",
+    "classify_leanstral_exception",
     "LeanstralConstructorArm",
     "LeanstralClientError",
     "LeanstralTimeoutError",
@@ -597,5 +787,6 @@ __all__ = [
     "CompletionClient",
     "LeanstralClient",
     "canonical_ir_schema",
+    "single_rule_research_canonical_schema",
     "LeanstralCanonicalConstructor",
 ]

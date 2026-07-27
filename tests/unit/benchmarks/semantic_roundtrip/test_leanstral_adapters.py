@@ -22,15 +22,21 @@ from benchmarks.semantic_roundtrip.constructors.leanstral import (
     CONSTRUCTOR_MAX_TOKENS,
     LEANSTRAL_ENDPOINT,
     LEANSTRAL_MODEL,
+    LEANSTRAL_ROUND_TRIP_ADAPTERS_INTERFACE,
+    SINGLE_RULE_RESEARCH_SCHEMA_NAME,
     LeanstralCanonicalConstructor,
     LeanstralClient,
     LeanstralConstructorArm,
     LeanstralMalformedResponseError,
     LeanstralTimeoutError,
     LeanstralUnavailableError,
+    ModelRejectionTaxonomy,
+    classify_model_rejection,
+    single_rule_research_canonical_schema,
 )
 from benchmarks.semantic_roundtrip.realizers.leanstral import (
     REALIZER_MAX_TOKENS,
+    SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME,
     LeanstralCanonicalRealizer,
 )
 
@@ -353,31 +359,143 @@ def test_realizer_records_terminal_failures(
 
 
 def test_malformed_semantics_and_empty_or_blank_outputs_are_failures() -> None:
-    invalid = LeanstralCanonicalConstructor(
-        RecordingClient(
-            [
-                {
-                    "rules": [
-                        {
-                            **IR_DICT["rules"][0],
-                            "actor": "out_of_vocabulary",
-                        }
-                    ]
-                }
-            ]
-        )
-    ).construct(constructor_request())
-    empty = LeanstralCanonicalConstructor(
-        RecordingClient([{"rules": []}])
-    ).construct(constructor_request())
-    extra = LeanstralCanonicalRealizer(
-        RecordingClient([{"text": "ok", "source": "leak"}])
-    ).realize(realizer_request())
-    blank = LeanstralCanonicalRealizer(
-        RecordingClient([{"text": "   "}])
-    ).realize(realizer_request())
+    invalid_client = RecordingClient(
+        [
+            {
+                "rules": [
+                    {
+                        **IR_DICT["rules"][0],
+                        "actor": "out_of_vocabulary",
+                    }
+                ]
+            }
+        ]
+    )
+    invalid_ctor = LeanstralCanonicalConstructor(invalid_client)
+    invalid = invalid_ctor.construct(constructor_request())
+    empty_client = RecordingClient([{"rules": []}])
+    empty_ctor = LeanstralCanonicalConstructor(empty_client)
+    empty = empty_ctor.construct(constructor_request())
+    extra_client = RecordingClient([{"text": "ok", "source": "leak"}])
+    extra_realizer = LeanstralCanonicalRealizer(extra_client)
+    extra = extra_realizer.realize(realizer_request())
+    blank_client = RecordingClient([{"text": "   "}])
+    blank_realizer = LeanstralCanonicalRealizer(blank_client)
+    blank = blank_realizer.realize(realizer_request())
 
     assert invalid.failure_reason is FailureReason.INVALID_OUTPUT
     assert empty.failure_reason is FailureReason.EMPTY_L1
     assert extra.failure_reason is FailureReason.INVALID_OUTPUT
     assert blank.failure_reason is FailureReason.BLANK_T1
+    assert (
+        invalid_ctor.last_rejection_taxonomy is ModelRejectionTaxonomy.SCHEMA
+    )
+    assert (
+        empty_ctor.last_rejection_taxonomy
+        is ModelRejectionTaxonomy.EMPTY_RULES
+    )
+    assert (
+        extra_realizer.last_rejection_taxonomy is ModelRejectionTaxonomy.SCHEMA
+    )
+    assert (
+        blank_realizer.last_rejection_taxonomy is ModelRejectionTaxonomy.BLANK
+    )
+
+
+def test_adapter_rejection_taxonomy_and_accept_rate_are_recorded() -> None:
+    timeout_ctor = LeanstralCanonicalConstructor(
+        RecordingClient([LeanstralTimeoutError("late")])
+    )
+    timeout = timeout_ctor.construct(constructor_request())
+    assert timeout.failure_reason is FailureReason.TIMEOUT
+    assert (
+        timeout_ctor.last_rejection_taxonomy is ModelRejectionTaxonomy.TIMEOUT
+    )
+
+    ok_client = RecordingClient([IR_DICT, {"rules": []}])
+    ctor = LeanstralCanonicalConstructor(ok_client)
+    assert ctor.construct(constructor_request()).status is ComponentStatus.SUCCESS
+    assert ctor.construct(constructor_request()).status is ComponentStatus.FAILED
+    stats = ctor.model_call_stats
+    assert stats["model_calls"] == 2
+    assert stats["accepted_calls"] == 1
+    assert stats["accept_rate"] == pytest.approx(0.5)
+    assert stats["last_rejection_taxonomy"] == "empty_rules"
+    assert ctor.adapters_interface == LEANSTRAL_ROUND_TRIP_ADAPTERS_INTERFACE
+
+    assert classify_model_rejection("blank_output") is ModelRejectionTaxonomy.BLANK
+    assert classify_model_rejection("polarity_ambiguous") is (
+        ModelRejectionTaxonomy.POLARITY
+    )
+    assert classify_model_rejection("call_exception") is ModelRejectionTaxonomy.OTHER
+
+
+def test_single_rule_research_schema_path_on_adapters() -> None:
+    schema = single_rule_research_canonical_schema(VOCABULARY)
+    assert schema["properties"]["rules"]["minItems"] == 1
+    assert schema["properties"]["rules"]["maxItems"] == 1
+
+    client = RecordingClient([IR_DICT])
+    ctor = LeanstralCanonicalConstructor(
+        client, research_single_rule_schema=True
+    )
+    result = ctor.construct(constructor_request())
+    assert result.status is ComponentStatus.SUCCESS
+    assert client.calls[0]["schema_name"] == SINGLE_RULE_RESEARCH_SCHEMA_NAME
+    assert client.calls[0]["schema"]["properties"]["rules"]["maxItems"] == 1
+    assert "single_rule_research" in ctor.identity
+
+    multi = {
+        "rules": [
+            IR_DICT["rules"][0],
+            {
+                "modality": "P",
+                "actor": "processor",
+                "action": "retain",
+                "object": "records",
+                "conditions": [],
+                "exceptions": [],
+                "temporal": [],
+            },
+        ]
+    }
+    multi_ctor = LeanstralCanonicalConstructor(
+        RecordingClient([multi]), research_single_rule_schema=True
+    )
+    multi_result = multi_ctor.construct(constructor_request())
+    assert multi_result.status is ComponentStatus.FAILED
+    assert multi_result.failure_reason is FailureReason.INVALID_OUTPUT
+    assert (
+        multi_ctor.last_rejection_taxonomy is ModelRejectionTaxonomy.SCHEMA
+    )
+
+    realizer = LeanstralCanonicalRealizer(
+        RecordingClient(
+            [{"text": "The controller must delete records after 30 days."}]
+        ),
+        research_single_rule_schema=True,
+    )
+    realized = realizer.realize(realizer_request())
+    assert realized.status is ComponentStatus.SUCCESS
+    assert "single_rule_research" in realizer.identity
+
+    multi_ir = CanonicalRuleIR(
+        (
+            IR.rules[0],
+            CanonicalRule(
+                modality="P",
+                actor="processor",
+                action="retain",
+                object="records",
+            ),
+        )
+    )
+    bad = LeanstralCanonicalRealizer(
+        RecordingClient([{"text": "unused"}]),
+        research_single_rule_schema=True,
+    ).realize(RealizerRequest(multi_ir, VOCABULARY, {}))
+    assert bad.status is ComponentStatus.FAILED
+    assert bad.failure_reason is FailureReason.INVALID_OUTPUT
+    assert SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME.startswith(
+        "semantic_roundtrip_single_rule_research"
+    )
