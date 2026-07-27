@@ -31,8 +31,14 @@ from benchmarks.semantic_roundtrip.constructors.autoencoder_guided import (
 from benchmarks.semantic_roundtrip.constructors.causal_autoencoder_guidance import (
     CAUSAL_AUTOENCODER_GUIDANCE_INTERFACE,
     CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE,
+    CAUSAL_MATRIX_PLANNER_INTERFACE,
     DEFAULT_QUALIFICATION_PATH,
+    EVALUATION_STATUS_NOT_MEASURED,
+    MATRIX_SCHEDULE_POLICY,
     MISSING_CAUSAL_CONTRACT_FIELDS,
+    SCORED_SUPPORTED,
+    SEMANTIC_SCHEDULE_EXCLUDED,
+    TERMINAL_UNSUPPORTED,
     UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
     CausalAdapterOutput,
     CausalAutoencoderGuidance,
@@ -42,7 +48,10 @@ from benchmarks.semantic_roundtrip.constructors.causal_autoencoder_guidance impo
     ReviewedCausalL1Contract,
     StableExportEvidence,
     build_causal_guidance_qualification,
+    filter_semantic_schedule_candidates,
+    guided_scored_support_from_qualification,
     load_causal_guidance_qualification,
+    plan_guided_semantic_schedule,
     validate_causal_guidance_qualification,
 )
 
@@ -418,6 +427,10 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
     assert qualification["status"] == (
         UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
     )
+    assert qualification["evaluation_status"] == (
+        EVALUATION_STATUS_NOT_MEASURED
+    )
+    assert qualification["evaluation_status_reason"] == TERMINAL_UNSUPPORTED
     causal_contract = qualification["causal_contract"]
     assert causal_contract["preregistered"] is False
     assert causal_contract["missing"] == list(
@@ -429,20 +442,131 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
     )
     coordinates = qualification["guided_coordinates"]
     assert coordinates["count"] == 12
-    assert coordinates["disposition"] == "terminal_unsupported"
+    assert coordinates["disposition"] == TERMINAL_UNSUPPORTED
+    assert coordinates["evaluation_status"] == (
+        EVALUATION_STATUS_NOT_MEASURED
+    )
+    assert coordinates["schedule_for_semantic_scoring"] is False
     assert all(
-        item["status"] == "terminal_unsupported"
+        item["status"] == TERMINAL_UNSUPPORTED
+        and item["evaluation_status"] == EVALUATION_STATUS_NOT_MEASURED
+        and item["schedule_for_semantic_scoring"] is False
         and item["reason"]
         == UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
         for item in coordinates["coordinates"]
     )
+    planner = qualification["matrix_planner"]
+    assert planner["interface"] == CAUSAL_MATRIX_PLANNER_INTERFACE
+    assert planner["include_guided_in_semantic_schedule"] is False
+    assert planner["semantic_schedule"] == SEMANTIC_SCHEDULE_EXCLUDED
+    assert planner["policy"] == MATRIX_SCHEDULE_POLICY
+    assert planner["scheduled_for_semantic_scoring_arm_ids"] == []
+    assert set(planner["excluded_guided_arm_ids"]) == {
+        item["arm_id"] for item in coordinates["coordinates"]
+    }
     assert DEFAULT_QUALIFICATION_PATH.is_file()
+    # CID must stay bound to the refreshed path-(b) payload.
+    assert isinstance(qualification["qualification_cid"], str)
+    assert qualification["qualification_cid"].startswith("baguqeera")
+
+
+def test_missing_contract_fail_closed_excludes_guided_from_semantic_schedule() -> None:
+    """Path (b): missing reviewed contract → not_measured, not scheduled."""
+
+    qualification = build_causal_guidance_qualification(
+        guidance_loader=lambda path: frozen_guidance(),
+    )
+    # Pair construction still fails closed without a contract.
+    paired = CausalAutoencoderGuidance(
+        FixedConstructor(),
+        guidance_loader=lambda path: frozen_guidance(),
+    ).construct_pair(request())
+    assert paired.status is CausalQualificationStatus.UNAVAILABLE
+    assert paired.guided_disposition == TERMINAL_UNSUPPORTED
+    assert paired.change_receipt is None
+    assert paired.missing_causal_contract == MISSING_CAUSAL_CONTRACT_FIELDS
+    assert guided_scored_support_from_qualification(qualification) == (
+        TERMINAL_UNSUPPORTED
+    )
+    assert guided_scored_support_from_qualification(None) == (
+        TERMINAL_UNSUPPORTED
+    )
+
+    baseline = (
+        "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
+    )
+    guided = (
+        "typed_deontic__guided__no_repair__not_applicable__deterministic"
+    )
+    candidates = [
+        {"cell_id": baseline, "composition": {"guidance": "no_guidance"}},
+        {"cell_id": guided, "composition": {"guidance": "guided"}},
+        guided,
+    ]
+    plan = plan_guided_semantic_schedule(candidates, qualification)
+    assert plan["interface"] == CAUSAL_MATRIX_PLANNER_INTERFACE
+    assert plan["guided_disposition"] == TERMINAL_UNSUPPORTED
+    assert plan["semantic_schedule"] == SEMANTIC_SCHEDULE_EXCLUDED
+    assert plan["scheduled_arm_ids"] == [baseline]
+    assert plan["not_measured_arm_ids"] == [guided, guided]
+    assert all(
+        item["evaluation_status"] == EVALUATION_STATUS_NOT_MEASURED
+        and item["schedule_for_semantic_scoring"] is False
+        and item["status"] == TERMINAL_UNSUPPORTED
+        for item in plan["not_measured"]
+    )
+    admitted = filter_semantic_schedule_candidates(
+        candidates, qualification
+    )
+    assert admitted == [candidates[0]]
+    # Qualification matrix planner freezes the same exclusion set.
+    assert set(qualification["matrix_planner"]["excluded_guided_arm_ids"]) == {
+        item["arm_id"]
+        for item in qualification["guided_coordinates"]["coordinates"]
+    }
+    assert (
+        qualification["matrix_planner"][
+            "scheduled_for_semantic_scoring_arm_ids"
+        ]
+        == []
+    )
+
+
+def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> None:
+    """When a reviewed contract marks scored_supported, guided arms schedule."""
+
+    qualification = {
+        "status": SCORED_SUPPORTED,
+        "disposition": SCORED_SUPPORTED,
+        "guided_coordinates": {"disposition": SCORED_SUPPORTED},
+        "causal_contract": {"preregistered": True},
+        "matrix_planner": {
+            "include_guided_in_semantic_schedule": True,
+        },
+    }
+    assert guided_scored_support_from_qualification(qualification) == (
+        SCORED_SUPPORTED
+    )
+    guided = {
+        "cell_id": "typed_deontic__guided__no_repair__not_applicable__deterministic",
+        "composition": {"guidance": "guided"},
+    }
+    plan = plan_guided_semantic_schedule([guided], qualification)
+    assert plan["guided_disposition"] == SCORED_SUPPORTED
+    assert plan["scheduled_arm_ids"] == [guided["cell_id"]]
+    assert plan["not_measured_arm_ids"] == []
+    assert filter_semantic_schedule_candidates([guided], qualification) == [
+        guided
+    ]
 
 
 def test_qualification_rejects_self_consistent_fabricated_relabeling() -> None:
     qualification = build_causal_guidance_qualification()
     fabricated = copy.deepcopy(qualification)
     fabricated["status"] = "qualified_causal_l1_adapter"
+    fabricated["evaluation_status"] = "semantic_scored"
+    fabricated["guided_coordinates"]["disposition"] = SCORED_SUPPORTED
+    fabricated["matrix_planner"]["include_guided_in_semantic_schedule"] = True
     fabricated["causal_contract"][
         "advisory_diagnostics_are_causal_guidance"
     ] = True

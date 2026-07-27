@@ -23,12 +23,25 @@ from benchmarks.semantic_roundtrip.constructors.leanstral import (
     LEANSTRAL_MODEL,
     LeanstralTimeoutError,
 )
+from benchmarks.semantic_roundtrip.constructors.typed_deontic import (
+    TypedDeonticCanonicalConstructor,
+    TypedDeonticConstructorDiagnostics,
+    TypedDeonticDiagnosticTriggerDetector,
+    TypedDeonticSlotDiagnostic,
+    derive_slot_diagnostics,
+    project_legal_norms,
+    project_legal_norms_with_diagnostics,
+)
 from benchmarks.semantic_roundtrip.selective_repair import (
+    ACTIVATION_FIXTURE_PACK_ID,
     DECLARED_SELECTION_RULES,
     DECLARED_STRUCTURAL_CONSTRAINTS,
     HAMMER_CANDIDATE_SELECTOR_INTERFACE,
     REPAIR_MAX_TOKENS,
+    REQUIRED_ACTIVATION_TRIGGER_KINDS,
     SELECTIVE_LEANSTRAL_REPAIR_INTERFACE,
+    SELECTIVE_REPAIR_ACTIVATION_INTERFACE,
+    SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE,
     CandidateSelection,
     HammerCandidateSelector,
     ModelCallStatus,
@@ -41,6 +54,11 @@ from benchmarks.semantic_roundtrip.selective_repair import (
     StructuralValidationReceipt,
     StructuralValidationRequest,
     StructuralValidatorBinding,
+    ZeroTriggerDetector,
+    activation_fixture_pack,
+    coordinate_receipt_from_construction,
+    run_selective_repair_activation,
+    validate_selective_repair_activation,
 )
 
 
@@ -544,3 +562,252 @@ def test_prompt_ignores_gold_config_and_binds_fixed_schema_and_budget() -> None:
     assert "gold" not in str(call).lower()
     rules_schema = call["schema"]["properties"]["rules"]  # type: ignore[index]
     assert rules_schema["maxItems"] == 16
+
+
+# ---------------------------------------------------------------------------
+# EVAL-005: selective repair activation harness
+# ---------------------------------------------------------------------------
+
+
+class _Norm:
+    def __init__(self, data: dict[str, object]) -> None:
+        self._data = data
+
+    def to_dict(self) -> dict[str, object]:
+        return dict(self._data)
+
+
+def test_activation_fixture_pack_forces_required_trigger_kinds() -> None:
+    pack = activation_fixture_pack()
+    assert len(pack) >= 3
+    kinds = {
+        trigger.kind
+        for case in pack
+        for trigger in case.triggers
+    }
+    assert set(REQUIRED_ACTIVATION_TRIGGER_KINDS) <= kinds
+    fields = {
+        trigger.canonical_field
+        for case in pack
+        for trigger in case.triggers
+    }
+    assert "temporal" in fields
+    assert any(
+        trigger.kind is RepairTriggerKind.LOW_CONFIDENCE
+        for case in pack
+        for trigger in case.triggers
+    )
+    assert any(
+        trigger.kind is RepairTriggerKind.CONTRADICTORY
+        for case in pack
+        for trigger in case.triggers
+    )
+
+
+def test_activation_harness_fires_triggers_attempts_repair_and_scopes_fields() -> None:
+    report = validate_selective_repair_activation()
+
+    assert report.fixture_pack_id == ACTIVATION_FIXTURE_PACK_ID
+    assert report.validation_passed is True
+    assert report.any_trigger is True
+    assert report.total_model_calls > 0
+    assert report.to_dict()["interface"] == SELECTIVE_REPAIR_ACTIVATION_INTERFACE
+
+    observed_kinds: set[str] = set()
+    for receipt in report.coordinate_receipts:
+        payload = receipt.to_dict()
+        assert payload["interface"] == (
+            SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE
+        )
+        assert "repair_triggered" in payload
+        assert "repair_applied" in payload
+        assert "model_calls" in payload
+        assert receipt.repair_triggered is True
+        assert receipt.model_calls >= 1
+        assert receipt.repair_attempted is True
+        assert receipt.repair_applied is True
+        assert receipt.only_triggered_fields_changed is True
+        observed_kinds.update(receipt.trigger_kinds)
+        # Accepted repair may only touch trigger fields.
+        assert set(receipt.changed_fields) <= set(receipt.trigger_fields)
+
+    assert set(item.value for item in REQUIRED_ACTIVATION_TRIGGER_KINDS) <= (
+        observed_kinds
+    )
+
+
+def test_selective_arm_with_zero_triggers_on_fixture_pack_fails_validation() -> None:
+    report = run_selective_repair_activation(
+        trigger_detector_factory=lambda _case: ZeroTriggerDetector(),
+        require_triggers=True,
+    )
+
+    assert report.validation_passed is False
+    assert report.any_trigger is False
+    assert report.total_model_calls == 0
+    assert report.detail is not None
+    assert "zero triggers" in report.detail
+    with pytest.raises(ContractError, match="zero triggers"):
+        validate_selective_repair_activation(report)
+
+
+def test_coordinate_receipt_from_construction_reports_activation_metrics() -> None:
+    repairer, _ = repair([REPAIRED_IR.to_dict()], policy=SelectiveRepairPolicy(candidate_count=1))
+    construction = repairer.construct_with_diagnostics(
+        request(), triggers=(OBJECT_TRIGGER,)
+    )
+    receipt = coordinate_receipt_from_construction(
+        "object_slot", construction
+    )
+
+    assert receipt.repair_triggered is True
+    assert receipt.repair_applied is True
+    assert receipt.model_calls == 1
+    assert receipt.changed_fields == ("object",)
+    assert receipt.only_triggered_fields_changed is True
+    assert receipt.to_dict()["repair_triggered"] is True
+
+
+def test_typed_deontic_emits_triggers_from_diagnostics_without_breaking_baseline() -> None:
+    vocabulary = AllowedAtomVocabulary(
+        actors=("controller",),
+        actions=("delete",),
+        objects=("records",),
+        qualifiers=("after_30_days", "unless_required_by_law"),
+    )
+    norms = [
+        _Norm(
+            {
+                "modality": "obligation",
+                "norm_type": "obligation",
+                "actor": "controller",
+                "action": "delete",
+                "action_verb": "delete",
+                "action_object": "records",
+                "conditions": [],
+                "exceptions": [],
+                "temporal_constraints": [],
+            }
+        )
+    ]
+    source = (
+        "The controller must delete the records after 30 days and shall not "
+        "delete the records unless required by law."
+    )
+    projected, diagnostics = project_legal_norms_with_diagnostics(
+        norms, vocabulary, source_text=source
+    )
+    # Projection path used by the no-repair baseline remains pure IR.
+    baseline_only = project_legal_norms(norms, vocabulary)
+    assert baseline_only == projected
+    assert projected.rules[0].temporal == ()
+    assert isinstance(diagnostics, TypedDeonticConstructorDiagnostics)
+    triggers = diagnostics.repair_triggers()
+    assert triggers
+    assert any(
+        getattr(item, "canonical_field") == "temporal"
+        and getattr(item, "kind") is RepairTriggerKind.MISSING
+        for item in triggers
+    )
+
+    # Explicit low-confidence and contradictory diagnostic slots convert too.
+    slots = derive_slot_diagnostics(
+        projected,
+        source_text=source,
+        field_confidences={(0, "object"): 0.2},
+        modality_raw={0: "obligation prohibition"},
+    )
+    kinds = {slot.kind for slot in slots}
+    assert "missing" in kinds
+    assert "low_confidence" in kinds
+    assert "contradictory" in kinds
+
+    detector = TypedDeonticDiagnosticTriggerDetector(
+        field_confidences={(0, "object"): 0.2}
+    )
+    detected = detector.detect(
+        ConstructorRequest(source, vocabulary, {}),
+        projected,
+    )
+    assert detected
+    assert detector.identity.startswith("TypedDeonticDiagnosticTriggerDetector")
+
+    # No-repair baseline arm: construct returns ConstructorResult only and does
+    # not require selective repair to import or run.
+    constructor = TypedDeonticCanonicalConstructor()
+    assert isinstance(constructor, RoundTripConstructor)
+    # construct_with_diagnostics is available for selective arms; construct
+    # remains the scored baseline surface.
+    assert callable(constructor.construct_with_diagnostics)
+    assert callable(constructor.construct)
+
+
+def test_typed_deontic_diagnostic_triggers_drive_selective_repair() -> None:
+    vocabulary = AllowedAtomVocabulary(
+        actors=("controller",),
+        actions=("delete",),
+        objects=("records",),
+        qualifiers=("after_30_days",),
+    )
+    baseline_ir = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="delete",
+                object="records",
+                temporal=(),
+            ),
+        )
+    )
+    repaired_ir = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="delete",
+                object="records",
+                temporal=("after_30_days",),
+            ),
+        )
+    )
+    source = "The controller must delete the records after 30 days."
+    detector = TypedDeonticDiagnosticTriggerDetector()
+    client = RecordingClient([repaired_ir.to_dict()])
+    repairer = SelectiveLeanstralRepair(
+        FixedConstructor(
+            ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=baseline_ir)
+        ),
+        client=client,
+        policy=SelectiveRepairPolicy(candidate_count=1),
+        selector=selector(SelectiveRepairPolicy(candidate_count=1)),
+        trigger_detector=detector,
+    )
+    construction = repairer.construct_with_diagnostics(
+        ConstructorRequest(source, vocabulary, {})
+    )
+    receipt = coordinate_receipt_from_construction(
+        "typed_deontic_temporal", construction
+    )
+
+    assert construction.receipt.triggers
+    assert any(
+        item.canonical_field == "temporal"
+        and item.kind is RepairTriggerKind.MISSING
+        for item in construction.receipt.triggers
+    )
+    assert receipt.repair_triggered is True
+    assert receipt.model_calls == 1
+    assert receipt.repair_applied is True
+    assert receipt.changed_fields == ("temporal",)
+    assert receipt.only_triggered_fields_changed is True
+
+
+def test_slot_diagnostic_rejects_unknown_fields() -> None:
+    with pytest.raises(ContractError, match="unknown slot diagnostic field"):
+        TypedDeonticSlotDiagnostic(
+            rule_index=0,
+            canonical_field="not_a_field",
+            kind="missing",
+        )
+

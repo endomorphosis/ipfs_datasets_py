@@ -166,10 +166,36 @@
       "checks": {
         "backend_match": true,
         "health_get": true,
-        "model_inference_performed": false,
+        "health_only": false,
+        "live_model_request_performed": true,
+        "model_inference_performed": true,
         "models_get": true,
         "one_slot_capacity": true,
-        "props_get": true
+        "props_get": true,
+        "schedulable_for_scored_matrix": true,
+        "smoke_accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+        "smoke_receipt": {
+          "accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+          "health_only": false,
+          "max_tokens": 1536,
+          "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "model_identity_match": true,
+          "model_inference_performed": true,
+          "prompt_sha256": "23cfd215e052d76becb2a3dcd0ee52569117a88b0f0057184a1f3268dcf59b58",
+          "reject_reason": null,
+          "request_performed": true,
+          "response_object_keys": [
+            "text"
+          ],
+          "response_text_chars": 126,
+          "response_text_sha256": "1df47a19b7d0641752848694e11d07b3190b7a44247a68c75cb86d89040bd4c7",
+          "role": "realize",
+          "route": "direct",
+          "schema_name": "semantic_roundtrip_realization_v1",
+          "schema_sha256": "e0946be44aaa7ed0fa5106abc6b1670192b44926ed42c3a2fd49011f961eed21",
+          "status": "accepted"
+        },
+        "smoke_reject_reason": null
       },
       "effective_identity": {
         "backend": "llama.cpp",
@@ -212,6 +238,11 @@
           "parallel_slots": 1
         },
         "endpoint": "http://127.0.0.1:8080/v1",
+        "live_smoke": {
+          "required": true,
+          "role": "construct_or_realize",
+          "schema_name": "semantic_roundtrip_realization_v1"
+        },
         "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
         "provider": "leanstral_local",
         "route": "direct_openai_compatible_http"
@@ -228,10 +259,11 @@
         "canonical_settings_exact_match": true,
         "canonical_settings_mismatch_rejected": true,
         "engine_present": true,
+        "health_only": false,
         "independent_model_started": false,
-        "live_model_request_performed": false,
+        "live_model_request_performed": true,
         "model_alias_mismatch_rejected": true,
-        "model_inference_performed": false,
+        "model_inference_performed": true,
         "realization_request_contract_accepted": true,
         "realization_schema_exact_match": true,
         "realization_schema_mismatch_rejected": true,
@@ -243,6 +275,30 @@
         "router_present": true,
         "same_effective_model": true,
         "same_effective_service": true,
+        "schedulable_for_scored_matrix": true,
+        "smoke_accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+        "smoke_receipt": {
+          "accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+          "health_only": false,
+          "max_tokens": 1536,
+          "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "model_identity_match": true,
+          "model_inference_performed": true,
+          "prompt_sha256": "23cfd215e052d76becb2a3dcd0ee52569117a88b0f0057184a1f3268dcf59b58",
+          "reject_reason": null,
+          "request_performed": true,
+          "response_object_keys": [
+            "text"
+          ],
+          "response_text_chars": 92,
+          "response_text_sha256": "9cde6791423fc6a3a13e3ed7fb755cdd9055f5f9172c9015be31eebb61908970",
+          "role": "realize",
+          "route": "symai",
+          "schema_name": "semantic_roundtrip_realization_v1",
+          "schema_sha256": "e0946be44aaa7ed0fa5106abc6b1670192b44926ed42c3a2fd49011f961eed21",
+          "status": "accepted"
+        },
+        "smoke_reject_reason": null,
         "symbolicai_version_match": true
       },
       "effective_identity": {
@@ -250,7 +306,7 @@
         "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
         "engine_source_identity": {
           "module_present": true,
-          "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/utils/symai_ipfs_engine.py",
+          "source": "/var/tmp/hssl-srt-eval-harness-supervisor/worktrees/semantic-roundtrip-eval-live-smoke/workspace-7ea6c44a3154-b7650d849a7c/ipfs_datasets_py/utils/symai_ipfs_engine.py",
           "source_bytes": 31520,
           "source_sha256": "40f36aa68b7c4c5032becc234f7bc0d2fb2b763b0257cc55db8b0d140e420711"
         },
@@ -266,7 +322,7 @@
         "router_module": "ipfs_datasets_py.llm_router",
         "router_source_identity": {
           "module_present": true,
-          "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/llm_router.py",
+          "source": "/var/tmp/hssl-srt-eval-harness-supervisor/worktrees/semantic-roundtrip-eval-live-smoke/workspace-7ea6c44a3154-b7650d849a7c/ipfs_datasets_py/llm_router.py",
           "source_bytes": 446,
           "source_sha256": "6391921f2e80eafd77b3cdbb94115e2cb97fb09a88aa2493c177c23b8cbe6103"
         },
@@ -419,6 +475,11 @@
         "distribution": "symbolicai",
         "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
         "independent_model": false,
+        "live_smoke": {
+          "required": true,
+          "role": "construct_or_realize",
+          "schema_name": "semantic_roundtrip_realization_v1"
+        },
         "model_alias": "Leanstral-119B",
         "provider": "ipfs_accelerate_py",
         "request_contracts": {
@@ -563,14 +624,14 @@
       "substitute_used": false
     }
   ],
-  "captured_at_utc": "2026-07-27T00:44:26Z",
+  "captured_at_utc": "2026-07-27T17:26:47Z",
   "interface_version": "SemanticRoundTripCapabilityInventory@1",
   "probe_policy": {
     "allows_substitutes": false,
     "autoencoder_access": "read_only",
     "full_spacy_pipeline_required": true,
     "installs_packages": false,
-    "model_inference_smoke": false,
+    "model_inference_smoke": true,
     "reconfigures_services": false,
     "solver_smokes": "bounded",
     "starts_services": false,

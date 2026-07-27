@@ -11,12 +11,13 @@ intervention on canonical L1.  This module keeps those concepts separate:
 * every resulting canonical change must name its exact stable feature and
   canonical field path; and
 * absent that contract, every historical guided arm remains explicit terminal
-  unsupported evidence.
+  unsupported evidence and is excluded from semantic scoring schedules.
 
 The repository currently has no reviewed causal L1 adapter.  Consequently the
 checked-in qualification artifact is intentionally
-``unavailable_no_reviewed_causal_l1_adapter``.  Advisory diagnostics are never
-promoted into fabricated canonical mutations.
+``unavailable_no_reviewed_causal_l1_adapter``.  The matrix planner API exposed
+here keeps guided cells off the semantic schedule (``not_measured`` only).
+Advisory diagnostics are never promoted into fabricated canonical mutations.
 """
 
 from __future__ import annotations
@@ -74,8 +75,16 @@ REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE: Final = (
     "ReviewedFeatureToCanonicalFieldIntervention@1"
 )
 CAUSAL_CHANGE_RECEIPT_INTERFACE: Final = "CausalGuidanceChangeReceipt@1"
+CAUSAL_MATRIX_PLANNER_INTERFACE: Final = "CausalGuidanceMatrixPlanner@1"
 UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER: Final = (
     "unavailable_no_reviewed_causal_l1_adapter"
+)
+SCORED_SUPPORTED: Final = "scored_supported"
+TERMINAL_UNSUPPORTED: Final = "terminal_unsupported"
+EVALUATION_STATUS_NOT_MEASURED: Final = "not_measured"
+SEMANTIC_SCHEDULE_EXCLUDED: Final = "excluded_from_semantic_schedule"
+MATRIX_SCHEDULE_POLICY: Final = (
+    "exclude_guided_without_reviewed_causal_l1_adapter"
 )
 
 STABLE_EXPORT_SCHEMA: Final = (
@@ -945,6 +954,170 @@ class CausalAutoencoderGuidance:
         return self.construct_pair(request).guided
 
 
+def _is_guided_arm_id(arm_id: object) -> bool:
+    if not isinstance(arm_id, str) or not arm_id.strip():
+        return False
+    text = arm_id.strip()
+    return "__guided__" in text or text.startswith("guided") or (
+        ".guided." in text
+    )
+
+
+def _arm_id_from_candidate(candidate: object) -> str:
+    if isinstance(candidate, str) and candidate.strip():
+        return candidate.strip()
+    if isinstance(candidate, Mapping):
+        for key in (
+            "arm_id",
+            "cell_id",
+            "id",
+            "coordinate_key",
+            "name",
+        ):
+            value = candidate.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        composition = candidate.get("composition")
+        if isinstance(composition, Mapping):
+            guidance = composition.get("guidance")
+            if _normalized(guidance) == "guided":
+                # Preserve a stable synthetic id when only composition is given.
+                cell = candidate.get("cell_id")
+                if isinstance(cell, str) and cell.strip():
+                    return cell.strip()
+                return "guided"
+    raise ContractError(
+        "schedule candidate must provide a nonblank arm_id or cell_id"
+    )
+
+
+def _candidate_is_guided(candidate: object) -> bool:
+    if isinstance(candidate, str):
+        return _is_guided_arm_id(candidate)
+    if isinstance(candidate, Mapping):
+        arm_id = None
+        for key in ("arm_id", "cell_id", "id", "coordinate_key", "name"):
+            value = candidate.get(key)
+            if isinstance(value, str) and value.strip():
+                arm_id = value.strip()
+                break
+        if arm_id is not None and _is_guided_arm_id(arm_id):
+            return True
+        composition = candidate.get("composition")
+        if isinstance(composition, Mapping):
+            if _normalized(composition.get("guidance")) == "guided":
+                return True
+        if _normalized(candidate.get("guidance")) == "guided":
+            return True
+    return False
+
+
+def guided_scored_support_from_qualification(
+    qualification: Mapping[str, object] | None,
+) -> str:
+    """Return ``scored_supported`` or ``terminal_unsupported`` for guided arms.
+
+    A missing or unavailable causal contract is always fail-closed: guided
+    arms remain terminal unsupported and must not enter semantic scoring.
+    """
+
+    if not isinstance(qualification, Mapping):
+        return TERMINAL_UNSUPPORTED
+    guided = qualification.get("guided_coordinates")
+    disposition = None
+    if isinstance(guided, Mapping):
+        disposition = guided.get("disposition")
+    if disposition is None:
+        disposition = qualification.get("disposition")
+    status = qualification.get("status")
+    contract = qualification.get("causal_contract")
+    preregistered = (
+        isinstance(contract, Mapping)
+        and contract.get("preregistered") is True
+    )
+    if disposition == SCORED_SUPPORTED or status == SCORED_SUPPORTED:
+        return SCORED_SUPPORTED
+    if (
+        status == CausalQualificationStatus.QUALIFIED.value
+        and preregistered
+    ):
+        return SCORED_SUPPORTED
+    return TERMINAL_UNSUPPORTED
+
+
+def plan_guided_semantic_schedule(
+    candidates: Sequence[object],
+    qualification: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Matrix planner: keep unsupported guided cells off semantic scoring.
+
+    Guided candidates without a reviewed causal L1 adapter are returned under
+    ``not_measured`` only.  They are never admitted to
+    ``scheduled_for_semantic_scoring``.  Non-guided candidates pass through
+    unchanged.
+    """
+
+    if not isinstance(candidates, Sequence) or isinstance(
+        candidates, (str, bytes, bytearray)
+    ):
+        raise ContractError("candidates must be a sequence of arm specs")
+
+    support = guided_scored_support_from_qualification(qualification)
+    scheduled: list[object] = []
+    not_measured: list[dict[str, object]] = []
+    scheduled_ids: list[str] = []
+    not_measured_ids: list[str] = []
+
+    for candidate in candidates:
+        arm_id = _arm_id_from_candidate(candidate)
+        guided = _candidate_is_guided(candidate)
+        if guided and support != SCORED_SUPPORTED:
+            not_measured_ids.append(arm_id)
+            not_measured.append(
+                {
+                    "arm_id": arm_id,
+                    "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
+                    "reason": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
+                    "schedule_for_semantic_scoring": False,
+                    "status": TERMINAL_UNSUPPORTED,
+                }
+            )
+            continue
+        scheduled_ids.append(arm_id)
+        scheduled.append(candidate)
+
+    return {
+        "evaluation_status_for_excluded_guided": (
+            EVALUATION_STATUS_NOT_MEASURED
+        ),
+        "guided_disposition": support,
+        "interface": CAUSAL_MATRIX_PLANNER_INTERFACE,
+        "not_measured": not_measured,
+        "not_measured_arm_ids": not_measured_ids,
+        "policy": MATRIX_SCHEDULE_POLICY,
+        "scheduled_arm_ids": scheduled_ids,
+        "scheduled_for_semantic_scoring": scheduled,
+        "semantic_schedule": (
+            SCORED_SUPPORTED
+            if support == SCORED_SUPPORTED
+            else SEMANTIC_SCHEDULE_EXCLUDED
+        ),
+    }
+
+
+def filter_semantic_schedule_candidates(
+    candidates: Sequence[object],
+    qualification: Mapping[str, object] | None = None,
+) -> list[object]:
+    """Return only candidates admitted to the semantic scoring schedule."""
+
+    plan = plan_guided_semantic_schedule(candidates, qualification)
+    scheduled = plan["scheduled_for_semantic_scoring"]
+    if not isinstance(scheduled, list):
+        raise ContractError("matrix planner returned a malformed schedule")
+    return list(scheduled)
+
+
 def _guided_coordinate_evidence(
     repo_root: Path,
 ) -> tuple[str, list[dict[str, object]]]:
@@ -979,11 +1152,13 @@ def _guided_coordinate_evidence(
         evidence.append(
             {
                 "arm_id": arm_id,
+                "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
                 "historical_terminal_failure_count": summary.get(
                     "terminal_failure_count"
                 ),
                 "reason": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
-                "status": "terminal_unsupported",
+                "schedule_for_semantic_scoring": False,
+                "status": TERMINAL_UNSUPPORTED,
             }
         )
     if not evidence:
@@ -997,7 +1172,13 @@ def build_causal_guidance_qualification(
     guidance_loader: GuidanceLoader = load_frozen_autoencoder_guidance,
     state_path: Path | None = None,
 ) -> dict[str, object]:
-    """Build the repository-backed unavailable qualification receipt."""
+    """Build the repository-backed unavailable qualification receipt.
+
+    Path (b) of the measurement-path contract: no reviewed causal L1 adapter
+    is present, so guided coordinates stay terminal unsupported, are excluded
+    from the semantic scoring schedule, and classify only as
+    ``not_measured``.
+    """
 
     root = Path(repo_root).resolve()
     resolved_state = (
@@ -1009,6 +1190,15 @@ def build_causal_guidance_qualification(
     guidance = guidance_loader(resolved_state)
     evidence = StableExportEvidence.from_guidance(guidance)
     srt021_cid, coordinates = _guided_coordinate_evidence(root)
+    arm_ids = [str(item["arm_id"]) for item in coordinates]
+    schedule_plan = plan_guided_semantic_schedule(
+        arm_ids,
+        {
+            "status": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
+            "guided_coordinates": {"disposition": TERMINAL_UNSUPPORTED},
+            "causal_contract": {"preregistered": False},
+        },
+    )
     payload: dict[str, object] = {
         "causal_contract": {
             "advisory_diagnostics_are_causal_guidance": False,
@@ -1017,6 +1207,8 @@ def build_causal_guidance_qualification(
             "reviewed_adapter_id": None,
             "reviewed_interventions": [],
         },
+        "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
+        "evaluation_status_reason": TERMINAL_UNSUPPORTED,
         "forbidden_inputs": {
             "fabricated_l1_mutations": False,
             "gold_labels": False,
@@ -1028,10 +1220,24 @@ def build_causal_guidance_qualification(
         "guided_coordinates": {
             "coordinates": coordinates,
             "count": len(coordinates),
-            "disposition": "terminal_unsupported",
+            "disposition": TERMINAL_UNSUPPORTED,
+            "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
+            "schedule_for_semantic_scoring": False,
             "source_manifest_cid": srt021_cid,
         },
         "interface": CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE,
+        "matrix_planner": {
+            "excluded_guided_arm_ids": list(
+                schedule_plan["not_measured_arm_ids"]
+            ),
+            "include_guided_in_semantic_schedule": False,
+            "interface": CAUSAL_MATRIX_PLANNER_INTERFACE,
+            "policy": MATRIX_SCHEDULE_POLICY,
+            "scheduled_for_semantic_scoring_arm_ids": list(
+                schedule_plan["scheduled_arm_ids"]
+            ),
+            "semantic_schedule": SEMANTIC_SCHEDULE_EXCLUDED,
+        },
         "negative_control": {
             "canonical_l1_changed": False,
             "causal_feature_ids": [],
@@ -1131,15 +1337,21 @@ __all__ = [
     "CAUSAL_CHANGE_RECEIPT_INTERFACE",
     "CAUSAL_GUIDANCE_QUALIFICATION_INTERFACE",
     "CAUSAL_GUIDANCE_QUALIFICATION_SCHEMA",
+    "CAUSAL_MATRIX_PLANNER_INTERFACE",
     "CAUSAL_SELECTION_RULE",
     "DEFAULT_QUALIFICATION_PATH",
     "DEFAULT_QUALIFICATION_RELATIVE_PATH",
+    "EVALUATION_STATUS_NOT_MEASURED",
     "FORBIDDEN_CAUSAL_INPUTS",
+    "MATRIX_SCHEDULE_POLICY",
     "MISSING_CAUSAL_CONTRACT_FIELDS",
     "PINNED_SRT021_MANIFEST_CID",
     "REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE",
+    "SCORED_SUPPORTED",
+    "SEMANTIC_SCHEDULE_EXCLUDED",
     "SOURCE_GROUNDING_RULE",
     "STABLE_EXPORT_SCHEMA",
+    "TERMINAL_UNSUPPORTED",
     "UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER",
     "CausalAdapterOutput",
     "CausalAutoencoderGuidance",
@@ -1153,6 +1365,9 @@ __all__ = [
     "ReviewedCausalL1Contract",
     "StableExportEvidence",
     "build_causal_guidance_qualification",
+    "filter_semantic_schedule_candidates",
+    "guided_scored_support_from_qualification",
     "load_causal_guidance_qualification",
+    "plan_guided_semantic_schedule",
     "validate_causal_guidance_qualification",
 ]

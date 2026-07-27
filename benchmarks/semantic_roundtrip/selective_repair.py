@@ -25,7 +25,6 @@ from enum import Enum
 from typing import Final, Protocol, runtime_checkable
 
 from benchmarks.semantic_roundtrip.contracts import (
-    LIST_FIELDS,
     RULE_FIELDS,
     AllowedAtomVocabulary,
     CanonicalRule,
@@ -1577,14 +1576,707 @@ SelectiveRepairResult = SelectiveRepairConstruction
 SelectiveLeanstralCanonicalConstructor = SelectiveLeanstralRepair
 
 
+# ---------------------------------------------------------------------------
+# Activation harness (EVAL-005)
+# ---------------------------------------------------------------------------
+
+ACTIVATION_FIXTURE_PACK_ID: Final = "selective-repair-activation-fixture-pack@1"
+REQUIRED_ACTIVATION_TRIGGER_KINDS: Final = (
+    RepairTriggerKind.MISSING,
+    RepairTriggerKind.LOW_CONFIDENCE,
+    RepairTriggerKind.CONTRADICTORY,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ActivationFixtureCase:
+    """One forced-defect case used to prove selective-repair activation."""
+
+    case_id: str
+    source_text: str
+    vocabulary: AllowedAtomVocabulary
+    baseline_ir: CanonicalRuleIR
+    repaired_ir: CanonicalRuleIR
+    triggers: tuple[RepairTrigger, ...]
+    expected_kinds: tuple[RepairTriggerKind, ...]
+    expected_fields: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.case_id, str) or not self.case_id.strip():
+            raise ContractError("activation fixture case_id must be nonblank")
+        if not isinstance(self.source_text, str) or not self.source_text.strip():
+            raise ContractError("activation fixture source_text must be nonblank")
+        if not isinstance(self.vocabulary, AllowedAtomVocabulary):
+            raise ContractError("activation fixture vocabulary is invalid")
+        if not isinstance(self.baseline_ir, CanonicalRuleIR):
+            raise ContractError("activation fixture baseline_ir is invalid")
+        if not isinstance(self.repaired_ir, CanonicalRuleIR):
+            raise ContractError("activation fixture repaired_ir is invalid")
+        object.__setattr__(self, "triggers", tuple(self.triggers))
+        object.__setattr__(self, "expected_kinds", tuple(self.expected_kinds))
+        object.__setattr__(self, "expected_fields", tuple(self.expected_fields))
+        if not self.triggers:
+            raise ContractError(
+                "activation fixture cases must declare at least one trigger"
+            )
+        if not all(isinstance(item, RepairTrigger) for item in self.triggers):
+            raise ContractError("activation fixture triggers are invalid")
+        if not self.expected_kinds:
+            raise ContractError("activation fixture expected_kinds is required")
+        try:
+            kinds = tuple(RepairTriggerKind(item) for item in self.expected_kinds)
+        except (TypeError, ValueError) as exc:
+            raise ContractError(
+                "activation fixture expected_kinds is invalid"
+            ) from exc
+        object.__setattr__(self, "expected_kinds", kinds)
+        fields = tuple(self.expected_fields)
+        if not fields or any(field not in RULE_FIELDS for field in fields):
+            raise ContractError("activation fixture expected_fields is invalid")
+        object.__setattr__(self, "expected_fields", fields)
+        if len(self.baseline_ir.rules) != len(self.repaired_ir.rules):
+            raise ContractError(
+                "activation fixture repaired IR must preserve rule count"
+            )
+
+    def constructor_request(
+        self, config: Mapping[str, object] | None = None
+    ) -> ConstructorRequest:
+        return ConstructorRequest(
+            self.source_text,
+            self.vocabulary,
+            dict(config or {}),
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "baseline_ir": self.baseline_ir.to_dict(),
+            "case_id": self.case_id,
+            "expected_fields": list(self.expected_fields),
+            "expected_kinds": [item.value for item in self.expected_kinds],
+            "repaired_ir": self.repaired_ir.to_dict(),
+            "source_text": self.source_text,
+            "triggers": [item.to_dict() for item in self.triggers],
+            "vocabulary": self.vocabulary.to_dict(),
+        }
+
+
+def activation_fixture_pack() -> tuple[ActivationFixtureCase, ...]:
+    """Fixture pack forcing missing temporal / low-confidence / contradiction.
+
+    Each case supplies a defective baseline IR plus preregistered triggers so
+    selective repair must fire on the pack.  The no-repair baseline continues
+    to score the unrepaired IR without invoking this pack.
+    """
+
+    vocabulary = AllowedAtomVocabulary(
+        actors=("controller", "processor"),
+        actions=("delete", "retain", "disclose"),
+        objects=("records", "personal_data"),
+        qualifiers=(
+            "after_30_days",
+            "within_72_hours",
+            "unless_required_by_law",
+            "if_requested",
+        ),
+    )
+
+    missing_temporal_baseline = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="delete",
+                object="records",
+                temporal=(),
+            ),
+        )
+    )
+    missing_temporal_repaired = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="delete",
+                object="records",
+                temporal=("after_30_days",),
+            ),
+        )
+    )
+    missing_temporal_triggers = (
+        RepairTrigger(
+            rule_index=0,
+            canonical_field="temporal",
+            kind=RepairTriggerKind.MISSING,
+            evidence=(
+                "activation fixture forces empty temporal despite "
+                "after_30_days source cue"
+            ),
+        ),
+    )
+
+    low_confidence_baseline = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="retain",
+                object="personal_data",
+            ),
+        )
+    )
+    low_confidence_repaired = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="retain",
+                object="records",
+            ),
+        )
+    )
+    low_confidence_triggers = (
+        RepairTrigger(
+            rule_index=0,
+            canonical_field="object",
+            kind=RepairTriggerKind.LOW_CONFIDENCE,
+            confidence=0.2,
+            evidence=(
+                "activation fixture forces low-confidence object attachment"
+            ),
+        ),
+    )
+
+    contradictory_baseline = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="processor",
+                action="disclose",
+                object="personal_data",
+                exceptions=(),
+            ),
+        )
+    )
+    contradictory_repaired = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="F",
+                actor="processor",
+                action="disclose",
+                object="personal_data",
+                exceptions=("unless_required_by_law",),
+            ),
+        )
+    )
+    contradictory_triggers = (
+        RepairTrigger(
+            rule_index=0,
+            canonical_field="modality",
+            kind=RepairTriggerKind.CONTRADICTORY,
+            evidence=(
+                "activation fixture forces obligation/prohibition contradiction"
+            ),
+        ),
+        RepairTrigger(
+            rule_index=0,
+            canonical_field="exceptions",
+            kind=RepairTriggerKind.MISSING,
+            evidence=(
+                "activation fixture forces missing exception slot for "
+                "unless_required_by_law"
+            ),
+        ),
+    )
+
+    return (
+        ActivationFixtureCase(
+            case_id="missing_temporal",
+            source_text=(
+                "The controller must delete the records after 30 days."
+            ),
+            vocabulary=vocabulary,
+            baseline_ir=missing_temporal_baseline,
+            repaired_ir=missing_temporal_repaired,
+            triggers=missing_temporal_triggers,
+            expected_kinds=(RepairTriggerKind.MISSING,),
+            expected_fields=("temporal",),
+        ),
+        ActivationFixtureCase(
+            case_id="low_confidence_object",
+            source_text=(
+                "The controller must retain the records if requested."
+            ),
+            vocabulary=vocabulary,
+            baseline_ir=low_confidence_baseline,
+            repaired_ir=low_confidence_repaired,
+            triggers=low_confidence_triggers,
+            expected_kinds=(RepairTriggerKind.LOW_CONFIDENCE,),
+            expected_fields=("object",),
+        ),
+        ActivationFixtureCase(
+            case_id="contradictory_modality",
+            source_text=(
+                "The processor must disclose personal data and shall not "
+                "disclose personal data unless required by law."
+            ),
+            vocabulary=vocabulary,
+            baseline_ir=contradictory_baseline,
+            repaired_ir=contradictory_repaired,
+            triggers=contradictory_triggers,
+            expected_kinds=(
+                RepairTriggerKind.CONTRADICTORY,
+                RepairTriggerKind.MISSING,
+            ),
+            expected_fields=("modality", "exceptions"),
+        ),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class SelectiveRepairCoordinateReceipt:
+    """Per-coordinate activation metrics for selective-repair arms."""
+
+    case_id: str
+    repair_triggered: bool
+    repair_applied: bool
+    model_calls: int
+    structural_validations: int = 0
+    trigger_kinds: tuple[str, ...] = ()
+    trigger_fields: tuple[str, ...] = ()
+    changed_fields: tuple[str, ...] = ()
+    only_triggered_fields_changed: bool = True
+    status: str = RepairAttemptStatus.NOT_TRIGGERED.value
+    detail: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.case_id, str) or not self.case_id.strip():
+            raise ContractError("coordinate receipt case_id must be nonblank")
+        for name in ("repair_triggered", "repair_applied", "only_triggered_fields_changed"):
+            if not isinstance(getattr(self, name), bool):
+                raise ContractError(f"{name} must be boolean")
+        for name in ("model_calls", "structural_validations"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ContractError(f"{name} must be a nonnegative integer")
+        object.__setattr__(self, "trigger_kinds", tuple(self.trigger_kinds))
+        object.__setattr__(self, "trigger_fields", tuple(self.trigger_fields))
+        object.__setattr__(self, "changed_fields", tuple(self.changed_fields))
+        if self.repair_applied and not self.repair_triggered:
+            raise ContractError(
+                "repair cannot be applied without being triggered"
+            )
+        if self.detail is not None and not str(self.detail).strip():
+            raise ContractError("coordinate receipt detail must be nonblank")
+
+    @property
+    def repair_attempted(self) -> bool:
+        return self.model_calls > 0 or self.structural_validations > 0
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "case_id": self.case_id,
+            "changed_fields": list(self.changed_fields),
+            "detail": self.detail,
+            "interface": SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE,
+            "model_calls": self.model_calls,
+            "only_triggered_fields_changed": self.only_triggered_fields_changed,
+            "repair_applied": self.repair_applied,
+            "repair_attempted": self.repair_attempted,
+            "repair_triggered": self.repair_triggered,
+            "status": self.status,
+            "structural_validations": self.structural_validations,
+            "trigger_fields": list(self.trigger_fields),
+            "trigger_kinds": list(self.trigger_kinds),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SelectiveRepairActivationReport:
+    """Aggregate activation evidence over the forced-defect fixture pack."""
+
+    fixture_pack_id: str
+    coordinate_receipts: tuple[SelectiveRepairCoordinateReceipt, ...]
+    validation_passed: bool
+    detail: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.fixture_pack_id, str) or not self.fixture_pack_id.strip():
+            raise ContractError("fixture_pack_id must be nonblank")
+        object.__setattr__(
+            self, "coordinate_receipts", tuple(self.coordinate_receipts)
+        )
+        if not self.coordinate_receipts:
+            raise ContractError(
+                "activation report requires at least one coordinate receipt"
+            )
+        if not all(
+            isinstance(item, SelectiveRepairCoordinateReceipt)
+            for item in self.coordinate_receipts
+        ):
+            raise ContractError("activation report receipts are invalid")
+        if not isinstance(self.validation_passed, bool):
+            raise ContractError("validation_passed must be boolean")
+        if self.detail is not None and not str(self.detail).strip():
+            raise ContractError("activation report detail must be nonblank")
+
+    @property
+    def any_trigger(self) -> bool:
+        return any(item.repair_triggered for item in self.coordinate_receipts)
+
+    @property
+    def total_model_calls(self) -> int:
+        return sum(item.model_calls for item in self.coordinate_receipts)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "coordinate_receipts": [
+                item.to_dict() for item in self.coordinate_receipts
+            ],
+            "detail": self.detail,
+            "fixture_pack_id": self.fixture_pack_id,
+            "interface": SELECTIVE_REPAIR_ACTIVATION_INTERFACE,
+            "total_model_calls": self.total_model_calls,
+            "triggered_case_count": sum(
+                1 for item in self.coordinate_receipts if item.repair_triggered
+            ),
+            "validation_passed": self.validation_passed,
+        }
+
+
+def coordinate_receipt_from_construction(
+    case_id: str,
+    construction: SelectiveRepairConstruction,
+    *,
+    allowed_trigger_paths: Sequence[str] | None = None,
+) -> SelectiveRepairCoordinateReceipt:
+    """Project a repair construction into activation coordinate metrics."""
+
+    if not isinstance(construction, SelectiveRepairConstruction):
+        raise ContractError("construction must be SelectiveRepairConstruction")
+    receipt = construction.receipt
+    triggers = receipt.triggers
+    repair_triggered = bool(triggers) and receipt.status is not (
+        RepairAttemptStatus.NOT_TRIGGERED
+    )
+    # NOT_TRIGGERED already implies empty triggers; also count explicit triggers
+    # retained on failed validation as triggered evidence.
+    if triggers:
+        repair_triggered = True
+    repair_applied = receipt.status is RepairAttemptStatus.ACCEPTED
+    model_calls = len(receipt.model_calls)
+    structural_validations = 0
+    changed_fields: tuple[str, ...] = ()
+    only_triggered = True
+    if receipt.selection is not None:
+        structural_validations = sum(
+            len(item.structural_receipts)
+            for item in receipt.selection.evaluations
+        )
+        selected = receipt.selection.selected
+        if selected is not None:
+            changed_fields = selected.changed_fields
+            allowed = set(
+                allowed_trigger_paths
+                if allowed_trigger_paths is not None
+                else (item.path for item in triggers)
+            )
+            outside = [
+                path
+                for path in selected.changed_field_paths
+                if path not in allowed
+            ]
+            only_triggered = not outside
+        else:
+            # Inspect all evaluations when nothing was accepted.
+            all_paths = {
+                path
+                for evaluation in receipt.selection.evaluations
+                for path in evaluation.changed_field_paths
+            }
+            allowed = set(
+                allowed_trigger_paths
+                if allowed_trigger_paths is not None
+                else (item.path for item in triggers)
+            )
+            only_triggered = all_paths.issubset(allowed) if all_paths else True
+            changed_fields = receipt.changed_fields
+    return SelectiveRepairCoordinateReceipt(
+        case_id=case_id,
+        repair_triggered=repair_triggered,
+        repair_applied=repair_applied,
+        model_calls=model_calls,
+        structural_validations=structural_validations,
+        trigger_kinds=tuple(item.kind.value for item in triggers),
+        trigger_fields=tuple(item.canonical_field for item in triggers),
+        changed_fields=changed_fields,
+        only_triggered_fields_changed=only_triggered,
+        status=receipt.status.value,
+        detail=receipt.detail,
+    )
+
+
+class FixedBaselineConstructor:
+    """Deterministic baseline that returns a pre-bound defective IR."""
+
+    def __init__(
+        self,
+        baseline_ir: CanonicalRuleIR,
+        *,
+        identity: str = "FixedActivationBaseline@1",
+    ) -> None:
+        if not isinstance(baseline_ir, CanonicalRuleIR):
+            raise ContractError("baseline_ir must be CanonicalRuleIR")
+        if not identity.strip():
+            raise ContractError("baseline identity must be nonblank")
+        self._baseline_ir = baseline_ir
+        self._identity = identity
+
+    @property
+    def identity(self) -> str:
+        return self._identity
+
+    def construct(self, request: ConstructorRequest) -> ConstructorResult:
+        if not isinstance(request, ConstructorRequest):
+            return ConstructorResult(
+                ComponentStatus.FAILED,
+                failure_reason=FailureReason.INVALID_OUTPUT,
+                failure_detail="request must be ConstructorRequest",
+            )
+        try:
+            self._baseline_ir.validate_vocabulary(
+                request.allowed_atom_vocabulary
+            )
+        except ContractError as exc:
+            return ConstructorResult(
+                ComponentStatus.FAILED,
+                failure_reason=FailureReason.INVALID_OUTPUT,
+                failure_detail=str(exc),
+            )
+        if self._baseline_ir.is_empty:
+            return ConstructorResult(
+                ComponentStatus.FAILED,
+                failure_reason=FailureReason.EMPTY_L1,
+                failure_detail="activation baseline is empty",
+            )
+        return ConstructorResult(
+            ComponentStatus.SUCCESS,
+            canonical_ir=self._baseline_ir,
+        )
+
+
+class FixtureTriggerDetector:
+    """Detector that returns the preregistered activation-case triggers."""
+
+    identity: Final = "ActivationFixtureTriggerDetector@1"
+
+    def __init__(self, triggers: Sequence[RepairTrigger]) -> None:
+        self._triggers = tuple(triggers)
+        if not self._triggers:
+            raise ContractError(
+                "fixture trigger detector requires nonempty triggers"
+            )
+        if not all(isinstance(item, RepairTrigger) for item in self._triggers):
+            raise ContractError("fixture triggers must be RepairTrigger records")
+
+    def detect(
+        self,
+        request: ConstructorRequest,
+        baseline_ir: CanonicalRuleIR,
+    ) -> tuple[RepairTrigger, ...]:
+        del request, baseline_ir
+        return self._triggers
+
+
+class ZeroTriggerDetector:
+    """Detector that never opens repair slots (negative activation control)."""
+
+    identity: Final = "ZeroTriggerDetector@1"
+
+    def detect(
+        self,
+        request: ConstructorRequest,
+        baseline_ir: CanonicalRuleIR,
+    ) -> tuple[RepairTrigger, ...]:
+        del request, baseline_ir
+        return ()
+
+
+def _default_activation_validators() -> tuple[StructuralValidatorBinding, ...]:
+    def validate(
+        structural_request: StructuralValidationRequest,
+    ) -> StructuralValidationReceipt:
+        del structural_request
+        return StructuralValidationReceipt(
+            validator_id="activation-hammer-cvc5",
+            tool=StructuralTool.HAMMER_CVC5,
+            constraints=DECLARED_STRUCTURAL_CONSTRAINTS,
+            passed=True,
+        )
+
+    return (
+        StructuralValidatorBinding(
+            validator_id="activation-hammer-cvc5",
+            tool=StructuralTool.HAMMER_CVC5,
+            constraints=DECLARED_STRUCTURAL_CONSTRAINTS,
+            validate=validate,
+        ),
+    )
+
+
+def run_selective_repair_activation(
+    *,
+    cases: Sequence[ActivationFixtureCase] | None = None,
+    client_factory: Callable[
+        [ActivationFixtureCase], CompletionClient
+    ] | None = None,
+    require_triggers: bool = True,
+    trigger_detector_factory: Callable[
+        [ActivationFixtureCase], RepairTriggerDetector
+    ] | None = None,
+    validators: Sequence[StructuralValidatorBinding] | None = None,
+    policy: SelectiveRepairPolicy | None = None,
+) -> SelectiveRepairActivationReport:
+    """Execute the activation fixture pack and collect coordinate receipts.
+
+    When ``require_triggers`` is true (default), a selective arm that yields
+    zero triggers across the pack fails validation.  Tests may inject a
+    zero-trigger detector to assert that fail-closed behaviour.
+    """
+
+    pack = tuple(cases) if cases is not None else activation_fixture_pack()
+    if not pack:
+        raise ContractError("activation fixture pack must be nonempty")
+    if not all(isinstance(item, ActivationFixtureCase) for item in pack):
+        raise ContractError("activation cases must be ActivationFixtureCase")
+    active_policy = policy or SelectiveRepairPolicy(candidate_count=1)
+    if not isinstance(active_policy, SelectiveRepairPolicy):
+        raise ContractError("policy must be SelectiveRepairPolicy")
+    validator_bindings = (
+        tuple(validators)
+        if validators is not None
+        else _default_activation_validators()
+    )
+
+    def _default_client(case: ActivationFixtureCase) -> CompletionClient:
+        class _Client:
+            endpoint = LEANSTRAL_ENDPOINT
+            model = LEANSTRAL_MODEL
+
+            def complete_json(self, **kwargs: object) -> object:
+                del kwargs
+                return case.repaired_ir.to_dict()
+
+        return _Client()  # type: ignore[return-value]
+
+    client_for = client_factory or _default_client
+    detector_for = trigger_detector_factory or (
+        lambda case: FixtureTriggerDetector(case.triggers)
+    )
+
+    receipts: list[SelectiveRepairCoordinateReceipt] = []
+    observed_kinds: set[RepairTriggerKind] = set()
+    for case in pack:
+        detector = detector_for(case)
+        repairer = SelectiveLeanstralRepair(
+            FixedBaselineConstructor(case.baseline_ir),
+            client=client_for(case),
+            policy=active_policy,
+            selector=HammerCandidateSelector(
+                active_policy,
+                validators=validator_bindings,
+            ),
+            trigger_detector=detector,
+        )
+        construction = repairer.construct_with_diagnostics(
+            case.constructor_request()
+        )
+        coordinate = coordinate_receipt_from_construction(
+            case.case_id,
+            construction,
+            allowed_trigger_paths=tuple(item.path for item in case.triggers),
+        )
+        receipts.append(coordinate)
+        for kind in coordinate.trigger_kinds:
+            try:
+                observed_kinds.add(RepairTriggerKind(kind))
+            except ValueError:
+                continue
+
+    validation_errors: list[str] = []
+    if require_triggers:
+        if not any(item.repair_triggered for item in receipts):
+            validation_errors.append(
+                "selective arm produced zero triggers on the activation "
+                "fixture pack"
+            )
+        missing_kinds = [
+            kind.value
+            for kind in REQUIRED_ACTIVATION_TRIGGER_KINDS
+            if kind not in observed_kinds
+        ]
+        if missing_kinds:
+            validation_errors.append(
+                "fixture pack did not fire required trigger kinds: "
+                + ", ".join(missing_kinds)
+            )
+        for item in receipts:
+            if item.repair_triggered and not item.repair_attempted:
+                validation_errors.append(
+                    f"{item.case_id}: triggers fired but neither model nor "
+                    "structural repair was attempted"
+                )
+            if item.repair_applied and not item.only_triggered_fields_changed:
+                validation_errors.append(
+                    f"{item.case_id}: repair changed untriggered fields"
+                )
+
+    passed = not validation_errors
+    detail = None if passed else "; ".join(validation_errors)
+    return SelectiveRepairActivationReport(
+        fixture_pack_id=ACTIVATION_FIXTURE_PACK_ID,
+        coordinate_receipts=tuple(receipts),
+        validation_passed=passed,
+        detail=detail,
+    )
+
+
+def validate_selective_repair_activation(
+    report: SelectiveRepairActivationReport | None = None,
+    **kwargs: object,
+) -> SelectiveRepairActivationReport:
+    """Run (or re-check) activation and fail closed on zero-trigger packs."""
+
+    if report is None:
+        report = run_selective_repair_activation(**kwargs)  # type: ignore[arg-type]
+    if not isinstance(report, SelectiveRepairActivationReport):
+        raise ContractError(
+            "report must be SelectiveRepairActivationReport"
+        )
+    if not report.validation_passed:
+        raise ContractError(
+            report.detail
+            or "selective repair activation validation failed"
+        )
+    if not report.any_trigger:
+        raise ContractError(
+            "selective arm with zero triggers on the fixture pack fails "
+            "validation"
+        )
+    return report
+
+
 assert isinstance(SelectiveLeanstralRepair(), RoundTripConstructor)
 
 
 __all__ = [
     "SELECTIVE_LEANSTRAL_REPAIR_INTERFACE",
+    "SELECTIVE_REPAIR_INTERFACE",
     "HAMMER_CANDIDATE_SELECTOR_INTERFACE",
     "SELECTIVE_REPAIR_POLICY_INTERFACE",
     "SELECTIVE_REPAIR_RECEIPT_INTERFACE",
+    "SELECTIVE_REPAIR_ACTIVATION_INTERFACE",
+    "SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE",
     "STRUCTURAL_VALIDATION_INTERFACE",
     "SELECTIVE_REPAIR_PROVIDER_ID",
     "REPAIR_MAX_TOKENS",
@@ -1593,6 +2285,8 @@ __all__ = [
     "DEFAULT_CANDIDATE_COUNT",
     "DECLARED_SELECTION_RULES",
     "DECLARED_STRUCTURAL_CONSTRAINTS",
+    "ACTIVATION_FIXTURE_PACK_ID",
+    "REQUIRED_ACTIVATION_TRIGGER_KINDS",
     "RepairTriggerKind",
     "RepairAttemptStatus",
     "ModelCallStatus",
@@ -1614,4 +2308,15 @@ __all__ = [
     "SelectiveRepairResult",
     "SelectiveLeanstralRepair",
     "SelectiveLeanstralCanonicalConstructor",
+    "ActivationFixtureCase",
+    "SelectiveRepairCoordinateReceipt",
+    "SelectiveRepairActivationReport",
+    "FixedBaselineConstructor",
+    "FixtureTriggerDetector",
+    "ZeroTriggerDetector",
+    "activation_fixture_pack",
+    "coordinate_receipt_from_construction",
+    "run_selective_repair_activation",
+    "validate_selective_repair_activation",
 ]
+
