@@ -97,6 +97,19 @@ from benchmarks.semantic_roundtrip.realizers.source_withheld_paraphrase import (
     SourceWithheldCanonicalParaphraser,
     frozen_replacement_config,
 )
+from benchmarks.semantic_roundtrip.hybrid_arms import (
+    HYBRID_ROUND_TRIP_ARMS_INTERFACE,
+    PREREGISTERED_HYBRID_ARMS,
+    EvaluationMode,
+    HybridArmSpec,
+    HybridPreflightError,
+    assert_hybrid_mode_preflight,
+    evaluate_hybrid_mode_preflight,
+    hybrid_arm_registry,
+    research_modes_do_not_alter_promotion_set,
+    select_evaluation_mode,
+    select_hybrid_arm,
+)
 from benchmarks.semantic_roundtrip.selective_repair import (
     SELECTIVE_LEANSTRAL_REPAIR_INTERFACE,
     SelectiveLeanstralRepair,
@@ -2602,6 +2615,170 @@ def canonical_qualification_json(value: Mapping[str, object]) -> str:
     ) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# Research hybrid / stage-local evaluation modes (EVAL-007)
+#
+# Additive hooks only: the frozen thirty-cell promotion plan is unchanged.
+# Research modes are scheduled and preflighted separately.
+# ---------------------------------------------------------------------------
+
+
+def research_evaluation_mode_registry() -> dict[str, object]:
+    """Return the preregistered hybrid/stage-local research mode registry.
+
+    The frozen promotion arm set remains exactly the historical thirty cells;
+    research arm identities are disjoint and never promotion-eligible.
+    """
+
+    registry = hybrid_arm_registry()
+    promotion_ids = list(DEFAULT_EXTENDED_MATRIX_PLAN.cell_ids)
+    if not research_modes_do_not_alter_promotion_set(promotion_ids):
+        raise ContractError(
+            "research hybrid arms collide with the frozen promotion cell set"
+        )
+    payload = {
+        "interface": QUALIFIED_REPLACEMENT_MATRIX_INTERFACE,
+        "hybrid_interface": HYBRID_ROUND_TRIP_ARMS_INTERFACE,
+        "promotion_arm_set_unchanged": True,
+        "promotion_cell_count": len(promotion_ids),
+        "promotion_cell_ids": promotion_ids,
+        "research_modes": {
+            mode.value: [
+                arm.arm_id
+                for arm in PREREGISTERED_HYBRID_ARMS
+                if arm.mode is mode
+            ]
+            for mode in EvaluationMode
+        },
+        "required_modes": [
+            EvaluationMode.CONSTRUCTOR_ONLY.value,
+            EvaluationMode.REALIZER_ONLY.value,
+            EvaluationMode.HYBRID.value,
+        ],
+        "hybrid_registry": registry,
+        "loss_reporting": {
+            "report_forward_cycle_end_to_end_separately": True,
+            "hybrid_success_requires_paired_bootstrap_vs_deterministic_baseline": True,
+        },
+    }
+    return {**payload, "research_modes_cid": cid_for_dag_json(payload)}
+
+
+def select_research_evaluation_mode(
+    mode: EvaluationMode | str | Mapping[str, object],
+) -> EvaluationMode:
+    """Resolve a research evaluation mode token for matrix hooks."""
+
+    return select_evaluation_mode(mode)
+
+
+def select_research_hybrid_arm(
+    *,
+    mode: EvaluationMode | str | None = None,
+    arm_id: str | None = None,
+    repair: str | None = None,
+) -> HybridArmSpec:
+    """Select one preregistered research arm without touching promotion cells."""
+
+    return select_hybrid_arm(mode=mode, arm_id=arm_id, repair=repair)
+
+
+def schedule_research_hybrid_arms(
+    modes: Sequence[EvaluationMode | str] | None = None,
+    *,
+    arm_ids: Sequence[str] | None = None,
+    live_smokes: Mapping[str, object] | None = None,
+    causal_qualification: Mapping[str, object] | None = None,
+    require_preflight: bool = True,
+) -> dict[str, object]:
+    """Build a research-only schedule for hybrid/stage-local modes.
+
+    When ``require_preflight`` is true (default), missing live-smoke or causal
+    evidence fails closed via :class:`HybridPreflightError` / launch preflight.
+    """
+
+    selected: list[HybridArmSpec] = []
+    if arm_ids is not None:
+        for arm_id in arm_ids:
+            selected.append(select_hybrid_arm(arm_id=str(arm_id)))
+    else:
+        mode_list: Sequence[EvaluationMode | str]
+        if modes is None:
+            mode_list = tuple(EvaluationMode)
+        else:
+            mode_list = modes
+        seen: set[str] = set()
+        for mode in mode_list:
+            resolved = select_evaluation_mode(mode)
+            for arm in PREREGISTERED_HYBRID_ARMS:
+                if arm.mode is not resolved or arm.arm_id in seen:
+                    continue
+                selected.append(arm)
+                seen.add(arm.arm_id)
+    if not selected:
+        raise ContractError("research hybrid schedule is empty")
+
+    promotion_ids = list(DEFAULT_EXTENDED_MATRIX_PLAN.cell_ids)
+    if not research_modes_do_not_alter_promotion_set(promotion_ids):
+        raise ContractError(
+            "research hybrid arms collide with the frozen promotion cell set"
+        )
+    research_ids = [arm.arm_id for arm in selected]
+    if set(research_ids) & set(promotion_ids):
+        raise ContractError(
+            "research schedule must not include promotion cell ids"
+        )
+
+    if require_preflight:
+        assert_hybrid_mode_preflight(
+            selected,
+            live_smokes=live_smokes,
+            causal_qualification=causal_qualification,
+        )
+    else:
+        # Still surface the verdict for receipts; do not authorize silently.
+        pass
+
+    verdict = evaluate_hybrid_mode_preflight(
+        selected,
+        live_smokes=live_smokes,
+        causal_qualification=causal_qualification,
+    )
+    payload = {
+        "interface": QUALIFIED_REPLACEMENT_MATRIX_INTERFACE,
+        "hybrid_interface": HYBRID_ROUND_TRIP_ARMS_INTERFACE,
+        "schedule_kind": "research_hybrid_stage_local",
+        "promotion_arm_set_unchanged": True,
+        "require_preflight": require_preflight,
+        "preflight": verdict,
+        "arm_ids": research_ids,
+        "arms": [arm.to_dict() for arm in selected],
+        "modes": sorted({arm.mode.value for arm in selected}),
+        "loss_reporting": {
+            "forward": "separate",
+            "cycle": "separate",
+            "end_to_end": "separate",
+        },
+        "hybrid_success_requires_paired_bootstrap_vs_baseline": True,
+    }
+    return {**payload, "schedule_cid": cid_for_dag_json(payload)}
+
+
+def assert_research_mode_preflight(
+    scheduled_arms: Sequence[HybridArmSpec | Mapping[str, object] | str],
+    *,
+    live_smokes: Mapping[str, object] | None = None,
+    causal_qualification: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Matrix-facing fail-closed preflight for research hybrid modes."""
+
+    return assert_hybrid_mode_preflight(
+        scheduled_arms,
+        live_smokes=live_smokes,
+        causal_qualification=causal_qualification,
+    )
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -2667,10 +2844,12 @@ __all__ = [
     "REPLACEMENT_QUALIFICATION_SCHEMA",
     "ROLE_AWARE_MODEL_RECOVERY_INTERFACE",
     "TERMINAL_UNSUPPORTED",
+    "HYBRID_ROUND_TRIP_ARMS_INTERFACE",
     "ReplacementQualificationError",
     "ReplacementCoordinateExecution",
     "ReplacementCoordinateRunner",
     "RoleAwareModelRecovery",
+    "HybridPreflightError",
     "build_balanced_model_schedule",
     "build_replacement_coordinate_runner",
     "build_replacement_qualification",
@@ -2679,4 +2858,9 @@ __all__ = [
     "run_deterministic_pilot_smoke",
     "run_live_model_smokes",
     "validate_replacement_qualification",
+    "research_evaluation_mode_registry",
+    "select_research_evaluation_mode",
+    "select_research_hybrid_arm",
+    "schedule_research_hybrid_arms",
+    "assert_research_mode_preflight",
 ]
