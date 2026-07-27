@@ -391,7 +391,7 @@ CPU preparation and result analysis run concurrently.
 - Track: benchmark
 - Depends on: SRT-014
 - Outputs: benchmarks/semantic_roundtrip/no_eligible_remediation.py, tests/unit/benchmarks/semantic_roundtrip/test_no_eligible_remediation.py, workspace/benchmarks/semantic-roundtrip-compositions/no_eligible_remediation_manifest.json
-- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py remediation-gate --repo-root . && PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py manifest-gate --repo-root . && PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_no_eligible_remediation.py -q
+- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py remediation-gate --repo-root .; PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py manifest-gate --repo-root .; PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_no_eligible_remediation.py -q
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/no-eligible-manifest
 - Parallel lane: remediation-manifest

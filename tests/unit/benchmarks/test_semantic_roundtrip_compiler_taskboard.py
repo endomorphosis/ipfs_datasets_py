@@ -217,6 +217,25 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
     assert remediation_ids <= set(tasks)
     assert tasks["SRT-021"].depends_on == ["SRT-014"]
     assert tasks["SRT-021"].metadata["implementation timeout seconds"] == "3600"
+    assert tasks["SRT-021"].validation == [
+        (
+            "PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py "
+            "remediation-gate --repo-root ."
+        ),
+        (
+            "PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py "
+            "manifest-gate --repo-root ."
+        ),
+        (
+            "PYTHONPATH=. python -m pytest "
+            "tests/unit/benchmarks/semantic_roundtrip/"
+            "test_no_eligible_remediation.py -q"
+        ),
+    ]
+    assert all(
+        not any(operator in command for operator in ("&&", "||", "|"))
+        for command in tasks["SRT-021"].validation
+    )
     assert {
         task_id: tasks[task_id].depends_on
         for task_id in ("SRT-022", "SRT-023", "SRT-024")
@@ -275,7 +294,7 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
         tasks["SRT-024"].acceptance
     )
     assert "mean primary loss `0.0883333334`" in tasks["SRT-022"].acceptance
-    assert "manifest-gate" in tasks["SRT-021"].validation[0]
+    assert "manifest-gate" in tasks["SRT-021"].validation[1]
     assert (
         tasks["SRT-023"].metadata["implementation timeout seconds"] == "7200"
     )
