@@ -111,6 +111,12 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
         for bundle in stored["bundles"].values()
         for task in bundle["tasks"]
     }
+    planned_tasks_by_id = {
+        task["task_id"]: task
+        for payload in build_bundle_task_payloads(index_path)
+        for task in payload["tasks"]
+    }
+    assert set(planned_tasks_by_id) == set(tasks_by_id)
     assert tasks_by_id["SRT-002"]["dependency_task_cids"] == [
         tasks_by_id["SRT-001"]["canonical_task_cid"]
     ]
@@ -128,12 +134,67 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
     for task_id in ("SRT-021", "SRT-022", "SRT-023", "SRT-024", "SRT-025", "SRT-026", "SRT-027"):
         assert tasks_by_id[task_id]["is_schedulable"] is True
         assert "preflight_blocked" not in tasks_by_id[task_id]
-    assert tasks_by_id["SRT-015"]["implementation_timeout_seconds"] == 7200
-    assert isinstance(
-        tasks_by_id["SRT-015"]["implementation_timeout_seconds"],
-        int,
+    explicit_timeouts = {
+        "SRT-015": 7200,
+        "SRT-018": 14400,
+        "SRT-019": 7200,
+        "SRT-021": 3600,
+        "SRT-022": 3600,
+        "SRT-023": 7200,
+        "SRT-024": 7200,
+        "SRT-025": 7200,
+        "SRT-026": 21600,
+        "SRT-027": 3600,
+    }
+    actual_explicit_timeouts = {
+        task_id: planned_tasks_by_id[task_id][
+            "implementation_timeout_seconds"
+        ]
+        for task_id in explicit_timeouts
+    }
+    assert actual_explicit_timeouts == explicit_timeouts
+    assert all(
+        isinstance(value, int)
+        for value in actual_explicit_timeouts.values()
     )
-    assert tasks_by_id["SRT-026"]["implementation_timeout_seconds"] == 14400
+    assert (
+        planned_tasks_by_id["SRT-014"].get("implementation_timeout_seconds")
+        is None
+    )
+    assert (
+        planned_tasks_by_id["SRT-016"].get("implementation_timeout_seconds")
+        is None
+    )
+    assert (
+        planned_tasks_by_id["SRT-017"].get("implementation_timeout_seconds")
+        is None
+    )
+
+    default_timeout = config["implementation_timeout_seconds"]
+    expected_effective_timeouts = {
+        "SRT-014": 1800,
+        "SRT-015": 7200,
+        "SRT-016": 1800,
+        "SRT-017": 1800,
+        "SRT-018": 14400,
+        "SRT-019": 7200,
+        "SRT-021": 3600,
+        "SRT-022": 3600,
+        "SRT-023": 7200,
+        "SRT-024": 7200,
+        "SRT-025": 7200,
+        "SRT-026": 21600,
+        "SRT-027": 3600,
+    }
+    assert {
+        task_id: (
+            planned_tasks_by_id[task_id].get(
+                "implementation_timeout_seconds"
+            )
+            or default_timeout
+        )
+        for task_id in expected_effective_timeouts
+    } == expected_effective_timeouts
 
 
 def _write_gate_report(

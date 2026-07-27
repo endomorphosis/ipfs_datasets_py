@@ -171,6 +171,8 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
 
     assert tasks["SRT-016"].depends_on == ["SRT-015"]
     assert tasks["SRT-017"].depends_on == ["SRT-015"]
+    assert "implementation timeout seconds" not in tasks["SRT-016"].metadata
+    assert "implementation timeout seconds" not in tasks["SRT-017"].metadata
 
     srt018 = tasks["SRT-018"]
     assert "ipfs_datasets_py/logic/legal_ir/__init__.py" in srt018.outputs
@@ -178,6 +180,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
         srt018.metadata["preconditions"]
     )
     assert set(srt018.depends_on) == {"SRT-016", "SRT-017"}
+    assert srt018.metadata["implementation timeout seconds"] == "14400"
 
     srt019 = tasks["SRT-019"]
     assert {
@@ -192,6 +195,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
     assert "test_canonical_decision.py" in srt019.validation[0]
     assert "--validate-canonical-decision" in srt019.validation[1]
     assert srt019.depends_on == ["SRT-018"]
+    assert srt019.metadata["implementation timeout seconds"] == "7200"
     assert "explicit declined decision" in srt019.metadata["preconditions"]
 
 
@@ -211,6 +215,7 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
     }
     assert remediation_ids <= set(tasks)
     assert tasks["SRT-021"].depends_on == ["SRT-014"]
+    assert tasks["SRT-021"].metadata["implementation timeout seconds"] == "3600"
     assert {
         task_id: tasks[task_id].depends_on
         for task_id in ("SRT-022", "SRT-023", "SRT-024")
@@ -219,6 +224,8 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
         "SRT-023": ["SRT-021"],
         "SRT-024": ["SRT-021"],
     }
+    assert tasks["SRT-022"].metadata["implementation timeout seconds"] == "3600"
+    assert tasks["SRT-024"].metadata["implementation timeout seconds"] == "7200"
     assert set(tasks["SRT-025"].depends_on) == {
         "SRT-022",
         "SRT-023",
@@ -279,7 +286,8 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
     )
     assert "670 total terminal observations" in tasks["SRT-026"].acceptance
     assert (
-        tasks["SRT-026"].metadata["implementation timeout seconds"] == "14400"
+        tasks["SRT-026"].metadata["implementation timeout seconds"] == "21600"
     )
+    assert tasks["SRT-027"].metadata["implementation timeout seconds"] == "3600"
     assert "--require-authorized" in tasks["SRT-027"].validation[0]
     assert "--validate-artifact" in tasks["SRT-027"].validation[0]
