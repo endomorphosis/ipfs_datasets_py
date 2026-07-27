@@ -589,17 +589,15 @@ def evaluate_srt014_downstream_gate(
     )
 
 
-def evaluate_no_eligible_remediation_manifest_gate(
+def _evaluate_no_eligible_remediation_manifest_gate(
     repo_root: Path,
     *,
-    srt014_gate: Mapping[str, Any] | None = None,
+    srt014_gate: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Validate SRT-021 lineage before replacement evidence can authorize."""
+    """Validate SRT-021 using a trusted freshly recomputed SRT-014 gate."""
 
     repo_root = repo_root.resolve()
-    original = dict(
-        srt014_gate or evaluate_srt014_downstream_gate(repo_root)
-    )
+    original = dict(srt014_gate)
     path = repo_root / NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
     base = {
         "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
@@ -749,6 +747,46 @@ def evaluate_no_eligible_remediation_manifest_gate(
     )
 
 
+def evaluate_no_eligible_remediation_manifest_gate(
+    repo_root: Path,
+    *,
+    srt014_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Bind an optional cached original gate to repository evidence."""
+
+    repo_root = repo_root.resolve()
+    original = evaluate_srt014_downstream_gate(repo_root)
+    if not _supplied_receipt_matches(srt014_gate, original):
+        return _gate_receipt(
+            {
+                "schema": (
+                    NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA
+                ),
+                "status": "invalid",
+                "valid": False,
+                "report_path": str(SRT014_REPORT_RELATIVE_PATH),
+                "srt014_gate_cid": original.get("gate_cid"),
+                "srt014_report_cid": original.get("report_cid"),
+                "srt014_report_raw_cid": original.get("report_raw_cid"),
+                "manifest_path": str(
+                    NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
+                ),
+                "manifest_cid": None,
+                "manifest_raw_cid": None,
+                "reason_codes": [
+                    (
+                        "supplied_srt014_receipt_"
+                        "does_not_match_repo_evidence"
+                    )
+                ],
+            }
+        )
+    return _evaluate_no_eligible_remediation_manifest_gate(
+        repo_root,
+        srt014_gate=original,
+    )
+
+
 def evaluate_replacement_selection_gate(
     repo_root: Path,
 ) -> dict[str, Any]:
@@ -781,28 +819,17 @@ def evaluate_replacement_selection_gate(
     return _gate_receipt(payload)
 
 
-def evaluate_canonical_design_gate(
-    repo_root: Path,
+def _compose_canonical_design_gate(
     *,
-    srt014_gate: Mapping[str, Any] | None = None,
-    remediation_manifest_gate: Mapping[str, Any] | None = None,
-    replacement_gate: Mapping[str, Any] | None = None,
+    srt014_gate: Mapping[str, Any],
+    remediation_manifest_gate: Mapping[str, Any],
+    replacement_gate: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Compose original and replacement evidence into SRT-015 authority."""
+    """Compose receipts already recomputed from one repository snapshot."""
 
-    original = dict(
-        srt014_gate or evaluate_srt014_downstream_gate(repo_root)
-    )
-    manifest = dict(
-        remediation_manifest_gate
-        or evaluate_no_eligible_remediation_manifest_gate(
-            repo_root,
-            srt014_gate=original,
-        )
-    )
-    replacement = dict(
-        replacement_gate or evaluate_replacement_selection_gate(repo_root)
-    )
+    original = dict(srt014_gate)
+    manifest = dict(remediation_manifest_gate)
+    replacement = dict(replacement_gate)
     original_status = str(original.get("status") or "invalid")
     replacement_status = str(replacement.get("status") or "invalid")
     original_identity_valid = _gate_receipt_has_valid_identity(
@@ -932,20 +959,123 @@ def evaluate_canonical_design_gate(
     )
 
 
-def evaluate_canonical_design_gate_artifact(
+def _supplied_receipt_matches(
+    supplied: Mapping[str, Any] | None,
+    expected: Mapping[str, Any],
+) -> bool:
+    if supplied is None:
+        return True
+    try:
+        return dict(supplied) == dict(expected)
+    except (TypeError, ValueError):
+        return False
+
+
+def _canonical_design_receipt_mismatch_gate(
+    *,
+    mismatch_kind: str,
+    original: Mapping[str, Any],
+    manifest: Mapping[str, Any] | None = None,
+    replacement: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return a CID-bound denial without preserving untrusted selections."""
+
+    statuses = {
+        "original": "original_evidence_invalid_or_not_no_eligible",
+        "remediation_manifest": "remediation_manifest_invalid",
+        "replacement": "replacement_invalid",
+    }
+    manifest = dict(manifest or {})
+    replacement = dict(replacement or {})
+    return _gate_receipt(
+        {
+            "schema": CANONICAL_DESIGN_GATE_SCHEMA,
+            "status": statuses[mismatch_kind],
+            "launch_authorized": False,
+            "srt014_gate_cid": original.get("gate_cid"),
+            "srt014_report_cid": original.get("report_cid"),
+            "srt014_selection_outcome": original.get("selection_outcome"),
+            "remediation_manifest_gate_cid": manifest.get("gate_cid"),
+            "remediation_manifest_cid": manifest.get("manifest_cid"),
+            "remediation_manifest_raw_cid": manifest.get("manifest_raw_cid"),
+            "replacement_gate_cid": replacement.get("gate_cid"),
+            "replacement_report_cid": replacement.get("report_cid"),
+            "replacement_selection_outcome": replacement.get(
+                "selection_outcome"
+            ),
+            "selection_basis": None,
+            "selectable_arm_ids": [],
+            "implementation_representative_arm_id": None,
+            "reason_codes": [
+                f"supplied_{mismatch_kind}_receipt_does_not_match_repo_evidence"
+            ],
+            "remediation": (
+                original.get("remediation")
+                if original.get("status") == "remediation_required"
+                else None
+            ),
+        }
+    )
+
+
+def evaluate_canonical_design_gate(
+    repo_root: Path,
+    *,
+    srt014_gate: Mapping[str, Any] | None = None,
+    remediation_manifest_gate: Mapping[str, Any] | None = None,
+    replacement_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Independently bind every optional cached receipt to repository state."""
+
+    repo_root = repo_root.resolve()
+    original = evaluate_srt014_downstream_gate(repo_root)
+    if not _supplied_receipt_matches(srt014_gate, original):
+        return _canonical_design_receipt_mismatch_gate(
+            mismatch_kind="original",
+            original=original,
+        )
+    manifest = _evaluate_no_eligible_remediation_manifest_gate(
+        repo_root,
+        srt014_gate=original,
+    )
+    if not _supplied_receipt_matches(
+        remediation_manifest_gate,
+        manifest,
+    ):
+        return _canonical_design_receipt_mismatch_gate(
+            mismatch_kind="remediation_manifest",
+            original=original,
+            manifest=manifest,
+        )
+    replacement = evaluate_replacement_selection_gate(repo_root)
+    if not _supplied_receipt_matches(replacement_gate, replacement):
+        return _canonical_design_receipt_mismatch_gate(
+            mismatch_kind="replacement",
+            original=original,
+            manifest=manifest,
+            replacement=replacement,
+        )
+    return _compose_canonical_design_gate(
+        srt014_gate=original,
+        remediation_manifest_gate=manifest,
+        replacement_gate=replacement,
+    )
+
+
+def _evaluate_canonical_design_gate_artifact(
     repo_root: Path,
     *,
     artifact_path: Path | None = None,
-    canonical_gate: Mapping[str, Any] | None = None,
+    canonical_gate: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Require SRT-027's JSON output to equal the recomputed gate receipt."""
+    """Validate an artifact against a trusted freshly recomputed gate."""
 
     repo_root = repo_root.resolve()
     path = artifact_path or CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH
     path = path if path.is_absolute() else repo_root / path
     path = path.resolve()
     relative_path = _repo_relative(repo_root, path)
-    expected = dict(canonical_gate or evaluate_canonical_design_gate(repo_root))
+    expected = dict(canonical_gate)
     base = {
         "schema": CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA,
         "artifact_path": relative_path,
@@ -1015,6 +1145,45 @@ def evaluate_canonical_design_gate_artifact(
                 "canonical_design_gate_artifact_matches_recomputed_gate"
             ],
         }
+    )
+
+
+def evaluate_canonical_design_gate_artifact(
+    repo_root: Path,
+    *,
+    artifact_path: Path | None = None,
+    canonical_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Bind an optional cached gate to repository evidence before validation."""
+
+    repo_root = repo_root.resolve()
+    expected = evaluate_canonical_design_gate(repo_root)
+    if not _supplied_receipt_matches(canonical_gate, expected):
+        path = artifact_path or CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH
+        path = path if path.is_absolute() else repo_root / path
+        relative_path = _repo_relative(repo_root, path.resolve())
+        return _gate_receipt(
+            {
+                "schema": (
+                    CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA
+                ),
+                "status": "invalid",
+                "valid": False,
+                "artifact_path": relative_path,
+                "artifact_raw_cid": None,
+                "canonical_design_gate_cid": expected.get("gate_cid"),
+                "reason_codes": [
+                    (
+                        "supplied_canonical_design_gate_receipt_"
+                        "does_not_match_repo_evidence"
+                    )
+                ],
+            }
+        )
+    return _evaluate_canonical_design_gate_artifact(
+        repo_root,
+        artifact_path=artifact_path,
+        canonical_gate=expected,
     )
 
 
@@ -1395,14 +1564,13 @@ def build_taskboard_bundle_index(
         ]
     srt014_gate = evaluate_srt014_downstream_gate(repo_root)
     remediation_manifest_gate = (
-        evaluate_no_eligible_remediation_manifest_gate(
+        _evaluate_no_eligible_remediation_manifest_gate(
             repo_root,
             srt014_gate=srt014_gate,
         )
     )
     replacement_gate = evaluate_replacement_selection_gate(repo_root)
-    canonical_design_gate = evaluate_canonical_design_gate(
-        repo_root,
+    canonical_design_gate = _compose_canonical_design_gate(
         srt014_gate=srt014_gate,
         remediation_manifest_gate=remediation_manifest_gate,
         replacement_gate=replacement_gate,
@@ -1969,7 +2137,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         gate = evaluate_canonical_design_gate(repo_root)
         artifact_validation = None
         if args.validate_artifact is not None:
-            artifact_validation = evaluate_canonical_design_gate_artifact(
+            artifact_validation = _evaluate_canonical_design_gate_artifact(
                 repo_root,
                 artifact_path=args.validate_artifact,
                 canonical_gate=gate,

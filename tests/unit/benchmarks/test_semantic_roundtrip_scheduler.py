@@ -199,15 +199,100 @@ def _test_gate_receipt(payload: dict[str, object]) -> dict[str, object]:
     return receipt
 
 
-def _valid_remediation_manifest_gate() -> dict[str, object]:
+def _valid_remediation_manifest_gate(
+    original_gate: dict[str, object],
+) -> dict[str, object]:
     return _test_gate_receipt({
         "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
         "status": "valid",
         "valid": True,
+        "report_path": str(SRT014_REPORT_RELATIVE_PATH),
+        "srt014_gate_cid": original_gate["gate_cid"],
+        "srt014_report_cid": original_gate.get("report_cid"),
+        "srt014_report_raw_cid": original_gate.get("report_raw_cid"),
+        "manifest_path": str(
+            NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
+        ),
         "manifest_cid": cid_for_dag_json({"kind": "remediation-manifest"}),
         "manifest_raw_cid": cid_for_bytes(b"remediation-manifest"),
         "reason_codes": ["no_eligible_remediation_manifest_valid"],
     })
+
+
+def _repo_bound_canonical_gate_receipts() -> tuple[
+    dict[str, object],
+    dict[str, object],
+    dict[str, object],
+]:
+    original = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "report_path": str(SRT014_REPORT_RELATIVE_PATH),
+        "report_cid": cid_for_dag_json({"report": "original"}),
+        "report_raw_cid": cid_for_bytes(b"original-report"),
+        "selection_outcome": "no_eligible_composition",
+        "selection_basis": None,
+        "selectable_arm_ids": [],
+        "implementation_representative_arm_id": None,
+        "tie_bound": 30,
+        "reason_codes": ["srt014_no_eligible_composition"],
+        "remediation": {"arm_count": 30, "eligible_arm_count": 0},
+    })
+    manifest = _valid_remediation_manifest_gate(original)
+    replacement = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
+        "status": "authorized",
+        "launch_authorized": True,
+        "report_path": str(REPLACEMENT_REPORT_RELATIVE_PATH),
+        "report_cid": cid_for_dag_json({"report": "replacement"}),
+        "report_raw_cid": cid_for_bytes(b"replacement-report"),
+        "report_role": "replacement_full_matrix",
+        "selection_outcome": "selected",
+        "selection_basis": "replacement_unique_winner",
+        "selectable_arm_ids": ["arm-03"],
+        "implementation_representative_arm_id": "arm-03",
+        "tie_bound": 30,
+        "reason_codes": ["replacement_unique_full_coverage_winner"],
+        "remediation": None,
+    })
+    return original, manifest, replacement
+
+
+def _resign_gate(
+    receipt: dict[str, object],
+    **updates: object,
+) -> dict[str, object]:
+    payload = {
+        key: value
+        for key, value in receipt.items()
+        if key not in {"gate_cid", "gate_cid_codec", "gate_cid_scope"}
+    }
+    payload.update(updates)
+    return _test_gate_receipt(payload)
+
+
+def _patch_repo_bound_canonical_gate_receipts(
+    monkeypatch: pytest.MonkeyPatch,
+    original: dict[str, object],
+    manifest: dict[str, object],
+    replacement: dict[str, object],
+) -> None:
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_srt014_downstream_gate",
+        lambda _repo_root: dict(original),
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "_evaluate_no_eligible_remediation_manifest_gate",
+        lambda _repo_root, **_kwargs: dict(manifest),
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_replacement_selection_gate",
+        lambda _repo_root: dict(replacement),
+    )
 
 
 def _write_remediation_manifest(
@@ -360,26 +445,28 @@ def test_authorized_gate_keeps_srt015_and_descendants_schedulable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     config = load_scheduler_config(DEFAULT_CONFIG_PATH)
-    original_gate = {
+    original_gate = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
         "status": "remediation_required",
         "launch_authorized": False,
-        "gate_cid": "bafyreiarmediation",
         "reason_codes": ["srt014_no_eligible_composition"],
-    }
-    replacement_gate = {
+    })
+    manifest_gate = _valid_remediation_manifest_gate(original_gate)
+    replacement_gate = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
         "status": "authorized",
         "launch_authorized": True,
-        "gate_cid": "bafyreireplacement",
+        "selection_outcome": "selected",
+        "selection_basis": "replacement_unique_winner",
+        "selectable_arm_ids": ["arm-03"],
+        "implementation_representative_arm_id": "arm-03",
         "reason_codes": ["replacement_unique_full_coverage_winner"],
-    }
-    canonical_gate = {
-        "status": "authorized",
-        "launch_authorized": True,
-        "gate_cid": "bafyreicanonical",
-        "reason_codes": [
-            "replacement_report_independently_authorizes_selection"
-        ],
-    }
+    })
+    canonical_gate = scheduler_module._compose_canonical_design_gate(
+        srt014_gate=original_gate,
+        remediation_manifest_gate=manifest_gate,
+        replacement_gate=replacement_gate,
+    )
     monkeypatch.setattr(
         scheduler_module,
         "evaluate_srt014_downstream_gate",
@@ -392,8 +479,8 @@ def test_authorized_gate_keeps_srt015_and_descendants_schedulable(
     )
     monkeypatch.setattr(
         scheduler_module,
-        "evaluate_canonical_design_gate",
-        lambda _repo_root, **_kwargs: canonical_gate,
+        "_evaluate_no_eligible_remediation_manifest_gate",
+        lambda _repo_root, **_kwargs: manifest_gate,
     )
 
     index = build_taskboard_bundle_index(
@@ -547,10 +634,9 @@ def test_replacement_missing_invalid_or_no_eligible_cannot_authorize_srt015(
         ),
     })
 
-    gate = evaluate_canonical_design_gate(
-        tmp_path,
+    gate = scheduler_module._compose_canonical_design_gate(
         srt014_gate=original,
-        remediation_manifest_gate=_valid_remediation_manifest_gate(),
+        remediation_manifest_gate=_valid_remediation_manifest_gate(original),
         replacement_gate=replacement,
     )
 
@@ -592,10 +678,9 @@ def test_only_selectable_replacement_evidence_authorizes_srt015(
         "reason_codes": ["replacement_full_coverage_selection"],
     })
 
-    gate = evaluate_canonical_design_gate(
-        tmp_path,
+    gate = scheduler_module._compose_canonical_design_gate(
         srt014_gate=original,
-        remediation_manifest_gate=_valid_remediation_manifest_gate(),
+        remediation_manifest_gate=_valid_remediation_manifest_gate(original),
         replacement_gate=replacement,
     )
 
@@ -624,7 +709,7 @@ def test_remediation_manifest_is_exactly_cid_and_lineage_bound(
         },
     })
 
-    missing = evaluate_no_eligible_remediation_manifest_gate(
+    missing = scheduler_module._evaluate_no_eligible_remediation_manifest_gate(
         tmp_path,
         srt014_gate=original,
     )
@@ -632,7 +717,7 @@ def test_remediation_manifest_is_exactly_cid_and_lineage_bound(
     assert missing["valid"] is False
 
     path, payload = _write_remediation_manifest(tmp_path, original)
-    valid = evaluate_no_eligible_remediation_manifest_gate(
+    valid = scheduler_module._evaluate_no_eligible_remediation_manifest_gate(
         tmp_path,
         srt014_gate=original,
     )
@@ -653,13 +738,44 @@ def test_remediation_manifest_is_exactly_cid_and_lineage_bound(
         json.dumps(forged, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    invalid = evaluate_no_eligible_remediation_manifest_gate(
+    invalid = scheduler_module._evaluate_no_eligible_remediation_manifest_gate(
         tmp_path,
         srt014_gate=original,
     )
     assert invalid["status"] == "invalid"
     assert invalid["valid"] is False
     assert "no_eligible_remediation_manifest_invalid" in invalid["reason_codes"]
+
+
+def test_manifest_gate_rejects_cached_original_that_differs_from_repo(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original, _manifest, _replacement = (
+        _repo_bound_canonical_gate_receipts()
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_srt014_downstream_gate",
+        lambda _repo_root: dict(original),
+    )
+    contradictory = _resign_gate(
+        original,
+        launch_authorized=True,
+        selection_outcome="selected",
+    )
+
+    denied = evaluate_no_eligible_remediation_manifest_gate(
+        tmp_path,
+        srt014_gate=contradictory,
+    )
+
+    assert denied["status"] == "invalid"
+    assert denied["valid"] is False
+    assert denied["reason_codes"] == [
+        "supplied_srt014_receipt_does_not_match_repo_evidence"
+    ]
+    assert denied["srt014_gate_cid"] == original["gate_cid"]
 
 
 def test_selected_replacement_cannot_bypass_missing_or_invalid_manifest(
@@ -705,8 +821,7 @@ def test_selected_replacement_cannot_bypass_missing_or_invalid_manifest(
             "remediation_manifest_invalid",
         ),
     ):
-        gate = evaluate_canonical_design_gate(
-            tmp_path,
+        gate = scheduler_module._compose_canonical_design_gate(
             srt014_gate=original,
             remediation_manifest_gate=manifest,
             replacement_gate=replacement,
@@ -714,6 +829,146 @@ def test_selected_replacement_cannot_bypass_missing_or_invalid_manifest(
         assert gate["status"] == expected_status
         assert gate["launch_authorized"] is False
         assert gate["selectable_arm_ids"] == []
+
+
+def test_cross_original_manifest_receipt_cannot_authorize(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original, manifest, replacement = _repo_bound_canonical_gate_receipts()
+    _patch_repo_bound_canonical_gate_receipts(
+        monkeypatch,
+        original,
+        manifest,
+        replacement,
+    )
+    exact = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=original,
+        remediation_manifest_gate=manifest,
+        replacement_gate=replacement,
+    )
+    assert exact["status"] == "authorized"
+    assert exact["launch_authorized"] is True
+
+    cross_original = _resign_gate(
+        manifest,
+        srt014_gate_cid=cid_for_dag_json({"gate": "another-original"}),
+        srt014_report_cid=cid_for_dag_json(
+            {"report": "another-original"}
+        ),
+        srt014_report_raw_cid=cid_for_bytes(b"another-original"),
+    )
+    denied = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=original,
+        remediation_manifest_gate=cross_original,
+        replacement_gate=replacement,
+    )
+
+    assert denied["status"] == "remediation_manifest_invalid"
+    assert denied["launch_authorized"] is False
+    assert denied["selectable_arm_ids"] == []
+    assert denied["reason_codes"] == [
+        (
+            "supplied_remediation_manifest_receipt_"
+            "does_not_match_repo_evidence"
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    "contradiction",
+    (
+        {"launch_authorized": True},
+        {
+            "selection_outcome": "selected",
+            "selection_basis": "srt014_unique_winner",
+            "selectable_arm_ids": ["arm-03"],
+            "implementation_representative_arm_id": "arm-03",
+        },
+    ),
+)
+def test_contradictory_original_receipt_cannot_authorize(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    contradiction: dict[str, object],
+) -> None:
+    original, manifest, replacement = _repo_bound_canonical_gate_receipts()
+    _patch_repo_bound_canonical_gate_receipts(
+        monkeypatch,
+        original,
+        manifest,
+        replacement,
+    )
+    contradictory = _resign_gate(original, **contradiction)
+
+    denied = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=contradictory,
+        remediation_manifest_gate=manifest,
+        replacement_gate=replacement,
+    )
+
+    assert denied["status"] == (
+        "original_evidence_invalid_or_not_no_eligible"
+    )
+    assert denied["launch_authorized"] is False
+    assert denied["selectable_arm_ids"] == []
+    assert denied["reason_codes"] == [
+        "supplied_original_receipt_does_not_match_repo_evidence"
+    ]
+
+
+@pytest.mark.parametrize(
+    "forgery",
+    (
+        {
+            "report_cid": "not-a-cid",
+            "report_raw_cid": "also-not-a-cid",
+        },
+        {
+            "selection_outcome": "selected",
+            "selection_basis": "replacement_unique_winner",
+            "selectable_arm_ids": [],
+            "implementation_representative_arm_id": None,
+        },
+        {
+            "selection_outcome": "no_eligible_composition",
+            "selection_basis": "replacement_unique_winner",
+            "selectable_arm_ids": ["unknown-arm"],
+            "implementation_representative_arm_id": "different-arm",
+        },
+    ),
+)
+def test_forged_authorized_replacement_receipt_cannot_authorize(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    forgery: dict[str, object],
+) -> None:
+    original, manifest, replacement = _repo_bound_canonical_gate_receipts()
+    _patch_repo_bound_canonical_gate_receipts(
+        monkeypatch,
+        original,
+        manifest,
+        replacement,
+    )
+    forged = _resign_gate(replacement, **forgery)
+
+    denied = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=original,
+        remediation_manifest_gate=manifest,
+        replacement_gate=forged,
+    )
+
+    assert denied["status"] == "replacement_invalid"
+    assert denied["launch_authorized"] is False
+    assert denied["selectable_arm_ids"] == []
+    assert denied["implementation_representative_arm_id"] is None
+    assert denied["reason_codes"] == [
+        "supplied_replacement_receipt_does_not_match_repo_evidence"
+    ]
 
 
 def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
@@ -737,7 +992,7 @@ def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
         ],
     })
 
-    missing = evaluate_canonical_design_gate_artifact(
+    missing = scheduler_module._evaluate_canonical_design_gate_artifact(
         tmp_path,
         canonical_gate=expected,
     )
@@ -750,7 +1005,7 @@ def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
         json.dumps(expected, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    valid = evaluate_canonical_design_gate_artifact(
+    valid = scheduler_module._evaluate_canonical_design_gate_artifact(
         tmp_path,
         canonical_gate=expected,
     )
@@ -766,7 +1021,7 @@ def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
         json.dumps(forged, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    invalid = evaluate_canonical_design_gate_artifact(
+    invalid = scheduler_module._evaluate_canonical_design_gate_artifact(
         tmp_path,
         canonical_gate=expected,
     )
@@ -775,6 +1030,49 @@ def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
     assert "canonical_design_gate_artifact_invalid" in (
         invalid["reason_codes"]
     )
+
+
+def test_canonical_gate_artifact_rejects_forged_cached_expected_gate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original, manifest, replacement = _repo_bound_canonical_gate_receipts()
+    expected = scheduler_module._compose_canonical_design_gate(
+        srt014_gate=original,
+        remediation_manifest_gate=manifest,
+        replacement_gate=replacement,
+    )
+    forged = _resign_gate(
+        expected,
+        selectable_arm_ids=["forged-arm"],
+        implementation_representative_arm_id="forged-arm",
+    )
+    path = tmp_path / CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(forged, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate",
+        lambda _repo_root: expected,
+    )
+
+    denied = evaluate_canonical_design_gate_artifact(
+        tmp_path,
+        canonical_gate=forged,
+    )
+
+    assert denied["status"] == "invalid"
+    assert denied["valid"] is False
+    assert denied["canonical_design_gate_cid"] == expected["gate_cid"]
+    assert denied["reason_codes"] == [
+        (
+            "supplied_canonical_design_gate_receipt_"
+            "does_not_match_repo_evidence"
+        )
+    ]
 
 
 @pytest.mark.parametrize(("valid", "expected_returncode"), ((True, 0), (False, 1)))
@@ -821,7 +1119,7 @@ def test_gate_cli_requires_exact_artifact_when_requested(
     )
     monkeypatch.setattr(
         scheduler_module,
-        "evaluate_canonical_design_gate_artifact",
+        "_evaluate_canonical_design_gate_artifact",
         lambda _repo_root, **_kwargs: {
             "status": "valid" if artifact_valid else "invalid",
             "valid": artifact_valid,
@@ -909,24 +1207,18 @@ def test_no_eligible_makes_only_remediation_manifest_ready(
         )
     board = tmp_path / "remediation.todo.md"
     board.write_text("\n".join(sections), encoding="utf-8")
-    original_gate = {
+    original_gate = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
         "status": "remediation_required",
         "launch_authorized": False,
-        "gate_cid": "bafyrei-remediation",
         "reason_codes": ["srt014_no_eligible_composition"],
-    }
-    replacement_gate = {
+    })
+    replacement_gate = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
         "status": "pending",
         "launch_authorized": False,
-        "gate_cid": "bafyrei-replacement-pending",
         "reason_codes": ["replacement_report_missing"],
-    }
-    canonical_gate = {
-        "status": "replacement_pending",
-        "launch_authorized": False,
-        "gate_cid": "bafyrei-canonical-pending",
-        "reason_codes": ["replacement_report_missing"],
-    }
+    })
     monkeypatch.setattr(
         scheduler_module,
         "evaluate_srt014_downstream_gate",
@@ -936,11 +1228,6 @@ def test_no_eligible_makes_only_remediation_manifest_ready(
         scheduler_module,
         "evaluate_replacement_selection_gate",
         lambda _repo_root: replacement_gate,
-    )
-    monkeypatch.setattr(
-        scheduler_module,
-        "evaluate_canonical_design_gate",
-        lambda _repo_root, **_kwargs: canonical_gate,
     )
     index_path = tmp_path / "bundles" / "index.json"
 
