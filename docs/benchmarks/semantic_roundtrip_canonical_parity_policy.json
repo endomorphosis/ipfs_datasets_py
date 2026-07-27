@@ -1,0 +1,48 @@
+{
+  "aggregation_order": "repeats_within_case_then_unweighted_macro_average_across_cases",
+  "bootstrap_method": "seeded_percentile_case_cluster_bootstrap",
+  "bootstrap_samples": 10000,
+  "bootstrap_seed": 17291,
+  "comparison": "canonical_minus_selected",
+  "confidence_level": 0.95,
+  "decision_rule": "upper_confidence_bound_lte_noninferiority_margin",
+  "eligibility_gates": [
+    "source_copy_exclusion",
+    "polarity_preservation",
+    "full_coverage"
+  ],
+  "evidence": {
+    "canonical_design_gate_cid": "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq",
+    "remediation_manifest_cid": "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a",
+    "replacement_gate_cid": "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq",
+    "replacement_report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga",
+    "srt014_gate_cid": "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq",
+    "srt014_report_cid": "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
+  },
+  "failure_loss": 1.0,
+  "frozen_before_parity_run": true,
+  "frozen_from_report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga",
+  "frozen_from_report_cids": [
+    "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq",
+    "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+  ],
+  "interface": "CanonicalRoundTripParityPolicy@1",
+  "loss_direction": "lower_is_better",
+  "metric": "end_to_end_loss",
+  "noninferiority_margin": 0.03,
+  "policy_cid": "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a",
+  "policy_cid_codec": "dag-json",
+  "policy_cid_scope": "document_without_policy_cid",
+  "resampling_unit": "case_after_within_case_repeat_aggregation",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1",
+  "selection": {
+    "implementation_representative_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "outcome": "exact_tie",
+    "representative_semantically_superior": false,
+    "selectable_arm_ids": [
+      "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "typed_deontic__no_guidance__selective__not_applicable__deterministic"
+    ],
+    "selection_basis": "replacement_bounded_tie_policy"
+  }
+}
