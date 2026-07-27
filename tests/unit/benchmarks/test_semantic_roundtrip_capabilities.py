@@ -261,6 +261,34 @@ def _leanstral_get(url: str, timeout: float, max_bytes: int) -> Any:
     raise AssertionError(url)
 
 
+def _strict_route_contract_validator(
+    *,
+    model_name: object,
+    route_binding: object,
+    generation_options: object,
+) -> dict[str, object]:
+    expected_binding = {
+        "resolved_provider_name": capabilities.LEANSTRAL_PROVIDER,
+        "resolved_model_name": capabilities.LEANSTRAL_MODEL,
+        "service_endpoint": capabilities.LEANSTRAL_ENDPOINT,
+        "routing_backend": capabilities.LEANSTRAL_BACKEND,
+    }
+    contracts = capabilities._symai_route_generation_contracts()
+    if (
+        model_name != capabilities.SYMAI_MODEL_ALIAS
+        or route_binding != expected_binding
+        or not any(
+            generation_options == expected
+            for expected in contracts.values()
+        )
+    ):
+        raise RuntimeError("route contract drifted")
+    assert isinstance(generation_options, dict)
+    return capabilities._normalized_symai_generation_options(
+        generation_options
+    )
+
+
 def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> None:
     config = capabilities.ProbeConfig(repository_root=tmp_path)
     direct = capabilities.probe_leanstral_direct(
@@ -279,6 +307,7 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
         direct,
         version_getter=lambda name: capabilities.SYMAI_VERSION,
         module_finder=lambda name: spec,
+        route_contract_validator=_strict_route_contract_validator,
     )
     assert symai.status == "available"
     assert symai.effective_identity
@@ -287,6 +316,8 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
         direct.effective_identity["model"]
     )
     assert symai.effective_identity["independent_model"] is False
+    assert symai.checks["route_contract_validation_passed"] is True
+    assert symai.checks["model_inference_performed"] is False
 
     inventory = _injected_inventory(
         {
@@ -301,6 +332,104 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
         "direct_openai_compatible_http"
     )
     assert inventory.bindings["symai_leanstral"]["route"] == "symai_router"
+
+
+def test_symai_route_rejects_a_permissive_contract_validator(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "router.py"
+    source.write_text("# route\n", encoding="utf-8")
+    spec = SimpleNamespace(origin=str(source))
+
+    def permissive(**kwargs: object) -> dict[str, object]:
+        value = kwargs["generation_options"]
+        assert isinstance(value, dict)
+        return capabilities._normalized_symai_generation_options(value)
+
+    record = capabilities.probe_symai_leanstral_route(
+        _direct(),
+        version_getter=lambda name: capabilities.SYMAI_VERSION,
+        module_finder=lambda name: spec,
+        route_contract_validator=permissive,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["canonical_request_contract_accepted"] is True
+    assert record.checks["realization_request_contract_accepted"] is True
+    assert record.checks["model_alias_mismatch_rejected"] is False
+    assert record.checks["route_binding_mismatch_rejected"] is False
+    assert record.checks["route_contract_validation_passed"] is False
+    assert record.checks["live_model_request_performed"] is False
+    assert record.reason
+    assert "model_alias_mismatch_rejected" in record.reason
+
+
+def test_symai_route_is_not_available_from_identity_probes_alone(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "router.py"
+    source.write_text("# route\n", encoding="utf-8")
+    spec = SimpleNamespace(origin=str(source))
+
+    def missing_validator() -> capabilities.RouteContractValidator:
+        raise RuntimeError("validator absent")
+
+    monkeypatch.setattr(
+        capabilities,
+        "_load_symai_route_contract_validator",
+        missing_validator,
+    )
+    record = capabilities.probe_symai_leanstral_route(
+        _direct(),
+        version_getter=lambda name: capabilities.SYMAI_VERSION,
+        module_finder=lambda name: spec,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["symbolicai_version_match"] is True
+    assert record.checks["engine_present"] is True
+    assert record.checks["router_present"] is True
+    assert record.checks["same_effective_model"] is True
+    assert record.checks["route_contract_validator_present"] is False
+    assert record.checks["route_contract_validation_passed"] is False
+    assert record.reason == (
+        "SyMAI side-effect-free route-contract validator is unavailable"
+    )
+
+
+def test_symai_route_reports_the_exact_rejected_good_contract(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "router.py"
+    source.write_text("# route\n", encoding="utf-8")
+    spec = SimpleNamespace(origin=str(source))
+
+    def rejects_realization(**kwargs: object) -> dict[str, object]:
+        options = kwargs["generation_options"]
+        assert isinstance(options, dict)
+        response_format = options["response_format"]
+        assert isinstance(response_format, dict)
+        json_schema = response_format["json_schema"]
+        assert isinstance(json_schema, dict)
+        if json_schema["name"] == capabilities.SYMAI_REALIZATION_SCHEMA_NAME:
+            raise RuntimeError("realization route contract rejected")
+        return _strict_route_contract_validator(**kwargs)
+
+    record = capabilities.probe_symai_leanstral_route(
+        _direct(),
+        version_getter=lambda name: capabilities.SYMAI_VERSION,
+        module_finder=lambda name: spec,
+        route_contract_validator=rejects_realization,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["canonical_request_contract_accepted"] is True
+    assert record.checks["realization_request_contract_accepted"] is False
+    assert record.checks["realization_schema_exact_match"] is False
+    assert record.checks["realization_settings_exact_match"] is False
+    assert record.reason
+    assert "realization_request_contract_accepted" in record.reason
 
 
 def test_leanstral_capacity_drift_is_unavailable() -> None:
