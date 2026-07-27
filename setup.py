@@ -227,6 +227,7 @@ setup(
             "processors/provekit_backend/build.sh",
             "logic/zkp/provekit/circuits/*/Nargo.toml",
             "logic/zkp/provekit/circuits/*/src/*.nr",
+            "logic/legal_ir/schemas/*.json",
         ],
     },
     include_package_data=True,

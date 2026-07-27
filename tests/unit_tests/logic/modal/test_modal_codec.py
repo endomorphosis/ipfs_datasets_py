@@ -45426,7 +45426,7 @@ def test_decompiler_emits_typed_status_detail_legal_ir_slots() -> None:
     )
 
 
-def test_codec_source_copy_loss_ignores_structurally_excluded_source_spans() -> None:
+def test_codec_source_copy_loss_detects_structurally_excluded_source_spans() -> None:
     codec = DeterministicModalLogicCodec(ModalLogicCodecConfig(embedding_dimensions=8))
     result = codec.encode(
         (
@@ -45440,9 +45440,12 @@ def test_codec_source_copy_loss_ignores_structurally_excluded_source_spans() -> 
     )
 
     assert result.decoded_modal_text.reconstruction_similarity == 1.0
-    assert result.losses["source_copy_loss"] == 0.0
-    assert result.losses["source_copy_reward_hack_penalty"] == 0.0
-    assert result.metadata["modal_decompiler_source_span_copy_ratio"] == 0.0
+    assert result.losses["source_copy_loss"] > 0.0
+    assert result.losses["source_copy_reward_hack_penalty"] > 0.0
+    assert (
+        result.metadata["modal_decompiler_source_span_copy_ratio"]
+        == result.losses["source_copy_loss"]
+    )
 
 
 def test_decompiler_reconstructs_packet_276_authority_and_grant_atoms() -> None:

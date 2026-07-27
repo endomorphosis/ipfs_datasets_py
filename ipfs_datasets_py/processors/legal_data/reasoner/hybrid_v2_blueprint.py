@@ -1822,6 +1822,48 @@ def _render_anchor_text(text: str) -> str:
     return _norm_space(str(text or "").replace("_", " "))
 
 
+def _natural_condition_clause(
+    cond: ConditionNodeV2,
+    *,
+    markers: Tuple[str, ...],
+) -> Optional[Tuple[str, str]]:
+    """Return a readable marker/tail pair for a simple parsed CNL atom."""
+    if (
+        cond.op != "atom"
+        or cond.atom is None
+        or cond.atom.args
+        or cond.children
+        or cond.var is not None
+        or cond.var_type is not None
+    ):
+        return None
+
+    predicate = cond.atom.pred
+    for marker in markers:
+        prefix = marker + "_"
+        if not predicate.startswith(prefix):
+            continue
+        tail = _render_anchor_text(predicate[len(prefix) :])
+        # Use the readable representation only when the parser reconstructs
+        # this simple predicate exactly. Composite nodes remain readable via
+        # ``_render_condition`` but are not guaranteed to replay losslessly.
+        if tail and f"{marker}_{_norm_token(tail)}" == predicate:
+            return marker, tail
+    return None
+
+
+def _is_unconditional_activation(cond: ConditionNodeV2) -> bool:
+    return (
+        cond.op == "atom"
+        and cond.atom is not None
+        and cond.atom.pred == "true"
+        and not cond.atom.args
+        and not cond.children
+        and cond.var is None
+        and cond.var_type is None
+    )
+
+
 def generate_cnl_from_ir(
     norm_ref: str,
     ir: LegalIRV2,
@@ -1880,12 +1922,43 @@ def generate_cnl_from_ir(
             rel_word = _lexicon_lookup(overrides, f"temporal:{temporal.relation.value}", temporal.relation.value)
             phrase += f" {rel_word} {temporal.expr.start}"
 
-    if norm.activation.atom is not None and norm.activation.atom.pred != "true":
-        if_word = _lexicon_lookup(overrides, "clause:if", "if")
-        phrase += f" {if_word} {norm.activation.atom.pred}"
+    if not _is_unconditional_activation(norm.activation):
+        activation_clause = _natural_condition_clause(
+            norm.activation,
+            markers=("if", "when"),
+        )
+        if activation_clause is None:
+            activation_marker = "if"
+            activation_tail = _render_condition(norm.activation)
+        else:
+            activation_marker, activation_tail = activation_clause
+        activation_word = _lexicon_lookup(
+            overrides,
+            f"clause:{activation_marker}",
+            activation_marker,
+        )
+        phrase += f" {activation_word} {activation_tail}"
     if norm.exceptions:
-        unless_word = _lexicon_lookup(overrides, "clause:unless", "unless")
-        phrase += f" {unless_word} {_render_condition(norm.exceptions[0])}"
+        exception_clause = None
+        if len(norm.exceptions) == 1:
+            exception_clause = _natural_condition_clause(
+                norm.exceptions[0],
+                markers=("unless", "except"),
+            )
+        if exception_clause is None:
+            exception_marker = "unless"
+            exception_tail = " or ".join(
+                _render_condition(condition)
+                for condition in norm.exceptions
+            )
+        else:
+            exception_marker, exception_tail = exception_clause
+        exception_word = _lexicon_lookup(
+            overrides,
+            f"clause:{exception_marker}",
+            exception_marker,
+        )
+        phrase += f" {exception_word} {exception_tail}"
 
     return phrase.strip() + "."
 
