@@ -1,4 +1,5 @@
 {
+  "board_namespace": "semantic-roundtrip-plateau-break-v1",
   "causal_contract": {
     "advisory_diagnostics_are_causal_guidance": false,
     "missing": [
@@ -194,5 +195,16 @@
     "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
   },
   "status": "unavailable_no_reviewed_causal_l1_adapter",
-  "qualification_cid": "baguqeerazzwzs54m7tolyu5g3he5km3fdr7eateaibpuifa2zkyekd6hek5q"
+  "task_id": "PLAT-060",
+  "teacher_residual": {
+    "evaluation_status": "not_measured",
+    "interface": "CausalAutoencoderTeacherResidual@1",
+    "production_default": false,
+    "promotion_requires": "reviewed_causal_l1_adapter",
+    "role": "teacher_residual_only",
+    "schedule_for_semantic_scoring": false,
+    "scored_support": "terminal_unsupported",
+    "task_id": "PLAT-060"
+  },
+  "qualification_cid": "baguqeerak52zxj73qvhrvcgtu2ifcevean76nrlecnteshfvkau2vebillvq"
 }
