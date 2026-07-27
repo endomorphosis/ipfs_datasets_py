@@ -1963,6 +1963,7 @@ def prepare_scheduler_inputs(
         "schema": "ipfs_datasets_py.benchmarks.semantic_roundtrip.scheduler_preparation@1",
         "generated_at": _utc_now(),
         "repo_root": str(repo_root),
+        "config_path": str(config_path.resolve()),
         "taskboard_path": str(taskboard),
         "taskboard_raw_cid": cid_for_bytes(taskboard.read_bytes()),
         "taskboard_cid_codec": "raw",
@@ -2030,6 +2031,29 @@ def build_bundle_supervisor_command(
     lanes = int(max_lanes or config.get("max_lanes") or 1)
     if lanes < 1:
         raise SchedulerPreparationError("max_lanes must be positive")
+    config_path = Path(
+        str(preparation.get("config_path") or DEFAULT_CONFIG_PATH)
+    ).resolve()
+    taskboard_path = Path(
+        str(
+            preparation.get("taskboard_path")
+            or resolve_taskboard(repo_root, config, None)
+        )
+    ).resolve()
+    refresh_command = [
+        sys.executable,
+        "-m",
+        "benchmarks.semantic_roundtrip_scheduler",
+        "prepare",
+        "--repo-root",
+        str(repo_root),
+        "--config-path",
+        str(config_path),
+        "--runtime-root",
+        str(runtime_root),
+        "--taskboard-path",
+        str(taskboard_path),
+    ]
     command = [
         sys.executable,
         "-m",
@@ -2052,6 +2076,10 @@ def build_bundle_supervisor_command(
         str(runtime_root / "coordination.duckdb"),
         "--provider-capacity-path",
         str(preparation["provider_capacity_path"]),
+        "--bundle-index-refresh-command",
+        shlex.join(refresh_command),
+        "--bundle-index-refresh-timeout-seconds",
+        str(config.get("bundle_index_refresh_timeout_seconds") or 60),
         "--task-prefix",
         str(config.get("task_prefix") or DEFAULT_TASK_PREFIX),
         "--max-lanes",

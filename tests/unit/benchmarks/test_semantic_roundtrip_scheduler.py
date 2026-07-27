@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 from pathlib import Path
 
 import pytest
@@ -1971,6 +1972,12 @@ def test_launch_command_uses_dynamic_scheduler_without_unsafe_once(
     config = load_scheduler_config(DEFAULT_CONFIG_PATH)
     preparation = {
         "repo_root": str(REPO_ROOT),
+        "config_path": str(DEFAULT_CONFIG_PATH),
+        "taskboard_path": str(
+            REPO_ROOT
+            / "docs/implementation/plans/"
+            "semantic_roundtrip_compiler.taskboard.todo.md"
+        ),
         "runtime_root": str(tmp_path),
         "bundle_index_path": str(tmp_path / "bundles" / "index.json"),
         "provider_capacity_path": str(tmp_path / "provider_capacity.json"),
@@ -1991,6 +1998,29 @@ def test_launch_command_uses_dynamic_scheduler_without_unsafe_once(
     assert "--start" in command
     assert "--implement" in command
     assert "--provider-capacity-path" in command
+    assert "--bundle-index-refresh-command" in command
+    refresh_command = shlex.split(
+        command[command.index("--bundle-index-refresh-command") + 1]
+    )
+    assert refresh_command[:4] == [
+        command[0],
+        "-m",
+        "benchmarks.semantic_roundtrip_scheduler",
+        "prepare",
+    ]
+    assert "--bundle-index-path" not in refresh_command
+    assert refresh_command[refresh_command.index("--repo-root") + 1] == str(
+        REPO_ROOT
+    )
+    assert refresh_command[refresh_command.index("--runtime-root") + 1] == str(
+        tmp_path.resolve()
+    )
+    assert refresh_command[
+        refresh_command.index("--taskboard-path") + 1
+    ] == preparation["taskboard_path"]
+    assert command[
+        command.index("--bundle-index-refresh-timeout-seconds") + 1
+    ] == "60"
     assert command[command.index("--max-lanes") + 1] == "4"
     assert command[command.index("--task-prefix") + 1] == "## SRT-"
     assert "--once" not in command
