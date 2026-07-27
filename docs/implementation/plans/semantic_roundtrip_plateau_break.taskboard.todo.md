@@ -266,8 +266,8 @@ Do **not** treat proof pass as semantic loss reduction.
 - Board namespace: semantic-roundtrip-plateau-break-v1
 - Bundle: semantic-roundtrip/plateau-break/det-legal-doc
 - Parallel lane: plat-det-legal-doc
-- Resource class: llm-proof-draft
-- Resource stage: inference
+- Resource class: cpu-medium
+- Resource stage: analysis
 - Implementation timeout seconds: 10800
 - Predicted files: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/
 - Interfaces: PlateauCodexPacket@1, StructuralAdmission@1
@@ -289,8 +289,8 @@ Do **not** treat proof pass as semantic loss reduction.
 - Board namespace: semantic-roundtrip-plateau-break-v1
 - Bundle: semantic-roundtrip/plateau-break/det-construction
 - Parallel lane: plat-det-construction
-- Resource class: llm-proof-draft
-- Resource stage: inference
+- Resource class: cpu-medium
+- Resource stage: analysis
 - Implementation timeout seconds: 10800
 - Predicted files: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/
 - Interfaces: PlateauCodexPacket@1, StructuralAdmission@1
@@ -312,8 +312,8 @@ Do **not** treat proof pass as semantic loss reduction.
 - Board namespace: semantic-roundtrip-plateau-break-v1
 - Bundle: semantic-roundtrip/plateau-break/det-corp-policy
 - Parallel lane: plat-det-corp-policy
-- Resource class: llm-proof-draft
-- Resource stage: inference
+- Resource class: cpu-medium
+- Resource stage: analysis
 - Implementation timeout seconds: 10800
 - Predicted files: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/
 - Interfaces: PlateauCodexPacket@1, StructuralAdmission@1
@@ -335,8 +335,8 @@ Do **not** treat proof pass as semantic loss reduction.
 - Board namespace: semantic-roundtrip-plateau-break-v1
 - Bundle: semantic-roundtrip/plateau-break/det-exec-order
 - Parallel lane: plat-det-exec-order
-- Resource class: llm-proof-draft
-- Resource stage: inference
+- Resource class: cpu-medium
+- Resource stage: analysis
 - Implementation timeout seconds: 7200
 - Predicted files: benchmarks/semantic_roundtrip/constructors/typed_deontic.py, tests/unit/benchmarks/semantic_roundtrip/
 - Interfaces: PlateauCodexPacket@1, StructuralAdmission@1
@@ -384,7 +384,7 @@ Do **not** treat proof pass as semantic loss reduction.
 - Resource class: llm-proof-draft
 - Resource stage: inference
 - Provider ID: leanstral-local
-- Requires provider: false
+- Requires provider: true
 - Implementation timeout seconds: 14400
 - Predicted files: docs/performance_snapshots/, docs/benchmarks/
 - Interfaces: EvalRepairMatrixReport@1
