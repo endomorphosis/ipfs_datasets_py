@@ -25,8 +25,10 @@ from enum import Enum
 from typing import Final, Protocol, runtime_checkable
 
 from benchmarks.semantic_roundtrip.contracts import (
+    LIST_FIELDS,
     RULE_FIELDS,
     AllowedAtomVocabulary,
+    CanonicalRule,
     CanonicalRuleIR,
     ComponentStatus,
     ConstructorRequest,
@@ -55,9 +57,14 @@ from benchmarks.semantic_roundtrip.constructors.leanstral import (
 
 
 SELECTIVE_LEANSTRAL_REPAIR_INTERFACE: Final = "SelectiveLeanstralRepair@1"
+SELECTIVE_REPAIR_INTERFACE: Final = "SelectiveRepair@1"
 HAMMER_CANDIDATE_SELECTOR_INTERFACE: Final = "HammerCandidateSelector@1"
 SELECTIVE_REPAIR_POLICY_INTERFACE: Final = "SelectiveRepairPolicy@1"
 SELECTIVE_REPAIR_RECEIPT_INTERFACE: Final = "SelectiveRepairCausalReceipt@1"
+SELECTIVE_REPAIR_ACTIVATION_INTERFACE: Final = "SelectiveRepairActivation@1"
+SELECTIVE_REPAIR_COORDINATE_RECEIPT_INTERFACE: Final = (
+    "SelectiveRepairCoordinateReceipt@1"
+)
 STRUCTURAL_VALIDATION_INTERFACE: Final = "StructuralCandidateValidation@1"
 SELECTIVE_REPAIR_PROVIDER_ID: Final = "leanstral-local"
 REPAIR_MAX_TOKENS: Final = CONSTRUCTOR_MAX_TOKENS
