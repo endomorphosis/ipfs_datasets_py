@@ -93,6 +93,16 @@ SYMAI_ENGINE: Final = (
     "IPFSSyMAINeurosymbolicEngine"
 )
 SYMAI_ROUTER_MODULE: Final = "ipfs_datasets_py.llm_router"
+SYMAI_ROUTE_CONTRACT_VALIDATOR: Final = (
+    "ipfs_accelerate_py.llm_router."
+    "validate_pinned_symai_request_contract"
+)
+SYMAI_CANONICAL_SCHEMA_NAME: Final = (
+    "semantic_roundtrip_canonical_ir_v1"
+)
+SYMAI_REALIZATION_SCHEMA_NAME: Final = (
+    "semantic_roundtrip_realization_v1"
+)
 
 AUTOENCODER_STATE_RELATIVE_PATH: Final = Path(
     "workspace/todo-queues/"
@@ -505,6 +515,7 @@ CommandRunner = Callable[[Sequence[str], bytes | None, float, int], CommandResul
 HttpGetter = Callable[[str, float, int], Any]
 StateLoader = Callable[[Mapping[str, Any]], Any]
 ModuleFinder = Callable[[str], Any]
+RouteContractValidator = Callable[..., Mapping[str, object]]
 
 
 def _distribution_version(distribution: str) -> str | None:
@@ -1121,11 +1132,124 @@ def probe_leanstral_direct(
     )
 
 
+def _load_symai_route_contract_validator() -> RouteContractValidator:
+    """Load the canonical router's no-I/O contract boundary."""
+
+    router = importlib.import_module("ipfs_accelerate_py.llm_router")
+    validator = getattr(
+        router,
+        "validate_pinned_symai_request_contract",
+        None,
+    )
+    if not callable(validator):
+        raise RuntimeError(
+            "canonical router has no pinned SyMAI contract validator"
+        )
+    return validator
+
+
+def _symai_route_generation_contracts(
+) -> dict[str, dict[str, object]]:
+    """Build the exact model-facing contracts used by both SyMAI roles."""
+
+    from benchmarks.semantic_roundtrip.contracts import (
+        AllowedAtomVocabulary,
+    )
+    from benchmarks.semantic_roundtrip.constructors.leanstral import (
+        CONSTRUCTOR_MAX_TOKENS,
+        _server_schema,
+        canonical_ir_schema,
+    )
+    from benchmarks.semantic_roundtrip.constructors.symai import (
+        SyMAIGenerationSettings,
+    )
+    from benchmarks.semantic_roundtrip.realizers.leanstral import (
+        REALIZATION_JSON_SCHEMA,
+        REALIZER_MAX_TOKENS,
+    )
+
+    # The canonical schema has case-specific enums.  This bounded witness is
+    # built by the same production schema function and exercises every schema
+    # field while the router validator independently enforces the family bounds.
+    vocabulary = AllowedAtomVocabulary(
+        actors=("capability_actor_b", "capability_actor_a"),
+        actions=("capability_action_b", "capability_action_a"),
+        objects=("capability_object_b", "capability_object_a"),
+        qualifiers=("capability_qualifier_b", "capability_qualifier_a"),
+    )
+
+    def options(
+        *,
+        schema_name: str,
+        schema: Mapping[str, object],
+        max_tokens: int,
+    ) -> dict[str, object]:
+        settings = SyMAIGenerationSettings.for_role(max_tokens)
+        return {
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema_name,
+                    "strict": True,
+                    "schema": _server_schema(schema),
+                },
+            },
+            "temperature": settings.temperature,
+            "seed": settings.seed,
+            "max_tokens": settings.max_tokens,
+            "stop": list(settings.stop),
+            "timeout": settings.timeout_seconds,
+            "cache_prompt": settings.cache_prompt,
+        }
+
+    return {
+        "canonical": options(
+            schema_name=SYMAI_CANONICAL_SCHEMA_NAME,
+            schema=canonical_ir_schema(vocabulary),
+            max_tokens=CONSTRUCTOR_MAX_TOKENS,
+        ),
+        "realization": options(
+            schema_name=SYMAI_REALIZATION_SCHEMA_NAME,
+            schema=REALIZATION_JSON_SCHEMA,
+            max_tokens=REALIZER_MAX_TOKENS,
+        ),
+    }
+
+
+def _normalized_symai_generation_options(
+    options: Mapping[str, object],
+) -> dict[str, object]:
+    normalized = _json_copy(dict(options))
+    normalized["temperature"] = float(normalized["temperature"])
+    normalized["timeout"] = float(normalized["timeout"])
+    normalized["stop"] = list(normalized["stop"])
+    return normalized
+
+
+def _route_contract_mismatch_rejected(
+    validator: RouteContractValidator,
+    *,
+    model_name: object,
+    route_binding: object,
+    generation_options: object,
+) -> bool:
+    try:
+        validator(
+            model_name=model_name,
+            route_binding=_json_copy(route_binding),
+            generation_options=_json_copy(generation_options),
+        )
+    except Exception:
+        return True
+    return False
+
+
 def probe_symai_leanstral_route(
     direct: CapabilityRecord,
     *,
     version_getter: VersionGetter | None = None,
     module_finder: ModuleFinder | None = None,
+    route_contract_validator: RouteContractValidator | None = None,
 ) -> CapabilityRecord:
     requested = {
         "route": "symai_router",
@@ -1136,6 +1260,22 @@ def probe_symai_leanstral_route(
         "symai_config_model": SYMAI_CONFIG_MODEL,
         "engine": SYMAI_ENGINE,
         "router_module": SYMAI_ROUTER_MODULE,
+        "route_contract_validator": SYMAI_ROUTE_CONTRACT_VALIDATOR,
+        "request_contracts": {
+            "canonical": {
+                "schema_name": SYMAI_CANONICAL_SCHEMA_NAME,
+                "max_tokens": 3072,
+            },
+            "realization": {
+                "schema_name": SYMAI_REALIZATION_SCHEMA_NAME,
+                "max_tokens": 1536,
+            },
+            "temperature": 0,
+            "seed": 0,
+            "stop": ["<|im_end|>"],
+            "timeout_seconds": 120.0,
+            "cache_prompt": False,
+        },
         "resolved_provider": LEANSTRAL_PROVIDER,
         "resolved_endpoint": LEANSTRAL_ENDPOINT,
         "resolved_model": LEANSTRAL_MODEL,
@@ -1161,6 +1301,8 @@ def probe_symai_leanstral_route(
         "router_module": SYMAI_ROUTER_MODULE,
         "engine_source_identity": _source_identity(engine_spec),
         "router_source_identity": _source_identity(router_spec),
+        "route_contract_validator": SYMAI_ROUTE_CONTRACT_VALIDATOR,
+        "validated_request_contracts": None,
         "resolved_provider": None,
         "resolved_endpoint": None,
         "resolved_model": None,
@@ -1177,6 +1319,8 @@ def probe_symai_leanstral_route(
                 "symbolicai_version_match": version == SYMAI_VERSION,
                 "engine_present": engine_spec is not None,
                 "router_present": router_spec is not None,
+                "route_contract_validator_present": False,
+                "route_contract_validation_passed": False,
                 "same_effective_model": False,
                 "model_inference_performed": False,
             },
@@ -1191,6 +1335,8 @@ def probe_symai_leanstral_route(
                 "symbolicai_version_match": True,
                 "engine_present": True,
                 "router_present": True,
+                "route_contract_validator_present": False,
+                "route_contract_validation_passed": False,
                 "same_effective_model": False,
                 "model_inference_performed": False,
             },
@@ -1213,9 +1359,24 @@ def probe_symai_leanstral_route(
         "symbolicai_version_match": True,
         "engine_present": True,
         "router_present": True,
+        "route_contract_validator_present": False,
+        "canonical_request_contract_accepted": False,
+        "canonical_schema_exact_match": False,
+        "canonical_settings_exact_match": False,
+        "realization_request_contract_accepted": False,
+        "realization_schema_exact_match": False,
+        "realization_settings_exact_match": False,
+        "model_alias_mismatch_rejected": False,
+        "route_binding_mismatch_rejected": False,
+        "canonical_schema_mismatch_rejected": False,
+        "canonical_settings_mismatch_rejected": False,
+        "realization_schema_mismatch_rejected": False,
+        "realization_settings_mismatch_rejected": False,
+        "route_contract_validation_passed": False,
         "same_effective_model": same_model,
         "same_effective_service": same_model,
         "independent_model_started": False,
+        "live_model_request_performed": False,
         "model_inference_performed": False,
     }
     if not same_model:
@@ -1225,6 +1386,164 @@ def probe_symai_leanstral_route(
             effective=effective,
             checks=checks,
             reason="SyMAI did not resolve to the exact direct Leanstral identity",
+        )
+
+    try:
+        validator = (
+            route_contract_validator
+            if route_contract_validator is not None
+            else _load_symai_route_contract_validator()
+        )
+    except Exception:
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason=(
+                "SyMAI side-effect-free route-contract validator is "
+                "unavailable"
+            ),
+        )
+    checks["route_contract_validator_present"] = callable(validator)
+    if not callable(validator):
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason=(
+                "SyMAI side-effect-free route-contract validator is "
+                "unavailable"
+            ),
+        )
+
+    try:
+        contracts = _symai_route_generation_contracts()
+    except Exception:
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason="SyMAI benchmark request contracts could not be constructed",
+        )
+
+    route_binding = {
+        "resolved_provider_name": LEANSTRAL_PROVIDER,
+        "resolved_model_name": LEANSTRAL_MODEL,
+        "service_endpoint": LEANSTRAL_ENDPOINT,
+        "routing_backend": LEANSTRAL_BACKEND,
+    }
+    normalized: dict[str, Mapping[str, object] | None] = {}
+    for role in ("canonical", "realization"):
+        options = contracts[role]
+        try:
+            result = validator(
+                model_name=SYMAI_MODEL_ALIAS,
+                route_binding=_json_copy(route_binding),
+                generation_options=_json_copy(options),
+            )
+        except Exception:
+            normalized[role] = None
+        else:
+            normalized[role] = (
+                _json_copy(dict(result))
+                if isinstance(result, Mapping)
+                else None
+            )
+
+        expected = _normalized_symai_generation_options(options)
+        observed = normalized[role]
+        schema_matches = bool(
+            observed is not None
+            and observed.get("response_format")
+            == expected["response_format"]
+        )
+        settings_matches = bool(
+            observed is not None
+            and set(observed) == set(expected)
+            and all(
+                observed.get(key) == value
+                for key, value in expected.items()
+                if key != "response_format"
+            )
+        )
+        checks[f"{role}_schema_exact_match"] = schema_matches
+        checks[f"{role}_settings_exact_match"] = settings_matches
+        checks[f"{role}_request_contract_accepted"] = bool(
+            schema_matches and settings_matches
+        )
+
+    checks["model_alias_mismatch_rejected"] = (
+        _route_contract_mismatch_rejected(
+            validator,
+            model_name=SYMAI_MODEL_ALIAS + "-drifted",
+            route_binding=route_binding,
+            generation_options=contracts["canonical"],
+        )
+    )
+    drifted_binding = _json_copy(route_binding)
+    drifted_binding["routing_backend"] = "drifted"
+    checks["route_binding_mismatch_rejected"] = (
+        _route_contract_mismatch_rejected(
+            validator,
+            model_name=SYMAI_MODEL_ALIAS,
+            route_binding=drifted_binding,
+            generation_options=contracts["canonical"],
+        )
+    )
+    for role in ("canonical", "realization"):
+        drifted_schema = _json_copy(contracts[role])
+        drifted_schema["response_format"]["json_schema"]["strict"] = False
+        checks[f"{role}_schema_mismatch_rejected"] = (
+            _route_contract_mismatch_rejected(
+                validator,
+                model_name=SYMAI_MODEL_ALIAS,
+                route_binding=route_binding,
+                generation_options=drifted_schema,
+            )
+        )
+        drifted_settings = _json_copy(contracts[role])
+        drifted_settings["max_tokens"] += 1
+        checks[f"{role}_settings_mismatch_rejected"] = (
+            _route_contract_mismatch_rejected(
+                validator,
+                model_name=SYMAI_MODEL_ALIAS,
+                route_binding=route_binding,
+                generation_options=drifted_settings,
+            )
+        )
+
+    contract_checks = (
+        "canonical_request_contract_accepted",
+        "canonical_schema_exact_match",
+        "canonical_settings_exact_match",
+        "realization_request_contract_accepted",
+        "realization_schema_exact_match",
+        "realization_settings_exact_match",
+        "model_alias_mismatch_rejected",
+        "route_binding_mismatch_rejected",
+        "canonical_schema_mismatch_rejected",
+        "canonical_settings_mismatch_rejected",
+        "realization_schema_mismatch_rejected",
+        "realization_settings_mismatch_rejected",
+    )
+    checks["route_contract_validation_passed"] = all(
+        checks[key] is True for key in contract_checks
+    )
+    effective["validated_request_contracts"] = normalized
+    if not checks["route_contract_validation_passed"]:
+        failed = [key for key in contract_checks if checks[key] is not True]
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason=(
+                "SyMAI side-effect-free route-contract validation failed: "
+                + ", ".join(failed)
+            ),
         )
     return CapabilityRecord.available(
         "symai_leanstral_route",
