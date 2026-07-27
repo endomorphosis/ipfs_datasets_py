@@ -124,7 +124,15 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
         tasks_by_id["SRT-002"]["canonical_task_cid"]
     ]
     assert stored["task_dependency_graph"]["edges"]
-    assert stored["srt014_downstream_gate"]["status"] == "pending"
+    expected_srt014_gate_status = (
+        "remediation_required"
+        if (REPO_ROOT / SRT014_REPORT_RELATIVE_PATH).is_file()
+        else "pending"
+    )
+    assert (
+        stored["srt014_downstream_gate"]["status"]
+        == expected_srt014_gate_status
+    )
     assert stored["srt014_downstream_gate"]["launch_authorized"] is False
     assert stored["replacement_selection_gate"]["status"] == "pending"
     assert stored["canonical_design_gate"]["launch_authorized"] is False
