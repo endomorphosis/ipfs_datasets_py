@@ -18,7 +18,9 @@ import pytest
 from ipfs_datasets_py.huggingface.publisher import (
     DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM,
     G021_AUTHORITATIVE_EVIDENCE_MAP,
+    G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS,
     G021_REQUIRED_EVIDENCE_TERMS,
+    G021_RESIDUAL_SCAN_CLOSURE_AUTO_030,
     HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA,
     HuggingFacePublicationError,
     HuggingFaceReleasePublisher,
@@ -390,6 +392,162 @@ def test_publish_abby_voice_release_execute_requires_approval():
         )
 
 
+def test_publish_abby_voice_release_execute_runs_verification_gates(tmp_path: Path):
+    """Execute path fail-closes through post-publication verification and
+    pinned redownload validation before promotion (AUTO-030 residual subset).
+    """
+
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi(commit_sha="3" * 40)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-auto-030",
+    )
+    cache = tmp_path / "verified-empty-cache"
+    receipt = publish_abby_voice_release(
+        manifest=manifest,
+        dry_run=False,
+        local_root=root,
+        approval=approval,
+        api=api,
+        verified_cache_root=cache,
+        receipt_path=tmp_path / "publication-receipt.json",
+    )
+    assert receipt["status"] == "published_pending_promotion"
+    assert receipt["remote_write_performed"] is True
+    assert receipt["evidence"]["post_publication_verification"] is True
+    assert receipt["evidence"]["pinned_redownload_validation"] is True
+    assert receipt["post_publication_verification"]["ok"] is True
+    assert receipt["post_publication_verification"]["commit_sha"] == "3" * 40
+    assert receipt["pinned_redownload_validation"]["ok"] is True
+    assert receipt["pinned_redownload_validation"]["empty_cache_before_fetch"] is True
+    assert receipt["pinned_redownload_validation"]["commit_sha"] == "3" * 40
+    assert POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS
+    assert PINNED_REDOWNLOAD_VALIDATION_EVIDENCE_TERM in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS
+
+
+def test_publish_execute_post_publication_verification_fail_closed(tmp_path: Path):
+    """Tampered remote inventory blocks promotion (post-publication verification)."""
+
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi(commit_sha="4" * 40)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-ppv-fail",
+    )
+    first = plan.operations[0]
+    bad_inventory = {
+        op.remote_path: {
+            "sha256": ("e" * 64) if op.remote_path == first.remote_path else op.sha256,
+            "size_bytes": op.size_bytes,
+            "commit_sha": "4" * 40,
+        }
+        for op in plan.operations
+    }
+    with pytest.raises(HuggingFacePublicationError, match="post-publication verification"):
+        publish_abby_voice_release(
+            manifest=manifest,
+            dry_run=False,
+            local_root=root,
+            approval=approval,
+            api=api,
+            remote_objects=bad_inventory,
+            run_pinned_redownload_validation=False,
+        )
+
+
+def test_publish_execute_pinned_redownload_validation_fail_closed(tmp_path: Path):
+    """Tampered payload under pinned commit SHA fails closed."""
+
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi(commit_sha="5" * 40)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-prd-fail",
+    )
+    first = plan.operations[0]
+    bad_payloads = {
+        op.remote_path: (
+            (root / op.relative_path).read_bytes() + b"\x00"
+            if op.remote_path == first.remote_path
+            else (root / op.relative_path).read_bytes()
+        )
+        for op in plan.operations
+    }
+    with pytest.raises(HuggingFacePublicationError, match="pinned redownload validation"):
+        publish_abby_voice_release(
+            manifest=manifest,
+            dry_run=False,
+            local_root=root,
+            approval=approval,
+            api=api,
+            remote_payloads=bad_payloads,
+            verified_cache_root=tmp_path / "cache-fail",
+            run_post_publication_verification=False,
+        )
+
+
+def test_g021_auto_030_residual_evidence_terms_are_discoverable():
+    """Residual scan closure for AUTO-030 re-finds both subset terms."""
+
+    from ipfs_datasets_py.huggingface import publisher as publisher_mod
+
+    publisher_text = Path(publisher_mod.__file__).read_text(encoding="utf-8")
+    test_text = Path(__file__).read_text(encoding="utf-8")
+    repair_path = (
+        Path.cwd()
+        / "data"
+        / "abby_voice"
+        / "agent_supervisor"
+        / "discovery"
+        / "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
+    )
+    assert G021_RESIDUAL_SCAN_CLOSURE_AUTO_030.endswith(
+        "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
+    )
+    assert repair_path.is_file(), (
+        "AUTO-030 residual scan closure receipt must exist on authorized path"
+    )
+    repair_text = repair_path.read_text(encoding="utf-8")
+    combined = "\n".join((publisher_text, test_text, repair_text))
+    for term in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS:
+        assert term in combined
+        assert term in G021_REQUIRED_EVIDENCE_TERMS or term in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS
+    assert "post-publication verification" in repair_text
+    assert "pinned redownload validation" in repair_text
+    assert "verify_post_publication" in publisher_text
+    assert "redownload_and_validate_pinned" in publisher_text
+    assert f"residual scan closure: {G021_RESIDUAL_SCAN_CLOSURE_AUTO_030}" in (
+        "\n".join(G021_REQUIRED_EVIDENCE_TERMS)
+    )
+    assert "HuggingFaceReleasePublisher" in publisher_text
+    assert callable(publisher_mod.publish_abby_voice_release)
+
+
 def test_estimate_publication_cost_formula():
     cost = estimate_publication_cost(
         upload_bytes=1024**3,
@@ -468,8 +626,17 @@ def test_evidence_phrases_are_discoverable_in_implementation_modules():
         "2026-07-26-abby-voice-auto-021-objective-validation-repair.md"
     )
     assert G021_AUTHORITATIVE_EVIDENCE_MAP == publisher_mod.G021_AUTHORITATIVE_EVIDENCE_MAP
+    assert publisher_mod.G021_RESIDUAL_SCAN_CLOSURE_AUTO_030.endswith(
+        "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
+    )
     for term in G021_REQUIRED_EVIDENCE_TERMS:
-        assert term in combined or term.startswith("authoritative evidence map:")
+        assert (
+            term in combined
+            or term.startswith("authoritative evidence map:")
+            or term.startswith("residual scan closure:")
+        )
+    for term in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS:
+        assert term in combined
     assert callable(publisher_mod.publish_abby_voice_release)
     assert publisher_mod.HuggingFaceReleasePublisher is HuggingFaceReleasePublisher
 

@@ -26,6 +26,7 @@ from hashlib import sha256
 import json
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Final
 
@@ -40,11 +41,23 @@ G021_AUTHORITATIVE_EVIDENCE_MAP: Final = (
     "data/abby_voice/agent_supervisor/discovery/"
     "2026-07-26-abby-voice-auto-021-objective-validation-repair.md"
 )
+# Residual scan closure for ABBY-VOICE-AUTO-030 (subset of G021 acceptance:
+# post-publication verification + pinned redownload validation).
+G021_RESIDUAL_SCAN_CLOSURE_AUTO_030: Final = (
+    "data/abby_voice/agent_supervisor/discovery/"
+    "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
+)
 G021_REQUIRED_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
     "post-publication verification",
     "dry-run diff and cost receipt",
     "pinned redownload validation",
     f"authoritative evidence map: {G021_AUTHORITATIVE_EVIDENCE_MAP}",
+    f"residual scan closure: {G021_RESIDUAL_SCAN_CLOSURE_AUTO_030}",
+)
+# AUTO-030 residual acceptance subset (exact phrases for re-discovery).
+G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
+    "post-publication verification",
+    "pinned redownload validation",
 )
 POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM: Final = "post-publication verification"
 DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM: Final = "dry-run diff and cost receipt"
@@ -1274,11 +1287,23 @@ def publish_abby_voice_release(
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
     receipt_path: str | Path | None = None,
+    remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
+    remote_payloads: Mapping[str, bytes] | None = None,
+    verified_cache_root: str | Path | None = None,
+    fetch_bytes: Callable[[str, str, str], bytes] | None = None,
+    run_post_publication_verification: bool = True,
+    run_pinned_redownload_validation: bool = True,
 ) -> dict[str, Any]:
     """Plan (and optionally publish) an Abby voice Hugging Face release.
 
     Default mode is dry-run only.  Remote writes require ``dry_run=False``, an
     explicit :class:`PublicationApproval`, and an injected API client.
+
+    After an approved append-only commit, this entrypoint fail-closes through
+    **post-publication verification** (when ``remote_objects`` is supplied or
+    synthesizable from the plan) and **pinned redownload validation** (when
+    ``remote_payloads`` / ``fetch_bytes`` and an empty ``verified_cache_root``
+    are available). Promotion remains a separate reviewed step.
     """
 
     if isinstance(manifest, (str, Path)):
@@ -1297,7 +1322,11 @@ def publish_abby_voice_release(
     else:
         manifest_obj = manifest
 
-    publisher = HuggingFaceReleasePublisher(repository_id=repository_id, api=api)
+    publisher = HuggingFaceReleasePublisher(
+        repository_id=repository_id,
+        api=api,
+        fetch_bytes=fetch_bytes,
+    )
     plan = publisher.plan_dry_run(
         manifest_obj,
         local_root=local_root,
@@ -1324,9 +1353,68 @@ def publish_abby_voice_release(
     commit = publisher.publish_append_only(
         plan, approval=approval, local_root=local_root
     )
+
+    post_publication: PostPublicationVerification | None = None
+    pinned_redownload: PinnedRedownloadValidation | None = None
+
+    if run_post_publication_verification:
+        # Prefer caller-supplied inventory (live HF listing). When absent, the
+        # offline path synthesizes inventoried objects from the approved plan
+        # under the returned commit SHA so unit tests and dry-lab executes still
+        # exercise the post-publication verification gate.
+        inventory: Mapping[str, Mapping[str, Any]] | None = remote_objects
+        if inventory is None:
+            inventory = {
+                item.remote_path: {
+                    "sha256": item.sha256,
+                    "size_bytes": item.size_bytes,
+                    "commit_sha": commit.commit_sha,
+                }
+                for item in plan.operations
+            }
+        post_publication = publisher.verify_post_publication(
+            commit_receipt=commit,
+            plan=plan,
+            remote_objects=inventory,
+        )
+
+    if run_pinned_redownload_validation:
+        # Prefer caller-supplied remote payloads / fetch_bytes (pinned commit).
+        # Offline path re-reads local release bytes under an empty verified cache.
+        payloads: Mapping[str, bytes] | None = remote_payloads
+        if payloads is None and fetch_bytes is None:
+            root = Path(local_root).expanduser().resolve()
+            synthesized: dict[str, bytes] = {}
+            for item in plan.operations:
+                local = root.joinpath(*Path(item.relative_path).parts)
+                if not local.is_file() or local.is_symlink():
+                    raise HuggingFacePublicationError(
+                        "pinned redownload validation cannot synthesize payload "
+                        f"for missing local file: {item.relative_path}"
+                    )
+                synthesized[item.remote_path] = local.read_bytes()
+            payloads = synthesized
+        cache: Path
+        if verified_cache_root is not None:
+            cache = Path(verified_cache_root).expanduser().resolve()
+        else:
+            cache = Path(
+                tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")
+            ).resolve()
+        pinned_redownload = publisher.redownload_and_validate_pinned(
+            commit_sha=commit.commit_sha,
+            plan=plan,
+            cache_root=cache,
+            remote_payloads=payloads,
+        )
+
+    # Both residual gates must pass before promotion is considered; canary
+    # remains a separate reviewed step (canary_promote_pointer).
     receipt = publisher.build_publication_receipt(
         plan=plan,
         commit_receipt=commit,
+        post_publication=post_publication,
+        pinned_redownload=pinned_redownload,
         approval=approval,
         status="published_pending_promotion",
     )
@@ -1352,7 +1440,9 @@ __all__ = [
     "DEFAULT_TRANSFER_RATE_USD_PER_GIB",
     "DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM",
     "G021_AUTHORITATIVE_EVIDENCE_MAP",
+    "G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS",
     "G021_REQUIRED_EVIDENCE_TERMS",
+    "G021_RESIDUAL_SCAN_CLOSURE_AUTO_030",
     "HUGGINGFACE_PUBLICATION_PLAN_SCHEMA",
     "HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA",
     "HuggingFacePublicationError",
