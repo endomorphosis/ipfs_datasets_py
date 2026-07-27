@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from collections import Counter
 from collections.abc import Mapping
@@ -30,6 +31,10 @@ from benchmarks.semantic_roundtrip.matrix import (  # noqa: E402
 )
 from benchmarks.semantic_roundtrip_capabilities import (  # noqa: E402
     SPACY_MODEL,
+)
+from benchmarks.semantic_roundtrip.canonical_decision import (  # noqa: E402
+    CanonicalDecisionValidationError,
+    validate_canonical_decision_file,
 )
 
 
@@ -128,8 +133,23 @@ def _record_key(
     for name in ("forward", "cycle", "end_to_end", "primary"):
         value = losses.get(name)
         _require(
-            isinstance(value, (int, float)) and not isinstance(value, bool),
-            f"{path}.losses.{name} must be numeric",
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and 0.0 <= float(value) <= 1.0,
+            f"{path}.losses.{name} must be finite and in [0, 1]",
+        )
+    _require(
+        float(losses["primary"]) == float(losses["end_to_end"]),
+        f"{path}.losses.primary must equal end_to_end",
+    )
+    if status == "failed":
+        _require(
+            all(
+                float(losses[name]) == 1.0
+                for name in ("forward", "cycle", "end_to_end", "primary")
+            ),
+            f"{path} terminal failure losses must all equal one",
         )
     gates = _mapping(record.get("gates"), f"{path}.gates")
     for name in (
@@ -178,7 +198,8 @@ def _validate_arm_summaries(
     deterministic_ids: list[str],
     model_ids: list[str],
     minimum_model_repeats: int,
-) -> None:
+    records: list[Mapping[str, Any]],
+) -> dict[str, dict[str, object]]:
     summaries = _mapping(
         statistics.get("arm_summaries"),
         "$.statistics.arm_summaries",
@@ -189,6 +210,14 @@ def _validate_arm_summaries(
         "$.statistics.arm_summaries must cover exactly every "
         "preregistered arm",
     )
+    records_by_arm: dict[str, list[Mapping[str, Any]]] = {
+        arm_id: [] for arm_id in expected_ids
+    }
+    for record in records:
+        records_by_arm[str(record.get("arm_id", record.get("cell_id")))].append(
+            record
+        )
+    recomputed: dict[str, dict[str, object]] = {}
     for arm_id in sorted(expected_ids):
         path = f"$.statistics.arm_summaries[{arm_id!r}]"
         summary = _mapping(summaries[arm_id], path)
@@ -221,18 +250,103 @@ def _validate_arm_summaries(
             set(per_case) == set(case_ids),
             f"{path}.per_case must cover every unchanged pilot case",
         )
+        arm_records = records_by_arm[arm_id]
+        case_means: dict[str, dict[str, float]] = {}
+        case_eligibility: dict[str, bool] = {}
+        for case_id in case_ids:
+            case_path = f"{path}.per_case[{case_id!r}]"
+            case_summary = _mapping(per_case[case_id], case_path)
+            case_records = sorted(
+                (
+                    record
+                    for record in arm_records
+                    if record.get("case_id") == case_id
+                ),
+                key=lambda record: int(record.get("repeat_index", -1)),
+            )
+            _require(
+                [record.get("repeat_index") for record in case_records]
+                == list(range(repeat_count)),
+                f"{case_path} records must cover every repeat exactly once",
+            )
+            _require(
+                case_summary.get("scheduled_repeat_count") == repeat_count,
+                f"{case_path}.scheduled_repeat_count must be {repeat_count}",
+            )
+            _require(
+                case_summary.get("observed_terminal_repeat_count")
+                == repeat_count,
+                f"{case_path}.observed_terminal_repeat_count must be "
+                f"{repeat_count}",
+            )
+            case_losses = _mapping(
+                case_summary.get("losses"),
+                f"{case_path}.losses",
+            )
+            computed_losses: dict[str, float] = {}
+            for loss_name in ("forward", "cycle", "end_to_end"):
+                computed = round(
+                    math.fsum(
+                        float(
+                            _mapping(
+                                record.get("losses"),
+                                f"{case_path} record losses",
+                            )[loss_name]
+                        )
+                        for record in case_records
+                    )
+                    / repeat_count,
+                    12,
+                )
+                reported = case_losses.get(loss_name)
+                _require(
+                    isinstance(reported, (int, float))
+                    and not isinstance(reported, bool)
+                    and math.isfinite(float(reported))
+                    and float(reported) == computed,
+                    f"{case_path}.losses.{loss_name} differs from records",
+                )
+                computed_losses[loss_name] = computed
+            all_repeats_eligible = all(
+                bool(
+                    _mapping(
+                        record.get("gates"),
+                        f"{case_path} record gates",
+                    ).get("selection_eligible")
+                )
+                for record in case_records
+            )
+            _require(
+                case_summary.get("all_repeats_selection_eligible")
+                is all_repeats_eligible,
+                f"{case_path}.all_repeats_selection_eligible differs "
+                "from records",
+            )
+            case_means[case_id] = computed_losses
+            case_eligibility[case_id] = all_repeats_eligible
         _mapping(summary.get("cost"), f"{path}.cost")
         aggregate = _mapping(summary.get("aggregate"), f"{path}.aggregate")
+        aggregate_means: dict[str, float] = {}
         for loss_name in ("forward", "cycle", "end_to_end"):
             loss = _mapping(
                 aggregate.get(loss_name),
                 f"{path}.aggregate.{loss_name}",
             )
+            computed = round(
+                math.fsum(
+                    case_means[case_id][loss_name] for case_id in case_ids
+                )
+                / len(case_ids),
+                12,
+            )
             _require(
                 isinstance(loss.get("mean"), (int, float))
-                and not isinstance(loss.get("mean"), bool),
-                f"{path}.aggregate.{loss_name}.mean must be numeric",
+                and not isinstance(loss.get("mean"), bool)
+                and math.isfinite(float(loss["mean"]))
+                and float(loss["mean"]) == computed,
+                f"{path}.aggregate.{loss_name}.mean differs from records",
             )
+            aggregate_means[loss_name] = computed
             uncertainty = _mapping(
                 loss.get("uncertainty"),
                 f"{path}.aggregate.{loss_name}.uncertainty",
@@ -243,6 +357,154 @@ def _validate_arm_summaries(
                     f"{path}.aggregate.{loss_name}.uncertainty.{field} "
                     "must be reported",
                 )
+        all_cases_eligible = all(case_eligibility.values())
+        _require(
+            summary.get("all_cases_selection_eligible")
+            is all_cases_eligible,
+            f"{path}.all_cases_selection_eligible differs from records",
+        )
+        recomputed[arm_id] = {
+            "aggregate": aggregate_means,
+            "selection_eligible": all_cases_eligible,
+        }
+    return recomputed
+
+
+def _validate_selection(
+    selection: Mapping[str, Any],
+    *,
+    arm_ids: list[str],
+    recomputed_summaries: Mapping[str, Mapping[str, object]],
+) -> dict[str, object]:
+    """Recompute the complete selection decision from terminal records."""
+
+    eligible = [
+        arm_id
+        for arm_id in arm_ids
+        if recomputed_summaries[arm_id]["selection_eligible"] is True
+    ]
+    ranked = sorted(
+        eligible,
+        key=lambda arm_id: (
+            float(
+                _mapping(
+                    recomputed_summaries[arm_id].get("aggregate"),
+                    f"recomputed summary {arm_id!r}",
+                )["end_to_end"]
+            ),
+            arm_id,
+        ),
+    )
+    co_winners: list[str] = []
+    if ranked:
+        best_loss = float(
+            _mapping(
+                recomputed_summaries[ranked[0]].get("aggregate"),
+                f"recomputed summary {ranked[0]!r}",
+            )["end_to_end"]
+        )
+        co_winners = [
+            arm_id
+            for arm_id in ranked
+            if float(
+                _mapping(
+                    recomputed_summaries[arm_id].get("aggregate"),
+                    f"recomputed summary {arm_id!r}",
+                )["end_to_end"]
+            )
+            == best_loss
+        ]
+    else:
+        best_loss = None
+
+    expected_outcome = (
+        "selected"
+        if len(co_winners) == 1
+        else "exact_tie"
+        if len(co_winners) > 1
+        else "no_eligible_composition"
+    )
+    _require(
+        selection.get("outcome") == expected_outcome,
+        "$.selection.outcome differs from recomputed selection evidence",
+    )
+    reported_eligible = _list(
+        selection.get("eligible_arm_ids"),
+        "$.selection.eligible_arm_ids",
+    )
+    _require(
+        reported_eligible == eligible,
+        "$.selection.eligible_arm_ids differs from terminal gates",
+    )
+    reported_ranked = _list(
+        selection.get("ranked_eligible_arm_ids"),
+        "$.selection.ranked_eligible_arm_ids",
+    )
+    _require(
+        reported_ranked == ranked,
+        "$.selection.ranked_eligible_arm_ids differs from recomputed loss order",
+    )
+    reported_co_winners = _list(
+        selection.get("co_winner_arm_ids"),
+        "$.selection.co_winner_arm_ids",
+    )
+    _require(
+        reported_co_winners == co_winners,
+        "$.selection.co_winner_arm_ids differs from exact minimum-loss set",
+    )
+    _require(
+        len(reported_co_winners) == len(set(reported_co_winners)),
+        "$.selection.co_winner_arm_ids must be unique",
+    )
+    _require(
+        selection.get("tie") is (len(co_winners) > 1),
+        "$.selection.tie differs from recomputed co-winner cardinality",
+    )
+    _require(
+        selection.get("production_promotion_allowed") is False,
+        "$.selection.production_promotion_allowed must be false",
+    )
+    _require(
+        selection.get("selection_metric")
+        == "lowest per-case-first macro mean end-to-end loss",
+        "$.selection.selection_metric differs from the frozen protocol",
+    )
+    reasons = _list(selection.get("reasons"), "$.selection.reasons")
+    _require(
+        bool(reasons)
+        and all(
+            isinstance(reason, str) and bool(reason.strip())
+            for reason in reasons
+        ),
+        "$.selection.reasons must contain explicit nonblank reasons",
+    )
+
+    winner = selection.get("winner")
+    if expected_outcome == "selected":
+        winner_map = _mapping(winner, "$.selection.winner")
+        _require(
+            winner_map.get("arm_id") == co_winners[0],
+            "$.selection.winner.arm_id differs from the unique minimum",
+        )
+        _require(
+            isinstance(winner_map.get("mean_end_to_end_loss"), (int, float))
+            and not isinstance(winner_map.get("mean_end_to_end_loss"), bool)
+            and float(winner_map["mean_end_to_end_loss"]) == best_loss,
+            "$.selection.winner.mean_end_to_end_loss differs from records",
+        )
+    else:
+        _require(
+            winner is None,
+            "$.selection.winner must be null without a unique minimum",
+        )
+
+    return {
+        "outcome": expected_outcome,
+        "eligible_arm_ids": eligible,
+        "co_winner_arm_ids": co_winners,
+        "winner_arm_id": co_winners[0] if len(co_winners) == 1 else None,
+        "bounded_tie": 1 < len(co_winners) <= len(arm_ids),
+    }
 
 
 def validate_composition_report(
@@ -553,12 +815,28 @@ def validate_composition_report(
         "observed model cache namespaces must be unique",
     )
 
-    _validate_arm_summaries(
+    recomputed_summaries = _validate_arm_summaries(
         _mapping(report.get("statistics"), "$.statistics"),
         case_ids=fixture_case_ids,
         deterministic_ids=deterministic_ids,
         model_ids=model_ids,
         minimum_model_repeats=minimum_model_repeats,
+        records=[
+            *(
+                _mapping(
+                    record,
+                    f"$.execution.deterministic.records[{index}]",
+                )
+                for index, record in enumerate(deterministic_records)
+            ),
+            *(
+                _mapping(
+                    record,
+                    f"$.execution.model_backed.records[{index}]",
+                )
+                for index, record in enumerate(model_records)
+            ),
+        ],
     )
     acceptance = _mapping(report.get("acceptance"), "$.acceptance")
     for flag in (
@@ -581,22 +859,11 @@ def validate_composition_report(
         "$.acceptance.winner_manufactured must be false",
     )
     selection = _mapping(report.get("selection"), "$.selection")
-    winner = selection.get("winner")
-    if winner is not None:
-        winner_id = (
-            winner.get("arm_id") if isinstance(winner, Mapping) else winner
-        )
-        _require(
-            winner_id in set(deterministic_ids) | set(model_ids),
-            "$.selection.winner must identify a preregistered arm",
-        )
-        _require(
-            winner_id in _list(
-                selection.get("eligible_arm_ids"),
-                "$.selection.eligible_arm_ids",
-            ),
-            "$.selection.winner must be selection-eligible",
-        )
+    selection_result = _validate_selection(
+        selection,
+        arm_ids=[*deterministic_ids, *model_ids],
+        recomputed_summaries=recomputed_summaries,
+    )
     return {
         "status": "valid",
         "report_cid": report_cid,
@@ -604,6 +871,11 @@ def validate_composition_report(
         "cell_count": len(deterministic_ids) + len(model_ids),
         "terminal_coordinate_count": expected_total,
         "model_repeat_count": minimum_model_repeats,
+        "selection_outcome": selection_result["outcome"],
+        "eligible_arm_ids": selection_result["eligible_arm_ids"],
+        "co_winner_arm_ids": selection_result["co_winner_arm_ids"],
+        "winner_arm_id": selection_result["winner_arm_id"],
+        "bounded_tie": selection_result["bounded_tie"],
     }
 
 
@@ -654,12 +926,21 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="write canonical JSON to this path instead of stdout",
     )
-    parser.add_argument(
+    validation = parser.add_mutually_exclusive_group()
+    validation.add_argument(
         "--validate-report",
         type=Path,
         help=(
             "validate a complete frozen SRT-014 decision report and exit "
             "without running model inference"
+        ),
+    )
+    validation.add_argument(
+        "--validate-canonical-decision",
+        type=Path,
+        help=(
+            "validate the source-bound SRT-019 canonical compiler decision "
+            "and exit without running model inference"
         ),
     )
     return parser
@@ -689,6 +970,31 @@ def main(argv: Sequence[str] | None = None) -> int:
                     {
                         "status": "invalid",
                         "report": str(args.validate_report),
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.validate_canonical_decision is not None:
+        try:
+            result = validate_canonical_decision_file(
+                args.validate_canonical_decision,
+                repo_root=REPO_ROOT,
+                composition_validator=lambda value: validate_composition_report(
+                    value,
+                    fixture_path=args.fixture,
+                ),
+            )
+        except CanonicalDecisionValidationError as exc:
+            print(
+                json.dumps(
+                    {
+                        "status": "invalid",
+                        "decision": str(args.validate_canonical_decision),
                         "error": str(exc),
                     },
                     sort_keys=True,

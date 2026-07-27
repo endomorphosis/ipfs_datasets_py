@@ -19,6 +19,7 @@
     "health_path": "/health",
     "models_path": "/v1/models",
     "props_path": "/props",
+    "slots_path": "/slots",
     "model_id": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
     "max_concurrency": 1,
     "timeout_seconds": 5
