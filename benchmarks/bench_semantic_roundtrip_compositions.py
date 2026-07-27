@@ -4,10 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+from collections import Counter
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -15,6 +18,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from benchmarks.logic_pipeline.content_addressing import (  # noqa: E402
     canonical_dag_json_bytes,
+    cid_for_dag_json,
+    validate_cid,
 )
 from benchmarks.semantic_roundtrip.constructors.leanstral import (  # noqa: E402
     LeanstralClient,
@@ -31,6 +36,593 @@ from benchmarks.semantic_roundtrip_capabilities import (  # noqa: E402
 DEFAULT_FIXTURE = (
     REPO_ROOT / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
 )
+REPORT_INTERFACE = "SemanticRoundTripCompositionDecision@1"
+REPORT_SCHEMA_VERSION = (
+    "ipfs-datasets.semantic-roundtrip-composition-pilot.v1"
+)
+
+
+class ReportValidationError(ValueError):
+    """Raised when a frozen composition report is incomplete or inconsistent."""
+
+
+def _mapping(value: object, path: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ReportValidationError(f"{path} must be an object")
+    return value
+
+
+def _list(value: object, path: str) -> list[Any]:
+    if not isinstance(value, list):
+        raise ReportValidationError(f"{path} must be an array")
+    return value
+
+
+def _require(
+    condition: object,
+    message: str,
+) -> None:
+    if not condition:
+        raise ReportValidationError(message)
+
+
+def _fixture_identity(
+    fixture_path: Path,
+) -> tuple[list[str], str]:
+    try:
+        raw = fixture_path.read_bytes()
+        fixture = json.loads(raw)
+    except OSError as exc:
+        raise ReportValidationError(
+            f"cannot read pilot fixture {fixture_path}: {exc}"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise ReportValidationError(
+            f"pilot fixture is not valid JSON: {exc}"
+        ) from exc
+    rows = _list(fixture, "pilot fixture")
+    case_ids: list[str] = []
+    for index, row in enumerate(rows):
+        case = _mapping(row, f"pilot fixture[{index}]")
+        case_id = case.get("case_id", case.get("id"))
+        _require(
+            isinstance(case_id, str) and bool(case_id),
+            f"pilot fixture[{index}].case_id must be a nonempty string",
+        )
+        case_ids.append(case_id)
+    _require(
+        len(case_ids) == len(set(case_ids)),
+        "pilot fixture case IDs must be unique",
+    )
+    return case_ids, hashlib.sha256(raw).hexdigest()
+
+
+def _record_key(
+    record: Mapping[str, Any],
+    *,
+    path: str,
+) -> tuple[str, int, str]:
+    case_id = record.get("case_id")
+    repeat_index = record.get("repeat_index")
+    arm_id = record.get("arm_id", record.get("cell_id"))
+    _require(
+        isinstance(case_id, str) and bool(case_id),
+        f"{path}.case_id must be a nonempty string",
+    )
+    _require(
+        isinstance(repeat_index, int)
+        and not isinstance(repeat_index, bool)
+        and repeat_index >= 0,
+        f"{path}.repeat_index must be a nonnegative integer",
+    )
+    _require(
+        isinstance(arm_id, str) and bool(arm_id),
+        f"{path}.arm_id must be a nonempty string",
+    )
+    status = record.get("status")
+    _require(
+        status in {"success", "failed"},
+        f"{path}.status must be terminal (success or failed)",
+    )
+    losses = _mapping(record.get("losses"), f"{path}.losses")
+    for name in ("forward", "cycle", "end_to_end", "primary"):
+        value = losses.get(name)
+        _require(
+            isinstance(value, (int, float)) and not isinstance(value, bool),
+            f"{path}.losses.{name} must be numeric",
+        )
+    gates = _mapping(record.get("gates"), f"{path}.gates")
+    for name in (
+        "source_copy_exclusion",
+        "polarity_preservation",
+        "full_coverage",
+        "selection_eligible",
+    ):
+        _require(
+            isinstance(gates.get(name), bool),
+            f"{path}.gates.{name} must be boolean",
+        )
+    _require(
+        gates["selection_eligible"]
+        == all(
+            bool(gates[name])
+            for name in (
+                "source_copy_exclusion",
+                "polarity_preservation",
+                "full_coverage",
+            )
+        ),
+        f"{path}.gates.selection_eligible is inconsistent",
+    )
+    _mapping(record.get("cost"), f"{path}.cost")
+    for cid_field in (
+        "candidate_cid",
+        "coordinate_record_cid",
+        "extended_record_cid",
+    ):
+        value = record.get(cid_field)
+        if value is not None:
+            try:
+                validate_cid(value)
+            except (TypeError, ValueError) as exc:
+                raise ReportValidationError(
+                    f"{path}.{cid_field} is not a canonical CID: {exc}"
+                ) from exc
+    return case_id, repeat_index, arm_id
+
+
+def _validate_arm_summaries(
+    statistics: Mapping[str, Any],
+    *,
+    case_ids: list[str],
+    deterministic_ids: list[str],
+    model_ids: list[str],
+    minimum_model_repeats: int,
+) -> None:
+    summaries = _mapping(
+        statistics.get("arm_summaries"),
+        "$.statistics.arm_summaries",
+    )
+    expected_ids = set(deterministic_ids) | set(model_ids)
+    _require(
+        set(summaries) == expected_ids,
+        "$.statistics.arm_summaries must cover exactly every "
+        "preregistered arm",
+    )
+    for arm_id in sorted(expected_ids):
+        path = f"$.statistics.arm_summaries[{arm_id!r}]"
+        summary = _mapping(summaries[arm_id], path)
+        repeat_count = (
+            1 if arm_id in deterministic_ids else minimum_model_repeats
+        )
+        scheduled = len(case_ids) * repeat_count
+        _require(
+            summary.get("scheduled_coordinate_count") == scheduled,
+            f"{path}.scheduled_coordinate_count must be {scheduled}",
+        )
+        _require(
+            summary.get("observed_coordinate_count") == scheduled,
+            f"{path}.observed_coordinate_count must be {scheduled}",
+        )
+        _require(
+            summary.get("missing_coordinate_count") == 0,
+            f"{path}.missing_coordinate_count must be zero",
+        )
+        _require(
+            summary.get("repeat_count_per_case") == repeat_count,
+            f"{path}.repeat_count_per_case must be {repeat_count}",
+        )
+        _require(
+            summary.get("execution_status") == "complete",
+            f"{path}.execution_status must be complete",
+        )
+        per_case = _mapping(summary.get("per_case"), f"{path}.per_case")
+        _require(
+            set(per_case) == set(case_ids),
+            f"{path}.per_case must cover every unchanged pilot case",
+        )
+        _mapping(summary.get("cost"), f"{path}.cost")
+        aggregate = _mapping(summary.get("aggregate"), f"{path}.aggregate")
+        for loss_name in ("forward", "cycle", "end_to_end"):
+            loss = _mapping(
+                aggregate.get(loss_name),
+                f"{path}.aggregate.{loss_name}",
+            )
+            _require(
+                isinstance(loss.get("mean"), (int, float))
+                and not isinstance(loss.get("mean"), bool),
+                f"{path}.aggregate.{loss_name}.mean must be numeric",
+            )
+            uncertainty = _mapping(
+                loss.get("uncertainty"),
+                f"{path}.aggregate.{loss_name}.uncertainty",
+            )
+            for field in ("method", "low", "high"):
+                _require(
+                    uncertainty.get(field) is not None,
+                    f"{path}.aggregate.{loss_name}.uncertainty.{field} "
+                    "must be reported",
+                )
+
+
+def validate_composition_report(
+    value: object,
+    *,
+    fixture_path: Path = DEFAULT_FIXTURE,
+) -> dict[str, object]:
+    """Validate the complete, preregistered SRT-014 decision artifact.
+
+    Failed coordinates remain valid terminal evidence, but missing coordinates
+    do not.  This distinction prevents a fail-closed loss placeholder from
+    being mistaken for an executed five-repeat model result.
+    """
+
+    report = _mapping(value, "$")
+    _require(
+        report.get("interface") == REPORT_INTERFACE,
+        f"$.interface must be {REPORT_INTERFACE}",
+    )
+    _require(
+        report.get("schema_version") == REPORT_SCHEMA_VERSION,
+        f"$.schema_version must be {REPORT_SCHEMA_VERSION}",
+    )
+    report_cid = report.get("report_cid")
+    try:
+        validate_cid(report_cid, codecs=("dag-json",))
+    except (TypeError, ValueError) as exc:
+        raise ReportValidationError(
+            f"$.report_cid is not a canonical DAG-JSON CID: {exc}"
+        ) from exc
+    cid_payload = dict(report)
+    del cid_payload["report_cid"]
+    _require(
+        cid_for_dag_json(cid_payload) == report_cid,
+        "$.report_cid does not match the canonical report payload",
+    )
+
+    fixture_case_ids, fixture_sha256 = _fixture_identity(fixture_path)
+    inputs = _mapping(report.get("inputs"), "$.inputs")
+    fixture = _mapping(inputs.get("fixture"), "$.inputs.fixture")
+    _require(
+        fixture.get("unchanged") is True,
+        "$.inputs.fixture.unchanged must be true",
+    )
+    _require(
+        fixture.get("case_count") == len(fixture_case_ids),
+        "$.inputs.fixture.case_count does not match the pilot fixture",
+    )
+    _require(
+        fixture.get("case_ids") == fixture_case_ids,
+        "$.inputs.fixture.case_ids do not match the pilot fixture",
+    )
+    _require(
+        fixture.get("sha256") == fixture_sha256,
+        "$.inputs.fixture.sha256 does not match the pilot fixture",
+    )
+
+    preregistration = _mapping(
+        report.get("preregistration"),
+        "$.preregistration",
+    )
+    deterministic_ids = _list(
+        preregistration.get("deterministic_cell_ids"),
+        "$.preregistration.deterministic_cell_ids",
+    )
+    model_ids = _list(
+        preregistration.get("model_backed_cell_ids"),
+        "$.preregistration.model_backed_cell_ids",
+    )
+    _require(
+        len(deterministic_ids) == 4
+        and len(set(deterministic_ids)) == 4
+        and all(isinstance(item, str) for item in deterministic_ids),
+        "exactly four unique deterministic cell IDs are required",
+    )
+    _require(
+        len(model_ids) == 26
+        and len(set(model_ids)) == 26
+        and all(isinstance(item, str) for item in model_ids),
+        "exactly 26 unique model-backed cell IDs are required",
+    )
+    _require(
+        set(deterministic_ids).isdisjoint(model_ids),
+        "deterministic and model-backed cell IDs must be disjoint",
+    )
+    _require(
+        preregistration.get("planned_cell_count") == 30,
+        "$.preregistration.planned_cell_count must be 30",
+    )
+    _require(
+        preregistration.get("deterministic_repeats") == 1,
+        "$.preregistration.deterministic_repeats must be one",
+    )
+    minimum_model_repeats = preregistration.get(
+        "minimum_uncached_model_repeats"
+    )
+    _require(
+        isinstance(minimum_model_repeats, int)
+        and not isinstance(minimum_model_repeats, bool)
+        and minimum_model_repeats >= 5,
+        "at least five uncached model repeats are required",
+    )
+    schedule = _mapping(
+        preregistration.get("model_schedule"),
+        "$.preregistration.model_schedule",
+    )
+    schedule_payload = dict(schedule)
+    supplied_schedule_cid = preregistration.get("model_schedule_cid")
+    try:
+        validate_cid(supplied_schedule_cid, codecs=("dag-json",))
+    except (TypeError, ValueError) as exc:
+        raise ReportValidationError(
+            "$.preregistration.model_schedule_cid is invalid: "
+            f"{exc}"
+        ) from exc
+    _require(
+        cid_for_dag_json(schedule_payload) == supplied_schedule_cid,
+        "$.preregistration.model_schedule_cid does not match the schedule",
+    )
+    _require(
+        schedule.get("case_ids") == fixture_case_ids,
+        "$.preregistration.model_schedule.case_ids must match the fixture",
+    )
+    _require(
+        schedule.get("repeat_count") == minimum_model_repeats,
+        "$.preregistration.model_schedule.repeat_count is inconsistent",
+    )
+    schedule_arms = schedule.get("model_arm_ids", schedule.get("arm_ids"))
+    _require(
+        set(_list(schedule_arms, "model schedule arm IDs"))
+        == set(model_ids),
+        "model schedule arms must equal the preregistered model-backed arms",
+    )
+    blocks = _list(
+        schedule.get("blocks"),
+        "$.preregistration.model_schedule.blocks",
+    )
+    _require(
+        len(blocks) == len(fixture_case_ids) * minimum_model_repeats,
+        "model schedule must contain one block per case and repeat",
+    )
+    scheduled_model: dict[
+        tuple[str, int, str],
+        tuple[str, str],
+    ] = {}
+    namespaces: list[str] = []
+    for index, raw_block in enumerate(blocks):
+        path = f"$.preregistration.model_schedule.blocks[{index}]"
+        block = _mapping(raw_block, path)
+        case_id = block.get("case_id")
+        repeat_index = block.get("repeat_index")
+        _require(
+            case_id in fixture_case_ids,
+            f"{path}.case_id is not in the fixture",
+        )
+        _require(
+            isinstance(repeat_index, int)
+            and not isinstance(repeat_index, bool)
+            and 0 <= repeat_index < minimum_model_repeats,
+            f"{path}.repeat_index is outside the preregistered range",
+        )
+        arm_order = _list(block.get("arm_order"), f"{path}.arm_order")
+        _require(
+            len(arm_order) == len(model_ids)
+            and set(arm_order) == set(model_ids),
+            f"{path}.arm_order must contain every model arm exactly once",
+        )
+        coordinates = _list(
+            block.get("coordinates"),
+            f"{path}.coordinates",
+        )
+        _require(
+            len(coordinates) == len(model_ids),
+            f"{path}.coordinates must contain every model arm",
+        )
+        coordinate_arms: list[str] = []
+        for coordinate_index, raw_coordinate in enumerate(coordinates):
+            coordinate_path = f"{path}.coordinates[{coordinate_index}]"
+            coordinate = _mapping(raw_coordinate, coordinate_path)
+            arm_id = coordinate.get("arm_id")
+            cache_mode = coordinate.get("cache_mode")
+            namespace = coordinate.get("cache_namespace")
+            _require(
+                arm_id in model_ids,
+                f"{coordinate_path}.arm_id is not preregistered",
+            )
+            _require(
+                cache_mode == "uncached",
+                f"{coordinate_path}.cache_mode must be uncached",
+            )
+            _require(
+                isinstance(namespace, str) and bool(namespace),
+                f"{coordinate_path}.cache_namespace must be nonempty",
+            )
+            key = (case_id, repeat_index, arm_id)
+            _require(
+                key not in scheduled_model,
+                f"duplicate scheduled model coordinate {key!r}",
+            )
+            scheduled_model[key] = (cache_mode, namespace)
+            namespaces.append(namespace)
+            coordinate_arms.append(arm_id)
+        _require(
+            coordinate_arms == arm_order,
+            f"{path}.coordinates must preserve arm_order",
+        )
+    _require(
+        len(namespaces) == len(set(namespaces)),
+        "every model coordinate must use a unique uncached namespace",
+    )
+
+    execution = _mapping(report.get("execution"), "$.execution")
+    expected_deterministic_count = (
+        len(fixture_case_ids) * len(deterministic_ids)
+    )
+    expected_model_count = len(scheduled_model)
+    expected_total = expected_deterministic_count + expected_model_count
+    _require(
+        execution.get("status") == "complete",
+        "$.execution.status must be complete",
+    )
+    _require(
+        execution.get("scheduled_coordinate_count") == expected_total,
+        "$.execution.scheduled_coordinate_count is inconsistent",
+    )
+    _require(
+        execution.get("observed_terminal_coordinate_count")
+        == expected_total,
+        "all scheduled coordinates must have terminal observations",
+    )
+    _require(
+        execution.get("missing_coordinate_count") == 0,
+        "$.execution.missing_coordinate_count must be zero",
+    )
+    deterministic = _mapping(
+        execution.get("deterministic"),
+        "$.execution.deterministic",
+    )
+    model_backed = _mapping(
+        execution.get("model_backed"),
+        "$.execution.model_backed",
+    )
+    deterministic_records = _list(
+        deterministic.get("records"),
+        "$.execution.deterministic.records",
+    )
+    model_records = _list(
+        model_backed.get("records"),
+        "$.execution.model_backed.records",
+    )
+    _require(
+        len(deterministic_records) == expected_deterministic_count,
+        "deterministic record count is incomplete",
+    )
+    _require(
+        len(model_records) == expected_model_count,
+        "model-backed record count is incomplete",
+    )
+    deterministic_keys: list[tuple[str, int, str]] = []
+    for index, raw_record in enumerate(deterministic_records):
+        path = f"$.execution.deterministic.records[{index}]"
+        record = _mapping(raw_record, path)
+        key = _record_key(record, path=path)
+        _require(
+            key[0] in fixture_case_ids
+            and key[1] == 0
+            and key[2] in deterministic_ids,
+            f"{path} is not a preregistered deterministic coordinate",
+        )
+        deterministic_keys.append(key)
+    expected_deterministic_keys = {
+        (case_id, 0, arm_id)
+        for case_id in fixture_case_ids
+        for arm_id in deterministic_ids
+    }
+    _require(
+        set(deterministic_keys) == expected_deterministic_keys
+        and len(deterministic_keys) == len(set(deterministic_keys)),
+        "deterministic records must cover each case/arm exactly once",
+    )
+    model_keys: list[tuple[str, int, str]] = []
+    observed_namespaces: list[str] = []
+    for index, raw_record in enumerate(model_records):
+        path = f"$.execution.model_backed.records[{index}]"
+        record = _mapping(raw_record, path)
+        key = _record_key(record, path=path)
+        _require(
+            key in scheduled_model,
+            f"{path} is not a scheduled model coordinate",
+        )
+        cache_mode, namespace = scheduled_model[key]
+        _require(
+            record.get("cache_mode") == cache_mode,
+            f"{path}.cache_mode differs from the frozen schedule",
+        )
+        _require(
+            record.get("cache_namespace") == namespace,
+            f"{path}.cache_namespace differs from the frozen schedule",
+        )
+        model_keys.append(key)
+        observed_namespaces.append(namespace)
+    _require(
+        Counter(model_keys) == Counter(scheduled_model.keys()),
+        "model records must cover each frozen coordinate exactly once",
+    )
+    _require(
+        len(observed_namespaces) == len(set(observed_namespaces)),
+        "observed model cache namespaces must be unique",
+    )
+
+    _validate_arm_summaries(
+        _mapping(report.get("statistics"), "$.statistics"),
+        case_ids=fixture_case_ids,
+        deterministic_ids=deterministic_ids,
+        model_ids=model_ids,
+        minimum_model_repeats=minimum_model_repeats,
+    )
+    acceptance = _mapping(report.get("acceptance"), "$.acceptance")
+    for flag in (
+        "all_deterministic_cells_once",
+        "all_model_backed_cells_five_uncached_repeats",
+        "unchanged_pilot_cases_scored",
+        "source_copy_gate_enforced",
+        "polarity_gate_enforced",
+        "full_coverage_gate_enforced",
+        "per_case_and_aggregate_losses_reported",
+        "uncertainty_reported",
+        "costs_reported_with_missingness",
+    ):
+        _require(
+            acceptance.get(flag) is True,
+            f"$.acceptance.{flag} must be true",
+        )
+    _require(
+        acceptance.get("winner_manufactured") is False,
+        "$.acceptance.winner_manufactured must be false",
+    )
+    selection = _mapping(report.get("selection"), "$.selection")
+    winner = selection.get("winner")
+    if winner is not None:
+        winner_id = (
+            winner.get("arm_id") if isinstance(winner, Mapping) else winner
+        )
+        _require(
+            winner_id in set(deterministic_ids) | set(model_ids),
+            "$.selection.winner must identify a preregistered arm",
+        )
+        _require(
+            winner_id in _list(
+                selection.get("eligible_arm_ids"),
+                "$.selection.eligible_arm_ids",
+            ),
+            "$.selection.winner must be selection-eligible",
+        )
+    return {
+        "status": "valid",
+        "report_cid": report_cid,
+        "case_count": len(fixture_case_ids),
+        "cell_count": len(deterministic_ids) + len(model_ids),
+        "terminal_coordinate_count": expected_total,
+        "model_repeat_count": minimum_model_repeats,
+    }
+
+
+def validate_report_file(
+    report_path: Path,
+    *,
+    fixture_path: Path = DEFAULT_FIXTURE,
+) -> dict[str, object]:
+    try:
+        value = json.loads(report_path.read_bytes())
+    except OSError as exc:
+        raise ReportValidationError(
+            f"cannot read report {report_path}: {exc}"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise ReportValidationError(
+            f"report is not valid JSON: {exc}"
+        ) from exc
+    return validate_composition_report(value, fixture_path=fixture_path)
 
 
 def _load_spacy_pipeline() -> object | None:
@@ -62,6 +654,14 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="write canonical JSON to this path instead of stdout",
     )
+    parser.add_argument(
+        "--validate-report",
+        type=Path,
+        help=(
+            "validate a complete frozen SRT-014 decision report and exit "
+            "without running model inference"
+        ),
+    )
     return parser
 
 
@@ -77,6 +677,27 @@ def run(fixture: Path) -> dict[str, object]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.validate_report is not None:
+        try:
+            result = validate_report_file(
+                args.validate_report,
+                fixture_path=args.fixture,
+            )
+        except ReportValidationError as exc:
+            print(
+                json.dumps(
+                    {
+                        "status": "invalid",
+                        "report": str(args.validate_report),
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
     report = run(args.fixture)
     raw = canonical_dag_json_bytes(report) + b"\n"
     if args.output is None:
