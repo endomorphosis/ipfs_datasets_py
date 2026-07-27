@@ -396,6 +396,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/no-eligible-manifest
 - Parallel lane: remediation-manifest
 - Resource class: cpu-small
+- Implementation timeout seconds: 3600
 - Predicted files: benchmarks/semantic_roundtrip/no_eligible_remediation.py, tests/unit/benchmarks/semantic_roundtrip/test_no_eligible_remediation.py, workspace/benchmarks/semantic-roundtrip-compositions/no_eligible_remediation_manifest.json
 - Interfaces: SRT014NoEligibleRemediationManifest@1
 - Conflict policy: Read the immutable SRT-014 report and gate receipt without changing the report, protocol, fixture, scores, gates, or historical run manifest; own only the remediation manifest builder, contract test, and new CID-bound manifest.
@@ -417,6 +418,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/deterministic-remediation
 - Parallel lane: deterministic-remediation
 - Resource class: cpu-medium
+- Implementation timeout seconds: 3600
 - Predicted files: benchmarks/semantic_roundtrip/realizers/source_withheld_paraphrase.py, tests/unit/benchmarks/semantic_roundtrip/test_source_withheld_paraphrase.py
 - Interfaces: SourceWithheldCanonicalParaphraser@1
 - Conflict policy: Add one replacement-experiment deterministic realizer and its tests without modifying the frozen deterministic realizer, constructors, protocol, fixture, report, scorer, or gates.
@@ -463,6 +465,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/causal-guidance-remediation
 - Parallel lane: causal-guidance-remediation
 - Resource class: cpu-medium
+- Implementation timeout seconds: 7200
 - Predicted files: benchmarks/semantic_roundtrip/constructors/causal_autoencoder_guidance.py, tests/unit/benchmarks/semantic_roundtrip/test_causal_autoencoder_guidance.py, workspace/benchmarks/semantic-roundtrip-compositions/causal_autoencoder_guidance_qualification.json
 - Interfaces: CausalAutoencoderGuidance@1, CausalGuidanceQualification@1
 - Conflict policy: Add a replacement-experiment causal applicator, qualification test, and receipt without retraining or mutating the frozen autoencoder state, changing baseline constructors, using target embeddings, or rewriting SRT-010/SRT-014 evidence.
@@ -512,7 +515,7 @@ CPU preparation and result analysis run concurrently.
 - Resource stage: inference
 - Provider ID: leanstral-local
 - Requires provider: true
-- Implementation timeout seconds: 14400
+- Implementation timeout seconds: 21600
 - Predicted files: docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json, docs/benchmarks/semantic_roundtrip_composition_replacement_results.md, workspace/benchmarks/semantic-roundtrip-compositions/replacement_run_manifest.json
 - Interfaces: SemanticRoundTripCompositionDecision@1
 - Conflict policy: Execute and publish only in a fresh immutable replacement namespace; never overwrite, amend, pool with, or relabel the SRT-014 report, raw checkpoint, run manifest, protocol, fixture, or decision.
@@ -534,6 +537,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/replacement-selection-gate
 - Parallel lane: replacement-selection-gate
 - Resource class: cpu-small
+- Implementation timeout seconds: 3600
 - Predicted files: workspace/benchmarks/semantic-roundtrip-compositions/replacement_selection_gate.json, docs/benchmarks/semantic_roundtrip_replacement_selection_gate.md
 - Interfaces: ReplacementSelectionGate@1, CanonicalDesignGate@1
 - Conflict policy: Revalidate and summarize immutable original and replacement evidence without executing inference, changing either report, changing the protocol/gates, manufacturing a winner, or editing canonical implementation files.
@@ -628,6 +632,7 @@ CPU preparation and result analysis run concurrently.
 - Resource stage: inference
 - Provider ID: leanstral-local
 - Requires provider: true
+- Implementation timeout seconds: 14400
 - Predicted files: ipfs_datasets_py/logic/legal_ir/__init__.py, ipfs_datasets_py/logic/legal_ir/canonical_roundtrip.py, tests/integration/logic/test_canonical_semantic_roundtrip.py, docs/performance_snapshots/2026-07-26_canonical_semantic_roundtrip.json
 - Interfaces: CanonicalSemanticRoundTrip@1
 - Conflict policy: Integrate the two new modules without altering benchmark fixtures, gold IR, score weights, or selected component implementations.
@@ -649,6 +654,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/handoff
 - Parallel lane: final-handoff
 - Resource class: cpu-small
+- Implementation timeout seconds: 7200
 - Predicted files: benchmarks/semantic_roundtrip/canonical_decision.py, benchmarks/bench_semantic_roundtrip_compositions.py, tests/unit/benchmarks/semantic_roundtrip/test_canonical_decision.py, docs/benchmarks/semantic_roundtrip_canonical_compiler_decision.md, docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json
 - Interfaces: CanonicalCompilerDecision@1
 - Conflict policy: Own the canonical-decision validator module, its CLI dispatch and contract tests, and the two handoff artifacts. Preserve the SRT-014 report validator and benchmark execution behavior; summarize immutable measured and conformance artifacts without rewriting task statuses or making deployment changes.
