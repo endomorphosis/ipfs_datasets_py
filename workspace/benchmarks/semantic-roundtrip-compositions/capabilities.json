@@ -143,7 +143,7 @@
         "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
         "exists": true,
         "loader_class": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder.ModalAutoencoderTrainingState",
-        "path": "/var/tmp/hssl-srt-dynamic-supervisor/worktrees/semantic-roundtrip-capabilities/workspace-ea37e57eb28d-0c3192a3b272/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+        "path": "/var/tmp/hssl-semantic-roundtrip-20260726/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
         "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
         "state_schema_version": "modal-autoencoder-state-v1"
       },
@@ -222,9 +222,24 @@
     },
     {
       "checks": {
+        "canonical_request_contract_accepted": true,
+        "canonical_schema_exact_match": true,
+        "canonical_schema_mismatch_rejected": true,
+        "canonical_settings_exact_match": true,
+        "canonical_settings_mismatch_rejected": true,
         "engine_present": true,
         "independent_model_started": false,
+        "live_model_request_performed": false,
+        "model_alias_mismatch_rejected": true,
         "model_inference_performed": false,
+        "realization_request_contract_accepted": true,
+        "realization_schema_exact_match": true,
+        "realization_schema_mismatch_rejected": true,
+        "realization_settings_exact_match": true,
+        "realization_settings_mismatch_rejected": true,
+        "route_binding_mismatch_rejected": true,
+        "route_contract_validation_passed": true,
+        "route_contract_validator_present": true,
         "router_present": true,
         "same_effective_model": true,
         "same_effective_service": true,
@@ -247,6 +262,7 @@
         "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
         "resolved_provider": "leanstral_local",
         "route": "symai_router",
+        "route_contract_validator": "ipfs_accelerate_py.llm_router.validate_pinned_symai_request_contract",
         "router_module": "ipfs_datasets_py.llm_router",
         "router_source_identity": {
           "module_present": true,
@@ -256,6 +272,145 @@
         },
         "shared_capacity": 1,
         "symai_config_model": "ipfs:Leanstral-119B",
+        "validated_request_contracts": {
+          "canonical": {
+            "cache_prompt": false,
+            "max_tokens": 3072,
+            "response_format": {
+              "json_schema": {
+                "name": "semantic_roundtrip_canonical_ir_v1",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "rules": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "action": {
+                            "enum": [
+                              "capability_action_a",
+                              "capability_action_b"
+                            ],
+                            "type": "string"
+                          },
+                          "actor": {
+                            "enum": [
+                              "capability_actor_a",
+                              "capability_actor_b"
+                            ],
+                            "type": "string"
+                          },
+                          "conditions": {
+                            "items": {
+                              "enum": [
+                                "capability_qualifier_a",
+                                "capability_qualifier_b"
+                              ],
+                              "type": "string"
+                            },
+                            "maxItems": 8,
+                            "type": "array"
+                          },
+                          "exceptions": {
+                            "items": {
+                              "enum": [
+                                "capability_qualifier_a",
+                                "capability_qualifier_b"
+                              ],
+                              "type": "string"
+                            },
+                            "maxItems": 8,
+                            "type": "array"
+                          },
+                          "modality": {
+                            "enum": [
+                              "O",
+                              "P",
+                              "F"
+                            ],
+                            "type": "string"
+                          },
+                          "object": {
+                            "enum": [
+                              "",
+                              "capability_object_a",
+                              "capability_object_b"
+                            ],
+                            "type": "string"
+                          },
+                          "temporal": {
+                            "items": {
+                              "enum": [
+                                "capability_qualifier_a",
+                                "capability_qualifier_b"
+                              ],
+                              "type": "string"
+                            },
+                            "maxItems": 8,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "modality",
+                          "actor",
+                          "action",
+                          "object",
+                          "conditions",
+                          "exceptions",
+                          "temporal"
+                        ],
+                        "type": "object"
+                      },
+                      "maxItems": 16,
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "rules"
+                  ],
+                  "type": "object"
+                },
+                "strict": true
+              },
+              "type": "json_schema"
+            },
+            "seed": 0,
+            "stop": [
+              "<|im_end|>"
+            ],
+            "temperature": 0.0,
+            "timeout": 120.0
+          },
+          "realization": {
+            "cache_prompt": false,
+            "max_tokens": 1536,
+            "response_format": {
+              "json_schema": {
+                "name": "semantic_roundtrip_realization_v1",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                "strict": true
+              },
+              "type": "json_schema"
+            },
+            "seed": 0,
+            "stop": [
+              "<|im_end|>"
+            ],
+            "temperature": 0.0,
+            "timeout": 120.0
+          }
+        },
         "version": "1.14.0"
       },
       "id": "symai_leanstral_route",
@@ -266,11 +421,29 @@
         "independent_model": false,
         "model_alias": "Leanstral-119B",
         "provider": "ipfs_accelerate_py",
+        "request_contracts": {
+          "cache_prompt": false,
+          "canonical": {
+            "max_tokens": 3072,
+            "schema_name": "semantic_roundtrip_canonical_ir_v1"
+          },
+          "realization": {
+            "max_tokens": 1536,
+            "schema_name": "semantic_roundtrip_realization_v1"
+          },
+          "seed": 0,
+          "stop": [
+            "<|im_end|>"
+          ],
+          "temperature": 0,
+          "timeout_seconds": 120.0
+        },
         "resolved_backend": "llama.cpp",
         "resolved_endpoint": "http://127.0.0.1:8080/v1",
         "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
         "resolved_provider": "leanstral_local",
         "route": "symai_router",
+        "route_contract_validator": "ipfs_accelerate_py.llm_router.validate_pinned_symai_request_contract",
         "router_module": "ipfs_datasets_py.llm_router",
         "shared_capacity": 1,
         "symai_config_model": "ipfs:Leanstral-119B",
@@ -390,7 +563,7 @@
       "substitute_used": false
     }
   ],
-  "captured_at_utc": "2026-07-26T21:10:01Z",
+  "captured_at_utc": "2026-07-27T00:44:26Z",
   "interface_version": "SemanticRoundTripCapabilityInventory@1",
   "probe_policy": {
     "allows_substitutes": false,
