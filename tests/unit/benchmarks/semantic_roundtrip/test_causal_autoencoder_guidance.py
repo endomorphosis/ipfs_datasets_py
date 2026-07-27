@@ -36,8 +36,13 @@ from benchmarks.semantic_roundtrip.constructors.causal_autoencoder_guidance impo
     EVALUATION_STATUS_NOT_MEASURED,
     MATRIX_SCHEDULE_POLICY,
     MISSING_CAUSAL_CONTRACT_FIELDS,
+    PLATEAU_BREAK_BOARD_NAMESPACE,
+    PLATEAU_BREAK_TASK_ID,
     SCORED_SUPPORTED,
     SEMANTIC_SCHEDULE_EXCLUDED,
+    TEACHER_RESIDUAL_INTERFACE,
+    TEACHER_RESIDUAL_PROMOTION_REQUIRES,
+    TEACHER_RESIDUAL_ROLE,
     TERMINAL_UNSUPPORTED,
     UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
     CausalAdapterOutput,
@@ -52,6 +57,7 @@ from benchmarks.semantic_roundtrip.constructors.causal_autoencoder_guidance impo
     guided_scored_support_from_qualification,
     load_causal_guidance_qualification,
     plan_guided_semantic_schedule,
+    teacher_residual_disposition_from_qualification,
     validate_causal_guidance_qualification,
 )
 
@@ -431,6 +437,8 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
         EVALUATION_STATUS_NOT_MEASURED
     )
     assert qualification["evaluation_status_reason"] == TERMINAL_UNSUPPORTED
+    assert qualification["task_id"] == PLATEAU_BREAK_TASK_ID
+    assert qualification["board_namespace"] == PLATEAU_BREAK_BOARD_NAMESPACE
     causal_contract = qualification["causal_contract"]
     assert causal_contract["preregistered"] is False
     assert causal_contract["missing"] == list(
@@ -464,6 +472,18 @@ def test_checked_in_qualification_is_exact_cid_bound_evidence() -> None:
     assert set(planner["excluded_guided_arm_ids"]) == {
         item["arm_id"] for item in coordinates["coordinates"]
     }
+    teacher = qualification["teacher_residual"]
+    assert teacher == teacher_residual_disposition_from_qualification(
+        qualification
+    )
+    assert teacher["interface"] == TEACHER_RESIDUAL_INTERFACE
+    assert teacher["role"] == TEACHER_RESIDUAL_ROLE
+    assert teacher["production_default"] is False
+    assert teacher["scored_support"] == TERMINAL_UNSUPPORTED
+    assert teacher["evaluation_status"] == EVALUATION_STATUS_NOT_MEASURED
+    assert teacher["schedule_for_semantic_scoring"] is False
+    assert teacher["promotion_requires"] == TEACHER_RESIDUAL_PROMOTION_REQUIRES
+    assert teacher["task_id"] == PLATEAU_BREAK_TASK_ID
     assert DEFAULT_QUALIFICATION_PATH.is_file()
     # CID must stay bound to the refreshed path-(b) payload.
     assert isinstance(qualification["qualification_cid"], str)
@@ -547,6 +567,12 @@ def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> 
     assert guided_scored_support_from_qualification(qualification) == (
         SCORED_SUPPORTED
     )
+    teacher = teacher_residual_disposition_from_qualification(qualification)
+    assert teacher["scored_support"] == SCORED_SUPPORTED
+    assert teacher["evaluation_status"] == SCORED_SUPPORTED
+    assert teacher["schedule_for_semantic_scoring"] is True
+    assert teacher["production_default"] is False
+    assert teacher["role"] == TEACHER_RESIDUAL_ROLE
     guided = {
         "cell_id": "typed_deontic__guided__no_repair__not_applicable__deterministic",
         "composition": {"guidance": "guided"},
@@ -558,6 +584,29 @@ def test_scored_supported_qualification_admits_guided_to_semantic_schedule() -> 
     assert filter_semantic_schedule_candidates([guided], qualification) == [
         guided
     ]
+
+
+def test_teacher_residual_fail_closed_without_reviewed_contract() -> None:
+    """PLAT-060 path (b): teacher residuals stay not_measured, not production."""
+
+    assert teacher_residual_disposition_from_qualification(None) == {
+        "evaluation_status": EVALUATION_STATUS_NOT_MEASURED,
+        "interface": TEACHER_RESIDUAL_INTERFACE,
+        "production_default": False,
+        "promotion_requires": TEACHER_RESIDUAL_PROMOTION_REQUIRES,
+        "role": TEACHER_RESIDUAL_ROLE,
+        "schedule_for_semantic_scoring": False,
+        "scored_support": TERMINAL_UNSUPPORTED,
+        "task_id": PLATEAU_BREAK_TASK_ID,
+    }
+    qualification = build_causal_guidance_qualification(
+        guidance_loader=lambda path: frozen_guidance(),
+    )
+    teacher = teacher_residual_disposition_from_qualification(qualification)
+    assert teacher["production_default"] is False
+    assert teacher["scored_support"] == TERMINAL_UNSUPPORTED
+    assert teacher["schedule_for_semantic_scoring"] is False
+    assert teacher["evaluation_status"] == EVALUATION_STATUS_NOT_MEASURED
 
 
 def test_qualification_rejects_self_consistent_fabricated_relabeling() -> None:
