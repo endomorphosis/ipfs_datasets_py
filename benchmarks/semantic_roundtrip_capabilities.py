@@ -6,6 +6,9 @@ The probe is intentionally conservative:
 * it never installs a package or starts, stops, or reconfigures a service;
 * the requested full spaCy pipeline cannot fall back to ``spacy.blank``;
 * direct Leanstral and SyMAI are different routes to one exact, one-slot model;
+* model-backed routes require a live construct-or-realize smoke using the same
+  strict JSON schemas as matrix execution before they are schedulable for
+  scored cells (health-only probes alone fail closed);
 * the frozen autoencoder state is opened with read-only operating-system flags;
 * cvc5 and Lean are exercised with small, timed, non-corpus smoke programs; and
 * every missing or mismatched capability is retained as ``unavailable``.
@@ -416,7 +419,7 @@ class CapabilityInventory:
                 "full_spacy_pipeline_required": True,
                 "autoencoder_access": "read_only",
                 "solver_smokes": "bounded",
-                "model_inference_smoke": False,
+                "model_inference_smoke": True,
             },
             "bindings": _json_copy(self.bindings),
             "capabilities": [
@@ -447,7 +450,7 @@ class CapabilityInventory:
             "full_spacy_pipeline_required": True,
             "autoencoder_access": "read_only",
             "solver_smokes": "bounded",
-            "model_inference_smoke": False,
+            "model_inference_smoke": True,
         }
         if dict(policy) != expected_policy:
             raise CapabilityProbeError("probe_policy differs from frozen policy")
@@ -482,6 +485,7 @@ class ProbeConfig:
     leanstral_model: str = LEANSTRAL_MODEL
     command_timeout_seconds: float = 5.0
     http_timeout_seconds: float = 3.0
+    live_smoke_timeout_seconds: float = 120.0
     max_command_output_bytes: int = 16 * 1024
     max_http_response_bytes: int = 2 * 1024 * 1024
 
@@ -516,6 +520,17 @@ HttpGetter = Callable[[str, float, int], Any]
 StateLoader = Callable[[Mapping[str, Any]], Any]
 ModuleFinder = Callable[[str], Any]
 RouteContractValidator = Callable[..., Mapping[str, object]]
+# Returns a complete live-smoke receipt mapping (see ``_smoke_receipt``).
+LiveSmokeRunner = Callable[[], Mapping[str, Any]]
+
+HEALTH_ONLY_NOT_SCHEDULABLE_REASON: Final = (
+    "health-only probe is not schedulable for scored matrix cells; "
+    "live construct-or-realize smoke with model_inference_performed "
+    "is required"
+)
+LIVE_SMOKE_ACCEPT_REASON: Final = (
+    "matrix_schema_construct_or_realize_smoke_accepted"
+)
 
 
 def _distribution_version(distribution: str) -> str | None:
@@ -996,13 +1011,397 @@ def _leanstral_requested() -> dict[str, Any]:
             "model_instances": LEANSTRAL_CAPACITY,
             "parallel_slots": LEANSTRAL_CAPACITY,
         },
+        "live_smoke": {
+            "role": "construct_or_realize",
+            "schema_name": SYMAI_REALIZATION_SCHEMA_NAME,
+            "required": True,
+        },
     }
+
+
+def _smoke_receipt(
+    *,
+    status: str,
+    role: str,
+    schema_name: str,
+    route: str,
+    model: str | None,
+    accept_reason: str | None,
+    reject_reason: str | None,
+    model_identity_match: bool | None,
+    model_inference_performed: bool,
+    request_performed: bool,
+    extra: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the durable live-smoke receipt persisted on capability checks."""
+
+    if status not in {"accepted", "rejected", "not_attempted"}:
+        raise CapabilityProbeError(f"invalid smoke receipt status: {status!r}")
+    if status == "accepted":
+        if not accept_reason or reject_reason is not None:
+            raise CapabilityProbeError(
+                "accepted smoke receipt requires accept_reason only"
+            )
+        if not model_inference_performed or not request_performed:
+            raise CapabilityProbeError(
+                "accepted smoke receipt requires real model inference"
+            )
+    elif status == "rejected":
+        if not reject_reason or accept_reason is not None:
+            raise CapabilityProbeError(
+                "rejected smoke receipt requires reject_reason only"
+            )
+    else:
+        if accept_reason is not None or reject_reason is None:
+            raise CapabilityProbeError(
+                "not_attempted smoke receipt requires reject_reason only"
+            )
+        if model_inference_performed or request_performed:
+            raise CapabilityProbeError(
+                "not_attempted smoke receipt cannot claim inference"
+            )
+    receipt: dict[str, Any] = {
+        "status": status,
+        "role": role,
+        "schema_name": schema_name,
+        "route": route,
+        "model": model,
+        "accept_reason": accept_reason,
+        "reject_reason": reject_reason,
+        "model_identity_match": model_identity_match,
+        "model_inference_performed": model_inference_performed,
+        "request_performed": request_performed,
+    }
+    if extra:
+        for key, value in extra.items():
+            if key in receipt:
+                raise CapabilityProbeError(
+                    f"smoke receipt extra key collides: {key!r}"
+                )
+            receipt[key] = value
+    return receipt
+
+
+def _health_only_smoke_receipt(*, route: str) -> dict[str, Any]:
+    return _smoke_receipt(
+        status="not_attempted",
+        role="construct_or_realize",
+        schema_name=SYMAI_REALIZATION_SCHEMA_NAME,
+        route=route,
+        model=None,
+        accept_reason=None,
+        reject_reason=HEALTH_ONLY_NOT_SCHEDULABLE_REASON,
+        model_identity_match=None,
+        model_inference_performed=False,
+        request_performed=False,
+        extra={"health_only": True},
+    )
+
+
+def _matrix_realize_smoke_materials() -> dict[str, Any]:
+    """Build the exact realization schema and prompt used by matrix T1."""
+
+    from benchmarks.semantic_roundtrip.contracts import (
+        AllowedAtomVocabulary,
+        CanonicalRule,
+        CanonicalRuleIR,
+        RealizerRequest,
+    )
+    from benchmarks.semantic_roundtrip.realizers.leanstral import (
+        REALIZATION_JSON_SCHEMA,
+        REALIZER_MAX_TOKENS,
+        _realizer_prompt,
+    )
+
+    vocabulary = AllowedAtomVocabulary(
+        actors=("capability_actor_a", "capability_actor_b"),
+        actions=("capability_action_a", "capability_action_b"),
+        objects=("capability_object_a", "capability_object_b"),
+        qualifiers=("capability_qualifier_a", "capability_qualifier_b"),
+    )
+    canonical_ir = CanonicalRuleIR(
+        rules=(
+            CanonicalRule(
+                modality="O",
+                actor="capability_actor_a",
+                action="capability_action_a",
+                object="capability_object_a",
+                conditions=("capability_qualifier_a",),
+                exceptions=(),
+                temporal=(),
+            ),
+        )
+    )
+    request = RealizerRequest(canonical_ir, vocabulary, {})
+    prompt = _realizer_prompt(request)
+    system = (
+        "You are a source-withheld formal-logic realizer. The supplied "
+        "canonical IR is your only semantic authority. Return one compact "
+        "JSON object matching the supplied schema and never explain."
+    )
+    return {
+        "role": "realize",
+        "schema_name": SYMAI_REALIZATION_SCHEMA_NAME,
+        "schema": REALIZATION_JSON_SCHEMA,
+        "max_tokens": REALIZER_MAX_TOKENS,
+        "system": system,
+        "prompt": prompt,
+        "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+        "schema_sha256": hashlib.sha256(
+            json.dumps(
+                REALIZATION_JSON_SCHEMA,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest(),
+    }
+
+
+def _run_construct_or_realize_smoke(
+    *,
+    route: str,
+    expected_model: str,
+    complete_json: Callable[..., Any],
+) -> dict[str, Any]:
+    """Execute one matrix-schema realize smoke and return a smoke receipt.
+
+    The smoke uses the same realization JSON schema name and shape as matrix
+    T1 execution.  Accept/reject reasons are always persisted on the receipt.
+    """
+
+    materials = _matrix_realize_smoke_materials()
+    role = str(materials["role"])
+    schema_name = str(materials["schema_name"])
+    evidence = {
+        "prompt_sha256": materials["prompt_sha256"],
+        "schema_sha256": materials["schema_sha256"],
+        "max_tokens": materials["max_tokens"],
+        "health_only": False,
+    }
+    try:
+        payload = complete_json(
+            system=materials["system"],
+            prompt=materials["prompt"],
+            schema_name=materials["schema_name"],
+            schema=materials["schema"],
+            max_tokens=materials["max_tokens"],
+        )
+    except Exception as exc:
+        return _smoke_receipt(
+            status="rejected",
+            role=role,
+            schema_name=schema_name,
+            route=route,
+            model=expected_model,
+            accept_reason=None,
+            reject_reason=(
+                f"live construct-or-realize smoke failed: "
+                f"{type(exc).__name__}: {exc}"
+            ),
+            model_identity_match=None,
+            model_inference_performed=True,
+            request_performed=True,
+            extra={
+                **evidence,
+                "exception_type": type(exc).__name__,
+            },
+        )
+
+    # SyMAI returns SyMAICompletion; direct returns a plain mapping.
+    response_model = expected_model
+    value: Any = payload
+    if hasattr(payload, "value") and hasattr(payload, "metadata"):
+        value = payload.value
+        metadata = payload.metadata
+        if isinstance(metadata, Mapping):
+            for key in (
+                "resolved_model_name",
+                "resolved_model",
+                "model",
+            ):
+                candidate = metadata.get(key)
+                if isinstance(candidate, str) and candidate.strip():
+                    response_model = candidate.strip()
+                    break
+
+    if not isinstance(value, Mapping):
+        return _smoke_receipt(
+            status="rejected",
+            role=role,
+            schema_name=schema_name,
+            route=route,
+            model=response_model,
+            accept_reason=None,
+            reject_reason=(
+                "live construct-or-realize smoke returned a non-object payload"
+            ),
+            model_identity_match=response_model == expected_model,
+            model_inference_performed=True,
+            request_performed=True,
+            extra=evidence,
+        )
+
+    identity_match = response_model == expected_model
+    if not identity_match:
+        return _smoke_receipt(
+            status="rejected",
+            role=role,
+            schema_name=schema_name,
+            route=route,
+            model=response_model,
+            accept_reason=None,
+            reject_reason=(
+                "live smoke response model identity mismatch: "
+                f"got {response_model!r}, expected {expected_model!r}"
+            ),
+            model_identity_match=False,
+            model_inference_performed=True,
+            request_performed=True,
+            extra={
+                **evidence,
+                "response_object_keys": sorted(str(k) for k in value),
+            },
+        )
+
+    text = value.get("text") if "text" in value else None
+    if not isinstance(text, str) or not text.strip():
+        return _smoke_receipt(
+            status="rejected",
+            role=role,
+            schema_name=schema_name,
+            route=route,
+            model=response_model,
+            accept_reason=None,
+            reject_reason=(
+                "live construct-or-realize smoke response missing non-empty "
+                "text under the matrix realization schema"
+            ),
+            model_identity_match=True,
+            model_inference_performed=True,
+            request_performed=True,
+            extra={
+                **evidence,
+                "response_object_keys": sorted(str(k) for k in value),
+            },
+        )
+
+    return _smoke_receipt(
+        status="accepted",
+        role=role,
+        schema_name=schema_name,
+        route=route,
+        model=response_model,
+        accept_reason=LIVE_SMOKE_ACCEPT_REASON,
+        reject_reason=None,
+        model_identity_match=True,
+        model_inference_performed=True,
+        request_performed=True,
+        extra={
+            **evidence,
+            "response_object_keys": sorted(str(k) for k in value),
+            "response_text_sha256": hashlib.sha256(
+                text.encode("utf-8")
+            ).hexdigest(),
+            "response_text_chars": len(text),
+        },
+    )
+
+
+def _default_direct_live_smoke(
+    config: ProbeConfig,
+) -> Mapping[str, Any]:
+    from benchmarks.semantic_roundtrip.constructors.leanstral import (
+        LeanstralClient,
+    )
+
+    client = LeanstralClient(
+        endpoint=config.leanstral_endpoint,
+        model=config.leanstral_model,
+        timeout_seconds=config.live_smoke_timeout_seconds,
+    )
+    return _run_construct_or_realize_smoke(
+        route="direct",
+        expected_model=LEANSTRAL_MODEL,
+        complete_json=client.complete_json,
+    )
+
+
+def _default_symai_live_smoke() -> Mapping[str, Any]:
+    from benchmarks.semantic_roundtrip.constructors.symai import SyMAIClient
+
+    client = SyMAIClient()
+    return _run_construct_or_realize_smoke(
+        route="symai",
+        expected_model=LEANSTRAL_MODEL,
+        complete_json=client.complete_json,
+    )
+
+
+def _apply_live_smoke_checks(
+    checks: dict[str, Any],
+    smoke: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Fold a smoke receipt into capability checks for scheduling gates."""
+
+    receipt = _json_copy(dict(smoke))
+    inference = bool(receipt.get("model_inference_performed"))
+    accepted = receipt.get("status") == "accepted" and inference
+    checks["smoke_receipt"] = receipt
+    checks["model_inference_performed"] = inference
+    checks["live_model_request_performed"] = bool(
+        receipt.get("request_performed")
+    )
+    checks["health_only"] = bool(
+        receipt.get("health_only")
+        or (not inference and receipt.get("status") == "not_attempted")
+    )
+    checks["schedulable_for_scored_matrix"] = accepted and not checks[
+        "health_only"
+    ]
+    if accepted:
+        checks["smoke_accept_reason"] = receipt.get("accept_reason")
+        checks["smoke_reject_reason"] = None
+    else:
+        checks["smoke_accept_reason"] = None
+        checks["smoke_reject_reason"] = receipt.get("reject_reason") or (
+            HEALTH_ONLY_NOT_SCHEDULABLE_REASON
+        )
+    return checks
+
+
+def is_schedulable_for_scored_matrix(record: CapabilityRecord) -> bool:
+    """Return whether a capability may enter scored matrix cells.
+
+    Health-only identity probes never qualify model-backed arms; a live
+    construct-or-realize smoke with ``model_inference_performed`` is required.
+    """
+
+    if record.status != "available":
+        return False
+    checks = record.checks
+    if checks.get("health_only") is True:
+        return False
+    if checks.get("model_inference_performed") is not True:
+        return False
+    if checks.get("schedulable_for_scored_matrix") is not True:
+        return False
+    receipt = checks.get("smoke_receipt")
+    if not isinstance(receipt, Mapping):
+        return False
+    if receipt.get("status") != "accepted":
+        return False
+    if receipt.get("model_inference_performed") is not True:
+        return False
+    return True
 
 
 def probe_leanstral_direct(
     config: ProbeConfig,
     *,
     http_getter: HttpGetter | None = None,
+    live_smoke_runner: LiveSmokeRunner | None = None,
 ) -> CapabilityRecord:
     requested = _leanstral_requested()
     get_json = http_getter or _http_json
@@ -1087,16 +1486,23 @@ def probe_leanstral_direct(
         json.JSONDecodeError,
         CapabilityProbeError,
     ) as exc:
-        return CapabilityRecord.unavailable(
-            "leanstral_direct",
-            requested,
-            effective=effective,
-            checks={
+        checks = _apply_live_smoke_checks(
+            {
                 "health_get": False,
                 "models_get": False,
                 "props_get": False,
                 "model_inference_performed": False,
+                "live_model_request_performed": False,
+                "health_only": True,
+                "schedulable_for_scored_matrix": False,
             },
+            _health_only_smoke_receipt(route="direct"),
+        )
+        return CapabilityRecord.unavailable(
+            "leanstral_direct",
+            requested,
+            effective=effective,
+            checks=checks,
             reason=f"Leanstral identity probe failed: {type(exc).__name__}",
         )
     checks = {
@@ -1108,6 +1514,12 @@ def probe_leanstral_direct(
             effective["capacity"]["parallel_slots"] == LEANSTRAL_CAPACITY
         ),
         "model_inference_performed": False,
+        "live_model_request_performed": False,
+        "health_only": True,
+        "schedulable_for_scored_matrix": False,
+        "smoke_receipt": None,
+        "smoke_accept_reason": None,
+        "smoke_reject_reason": None,
     }
     required_checks = (
         checks["health_get"],
@@ -1117,12 +1529,52 @@ def probe_leanstral_direct(
         checks["one_slot_capacity"],
     )
     if not all(required_checks):
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="direct"),
+        )
         return CapabilityRecord.unavailable(
             "leanstral_direct",
             requested,
             effective=effective,
             checks=checks,
             reason="Leanstral health, model, backend, or one-slot capacity drifted",
+        )
+
+    # Health/identity alone is never enough for scored matrix cells.
+    runner = live_smoke_runner
+    if runner is None:
+        runner = lambda: _default_direct_live_smoke(config)
+    try:
+        smoke = dict(runner())
+    except Exception as exc:
+        smoke = _smoke_receipt(
+            status="rejected",
+            role="realize",
+            schema_name=SYMAI_REALIZATION_SCHEMA_NAME,
+            route="direct",
+            model=LEANSTRAL_MODEL,
+            accept_reason=None,
+            reject_reason=(
+                f"live construct-or-realize smoke raised "
+                f"{type(exc).__name__}: {exc}"
+            ),
+            model_identity_match=None,
+            model_inference_performed=True,
+            request_performed=True,
+            extra={"health_only": False, "exception_type": type(exc).__name__},
+        )
+    checks = _apply_live_smoke_checks(checks, smoke)
+    if not checks["schedulable_for_scored_matrix"]:
+        reject = checks.get("smoke_reject_reason") or (
+            HEALTH_ONLY_NOT_SCHEDULABLE_REASON
+        )
+        return CapabilityRecord.unavailable(
+            "leanstral_direct",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason=str(reject),
         )
     return CapabilityRecord.available(
         "leanstral_direct",
@@ -1250,6 +1702,7 @@ def probe_symai_leanstral_route(
     version_getter: VersionGetter | None = None,
     module_finder: ModuleFinder | None = None,
     route_contract_validator: RouteContractValidator | None = None,
+    live_smoke_runner: LiveSmokeRunner | None = None,
 ) -> CapabilityRecord:
     requested = {
         "route": "symai_router",
@@ -1275,6 +1728,11 @@ def probe_symai_leanstral_route(
             "stop": ["<|im_end|>"],
             "timeout_seconds": 120.0,
             "cache_prompt": False,
+        },
+        "live_smoke": {
+            "role": "construct_or_realize",
+            "schema_name": SYMAI_REALIZATION_SCHEMA_NAME,
+            "required": True,
         },
         "resolved_provider": LEANSTRAL_PROVIDER,
         "resolved_endpoint": LEANSTRAL_ENDPOINT,
@@ -1311,11 +1769,8 @@ def probe_symai_leanstral_route(
         "shared_capacity": LEANSTRAL_CAPACITY,
     }
     if version != SYMAI_VERSION or engine_spec is None or router_spec is None:
-        return CapabilityRecord.unavailable(
-            "symai_leanstral_route",
-            requested,
-            effective=effective,
-            checks={
+        checks = _apply_live_smoke_checks(
+            {
                 "symbolicai_version_match": version == SYMAI_VERSION,
                 "engine_present": engine_spec is not None,
                 "router_present": router_spec is not None,
@@ -1323,15 +1778,22 @@ def probe_symai_leanstral_route(
                 "route_contract_validation_passed": False,
                 "same_effective_model": False,
                 "model_inference_performed": False,
+                "live_model_request_performed": False,
+                "health_only": True,
+                "schedulable_for_scored_matrix": False,
             },
-            reason="SyMAI package or frozen IPFS router implementation is unavailable",
+            _health_only_smoke_receipt(route="symai"),
         )
-    if direct.status != "available" or direct.effective_identity is None:
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
             effective=effective,
-            checks={
+            checks=checks,
+            reason="SyMAI package or frozen IPFS router implementation is unavailable",
+        )
+    if direct.status != "available" or direct.effective_identity is None:
+        checks = _apply_live_smoke_checks(
+            {
                 "symbolicai_version_match": True,
                 "engine_present": True,
                 "router_present": True,
@@ -1339,7 +1801,17 @@ def probe_symai_leanstral_route(
                 "route_contract_validation_passed": False,
                 "same_effective_model": False,
                 "model_inference_performed": False,
+                "live_model_request_performed": False,
+                "health_only": True,
+                "schedulable_for_scored_matrix": False,
             },
+            _health_only_smoke_receipt(route="symai"),
+        )
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
             reason="SyMAI route cannot bind its required direct Leanstral service",
         )
     effective.update(
@@ -1378,8 +1850,17 @@ def probe_symai_leanstral_route(
         "independent_model_started": False,
         "live_model_request_performed": False,
         "model_inference_performed": False,
+        "health_only": True,
+        "schedulable_for_scored_matrix": False,
+        "smoke_receipt": None,
+        "smoke_accept_reason": None,
+        "smoke_reject_reason": None,
     }
     if not same_model:
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="symai"),
+        )
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -1395,6 +1876,10 @@ def probe_symai_leanstral_route(
             else _load_symai_route_contract_validator()
         )
     except Exception:
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="symai"),
+        )
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -1407,6 +1892,10 @@ def probe_symai_leanstral_route(
         )
     checks["route_contract_validator_present"] = callable(validator)
     if not callable(validator):
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="symai"),
+        )
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -1421,6 +1910,10 @@ def probe_symai_leanstral_route(
     try:
         contracts = _symai_route_generation_contracts()
     except Exception:
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="symai"),
+        )
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -1535,6 +2028,10 @@ def probe_symai_leanstral_route(
     effective["validated_request_contracts"] = normalized
     if not checks["route_contract_validation_passed"]:
         failed = [key for key in contract_checks if checks[key] is not True]
+        checks = _apply_live_smoke_checks(
+            checks,
+            _health_only_smoke_receipt(route="symai"),
+        )
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -1544,6 +2041,43 @@ def probe_symai_leanstral_route(
                 "SyMAI side-effect-free route-contract validation failed: "
                 + ", ".join(failed)
             ),
+        )
+
+    # Route-contract validation alone is a health/identity probe: require a
+    # live construct-or-realize smoke through the SyMAI route for scored cells.
+    runner = live_smoke_runner
+    if runner is None:
+        runner = _default_symai_live_smoke
+    try:
+        smoke = dict(runner())
+    except Exception as exc:
+        smoke = _smoke_receipt(
+            status="rejected",
+            role="realize",
+            schema_name=SYMAI_REALIZATION_SCHEMA_NAME,
+            route="symai",
+            model=LEANSTRAL_MODEL,
+            accept_reason=None,
+            reject_reason=(
+                f"live construct-or-realize smoke raised "
+                f"{type(exc).__name__}: {exc}"
+            ),
+            model_identity_match=None,
+            model_inference_performed=True,
+            request_performed=True,
+            extra={"health_only": False, "exception_type": type(exc).__name__},
+        )
+    checks = _apply_live_smoke_checks(checks, smoke)
+    if not checks["schedulable_for_scored_matrix"]:
+        reject = checks.get("smoke_reject_reason") or (
+            HEALTH_ONLY_NOT_SCHEDULABLE_REASON
+        )
+        return CapabilityRecord.unavailable(
+            "symai_leanstral_route",
+            requested,
+            effective=effective,
+            checks=checks,
+            reason=str(reject),
         )
     return CapabilityRecord.available(
         "symai_leanstral_route",

@@ -13,17 +13,56 @@ import pytest
 from benchmarks import semantic_roundtrip_capabilities as capabilities
 
 
+def _accepted_smoke_receipt(*, route: str) -> dict[str, Any]:
+    return capabilities._smoke_receipt(
+        status="accepted",
+        role="realize",
+        schema_name=capabilities.SYMAI_REALIZATION_SCHEMA_NAME,
+        route=route,
+        model=capabilities.LEANSTRAL_MODEL,
+        accept_reason=capabilities.LIVE_SMOKE_ACCEPT_REASON,
+        reject_reason=None,
+        model_identity_match=True,
+        model_inference_performed=True,
+        request_performed=True,
+        extra={
+            "health_only": False,
+            "response_object_keys": ["text"],
+            "response_text_chars": 12,
+            "response_text_sha256": "a" * 64,
+            "prompt_sha256": "b" * 64,
+            "schema_sha256": "c" * 64,
+            "max_tokens": 1536,
+        },
+    )
+
+
+def _live_smoke_checks(*, route: str) -> dict[str, Any]:
+    checks: dict[str, Any] = {
+        "probe_completed": True,
+        "model_inference_performed": False,
+        "live_model_request_performed": False,
+        "health_only": True,
+        "schedulable_for_scored_matrix": False,
+    }
+    return capabilities._apply_live_smoke_checks(
+        checks,
+        _accepted_smoke_receipt(route=route),
+    )
+
+
 def _available(
     capability_id: str,
     *,
     effective: dict[str, Any] | None = None,
+    checks: dict[str, Any] | None = None,
 ) -> capabilities.CapabilityRecord:
     identity = effective or {"implementation": capability_id, "version": "1"}
     return capabilities.CapabilityRecord.available(
         capability_id,
         {"requested": capability_id},
         identity,
-        {"probe_completed": True},
+        checks or {"probe_completed": True},
     )
 
 
@@ -37,6 +76,7 @@ def _direct() -> capabilities.CapabilityRecord:
             "model": capabilities.LEANSTRAL_MODEL,
             "backend": capabilities.LEANSTRAL_BACKEND,
         },
+        checks=_live_smoke_checks(route="direct"),
     )
 
 
@@ -52,7 +92,12 @@ def _symai() -> capabilities.CapabilityRecord:
             "resolved_model": capabilities.LEANSTRAL_MODEL,
             "resolved_backend": capabilities.LEANSTRAL_BACKEND,
         },
+        checks=_live_smoke_checks(route="symai"),
     )
+
+
+def _accepted_live_smoke_runner(*, route: str) -> capabilities.LiveSmokeRunner:
+    return lambda: _accepted_smoke_receipt(route=route)
 
 
 def _injected_inventory(
@@ -294,11 +339,19 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
     direct = capabilities.probe_leanstral_direct(
         config,
         http_getter=_leanstral_get,
+        live_smoke_runner=_accepted_live_smoke_runner(route="direct"),
     )
     assert direct.status == "available"
     assert direct.effective_identity
     assert direct.effective_identity["capacity"]["parallel_slots"] == 1
-    assert direct.checks["model_inference_performed"] is False
+    assert direct.checks["model_inference_performed"] is True
+    assert direct.checks["schedulable_for_scored_matrix"] is True
+    assert direct.checks["health_only"] is False
+    assert direct.checks["smoke_receipt"]["status"] == "accepted"
+    assert direct.checks["smoke_accept_reason"] == (
+        capabilities.LIVE_SMOKE_ACCEPT_REASON
+    )
+    assert capabilities.is_schedulable_for_scored_matrix(direct) is True
 
     source = tmp_path / "router.py"
     source.write_text("# frozen route\n", encoding="utf-8")
@@ -308,6 +361,7 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
         version_getter=lambda name: capabilities.SYMAI_VERSION,
         module_finder=lambda name: spec,
         route_contract_validator=_strict_route_contract_validator,
+        live_smoke_runner=_accepted_live_smoke_runner(route="symai"),
     )
     assert symai.status == "available"
     assert symai.effective_identity
@@ -317,7 +371,12 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
     )
     assert symai.effective_identity["independent_model"] is False
     assert symai.checks["route_contract_validation_passed"] is True
-    assert symai.checks["model_inference_performed"] is False
+    assert symai.checks["model_inference_performed"] is True
+    assert symai.checks["schedulable_for_scored_matrix"] is True
+    assert symai.checks["smoke_receipt"]["accept_reason"] == (
+        capabilities.LIVE_SMOKE_ACCEPT_REASON
+    )
+    assert capabilities.is_schedulable_for_scored_matrix(symai) is True
 
     inventory = _injected_inventory(
         {
@@ -332,6 +391,7 @@ def test_direct_and_symai_routes_bind_one_exact_shared_model(tmp_path: Path) -> 
         "direct_openai_compatible_http"
     )
     assert inventory.bindings["symai_leanstral"]["route"] == "symai_router"
+    assert inventory.to_dict()["probe_policy"]["model_inference_smoke"] is True
 
 
 def test_symai_route_rejects_a_permissive_contract_validator(
@@ -442,11 +502,125 @@ def test_leanstral_capacity_drift_is_unavailable() -> None:
     record = capabilities.probe_leanstral_direct(
         capabilities.ProbeConfig(),
         http_getter=two_slots,
+        live_smoke_runner=_accepted_live_smoke_runner(route="direct"),
     )
 
     assert record.status == "unavailable"
     assert record.checks["one_slot_capacity"] is False
+    assert record.checks["model_inference_performed"] is False
+    assert record.checks["health_only"] is True
+    assert record.checks["schedulable_for_scored_matrix"] is False
+    assert capabilities.is_schedulable_for_scored_matrix(record) is False
     assert record.substitute_used is False
+
+
+def test_health_only_probe_is_not_schedulable_for_scored_matrix() -> None:
+    """Identity/health success without live inference must fail closed."""
+
+    def health_only_runner() -> dict[str, Any]:
+        return capabilities._health_only_smoke_receipt(route="direct")
+
+    record = capabilities.probe_leanstral_direct(
+        capabilities.ProbeConfig(),
+        http_getter=_leanstral_get,
+        live_smoke_runner=health_only_runner,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["health_get"] is True
+    assert record.checks["models_get"] is True
+    assert record.checks["model_inference_performed"] is False
+    assert record.checks["health_only"] is True
+    assert record.checks["schedulable_for_scored_matrix"] is False
+    assert record.checks["smoke_receipt"]["status"] == "not_attempted"
+    assert record.checks["smoke_reject_reason"] == (
+        capabilities.HEALTH_ONLY_NOT_SCHEDULABLE_REASON
+    )
+    assert record.reason == capabilities.HEALTH_ONLY_NOT_SCHEDULABLE_REASON
+    assert capabilities.is_schedulable_for_scored_matrix(record) is False
+
+
+def test_forced_live_smoke_failure_marks_arm_non_schedulable() -> None:
+    def explode() -> dict[str, Any]:
+        raise RuntimeError("forced live smoke failure")
+
+    record = capabilities.probe_leanstral_direct(
+        capabilities.ProbeConfig(),
+        http_getter=_leanstral_get,
+        live_smoke_runner=explode,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["health_get"] is True
+    assert record.checks["live_model_request_performed"] is True
+    assert record.checks["model_inference_performed"] is True
+    assert record.checks["schedulable_for_scored_matrix"] is False
+    assert record.checks["health_only"] is False
+    assert record.checks["smoke_receipt"]["status"] == "rejected"
+    assert record.checks["smoke_receipt"]["reject_reason"]
+    assert "forced live smoke failure" in str(
+        record.checks["smoke_reject_reason"]
+    )
+    assert capabilities.is_schedulable_for_scored_matrix(record) is False
+
+
+def test_live_smoke_identity_mismatch_is_rejected() -> None:
+    def mismatched(**_kwargs: Any) -> Any:
+        return SimpleNamespace(
+            value={"text": "realized rule text"},
+            metadata={"resolved_model_name": "not-the-pinned-leanstral"},
+        )
+
+    receipt = capabilities._run_construct_or_realize_smoke(
+        route="direct",
+        expected_model=capabilities.LEANSTRAL_MODEL,
+        complete_json=mismatched,
+    )
+    assert receipt["status"] == "rejected"
+    assert receipt["model_identity_match"] is False
+    assert receipt["model_inference_performed"] is True
+    assert "identity mismatch" in str(receipt["reject_reason"])
+    assert receipt["accept_reason"] is None
+
+    record = capabilities.probe_leanstral_direct(
+        capabilities.ProbeConfig(),
+        http_getter=_leanstral_get,
+        live_smoke_runner=lambda: receipt,
+    )
+    assert record.status == "unavailable"
+    assert record.checks["schedulable_for_scored_matrix"] is False
+    assert record.checks["smoke_receipt"]["model_identity_match"] is False
+    assert "identity mismatch" in str(record.reason)
+    assert capabilities.is_schedulable_for_scored_matrix(record) is False
+
+
+def test_symai_forced_live_smoke_failure_persists_reject_reason(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "router.py"
+    source.write_text("# route\n", encoding="utf-8")
+    spec = SimpleNamespace(origin=str(source))
+
+    def explode() -> dict[str, Any]:
+        raise RuntimeError("symai live smoke forced failure")
+
+    record = capabilities.probe_symai_leanstral_route(
+        _direct(),
+        version_getter=lambda name: capabilities.SYMAI_VERSION,
+        module_finder=lambda name: spec,
+        route_contract_validator=_strict_route_contract_validator,
+        live_smoke_runner=explode,
+    )
+
+    assert record.status == "unavailable"
+    assert record.checks["route_contract_validation_passed"] is True
+    assert record.checks["model_inference_performed"] is True
+    assert record.checks["schedulable_for_scored_matrix"] is False
+    assert record.checks["smoke_receipt"]["status"] == "rejected"
+    assert "symai live smoke forced failure" in str(
+        record.checks["smoke_reject_reason"]
+    )
+    assert capabilities.is_schedulable_for_scored_matrix(record) is False
 
 
 def test_frozen_autoencoder_state_is_loaded_read_only() -> None:
@@ -618,6 +792,7 @@ def test_captured_workspace_receipt_is_schema_valid_and_truthful() -> None:
     assert payload["probe_policy"]["allows_substitutes"] is False
     assert payload["probe_policy"]["full_spacy_pipeline_required"] is True
     assert payload["probe_policy"]["autoencoder_access"] == "read_only"
+    assert payload["probe_policy"]["model_inference_smoke"] is True
     assert inventory.bindings["shared_model_capacity"] == 1
     assert inventory.by_id["autoencoder_state"].requested_identity["cid"] == (
         capabilities.AUTOENCODER_STATE_CID
@@ -634,3 +809,17 @@ def test_captured_workspace_receipt_is_schema_valid_and_truthful() -> None:
         and (record.status == "available" or record.reason)
         for record in inventory.capabilities
     )
+    for capability_id in ("leanstral_direct", "symai_leanstral_route"):
+        record = inventory.by_id[capability_id]
+        assert "smoke_receipt" in record.checks
+        receipt = record.checks["smoke_receipt"]
+        assert isinstance(receipt, dict) or hasattr(receipt, "get")
+        assert receipt.get("accept_reason") or receipt.get("reject_reason")
+        if record.status == "available":
+            assert record.checks["model_inference_performed"] is True
+            assert record.checks["schedulable_for_scored_matrix"] is True
+            assert receipt["status"] == "accepted"
+            assert capabilities.is_schedulable_for_scored_matrix(record)
+        else:
+            assert record.checks["schedulable_for_scored_matrix"] is False
+            assert capabilities.is_schedulable_for_scored_matrix(record) is False
