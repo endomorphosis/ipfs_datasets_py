@@ -8,6 +8,11 @@ description: Query the CID-keyed SkillCenter Intent IR dataset on Hugging Face w
 Use the bundled query wrapper. It fetches only compact meta-indexes, relevant
 posting/vector shards, and corpus shards containing final hits.
 
+Use `Publicus/skillcenter-ir` as the canonical release repository. The
+upstream source corpus is `Tommysha/skillcenter-bundles`; do not query that
+SQLite-bundle repository as though it contained this release's Parquet
+meta-indexes.
+
 ## Choose retrieval
 
 - Use `bm25` for tool names, APIs, commands, quoted concepts, and other exact
@@ -24,7 +29,7 @@ posting/vector shards, and corpus shards containing final hits.
 
 ```bash
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   bm25 "rotate API credentials securely" --top-k 10
 ```
@@ -33,7 +38,7 @@ python scripts/query_skillcenter_hf.py \
 
 ```bash
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   vector "rotate API credentials securely" \
   --candidate-centroids 4 --device auto --top-k 10
@@ -53,12 +58,12 @@ Resolve a node or fetch a bounded adjacency page:
 
 ```bash
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   graph node "<node-cid>"
 
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   graph neighbors "<node-cid>" \
   --direction both --limit 25 --hydrate
@@ -68,7 +73,7 @@ Walk with explicit resource ceilings:
 
 ```bash
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   graph walk "<node-cid>" \
   --direction outgoing --max-depth 2 \
@@ -84,7 +89,7 @@ Guide a bounded walk toward a semantic goal:
 
 ```bash
 python scripts/query_skillcenter_hf.py \
-  --repo-id Tommysha/skillcenter-ir \
+  --repo-id Publicus/skillcenter-ir \
   --revision main \
   graph walk "<node-cid>" \
   --strategy semantic-beam \
