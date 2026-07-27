@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import re
 
@@ -287,6 +288,28 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
     assert "670 total terminal observations" in tasks["SRT-026"].acceptance
     assert (
         tasks["SRT-026"].metadata["implementation timeout seconds"] == "21600"
+    )
+    artifact_envelope = json.loads(
+        tasks["SRT-026"].metadata["proposal artifact envelope"]
+    )
+    assert artifact_envelope == {
+        "schema": (
+            "ipfs_accelerate_py/agent-supervisor/"
+            "task-artifact-envelope@1"
+        ),
+        "paths": tasks["SRT-026"].outputs,
+        "max_file_bytes": 12_000_000,
+        "max_patch_bytes": 14_000_000,
+        "max_output_bytes": 24_000_000,
+    }
+    assert artifact_envelope["paths"] == sorted(
+        predicted["SRT-026"],
+        key=artifact_envelope["paths"].index,
+    )
+    assert all(
+        "proposal artifact envelope" not in task.metadata
+        for task_id, task in tasks.items()
+        if task_id != "SRT-026"
     )
     assert tasks["SRT-027"].metadata["implementation timeout seconds"] == "3600"
     assert "--require-authorized" in tasks["SRT-027"].validation[0]

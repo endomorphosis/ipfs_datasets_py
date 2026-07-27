@@ -157,6 +157,31 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
         isinstance(value, int)
         for value in actual_explicit_timeouts.values()
     )
+    proposal_artifact_envelope = (
+        '{"schema":"ipfs_accelerate_py/agent-supervisor/'
+        'task-artifact-envelope@1","paths":['
+        '"docs/performance_snapshots/'
+        '2026-07-27_semantic_roundtrip_composition_replacement.json",'
+        '"docs/benchmarks/'
+        'semantic_roundtrip_composition_replacement_results.md",'
+        '"workspace/benchmarks/semantic-roundtrip-compositions/'
+        'replacement_run_manifest.json"],'
+        '"max_file_bytes":12000000,"max_patch_bytes":14000000,'
+        '"max_output_bytes":24000000}'
+    )
+    assert (
+        tasks_by_id["SRT-026"]["proposal_artifact_envelope"]
+        == proposal_artifact_envelope
+    )
+    assert (
+        planned_tasks_by_id["SRT-026"]["proposal_artifact_envelope"]
+        == proposal_artifact_envelope
+    )
+    assert all(
+        "proposal_artifact_envelope" not in task
+        for task_id, task in planned_tasks_by_id.items()
+        if task_id != "SRT-026"
+    )
     assert (
         planned_tasks_by_id["SRT-014"].get("implementation_timeout_seconds")
         is None

@@ -516,6 +516,7 @@ CPU preparation and result analysis run concurrently.
 - Provider ID: leanstral-local
 - Requires provider: true
 - Implementation timeout seconds: 21600
+- Proposal artifact envelope: {"schema":"ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@1","paths":["docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json","docs/benchmarks/semantic_roundtrip_composition_replacement_results.md","workspace/benchmarks/semantic-roundtrip-compositions/replacement_run_manifest.json"],"max_file_bytes":12000000,"max_patch_bytes":14000000,"max_output_bytes":24000000}
 - Predicted files: docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json, docs/benchmarks/semantic_roundtrip_composition_replacement_results.md, workspace/benchmarks/semantic-roundtrip-compositions/replacement_run_manifest.json
 - Interfaces: SemanticRoundTripCompositionDecision@1
 - Conflict policy: Execute and publish only in a fresh immutable replacement namespace; never overwrite, amend, pool with, or relabel the SRT-014 report, raw checkpoint, run manifest, protocol, fixture, or decision.
