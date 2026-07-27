@@ -48,10 +48,38 @@ class BucketAudioMappingStatus(StrEnum):
     SELECTED_FOR_RESPONSE = "selected_for_response"
     ALTERNATE_FOR_RESPONSE = "alternate_for_response"
     UNMAPPED_LINKABLE = "unmapped_linkable"
+    # Deterministic / ASR rescues for previously unmapped linkable audio.
+    MAPPED_TO_VOCABULARY = "mapped_to_vocabulary"
+    MAPPED_TO_QUARANTINED_RESPONSE = "mapped_to_quarantined_response"
+    ASR_RESCUED_RESPONSE = "asr_rescued_response"
+    ASR_RESCUED_VOCABULARY = "asr_rescued_vocabulary"
+    ASR_UNMATCHED = "asr_unmatched"
     NON_RESPONSE_AUDIO = "non_response_audio"
     EMPTY_OR_ARCHIVE = "empty_or_archive"
     METADATA_ONLY = "metadata_only"
     NON_AUDIO = "non_audio"
+
+
+class BucketAudioSubjectKind(StrEnum):
+    """Semantic subject bound to a normalized bucket entry."""
+
+    RESPONSE = "response"
+    VOCABULARY = "vocabulary"
+    BM25_TERM = "bm25_term"
+    NONE = "none"
+
+
+class BucketAudioMappingMethod(StrEnum):
+    """How the subject binding was established."""
+
+    PLAN_ALIAS = "plan_alias"
+    PLAN_SELECTION = "plan_selection"
+    BM25_TEXT_HASH = "bm25_text_hash"
+    VOCABULARY_TEXT_HASH = "vocabulary_text_hash"
+    QUARANTINED_SOURCE_HASH = "quarantined_source_hash"
+    ASR_EXACT_NORMALIZED = "asr_exact_normalized"
+    ASR_WER_THRESHOLD = "asr_wer_threshold"
+    NONE = "none"
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -123,6 +151,11 @@ class NormalizedBucketAudioEntry:
     source_ref: str | None = None
     is_preferred_selection: bool = False
     alternate_rank: int | None = None
+    subject_kind: BucketAudioSubjectKind = BucketAudioSubjectKind.NONE
+    subject_id: str | None = None
+    mapping_method: BucketAudioMappingMethod = BucketAudioMappingMethod.NONE
+    source_text: str | None = None
+    asr_wer_bp: int | None = None
     schema_version: str = ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -137,6 +170,12 @@ class NormalizedBucketAudioEntry:
         object.__setattr__(self, "object_class", BucketAudioObjectClass(self.object_class))
         object.__setattr__(
             self, "mapping_status", BucketAudioMappingStatus(self.mapping_status)
+        )
+        object.__setattr__(
+            self, "subject_kind", BucketAudioSubjectKind(self.subject_kind)
+        )
+        object.__setattr__(
+            self, "mapping_method", BucketAudioMappingMethod(self.mapping_method)
         )
         if not _HASH64_RE.fullmatch(self.listing_sha256):
             raise ValueError("listing_sha256 must be a full lowercase SHA-256")
@@ -157,18 +196,31 @@ class NormalizedBucketAudioEntry:
             or self.alternate_rank < 1
         ):
             raise ValueError("alternate_rank must be a positive integer when set")
+        if self.asr_wer_bp is not None and (
+            isinstance(self.asr_wer_bp, bool)
+            or not isinstance(self.asr_wer_bp, int)
+            or self.asr_wer_bp < 0
+            or self.asr_wer_bp > 10_000
+        ):
+            raise ValueError("asr_wer_bp must be an integer basis point in 0..10000")
+        if self.source_text is not None and (
+            not isinstance(self.source_text, str) or "\x00" in self.source_text
+        ):
+            raise ValueError("source_text must be text without NUL")
         if self.schema_version != ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION:
             raise ValueError("unsupported bucket audio entry schema")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "alternate_rank": self.alternate_rank,
+            "asr_wer_bp": self.asr_wer_bp,
             "bucket_id": self.bucket_id,
             "canonical_text_sha256": self.canonical_text_sha256,
             "entry_id": self.entry_id,
             "is_preferred_selection": self.is_preferred_selection,
             "legacy_text_hash": self.legacy_text_hash,
             "listing_sha256": self.listing_sha256,
+            "mapping_method": self.mapping_method.value,
             "mapping_status": self.mapping_status.value,
             "media_extension": self.media_extension,
             "object_class": self.object_class.value,
@@ -180,6 +232,9 @@ class NormalizedBucketAudioEntry:
             "size_bytes": self.size_bytes,
             "source_id": self.source_id,
             "source_ref": self.source_ref,
+            "source_text": self.source_text,
+            "subject_id": self.subject_id,
+            "subject_kind": self.subject_kind.value,
             "xet_hash": self.xet_hash,
         }
 
@@ -206,6 +261,15 @@ class NormalizedBucketAudioEntry:
             source_ref=value.get("source_ref"),
             is_preferred_selection=bool(value.get("is_preferred_selection")),
             alternate_rank=value.get("alternate_rank"),
+            subject_kind=BucketAudioSubjectKind(
+                value.get("subject_kind") or BucketAudioSubjectKind.NONE
+            ),
+            subject_id=value.get("subject_id"),
+            mapping_method=BucketAudioMappingMethod(
+                value.get("mapping_method") or BucketAudioMappingMethod.NONE
+            ),
+            source_text=value.get("source_text"),
+            asr_wer_bp=value.get("asr_wer_bp"),
             schema_version=str(
                 value.get("schema_version")
                 or ABBY_VOICE_BUCKET_AUDIO_ENTRY_SCHEMA_VERSION
@@ -339,6 +403,8 @@ class AbbyVoiceBucketAudioNormalizedBundle:
             raw_entries, (str, bytes, bytearray)
         ):
             raise TypeError("normalized bundle entries must be a sequence")
+        # Always recompute content-addressed id so additive entry fields
+        # (rescue metadata) do not fail closed on older bundle payloads.
         return cls(
             entries=tuple(
                 NormalizedBucketAudioEntry.from_dict(item) for item in raw_entries
@@ -355,7 +421,7 @@ class AbbyVoiceBucketAudioNormalizedBundle:
                 value.get("normalized_version")
                 or ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_VERSION
             ),
-            normalized_id=str(value.get("normalized_id") or ""),
+            normalized_id="",
         )
 
 
@@ -427,6 +493,9 @@ def normalize_bucket_audio_entries(
             if obj.legacy_text_hash is not None
             else None
         )
+        subject_kind = BucketAudioSubjectKind.NONE
+        subject_id: str | None = None
+        mapping_method = BucketAudioMappingMethod.NONE
         if selection_hit is not None:
             selection, preferred, rank = selection_hit
             mapping_status = (
@@ -436,6 +505,9 @@ def normalize_bucket_audio_entries(
             )
             response_id = selection.response_id
             legacy_hash = selection.legacy_text_hash
+            subject_kind = BucketAudioSubjectKind.RESPONSE
+            subject_id = response_id
+            mapping_method = BucketAudioMappingMethod.PLAN_SELECTION
             if alias is None:
                 # Selection implies an alias existed at plan time; still join if
                 # available via hash for canonical text metadata.
@@ -450,12 +522,19 @@ def normalize_bucket_audio_entries(
             legacy_hash = obj.legacy_text_hash
             preferred = False
             rank = None
+            subject_kind = BucketAudioSubjectKind.RESPONSE
+            subject_id = response_id
+            mapping_method = BucketAudioMappingMethod.PLAN_ALIAS
         else:
             mapping_status = _mapping_status_for_class(obj.object_class)
             response_id = alias.response_id if alias is not None else None
             legacy_hash = obj.legacy_text_hash
             preferred = False
             rank = None
+            if response_id is not None:
+                subject_kind = BucketAudioSubjectKind.RESPONSE
+                subject_id = response_id
+                mapping_method = BucketAudioMappingMethod.PLAN_ALIAS
 
         entries.append(
             NormalizedBucketAudioEntry(
@@ -479,6 +558,9 @@ def normalize_bucket_audio_entries(
                 source_ref=alias.source_ref if alias is not None else None,
                 is_preferred_selection=preferred,
                 alternate_rank=rank,
+                subject_kind=subject_kind,
+                subject_id=subject_id,
+                mapping_method=mapping_method,
             )
         )
 
@@ -496,7 +578,9 @@ __all__ = [
     "ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_SCHEMA_VERSION",
     "ABBY_VOICE_BUCKET_AUDIO_NORMALIZED_VERSION",
     "AbbyVoiceBucketAudioNormalizedBundle",
+    "BucketAudioMappingMethod",
     "BucketAudioMappingStatus",
+    "BucketAudioSubjectKind",
     "NormalizedBucketAudioEntry",
     "normalize_bucket_audio_entries",
 ]
