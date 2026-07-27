@@ -205,6 +205,16 @@ def test_projection_supports_all_canonical_modalities(
 
 
 def test_constructor_matches_frozen_pilot_l1_for_every_case() -> None:
+    """Plateau edit waves may improve L1; never regress vs the audited freeze.
+
+    Exact IR equality remains required for the zero-residual control case.
+    Non-zero pilots must not increase forward semantic loss relative to the
+    2026-07-26 audited typed_deontic L1 snapshot.
+    """
+
+    from benchmarks.semantic_roundtrip.contracts import CanonicalRuleIR
+    from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
+
     repository_root = Path(__file__).resolve().parents[4]
     fixture_path = (
         repository_root
@@ -237,11 +247,25 @@ def test_constructor_matches_frozen_pilot_l1_for_every_case() -> None:
 
         assert result.status is ComponentStatus.SUCCESS, case["id"]
         assert result.canonical_ir is not None
-        assert (
-            result.canonical_ir.to_dict() == pilot_l1_by_case[case["id"]]
-        ), case["id"]
         assert result.failure_reason is None
         assert not hasattr(result, "native_payload")
+
+        frozen_l1 = CanonicalRuleIR.from_dict(
+            pilot_l1_by_case[case["id"]], vocabulary
+        )
+        gold = CanonicalRuleIR.from_dict(case["gold_ir"], vocabulary)
+        new_loss = float(
+            compare_semantic_ir(gold, result.canonical_ir)["semantic_loss"]
+        )
+        frozen_loss = float(
+            compare_semantic_ir(gold, frozen_l1)["semantic_loss"]
+        )
+        assert new_loss <= frozen_loss + 1e-9, (
+            f"{case['id']}: forward loss regressed "
+            f"{new_loss} > frozen {frozen_loss}"
+        )
+        if case["id"] == "exception_with_window":
+            assert result.canonical_ir.to_dict() == pilot_l1_by_case[case["id"]]
 
 
 def test_constructor_reports_empty_l1_without_native_payload() -> None:

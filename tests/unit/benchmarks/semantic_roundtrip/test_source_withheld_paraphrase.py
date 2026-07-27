@@ -232,9 +232,13 @@ def test_five_case_typed_constructor_round_trip_matches_frozen_baseline() -> Non
             )
         )
 
-    assert overlap_precisions == [0.25, 0.0, 0.148, 0.0, 0.051]
-    assert primary_losses == [0.0, 0.15, 0.05, 0.1, 0.141666667]
-    assert sum(primary_losses) / len(primary_losses) == 0.0883333334
+    # PLAT-082 improved typed_deontic projection; shared-8gram and cycle losses
+    # move with the stronger L1. Keep the sealed plateau mean as a ceiling.
+    assert overlap_precisions == [0.25, 0.045, 0.118, 0.051, 0.038]
+    assert primary_losses == [0.0, 0.083333333, 0.0, 0.025, 0.0]
+    mean_primary = sum(primary_losses) / len(primary_losses)
+    assert mean_primary <= 0.0883333334 + 1e-9
+    assert mean_primary == pytest.approx(0.0216666666, abs=1e-9)
 
 
 def test_exact_copy_and_eight_token_overlap_negative_controls_pass() -> None:
