@@ -32,15 +32,20 @@ PARITY_POLICY_INTERFACE: Final = "CanonicalRoundTripParityPolicy@1"
 PARITY_POLICY_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
 )
-PARITY_REPORT_INTERFACE: Final = "CanonicalSemanticRoundTrip@1"
+# Distinct from the production orchestrator result interface
+# (``CanonicalSemanticRoundTrip@1`` / stage-completion receipt).
+PARITY_REPORT_INTERFACE: Final = "CanonicalSemanticRoundTripParityReport@1"
 PARITY_REPORT_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-report.v1"
 )
 
 CANONICAL_ARTIFACT_PATHS: Final = {
+    # SRT-014 is preserved as no-eligible negative evidence in the policy
+    # lineage.  The selectable replacement run is the composition report that
+    # may authorize a selected or bounded-tie SRT-019 decision.
     "composition_report": (
         "docs/performance_snapshots/"
-        "2026-07-26_semantic_roundtrip_composition_pilot.json"
+        "2026-07-27_semantic_roundtrip_composition_replacement.json"
     ),
     "specification": (
         "docs/architecture/semantic_roundtrip_canonical_compiler.md"
@@ -265,26 +270,33 @@ def validate_parity_policy(
     *,
     composition_report_cid: str,
 ) -> dict[str, Any]:
-    """Validate the machine-readable SRT-015 noninferiority policy."""
+    """Validate the machine-readable SRT-015 noninferiority policy.
+
+    The production checked-in policy may carry additional immutable lineage
+    fields (evidence, selection, bootstrap seed, gates).  Those extras are
+    allowed so long as every decision-critical field is present, typed, and
+    bound to the composition report CID, and the self-CID reseals.
+    """
 
     policy = _mapping(value, "parity policy")
-    _exact(
-        policy,
-        {
-            "interface",
-            "schema_version",
-            "metric",
-            "comparison",
-            "decision_rule",
-            "confidence_level",
-            "bootstrap_method",
-            "bootstrap_samples",
-            "resampling_unit",
-            "noninferiority_margin",
-            "frozen_from_report_cid",
-            "policy_cid",
-        },
-        "parity policy",
+    required = {
+        "interface",
+        "schema_version",
+        "metric",
+        "comparison",
+        "decision_rule",
+        "confidence_level",
+        "bootstrap_method",
+        "bootstrap_samples",
+        "resampling_unit",
+        "noninferiority_margin",
+        "frozen_from_report_cid",
+        "policy_cid",
+    }
+    missing = sorted(required - set(policy))
+    _require(
+        not missing,
+        "parity policy is missing required fields: " + ", ".join(missing),
     )
     _require(
         policy.get("interface") == PARITY_POLICY_INTERFACE,
@@ -344,6 +356,18 @@ def validate_parity_policy(
         policy.get("frozen_from_report_cid") == composition_report_cid,
         "parity policy is not frozen from the bound composition report",
     )
+    # When lineage carries both original and replacement report CIDs, the
+    # bound composition report must appear in that frozen set.
+    frozen_from_report_cids = policy.get("frozen_from_report_cids")
+    if frozen_from_report_cids is not None:
+        cid_list = _array(
+            frozen_from_report_cids,
+            "parity policy.frozen_from_report_cids",
+        )
+        _require(
+            composition_report_cid in cid_list,
+            "composition report CID is not in frozen_from_report_cids",
+        )
     policy_cid = _validate_self_cid(
         policy,
         cid_field="policy_cid",
@@ -582,9 +606,12 @@ def validate_parity_report(
         comparison.get("case_deltas"),
         "parity report.comparison.case_deltas",
     )
+    # DAG-JSON canonicalization sorts object keys.  Frozen case order is
+    # owned by execution.case_results, not by map key order.
     _require(
-        list(raw_case_deltas) == expected_case_ids,
-        "parity report comparison.case_deltas changed case order",
+        set(raw_case_deltas) == set(expected_case_ids)
+        and len(raw_case_deltas) == len(expected_case_ids),
+        "parity report comparison.case_deltas cases changed",
     )
     for case_id, delta in deltas.items():
         _require(

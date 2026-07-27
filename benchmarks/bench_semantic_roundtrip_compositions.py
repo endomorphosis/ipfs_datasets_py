@@ -1,3 +1,4 @@
+# SRT-019: canonical decision validation is fail-closed against bound source artifacts.
 #!/usr/bin/env python3
 """Run the fair eight-cell semantic round-trip composition matrix."""
 

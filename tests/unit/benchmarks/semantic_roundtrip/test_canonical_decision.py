@@ -1,4 +1,8 @@
-"""Contracts for the source-bound SRT-019 canonical decision."""
+"""Contracts for the source-bound SRT-019 canonical decision.
+
+These tests pin the fail-closed selected/declined receipt shapes used by
+the operator handoff validator.
+"""
 
 from __future__ import annotations
 
