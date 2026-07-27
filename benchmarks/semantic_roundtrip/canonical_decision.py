@@ -32,7 +32,9 @@ PARITY_POLICY_INTERFACE: Final = "CanonicalRoundTripParityPolicy@1"
 PARITY_POLICY_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
 )
-PARITY_REPORT_INTERFACE: Final = "CanonicalSemanticRoundTrip@1"
+# Distinct from the production orchestrator result interface
+# (``CanonicalSemanticRoundTrip@1`` / stage-completion receipt).
+PARITY_REPORT_INTERFACE: Final = "CanonicalSemanticRoundTripParityReport@1"
 PARITY_REPORT_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-report.v1"
 )

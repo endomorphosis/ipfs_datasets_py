@@ -1596,6 +1596,10 @@ class CanonicalStructuredTextCompiler(Protocol):
     def identity(self) -> str:
         """Return a frozen implementation/configuration identity."""
 
+    @property
+    def configuration_cid(self) -> str:
+        """Return the frozen measured compiler configuration CID."""
+
     def compile(self, request: CompilerRequest) -> CompilerResult:
         """Compile structured text or return an explicit abstention/failure."""
 
@@ -1607,6 +1611,14 @@ class CanonicalStructuredTextDecompiler(Protocol):
     @property
     def identity(self) -> str:
         """Return a frozen implementation/configuration identity."""
+
+    @property
+    def deterministic(self) -> bool:
+        """Return whether the realizer is fully deterministic."""
+
+    @property
+    def uses_model(self) -> bool:
+        """Return whether the realizer may invoke a learned model."""
 
     def decompile(self, request: DecompilerRequest) -> DecompilerResult:
         """Realize canonical IR without consulting its originating source."""
