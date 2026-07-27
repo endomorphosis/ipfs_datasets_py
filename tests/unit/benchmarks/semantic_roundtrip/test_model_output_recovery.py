@@ -35,19 +35,28 @@ from benchmarks.semantic_roundtrip.model_output_recovery import (
     DIRECT_ROUTE_ID,
     FROZEN_SRT021_REMEDIATION_EVIDENCE,
     LEANSTRAL_TOKENIZER_IDENTITY,
+    PREREGISTERED_RESEARCH_RECOVERY_POLICY,
     PREREGISTERED_SRT023_POLICY,
+    PROMOTION_RECOVERY_POLICY,
     SRT014_REPORT_CID,
     SRT021_MANIFEST_CID,
     SRT021_MANIFEST_GATE_CID,
     SRT021_MANIFEST_RELATIVE_PATH,
     SYMAI_POLARITY_CONTRACT_INTERFACE,
+    TYPED_REJECTION_REASONS,
+    ArmReliabilityMetrics,
     BoundedModelOutputRecovery,
     ModelCallReceipt,
     ModelOutputRecoveryReceipt,
+    ModelRejectionReason,
     RecoveryPolicy,
+    RecoveryPolicyKind,
     RecoveryRole,
     RecoveryRoute,
+    RecoverySchemaPath,
     SyMAIPolarityContract,
+    arm_reliability_metrics,
+    classify_model_rejection,
     load_srt021_remediation_evidence,
 )
 from benchmarks.semantic_roundtrip_capabilities import (
@@ -741,6 +750,7 @@ def test_readdressed_accepted_then_accepted_transition_is_rejected() -> None:
         {
             "outcome": "accepted",
             "rejection": None,
+            "rejection_reason": None,
             "failure_reason": None,
             "detail": None,
         }
@@ -766,16 +776,23 @@ def test_readdressed_accepted_then_accepted_transition_is_rejected() -> None:
 def test_readdressed_nonretryable_then_accepted_transition_is_rejected(
     rejection: str, failure_reason: str
 ) -> None:
+    from benchmarks.semantic_roundtrip.model_output_recovery import (
+        classify_model_rejection,
+    )
+
     result = BoundedModelOutputRecovery(
         RecordingClient([{"rules": []}, IR.to_dict()]),
         route="direct",
     ).recover_l1(constructor_request())
     receipt = json.loads(json.dumps(result.receipt.to_dict()))
     first_call = receipt["calls"][0]
+    mapped = classify_model_rejection(rejection)
+    assert mapped is not None
     first_call.update(
         {
             "outcome": "call_failed",
             "rejection": rejection,
+            "rejection_reason": mapped.value,
             "failure_reason": failure_reason,
             "detail": "forged nonretryable call",
         }
@@ -963,3 +980,219 @@ def test_readdressed_call_role_schema_or_token_drift_is_rejected(
     receipt = readdress_receipt(receipt)
     with pytest.raises(ContractError, match="schema or token"):
         ModelOutputRecoveryReceipt.validate_dict(receipt)
+
+
+@pytest.mark.parametrize(
+    ("detailed", "taxonomy"),
+    [
+        ("blank_output", ModelRejectionReason.BLANK),
+        ("empty_output", ModelRejectionReason.EMPTY_RULES),
+        ("malformed_output", ModelRejectionReason.SCHEMA),
+        ("polarity_ambiguous", ModelRejectionReason.POLARITY),
+        ("call_timeout", ModelRejectionReason.TIMEOUT),
+        ("route_contract_failure", ModelRejectionReason.OTHER),
+        ("call_exception", ModelRejectionReason.OTHER),
+        ("blank", ModelRejectionReason.BLANK),
+        ("schema", ModelRejectionReason.SCHEMA),
+        ("polarity", ModelRejectionReason.POLARITY),
+        ("empty_rules", ModelRejectionReason.EMPTY_RULES),
+        ("timeout", ModelRejectionReason.TIMEOUT),
+        ("other", ModelRejectionReason.OTHER),
+        ("unmapped_provider_glitch", ModelRejectionReason.OTHER),
+    ],
+)
+def test_rejection_taxonomy_maps_every_detailed_label(
+    detailed: str, taxonomy: ModelRejectionReason
+) -> None:
+    assert classify_model_rejection(detailed) is taxonomy
+    assert taxonomy.value in TYPED_REJECTION_REASONS
+    assert TYPED_REJECTION_REASONS == {
+        "blank",
+        "schema",
+        "polarity",
+        "empty_rules",
+        "timeout",
+        "other",
+    }
+
+
+def test_every_failed_model_call_records_typed_rejection_reason() -> None:
+    cases = [
+        ({"rules": []}, "empty_rules", FailureReason.EMPTY_L1),
+        (
+            {"rules": [{"modality": "O"}]},
+            "schema",
+            FailureReason.INVALID_OUTPUT,
+        ),
+    ]
+    for payload, reason, failure in cases:
+        result = BoundedModelOutputRecovery(
+            RecordingClient([payload]),
+            route="direct",
+            policy=RecoveryPolicy("srt-023-no-retry-taxonomy", 0),
+        ).recover_l1(constructor_request())
+        call = result.receipt.calls[0]
+        assert call.outcome == "rejected"
+        assert call.rejection_reason == reason
+        assert call.failure_reason is failure
+        assert result.receipt.terminal_rejection_reason == reason
+        assert result.receipt.to_dict()["terminal_rejection_reason"] == reason
+
+    polarity = IR.to_dict()
+    polarity["rules"][0]["modality"] = "P"
+    polarity_result = BoundedModelOutputRecovery(
+        RecordingClient([polarity]),
+        route="direct",
+        policy=RecoveryPolicy("srt-023-no-retry-polarity", 0),
+    ).recover_l2(constructor_request("text"), expected_ir=IR)
+    assert polarity_result.receipt.calls[0].rejection_reason == "polarity"
+
+    timeout = BoundedModelOutputRecovery(
+        RecordingClient([TimeoutError("late")]),
+        route="direct",
+        policy=RecoveryPolicy("srt-023-no-retry-timeout", 0),
+    ).recover_l1(constructor_request())
+    assert timeout.receipt.calls[0].rejection_reason == "timeout"
+    assert timeout.receipt.calls[0].rejection == "call_timeout"
+
+    blank = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}]),
+        route="direct",
+        policy=RecoveryPolicy("srt-023-no-retry-blank", 0),
+    ).recover_t1(realizer_request())
+    assert blank.receipt.calls[0].rejection_reason == "blank"
+
+
+def test_promotion_default_is_unchanged_and_research_policy_is_separated() -> None:
+    assert PROMOTION_RECOVERY_POLICY is PREREGISTERED_SRT023_POLICY
+    assert PROMOTION_RECOVERY_POLICY.max_retries == 1
+    assert PROMOTION_RECOVERY_POLICY.kind is RecoveryPolicyKind.PROMOTION
+    assert PROMOTION_RECOVERY_POLICY.is_promotion_default is True
+    assert PROMOTION_RECOVERY_POLICY.is_research is False
+
+    research = PREREGISTERED_RESEARCH_RECOVERY_POLICY
+    assert research.kind is RecoveryPolicyKind.RESEARCH
+    assert research.max_retries > 1
+    assert research.is_research is True
+    assert research.is_promotion_default is False
+    assert research.policy_cid != PROMOTION_RECOVERY_POLICY.policy_cid
+
+    with pytest.raises(ContractError, match="at most one"):
+        RecoveryPolicy("srt-023-replacement-too-many", 2)
+    with pytest.raises(ContractError, match="greater than one"):
+        RecoveryPolicy(
+            "research-recovery-too-small",
+            1,
+            kind=RecoveryPolicyKind.RESEARCH,
+        )
+    with pytest.raises(ContractError, match="research-recovery"):
+        RecoveryPolicy(
+            "srt-023-replacement-as-research",
+            3,
+            kind=RecoveryPolicyKind.RESEARCH,
+        )
+    with pytest.raises(ContractError, match="replacement experiment"):
+        RecoveryPolicy("production-run", 1)
+
+
+def test_research_policy_allows_preregistered_budget_greater_than_one() -> None:
+    empty = {"rules": []}
+    client = RecordingClient([empty, empty, empty, IR.to_dict()])
+    recovery = BoundedModelOutputRecovery(
+        client,
+        route="direct",
+        policy=PREREGISTERED_RESEARCH_RECOVERY_POLICY,
+    )
+
+    result = recovery.recover_l1(constructor_request())
+
+    assert result.status is ComponentStatus.SUCCESS
+    assert len(client.calls) == 4  # initial + 3 research retries
+    assert result.receipt.retries == 3
+    assert result.receipt.policy.kind is RecoveryPolicyKind.RESEARCH
+    assert all(
+        call.rejection_reason == "empty_rules"
+        for call in result.receipt.calls[:-1]
+    )
+
+
+def test_accept_rate_and_retry_exhausted_rate_are_separate_from_e2e_loss() -> None:
+    accepted = BoundedModelOutputRecovery(
+        RecordingClient([IR.to_dict()]), route="direct"
+    ).recover_l1(constructor_request())
+    exhausted = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}, {"rules": []}]), route="direct"
+    ).recover_l1(constructor_request())
+    one_shot = BoundedModelOutputRecovery(
+        RecordingClient([{"rules": []}]),
+        route="direct",
+        policy=RecoveryPolicy("srt-023-no-retry-metrics", 0),
+    ).recover_l1(constructor_request())
+
+    metrics = arm_reliability_metrics(
+        "model__not_applicable__always_on__symai__leanstral_symai",
+        [accepted, exhausted, one_shot],
+    )
+
+    assert isinstance(metrics, ArmReliabilityMetrics)
+    assert metrics.recovery_invocations == 3
+    assert metrics.accepted_recoveries == 1
+    assert metrics.retry_exhausted_recoveries == 1
+    assert metrics.accept_rate == pytest.approx(1 / 3)
+    assert metrics.retry_exhausted_rate == pytest.approx(1 / 3)
+    payload = metrics.to_dict()
+    assert payload["accept_rate"] == pytest.approx(1 / 3)
+    assert payload["retry_exhausted_rate"] == pytest.approx(1 / 3)
+    assert payload["separate_from_end_to_end_loss"] is True
+    assert payload["end_to_end_loss"] is None
+    assert "empty_rules" in payload["rejection_reason_counts"]
+    # Reliability rates must not be confused with a unit end-to-end loss.
+    assert payload["accept_rate"] != 1.0 or payload["retry_exhausted_rate"] != 0.0
+
+
+def test_single_rule_research_schema_path_is_usable_for_hybrid_repair() -> None:
+    single = CanonicalRuleIR(
+        (
+            CanonicalRule(
+                modality="O",
+                actor="controller",
+                action="delete",
+                object="records",
+                temporal=("after_30_days",),
+            ),
+        )
+    )
+    schema = SyMAIPolarityContract.single_rule_research_canonical_schema(
+        VOCABULARY
+    )
+    assert schema["properties"]["rules"]["minItems"] == 1
+    assert schema["properties"]["rules"]["maxItems"] == 1
+    t1_schema = SyMAIPolarityContract.single_rule_research_realization_schema(
+        single
+    )
+    assert t1_schema["properties"]["rules"]["minItems"] == 1
+    assert t1_schema["properties"]["rules"]["maxItems"] == 1
+    with pytest.raises(ContractError, match="exactly one rule"):
+        SyMAIPolarityContract.single_rule_research_realization_schema(IR)
+
+    client = RecordingClient([single.to_dict()])
+    recovery = BoundedModelOutputRecovery(
+        client,
+        route="direct",
+        schema_path=RecoverySchemaPath.SINGLE_RULE_RESEARCH,
+    )
+    result = recovery.recover_l1(constructor_request())
+    assert result.status is ComponentStatus.SUCCESS
+    assert result.canonical_ir == single
+    assert client.calls[0]["schema_name"] == (
+        "research_single_rule_l1_canonical_ir_v1"
+    )
+    assert client.calls[0]["schema"]["properties"]["rules"]["maxItems"] == 1
+    assert recovery.schema_path is RecoverySchemaPath.SINGLE_RULE_RESEARCH
+
+    with pytest.raises(ContractError, match="exactly one input rule"):
+        BoundedModelOutputRecovery(
+            RecordingClient([realization()]),
+            route="direct",
+            schema_path=RecoverySchemaPath.SINGLE_RULE_RESEARCH,
+        ).recover_t1(realizer_request())
