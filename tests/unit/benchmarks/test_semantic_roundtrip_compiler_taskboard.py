@@ -331,5 +331,6 @@ def test_no_eligible_remediation_dag_is_bounded_and_file_disjoint() -> None:
         if task_id != "SRT-026"
     )
     assert tasks["SRT-027"].metadata["implementation timeout seconds"] == "3600"
-    assert "--require-authorized" in tasks["SRT-027"].validation[0]
+    assert "--require-terminal" in tasks["SRT-027"].validation[0]
+    assert "--require-authorized" not in tasks["SRT-027"].validation[0]
     assert "--validate-artifact" in tasks["SRT-027"].validation[0]

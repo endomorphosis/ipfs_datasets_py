@@ -97,6 +97,11 @@ CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA = (
     "ipfs_datasets_py.benchmarks.semantic_roundtrip."
     "canonical_design_gate_artifact_validation@1"
 )
+CANONICAL_DESIGN_GATE_TERMINAL_STATUSES = frozenset(
+    {"authorized", "replacement_remediation_required"}
+)
+REPLACEMENT_EXPECTED_MODEL_REPEAT_COUNT = 5
+REPLACEMENT_EXPECTED_TERMINAL_COORDINATE_COUNT = 670
 NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE = (
     "SRT014NoEligibleRemediationManifest@1"
 )
@@ -386,6 +391,8 @@ def evaluate_srt014_downstream_gate(
     repo_root: Path,
     *,
     report_path: Path | None = None,
+    expected_model_repeat_count: int | None = None,
+    expected_terminal_coordinate_count: int | None = None,
 ) -> dict[str, Any]:
     """Return the fail-closed SRT-014 selectability receipt.
 
@@ -476,6 +483,26 @@ def evaluate_srt014_downstream_gate(
                 repo_root / "tests/fixtures/semantic_roundtrip/pilot_cases.json"
             ),
         )
+        if (
+            expected_model_repeat_count is not None
+            and validated.get("model_repeat_count")
+            != expected_model_repeat_count
+        ):
+            raise SchedulerPreparationError(
+                "composition report model_repeat_count must be exactly "
+                f"{expected_model_repeat_count}, got "
+                f"{validated.get('model_repeat_count')!r}"
+            )
+        if (
+            expected_terminal_coordinate_count is not None
+            and validated.get("terminal_coordinate_count")
+            != expected_terminal_coordinate_count
+        ):
+            raise SchedulerPreparationError(
+                "composition report terminal_coordinate_count must be "
+                f"exactly {expected_terminal_coordinate_count}, got "
+                f"{validated.get('terminal_coordinate_count')!r}"
+            )
         preregistration = report.get("preregistration")
         if not isinstance(preregistration, Mapping):
             raise SchedulerPreparationError(
@@ -795,6 +822,10 @@ def evaluate_replacement_selection_gate(
     original_shape = evaluate_srt014_downstream_gate(
         repo_root,
         report_path=repo_root.resolve() / REPLACEMENT_REPORT_RELATIVE_PATH,
+        expected_model_repeat_count=REPLACEMENT_EXPECTED_MODEL_REPEAT_COUNT,
+        expected_terminal_coordinate_count=(
+            REPLACEMENT_EXPECTED_TERMINAL_COORDINATE_COUNT
+        ),
     )
     payload = {
         key: value
@@ -2085,6 +2116,14 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--require-terminal",
+        action="store_true",
+        help=(
+            "For gate, return nonzero unless replacement evidence is a "
+            "terminal authorized or no-eligible decision"
+        ),
+    )
+    parser.add_argument(
         "--validate-artifact",
         type=Path,
         default=None,
@@ -2160,6 +2199,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             (
                 bool(args.require_authorized)
                 and gate.get("launch_authorized") is not True
+            )
+            or (
+                bool(args.require_terminal)
+                and gate.get("status")
+                not in CANONICAL_DESIGN_GATE_TERMINAL_STATUSES
             )
             or (
                 artifact_validation is not None

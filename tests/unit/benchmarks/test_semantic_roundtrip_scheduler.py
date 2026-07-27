@@ -1235,6 +1235,70 @@ def test_gate_cli_requires_exact_artifact_when_requested(
     capsys.readouterr()
 
 
+@pytest.mark.parametrize(
+    (
+        "status",
+        "launch_authorized",
+        "terminal_returncode",
+        "authorized_returncode",
+    ),
+    (
+        ("authorized", True, 0, 0),
+        ("replacement_remediation_required", False, 0, 1),
+        ("replacement_pending", False, 1, 1),
+        ("replacement_invalid", False, 1, 1),
+    ),
+)
+def test_gate_cli_distinguishes_terminal_evidence_from_authorization(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    status: str,
+    launch_authorized: bool,
+    terminal_returncode: int,
+    authorized_returncode: int,
+) -> None:
+    canonical = _test_gate_receipt({
+        "schema": CANONICAL_DESIGN_GATE_SCHEMA,
+        "status": status,
+        "launch_authorized": launch_authorized,
+        "replacement_selection_outcome": (
+            "selected"
+            if status == "authorized"
+            else "no_eligible_composition"
+            if status == "replacement_remediation_required"
+            else None
+        ),
+        "reason_codes": [f"replacement_{status}"],
+    })
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate",
+        lambda _repo_root: canonical,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "_evaluate_canonical_design_gate_artifact",
+        lambda _repo_root, **_kwargs: {
+            "status": "valid",
+            "valid": True,
+        },
+    )
+    common = [
+        "gate",
+        "--repo-root",
+        str(REPO_ROOT),
+        "--validate-artifact",
+        str(CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH),
+    ]
+
+    terminal = scheduler_module.main([*common, "--require-terminal"])
+    authorized = scheduler_module.main([*common, "--require-authorized"])
+
+    assert terminal == terminal_returncode
+    assert authorized == authorized_returncode
+    capsys.readouterr()
+
+
 def test_replacement_gate_uses_replacement_report_and_basis(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1246,6 +1310,8 @@ def test_replacement_gate_uses_replacement_report_and_basis(
         lambda *_args, **_kwargs: {
             "status": "valid",
             "report_cid": "bafyreifakereport",
+            "model_repeat_count": 5,
+            "terminal_coordinate_count": 670,
             "selection_outcome": "selected",
             "winner_arm_id": "arm-07",
             "co_winner_arm_ids": ["arm-07"],
@@ -1260,6 +1326,84 @@ def test_replacement_gate_uses_replacement_report_and_basis(
     assert gate["report_path"] == str(REPLACEMENT_REPORT_RELATIVE_PATH)
     assert gate["selection_basis"] == "replacement_unique_winner"
     assert gate["implementation_representative_arm_id"] == "arm-07"
+
+
+def test_replacement_gate_accepts_exact_no_eligible_as_terminal_denial(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_gate_report(tmp_path, REPLACEMENT_REPORT_RELATIVE_PATH)
+    monkeypatch.setattr(
+        composition_report,
+        "validate_composition_report",
+        lambda *_args, **_kwargs: {
+            "status": "valid",
+            "report_cid": "bafyreifakereport",
+            "model_repeat_count": 5,
+            "terminal_coordinate_count": 670,
+            "selection_outcome": "no_eligible_composition",
+            "winner_arm_id": None,
+            "co_winner_arm_ids": [],
+            "bounded_tie": False,
+        },
+    )
+
+    gate = evaluate_replacement_selection_gate(tmp_path)
+
+    assert gate["status"] == "replacement_remediation_required"
+    assert gate["launch_authorized"] is False
+    assert gate["selection_outcome"] == "no_eligible_composition"
+    assert gate["selectable_arm_ids"] == []
+    assert gate["implementation_representative_arm_id"] is None
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    (
+        (
+            "model_repeat_count",
+            6,
+            "model_repeat_count must be exactly 5",
+        ),
+        (
+            "terminal_coordinate_count",
+            800,
+            "terminal_coordinate_count must be exactly 670",
+        ),
+    ),
+)
+def test_replacement_gate_rejects_nonexact_matrix_dimensions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: int,
+    message: str,
+) -> None:
+    _write_gate_report(tmp_path, REPLACEMENT_REPORT_RELATIVE_PATH)
+    validated = {
+        "status": "valid",
+        "report_cid": "bafyreifakereport",
+        "model_repeat_count": 5,
+        "terminal_coordinate_count": 670,
+        "selection_outcome": "selected",
+        "winner_arm_id": "arm-07",
+        "co_winner_arm_ids": ["arm-07"],
+        "bounded_tie": False,
+    }
+    validated[field] = value
+    monkeypatch.setattr(
+        composition_report,
+        "validate_composition_report",
+        lambda *_args, **_kwargs: validated,
+    )
+
+    gate = evaluate_replacement_selection_gate(tmp_path)
+
+    assert gate["status"] == "invalid"
+    assert gate["launch_authorized"] is False
+    assert gate["selection_outcome"] is None
+    assert gate["reason_codes"][0] == "replacement_report_validation_failed"
+    assert any(message in reason for reason in gate["reason_codes"])
 
 
 def test_no_eligible_makes_only_remediation_manifest_ready(

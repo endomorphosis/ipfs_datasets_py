@@ -533,7 +533,7 @@ CPU preparation and result analysis run concurrently.
 - Track: benchmark
 - Depends on: SRT-026
 - Outputs: workspace/benchmarks/semantic-roundtrip-compositions/replacement_selection_gate.json, docs/benchmarks/semantic_roundtrip_replacement_selection_gate.md
-- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py gate --repo-root . --require-authorized --validate-artifact workspace/benchmarks/semantic-roundtrip-compositions/replacement_selection_gate.json
+- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py gate --repo-root . --require-terminal --validate-artifact workspace/benchmarks/semantic-roundtrip-compositions/replacement_selection_gate.json
 - Board namespace: semantic-roundtrip-canonical-compiler-v1
 - Bundle: semantic-roundtrip/replacement-selection-gate
 - Parallel lane: replacement-selection-gate
