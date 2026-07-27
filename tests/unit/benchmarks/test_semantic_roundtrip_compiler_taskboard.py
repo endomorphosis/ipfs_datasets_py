@@ -158,6 +158,7 @@ def test_downstream_canonical_tasks_own_shared_contracts_and_validators() -> Non
     assert "cid_for_dag_json" in srt015.acceptance
     assert "noninferiority margin" in srt015.acceptance
     assert "leave SRT-015 incomplete" in srt015.metadata["preconditions"]
+    assert srt015.metadata["implementation timeout seconds"] == "7200"
 
     assert tasks["SRT-016"].depends_on == ["SRT-015"]
     assert tasks["SRT-017"].depends_on == ["SRT-015"]

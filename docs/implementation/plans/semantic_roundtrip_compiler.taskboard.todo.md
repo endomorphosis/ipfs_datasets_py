@@ -396,6 +396,7 @@ CPU preparation and result analysis run concurrently.
 - Bundle: semantic-roundtrip/canonical-design
 - Parallel lane: canonical-design
 - Resource class: cpu-small
+- Implementation timeout seconds: 7200
 - Predicted files: docs/architecture/semantic_roundtrip_canonical_compiler.md, docs/benchmarks/semantic_roundtrip_canonical_parity_policy.json, ipfs_datasets_py/logic/legal_ir/canonical_contracts.py, ipfs_datasets_py/logic/legal_ir/schemas/canonical_roundtrip_ir.schema.json, tests/unit/logic/legal_ir/test_canonical_roundtrip_schema.py, setup.py, pyproject.toml, MANIFEST.in
 - Interfaces: CanonicalStructuredTextCompiler@1, CanonicalStructuredTextDecompiler@1, CanonicalRoundTripContracts@1, CanonicalRoundTripParityPolicy@1
 - Conflict policy: Derive the specification, shared compiler/decompiler contracts, packaged schema, and machine-readable parity policy from the frozen SRT-014 decision; do not select unmeasured tools or copy benchmark-only closed vocabularies into the production API. SRT-016 and SRT-017 consume canonical_contracts.py but do not modify it.
