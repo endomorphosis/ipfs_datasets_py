@@ -83,6 +83,36 @@ def _tokens(value: object) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+def _token_stem_variants(word: str) -> frozenset[str]:
+    """Expand a normalized token with light inflectional variants.
+
+    Used only for closed-vocabulary matching so past participles such as
+    ``resolved`` can align to the atom ``resolve`` without an LLM.
+    """
+
+    variants = {word}
+    if len(word) > 4 and word.endswith("ies"):
+        variants.add(word[:-3] + "y")
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        variants.add(word[:-1])
+    if len(word) > 4 and word.endswith("ed"):
+        variants.add(word[:-1])  # resolved -> resolve
+        variants.add(word[:-2])  # walked -> walk
+        if len(word) > 5 and word[-3] == word[-4]:
+            variants.add(word[:-3])  # stopped -> stop
+    if len(word) > 5 and word.endswith("ing"):
+        variants.add(word[:-3])
+        variants.add(word[:-3] + "e")
+    return frozenset(variants)
+
+
+def _expanded_token_set(value: object) -> set[str]:
+    expanded: set[str] = set()
+    for token in _tokens(value):
+        expanded |= _token_stem_variants(token)
+    return expanded
+
+
 def _flatten_strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
@@ -105,12 +135,75 @@ def _flatten_strings(value: object) -> list[str]:
 
 
 def _jaccard(left: object, right: object) -> float:
-    left_tokens, right_tokens = set(_tokens(left)), set(_tokens(right))
+    left_tokens, right_tokens = (
+        _expanded_token_set(left),
+        _expanded_token_set(right),
+    )
     if not left_tokens and not right_tokens:
         return 1.0
     if not left_tokens or not right_tokens:
         return 0.0
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+
+def _atom_hit_counts(
+    text: object, candidate: str
+) -> tuple[int, int, int]:
+    """Return ``(exact_hits, stem_hits, cand_token_count)``.
+
+    Exact hits (candidate token present in text tokens) outrank stem-only
+    hits so ``withdraw the filing`` prefers ``withdraw`` over a stem of
+    ``filing`` → ``file``.
+    """
+
+    cand_toks = _tokens(candidate)
+    if not cand_toks:
+        return 0, 0, 0
+    text_exact = set(_tokens(text))
+    if not text_exact:
+        return 0, 0, len(cand_toks)
+    text_exp = set()
+    for token in text_exact:
+        text_exp |= _token_stem_variants(token)
+    exact_hits = 0
+    stem_hits = 0
+    for token in cand_toks:
+        if token in text_exact:
+            exact_hits += 1
+            continue
+        variants = _token_stem_variants(token)
+        if variants & text_exact or variants & text_exp:
+            stem_hits += 1
+            continue
+        # Text token stems to the candidate atom (resolved → resolve).
+        if any(
+            token in _token_stem_variants(text_token)
+            for text_token in text_exact
+        ):
+            stem_hits += 1
+    return exact_hits, stem_hits, len(cand_toks)
+
+
+def _atom_match_score(text: object, candidate: str) -> float:
+    """Score a closed-vocabulary atom against free text.
+
+    Combines expanded Jaccard with a precision-weighted hit count so short
+    exact atoms (``work``) beat long partial overlaps
+    (``work_compliance_with_...``) while still preferring longer atoms when
+    nearly all of their tokens are grounded in the evidence. Exact token
+    hits are weighted above stem-only hits.
+    """
+
+    exact_hits, stem_hits, cand_n = _atom_hit_counts(text, candidate)
+    hits = exact_hits + stem_hits
+    if hits <= 0 or cand_n <= 0:
+        return 0.0
+    precision = hits / cand_n
+    # Exact hits count double so stem collisions cannot outrank true verbs.
+    weighted_hits = float(exact_hits) * 2.0 + float(stem_hits)
+    specificity = precision * weighted_hits
+    jaccard = _jaccard(text, candidate)
+    return max(jaccard, specificity)
 
 
 def _best_atom_scored(
@@ -128,22 +221,31 @@ def _best_atom_scored(
         return ("", None) if allow_empty else ("", None)
     if not candidates:
         return "", None
-    scored = sorted(
-        (
-            (
-                max(
-                    [_jaccard(text, candidate)]
-                    + [_jaccard(piece, candidate) for piece in pieces]
-                ),
-                candidate,
-            )
-            for candidate in candidates
-        ),
-        key=lambda item: (-item[0], item[1]),
+
+    def _rank(candidate: str) -> tuple[float, int, str]:
+        score = max(
+            [_atom_match_score(text, candidate)]
+            + [_atom_match_score(piece, candidate) for piece in pieces]
+        )
+        exact_hits, _stem_hits, _n = _atom_hit_counts(text, candidate)
+        for piece in pieces:
+            piece_exact, _, _ = _atom_hit_counts(piece, candidate)
+            if piece_exact > exact_hits:
+                exact_hits = piece_exact
+        # Higher score, then more exact hits, then stable name.
+        return (score, exact_hits, candidate)
+
+    ranked = sorted(
+        ((_rank(candidate), candidate) for candidate in candidates),
+        key=lambda item: (-item[0][0], -item[0][1], item[0][2]),
     )
-    if not scored or scored[0][0] < threshold:
-        return "", float(scored[0][0]) if scored else 0.0
-    return scored[0][1], float(scored[0][0])
+    best_rank, best_candidate = ranked[0]
+    best_score = float(best_rank[0])
+    if best_score < threshold:
+        return "", max(0.0, min(1.0, best_score))
+    # Confidence is always a unit interval for diagnostics; match score may
+    # exceed 1.0 when specificity rewards multi-token grounding.
+    return best_candidate, max(0.0, min(1.0, best_score))
 
 
 def _best_atom(
@@ -273,6 +375,199 @@ def _modality_conflict(value: object, source_text: str = "") -> bool:
 
 def _source_has_temporal_cue(source_text: str) -> bool:
     return bool(_TEMPORAL_CUE_RE.search(source_text or ""))
+
+
+# Qualifier atoms whose surface form is a temporal window / deadline.
+_TEMPORAL_QUALIFIER_RE: Final = re.compile(
+    r"(within|before|after|during|until|by_|at_|annually|for_|days|hours|"
+    r"weeks|months|years|written_notice|deadline|time)",
+    re.IGNORECASE,
+)
+# Qualifier atoms that are conditional gates (incl. advance-notice gates).
+_CONDITION_QUALIFIER_RE: Final = re.compile(
+    r"(upon_|if_|when_|unless|provided|does_not|exceed|over_|required_by|"
+    r"in_government|advance_notice|gift_value|work_does|transaction)",
+    re.IGNORECASE,
+)
+# Qualifier atoms that are exception carve-outs.
+_EXCEPTION_QUALIFIER_RE: Final = re.compile(
+    r"(without|except|unless|prior_written_approval|emergency)",
+    re.IGNORECASE,
+)
+_PASSIVE_BE_RE: Final = re.compile(
+    r"\b(?:shall|must|will|may|is|are|be)\s+be\s+\w+",
+    re.IGNORECASE,
+)
+_COLLECTIVE_ACTORS: Final = frozenset(
+    {"parties", "either_party", "both_parties", "party"}
+)
+
+
+def _norm_evidence_text(data: Mapping[str, object]) -> str:
+    """Concatenate per-norm fields used for closed-vocabulary recovery."""
+
+    pieces = _flatten_strings(
+        [
+            data.get("actor"),
+            data.get("action"),
+            data.get("action_verb"),
+            data.get("action_object"),
+            data.get("conditions"),
+            data.get("exceptions"),
+            data.get("temporal_constraints"),
+            data.get("source_text"),
+        ]
+    )
+    return " ".join(pieces)
+
+
+def _classify_qualifier_facet(atom: str) -> str:
+    """Map a matched qualifier atom to conditions / exceptions / temporal."""
+
+    atom_l = str(atom or "").strip().lower()
+    if not atom_l:
+        return "conditions"
+    # Order matters: advance-notice gates are conditions even when they
+    # mention hours; written-notice windows with day counts stay temporal.
+    if "advance_notice" in atom_l:
+        return "conditions"
+    if _EXCEPTION_QUALIFIER_RE.search(atom_l) and not atom_l.startswith(
+        "upon_"
+    ):
+        # "unless emergency" style carve-outs; keep upon_* as conditions.
+        if any(
+            cue in atom_l
+            for cue in ("without", "except", "prior_written", "emergency")
+        ):
+            return "exceptions"
+    if _CONDITION_QUALIFIER_RE.search(atom_l):
+        return "conditions"
+    if _TEMPORAL_QUALIFIER_RE.search(atom_l):
+        return "temporal"
+    if atom_l.startswith("with_"):
+        return "conditions"
+    return "conditions"
+
+
+def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
+    """True when every token of the qualifier atom is grounded in evidence.
+
+    Requires precision 1.0 so ``within_30_days`` cannot fire on
+    ``within 10 days`` evidence (the numeric token must match).
+    """
+
+    cand_toks = _tokens(qualifier)
+    if not cand_toks:
+        return False
+    text_exp = _expanded_token_set(evidence)
+    if not text_exp:
+        return False
+    return all(
+        bool(_token_stem_variants(token) & text_exp) for token in cand_toks
+    )
+
+
+def _harvest_qualifiers_from_evidence(
+    evidence: str,
+    vocabulary: AllowedAtomVocabulary,
+) -> dict[str, tuple[str, ...]]:
+    """Find closed-vocabulary qualifiers grounded in per-norm evidence text.
+
+    Does **not** scan the full document — only the norm-local evidence string
+    — so multi-rule pilots do not leak every temporal into every rule.
+    """
+
+    if not _clean_text(evidence) or not vocabulary.qualifiers:
+        return {
+            "conditions": (),
+            "exceptions": (),
+            "temporal": (),
+        }
+    buckets: dict[str, set[str]] = {
+        "conditions": set(),
+        "exceptions": set(),
+        "temporal": set(),
+    }
+    for qualifier in vocabulary.qualifiers:
+        if not _qualifier_fully_grounded(evidence, qualifier):
+            continue
+        facet = _classify_qualifier_facet(qualifier)
+        buckets[facet].add(qualifier)
+    return {
+        key: tuple(sorted(values)) for key, values in buckets.items()
+    }
+
+
+def _recover_actor_action(
+    data: Mapping[str, object],
+    vocabulary: AllowedAtomVocabulary,
+    *,
+    actor: str,
+    actor_conf: float | None,
+    action: str,
+    action_conf: float | None,
+) -> tuple[str, float | None, str, float | None]:
+    """Recover actor/action when the converter mis-parsed passive voice.
+
+    Example: ``All disputes shall be resolved through binding arbitration...``
+    yields actor=``All disputes`` and verb=``be``; gold maps to
+    ``parties`` / ``resolve`` / ``disputes_through_...``.
+    """
+
+    if actor and action:
+        return actor, actor_conf, action, action_conf
+    evidence = _norm_evidence_text(data)
+    if not evidence:
+        return actor, actor_conf, action, action_conf
+
+    if not action:
+        recovered_action, recovered_action_conf = _best_atom_scored(
+            [
+                data.get("action"),
+                data.get("action_verb"),
+                data.get("action_object"),
+                data.get("source_text"),
+                evidence,
+            ],
+            vocabulary.actions,
+        )
+        if recovered_action:
+            action, action_conf = recovered_action, recovered_action_conf
+
+    if not actor:
+        recovered_actor, recovered_actor_conf = _best_atom_scored(
+            [
+                data.get("actor"),
+                data.get("source_text"),
+                evidence,
+            ],
+            vocabulary.actors,
+        )
+        if recovered_actor:
+            actor, actor_conf = recovered_actor, recovered_actor_conf
+
+    if not actor and action and _PASSIVE_BE_RE.search(evidence):
+        # Agentless passive obligation/prohibition: prefer collective actors
+        # present in the closed vocabulary (construction/legal style).
+        for preferred in (
+            "parties",
+            "either_party",
+            "both_parties",
+            "party",
+        ):
+            if preferred in vocabulary.actors:
+                actor = preferred
+                actor_conf = 0.55
+                break
+
+    return actor, actor_conf, action, action_conf
+
+
+def _merge_qualifier_facets(
+    structured: tuple[str, ...],
+    harvested: tuple[str, ...],
+) -> tuple[str, ...]:
+    return tuple(sorted(set(structured) | set(harvested)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -569,11 +864,38 @@ def project_legal_norms_with_diagnostics(
             [data.get("action"), data.get("action_verb")],
             vocabulary.actions,
         )
+        actor, actor_conf, action, action_conf = _recover_actor_action(
+            data,
+            vocabulary,
+            actor=actor,
+            actor_conf=actor_conf,
+            action=action,
+            action_conf=action_conf,
+        )
+        # Object evidence is staged: action_object alone first so actor tokens
+        # in source_text (e.g. "Contractor") cannot outrank a clean object
+        # head such as ``work`` / ``payment`` when scores tie.
         object_atom, object_conf = _best_atom_scored(
             data.get("action_object"),
             vocabulary.objects,
             allow_empty=True,
         )
+        if not object_atom:
+            object_atom, object_conf = _best_atom_scored(
+                data.get("action"),
+                vocabulary.objects,
+                allow_empty=True,
+            )
+        if not object_atom:
+            object_atom, object_conf = _best_atom_scored(
+                [
+                    data.get("action_object"),
+                    data.get("action"),
+                    data.get("source_text"),
+                ],
+                vocabulary.objects,
+                allow_empty=True,
+            )
         if not actor or not action:
             continue
 
@@ -587,6 +909,25 @@ def project_legal_norms_with_diagnostics(
             data.get("temporal_constraints") or (),
             vocabulary.qualifiers,
         )
+        harvested = _harvest_qualifiers_from_evidence(
+            _norm_evidence_text(data),
+            vocabulary,
+        )
+        conditions = _merge_qualifier_facets(
+            conditions, harvested["conditions"]
+        )
+        exceptions = _merge_qualifier_facets(
+            exceptions, harvested["exceptions"]
+        )
+        temporal = _merge_qualifier_facets(temporal, harvested["temporal"])
+        # Re-score confidences after harvest: structured matches retain their
+        # confidence; pure harvest fills use a mid confidence marker.
+        if harvested["conditions"] and conditions_conf is None:
+            conditions_conf = 0.7
+        if harvested["exceptions"] and exceptions_conf is None:
+            exceptions_conf = 0.7
+        if harvested["temporal"] and temporal_conf is None:
+            temporal_conf = 0.7
         modality_value = [data.get("modality"), data.get("norm_type")]
         modality = _modality_from_text(modality_value)
         modality_raw[rule_index] = modality_value
