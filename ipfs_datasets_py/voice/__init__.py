@@ -84,6 +84,13 @@ if TYPE_CHECKING:
         AudioWorkReason,
         VoiceAudioWorkset,
     )
+    from .materialize import (
+        AbbyVoiceHFReleaseBuilder,
+        AbbyVoiceMaterializationResult,
+        AbbyVoiceMaterializer,
+        TTSASRExecutionReceipt,
+        VoiceAudioJobSpec,
+    )
 
 
 _LAZY_EXPORTS: Final[dict[str, str]] = {
@@ -103,6 +110,11 @@ _LAZY_EXPORTS: Final[dict[str, str]] = {
     "AudioWorkOperation": ".workset",
     "AudioWorkReason": ".workset",
     "VoiceAudioWorkset": ".workset",
+    "AbbyVoiceHFReleaseBuilder": ".materialize",
+    "AbbyVoiceMaterializationResult": ".materialize",
+    "AbbyVoiceMaterializer": ".materialize",
+    "TTSASRExecutionReceipt": ".materialize",
+    "VoiceAudioJobSpec": ".materialize",
 }
 
 
@@ -165,6 +177,11 @@ __all__ = [
     "AudioWorkOperation",
     "AudioWorkReason",
     "VoiceAudioWorkset",
+    "AbbyVoiceHFReleaseBuilder",
+    "AbbyVoiceMaterializationResult",
+    "AbbyVoiceMaterializer",
+    "TTSASRExecutionReceipt",
+    "VoiceAudioJobSpec",
     "build_slotted_response_dag",
     "deduplicate_voice_response_chunks",
     "deterministic_split",
