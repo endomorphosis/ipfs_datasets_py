@@ -439,6 +439,24 @@ class DuplicateLedgerEntry:
 
 
 @dataclass(frozen=True, slots=True)
+class NormalizedInputDisposition:
+    """One authoritative disposition for one normalized source-row identity."""
+
+    source_ref: str
+    source_sha256: str
+    status: str
+    reason_codes: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "reason_codes": list(self.reason_codes),
+            "source_ref": self.source_ref,
+            "source_sha256": self.source_sha256,
+            "status": self.status,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class NormalizationResult:
     """Canonical rows and complete deterministic quality evidence."""
 
@@ -449,6 +467,7 @@ class NormalizationResult:
     quarantine: tuple[QuarantineRecord, ...] = ()
     duplicates: tuple[DuplicateLedgerEntry, ...] = ()
     warnings: tuple[QuarantineRecord, ...] = ()
+    input_dispositions: tuple[NormalizedInputDisposition, ...] = ()
     splits: Mapping[str, str] = field(default_factory=dict)
     input_record_count: int = 0
     source_manifest_count: int = 0
@@ -494,12 +513,7 @@ class NormalizationResult:
             },
             "split_counts": dict(sorted(Counter(self.splits.values()).items())),
             "reconciliation": {
-                "source_rows_accounted_for": (
-                    len(self.responses)
-                    + len(self.templates)
-                    + len(self.audio)
-                    + quarantined_sources
-                ),
+                "source_rows_accounted_for": len(self.input_dispositions),
                 "quarantine_is_non_destructive": True,
             },
         }
@@ -515,6 +529,9 @@ class NormalizationResult:
             "quarantine": [row.to_dict() for row in self.quarantine],
             "warnings": [row.to_dict() for row in self.warnings],
             "duplicates": [row.to_dict() for row in self.duplicates],
+            "input_dispositions": [
+                row.to_dict() for row in self.input_dispositions
+            ],
             "splits": dict(sorted(self.splits.items())),
             "quality_summary": self.quality_summary(),
         }
@@ -1736,6 +1753,52 @@ class AbbyVoiceDatasetNormalizer:
                 ),
             )
 
+        source_hashes: dict[str, str] = {}
+        for source_ref, source_sha256 in (
+            *((item.source_ref, item.source_sha256) for item in candidates),
+            *((item.source_ref, item.source_sha256) for item in quarantine),
+        ):
+            existing_sha256 = source_hashes.get(source_ref)
+            if existing_sha256 is not None and existing_sha256 != source_sha256:
+                raise ValueError(
+                    f"source_ref collision for distinct input rows: {source_ref!r}"
+                )
+            source_hashes[source_ref] = source_sha256
+        quarantine_reasons: dict[str, set[str]] = defaultdict(set)
+        for item in quarantine:
+            quarantine_reasons[item.source_ref].update(item.reason_codes)
+        duplicate_source_refs = {
+            source_ref
+            for item in duplicate_ledger
+            for source_ref in item.duplicate_source_refs
+        }
+        input_dispositions = tuple(
+            NormalizedInputDisposition(
+                source_ref=source_ref,
+                source_sha256=source_sha256,
+                status=(
+                    "quarantined"
+                    if source_ref in quarantine_reasons
+                    or source_ref in duplicate_source_refs
+                    else "accepted"
+                ),
+                reason_codes=(
+                    tuple(sorted(quarantine_reasons[source_ref]))
+                    if source_ref in quarantine_reasons
+                    else (
+                        (QuarantineReason.DUPLICATE_TEXT.value,)
+                        if source_ref in duplicate_source_refs
+                        else ("canonical_normalization",)
+                    )
+                ),
+            )
+            for source_ref, source_sha256 in sorted(source_hashes.items())
+        )
+        if len(input_dispositions) != input_count:
+            raise ValueError(
+                "normalization input disposition count does not match input record count"
+            )
+
         return NormalizationResult(
             responses=tuple(final_responses),
             templates=tuple(final_templates),
@@ -1744,6 +1807,7 @@ class AbbyVoiceDatasetNormalizer:
             quarantine=tuple(quarantine),
             warnings=tuple(warnings),
             duplicates=tuple(duplicate_ledger),
+            input_dispositions=input_dispositions,
             splits=dict(sorted(splits.items())),
             input_record_count=input_count,
             source_manifest_count=len(loaded),
@@ -1916,6 +1980,7 @@ __all__ = [
     "AbbyVoiceDatasetNormalizer",
     "DuplicateLedgerEntry",
     "NormalizationConfig",
+    "NormalizedInputDisposition",
     "NormalizationResult",
     "QualityIssue",
     "QuarantineReason",

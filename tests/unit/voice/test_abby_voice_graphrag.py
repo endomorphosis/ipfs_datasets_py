@@ -687,7 +687,17 @@ def test_module_import_is_dependency_light_and_offline() -> None:
     script = (
         "import sys; import ipfs_datasets_py.voice.graphrag; "
         "heavy=('transformers','faiss','networkx','ipld_car'); "
-        "print(','.join(name for name in heavy if name in sys.modules))"
+        "manager_dependencies=("
+        "'ipfs_datasets_py.voice.dataset_manager',"
+        "'ipfs_datasets_py.voice.legacy_sources',"
+        "'ipfs_datasets_py.voice.workset',"
+        "'ipfs_datasets_py.huggingface',"
+        "'ipfs_datasets_py.logic.intent_ir',"
+        "'cryptography',"
+        "'multiformats'"
+        "); "
+        "print(','.join(name for name in heavy + manager_dependencies "
+        "if name in sys.modules))"
     )
 
     result = subprocess.run(

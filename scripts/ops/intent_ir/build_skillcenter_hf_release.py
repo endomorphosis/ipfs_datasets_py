@@ -20,6 +20,7 @@ from ipfs_datasets_py.logic.intent_ir.graphrag.skillcenter_hf_release import (  
     add_skillcenter_hf_graph_navigation,
     build_skillcenter_hf_release,
     rebalance_skillcenter_hf_release_vectors,
+    retarget_skillcenter_hf_release,
     validate_skillcenter_hf_release,
 )
 from ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot import (  # noqa: E402
@@ -68,6 +69,12 @@ def _defaults(revision: str) -> dict[str, Path]:
             / revision
             / "full-cid-zstd-graph-v3"
         ),
+        "publicus_output": (
+            base
+            / "skillcenter-huggingface"
+            / revision
+            / "publicus-skillcenter-ir"
+        ),
         "vectors": (
             base
             / "skillcenter-vectors"
@@ -108,6 +115,15 @@ def _parser() -> argparse.ArgumentParser:
         help=(
             "Build a v3 release by hard-linking a v2 release and adding "
             "paged incoming/outgoing graph adjacency artifacts."
+        ),
+    )
+    parser.add_argument(
+        "--retarget-from",
+        type=Path,
+        default=None,
+        help=(
+            "Prepare a clean upload bundle for --dataset-repo-id by "
+            "hard-linking immutable artifacts from this completed release."
         ),
     )
     parser.add_argument(
@@ -155,21 +171,32 @@ def _progress(event: Mapping[str, Any]) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if (
-        args.rebalance_from is not None
-        and args.graph_navigation_from is not None
+        sum(
+            value is not None
+            for value in (
+                args.rebalance_from,
+                args.graph_navigation_from,
+                args.retarget_from,
+            )
+        )
+        > 1
     ):
         raise SystemExit(
-            "--rebalance-from and --graph-navigation-from are mutually "
-            "exclusive"
+            "--rebalance-from, --graph-navigation-from, and --retarget-from "
+            "are mutually exclusive"
         )
     defaults = _defaults(args.revision)
     output_dir = args.output_dir or (
-        defaults["graph_output"]
-        if args.graph_navigation_from is not None
+        defaults["publicus_output"]
+        if args.retarget_from is not None
         else (
-            defaults["centroid_output"]
-            if args.rebalance_from is not None
-            else defaults["output"]
+            defaults["graph_output"]
+            if args.graph_navigation_from is not None
+            else (
+                defaults["centroid_output"]
+                if args.rebalance_from is not None
+                else defaults["output"]
+            )
         )
     )
     if args.validate_only:
@@ -179,6 +206,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.graph_navigation_from,
             output_dir=output_dir,
             graph_dir=args.graph_dir or defaults["graph"],
+            query_script=args.query_script,
+            skill_dir=args.skill_dir,
+            semantic_traversal_module=args.semantic_traversal_module,
+            progress_callback=_progress,
+        )
+    elif args.retarget_from is not None:
+        summary = retarget_skillcenter_hf_release(
+            args.retarget_from,
+            output_dir=output_dir,
+            dataset_repo_id=args.dataset_repo_id,
             query_script=args.query_script,
             skill_dir=args.skill_dir,
             semantic_traversal_module=args.semantic_traversal_module,

@@ -59,7 +59,7 @@ SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION: Final = (
 SKILLCENTER_HF_META_SCHEMA_VERSION: Final = (
     "skillcenter-hf-shard-meta/v1"
 )
-DEFAULT_RELEASE_REPO_ID: Final = "Tommysha/skillcenter-ir"
+DEFAULT_RELEASE_REPO_ID: Final = "Publicus/skillcenter-ir"
 RELEASE_CHUNK_ROWS: Final = 4096
 BM25_TERMS_PER_SHARD: Final = 4096
 BM25_POSTINGS_PER_ROW: Final = 4096
@@ -552,6 +552,175 @@ def refresh_skillcenter_hf_release_support(
     return validate_skillcenter_hf_release(release_root)
 
 
+def retarget_skillcenter_hf_release(
+    source_release: str | Path,
+    *,
+    output_dir: str | Path,
+    dataset_repo_id: str,
+    query_script: str | Path,
+    skill_dir: str | Path,
+    semantic_traversal_module: str | Path | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> SkillCenterHFReleaseSummary:
+    """Prepare a clean release copy for a different Hub dataset repository.
+
+    Immutable Parquet data and meta-indexes are hard-linked when possible.
+    Dataset-card, client, skill, and manifest files are regenerated for the
+    destination repository. Interpreter caches and other unmanifested support
+    files are never copied.
+    """
+
+    repo_id = str(dataset_repo_id or "").strip()
+    if "/" not in repo_id or repo_id.startswith("/") or repo_id.endswith("/"):
+        raise SkillCenterHFReleaseError(
+            "dataset_repo_id must have the form namespace/repository"
+        )
+    source = Path(source_release).expanduser().resolve()
+    output = Path(output_dir).expanduser().resolve()
+    if source == output:
+        raise SkillCenterHFReleaseError(
+            "retarget output must differ from the source release"
+        )
+    if output.exists():
+        if (output / "manifest.json").is_file():
+            return validate_skillcenter_hf_release(output)
+        raise SkillCenterHFReleaseError(
+            f"retarget output already exists: {output}"
+        )
+    try:
+        manifest_bytes = (source / "manifest.json").read_bytes()
+        manifest = json.loads(manifest_bytes)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise SkillCenterHFReleaseError(
+            "source release manifest is missing or malformed"
+        ) from exc
+    if (
+        not isinstance(manifest, Mapping)
+        or manifest.get("schema_version")
+        not in {
+            SKILLCENTER_HF_RELEASE_SCHEMA_VERSION_V2,
+            SKILLCENTER_HF_RELEASE_SCHEMA_VERSION,
+        }
+        or manifest.get("primary_key") != "entry_cid"
+    ):
+        raise SkillCenterHFReleaseError(
+            "retarget requires a supported CID-keyed source release"
+        )
+
+    source_script = Path(query_script).expanduser().resolve()
+    source_skill = Path(skill_dir).expanduser().resolve()
+    if not source_script.is_file() or not (source_skill / "SKILL.md").is_file():
+        raise SkillCenterHFReleaseError(
+            "current query script or agent skill is missing"
+        )
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".{output.name}-retarget-",
+            dir=output.parent,
+        )
+    )
+    moved = False
+    try:
+        _notify(
+            progress_callback,
+            {
+                "dataset_repo_id": repo_id,
+                "phase": "retarget_copy_artifacts",
+            },
+        )
+        for root_name in ("data", "indexes"):
+            source_root = source / root_name
+            if not source_root.is_dir():
+                raise SkillCenterHFReleaseError(
+                    f"source release is missing {root_name}/"
+                )
+            for source_path in sorted(
+                path for path in source_root.rglob("*") if path.is_file()
+            ):
+                relative = source_path.relative_to(source)
+                target = staging.joinpath(*relative.parts)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    os.link(source_path, target)
+                except OSError:
+                    shutil.copy2(source_path, target)
+
+        target_script = staging / "scripts" / "query_skillcenter_hf.py"
+        target_script.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_script, target_script)
+        semantic_source = _semantic_traversal_source(
+            semantic_traversal_module
+        )
+        semantic_target = staging / "scripts" / "semantic_traversal.py"
+        shutil.copy2(semantic_source, semantic_target)
+        target_skill = staging / "skill" / source_skill.name
+        target_skill.parent.mkdir(parents=True, exist_ok=True)
+        _copy_skill_tree(source_skill, target_skill)
+
+        retargeted = dict(manifest)
+        retargeted["dataset_repo_id"] = repo_id
+        retargeted["files"] = {
+            "query_script": _file_descriptor(
+                target_script,
+                root=staging,
+            ),
+            "semantic_traversal": _file_descriptor(
+                semantic_target,
+                root=staging,
+            ),
+            "skill": _tree_descriptor(target_skill, root=staging),
+        }
+        retargeted["publication"] = {
+            "source_dataset_repo_id": str(
+                manifest.get("dataset_repo_id") or ""
+            ),
+            "source_manifest_sha256": hashlib.sha256(
+                manifest_bytes
+            ).hexdigest(),
+            "target_dataset_repo_id": repo_id,
+        }
+        _atomic_write_bytes(
+            staging / "README.md",
+            render_skillcenter_hf_readme(retargeted).encode("utf-8"),
+        )
+        _atomic_write_bytes(
+            staging / "manifest.json",
+            canonical_json_bytes(retargeted),
+        )
+        staged_summary = validate_skillcenter_hf_release(staging)
+        os.replace(staging, output)
+        moved = True
+    finally:
+        if not moved and staging.exists():
+            shutil.rmtree(staging)
+
+    _notify(
+        progress_callback,
+        {
+            "dataset_repo_id": repo_id,
+            "output_dir": str(output),
+            "phase": "retarget_complete",
+        },
+    )
+    return SkillCenterHFReleaseSummary(
+        output_dir=str(output),
+        dataset_repo_id=staged_summary.dataset_repo_id,
+        dataset_revision=staged_summary.dataset_revision,
+        corpus_rows=staged_summary.corpus_rows,
+        bm25_terms=staged_summary.bm25_terms,
+        bm25_postings=staged_summary.bm25_postings,
+        graph_nodes=staged_summary.graph_nodes,
+        graph_edges=staged_summary.graph_edges,
+        vector_rows=staged_summary.vector_rows,
+        vector_chunks=staged_summary.vector_chunks,
+        manifest_sha256=staged_summary.manifest_sha256,
+        graph_adjacency_rows=staged_summary.graph_adjacency_rows,
+        graph_adjacency_shards=staged_summary.graph_adjacency_shards,
+    )
+
+
 def rebalance_skillcenter_hf_release_vectors(
     source_release: str | Path,
     *,
@@ -963,6 +1132,7 @@ def render_skillcenter_hf_readme(manifest: Mapping[str, Any]) -> str:
 
     counts = dict(manifest["counts"])
     dataset_repo_id = str(manifest["dataset_repo_id"])
+    source_dataset_id = str(manifest["dataset_id"])
     revision = str(manifest["dataset_revision"])
     model_name = str(manifest["vector"]["model_name"])
     dimension = int(manifest["vector"]["dimension"])
@@ -973,8 +1143,11 @@ license: other
 language:
 - en
 task_categories:
+- text-retrieval
 - feature-extraction
 - sentence-similarity
+size_categories:
+- 100K<n<1M
 tags:
 - agents
 - bm25
@@ -1040,9 +1213,13 @@ configs:
 
 # SkillCenter Intent IR retrieval corpus
 
-This release converts the complete SkillCenter corpus and its local retrieval
-artifacts into thin-client-friendly, Zstandard-compressed Parquet. It is bound
-to source revision `{revision}` and contains:
+This is the CID-keyed retrieval release at
+[`{dataset_repo_id}`](https://huggingface.co/datasets/{dataset_repo_id}). It
+converts the complete
+[`{source_dataset_id}`](https://huggingface.co/datasets/{source_dataset_id})
+SkillCenter corpus and its local retrieval artifacts into
+thin-client-friendly, Zstandard-compressed Parquet. It is bound to upstream
+revision `{revision}` and contains:
 
 - {int(counts["corpus_rows"]):,} canonical skills keyed by `entry_cid`;
 - {int(counts["bm25_terms"]):,} BM25 terms and
@@ -1063,6 +1240,9 @@ relevant posting/vector shards, and corpus shards containing the final hits.
 
 ```bash
 python -m pip install pyarrow numpy huggingface_hub
+hf download {dataset_repo_id} \\
+  scripts/query_skillcenter_hf.py scripts/semantic_traversal.py \\
+  --repo-type dataset --local-dir .
 python scripts/query_skillcenter_hf.py \\
   --repo-id {dataset_repo_id} \\
   --revision main \\
@@ -1148,17 +1328,24 @@ also be filtered server-side through the Hugging Face Dataset Viewer API using
 `node_cid`. The bundled client uses manifest-verified shard descriptors so it
 works before Dataset Viewer materialization and with pinned Hub revisions.
 
-## Provenance and use
+## Provenance, licensing, and safe use
 
 The release manifest records the source corpus, BM25 SQLite, graph, and FAISS
-content identities. CIDs identify local content; they do not prove public IPFS
-pinning. Skill records retain their individual license and source metadata.
-Review `license_expression`, provenance, and trust fields before redistribution
-or execution.
+content identities, including SHA-256 bindings to each input manifest. CIDs
+identify local content; they do not prove public IPFS pinning. The original
+source URL, source type, license expression, provenance, and trust metadata
+remain attached to each canonical skill.
+
+The release packaging and query machinery are produced by
+[`ipfs_datasets_py`](https://github.com/endomorphosis/ipfs_datasets_py).
+SkillCenter aggregates material from multiple public sources. The framework
+and packaging code do not replace each skill's original license; review the
+record-level `license_expression` and source metadata before redistribution.
 
 Retrieved skills and graph relationships are context-only inputs. They are not
 formal proof authority and must not be executed solely because retrieval
-ranked them highly.
+ranked them highly. Inspect their content and provenance, apply the least
+privilege needed, and obtain human approval before consequential actions.
 """
 
 
@@ -3442,5 +3629,6 @@ __all__ = [
     "build_skillcenter_hf_release",
     "refresh_skillcenter_hf_release_support",
     "render_skillcenter_hf_readme",
+    "retarget_skillcenter_hf_release",
     "validate_skillcenter_hf_release",
 ]

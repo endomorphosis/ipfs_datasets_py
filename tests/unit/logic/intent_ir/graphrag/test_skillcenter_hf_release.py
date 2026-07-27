@@ -177,6 +177,122 @@ def test_vector_routing_centroid_points_to_at_most_two_sorted_shards() -> None:
         _vector_routing_groups(malformed, config)
 
 
+def test_retarget_release_regenerates_publication_support_and_omits_caches(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "source"
+    output = tmp_path / "publicus"
+    data_path = source / "data" / "corpus" / "part-000000.parquet"
+    index_path = source / "indexes" / "corpus_chunks.parquet"
+    data_path.parent.mkdir(parents=True)
+    index_path.parent.mkdir(parents=True)
+    data_path.write_bytes(b"immutable parquet placeholder")
+    index_path.write_bytes(b"immutable index placeholder")
+    cache_path = source / "scripts" / "__pycache__" / "client.pyc"
+    cache_path.parent.mkdir(parents=True)
+    cache_path.write_bytes(b"do not publish")
+    (source / "README.md").write_text("old card", encoding="utf-8")
+
+    manifest = {
+        "counts": {
+            "bm25_postings": 1,
+            "bm25_terms": 1,
+            "corpus_rows": 1,
+            "graph_edges": 1,
+            "graph_nodes": 1,
+            "vector_rows": 1,
+        },
+        "dataset_id": "Tommysha/skillcenter-bundles",
+        "dataset_repo_id": "Tommysha/skillcenter-ir",
+        "dataset_revision": "source-revision",
+        "files": {},
+        "indexes": {},
+        "parquet": {"max_rows_per_file": 4096},
+        "primary_key": "entry_cid",
+        "schema_version": release.SKILLCENTER_HF_RELEASE_SCHEMA_VERSION,
+        "vector": {"dimension": 384, "model_name": "thenlper/gte-small"},
+    }
+    source_manifest = release.canonical_json_bytes(manifest)
+    (source / "manifest.json").write_bytes(source_manifest)
+
+    query_script = tmp_path / "query_skillcenter_hf.py"
+    query_script.write_text(
+        'DEFAULT_REPO_ID = "Publicus/skillcenter-ir"\n',
+        encoding="utf-8",
+    )
+    semantic_module = tmp_path / "semantic_traversal.py"
+    semantic_module.write_text("def walk():\n    return []\n", encoding="utf-8")
+    skill_dir = tmp_path / "query-skillcenter-hf"
+    skill_dir.mkdir()
+    (skill_dir / "SKILL.md").write_text(
+        "---\n"
+        "name: query-skillcenter-hf\n"
+        "description: Query the Publicus SkillCenter release.\n"
+        "---\n\n"
+        "Use `Publicus/skillcenter-ir`.\n",
+        encoding="utf-8",
+    )
+    skill_cache = skill_dir / "__pycache__" / "helper.pyc"
+    skill_cache.parent.mkdir()
+    skill_cache.write_bytes(b"do not publish")
+
+    def _validated(root: str | Path) -> release.SkillCenterHFReleaseSummary:
+        release_root = Path(root)
+        current = json.loads((release_root / "manifest.json").read_bytes())
+        assert current["dataset_repo_id"] == "Publicus/skillcenter-ir"
+        return release.SkillCenterHFReleaseSummary(
+            output_dir=str(release_root),
+            dataset_repo_id=current["dataset_repo_id"],
+            dataset_revision=current["dataset_revision"],
+            corpus_rows=1,
+            bm25_terms=1,
+            bm25_postings=1,
+            graph_nodes=1,
+            graph_edges=1,
+            vector_rows=1,
+            vector_chunks=1,
+            manifest_sha256=release._sha256_file(
+                release_root / "manifest.json"
+            ),
+        )
+
+    monkeypatch.setattr(
+        release,
+        "validate_skillcenter_hf_release",
+        _validated,
+    )
+    summary = release.retarget_skillcenter_hf_release(
+        source,
+        output_dir=output,
+        dataset_repo_id="Publicus/skillcenter-ir",
+        query_script=query_script,
+        skill_dir=skill_dir,
+        semantic_traversal_module=semantic_module,
+    )
+
+    target_manifest = json.loads((output / "manifest.json").read_bytes())
+    assert target_manifest["dataset_repo_id"] == "Publicus/skillcenter-ir"
+    assert target_manifest["publication"] == {
+        "source_dataset_repo_id": "Tommysha/skillcenter-ir",
+        "source_manifest_sha256": release._sha256_file(
+            source / "manifest.json"
+        ),
+        "target_dataset_repo_id": "Publicus/skillcenter-ir",
+    }
+    assert "Publicus/skillcenter-ir" in (output / "README.md").read_text()
+    assert "Publicus/skillcenter-ir" in (
+        output / "skill" / skill_dir.name / "SKILL.md"
+    ).read_text()
+    assert not list(output.rglob("*.pyc"))
+    assert not list(output.rglob("__pycache__"))
+    assert data_path.stat().st_ino == (
+        output / data_path.relative_to(source)
+    ).stat().st_ino
+    assert json.loads((source / "manifest.json").read_bytes()) == manifest
+    assert summary.output_dir == str(output)
+
+
 def test_graph_adjacency_pages_are_bounded() -> None:
     connection = sqlite3.connect(":memory:")
     connection.row_factory = sqlite3.Row

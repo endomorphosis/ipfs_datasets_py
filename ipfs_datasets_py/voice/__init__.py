@@ -4,6 +4,40 @@ The package is intentionally dependency-light.  Arrow and Hugging Face
 integrations are imported lazily by :mod:`ipfs_datasets_py.voice.schema`.
 """
 
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING, Any, Final
+
+from .graphrag import (
+    GRAPHRAG_INDEX_SCHEMA_VERSION,
+    EvidenceRecord,
+    GraphEdge,
+    GraphNode,
+    GraphRAGIngestionError,
+    GraphRAGVoiceTemplateProvider,
+    IngestionReceipt,
+    SlottedResponseIndex,
+    TemplateGraphSnapshot,
+    TemplateMatch,
+    UnsafeSlotBindingError,
+)
+from .normalize import (
+    AbbyVoiceDatasetNormalizer,
+    DuplicateLedgerEntry,
+    NormalizationConfig,
+    NormalizationResult,
+    NormalizedInputDisposition,
+    QualityIssue,
+    QuarantineReason,
+    QuarantineRecord,
+    build_slotted_response_dag,
+    deduplicate_voice_response_chunks,
+    deterministic_split,
+    normalize_indextts_spoken_text,
+    normalize_manifest,
+    normalize_spoken_text,
+)
 from .schema import (
     ABBY_VOICE_AUDIO_V2,
     ABBY_VOICE_PROVENANCE_V2,
@@ -26,34 +60,77 @@ from .schema import (
     validate_publishable,
     validate_rows,
 )
-from .normalize import (
-    AbbyVoiceDatasetNormalizer,
-    DuplicateLedgerEntry,
-    NormalizationConfig,
-    NormalizationResult,
-    QualityIssue,
-    QuarantineReason,
-    QuarantineRecord,
-    build_slotted_response_dag,
-    deduplicate_voice_response_chunks,
-    deterministic_split,
-    normalize_indextts_spoken_text,
-    normalize_manifest,
-    normalize_spoken_text,
-)
-from .graphrag import (
-    GRAPHRAG_INDEX_SCHEMA_VERSION,
-    EvidenceRecord,
-    GraphEdge,
-    GraphNode,
-    GraphRAGIngestionError,
-    GraphRAGVoiceTemplateProvider,
-    IngestionReceipt,
-    SlottedResponseIndex,
-    TemplateGraphSnapshot,
-    TemplateMatch,
-    UnsafeSlotBindingError,
-)
+
+if TYPE_CHECKING:
+    from .dataset_manager import (
+        AbbyVoiceDatasetManager,
+        AbbyVoiceDatasetManagerResult,
+        DatasetDisposition,
+        PinnedVoiceSource,
+    )
+    from .legacy_sources import (
+        LegacyAudioCandidate,
+        LegacyAudioDisposition,
+        LegacyAudioReconciliation,
+        LegacyDispositionReason,
+        LegacyDispositionStatus,
+        reconcile_legacy_audio_candidates,
+    )
+    from .workset import (
+        AudioArtifactDescriptor,
+        AudioWorkItem,
+        AudioWorkManifest,
+        AudioWorkOperation,
+        AudioWorkReason,
+        VoiceAudioWorkset,
+    )
+    from .materialize import (
+        AbbyVoiceHFReleaseBuilder,
+        AbbyVoiceMaterializationResult,
+        AbbyVoiceMaterializer,
+        TTSASRExecutionReceipt,
+        VoiceAudioJobSpec,
+    )
+
+
+_LAZY_EXPORTS: Final[dict[str, str]] = {
+    "AbbyVoiceDatasetManager": ".dataset_manager",
+    "AbbyVoiceDatasetManagerResult": ".dataset_manager",
+    "DatasetDisposition": ".dataset_manager",
+    "PinnedVoiceSource": ".dataset_manager",
+    "LegacyAudioCandidate": ".legacy_sources",
+    "LegacyAudioDisposition": ".legacy_sources",
+    "LegacyAudioReconciliation": ".legacy_sources",
+    "LegacyDispositionReason": ".legacy_sources",
+    "LegacyDispositionStatus": ".legacy_sources",
+    "reconcile_legacy_audio_candidates": ".legacy_sources",
+    "AudioArtifactDescriptor": ".workset",
+    "AudioWorkItem": ".workset",
+    "AudioWorkManifest": ".workset",
+    "AudioWorkOperation": ".workset",
+    "AudioWorkReason": ".workset",
+    "VoiceAudioWorkset": ".workset",
+    "AbbyVoiceHFReleaseBuilder": ".materialize",
+    "AbbyVoiceMaterializationResult": ".materialize",
+    "AbbyVoiceMaterializer": ".materialize",
+    "TTSASRExecutionReceipt": ".materialize",
+    "VoiceAudioJobSpec": ".materialize",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Load data-manager contracts only when callers request them."""
+
+    module_name = _LAZY_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(module_name, __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
 
 __all__ = [
     "ABBY_VOICE_AUDIO_V2",
@@ -68,6 +145,7 @@ __all__ = [
     "AbbyVoiceDatasetNormalizer",
     "DuplicateLedgerEntry",
     "NormalizationConfig",
+    "NormalizedInputDisposition",
     "NormalizationResult",
     "QualityIssue",
     "QuarantineReason",
@@ -83,6 +161,27 @@ __all__ = [
     "TemplateGraphSnapshot",
     "TemplateMatch",
     "UnsafeSlotBindingError",
+    "AbbyVoiceDatasetManager",
+    "AbbyVoiceDatasetManagerResult",
+    "DatasetDisposition",
+    "PinnedVoiceSource",
+    "LegacyAudioCandidate",
+    "LegacyAudioDisposition",
+    "LegacyAudioReconciliation",
+    "LegacyDispositionReason",
+    "LegacyDispositionStatus",
+    "reconcile_legacy_audio_candidates",
+    "AudioArtifactDescriptor",
+    "AudioWorkItem",
+    "AudioWorkManifest",
+    "AudioWorkOperation",
+    "AudioWorkReason",
+    "VoiceAudioWorkset",
+    "AbbyVoiceHFReleaseBuilder",
+    "AbbyVoiceMaterializationResult",
+    "AbbyVoiceMaterializer",
+    "TTSASRExecutionReceipt",
+    "VoiceAudioJobSpec",
     "build_slotted_response_dag",
     "deduplicate_voice_response_chunks",
     "deterministic_split",

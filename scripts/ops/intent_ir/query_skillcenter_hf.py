@@ -62,7 +62,7 @@ except ImportError:
     )
 
 
-DEFAULT_REPO_ID = "Tommysha/skillcenter-ir"
+DEFAULT_REPO_ID = "Publicus/skillcenter-ir"
 DEFAULT_MANIFEST = "manifest.json"
 DEFAULT_CACHE_DIR = Path(
     "~/.cache/ipfs_datasets_py/skillcenter-hf-query"

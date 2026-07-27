@@ -167,7 +167,7 @@ HF_RELEASE_ROOT="${XDG_DATA_HOME:-${HOME}/.local/share}/ipfs_datasets_py/intent-
 
 python scripts/ops/intent_ir/build_skillcenter_hf_release.py \
   --output-dir "${HF_RELEASE_ROOT}" \
-  --dataset-repo-id Tommysha/skillcenter-ir
+  --dataset-repo-id Publicus/skillcenter-ir
 python scripts/ops/intent_ir/build_skillcenter_hf_release.py \
   --output-dir "${HF_RELEASE_ROOT}" \
   --validate-only
@@ -194,6 +194,34 @@ HF_RELEASE_V3_ROOT="${HF_RELEASE_ROOT}-graph-v3"
 python scripts/ops/intent_ir/build_skillcenter_hf_release.py \
   --graph-navigation-from "${HF_RELEASE_V2_ROOT}" \
   --output-dir "${HF_RELEASE_V3_ROOT}"
+```
+
+Prepare a clean, upload-ready copy for the `Publicus` Hugging Face
+organization. This regenerates the dataset card, query client, agent skill,
+and manifest for `Publicus/skillcenter-ir`; immutable Parquet artifacts are
+hard-linked when possible, and Python cache files are excluded.
+
+```bash
+HF_PUBLICUS_ROOT="${HF_RELEASE_V3_ROOT}-publicus"
+python scripts/ops/intent_ir/build_skillcenter_hf_release.py \
+  --retarget-from "${HF_RELEASE_V3_ROOT}" \
+  --output-dir "${HF_PUBLICUS_ROOT}" \
+  --dataset-repo-id Publicus/skillcenter-ir
+python scripts/ops/intent_ir/build_skillcenter_hf_release.py \
+  --output-dir "${HF_PUBLICUS_ROOT}" \
+  --validate-only
+```
+
+Review `${HF_PUBLICUS_ROOT}/README.md`,
+`${HF_PUBLICUS_ROOT}/skill/query-skillcenter-hf/SKILL.md`, and
+`${HF_PUBLICUS_ROOT}/manifest.json` before publication. Upload only the
+validated retargeted directory:
+
+```bash
+hf auth whoami
+hf upload-large-folder Publicus/skillcenter-ir "${HF_PUBLICUS_ROOT}" \
+  --repo-type dataset --no-private --num-workers 8 \
+  --exclude "**/__pycache__/**" --exclude "**/*.pyc"
 ```
 
 The generated `README.md`, `manifest.json`, remote query client, reusable
