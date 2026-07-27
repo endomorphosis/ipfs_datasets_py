@@ -10,17 +10,35 @@ import pytest
 import benchmarks.bench_semantic_roundtrip_compositions as composition_report
 import benchmarks.semantic_roundtrip_scheduler as scheduler_module
 from benchmarks.semantic_roundtrip_scheduler import (
+    CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH,
+    CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA,
+    CANONICAL_DESIGN_GATE_SCHEMA,
     DEFAULT_CONFIG_PATH,
+    NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE,
+    NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+    NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH,
+    NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA,
+    REPLACEMENT_REPORT_RELATIVE_PATH,
+    REPLACEMENT_SELECTION_GATE_SCHEMA,
+    SRT014_DOWNSTREAM_GATE_SCHEMA,
     SRT014_REPORT_RELATIVE_PATH,
     SchedulerPreparationError,
     build_bundle_supervisor_command,
     build_taskboard_bundle_index,
+    evaluate_canonical_design_gate,
+    evaluate_canonical_design_gate_artifact,
+    evaluate_no_eligible_remediation_manifest_gate,
+    evaluate_replacement_selection_gate,
     evaluate_srt014_downstream_gate,
     load_scheduler_config,
     probe_provider_capacity,
     validate_taskboard_for_dynamic_scheduler,
 )
-from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, validate_cid
+from ipfs_datasets_py.utils.cid_utils import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 from ipfs_accelerate_py.agent_supervisor.artifact_store import (
     read_bundle_index_artifact,
 )
@@ -64,8 +82,8 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
     )
     stored = read_bundle_index_artifact(index_path)
 
-    assert len(expected["bundles"]) == 20
-    assert len(stored["bundles"]) == 20
+    assert len(expected["bundles"]) == 27
+    assert len(stored["bundles"]) == 27
     assert expected["source_todo_raw_cid"] == cid_for_bytes(TASKBOARD.read_bytes())
     assert (
         validate_cid(expected["source_todo_raw_cid"], codecs=("raw",))
@@ -102,13 +120,27 @@ def test_current_board_compiles_to_one_queryable_bundle_per_task(
     assert stored["task_dependency_graph"]["edges"]
     assert stored["srt014_downstream_gate"]["status"] == "pending"
     assert stored["srt014_downstream_gate"]["launch_authorized"] is False
+    assert stored["replacement_selection_gate"]["status"] == "pending"
+    assert stored["canonical_design_gate"]["launch_authorized"] is False
     for task_id in ("SRT-015", "SRT-016", "SRT-017", "SRT-018", "SRT-019"):
-        assert tasks_by_id[task_id]["is_schedulable"] is False
-        assert tasks_by_id[task_id]["preflight_blocked"] is True
+        assert tasks_by_id[task_id]["is_schedulable"] is True
+        assert "preflight_blocked" not in tasks_by_id[task_id]
+    for task_id in ("SRT-021", "SRT-022", "SRT-023", "SRT-024", "SRT-025", "SRT-026", "SRT-027"):
+        assert tasks_by_id[task_id]["is_schedulable"] is True
+        assert "preflight_blocked" not in tasks_by_id[task_id]
+    assert tasks_by_id["SRT-015"]["implementation_timeout_seconds"] == 7200
+    assert isinstance(
+        tasks_by_id["SRT-015"]["implementation_timeout_seconds"],
+        int,
+    )
+    assert tasks_by_id["SRT-026"]["implementation_timeout_seconds"] == 14400
 
 
-def _write_gate_report(repo_root: Path) -> Path:
-    path = repo_root / SRT014_REPORT_RELATIVE_PATH
+def _write_gate_report(
+    repo_root: Path,
+    relative_path: Path = SRT014_REPORT_RELATIVE_PATH,
+) -> Path:
+    path = repo_root / relative_path
     path.parent.mkdir(parents=True, exist_ok=True)
     deterministic_ids = [f"arm-{index:02d}" for index in range(4)]
     model_ids = [f"arm-{index:02d}" for index in range(4, 30)]
@@ -157,6 +189,54 @@ def _write_gate_report(repo_root: Path) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def _test_gate_receipt(payload: dict[str, object]) -> dict[str, object]:
+    receipt = dict(payload)
+    receipt["gate_cid"] = cid_for_dag_json(receipt)
+    receipt["gate_cid_codec"] = "dag-json"
+    receipt["gate_cid_scope"] = "payload_without_gate_cid_fields"
+    return receipt
+
+
+def _valid_remediation_manifest_gate() -> dict[str, object]:
+    return _test_gate_receipt({
+        "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+        "status": "valid",
+        "valid": True,
+        "manifest_cid": cid_for_dag_json({"kind": "remediation-manifest"}),
+        "manifest_raw_cid": cid_for_bytes(b"remediation-manifest"),
+        "reason_codes": ["no_eligible_remediation_manifest_valid"],
+    })
+
+
+def _write_remediation_manifest(
+    repo_root: Path,
+    original_gate: dict[str, object],
+) -> tuple[Path, dict[str, object]]:
+    payload: dict[str, object] = {
+        "interface": NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE,
+        "schema_version": NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA,
+        "status": "frozen_no_eligible",
+        "source": {
+            "srt014_report_path": str(SRT014_REPORT_RELATIVE_PATH),
+            "srt014_report_cid": original_gate["report_cid"],
+            "srt014_report_raw_cid": original_gate["report_raw_cid"],
+            "srt014_gate_cid": original_gate["gate_cid"],
+        },
+        "remediation": original_gate["remediation"],
+        "protocol_immutable": True,
+        "replacement_run_required": True,
+        "srt015_fenced": True,
+    }
+    payload["manifest_cid"] = cid_for_dag_json(payload)
+    path = repo_root / NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path, payload
 
 
 @pytest.mark.parametrize(
@@ -280,16 +360,40 @@ def test_authorized_gate_keeps_srt015_and_descendants_schedulable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     config = load_scheduler_config(DEFAULT_CONFIG_PATH)
-    gate = {
+    original_gate = {
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "gate_cid": "bafyreiarmediation",
+        "reason_codes": ["srt014_no_eligible_composition"],
+    }
+    replacement_gate = {
         "status": "authorized",
         "launch_authorized": True,
-        "gate_cid": "bafyreiauthorized",
-        "reason_codes": ["srt014_unique_full_coverage_winner"],
+        "gate_cid": "bafyreireplacement",
+        "reason_codes": ["replacement_unique_full_coverage_winner"],
+    }
+    canonical_gate = {
+        "status": "authorized",
+        "launch_authorized": True,
+        "gate_cid": "bafyreicanonical",
+        "reason_codes": [
+            "replacement_report_independently_authorizes_selection"
+        ],
     }
     monkeypatch.setattr(
         scheduler_module,
         "evaluate_srt014_downstream_gate",
-        lambda _repo_root: gate,
+        lambda _repo_root: original_gate,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_replacement_selection_gate",
+        lambda _repo_root: replacement_gate,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate",
+        lambda _repo_root, **_kwargs: canonical_gate,
     )
 
     index = build_taskboard_bundle_index(
@@ -308,10 +412,13 @@ def test_authorized_gate_keeps_srt015_and_descendants_schedulable(
     for task_id in ("SRT-015", "SRT-016", "SRT-017", "SRT-018", "SRT-019"):
         assert tasks_by_id[task_id]["is_schedulable"] is True
         assert "preflight_blocked" not in tasks_by_id[task_id]
-        assert tasks_by_id[task_id]["srt014_downstream_gate_cid"] == gate["gate_cid"]
+        assert (
+            tasks_by_id[task_id]["canonical_design_gate_cid"]
+            == canonical_gate["gate_cid"]
+        )
 
 
-def test_completed_srt014_cannot_make_srt015_claimable_without_report(
+def test_completed_srt014_only_makes_replacement_gate_task_claimable(
     tmp_path: Path,
 ) -> None:
     board = tmp_path / "gate.todo.md"
@@ -334,13 +441,29 @@ def test_completed_srt014_cannot_make_srt015_claimable_without_report(
 - Predicted files: docs/performance_snapshots/2026-07-26_semantic_roundtrip_composition_pilot.json
 - Acceptance: terminal measurement
 
+## SRT-027 Replacement gate
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: benchmark
+- Depends on: SRT-014
+- Outputs: replacement-gate.json
+- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py gate --repo-root . --require-authorized
+- Board namespace: gate-test
+- Bundle: gate/replacement
+- Parallel lane: replacement-gate
+- Resource class: cpu-small
+- Predicted files: replacement-gate.json
+- Acceptance: fail closed unless replacement evidence authorizes
+
 ## SRT-015 Canonical design
 
 - Status: todo
 - Completion: manual
 - Priority: P0
 - Track: compiler
-- Depends on: SRT-014
+- Depends on: SRT-027
 - Outputs: canonical.txt
 - Validation: test -f canonical.txt
 - Board namespace: gate-test
@@ -368,12 +491,586 @@ def test_completed_srt014_cannot_make_srt015_claimable_without_report(
 
     assert index["srt014_downstream_gate"]["status"] == "pending"
     assert tasks["SRT-014"]["status"] == "completed"
-    assert tasks["SRT-015"]["is_schedulable"] is False
+    assert tasks["SRT-015"]["is_schedulable"] is True
+    assert any(
+        "SRT-027" in payload["execution_slice_task_ids"]
+        and payload["claimable"]
+        for payload in payloads
+    )
     assert not any(
         "SRT-015" in payload["execution_slice_task_ids"]
         and payload["claimable"]
         for payload in payloads
     )
+
+
+@pytest.mark.parametrize(
+    ("replacement_status", "expected_status"),
+    (
+        ("pending", "replacement_pending"),
+        ("invalid", "replacement_invalid"),
+        (
+            "replacement_remediation_required",
+            "replacement_remediation_required",
+        ),
+    ),
+)
+def test_replacement_missing_invalid_or_no_eligible_cannot_authorize_srt015(
+    tmp_path: Path,
+    replacement_status: str,
+    expected_status: str,
+) -> None:
+    original = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "report_cid": "bafyrei-original-report",
+        "selection_outcome": "no_eligible_composition",
+        "reason_codes": ["srt014_no_eligible_composition"],
+        "remediation": {"arm_count": 30},
+    })
+    replacement = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
+        "status": replacement_status,
+        "launch_authorized": False,
+        "report_cid": None,
+        "selection_outcome": (
+            "no_eligible_composition"
+            if replacement_status == "replacement_remediation_required"
+            else None
+        ),
+        "reason_codes": [f"replacement_{replacement_status}"],
+        "remediation": (
+            {"arm_count": 30}
+            if replacement_status == "replacement_remediation_required"
+            else None
+        ),
+    })
+
+    gate = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=original,
+        remediation_manifest_gate=_valid_remediation_manifest_gate(),
+        replacement_gate=replacement,
+    )
+
+    assert gate["status"] == expected_status
+    assert gate["launch_authorized"] is False
+    assert gate["selectable_arm_ids"] == []
+    assert gate["implementation_representative_arm_id"] is None
+
+
+@pytest.mark.parametrize(
+    ("outcome", "basis"),
+    (
+        ("selected", "replacement_unique_winner"),
+        ("exact_tie", "replacement_bounded_tie_policy"),
+    ),
+)
+def test_only_selectable_replacement_evidence_authorizes_srt015(
+    tmp_path: Path,
+    outcome: str,
+    basis: str,
+) -> None:
+    original = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "report_cid": "bafyrei-original-report",
+        "selection_outcome": "no_eligible_composition",
+        "reason_codes": ["srt014_no_eligible_composition"],
+    })
+    replacement = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
+        "status": "authorized",
+        "launch_authorized": True,
+        "report_cid": "bafyrei-replacement-report",
+        "selection_outcome": outcome,
+        "selection_basis": basis,
+        "selectable_arm_ids": ["arm-03", "arm-19"],
+        "implementation_representative_arm_id": "arm-03",
+        "reason_codes": ["replacement_full_coverage_selection"],
+    })
+
+    gate = evaluate_canonical_design_gate(
+        tmp_path,
+        srt014_gate=original,
+        remediation_manifest_gate=_valid_remediation_manifest_gate(),
+        replacement_gate=replacement,
+    )
+
+    assert gate["status"] == "authorized"
+    assert gate["launch_authorized"] is True
+    assert gate["selection_basis"] == basis
+    assert gate["selectable_arm_ids"] == ["arm-03", "arm-19"]
+    assert gate["implementation_representative_arm_id"] == "arm-03"
+
+
+def test_remediation_manifest_is_exactly_cid_and_lineage_bound(
+    tmp_path: Path,
+) -> None:
+    original = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "report_cid": cid_for_dag_json({"kind": "original-report"}),
+        "report_raw_cid": cid_for_bytes(b"original-report"),
+        "selection_outcome": "no_eligible_composition",
+        "reason_codes": ["srt014_no_eligible_composition"],
+        "remediation": {
+            "arm_count": 30,
+            "eligible_arm_count": 0,
+            "systemic_gate_ids": ["full_coverage"],
+        },
+    })
+
+    missing = evaluate_no_eligible_remediation_manifest_gate(
+        tmp_path,
+        srt014_gate=original,
+    )
+    assert missing["status"] == "pending"
+    assert missing["valid"] is False
+
+    path, payload = _write_remediation_manifest(tmp_path, original)
+    valid = evaluate_no_eligible_remediation_manifest_gate(
+        tmp_path,
+        srt014_gate=original,
+    )
+    assert valid["status"] == "valid"
+    assert valid["valid"] is True
+    assert valid["manifest_cid"] == payload["manifest_cid"]
+    assert valid["manifest_raw_cid"] == cid_for_bytes(path.read_bytes())
+
+    forged = dict(payload)
+    forged["source"] = {
+        **dict(payload["source"]),
+        "srt014_report_raw_cid": cid_for_bytes(b"forged-report"),
+    }
+    forged_without_cid = dict(forged)
+    del forged_without_cid["manifest_cid"]
+    forged["manifest_cid"] = cid_for_dag_json(forged_without_cid)
+    path.write_text(
+        json.dumps(forged, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    invalid = evaluate_no_eligible_remediation_manifest_gate(
+        tmp_path,
+        srt014_gate=original,
+    )
+    assert invalid["status"] == "invalid"
+    assert invalid["valid"] is False
+    assert "no_eligible_remediation_manifest_invalid" in invalid["reason_codes"]
+
+
+def test_selected_replacement_cannot_bypass_missing_or_invalid_manifest(
+    tmp_path: Path,
+) -> None:
+    original = _test_gate_receipt({
+        "schema": SRT014_DOWNSTREAM_GATE_SCHEMA,
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "report_cid": "bafyrei-original-report",
+        "selection_outcome": "no_eligible_composition",
+        "reason_codes": ["srt014_no_eligible_composition"],
+    })
+    replacement = _test_gate_receipt({
+        "schema": REPLACEMENT_SELECTION_GATE_SCHEMA,
+        "status": "authorized",
+        "launch_authorized": True,
+        "report_cid": "bafyrei-replacement-report",
+        "selection_outcome": "selected",
+        "selection_basis": "replacement_unique_winner",
+        "selectable_arm_ids": ["arm-03"],
+        "implementation_representative_arm_id": "arm-03",
+        "reason_codes": ["replacement_full_coverage_selection"],
+    })
+
+    for manifest, expected_status in (
+        (
+            _test_gate_receipt({
+                "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+                "status": "pending",
+                "valid": False,
+                "reason_codes": ["no_eligible_remediation_manifest_missing"],
+            }),
+            "remediation_manifest_pending",
+        ),
+        (
+            _test_gate_receipt({
+                "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+                "status": "invalid",
+                "valid": False,
+                "reason_codes": ["no_eligible_remediation_manifest_invalid"],
+            }),
+            "remediation_manifest_invalid",
+        ),
+    ):
+        gate = evaluate_canonical_design_gate(
+            tmp_path,
+            srt014_gate=original,
+            remediation_manifest_gate=manifest,
+            replacement_gate=replacement,
+        )
+        assert gate["status"] == expected_status
+        assert gate["launch_authorized"] is False
+        assert gate["selectable_arm_ids"] == []
+
+
+def test_canonical_gate_artifact_must_exactly_match_recomputed_receipt(
+    tmp_path: Path,
+) -> None:
+    expected = _test_gate_receipt({
+        "schema": CANONICAL_DESIGN_GATE_SCHEMA,
+        "status": "authorized",
+        "launch_authorized": True,
+        "srt014_gate_cid": cid_for_dag_json({"kind": "original-gate"}),
+        "remediation_manifest_cid": cid_for_dag_json(
+            {"kind": "remediation-manifest"}
+        ),
+        "replacement_gate_cid": cid_for_dag_json(
+            {"kind": "replacement-gate"}
+        ),
+        "selectable_arm_ids": ["arm-03"],
+        "implementation_representative_arm_id": "arm-03",
+        "reason_codes": [
+            "replacement_report_independently_authorizes_selection"
+        ],
+    })
+
+    missing = evaluate_canonical_design_gate_artifact(
+        tmp_path,
+        canonical_gate=expected,
+    )
+    assert missing["status"] == "pending"
+    assert missing["valid"] is False
+
+    path = tmp_path / CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(expected, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    valid = evaluate_canonical_design_gate_artifact(
+        tmp_path,
+        canonical_gate=expected,
+    )
+    assert valid["schema"] == (
+        CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA
+    )
+    assert valid["status"] == "valid"
+    assert valid["valid"] is True
+    assert valid["artifact_raw_cid"] == cid_for_bytes(path.read_bytes())
+
+    forged = {**expected, "launch_authorized": False}
+    path.write_text(
+        json.dumps(forged, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    invalid = evaluate_canonical_design_gate_artifact(
+        tmp_path,
+        canonical_gate=expected,
+    )
+    assert invalid["status"] == "invalid"
+    assert invalid["valid"] is False
+    assert "canonical_design_gate_artifact_invalid" in (
+        invalid["reason_codes"]
+    )
+
+
+@pytest.mark.parametrize(("valid", "expected_returncode"), ((True, 0), (False, 1)))
+def test_manifest_gate_cli_requires_valid_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    valid: bool,
+    expected_returncode: int,
+) -> None:
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_no_eligible_remediation_manifest_gate",
+        lambda _repo_root: {"status": "valid" if valid else "invalid", "valid": valid},
+    )
+
+    returncode = scheduler_module.main(
+        ["manifest-gate", "--repo-root", str(REPO_ROOT)]
+    )
+
+    assert returncode == expected_returncode
+    capsys.readouterr()
+
+
+@pytest.mark.parametrize(
+    ("artifact_valid", "expected_returncode"),
+    ((True, 0), (False, 1)),
+)
+def test_gate_cli_requires_exact_artifact_when_requested(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    artifact_valid: bool,
+    expected_returncode: int,
+) -> None:
+    canonical = _test_gate_receipt({
+        "schema": CANONICAL_DESIGN_GATE_SCHEMA,
+        "status": "authorized",
+        "launch_authorized": True,
+        "reason_codes": ["replacement_authorized"],
+    })
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate",
+        lambda _repo_root: canonical,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate_artifact",
+        lambda _repo_root, **_kwargs: {
+            "status": "valid" if artifact_valid else "invalid",
+            "valid": artifact_valid,
+        },
+    )
+
+    returncode = scheduler_module.main(
+        [
+            "gate",
+            "--repo-root",
+            str(REPO_ROOT),
+            "--require-authorized",
+            "--validate-artifact",
+            str(CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH),
+        ]
+    )
+
+    assert returncode == expected_returncode
+    capsys.readouterr()
+
+
+def test_replacement_gate_uses_replacement_report_and_basis(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _write_gate_report(tmp_path, REPLACEMENT_REPORT_RELATIVE_PATH)
+    monkeypatch.setattr(
+        composition_report,
+        "validate_composition_report",
+        lambda *_args, **_kwargs: {
+            "status": "valid",
+            "report_cid": "bafyreifakereport",
+            "selection_outcome": "selected",
+            "winner_arm_id": "arm-07",
+            "co_winner_arm_ids": ["arm-07"],
+            "bounded_tie": False,
+        },
+    )
+
+    gate = evaluate_replacement_selection_gate(tmp_path)
+
+    assert gate["status"] == "authorized"
+    assert gate["launch_authorized"] is True
+    assert gate["report_path"] == str(REPLACEMENT_REPORT_RELATIVE_PATH)
+    assert gate["selection_basis"] == "replacement_unique_winner"
+    assert gate["implementation_representative_arm_id"] == "arm-07"
+
+
+def test_no_eligible_makes_only_remediation_manifest_ready(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dependencies = {
+        "SRT-014": (),
+        "SRT-021": ("SRT-014",),
+        "SRT-022": ("SRT-021",),
+        "SRT-023": ("SRT-021",),
+        "SRT-024": ("SRT-021",),
+        "SRT-025": ("SRT-022", "SRT-023", "SRT-024"),
+        "SRT-026": ("SRT-025",),
+        "SRT-027": ("SRT-026",),
+        "SRT-015": ("SRT-027",),
+        "SRT-016": ("SRT-015",),
+    }
+    sections = ["# No-eligible remediation board"]
+    for task_id, depends_on in dependencies.items():
+        status = "completed" if task_id == "SRT-014" else "todo"
+        sections.append(
+            f"""## {task_id} Test task
+
+- Status: {status}
+- Completion: manual
+- Priority: P0
+- Track: benchmark
+- Depends on: {", ".join(depends_on)}
+- Outputs: {task_id.lower()}.json
+- Validation: true
+- Board namespace: gate-test
+- Bundle: gate/{task_id.lower()}
+- Parallel lane: {task_id.lower()}
+- Resource class: cpu-small
+- Predicted files: {task_id.lower()}.json
+- Acceptance: bounded test task
+"""
+        )
+    board = tmp_path / "remediation.todo.md"
+    board.write_text("\n".join(sections), encoding="utf-8")
+    original_gate = {
+        "status": "remediation_required",
+        "launch_authorized": False,
+        "gate_cid": "bafyrei-remediation",
+        "reason_codes": ["srt014_no_eligible_composition"],
+    }
+    replacement_gate = {
+        "status": "pending",
+        "launch_authorized": False,
+        "gate_cid": "bafyrei-replacement-pending",
+        "reason_codes": ["replacement_report_missing"],
+    }
+    canonical_gate = {
+        "status": "replacement_pending",
+        "launch_authorized": False,
+        "gate_cid": "bafyrei-canonical-pending",
+        "reason_codes": ["replacement_report_missing"],
+    }
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_srt014_downstream_gate",
+        lambda _repo_root: original_gate,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_replacement_selection_gate",
+        lambda _repo_root: replacement_gate,
+    )
+    monkeypatch.setattr(
+        scheduler_module,
+        "evaluate_canonical_design_gate",
+        lambda _repo_root, **_kwargs: canonical_gate,
+    )
+    index_path = tmp_path / "bundles" / "index.json"
+
+    index = build_taskboard_bundle_index(
+        repo_root=tmp_path,
+        taskboard_path=board,
+        bundle_index_path=index_path,
+    )
+    payloads = build_bundle_task_payloads(index_path)
+    tasks = {
+        task["task_id"]: task
+        for bundle in index["bundles"].values()
+        for task in bundle["tasks"]
+    }
+    claimable = {
+        task_id
+        for payload in payloads
+        if payload["claimable"]
+        for task_id in payload["execution_slice_task_ids"]
+    }
+
+    assert claimable == {"SRT-021"}
+    assert tasks["SRT-014"]["status"] == "completed"
+    assert tasks["SRT-014"]["is_schedulable"] is False
+    assert tasks["SRT-015"]["is_schedulable"] is True
+    assert tasks["SRT-016"]["is_schedulable"] is True
+    assert "preflight_blocked" not in tasks["SRT-015"]
+    assert "preflight_blocked" not in tasks["SRT-016"]
+
+
+@pytest.mark.parametrize(
+    "receipt",
+    (
+        {"status": "failed"},
+        {"outcome": "no_eligible_composition"},
+    ),
+)
+def test_srt015_automatically_unblocks_only_after_successful_srt027_receipt(
+    tmp_path: Path,
+    receipt: dict[str, str],
+) -> None:
+    board = tmp_path / "automatic-unblock.todo.md"
+    board.write_text(
+        """# Automatic gate unblock board
+
+## SRT-027 Replacement selection gate
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: benchmark
+- Depends on:
+- Outputs: replacement-gate.json
+- Validation: PYTHONPATH=. python benchmarks/semantic_roundtrip_scheduler.py gate --repo-root . --require-authorized
+- Board namespace: gate-test
+- Bundle: gate/replacement
+- Parallel lane: replacement-gate
+- Resource class: cpu-small
+- Predicted files: replacement-gate.json
+- Acceptance: complete only for authorized replacement evidence
+
+## SRT-015 Canonical design
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: compiler
+- Depends on: SRT-027
+- Outputs: canonical.txt
+- Validation: test -f canonical.txt
+- Board namespace: gate-test
+- Bundle: gate/design
+- Parallel lane: design
+- Resource class: cpu-small
+- Predicted files: canonical.txt
+- Acceptance: consume only authorized evidence
+""",
+        encoding="utf-8",
+    )
+    index_path = tmp_path / "bundles" / "index.json"
+    index = build_taskboard_bundle_index(
+        repo_root=tmp_path,
+        taskboard_path=board,
+        bundle_index_path=index_path,
+    )
+    index_bytes = index_path.read_bytes()
+    tasks = {
+        task["task_id"]: task
+        for bundle in index["bundles"].values()
+        for task in bundle["tasks"]
+    }
+    gate_cid = tasks["SRT-027"]["canonical_task_cid"]
+
+    initial = build_bundle_task_payloads(index_path)
+    assert tasks["SRT-015"]["is_schedulable"] is True
+    assert any(
+        payload["claimable"]
+        and payload["execution_slice_task_ids"] == ["SRT-027"]
+        for payload in initial
+    )
+    assert not any(
+        payload["claimable"]
+        and "SRT-015" in payload["execution_slice_task_ids"]
+        for payload in initial
+    )
+
+    failed = build_bundle_task_payloads(
+        index_path,
+        merge_receipts=[
+            {"canonical_task_cid": gate_cid, **receipt},
+        ],
+    )
+    assert not any(
+        payload["claimable"]
+        and "SRT-015" in payload["execution_slice_task_ids"]
+        for payload in failed
+    )
+
+    succeeded = build_bundle_task_payloads(
+        index_path,
+        merge_receipts=[
+            {"canonical_task_cid": gate_cid, "status": "succeeded"},
+        ],
+    )
+    assert any(
+        payload["claimable"]
+        and payload["execution_slice_task_ids"] == ["SRT-015"]
+        for payload in succeeded
+    )
+    assert index_path.read_bytes() == index_bytes
 
 
 def test_dependency_schedule_admits_the_second_wave_after_srt_002_and_srt_020(
@@ -443,6 +1140,43 @@ def test_custom_resource_class_is_rejected_before_index_write(
 
     tasks = parse_task_file(board, "## SRT-")
     with pytest.raises(SchedulerPreparationError, match="unsupported resource class"):
+        validate_taskboard_for_dynamic_scheduler(tasks)
+
+
+@pytest.mark.parametrize("timeout", ("invalid", "0", "-1"))
+def test_implementation_timeout_must_be_a_positive_integer(
+    tmp_path: Path,
+    timeout: str,
+) -> None:
+    board = tmp_path / "invalid-timeout.todo.md"
+    board.write_text(
+        f"""# Board
+
+## SRT-999 Invalid timeout
+
+- Status: todo
+- Completion: manual
+- Priority: P0
+- Track: benchmark
+- Depends on:
+- Outputs: result.txt
+- Validation: test -f result.txt
+- Board namespace: test
+- Bundle: test/invalid-timeout
+- Parallel lane: invalid-timeout
+- Resource class: cpu-small
+- Implementation timeout seconds: {timeout}
+- Predicted files: result.txt
+- Acceptance: rejected
+""",
+        encoding="utf-8",
+    )
+
+    tasks = parse_task_file(board, "## SRT-")
+    with pytest.raises(
+        SchedulerPreparationError,
+        match="implementation_timeout_seconds must be a positive integer",
+    ):
         validate_taskboard_for_dynamic_scheduler(tasks)
 
 

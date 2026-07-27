@@ -30,7 +30,11 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
-from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, cid_for_dag_json
+from ipfs_datasets_py.utils.cid_utils import (
+    cid_for_bytes,
+    cid_for_dag_json,
+    validate_cid,
+)
 from ipfs_accelerate_py.agent_supervisor.artifact_store import (
     write_bundle_index_artifact,
 )
@@ -67,7 +71,42 @@ SRT014_REPORT_RELATIVE_PATH = Path(
     "docs/performance_snapshots/"
     "2026-07-26_semantic_roundtrip_composition_pilot.json"
 )
+REPLACEMENT_REPORT_RELATIVE_PATH = Path(
+    "docs/performance_snapshots/"
+    "2026-07-27_semantic_roundtrip_composition_replacement.json"
+)
+NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH = Path(
+    "workspace/benchmarks/semantic-roundtrip-compositions/"
+    "no_eligible_remediation_manifest.json"
+)
+CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH = Path(
+    "workspace/benchmarks/semantic-roundtrip-compositions/"
+    "replacement_selection_gate.json"
+)
 SRT014_GATED_TASK_ID = "SRT-015"
+SRT014_REMEDIATION_ROOT_TASK_ID = "SRT-021"
+SRT014_REPLACEMENT_GATE_TASK_ID = "SRT-027"
+REPLACEMENT_SELECTION_GATE_SCHEMA = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
+    "replacement_selection_gate@1"
+)
+CANONICAL_DESIGN_GATE_SCHEMA = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip.canonical_design_gate@1"
+)
+CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
+    "canonical_design_gate_artifact_validation@1"
+)
+NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE = (
+    "SRT014NoEligibleRemediationManifest@1"
+)
+NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA = (
+    "ipfs-datasets.semantic-roundtrip-no-eligible-remediation.v1"
+)
+NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA = (
+    "ipfs_datasets_py.benchmarks.semantic_roundtrip."
+    "no_eligible_remediation_manifest_gate@1"
+)
 SRT014_SELECTION_GATE_IDS = (
     "source_copy_exclusion",
     "polarity_preservation",
@@ -99,6 +138,36 @@ def _gate_receipt(payload: Mapping[str, Any]) -> dict[str, Any]:
     receipt["gate_cid_codec"] = "dag-json"
     receipt["gate_cid_scope"] = "payload_without_gate_cid_fields"
     return receipt
+
+
+def _gate_receipt_has_valid_identity(
+    receipt: Mapping[str, Any],
+    *,
+    schema: str,
+) -> bool:
+    """Return whether a gate receipt is exact, typed, and CID-bound."""
+
+    try:
+        if (
+            receipt.get("schema") != schema
+            or receipt.get("gate_cid_codec") != "dag-json"
+            or receipt.get("gate_cid_scope")
+            != "payload_without_gate_cid_fields"
+        ):
+            return False
+        gate_cid = validate_cid(
+            receipt.get("gate_cid"),
+            codecs=("dag-json",),
+        )
+        payload = {
+            key: value
+            for key, value in receipt.items()
+            if key
+            not in {"gate_cid", "gate_cid_codec", "gate_cid_scope"}
+        }
+        return cid_for_dag_json(payload) == gate_cid
+    except (TypeError, ValueError):
+        return False
 
 
 def _srt014_remediation_summary(
@@ -520,38 +589,507 @@ def evaluate_srt014_downstream_gate(
     )
 
 
-def _apply_srt014_downstream_gate(
-    tasks: list[dict[str, Any]],
-    gate: Mapping[str, Any],
-) -> None:
-    """Fence SRT-015 and its descendants when selection is not admissible."""
+def evaluate_no_eligible_remediation_manifest_gate(
+    repo_root: Path,
+    *,
+    srt014_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validate SRT-021 lineage before replacement evidence can authorize."""
 
+    repo_root = repo_root.resolve()
+    original = dict(
+        srt014_gate or evaluate_srt014_downstream_gate(repo_root)
+    )
+    path = repo_root / NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
+    base = {
+        "schema": NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+        "report_path": str(SRT014_REPORT_RELATIVE_PATH),
+        "srt014_gate_cid": original.get("gate_cid"),
+        "srt014_report_cid": original.get("report_cid"),
+        "srt014_report_raw_cid": original.get("report_raw_cid"),
+        "manifest_path": str(
+            NO_ELIGIBLE_REMEDIATION_MANIFEST_RELATIVE_PATH
+        ),
+        "manifest_cid": None,
+        "manifest_raw_cid": None,
+        "reason_codes": [],
+    }
+    if original.get("status") != "remediation_required":
+        return _gate_receipt(
+            {
+                **base,
+                "status": "not_admissible",
+                "valid": False,
+                "reason_codes": [
+                    "remediation_manifest_requires_no_eligible_srt014"
+                ],
+            }
+        )
+    if not path.is_file():
+        return _gate_receipt(
+            {
+                **base,
+                "status": "pending",
+                "valid": False,
+                "reason_codes": ["no_eligible_remediation_manifest_missing"],
+            }
+        )
+    raw: bytes | None = None
+    try:
+        raw = path.read_bytes()
+        value = json.loads(raw)
+        if not isinstance(value, Mapping):
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest must be an object"
+            )
+        expected_keys = {
+            "interface",
+            "schema_version",
+            "status",
+            "source",
+            "remediation",
+            "protocol_immutable",
+            "replacement_run_required",
+            "srt015_fenced",
+            "manifest_cid",
+        }
+        if set(value) != expected_keys:
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest fields changed"
+            )
+        if (
+            value.get("interface")
+            != NO_ELIGIBLE_REMEDIATION_MANIFEST_INTERFACE
+            or value.get("schema_version")
+            != NO_ELIGIBLE_REMEDIATION_MANIFEST_SCHEMA
+        ):
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest identity changed"
+            )
+        manifest_cid = value.get("manifest_cid")
+        validate_cid(manifest_cid, codecs=("dag-json",))
+        cid_payload = dict(value)
+        del cid_payload["manifest_cid"]
+        if cid_for_dag_json(cid_payload) != manifest_cid:
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest CID does not match payload"
+            )
+        if value.get("status") != "frozen_no_eligible":
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest status must be frozen"
+            )
+        source = value.get("source")
+        if not isinstance(source, Mapping):
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest source must be an object"
+            )
+        expected_source = {
+            "srt014_report_path": str(SRT014_REPORT_RELATIVE_PATH),
+            "srt014_report_cid": original.get("report_cid"),
+            "srt014_report_raw_cid": original.get("report_raw_cid"),
+            "srt014_gate_cid": original.get("gate_cid"),
+        }
+        if dict(source) != expected_source:
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest source lineage changed"
+            )
+        validate_cid(
+            source.get("srt014_report_cid"),
+            codecs=("dag-json",),
+        )
+        validate_cid(
+            source.get("srt014_report_raw_cid"),
+            codecs=("raw",),
+        )
+        validate_cid(
+            source.get("srt014_gate_cid"),
+            codecs=("dag-json",),
+        )
+        if not isinstance(value.get("remediation"), Mapping):
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest remediation must be an object"
+            )
+        if value.get("remediation") != original.get("remediation"):
+            raise SchedulerPreparationError(
+                "no-eligible remediation manifest differs from gate evidence"
+            )
+        for field in (
+            "protocol_immutable",
+            "replacement_run_required",
+            "srt015_fenced",
+        ):
+            if value.get(field) is not True:
+                raise SchedulerPreparationError(
+                    f"no-eligible remediation manifest {field} must be true"
+                )
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        return _gate_receipt(
+            {
+                **base,
+                "status": "invalid",
+                "valid": False,
+                "manifest_raw_cid": (
+                    cid_for_bytes(raw) if raw is not None else None
+                ),
+                "reason_codes": [
+                    "no_eligible_remediation_manifest_invalid",
+                    f"{type(exc).__name__}:{exc}",
+                ],
+            }
+        )
+    return _gate_receipt(
+        {
+            **base,
+            "status": "valid",
+            "valid": True,
+            "manifest_cid": manifest_cid,
+            "manifest_raw_cid": cid_for_bytes(raw),
+            "reason_codes": ["no_eligible_remediation_manifest_valid"],
+        }
+    )
+
+
+def evaluate_replacement_selection_gate(
+    repo_root: Path,
+) -> dict[str, Any]:
+    """Validate the immutable replacement report under the same protocol."""
+
+    original_shape = evaluate_srt014_downstream_gate(
+        repo_root,
+        report_path=repo_root.resolve() / REPLACEMENT_REPORT_RELATIVE_PATH,
+    )
+    payload = {
+        key: value
+        for key, value in original_shape.items()
+        if key not in {"gate_cid", "gate_cid_codec", "gate_cid_scope"}
+    }
+    payload["schema"] = REPLACEMENT_SELECTION_GATE_SCHEMA
+    payload["report_role"] = "replacement_full_matrix"
+    payload["reason_codes"] = [
+        str(reason).replace("srt014_", "replacement_", 1)
+        for reason in original_shape["reason_codes"]
+    ]
+    status = str(original_shape["status"])
+    if status == "authorized":
+        payload["selection_basis"] = (
+            "replacement_unique_winner"
+            if original_shape["selection_outcome"] == "selected"
+            else "replacement_bounded_tie_policy"
+        )
+    elif status == "remediation_required":
+        payload["status"] = "replacement_remediation_required"
+    return _gate_receipt(payload)
+
+
+def evaluate_canonical_design_gate(
+    repo_root: Path,
+    *,
+    srt014_gate: Mapping[str, Any] | None = None,
+    remediation_manifest_gate: Mapping[str, Any] | None = None,
+    replacement_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compose original and replacement evidence into SRT-015 authority."""
+
+    original = dict(
+        srt014_gate or evaluate_srt014_downstream_gate(repo_root)
+    )
+    manifest = dict(
+        remediation_manifest_gate
+        or evaluate_no_eligible_remediation_manifest_gate(
+            repo_root,
+            srt014_gate=original,
+        )
+    )
+    replacement = dict(
+        replacement_gate or evaluate_replacement_selection_gate(repo_root)
+    )
+    original_status = str(original.get("status") or "invalid")
+    replacement_status = str(replacement.get("status") or "invalid")
+    original_identity_valid = _gate_receipt_has_valid_identity(
+        original,
+        schema=SRT014_DOWNSTREAM_GATE_SCHEMA,
+    )
+    manifest_identity_valid = _gate_receipt_has_valid_identity(
+        manifest,
+        schema=NO_ELIGIBLE_REMEDIATION_MANIFEST_GATE_SCHEMA,
+    )
+    replacement_identity_valid = _gate_receipt_has_valid_identity(
+        replacement,
+        schema=REPLACEMENT_SELECTION_GATE_SCHEMA,
+    )
+    original_admissible = (
+        original_identity_valid
+        and original_status == "remediation_required"
+    )
+    if not original_admissible:
+        status = (
+            "original_evidence_pending"
+            if original_identity_valid and original_status == "pending"
+            else "original_evidence_invalid_or_not_no_eligible"
+        )
+        authorized = False
+        reasons = [
+            "canonical_design_requires_valid_original_srt014_evidence",
+            *(
+                str(reason)
+                for reason in original.get("reason_codes") or ()
+            ),
+        ]
+    elif not (
+        manifest_identity_valid
+        and manifest.get("status") == "valid"
+        and manifest.get("valid") is True
+    ):
+        status = (
+            "remediation_manifest_pending"
+            if (
+                manifest_identity_valid
+                and manifest.get("status") == "pending"
+            )
+            else "remediation_manifest_invalid"
+        )
+        authorized = False
+        reasons = [
+            "canonical_design_requires_valid_remediation_manifest",
+            *(
+                str(reason)
+                for reason in manifest.get("reason_codes") or ()
+            ),
+        ]
+    elif (
+        replacement_identity_valid
+        and replacement_status == "authorized"
+        and replacement.get("launch_authorized") is True
+    ):
+        status = "authorized"
+        authorized = True
+        reasons = [
+            "replacement_report_independently_authorizes_selection",
+            *(
+                str(reason)
+                for reason in replacement.get("reason_codes") or ()
+            ),
+        ]
+    elif replacement_identity_valid and replacement_status == "pending":
+        status = "replacement_pending"
+        authorized = False
+        reasons = ["replacement_report_missing"]
+    elif (
+        replacement_identity_valid
+        and replacement_status == "replacement_remediation_required"
+    ):
+        status = "replacement_remediation_required"
+        authorized = False
+        reasons = ["replacement_report_has_no_eligible_composition"]
+    else:
+        status = "replacement_invalid"
+        authorized = False
+        reasons = [
+            "replacement_report_invalid_or_unbounded",
+            *(
+                str(reason)
+                for reason in replacement.get("reason_codes") or ()
+            ),
+        ]
+    return _gate_receipt(
+        {
+            "schema": CANONICAL_DESIGN_GATE_SCHEMA,
+            "status": status,
+            "launch_authorized": authorized,
+            "srt014_gate_cid": original.get("gate_cid"),
+            "srt014_report_cid": original.get("report_cid"),
+            "srt014_selection_outcome": original.get("selection_outcome"),
+            "remediation_manifest_gate_cid": manifest.get("gate_cid"),
+            "remediation_manifest_cid": manifest.get("manifest_cid"),
+            "remediation_manifest_raw_cid": manifest.get("manifest_raw_cid"),
+            "replacement_gate_cid": replacement.get("gate_cid"),
+            "replacement_report_cid": replacement.get("report_cid"),
+            "replacement_selection_outcome": replacement.get(
+                "selection_outcome"
+            ),
+            "selection_basis": (
+                replacement.get("selection_basis") if authorized else None
+            ),
+            "selectable_arm_ids": (
+                list(replacement.get("selectable_arm_ids") or ())
+                if authorized
+                else []
+            ),
+            "implementation_representative_arm_id": (
+                replacement.get("implementation_representative_arm_id")
+                if authorized
+                else None
+            ),
+            "reason_codes": list(dict.fromkeys(reasons)),
+            "remediation": (
+                replacement.get("remediation")
+                if replacement_status == "replacement_remediation_required"
+                else original.get("remediation")
+                if original_status == "remediation_required"
+                else None
+            ),
+        }
+    )
+
+
+def evaluate_canonical_design_gate_artifact(
+    repo_root: Path,
+    *,
+    artifact_path: Path | None = None,
+    canonical_gate: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Require SRT-027's JSON output to equal the recomputed gate receipt."""
+
+    repo_root = repo_root.resolve()
+    path = artifact_path or CANONICAL_DESIGN_GATE_ARTIFACT_RELATIVE_PATH
+    path = path if path.is_absolute() else repo_root / path
+    path = path.resolve()
+    relative_path = _repo_relative(repo_root, path)
+    expected = dict(canonical_gate or evaluate_canonical_design_gate(repo_root))
+    base = {
+        "schema": CANONICAL_DESIGN_GATE_ARTIFACT_VALIDATION_SCHEMA,
+        "artifact_path": relative_path,
+        "artifact_raw_cid": None,
+        "canonical_design_gate_cid": expected.get("gate_cid"),
+        "reason_codes": [],
+    }
+    if not _gate_receipt_has_valid_identity(
+        expected,
+        schema=CANONICAL_DESIGN_GATE_SCHEMA,
+    ):
+        return _gate_receipt(
+            {
+                **base,
+                "status": "invalid",
+                "valid": False,
+                "reason_codes": [
+                    "recomputed_canonical_design_gate_invalid"
+                ],
+            }
+        )
+    if not path.is_file():
+        return _gate_receipt(
+            {
+                **base,
+                "status": "pending",
+                "valid": False,
+                "reason_codes": [
+                    "canonical_design_gate_artifact_missing"
+                ],
+            }
+        )
+    raw: bytes | None = None
+    try:
+        raw = path.read_bytes()
+        value = json.loads(raw)
+        if not isinstance(value, Mapping):
+            raise SchedulerPreparationError(
+                "canonical design gate artifact must be an object"
+            )
+        if dict(value) != expected:
+            raise SchedulerPreparationError(
+                "canonical design gate artifact differs from recomputed gate"
+            )
+    except (OSError, TypeError, ValueError) as exc:
+        return _gate_receipt(
+            {
+                **base,
+                "status": "invalid",
+                "valid": False,
+                "artifact_raw_cid": (
+                    cid_for_bytes(raw) if raw is not None else None
+                ),
+                "reason_codes": [
+                    "canonical_design_gate_artifact_invalid",
+                    f"{type(exc).__name__}:{exc}",
+                ],
+            }
+        )
+    return _gate_receipt(
+        {
+            **base,
+            "status": "valid",
+            "valid": True,
+            "artifact_raw_cid": cid_for_bytes(raw),
+            "reason_codes": [
+                "canonical_design_gate_artifact_matches_recomputed_gate"
+            ],
+        }
+    )
+
+
+def _dependent_task_ids(
+    tasks: Sequence[Mapping[str, Any]],
+    root_task_id: str,
+) -> set[str]:
     task_ids = {str(task.get("task_id") or "") for task in tasks}
-    if SRT014_GATED_TASK_ID not in task_ids:
-        return
-    blocked = {SRT014_GATED_TASK_ID}
+    if root_task_id not in task_ids:
+        return set()
+    dependents = {root_task_id}
     changed = True
     while changed:
         changed = False
         for task in tasks:
             task_id = str(task.get("task_id") or "")
             dependencies = set(task.get("depends_on") or ())
-            if task_id not in blocked and dependencies.intersection(blocked):
-                blocked.add(task_id)
+            if task_id not in dependents and dependencies.intersection(
+                dependents
+            ):
+                dependents.add(task_id)
                 changed = True
+    return dependents
+
+
+def _apply_no_eligible_remediation_gate(
+    tasks: list[dict[str, Any]],
+    gate: Mapping[str, Any],
+) -> None:
+    """Admit remediation only for a validated no-eligible SRT-014 result."""
+
+    remediation_ids = _dependent_task_ids(
+        tasks,
+        SRT014_REMEDIATION_ROOT_TASK_ID,
+    )
+    for task in tasks:
+        task_id = str(task.get("task_id") or "")
+        if task_id not in remediation_ids:
+            continue
+        task["srt014_remediation_gate_cid"] = gate["gate_cid"]
+        task["srt014_remediation_gate_status"] = gate["status"]
+        task["srt014_remediation_gate_reason_codes"] = list(
+            gate["reason_codes"]
+        )
+        if gate.get("status") not in {"pending", "remediation_required"}:
+            task["is_schedulable"] = False
+            task["preflight_blocked"] = True
+            task["preflight_blocked_by"] = SRT014_REMEDIATION_ROOT_TASK_ID
+
+
+def _apply_canonical_design_gate(
+    tasks: list[dict[str, Any]],
+    gate: Mapping[str, Any],
+) -> None:
+    """Fence SRT-015 and its descendants when selection is not admissible."""
+
+    blocked = _dependent_task_ids(tasks, SRT014_GATED_TASK_ID)
     for task in tasks:
         task_id = str(task.get("task_id") or "")
         if task_id not in blocked:
             continue
-        task["srt014_downstream_gate_cid"] = gate["gate_cid"]
-        task["srt014_downstream_gate_status"] = gate["status"]
-        task["srt014_downstream_gate_reason_codes"] = list(
+        task["canonical_design_gate_cid"] = gate["gate_cid"]
+        task["canonical_design_gate_status"] = gate["status"]
+        task["canonical_design_gate_reason_codes"] = list(
             gate["reason_codes"]
         )
-        if gate.get("launch_authorized") is not True:
+        if gate.get("status") in {
+            "original_evidence_invalid_or_not_no_eligible",
+            "remediation_manifest_invalid",
+            "replacement_invalid",
+            "replacement_remediation_required",
+        }:
             task["is_schedulable"] = False
             task["preflight_blocked"] = True
-            task["preflight_blocked_by"] = SRT014_GATED_TASK_ID
+            task["preflight_blocked_by"] = SRT014_REPLACEMENT_GATE_TASK_ID
 
 
 def _utc_now() -> str:
@@ -654,6 +1192,7 @@ def _normalized_metadata(task: PortalTask) -> dict[str, Any]:
         "estimated_context_tokens",
         "estimated_tokens",
         "gpu_memory_bytes",
+        "implementation_timeout_seconds",
         "memory_bytes",
         "process_slots",
         "required_context_tokens",
@@ -661,6 +1200,13 @@ def _normalized_metadata(task: PortalTask) -> dict[str, Any]:
     ):
         if field in metadata:
             metadata[field] = _parse_int(metadata[field])
+    if (
+        "implementation_timeout_seconds" in metadata
+        and metadata["implementation_timeout_seconds"] <= 0
+    ):
+        raise SchedulerPreparationError(
+            "implementation_timeout_seconds must be a positive integer"
+        )
     for field in ("is_schedulable", "requires_provider", "review_only"):
         if field in metadata:
             metadata[field] = _parse_bool(metadata[field])
@@ -848,7 +1394,21 @@ def build_taskboard_bundle_index(
             for dependency_id in task["depends_on"]
         ]
     srt014_gate = evaluate_srt014_downstream_gate(repo_root)
-    _apply_srt014_downstream_gate(task_payloads, srt014_gate)
+    remediation_manifest_gate = (
+        evaluate_no_eligible_remediation_manifest_gate(
+            repo_root,
+            srt014_gate=srt014_gate,
+        )
+    )
+    replacement_gate = evaluate_replacement_selection_gate(repo_root)
+    canonical_design_gate = evaluate_canonical_design_gate(
+        repo_root,
+        srt014_gate=srt014_gate,
+        remediation_manifest_gate=remediation_manifest_gate,
+        replacement_gate=replacement_gate,
+    )
+    _apply_no_eligible_remediation_gate(task_payloads, srt014_gate)
+    _apply_canonical_design_gate(task_payloads, canonical_design_gate)
     planning_graph = materialize_task_planning_graph(
         task_payloads,
         repo_root=repo_root,
@@ -895,6 +1455,9 @@ def build_taskboard_bundle_index(
         "task_prefix": task_prefix,
         "execution_authority": "agent-supervisor/v1",
         "srt014_downstream_gate": srt014_gate,
+        "no_eligible_remediation_manifest_gate": remediation_manifest_gate,
+        "replacement_selection_gate": replacement_gate,
+        "canonical_design_gate": canonical_design_gate,
         "bundles": bundles,
         "task_dependency_graph": planning_graph.dependency_graph.to_dict(),
         "dependency_dag": planning_graph.dependency_graph.to_dict(),
@@ -1211,8 +1774,15 @@ def prepare_scheduler_inputs(
         "provider_capacity_cid": str(capacity["provider_capacity_cid"]),
         "provider_capacity_cid_codec": "dag-json",
         "srt014_downstream_gate": dict(index["srt014_downstream_gate"]),
+        "no_eligible_remediation_manifest_gate": dict(
+            index["no_eligible_remediation_manifest_gate"]
+        ),
+        "replacement_selection_gate": dict(
+            index["replacement_selection_gate"]
+        ),
+        "canonical_design_gate": dict(index["canonical_design_gate"]),
         "srt015_launch_authorized": bool(
-            index["srt014_downstream_gate"]["launch_authorized"]
+            index["canonical_design_gate"]["launch_authorized"]
         ),
         "bundle_count": len(index["bundles"]),
         "task_count": sum(
@@ -1321,7 +1891,15 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "action",
-        choices=("validate", "prepare", "plan", "launch"),
+        choices=(
+            "validate",
+            "remediation-gate",
+            "manifest-gate",
+            "gate",
+            "prepare",
+            "plan",
+            "launch",
+        ),
         nargs="?",
         default="prepare",
     )
@@ -1330,6 +1908,23 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--runtime-root", type=Path, default=DEFAULT_RUNTIME_ROOT)
     parser.add_argument("--taskboard-path", type=Path, default=None)
     parser.add_argument("--max-lanes", type=int, default=None)
+    parser.add_argument(
+        "--require-authorized",
+        action="store_true",
+        help=(
+            "For gate, return nonzero unless replacement evidence authorizes "
+            "SRT-015"
+        ),
+    )
+    parser.add_argument(
+        "--validate-artifact",
+        type=Path,
+        default=None,
+        help=(
+            "For gate, require this CID-bound JSON artifact to equal the "
+            "independently recomputed canonical-design gate"
+        ),
+    )
     parser.add_argument(
         "--execute",
         action="store_true",
@@ -1370,6 +1965,47 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 0
+    if args.action == "gate":
+        gate = evaluate_canonical_design_gate(repo_root)
+        artifact_validation = None
+        if args.validate_artifact is not None:
+            artifact_validation = evaluate_canonical_design_gate_artifact(
+                repo_root,
+                artifact_path=args.validate_artifact,
+                canonical_gate=gate,
+            )
+        print(
+            json.dumps(
+                (
+                    {
+                        "canonical_design_gate": gate,
+                        "artifact_validation": artifact_validation,
+                    }
+                    if artifact_validation is not None
+                    else gate
+                ),
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return int(
+            (
+                bool(args.require_authorized)
+                and gate.get("launch_authorized") is not True
+            )
+            or (
+                artifact_validation is not None
+                and artifact_validation.get("valid") is not True
+            )
+        )
+    if args.action == "remediation-gate":
+        gate = evaluate_srt014_downstream_gate(repo_root)
+        print(json.dumps(gate, indent=2, sort_keys=True))
+        return int(gate.get("status") != "remediation_required")
+    if args.action == "manifest-gate":
+        gate = evaluate_no_eligible_remediation_manifest_gate(repo_root)
+        print(json.dumps(gate, indent=2, sort_keys=True))
+        return int(gate.get("valid") is not True)
 
     preparation = prepare_scheduler_inputs(
         repo_root=repo_root,
