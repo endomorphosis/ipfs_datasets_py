@@ -13,6 +13,8 @@
     "reviewed_adapter_id": null,
     "reviewed_interventions": []
   },
+  "evaluation_status": "not_measured",
+  "evaluation_status_reason": "terminal_unsupported",
   "forbidden_inputs": {
     "fabricated_l1_mutations": false,
     "gold_labels": false,
@@ -25,82 +27,129 @@
     "coordinates": [
       {
         "arm_id": "modal_spacy__guided__no_repair__not_applicable__deterministic",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 5,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_direct",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_symai",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "modal_spacy__guided__selective__not_applicable__deterministic",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_direct",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_symai",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__no_repair__not_applicable__deterministic",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 5,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_direct",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_symai",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__selective__not_applicable__deterministic",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_direct",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       },
       {
         "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_symai",
+        "evaluation_status": "not_measured",
         "historical_terminal_failure_count": 25,
         "reason": "unavailable_no_reviewed_causal_l1_adapter",
+        "schedule_for_semantic_scoring": false,
         "status": "terminal_unsupported"
       }
     ],
     "count": 12,
     "disposition": "terminal_unsupported",
+    "evaluation_status": "not_measured",
+    "schedule_for_semantic_scoring": false,
     "source_manifest_cid": "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
   },
   "interface": "CausalGuidanceQualification@1",
+  "matrix_planner": {
+    "excluded_guided_arm_ids": [
+      "modal_spacy__guided__no_repair__not_applicable__deterministic",
+      "modal_spacy__guided__no_repair__not_applicable__leanstral_direct",
+      "modal_spacy__guided__no_repair__not_applicable__leanstral_symai",
+      "modal_spacy__guided__selective__not_applicable__deterministic",
+      "modal_spacy__guided__selective__not_applicable__leanstral_direct",
+      "modal_spacy__guided__selective__not_applicable__leanstral_symai",
+      "typed_deontic__guided__no_repair__not_applicable__deterministic",
+      "typed_deontic__guided__no_repair__not_applicable__leanstral_direct",
+      "typed_deontic__guided__no_repair__not_applicable__leanstral_symai",
+      "typed_deontic__guided__selective__not_applicable__deterministic",
+      "typed_deontic__guided__selective__not_applicable__leanstral_direct",
+      "typed_deontic__guided__selective__not_applicable__leanstral_symai"
+    ],
+    "include_guided_in_semantic_schedule": false,
+    "interface": "CausalGuidanceMatrixPlanner@1",
+    "policy": "exclude_guided_without_reviewed_causal_l1_adapter",
+    "scheduled_for_semantic_scoring_arm_ids": [],
+    "semantic_schedule": "excluded_from_semantic_schedule"
+  },
   "negative_control": {
     "canonical_l1_changed": false,
     "causal_feature_ids": [],
@@ -116,7 +165,6 @@
     "schema_preserved": true,
     "source_grounding_rule": "preserve_rule_cardinality_and_closed_source_vocabulary"
   },
-  "qualification_cid": "baguqeera3i5omzahn7sghnfep2kdk4xehidketlc6yihe3sav74rixq5higq",
   "schema_version": "ipfs-datasets.semantic-roundtrip-causal-guidance-qualification.v1",
   "stable_export": {
     "excluded_categories": [
@@ -145,5 +193,6 @@
     "schema": "modal-autoencoder-state-v1",
     "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
   },
-  "status": "unavailable_no_reviewed_causal_l1_adapter"
+  "status": "unavailable_no_reviewed_causal_l1_adapter",
+  "qualification_cid": "baguqeerazzwzs54m7tolyu5g3he5km3fdr7eateaibpuifa2zkyekd6hek5q"
 }
