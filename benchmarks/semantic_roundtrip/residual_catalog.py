@@ -13,7 +13,12 @@ Each residual names:
 * a suggested ``RepairTriggerKind`` value (missing / contradictory /
   low_confidence).
 
-``exception_with_window`` is recorded as the zero-residual control case.
+``exception_with_window`` is recorded as the zero-residual control case on the
+**pilot** population.  Holdout / custom populations are built via
+:func:`build_plateau_residual_catalog` with a preregistered ``cases_path`` (or
+:func:`build_holdout_residual_catalog`); pilot-only seal validation remains in
+:func:`parse_plateau_residual_catalog`.
+
 Optional spaCy and autoencoder cue slots are placeholders for teacher
 pipelines (PLAT-050 / PLAT-060); they never authorize production composition.
 """
@@ -66,8 +71,26 @@ DEFAULT_CATALOG_RELATIVE_PATH: Final = Path(
     "workspace/benchmarks/semantic-roundtrip-compositions/"
     "plateau_residual_catalog.json"
 )
+DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH: Final = Path(
+    "workspace/benchmarks/semantic-roundtrip-compositions/"
+    "holdout_residual_catalog.json"
+)
 PILOT_CASES_RELATIVE_PATH: Final = Path(
     "tests/fixtures/semantic_roundtrip/pilot_cases.json"
+)
+HOLDOUT_CASES_RELATIVE_PATH: Final = Path(
+    "tests/fixtures/semantic_roundtrip/holdout_cases.json"
+)
+
+POPULATION_KIND_PILOT: Final = "pilot"
+POPULATION_KIND_HOLDOUT: Final = "holdout"
+POPULATION_KIND_CUSTOM: Final = "custom"
+POPULATION_KINDS: Final = frozenset(
+    {
+        POPULATION_KIND_PILOT,
+        POPULATION_KIND_HOLDOUT,
+        POPULATION_KIND_CUSTOM,
+    }
 )
 
 BASELINE_ARM_ID: Final = (
@@ -79,6 +102,11 @@ BASELINE_CONSTRUCTOR_IDENTITY: Final = (
 BASELINE_E2E_MEAN: Final = 0.088333333
 BASELINE_REPORT_CID: Final = (
     "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza"
+)
+# Post-pilot production baseline for holdout residual catalogs (PLAT2).
+HOLDOUT_BASELINE_E2E_MEAN: Final = 0.0
+HOLDOUT_BASELINE_REPORT_CID: Final = (
+    "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q"
 )
 
 PILOT_CASE_IDS: Final = (
@@ -764,6 +792,52 @@ def aggregate_residuals(
     }
 
 
+def load_population_matrix_cases(
+    path: str | Path,
+    *,
+    expected_case_ids: Sequence[str] | None = None,
+    require_nonempty: bool = True,
+) -> tuple[MatrixCase, ...]:
+    """Load a preregistered case population JSON array as MatrixCase records.
+
+    Accepts either ``id`` or ``case_id`` keys (same contract as
+    :func:`benchmarks.semantic_roundtrip.matrix.load_matrix_cases`).
+    """
+
+    fixture_path = Path(path)
+    try:
+        payload = json.loads(fixture_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ResidualCatalogError(
+            f"cannot read case population path: {fixture_path}"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise ResidualCatalogError(
+            f"case population path is not valid JSON: {fixture_path}"
+        ) from exc
+    if not isinstance(payload, list):
+        raise ResidualCatalogError(
+            f"case population at {fixture_path} must be a JSON array"
+        )
+    if require_nonempty and not payload:
+        raise ResidualCatalogError(
+            f"case population at {fixture_path} must be nonempty"
+        )
+    cases = tuple(MatrixCase.from_dict(item) for item in payload)
+    observed = tuple(case.case_id for case in cases)
+    if len(set(observed)) != len(observed):
+        raise ResidualCatalogError(
+            f"case population has duplicate case_ids: {observed}"
+        )
+    if expected_case_ids is not None:
+        expected = tuple(expected_case_ids)
+        _require(
+            observed == expected,
+            f"case population ids {observed} do not match expected {expected}",
+        )
+    return cases
+
+
 def load_pilot_matrix_cases(
     repo_root: Path | None = None,
     *,
@@ -773,16 +847,123 @@ def load_pilot_matrix_cases(
 
     root = repo_root if repo_root is not None else _repo_root()
     fixture_path = path if path is not None else root / PILOT_CASES_RELATIVE_PATH
-    payload = json.loads(fixture_path.read_text(encoding="utf-8"))
-    if not isinstance(payload, list):
-        raise ResidualCatalogError("pilot_cases.json must be an array")
-    cases = tuple(MatrixCase.from_dict(item) for item in payload)
+    cases = load_population_matrix_cases(
+        fixture_path,
+        expected_case_ids=None,
+        require_nonempty=True,
+    )
     observed = tuple(case.case_id for case in cases)
     _require(
-        set(observed) == set(PILOT_CASE_IDS) and len(observed) == len(PILOT_CASE_IDS),
+        set(observed) == set(PILOT_CASE_IDS)
+        and len(observed) == len(PILOT_CASE_IDS),
         f"pilot fixture case ids changed: {observed}",
     )
-    return cases
+    # Stable pilot order for CID-bound receipts.
+    by_id = {case.case_id: case for case in cases}
+    return tuple(by_id[case_id] for case_id in PILOT_CASE_IDS)
+
+
+def preregistered_holdout_matrix_cases() -> tuple[MatrixCase, ...]:
+    """Provisional holdout population from selective-repair activation fixtures.
+
+    Used when ``holdout_cases.json`` is not yet frozen (PLAT2-020).  Gold IR is
+    the repaired target; L1 is still constructed by the typed_deontic baseline
+    so residuals reflect the real det. production path.
+    """
+
+    from benchmarks.semantic_roundtrip.selective_repair import (
+        activation_fixture_pack,
+    )
+
+    cases: list[MatrixCase] = []
+    for fixture in activation_fixture_pack():
+        cases.append(
+            MatrixCase(
+                case_id=fixture.case_id,
+                source_text=fixture.source_text,
+                allowed_atom_vocabulary=fixture.vocabulary,
+                gold_ir=fixture.repaired_ir,
+            )
+        )
+    _require(bool(cases), "activation fixture pack must be nonempty")
+    return tuple(cases)
+
+
+def load_holdout_matrix_cases(
+    repo_root: Path | None = None,
+    *,
+    path: Path | None = None,
+    allow_activation_fallback: bool = True,
+) -> tuple[MatrixCase, ...]:
+    """Load the preregistered holdout case population.
+
+    Prefers ``tests/fixtures/semantic_roundtrip/holdout_cases.json`` when
+    present.  Until PLAT2-020 freezes that fixture, falls back to the
+    selective-repair activation pack (missing_temporal, low_confidence_object,
+    contradictory_modality).
+    """
+
+    root = repo_root if repo_root is not None else _repo_root()
+    fixture_path = (
+        Path(path) if path is not None else root / HOLDOUT_CASES_RELATIVE_PATH
+    )
+    if fixture_path.is_file():
+        return load_population_matrix_cases(fixture_path, require_nonempty=True)
+    if not allow_activation_fallback:
+        raise ResidualCatalogError(
+            f"holdout case population not found: {fixture_path}"
+        )
+    return preregistered_holdout_matrix_cases()
+
+
+def _resolve_population_path(
+    path: str | Path | None,
+    *,
+    repo_root: Path,
+) -> Path | None:
+    if path is None:
+        return None
+    resolved = Path(path)
+    if not resolved.is_absolute():
+        resolved = repo_root / resolved
+    return resolved
+
+
+def _population_path_label(
+    path: str | Path | None,
+    *,
+    default: Path | None = None,
+) -> str | None:
+    if path is not None:
+        return str(Path(path)).replace("\\", "/")
+    if default is not None:
+        return str(default).replace("\\", "/")
+    return None
+
+
+def _infer_population_kind(
+    case_ids: Sequence[str],
+    *,
+    explicit: str | None,
+    cases_path: str | Path | None,
+) -> str:
+    if explicit is not None:
+        kind = str(explicit).strip()
+        if kind not in POPULATION_KINDS:
+            raise ResidualCatalogError(
+                f"unknown population_kind: {explicit!r}; "
+                f"expected one of {sorted(POPULATION_KINDS)}"
+            )
+        return kind
+    if cases_path is not None:
+        label = str(Path(cases_path)).replace("\\", "/")
+        if label.endswith(str(PILOT_CASES_RELATIVE_PATH).replace("\\", "/")):
+            return POPULATION_KIND_PILOT
+        if label.endswith(str(HOLDOUT_CASES_RELATIVE_PATH).replace("\\", "/")):
+            return POPULATION_KIND_HOLDOUT
+    if tuple(case_ids) == PILOT_CASE_IDS or set(case_ids) == set(PILOT_CASE_IDS):
+        return POPULATION_KIND_PILOT
+    return POPULATION_KIND_CUSTOM
 
 
 def construct_baseline_l1(
@@ -823,28 +1004,103 @@ def construct_baseline_l1(
     return canonical_ir
 
 
+def _bind_catalog_cid(payload: dict[str, object]) -> dict[str, object]:
+    """Attach codec/scope and CID-bind the catalog payload in place."""
+
+    payload["catalog_cid_codec"] = CATALOG_CID_CODEC
+    payload["catalog_cid_scope"] = CATALOG_CID_SCOPE
+    # Codec/scope are part of the bound content for fail-closed verification.
+    payload["catalog_cid"] = cid_for_dag_json(
+        {key: value for key, value in payload.items() if key != "catalog_cid"}
+    )
+    return payload
+
+
 def build_plateau_residual_catalog(
     repo_root: Path | None = None,
     *,
     cases: Sequence[MatrixCase] | None = None,
+    cases_path: str | Path | None = None,
+    population_kind: str | None = None,
     l1_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]]
     | None = None,
     constructor: object | None = None,
     baseline_arm_id: str = BASELINE_ARM_ID,
     constructor_identity: str = BASELINE_CONSTRUCTOR_IDENTITY,
-    baseline_e2e_mean: float = BASELINE_E2E_MEAN,
-    baseline_report_cid: str = BASELINE_REPORT_CID,
+    baseline_e2e_mean: float | None = None,
+    baseline_report_cid: str | None = None,
     cycle_loss_by_case: Mapping[str, float] | None = None,
     end_to_end_loss_by_case: Mapping[str, float] | None = None,
+    zero_residual_control_case_id: str | None = None,
 ) -> dict[str, object]:
-    """Build the CID-bindable plateau residual catalog for pilot cases."""
+    """Build a CID-bindable plateau residual catalog for a case population.
+
+    Population resolution order:
+
+    1. Explicit ``cases`` sequence when provided.
+    2. Preregistered ``cases_path`` JSON array (relative to repo root or absolute).
+    3. Default pilot fixture when ``population_kind`` is ``pilot`` or omitted.
+    4. Holdout fixture / activation fallback when ``population_kind`` is
+       ``holdout``.
+
+    Pilot catalogs keep the sealed pilot field layout (``pilot_case_ids``,
+    ``nonzero_pilot_case_ids``) so historical CID receipts remain valid.
+    Holdout and custom populations emit population-agnostic fields
+    (``case_ids``, ``population_path``, ``population_kind``).
+    """
 
     root = repo_root if repo_root is not None else _repo_root()
-    matrix_cases = (
-        tuple(cases)
-        if cases is not None
-        else load_pilot_matrix_cases(root)
+    resolved_path = _resolve_population_path(cases_path, repo_root=root)
+    path_label = _population_path_label(cases_path)
+
+    if cases is not None:
+        matrix_cases = tuple(cases)
+    elif resolved_path is not None:
+        matrix_cases = load_population_matrix_cases(
+            resolved_path, require_nonempty=True
+        )
+        if path_label is None:
+            path_label = str(resolved_path).replace("\\", "/")
+    elif population_kind == POPULATION_KIND_HOLDOUT:
+        matrix_cases = load_holdout_matrix_cases(root)
+        path_label = _population_path_label(
+            cases_path, default=HOLDOUT_CASES_RELATIVE_PATH
+        )
+    else:
+        # Default and explicit pilot populations use the sealed fixture.
+        matrix_cases = load_pilot_matrix_cases(root)
+        path_label = _population_path_label(
+            cases_path, default=PILOT_CASES_RELATIVE_PATH
+        )
+
+    _require(bool(matrix_cases), "case population must be nonempty")
+    case_ids = tuple(case.case_id for case in matrix_cases)
+    kind = _infer_population_kind(
+        case_ids, explicit=population_kind, cases_path=cases_path
     )
+    if kind == POPULATION_KIND_PILOT:
+        _require(
+            set(case_ids) == set(PILOT_CASE_IDS)
+            and len(case_ids) == len(PILOT_CASE_IDS),
+            f"pilot population case ids must match sealed pilots; got {case_ids}",
+        )
+
+    if baseline_e2e_mean is None:
+        baseline_e2e_mean = (
+            HOLDOUT_BASELINE_E2E_MEAN
+            if kind == POPULATION_KIND_HOLDOUT
+            else BASELINE_E2E_MEAN
+        )
+    if baseline_report_cid is None:
+        baseline_report_cid = (
+            HOLDOUT_BASELINE_REPORT_CID
+            if kind == POPULATION_KIND_HOLDOUT
+            else BASELINE_REPORT_CID
+        )
+
+    if zero_residual_control_case_id is None and kind == POPULATION_KIND_PILOT:
+        zero_residual_control_case_id = ZERO_RESIDUAL_CONTROL_CASE_ID
+
     cycle_loss_by_case = dict(cycle_loss_by_case or {})
     end_to_end_loss_by_case = dict(end_to_end_loss_by_case or {})
     records: list[CaseResidualRecord] = []
@@ -858,14 +1114,16 @@ def build_plateau_residual_catalog(
             )
         else:
             l1 = construct_baseline_l1(case, constructor=constructor)
+        is_control = (
+            zero_residual_control_case_id is not None
+            and case.case_id == zero_residual_control_case_id
+        )
         records.append(
             build_case_residual(
                 case.case_id,
                 case.gold_ir,
                 l1,
-                is_zero_residual_control=(
-                    case.case_id == ZERO_RESIDUAL_CONTROL_CASE_ID
-                ),
+                is_zero_residual_control=is_control,
                 case_cid=case.case_cid,
                 gold_ir_cid=case.gold_ir_cid,
                 cycle_loss=cycle_loss_by_case.get(case.case_id),
@@ -873,9 +1131,17 @@ def build_plateau_residual_catalog(
             )
         )
 
-    # Stable pilot order for CID binding.
-    order = {case_id: index for index, case_id in enumerate(PILOT_CASE_IDS)}
+    # Preserve input / sealed pilot order for CID binding.
+    if kind == POPULATION_KIND_PILOT:
+        order = {
+            case_id: index for index, case_id in enumerate(PILOT_CASE_IDS)
+        }
+    else:
+        order = {
+            case_id: index for index, case_id in enumerate(case_ids)
+        }
     records.sort(key=lambda record: order.get(record.case_id, 10_000))
+    ordered_case_ids = tuple(record.case_id for record in records)
 
     aggregates = aggregate_residuals(records)
     case_payloads = [record.to_dict() for record in records]
@@ -884,42 +1150,285 @@ def build_plateau_residual_catalog(
         for record in records
         for facet in record.residuals
     ]
+    nonzero_case_ids = [
+        record.case_id
+        for record in records
+        if not record.is_zero_residual_control and record.forward_loss > 0.0
+    ]
 
-    payload: dict[str, object] = {
-        "aggregates": aggregates,
-        "baseline": {
-            "arm_id": baseline_arm_id,
-            "constructor_identity": constructor_identity,
-            "e2e_mean": baseline_e2e_mean,
-            "report_cid": baseline_report_cid,
-        },
-        "cases": case_payloads,
-        "interface": PLATEAU_RESIDUAL_CATALOG_INTERFACE,
-        "nonzero_pilot_case_ids": list(NONZERO_PILOT_CASE_IDS),
-        "pilot_case_ids": list(PILOT_CASE_IDS),
-        "residuals": residual_rows,
-        "schema_version": PLATEAU_RESIDUAL_CATALOG_SCHEMA,
-        "zero_residual_control_case_id": ZERO_RESIDUAL_CONTROL_CASE_ID,
+    baseline = {
+        "arm_id": baseline_arm_id,
+        "constructor_identity": constructor_identity,
+        "e2e_mean": baseline_e2e_mean,
+        "report_cid": baseline_report_cid,
     }
-    payload["catalog_cid"] = cid_for_dag_json(
-        {key: value for key, value in payload.items() if key != "catalog_cid"}
+
+    if kind == POPULATION_KIND_PILOT:
+        # Sealed pilot layout — do not add population_* keys (CID stability).
+        payload: dict[str, object] = {
+            "aggregates": aggregates,
+            "baseline": baseline,
+            "cases": case_payloads,
+            "interface": PLATEAU_RESIDUAL_CATALOG_INTERFACE,
+            "nonzero_pilot_case_ids": list(NONZERO_PILOT_CASE_IDS),
+            "pilot_case_ids": list(PILOT_CASE_IDS),
+            "residuals": residual_rows,
+            "schema_version": PLATEAU_RESIDUAL_CATALOG_SCHEMA,
+            "zero_residual_control_case_id": (
+                zero_residual_control_case_id
+                or ZERO_RESIDUAL_CONTROL_CASE_ID
+            ),
+        }
+    else:
+        payload = {
+            "aggregates": aggregates,
+            "baseline": baseline,
+            "case_ids": list(ordered_case_ids),
+            "cases": case_payloads,
+            "interface": PLATEAU_RESIDUAL_CATALOG_INTERFACE,
+            "nonzero_case_ids": nonzero_case_ids,
+            "population_kind": kind,
+            "population_path": path_label
+            or str(HOLDOUT_CASES_RELATIVE_PATH).replace("\\", "/"),
+            "residuals": residual_rows,
+            "schema_version": PLATEAU_RESIDUAL_CATALOG_SCHEMA,
+            "zero_residual_control_case_id": zero_residual_control_case_id,
+        }
+    return _bind_catalog_cid(payload)
+
+
+def build_holdout_residual_catalog(
+    repo_root: Path | None = None,
+    *,
+    cases: Sequence[MatrixCase] | None = None,
+    cases_path: str | Path | None = None,
+    l1_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]]
+    | None = None,
+    constructor: object | None = None,
+    baseline_arm_id: str = BASELINE_ARM_ID,
+    constructor_identity: str = BASELINE_CONSTRUCTOR_IDENTITY,
+    baseline_e2e_mean: float = HOLDOUT_BASELINE_E2E_MEAN,
+    baseline_report_cid: str = HOLDOUT_BASELINE_REPORT_CID,
+    cycle_loss_by_case: Mapping[str, float] | None = None,
+    end_to_end_loss_by_case: Mapping[str, float] | None = None,
+    zero_residual_control_case_id: str | None = None,
+) -> dict[str, object]:
+    """Build the holdout-population residual catalog (case × facet)."""
+
+    return build_plateau_residual_catalog(
+        repo_root,
+        cases=cases,
+        cases_path=cases_path,
+        population_kind=POPULATION_KIND_HOLDOUT,
+        l1_by_case=l1_by_case,
+        constructor=constructor,
+        baseline_arm_id=baseline_arm_id,
+        constructor_identity=constructor_identity,
+        baseline_e2e_mean=baseline_e2e_mean,
+        baseline_report_cid=baseline_report_cid,
+        cycle_loss_by_case=cycle_loss_by_case,
+        end_to_end_loss_by_case=end_to_end_loss_by_case,
+        zero_residual_control_case_id=zero_residual_control_case_id,
     )
-    payload["catalog_cid_codec"] = CATALOG_CID_CODEC
-    payload["catalog_cid_scope"] = CATALOG_CID_SCOPE
-    # Re-bind CID over full payload excluding only catalog_cid itself.
-    # Codec/scope are part of the bound content for fail-closed verification.
-    payload["catalog_cid"] = cid_for_dag_json(
-        {key: value for key, value in payload.items() if key != "catalog_cid"}
+
+
+def _validate_catalog_cid_binding(data: Mapping[str, Any]) -> None:
+    catalog_cid = data.get("catalog_cid")
+    try:
+        validate_cid(catalog_cid, codecs=(CATALOG_CID_CODEC,))
+    except (TypeError, ValueError) as exc:
+        raise ResidualCatalogError(
+            "catalog_cid must be a canonical dag-json CID"
+        ) from exc
+    cid_payload = {
+        key: value for key, value in data.items() if key != "catalog_cid"
+    }
+    if cid_for_dag_json(cid_payload) != catalog_cid:
+        raise ResidualCatalogError(
+            "catalog_cid does not match the CID-bound payload"
+        )
+    if data.get("catalog_cid_codec") != CATALOG_CID_CODEC:
+        raise ResidualCatalogError("catalog_cid_codec must be dag-json")
+    if data.get("catalog_cid_scope") != CATALOG_CID_SCOPE:
+        raise ResidualCatalogError(
+            "catalog_cid_scope must be payload_without_catalog_cid"
+        )
+
+
+def _validate_case_residual_rows(
+    cases: Sequence[CaseResidualRecord],
+    residual_rows: Sequence[object],
+) -> None:
+    parsed_rows = [ResidualFacet.from_dict(item) for item in residual_rows]
+    expected_rows = [
+        facet for record in cases for facet in record.residuals
+    ]
+    _require(
+        len(parsed_rows) == len(expected_rows),
+        "flat residuals length must match nested case residuals",
     )
-    return payload
+    for facet in expected_rows:
+        _require(
+            facet.loss_contribution > 0.0,
+            f"{facet.case_id} residual loss_contribution must be positive",
+        )
+
+
+def _validate_aggregates(
+    cases: Sequence[CaseResidualRecord],
+    aggregates: Mapping[str, Any],
+) -> None:
+    recomputed = aggregate_residuals(cases)
+    for key in (
+        "case_count",
+        "nonzero_case_count",
+        "total_residual_count",
+        "zero_control_residual_count",
+        "sum_forward_loss",
+        "mean_forward_loss",
+    ):
+        _require(
+            aggregates.get(key) == recomputed[key],
+            f"aggregates.{key} does not match recomputation",
+        )
+
+
+def parse_population_residual_catalog(
+    value: object,
+    *,
+    require_holdout_kind: bool = False,
+) -> dict[str, object]:
+    """Parse a population residual catalog (holdout or custom).
+
+    Does **not** enforce the sealed pilot case set.  Pilot receipts must use
+    :func:`parse_plateau_residual_catalog` so historical seals stay fail-closed.
+    """
+
+    data = dict(_mapping(value, "population residual catalog"))
+    _require(
+        data.get("interface") == PLATEAU_RESIDUAL_CATALOG_INTERFACE,
+        "catalog interface mismatch",
+    )
+    _require(
+        data.get("schema_version") == PLATEAU_RESIDUAL_CATALOG_SCHEMA,
+        "catalog schema_version mismatch",
+    )
+    kind = data.get("population_kind")
+    if kind is not None:
+        _require(
+            kind in POPULATION_KINDS and kind != POPULATION_KIND_PILOT,
+            "population residual catalog population_kind must be "
+            "holdout or custom",
+        )
+    if require_holdout_kind:
+        _require(
+            kind == POPULATION_KIND_HOLDOUT,
+            "holdout residual catalog population_kind must be holdout",
+        )
+    population_path = data.get("population_path")
+    _require(
+        isinstance(population_path, str) and population_path.strip(),
+        "population_path must be a nonblank string",
+    )
+    case_ids = _array(data.get("case_ids"), "case_ids")
+    _require(bool(case_ids), "case_ids must be a nonempty array")
+    for index, case_id in enumerate(case_ids):
+        _nonblank(case_id, f"case_ids[{index}]")
+    _require(
+        len(set(case_ids)) == len(case_ids),
+        "case_ids must be unique",
+    )
+
+    baseline = _mapping(data.get("baseline"), "baseline")
+    _require(
+        baseline.get("arm_id") == BASELINE_ARM_ID,
+        "baseline arm_id must be the sealed deterministic production arm",
+    )
+    _nonblank(
+        baseline.get("constructor_identity"),
+        "baseline.constructor_identity",
+    )
+    _finite_unit(baseline.get("e2e_mean"), "baseline.e2e_mean")
+    _nonblank(baseline.get("report_cid"), "baseline.report_cid")
+
+    cases = [
+        CaseResidualRecord.from_dict(item)
+        for item in _array(data.get("cases"), "cases")
+    ]
+    observed_ids = [record.case_id for record in cases]
+    _require(
+        observed_ids == case_ids,
+        f"catalog cases must match case_ids order; got {observed_ids}",
+    )
+    _require(bool(cases), "catalog cases must be nonempty")
+
+    control_id = data.get("zero_residual_control_case_id")
+    if control_id is not None:
+        control_id = _nonblank(
+            control_id, "zero_residual_control_case_id"
+        )
+        control = next(
+            (record for record in cases if record.case_id == control_id),
+            None,
+        )
+        _require(
+            control is not None,
+            "zero_residual_control_case_id must appear in cases",
+        )
+        assert control is not None
+        _require(
+            control.is_zero_residual_control
+            and control.forward_loss == 0.0
+            and control.residual_count == 0,
+            f"{control_id} must be a zero-residual control",
+        )
+
+    residual_rows = _array(data.get("residuals"), "residuals")
+    _validate_case_residual_rows(cases, residual_rows)
+
+    nonzero_declared = _array(
+        data.get("nonzero_case_ids"), "nonzero_case_ids"
+    )
+    expected_nonzero = [
+        record.case_id
+        for record in cases
+        if not record.is_zero_residual_control and record.forward_loss > 0.0
+    ]
+    _require(
+        nonzero_declared == expected_nonzero,
+        "nonzero_case_ids must match cases with positive forward_loss",
+    )
+    for case_id in expected_nonzero:
+        record = next(item for item in cases if item.case_id == case_id)
+        _require(
+            record.residual_count > 0 and bool(record.field_paths),
+            f"{case_id} must expose field-path residuals",
+        )
+
+    aggregates = _mapping(data.get("aggregates"), "aggregates")
+    _validate_aggregates(cases, aggregates)
+    _validate_catalog_cid_binding(data)
+    return data
 
 
 def parse_plateau_residual_catalog(
     value: object,
 ) -> dict[str, object]:
-    """Parse and structurally validate a catalog object without CID rebuild."""
+    """Parse and validate a **pilot-sealed** catalog (historical receipts).
+
+    Holdout / custom populations must use
+    :func:`parse_population_residual_catalog` instead.
+    """
 
     data = dict(_mapping(value, "plateau residual catalog"))
+    if data.get("population_kind") in {
+        POPULATION_KIND_HOLDOUT,
+        POPULATION_KIND_CUSTOM,
+    }:
+        raise ResidualCatalogError(
+            "pilot seal parser rejects population residual catalogs; "
+            "use parse_population_residual_catalog"
+        )
     _require(
         data.get("interface") == PLATEAU_RESIDUAL_CATALOG_INTERFACE,
         "catalog interface mismatch",
@@ -987,52 +1496,27 @@ def parse_plateau_residual_catalog(
             )
 
     residual_rows = _array(data.get("residuals"), "residuals")
-    parsed_rows = [ResidualFacet.from_dict(item) for item in residual_rows]
-    expected_rows = [
-        facet
-        for record in cases
-        for facet in record.residuals
-    ]
-    _require(
-        len(parsed_rows) == len(expected_rows),
-        "flat residuals length must match nested case residuals",
-    )
+    _validate_case_residual_rows(cases, residual_rows)
     aggregates = _mapping(data.get("aggregates"), "aggregates")
-    recomputed = aggregate_residuals(cases)
-    for key in (
-        "case_count",
-        "nonzero_case_count",
-        "total_residual_count",
-        "zero_control_residual_count",
-        "sum_forward_loss",
-        "mean_forward_loss",
-    ):
-        _require(
-            aggregates.get(key) == recomputed[key],
-            f"aggregates.{key} does not match recomputation",
-        )
-
-    catalog_cid = data.get("catalog_cid")
-    try:
-        validate_cid(catalog_cid, codecs=(CATALOG_CID_CODEC,))
-    except (TypeError, ValueError) as exc:
-        raise ResidualCatalogError(
-            "catalog_cid must be a canonical dag-json CID"
-        ) from exc
-    cid_payload = {
-        key: value for key, value in data.items() if key != "catalog_cid"
-    }
-    if cid_for_dag_json(cid_payload) != catalog_cid:
-        raise ResidualCatalogError(
-            "catalog_cid does not match the CID-bound payload"
-        )
-    if data.get("catalog_cid_codec") != CATALOG_CID_CODEC:
-        raise ResidualCatalogError("catalog_cid_codec must be dag-json")
-    if data.get("catalog_cid_scope") != CATALOG_CID_SCOPE:
-        raise ResidualCatalogError(
-            "catalog_cid_scope must be payload_without_catalog_cid"
-        )
+    _validate_aggregates(cases, aggregates)
+    _validate_catalog_cid_binding(data)
     return data
+
+
+def parse_residual_catalog_document(
+    value: object,
+) -> dict[str, object]:
+    """Dispatch to pilot seal or population parser based on payload shape."""
+
+    data = _mapping(value, "residual catalog")
+    kind = data.get("population_kind")
+    if kind in {POPULATION_KIND_HOLDOUT, POPULATION_KIND_CUSTOM}:
+        return parse_population_residual_catalog(data)
+    if "pilot_case_ids" in data:
+        return parse_plateau_residual_catalog(data)
+    if "case_ids" in data:
+        return parse_population_residual_catalog(data)
+    return parse_plateau_residual_catalog(data)
 
 
 def validate_plateau_residual_catalog(
@@ -1046,13 +1530,23 @@ def validate_plateau_residual_catalog(
 ) -> dict[str, object]:
     """Validate catalog structure and optional exact regeneration."""
 
-    parsed = parse_plateau_residual_catalog(value)
+    parsed = parse_residual_catalog_document(value)
     if expect_regenerated:
-        expected = build_plateau_residual_catalog(
-            repo_root,
-            l1_by_case=l1_by_case,
-            constructor=constructor,
-        )
+        kind = parsed.get("population_kind")
+        if kind in {POPULATION_KIND_HOLDOUT, POPULATION_KIND_CUSTOM}:
+            expected = build_plateau_residual_catalog(
+                repo_root,
+                cases_path=parsed.get("population_path"),  # type: ignore[arg-type]
+                population_kind=str(kind),
+                l1_by_case=l1_by_case,
+                constructor=constructor,
+            )
+        else:
+            expected = build_plateau_residual_catalog(
+                repo_root,
+                l1_by_case=l1_by_case,
+                constructor=constructor,
+            )
         if parsed != expected:
             raise ResidualCatalogError(
                 "catalog does not match regenerated plateau residual catalog"
@@ -1065,7 +1559,7 @@ def load_plateau_residual_catalog(
     *,
     repo_root: Path | None = None,
 ) -> dict[str, object]:
-    """Load and parse the checked-in CID-bound catalog receipt."""
+    """Load and parse the checked-in CID-bound **pilot** catalog receipt."""
 
     root = repo_root if repo_root is not None else _repo_root()
     catalog_path = (
@@ -1077,16 +1571,68 @@ def load_plateau_residual_catalog(
     return parse_plateau_residual_catalog(payload)
 
 
+def load_holdout_residual_catalog(
+    path: Path | None = None,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, object]:
+    """Load and parse the checked-in CID-bound **holdout** catalog receipt."""
+
+    root = repo_root if repo_root is not None else _repo_root()
+    catalog_path = (
+        path
+        if path is not None
+        else root / DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH
+    )
+    payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    return parse_population_residual_catalog(
+        payload, require_holdout_kind=True
+    )
+
+
+def _atomic_write_json(path: Path, payload: Mapping[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = json.dumps(
+        payload,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+    if not encoded.endswith("\n"):
+        encoded += "\n"
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.stem}.",
+        suffix=".json.tmp",
+        dir=str(path.parent),
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, path)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
 def write_plateau_residual_catalog(
     path: Path | None = None,
     *,
     repo_root: Path | None = None,
     catalog: Mapping[str, object] | None = None,
+    cases_path: str | Path | None = None,
+    population_kind: str | None = None,
     l1_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]]
     | None = None,
     constructor: object | None = None,
 ) -> dict[str, object]:
-    """Atomically write the plateau residual catalog JSON receipt."""
+    """Atomically write a residual catalog JSON receipt.
+
+    Validates with the pilot seal parser when the payload is a pilot catalog,
+    otherwise with the population parser.
+    """
 
     root = repo_root if repo_root is not None else _repo_root()
     catalog_path = (
@@ -1099,35 +1645,49 @@ def write_plateau_residual_catalog(
         if catalog is not None
         else build_plateau_residual_catalog(
             root,
+            cases_path=cases_path,
+            population_kind=population_kind,
             l1_by_case=l1_by_case,
             constructor=constructor,
         )
     )
-    parse_plateau_residual_catalog(payload)
-    catalog_path.parent.mkdir(parents=True, exist_ok=True)
-    encoded = json.dumps(
-        payload,
-        indent=2,
-        sort_keys=True,
-        ensure_ascii=False,
-        allow_nan=False,
+    parse_residual_catalog_document(payload)
+    _atomic_write_json(catalog_path, payload)
+    return payload
+
+
+def write_holdout_residual_catalog(
+    path: Path | None = None,
+    *,
+    repo_root: Path | None = None,
+    catalog: Mapping[str, object] | None = None,
+    cases: Sequence[MatrixCase] | None = None,
+    cases_path: str | Path | None = None,
+    l1_by_case: Mapping[str, CanonicalRuleIR | Mapping[str, object]]
+    | None = None,
+    constructor: object | None = None,
+) -> dict[str, object]:
+    """Atomically write the holdout residual catalog JSON receipt."""
+
+    root = repo_root if repo_root is not None else _repo_root()
+    catalog_path = (
+        path
+        if path is not None
+        else root / DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH
     )
-    if not encoded.endswith("\n"):
-        encoded += "\n"
-    fd, tmp_name = tempfile.mkstemp(
-        prefix=".plateau_residual_catalog.",
-        suffix=".json.tmp",
-        dir=str(catalog_path.parent),
+    payload = (
+        dict(catalog)
+        if catalog is not None
+        else build_holdout_residual_catalog(
+            root,
+            cases=cases,
+            cases_path=cases_path,
+            l1_by_case=l1_by_case,
+            constructor=constructor,
+        )
     )
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(encoded)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp_name, catalog_path)
-    finally:
-        if os.path.exists(tmp_name):
-            os.unlink(tmp_name)
+    parse_population_residual_catalog(payload, require_holdout_kind=True)
+    _atomic_write_json(catalog_path, payload)
     return payload
 
 
@@ -1148,6 +1708,18 @@ def _main(argv: Sequence[str] | None = None) -> int:
         help="Catalog JSON path",
     )
     parser.add_argument(
+        "--cases-path",
+        type=Path,
+        default=None,
+        help="Preregistered case population JSON path",
+    )
+    parser.add_argument(
+        "--population-kind",
+        choices=sorted(POPULATION_KINDS),
+        default=None,
+        help="Population kind (pilot, holdout, custom)",
+    )
+    parser.add_argument(
         "--validate-only",
         action="store_true",
         help="Validate the checked-in catalog without rebuilding L1",
@@ -1159,14 +1731,24 @@ def _main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
     root = args.repo_root or _repo_root()
-    path = args.output or (root / DEFAULT_CATALOG_RELATIVE_PATH)
+    kind = args.population_kind
+    default_out = (
+        root / DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH
+        if kind == POPULATION_KIND_HOLDOUT
+        else root / DEFAULT_CATALOG_RELATIVE_PATH
+    )
+    path = args.output or default_out
     if args.validate_only:
-        catalog = load_plateau_residual_catalog(path, repo_root=root)
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        catalog = parse_residual_catalog_document(raw)
         print(
             json.dumps(
                 {
                     "status": "ok",
                     "catalog_cid": catalog["catalog_cid"],
+                    "population_kind": catalog.get(
+                        "population_kind", POPULATION_KIND_PILOT
+                    ),
                     "total_residual_count": catalog["aggregates"][
                         "total_residual_count"
                     ],
@@ -1177,13 +1759,28 @@ def _main(argv: Sequence[str] | None = None) -> int:
         )
         return 0
     if args.write:
-        payload = write_plateau_residual_catalog(path, repo_root=root)
+        if kind == POPULATION_KIND_HOLDOUT:
+            payload = write_holdout_residual_catalog(
+                path,
+                repo_root=root,
+                cases_path=args.cases_path,
+            )
+        else:
+            payload = write_plateau_residual_catalog(
+                path,
+                repo_root=root,
+                cases_path=args.cases_path,
+                population_kind=kind,
+            )
         print(
             json.dumps(
                 {
                     "status": "written",
                     "path": str(path),
                     "catalog_cid": payload["catalog_cid"],
+                    "population_kind": payload.get(
+                        "population_kind", POPULATION_KIND_PILOT
+                    ),
                     "total_residual_count": payload["aggregates"][
                         "total_residual_count"
                     ],
@@ -1193,7 +1790,11 @@ def _main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 0
-    payload = build_plateau_residual_catalog(root)
+    payload = build_plateau_residual_catalog(
+        root,
+        cases_path=args.cases_path,
+        population_kind=kind,
+    )
     print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
     return 0
 
@@ -1210,11 +1811,19 @@ __all__ = [
     "CATALOG_CID_CODEC",
     "CATALOG_CID_SCOPE",
     "DEFAULT_CATALOG_RELATIVE_PATH",
+    "DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH",
+    "HOLDOUT_BASELINE_E2E_MEAN",
+    "HOLDOUT_BASELINE_REPORT_CID",
+    "HOLDOUT_CASES_RELATIVE_PATH",
     "NONZERO_PILOT_CASE_IDS",
     "PILOT_CASE_IDS",
     "PILOT_CASES_RELATIVE_PATH",
     "PLATEAU_RESIDUAL_CATALOG_INTERFACE",
     "PLATEAU_RESIDUAL_CATALOG_SCHEMA",
+    "POPULATION_KIND_CUSTOM",
+    "POPULATION_KIND_HOLDOUT",
+    "POPULATION_KIND_PILOT",
+    "POPULATION_KINDS",
     "RESIDUAL_KIND_EXTRA_RULE",
     "RESIDUAL_KIND_FIELD_MISMATCH",
     "RESIDUAL_KIND_MISSING_RULE",
@@ -1224,13 +1833,21 @@ __all__ = [
     "ResidualFacet",
     "aggregate_residuals",
     "build_case_residual",
+    "build_holdout_residual_catalog",
     "build_plateau_residual_catalog",
     "compute_facet_residuals",
     "construct_baseline_l1",
+    "load_holdout_matrix_cases",
+    "load_holdout_residual_catalog",
     "load_pilot_matrix_cases",
     "load_plateau_residual_catalog",
+    "load_population_matrix_cases",
     "parse_plateau_residual_catalog",
+    "parse_population_residual_catalog",
+    "parse_residual_catalog_document",
+    "preregistered_holdout_matrix_cases",
     "suggest_trigger_kind",
     "validate_plateau_residual_catalog",
+    "write_holdout_residual_catalog",
     "write_plateau_residual_catalog",
 ]
