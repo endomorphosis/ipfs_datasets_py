@@ -8,6 +8,7 @@ from types import MappingProxyType
 import pytest
 
 from ipfs_datasets_py.logic.legal_ir.canonical_compiler import (
+    MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
     TYPED_DEONTIC_COMPILER_CONFIG,
     TYPED_DEONTIC_COMPILER_CONFIG_CID,
     CanonicalCompiler,
@@ -252,6 +253,11 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
     assert provenance["constructor_adapter_raw_cid"] == (
         SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
     )
+    # Residual LIG-003 hygiene: current on-disk adapter bytes pin (may differ
+    # from the historical selection identity above after deliberate updates).
+    assert provenance["measured_adapter_raw_cid"] == (
+        MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID
+    )
     assert provenance["implementation_representative_arm_identity_cid"] == (
         IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID
     )
@@ -298,8 +304,21 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
     assert cid_for_bytes(fixture_path.read_bytes()) == (
         "bafkreidngtg5cojnhkmwj4coijqpoixao25hxfwdzxjpywlusrqhk3hrm4"
     )
+    # Residual LIG-003 CID hygiene: pin the *current* measured adapter module
+    # bytes.  This is a deliberate golden update after the adapter grew under
+    # EVAL-005 (selective-repair surface) while pure construct L1 stayed
+    # equivalent.  Distinct from SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID, which
+    # remains the historical replacement-gate selection identity.
+    # Do not weaken this exact-CID integrity check.
     assert cid_for_bytes(adapter_path.read_bytes()) == (
+        MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID
+    )
+    assert MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID != (
         SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
+    )
+    validate_cid(
+        MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
+        codecs=("raw",),
     )
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
     assert tuple(case["id"] for case in cases) == (
@@ -336,9 +355,14 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
         assert actual.status is OperationStatus.SUCCESS, case["id"]
         assert actual.canonical_ir is not None
         assert expected.canonical_ir is not None
+        # Golden L1 remains stable under the deliberate adapter-byte hygiene
+        # update (pure construct semantics unchanged after EVAL-005 surface).
         assert actual.canonical_ir.to_dict() == (
             expected.canonical_ir.to_dict()
         ), case["id"]
+        assert actual.canonical_ir.ir_cid == cid_for_dag_json(
+            actual.canonical_ir.to_dict()
+        )
 
 
 def test_unmapped_semantics_abstain_or_are_explicitly_partial() -> None:
@@ -438,6 +462,13 @@ def test_configuration_and_protocol_identity_are_stable() -> None:
         TYPED_DEONTIC_COMPILER_CONFIG["converter"],
         MappingProxyType,
     )
+    # Measured config still binds shared selection lineage, not the live
+    # adapter-byte pin (that pin is residual hygiene beside selection).
+    constructor_cfg = TYPED_DEONTIC_COMPILER_CONFIG["constructor"]
+    assert isinstance(constructor_cfg, MappingProxyType)
+    assert constructor_cfg["adapter_raw_cid"] == (
+        SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
+    )
     with pytest.raises(TypeError):
         TYPED_DEONTIC_COMPILER_CONFIG["fallback_allowed"] = True
     with pytest.raises(TypeError):
@@ -447,6 +478,10 @@ def test_configuration_and_protocol_identity_are_stable() -> None:
     validate_cid(
         TYPED_DEONTIC_COMPILER_CONFIG_CID,
         codecs=("dag-json",),
+    )
+    validate_cid(
+        MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
+        codecs=("raw",),
     )
     with pytest.raises(CanonicalContractError, match="CompilerRequest"):
         compiler.compile(object())  # type: ignore[arg-type]

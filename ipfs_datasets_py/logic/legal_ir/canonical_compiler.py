@@ -50,6 +50,26 @@ from ipfs_datasets_py.logic.legal_ir.canonical_contracts import (
 )
 from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
 
+# Residual LIG-003 CID hygiene: deliberate pin of the current measured
+# typed-deontic adapter module bytes
+# (``benchmarks/semantic_roundtrip/constructors/typed_deontic.py``).
+#
+# The replacement-gate selection identity
+# (:data:`SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID`) remains the historical
+# evidence-bound raw CID from the frozen selection report.  The on-disk adapter
+# later grew under EVAL-005 with selective-repair surface while preserving the
+# pure ``construct`` L1 path.  Production integrity therefore pins *both*:
+#
+# * selection lineage → ``SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID``
+# * current measured adapter bytes → ``MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID``
+#
+# Any intentional adapter edit requires a deliberate update of this constant
+# and revalidation of the frozen L1 suite.  Do not weaken the exact-CID check.
+MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID: Final = (
+    "bafkreiecmdzlnzrjjzaauabg3mmrn7dl2o6p6jsnq7tgbt25sppmjvka34"
+)
+"""CIDv1/raw of the current measured typed-deontic adapter module bytes."""
+
 
 def _compiler_configuration_payload() -> dict[str, object]:
     """Build a detached strict-JSON form of the measured configuration."""
@@ -58,6 +78,7 @@ def _compiler_configuration_payload() -> dict[str, object]:
         "interface": CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE,
         "constructor": {
             "interface": SELECTED_CONSTRUCTOR_INTERFACE,
+            # Historical replacement-gate selection identity (shared contracts).
             "adapter_raw_cid": SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID,
         },
         "selection": {
@@ -587,6 +608,9 @@ def _base_provenance(
         "policy_cid": request.policy_cid,
         "constructor_interface": SELECTED_CONSTRUCTOR_INTERFACE,
         "constructor_adapter_raw_cid": SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID,
+        # Deliberate residual hygiene pin of current on-disk adapter bytes
+        # (distinct from the historical selection identity above).
+        "measured_adapter_raw_cid": MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
         "implementation_representative_arm_id": (
             IMPLEMENTATION_REPRESENTATIVE_ARM_ID
         ),
@@ -998,6 +1022,7 @@ assert isinstance(TypedDeonticCanonicalCompiler(), CanonicalStructuredTextCompil
 
 __all__ = [
     "CanonicalCompiler",
+    "MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID",
     "TYPED_DEONTIC_COMPILER_CONFIG",
     "TYPED_DEONTIC_COMPILER_CONFIG_CID",
     "TypedDeonticCanonicalCompiler",
