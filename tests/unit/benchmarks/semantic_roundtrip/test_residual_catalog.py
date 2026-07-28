@@ -15,35 +15,52 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
 from benchmarks.semantic_roundtrip.residual_catalog import (
+    ACCESS_MODE_AUTHORIZED_EVALUATOR,
+    ACCESS_MODE_PACKET,
+    ACCESS_MODE_SUPERVISOR,
     BASELINE_ARM_ID,
+    CATALOG_STATUS_NOT_MEASURED,
+    CATALOG_STATUS_RUNTIME_FAILED,
+    CATALOG_STATUS_SEMANTIC_SCORED,
+    CATALOG_STATUS_UNSUPPORTED,
     DEFAULT_CATALOG_RELATIVE_PATH,
     DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH,
+    DEFAULT_REPAIR_DEV_CATALOG_RELATIVE_PATH,
     HOLDOUT_BASELINE_E2E_MEAN,
     HOLDOUT_CASES_RELATIVE_PATH,
     NONZERO_PILOT_CASE_IDS,
+    NON_SEMANTIC_CATALOG_STATUSES,
     PILOT_CASE_IDS,
     PILOT_CASES_RELATIVE_PATH,
     PLATEAU_RESIDUAL_CATALOG_INTERFACE,
     PLATEAU_RESIDUAL_CATALOG_SCHEMA,
+    POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
     POPULATION_KIND_HOLDOUT,
+    POPULATION_KIND_REPAIR_DEVELOPMENT,
     ZERO_RESIDUAL_CONTROL_CASE_ID,
     CaseResidualRecord,
     ResidualCatalogError,
     ResidualFacet,
     aggregate_residuals,
+    assert_access_allows_population,
+    assert_catalog_usable_on_supervisor_path,
     build_case_residual,
     build_holdout_residual_catalog,
     build_plateau_residual_catalog,
+    build_repair_dev_residual_catalog,
     compute_facet_residuals,
     load_holdout_residual_catalog,
     load_plateau_residual_catalog,
     load_population_matrix_cases,
+    load_repair_dev_residual_catalog,
     parse_plateau_residual_catalog,
     parse_population_residual_catalog,
     preregistered_holdout_matrix_cases,
+    reject_blind_material_on_normal_path,
     suggest_trigger_kind,
     write_holdout_residual_catalog,
     write_plateau_residual_catalog,
+    write_repair_dev_residual_catalog,
 )
 from benchmarks.semantic_roundtrip.selective_repair import RepairTriggerKind
 
@@ -51,6 +68,7 @@ from benchmarks.semantic_roundtrip.selective_repair import RepairTriggerKind
 ROOT = Path(__file__).resolve().parents[4]
 CATALOG_PATH = ROOT / DEFAULT_CATALOG_RELATIVE_PATH
 HOLDOUT_CATALOG_PATH = ROOT / DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH
+REPAIR_DEV_CATALOG_PATH = ROOT / DEFAULT_REPAIR_DEV_CATALOG_RELATIVE_PATH
 
 
 def _rule(
@@ -568,3 +586,317 @@ def test_write_holdout_catalog_round_trip(tmp_path: Path) -> None:
     assert reloaded == written
     parse_population_residual_catalog(reloaded, require_holdout_kind=True)
     assert reloaded["catalog_cid"] == source["catalog_cid"]
+
+
+def test_build_accepts_explicitly_typed_repair_development_population() -> None:
+    catalog = build_plateau_residual_catalog(
+        ROOT,
+        population_kind=POPULATION_KIND_REPAIR_DEVELOPMENT,
+    )
+    parse_population_residual_catalog(
+        catalog,
+        require_repair_development_kind=True,
+        access_mode=ACCESS_MODE_SUPERVISOR,
+    )
+
+    assert catalog["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
+    assert catalog["interface"] == PLATEAU_RESIDUAL_CATALOG_INTERFACE
+    assert catalog["schema_version"] == PLATEAU_RESIDUAL_CATALOG_SCHEMA
+    assert catalog["baseline"]["arm_id"] == BASELINE_ARM_ID
+    assert catalog["baseline"]["e2e_mean"] == HOLDOUT_BASELINE_E2E_MEAN
+    assert catalog["case_ids"]
+    assert set(catalog["case_ids"]).isdisjoint(set(PILOT_CASE_IDS))
+    assert catalog["tree_cid"]
+    assert catalog["population_cid"]
+    assert catalog["catalog_cid"]
+    assert catalog["assumptions"]
+    assert catalog["status"]["non_semantic_excluded_from_score_aggregates"] is True
+    assert set(catalog["status"]["non_semantic_statuses"]) == set(
+        NON_SEMANTIC_CATALOG_STATUSES
+    )
+    assert catalog["provenance"]["population_kind"] == (
+        POPULATION_KIND_REPAIR_DEVELOPMENT
+    )
+    assert catalog["provenance"]["tree_cid"] == catalog["tree_cid"]
+    assert catalog["provenance"]["population_cid"] == catalog["population_cid"]
+
+    for case_id in catalog["case_ids"]:
+        status_entry = catalog["status"]["by_case"][case_id]
+        assert status_entry["evaluation_status"] in {
+            CATALOG_STATUS_SEMANTIC_SCORED,
+            CATALOG_STATUS_UNSUPPORTED,
+            CATALOG_STATUS_NOT_MEASURED,
+            CATALOG_STATUS_RUNTIME_FAILED,
+        }
+        record = next(
+            item for item in catalog["cases"] if item["case_id"] == case_id
+        )
+        if status_entry["semantic_score_eligible"]:
+            assert record["residual_count"] == len(record["residuals"])
+            contribution = round(
+                sum(float(facet["loss_contribution"]) for facet in record["residuals"]),
+                9,
+            )
+            assert abs(contribution - float(record["forward_loss"])) < 1e-6
+        else:
+            assert record["residuals"] == []
+            assert record["residual_count"] == 0
+
+    # Pilot seal parser remains fail-closed on repair-dev payloads.
+    with pytest.raises(ResidualCatalogError, match="population residual"):
+        parse_plateau_residual_catalog(catalog)
+
+    assert_catalog_usable_on_supervisor_path(
+        catalog, access_mode=ACCESS_MODE_SUPERVISOR
+    )
+    assert_catalog_usable_on_supervisor_path(
+        catalog, access_mode=ACCESS_MODE_PACKET
+    )
+
+
+def test_checked_in_repair_dev_catalog_parses_with_bindings() -> None:
+    assert REPAIR_DEV_CATALOG_PATH.is_file(), (
+        "repair_dev_residual_catalog.json must be written by PLAT2-010"
+    )
+    catalog = load_repair_dev_residual_catalog(
+        REPAIR_DEV_CATALOG_PATH, repo_root=ROOT
+    )
+    assert catalog["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
+    assert catalog["tree_cid"]
+    assert catalog["population_cid"]
+    assert catalog["assumptions"]
+    assert catalog["status"]["non_semantic_excluded_from_score_aggregates"] is True
+    assert catalog["provenance"]["builder"]
+    assert catalog["aggregates"]["case_count"] == len(catalog["case_ids"])
+    assert catalog["aggregates"]["total_residual_count"] == len(
+        catalog["residuals"]
+    )
+    cid_payload = {
+        key: value for key, value in catalog.items() if key != "catalog_cid"
+    }
+    assert catalog["catalog_cid"] == cid_for_dag_json(cid_payload)
+
+    regenerated = build_repair_dev_residual_catalog(ROOT)
+    parse_population_residual_catalog(
+        regenerated, require_repair_development_kind=True
+    )
+    assert regenerated["population_kind"] == POPULATION_KIND_REPAIR_DEVELOPMENT
+    assert set(catalog["case_ids"]).issubset(set(regenerated["case_ids"]))
+
+
+def test_write_repair_dev_catalog_round_trip(tmp_path: Path) -> None:
+    source = build_repair_dev_residual_catalog(ROOT)
+    out = tmp_path / "repair_dev_residual_catalog.json"
+    written = write_repair_dev_residual_catalog(out, catalog=source)
+    reloaded = json.loads(out.read_text(encoding="utf-8"))
+    assert reloaded == written
+    parse_population_residual_catalog(
+        reloaded, require_repair_development_kind=True
+    )
+    assert reloaded["catalog_cid"] == source["catalog_cid"]
+
+
+def test_non_semantic_statuses_excluded_from_score_aggregates() -> None:
+    gold = _ir(_rule(temporal=("within_10_days",)))
+    candidate = _ir(_rule(temporal=()))
+    scored = build_case_residual("scored_case", gold, candidate)
+    unsupported = CaseResidualRecord(
+        case_id="unsupported_case",
+        forward_loss=0.0,
+        residuals=(),
+        is_zero_residual_control=False,
+        evaluation_status=CATALOG_STATUS_UNSUPPORTED,
+        evaluation_status_reason="terminal_unsupported",
+    )
+    not_measured = CaseResidualRecord(
+        case_id="not_measured_case",
+        forward_loss=0.0,
+        residuals=(),
+        is_zero_residual_control=False,
+        evaluation_status=CATALOG_STATUS_NOT_MEASURED,
+        evaluation_status_reason="preflight_blocked",
+    )
+    runtime_failed = CaseResidualRecord(
+        case_id="runtime_failed_case",
+        forward_loss=0.0,
+        residuals=(),
+        is_zero_residual_control=False,
+        evaluation_status=CATALOG_STATUS_RUNTIME_FAILED,
+        evaluation_status_reason="provider_error",
+    )
+    aggregates = aggregate_residuals(
+        [scored, unsupported, not_measured, runtime_failed]
+    )
+    assert aggregates["case_count"] == 4
+    assert aggregates["semantic_scored_case_count"] == 1
+    assert aggregates["sum_forward_loss"] == scored.forward_loss
+    assert aggregates["total_residual_count"] == scored.residual_count
+    assert aggregates["by_evaluation_status"][CATALOG_STATUS_UNSUPPORTED] == 1
+    assert aggregates["by_evaluation_status"][CATALOG_STATUS_NOT_MEASURED] == 1
+    assert aggregates["by_evaluation_status"][CATALOG_STATUS_RUNTIME_FAILED] == 1
+    assert aggregates["by_evaluation_status"][CATALOG_STATUS_SEMANTIC_SCORED] == 1
+
+    with pytest.raises(ResidualCatalogError, match="must not carry residual"):
+        CaseResidualRecord(
+            case_id=scored.case_id,
+            forward_loss=scored.forward_loss,
+            residuals=scored.residuals,
+            is_zero_residual_control=False,
+            evaluation_status=CATALOG_STATUS_UNSUPPORTED,
+        )
+
+
+def test_premature_blind_access_rejected_on_supervisor_and_packet_paths(
+    tmp_path: Path,
+) -> None:
+    holdout_cases = preregistered_holdout_matrix_cases()
+    # Unauthorized build of blind population fails closed.
+    with pytest.raises(ResidualCatalogError, match="premature blind access"):
+        build_plateau_residual_catalog(
+            ROOT,
+            cases=holdout_cases,
+            population_kind=POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+            access_mode=ACCESS_MODE_SUPERVISOR,
+        )
+    with pytest.raises(ResidualCatalogError, match="premature blind access"):
+        build_plateau_residual_catalog(
+            ROOT,
+            cases=holdout_cases,
+            population_kind=POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+            access_mode=ACCESS_MODE_PACKET,
+        )
+    # Missing authorization in evaluator mode fails closed.
+    with pytest.raises(ResidualCatalogError, match="missing evaluator authorization"):
+        build_plateau_residual_catalog(
+            ROOT,
+            cases=holdout_cases,
+            population_kind=POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+            access_mode=ACCESS_MODE_AUTHORIZED_EVALUATOR,
+        )
+    # Pre-freeze authorization fails closed.
+    with pytest.raises(ResidualCatalogError, match="premature blind access"):
+        build_plateau_residual_catalog(
+            ROOT,
+            cases=holdout_cases,
+            population_kind=POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+            access_mode=ACCESS_MODE_AUTHORIZED_EVALUATOR,
+            evaluator_authorization={
+                "evaluator_mode": True,
+                "candidate_freeze_cid": cid_for_dag_json({"freeze": "demo"}),
+                "post_freeze": False,
+            },
+        )
+    # Authorized post-freeze evaluator path succeeds.
+    freeze_cid = cid_for_dag_json({"freeze": "candidate", "tree": "demo"})
+    auth = {
+        "evaluator_mode": True,
+        "candidate_freeze_cid": freeze_cid,
+        "post_freeze": True,
+    }
+    blind = build_plateau_residual_catalog(
+        ROOT,
+        cases=holdout_cases,
+        population_kind=POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+        access_mode=ACCESS_MODE_AUTHORIZED_EVALUATOR,
+        evaluator_authorization=auth,
+    )
+    assert blind["population_kind"] == POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION
+    assert blind["evaluator_mode"] is True
+    assert blind["contains_blind_residuals"] is True
+    assert blind["tree_cid"]
+    assert blind["population_cid"]
+    assert blind["status"]["non_semantic_excluded_from_score_aggregates"] is True
+
+    # Normal parse paths reject the blind catalog.
+    with pytest.raises(ResidualCatalogError, match="premature blind access|rejects blind"):
+        parse_population_residual_catalog(
+            blind, access_mode=ACCESS_MODE_SUPERVISOR
+        )
+    with pytest.raises(ResidualCatalogError, match="premature blind access|rejects blind"):
+        parse_population_residual_catalog(
+            blind, access_mode=ACCESS_MODE_PACKET
+        )
+    with pytest.raises(ResidualCatalogError, match="rejects blind|evaluator mode"):
+        assert_catalog_usable_on_supervisor_path(
+            blind, access_mode=ACCESS_MODE_SUPERVISOR
+        )
+
+    # Authorized parse succeeds.
+    parsed = parse_population_residual_catalog(
+        blind,
+        access_mode=ACCESS_MODE_AUTHORIZED_EVALUATOR,
+        evaluator_authorization=auth,
+        allow_blind=True,
+    )
+    assert parsed["catalog_cid"] == blind["catalog_cid"]
+
+    # Synthetic blind markers on repair-dev payloads are rejected.
+    repair = build_repair_dev_residual_catalog(
+        ROOT, cases=holdout_cases[:1]
+    )
+    tainted = copy.deepcopy(repair)
+    tainted["cases"][0]["blind_source"] = True
+    with pytest.raises(ResidualCatalogError, match="blind sources"):
+        reject_blind_material_on_normal_path(
+            tainted, access_mode=ACCESS_MODE_SUPERVISOR
+        )
+    tainted_gold = copy.deepcopy(repair)
+    tainted_gold["cases"][0]["gold_binding"] = "blind"
+    with pytest.raises(ResidualCatalogError, match="blind gold"):
+        reject_blind_material_on_normal_path(
+            tainted_gold, access_mode=ACCESS_MODE_PACKET
+        )
+    tainted_residual = copy.deepcopy(repair)
+    if tainted_residual["residuals"]:
+        tainted_residual["residuals"][0]["visibility"] = "blind"
+        with pytest.raises(ResidualCatalogError, match="blind residuals"):
+            reject_blind_material_on_normal_path(
+                tainted_residual, access_mode=ACCESS_MODE_SUPERVISOR
+            )
+    unauthorized_mode = copy.deepcopy(repair)
+    unauthorized_mode["evaluator_mode"] = True
+    with pytest.raises(ResidualCatalogError, match="unauthorized evaluator mode"):
+        reject_blind_material_on_normal_path(
+            unauthorized_mode, access_mode=ACCESS_MODE_SUPERVISOR
+        )
+
+    with pytest.raises(ResidualCatalogError, match="premature blind access"):
+        assert_access_allows_population(
+            POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+            access_mode=ACCESS_MODE_SUPERVISOR,
+        )
+
+
+def test_repair_dev_case_status_overrides_keep_scores_distinct() -> None:
+    cases = preregistered_holdout_matrix_cases()
+    catalog = build_repair_dev_residual_catalog(
+        ROOT,
+        cases=cases,
+        case_status_overrides={
+            cases[0].case_id: {
+                "evaluation_status": CATALOG_STATUS_NOT_MEASURED,
+                "reason": "preflight_blocked",
+            }
+        },
+    )
+    parse_population_residual_catalog(
+        catalog, require_repair_development_kind=True
+    )
+    override_id = cases[0].case_id
+    assert (
+        catalog["status"]["by_case"][override_id]["evaluation_status"]
+        == CATALOG_STATUS_NOT_MEASURED
+    )
+    assert catalog["status"]["by_case"][override_id][
+        "semantic_score_eligible"
+    ] is False
+    record = next(
+        item for item in catalog["cases"] if item["case_id"] == override_id
+    )
+    assert record["residuals"] == []
+    assert override_id not in catalog["nonzero_case_ids"]
+    assert catalog["aggregates"]["by_evaluation_status"][
+        CATALOG_STATUS_NOT_MEASURED
+    ] == 1
+    # Semantic aggregates ignore the not_measured case.
+    assert catalog["aggregates"]["semantic_scored_case_count"] == len(cases) - 1
