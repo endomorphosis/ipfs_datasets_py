@@ -1,0 +1,140 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.088333333,
+  "baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+  "board_namespace": "semantic-roundtrip-plateau-break-v1",
+  "case_id": "legal_doc_1",
+  "deterministic_changes": [
+    {
+      "id": "currency_thousands_numeric_normalize",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[2].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Normalize currency markers and thousands separators so evidence '$10,000' grounds the atom token '10000' without LLM assistance."
+    },
+    {
+      "id": "optional_amount_schema_token_grounding",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[2].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Treat closed-vocabulary scaffolding token 'amount' as optional for precision-1.0 grounding so 'transactions exceeding $10,000' maps to transaction_amount_exceeds_10000."
+    },
+    {
+      "id": "exception_context_without_except_reclassify",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "When per-norm evidence uses without/except framing, reclassify grounded carve-out atoms (explicit_consent, required_by_law_enforcement_agencies) onto the exceptions facet."
+    },
+    {
+      "id": "prefer_exceptions_over_dual_conditions",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Drop dual-placed qualifier atoms from conditions when already listed as exceptions so prohibition carve-outs are not also projected as conditions."
+    },
+    {
+      "id": "norm_local_qualifier_harvest",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[1].temporal",
+        "rules[2].conditions",
+        "rules[2].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Harvest conditions/exceptions/temporal from per-norm evidence against the closed qualifier vocabulary (precision 1.0 content tokens; no full-document leak)."
+    }
+  ],
+  "doctrine": {
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT-081",
+  "evidence_subset": "edit-wave legal_doc_1",
+  "implementable": true,
+  "improvement": {
+    "legal_doc_1_cleared": true,
+    "legal_doc_1_forward_delta": -0.133333332,
+    "mean_pilot_forward_delta": -0.085
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "notes": "PLAT-081 applies residual-driven deterministic projection fixes in typed_deontic only for legal_doc_1. Optional methods remain teachers/gates and are not promoted into the production composition.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "packet_cids": [
+    "baguqeeraehbzg4rpgemxfctbnho33y5nlcicgur5swu6hp3k4xbfhc5dhzaq"
+  ],
+  "packet_digests": [
+    "21c393722f3119728a6169ddbde3ad589023523d95a9e3bf6ae5c2538ba33e41"
+  ],
+  "packet_ids": [
+    "plat-081-legal-doc-1-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat-det-legal-doc",
+  "post_scores": {
+    "legal_doc_1_end_to_end_loss": 0.0,
+    "legal_doc_1_forward_loss": 0.0,
+    "legal_doc_1_l1_rule_count": 3,
+    "legal_doc_1_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0,
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.0
+    }
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/legal_doc_1.json"
+  ],
+  "prior_scores": {
+    "legal_doc_1_end_to_end_loss": 0.15,
+    "legal_doc_1_forward_loss": 0.133333332,
+    "legal_doc_1_l1_rule_count": 3,
+    "legal_doc_1_residual_count": 4,
+    "mean_pilot_forward_loss": 0.085,
+    "sealed_plateau_mean_e2e": 0.088333333
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "receipt_cid": "baguqeerafzaqfs26bovklw4lbhrauqkz25d2mktgnv3po64sncgusbukikwq",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeerar435zxtsbiiilmv6bvtmqbiz7vlvhz4kq64rekbavz7zvuaf4mhq",
+  "residual_field_paths": [
+    "rules[0].conditions",
+    "rules[1].temporal",
+    "rules[2].conditions",
+    "rules[2].temporal"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "track": "det-compiler",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=15"
+  ]
+}
