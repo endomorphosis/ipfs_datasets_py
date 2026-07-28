@@ -1,0 +1,1041 @@
+{
+  "artifact": {
+    "assumptions": [],
+    "compiler_config": {
+      "compiler_id": "legal-ir-formalization-adapter",
+      "compiler_version": "legal-ir-formalization-adapter/v1",
+      "config_id": "legal-ir-adapter-default",
+      "options": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "legacy_identity_contract": "ModalIRDocument.canonical_hash"
+      },
+      "producer_id": "legal-ir-formalization-adapter",
+      "schema_version": "formalization-compiler-config/v1",
+      "target_view_ids": [
+        "legal-ir-view/deontic/v1",
+        "legal-ir-view/frame-logic/v1"
+      ],
+      "unsupported_policy": "preserve_opaque"
+    },
+    "compiler_config_identity": {
+      "cid": "bafkreidgwsfbrxhk7mi7t7qkagty2rghty3fyoz3gohjfmqhqu36izq3wi",
+      "digest": "sha256:66b48a18dceafb11f9fe0a01a78d44c79e365c3b3b338e92b2078537e4661bb2",
+      "domain": "formalization-compiler-config",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-compiler-config/v1"
+    },
+    "cross_view_links": [
+      {
+        "link_id": "link:us-code-5-553-fixture:f0001:us-code-5-553-fixture:frame:0",
+        "metadata": {},
+        "preserved_properties": [
+          "legal_source_identity",
+          "provenance",
+          "selected_frame"
+        ],
+        "relation": "corresponds_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "us-code-5-553-fixture:f0001",
+        "source_ref_ids": [
+          "source:us-code-5-553-fixture"
+        ],
+        "span_ids": [
+          "span:us-code-5-553-fixture:f0001"
+        ],
+        "target_formula_id": "us-code-5-553-fixture:frame:0"
+      }
+    ],
+    "declaration_digest": "sha256:8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703",
+    "declaration_id": "us-code-5-553-fixture",
+    "diagnostics": {
+      "config_id": "legal-ir-adapter-default",
+      "diagnostics": [
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:2e612c81f55adb5951755f10d06f38f3",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/embedding_vector",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/embedding_vector: source-derived embedding values are not declaration semantics (unsupported_training_feature)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:142fb69aac596bc34cde65dc92a29b4753db80f3c0461e2a3c068298e0f64b6c",
+            "disposition": "unsupported_training_feature",
+            "field_path": "/embedding_vector",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:8f68b1a365360fcc68c6cb54fa3065cb",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/text: raw statutory text is represented by the shared SourceRef (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:574736f5b6277bfb873b1067e9a9bd4b659a4ca5cb6877044714c40b4bcd36df",
+            "disposition": "externalized_source_body",
+            "field_path": "/text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:97ef60ceb2bee1780fdf46b201f4c662",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/losses",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/losses: training losses cannot become declaration features (unsupported_runtime_result)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:e7f43221ea92b891d8da9941f1fe93b2918df4523fc3e6c0ca3b39c711b4323a",
+            "disposition": "unsupported_runtime_result",
+            "field_path": "/losses",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:a4f24741caf2468e5436b24a234dcb19",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/normalized_text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/normalized_text: normalized statutory text is not a formal declaration feature (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:574736f5b6277bfb873b1067e9a9bd4b659a4ca5cb6877044714c40b4bcd36df",
+            "disposition": "externalized_source_body",
+            "field_path": "/normalized_text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:c37a1e08732fc2f5f697c6cf32faf426",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/modal_ir/normalized_text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/modal_ir/normalized_text: the legacy modal document's source copy is content-bound, not embedded (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:574736f5b6277bfb873b1067e9a9bd4b659a4ca5cb6877044714c40b4bcd36df",
+            "disposition": "externalized_source_body",
+            "field_path": "/modal_ir/normalized_text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:c78fb8d8ddf4ccf4d8dd01051a2590d6",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/embedding_model",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/embedding_model: Legal embedding configuration is outside shared formal semantics (unsupported_training_feature)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:ce81d423f1c1a4ee76a147811a100f644c3c4fc243787bb21e121e2c64bfe12e",
+            "disposition": "unsupported_training_feature",
+            "field_path": "/embedding_model",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:dee320a21edf30cee84b5c958516acd2",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/parser_trace",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:us-code-5-553-fixture"
+            ],
+            "span_ids": [
+              "span:us-code-5-553-fixture:document"
+            ],
+            "subject_ids": [
+              "us-code-5-553-fixture"
+            ]
+          },
+          "message": "/parser_trace: the Legal parser trace is not a formal view (unsupported_producer_trace)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "us-code-5-553-fixture",
+            "content_digest": "sha256:22b915ea2e3a666d3538c8036e561b440714b23bc48793fd04e3abd47f3182db",
+            "disposition": "unsupported_producer_trace",
+            "field_path": "/parser_trace",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        }
+      ],
+      "error_count": 0,
+      "evidence_set_id": "",
+      "metadata": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "unsupported_field_count": 7
+      },
+      "producer_id": "legal-ir-formalization-adapter",
+      "provenance_id": "provenance:us-code-5-553-fixture",
+      "report_id": "diagnostics:us-code-5-553-fixture:66b48a18dceafb11",
+      "schema_version": "ir-diagnostics/v1",
+      "valid": true,
+      "warning_count": 7
+    },
+    "domain": "legal",
+    "formulas": [
+      {
+        "assumption_ids": [],
+        "expression": {
+          "action": "publish_notice",
+          "actor": "agency",
+          "conditions": [
+            "request_received"
+          ],
+          "exceptions": [
+            "emergency"
+          ],
+          "formula_id": "us-code-5-553-fixture:f0001",
+          "legal_modal_ir": {
+            "conditions": [
+              "request_received"
+            ],
+            "exceptions": [
+              "emergency"
+            ],
+            "formula_id": "us-code-5-553-fixture:f0001",
+            "metadata": {
+              "legal_scope": "agency_records"
+            },
+            "operator": {
+              "family": "deontic",
+              "label": "obligation",
+              "symbol": "O",
+              "system": "D"
+            },
+            "predicate": {
+              "arguments": [
+                "agency",
+                "notice"
+              ],
+              "name": "publish_notice",
+              "role": "clause"
+            },
+            "provenance": {
+              "citation": "5 U.S.C. 553",
+              "end_char": 67,
+              "source_id": "us-code-5-553-fixture",
+              "start_char": 0
+            }
+          },
+          "norm_type": "obligation",
+          "object": "notice",
+          "operator": "O",
+          "polarity": "positive",
+          "provenance_ids": [
+            "source:us-code-5-553-fixture",
+            "span:us-code-5-553-fixture:f0001"
+          ]
+        },
+        "formula_id": "us-code-5-553-fixture:f0001",
+        "input_node_ids": [
+          "us-code-5-553-fixture"
+        ],
+        "metadata": {
+          "legacy_formula_id": "us-code-5-553-fixture:f0001",
+          "legacy_logic_family": "deontic",
+          "legal_contract_aliases": [
+            "deontic",
+            "deontic.ir",
+            "deontic.ir",
+            "deontic_ir",
+            "deontic_norms"
+          ],
+          "preferred_view_id": "legal-ir-view/deontic/v1"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:us-code-5-553-fixture"
+        ],
+        "span_ids": [
+          "span:us-code-5-553-fixture:f0001"
+        ],
+        "symbol_ids": [
+          "us-code-5-553-fixture:f0001:argument:0",
+          "us-code-5-553-fixture:f0001:argument:1",
+          "us-code-5-553-fixture:f0001:operator",
+          "us-code-5-553-fixture:f0001:predicate"
+        ],
+        "view_id": "legal-ir-view/deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "formula_id": "us-code-5-553-fixture:frame:0",
+          "frame_id": "administrative_notice",
+          "legal_frame_logic": {
+            "graph_id": "legal-graph-553",
+            "metadata": {
+              "legal_relation_scope": "section_553"
+            },
+            "neo4j_node_labels": [],
+            "neo4j_relationship_types": [],
+            "ontology_name": "modal_flogic_ir",
+            "selected_frame": "administrative_notice",
+            "triples": [
+              {
+                "object": "notice",
+                "predicate": "must_publish",
+                "subject": "agency"
+              }
+            ]
+          },
+          "object": "notice",
+          "predicate": "must_publish",
+          "provenance_ids": [
+            "source:us-code-5-553-fixture",
+            "span:us-code-5-553-fixture:document"
+          ],
+          "role": "must_publish",
+          "subject": "agency"
+        },
+        "formula_id": "us-code-5-553-fixture:frame:0",
+        "input_node_ids": [
+          "us-code-5-553-fixture"
+        ],
+        "metadata": {
+          "legal_contract_aliases": [
+            "frame_logic",
+            "modal.frame_logic",
+            "modal.frame_logic",
+            "modal_frame_logic",
+            "frame-logic"
+          ],
+          "preferred_view_id": "legal-ir-view/frame-logic/v1"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:us-code-5-553-fixture"
+        ],
+        "span_ids": [
+          "span:us-code-5-553-fixture:document"
+        ],
+        "symbol_ids": [],
+        "view_id": "legal-ir-view/frame-logic/v1"
+      }
+    ],
+    "metadata": {
+      "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+      "legacy_modal_ir_canonical_hash": "8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703",
+      "legacy_output_identity": "8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703",
+      "view_aliases": {
+        "legal-ir-view/cec/v1": [
+          "cec",
+          "CEC.native",
+          "CEC.native",
+          "cec_native",
+          "event_calculus",
+          "dcec"
+        ],
+        "legal-ir-view/decompiler/v1": [
+          "decompiler",
+          "modal.ir_decompiler",
+          "modal.ir_decompiler",
+          "modal.decompiler",
+          "ir_decompiler",
+          "round_trip"
+        ],
+        "legal-ir-view/deontic/v1": [
+          "deontic",
+          "deontic.ir",
+          "deontic.ir",
+          "deontic_ir",
+          "deontic_norms"
+        ],
+        "legal-ir-view/external-provers/v1": [
+          "external_provers",
+          "external_provers.router",
+          "external_provers.router",
+          "external_provers_router",
+          "prover_router",
+          "prover"
+        ],
+        "legal-ir-view/frame-logic/v1": [
+          "frame_logic",
+          "modal.frame_logic",
+          "modal.frame_logic",
+          "modal_frame_logic",
+          "frame-logic"
+        ],
+        "legal-ir-view/knowledge-graphs/v1": [
+          "knowledge_graphs",
+          "knowledge_graphs.neo4j_compat",
+          "knowledge_graphs.neo4j_compat",
+          "knowledge_graphs_neo4j_compat",
+          "knowledge_graph",
+          "neo4j_compat"
+        ],
+        "legal-ir-view/tdfol/v1": [
+          "tdfol",
+          "TDFOL.prover",
+          "TDFOL.prover",
+          "tdfol_prover",
+          "TDFOL",
+          "temporal"
+        ]
+      }
+    },
+    "proof_obligations": [],
+    "sample_id": "us-code-5-553-fixture",
+    "schema_version": "formalization-artifact/v1",
+    "source_map": {
+      "bindings": [
+        {
+          "binding_id": "binding:legal-formula:58e59341d14ee893744cdc56",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "legacy_formula_id": "us-code-5-553-fixture:f0001"
+          },
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "subject_id": "us-code-5-553-fixture:f0001"
+        },
+        {
+          "binding_id": "binding:legal-frame:f0da1f8829d892c54dd4da58",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:document"
+          ],
+          "subject_id": "us-code-5-553-fixture:frame:0"
+        },
+        {
+          "binding_id": "binding:legal-source:7180fb4a8f73f716b333a431",
+          "config_id": "",
+          "derived": false,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "legacy_declaration_id": "us-code-5-553-fixture",
+            "legacy_sample_id": "us-code-5-553-fixture"
+          },
+          "parent_subject_ids": [],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:document"
+          ],
+          "subject_id": "us-code-5-553-fixture"
+        },
+        {
+          "binding_id": "binding:legal-symbol:802cd0852125f64f7a28bce8",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "subject_id": "us-code-5-553-fixture:f0001:argument:1"
+        },
+        {
+          "binding_id": "binding:legal-symbol:9038282723557bf9035711a3",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "subject_id": "us-code-5-553-fixture:f0001:operator"
+        },
+        {
+          "binding_id": "binding:legal-symbol:9e27bd0b8b1e78f31d347101",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "subject_id": "us-code-5-553-fixture:f0001:argument:0"
+        },
+        {
+          "binding_id": "binding:legal-symbol:cb6af3f43955a11bca405fe7",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "us-code-5-553-fixture"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "subject_id": "us-code-5-553-fixture:f0001:predicate"
+        }
+      ],
+      "configs": [
+        {
+          "config_id": "legal-ir-adapter-default",
+          "content_cid": "",
+          "content_sha256": "66b48a18dceafb11f9fe0a01a78d44c79e365c3b3b338e92b2078537e4661bb2",
+          "metadata": {},
+          "schema_id": "formalization-compiler-config/v1"
+        }
+      ],
+      "metadata": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "legacy_output_identity": "8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703"
+      },
+      "producers": [
+        {
+          "implementation_sha256": "",
+          "metadata": {
+            "compiler_id": "legal-ir-formalization-adapter"
+          },
+          "model_id": "",
+          "name": "Legal IR shared-formalization adapter",
+          "producer_id": "legal-ir-formalization-adapter",
+          "repository_revision": "",
+          "version": "legal-ir-formalization-adapter/v1"
+        }
+      ],
+      "provenance_id": "provenance:us-code-5-553-fixture",
+      "schema_version": "ir-provenance/v1",
+      "sources": [
+        {
+          "container_sha256": "",
+          "container_uri": "",
+          "content_cid": "",
+          "content_sha256": "c6f657aef512c65630880982bff76e8f36f743a1339b75f7da74c697b283e8e9",
+          "license_expression": "",
+          "metadata": {
+            "citation": "5 U.S.C. 553",
+            "legal_source": "us_code",
+            "normalized_text_sha256": "c6f657aef512c65630880982bff76e8f36f743a1339b75f7da74c697b283e8e9"
+          },
+          "ref_id": "source:us-code-5-553-fixture",
+          "review_status": "trusted_fixture",
+          "source_id": "us-code-5-553-fixture",
+          "source_revision": "modal-ir-v1",
+          "source_uri": "urn:legal-ir:us-code:5:553:us-code-5-553-fixture"
+        }
+      ],
+      "spans": [
+        {
+          "end_byte": 67,
+          "end_char": 67,
+          "end_column": null,
+          "end_line": null,
+          "metadata": {
+            "scope": "legal_document"
+          },
+          "source_ref_id": "source:us-code-5-553-fixture",
+          "span_id": "span:us-code-5-553-fixture:document",
+          "start_byte": 0,
+          "start_char": 0,
+          "start_column": null,
+          "start_line": null
+        },
+        {
+          "end_byte": 67,
+          "end_char": 67,
+          "end_column": null,
+          "end_line": null,
+          "metadata": {
+            "citation": "5 U.S.C. 553",
+            "coordinate_alignment": "exact",
+            "legacy_formula_id": "us-code-5-553-fixture:f0001",
+            "normalized_end_char": 67,
+            "normalized_start_char": 0
+          },
+          "source_ref_id": "source:us-code-5-553-fixture",
+          "span_id": "span:us-code-5-553-fixture:f0001",
+          "start_byte": 0,
+          "start_char": 0,
+          "start_column": null,
+          "start_line": null
+        }
+      ]
+    },
+    "symbol_table": {
+      "metadata": {
+        "domain": "legal"
+      },
+      "schema_version": "formal-symbol-table/v1",
+      "symbols": [
+        {
+          "kind": "constant",
+          "metadata": {
+            "argument_index": 0
+          },
+          "name": "agency",
+          "sort": "legal_argument",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "symbol_id": "us-code-5-553-fixture:f0001:argument:0"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "argument_index": 1
+          },
+          "name": "notice",
+          "sort": "legal_argument",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "symbol_id": "us-code-5-553-fixture:f0001:argument:1"
+        },
+        {
+          "kind": "operator",
+          "metadata": {
+            "legal_operator": {
+              "family": "deontic",
+              "label": "obligation",
+              "symbol": "O",
+              "system": "D"
+            }
+          },
+          "name": "O",
+          "sort": "deontic",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "symbol_id": "us-code-5-553-fixture:f0001:operator"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "legal_predicate": {
+              "arguments": [
+                "agency",
+                "notice"
+              ],
+              "name": "publish_notice",
+              "role": "clause"
+            }
+          },
+          "name": "publish_notice",
+          "sort": "clause",
+          "source_ref_ids": [
+            "source:us-code-5-553-fixture"
+          ],
+          "span_ids": [
+            "span:us-code-5-553-fixture:f0001"
+          ],
+          "symbol_id": "us-code-5-553-fixture:f0001:predicate"
+        }
+      ],
+      "table_id": "symbols:us-code-5-553-fixture"
+    },
+    "view_registry": {
+      "registry_id": "legal-ir-formalization-views",
+      "schema_version": "formalization-view-registry/v1",
+      "views": [
+        {
+          "capabilities": [
+            "event_identity",
+            "fluent_identity",
+            "time_anchor",
+            "transition_direction"
+          ],
+          "description": "Event-calculus events, fluents, and lifecycle transitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "event_calculus",
+          "metadata": {
+            "aliases": [
+              "CEC.native",
+              "cec_native",
+              "event_calculus",
+              "dcec"
+            ],
+            "canonical_legal_view": "cec",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "event_identity",
+              "fluent_identity",
+              "transition_direction",
+              "time_anchor"
+            ],
+            "target_component": "CEC.native"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/cec/v1"
+        },
+        {
+          "capabilities": [
+            "argument_roles",
+            "condition_scope",
+            "exception_scope",
+            "formula_identity",
+            "operator_force",
+            "predicate_signature"
+          ],
+          "description": "Deterministic structural round trip from typed IR without copied source text.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "structural_round_trip",
+          "metadata": {
+            "aliases": [
+              "modal.ir_decompiler",
+              "modal.decompiler",
+              "ir_decompiler",
+              "round_trip"
+            ],
+            "canonical_legal_view": "decompiler",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "formula_identity",
+              "operator_force",
+              "predicate_signature",
+              "argument_roles",
+              "condition_scope",
+              "exception_scope"
+            ],
+            "target_component": "modal.ir_decompiler"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/decompiler/v1"
+        },
+        {
+          "capabilities": [
+            "condition_scope",
+            "exception_precedence",
+            "operator_force",
+            "prohibition_polarity"
+          ],
+          "description": "Normative force, polarity, scope, conditions, and defeasible exceptions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "deontic",
+          "metadata": {
+            "aliases": [
+              "deontic.ir",
+              "deontic_ir",
+              "deontic_norms"
+            ],
+            "canonical_legal_view": "deontic",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "operator_force",
+              "prohibition_polarity",
+              "condition_scope",
+              "exception_precedence"
+            ],
+            "target_component": "deontic.ir"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/deontic/v1"
+        },
+        {
+          "capabilities": [
+            "input_formula_id",
+            "modal_operator",
+            "route_status",
+            "trust_boundary",
+            "type_encoding"
+          ],
+          "description": "Bounded prover route, backend result, and reconstruction receipt.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "proof_translation",
+          "metadata": {
+            "aliases": [
+              "external_provers.router",
+              "external_provers_router",
+              "prover_router",
+              "prover"
+            ],
+            "canonical_legal_view": "external_provers",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "input_formula_id",
+              "modal_operator",
+              "type_encoding",
+              "route_status",
+              "trust_boundary"
+            ],
+            "target_component": "external_provers.router"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/external-provers/v1"
+        },
+        {
+          "capabilities": [
+            "exception_scope",
+            "modal_operator",
+            "relation_direction",
+            "typed_role"
+          ],
+          "description": "Typed frame roles and relations shared by modal and graph views.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "frame_logic",
+          "metadata": {
+            "aliases": [
+              "modal.frame_logic",
+              "modal_frame_logic",
+              "frame-logic"
+            ],
+            "canonical_legal_view": "frame_logic",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "typed_role",
+              "relation_direction",
+              "modal_operator",
+              "exception_scope"
+            ],
+            "target_component": "modal.frame_logic"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/frame-logic/v1"
+        },
+        {
+          "capabilities": [
+            "edge_direction",
+            "edge_type",
+            "endpoint_identity",
+            "provenance_identity"
+          ],
+          "description": "Neo4j-compatible typed nodes and directed relationships.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "graph_projection",
+          "metadata": {
+            "aliases": [
+              "knowledge_graphs.neo4j_compat",
+              "knowledge_graphs_neo4j_compat",
+              "knowledge_graph",
+              "neo4j_compat"
+            ],
+            "canonical_legal_view": "knowledge_graphs",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "endpoint_identity",
+              "edge_direction",
+              "edge_type",
+              "provenance_identity"
+            ],
+            "target_component": "knowledge_graphs.neo4j_compat"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/knowledge-graphs/v1"
+        },
+        {
+          "capabilities": [
+            "deontic_force",
+            "event_order",
+            "quantifier_scope",
+            "temporal_anchor"
+          ],
+          "description": "Typed first-order temporal formula and explicit time anchors.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "temporal_first_order",
+          "metadata": {
+            "aliases": [
+              "TDFOL.prover",
+              "tdfol_prover",
+              "TDFOL",
+              "temporal"
+            ],
+            "canonical_legal_view": "tdfol",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "quantifier_scope",
+              "temporal_anchor",
+              "event_order",
+              "deontic_force"
+            ],
+            "target_component": "TDFOL.prover"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/tdfol/v1"
+        }
+      ]
+    },
+    "view_registry_identity": {
+      "cid": "bafkreictwwxeqfbfkp7dojs2p5wgb3i7lva7h3r6ivs6ovgh2s3ckb47ei",
+      "digest": "sha256:53b5ae48142553fe37265a7f6c60ed1f5d41f3ee3e4565e754c7d4b625079f22",
+      "domain": "formalization-view-registry",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-view-registry/v1"
+    }
+  },
+  "artifact_cid": "bafkreies7je37ungndxl7rlxow4x5aglsxg3wyuxlkfked4wcukidtp6iu",
+  "artifact_digest": "sha256:92fa49bfd1a668eebfc57775b97e80cb95cdbb62975a8aa20f96151481cdfe45",
+  "content_cid": "bafkreie26ajhx5dxwsbl74r22dpig7djkjt3n2l5wjudxujcjaurripmty",
+  "content_digest": "sha256:9af0127bf477b482bff23ad0de837c695267b6e97db2683bd122482918a1ec9e",
+  "jurisdiction": "us-federal",
+  "profile": "legal-dev-offline",
+  "schema_version": "legal-proof-record/v1",
+  "source_digest": "sha256:8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703",
+  "source_id": "us-code-5-553-fixture",
+  "theorem_receipts": []
+}
