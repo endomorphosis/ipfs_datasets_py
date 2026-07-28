@@ -87,7 +87,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-010 Extend residual catalog for preregistered populations
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: residual
@@ -111,7 +111,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-020 Freeze repair-development and blind-holdout populations
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: corpus
@@ -135,7 +135,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-025 Freeze repair-development baseline and experiment contract
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: baseline
@@ -159,7 +159,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-030 Repair-development packets and materializer
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: packets
@@ -183,7 +183,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-035 Preregister intervention roles, capabilities, and ablations
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: interventions
@@ -207,7 +207,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-040 Optional evidence-gated teachers on repair-development residuals
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: teachers
@@ -233,7 +233,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-050 Deterministic compiler edit waves on repair-development
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: det-compiler
@@ -257,7 +257,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-055 Freeze candidate, attribution evidence, and holdout authorization
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: candidate-freeze
@@ -281,7 +281,8 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 
 ## PLAT2-060 One-shot blind-holdout evaluation and decision
 
-- Status: todo
+- Status: blocked
+- Blocked reason: The one-shot evaluation ran at 2026-07-28T08:58:44.684+00:00 and its focused suite passed 54 tests, but the supervisor discarded the worktree after a post-run validation/import failure before the six outputs were merged. The blind seal is already opened, so this task must not be retried. Recover the completed outputs from the checkpoint and Grok session receipts under `/var/tmp/hssl-srt-plateau-holdout-v2/state/semantic-roundtrip-plateau-holdout-remeasure/state/` and `~/.grok/sessions/` before marking it completed.
 - Completion: auto
 - Priority: P0
 - Track: remeasure
