@@ -51098,6 +51098,135 @@ def test_decompiler_reconstructs_packet_000901_adverse_action_equipment_payment_
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000569_program_franchise_consortium_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "15 U.S.C. 2806. Relationship of statutory provisions. "
+                    "Petroleum Marketing Practices. Franchise Protection. A "
+                    "franchise relationship may include payment or fee terms "
+                    "subject to this section."
+                ),
+                predicate="petroleum_franchise_relationship_payment_fee",
+                conditions=["subject to this section"],
+            ),
+            {
+                "franchise_fee_payment",
+                "franchise_relationship_protection",
+                "franchise_statutory_relationship",
+                "petroleum_marketing_practice",
+            },
+            {"deontic->conditional_normative", "deontic->frame"},
+            {
+                "uscode_petroleum_franchise_relationship_surface",
+                "uscode_franchise_payment_fee_surface",
+            },
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "42 U.S.C. 9858a. Establishment of block grant program. "
+                    "The Secretary is authorized to make grants to States in "
+                    "accordance with the provisions of this subchapter."
+                ),
+                predicate="secretary_block_grant_program_grants_to_states",
+                conditions=["in accordance with the provisions of this subchapter"],
+            ),
+            {
+                "block_grant_program",
+                "program_grant_authority",
+                "state_grant_award",
+            },
+            {"deontic->conditional_normative", "deontic->frame"},
+            {"uscode_block_grant_program_surface"},
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "50 U.S.C. 2823. University-based defense nuclear policy "
+                    "collaboration program. The Administrator shall carry out "
+                    "a program under which the Administrator establishes a "
+                    "policy research consortium of institutions of higher "
+                    "education."
+                ),
+                predicate="administrator_defense_nuclear_policy_research_consortium",
+                conditions=[
+                    (
+                        "under which the Administrator establishes a policy "
+                        "research consortium"
+                    )
+                ],
+            ),
+            {
+                "defense_nuclear_policy_collaboration",
+                "university_policy_research_consortium",
+                "university_research_consortium",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            {"uscode_university_policy_research_consortium_surface"},
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 11921. Independent living services. The "
+                    "Secretary may make grants under this subchapter for "
+                    "vocational rehabilitation services and centers for "
+                    "independent living."
+                ),
+                predicate="secretary_independent_living_rehabilitation_grants",
+                conditions=["under this subchapter"],
+            ),
+            {
+                "independent_living_center",
+                "independent_living_services",
+                "program_grant_authority",
+                "vocational_rehabilitation_services",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            {
+                "uscode_rehabilitation_service_surface",
+                "uscode_block_grant_program_surface",
+            },
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surfaces in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surfaces.issubset(
+            set(slot_texts["typed-decompiler-target-surface-profile"])
+        )
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def test_decompiler_reconstructs_packet_000188_public_program_surfaces() -> None:
     samples = [
         (
