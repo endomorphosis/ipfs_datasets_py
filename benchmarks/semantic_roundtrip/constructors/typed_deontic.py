@@ -50,8 +50,18 @@ _TEMPORAL_CUE_RE: Final = re.compile(
     r"after|before|within|until|by|during|following|"
     r"annual|annually|monthly|weekly|daily|"
     r"\d+\s*(?:day|days|hour|hours|week|weeks|month|months|year|years)|"
+    # Compact incident windows (exec_order style): 24h / 72hr / 90-hrs.
+    r"\d+\s*(?:-\s*)?(?:h|hr|hrs)\b|"
     r"calendar\s+day|business\s+day"
     r")\b",
+    re.IGNORECASE,
+)
+# Domain-scope condition cues (exec_order style): "in any government
+# communications" / "in official channels". Used only for missing-slot
+# diagnostics; projection still requires closed-vocabulary grounding.
+_DOMAIN_CONDITION_CUE_RE: Final = re.compile(
+    r"\b(?:in\s+(?:any\s+|all\s+)?(?:government|public|official|agency)\b|"
+    r"in\s+\w[\w\s-]{0,40}\bcommunications?\b)",
     re.IGNORECASE,
 )
 _OBLIGATION_CUE_RE: Final = re.compile(
@@ -73,11 +83,15 @@ def _clean_text(value: object) -> str:
 
 
 def _normalize_numeric_surface(text: str) -> str:
-    """Normalize currency and thousands-grouped numbers for token matching.
+    """Normalize currency, duration, and thousands-grouped numbers.
 
     Maps surfaces such as ``$10,000`` / ``10,000`` onto a single digit token
     ``10000`` so closed-vocabulary atoms like
     ``transaction_amount_exceeds_10000`` can ground without an LLM.
+
+    Also expands compact hour windows used in executive-order / incident
+    reporting language (``24h``, ``24-hr``, ``72hrs``) into ``24 hour`` so
+    atoms such as ``within_24_hours`` ground with precision 1.0.
     """
 
     cleaned = re.sub(r"\$\s*", "", text)
@@ -86,6 +100,13 @@ def _normalize_numeric_surface(text: str) -> str:
     while previous != cleaned:
         previous = cleaned
         cleaned = re.sub(r"(\d),(\d{3})\b", r"\1\2", cleaned)
+    # Compact hour durations: 24h / 24-hr / 72hrs → "<n> hour".
+    cleaned = re.sub(
+        r"\b(\d+)\s*-?\s*(?:hours?|hrs?|h)\b",
+        r"\1 hour",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
     return cleaned
 
 
@@ -406,16 +427,23 @@ def _source_has_temporal_cue(source_text: str) -> bool:
     return bool(_TEMPORAL_CUE_RE.search(source_text or ""))
 
 
+def _source_has_domain_condition_cue(source_text: str) -> bool:
+    """True when source suggests a domain/scope gate (exec_order style)."""
+
+    return bool(_DOMAIN_CONDITION_CUE_RE.search(source_text or ""))
+
+
 # Qualifier atoms whose surface form is a temporal window / deadline.
 _TEMPORAL_QUALIFIER_RE: Final = re.compile(
     r"(within|before|after|during|until|by_|at_|annually|for_|days|hours|"
     r"weeks|months|years|written_notice|deadline|time)",
     re.IGNORECASE,
 )
-# Qualifier atoms that are conditional gates (incl. advance-notice gates).
+# Qualifier atoms that are conditional gates (incl. advance-notice gates and
+# domain-scope ``in_*`` atoms such as ``in_government_communications``).
 _CONDITION_QUALIFIER_RE: Final = re.compile(
     r"(upon_|if_|when_|unless|provided|does_not|exceed|over_|required_by|"
-    r"in_government|advance_notice|gift_value|work_does|transaction)",
+    r"\bin_|advance_notice|gift_value|work_does|transaction)",
     re.IGNORECASE,
 )
 # Qualifier atoms that are exception carve-outs.
@@ -440,6 +468,11 @@ _COLLECTIVE_ACTORS: Final = frozenset(
 # says ``transactions exceeding $10,000``.  Optional only when at least one
 # non-optional content token is present and every required token grounds.
 _OPTIONAL_QUALIFIER_GROUNDING_TOKENS: Final = frozenset({"amount"})
+# Leading domain-scope prepositions on atoms such as
+# ``in_government_communications`` may be absent or substituted in surface
+# evidence ("government communications", "for government communications")
+# while content tokens still identify the closed atom.
+_OPTIONAL_DOMAIN_PREPOSITION_TOKENS: Final = frozenset({"in", "on"})
 
 
 def _norm_evidence_text(data: Mapping[str, object]) -> str:
@@ -466,6 +499,10 @@ def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
     When *evidence* is supplied, exception framing such as ``without X`` or
     ``except when required by…`` reclassifies a grounded non-temporal atom as
     an exception carve-out (legal_doc prohibition style).
+
+    Domain-scope atoms such as ``in_government_communications`` (exec_order)
+    are conditions even when surface evidence uses "if in …" framing from the
+    deterministic realizer.
     """
 
     atom_l = str(atom or "").strip().lower()
@@ -486,10 +523,15 @@ def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
             return "exceptions"
 
     is_temporal = bool(_TEMPORAL_QUALIFIER_RE.search(atom_l))
-    is_condition = bool(_CONDITION_QUALIFIER_RE.search(atom_l))
+    # Domain-scope preposition atoms (in_*/on_*) are conditions unless the
+    # remainder is itself a pure temporal window (rare; keep temporal first).
+    is_domain_scope = atom_l.startswith("in_") or atom_l.startswith("on_")
+    is_condition = bool(_CONDITION_QUALIFIER_RE.search(atom_l)) or (
+        is_domain_scope and not is_temporal
+    )
     # Pure temporal windows keep the temporal facet even under surrounding
-    # "except when…" wording so day-count atoms are never stolen into
-    # exceptions.
+    # "except when…" wording so day-count / hour-count atoms are never stolen
+    # into exceptions (exec_order ``within_24_hours``, legal day windows).
     if is_temporal and not is_condition:
         return "temporal"
     if evidence and _exception_framed_in_evidence(evidence, atom_l):
@@ -546,15 +588,32 @@ def _exception_framed_in_evidence(evidence: str, qualifier: str) -> bool:
     )
 
 
+def _optional_grounding_tokens_for(qualifier: str) -> frozenset[str]:
+    """Return tokens that may be absent when grounding *qualifier*.
+
+    Includes global schema scaffolding (``amount``) plus, for domain-scope
+    atoms such as ``in_government_communications``, the leading preposition
+    so evidence ``government communications`` still grounds the closed atom.
+    """
+
+    optional: set[str] = set(_OPTIONAL_QUALIFIER_GROUNDING_TOKENS)
+    atom_l = str(qualifier or "").strip().lower()
+    if atom_l.startswith("in_") or atom_l.startswith("on_"):
+        optional |= _OPTIONAL_DOMAIN_PREPOSITION_TOKENS
+    return frozenset(optional)
+
+
 def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
     """True when every required token of the qualifier atom is grounded.
 
     Requires precision 1.0 on non-optional tokens so ``within_30_days`` cannot
-    fire on ``within 10 days`` evidence (the numeric token must match).
+    fire on ``within 10 days`` evidence (the numeric token must match), and so
+    ``within_24_hours`` cannot fire on a ``within 72 hours`` window.
 
     Schema scaffolding tokens listed in
-    ``_OPTIONAL_QUALIFIER_GROUNDING_TOKENS`` (e.g. ``amount``) may be absent
-    from surface evidence when at least one required content token grounds.
+    ``_OPTIONAL_QUALIFIER_GROUNDING_TOKENS`` (e.g. ``amount``) and domain
+    prepositions on ``in_*`` / ``on_*`` atoms may be absent from surface
+    evidence when at least one required content token grounds.
     """
 
     cand_toks = _tokens(qualifier)
@@ -563,15 +622,12 @@ def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
     text_exp = _expanded_token_set(evidence)
     if not text_exp:
         return False
+    optional_tokens = _optional_grounding_tokens_for(qualifier)
     required = [
-        token
-        for token in cand_toks
-        if token not in _OPTIONAL_QUALIFIER_GROUNDING_TOKENS
+        token for token in cand_toks if token not in optional_tokens
     ]
     optional = [
-        token
-        for token in cand_toks
-        if token in _OPTIONAL_QUALIFIER_GROUNDING_TOKENS
+        token for token in cand_toks if token in optional_tokens
     ]
     # Never allow an all-optional qualifier (would match empty content).
     check = required if required else list(cand_toks)
@@ -891,6 +947,7 @@ def derive_slot_diagnostics(
     slots: list[TypedDeonticSlotDiagnostic] = []
     source = _clean_text(source_text)
     temporal_cue = _source_has_temporal_cue(source)
+    domain_condition_cue = _source_has_domain_condition_cue(source)
 
     for index, rule in enumerate(canonical_ir.rules):
         for field in RULE_FIELDS:
@@ -908,6 +965,22 @@ def derive_slot_diagnostics(
                         evidence=(
                             "source contains temporal cue but temporal "
                             "slot is empty"
+                        ),
+                        value=value,
+                    )
+                )
+                continue
+
+            if field == "conditions" and empty and domain_condition_cue:
+                slots.append(
+                    TypedDeonticSlotDiagnostic(
+                        rule_index=index,
+                        canonical_field=field,
+                        kind="missing",
+                        confidence=confidence,
+                        evidence=(
+                            "source contains domain-scope condition cue "
+                            "but conditions slot is empty"
                         ),
                         value=value,
                     )
