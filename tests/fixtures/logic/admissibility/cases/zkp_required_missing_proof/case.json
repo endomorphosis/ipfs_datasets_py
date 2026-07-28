@@ -1,0 +1,106 @@
+{
+  "case_id": "zkp_required_missing_proof",
+  "description": "Grants present but zkp-required profile has no Legal attestations → abstain.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "security"
+  ],
+  "expected_decision": {
+    "attestation_results": [
+      {
+        "attestation_interface": "",
+        "backend": "",
+        "content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+        "family": "legal",
+        "interface": "ProofCorpusAttest@1",
+        "is_simulated": false,
+        "profile": "legal-strict",
+        "reason": "zkp_missing",
+        "schema_version": "proof-corpus-attest/v1",
+        "statement_digest": "",
+        "status": "absent"
+      },
+      {
+        "attestation_interface": "",
+        "backend": "",
+        "content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+        "family": "legal",
+        "interface": "ProofCorpusAttest@1",
+        "is_simulated": false,
+        "profile": "legal-strict",
+        "reason": "zkp_missing",
+        "schema_version": "proof-corpus-attest/v1",
+        "statement_digest": "",
+        "status": "absent"
+      }
+    ],
+    "config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+    "constraint_cids": [
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+    "interface": "AdmissibilityDecision@1",
+    "profile_id": "zkp-required",
+    "reason_codes": [
+      "zkp_missing"
+    ],
+    "schema_version": "admissibility-decision/v1",
+    "status": "abstain",
+    "store_snapshot_digest": "sha256:f53d0a2bdbfcceb97eab3a640d5c4d5e153917e71ea8c656177a9d97fa1073c6"
+  },
+  "expected_reason_codes": [
+    "zkp_missing"
+  ],
+  "expected_status": "abstain",
+  "lineage": {
+    "constraint_artifact_cids": [
+      "bafkreiakfi2vxxklnbp33bfj34jrmy3v7mt7hckgg4fjekqpiei274zthu",
+      "bafkreig32la76u3sdfq3elv2ib5xkjjpeqopugk7gs6m5sx7pcyesprmu4"
+    ],
+    "constraint_content_cids": [
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "corpus_content_cids": [
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_artifact_digest": "sha256:1bdd4bb8dea81a7f445176d448f9cb8411fdccb52b9f309f9d1ef70c7d0bd991",
+    "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+    "intent_content_digest": "sha256:6f27e659e8879c2497044cf571f0f01de0dde5d517d27227311839824187b477",
+    "intent_declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+    "intent_formal_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+    "intent_source_id": "intent:admissibility:benign_skill",
+    "legal_artifact_cid": "bafkreiakfi2vxxklnbp33bfj34jrmy3v7mt7hckgg4fjekqpiei274zthu",
+    "legal_artifact_digest": "sha256:0a2a355bdd4b685fbd84a9df13166375fb27f38946370a922a0f4111aff3333d",
+    "legal_content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+    "legal_content_cids": [
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "security_artifact_cid": "bafkreig32la76u3sdfq3elv2ib5xkjjpeqopugk7gs6m5sx7pcyesprmu4",
+    "security_artifact_digest": "sha256:dbd2c1ff53721961b22eba407b75252f241cfa195f34bccecaff78b0493e2ca7",
+    "security_content_cid": "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+    "security_content_cids": [
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm"
+    ],
+    "store_snapshot_digest": "sha256:f53d0a2bdbfcceb97eab3a640d5c4d5e153917e71ea8c656177a9d97fa1073c6"
+  },
+  "paths": {
+    "envelopes": "envelopes",
+    "expected_decision": "expected_decision.json",
+    "formal_artifacts": "formal_artifacts",
+    "intent_ir": "intent_ir.json",
+    "lineage": "lineage.json"
+  },
+  "profile_config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+  "profile_id": "zkp-required",
+  "source_formal_case_id": "benign_skill",
+  "stratum": "zkp_abstain"
+}

@@ -1,0 +1,58 @@
+{
+  "case_id": "abstain_incomplete",
+  "description": "Incomplete unsupported semantics with no constraints → abstain.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent"
+  ],
+  "expected_decision": {
+    "attestation_results": [],
+    "config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+    "constraint_cids": [],
+    "intent_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+    "intent_cid": "bafkreia5muhdbbzfpa4fhxh2oxtvj4edsyjyusdj42nms3xvewjmbh337y",
+    "interface": "AdmissibilityDecision@1",
+    "profile_id": "legal-strict",
+    "reason_codes": [
+      "missing_evidence",
+      "semantics_unsupported"
+    ],
+    "schema_version": "admissibility-decision/v1",
+    "status": "abstain",
+    "store_snapshot_digest": "sha256:d5674820fae55691d0d6bc39e8ef6fc2edbbc18eb48020b70bb7d0ea599322f6"
+  },
+  "expected_reason_codes": [
+    "missing_evidence",
+    "semantics_unsupported"
+  ],
+  "expected_status": "abstain",
+  "lineage": {
+    "constraint_artifact_cids": [],
+    "constraint_content_cids": [],
+    "corpus_content_cids": [
+      "bafkreia5muhdbbzfpa4fhxh2oxtvj4edsyjyusdj42nms3xvewjmbh337y"
+    ],
+    "intent_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+    "intent_artifact_digest": "sha256:6bb1ae516158973d86c31151077651161f6536e9f6cc765b1dc195d199e8dcef",
+    "intent_content_cid": "bafkreia5muhdbbzfpa4fhxh2oxtvj4edsyjyusdj42nms3xvewjmbh337y",
+    "intent_content_digest": "sha256:1d650e308725783853dcfa75e754f08396138a4869e69ac96ef52592c09f7bfe",
+    "intent_declaration_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+    "intent_formal_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+    "intent_source_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+    "intent_source_id": "intent:admissibility:incomplete_unsupported_semantics",
+    "legal_content_cids": [],
+    "security_content_cids": [],
+    "store_snapshot_digest": "sha256:d5674820fae55691d0d6bc39e8ef6fc2edbbc18eb48020b70bb7d0ea599322f6"
+  },
+  "paths": {
+    "envelopes": "envelopes",
+    "expected_decision": "expected_decision.json",
+    "formal_artifacts": "formal_artifacts",
+    "intent_ir": "intent_ir.json",
+    "lineage": "lineage.json"
+  },
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_case_id": "incomplete_unsupported_semantics",
+  "stratum": "abstain"
+}

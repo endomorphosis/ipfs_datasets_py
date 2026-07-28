@@ -1,0 +1,149 @@
+{
+  "case_ids": [
+    "benign_skill",
+    "legal_hard_reject",
+    "security_hard_reject",
+    "abstain_incomplete",
+    "contradiction_grant_and_forbid",
+    "zkp_required_missing_proof"
+  ],
+  "cases": [
+    {
+      "case_id": "benign_skill",
+      "constraint_content_cids": [
+        "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+        "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+      ],
+      "description": "Benign intent with Legal and Security positive grants.",
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "path": "cases/benign_skill",
+      "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "store_snapshot_digest": "sha256:f53d0a2bdbfcceb97eab3a640d5c4d5e153917e71ea8c656177a9d97fa1073c6",
+      "stratum": "allow"
+    },
+    {
+      "case_id": "legal_hard_reject",
+      "constraint_content_cids": [
+        "bafkreic745j5tp3eq54pioezg65ep4bfbggqjxe4xoprl2cnszluszyeqm",
+        "bafkreignokmlzraekvnfwaooviqn3xiova7lvaqbae3hez25h4dcmuz2ea"
+      ],
+      "description": "Legally risky intent forbidden by an attested Legal hard constraint.",
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "legal_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+      "intent_content_cid": "bafkreifz2hvhsl43v6b6yusiojy7k64tx65hduqucvuoiingnp7gdeyuju",
+      "intent_source_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+      "path": "cases/legal_hard_reject",
+      "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "store_snapshot_digest": "sha256:700530b3f07bfafbe7dbea12c5375058e6b9ba4482c471e3d1e58d8ac0d5b62f",
+      "stratum": "legal_reject"
+    },
+    {
+      "case_id": "security_hard_reject",
+      "constraint_content_cids": [
+        "bafkreidyeafi3g626sbrxjkq4ywnifh55vxac3snxiolsou6gx4z4qnjzi",
+        "bafkreigrlcc524hpwrflehhlcdwldvz6hjqfqkmz27er7f73dvzhmgjjke"
+      ],
+      "description": "Security-sensitive intent forbidden by an attested Security hard constraint.",
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreif4anmvhr2scitiirzxpcnnrcj6ikpgvfrt6bbugskaiqo6kzefcu",
+      "intent_content_cid": "bafkreieoe433gsimyvnh5ittuqakuyrrv5hwhbvcflw3nbyzlh3p2kulea",
+      "intent_source_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+      "path": "cases/security_hard_reject",
+      "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "store_snapshot_digest": "sha256:19f3dffcd5db59a58afd3ef791cabfda9438412265df286c6b03053d3de205c1",
+      "stratum": "security_reject"
+    },
+    {
+      "case_id": "abstain_incomplete",
+      "constraint_content_cids": [],
+      "description": "Incomplete unsupported semantics with no constraints → abstain.",
+      "expected_reason_codes": [
+        "missing_evidence",
+        "semantics_unsupported"
+      ],
+      "expected_status": "abstain",
+      "intent_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+      "intent_content_cid": "bafkreia5muhdbbzfpa4fhxh2oxtvj4edsyjyusdj42nms3xvewjmbh337y",
+      "intent_source_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+      "path": "cases/abstain_incomplete",
+      "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "store_snapshot_digest": "sha256:d5674820fae55691d0d6bc39e8ef6fc2edbbc18eb48020b70bb7d0ea599322f6",
+      "stratum": "abstain"
+    },
+    {
+      "case_id": "contradiction_grant_and_forbid",
+      "constraint_content_cids": [
+        "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+        "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+        "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+      ],
+      "description": "Same obligation has Legal grant and Legal forbid → reject contradiction.",
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "legal_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "path": "cases/contradiction_grant_and_forbid",
+      "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "store_snapshot_digest": "sha256:9e56a5d758b078fda09d20a2be61987c008a6415d840a9a612438019b5d3db2e",
+      "stratum": "contradiction"
+    },
+    {
+      "case_id": "zkp_required_missing_proof",
+      "constraint_content_cids": [
+        "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+        "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+      ],
+      "description": "Grants present but zkp-required profile has no Legal attestations → abstain.",
+      "expected_reason_codes": [
+        "zkp_missing"
+      ],
+      "expected_status": "abstain",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "path": "cases/zkp_required_missing_proof",
+      "profile_config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+      "profile_id": "zkp-required",
+      "store_snapshot_digest": "sha256:f53d0a2bdbfcceb97eab3a640d5c4d5e153917e71ea8c656177a9d97fa1073c6",
+      "stratum": "zkp_abstain"
+    }
+  ],
+  "decision_interface": "AdmissibilityDecision@1",
+  "default_profile_id": "legal-strict",
+  "description": "Offline multi-family proof-corpus fixtures for end-to-end IntentAdmissibilityGate@1 integration. Each case pins full lineage CIDs from Intent source formalization through constraint envelopes to the gate decision. No network required.",
+  "expected_strata": [
+    "abstain",
+    "allow",
+    "contradiction",
+    "legal_reject",
+    "security_reject",
+    "zkp_abstain"
+  ],
+  "gate_interface": "IntentAdmissibilityGate@1",
+  "interface": "LogicAdmissibilityGateFixtures@1",
+  "schema_version": "logic-admissibility-gate-fixtures/v1",
+  "source_intent_fixtures": "tests/fixtures/intent_ir/admissibility"
+}

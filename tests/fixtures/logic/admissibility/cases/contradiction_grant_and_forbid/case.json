@@ -1,0 +1,89 @@
+{
+  "case_id": "contradiction_grant_and_forbid",
+  "description": "Same obligation has Legal grant and Legal forbid → reject contradiction.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "legal_forbid",
+    "security"
+  ],
+  "expected_decision": {
+    "attestation_results": [],
+    "config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+    "constraint_cids": [
+      "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+    "interface": "AdmissibilityDecision@1",
+    "profile_id": "legal-strict",
+    "reason_codes": [
+      "constraint_contradiction",
+      "legal_hard_constraint"
+    ],
+    "schema_version": "admissibility-decision/v1",
+    "status": "reject",
+    "store_snapshot_digest": "sha256:9e56a5d758b078fda09d20a2be61987c008a6415d840a9a612438019b5d3db2e"
+  },
+  "expected_reason_codes": [
+    "constraint_contradiction",
+    "legal_hard_constraint"
+  ],
+  "expected_status": "reject",
+  "lineage": {
+    "constraint_artifact_cids": [
+      "bafkreiakfi2vxxklnbp33bfj34jrmy3v7mt7hckgg4fjekqpiei274zthu",
+      "bafkreibqkgraopcnw3lhvdv5vvfeazuwuvt23ajg5mdp5tnpfdzj2khbx4",
+      "bafkreig32la76u3sdfq3elv2ib5xkjjpeqopugk7gs6m5sx7pcyesprmu4"
+    ],
+    "constraint_content_cids": [
+      "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "corpus_content_cids": [
+      "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+      "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_artifact_digest": "sha256:1bdd4bb8dea81a7f445176d448f9cb8411fdccb52b9f309f9d1ef70c7d0bd991",
+    "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+    "intent_content_digest": "sha256:6f27e659e8879c2497044cf571f0f01de0dde5d517d27227311839824187b477",
+    "intent_declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+    "intent_formal_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+    "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+    "intent_source_id": "intent:admissibility:benign_skill",
+    "legal_artifact_cid": "bafkreiakfi2vxxklnbp33bfj34jrmy3v7mt7hckgg4fjekqpiei274zthu",
+    "legal_artifact_digest": "sha256:0a2a355bdd4b685fbd84a9df13166375fb27f38946370a922a0f4111aff3333d",
+    "legal_content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+    "legal_content_cids": [
+      "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+      "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+    ],
+    "legal_forbid_artifact_cid": "bafkreibqkgraopcnw3lhvdv5vvfeazuwuvt23ajg5mdp5tnpfdzj2khbx4",
+    "legal_forbid_content_cid": "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+    "security_artifact_cid": "bafkreig32la76u3sdfq3elv2ib5xkjjpeqopugk7gs6m5sx7pcyesprmu4",
+    "security_artifact_digest": "sha256:dbd2c1ff53721961b22eba407b75252f241cfa195f34bccecaff78b0493e2ca7",
+    "security_content_cid": "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+    "security_content_cids": [
+      "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm"
+    ],
+    "store_snapshot_digest": "sha256:9e56a5d758b078fda09d20a2be61987c008a6415d840a9a612438019b5d3db2e"
+  },
+  "paths": {
+    "envelopes": "envelopes",
+    "expected_decision": "expected_decision.json",
+    "formal_artifacts": "formal_artifacts",
+    "intent_ir": "intent_ir.json",
+    "lineage": "lineage.json"
+  },
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_case_id": "benign_skill",
+  "stratum": "contradiction"
+}
