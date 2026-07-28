@@ -625,7 +625,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-023 Define shared constraint and applicability contracts
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
