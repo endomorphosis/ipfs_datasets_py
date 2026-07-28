@@ -48,6 +48,7 @@ _TOKEN_RE: Final = re.compile(r"[a-z0-9]+")
 _TEMPORAL_CUE_RE: Final = re.compile(
     r"\b("
     r"after|before|within|until|by|during|following|"
+    r"annual|annually|monthly|weekly|daily|"
     r"\d+\s*(?:day|days|hour|hours|week|weeks|month|months|year|years)|"
     r"calendar\s+day|business\s+day"
     r")\b",
@@ -87,7 +88,8 @@ def _token_stem_variants(word: str) -> frozenset[str]:
     """Expand a normalized token with light inflectional variants.
 
     Used only for closed-vocabulary matching so past participles such as
-    ``resolved`` can align to the atom ``resolve`` without an LLM.
+    ``resolved`` can align to the atom ``resolve`` without an LLM, and so
+    frequency adverbs such as ``annually`` align to evidence ``annual``.
     """
 
     variants = {word}
@@ -103,6 +105,13 @@ def _token_stem_variants(word: str) -> frozenset[str]:
     if len(word) > 5 and word.endswith("ing"):
         variants.add(word[:-3])
         variants.add(word[:-3] + "e")
+    # Frequency / manner adverbs: annually -> annual, monthly -> month.
+    # Require length > 5 so short forms like "only" / "daily" stay intact
+    # (daily would otherwise collapse to the unusable stem "dai").
+    if len(word) > 5 and word.endswith("ly"):
+        stem = word[:-2]
+        if len(stem) >= 4:
+            variants.add(stem)
     return frozenset(variants)
 
 
