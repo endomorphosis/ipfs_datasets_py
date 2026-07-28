@@ -1,0 +1,1118 @@
+{
+  "bound_interfaces": {
+    "capability": "AuthorizationCapability@1",
+    "composer": "AuthorizationQueryComposer@1",
+    "decision": "AdmissibilityDecision@1",
+    "gate": "IntentAdmissibilityGate@1",
+    "invocation_envelope": "InvocationIntentEnvelope@1",
+    "portfolio": "AuthorizationPortfolio@1",
+    "proof_envelope": "AttestedProofEnvelope@1",
+    "reason": "AdmissibilityReason@1",
+    "receipt": "DecisionReceipt@1"
+  },
+  "case_ids": [
+    "allow_mcp_read_public_record",
+    "allow_prompt_read_public_record",
+    "allow_skill_read_public_record",
+    "ambiguous_conflicting_interpretations",
+    "cache_substitution_membership_only",
+    "capability_denied_admin",
+    "capability_granted_read",
+    "conditional_obligation_unmet",
+    "conflicting_grant_and_forbid",
+    "data_egress_blocked",
+    "deny_explicit_legal_forbid",
+    "destructive_effect_requires_proof",
+    "exception_scope_grants_narrow_allow",
+    "exhaustion_query_budget",
+    "expired_authority_window",
+    "filesystem_scope_violation",
+    "metamorphic_relevant_vs_irrelevant",
+    "missing_law_no_applicable_authority",
+    "network_destination_denied",
+    "poisoned_ranking_neighbors",
+    "race_revocation_toctou",
+    "replay_consumed_receipt",
+    "revoked_authority_root",
+    "rollback_plan_required_and_bound",
+    "subprocess_execution_denied",
+    "superseded_authority_parent",
+    "tampered_proof_bytes",
+    "trust_zone_mismatch",
+    "wrong_argument_commitment",
+    "wrong_audience_binding",
+    "wrong_corpus_root",
+    "wrong_effective_time",
+    "wrong_environment_binding",
+    "wrong_tenant_scope",
+    "wrong_tool_version",
+    "zkp_circuit_mismatch",
+    "zkp_malformed_proof",
+    "zkp_public_input_mismatch",
+    "zkp_real_direct_verification",
+    "zkp_simulated_never_allows",
+    "zkp_vk_mismatch"
+  ],
+  "case_index": [
+    {
+      "case_id": "allow_mcp_read_public_record",
+      "categories": [
+        "authority_outcome",
+        "invocation_equivalence"
+      ],
+      "equivalence_group": "equiv:read_public_record",
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "mcp_tool",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "equivalence",
+        "mcp",
+        "positive_grant"
+      ]
+    },
+    {
+      "case_id": "allow_prompt_read_public_record",
+      "categories": [
+        "authority_outcome",
+        "invocation_equivalence"
+      ],
+      "equivalence_group": "equiv:read_public_record",
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "prompt",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "equivalence",
+        "positive_grant",
+        "prompt"
+      ]
+    },
+    {
+      "case_id": "allow_skill_read_public_record",
+      "categories": [
+        "authority_outcome",
+        "invocation_equivalence"
+      ],
+      "equivalence_group": "equiv:read_public_record",
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "equivalence",
+        "positive_grant",
+        "skillcenter"
+      ]
+    },
+    {
+      "case_id": "ambiguous_conflicting_interpretations",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "semantics_unsupported",
+        "missing_evidence"
+      ],
+      "expected_status": "abstain",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "abstain",
+        "ambiguous"
+      ]
+    },
+    {
+      "case_id": "cache_substitution_membership_only",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "missing_evidence"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "cache_substitution",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "capability_denied_admin",
+      "categories": [
+        "capability",
+        "capability_scope"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "capability",
+        "denied",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "capability_granted_read",
+      "categories": [
+        "capability",
+        "capability_scope"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "capability",
+        "granted"
+      ]
+    },
+    {
+      "case_id": "conditional_obligation_unmet",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "missing_evidence"
+      ],
+      "expected_status": "abstain",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "abstain",
+        "conditional"
+      ]
+    },
+    {
+      "case_id": "conflicting_grant_and_forbid",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "legal_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "conflicting",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "data_egress_blocked",
+      "categories": [
+        "capability_scope",
+        "data_egress"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "data_egress",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "deny_explicit_legal_forbid",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "legal_hard_constraint",
+        "constraint_contradiction"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "deny",
+        "legal_forbid",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "destructive_effect_requires_proof",
+      "categories": [
+        "capability_scope",
+        "destructive"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint",
+        "missing_evidence"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "destructive",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "exception_scope_grants_narrow_allow",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "exception"
+      ]
+    },
+    {
+      "case_id": "exhaustion_query_budget",
+      "categories": [
+        "concurrency"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "prover_unavailable",
+        "corpus_unavailable"
+      ],
+      "expected_status": "abstain",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "abstain",
+        "concurrency",
+        "exhaustion"
+      ]
+    },
+    {
+      "case_id": "expired_authority_window",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "expired",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "filesystem_scope_violation",
+      "categories": [
+        "capability_scope",
+        "filesystem"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "filesystem",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "metamorphic_relevant_vs_irrelevant",
+      "categories": [
+        "metamorphic"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "metamorphic"
+      ]
+    },
+    {
+      "case_id": "missing_law_no_applicable_authority",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "missing_evidence",
+        "corpus_unavailable"
+      ],
+      "expected_status": "abstain",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "abstain",
+        "missing"
+      ]
+    },
+    {
+      "case_id": "network_destination_denied",
+      "categories": [
+        "capability_scope",
+        "network"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "network",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "poisoned_ranking_neighbors",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "missing_evidence"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "poisoned_neighbors",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "race_revocation_toctou",
+      "categories": [
+        "concurrency"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "concurrency",
+        "race",
+        "reject"
+      ]
+    },
+    {
+      "case_id": "replay_consumed_receipt",
+      "categories": [
+        "concurrency"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "concurrency",
+        "reject",
+        "replay"
+      ]
+    },
+    {
+      "case_id": "revoked_authority_root",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "reject",
+        "revoked"
+      ]
+    },
+    {
+      "case_id": "rollback_plan_required_and_bound",
+      "categories": [
+        "capability_scope",
+        "rollback"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "rollback"
+      ]
+    },
+    {
+      "case_id": "subprocess_execution_denied",
+      "categories": [
+        "capability_scope",
+        "subprocess"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "reject",
+        "subprocess"
+      ]
+    },
+    {
+      "case_id": "superseded_authority_parent",
+      "categories": [
+        "authority_outcome"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "reject",
+        "superseded"
+      ]
+    },
+    {
+      "case_id": "tampered_proof_bytes",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "zkp_verify_failed"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "tamper"
+      ]
+    },
+    {
+      "case_id": "trust_zone_mismatch",
+      "categories": [
+        "capability_scope",
+        "trust_zone"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "security_hard_constraint",
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "mismatch",
+        "reject",
+        "trust_zone"
+      ]
+    },
+    {
+      "case_id": "wrong_argument_commitment",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "invalid_intent"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_arguments"
+      ]
+    },
+    {
+      "case_id": "wrong_audience_binding",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_audience"
+      ]
+    },
+    {
+      "case_id": "wrong_corpus_root",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_root"
+      ]
+    },
+    {
+      "case_id": "wrong_effective_time",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "missing_evidence"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_time"
+      ]
+    },
+    {
+      "case_id": "wrong_environment_binding",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_environment"
+      ]
+    },
+    {
+      "case_id": "wrong_tenant_scope",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_tenant"
+      ]
+    },
+    {
+      "case_id": "wrong_tool_version",
+      "categories": [
+        "adversarial_integrity"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "invalid_intent"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "adversarial",
+        "reject",
+        "wrong_tool"
+      ]
+    },
+    {
+      "case_id": "zkp_circuit_mismatch",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "zkp_verify_failed",
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "circuit_mismatch",
+        "reject",
+        "zkp"
+      ]
+    },
+    {
+      "case_id": "zkp_malformed_proof",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "zkp_verify_failed",
+        "integrity_failure"
+      ],
+      "expected_status": "abstain",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "abstain",
+        "malformed_zkp",
+        "zkp"
+      ]
+    },
+    {
+      "case_id": "zkp_public_input_mismatch",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "zkp_verify_failed",
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "public_input_mismatch",
+        "reject",
+        "zkp"
+      ]
+    },
+    {
+      "case_id": "zkp_real_direct_verification",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "golden",
+      "tags": [
+        "allow",
+        "real_zkp",
+        "zkp"
+      ]
+    },
+    {
+      "case_id": "zkp_simulated_never_allows",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "integrity_failure",
+        "zkp_verify_failed"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "reject",
+        "simulated_zkp",
+        "zkp"
+      ]
+    },
+    {
+      "case_id": "zkp_vk_mismatch",
+      "categories": [
+        "zkp"
+      ],
+      "equivalence_group": null,
+      "expected_reason_codes": [
+        "zkp_verify_failed",
+        "integrity_failure"
+      ],
+      "expected_status": "reject",
+      "invocation_kind": "skillcenter",
+      "license_expression": "CC0-1.0",
+      "privacy_class": "public_synthetic",
+      "stratum": "adversarial",
+      "tags": [
+        "reject",
+        "vk_mismatch",
+        "zkp"
+      ]
+    }
+  ],
+  "cases_path": "cases.json",
+  "cases_sha256": "8c322f84225b6a221d003f02d3dee0ec626a04a26c2d20c5ba2e7779a5a91e3b",
+  "corpus_id": "attested-authorization-golden-v1",
+  "corpus_revision": "lig-040-v1",
+  "coverage_index": {
+    "case_count": 41,
+    "categories": [
+      "adversarial_integrity",
+      "authority_outcome",
+      "capability",
+      "capability_scope",
+      "concurrency",
+      "data_egress",
+      "destructive",
+      "filesystem",
+      "invocation_equivalence",
+      "metamorphic",
+      "network",
+      "rollback",
+      "subprocess",
+      "trust_zone",
+      "zkp"
+    ],
+    "invocation_kinds_present": [
+      "mcp_tool",
+      "prompt",
+      "skillcenter"
+    ],
+    "strata": [
+      "adversarial",
+      "golden"
+    ],
+    "tags": [
+      "abstain",
+      "adversarial",
+      "allow",
+      "ambiguous",
+      "cache_substitution",
+      "capability",
+      "circuit_mismatch",
+      "concurrency",
+      "conditional",
+      "conflicting",
+      "data_egress",
+      "denied",
+      "deny",
+      "destructive",
+      "equivalence",
+      "exception",
+      "exhaustion",
+      "expired",
+      "filesystem",
+      "granted",
+      "legal_forbid",
+      "malformed_zkp",
+      "mcp",
+      "metamorphic",
+      "mismatch",
+      "missing",
+      "network",
+      "poisoned_neighbors",
+      "positive_grant",
+      "prompt",
+      "public_input_mismatch",
+      "race",
+      "real_zkp",
+      "reject",
+      "replay",
+      "revoked",
+      "rollback",
+      "simulated_zkp",
+      "skillcenter",
+      "subprocess",
+      "superseded",
+      "tamper",
+      "trust_zone",
+      "vk_mismatch",
+      "wrong_arguments",
+      "wrong_audience",
+      "wrong_environment",
+      "wrong_root",
+      "wrong_tenant",
+      "wrong_time",
+      "wrong_tool",
+      "zkp"
+    ],
+    "wire_statuses": [
+      "abstain",
+      "allow",
+      "reject"
+    ]
+  },
+  "depends_on_interfaces": [
+    "InvocationIntentEnvelope@1",
+    "AttestedProofEnvelope@1",
+    "AuthorizationQueryComposer@1",
+    "AuthorizationPortfolio@1",
+    "DecisionReceipt@1",
+    "AdmissibilityReason@1"
+  ],
+  "description": "Canonical manifest for the attested-authorization golden and adversarial corpus (LIG-040). Indexes synthetic offline cases covering skill/prompt/MCP equivalence, authority lifecycles, capability and trust-zone scopes, adversarial binding failures, ZKP classes, and concurrency. Fixtures never execute invocations, never require network or optional solvers, and never include private tenant data or secrets.",
+  "equivalence_groups": {
+    "equiv:read_public_record": [
+      "allow_mcp_read_public_record",
+      "allow_prompt_read_public_record",
+      "allow_skill_read_public_record"
+    ]
+  },
+  "evidence_subset": [
+    "golden_coverage",
+    "canonical_manifest",
+    "licensing_privacy",
+    "relevant_irrelevant_mutation",
+    "non_execution_receipt"
+  ],
+  "goal_id": "LIG-G120",
+  "interface": "AttestedAuthorizationGoldenCorpus@1",
+  "license": {
+    "attribution": "ipfs_datasets_py LIG-040 synthetic corpus",
+    "license_expression": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "source_class": "synthetic_fixture"
+  },
+  "non_execution": {
+    "executes_mcp_tools": false,
+    "executes_prompts": false,
+    "executes_skills": false,
+    "requires_network": false,
+    "requires_optional_solver": false,
+    "requires_paid_model": false,
+    "side_effects": false
+  },
+  "privacy": {
+    "argument_representation": "commitment_only",
+    "contains_pii": false,
+    "contains_secrets": false,
+    "network_required": false,
+    "privacy_class": "public_synthetic",
+    "private_data_allowed": false,
+    "raw_prompt_bodies_allowed": false,
+    "raw_tool_arguments_allowed": false
+  },
+  "reason_code_vocabulary": [
+    "constraint_contradiction",
+    "corpus_unavailable",
+    "integrity_failure",
+    "invalid_intent",
+    "invalid_profile",
+    "legal_hard_constraint",
+    "missing_evidence",
+    "no_constraints",
+    "obligations_supported",
+    "prover_unavailable",
+    "security_hard_constraint",
+    "semantics_unsupported",
+    "zkp_missing",
+    "zkp_verify_failed"
+  ],
+  "required_coverage": {
+    "adversarial_integrity": [
+      "poisoned_neighbors",
+      "tamper",
+      "wrong_root",
+      "wrong_tenant",
+      "wrong_audience",
+      "wrong_tool",
+      "wrong_arguments",
+      "wrong_time",
+      "wrong_environment",
+      "cache_substitution"
+    ],
+    "authority_outcomes": [
+      "allow",
+      "deny",
+      "conditional",
+      "exception",
+      "ambiguous",
+      "conflicting",
+      "missing",
+      "expired",
+      "superseded",
+      "revoked"
+    ],
+    "capability_scopes": [
+      "capability",
+      "trust_zone",
+      "data_egress",
+      "filesystem",
+      "network",
+      "subprocess",
+      "destructive",
+      "rollback"
+    ],
+    "concurrency": [
+      "replay",
+      "race",
+      "exhaustion"
+    ],
+    "invocation_kinds": [
+      "skillcenter",
+      "prompt",
+      "mcp_tool"
+    ],
+    "zkp_classes": [
+      "malformed_zkp",
+      "real_zkp",
+      "simulated_zkp",
+      "circuit_mismatch",
+      "vk_mismatch",
+      "public_input_mismatch"
+    ]
+  },
+  "schema_version": "attested-authorization-golden-corpus/v1",
+  "task_id": "LIG-040",
+  "wire_status_vocabulary": [
+    "allow",
+    "reject",
+    "abstain"
+  ]
+}
