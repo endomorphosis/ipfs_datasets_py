@@ -1,0 +1,62 @@
+{
+  "assumptions": [
+    "authorization is single-use for PLAT2-060 one-shot evaluation",
+    "outcomes must not be inspected before evaluation completes",
+    "tuning against this blind holdout is forbidden after authorization",
+    "any code/config/prompt/threshold/population change invalidates this authorization and requires a new experiment identity plus a fresh blind holdout"
+  ],
+  "authorization_artifact_cid": "baguqeera73mnnv6go2f2bcydqtzbasbc5jkossmnm224ydowezr2bal6rvjq",
+  "authorization_artifact_cid_codec": "dag-json",
+  "authorization_artifact_cid_scope": "payload_without_authorization_artifact_cid",
+  "authorization_cid": "baguqeera6hix4s2y5duvbzmrevh7nmdign6q4njo6hyvg7o2kd3dlkzdt22a",
+  "blind_holdout": {
+    "access_receipt_count": 0,
+    "blind_seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+    "blind_seal_unopened": true,
+    "ledger_exists": false,
+    "private_content_absent_from_public_seal": true,
+    "status": "sealed_unopened"
+  },
+  "candidate_freeze_cid": "baguqeerap2muaeecbnwuxybhu2nnrddcnqbcypa4nxojtiuads2zvxu6s2da",
+  "complete": true,
+  "evidence_id": "PLAT2EV055FREEZE",
+  "goal_id": "PLAT2-055",
+  "holdout_authorized": true,
+  "interface": "SemanticRoundtripHoldoutAuthorization@1",
+  "invalidation_policy": {
+    "action_on_change": "mint_new_experiment_identity_and_require_fresh_blind_holdout",
+    "invalidating_change_classes": [
+      "compiler_or_realizer_code",
+      "production_arm_or_config",
+      "metrics_or_facets",
+      "aggregation_or_bootstrap",
+      "noninferiority_margin_or_thresholds",
+      "selection_or_promotion_rules",
+      "intervention_registry",
+      "packets_or_prompts",
+      "provider_model_or_toolchain_identity",
+      "environment",
+      "tests_that_define_acceptance",
+      "population_or_seal_cid",
+      "candidate_source_tree"
+    ],
+    "mutable_after_authorization": false,
+    "retune_against_this_blind_holdout": false
+  },
+  "outcomes_inspected": false,
+  "protocol_authorization": {
+    "authorization_cid": "baguqeera6hix4s2y5duvbzmrevh7nmdign6q4njo6hyvg7o2kd3dlkzdt22a",
+    "candidate_freeze_cid": "baguqeerap2muaeecbnwuxybhu2nnrddcnqbcypa4nxojtiuads2zvxu6s2da",
+    "complete": true,
+    "goal_id": "PLAT2-055",
+    "holdout_authorized": true,
+    "outcomes_inspected": false,
+    "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+    "tuning_permitted": false
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau2-holdout-authorization.v1",
+  "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+  "task_id": "PLAT2-055",
+  "title": "PLAT2-055 holdout access authorization",
+  "tuning_permitted": false
+}
