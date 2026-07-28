@@ -1,0 +1,721 @@
+[
+  {
+    "id": "missing_temporal",
+    "case_family": "selective_repair_activation",
+    "complexity_tier": 1,
+    "source_ref": "benchmarks/semantic_roundtrip/selective_repair.py#activation_fixture_pack/missing_temporal",
+    "source_text": "The controller must delete the records after 30 days.",
+    "allowed_atoms": {
+      "actors": [
+        "controller",
+        "processor"
+      ],
+      "actions": [
+        "delete",
+        "disclose",
+        "retain"
+      ],
+      "objects": [
+        "personal_data",
+        "records"
+      ],
+      "qualifiers": [
+        "after_30_days",
+        "if_requested",
+        "unless_required_by_law",
+        "within_72_hours"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "O",
+          "actor": "controller",
+          "action": "delete",
+          "object": "records",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": [
+            "after_30_days"
+          ]
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir",
+      "activation_fixture_pack_id": "selective-repair-activation-fixture-pack@1",
+      "baseline_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "controller",
+            "action": "delete",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      },
+      "repaired_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "controller",
+            "action": "delete",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": [
+              "after_30_days"
+            ]
+          }
+        ]
+      },
+      "expected_trigger_kinds": [
+        "missing"
+      ],
+      "expected_fields": [
+        "temporal"
+      ],
+      "triggers": [
+        {
+          "canonical_field": "temporal",
+          "confidence": null,
+          "evidence": "activation fixture forces empty temporal despite after_30_days source cue",
+          "kind": "missing",
+          "path": "rules[0].temporal",
+          "rule_index": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "low_confidence_object",
+    "case_family": "selective_repair_activation",
+    "complexity_tier": 1,
+    "source_ref": "benchmarks/semantic_roundtrip/selective_repair.py#activation_fixture_pack/low_confidence_object",
+    "source_text": "The controller must retain the records if requested.",
+    "allowed_atoms": {
+      "actors": [
+        "controller",
+        "processor"
+      ],
+      "actions": [
+        "delete",
+        "disclose",
+        "retain"
+      ],
+      "objects": [
+        "personal_data",
+        "records"
+      ],
+      "qualifiers": [
+        "after_30_days",
+        "if_requested",
+        "unless_required_by_law",
+        "within_72_hours"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "O",
+          "actor": "controller",
+          "action": "retain",
+          "object": "records",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir",
+      "activation_fixture_pack_id": "selective-repair-activation-fixture-pack@1",
+      "baseline_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "controller",
+            "action": "retain",
+            "object": "personal_data",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      },
+      "repaired_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "controller",
+            "action": "retain",
+            "object": "records",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      },
+      "expected_trigger_kinds": [
+        "low_confidence"
+      ],
+      "expected_fields": [
+        "object"
+      ],
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": 0.2,
+          "evidence": "activation fixture forces low-confidence object attachment",
+          "kind": "low_confidence",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "contradictory_modality",
+    "case_family": "selective_repair_activation",
+    "complexity_tier": 1,
+    "source_ref": "benchmarks/semantic_roundtrip/selective_repair.py#activation_fixture_pack/contradictory_modality",
+    "source_text": "The processor must disclose personal data and shall not disclose personal data unless required by law.",
+    "allowed_atoms": {
+      "actors": [
+        "controller",
+        "processor"
+      ],
+      "actions": [
+        "delete",
+        "disclose",
+        "retain"
+      ],
+      "objects": [
+        "personal_data",
+        "records"
+      ],
+      "qualifiers": [
+        "after_30_days",
+        "if_requested",
+        "unless_required_by_law",
+        "within_72_hours"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "F",
+          "actor": "processor",
+          "action": "disclose",
+          "object": "personal_data",
+          "conditions": [],
+          "exceptions": [
+            "unless_required_by_law"
+          ],
+          "temporal": []
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir",
+      "activation_fixture_pack_id": "selective-repair-activation-fixture-pack@1",
+      "baseline_ir": {
+        "rules": [
+          {
+            "modality": "O",
+            "actor": "processor",
+            "action": "disclose",
+            "object": "personal_data",
+            "conditions": [],
+            "exceptions": [],
+            "temporal": []
+          }
+        ]
+      },
+      "repaired_ir": {
+        "rules": [
+          {
+            "modality": "F",
+            "actor": "processor",
+            "action": "disclose",
+            "object": "personal_data",
+            "conditions": [],
+            "exceptions": [
+              "unless_required_by_law"
+            ],
+            "temporal": []
+          }
+        ]
+      },
+      "expected_trigger_kinds": [
+        "contradictory",
+        "missing"
+      ],
+      "expected_fields": [
+        "modality",
+        "exceptions"
+      ],
+      "triggers": [
+        {
+          "canonical_field": "modality",
+          "confidence": null,
+          "evidence": "activation fixture forces obligation/prohibition contradiction",
+          "kind": "contradictory",
+          "path": "rules[0].modality",
+          "rule_index": 0
+        },
+        {
+          "canonical_field": "exceptions",
+          "confidence": null,
+          "evidence": "activation fixture forces missing exception slot for unless_required_by_law",
+          "kind": "missing",
+          "path": "rules[0].exceptions",
+          "rule_index": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "legal_doc_2",
+    "case_family": "legal_corpus",
+    "complexity_tier": 2,
+    "source_ref": "tests/integration/test_deontological_reasoning.py#legal_doc_2",
+    "source_text": "State Regulation 405.7: Financial institutions may share customer data with affiliated companies for marketing purposes. Credit unions are allowed to waive transaction fees for members in good standing.\n\nAll banks must not engage in discriminatory lending practices based on race, gender, or religious affiliation. Institutions shall provide equal access to financial services.",
+    "allowed_atoms": {
+      "actors": [
+        "financial_institutions",
+        "credit_unions",
+        "banks",
+        "institutions",
+        "affiliated_companies"
+      ],
+      "actions": [
+        "share",
+        "waive",
+        "engage",
+        "provide",
+        "disclose",
+        "deny"
+      ],
+      "objects": [
+        "customer_data_with_affiliated_companies",
+        "transaction_fees",
+        "discriminatory_lending_practices",
+        "equal_access_to_financial_services",
+        "account_balances",
+        "loan_applications"
+      ],
+      "qualifiers": [
+        "for_marketing_purposes",
+        "for_members_in_good_standing",
+        "based_on_race_gender_or_religious_affiliation",
+        "within_30_days",
+        "with_written_consent"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "P",
+          "actor": "financial_institutions",
+          "action": "share",
+          "object": "customer_data_with_affiliated_companies",
+          "conditions": [
+            "for_marketing_purposes"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "P",
+          "actor": "credit_unions",
+          "action": "waive",
+          "object": "transaction_fees",
+          "conditions": [
+            "for_members_in_good_standing"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "F",
+          "actor": "banks",
+          "action": "engage",
+          "object": "discriminatory_lending_practices",
+          "conditions": [
+            "based_on_race_gender_or_religious_affiliation"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "institutions",
+          "action": "provide",
+          "object": "equal_access_to_financial_services",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir"
+    }
+  },
+  {
+    "id": "privacy_act_amendment",
+    "case_family": "legal_corpus",
+    "complexity_tier": 2,
+    "source_ref": "tests/integration/test_deontological_reasoning.py#conflicting_doc",
+    "source_text": "Privacy Act Amendment: Banks cannot share customer data with any external entity, including affiliated companies, without explicit written consent from the customer. Financial institutions must delete all customer data within 30 days of account closure.",
+    "allowed_atoms": {
+      "actors": [
+        "banks",
+        "financial_institutions",
+        "external_entities",
+        "customers"
+      ],
+      "actions": [
+        "share",
+        "delete",
+        "retain",
+        "disclose"
+      ],
+      "objects": [
+        "customer_data_with_any_external_entity",
+        "all_customer_data",
+        "account_balances",
+        "marketing_lists"
+      ],
+      "qualifiers": [
+        "explicit_written_consent_from_the_customer",
+        "within_30_days_of_account_closure",
+        "within_90_days_of_account_closure",
+        "for_law_enforcement"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "F",
+          "actor": "banks",
+          "action": "share",
+          "object": "customer_data_with_any_external_entity",
+          "conditions": [],
+          "exceptions": [
+            "explicit_written_consent_from_the_customer"
+          ],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "financial_institutions",
+          "action": "delete",
+          "object": "all_customer_data",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": [
+            "within_30_days_of_account_closure"
+          ]
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir"
+    }
+  },
+  {
+    "id": "fed_reg_1",
+    "case_family": "legal_corpus",
+    "complexity_tier": 2,
+    "source_ref": "tests/integration/test_deontological_reasoning.py#fed_reg_1",
+    "source_text": "Federal Communications Commission Rule 47 CFR 64.1200: Telecommunications companies must obtain prior express written consent before making robocalls to wireless numbers. Companies are required to maintain a Do Not Call registry and honor all requests within 30 days.\n\nTelecom providers shall not block emergency calls under any circumstances. All carriers must provide free access to emergency services including 911.",
+    "allowed_atoms": {
+      "actors": [
+        "telecommunications_companies",
+        "companies",
+        "telecom_providers",
+        "carriers",
+        "wireless_subscribers"
+      ],
+      "actions": [
+        "obtain",
+        "maintain",
+        "honor",
+        "block",
+        "provide",
+        "charge"
+      ],
+      "objects": [
+        "prior_express_written_consent",
+        "do_not_call_registry",
+        "all_requests",
+        "emergency_calls",
+        "free_access_to_emergency_services_including_911",
+        "marketing_calls"
+      ],
+      "qualifiers": [
+        "before_making_robocalls_to_wireless_numbers",
+        "within_30_days",
+        "under_any_circumstances",
+        "within_14_days",
+        "for_existing_customers"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "O",
+          "actor": "telecommunications_companies",
+          "action": "obtain",
+          "object": "prior_express_written_consent",
+          "conditions": [
+            "before_making_robocalls_to_wireless_numbers"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "companies",
+          "action": "maintain",
+          "object": "do_not_call_registry",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "companies",
+          "action": "honor",
+          "object": "all_requests",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": [
+            "within_30_days"
+          ]
+        },
+        {
+          "modality": "F",
+          "actor": "telecom_providers",
+          "action": "block",
+          "object": "emergency_calls",
+          "conditions": [
+            "under_any_circumstances"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "carriers",
+          "action": "provide",
+          "object": "free_access_to_emergency_services_including_911",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir"
+    }
+  },
+  {
+    "id": "dept_memo_1",
+    "case_family": "legal_corpus",
+    "complexity_tier": 2,
+    "source_ref": "tests/integration/test_deontological_reasoning.py#dept_memo_1",
+    "source_text": "Department of Defense Memorandum: Military contractors may use foreign-manufactured equipment if approved through the Defense Security Cooperation Agency. Contractors are allowed up to 72 hours to report security incidents for classified projects.\n\nAll DOD personnel must complete cybersecurity certification every two years. Contractors shall not share classified information with non-US persons.",
+    "allowed_atoms": {
+      "actors": [
+        "military_contractors",
+        "contractors",
+        "dod_personnel",
+        "non_us_persons",
+        "civilian_agencies"
+      ],
+      "actions": [
+        "use",
+        "report",
+        "complete",
+        "share",
+        "disclose",
+        "audit"
+      ],
+      "objects": [
+        "foreign_manufactured_equipment",
+        "security_incidents",
+        "cybersecurity_certification",
+        "classified_information",
+        "unclassified_briefings",
+        "facility_access_logs"
+      ],
+      "qualifiers": [
+        "approved_through_defense_security_cooperation_agency",
+        "within_72_hours",
+        "for_classified_projects",
+        "every_two_years",
+        "with_non_us_persons",
+        "annually",
+        "within_24_hours"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "P",
+          "actor": "military_contractors",
+          "action": "use",
+          "object": "foreign_manufactured_equipment",
+          "conditions": [
+            "approved_through_defense_security_cooperation_agency"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "P",
+          "actor": "contractors",
+          "action": "report",
+          "object": "security_incidents",
+          "conditions": [
+            "for_classified_projects"
+          ],
+          "exceptions": [],
+          "temporal": [
+            "within_72_hours"
+          ]
+        },
+        {
+          "modality": "O",
+          "actor": "dod_personnel",
+          "action": "complete",
+          "object": "cybersecurity_certification",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": [
+            "every_two_years"
+          ]
+        },
+        {
+          "modality": "F",
+          "actor": "contractors",
+          "action": "share",
+          "object": "classified_information",
+          "conditions": [
+            "with_non_us_persons"
+          ],
+          "exceptions": [],
+          "temporal": []
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir"
+    }
+  },
+  {
+    "id": "hr_handbook",
+    "case_family": "legal_corpus",
+    "complexity_tier": 2,
+    "source_ref": "tests/integration/test_deontological_reasoning.py#hr_handbook",
+    "source_text": "Employee Handbook Chapter 7: Staff members may accept promotional items and gifts up to $50 in value from approved business partners. Employees are allowed to discuss general business practices with industry colleagues.\n\nAll workers must not engage in insider trading or share material non-public information. Employees shall report violations of company policy to HR within 5 business days.",
+    "allowed_atoms": {
+      "actors": [
+        "staff_members",
+        "employees",
+        "workers",
+        "managers",
+        "contractors"
+      ],
+      "actions": [
+        "accept",
+        "discuss",
+        "engage",
+        "share",
+        "report",
+        "approve"
+      ],
+      "objects": [
+        "promotional_items_and_gifts",
+        "general_business_practices",
+        "insider_trading",
+        "material_non_public_information",
+        "violations_of_company_policy_to_hr",
+        "client_lists"
+      ],
+      "qualifiers": [
+        "up_to_50_in_value",
+        "from_approved_business_partners",
+        "with_industry_colleagues",
+        "within_5_business_days",
+        "gift_value_over_100",
+        "within_10_business_days"
+      ]
+    },
+    "gold_ir": {
+      "rules": [
+        {
+          "modality": "P",
+          "actor": "staff_members",
+          "action": "accept",
+          "object": "promotional_items_and_gifts",
+          "conditions": [
+            "up_to_50_in_value",
+            "from_approved_business_partners"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "P",
+          "actor": "employees",
+          "action": "discuss",
+          "object": "general_business_practices",
+          "conditions": [
+            "with_industry_colleagues"
+          ],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "F",
+          "actor": "workers",
+          "action": "engage",
+          "object": "insider_trading",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "F",
+          "actor": "workers",
+          "action": "share",
+          "object": "material_non_public_information",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": []
+        },
+        {
+          "modality": "O",
+          "actor": "employees",
+          "action": "report",
+          "object": "violations_of_company_policy_to_hr",
+          "conditions": [],
+          "exceptions": [],
+          "temporal": [
+            "within_5_business_days"
+          ]
+        }
+      ]
+    },
+    "score_bindings": {
+      "binding_kind": "gold_ir"
+    }
+  }
+]
