@@ -1,0 +1,61 @@
+{
+  "actions": [],
+  "control_edges": [],
+  "document_id": "intent:admissibility:incomplete_unsupported_semantics",
+  "entry_action_ids": [],
+  "intent_kind": "declarative",
+  "schema_version": "intent-ir/v1",
+  "sources": [
+    {
+      "container_sha256": "958e70e81d1985b9ec25ef70b7b93907806ac503bc329afa97f9dc5685f64b19",
+      "container_uri": "fixture://intent_ir/admissibility/container/incomplete_unsupported_semantics",
+      "content_cid": "",
+      "content_sha256": "911acb6eee49086f08e083d9fe392fc784084ebec90225b4b763d741c7ccdcc7",
+      "license_expression": "CC0-1.0",
+      "ref_id": "source:incomplete_unsupported_semantics",
+      "review_status": "trusted_fixture",
+      "source_id": "fixture.prompt.incomplete_unsupported_semantics",
+      "source_revision": "fixture-v1",
+      "source_uri": "fixture://intent_ir/admissibility/incomplete_unsupported_semantics",
+      "span": null
+    }
+  ],
+  "statements": [
+    {
+      "arguments": [],
+      "confidence": 0.2,
+      "grounding": "inferred",
+      "kind": "assumption",
+      "modality": "asserted",
+      "normalized_text": "Relevant inputs may or may not be present",
+      "predicate": "",
+      "review_status": "machine_extracted",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "statement_id": "statement:assumption"
+    },
+    {
+      "arguments": [],
+      "confidence": 0.25,
+      "grounding": "inferred",
+      "kind": "goal",
+      "modality": "intended",
+      "normalized_text": "Do something useful with whatever is available",
+      "predicate": "",
+      "review_status": "machine_extracted",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "statement_id": "statement:goal"
+    }
+  ],
+  "tags": [
+    "admissibility",
+    "fixture",
+    "incomplete",
+    "unsupported"
+  ],
+  "terminal_action_ids": [],
+  "title": "Incomplete unsupported free-form intent"
+}
