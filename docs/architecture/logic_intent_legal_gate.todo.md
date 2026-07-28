@@ -1084,7 +1084,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-040 Build the attested-authorization golden and adversarial corpus
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
