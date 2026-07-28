@@ -1,0 +1,35 @@
+{
+  "case_id": "legal_hard_reject",
+  "constraints": [
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal",
+      "role": "prohibition"
+    },
+    {
+      "domain": "security",
+      "family": "security",
+      "name": "security",
+      "role": "grant"
+    }
+  ],
+  "description": "Legal prohibition on legally-risky effect \u2192 hard reject.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "security"
+  ],
+  "expected_reason_codes": [
+    "constraint_contradiction",
+    "legal_hard_constraint"
+  ],
+  "expected_status": "reject",
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/legally_risky_effect.json",
+  "source_formal_case_id": "legally_risky_effect",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/legally_risky_effect.json",
+  "stratum": "legal_reject"
+}

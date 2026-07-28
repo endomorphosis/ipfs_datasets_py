@@ -1,0 +1,34 @@
+{
+  "case_id": "benign_skill",
+  "constraints": [
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal",
+      "role": "grant"
+    },
+    {
+      "domain": "security",
+      "family": "security",
+      "name": "security",
+      "role": "grant"
+    }
+  ],
+  "description": "Benign intent with Legal and Security positive grants.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "security"
+  ],
+  "expected_reason_codes": [
+    "obligations_supported"
+  ],
+  "expected_status": "allow",
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/benign_skill.json",
+  "source_formal_case_id": "benign_skill",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/benign_skill.json",
+  "stratum": "allow"
+}

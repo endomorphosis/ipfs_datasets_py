@@ -1,0 +1,19 @@
+{
+  "attestation_results": [],
+  "config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "constraint_cids": [
+    "bafkreifrsjxprpxzb6eqcljsr5rp3czid7q2utyixc2sx63bjvcbi7yufm",
+    "bafkreihalcdp6qcd6whzkuad4ienp25otgwow3isr4lr32npnfvzyxt7mi"
+  ],
+  "intent_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+  "intent_cid": "bafkreifz2hvhsl43v6b6yusiojy7k64tx65hduqucvuoiingnp7gdeyuju",
+  "interface": "AdmissibilityDecision@1",
+  "profile_id": "legal-strict",
+  "reason_codes": [
+    "constraint_contradiction",
+    "legal_hard_constraint"
+  ],
+  "schema_version": "admissibility-decision/v1",
+  "status": "reject",
+  "store_snapshot_digest": "sha256:505dd96770589a79325d455a3ed93f8d688fc2ba311bb55d3b2e5ab7d89345ab"
+}

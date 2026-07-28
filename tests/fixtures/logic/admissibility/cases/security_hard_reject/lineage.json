@@ -1,0 +1,52 @@
+{
+  "constraint_artifact_cids": [
+    "bafkreibefkdcpfizlhgyfjdozhn2xysx6up6zzs2ubygc6jwnd2xp7upqi",
+    "bafkreieddrexzc7s5xwlcpzqoucshn2ixgvn5xxasckzdcdyy5jx4p4hci"
+  ],
+  "constraint_content_cids": [
+    "bafkreiga4m4pmq35fnosthf22rbr26ngizbeytpng24ev5gmucpw2efxcy",
+    "bafkreihufhrdhqmxkaajnqhb65wmpre6krdxz5aqwmrtbslfajls5un2ta"
+  ],
+  "corpus_content_cids": [
+    "bafkreieoe433gsimyvnh5ittuqakuyrrv5hwhbvcflw3nbyzlh3p2kulea",
+    "bafkreiga4m4pmq35fnosthf22rbr26ngizbeytpng24ev5gmucpw2efxcy",
+    "bafkreihufhrdhqmxkaajnqhb65wmpre6krdxz5aqwmrtbslfajls5un2ta"
+  ],
+  "envelope_records": [
+    {
+      "artifact_cid": "bafkreieddrexzc7s5xwlcpzqoucshn2ixgvn5xxasckzdcdyy5jx4p4hci",
+      "artifact_digest": "sha256:831c497c8bf2edecb13f30750523b748b9aadedee09095918878c7537e3f8712",
+      "content_cid": "bafkreihufhrdhqmxkaajnqhb65wmpre6krdxz5aqwmrtbslfajls5un2ta",
+      "content_digest": "sha256:f429e233c197500096c0e1f76cc7c49e54477cf410b32330c96502572ed1ba98",
+      "family": "legal",
+      "name": "legal"
+    },
+    {
+      "artifact_cid": "bafkreibefkdcpfizlhgyfjdozhn2xysx6up6zzs2ubygc6jwnd2xp7upqi",
+      "artifact_digest": "sha256:242a8627951959cd82a46ec9dbabe257f51fece65aa07061793668f577fe8f82",
+      "content_cid": "bafkreiga4m4pmq35fnosthf22rbr26ngizbeytpng24ev5gmucpw2efxcy",
+      "content_digest": "sha256:c0e338f6437d2b5d299cbad4431d79a646424c4ded36b84af4cca09f6d10b716",
+      "family": "security",
+      "name": "security"
+    }
+  ],
+  "intent_artifact_cid": "bafkreif4anmvhr2scitiirzxpcnnrcj6ikpgvfrt6bbugskaiqo6kzefcu",
+  "intent_artifact_digest": "sha256:bc035953c7521226844737789ad8893e429e6a9633f043434940441de5648515",
+  "intent_content_cid": "bafkreieoe433gsimyvnh5ittuqakuyrrv5hwhbvcflw3nbyzlh3p2kulea",
+  "intent_content_digest": "sha256:8e2737b3490cc55a7ea273a400aa6231af4f6386a22aedb6871959f6fd2a8b20",
+  "intent_declaration_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+  "intent_formal_artifact_cid": "bafkreif4anmvhr2scitiirzxpcnnrcj6ikpgvfrt6bbugskaiqo6kzefcu",
+  "intent_source_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+  "intent_source_id": "sample:intent:de170636a075301097903ba938ec178b",
+  "legal_artifact_cid": "bafkreieddrexzc7s5xwlcpzqoucshn2ixgvn5xxasckzdcdyy5jx4p4hci",
+  "legal_content_cid": "bafkreihufhrdhqmxkaajnqhb65wmpre6krdxz5aqwmrtbslfajls5un2ta",
+  "legal_content_cids": [
+    "bafkreihufhrdhqmxkaajnqhb65wmpre6krdxz5aqwmrtbslfajls5un2ta"
+  ],
+  "security_artifact_cid": "bafkreibefkdcpfizlhgyfjdozhn2xysx6up6zzs2ubygc6jwnd2xp7upqi",
+  "security_content_cid": "bafkreiga4m4pmq35fnosthf22rbr26ngizbeytpng24ev5gmucpw2efxcy",
+  "security_content_cids": [
+    "bafkreiga4m4pmq35fnosthf22rbr26ngizbeytpng24ev5gmucpw2efxcy"
+  ],
+  "store_snapshot_digest": "sha256:bc8600ee48c3c071741e1997af5d5d0efed324afdb15ba5096367800594835bc"
+}
