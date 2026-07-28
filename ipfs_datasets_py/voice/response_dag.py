@@ -122,6 +122,52 @@ def _placeholder_names(template_text: str) -> tuple[str, ...]:
     return tuple(names)
 
 
+def _render_slotted_template(
+    template_text: str,
+    bindings: Sequence[Mapping[str, Any]],
+) -> str:
+    values = {str(binding["slot_name"]): binding["value"] for binding in bindings}
+    try:
+        for _literal, field_name, format_spec, conversion in Formatter().parse(
+            template_text
+        ):
+            if not field_name:
+                continue
+            if field_name not in values or "." in field_name or "[" in field_name:
+                raise AbbyVoiceResponseDAGError(
+                    f"template field {field_name!r} is not a simple bound slot"
+                )
+            if format_spec or conversion:
+                raise AbbyVoiceResponseDAGError(
+                    "template slots must not use conversions or format specs"
+                )
+        return template_text.format_map(values).strip()
+    except (KeyError, TypeError, ValueError) as exc:
+        if isinstance(exc, AbbyVoiceResponseDAGError):
+            raise
+        raise AbbyVoiceResponseDAGError(
+            f"template_text could not be rendered deterministically: {exc}"
+        ) from exc
+
+
+def _freeze_json(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {str(key): _freeze_json(item) for key, item in value.items()}
+        )
+    if isinstance(value, Sequence) and not isinstance(value, str):
+        return tuple(_freeze_json(item) for item in value)
+    return value
+
+
+def _thaw_json(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _thaw_json(item) for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, str):
+        return [_thaw_json(item) for item in value]
+    return value
+
+
 def _edge(source: str, target: str, kind: str) -> dict[str, str]:
     return {
         "id": _stable_id(
@@ -234,6 +280,7 @@ def _normalize_slot_bindings(
                 "slot_name": name,
                 "source_cids": list(source_cids),
                 "value": value,
+                "vocabulary_id": node_id,
             }
         )
     return tuple(result)
@@ -298,6 +345,23 @@ class ResponseDAGAppendCandidate:
             raise AbbyVoiceResponseDAGError("response-DAG nodes must have unique IDs")
         if len(edge_ids) != len(set(edge_ids)):
             raise AbbyVoiceResponseDAGError("response-DAG edges must have unique IDs")
+        node_kinds = [str(node.get("kind") or "") for node in nodes]
+        unsupported_kinds = sorted(
+            set(node_kinds) - {"audio", "response", "template", "vocabulary"}
+        )
+        if unsupported_kinds:
+            raise AbbyVoiceResponseDAGError(
+                "response-DAG contains unsupported node kinds: "
+                + ", ".join(unsupported_kinds)
+            )
+        if node_kinds.count("response") != 1 or node_kinds.count("audio") != 1:
+            raise AbbyVoiceResponseDAGError(
+                "response-DAG append requires exactly one response and one audio node"
+            )
+        if "vocabulary" in node_kinds and node_kinds.count("template") != 1:
+            raise AbbyVoiceResponseDAGError(
+                "vocabulary rows require exactly one slotted template row"
+            )
         known_nodes = set(node_ids)
         for edge in edges:
             if edge.get("source") not in known_nodes or edge.get("target") not in known_nodes:
@@ -313,14 +377,14 @@ class ResponseDAGAppendCandidate:
         object.__setattr__(
             self,
             "nodes",
-            tuple(MappingProxyType(dict(node)) for node in nodes),
+            tuple(_freeze_json(node) for node in nodes),
         )
         object.__setattr__(
             self,
             "edges",
-            tuple(MappingProxyType(dict(edge)) for edge in edges),
+            tuple(_freeze_json(edge) for edge in edges),
         )
-        object.__setattr__(self, "metadata", MappingProxyType(dict(metadata)))
+        object.__setattr__(self, "metadata", _freeze_json(metadata))
 
         computed = _stable_id("response-dag-candidate", self.identity_dict())
         if self.candidate_id and self.candidate_id != computed:
@@ -332,9 +396,9 @@ class ResponseDAGAppendCandidate:
     def identity_dict(self) -> dict[str, Any]:
         return {
             "cache_miss_event_id": self.cache_miss_event_id,
-            "edges": [dict(edge) for edge in self.edges],
-            "metadata": dict(self.metadata),
-            "nodes": [dict(node) for node in self.nodes],
+            "edges": [_thaw_json(edge) for edge in self.edges],
+            "metadata": _thaw_json(self.metadata),
+            "nodes": [_thaw_json(node) for node in self.nodes],
             "output_audio_sha256": self.output_audio_sha256,
             "rendered_text_sha256": self.rendered_text_sha256,
             "schema_version": self.schema_version,
@@ -347,6 +411,26 @@ class ResponseDAGAppendCandidate:
         payload["append_only"] = True
         return payload
 
+    @property
+    def template_rows(self) -> tuple[dict[str, Any], ...]:
+        """Canonical reusable template rows carried by this append."""
+
+        return tuple(
+            _thaw_json(node)
+            for node in self.nodes
+            if node.get("kind") == "template"
+        )
+
+    @property
+    def vocabulary_rows(self) -> tuple[dict[str, Any], ...]:
+        """Canonical grounded vocabulary rows carried by this append."""
+
+        return tuple(
+            _thaw_json(node)
+            for node in self.nodes
+            if node.get("kind") == "vocabulary"
+        )
+
     def file_payloads(self) -> dict[str, bytes]:
         """Return deterministic immutable files for Hub materialization."""
 
@@ -356,10 +440,19 @@ class ResponseDAGAppendCandidate:
         }
         for node in self.nodes:
             path = f"{prefix}/nodes/{node['id']}.json"
-            payloads[path] = _canonical_bytes(dict(node)) + b"\n"
+            payloads[path] = _canonical_bytes(_thaw_json(node)) + b"\n"
         for edge in self.edges:
             path = f"{prefix}/edges/{edge['id']}.json"
-            payloads[path] = _canonical_bytes(dict(edge)) + b"\n"
+            payloads[path] = _canonical_bytes(_thaw_json(edge)) + b"\n"
+        row_groups = {
+            "templates": self.template_rows,
+            "vocabulary": self.vocabulary_rows,
+        }
+        for group, rows in row_groups.items():
+            if rows:
+                payloads[f"{prefix}/rows/{group}.jsonl"] = b"".join(
+                    _canonical_bytes(row) + b"\n" for row in rows
+                )
         return dict(sorted(payloads.items()))
 
     def release_manifest(self) -> dict[str, Any]:
@@ -388,7 +481,12 @@ class ResponseDAGAppendCandidate:
     def materialize(self, root: str | Path) -> dict[str, Any]:
         """Write immutable local files, refusing any mismatched existing path."""
 
-        output_root = Path(root).expanduser().resolve()
+        requested_root = Path(root).expanduser()
+        if requested_root.is_symlink():
+            raise AbbyVoiceResponseDAGError(
+                "response-DAG output root must not be a symlink"
+            )
+        output_root = requested_root.resolve()
         output_root.mkdir(parents=True, exist_ok=True)
         for relative, body in self.file_payloads().items():
             safe = PurePosixPath(relative)
@@ -397,6 +495,11 @@ class ResponseDAGAppendCandidate:
                     f"unsafe response-DAG path: {relative}"
                 )
             target = output_root.joinpath(*safe.parts)
+            resolved_target = target.resolve(strict=False)
+            if not resolved_target.is_relative_to(output_root):
+                raise AbbyVoiceResponseDAGError(
+                    f"response-DAG path escapes output root: {relative}"
+                )
             if target.exists():
                 if not target.is_file() or target.is_symlink():
                     raise AbbyVoiceResponseDAGError(
@@ -409,6 +512,10 @@ class ResponseDAGAppendCandidate:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_name(f".{target.name}.partial")
+            if temporary.exists() or temporary.is_symlink():
+                raise AbbyVoiceResponseDAGError(
+                    f"append-only temporary path already exists: {relative}"
+                )
             temporary.write_bytes(body)
             os.replace(temporary, target)
         return self.release_manifest()
@@ -478,6 +585,14 @@ def append_response_dag_candidate(
         raise AbbyVoiceResponseDAGError(
             "slot bindings require a reusable slotted template"
         )
+    if normalized_template:
+        rendered_from_template = _render_slotted_template(
+            normalized_template, bindings
+        )
+        if rendered_from_template != rendered:
+            raise AbbyVoiceResponseDAGError(
+                "slotted template and vocabulary do not render response_text"
+            )
     template_id = supplied_template_id
     if normalized_template:
         template_id = template_id or stable_template_id(
@@ -496,6 +611,7 @@ def append_response_dag_candidate(
         "id": response_id,
         "intent": intent,
         "kind": "response",
+        "response_id": response_id,
         "slot_names": list(binding_names),
         "spoken_text": rendered,
         "template_id": template_id,
@@ -514,6 +630,7 @@ def append_response_dag_candidate(
             "kind": "template",
             "slot_names": list(placeholders),
             "spoken_template": normalized_template or None,
+            "template_id": template_id,
             "template_text": normalized_template or None,
         }
         nodes.append(template_node)
