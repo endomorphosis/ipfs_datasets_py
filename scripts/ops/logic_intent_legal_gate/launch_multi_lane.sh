@@ -76,6 +76,7 @@ export GROK_CLI_MODEL="${GROK_CLI_MODEL:-grok-4.5}"
 
 PROTECTED=(
   --implementation-protected-path docs/architecture/LOGIC_INTENT_LEGAL_GATE_PLAN.md
+  --implementation-protected-path docs/architecture/INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md
   --implementation-protected-path docs/architecture/logic_intent_legal_gate.objectives.md
   --implementation-protected-path docs/architecture/logic_intent_legal_gate.todo.md
 )

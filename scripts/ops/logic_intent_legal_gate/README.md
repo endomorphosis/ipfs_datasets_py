@@ -5,6 +5,7 @@ Unified, deduplicated task board for LIG (IRF foundation absorbed).
 | Item | Path |
 |------|------|
 | Plan | `docs/architecture/LOGIC_INTENT_LEGAL_GATE_PLAN.md` |
+| Deep authorization design | `docs/architecture/INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md` |
 | Goals | `docs/architecture/logic_intent_legal_gate.objectives.md` |
 | Board | `docs/architecture/logic_intent_legal_gate.todo.md` |
 | Branch | `feature/logic-intent-legal-gate` |
@@ -41,14 +42,14 @@ Environment:
 | `ACCELERATE_ROOT` | `../ipfs_accelerate_py` | for `PYTHONPATH` |
 | `IMPLEMENT` | `1` | set `0` for dry-run equivalent |
 
-Protected paths (implementation agents cannot claim as Outputs): the three
+Protected paths (implementation agents cannot claim as Outputs): the four
 architecture files listed above.
 
-## Initially ready (post-absorption)
+## Authority-hardening continuation
 
-- **LIG-003** — Legal frozen CID residual
-- **LIG-005** — prompt/MCP source adapters
-- **LIG-009** — security constraint cache
-- **LIG-014** — admissibility profiles
+- **LIG-022** — canonical invocation intent envelope
+- **LIG-023** — shared constraint and applicability contracts
 
-Completed foundation (not re-run): LIG-001, LIG-002, LIG-004, LIG-010, LIG-021.
+These are the first file-exclusive continuation roots after the base LIG
+pipeline. Read the board/task-state files for current readiness; base task
+status can advance while the four shards run.
