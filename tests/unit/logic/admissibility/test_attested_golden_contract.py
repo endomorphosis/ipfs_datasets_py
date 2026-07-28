@@ -737,3 +737,48 @@ def test_default_status_mapping_not_weakened_by_allow_only_adversarial(
             continue
         assert case["expected"]["status"] != "allow", case["case_id"]
         assert case["expected"]["cannot_allow"] is True
+
+
+def test_simulated_zkp_cases_never_allow_or_grant_capability(
+    cases: list[dict[str, Any]],
+) -> None:
+    """LIG-041 release gate: simulated ZKP evidence cannot authorize production."""
+
+    hit = 0
+    for case in cases:
+        authorities = case.get("authorities") or []
+        simulated = any(
+            bool(a.get("is_simulated"))
+            or str(a.get("attestation_kind", "")).lower()
+            in {"simulation", "simulated"}
+            or str(a.get("result_authority", "")).lower()
+            in {"simulation", "simulated"}
+            for a in authorities
+        )
+        tags = set(case.get("tags") or [])
+        if not simulated and "simulated_zkp" not in tags:
+            continue
+        hit += 1
+        exp = case["expected"]
+        assert exp["status"] != "allow", case["case_id"]
+        assert exp["cannot_allow"] is True
+        assert exp["grants_dispatch_capability"] is False
+    assert hit >= 1, "expected at least one simulated-ZKP fixture"
+
+
+def test_package_root_exports_include_gate_and_rollout_symbols() -> None:
+    """LIG-041: package facade must expose gate + rollout without leaf imports."""
+
+    import ipfs_datasets_py.logic.admissibility as adm
+
+    for name in (
+        "IntentAdmissibilityGate",
+        "evaluate_admissibility",
+        "AdmissibilityStatus",
+        "AuthorizationRolloutPolicy",
+        "default_rollout_policy",
+        "IntentAuthorizationService",
+        "NON_ALLOWING_AUTHORITY_PATHS",
+    ):
+        assert name in adm.__all__, name
+        assert getattr(adm, name) is not None

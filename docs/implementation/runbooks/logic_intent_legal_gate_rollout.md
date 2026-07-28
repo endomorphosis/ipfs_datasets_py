@@ -13,17 +13,19 @@ a production dispatch.
 
 | Item | Value |
 |------|--------|
-| Task | LIG-020 (goal LIG-G080) |
-| Bundle / lane | `lig/eval-rollout` / `lig-eval` |
+| Task | LIG-020 (goal LIG-G080); extended by **LIG-041** (goal LIG-G120) |
+| Bundle / lane | `lig/eval-rollout` / `lig-eval` → `lig/authorization-release` / `lig-auth-release` |
 | Board namespace | `logic-intent-legal-gate-v1` |
 | Branch | `feature/logic-intent-legal-gate` |
 | State root | `data/agent_supervisor/logic_intent_legal_gate/` |
 | Default disposition without constraints | **reject** (never allow) |
-| Production rollout default | **shadow** |
+| Production rollout default | **shadow** (config defaults `off` / offline `audit`) |
+| Interfaces | `AttestedAuthorizationRollout@1`, `AttestedAuthorizationConformance@1` |
 
-Depends on completed gate and bridge work (LIG-016, LIG-017). Later authority
-hardening (LIG-022…LIG-041) may extend modes and receipts without flipping the
-production default without a canary receipt.
+Depends on completed gate and bridge work (LIG-016, LIG-017) and authority
+hardening (LIG-022…LIG-040). **LIG-041** owns final package exports, registry
+wiring, conformance suite, this runbook's release gates, and release-evidence
+binding. Never flip the production default to enforce without a canary receipt.
 
 ---
 
@@ -171,13 +173,65 @@ Canary requires **zero authority violations**. Any hard-gate regression, silent
 allow, or simulated-proof production authorization aborts promotion and returns
 to shadow or off.
 
-### Enforce (later; not LIG-020 default)
+### Enforce (later; not the production default)
 
-Full enforce is out of band for LIG-020. Later work (LIG-G120 / LIG-039+) may
-add staged policy (`off` → `audit` → `shadow` → `deny-canary` →
-`allow-token-canary` → `enforce`) and redacted telemetry. Until that config
-exists, operators treat **shadow as production default** and require manual
-approval for any enforce-like wiring.
+Full enforce remains operator-gated. Staged policy is now configured via
+`config/intent_authorization_rollout.json` and
+`AuthorizationRolloutPolicy@1`:
+
+`off` → `audit` → `shadow` → `deny-canary` → `allow-token-canary` → `enforce`
+
+Config defaults: **stage=`off`**, **offline_stage=`audit`**,
+**receipt_consumption_enabled=`false`**. Live observation still treats
+**shadow as the first production posture**. Enforce requires explicit legal /
+security / release-owner approval and a current-tree release evidence receipt.
+
+### Deny-canary and allow-token-canary thresholds (LIG-041)
+
+| Gate | Deny-canary | Allow-token-canary |
+|------|-------------|--------------------|
+| Authority violations | **Zero** silent allows | **Zero** silent allows |
+| Simulated ZKP production allow | **Zero** | **Zero** |
+| Cohort | Explicit allowlist + owner + time bound | Same; **reversible** effects only |
+| Receipt consumption | Optional for deny enforcement only | Short-lived one-time receipts only |
+| False-deny budget | Measured and reviewed | Measured; expand only with approval |
+| Approvals | Release owner | Release owner + legal + security |
+| Rollback drill | Required in window | Required in window |
+
+Skipped ladder transitions are rejected by policy validation.
+
+---
+
+## Corpus / circuit / VK / policy promotion (LIG-041)
+
+Promote only with human legal and security review. Bind each promotion to:
+
+1. Proof-corpus manifest root (and store snapshot digest when used)
+2. Revocation snapshot root
+3. Trust / coverage policy digest
+4. Circuit id + verification key (VK) set / trusted-setup id
+5. Rollout config path + digest; profile id + `config_digest`
+6. Exact git tree / commit for datasets (and accelerate if bridge-touched)
+7. Selected tests + exit codes; known gaps; optional capability matrix
+8. Approval identities and timestamps
+
+Never re-validate old receipts under a new policy or corpus root. Simulated
+circuits/VKs never enter production allow paths.
+
+---
+
+## Privacy, retention, incidents
+
+- Telemetry: bounded redacted labels only (`AuthorizationTelemetry@1`). Raw
+  prompts, arguments, formulas, witnesses, secrets, and free-form CIDs are
+  forbidden as labels.
+- Retention: keep redacted shadow/canary evidence for incident review; do not
+  commit private tenant data into golden fixtures.
+- **Incident disable:** set `receipt_consumption_enabled=false` first (or call
+  immediate-disable on the rollout policy), then
+  `IPFS_ACCELERATE_ADMISSIBILITY_ENABLED=0` if observation must stop. Preserve
+  evidence; return to shadow/audit; re-run the LIG-041 validation suite before
+  re-promotion.
 
 ---
 
@@ -250,6 +304,29 @@ python -m pytest \
   test/api/test_agent_supervisor_intent_admissibility.py \
   -q
 ```
+
+### Release / LIG-041 conformance bundle (authoritative for promotion)
+
+```bash
+export PYTHONPATH="${PYTHONPATH:-}:$(pwd)/../ipfs_accelerate_py:$(pwd)"
+
+test -f docs/guides/ATTESTED_INTENT_AUTHORIZATION.md
+test -f docs/implementation/runbooks/logic_intent_legal_gate_rollout.md
+test -f config/intent_authorization_rollout.json
+
+python -m pytest \
+  tests/unit/logic/admissibility/test_attested_golden_contract.py \
+  tests/integration/logic/test_attested_intent_authorization.py \
+  tests/integration/logic/test_intent_admissibility_gate.py \
+  tests/integration/logic/test_ir_family_conformance.py \
+  tests/integration/logic/test_ir_compatibility_exports.py \
+  -q
+```
+
+Populations covered by the release suite: golden, adversarial, metamorphic,
+differential (skill/prompt/MCP equivalence), native-ZK, cache/revocation,
+tenant-privacy, race-TOCTOU, chaos/exhaustion, deterministic rebuild, and
+legacy gate compatibility. Simulated ZKP must never authorize production.
 
 All of the above must pass offline (no network) before canary admission.
 
@@ -371,14 +448,35 @@ Capture before any stage transition past shadow:
 
 - [ ] Profile id and `config_digest`
 - [ ] Exact git commit / tree for datasets (and accelerate if bridge-touched)
-- [ ] Validation command log (exit codes for the pre-canary bundle)
+- [ ] Corpus / revocation / policy roots and circuit/VK identifiers
+- [ ] Rollout config digest (`config/intent_authorization_rollout.json`)
+- [ ] Validation command log (exit codes for pre-canary **and** LIG-041 bundles)
 - [ ] Shadow metrics: allow / reject / abstain counts and sample size
 - [ ] Zero authority-violation attestation for the sample window
-- [ ] Canary cohort definition (who, tools, duration, owner)
+- [ ] Zero simulated-ZKP production allows
+- [ ] Canary cohort definition (who, tools, duration, owner, effect allowlist)
+- [ ] Known gaps and optional-capability coverage matrix
 - [ ] Rollback drill result and timestamps
 - [ ] Operator approvals (release owner; legal/security when enforce is sought)
 
-No production default flip without a canary receipt.
+No production default flip without a canary receipt bound to the exact tree.
+
+### Release evidence binding shape (`AttestedAuthorizationRollout@1`)
+
+Minimum fields for a promotion receipt:
+
+| Field | Purpose |
+|-------|---------|
+| `code_tree` / commit | Exact implementation under test |
+| `corpus_root`, `revocation_root`, `policy_root` | Authority roots |
+| `circuit_ids`, `vk_ids` | ZK / native circuit binding |
+| `profile_id`, `config_digest` | Admissibility policy pin |
+| `rollout_config_digest` | Stage ladder pin |
+| `selected_tests` | Exact pytest targets run |
+| `capabilities` | Optional solver / network matrix |
+| `known_gaps` | Non-blocking absences (never silent) |
+| `approvals` | Human legal / security / release owner |
+| `rollback_drill` | Timestamped disable + restore result |
 
 ---
 
@@ -389,13 +487,21 @@ No production default flip without a canary receipt.
 | Profiles | `ipfs_datasets_py/logic/admissibility/profiles.py` |
 | Gate | `ipfs_datasets_py/logic/admissibility/gate.py` |
 | Reasons | `ipfs_datasets_py/logic/admissibility/reasons.py` |
+| Authorization service / receipts | `ipfs_datasets_py/logic/admissibility/service.py`, `receipt.py`, `enforcement.py` |
+| Telemetry / rollout policy | `ipfs_datasets_py/logic/admissibility/telemetry.py` |
+| Rollout config | `config/intent_authorization_rollout.json` |
+| Proof corpus | `ipfs_datasets_py/logic/proof_corpus/` |
+| Invocation adapters | `ipfs_datasets_py/logic/intent_ir/invocation/` |
+| Package registry | `ipfs_datasets_py/logic/submodule_registry.py` |
 | MCP tools | `ipfs_datasets_py/mcp_server/tools/logic_admissibility_tools.py` |
 | Supervisor bridge | `ipfs_accelerate_py/agent_supervisor/admissibility_bridge.py` |
 | Integration fixtures | `tests/fixtures/logic/admissibility/`, `tests/fixtures/intent_ir/admissibility/` |
+| Attested golden corpus | `tests/fixtures/logic/attested_authorization/` |
+| Attested guide | `docs/guides/ATTESTED_INTENT_AUTHORIZATION.md` |
 | Benchmark fixtures | `tests/fixtures/logic/admissibility/benchmark/` |
 | Multi-lane ops | `scripts/ops/logic_intent_legal_gate/` |
 | Leanstral LegalIR rollout (separate program) | `docs/implementation/runbooks/leanstral_legal_ir_rollout.md` |
 
-This document is the LIG-020 shadow/canary runbook. Later governance tasks may
-extend it with telemetry policy files and release-bound evidence manifests
-without weakening the shadow-default or protected-path rules above.
+This document is the LIG-020 shadow/canary runbook extended by **LIG-041** with
+release conformance, promotion, incident-disable, and rollback evidence rules.
+Do not weaken the shadow-default or protected-path rules above.

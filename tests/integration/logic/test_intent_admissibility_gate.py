@@ -514,3 +514,22 @@ def test_manifest_lineage_entries_match_case_files() -> None:
         assert entry["expected_status"] == expected["status"]
         assert set(entry["expected_reason_codes"]) == set(expected["reason_codes"])
         assert entry["profile_config_digest"] == expected["config_digest"]
+
+
+def test_lig041_package_exports_preserve_gate_evaluate_path() -> None:
+    """LIG-041 facade re-exports must preserve the LIG-016 evaluate entrypoints."""
+
+    import ipfs_datasets_py.logic.admissibility as adm
+    import ipfs_datasets_py.logic.proof_corpus as pc
+
+    assert adm.evaluate_admissibility is evaluate_admissibility
+    assert adm.IntentAdmissibilityGate is IntentAdmissibilityGate
+    assert adm.AdmissibilityDecision is AdmissibilityDecision
+    assert pc.ArtifactEnvelope is ArtifactEnvelope
+    assert pc.ProofCorpusStore is ProofCorpusStore
+    # Production default profile still fail-closed.
+    from ipfs_datasets_py.logic.admissibility import DEFAULT_PROFILE_ID, get_profile
+
+    profile = get_profile(DEFAULT_PROFILE_ID)
+    assert profile.accept_simulated_zkp is False
+    assert profile.allow_without_constraints is False
