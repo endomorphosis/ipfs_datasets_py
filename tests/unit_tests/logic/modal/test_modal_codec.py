@@ -52530,3 +52530,21 @@ def _token_overlap_ratio(left: str, right: str) -> float:
     if not left_tokens:
         return 1.0 if not right_tokens else 0.0
     return len(left_tokens & right_tokens) / len(left_tokens)
+
+def test_flogic_graph_requires_ontology_term_projection_view() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "modal_frame_logic",
+            }
+        ],
+        augment_sparse_legal_projection=False,
+    )
+
+    assert "ontology_term" in graph_data.metadata["frame_logic_projection_views"]
+    assert "ontology_term" in graph_data.metadata[
+        "frame_logic_projection_legal_view_required"
+    ]
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
