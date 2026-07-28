@@ -72,8 +72,28 @@ def _clean_text(value: object) -> str:
     return " ".join(str(value or "").strip().split())
 
 
+def _normalize_numeric_surface(text: str) -> str:
+    """Normalize currency and thousands-grouped numbers for token matching.
+
+    Maps surfaces such as ``$10,000`` / ``10,000`` onto a single digit token
+    ``10000`` so closed-vocabulary atoms like
+    ``transaction_amount_exceeds_10000`` can ground without an LLM.
+    """
+
+    cleaned = re.sub(r"\$\s*", "", text)
+    # Collapse nested thousands separators: 1,234,567 → 1234567.
+    previous = None
+    while previous != cleaned:
+        previous = cleaned
+        cleaned = re.sub(r"(\d),(\d{3})\b", r"\1\2", cleaned)
+    return cleaned
+
+
 def _tokens(value: object) -> tuple[str, ...]:
-    words = _TOKEN_RE.findall(_clean_text(value).lower().replace("_", " "))
+    surface = _normalize_numeric_surface(
+        _clean_text(value).lower().replace("_", " ")
+    )
+    words = _TOKEN_RE.findall(surface)
     normalized: list[str] = []
     for word in words:
         if len(word) > 4 and word.endswith("ies"):
@@ -403,6 +423,11 @@ _EXCEPTION_QUALIFIER_RE: Final = re.compile(
     r"(without|except|unless|prior_written_approval|emergency)",
     re.IGNORECASE,
 )
+# Evidence-side exception framing cues (not atom names).
+_EXCEPTION_CONTEXT_RE: Final = re.compile(
+    r"\b(?:without|except(?:\s+when|\s+if)?|unless)\b",
+    re.IGNORECASE,
+)
 _PASSIVE_BE_RE: Final = re.compile(
     r"\b(?:shall|must|will|may|is|are|be)\s+be\s+\w+",
     re.IGNORECASE,
@@ -410,6 +435,11 @@ _PASSIVE_BE_RE: Final = re.compile(
 _COLLECTIVE_ACTORS: Final = frozenset(
     {"parties", "either_party", "both_parties", "party"}
 )
+# Schema scaffolding tokens that often appear only in closed-vocabulary atom
+# names (e.g. ``transaction_amount_exceeds_10000``) while surface evidence
+# says ``transactions exceeding $10,000``.  Optional only when at least one
+# non-optional content token is present and every required token grounds.
+_OPTIONAL_QUALIFIER_GROUNDING_TOKENS: Final = frozenset({"amount"})
 
 
 def _norm_evidence_text(data: Mapping[str, object]) -> str:
@@ -430,8 +460,13 @@ def _norm_evidence_text(data: Mapping[str, object]) -> str:
     return " ".join(pieces)
 
 
-def _classify_qualifier_facet(atom: str) -> str:
-    """Map a matched qualifier atom to conditions / exceptions / temporal."""
+def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
+    """Map a matched qualifier atom to conditions / exceptions / temporal.
+
+    When *evidence* is supplied, exception framing such as ``without X`` or
+    ``except when required by…`` reclassifies a grounded non-temporal atom as
+    an exception carve-out (legal_doc prohibition style).
+    """
 
     atom_l = str(atom or "").strip().lower()
     if not atom_l:
@@ -449,20 +484,77 @@ def _classify_qualifier_facet(atom: str) -> str:
             for cue in ("without", "except", "prior_written", "emergency")
         ):
             return "exceptions"
-    if _CONDITION_QUALIFIER_RE.search(atom_l):
+
+    is_temporal = bool(_TEMPORAL_QUALIFIER_RE.search(atom_l))
+    is_condition = bool(_CONDITION_QUALIFIER_RE.search(atom_l))
+    # Pure temporal windows keep the temporal facet even under surrounding
+    # "except when…" wording so day-count atoms are never stolen into
+    # exceptions.
+    if is_temporal and not is_condition:
+        return "temporal"
+    if evidence and _exception_framed_in_evidence(evidence, atom_l):
+        return "exceptions"
+    if is_condition:
         return "conditions"
-    if _TEMPORAL_QUALIFIER_RE.search(atom_l):
+    if is_temporal:
         return "temporal"
     if atom_l.startswith("with_"):
         return "conditions"
     return "conditions"
 
 
-def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
-    """True when every token of the qualifier atom is grounded in evidence.
+def _exception_framed_in_evidence(evidence: str, qualifier: str) -> bool:
+    """True when *qualifier* is mentioned under without/except/unless framing.
 
-    Requires precision 1.0 so ``within_30_days`` cannot fire on
-    ``within 10 days`` evidence (the numeric token must match).
+    Looks for an exception cue in the evidence and requires at least one
+    non-trivial qualifier token to appear after that cue (or the cue and the
+    qualifier tokens to co-occur in a short local window).
+    """
+
+    text = _clean_text(evidence).lower()
+    if not text or not _EXCEPTION_CONTEXT_RE.search(text):
+        return False
+    qual_toks = [
+        token
+        for token in _tokens(qualifier)
+        if token not in _OPTIONAL_QUALIFIER_GROUNDING_TOKENS and len(token) > 2
+    ]
+    if not qual_toks:
+        return False
+    # Split on exception cues and inspect the span following each cue.
+    parts = _EXCEPTION_CONTEXT_RE.split(text)
+    # re.split with a capturing pattern keeps delimiters; walk cue → tail pairs.
+    # When the pattern has no capture groups, parts are [pre, post, post, ...].
+    # We only need any post-cue segment that grounds a content token.
+    for index, part in enumerate(parts):
+        if index == 0:
+            continue
+        tail = part
+        # Also accept the immediate preceding token window for "without X".
+        window = tail
+        if index > 0:
+            window = parts[index - 1][-40:] + " " + tail
+        window_exp = _expanded_token_set(window if tail else text)
+        if any(
+            bool(_token_stem_variants(token) & window_exp) for token in qual_toks
+        ):
+            return True
+    # Fallback: co-occurrence of cue + any content token in full evidence.
+    text_exp = _expanded_token_set(text)
+    return any(
+        bool(_token_stem_variants(token) & text_exp) for token in qual_toks
+    )
+
+
+def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
+    """True when every required token of the qualifier atom is grounded.
+
+    Requires precision 1.0 on non-optional tokens so ``within_30_days`` cannot
+    fire on ``within 10 days`` evidence (the numeric token must match).
+
+    Schema scaffolding tokens listed in
+    ``_OPTIONAL_QUALIFIER_GROUNDING_TOKENS`` (e.g. ``amount``) may be absent
+    from surface evidence when at least one required content token grounds.
     """
 
     cand_toks = _tokens(qualifier)
@@ -471,9 +563,25 @@ def _qualifier_fully_grounded(evidence: str, qualifier: str) -> bool:
     text_exp = _expanded_token_set(evidence)
     if not text_exp:
         return False
-    return all(
-        bool(_token_stem_variants(token) & text_exp) for token in cand_toks
-    )
+    required = [
+        token
+        for token in cand_toks
+        if token not in _OPTIONAL_QUALIFIER_GROUNDING_TOKENS
+    ]
+    optional = [
+        token
+        for token in cand_toks
+        if token in _OPTIONAL_QUALIFIER_GROUNDING_TOKENS
+    ]
+    # Never allow an all-optional qualifier (would match empty content).
+    check = required if required else list(cand_toks)
+    if not all(
+        bool(_token_stem_variants(token) & text_exp) for token in check
+    ):
+        return False
+    # Optional tokens improve confidence when present but do not block.
+    _ = optional
+    return True
 
 
 def _harvest_qualifiers_from_evidence(
@@ -500,7 +608,7 @@ def _harvest_qualifiers_from_evidence(
     for qualifier in vocabulary.qualifiers:
         if not _qualifier_fully_grounded(evidence, qualifier):
             continue
-        facet = _classify_qualifier_facet(qualifier)
+        facet = _classify_qualifier_facet(qualifier, evidence)
         buckets[facet].add(qualifier)
     return {
         key: tuple(sorted(values)) for key, values in buckets.items()
@@ -577,6 +685,44 @@ def _merge_qualifier_facets(
     harvested: tuple[str, ...],
 ) -> tuple[str, ...]:
     return tuple(sorted(set(structured) | set(harvested)))
+
+
+def _prefer_exceptions_over_conditions(
+    conditions: tuple[str, ...],
+    exceptions: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Drop dual-placed atoms from conditions when already listed as exceptions.
+
+    Prohibition wording such as ``cannot disclose … without explicit consent,
+    except when required by law enforcement`` often yields the same closed
+    atoms from both structured exception slots and condition harvest.  Gold
+    keeps those carve-outs on the exceptions facet only.
+    """
+
+    if not conditions or not exceptions:
+        return conditions
+    exception_set = set(exceptions)
+    return tuple(atom for atom in conditions if atom not in exception_set)
+
+
+def _reclassify_exception_framed_conditions(
+    conditions: tuple[str, ...],
+    exceptions: tuple[str, ...],
+    evidence: str,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Move condition atoms into exceptions when evidence uses without/except."""
+
+    if not conditions or not _clean_text(evidence):
+        return conditions, exceptions
+    kept: list[str] = []
+    moved: set[str] = set(exceptions)
+    for atom in conditions:
+        facet = _classify_qualifier_facet(atom, evidence)
+        if facet == "exceptions":
+            moved.add(atom)
+        else:
+            kept.append(atom)
+    return tuple(kept), tuple(sorted(moved))
 
 
 @dataclass(frozen=True, slots=True)
@@ -918,8 +1064,9 @@ def project_legal_norms_with_diagnostics(
             data.get("temporal_constraints") or (),
             vocabulary.qualifiers,
         )
+        evidence_text = _norm_evidence_text(data)
         harvested = _harvest_qualifiers_from_evidence(
-            _norm_evidence_text(data),
+            evidence_text,
             vocabulary,
         )
         conditions = _merge_qualifier_facets(
@@ -929,6 +1076,12 @@ def project_legal_norms_with_diagnostics(
             exceptions, harvested["exceptions"]
         )
         temporal = _merge_qualifier_facets(temporal, harvested["temporal"])
+        # Promote without/except-framed condition atoms to exceptions, then
+        # drop any remaining dual placement onto conditions only.
+        conditions, exceptions = _reclassify_exception_framed_conditions(
+            conditions, exceptions, evidence_text
+        )
+        conditions = _prefer_exceptions_over_conditions(conditions, exceptions)
         # Re-score confidences after harvest: structured matches retain their
         # confidence; pure harvest fills use a mid confidence marker.
         if harvested["conditions"] and conditions_conf is None:
