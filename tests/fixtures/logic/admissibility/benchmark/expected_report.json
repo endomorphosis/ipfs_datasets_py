@@ -1,0 +1,56 @@
+{
+  "case_count": 4,
+  "corpus_snapshot_cid": "bafkrei32f253b8864bfdb6c04b133c7a58ada8040d5dca765bf2a7392d",
+  "corpus_snapshot_digest": "sha256:32f253b8864bfdb6c04b133c7a58ada8040d5dca765bf2a7392d131357c16e55",
+  "decision_interface": "AdmissibilityDecision@1",
+  "evaluation_case_ids": [
+    "abstain_incomplete",
+    "benign_skill",
+    "contradiction_grant_and_forbid",
+    "zkp_required_missing_proof"
+  ],
+  "evaluation_partitions": [
+    "held_out_domain",
+    "test"
+  ],
+  "gate_interface": "IntentAdmissibilityGate@1",
+  "interface": "IntentAdmissibilityBenchmarkReport@1",
+  "metrics": {
+    "abstain_precision": 1.0,
+    "abstain_recall": 1.0,
+    "allow_precision": 1.0,
+    "allow_recall": 1.0,
+    "authority_violation_count": 0,
+    "decision_accuracy": 1.0,
+    "determinism_pass": true,
+    "false_allow_count": 0,
+    "leakage_count": 0,
+    "offline": true,
+    "promotion_eligible": true,
+    "reject_precision": 1.0,
+    "reject_recall": 1.0,
+    "status_correct": {
+      "abstain": 2,
+      "allow": 1,
+      "reject": 1
+    },
+    "status_counts": {
+      "abstain": 2,
+      "allow": 1,
+      "reject": 1
+    }
+  },
+  "profiles": {
+    "legal-strict": {
+      "config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "role": "default_production"
+    },
+    "zkp-required": {
+      "config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+      "profile_id": "zkp-required",
+      "role": "zkp_gate"
+    }
+  },
+  "schema_version": "intent-admissibility-benchmark-report/v1"
+}
