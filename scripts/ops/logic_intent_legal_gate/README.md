@@ -30,6 +30,10 @@ scripts/ops/logic_intent_legal_gate/launch_multi_lane.sh
 
 # Single shard foreground
 SHARD=0 SHARD_COUNT=4 scripts/ops/logic_intent_legal_gate/launch_multi_lane.sh --foreground
+
+# Operator status (shards + merge-queued + merge train)
+scripts/ops/logic_intent_legal_gate/status.sh
+scripts/ops/logic_intent_legal_gate/status.sh --json
 ```
 
 Environment:
