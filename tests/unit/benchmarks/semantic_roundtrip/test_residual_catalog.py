@@ -17,20 +17,32 @@ from benchmarks.semantic_roundtrip.metrics import compare_semantic_ir
 from benchmarks.semantic_roundtrip.residual_catalog import (
     BASELINE_ARM_ID,
     DEFAULT_CATALOG_RELATIVE_PATH,
+    DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH,
+    HOLDOUT_BASELINE_E2E_MEAN,
+    HOLDOUT_CASES_RELATIVE_PATH,
     NONZERO_PILOT_CASE_IDS,
     PILOT_CASE_IDS,
+    PILOT_CASES_RELATIVE_PATH,
     PLATEAU_RESIDUAL_CATALOG_INTERFACE,
     PLATEAU_RESIDUAL_CATALOG_SCHEMA,
+    POPULATION_KIND_HOLDOUT,
     ZERO_RESIDUAL_CONTROL_CASE_ID,
     CaseResidualRecord,
     ResidualCatalogError,
     ResidualFacet,
     aggregate_residuals,
     build_case_residual,
+    build_holdout_residual_catalog,
+    build_plateau_residual_catalog,
     compute_facet_residuals,
+    load_holdout_residual_catalog,
     load_plateau_residual_catalog,
+    load_population_matrix_cases,
     parse_plateau_residual_catalog,
+    parse_population_residual_catalog,
+    preregistered_holdout_matrix_cases,
     suggest_trigger_kind,
+    write_holdout_residual_catalog,
     write_plateau_residual_catalog,
 )
 from benchmarks.semantic_roundtrip.selective_repair import RepairTriggerKind
@@ -38,6 +50,7 @@ from benchmarks.semantic_roundtrip.selective_repair import RepairTriggerKind
 
 ROOT = Path(__file__).resolve().parents[4]
 CATALOG_PATH = ROOT / DEFAULT_CATALOG_RELATIVE_PATH
+HOLDOUT_CATALOG_PATH = ROOT / DEFAULT_HOLDOUT_CATALOG_RELATIVE_PATH
 
 
 def _rule(
@@ -346,3 +359,166 @@ def test_parse_rejects_missing_nonzero_pilot_residuals() -> None:
     # before aggregate equality if case validation runs first.
     with pytest.raises(ResidualCatalogError):
         parse_plateau_residual_catalog(broken)
+
+
+def _write_population_fixture(
+    path: Path, cases: list[dict[str, object]]
+) -> Path:
+    path.write_text(
+        json.dumps(cases, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_build_accepts_preregistered_case_population_path(
+    tmp_path: Path,
+) -> None:
+    """Holdout path: build from an explicit preregistered population JSON."""
+
+    holdout_cases = preregistered_holdout_matrix_cases()
+    fixture_rows = [
+        {
+            "id": case.case_id,
+            "source_text": case.source_text,
+            "allowed_atoms": case.allowed_atom_vocabulary.to_dict(),
+            "gold_ir": case.gold_ir.to_dict(),
+        }
+        for case in holdout_cases
+    ]
+    population_path = _write_population_fixture(
+        tmp_path / "holdout_population.json", fixture_rows
+    )
+    loaded = load_population_matrix_cases(population_path)
+    assert [case.case_id for case in loaded] == [
+        case.case_id for case in holdout_cases
+    ]
+
+    catalog = build_plateau_residual_catalog(
+        ROOT,
+        cases_path=population_path,
+        population_kind=POPULATION_KIND_HOLDOUT,
+    )
+    parse_population_residual_catalog(catalog, require_holdout_kind=True)
+
+    assert catalog["population_kind"] == POPULATION_KIND_HOLDOUT
+    assert catalog["interface"] == PLATEAU_RESIDUAL_CATALOG_INTERFACE
+    assert catalog["schema_version"] == PLATEAU_RESIDUAL_CATALOG_SCHEMA
+    assert catalog["baseline"]["arm_id"] == BASELINE_ARM_ID
+    assert catalog["baseline"]["e2e_mean"] == HOLDOUT_BASELINE_E2E_MEAN
+    assert catalog["case_ids"] == [case.case_id for case in holdout_cases]
+    assert set(catalog["case_ids"]).isdisjoint(set(PILOT_CASE_IDS))
+    assert "pilot_case_ids" not in catalog
+    assert catalog["aggregates"]["case_count"] == len(holdout_cases)
+    assert catalog["aggregates"]["total_residual_count"] == len(
+        catalog["residuals"]
+    )
+    assert catalog["aggregates"]["total_residual_count"] > 0
+
+    cases_by_id = {
+        item["case_id"]: item for item in catalog["cases"]  # type: ignore[index]
+    }
+    for case_id in catalog["case_ids"]:  # type: ignore[union-attr]
+        record = cases_by_id[case_id]
+        assert "residuals" in record
+        assert record["residual_count"] == len(record["residuals"])
+        contribution = round(
+            sum(
+                float(facet["loss_contribution"])  # type: ignore[index]
+                for facet in record["residuals"]  # type: ignore[index]
+            ),
+            9,
+        )
+        assert abs(contribution - float(record["forward_loss"])) < 1e-6
+        for facet in record["residuals"]:  # type: ignore[index]
+            assert facet["case_id"] == case_id
+            assert facet["field_path"]
+            assert float(facet["loss_contribution"]) > 0.0  # type: ignore[arg-type]
+
+    # Pilot seal parser must remain fail-closed on holdout payloads.
+    with pytest.raises(ResidualCatalogError, match="population residual"):
+        parse_plateau_residual_catalog(catalog)
+
+
+def test_build_from_pilot_cases_path_preserves_seal() -> None:
+    """Pilot population path keeps sealed field layout (not holdout keys).
+
+    Post-plateau typed_deontic L1 may zero out historical pilot residuals, so
+    this test does not require regenerating the sealed nonzero receipt.  The
+    checked-in pilot catalog remains fail-closed via parse.
+    """
+
+    catalog = build_plateau_residual_catalog(
+        ROOT,
+        cases_path=ROOT / PILOT_CASES_RELATIVE_PATH,
+        population_kind="pilot",
+    )
+    assert catalog["pilot_case_ids"] == list(PILOT_CASE_IDS)
+    assert catalog["nonzero_pilot_case_ids"] == list(NONZERO_PILOT_CASE_IDS)
+    assert catalog["zero_residual_control_case_id"] == (
+        ZERO_RESIDUAL_CONTROL_CASE_ID
+    )
+    assert "population_kind" not in catalog
+    assert "case_ids" not in catalog
+    assert "population_path" not in catalog
+    # Historical pilot seal receipt still validates independently.
+    sealed = load_plateau_residual_catalog(CATALOG_PATH, repo_root=ROOT)
+    parse_plateau_residual_catalog(sealed)
+    assert sealed["pilot_case_ids"] == list(PILOT_CASE_IDS)
+
+
+def test_checked_in_holdout_catalog_parses_with_case_facet_residuals() -> None:
+    assert HOLDOUT_CATALOG_PATH.is_file(), (
+        "holdout_residual_catalog.json must be written by PLAT2-010"
+    )
+    catalog = load_holdout_residual_catalog(
+        HOLDOUT_CATALOG_PATH, repo_root=ROOT
+    )
+
+    assert catalog["population_kind"] == POPULATION_KIND_HOLDOUT
+    assert str(HOLDOUT_CASES_RELATIVE_PATH).replace("\\", "/") in str(
+        catalog["population_path"]
+    )
+    assert catalog["case_ids"]
+    assert set(catalog["case_ids"]).isdisjoint(set(PILOT_CASE_IDS))
+    assert catalog["aggregates"]["case_count"] == len(catalog["case_ids"])
+    assert catalog["aggregates"]["total_residual_count"] == len(
+        catalog["residuals"]
+    )
+    assert catalog["aggregates"]["total_residual_count"] > 0
+    assert catalog["nonzero_case_ids"]
+    assert catalog["baseline"]["arm_id"] == BASELINE_ARM_ID
+
+    for case_id in catalog["nonzero_case_ids"]:  # type: ignore[union-attr]
+        record = next(
+            item
+            for item in catalog["cases"]  # type: ignore[union-attr]
+            if item["case_id"] == case_id
+        )
+        assert record["forward_loss"] > 0.0
+        assert record["residual_count"] > 0
+        assert record["field_paths"]
+        for facet in record["residuals"]:
+            assert facet["case_id"] == case_id
+            assert float(facet["loss_contribution"]) > 0.0
+
+    cid_payload = {
+        key: value for key, value in catalog.items() if key != "catalog_cid"
+    }
+    assert catalog["catalog_cid"] == cid_for_dag_json(cid_payload)
+
+    # Regenerating the holdout catalog must CID-match the checked-in receipt.
+    regenerated = build_holdout_residual_catalog(ROOT)
+    assert regenerated["catalog_cid"] == catalog["catalog_cid"]
+    assert regenerated["case_ids"] == catalog["case_ids"]
+    assert regenerated["residuals"] == catalog["residuals"]
+
+
+def test_write_holdout_catalog_round_trip(tmp_path: Path) -> None:
+    source = build_holdout_residual_catalog(ROOT)
+    out = tmp_path / "holdout_residual_catalog.json"
+    written = write_holdout_residual_catalog(out, catalog=source)
+    reloaded = json.loads(out.read_text(encoding="utf-8"))
+    assert reloaded == written
+    parse_population_residual_catalog(reloaded, require_holdout_kind=True)
+    assert reloaded["catalog_cid"] == source["catalog_cid"]
