@@ -25,7 +25,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-001 Classification and launch preflight
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: harness
@@ -47,7 +47,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-002 Live model and route smokes before schedule
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: harness
@@ -72,7 +72,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-003 Causal autoencoder guidance measurement path
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: harness
@@ -94,7 +94,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-004 Leanstral reliability and rejection taxonomy
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: harness
@@ -119,7 +119,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-005 Selective repair activation harness
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: harness
@@ -141,7 +141,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-006 Modal-spaCy polarity preflight and constructor-only scoring
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: harness
@@ -163,7 +163,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-007 Hybrid and stage-local evaluation modes
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: harness
@@ -185,7 +185,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-008 Hammer/cvc5/Lean as repair admission gates
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: harness
@@ -207,7 +207,7 @@ modes may score stage-local metrics; promotion still requires full gates.
 
 ## EVAL-009 Research matrix re-run and improvement report
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: harness
