@@ -1,0 +1,65 @@
+{
+  "aggregate": {
+    "budget_exceeded_count": 0,
+    "implementable_count": 1,
+    "max_token_count": 93,
+    "mean_omitted_handle_coverage": 1.0,
+    "mean_token_count": 85.0,
+    "packet_count": 2,
+    "soft_warn_token_count": 0
+  },
+  "bindings": {
+    "baseline_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+    "catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+    "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+    "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va"
+  },
+  "evidence_id": "PLAT2EV030PKT",
+  "interface": "RepairDevPacketContextMetrics@1",
+  "metrics_cid": "baguqeeratk3nvuh5po2q4vgbhhgnn5tkbyd72blg4picotvafzbghqhp35wa",
+  "metrics_cid_codec": "dag-json",
+  "metrics_cid_scope": "payload_without_metrics_cid",
+  "packet_token_budget": {
+    "counting_method": "whitespace_split_proxy_v1",
+    "max_tokens": 8192,
+    "omitted_handle_coverage_required": true,
+    "soft_warn_tokens": 6144
+  },
+  "packets": [
+    {
+      "case_id": "low_confidence_object",
+      "expansion_handle_count": 0,
+      "implementable": true,
+      "implementable_blockers": [],
+      "included_expansion_handle_count": 0,
+      "omitted_handle_coverage": 1.0,
+      "omitted_handle_ids": [],
+      "packet_digest": "aef5f3f55d831556b9065619ab14166475b4f9ad9e00d1b3b9ae55ca4244b278",
+      "packet_id": "repair-dev-pkt-metrics-low_confidence_object",
+      "population_kind": "repair_development",
+      "token_budget": 8192,
+      "token_count": 77
+    },
+    {
+      "case_id": "legal_doc_2",
+      "expansion_handle_count": 0,
+      "implementable": false,
+      "implementable_blockers": [
+        "no_accepted_admission",
+        "admission_validator_reject"
+      ],
+      "included_expansion_handle_count": 0,
+      "omitted_handle_coverage": 1.0,
+      "omitted_handle_ids": [],
+      "packet_digest": "c1fa69873f8f238b3a2b6f5e44df104e8ef85e54a4c7cd1ff3a79ddb420b68da",
+      "packet_id": "repair-dev-pkt-metrics-legal_doc_2",
+      "population_kind": "repair_development",
+      "token_budget": 8192,
+      "token_count": 93
+    }
+  ],
+  "population_kind": "repair_development",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-repair-dev-packet-context-metrics.v1",
+  "task_id": "PLAT2-030",
+  "title": "Repair-development packet context metrics"
+}

@@ -17,31 +17,51 @@ from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     DEFAULT_BASELINE_E2E,
     DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
+    DEFAULT_REPAIR_DEV_PACKET_METRICS_RELATIVE_PATH,
+    DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS,
     DEFAULT_VALIDATION_COMMANDS,
+    ExpansionHandle,
     HOLDOUT_BASELINE_E2E,
     HOLDOUT_POPULATION_KIND,
     NON_IMPLEMENTABLE_DISPOSITIONS,
+    PACKET_TOKEN_BUDGET,
     PLATEAU_CODEX_PACKET_EVIDENCE,
     PLATEAU_CODEX_PACKET_INTERFACE,
     PLATEAU_CODEX_PACKET_SCHEMA,
+    PacketBindings,
     PlateauAdmissionReceipt,
     PlateauCodexPacket,
     PlateauCodexPacketError,
     ProofObligation,
     ProverCheckReceipt,
+    REPAIR_DEV_BASELINE_E2E,
+    REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE,
+    REPAIR_DEV_POPULATION_KIND,
     ResidualRef,
     TeacherProposal,
+    assert_catalog_allowed_for_packets,
     baseline_l1_digest,
     build_holdout_codex_packet,
     build_holdout_packet_from_proposal_admission,
     build_holdout_packets_from_residual_catalog,
     build_packet_from_proposal_admission,
     build_plateau_codex_packet,
+    build_repair_dev_codex_packet,
+    build_repair_dev_packet_context_metrics,
+    build_repair_dev_packet_from_proposal_admission,
+    build_repair_dev_packets_from_residual_catalog,
     disposition_is_implementable,
+    extract_catalog_bindings,
     mint_proof_obligations,
+    plan_expansion_handles,
     residual_ref_from_catalog_facet,
     residual_refs_from_catalog,
     stable_residual_id,
+    write_repair_dev_packet_context_metrics,
+)
+from benchmarks.semantic_roundtrip.residual_catalog import (
+    CATALOG_STATUS_NOT_MEASURED,
+    CATALOG_STATUS_UNSUPPORTED,
 )
 from benchmarks.semantic_roundtrip.selective_repair import (
     DECLARED_STRUCTURAL_CONSTRAINTS,
@@ -842,3 +862,465 @@ def test_build_holdout_packets_from_residual_catalog() -> None:
     )
     assert packet.validation_commands
     assert any("pytest" in cmd for cmd in packet.validation_commands)
+
+
+# ---------------------------------------------------------------------------
+# Repair-development population (PLAT2-030 normative path)
+# ---------------------------------------------------------------------------
+
+REPAIR_DEV_CATALOG_PATH = (
+    ROOT
+    / "workspace"
+    / "benchmarks"
+    / "semantic-roundtrip-compositions"
+    / "repair_dev_residual_catalog.json"
+)
+REPAIR_DEV_CONDITIONS_PATH = "rules[0].conditions"
+REPAIR_DEV_PRIOR = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=("if_requested",),
+        ),
+    )
+)
+REPAIR_DEV_CANDIDATE = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=(),
+        ),
+    )
+)
+
+
+def _repair_dev_residual(
+    residual_id: str = "resid-repair-dev-conditions",
+    case_id: str = "low_confidence_object",
+    field_path: str = REPAIR_DEV_CONDITIONS_PATH,
+    catalog_digest: str | None = None,
+) -> ResidualRef:
+    return ResidualRef(
+        residual_id=residual_id,
+        case_id=case_id,
+        field_paths=(field_path,),
+        facet="conditions",
+        estimated_forward_contribution=0.1,
+        catalog_digest=catalog_digest or ("d" * 64),
+        detail="repair_development residual facet",
+    )
+
+
+def _repair_dev_proposal(
+    proposal_id: str = "prop-repair-dev-1",
+    residual_id: str = "resid-repair-dev-conditions",
+    field_path: str = REPAIR_DEV_CONDITIONS_PATH,
+) -> TeacherProposal:
+    return TeacherProposal(
+        proposal_id=proposal_id,
+        teacher="leanstral",
+        residual_ref_ids=(residual_id,),
+        allowed_field_paths=(field_path,),
+        candidate_l1=REPAIR_DEV_CANDIDATE,
+        detail="repair_development selective conditions repair proposal",
+        semantic_authority=False,
+    )
+
+
+def test_repair_dev_constants_and_validation_commands() -> None:
+    assert REPAIR_DEV_BASELINE_E2E == pytest.approx(0.0)
+    assert REPAIR_DEV_POPULATION_KIND == "repair_development"
+    assert DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    assert any(
+        "test_structural_admission" in cmd
+        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+    assert any(
+        "test_plateau_codex_packet" in cmd
+        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+    assert any(
+        "test_holdout_baseline" in cmd
+        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+    assert any(
+        "test_residual_catalog" in cmd
+        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+    assert any(
+        "test_plateau_supervisor_materialize" in cmd
+        for cmd in DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+
+
+def test_assert_catalog_allows_repair_dev_only() -> None:
+    assert REPAIR_DEV_CATALOG_PATH.is_file()
+    catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    kind = assert_catalog_allowed_for_packets(catalog)
+    assert kind == REPAIR_DEV_POPULATION_KIND
+
+    blind = dict(catalog)
+    blind["population_kind"] = "authorized_blind_evaluation"
+    with pytest.raises(PlateauCodexPacketError, match="blind"):
+        assert_catalog_allowed_for_packets(blind)
+
+    pilotish = dict(catalog)
+    pilotish["population_kind"] = "pilot"
+    with pytest.raises(PlateauCodexPacketError, match="population kinds"):
+        assert_catalog_allowed_for_packets(pilotish)
+
+
+def test_repair_dev_accepted_packet_binds_context_and_is_implementable() -> None:
+    catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    residual = _repair_dev_residual(catalog_digest=catalog["catalog_cid"])
+    admission = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=(REPAIR_DEV_CONDITIONS_PATH,),
+    )
+    assert admission.disposition is AdmissionDisposition.ACCEPTED
+
+    packet = build_repair_dev_packet_from_proposal_admission(
+        packet_id="repair-dev-pkt-accept-1",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_ref=residual,
+        proposal=_repair_dev_proposal(),
+        admission=admission,
+        catalog=catalog,
+        acceptance_ids=("ACC-repair-dev-conditions",),
+    )
+    assert packet.implementable is True
+    assert packet.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert packet.baseline_e2e == pytest.approx(REPAIR_DEV_BASELINE_E2E)
+    assert packet.bindings is not None
+    assert packet.bindings.catalog_cid == catalog["catalog_cid"]
+    assert packet.bindings.tree_cid == catalog["tree_cid"]
+    assert packet.bindings.population_cid == catalog["population_cid"]
+    assert packet.bindings.baseline_cid == catalog["baseline"]["report_cid"]
+    assert packet.bindings.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert packet.bindings.assumptions
+    assert packet.bindings.evidence_status
+    assert packet.bindings.acceptance_ids == ("ACC-repair-dev-conditions",)
+    assert packet.bindings.invalidators
+    assert packet.bindings.provenance
+    assert packet.bindings.structural_obligation_ids == packet.proof_obligation_ids
+    assert packet.invariant_context is not None
+    assert packet.invariant_context.failing_facet
+    assert packet.invariant_context.counterexample_handle
+    assert packet.invariant_context.canonical_spec_rule_handles
+    assert packet.invariant_context.changed_ast_dependency_slice
+    assert packet.invariant_context.pilot_regression_requirements
+    assert packet.invariant_context.proof_receipt_digests
+    assert packet.invariant_context.excludes_gold_target_bodies is True
+    assert packet.invariant_context.excludes_blind_ids_sources_gold is True
+    assert packet.token_count is not None
+    assert packet.token_budget == PACKET_TOKEN_BUDGET
+    assert packet.token_count <= PACKET_TOKEN_BUDGET
+    assert packet.omitted_handle_coverage == pytest.approx(1.0)
+    assert packet.validation_commands == DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    payload = packet.to_dict()
+    assert "gold_value" not in json.dumps(payload)
+    assert "source_text" not in json.dumps(payload)
+    assert payload["bindings"]["catalog_cid"] == catalog["catalog_cid"]
+    restored = PlateauCodexPacket.from_dict(payload)
+    assert restored.packet_digest == packet.packet_digest
+    assert restored.bindings is not None
+    assert restored.invariant_context is not None
+
+
+def test_repair_dev_reject_and_not_measured_not_implementable() -> None:
+    catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    residual = _repair_dev_residual(catalog_digest=catalog["catalog_cid"])
+    admission = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_reject_gate(),
+        allowed_field_paths=(REPAIR_DEV_CONDITIONS_PATH,),
+    )
+    packet = build_repair_dev_packet_from_proposal_admission(
+        packet_id="repair-dev-pkt-reject",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_ref=residual,
+        proposal=_repair_dev_proposal(),
+        admission=admission,
+        catalog=catalog,
+    )
+    assert packet.implementable is False
+    assert packet.implementable_blockers
+    assert any("admission" in b or "no_accepted" in b for b in packet.implementable_blockers)
+
+    bindings = extract_catalog_bindings(
+        catalog, case_id="low_confidence_object"
+    )
+    stale_bindings = PacketBindings(
+        baseline_cid=bindings.baseline_cid,
+        tree_cid=bindings.tree_cid,
+        population_cid=bindings.population_cid,
+        catalog_cid=bindings.catalog_cid,
+        population_kind=bindings.population_kind,
+        assumptions=bindings.assumptions,
+        evidence_status=CATALOG_STATUS_NOT_MEASURED,
+        structural_obligation_ids=(),
+        invalidators=bindings.invalidators,
+        acceptance_ids=(),
+        provenance=dict(bindings.provenance),
+    )
+    accept = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=(REPAIR_DEV_CONDITIONS_PATH,),
+    )
+    blocked = build_repair_dev_codex_packet(
+        packet_id="repair-dev-pkt-not-measured",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_repair_dev_proposal(),),
+        admission_results=(accept,),
+        proposal_ids_for_admissions=("prop-repair-dev-1",),
+        bindings=stale_bindings,
+        catalog=catalog,
+    )
+    assert blocked.implementable is False
+    assert any(
+        "evidence_status" in b for b in blocked.implementable_blockers
+    )
+
+    unsupported_bindings = PacketBindings(
+        baseline_cid=bindings.baseline_cid,
+        tree_cid=bindings.tree_cid,
+        population_cid=bindings.population_cid,
+        catalog_cid=bindings.catalog_cid,
+        population_kind=bindings.population_kind,
+        assumptions=bindings.assumptions,
+        evidence_status=CATALOG_STATUS_UNSUPPORTED,
+        structural_obligation_ids=(),
+        invalidators=bindings.invalidators,
+        acceptance_ids=(),
+        provenance=dict(bindings.provenance),
+    )
+    blocked_u = build_repair_dev_codex_packet(
+        packet_id="repair-dev-pkt-unsupported",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_repair_dev_proposal(),),
+        admission_results=(accept,),
+        proposal_ids_for_admissions=("prop-repair-dev-1",),
+        bindings=unsupported_bindings,
+        catalog=catalog,
+    )
+    assert blocked_u.implementable is False
+
+    # Missing required evidence without catalog-derived bindings.
+    missing = build_repair_dev_codex_packet(
+        packet_id="repair-dev-pkt-missing-evidence",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_repair_dev_proposal(),),
+        admission_results=(accept,),
+        proposal_ids_for_admissions=("prop-repair-dev-1",),
+        bindings=None,
+        catalog=None,
+        require_repair_dev_evidence=True,
+    )
+    assert missing.implementable is False
+    assert any(
+        "missing_required_evidence" in b for b in missing.implementable_blockers
+    )
+
+
+def test_repair_dev_stale_bindings_force_non_implementable() -> None:
+    catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    residual = _repair_dev_residual(catalog_digest=catalog["catalog_cid"])
+    accept = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=(REPAIR_DEV_CONDITIONS_PATH,),
+    )
+    stale = PacketBindings(
+        baseline_cid=catalog["baseline"]["report_cid"],
+        tree_cid="baguqeerstale0000000000000000000000000000000000000000000000000",
+        population_cid=catalog["population_cid"],
+        catalog_cid=catalog["catalog_cid"],
+        population_kind=REPAIR_DEV_POPULATION_KIND,
+        assumptions=tuple(catalog.get("assumptions") or ()),
+        evidence_status="semantic_scored",
+        provenance={},
+    )
+    packet = build_repair_dev_codex_packet(
+        packet_id="repair-dev-pkt-stale",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_repair_dev_proposal(),),
+        admission_results=(accept,),
+        proposal_ids_for_admissions=("prop-repair-dev-1",),
+        bindings=stale,
+        catalog=catalog,
+    )
+    assert packet.implementable is False
+    assert any("stale_binding" in b for b in packet.implementable_blockers)
+
+
+def test_expansion_handles_and_token_budget_ledger() -> None:
+    catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    residual = _repair_dev_residual(catalog_digest=catalog["catalog_cid"])
+    accept = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=(REPAIR_DEV_CONDITIONS_PATH,),
+    )
+    big = ExpansionHandle(
+        handle_id="exp-large-slice",
+        content_digest="a" * 64,
+        kind="ast_slice",
+        token_estimate=PACKET_TOKEN_BUDGET,
+        included=True,
+        detail="optional large slice",
+    )
+    small = ExpansionHandle(
+        handle_id="exp-small-cue",
+        content_digest="b" * 64,
+        kind="diagnostic_cue",
+        token_estimate=8,
+        included=True,
+        detail="tiny cue",
+    )
+    planned, omitted, coverage, total = plan_expansion_handles(
+        (small, big),
+        base_token_count=100,
+        token_budget=PACKET_TOKEN_BUDGET,
+    )
+    assert coverage == pytest.approx(1.0)
+    assert "exp-large-slice" in omitted
+    assert any(h.handle_id == "exp-small-cue" and h.included for h in planned)
+    assert total <= PACKET_TOKEN_BUDGET
+
+    packet = build_repair_dev_codex_packet(
+        packet_id="repair-dev-pkt-expand",
+        baseline_l1=REPAIR_DEV_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_repair_dev_proposal(),),
+        admission_results=(accept,),
+        proposal_ids_for_admissions=("prop-repair-dev-1",),
+        catalog=catalog,
+        expansion_handles=planned,
+    )
+    assert packet.omitted_handle_ids
+    assert packet.omitted_handle_coverage == pytest.approx(1.0)
+    assert packet.token_count is not None
+    assert packet.token_count <= PACKET_TOKEN_BUDGET
+
+
+def test_forbidden_gold_body_in_bindings_rejected() -> None:
+    with pytest.raises(PlateauCodexPacketError, match="forbidden"):
+        PacketBindings(
+            baseline_cid="baguqeerabase",
+            tree_cid="baguqeeratree",
+            population_cid="baguqeerapop",
+            catalog_cid="baguqeeracat",
+            population_kind=REPAIR_DEV_POPULATION_KIND,
+            assumptions=(),
+            evidence_status="semantic_scored",
+            provenance={"gold_value": {"action": "delete"}},
+        )
+
+
+def test_build_repair_dev_packets_and_context_metrics(tmp_path: Path) -> None:
+    sealed = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
+    # Project sealed CID bindings onto a conditions-shaped residual so the
+    # synthetic prior/candidate admission path can authorize implementable work.
+    catalog = {
+        "assumptions": sealed.get("assumptions") or (),
+        "baseline": sealed["baseline"],
+        "catalog_cid": sealed["catalog_cid"],
+        "population_cid": sealed["population_cid"],
+        "population_kind": sealed["population_kind"],
+        "provenance": sealed.get("provenance") or {},
+        "residuals": [
+            {
+                "canonical_field": "conditions",
+                "case_id": "low_confidence_object",
+                "field_path": REPAIR_DEV_CONDITIONS_PATH,
+                "loss_contribution": 0.1,
+                "residual_kind": "field_mismatch",
+                "suggested_trigger_kind": "contradictory",
+            }
+        ],
+        "status": {
+            "by_case": {
+                "low_confidence_object": {
+                    "evaluation_status": "semantic_scored",
+                    "reason": "success",
+                    "semantic_score_eligible": True,
+                }
+            }
+        },
+        "tree_cid": sealed["tree_cid"],
+    }
+    refs = residual_refs_from_catalog(
+        catalog, case_ids=("low_confidence_object",), nonzero_only=True
+    )
+    assert refs
+    residual = refs[0]
+    admission = admit_hybrid_repair(
+        REPAIR_DEV_PRIOR,
+        REPAIR_DEV_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=residual.field_paths,
+    )
+    proposal = TeacherProposal(
+        proposal_id="prop-from-repair-catalog",
+        teacher="residual_catalog",
+        residual_ref_ids=(),
+        allowed_field_paths=residual.field_paths,
+        candidate_l1=REPAIR_DEV_CANDIDATE,
+        detail="catalog-driven repair_development proposal",
+    )
+    packets = build_repair_dev_packets_from_residual_catalog(
+        catalog,
+        baseline_l1_by_case={"low_confidence_object": REPAIR_DEV_PRIOR},
+        proposals_by_case={"low_confidence_object": proposal},
+        admissions_by_case={"low_confidence_object": admission},
+        case_ids=("low_confidence_object",),
+        acceptance_ids_by_case={
+            "low_confidence_object": ("ACC-low-confidence",)
+        },
+    )
+    assert len(packets) == 1
+    packet = packets[0]
+    assert packet.implementable is True
+    assert packet.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert packet.packet_id.startswith("repair-dev-pkt-")
+    assert packet.bindings is not None
+    assert packet.invariant_context is not None
+
+    metrics = build_repair_dev_packet_context_metrics(
+        packets, catalog=catalog
+    )
+    assert metrics["interface"] == REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE
+    assert metrics["population_kind"] == REPAIR_DEV_POPULATION_KIND
+    assert metrics["aggregate"]["packet_count"] == 1
+    assert metrics["aggregate"]["implementable_count"] == 1
+    assert metrics["packet_token_budget"]["max_tokens"] == PACKET_TOKEN_BUDGET
+    assert metrics["metrics_cid"]
+    assert metrics["packets"][0]["token_count"] >= 0
+
+    out = tmp_path / "repair_dev_packet_context_metrics.json"
+    written = write_repair_dev_packet_context_metrics(
+        packets, path=out, catalog=catalog
+    )
+    assert out.is_file()
+    loaded = json.loads(out.read_text(encoding="utf-8"))
+    assert loaded["metrics_cid"] == written["metrics_cid"]
+    assert DEFAULT_REPAIR_DEV_PACKET_METRICS_RELATIVE_PATH.endswith(
+        "repair_dev_packet_context_metrics.json"
+    )

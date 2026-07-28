@@ -14,10 +14,13 @@ from benchmarks.semantic_roundtrip.contracts import (
 from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
+    DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS,
     HOLDOUT_BASELINE_E2E,
+    REPAIR_DEV_POPULATION_KIND,
     build_holdout_packet_from_proposal_admission,
     build_packet_from_proposal_admission,
     build_plateau_codex_packet,
+    build_repair_dev_packet_from_proposal_admission,
 )
 from benchmarks.semantic_roundtrip.plateau_supervisor_materialize import (
     BUNDLE_SUPERVISOR_MODULE,
@@ -37,6 +40,9 @@ from benchmarks.semantic_roundtrip.plateau_supervisor_materialize import (
     PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE,
     PLATEAU_SUPERVISOR_NOTE_INTERFACE,
     PLATEAU_SUPERVISOR_TASK_INTERFACE,
+    REPAIR_DEV_BOARD_NAMESPACE,
+    REPAIR_DEV_BUNDLE,
+    REPAIR_DEV_CASE_TO_EDIT_WAVE_TASK,
     BundleSupervisorLaunchSpec,
     MaterializedKind,
     PlateauSupervisorMaterializeError,
@@ -46,12 +52,15 @@ from benchmarks.semantic_roundtrip.plateau_supervisor_materialize import (
     holdout_launch_spec,
     is_holdout_case,
     is_materializer_allowed_path,
+    is_repair_dev_packet,
     load_packets_from_json_path,
     main,
     materialize_holdout_packets,
     materialize_packet,
     materialize_packets,
+    materialize_repair_dev_packets,
     render_launch_markdown,
+    repair_dev_launch_spec,
 )
 from benchmarks.semantic_roundtrip.selective_repair import StructuralTool
 from benchmarks.semantic_roundtrip.structural_admission import (
@@ -752,7 +761,7 @@ def _holdout_rejected_packet(
 
 
 def test_holdout_launch_spec_and_constants() -> None:
-    assert HOLDOUT_BOARD_NAMESPACE == "semantic-roundtrip-plateau-holdout-v1"
+    assert HOLDOUT_BOARD_NAMESPACE == "semantic-roundtrip-plateau-holdout-v2"
     assert HOLDOUT_TASK_PREFIX == "## PLAT2-"
     assert HOLDOUT_BUNDLE.endswith("plateau-holdout/packets")
     assert HOLDOUT_MAX_LANES == 2
@@ -879,7 +888,13 @@ def test_materialize_holdout_packets_one_task_per_implementable() -> None:
 
 
 def test_holdout_edit_wave_mapping_for_registered_cases() -> None:
-    for case_id, wave in HOLDOUT_CASE_TO_EDIT_WAVE_TASK.items():
+    # Limit to the original transitional holdout fixture cases (shared prior/candidate).
+    for case_id in (
+        "missing_temporal",
+        "low_confidence_object",
+        "contradictory_modality",
+    ):
+        wave = HOLDOUT_CASE_TO_EDIT_WAVE_TASK[case_id]
         packet = _holdout_accepted_packet(
             case_id=case_id,
             packet_id=f"holdout-pkt-{case_id.replace('_', '-')}",
@@ -888,3 +903,157 @@ def test_holdout_edit_wave_mapping_for_registered_cases() -> None:
         assert item.edit_wave_task_id == wave
         assert item.case_id == case_id
         assert item.population_kind == "holdout"
+
+
+# ---------------------------------------------------------------------------
+# Repair-development materializer (PLAT2-030 normative path)
+# ---------------------------------------------------------------------------
+
+
+def _repair_dev_residual(
+    residual_id: str = "resid-repair-dev-mat",
+    case_id: str = "low_confidence_object",
+):
+    from benchmarks.semantic_roundtrip.plateau_codex_packet import ResidualRef
+
+    return ResidualRef(
+        residual_id=residual_id,
+        case_id=case_id,
+        field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        facet="conditions",
+        estimated_forward_contribution=0.1,
+        catalog_digest="e" * 64,
+        detail="repair_development residual for materializer tests",
+    )
+
+
+def _repair_dev_proposal(residual_id: str = "resid-repair-dev-mat"):
+    from benchmarks.semantic_roundtrip.plateau_codex_packet import TeacherProposal
+
+    return TeacherProposal(
+        proposal_id="prop-repair-dev-mat-1",
+        teacher="leanstral",
+        residual_ref_ids=(residual_id,),
+        allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        candidate_l1=HOLDOUT_CANDIDATE,
+        detail="repair_development proposal for materializer",
+        semantic_authority=False,
+    )
+
+
+def _repair_dev_accepted_packet(
+    *,
+    packet_id: str = "repair-dev-pkt-mat-accept",
+    case_id: str = "low_confidence_object",
+    catalog: dict | None = None,
+):
+    residual = _repair_dev_residual(
+        residual_id=f"resid-{case_id}-rd",
+        case_id=case_id,
+    )
+    return build_repair_dev_packet_from_proposal_admission(
+        packet_id=packet_id,
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=residual,
+        proposal=_repair_dev_proposal(residual_id=residual.residual_id),
+        admission=admit_hybrid_repair(
+            HOLDOUT_PRIOR,
+            HOLDOUT_CANDIDATE,
+            gate=_accept_gate(),
+            allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        ),
+        case_id=case_id,
+        catalog=catalog,
+        require_repair_dev_evidence=catalog is not None,
+    )
+
+
+def test_repair_dev_launch_spec_and_materialize_det_only() -> None:
+    assert REPAIR_DEV_BOARD_NAMESPACE == HOLDOUT_BOARD_NAMESPACE
+    assert REPAIR_DEV_BUNDLE == HOLDOUT_BUNDLE
+    assert is_holdout_case("legal_doc_2")
+    assert is_holdout_case("hr_handbook")
+    assert REPAIR_DEV_CASE_TO_EDIT_WAVE_TASK["legal_doc_2"] == "PLAT2-050"
+
+    spec = repair_dev_launch_spec()
+    assert spec.board_namespace == REPAIR_DEV_BOARD_NAMESPACE
+    assert spec.task_prefix == HOLDOUT_TASK_PREFIX
+
+    catalog = json.loads(
+        (
+            Path(__file__).resolve().parents[4]
+            / "workspace"
+            / "benchmarks"
+            / "semantic-roundtrip-compositions"
+            / "repair_dev_residual_catalog.json"
+        ).read_text(encoding="utf-8")
+    )
+    packet = _repair_dev_accepted_packet(catalog=catalog)
+    assert packet.implementable is True
+    assert packet.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert is_repair_dev_packet(packet)
+
+    item = materialize_packet(packet)
+    assert item.kind is MaterializedKind.IMPLEMENTABLE
+    assert item.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert item.board_namespace == REPAIR_DEV_BOARD_NAMESPACE
+    assert item.bundle == REPAIR_DEV_BUNDLE
+    assert item.predicted_files
+    for path in item.predicted_files:
+        assert is_materializer_allowed_path(path)
+    assert not any(path.startswith("docs/") for path in item.predicted_files)
+    assert item.validation_commands == DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    assert any("test_holdout_baseline" in cmd for cmd in item.validation_commands)
+    assert any(
+        "test_plateau_codex_packet" in cmd for cmd in item.validation_commands
+    )
+    assert any(
+        "test_structural_admission" in cmd for cmd in item.validation_commands
+    )
+    assert "Repair-development case" in item.body
+    assert item.authorize_merge is False
+    assert item.semantic_authority is False
+
+
+def test_materialize_repair_dev_packets_batch() -> None:
+    catalog = json.loads(
+        (
+            Path(__file__).resolve().parents[4]
+            / "workspace"
+            / "benchmarks"
+            / "semantic-roundtrip-compositions"
+            / "repair_dev_residual_catalog.json"
+        ).read_text(encoding="utf-8")
+    )
+    accepted = _repair_dev_accepted_packet(
+        packet_id="repair-dev-pkt-batch-a",
+        catalog=catalog,
+    )
+    rejected = build_repair_dev_packet_from_proposal_admission(
+        packet_id="repair-dev-pkt-batch-rej",
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=_repair_dev_residual(residual_id="resid-rd-rej"),
+        proposal=_repair_dev_proposal(residual_id="resid-rd-rej"),
+        admission=admit_hybrid_repair(
+            HOLDOUT_PRIOR,
+            HOLDOUT_CANDIDATE,
+            gate=_reject_gate(),
+            allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        ),
+        catalog=catalog,
+    )
+    assert rejected.implementable is False
+
+    receipt = materialize_repair_dev_packets([accepted, rejected])
+    assert receipt.implementable_count == 1
+    assert receipt.obligation_only_count == 1
+    impl = receipt.implementable_items()[0]
+    assert impl.population_kind == REPAIR_DEV_POPULATION_KIND
+    assert impl.board_namespace == REPAIR_DEV_BOARD_NAMESPACE
+    assert impl.predicted_files
+    for path in impl.predicted_files:
+        assert is_materializer_allowed_path(path)
+    assert impl.validation_commands
+    obligation = receipt.obligation_only_items()[0]
+    assert obligation.predicted_files == ()
+    assert obligation.implementable is False

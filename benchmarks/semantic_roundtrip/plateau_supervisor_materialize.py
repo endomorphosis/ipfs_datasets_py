@@ -19,9 +19,12 @@ Launch doctrine (merge branch, max lanes, ``bundle_supervisor`` flags) lives
 in ``docs/benchmarks/semantic_roundtrip_plateau_supervisor_launch.md`` and is
 also exposed as constants / helpers here for machine consumption.
 
-Holdout (PLAT2-030): :func:`materialize_holdout_packets` and
-:func:`holdout_launch_spec` route implementable holdout residuals onto the
-``semantic-roundtrip-plateau-holdout-v1`` board with ``## PLAT2-`` tasks.
+Holdout / repair-development (PLAT2-030): :func:`materialize_holdout_packets`,
+:func:`materialize_repair_dev_packets`, and launch specs route implementable
+residuals onto the ``semantic-roundtrip-plateau-holdout-v2`` board with
+``## PLAT2-`` tasks.  Predicted files stay on the deterministic surface;
+validation commands cover unit tests, repair-development/pilot metrics,
+structural gates, and packet revalidation.
 """
 
 from __future__ import annotations
@@ -44,10 +47,12 @@ from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     DEFAULT_BASELINE_E2E,
     DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
+    DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS,
     DEFAULT_VALIDATION_COMMANDS,
     HOLDOUT_BASELINE_E2E,
     HOLDOUT_POPULATION_KIND,
     PLATEAU_CODEX_PACKET_INTERFACE,
+    REPAIR_DEV_POPULATION_KIND,
     PlateauCodexPacket,
     PlateauCodexPacketError,
     ProofObligation,
@@ -104,11 +109,11 @@ BUNDLE_SUPERVISOR_MODULE: Final = (
     "ipfs_accelerate_py.agent_supervisor.bundle_supervisor"
 )
 
-# Holdout launch doctrine (PLAT2 / plateau-holdout board).
-HOLDOUT_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-holdout-v1"
+# Holdout / repair-development launch doctrine (PLAT2 / plateau-holdout board).
+HOLDOUT_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-holdout-v2"
 HOLDOUT_BUNDLE: Final = "semantic-roundtrip/plateau-holdout/packets"
 HOLDOUT_TASK_PREFIX: Final = "## PLAT2-"
-HOLDOUT_RUNTIME_ROOT: Final = "/var/tmp/hssl-srt-plateau-holdout"
+HOLDOUT_RUNTIME_ROOT: Final = "/var/tmp/hssl-srt-plateau-holdout-v2"
 HOLDOUT_TASKBOARD_RELATIVE_PATH: Final = (
     "docs/implementation/plans/semantic_roundtrip_plateau_holdout.taskboard.todo.md"
 )
@@ -118,6 +123,18 @@ HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
 HOLDOUT_MAX_LANES: Final = 2
 HOLDOUT_MERGE_TARGET_BRANCH: Final = DEFAULT_MERGE_TARGET_BRANCH
 
+# Repair-development aliases (same PLAT2 board; population kind differs).
+REPAIR_DEV_BOARD_NAMESPACE: Final = HOLDOUT_BOARD_NAMESPACE
+REPAIR_DEV_BUNDLE: Final = HOLDOUT_BUNDLE
+REPAIR_DEV_TASK_PREFIX: Final = HOLDOUT_TASK_PREFIX
+REPAIR_DEV_RUNTIME_ROOT: Final = HOLDOUT_RUNTIME_ROOT
+REPAIR_DEV_TASKBOARD_RELATIVE_PATH: Final = HOLDOUT_TASKBOARD_RELATIVE_PATH
+REPAIR_DEV_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
+    HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH
+)
+REPAIR_DEV_MAX_LANES: Final = HOLDOUT_MAX_LANES
+REPAIR_DEV_MERGE_TARGET_BRANCH: Final = HOLDOUT_MERGE_TARGET_BRANCH
+
 # Case id → parallel edit-wave task id (PLAT-08x).
 CASE_TO_EDIT_WAVE_TASK: Final = {
     "legal_doc_1": "PLAT-081",
@@ -126,12 +143,18 @@ CASE_TO_EDIT_WAVE_TASK: Final = {
     "exec_order_1": "PLAT-084",
 }
 
-# Holdout case id → det. compiler edit-wave task (PLAT2-050 lane).
+# Holdout / repair-dev case id → det. compiler edit-wave task (PLAT2-050 lane).
 HOLDOUT_CASE_TO_EDIT_WAVE_TASK: Final = {
     "missing_temporal": "PLAT2-050",
     "low_confidence_object": "PLAT2-050",
     "contradictory_modality": "PLAT2-050",
+    "legal_doc_2": "PLAT2-050",
+    "privacy_act_amendment": "PLAT2-050",
+    "fed_reg_1": "PLAT2-050",
+    "dept_memo_1": "PLAT2-050",
+    "hr_handbook": "PLAT2-050",
 }
+REPAIR_DEV_CASE_TO_EDIT_WAVE_TASK: Final = HOLDOUT_CASE_TO_EDIT_WAVE_TASK
 
 _TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 
@@ -324,26 +347,62 @@ def _edit_wave_hint(case_id: str | None) -> str | None:
 
 
 def is_holdout_case(case_id: str | None) -> bool:
-    """Return whether *case_id* is a preregistered holdout population case."""
+    """Return whether *case_id* is a preregistered holdout / repair-dev case."""
 
     if not case_id:
         return False
     return case_id in HOLDOUT_CASE_TO_EDIT_WAVE_TASK
 
 
-def is_holdout_packet(packet: PlateauCodexPacket) -> bool:
-    """Heuristic: holdout case id, holdout baseline e2e, or holdout detail tag."""
+def is_repair_dev_case(case_id: str | None) -> bool:
+    """Return whether *case_id* is a preregistered repair-development case."""
 
+    return is_holdout_case(case_id)
+
+
+def is_holdout_packet(packet: PlateauCodexPacket) -> bool:
+    """Heuristic: holdout case id, population_kind, baseline e2e, or detail tag."""
+
+    if getattr(packet, "population_kind", None) in {
+        HOLDOUT_POPULATION_KIND,
+        REPAIR_DEV_POPULATION_KIND,
+    }:
+        return True
     if is_holdout_case(packet.case_id):
         return True
     if packet.baseline_e2e is not None and float(packet.baseline_e2e) == float(
         HOLDOUT_BASELINE_E2E
     ):
         detail = (packet.detail or "").lower()
-        if HOLDOUT_POPULATION_KIND in detail or "holdout" in detail:
+        if (
+            HOLDOUT_POPULATION_KIND in detail
+            or REPAIR_DEV_POPULATION_KIND in detail
+            or "holdout" in detail
+            or "repair_development" in detail
+            or "repair-development" in detail
+        ):
             return True
     detail = (packet.detail or "").lower()
-    return HOLDOUT_POPULATION_KIND in detail or "holdout residual" in detail
+    return (
+        HOLDOUT_POPULATION_KIND in detail
+        or REPAIR_DEV_POPULATION_KIND in detail
+        or "holdout residual" in detail
+        or "repair_development residual" in detail
+        or "repair-development residual" in detail
+    )
+
+
+def is_repair_dev_packet(packet: PlateauCodexPacket) -> bool:
+    """Return whether *packet* is a repair-development residual packet."""
+
+    if getattr(packet, "population_kind", None) == REPAIR_DEV_POPULATION_KIND:
+        return True
+    detail = (packet.detail or "").lower()
+    return (
+        REPAIR_DEV_POPULATION_KIND in detail
+        or "repair_development residual" in detail
+        or "repair-development residual" in detail
+    )
 
 
 def _field_change_summary(
@@ -639,6 +698,7 @@ def _implementable_body(packet: PlateauCodexPacket) -> str:
     residual_ids = [item.residual_id for item in packet.residual_refs]
     proposal_ids = [item.proposal_id for item in packet.proposals]
     wave = _edit_wave_hint(packet.case_id)
+    repair_dev = is_repair_dev_packet(packet)
     holdout = is_holdout_packet(packet)
     parts = [
         f"Materialized from sealed {PLATEAU_CODEX_PACKET_INTERFACE} "
@@ -647,16 +707,27 @@ def _implementable_body(packet: PlateauCodexPacket) -> str:
         "realizer/tests surface listed under predicted_files.",
         (
             "Merge only after structural re-admission, packet validation "
-            "commands, and holdout re-score gates pass."
-            if holdout
-            else "Merge only after structural re-admission, packet validation "
-            "commands, and pilot re-score gates pass."
+            "commands, repair-development/pilot metrics, and re-score "
+            "gates pass."
+            if repair_dev
+            else (
+                "Merge only after structural re-admission, packet validation "
+                "commands, and holdout re-score gates pass."
+                if holdout
+                else "Merge only after structural re-admission, packet "
+                "validation commands, and pilot re-score gates pass."
+            )
         ),
         "Proof pass alone is not promotion evidence "
         "(semantic_authority=false).",
     ]
     if packet.case_id:
-        label = "Holdout case" if holdout else "Pilot case"
+        if repair_dev:
+            label = "Repair-development case"
+        elif holdout:
+            label = "Holdout case"
+        else:
+            label = "Pilot case"
         parts.append(f"{label}: `{packet.case_id}`.")
     if wave:
         parts.append(f"Aligns with edit-wave task `{wave}`.")
@@ -726,6 +797,7 @@ def materialize_packet(
     board_namespace: str | None = None,
     bundle: str | None = None,
     force_holdout: bool = False,
+    force_repair_dev: bool = False,
 ) -> MaterializedSupervisorItem:
     """Materialize one sealed packet into a supervisor task or obligation note.
 
@@ -734,8 +806,10 @@ def materialize_packet(
       and nonempty ``validation_commands``.
     * Non-implementable packets produce ``MaterializedKind.OBLIGATION_ONLY``
       notes listing ``proof_obligation_ids``.
-    * Holdout packets (case id / detail / ``force_holdout``) route to the
-      PLAT2 board namespace and packet bundle.
+    * Holdout / repair-development packets route to the PLAT2 board namespace
+      and packets bundle with det.-only predicted files and validation
+      commands covering structural gates, unit tests, metrics, and packet
+      revalidation.
     """
 
     sealed = coerce_packet(packet, verify_digest=verify_digest)
@@ -747,7 +821,13 @@ def materialize_packet(
     task_id = _task_id_for_packet(sealed)
     wave = _edit_wave_hint(sealed.case_id)
     disposition = sealed.primary_disposition.value
-    holdout = force_holdout or is_holdout_packet(sealed)
+    repair_dev = force_repair_dev or is_repair_dev_packet(sealed)
+    holdout = (
+        force_holdout
+        or force_repair_dev
+        or is_holdout_packet(sealed)
+        or repair_dev
+    )
     namespace = (
         board_namespace
         if board_namespace is not None
@@ -760,7 +840,14 @@ def materialize_packet(
         if bundle is not None
         else (HOLDOUT_BUNDLE if holdout else DEFAULT_BUNDLE)
     )
-    population = HOLDOUT_POPULATION_KIND if holdout else None
+    if sealed.population_kind:
+        population = sealed.population_kind
+    elif repair_dev or force_repair_dev:
+        population = REPAIR_DEV_POPULATION_KIND
+    elif holdout:
+        population = HOLDOUT_POPULATION_KIND
+    else:
+        population = None
 
     if sealed.implementable:
         files = filter_supervisor_predicted_files(
@@ -774,11 +861,12 @@ def materialize_packet(
             else sealed.validation_commands
         )
         if not commands:
-            commands = (
-                DEFAULT_HOLDOUT_VALIDATION_COMMANDS
-                if holdout
-                else DEFAULT_VALIDATION_COMMANDS
-            )
+            if repair_dev or force_repair_dev:
+                commands = DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+            elif holdout:
+                commands = DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+            else:
+                commands = DEFAULT_VALIDATION_COMMANDS
         case_label = sealed.case_id or "unknown-case"
         title = (
             f"Det. compiler edit from packet {sealed.packet_id} "
@@ -951,6 +1039,7 @@ def materialize_packets(
     merge_target_branch: str = DEFAULT_MERGE_TARGET_BRANCH,
     max_lanes: int = DEFAULT_MAX_LANES,
     force_holdout: bool = False,
+    force_repair_dev: bool = False,
     board_namespace: str | None = None,
     bundle: str | None = None,
 ) -> MaterializerReceipt:
@@ -974,6 +1063,7 @@ def materialize_packets(
                     raw,
                     verify_digest=verify_digest,
                     force_holdout=force_holdout,
+                    force_repair_dev=force_repair_dev,
                     board_namespace=board_namespace,
                     bundle=bundle,
                 )
@@ -986,12 +1076,18 @@ def materialize_packets(
         1 for item in items if item.kind is MaterializedKind.IMPLEMENTABLE
     )
     obligation_only_count = len(items) - implementable_count
+    evidence = (
+        PLATEAU_SUPERVISOR_MATERIALIZER_HOLDOUT_EVIDENCE
+        if force_holdout or force_repair_dev
+        else PLATEAU_SUPERVISOR_MATERIALIZER_EVIDENCE
+    )
     return MaterializerReceipt(
         items=tuple(items),
         implementable_count=implementable_count,
         obligation_only_count=obligation_only_count,
         packet_ids=tuple(item.packet_id for item in items),
         packet_digests=tuple(item.packet_digest for item in items),
+        evidence=evidence,
         merge_target_branch=_nonblank(
             merge_target_branch, "merge_target_branch"
         ),
@@ -1021,6 +1117,33 @@ def materialize_holdout_packets(
         force_holdout=True,
         board_namespace=HOLDOUT_BOARD_NAMESPACE,
         bundle=HOLDOUT_BUNDLE,
+    )
+
+
+def materialize_repair_dev_packets(
+    packets: Sequence[PlateauCodexPacket | Mapping[str, object] | str],
+    *,
+    verify_digest: bool = True,
+    merge_target_branch: str = REPAIR_DEV_MERGE_TARGET_BRANCH,
+    max_lanes: int = REPAIR_DEV_MAX_LANES,
+) -> MaterializerReceipt:
+    """Materialize repair-development residual packets onto the PLAT2 board.
+
+    Forces the plateau-holdout board namespace / packets bundle.  Implementable
+    tasks carry det.-only predicted files and validation commands for unit
+    tests, repair-development/pilot metrics, structural gates, and packet
+    revalidation.
+    """
+
+    return materialize_packets(
+        packets,
+        verify_digest=verify_digest,
+        merge_target_branch=merge_target_branch,
+        max_lanes=max_lanes,
+        force_holdout=True,
+        force_repair_dev=True,
+        board_namespace=REPAIR_DEV_BOARD_NAMESPACE,
+        bundle=REPAIR_DEV_BUNDLE,
     )
 
 
@@ -1190,6 +1313,12 @@ def holdout_launch_spec() -> BundleSupervisorLaunchSpec:
     )
 
 
+def repair_dev_launch_spec() -> BundleSupervisorLaunchSpec:
+    """Return launch specification for repair-development packet tasks."""
+
+    return holdout_launch_spec()
+
+
 def render_launch_markdown(
     spec: BundleSupervisorLaunchSpec | None = None,
 ) -> str:
@@ -1310,6 +1439,7 @@ __all__ = [
     "DEFAULT_TASK_PREFIX",
     "DEFAULT_TASKBOARD_RELATIVE_PATH",
     "DEFAULT_VALIDATION_COMMANDS",
+    "DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS",
     "HOLDOUT_BOARD_NAMESPACE",
     "HOLDOUT_BUNDLE",
     "HOLDOUT_CASE_TO_EDIT_WAVE_TASK",
@@ -1326,6 +1456,16 @@ __all__ = [
     "PLATEAU_SUPERVISOR_MATERIALIZER_SCHEMA",
     "PLATEAU_SUPERVISOR_NOTE_INTERFACE",
     "PLATEAU_SUPERVISOR_TASK_INTERFACE",
+    "REPAIR_DEV_BOARD_NAMESPACE",
+    "REPAIR_DEV_BUNDLE",
+    "REPAIR_DEV_CASE_TO_EDIT_WAVE_TASK",
+    "REPAIR_DEV_MAX_LANES",
+    "REPAIR_DEV_MERGE_TARGET_BRANCH",
+    "REPAIR_DEV_POPULATION_KIND",
+    "REPAIR_DEV_RUNTIME_ROOT",
+    "REPAIR_DEV_SCHEDULER_CONFIG_RELATIVE_PATH",
+    "REPAIR_DEV_TASK_PREFIX",
+    "REPAIR_DEV_TASKBOARD_RELATIVE_PATH",
     "BundleSupervisorLaunchSpec",
     "MaterializedKind",
     "MaterializedSupervisorItem",
@@ -1338,10 +1478,14 @@ __all__ = [
     "is_holdout_case",
     "is_holdout_packet",
     "is_materializer_allowed_path",
+    "is_repair_dev_case",
+    "is_repair_dev_packet",
     "load_packets_from_json_path",
     "main",
     "materialize_holdout_packets",
     "materialize_packet",
     "materialize_packets",
+    "materialize_repair_dev_packets",
     "render_launch_markdown",
+    "repair_dev_launch_spec",
 ]

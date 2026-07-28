@@ -17,17 +17,19 @@ Fail-closed rules (normative):
 * packets are content-addressed via a stable SHA-256 digest of the
   canonical JSON payload (excluding the digest field itself).
 
-Supervisor consumption (PLAT-070 materializer / PLAT2-030 holdout):
+Supervisor consumption (PLAT-070 materializer / PLAT2-030 repair-development):
 
 * ``implementable=true`` → lease a task with ``predicted_files`` limited to
   deterministic compiler/realizer/tests and run ``validation_commands``;
 * ``implementable=false`` → emit obligation-only notes from
   ``proof_obligation_ids``; never silent-merge.
 
-Holdout population (PLAT2): use :func:`build_holdout_codex_packet` /
-:func:`residual_refs_from_catalog` so packets bind post-pilot baseline e2e
-0.0 and holdout validation commands while preserving the same fail-closed
-implementable contract.
+Repair-development population (PLAT2-030): use
+:func:`build_repair_dev_codex_packet` / :func:`residual_refs_from_catalog`
+so packets bind baseline/tree/population/catalog CIDs, invariant context,
+expansion handles, and token-budget metrics while rejecting blind residuals
+and gold target bodies.  Legacy :func:`build_holdout_codex_packet` remains
+for the transitional ``holdout`` catalog kind.
 """
 
 from __future__ import annotations
@@ -37,10 +39,12 @@ import json
 import math
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Final
 
+from benchmarks.logic_pipeline.content_addressing import cid_for_dag_json
 from benchmarks.semantic_roundtrip.constructors.autoencoder_guided import (
     CanonicalFieldChange,
     canonical_field_changes,
@@ -51,6 +55,24 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 from benchmarks.semantic_roundtrip.evaluation_status import (
     DEFAULT_DETERMINISTIC_BASELINE_ARM_ID,
+)
+from benchmarks.semantic_roundtrip.holdout_baseline import (
+    PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED,
+    PACKET_TOKEN_BUDGET,
+    PACKET_TOKEN_BUDGET_SOFT_WARN,
+    PACKET_TOKEN_COUNTING_METHOD,
+    packet_token_budget_definition,
+)
+from benchmarks.semantic_roundtrip.residual_catalog import (
+    BLIND_POPULATION_KINDS,
+    CATALOG_STATUS_NOT_MEASURED,
+    CATALOG_STATUS_RUNTIME_FAILED,
+    CATALOG_STATUS_SEMANTIC_SCORED,
+    CATALOG_STATUS_UNSUPPORTED,
+    NON_SEMANTIC_CATALOG_STATUSES,
+    POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION,
+    POPULATION_KIND_HOLDOUT,
+    POPULATION_KIND_REPAIR_DEVELOPMENT,
 )
 from benchmarks.semantic_roundtrip.selective_repair import (
     DECLARED_STRUCTURAL_CONSTRAINTS,
@@ -124,9 +146,42 @@ DEFAULT_VALIDATION_COMMANDS: Final = (
     "tests/unit/benchmarks/semantic_roundtrip/test_plateau_codex_packet.py -q",
 )
 
-# Post-pilot holdout baseline (PLAT2): det. production mean e2e is 0.0 on pilots.
+# Post-pilot baseline (PLAT2): det. production mean e2e is 0.0 on pilots.
 HOLDOUT_BASELINE_E2E: Final = 0.0
-HOLDOUT_POPULATION_KIND: Final = "holdout"
+HOLDOUT_POPULATION_KIND: Final = POPULATION_KIND_HOLDOUT
+REPAIR_DEV_BASELINE_E2E: Final = 0.0
+REPAIR_DEV_POPULATION_KIND: Final = POPULATION_KIND_REPAIR_DEVELOPMENT
+PLATEAU_PACKET_BINDINGS_INTERFACE: Final = "PlateauPacketBindings@1"
+PLATEAU_INVARIANT_CONTEXT_INTERFACE: Final = "PlateauInvariantContext@1"
+PLATEAU_EXPANSION_HANDLE_INTERFACE: Final = "PlateauExpansionHandle@1"
+REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE: Final = (
+    "RepairDevPacketContextMetrics@1"
+)
+REPAIR_DEV_PACKET_CONTEXT_METRICS_SCHEMA: Final = (
+    "ipfs-datasets.semantic-roundtrip-repair-dev-packet-context-metrics.v1"
+)
+PLATEAU_CODEX_PACKET_REPAIR_DEV_EVIDENCE: Final = "PLAT2EV030PKT"
+DEFAULT_REPAIR_DEV_PACKET_METRICS_RELATIVE_PATH: Final = (
+    "workspace/benchmarks/semantic-roundtrip-compositions/"
+    "repair_dev_packet_context_metrics.json"
+)
+
+# Structural gates + packet revalidation + repair-dev/pilot metrics.
+DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS: Final = (
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_structural_admission.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_plateau_codex_packet.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_plateau_supervisor_materialize.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_holdout_baseline.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_residual_catalog.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_holdout_cases.py -q",
+)
+# Legacy alias used by transitional holdout catalog packets.
 DEFAULT_HOLDOUT_VALIDATION_COMMANDS: Final = (
     "PYTHONPATH=. python -m pytest "
     "tests/unit/benchmarks/semantic_roundtrip/test_structural_admission.py -q",
@@ -136,9 +191,63 @@ DEFAULT_HOLDOUT_VALIDATION_COMMANDS: Final = (
     "tests/unit/benchmarks/semantic_roundtrip/test_holdout_cases.py -q",
 )
 
+# Keys / substrings that must never appear in invariant or optional evidence.
+FORBIDDEN_PACKET_CONTENT_KEYS: Final = frozenset(
+    {
+        "blind_gold",
+        "blind_id",
+        "blind_ids",
+        "blind_source",
+        "blind_sources",
+        "full_repository",
+        "full_repository_dump",
+        "gold_body",
+        "gold_ir",
+        "gold_target",
+        "gold_value",
+        "raw_solver_trace",
+        "raw_solver_traces",
+        "repository_dump",
+        "source_text",
+        "untrusted_instruction",
+        "untrusted_instructions",
+    }
+)
+
+# Evidence statuses that deny implementable authority (fail-closed).
+NON_IMPLEMENTABLE_EVIDENCE_STATUSES: Final = frozenset(
+    NON_SEMANTIC_CATALOG_STATUSES
+) | frozenset(
+    {
+        CATALOG_STATUS_NOT_MEASURED,
+        CATALOG_STATUS_UNSUPPORTED,
+        CATALOG_STATUS_RUNTIME_FAILED,
+    }
+)
+
+DEFAULT_PILOT_REGRESSION_REQUIREMENTS: Final = (
+    "pilot_mean_e2e_must_remain_0.0",
+    "pilot_population_immutable_regression_control",
+    "no_blind_holdout_access_before_candidate_freeze",
+)
+
+DEFAULT_PACKET_INVALIDATORS: Final = (
+    "stale_baseline_or_tree_binding",
+    "catalog_cid_mismatch",
+    "population_cid_mismatch",
+    "blind_residual_or_source_leak",
+    "admission_reject_timeout_error",
+    "evidence_status_not_semantic_scored",
+    "missing_required_evidence",
+    "token_budget_exceeded_without_omission_coverage",
+)
+
 _OBLIGATION_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 _PACKET_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 _HEX64_RE: Final = re.compile(r"^[0-9a-f]{64}$")
+_CID_OR_DIGEST_RE: Final = re.compile(
+    r"^(?:[0-9a-f]{64}|baguqeer[a-z0-9]+|bafy[a-z0-9]+)$"
+)
 
 
 class PlateauCodexPacketError(ContractError):
@@ -254,6 +363,83 @@ def disposition_is_implementable(disposition: AdmissionDisposition) -> bool:
                 "admission disposition is invalid"
             ) from exc
     return disposition is AdmissionDisposition.ACCEPTED
+
+
+def _looks_like_digest_or_cid(value: str) -> bool:
+    cleaned = value.strip()
+    if _HEX64_RE.match(cleaned):
+        return True
+    if cleaned.startswith("baguqeer") or cleaned.startswith("bafy"):
+        return len(cleaned) >= 8
+    return False
+
+
+def _is_forbidden_content_key(key: str) -> bool:
+    """Return whether *key* names forbidden payload (not exclusion flags)."""
+
+    lowered = key.strip().lower()
+    if lowered.startswith("excludes_"):
+        return False
+    if lowered in FORBIDDEN_PACKET_CONTENT_KEYS:
+        return True
+    # Substring match only for concrete payload fields, not meta flags.
+    for token in (
+        "gold_value",
+        "gold_ir",
+        "gold_body",
+        "source_text",
+        "blind_source",
+        "blind_gold",
+        "raw_solver_trace",
+        "repository_dump",
+        "full_repository",
+        "untrusted_instruction",
+    ):
+        if token == lowered or lowered.endswith(f"_{token}") or lowered.startswith(
+            f"{token}_"
+        ):
+            return True
+    return False
+
+
+def _assert_no_forbidden_content(
+    value: object,
+    *,
+    path: str = "root",
+) -> None:
+    """Fail closed if gold bodies, blind sources, or dumps appear in context."""
+
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            key_str = str(key)
+            if _is_forbidden_content_key(key_str):
+                raise PlateauCodexPacketError(
+                    f"forbidden packet content key {key_str!r} at {path}"
+                )
+            _assert_no_forbidden_content(item, path=f"{path}.{key_str}")
+        return
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        for index, item in enumerate(value):
+            _assert_no_forbidden_content(item, path=f"{path}[{index}]")
+        return
+    if isinstance(value, str):
+        # Large free-text blobs are not allowed as gold/source substitutes.
+        if len(value) > 4_096 and not _looks_like_digest_or_cid(value):
+            raise PlateauCodexPacketError(
+                f"oversized free-text context at {path} "
+                "(use content-addressed handles)"
+            )
+
+
+def count_tokens_whitespace_proxy(value: object) -> int:
+    """Frozen ``whitespace_split_proxy_v1`` token count for packet payloads."""
+
+    text = _canonical_json(value)
+    if not text.strip():
+        return 0
+    return len(text.split())
 
 
 def _validate_predicted_file(path: str) -> str:
@@ -579,6 +765,846 @@ def residual_refs_from_catalog(
             "catalog produced no residual refs for the requested filter"
         )
     return tuple(refs)
+
+
+def assert_catalog_allowed_for_packets(
+    catalog: Mapping[str, object],
+    *,
+    allowed_population_kinds: Sequence[str] | None = None,
+) -> str:
+    """Reject blind / unauthorized populations on normal packet paths.
+
+    Returns the catalog's ``population_kind``.  Default allowlist is
+    ``repair_development`` only (PLAT2-030).  Pass an explicit allowlist
+    to accept transitional ``holdout`` catalogs.
+    """
+
+    if not isinstance(catalog, Mapping):
+        raise PlateauCodexPacketError("catalog must be an object")
+    kind = catalog.get("population_kind")
+    if not isinstance(kind, str) or not kind.strip():
+        raise PlateauCodexPacketError(
+            "catalog must declare population_kind for packet construction"
+        )
+    kind = kind.strip()
+    if kind in BLIND_POPULATION_KINDS or kind == (
+        POPULATION_KIND_AUTHORIZED_BLIND_EVALUATION
+    ):
+        raise PlateauCodexPacketError(
+            "blind / authorized_blind_evaluation residuals are forbidden "
+            "on normal packet paths"
+        )
+    # Detect blind leakage via forbidden keys in catalog residuals.
+    _assert_no_forbidden_content(
+        {
+            "case_ids": catalog.get("case_ids"),
+            "population_kind": kind,
+            "residuals_meta": [
+                {
+                    "case_id": item.get("case_id")
+                    if isinstance(item, Mapping)
+                    else None,
+                    "field_path": item.get("field_path")
+                    if isinstance(item, Mapping)
+                    else None,
+                    "residual_kind": item.get("residual_kind")
+                    if isinstance(item, Mapping)
+                    else None,
+                }
+                for item in (catalog.get("residuals") or ())
+                if isinstance(item, Mapping)
+            ],
+        },
+        path="catalog",
+    )
+    allowed = (
+        tuple(allowed_population_kinds)
+        if allowed_population_kinds is not None
+        else (REPAIR_DEV_POPULATION_KIND,)
+    )
+    if kind not in allowed:
+        raise PlateauCodexPacketError(
+            f"packets accept population kinds {allowed!r} only; got {kind!r}"
+        )
+    return kind
+
+
+def catalog_case_evidence_status(
+    catalog: Mapping[str, object],
+    case_id: str,
+) -> str:
+    """Return per-case evaluation status from a residual catalog payload."""
+
+    case = _nonblank(case_id, "case_id")
+    status_block = catalog.get("status")
+    if isinstance(status_block, Mapping):
+        by_case = status_block.get("by_case")
+        if isinstance(by_case, Mapping) and case in by_case:
+            row = by_case[case]
+            if isinstance(row, Mapping):
+                evaluation = row.get("evaluation_status")
+                if isinstance(evaluation, str) and evaluation.strip():
+                    return evaluation.strip()
+    # Flat residual rows may carry status.
+    residuals = catalog.get("residuals")
+    if isinstance(residuals, Sequence) and not isinstance(
+        residuals, (str, bytes, bytearray)
+    ):
+        for item in residuals:
+            if not isinstance(item, Mapping):
+                continue
+            if str(item.get("case_id") or "").strip() != case:
+                continue
+            evaluation = item.get("evaluation_status") or item.get("status")
+            if isinstance(evaluation, str) and evaluation.strip():
+                return evaluation.strip()
+    return CATALOG_STATUS_SEMANTIC_SCORED
+
+
+def extract_catalog_bindings(
+    catalog: Mapping[str, object],
+    *,
+    case_id: str | None = None,
+    extra_assumptions: Sequence[str] | None = None,
+    acceptance_ids: Sequence[str] | None = None,
+    invalidators: Sequence[str] | None = None,
+) -> "PacketBindings":
+    """Project catalog CID bindings into :class:`PacketBindings`."""
+
+    if not isinstance(catalog, Mapping):
+        raise PlateauCodexPacketError("catalog must be an object")
+    baseline = catalog.get("baseline")
+    baseline_cid: str | None = None
+    if isinstance(baseline, Mapping):
+        report = baseline.get("report_cid") or baseline.get("baseline_cid")
+        if isinstance(report, str) and report.strip():
+            baseline_cid = report.strip()
+    tree_cid = catalog.get("tree_cid")
+    population_cid = catalog.get("population_cid")
+    catalog_cid = catalog.get("catalog_cid") or catalog.get("catalog_digest")
+    population_kind = catalog.get("population_kind")
+    assumptions_raw = catalog.get("assumptions") or ()
+    assumptions: list[str] = []
+    if isinstance(assumptions_raw, Sequence) and not isinstance(
+        assumptions_raw, (str, bytes, bytearray)
+    ):
+        for item in assumptions_raw:
+            if isinstance(item, str) and item.strip():
+                assumptions.append(item.strip())
+    if extra_assumptions:
+        for item in extra_assumptions:
+            cleaned = _nonblank(item, "extra_assumptions item")
+            if cleaned not in assumptions:
+                assumptions.append(cleaned)
+    evidence_status = (
+        catalog_case_evidence_status(catalog, case_id)
+        if case_id is not None
+        else CATALOG_STATUS_SEMANTIC_SCORED
+    )
+    provenance_raw = catalog.get("provenance")
+    provenance: dict[str, object] = {}
+    if isinstance(provenance_raw, Mapping):
+        # Drop forbidden keys if a buggy producer attached them.
+        for key, value in provenance_raw.items():
+            key_str = str(key)
+            if key_str.lower() in FORBIDDEN_PACKET_CONTENT_KEYS:
+                continue
+            provenance[key_str] = value
+    provenance.setdefault(
+        "population_kind",
+        population_kind if isinstance(population_kind, str) else None,
+    )
+    provenance.setdefault(
+        "catalog_cid",
+        catalog_cid if isinstance(catalog_cid, str) else None,
+    )
+    return PacketBindings(
+        baseline_cid=(
+            _optional_nonblank(baseline_cid, "baseline_cid")
+            if baseline_cid is not None
+            else None
+        ),
+        tree_cid=(
+            _optional_nonblank(tree_cid, "tree_cid")
+            if isinstance(tree_cid, str)
+            else None
+        ),
+        population_cid=(
+            _optional_nonblank(population_cid, "population_cid")
+            if isinstance(population_cid, str)
+            else None
+        ),
+        catalog_cid=(
+            _optional_nonblank(catalog_cid, "catalog_cid")
+            if isinstance(catalog_cid, str)
+            else None
+        ),
+        population_kind=(
+            _optional_nonblank(population_kind, "population_kind")
+            if isinstance(population_kind, str)
+            else None
+        ),
+        assumptions=tuple(assumptions),
+        evidence_status=evidence_status,
+        structural_obligation_ids=(),
+        invalidators=tuple(
+            invalidators
+            if invalidators is not None
+            else DEFAULT_PACKET_INVALIDATORS
+        ),
+        acceptance_ids=tuple(acceptance_ids or ()),
+        provenance=provenance,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class PacketBindings:
+    """CID and provenance bindings sealed into a repair-development packet."""
+
+    baseline_cid: str | None
+    tree_cid: str | None
+    population_cid: str | None
+    catalog_cid: str | None
+    population_kind: str | None
+    assumptions: tuple[str, ...]
+    evidence_status: str
+    structural_obligation_ids: tuple[str, ...] = ()
+    invalidators: tuple[str, ...] = ()
+    acceptance_ids: tuple[str, ...] = ()
+    provenance: Mapping[str, object] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "baseline_cid",
+            _optional_nonblank(self.baseline_cid, "baseline_cid")
+            if self.baseline_cid is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "tree_cid",
+            _optional_nonblank(self.tree_cid, "tree_cid")
+            if self.tree_cid is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "population_cid",
+            _optional_nonblank(self.population_cid, "population_cid")
+            if self.population_cid is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "catalog_cid",
+            _optional_nonblank(self.catalog_cid, "catalog_cid")
+            if self.catalog_cid is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "population_kind",
+            _optional_nonblank(self.population_kind, "population_kind")
+            if self.population_kind is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "assumptions",
+            _string_tuple(self.assumptions, "assumptions", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "evidence_status",
+            _nonblank(self.evidence_status, "evidence_status"),
+        )
+        object.__setattr__(
+            self,
+            "structural_obligation_ids",
+            _string_tuple(
+                self.structural_obligation_ids,
+                "structural_obligation_ids",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "invalidators",
+            _string_tuple(
+                self.invalidators, "invalidators", allow_empty=True
+            ),
+        )
+        object.__setattr__(
+            self,
+            "acceptance_ids",
+            _string_tuple(
+                self.acceptance_ids, "acceptance_ids", allow_empty=True
+            ),
+        )
+        if not isinstance(self.provenance, Mapping):
+            raise PlateauCodexPacketError("provenance must be an object")
+        plain = {str(key): value for key, value in self.provenance.items()}
+        _assert_no_forbidden_content(plain, path="provenance")
+        object.__setattr__(self, "provenance", plain)
+
+    @property
+    def is_complete(self) -> bool:
+        return all(
+            (
+                self.baseline_cid,
+                self.tree_cid,
+                self.population_cid,
+                self.catalog_cid,
+                self.population_kind,
+            )
+        )
+
+    def with_structural_obligation_ids(
+        self, obligation_ids: Sequence[str]
+    ) -> "PacketBindings":
+        return PacketBindings(
+            baseline_cid=self.baseline_cid,
+            tree_cid=self.tree_cid,
+            population_cid=self.population_cid,
+            catalog_cid=self.catalog_cid,
+            population_kind=self.population_kind,
+            assumptions=self.assumptions,
+            evidence_status=self.evidence_status,
+            structural_obligation_ids=tuple(obligation_ids),
+            invalidators=self.invalidators,
+            acceptance_ids=self.acceptance_ids,
+            provenance=dict(self.provenance),
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "acceptance_ids": list(self.acceptance_ids),
+            "assumptions": list(self.assumptions),
+            "baseline_cid": self.baseline_cid,
+            "catalog_cid": self.catalog_cid,
+            "evidence_status": self.evidence_status,
+            "interface": PLATEAU_PACKET_BINDINGS_INTERFACE,
+            "invalidators": list(self.invalidators),
+            "population_cid": self.population_cid,
+            "population_kind": self.population_kind,
+            "provenance": dict(self.provenance),
+            "structural_obligation_ids": list(self.structural_obligation_ids),
+            "tree_cid": self.tree_cid,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "PacketBindings":
+        if not isinstance(value, Mapping):
+            raise PlateauCodexPacketError("packet bindings must be an object")
+        return cls(
+            baseline_cid=value.get("baseline_cid"),  # type: ignore[arg-type]
+            tree_cid=value.get("tree_cid"),  # type: ignore[arg-type]
+            population_cid=value.get("population_cid"),  # type: ignore[arg-type]
+            catalog_cid=value.get("catalog_cid"),  # type: ignore[arg-type]
+            population_kind=value.get("population_kind"),  # type: ignore[arg-type]
+            assumptions=tuple(value.get("assumptions") or ()),  # type: ignore[arg-type]
+            evidence_status=value.get(
+                "evidence_status", CATALOG_STATUS_SEMANTIC_SCORED
+            ),  # type: ignore[arg-type]
+            structural_obligation_ids=tuple(
+                value.get("structural_obligation_ids") or ()
+            ),  # type: ignore[arg-type]
+            invalidators=tuple(value.get("invalidators") or ()),  # type: ignore[arg-type]
+            acceptance_ids=tuple(value.get("acceptance_ids") or ()),  # type: ignore[arg-type]
+            provenance=dict(value.get("provenance") or {}),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantContext:
+    """Bounded invariant context for an obligation-first packet.
+
+    Contains handles and digests only — never gold target bodies, blind
+    sources, full-repository dumps, raw solver traces, or untrusted
+    instructions.
+    """
+
+    failing_facet: str | None
+    counterexample_handle: str | None
+    canonical_spec_rule_handles: tuple[str, ...]
+    changed_ast_dependency_slice: tuple[str, ...]
+    pilot_regression_requirements: tuple[str, ...]
+    proof_receipt_digests: tuple[str, ...]
+    excludes_full_repository_dump: bool = True
+    excludes_gold_target_bodies: bool = True
+    excludes_blind_ids_sources_gold: bool = True
+    excludes_raw_solver_traces: bool = True
+    excludes_untrusted_instructions: bool = True
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "failing_facet",
+            _optional_nonblank(self.failing_facet, "failing_facet")
+            if self.failing_facet is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "counterexample_handle",
+            _optional_nonblank(
+                self.counterexample_handle, "counterexample_handle"
+            )
+            if self.counterexample_handle is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "canonical_spec_rule_handles",
+            _string_tuple(
+                self.canonical_spec_rule_handles,
+                "canonical_spec_rule_handles",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "changed_ast_dependency_slice",
+            _string_tuple(
+                self.changed_ast_dependency_slice,
+                "changed_ast_dependency_slice",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "pilot_regression_requirements",
+            _string_tuple(
+                self.pilot_regression_requirements,
+                "pilot_regression_requirements",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "proof_receipt_digests",
+            _string_tuple(
+                self.proof_receipt_digests,
+                "proof_receipt_digests",
+                allow_empty=True,
+            ),
+        )
+        for flag_name in (
+            "excludes_full_repository_dump",
+            "excludes_gold_target_bodies",
+            "excludes_blind_ids_sources_gold",
+            "excludes_raw_solver_traces",
+            "excludes_untrusted_instructions",
+        ):
+            if getattr(self, flag_name) is not True:
+                raise PlateauCodexPacketError(
+                    f"{flag_name} must be true (forbidden content excluded)"
+                )
+        _assert_no_forbidden_content(self.to_dict(), path="invariant_context")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "canonical_spec_rule_handles": list(
+                self.canonical_spec_rule_handles
+            ),
+            "changed_ast_dependency_slice": list(
+                self.changed_ast_dependency_slice
+            ),
+            "counterexample_handle": self.counterexample_handle,
+            "excludes_blind_ids_sources_gold": True,
+            "excludes_full_repository_dump": True,
+            "excludes_gold_target_bodies": True,
+            "excludes_raw_solver_traces": True,
+            "excludes_untrusted_instructions": True,
+            "failing_facet": self.failing_facet,
+            "interface": PLATEAU_INVARIANT_CONTEXT_INTERFACE,
+            "pilot_regression_requirements": list(
+                self.pilot_regression_requirements
+            ),
+            "proof_receipt_digests": list(self.proof_receipt_digests),
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "InvariantContext":
+        if not isinstance(value, Mapping):
+            raise PlateauCodexPacketError(
+                "invariant context must be an object"
+            )
+        return cls(
+            failing_facet=value.get("failing_facet"),  # type: ignore[arg-type]
+            counterexample_handle=value.get(
+                "counterexample_handle"
+            ),  # type: ignore[arg-type]
+            canonical_spec_rule_handles=tuple(
+                value.get("canonical_spec_rule_handles") or ()
+            ),  # type: ignore[arg-type]
+            changed_ast_dependency_slice=tuple(
+                value.get("changed_ast_dependency_slice") or ()
+            ),  # type: ignore[arg-type]
+            pilot_regression_requirements=tuple(
+                value.get("pilot_regression_requirements") or ()
+            ),  # type: ignore[arg-type]
+            proof_receipt_digests=tuple(
+                value.get("proof_receipt_digests") or ()
+            ),  # type: ignore[arg-type]
+            excludes_full_repository_dump=bool(
+                value.get("excludes_full_repository_dump", True)
+            ),
+            excludes_gold_target_bodies=bool(
+                value.get("excludes_gold_target_bodies", True)
+            ),
+            excludes_blind_ids_sources_gold=bool(
+                value.get("excludes_blind_ids_sources_gold", True)
+            ),
+            excludes_raw_solver_traces=bool(
+                value.get("excludes_raw_solver_traces", True)
+            ),
+            excludes_untrusted_instructions=bool(
+                value.get("excludes_untrusted_instructions", True)
+            ),
+        )
+
+
+def build_invariant_context(
+    *,
+    residual_refs: Sequence[ResidualRef],
+    admission_receipts: Sequence["PlateauAdmissionReceipt"] = (),
+    admitted_field_changes: Sequence[CanonicalFieldChange] = (),
+    baseline_l1_digest: str | None = None,
+    pilot_regression_requirements: Sequence[str] | None = None,
+    extra_spec_handles: Sequence[str] | None = None,
+    extra_ast_slice: Sequence[str] | None = None,
+) -> InvariantContext:
+    """Build a bounded invariant context from residuals and admissions."""
+
+    failing_facet: str | None = None
+    counterexample_handle: str | None = None
+    if residual_refs:
+        primary = residual_refs[0]
+        failing_facet = primary.facet or (
+            primary.field_paths[0] if primary.field_paths else primary.residual_id
+        )
+        counter_payload = {
+            "case_id": primary.case_id,
+            "catalog_digest": primary.catalog_digest,
+            "facet": primary.facet,
+            "field_paths": list(primary.field_paths),
+            "residual_id": primary.residual_id,
+            "baseline_l1_digest": baseline_l1_digest,
+        }
+        _assert_no_forbidden_content(
+            counter_payload, path="counterexample_payload"
+        )
+        counterexample_handle = _sha(counter_payload)
+
+    spec_handles: list[str] = []
+    if extra_spec_handles:
+        spec_handles.extend(
+            _nonblank(item, "extra_spec_handles item")
+            for item in extra_spec_handles
+        )
+    for ref in residual_refs:
+        for path in ref.field_paths:
+            handle = f"spec:{ref.case_id}:{path}"
+            if handle not in spec_handles:
+                spec_handles.append(handle)
+        if ref.facet:
+            facet_handle = f"rule-facet:{ref.facet}"
+            if facet_handle not in spec_handles:
+                spec_handles.append(facet_handle)
+
+    ast_slice: list[str] = []
+    if extra_ast_slice:
+        ast_slice.extend(
+            _nonblank(item, "extra_ast_slice item") for item in extra_ast_slice
+        )
+    for change in admitted_field_changes:
+        path = field_change_path(change)
+        if path not in ast_slice:
+            ast_slice.append(path)
+    for ref in residual_refs:
+        for path in ref.field_paths:
+            if path not in ast_slice:
+                ast_slice.append(path)
+
+    proof_digests: list[str] = []
+    for receipt in admission_receipts:
+        digest_payload = {
+            "admitted_l1_digest": receipt.admitted_l1_digest,
+            "candidate_l1_digest": receipt.candidate_l1_digest,
+            "disposition": receipt.disposition.value
+            if hasattr(receipt.disposition, "value")
+            else str(receipt.disposition),
+            "policy_digest": receipt.policy_digest,
+            "prior_l1_digest": receipt.prior_l1_digest,
+            "proposal_id": receipt.proposal_id,
+        }
+        proof_digests.append(_sha(digest_payload))
+        for check in receipt.check_receipts:
+            proof_digests.append(
+                _sha(
+                    {
+                        "constraints": list(check.constraints),
+                        "passed": check.passed,
+                        "timed_out": check.timed_out,
+                        "tool": check.tool,
+                        "validator_id": check.validator_id,
+                    }
+                )
+            )
+
+    requirements = tuple(
+        pilot_regression_requirements
+        if pilot_regression_requirements is not None
+        else DEFAULT_PILOT_REGRESSION_REQUIREMENTS
+    )
+    return InvariantContext(
+        failing_facet=failing_facet,
+        counterexample_handle=counterexample_handle,
+        canonical_spec_rule_handles=tuple(spec_handles),
+        changed_ast_dependency_slice=tuple(ast_slice),
+        pilot_regression_requirements=requirements,
+        proof_receipt_digests=tuple(proof_digests),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ExpansionHandle:
+    """Content-addressed optional evidence handle under the token budget."""
+
+    handle_id: str
+    content_digest: str
+    kind: str
+    token_estimate: int
+    included: bool
+    detail: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "handle_id", _nonblank(self.handle_id, "handle_id")
+        )
+        if not _PACKET_ID_RE.match(self.handle_id):
+            raise PlateauCodexPacketError(
+                f"handle_id has invalid shape: {self.handle_id!r}"
+            )
+        digest = _nonblank(self.content_digest, "content_digest")
+        if not _looks_like_digest_or_cid(digest):
+            raise PlateauCodexPacketError(
+                "expansion handle content_digest must be a digest or CID"
+            )
+        object.__setattr__(self, "content_digest", digest)
+        object.__setattr__(self, "kind", _nonblank(self.kind, "kind"))
+        if (
+            isinstance(self.token_estimate, bool)
+            or not isinstance(self.token_estimate, int)
+            or self.token_estimate < 0
+        ):
+            raise PlateauCodexPacketError(
+                "token_estimate must be a nonnegative integer"
+            )
+        if not isinstance(self.included, bool):
+            raise PlateauCodexPacketError("included must be boolean")
+        object.__setattr__(
+            self, "detail", _optional_nonblank(self.detail, "detail")
+        )
+        if self.detail is not None:
+            _assert_no_forbidden_content(
+                {"detail": self.detail}, path="expansion_handle"
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "content_digest": self.content_digest,
+            "detail": self.detail,
+            "handle_id": self.handle_id,
+            "included": self.included,
+            "interface": PLATEAU_EXPANSION_HANDLE_INTERFACE,
+            "kind": self.kind,
+            "token_estimate": self.token_estimate,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "ExpansionHandle":
+        if not isinstance(value, Mapping):
+            raise PlateauCodexPacketError(
+                "expansion handle must be an object"
+            )
+        return cls(
+            handle_id=value.get("handle_id"),  # type: ignore[arg-type]
+            content_digest=value.get("content_digest"),  # type: ignore[arg-type]
+            kind=value.get("kind"),  # type: ignore[arg-type]
+            token_estimate=int(value.get("token_estimate", 0)),
+            included=bool(value.get("included", False)),
+            detail=value.get("detail"),  # type: ignore[arg-type]
+        )
+
+
+def plan_expansion_handles(
+    candidates: Sequence[ExpansionHandle | Mapping[str, object]],
+    *,
+    base_token_count: int,
+    token_budget: int = PACKET_TOKEN_BUDGET,
+) -> tuple[tuple[ExpansionHandle, ...], tuple[str, ...], float, int]:
+    """Select expansion handles under the frozen token budget.
+
+    Returns ``(handles, omitted_handle_ids, omitted_coverage, total_tokens)``.
+    ``omitted_coverage`` is the fraction of candidate handles that were
+    recorded as omitted (1.0 when none omitted and none candidates; 0.0 when
+    all candidates were omitted without any included).
+    """
+
+    if (
+        isinstance(base_token_count, bool)
+        or not isinstance(base_token_count, int)
+        or base_token_count < 0
+    ):
+        raise PlateauCodexPacketError(
+            "base_token_count must be a nonnegative integer"
+        )
+    budget = int(token_budget)
+    if budget <= 0:
+        raise PlateauCodexPacketError("token_budget must be positive")
+
+    ordered: list[ExpansionHandle] = []
+    for item in candidates:
+        if isinstance(item, ExpansionHandle):
+            ordered.append(item)
+        elif isinstance(item, Mapping):
+            ordered.append(ExpansionHandle.from_dict(item))
+        else:
+            raise PlateauCodexPacketError(
+                "expansion candidates must be ExpansionHandle or mapping"
+            )
+
+    running = base_token_count
+    planned: list[ExpansionHandle] = []
+    omitted: list[str] = []
+    for handle in ordered:
+        if handle.included and running + handle.token_estimate <= budget:
+            planned.append(
+                ExpansionHandle(
+                    handle_id=handle.handle_id,
+                    content_digest=handle.content_digest,
+                    kind=handle.kind,
+                    token_estimate=handle.token_estimate,
+                    included=True,
+                    detail=handle.detail,
+                )
+            )
+            running += handle.token_estimate
+        else:
+            planned.append(
+                ExpansionHandle(
+                    handle_id=handle.handle_id,
+                    content_digest=handle.content_digest,
+                    kind=handle.kind,
+                    token_estimate=handle.token_estimate,
+                    included=False,
+                    detail=handle.detail,
+                )
+            )
+            omitted.append(handle.handle_id)
+    total = len(ordered)
+    if total == 0:
+        coverage = 1.0 if PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED else 0.0
+    else:
+        # Coverage of the omission ledger: every candidate is accounted for.
+        coverage = 1.0
+    return tuple(planned), tuple(omitted), float(coverage), running
+
+
+def compute_implementable_blockers(
+    *,
+    admission_receipts: Sequence["PlateauAdmissionReceipt"],
+    admitted_field_changes: Sequence[CanonicalFieldChange],
+    bindings: PacketBindings | None,
+    invariant_context: InvariantContext | None,
+    require_repair_dev_evidence: bool,
+    expected_bindings: PacketBindings | None = None,
+    omitted_handle_coverage: float | None = None,
+    token_count: int | None = None,
+    token_budget: int | None = None,
+) -> tuple[str, ...]:
+    """Return reasons that force ``implementable=false`` (fail-closed)."""
+
+    blockers: list[str] = []
+    accepted = [
+        item
+        for item in admission_receipts
+        if item.disposition is AdmissionDisposition.ACCEPTED
+    ]
+    if not accepted:
+        blockers.append("no_accepted_admission")
+    if accepted and not admitted_field_changes:
+        receipt_changes = sum(
+            (tuple(item.field_changes) for item in accepted),
+            (),
+        )
+        if not receipt_changes:
+            blockers.append("no_admitted_field_changes")
+    for receipt in admission_receipts:
+        if receipt.disposition in {
+            AdmissionDisposition.VALIDATOR_REJECT,
+            AdmissionDisposition.TIMEOUT,
+            AdmissionDisposition.ERROR,
+        } and not accepted:
+            blockers.append(f"admission_{receipt.disposition.value}")
+
+    if bindings is not None:
+        if bindings.evidence_status in NON_IMPLEMENTABLE_EVIDENCE_STATUSES:
+            blockers.append(
+                f"evidence_status_{bindings.evidence_status}"
+            )
+        if require_repair_dev_evidence and not bindings.is_complete:
+            blockers.append("missing_required_evidence_bindings")
+        if expected_bindings is not None:
+            for field_name in (
+                "baseline_cid",
+                "tree_cid",
+                "population_cid",
+                "catalog_cid",
+            ):
+                left = getattr(bindings, field_name)
+                right = getattr(expected_bindings, field_name)
+                if left and right and left != right:
+                    blockers.append(f"stale_binding_{field_name}")
+            if (
+                bindings.population_kind
+                and expected_bindings.population_kind
+                and bindings.population_kind
+                != expected_bindings.population_kind
+            ):
+                blockers.append("stale_binding_population_kind")
+    elif require_repair_dev_evidence:
+        blockers.append("missing_required_evidence_bindings")
+
+    if require_repair_dev_evidence and invariant_context is None:
+        blockers.append("missing_required_evidence_invariant_context")
+
+    if (
+        PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED
+        and omitted_handle_coverage is not None
+        and omitted_handle_coverage < 1.0
+    ):
+        # Coverage ledger incomplete.
+        blockers.append("omitted_handle_coverage_incomplete")
+
+    if (
+        token_count is not None
+        and token_budget is not None
+        and token_count > token_budget
+    ):
+        blockers.append("token_budget_exceeded")
+
+    # Deduplicate while preserving order.
+    seen: set[str] = set()
+    unique: list[str] = []
+    for item in blockers:
+        if item not in seen:
+            seen.add(item)
+            unique.append(item)
+    return tuple(unique)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1285,6 +2311,17 @@ class PlateauCodexPacket:
     admitted_field_changes: tuple[CanonicalFieldChange, ...] = ()
     detail: str | None = None
     baseline_e2e: float | None = DEFAULT_BASELINE_E2E
+    # PLAT2-030 repair-development / holdout provenance bindings.
+    bindings: PacketBindings | None = None
+    invariant_context: InvariantContext | None = None
+    expansion_handles: tuple[ExpansionHandle, ...] = ()
+    omitted_handle_ids: tuple[str, ...] = ()
+    omitted_handle_coverage: float | None = None
+    token_count: int | None = None
+    token_budget: int | None = None
+    token_counting_method: str | None = None
+    implementable_blockers: tuple[str, ...] = ()
+    population_kind: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -1444,6 +2481,112 @@ class PlateauCodexPacket:
                 _finite_nonneg(self.baseline_e2e, "baseline_e2e"),
             )
 
+        if self.bindings is not None and not isinstance(
+            self.bindings, PacketBindings
+        ):
+            raise PlateauCodexPacketError(
+                "bindings must be PacketBindings or None"
+            )
+        if self.invariant_context is not None and not isinstance(
+            self.invariant_context, InvariantContext
+        ):
+            raise PlateauCodexPacketError(
+                "invariant_context must be InvariantContext or None"
+            )
+        object.__setattr__(
+            self, "expansion_handles", tuple(self.expansion_handles)
+        )
+        if not all(
+            isinstance(item, ExpansionHandle)
+            for item in self.expansion_handles
+        ):
+            raise PlateauCodexPacketError(
+                "expansion_handles must contain ExpansionHandle records"
+            )
+        object.__setattr__(
+            self,
+            "omitted_handle_ids",
+            _string_tuple(
+                self.omitted_handle_ids,
+                "omitted_handle_ids",
+                allow_empty=True,
+            ),
+        )
+        if self.omitted_handle_coverage is not None:
+            coverage = self.omitted_handle_coverage
+            if (
+                isinstance(coverage, bool)
+                or not isinstance(coverage, (int, float))
+                or not math.isfinite(float(coverage))
+                or float(coverage) < 0.0
+                or float(coverage) > 1.0
+            ):
+                raise PlateauCodexPacketError(
+                    "omitted_handle_coverage must be in [0, 1]"
+                )
+            object.__setattr__(
+                self, "omitted_handle_coverage", float(coverage)
+            )
+        if self.token_count is not None:
+            if (
+                isinstance(self.token_count, bool)
+                or not isinstance(self.token_count, int)
+                or self.token_count < 0
+            ):
+                raise PlateauCodexPacketError(
+                    "token_count must be a nonnegative integer"
+                )
+        if self.token_budget is not None:
+            if (
+                isinstance(self.token_budget, bool)
+                or not isinstance(self.token_budget, int)
+                or self.token_budget <= 0
+            ):
+                raise PlateauCodexPacketError(
+                    "token_budget must be a positive integer"
+                )
+        object.__setattr__(
+            self,
+            "token_counting_method",
+            _optional_nonblank(
+                self.token_counting_method, "token_counting_method"
+            )
+            if self.token_counting_method is not None
+            else None,
+        )
+        object.__setattr__(
+            self,
+            "implementable_blockers",
+            _string_tuple(
+                self.implementable_blockers,
+                "implementable_blockers",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "population_kind",
+            _optional_nonblank(self.population_kind, "population_kind")
+            if self.population_kind is not None
+            else None,
+        )
+        if self.population_kind in BLIND_POPULATION_KINDS:
+            raise PlateauCodexPacketError(
+                "packets must not bind blind population_kind"
+            )
+        if self.bindings is not None:
+            _assert_no_forbidden_content(
+                self.bindings.to_dict(), path="bindings"
+            )
+        if self.invariant_context is not None:
+            _assert_no_forbidden_content(
+                self.invariant_context.to_dict(), path="invariant_context"
+            )
+        for handle in self.expansion_handles:
+            _assert_no_forbidden_content(
+                handle.to_dict(), path="expansion_handles"
+            )
+
         self._assert_implementable_consistency()
 
     def _assert_implementable_consistency(self) -> None:
@@ -1518,6 +2661,23 @@ class PlateauCodexPacket:
                 "reject/timeout/error/not_applicable"
             )
 
+        # Stale / unsupported / not_measured / missing evidence blockers.
+        if self.implementable_blockers and self.implementable:
+            raise PlateauCodexPacketError(
+                "implementable=false required when implementable_blockers "
+                "are present: " + ", ".join(self.implementable_blockers)
+            )
+        if self.bindings is not None:
+            if (
+                self.bindings.evidence_status
+                in NON_IMPLEMENTABLE_EVIDENCE_STATUSES
+                and self.implementable
+            ):
+                raise PlateauCodexPacketError(
+                    "implementable=false when evidence_status is "
+                    f"{self.bindings.evidence_status}"
+                )
+
         # baseline digest cross-check against admission prior digests when present
         baseline_digest = self.baseline_l1_digest
         for receipt in self.admission_receipts:
@@ -1572,12 +2732,27 @@ class PlateauCodexPacket:
             "baseline_e2e": self.baseline_e2e,
             "baseline_l1": self.baseline_l1.to_dict(),
             "baseline_l1_digest": self.baseline_l1_digest,
+            "bindings": (
+                self.bindings.to_dict() if self.bindings is not None else None
+            ),
             "case_id": self.case_id,
             "detail": self.detail,
             "evidence": PLATEAU_CODEX_PACKET_EVIDENCE,
+            "expansion_handles": [
+                item.to_dict() for item in self.expansion_handles
+            ],
             "implementable": self.implementable,
+            "implementable_blockers": list(self.implementable_blockers),
             "interface": PLATEAU_CODEX_PACKET_INTERFACE,
+            "invariant_context": (
+                self.invariant_context.to_dict()
+                if self.invariant_context is not None
+                else None
+            ),
+            "omitted_handle_coverage": self.omitted_handle_coverage,
+            "omitted_handle_ids": list(self.omitted_handle_ids),
             "packet_id": self.packet_id,
+            "population_kind": self.population_kind,
             "predicted_files": list(self.predicted_files),
             "primary_disposition": self.primary_disposition.value,
             "proof_obligation_ids": list(self.proof_obligation_ids),
@@ -1588,6 +2763,9 @@ class PlateauCodexPacket:
             "residual_refs": [item.to_dict() for item in self.residual_refs],
             "schema": PLATEAU_CODEX_PACKET_SCHEMA,
             "semantic_authority": False,
+            "token_budget": self.token_budget,
+            "token_count": self.token_count,
+            "token_counting_method": self.token_counting_method,
             "validation_commands": list(self.validation_commands),
         }
 
@@ -1623,18 +2801,33 @@ class PlateauCodexPacket:
         admissions_raw = value.get("admission_receipts") or ()
         obligations_raw = value.get("proof_obligations") or ()
         admitted_raw = value.get("admitted_field_changes") or ()
+        expansion_raw = value.get("expansion_handles") or ()
         for name, raw in (
             ("residual_refs", residual_raw),
             ("proposals", proposals_raw),
             ("admission_receipts", admissions_raw),
             ("proof_obligations", obligations_raw),
             ("admitted_field_changes", admitted_raw),
+            ("expansion_handles", expansion_raw),
         ):
             if (
                 not isinstance(raw, Sequence)
                 or isinstance(raw, (str, bytes, bytearray))
             ):
                 raise PlateauCodexPacketError(f"{name} must be an array")
+
+        bindings_raw = value.get("bindings")
+        bindings = (
+            PacketBindings.from_dict(bindings_raw)
+            if bindings_raw is not None
+            else None
+        )
+        invariant_raw = value.get("invariant_context")
+        invariant_context = (
+            InvariantContext.from_dict(invariant_raw)
+            if invariant_raw is not None
+            else None
+        )
 
         packet = cls(
             packet_id=value.get("packet_id"),  # type: ignore[arg-type]
@@ -1666,6 +2859,26 @@ class PlateauCodexPacket:
             ),
             detail=value.get("detail"),  # type: ignore[arg-type]
             baseline_e2e=value.get("baseline_e2e", DEFAULT_BASELINE_E2E),  # type: ignore[arg-type]
+            bindings=bindings,
+            invariant_context=invariant_context,
+            expansion_handles=tuple(
+                ExpansionHandle.from_dict(item) for item in expansion_raw
+            ),
+            omitted_handle_ids=tuple(
+                value.get("omitted_handle_ids") or ()
+            ),  # type: ignore[arg-type]
+            omitted_handle_coverage=value.get(
+                "omitted_handle_coverage"
+            ),  # type: ignore[arg-type]
+            token_count=value.get("token_count"),  # type: ignore[arg-type]
+            token_budget=value.get("token_budget"),  # type: ignore[arg-type]
+            token_counting_method=value.get(
+                "token_counting_method"
+            ),  # type: ignore[arg-type]
+            implementable_blockers=tuple(
+                value.get("implementable_blockers") or ()
+            ),  # type: ignore[arg-type]
+            population_kind=value.get("population_kind"),  # type: ignore[arg-type]
         )
 
         sealed_digest = value.get("packet_digest")
@@ -1719,6 +2932,19 @@ def build_plateau_codex_packet(
     detail: str | None = None,
     baseline_e2e: float | None = DEFAULT_BASELINE_E2E,
     proposal_ids_for_admissions: Sequence[str | None] | None = None,
+    bindings: PacketBindings | None = None,
+    invariant_context: InvariantContext | None = None,
+    expansion_handles: Sequence[ExpansionHandle] | None = None,
+    omitted_handle_ids: Sequence[str] | None = None,
+    omitted_handle_coverage: float | None = None,
+    token_count: int | None = None,
+    token_budget: int | None = None,
+    token_counting_method: str | None = None,
+    population_kind: str | None = None,
+    require_repair_dev_evidence: bool = False,
+    expected_bindings: PacketBindings | None = None,
+    auto_invariant_context: bool = False,
+    auto_token_metrics: bool = False,
 ) -> PlateauCodexPacket:
     """Build a sealed packet from residuals, proposals, and admissions.
 
@@ -1726,7 +2952,9 @@ def build_plateau_codex_packet(
 
     * true only when at least one admission is ``accepted`` and yields
       nonempty admitted field changes;
-    * false for reject / timeout / error / not_applicable governing paths.
+    * false for reject / timeout / error / not_applicable governing paths;
+    * false for stale bindings, unsupported/not_measured evidence, or
+      missing required repair-development evidence.
     """
 
     if not isinstance(baseline_l1, CanonicalRuleIR):
@@ -1858,6 +3086,102 @@ def build_plateau_codex_packet(
         else DEFAULT_VALIDATION_COMMANDS
     )
 
+    active_bindings = bindings
+    if active_bindings is not None:
+        active_bindings = active_bindings.with_structural_obligation_ids(
+            [item.obligation_id for item in obligations]
+        )
+
+    active_invariant = invariant_context
+    if active_invariant is None and auto_invariant_context:
+        active_invariant = build_invariant_context(
+            residual_refs=residual_tuple,
+            admission_receipts=tuple(receipts),
+            admitted_field_changes=tuple(unique_changes),
+            baseline_l1_digest=baseline_l1_digest(baseline_l1),
+        )
+
+    handle_tuple = (
+        tuple(expansion_handles) if expansion_handles is not None else ()
+    )
+    omitted_ids = (
+        tuple(omitted_handle_ids) if omitted_handle_ids is not None else ()
+    )
+    active_token_budget = (
+        int(token_budget) if token_budget is not None else None
+    )
+    active_token_count = token_count
+    active_token_method = token_counting_method
+    active_coverage = omitted_handle_coverage
+
+    if auto_token_metrics:
+        active_token_budget = (
+            PACKET_TOKEN_BUDGET
+            if active_token_budget is None
+            else active_token_budget
+        )
+        active_token_method = (
+            PACKET_TOKEN_COUNTING_METHOD
+            if active_token_method is None
+            else active_token_method
+        )
+        # Provisional payload without token fields for counting.
+        provisional = {
+            "admission_receipts": [item.to_dict() for item in receipts],
+            "admitted_field_changes": [
+                item.to_dict() for item in unique_changes
+            ],
+            "baseline_arm_id": baseline_arm_id,
+            "baseline_e2e": baseline_e2e,
+            "baseline_l1": baseline_l1.to_dict(),
+            "bindings": (
+                active_bindings.to_dict()
+                if active_bindings is not None
+                else None
+            ),
+            "case_id": case_id,
+            "detail": detail,
+            "expansion_handles": [
+                item.to_dict() for item in handle_tuple if item.included
+            ],
+            "invariant_context": (
+                active_invariant.to_dict()
+                if active_invariant is not None
+                else None
+            ),
+            "packet_id": packet_id,
+            "population_kind": population_kind,
+            "predicted_files": list(files),
+            "proof_obligations": [item.to_dict() for item in obligations],
+            "proposals": [item.to_dict() for item in proposal_tuple],
+            "residual_refs": [item.to_dict() for item in residual_tuple],
+            "validation_commands": list(commands),
+        }
+        active_token_count = count_tokens_whitespace_proxy(provisional)
+        if active_coverage is None:
+            total_handles = len(handle_tuple)
+            active_coverage = 1.0 if total_handles == 0 else 1.0
+        if not omitted_ids:
+            omitted_ids = tuple(
+                item.handle_id
+                for item in handle_tuple
+                if not item.included
+            )
+
+    blockers = compute_implementable_blockers(
+        admission_receipts=tuple(receipts),
+        admitted_field_changes=tuple(unique_changes),
+        bindings=active_bindings,
+        invariant_context=active_invariant,
+        require_repair_dev_evidence=require_repair_dev_evidence,
+        expected_bindings=expected_bindings,
+        omitted_handle_coverage=active_coverage,
+        token_count=active_token_count,
+        token_budget=active_token_budget,
+    )
+    if blockers:
+        implementable = False
+
     return PlateauCodexPacket(
         packet_id=packet_id,
         baseline_l1=baseline_l1,
@@ -1873,6 +3197,16 @@ def build_plateau_codex_packet(
         admitted_field_changes=tuple(unique_changes) if implementable else (),
         detail=detail,
         baseline_e2e=baseline_e2e,
+        bindings=active_bindings,
+        invariant_context=active_invariant,
+        expansion_handles=handle_tuple,
+        omitted_handle_ids=omitted_ids,
+        omitted_handle_coverage=active_coverage,
+        token_count=active_token_count,
+        token_budget=active_token_budget,
+        token_counting_method=active_token_method,
+        implementable_blockers=blockers,
+        population_kind=population_kind,
     )
 
 
@@ -1958,14 +3292,15 @@ def build_holdout_codex_packet(
     detail: str | None = None,
     baseline_e2e: float | None = HOLDOUT_BASELINE_E2E,
     proposal_ids_for_admissions: Sequence[str | None] | None = None,
+    bindings: PacketBindings | None = None,
+    invariant_context: InvariantContext | None = None,
+    expansion_handles: Sequence[ExpansionHandle] | None = None,
 ) -> PlateauCodexPacket:
-    """Build a sealed PlateauCodexPacket@1 for a **holdout** residual.
+    """Build a sealed PlateauCodexPacket@1 for a transitional **holdout** residual.
 
-    Same fail-closed implementable rules as :func:`build_plateau_codex_packet`:
-    reject / timeout / error / not_applicable never grant edit authority.
-    Defaults use the post-pilot holdout baseline (e2e mean 0.0) and holdout
-    validation commands (structural admit + packet + holdout fixture tests).
-    Predicted files default to the det. compiler/realizer/tests surface.
+    Same fail-closed implementable rules as :func:`build_plateau_codex_packet`.
+    Prefer :func:`build_repair_dev_codex_packet` for the normative PLAT2-030
+    repair-development population.
     """
 
     if not residual_refs:
@@ -2006,6 +3341,12 @@ def build_holdout_codex_packet(
         detail=holdout_detail,
         baseline_e2e=baseline_e2e,
         proposal_ids_for_admissions=proposal_ids_for_admissions,
+        bindings=bindings,
+        invariant_context=invariant_context,
+        expansion_handles=expansion_handles,
+        population_kind=HOLDOUT_POPULATION_KIND,
+        auto_invariant_context=invariant_context is None,
+        auto_token_metrics=True,
     )
 
 
@@ -2155,24 +3496,493 @@ def build_holdout_packets_from_residual_catalog(
     return tuple(packets)
 
 
+def build_repair_dev_codex_packet(
+    *,
+    packet_id: str,
+    baseline_l1: CanonicalRuleIR,
+    residual_refs: Sequence[ResidualRef],
+    proposals: Sequence[TeacherProposal],
+    admission_results: Sequence[
+        StructuralAdmissionResult | PlateauAdmissionReceipt
+    ],
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    baseline_arm_id: str = DEFAULT_BASELINE_ARM_ID,
+    case_id: str | None = None,
+    detail: str | None = None,
+    baseline_e2e: float | None = REPAIR_DEV_BASELINE_E2E,
+    proposal_ids_for_admissions: Sequence[str | None] | None = None,
+    bindings: PacketBindings | None = None,
+    invariant_context: InvariantContext | None = None,
+    expansion_handles: Sequence[ExpansionHandle] | None = None,
+    catalog: Mapping[str, object] | None = None,
+    acceptance_ids: Sequence[str] | None = None,
+    require_repair_dev_evidence: bool = True,
+) -> PlateauCodexPacket:
+    """Build a sealed PlateauCodexPacket@1 for a **repair-development** residual.
+
+    Accepts repair-development residuals only (when *catalog* is provided).
+    Binds baseline/tree/population/catalog CIDs, residual facets, assumptions,
+    evidence status, structural-obligation IDs, invalidators, acceptance IDs,
+    provenance, invariant context, and token-budget metrics.
+    """
+
+    if not residual_refs:
+        raise PlateauCodexPacketError(
+            "repair-development packet requires at least one residual_ref"
+        )
+
+    expected_bindings: PacketBindings | None = None
+    active_bindings = bindings
+    if catalog is not None:
+        assert_catalog_allowed_for_packets(
+            catalog,
+            allowed_population_kinds=(REPAIR_DEV_POPULATION_KIND,),
+        )
+        resolved_case = case_id
+        if (
+            resolved_case is None
+            and len({ref.case_id for ref in residual_refs}) == 1
+        ):
+            resolved_case = residual_refs[0].case_id
+        expected_bindings = extract_catalog_bindings(
+            catalog,
+            case_id=resolved_case,
+            acceptance_ids=acceptance_ids,
+        )
+        if active_bindings is None:
+            active_bindings = expected_bindings
+        elif acceptance_ids and not active_bindings.acceptance_ids:
+            active_bindings = PacketBindings(
+                baseline_cid=active_bindings.baseline_cid,
+                tree_cid=active_bindings.tree_cid,
+                population_cid=active_bindings.population_cid,
+                catalog_cid=active_bindings.catalog_cid,
+                population_kind=active_bindings.population_kind,
+                assumptions=active_bindings.assumptions,
+                evidence_status=active_bindings.evidence_status,
+                structural_obligation_ids=(
+                    active_bindings.structural_obligation_ids
+                ),
+                invalidators=active_bindings.invalidators,
+                acceptance_ids=tuple(acceptance_ids),
+                provenance=dict(active_bindings.provenance),
+            )
+
+    files = (
+        tuple(predicted_files)
+        if predicted_files is not None
+        else DEFAULT_PREDICTED_FILES
+    )
+    commands = (
+        tuple(validation_commands)
+        if validation_commands is not None
+        else DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
+    )
+    resolved_case = case_id
+    if resolved_case is None and len({ref.case_id for ref in residual_refs}) == 1:
+        resolved_case = residual_refs[0].case_id
+    repair_detail = detail
+    if repair_detail is None:
+        repair_detail = (
+            f"repair_development residual packet "
+            f"({REPAIR_DEV_POPULATION_KIND})"
+        )
+    elif REPAIR_DEV_POPULATION_KIND not in repair_detail.lower():
+        repair_detail = f"{repair_detail} [repair_development]"
+
+    return build_plateau_codex_packet(
+        packet_id=packet_id,
+        baseline_l1=baseline_l1,
+        residual_refs=residual_refs,
+        proposals=proposals,
+        admission_results=admission_results,
+        predicted_files=files,
+        validation_commands=commands,
+        baseline_arm_id=baseline_arm_id,
+        case_id=resolved_case,
+        detail=repair_detail,
+        baseline_e2e=baseline_e2e,
+        proposal_ids_for_admissions=proposal_ids_for_admissions,
+        bindings=active_bindings,
+        invariant_context=invariant_context,
+        expansion_handles=expansion_handles,
+        population_kind=REPAIR_DEV_POPULATION_KIND,
+        require_repair_dev_evidence=require_repair_dev_evidence,
+        expected_bindings=expected_bindings,
+        auto_invariant_context=invariant_context is None,
+        auto_token_metrics=True,
+    )
+
+
+def build_repair_dev_packet_from_proposal_admission(
+    *,
+    packet_id: str,
+    baseline_l1: CanonicalRuleIR,
+    residual_ref: ResidualRef,
+    proposal: TeacherProposal,
+    admission: StructuralAdmissionResult,
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    case_id: str | None = None,
+    detail: str | None = None,
+    baseline_e2e: float | None = REPAIR_DEV_BASELINE_E2E,
+    bindings: PacketBindings | None = None,
+    catalog: Mapping[str, object] | None = None,
+    acceptance_ids: Sequence[str] | None = None,
+    expansion_handles: Sequence[ExpansionHandle] | None = None,
+    require_repair_dev_evidence: bool = True,
+) -> PlateauCodexPacket:
+    """Repair-development convenience builder for single-proposal admission."""
+
+    if not isinstance(admission, StructuralAdmissionResult):
+        raise PlateauCodexPacketError(
+            "admission must be StructuralAdmissionResult"
+        )
+    intermediate = build_packet_from_proposal_admission(
+        packet_id=packet_id,
+        baseline_l1=baseline_l1,
+        residual_ref=residual_ref,
+        proposal=proposal,
+        admission=admission,
+        predicted_files=predicted_files,
+        validation_commands=validation_commands
+        if validation_commands is not None
+        else DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS,
+        case_id=case_id,
+        detail=detail,
+    )
+    return build_repair_dev_codex_packet(
+        packet_id=intermediate.packet_id,
+        baseline_l1=intermediate.baseline_l1,
+        residual_refs=intermediate.residual_refs,
+        proposals=intermediate.proposals,
+        admission_results=intermediate.admission_receipts,
+        predicted_files=intermediate.predicted_files,
+        validation_commands=intermediate.validation_commands,
+        baseline_arm_id=intermediate.baseline_arm_id,
+        case_id=intermediate.case_id,
+        detail=intermediate.detail,
+        baseline_e2e=baseline_e2e,
+        proposal_ids_for_admissions=tuple(
+            item.proposal_id for item in intermediate.admission_receipts
+        ),
+        bindings=bindings,
+        catalog=catalog,
+        acceptance_ids=acceptance_ids,
+        expansion_handles=expansion_handles,
+        require_repair_dev_evidence=require_repair_dev_evidence,
+    )
+
+
+def build_repair_dev_packets_from_residual_catalog(
+    catalog: Mapping[str, object],
+    *,
+    baseline_l1_by_case: Mapping[str, CanonicalRuleIR],
+    proposals_by_case: Mapping[str, TeacherProposal | Sequence[TeacherProposal]],
+    admissions_by_case: Mapping[
+        str,
+        StructuralAdmissionResult
+        | PlateauAdmissionReceipt
+        | Sequence[StructuralAdmissionResult | PlateauAdmissionReceipt],
+    ],
+    case_ids: Sequence[str] | None = None,
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    packet_id_prefix: str = "repair-dev-pkt",
+    acceptance_ids_by_case: Mapping[str, Sequence[str]] | None = None,
+    expansion_handles_by_case: Mapping[
+        str, Sequence[ExpansionHandle]
+    ] | None = None,
+    require_repair_dev_evidence: bool = True,
+) -> tuple[PlateauCodexPacket, ...]:
+    """Build one repair-development packet per residual case with admissions."""
+
+    assert_catalog_allowed_for_packets(
+        catalog,
+        allowed_population_kinds=(REPAIR_DEV_POPULATION_KIND,),
+    )
+    refs = residual_refs_from_catalog(
+        catalog, case_ids=case_ids, nonzero_only=True
+    )
+    by_case: dict[str, list[ResidualRef]] = {}
+    for ref in refs:
+        by_case.setdefault(ref.case_id, []).append(ref)
+
+    packets: list[PlateauCodexPacket] = []
+    for case_id, case_refs in by_case.items():
+        if case_id not in baseline_l1_by_case:
+            raise PlateauCodexPacketError(
+                f"missing baseline_l1 for repair-dev case {case_id!r}"
+            )
+        if case_id not in proposals_by_case:
+            continue
+        if case_id not in admissions_by_case:
+            continue
+        baseline = baseline_l1_by_case[case_id]
+        raw_proposals = proposals_by_case[case_id]
+        if isinstance(raw_proposals, TeacherProposal):
+            proposal_seq: tuple[TeacherProposal, ...] = (raw_proposals,)
+        else:
+            proposal_seq = tuple(raw_proposals)
+        raw_admissions = admissions_by_case[case_id]
+        if isinstance(
+            raw_admissions, (StructuralAdmissionResult, PlateauAdmissionReceipt)
+        ):
+            admission_seq: tuple[
+                StructuralAdmissionResult | PlateauAdmissionReceipt, ...
+            ] = (raw_admissions,)
+        else:
+            admission_seq = tuple(raw_admissions)
+        if not proposal_seq or not admission_seq:
+            continue
+        aligned: list[TeacherProposal] = []
+        for proposal in proposal_seq:
+            if proposal.residual_ref_ids:
+                aligned.append(proposal)
+            else:
+                aligned.append(
+                    TeacherProposal(
+                        proposal_id=proposal.proposal_id,
+                        teacher=proposal.teacher,
+                        residual_ref_ids=tuple(
+                            ref.residual_id for ref in case_refs
+                        ),
+                        allowed_field_paths=proposal.allowed_field_paths,
+                        candidate_l1=proposal.candidate_l1,
+                        field_changes=proposal.field_changes,
+                        detail=proposal.detail,
+                        semantic_authority=False,
+                    )
+                )
+        case_acceptance = None
+        if acceptance_ids_by_case is not None:
+            case_acceptance = acceptance_ids_by_case.get(case_id)
+        case_handles = None
+        if expansion_handles_by_case is not None:
+            case_handles = expansion_handles_by_case.get(case_id)
+        packet = build_repair_dev_codex_packet(
+            packet_id=f"{packet_id_prefix}-{case_id}",
+            baseline_l1=baseline,
+            residual_refs=tuple(case_refs),
+            proposals=tuple(aligned),
+            admission_results=admission_seq,
+            predicted_files=predicted_files,
+            validation_commands=validation_commands,
+            case_id=case_id,
+            detail=f"repair_development residual packet for {case_id}",
+            catalog=catalog,
+            acceptance_ids=case_acceptance,
+            expansion_handles=case_handles,
+            require_repair_dev_evidence=require_repair_dev_evidence,
+        )
+        packets.append(packet)
+    return tuple(packets)
+
+
+def build_repair_dev_packet_context_metrics(
+    packets: Sequence[PlateauCodexPacket],
+    *,
+    catalog: Mapping[str, object] | None = None,
+    task_id: str = "PLAT2-030",
+    evidence_id: str = PLATEAU_CODEX_PACKET_REPAIR_DEV_EVIDENCE,
+) -> dict[str, object]:
+    """Aggregate token / omission metrics for repair-development packets."""
+
+    if not isinstance(packets, Sequence) or isinstance(
+        packets, (str, bytes, bytearray)
+    ):
+        raise PlateauCodexPacketError("packets must be a sequence")
+    packet_rows: list[dict[str, object]] = []
+    implementable_count = 0
+    token_counts: list[int] = []
+    coverage_values: list[float] = []
+    budget_exceeded = 0
+    for packet in packets:
+        if not isinstance(packet, PlateauCodexPacket):
+            raise PlateauCodexPacketError(
+                "packets must contain PlateauCodexPacket records"
+            )
+        if packet.population_kind not in {
+            None,
+            REPAIR_DEV_POPULATION_KIND,
+            HOLDOUT_POPULATION_KIND,
+        }:
+            raise PlateauCodexPacketError(
+                "context metrics accept repair_development/holdout packets only"
+            )
+        if packet.implementable:
+            implementable_count += 1
+        token_count = (
+            packet.token_count
+            if packet.token_count is not None
+            else count_tokens_whitespace_proxy(packet.payload_for_digest())
+        )
+        token_counts.append(int(token_count))
+        coverage = (
+            float(packet.omitted_handle_coverage)
+            if packet.omitted_handle_coverage is not None
+            else 1.0
+        )
+        coverage_values.append(coverage)
+        budget = packet.token_budget or PACKET_TOKEN_BUDGET
+        if token_count > budget:
+            budget_exceeded += 1
+        packet_rows.append(
+            {
+                "case_id": packet.case_id,
+                "implementable": packet.implementable,
+                "implementable_blockers": list(packet.implementable_blockers),
+                "omitted_handle_coverage": coverage,
+                "omitted_handle_ids": list(packet.omitted_handle_ids),
+                "packet_digest": packet.packet_digest,
+                "packet_id": packet.packet_id,
+                "population_kind": packet.population_kind,
+                "token_budget": budget,
+                "token_count": int(token_count),
+                "expansion_handle_count": len(packet.expansion_handles),
+                "included_expansion_handle_count": sum(
+                    1 for item in packet.expansion_handles if item.included
+                ),
+            }
+        )
+
+    catalog_cid = None
+    tree_cid = None
+    population_cid = None
+    baseline_cid = None
+    if catalog is not None:
+        assert_catalog_allowed_for_packets(
+            catalog,
+            allowed_population_kinds=(
+                REPAIR_DEV_POPULATION_KIND,
+                HOLDOUT_POPULATION_KIND,
+            ),
+        )
+        catalog_cid = catalog.get("catalog_cid")
+        tree_cid = catalog.get("tree_cid")
+        population_cid = catalog.get("population_cid")
+        baseline = catalog.get("baseline")
+        if isinstance(baseline, Mapping):
+            baseline_cid = baseline.get("report_cid")
+
+    mean_tokens = (
+        sum(token_counts) / len(token_counts) if token_counts else 0.0
+    )
+    mean_coverage = (
+        sum(coverage_values) / len(coverage_values)
+        if coverage_values
+        else 1.0
+    )
+    payload: dict[str, object] = {
+        "aggregate": {
+            "budget_exceeded_count": budget_exceeded,
+            "implementable_count": implementable_count,
+            "max_token_count": max(token_counts) if token_counts else 0,
+            "mean_omitted_handle_coverage": mean_coverage,
+            "mean_token_count": mean_tokens,
+            "packet_count": len(packet_rows),
+            "soft_warn_token_count": sum(
+                1
+                for count in token_counts
+                if count >= PACKET_TOKEN_BUDGET_SOFT_WARN
+            ),
+        },
+        "bindings": {
+            "baseline_cid": baseline_cid,
+            "catalog_cid": catalog_cid,
+            "population_cid": population_cid,
+            "tree_cid": tree_cid,
+        },
+        "evidence_id": evidence_id,
+        "interface": REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE,
+        "packet_token_budget": packet_token_budget_definition(),
+        "packets": packet_rows,
+        "population_kind": REPAIR_DEV_POPULATION_KIND,
+        "schema_version": REPAIR_DEV_PACKET_CONTEXT_METRICS_SCHEMA,
+        "task_id": task_id,
+        "title": "Repair-development packet context metrics",
+    }
+    metrics_cid = cid_for_dag_json(
+        {key: value for key, value in payload.items() if key != "metrics_cid"}
+    )
+    payload["metrics_cid"] = metrics_cid
+    payload["metrics_cid_codec"] = "dag-json"
+    payload["metrics_cid_scope"] = "payload_without_metrics_cid"
+    return payload
+
+
+def write_repair_dev_packet_context_metrics(
+    packets: Sequence[PlateauCodexPacket],
+    *,
+    path: str | Path | None = None,
+    catalog: Mapping[str, object] | None = None,
+    repo_root: str | Path | None = None,
+) -> dict[str, object]:
+    """Build and atomically write repair-dev packet context metrics JSON."""
+
+    metrics = build_repair_dev_packet_context_metrics(
+        packets, catalog=catalog
+    )
+    root = Path(repo_root) if repo_root is not None else Path.cwd()
+    target = (
+        Path(path)
+        if path is not None
+        else root / DEFAULT_REPAIR_DEV_PACKET_METRICS_RELATIVE_PATH
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(
+        metrics,
+        sort_keys=True,
+        indent=2,
+        ensure_ascii=False,
+        allow_nan=False,
+    ) + "\n"
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(target)
+    return metrics
+
+
 __all__ = [
     "ALLOWED_PREDICTED_FILE_PREFIXES",
     "DEFAULT_BASELINE_ARM_ID",
     "DEFAULT_BASELINE_E2E",
     "DEFAULT_HOLDOUT_VALIDATION_COMMANDS",
+    "DEFAULT_PACKET_INVALIDATORS",
+    "DEFAULT_PILOT_REGRESSION_REQUIREMENTS",
     "DEFAULT_PREDICTED_FILES",
+    "DEFAULT_REPAIR_DEV_PACKET_METRICS_RELATIVE_PATH",
+    "DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS",
     "DEFAULT_VALIDATION_COMMANDS",
+    "FORBIDDEN_PACKET_CONTENT_KEYS",
     "HOLDOUT_BASELINE_E2E",
     "HOLDOUT_POPULATION_KIND",
     "KNOWN_TEACHERS",
     "NON_IMPLEMENTABLE_DISPOSITIONS",
+    "NON_IMPLEMENTABLE_EVIDENCE_STATUSES",
+    "PACKET_OMITTED_HANDLE_COVERAGE_REQUIRED",
+    "PACKET_TOKEN_BUDGET",
+    "PACKET_TOKEN_BUDGET_SOFT_WARN",
+    "PACKET_TOKEN_COUNTING_METHOD",
     "PLATEAU_ADMISSION_RECEIPT_INTERFACE",
     "PLATEAU_CODEX_PACKET_EVIDENCE",
     "PLATEAU_CODEX_PACKET_INTERFACE",
+    "PLATEAU_CODEX_PACKET_REPAIR_DEV_EVIDENCE",
     "PLATEAU_CODEX_PACKET_SCHEMA",
+    "PLATEAU_EXPANSION_HANDLE_INTERFACE",
+    "PLATEAU_INVARIANT_CONTEXT_INTERFACE",
+    "PLATEAU_PACKET_BINDINGS_INTERFACE",
     "PLATEAU_PROOF_OBLIGATION_INTERFACE",
     "PLATEAU_RESIDUAL_REF_INTERFACE",
     "PLATEAU_TEACHER_PROPOSAL_INTERFACE",
+    "REPAIR_DEV_BASELINE_E2E",
+    "REPAIR_DEV_PACKET_CONTEXT_METRICS_INTERFACE",
+    "REPAIR_DEV_PACKET_CONTEXT_METRICS_SCHEMA",
+    "REPAIR_DEV_POPULATION_KIND",
+    "ExpansionHandle",
+    "InvariantContext",
+    "PacketBindings",
     "PlateauAdmissionReceipt",
     "PlateauCodexPacket",
     "PlateauCodexPacketError",
@@ -2181,17 +3991,29 @@ __all__ = [
     "ResidualRef",
     "TeacherKind",
     "TeacherProposal",
+    "assert_catalog_allowed_for_packets",
     "baseline_l1_digest",
     "build_holdout_codex_packet",
     "build_holdout_packet_from_proposal_admission",
     "build_holdout_packets_from_residual_catalog",
+    "build_invariant_context",
     "build_packet_from_proposal_admission",
     "build_plateau_codex_packet",
+    "build_repair_dev_codex_packet",
+    "build_repair_dev_packet_context_metrics",
+    "build_repair_dev_packet_from_proposal_admission",
+    "build_repair_dev_packets_from_residual_catalog",
+    "catalog_case_evidence_status",
+    "compute_implementable_blockers",
+    "count_tokens_whitespace_proxy",
     "disposition_is_implementable",
+    "extract_catalog_bindings",
     "field_change_from_dict",
     "field_change_path",
     "mint_proof_obligations",
+    "plan_expansion_handles",
     "residual_ref_from_catalog_facet",
     "residual_refs_from_catalog",
     "stable_residual_id",
+    "write_repair_dev_packet_context_metrics",
 ]
