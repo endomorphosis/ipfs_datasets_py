@@ -1,0 +1,37 @@
+{
+  "assets": [],
+  "assumptions": [],
+  "channels": [],
+  "claims": [],
+  "declaration_id": "security:unknown-extension-fixture",
+  "extensions": [
+    {
+      "extension_id": "extension:security.unknown-vendor:v1",
+      "payload": {
+        "schema_version": "security.unknown-vendor/v1"
+      },
+      "required": true,
+      "source_ids": [
+        "source:unknown-fixture"
+      ],
+      "version": "v1",
+      "vocabulary": "security.unknown-vendor"
+    }
+  ],
+  "policies": [],
+  "principals": [],
+  "resources": [],
+  "schema_version": "security-ir/v1",
+  "sources": [
+    {
+      "attributes": {},
+      "content_sha256": "a3cc862bb20e209d2817f8262752d137b348d0d1c640b7856484c9ac1ed41d76",
+      "review_status": "unreviewed",
+      "revision": "fixture-1",
+      "source_id": "source:unknown-fixture",
+      "uri": "repo://tests/fixtures/security_ir/constraint_cache/unknown_extension_declaration.json"
+    }
+  ],
+  "state_machines": [],
+  "trust_zones": []
+}

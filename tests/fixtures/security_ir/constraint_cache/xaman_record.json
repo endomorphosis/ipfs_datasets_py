@@ -1,0 +1,2459 @@
+{
+  "artifact": {
+    "assumptions": [
+      {
+        "assumption_id": "A1",
+        "metadata": {
+          "attributes": {
+            "legacy_collection": "assumptions",
+            "legacy_value": "A1"
+          },
+          "security_node_id": "security-node:assumption:A1"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "cryptographic primitives are unbroken"
+      },
+      {
+        "assumption_id": "A2",
+        "metadata": {
+          "attributes": {
+            "legacy_collection": "assumptions",
+            "legacy_value": "A2"
+          },
+          "security_node_id": "security-node:assumption:A2"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "private keys are generated with sufficient entropy"
+      },
+      {
+        "assumption_id": "A3",
+        "metadata": {
+          "attributes": {
+            "legacy_collection": "assumptions",
+            "legacy_value": "A3"
+          },
+          "security_node_id": "security-node:assumption:A3"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "signing code signs only approved canonical transaction bytes"
+      },
+      {
+        "assumption_id": "A6",
+        "metadata": {
+          "attributes": {
+            "legacy_collection": "assumptions",
+            "legacy_value": "A6"
+          },
+          "security_node_id": "security-node:assumption:A6"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "the declared XRPL finality threshold is sufficient"
+      },
+      {
+        "assumption_id": "A9",
+        "metadata": {
+          "attributes": {
+            "legacy_collection": "assumptions",
+            "legacy_value": "A9"
+          },
+          "security_node_id": "security-node:assumption:A9"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "external XRPL providers may lie, delay, or censor only within the modeled bounds"
+      }
+    ],
+    "compiler_config": {
+      "compiler_id": "security-ir-formalization-adapter",
+      "compiler_version": "security-ir-formalization-adapter/v1",
+      "config_id": "security-ir-formalization-default",
+      "options": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "proof_backend_execution": false,
+        "result_artifacts_are_features": false
+      },
+      "producer_id": "security-ir-formalization-adapter",
+      "schema_version": "formalization-compiler-config/v1",
+      "target_view_ids": [
+        "security-ir-view/claim/v1",
+        "security-ir-view/policy/v1",
+        "security-ir-view/threat/v1"
+      ],
+      "unsupported_policy": "preserve_opaque"
+    },
+    "compiler_config_identity": {
+      "cid": "bafkreiarkthou7topzmlm44ztqioykbzm2zz2mjzvbgyxf4ekkglhvckpm",
+      "digest": "sha256:1154ceea7e6e7e58b673999c10ec283966b39d3139a84d8b9784528cb3d44a7b",
+      "domain": "formalization-compiler-config",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-compiler-config/v1"
+    },
+    "cross_view_links": [],
+    "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+    "declaration_id": "security-ir-v1-golden-xaman",
+    "diagnostics": {
+      "config_id": "security-ir-formalization-default",
+      "diagnostics": [
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "security-ir-formalization-default",
+          "diagnostic_id": "diagnostic:be60343fdd89fcbd845d73d4f54afd5c",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/declaration/extensions",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:xaman-app"
+            ],
+            "span_ids": [],
+            "subject_ids": [
+              "security-node:extension:extension:security.xaman:v1"
+            ]
+          },
+          "message": "Security extension 'extension:security.xaman:v1' from vocabulary 'security.xaman' is preserved but has no reviewed shared-formalization lowering",
+          "metadata": {
+            "adapter_schema_version": "security-ir-formalization-adapter/v1",
+            "construct_id": "security-node:extension:extension:security.xaman:v1",
+            "extension_id": "extension:security.xaman:v1",
+            "required": true,
+            "view_id": "",
+            "vocabulary": "security.xaman",
+            "vocabulary_version": "v1"
+          },
+          "producer_id": "security-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        }
+      ],
+      "error_count": 0,
+      "evidence_set_id": "",
+      "metadata": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "result_artifacts_excluded": true,
+        "unsupported_extension_count": 1
+      },
+      "producer_id": "security-ir-formalization-adapter",
+      "provenance_id": "provenance:security:dca9781b2db112ccc98b0c042a810ea0",
+      "report_id": "diagnostics:security:5956718504015ac8:1154ceea7e6e7e58",
+      "schema_version": "ir-diagnostics/v1",
+      "valid": true,
+      "warning_count": 1
+    },
+    "domain": "security",
+    "formulas": [
+      {
+        "assumption_ids": [
+          "A1"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A1",
+            "attributes": {
+              "legacy_collection": "assumptions",
+              "legacy_value": "A1"
+            },
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "cryptographic primitives are unbroken"
+          }
+        },
+        "formula_id": "formula:security:assumption:A1",
+        "input_node_ids": [
+          "security-node:assumption:A1"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A1"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A1"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A2"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A2",
+            "attributes": {
+              "legacy_collection": "assumptions",
+              "legacy_value": "A2"
+            },
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "private keys are generated with sufficient entropy"
+          }
+        },
+        "formula_id": "formula:security:assumption:A2",
+        "input_node_ids": [
+          "security-node:assumption:A2"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A2"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A2"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A3"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A3",
+            "attributes": {
+              "legacy_collection": "assumptions",
+              "legacy_value": "A3"
+            },
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "signing code signs only approved canonical transaction bytes"
+          }
+        },
+        "formula_id": "formula:security:assumption:A3",
+        "input_node_ids": [
+          "security-node:assumption:A3"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A3"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A3"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A6"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A6",
+            "attributes": {
+              "legacy_collection": "assumptions",
+              "legacy_value": "A6"
+            },
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "the declared XRPL finality threshold is sufficient"
+          }
+        },
+        "formula_id": "formula:security:assumption:A6",
+        "input_node_ids": [
+          "security-node:assumption:A6"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A6"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A6"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A9"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A9",
+            "attributes": {
+              "legacy_collection": "assumptions",
+              "legacy_value": "A9"
+            },
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "external XRPL providers may lie, delay, or censor only within the modeled bounds"
+          }
+        },
+        "formula_id": "formula:security:assumption:A9",
+        "input_node_ids": [
+          "security-node:assumption:A9"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A9"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A9"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A2"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A2"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "Authentication blocks unauthenticated signing.",
+                "domain": "auth_component",
+                "id": "claim:xaman-auth",
+                "required_assumptions": [
+                  "A2"
+                ],
+                "severity": "blocking"
+              }
+            },
+            "claim_id": "claim:xaman-auth",
+            "domain": "auth_component",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "Authentication blocks unauthenticated signing."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-auth",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-auth"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-auth"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-auth"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "claim": {
+            "assumption_ids": [],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "End-to-end coverage spans the signing lifecycle.",
+                "domain": "e2e_flow",
+                "id": "claim:xaman-e2e",
+                "required_assumptions": [],
+                "severity": "medium"
+              }
+            },
+            "claim_id": "claim:xaman-e2e",
+            "domain": "e2e_flow",
+            "policy_ids": [],
+            "severity": "medium",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "End-to-end coverage spans the signing lifecycle."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-e2e",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-e2e"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-e2e"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-e2e"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [
+          "A3",
+          "A6"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A3",
+              "A6"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "The submitted XRPL transaction matches approved intent.",
+                "domain": "ledger",
+                "id": "claim:xaman-ledger",
+                "required_assumptions": [
+                  "A3",
+                  "A6"
+                ],
+                "severity": "blocking"
+              }
+            },
+            "claim_id": "claim:xaman-ledger",
+            "domain": "ledger",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "The submitted XRPL transaction matches approved intent."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-ledger",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-ledger"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-ledger"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-ledger"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [
+          "A3"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A3"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "Signed payload bytes match the approved digest.",
+                "domain": "payload",
+                "id": "claim:xaman-payload",
+                "required_assumptions": [
+                  "A3"
+                ],
+                "severity": "blocking"
+              }
+            },
+            "claim_id": "claim:xaman-payload",
+            "domain": "payload",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "Signed payload bytes match the approved digest."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-payload",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-payload"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-payload"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-payload"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [
+          "A9"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A9"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "Wallet service calls carry an authenticated session.",
+                "domain": "service",
+                "id": "claim:xaman-service",
+                "required_assumptions": [
+                  "A9"
+                ],
+                "severity": "high"
+              }
+            },
+            "claim_id": "claim:xaman-service",
+            "domain": "service",
+            "policy_ids": [],
+            "severity": "high",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "Wallet service calls carry an authenticated session."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-service",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-service"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-service"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-service"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A1",
+              "A2"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "Application state never persists a raw seed.",
+                "domain": "store",
+                "id": "claim:xaman-store",
+                "required_assumptions": [
+                  "A1",
+                  "A2"
+                ],
+                "severity": "blocking"
+              }
+            },
+            "claim_id": "claim:xaman-store",
+            "domain": "store",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "Application state never persists a raw seed."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-store",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-store"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-store"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-store"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A1",
+              "A2"
+            ],
+            "attributes": {
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "The encrypted vault never persists a wallet secret in plaintext.",
+                "domain": "vault",
+                "id": "claim:xaman-vault",
+                "required_assumptions": [
+                  "A1",
+                  "A2"
+                ],
+                "severity": "blocking"
+              }
+            },
+            "claim_id": "claim:xaman-vault",
+            "domain": "vault",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [
+              "source:xaman-app"
+            ],
+            "statement": "The encrypted vault never persists a wallet secret in plaintext."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:xaman-vault",
+        "input_node_ids": [
+          "security-node:claim:claim:xaman-vault"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:xaman-vault"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:xaman-vault"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "kind": "security_policy",
+          "modality": "unspecified",
+          "policy": {
+            "attributes": {
+              "legacy_collection": "policies",
+              "legacy_record": {
+                "enabled": true,
+                "id": "policy:xaman-biometric-required",
+                "name": "xaman_biometric_required"
+              }
+            },
+            "channel_ids": [],
+            "effect": "unspecified",
+            "name": "xaman_biometric_required",
+            "policy_id": "policy:xaman-biometric-required",
+            "principal_ids": [],
+            "resource_ids": [],
+            "source_ids": [
+              "source:xaman-app"
+            ]
+          }
+        },
+        "formula_id": "formula:security:policy:policy:xaman-biometric-required",
+        "input_node_ids": [
+          "security-node:policy:policy:xaman-biometric-required"
+        ],
+        "metadata": {
+          "security_construct": "policy",
+          "security_id": "policy:xaman-biometric-required"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:xaman-app"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:policy:policy:xaman-biometric-required"
+        ],
+        "view_id": "security-ir-view/policy/v1"
+      }
+    ],
+    "metadata": {
+      "adapter_schema_version": "security-ir-formalization-adapter/v1",
+      "declaration_cid": "bafkreihfnizsolg2xx2e6ilzobipdbbviyxqdygkomu2gugn4u73ie4vly",
+      "proof_backend_executed": false,
+      "result_artifacts_excluded": true
+    },
+    "proof_obligations": [
+      {
+        "assumption_ids": [
+          "A2"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-auth",
+          "claim_id": "claim:xaman-auth",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "b35e40e23bfb32ded7d6154997d1cfe355f06c9d38e9a5d748bd2c508b104b81"
+        },
+        "obligation_id": "obligation:security:claim:xaman-auth",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A2\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A2\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"private keys are generated with sufficient entropy\"}],\"claim\":{\"assumption_ids\":[\"A2\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"Authentication blocks unauthenticated signing.\",\"domain\":\"auth_component\",\"id\":\"claim:xaman-auth\",\"required_assumptions\":[\"A2\"],\"severity\":\"blocking\"}},\"claim_id\":\"claim:xaman-auth\",\"domain\":\"auth_component\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"Authentication blocks unauthenticated signing.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-e2e",
+          "claim_id": "claim:xaman-e2e",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "4f37ba3419e42da02000503a703a02b438aee6857adb59a070379565c2e65e95"
+        },
+        "obligation_id": "obligation:security:claim:xaman-e2e",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[],\"claim\":{\"assumption_ids\":[],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"End-to-end coverage spans the signing lifecycle.\",\"domain\":\"e2e_flow\",\"id\":\"claim:xaman-e2e\",\"required_assumptions\":[],\"severity\":\"medium\"}},\"claim_id\":\"claim:xaman-e2e\",\"domain\":\"e2e_flow\",\"policy_ids\":[],\"severity\":\"medium\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"End-to-end coverage spans the signing lifecycle.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [
+          "A3",
+          "A6"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-ledger",
+          "claim_id": "claim:xaman-ledger",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "a0d93c129db4696ba8b8e490b2607513a334d84d28f93da76d5c03ee1f191d4f"
+        },
+        "obligation_id": "obligation:security:claim:xaman-ledger",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A3\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A3\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"signing code signs only approved canonical transaction bytes\"},{\"assumption_id\":\"A6\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A6\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"the declared XRPL finality threshold is sufficient\"}],\"claim\":{\"assumption_ids\":[\"A3\",\"A6\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"The submitted XRPL transaction matches approved intent.\",\"domain\":\"ledger\",\"id\":\"claim:xaman-ledger\",\"required_assumptions\":[\"A3\",\"A6\"],\"severity\":\"blocking\"}},\"claim_id\":\"claim:xaman-ledger\",\"domain\":\"ledger\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"The submitted XRPL transaction matches approved intent.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [
+          "A3"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-payload",
+          "claim_id": "claim:xaman-payload",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "9ebd6825c89fe9fc68fa40c47c97a8f26125b914434171dfdf25e63ad4941587"
+        },
+        "obligation_id": "obligation:security:claim:xaman-payload",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A3\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A3\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"signing code signs only approved canonical transaction bytes\"}],\"claim\":{\"assumption_ids\":[\"A3\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"Signed payload bytes match the approved digest.\",\"domain\":\"payload\",\"id\":\"claim:xaman-payload\",\"required_assumptions\":[\"A3\"],\"severity\":\"blocking\"}},\"claim_id\":\"claim:xaman-payload\",\"domain\":\"payload\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"Signed payload bytes match the approved digest.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [
+          "A9"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-service",
+          "claim_id": "claim:xaman-service",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "feb6a14e2d264788a1ed8da3feef9b920d75a27696764a76577a499beb2bdd0a"
+        },
+        "obligation_id": "obligation:security:claim:xaman-service",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A9\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A9\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"external XRPL providers may lie, delay, or censor only within the modeled bounds\"}],\"claim\":{\"assumption_ids\":[\"A9\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"Wallet service calls carry an authenticated session.\",\"domain\":\"service\",\"id\":\"claim:xaman-service\",\"required_assumptions\":[\"A9\"],\"severity\":\"high\"}},\"claim_id\":\"claim:xaman-service\",\"domain\":\"service\",\"policy_ids\":[],\"severity\":\"high\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"Wallet service calls carry an authenticated session.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-store",
+          "claim_id": "claim:xaman-store",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "92b6b4f2c08568a15c0ead98711877bf48894315e866f8dc0435bb717edeeddf"
+        },
+        "obligation_id": "obligation:security:claim:xaman-store",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A1\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A1\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"cryptographic primitives are unbroken\"},{\"assumption_id\":\"A2\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A2\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"private keys are generated with sufficient entropy\"}],\"claim\":{\"assumption_ids\":[\"A1\",\"A2\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"Application state never persists a raw seed.\",\"domain\":\"store\",\"id\":\"claim:xaman-store\",\"required_assumptions\":[\"A1\",\"A2\"],\"severity\":\"blocking\"}},\"claim_id\":\"claim:xaman-store\",\"domain\":\"store\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"Application state never persists a raw seed.\"},\"policies\":[]}"
+      },
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:xaman-vault",
+          "claim_id": "claim:xaman-vault",
+          "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+          "semantic_input_sha256": "e0705dec3cbabae97efc5f8ce205f3e32f24400f8d6f43f3ff931bc206d96e89"
+        },
+        "obligation_id": "obligation:security:claim:xaman-vault",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:xaman-app"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A1\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A1\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"cryptographic primitives are unbroken\"},{\"assumption_id\":\"A2\",\"attributes\":{\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A2\"},\"source_ids\":[\"source:xaman-app\"],\"statement\":\"private keys are generated with sufficient entropy\"}],\"claim\":{\"assumption_ids\":[\"A1\",\"A2\"],\"attributes\":{\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"The encrypted vault never persists a wallet secret in plaintext.\",\"domain\":\"vault\",\"id\":\"claim:xaman-vault\",\"required_assumptions\":[\"A1\",\"A2\"],\"severity\":\"blocking\"}},\"claim_id\":\"claim:xaman-vault\",\"domain\":\"vault\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[\"source:xaman-app\"],\"statement\":\"The encrypted vault never persists a wallet secret in plaintext.\"},\"policies\":[]}"
+      }
+    ],
+    "sample_id": "sample:security:dca9781b2db112ccc98b0c042a810ea0",
+    "schema_version": "formalization-artifact/v1",
+    "source_map": {
+      "bindings": [
+        {
+          "binding_id": "binding:security:declaration:1fee922d9218f8d047b4aee812fc387e",
+          "config_id": "",
+          "derived": false,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "adapter_schema_version": "security-ir-formalization-adapter/v1",
+            "security_construct": "declaration"
+          },
+          "parent_subject_ids": [],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:dca9781b2db112ccc98b0c04"
+          ],
+          "span_ids": [],
+          "subject_id": "security-ir-v1-golden-xaman"
+        },
+        {
+          "binding_id": "binding:security:formula:1079340a90212760682c0a07ce6f4695",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A9"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A9"
+        },
+        {
+          "binding_id": "binding:security:formula:14113fc91215531771d5349da93c0810",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-store"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-store"
+        },
+        {
+          "binding_id": "binding:security:formula:2d609b46aa85101fb4c9d97b2606d13a",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:policy:policy:xaman-biometric-required"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:policy:policy:xaman-biometric-required"
+        },
+        {
+          "binding_id": "binding:security:formula:593581c48d75478af00569db2ce08285",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A1"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A1"
+        },
+        {
+          "binding_id": "binding:security:formula:63fc8e04283aa68e1a7cd9e75cfede81",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-e2e"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-e2e"
+        },
+        {
+          "binding_id": "binding:security:formula:84964df85b85d235eab5a67bd9c567f6",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-auth"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-auth"
+        },
+        {
+          "binding_id": "binding:security:formula:91fd085a67f51da393ef750625dc7297",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-payload"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-payload"
+        },
+        {
+          "binding_id": "binding:security:formula:a91a7707825061bddd0e25211d22f030",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-service"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-service"
+        },
+        {
+          "binding_id": "binding:security:formula:c02bd1345db6c00c3ed42387e1521aa0",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A3"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:formula:d3459634da20b4f51bd0222ce8094dbb",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-ledger"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-ledger"
+        },
+        {
+          "binding_id": "binding:security:formula:d77266ee09bab8fa37399b9f5a939126",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-vault"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:xaman-vault"
+        },
+        {
+          "binding_id": "binding:security:formula:e7a69f4b1f7f743ca531d7c67e81dc43",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A6"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A6"
+        },
+        {
+          "binding_id": "binding:security:formula:f41cc17510bd95aef37058c11b16eee3",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A2"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A2"
+        },
+        {
+          "binding_id": "binding:security:input:008e37a1332b3335b399a66945768701",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-vault"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-vault"
+        },
+        {
+          "binding_id": "binding:security:input:065bd182bff97306736af4e1f03ea983",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-store"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-store"
+        },
+        {
+          "binding_id": "binding:security:input:375892e773cb44edf6137ef9eeebac32",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A3"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:input:548756d3eea408b2e1c6e8b49feaabe1",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-service"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-service"
+        },
+        {
+          "binding_id": "binding:security:input:6146945211cd32cba92a3761783e4a56",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A1"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A1"
+        },
+        {
+          "binding_id": "binding:security:input:7489a7ec0cf627d8d2952634a90629e5",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-ledger"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-ledger"
+        },
+        {
+          "binding_id": "binding:security:input:864a4e56bd8ecdd910aba916e18fd9c8",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "policy",
+            "security_id": "policy:xaman-biometric-required"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:policy:policy:xaman-biometric-required"
+        },
+        {
+          "binding_id": "binding:security:input:96ddcf863077ddc4c6f05ca30384aadd",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "extension",
+            "security_id": "extension:security.xaman:v1"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:extension:extension:security.xaman:v1"
+        },
+        {
+          "binding_id": "binding:security:input:9875d9af35c5c6313b16a73d9afa8ad6",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A9"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A9"
+        },
+        {
+          "binding_id": "binding:security:input:9f8d3833fe3ecaa2164ef804cc33b3bc",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A6"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A6"
+        },
+        {
+          "binding_id": "binding:security:input:cac02d2de12080a12573c5ebec99e1cd",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-e2e"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-e2e"
+        },
+        {
+          "binding_id": "binding:security:input:d7198b9902be7fc3698f97eb0509faab",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-payload"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-payload"
+        },
+        {
+          "binding_id": "binding:security:input:f8df0c9a943c8f5330cc46b69d2480ad",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A2"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A2"
+        },
+        {
+          "binding_id": "binding:security:input:fe8107298cd86520c336b7f97ea23e98",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-auth"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-xaman"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:xaman-auth"
+        },
+        {
+          "binding_id": "binding:security:symbol:1d560afb36d5f2942456ecbc2ba56e2d",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-service"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-service"
+        },
+        {
+          "binding_id": "binding:security:symbol:2156893853052c9c7d9713dfa9a6f517",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:policy:policy:xaman-biometric-required"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:policy:policy:xaman-biometric-required"
+        },
+        {
+          "binding_id": "binding:security:symbol:21a504efd20ecc9bd623d8acd3519be9",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A9"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A9"
+        },
+        {
+          "binding_id": "binding:security:symbol:24ae2481763c6c78e9a8b8e721447465",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A2"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A2"
+        },
+        {
+          "binding_id": "binding:security:symbol:4089833fba52f9a8aaaf94a666ad2e21",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-payload"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-payload"
+        },
+        {
+          "binding_id": "binding:security:symbol:417c6df148d4b80bd89f631d748b6c97",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-ledger"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-ledger"
+        },
+        {
+          "binding_id": "binding:security:symbol:4d73926ad9936b8311bbec680dde5451",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-vault"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-vault"
+        },
+        {
+          "binding_id": "binding:security:symbol:78ba52bd7a428bd8dc46ce55b3d21eb9",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A3"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:symbol:812952b44feffec7eba65ff322374650",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A6"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A6"
+        },
+        {
+          "binding_id": "binding:security:symbol:a32f43c0c3cb9f917992b2bb5e4f218f",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-auth"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-auth"
+        },
+        {
+          "binding_id": "binding:security:symbol:bd149b1868a70e723088326bba95e4d7",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A1"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A1"
+        },
+        {
+          "binding_id": "binding:security:symbol:e8ad767eec2a2e81790dfb0a89d210b0",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-store"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-store"
+        },
+        {
+          "binding_id": "binding:security:symbol:f3f0d00c727eea1eb02a52e254f74219",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:xaman-e2e"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:xaman-e2e"
+        }
+      ],
+      "configs": [
+        {
+          "config_id": "security-ir-formalization-default",
+          "content_cid": "",
+          "content_sha256": "1154ceea7e6e7e58b673999c10ec283966b39d3139a84d8b9784528cb3d44a7b",
+          "metadata": {},
+          "schema_id": "formalization-compiler-config/v1"
+        }
+      ],
+      "metadata": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+        "result_artifacts_excluded": true
+      },
+      "producers": [
+        {
+          "implementation_sha256": "",
+          "metadata": {
+            "compiler_id": "security-ir-formalization-adapter"
+          },
+          "model_id": "",
+          "name": "Security IR shared-formalization adapter",
+          "producer_id": "security-ir-formalization-adapter",
+          "repository_revision": "",
+          "version": "security-ir-formalization-adapter/v1"
+        }
+      ],
+      "provenance_id": "provenance:security:dca9781b2db112ccc98b0c042a810ea0",
+      "schema_version": "ir-provenance/v1",
+      "sources": [
+        {
+          "container_sha256": "",
+          "container_uri": "",
+          "content_cid": "",
+          "content_sha256": "dca9781b2db112ccc98b0c042a810ea0144f97ebb05a933aea5f03a5b6ab378b",
+          "license_expression": "",
+          "metadata": {
+            "content_binding": "canonical_security_ir_declaration",
+            "declaration_cid": "bafkreihfnizsolg2xx2e6ilzobipdbbviyxqdygkomu2gugn4u73ie4vly",
+            "identity_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e"
+          },
+          "ref_id": "source:security-declaration:dca9781b2db112ccc98b0c04",
+          "review_status": "machine_extracted",
+          "source_id": "security-ir-v1-golden-xaman",
+          "source_revision": "security-ir/v1",
+          "source_uri": "urn:security-ir:declaration:security-ir-v1-golden-xaman"
+        },
+        {
+          "container_sha256": "",
+          "container_uri": "",
+          "content_cid": "",
+          "content_sha256": "48c63e75e409419737298f2a4a72635665c94b44796dcfaa6c10beb9a7d19995",
+          "license_expression": "",
+          "metadata": {
+            "content_binding": "security_source_descriptor",
+            "declared_review_status": "trusted_fixture",
+            "original_source_uri": "https://github.com/XRPL-Labs/Xaman-App",
+            "security_source_attributes": {
+              "binding_kind": "pinned_source_revision",
+              "config_id": "config:xaman-golden"
+            }
+          },
+          "ref_id": "source:xaman-app",
+          "review_status": "trusted_fixture",
+          "source_id": "source:xaman-app",
+          "source_revision": "942f43876265a7af44f233288ad2b1d00841d5fa",
+          "source_uri": "urn:security-ir:source-descriptor:source:xaman-app"
+        }
+      ],
+      "spans": []
+    },
+    "symbol_table": {
+      "metadata": {
+        "domain": "security"
+      },
+      "schema_version": "formal-symbol-table/v1",
+      "symbols": [
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A1"
+          },
+          "name": "A1",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A1"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A2"
+          },
+          "name": "A2",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A2"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A3"
+          },
+          "name": "A3",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A3"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A6"
+          },
+          "name": "A6",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A6"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A9"
+          },
+          "name": "A9",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A9"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-auth"
+          },
+          "name": "claim:xaman-auth",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-auth"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-e2e"
+          },
+          "name": "claim:xaman-e2e",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-e2e"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-ledger"
+          },
+          "name": "claim:xaman-ledger",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-ledger"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-payload"
+          },
+          "name": "claim:xaman-payload",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-payload"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-service"
+          },
+          "name": "claim:xaman-service",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-service"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-store"
+          },
+          "name": "claim:xaman-store",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-store"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:xaman-vault"
+          },
+          "name": "claim:xaman-vault",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:xaman-vault"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "policy",
+            "security_id": "policy:xaman-biometric-required"
+          },
+          "name": "xaman_biometric_required",
+          "sort": "policy",
+          "source_ref_ids": [
+            "source:xaman-app"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:policy:policy:xaman-biometric-required"
+        }
+      ],
+      "table_id": "symbols:security:security-ir-v1-golden-xaman"
+    },
+    "view_registry": {
+      "registry_id": "security-ir-formalization-views",
+      "schema_version": "formalization-view-registry/v1",
+      "views": [
+        {
+          "capabilities": [
+            "assumptions",
+            "proof_obligations",
+            "source_grounding"
+          ],
+          "description": "Security claims and their solver-neutral obligations.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "verification_condition",
+          "metadata": {
+            "security_constructs": [
+              "claim"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/claim/v1"
+        },
+        {
+          "capabilities": [
+            "action_contracts",
+            "deontic_modality",
+            "source_grounding"
+          ],
+          "description": "Declarative allow, deny, require, and audit policies.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "deontic",
+          "metadata": {
+            "security_constructs": [
+              "policy"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/policy/v1"
+        },
+        {
+          "capabilities": [
+            "assumptions",
+            "source_grounding",
+            "typed_symbols"
+          ],
+          "description": "Explicit threat premises and environmental assumptions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "threat_model",
+          "metadata": {
+            "security_constructs": [
+              "threat_assumption"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/threat/v1"
+        },
+        {
+          "capabilities": [
+            "source_grounding",
+            "state_transitions",
+            "temporal_control"
+          ],
+          "description": "Finite-state machines and guarded security transitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "transition_system",
+          "metadata": {
+            "security_constructs": [
+              "state_machine",
+              "transition"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/transition/v1"
+        }
+      ]
+    },
+    "view_registry_identity": {
+      "cid": "bafkreihsdkdhk25ds6ey4uidwzeba2leolcecnlzxy74m7wbhfpplj227a",
+      "digest": "sha256:f21a86756ba397898e5103b64810696472c4413579be3fc67ec1395ef5a75af8",
+      "domain": "formalization-view-registry",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-view-registry/v1"
+    }
+  },
+  "content_cid": "bafkreiatkafypp2brujjz7k6sjchk6zjynucailatrlhhm7sz4dabjmvf4",
+  "content_digest": "sha256:13500b87bf418d129cfd5e9244757b29c3682021609c5673b3f2cf0600a5952f",
+  "declaration": {
+    "assets": [
+      {
+        "asset_id": "asset:xrp",
+        "attributes": {
+          "legacy_collection": "assets",
+          "legacy_record": {
+            "decimals": 6,
+            "id": "asset:xrp",
+            "symbol": "XRP"
+          }
+        },
+        "kind": "unspecified",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "symbol": "XRP"
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption_id": "A1",
+        "attributes": {
+          "legacy_collection": "assumptions",
+          "legacy_value": "A1"
+        },
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "cryptographic primitives are unbroken"
+      },
+      {
+        "assumption_id": "A2",
+        "attributes": {
+          "legacy_collection": "assumptions",
+          "legacy_value": "A2"
+        },
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "private keys are generated with sufficient entropy"
+      },
+      {
+        "assumption_id": "A3",
+        "attributes": {
+          "legacy_collection": "assumptions",
+          "legacy_value": "A3"
+        },
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "signing code signs only approved canonical transaction bytes"
+      },
+      {
+        "assumption_id": "A6",
+        "attributes": {
+          "legacy_collection": "assumptions",
+          "legacy_value": "A6"
+        },
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "the declared XRPL finality threshold is sufficient"
+      },
+      {
+        "assumption_id": "A9",
+        "attributes": {
+          "legacy_collection": "assumptions",
+          "legacy_value": "A9"
+        },
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "external XRPL providers may lie, delay, or censor only within the modeled bounds"
+      }
+    ],
+    "channels": [],
+    "claims": [
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "The encrypted vault never persists a wallet secret in plaintext.",
+            "domain": "vault",
+            "id": "claim:xaman-vault",
+            "required_assumptions": [
+              "A1",
+              "A2"
+            ],
+            "severity": "blocking"
+          }
+        },
+        "claim_id": "claim:xaman-vault",
+        "domain": "vault",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "The encrypted vault never persists a wallet secret in plaintext."
+      },
+      {
+        "assumption_ids": [
+          "A3"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "Signed payload bytes match the approved digest.",
+            "domain": "payload",
+            "id": "claim:xaman-payload",
+            "required_assumptions": [
+              "A3"
+            ],
+            "severity": "blocking"
+          }
+        },
+        "claim_id": "claim:xaman-payload",
+        "domain": "payload",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "Signed payload bytes match the approved digest."
+      },
+      {
+        "assumption_ids": [
+          "A3",
+          "A6"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "The submitted XRPL transaction matches approved intent.",
+            "domain": "ledger",
+            "id": "claim:xaman-ledger",
+            "required_assumptions": [
+              "A3",
+              "A6"
+            ],
+            "severity": "blocking"
+          }
+        },
+        "claim_id": "claim:xaman-ledger",
+        "domain": "ledger",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "The submitted XRPL transaction matches approved intent."
+      },
+      {
+        "assumption_ids": [
+          "A2"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "Authentication blocks unauthenticated signing.",
+            "domain": "auth_component",
+            "id": "claim:xaman-auth",
+            "required_assumptions": [
+              "A2"
+            ],
+            "severity": "blocking"
+          }
+        },
+        "claim_id": "claim:xaman-auth",
+        "domain": "auth_component",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "Authentication blocks unauthenticated signing."
+      },
+      {
+        "assumption_ids": [
+          "A9"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "Wallet service calls carry an authenticated session.",
+            "domain": "service",
+            "id": "claim:xaman-service",
+            "required_assumptions": [
+              "A9"
+            ],
+            "severity": "high"
+          }
+        },
+        "claim_id": "claim:xaman-service",
+        "domain": "service",
+        "policy_ids": [],
+        "severity": "high",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "Wallet service calls carry an authenticated session."
+      },
+      {
+        "assumption_ids": [
+          "A1",
+          "A2"
+        ],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "Application state never persists a raw seed.",
+            "domain": "store",
+            "id": "claim:xaman-store",
+            "required_assumptions": [
+              "A1",
+              "A2"
+            ],
+            "severity": "blocking"
+          }
+        },
+        "claim_id": "claim:xaman-store",
+        "domain": "store",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "Application state never persists a raw seed."
+      },
+      {
+        "assumption_ids": [],
+        "attributes": {
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "End-to-end coverage spans the signing lifecycle.",
+            "domain": "e2e_flow",
+            "id": "claim:xaman-e2e",
+            "required_assumptions": [],
+            "severity": "medium"
+          }
+        },
+        "claim_id": "claim:xaman-e2e",
+        "domain": "e2e_flow",
+        "policy_ids": [],
+        "severity": "medium",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "statement": "End-to-end coverage spans the signing lifecycle."
+      }
+    ],
+    "declaration_id": "security-ir-v1-golden-xaman",
+    "extensions": [
+      {
+        "extension_id": "extension:security.xaman:v1",
+        "payload": {
+          "capabilities": [],
+          "config_binding": {
+            "config_id": "config:xaman-golden"
+          },
+          "domains": [
+            "auth_component",
+            "e2e_flow",
+            "ledger",
+            "payload",
+            "service",
+            "store",
+            "vault"
+          ],
+          "events": [
+            {
+              "event": "signing_request",
+              "id": "event:xaman-signing-request:golden",
+              "timestamp": "2026-07-24T12:00:00Z",
+              "wallet_id": "wallet:xaman"
+            }
+          ],
+          "evidence_requirements": [
+            {
+              "assumption_id": "A1",
+              "blocking": true,
+              "claim_ids": [
+                "claim:xaman-store",
+                "claim:xaman-vault"
+              ],
+              "required_evidence": [
+                "cryptographic primitive and dependency inventory",
+                "cryptographic review bound to the source revision"
+              ],
+              "requirement_id": "requirement:xaman:A1",
+              "schema_version": "xaman-evidence-requirement/v1",
+              "source_ids": [
+                "source:xaman-app"
+              ]
+            },
+            {
+              "assumption_id": "A2",
+              "blocking": true,
+              "claim_ids": [
+                "claim:xaman-auth",
+                "claim:xaman-store",
+                "claim:xaman-vault"
+              ],
+              "required_evidence": [
+                "key-generation and entropy-source documentation",
+                "key lifecycle and native secret-storage controls"
+              ],
+              "requirement_id": "requirement:xaman:A2",
+              "schema_version": "xaman-evidence-requirement/v1",
+              "source_ids": [
+                "source:xaman-app"
+              ]
+            },
+            {
+              "assumption_id": "A3",
+              "blocking": true,
+              "claim_ids": [
+                "claim:xaman-ledger",
+                "claim:xaman-payload"
+              ],
+              "required_evidence": [
+                "deployed signing source digest",
+                "approved-intent to canonical-signing-bytes binding"
+              ],
+              "requirement_id": "requirement:xaman:A3",
+              "schema_version": "xaman-evidence-requirement/v1",
+              "source_ids": [
+                "source:xaman-app"
+              ]
+            },
+            {
+              "assumption_id": "A6",
+              "blocking": true,
+              "claim_ids": [
+                "claim:xaman-ledger"
+              ],
+              "required_evidence": [
+                "XRPL finality and reorganization policy",
+                "release-owner acceptance of finality bounds"
+              ],
+              "requirement_id": "requirement:xaman:A6",
+              "schema_version": "xaman-evidence-requirement/v1",
+              "source_ids": [
+                "source:xaman-app"
+              ]
+            },
+            {
+              "assumption_id": "A9",
+              "blocking": false,
+              "claim_ids": [
+                "claim:xaman-service"
+              ],
+              "required_evidence": [
+                "XRPL provider inventory and trust bounds",
+                "stale-data, delay, censorship, and fallback policy"
+              ],
+              "requirement_id": "requirement:xaman:A9",
+              "schema_version": "xaman-evidence-requirement/v1",
+              "source_ids": [
+                "source:xaman-app"
+              ]
+            }
+          ],
+          "invariants": [
+            {
+              "description": "Wallet secrets are never persisted outside the encrypted vault.",
+              "id": "invariant:xaman-no-plaintext-secret"
+            }
+          ],
+          "roles": [
+            {
+              "id": "role:xaman-user",
+              "name": "xaman_user"
+            }
+          ],
+          "schema_version": "security.xaman/v1",
+          "source_binding": {
+            "source_id": "source:xaman-app"
+          }
+        },
+        "required": true,
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "version": "v1",
+        "vocabulary": "security.xaman"
+      }
+    ],
+    "policies": [
+      {
+        "attributes": {
+          "legacy_collection": "policies",
+          "legacy_record": {
+            "enabled": true,
+            "id": "policy:xaman-biometric-required",
+            "name": "xaman_biometric_required"
+          }
+        },
+        "channel_ids": [],
+        "effect": "unspecified",
+        "name": "xaman_biometric_required",
+        "policy_id": "policy:xaman-biometric-required",
+        "principal_ids": [],
+        "resource_ids": [],
+        "source_ids": [
+          "source:xaman-app"
+        ]
+      }
+    ],
+    "principals": [
+      {
+        "attributes": {
+          "legacy_collection": "principals",
+          "legacy_record": {
+            "id": "principal:xaman-user",
+            "role": "role:xaman-user"
+          }
+        },
+        "kind": "unspecified",
+        "principal_id": "principal:xaman-user",
+        "role_ids": [
+          "role:xaman-user"
+        ],
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "trust_zone_ids": []
+      }
+    ],
+    "resources": [
+      {
+        "asset_ids": [],
+        "attributes": {
+          "legacy_collection": "entities",
+          "legacy_record": {
+            "id": "entity:xaman-user",
+            "kind": "user",
+            "name": "Xaman Wallet Holder"
+          }
+        },
+        "kind": "entitie:user",
+        "owner_principal_ids": [],
+        "resource_id": "entity:xaman-user",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "trust_zone_ids": []
+      },
+      {
+        "asset_ids": [],
+        "attributes": {
+          "legacy_collection": "entities",
+          "legacy_record": {
+            "id": "entity:xaman-app",
+            "kind": "wallet_app",
+            "name": "Xaman App"
+          }
+        },
+        "kind": "entitie:wallet_app",
+        "owner_principal_ids": [],
+        "resource_id": "entity:xaman-app",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "trust_zone_ids": []
+      },
+      {
+        "asset_ids": [
+          "asset:xrp"
+        ],
+        "attributes": {
+          "legacy_collection": "wallets",
+          "legacy_record": {
+            "asset": "asset:xrp",
+            "id": "wallet:xaman",
+            "owner": "principal:xaman-user",
+            "status": "active"
+          }
+        },
+        "kind": "wallet",
+        "owner_principal_ids": [
+          "principal:xaman-user"
+        ],
+        "resource_id": "wallet:xaman",
+        "source_ids": [
+          "source:xaman-app"
+        ],
+        "trust_zone_ids": []
+      }
+    ],
+    "schema_version": "security-ir/v1",
+    "sources": [
+      {
+        "attributes": {
+          "binding_kind": "pinned_source_revision",
+          "config_id": "config:xaman-golden"
+        },
+        "content_sha256": "",
+        "review_status": "trusted_fixture",
+        "revision": "942f43876265a7af44f233288ad2b1d00841d5fa",
+        "source_id": "source:xaman-app",
+        "uri": "https://github.com/XRPL-Labs/Xaman-App"
+      }
+    ],
+    "state_machines": [],
+    "trust_zones": []
+  },
+  "declaration_cid": "bafkreihfnizsolg2xx2e6ilzobipdbbviyxqdygkomu2gugn4u73ie4vly",
+  "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+  "declaration_id": "security-ir-v1-golden-xaman",
+  "extension_ids": [
+    "extension:security.xaman:v1"
+  ],
+  "extension_vocabularies": [
+    "security.xaman"
+  ],
+  "policy_decisions": [],
+  "profile": "xaman-golden",
+  "schema_version": "security-constraint-record/v1"
+}

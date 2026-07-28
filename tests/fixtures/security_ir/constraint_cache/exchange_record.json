@@ -1,0 +1,1167 @@
+{
+  "artifact": {
+    "assumptions": [
+      {
+        "assumption_id": "A3",
+        "metadata": {
+          "attributes": {
+            "exchange_vocabulary": "security.crypto-exchange/v1",
+            "legacy_collection": "assumptions",
+            "legacy_value": "A3"
+          },
+          "security_node_id": "security-node:assumption:A3"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "statement": "signing code signs only approved canonical transaction bytes"
+      },
+      {
+        "assumption_id": "A4",
+        "metadata": {
+          "attributes": {
+            "exchange_vocabulary": "security.crypto-exchange/v1",
+            "legacy_collection": "assumptions",
+            "legacy_value": "A4"
+          },
+          "security_node_id": "security-node:assumption:A4"
+        },
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "statement": "database commits are serializable"
+      }
+    ],
+    "compiler_config": {
+      "compiler_id": "security-ir-formalization-adapter",
+      "compiler_version": "security-ir-formalization-adapter/v1",
+      "config_id": "security-ir-formalization-default",
+      "options": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "proof_backend_execution": false,
+        "result_artifacts_are_features": false
+      },
+      "producer_id": "security-ir-formalization-adapter",
+      "schema_version": "formalization-compiler-config/v1",
+      "target_view_ids": [
+        "security-ir-view/claim/v1",
+        "security-ir-view/policy/v1",
+        "security-ir-view/threat/v1",
+        "security-ir-view/transition/v1"
+      ],
+      "unsupported_policy": "preserve_opaque"
+    },
+    "compiler_config_identity": {
+      "cid": "bafkreigjse2zsglp3p7zfnuli6it7vzfebze3iawupefkh3642cirdiqga",
+      "digest": "sha256:c9913599196fdbff92b68b47913fd72520724da016a3c8551f7ee684888d1030",
+      "domain": "formalization-compiler-config",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-compiler-config/v1"
+    },
+    "cross_view_links": [],
+    "declaration_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8",
+    "declaration_id": "security-ir-v1-golden-exchange",
+    "diagnostics": {
+      "config_id": "security-ir-formalization-default",
+      "diagnostics": [
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "security-ir-formalization-default",
+          "diagnostic_id": "diagnostic:9094e13d37ef09d397241aa738ef600b",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/declaration/extensions",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+            ],
+            "span_ids": [],
+            "subject_ids": [
+              "security-node:extension:extension:security.crypto-exchange:v1"
+            ]
+          },
+          "message": "Security extension 'extension:security.crypto-exchange:v1' from vocabulary 'security.crypto-exchange' is preserved but has no reviewed shared-formalization lowering",
+          "metadata": {
+            "adapter_schema_version": "security-ir-formalization-adapter/v1",
+            "construct_id": "security-node:extension:extension:security.crypto-exchange:v1",
+            "extension_id": "extension:security.crypto-exchange:v1",
+            "required": true,
+            "view_id": "",
+            "vocabulary": "security.crypto-exchange",
+            "vocabulary_version": "v1"
+          },
+          "producer_id": "security-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        }
+      ],
+      "error_count": 0,
+      "evidence_set_id": "",
+      "metadata": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "result_artifacts_excluded": true,
+        "unsupported_extension_count": 1
+      },
+      "producer_id": "security-ir-formalization-adapter",
+      "provenance_id": "provenance:security:cd40111b9a1c51a0cb0c8911b22c7fb4",
+      "report_id": "diagnostics:security:b952f53a2c57bdbd:c9913599196fdbff",
+      "schema_version": "ir-diagnostics/v1",
+      "valid": true,
+      "warning_count": 1
+    },
+    "domain": "security",
+    "formulas": [
+      {
+        "assumption_ids": [
+          "A3"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A3",
+            "attributes": {
+              "exchange_vocabulary": "security.crypto-exchange/v1",
+              "legacy_collection": "assumptions",
+              "legacy_value": "A3"
+            },
+            "source_ids": [],
+            "statement": "signing code signs only approved canonical transaction bytes"
+          }
+        },
+        "formula_id": "formula:security:assumption:A3",
+        "input_node_ids": [
+          "security-node:assumption:A3"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A3"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A3"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A4"
+        ],
+        "expression": {
+          "kind": "threat_assumption",
+          "premise": {
+            "assumption_id": "A4",
+            "attributes": {
+              "exchange_vocabulary": "security.crypto-exchange/v1",
+              "legacy_collection": "assumptions",
+              "legacy_value": "A4"
+            },
+            "source_ids": [],
+            "statement": "database commits are serializable"
+          }
+        },
+        "formula_id": "formula:security:assumption:A4",
+        "input_node_ids": [
+          "security-node:assumption:A4"
+        ],
+        "metadata": {
+          "security_construct": "assumption",
+          "security_id": "A4"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:assumption:A4"
+        ],
+        "view_id": "security-ir-view/threat/v1"
+      },
+      {
+        "assumption_ids": [
+          "A3",
+          "A4"
+        ],
+        "expression": {
+          "claim": {
+            "assumption_ids": [
+              "A3",
+              "A4"
+            ],
+            "attributes": {
+              "exchange_vocabulary": "security.crypto-exchange/v1",
+              "legacy_collection": "claims",
+              "legacy_record": {
+                "description": "The golden withdrawal remains authorized.",
+                "domain": "withdrawals",
+                "id": "claim:golden-authorized-withdrawal",
+                "required_assumptions": [
+                  "A3",
+                  "A4"
+                ],
+                "severity": "blocking"
+              },
+              "semantic_input_sha256": "19389b2c9225db154a2fbe76d3dfaaa0362add25caf61d16dcc21282db6e9835"
+            },
+            "claim_id": "claim:golden-authorized-withdrawal",
+            "domain": "security.crypto-exchange/v1/domain/withdrawals",
+            "policy_ids": [],
+            "severity": "blocking",
+            "source_ids": [],
+            "statement": "The golden withdrawal remains authorized."
+          },
+          "kind": "security_claim"
+        },
+        "formula_id": "formula:security:claim:claim:golden-authorized-withdrawal",
+        "input_node_ids": [
+          "security-node:claim:claim:golden-authorized-withdrawal"
+        ],
+        "metadata": {
+          "security_construct": "claim",
+          "security_id": "claim:golden-authorized-withdrawal"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:claim:claim:golden-authorized-withdrawal"
+        ],
+        "view_id": "security-ir-view/claim/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "kind": "security_policy",
+          "modality": "unspecified",
+          "policy": {
+            "attributes": {
+              "exchange_vocabulary": "security.crypto-exchange/v1",
+              "legacy_collection": "policies",
+              "legacy_record": {
+                "enabled": true,
+                "id": "policy:authorization-required",
+                "name": "authorization_required"
+              }
+            },
+            "channel_ids": [],
+            "effect": "unspecified",
+            "name": "security.crypto-exchange/v1/policy/authorization_required",
+            "policy_id": "policy:authorization-required",
+            "principal_ids": [],
+            "resource_ids": [],
+            "source_ids": []
+          }
+        },
+        "formula_id": "formula:security:policy:policy:authorization-required",
+        "input_node_ids": [
+          "security-node:policy:policy:authorization-required"
+        ],
+        "metadata": {
+          "security_construct": "policy",
+          "security_id": "policy:authorization-required"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:policy:policy:authorization-required"
+        ],
+        "view_id": "security-ir-view/policy/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "kind": "state_machine",
+          "state_machine": {
+            "attributes": {
+              "legacy_collection": "state_machines",
+              "legacy_record": {
+                "current": "broadcast",
+                "id": "state-machine:withdrawal",
+                "states": [
+                  "requested",
+                  "broadcast"
+                ]
+              }
+            },
+            "initial_state": "broadcast",
+            "source_ids": [],
+            "state_machine_id": "state-machine:withdrawal",
+            "states": [
+              "broadcast",
+              "requested"
+            ],
+            "transitions": []
+          }
+        },
+        "formula_id": "formula:security:state-machine:state-machine:withdrawal",
+        "input_node_ids": [
+          "security-node:state-machine:state-machine:withdrawal"
+        ],
+        "metadata": {
+          "security_construct": "state-machine",
+          "security_id": "state-machine:withdrawal"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:security:state-machine:state-machine:withdrawal"
+        ],
+        "view_id": "security-ir-view/transition/v1"
+      }
+    ],
+    "metadata": {
+      "adapter_schema_version": "security-ir-formalization-adapter/v1",
+      "declaration_cid": "bafkreigcslsjoutqkgpxffk4dy4zsrf5edwaw5x56mwesb7tcdn6igl3va",
+      "proof_backend_executed": false,
+      "result_artifacts_excluded": true
+    },
+    "proof_obligations": [
+      {
+        "assumption_ids": [
+          "A3",
+          "A4"
+        ],
+        "logic_family": "security_verification_condition",
+        "metadata": {
+          "claim_formula_id": "formula:security:claim:claim:golden-authorized-withdrawal",
+          "claim_id": "claim:golden-authorized-withdrawal",
+          "declaration_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8",
+          "semantic_input_sha256": "ae5648271b2c40f31e48c8df272a2fb33ef791fa16aac89d8f3adee30807623c"
+        },
+        "obligation_id": "obligation:security:claim:golden-authorized-withdrawal",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+        ],
+        "statement": "{\"assumptions\":[{\"assumption_id\":\"A3\",\"attributes\":{\"exchange_vocabulary\":\"security.crypto-exchange/v1\",\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A3\"},\"source_ids\":[],\"statement\":\"signing code signs only approved canonical transaction bytes\"},{\"assumption_id\":\"A4\",\"attributes\":{\"exchange_vocabulary\":\"security.crypto-exchange/v1\",\"legacy_collection\":\"assumptions\",\"legacy_value\":\"A4\"},\"source_ids\":[],\"statement\":\"database commits are serializable\"}],\"claim\":{\"assumption_ids\":[\"A3\",\"A4\"],\"attributes\":{\"exchange_vocabulary\":\"security.crypto-exchange/v1\",\"legacy_collection\":\"claims\",\"legacy_record\":{\"description\":\"The golden withdrawal remains authorized.\",\"domain\":\"withdrawals\",\"id\":\"claim:golden-authorized-withdrawal\",\"required_assumptions\":[\"A3\",\"A4\"],\"severity\":\"blocking\"},\"semantic_input_sha256\":\"19389b2c9225db154a2fbe76d3dfaaa0362add25caf61d16dcc21282db6e9835\"},\"claim_id\":\"claim:golden-authorized-withdrawal\",\"domain\":\"security.crypto-exchange/v1/domain/withdrawals\",\"policy_ids\":[],\"severity\":\"blocking\",\"source_ids\":[],\"statement\":\"The golden withdrawal remains authorized.\"},\"policies\":[]}"
+      }
+    ],
+    "sample_id": "sample:security:cd40111b9a1c51a0cb0c8911b22c7fb4",
+    "schema_version": "formalization-artifact/v1",
+    "source_map": {
+      "bindings": [
+        {
+          "binding_id": "binding:security:declaration:40ac98d337a9b10ad524cf8d96863bc1",
+          "config_id": "",
+          "derived": false,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "adapter_schema_version": "security-ir-formalization-adapter/v1",
+            "security_construct": "declaration"
+          },
+          "parent_subject_ids": [],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-ir-v1-golden-exchange"
+        },
+        {
+          "binding_id": "binding:security:formula:3aead1b1ee197264b6cfdd0514174382",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:policy:policy:authorization-required"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:policy:policy:authorization-required"
+        },
+        {
+          "binding_id": "binding:security:formula:4ca69819e6048b36a4ff36d833ff0281",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A4"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A4"
+        },
+        {
+          "binding_id": "binding:security:formula:c02bd1345db6c00c3ed42387e1521aa0",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A3"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:formula:cfe768aa6c584e9b3f0292c794bd64fa",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:state-machine:state-machine:withdrawal"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:state-machine:state-machine:withdrawal"
+        },
+        {
+          "binding_id": "binding:security:formula:f5404672ae92652cec9a83385d3e67ba",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:golden-authorized-withdrawal"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:security:claim:claim:golden-authorized-withdrawal"
+        },
+        {
+          "binding_id": "binding:security:input:375892e773cb44edf6137ef9eeebac32",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A3"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:input:44e9a4ff615d2a6f7b864676c254dc86",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A4"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:assumption:A4"
+        },
+        {
+          "binding_id": "binding:security:input:a4e69e1373cc85d8d9b0bcdf6eb8fadd",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "policy",
+            "security_id": "policy:authorization-required"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:policy:policy:authorization-required"
+        },
+        {
+          "binding_id": "binding:security:input:b0cd29241cc905650de21371b8d0d664",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "extension",
+            "security_id": "extension:security.crypto-exchange:v1"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:extension:extension:security.crypto-exchange:v1"
+        },
+        {
+          "binding_id": "binding:security:input:f280d76f51f57f0dda77af04a0b6faf7",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "state-machine",
+            "security_id": "state-machine:withdrawal"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:state-machine:state-machine:withdrawal"
+        },
+        {
+          "binding_id": "binding:security:input:f52085f6c4a34d02e5ca9811ae634357",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:golden-authorized-withdrawal"
+          },
+          "parent_subject_ids": [
+            "security-ir-v1-golden-exchange"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "security-node:claim:claim:golden-authorized-withdrawal"
+        },
+        {
+          "binding_id": "binding:security:symbol:78ba52bd7a428bd8dc46ce55b3d21eb9",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A3"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A3"
+        },
+        {
+          "binding_id": "binding:security:symbol:81251c71456afd8e87eace814dfd139c",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:state-machine:state-machine:withdrawal"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:state-machine:state-machine:withdrawal"
+        },
+        {
+          "binding_id": "binding:security:symbol:b1ea05f52eb3d51e55a199ccd29f0d78",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:policy:policy:authorization-required"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:policy:policy:authorization-required"
+        },
+        {
+          "binding_id": "binding:security:symbol:cc8ff0024af035add181cbd1efdf0fdc",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:claim:claim:golden-authorized-withdrawal"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:claim:claim:golden-authorized-withdrawal"
+        },
+        {
+          "binding_id": "binding:security:symbol:d1c9e3baa5ad74b9fba620ee11e2499e",
+          "config_id": "security-ir-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "security-node:assumption:A4"
+          ],
+          "producer_id": "security-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:security:assumption:A4"
+        }
+      ],
+      "configs": [
+        {
+          "config_id": "security-ir-formalization-default",
+          "content_cid": "",
+          "content_sha256": "c9913599196fdbff92b68b47913fd72520724da016a3c8551f7ee684888d1030",
+          "metadata": {},
+          "schema_id": "formalization-compiler-config/v1"
+        }
+      ],
+      "metadata": {
+        "adapter_schema_version": "security-ir-formalization-adapter/v1",
+        "declaration_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8",
+        "result_artifacts_excluded": true
+      },
+      "producers": [
+        {
+          "implementation_sha256": "",
+          "metadata": {
+            "compiler_id": "security-ir-formalization-adapter"
+          },
+          "model_id": "",
+          "name": "Security IR shared-formalization adapter",
+          "producer_id": "security-ir-formalization-adapter",
+          "repository_revision": "",
+          "version": "security-ir-formalization-adapter/v1"
+        }
+      ],
+      "provenance_id": "provenance:security:cd40111b9a1c51a0cb0c8911b22c7fb4",
+      "schema_version": "ir-provenance/v1",
+      "sources": [
+        {
+          "container_sha256": "",
+          "container_uri": "",
+          "content_cid": "",
+          "content_sha256": "cd40111b9a1c51a0cb0c8911b22c7fb4c5b03251125add3ef5ffc7259a17aa36",
+          "license_expression": "",
+          "metadata": {
+            "content_binding": "canonical_security_ir_declaration",
+            "declaration_cid": "bafkreigcslsjoutqkgpxffk4dy4zsrf5edwaw5x56mwesb7tcdn6igl3va",
+            "identity_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8"
+          },
+          "ref_id": "source:security-declaration:cd40111b9a1c51a0cb0c8911",
+          "review_status": "machine_extracted",
+          "source_id": "security-ir-v1-golden-exchange",
+          "source_revision": "security-ir/v1",
+          "source_uri": "urn:security-ir:declaration:security-ir-v1-golden-exchange"
+        }
+      ],
+      "spans": []
+    },
+    "symbol_table": {
+      "metadata": {
+        "domain": "security"
+      },
+      "schema_version": "formal-symbol-table/v1",
+      "symbols": [
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A3"
+          },
+          "name": "A3",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A3"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "assumption",
+            "security_id": "A4"
+          },
+          "name": "A4",
+          "sort": "assumption",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:assumption:A4"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "claim",
+            "security_id": "claim:golden-authorized-withdrawal"
+          },
+          "name": "claim:golden-authorized-withdrawal",
+          "sort": "claim",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:claim:claim:golden-authorized-withdrawal"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "security_construct": "policy",
+            "security_id": "policy:authorization-required"
+          },
+          "name": "security.crypto-exchange/v1/policy/authorization_required",
+          "sort": "policy",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:policy:policy:authorization-required"
+        },
+        {
+          "kind": "relation",
+          "metadata": {
+            "security_construct": "state-machine",
+            "security_id": "state-machine:withdrawal"
+          },
+          "name": "state-machine:withdrawal",
+          "sort": "state-machine",
+          "source_ref_ids": [
+            "source:security-declaration:cd40111b9a1c51a0cb0c8911"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:security:state-machine:state-machine:withdrawal"
+        }
+      ],
+      "table_id": "symbols:security:security-ir-v1-golden-exchange"
+    },
+    "view_registry": {
+      "registry_id": "security-ir-formalization-views",
+      "schema_version": "formalization-view-registry/v1",
+      "views": [
+        {
+          "capabilities": [
+            "assumptions",
+            "proof_obligations",
+            "source_grounding"
+          ],
+          "description": "Security claims and their solver-neutral obligations.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "verification_condition",
+          "metadata": {
+            "security_constructs": [
+              "claim"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/claim/v1"
+        },
+        {
+          "capabilities": [
+            "action_contracts",
+            "deontic_modality",
+            "source_grounding"
+          ],
+          "description": "Declarative allow, deny, require, and audit policies.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "deontic",
+          "metadata": {
+            "security_constructs": [
+              "policy"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/policy/v1"
+        },
+        {
+          "capabilities": [
+            "assumptions",
+            "source_grounding",
+            "typed_symbols"
+          ],
+          "description": "Explicit threat premises and environmental assumptions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "threat_model",
+          "metadata": {
+            "security_constructs": [
+              "threat_assumption"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/threat/v1"
+        },
+        {
+          "capabilities": [
+            "source_grounding",
+            "state_transitions",
+            "temporal_control"
+          ],
+          "description": "Finite-state machines and guarded security transitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "transition_system",
+          "metadata": {
+            "security_constructs": [
+              "state_machine",
+              "transition"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "security-ir-view/transition/v1"
+        }
+      ]
+    },
+    "view_registry_identity": {
+      "cid": "bafkreihsdkdhk25ds6ey4uidwzeba2leolcecnlzxy74m7wbhfpplj227a",
+      "digest": "sha256:f21a86756ba397898e5103b64810696472c4413579be3fc67ec1395ef5a75af8",
+      "domain": "formalization-view-registry",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-view-registry/v1"
+    }
+  },
+  "content_cid": "bafkreidbsjvezpxinqku54gcc2tvffukhmwk4gwojibkvzruspkbmdmk4y",
+  "content_digest": "sha256:61926a4cbee86c154ef0c216a752968a3b2cae1ace4a02aae63493d4160d8ae6",
+  "declaration": {
+    "assets": [
+      {
+        "asset_id": "asset:btc",
+        "attributes": {
+          "legacy_collection": "assets",
+          "legacy_record": {
+            "decimals": 8,
+            "id": "asset:btc",
+            "symbol": "BTC"
+          }
+        },
+        "kind": "unspecified",
+        "source_ids": [],
+        "symbol": "BTC"
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption_id": "A3",
+        "attributes": {
+          "exchange_vocabulary": "security.crypto-exchange/v1",
+          "legacy_collection": "assumptions",
+          "legacy_value": "A3"
+        },
+        "source_ids": [],
+        "statement": "signing code signs only approved canonical transaction bytes"
+      },
+      {
+        "assumption_id": "A4",
+        "attributes": {
+          "exchange_vocabulary": "security.crypto-exchange/v1",
+          "legacy_collection": "assumptions",
+          "legacy_value": "A4"
+        },
+        "source_ids": [],
+        "statement": "database commits are serializable"
+      }
+    ],
+    "channels": [],
+    "claims": [
+      {
+        "assumption_ids": [
+          "A3",
+          "A4"
+        ],
+        "attributes": {
+          "exchange_vocabulary": "security.crypto-exchange/v1",
+          "legacy_collection": "claims",
+          "legacy_record": {
+            "description": "The golden withdrawal remains authorized.",
+            "domain": "withdrawals",
+            "id": "claim:golden-authorized-withdrawal",
+            "required_assumptions": [
+              "A3",
+              "A4"
+            ],
+            "severity": "blocking"
+          },
+          "semantic_input_sha256": "19389b2c9225db154a2fbe76d3dfaaa0362add25caf61d16dcc21282db6e9835"
+        },
+        "claim_id": "claim:golden-authorized-withdrawal",
+        "domain": "security.crypto-exchange/v1/domain/withdrawals",
+        "policy_ids": [],
+        "severity": "blocking",
+        "source_ids": [],
+        "statement": "The golden withdrawal remains authorized."
+      }
+    ],
+    "declaration_id": "security-ir-v1-golden-exchange",
+    "extensions": [
+      {
+        "extension_id": "extension:security.crypto-exchange:v1",
+        "payload": {
+          "capabilities": [
+            {
+              "delegated_actions": [
+                "withdraw"
+              ],
+              "id": "capability:customer-withdraw",
+              "parent_actions": [
+                "withdraw",
+                "cancel"
+              ],
+              "principal": "principal:customer",
+              "resource_id": "wallet:customer"
+            }
+          ],
+          "events": [
+            {
+              "event": "withdrawal_requested",
+              "id": "event:withdrawal-requested:golden",
+              "principal": "principal:customer",
+              "timestamp": 1,
+              "wallet_id": "wallet:customer",
+              "withdrawal_id": "withdrawal:golden"
+            },
+            {
+              "event": "withdrawal_broadcast",
+              "id": "event:withdrawal-broadcast:golden",
+              "principal": "principal:customer",
+              "timestamp": 2,
+              "wallet_id": "wallet:customer",
+              "withdrawal_id": "withdrawal:golden"
+            }
+          ],
+          "invariants": [
+            {
+              "description": "Every broadcast withdrawal has an authorized request.",
+              "id": "invariant:authorized-withdrawal"
+            }
+          ],
+          "metadata": {
+            "fixture_kind": "exchange",
+            "labels": [
+              "golden",
+              "legacy"
+            ],
+            "review": {
+              "status": "trusted_fixture"
+            }
+          },
+          "prover_targets": [
+            "z3",
+            "cvc5"
+          ],
+          "roles": [
+            {
+              "id": "role:customer",
+              "name": "customer"
+            }
+          ],
+          "schema_version": "security.crypto-exchange/v1"
+        },
+        "required": true,
+        "source_ids": [],
+        "version": "v1",
+        "vocabulary": "security.crypto-exchange"
+      }
+    ],
+    "policies": [
+      {
+        "attributes": {
+          "exchange_vocabulary": "security.crypto-exchange/v1",
+          "legacy_collection": "policies",
+          "legacy_record": {
+            "enabled": true,
+            "id": "policy:authorization-required",
+            "name": "authorization_required"
+          }
+        },
+        "channel_ids": [],
+        "effect": "unspecified",
+        "name": "security.crypto-exchange/v1/policy/authorization_required",
+        "policy_id": "policy:authorization-required",
+        "principal_ids": [],
+        "resource_ids": [],
+        "source_ids": []
+      }
+    ],
+    "principals": [
+      {
+        "attributes": {
+          "legacy_collection": "principals",
+          "legacy_record": {
+            "id": "principal:customer",
+            "role": "role:customer"
+          }
+        },
+        "kind": "unspecified",
+        "principal_id": "principal:customer",
+        "role_ids": [
+          "role:customer"
+        ],
+        "source_ids": [],
+        "trust_zone_ids": []
+      }
+    ],
+    "resources": [
+      {
+        "asset_ids": [],
+        "attributes": {
+          "legacy_collection": "entities",
+          "legacy_record": {
+            "id": "entity:customer",
+            "kind": "user",
+            "name": "Golden Customer"
+          }
+        },
+        "kind": "security.crypto-exchange/v1/resource/entity",
+        "owner_principal_ids": [],
+        "resource_id": "entity:customer",
+        "source_ids": [],
+        "trust_zone_ids": []
+      },
+      {
+        "asset_ids": [],
+        "attributes": {
+          "legacy_collection": "entities",
+          "legacy_record": {
+            "id": "entity:exchange",
+            "kind": "exchange",
+            "name": "Golden Exchange"
+          }
+        },
+        "kind": "security.crypto-exchange/v1/resource/entity",
+        "owner_principal_ids": [],
+        "resource_id": "entity:exchange",
+        "source_ids": [],
+        "trust_zone_ids": []
+      },
+      {
+        "asset_ids": [
+          "asset:btc"
+        ],
+        "attributes": {
+          "legacy_collection": "wallets",
+          "legacy_record": {
+            "asset": "asset:btc",
+            "id": "wallet:customer",
+            "owner": "principal:customer",
+            "status": "active"
+          }
+        },
+        "kind": "security.crypto-exchange/v1/resource/wallet",
+        "owner_principal_ids": [
+          "principal:customer"
+        ],
+        "resource_id": "wallet:customer",
+        "source_ids": [],
+        "trust_zone_ids": []
+      },
+      {
+        "asset_ids": [
+          "asset:btc"
+        ],
+        "attributes": {
+          "legacy_collection": "accounts",
+          "legacy_record": {
+            "asset_id": "asset:btc",
+            "balance": 5,
+            "id": "account:customer-btc",
+            "owner": "principal:customer",
+            "reservation_requests": [
+              1,
+              2
+            ],
+            "wallet_id": "wallet:customer"
+          }
+        },
+        "kind": "security.crypto-exchange/v1/resource/account",
+        "owner_principal_ids": [
+          "principal:customer"
+        ],
+        "resource_id": "account:customer-btc",
+        "source_ids": [],
+        "trust_zone_ids": []
+      }
+    ],
+    "schema_version": "security-ir/v1",
+    "sources": [],
+    "state_machines": [
+      {
+        "attributes": {
+          "legacy_collection": "state_machines",
+          "legacy_record": {
+            "current": "broadcast",
+            "id": "state-machine:withdrawal",
+            "states": [
+              "requested",
+              "broadcast"
+            ]
+          }
+        },
+        "initial_state": "broadcast",
+        "source_ids": [],
+        "state_machine_id": "state-machine:withdrawal",
+        "states": [
+          "requested",
+          "broadcast"
+        ],
+        "transitions": []
+      }
+    ],
+    "trust_zones": []
+  },
+  "declaration_cid": "bafkreigcslsjoutqkgpxffk4dy4zsrf5edwaw5x56mwesb7tcdn6igl3va",
+  "declaration_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8",
+  "declaration_id": "security-ir-v1-golden-exchange",
+  "extension_ids": [
+    "extension:security.crypto-exchange:v1"
+  ],
+  "extension_vocabularies": [
+    "security.crypto-exchange"
+  ],
+  "policy_decisions": [],
+  "profile": "exchange-golden",
+  "schema_version": "security-constraint-record/v1"
+}
