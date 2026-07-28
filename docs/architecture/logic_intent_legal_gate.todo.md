@@ -189,7 +189,7 @@ Wave 6  LIG-019 / LIG-020  (eval + runbook)
 
 ## LIG-006 Offline Intent formalization fixtures for gate inputs
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
@@ -214,7 +214,7 @@ Wave 6  LIG-019 / LIG-020  (eval + runbook)
 
 ## LIG-007 Legal proof cache put/get with integrity rehash
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
