@@ -51,6 +51,9 @@ _ROUTER_FORMULA_PRIORITY_KEYS = (
     "formula_object",
     "proof_formula_object",
     "formula",
+    "router_formula",
+    "prover_formula",
+    "external_prover_formula",
     "candidate_formula",
     "formula_candidate",
     "compiler_formula",
@@ -63,6 +66,11 @@ _ROUTER_FORMULA_PRIORITY_KEYS = (
     "proof_goal",
     "theorem",
     "theorem_formula",
+    "router_formulas",
+    "prover_formulas",
+    "prover_obligation",
+    "prover_obligations",
+    "external_prover_formulas",
     "claim",
     "claims",
     "assertion",
@@ -86,6 +94,10 @@ _ROUTER_FORMULA_CONTAINER_KEYS = (
     "proof_obligations",
     "proofs",
     "records",
+    "router_formulas",
+    "prover_formulas",
+    "prover_obligations",
+    "external_prover_formulas",
     "formulas",
     "theorems",
     "goals",
@@ -1245,6 +1257,12 @@ def _coerce_router_formula_inner(value: Any, *, seen: set[int]) -> tuple[Any, bo
         return None, False
 
     text = str(value or "").strip()
+    json_value = _router_json_value(text)
+    if json_value is not None:
+        formula, used_sanitized = _coerce_router_formula_inner(json_value, seen=seen)
+        if formula is not None:
+            return formula, used_sanitized
+
     if text:
         sanitized = _sanitize_router_formula_text(text)
         if sanitized and sanitized != text:
@@ -1331,7 +1349,26 @@ def _formula_text_from_value(value: Any, *, seen: set[int]) -> str:
             if text:
                 return text
         return ""
-    return str(value or "").strip()
+    text = str(value or "").strip()
+    json_value = _router_json_value(text)
+    if json_value is not None:
+        nested_text = _formula_text_from_value(json_value, seen=seen)
+        if nested_text:
+            return nested_text
+    return text
+
+
+def _router_json_value(text: str) -> Any:
+    normalized = str(text or "").strip()
+    if not normalized or normalized[0] not in "[{":
+        return None
+    try:
+        parsed = json.loads(normalized)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if isinstance(parsed, (Mapping, list, tuple)):
+        return parsed
+    return None
 
 
 def _record_source_id(record: Mapping[str, Any], index: int) -> str:

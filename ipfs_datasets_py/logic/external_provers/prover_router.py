@@ -276,6 +276,21 @@ def _guidance_json_mapping(value: str) -> Mapping[str, Any]:
     return {}
 
 
+def _router_json_formula_value(value: str) -> Any:
+    """Return JSON object/list formula payloads encoded as strings."""
+
+    text = str(value or "").strip()
+    if not text or text[0] not in "[{":
+        return None
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if isinstance(parsed, (Mapping, list, tuple)):
+        return parsed
+    return None
+
+
 def _guidance_target_key_is_router(value: Any) -> bool:
     text = (
         str(value or "")
@@ -722,6 +737,9 @@ class ProverRouter:
                 "formula_object",
                 "proof_formula_object",
                 "formula",
+                "router_formula",
+                "prover_formula",
+                "external_prover_formula",
                 "candidate_formula",
                 "formula_candidate",
                 "compiler_formula",
@@ -734,6 +752,11 @@ class ProverRouter:
                 "proof_goal",
                 "theorem",
                 "theorem_formula",
+                "router_formulas",
+                "prover_formulas",
+                "prover_obligation",
+                "prover_obligations",
+                "external_prover_formulas",
                 "claim",
                 "claims",
                 "assertion",
@@ -758,6 +781,10 @@ class ProverRouter:
                 "proof_obligations",
                 "proofs",
                 "records",
+                "router_formulas",
+                "prover_formulas",
+                "prover_obligations",
+                "external_prover_formulas",
                 "formulas",
                 "theorems",
                 "goals",
@@ -805,6 +832,14 @@ class ProverRouter:
         text = str(formula or "").strip()
         if not text:
             return None
+        json_formula = _router_json_formula_value(text)
+        if json_formula is not None:
+            coerced = ProverRouter._coerce_native_formula_inner(
+                json_formula,
+                seen=seen,
+            )
+            if coerced is not None:
+                return coerced
         try:
             from ..bridge.fol_tdfol import coerce_tdfol_formula
 
