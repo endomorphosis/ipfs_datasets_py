@@ -124,8 +124,10 @@ echo "[lig] ACCELERATE_ROOT=$ACCELERATE_ROOT"
 echo "[lig] board=$TODO_PATH prefix=$TASK_PREFIX shards=$SHARD_COUNT"
 
 # Soft warning if IRF supervisors appear live (contention risk).
-if pgrep -af 'ir.family|ir-family-v1' 2>/dev/null | grep -E 'implementation_supervisor|implementation_daemon' >/dev/null 2>&1; then
-  echo "[lig] WARNING: possible live ir-family implementation process; stop it to avoid logic/** contention" >&2
+# Match only the IRF todo path / state namespace — avoid false positives from other boards.
+if pgrep -af 'ir_family_refactor_intent_ir\.todo|agent-supervisor/ir-family-v1' 2>/dev/null \
+  | grep -E 'implementation_supervisor|implementation_daemon' >/dev/null 2>&1; then
+  echo "[lig] WARNING: live ir-family-v1 implementation process detected; stop it to avoid logic/** contention" >&2
 fi
 
 if [[ "$FOREGROUND" == "1" ]]; then
