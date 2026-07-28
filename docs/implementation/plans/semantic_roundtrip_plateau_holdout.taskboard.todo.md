@@ -282,7 +282,7 @@ Semantic e2e loss and preregistered holdout gates remain promotion authority.
 ## PLAT2-060 One-shot blind-holdout evaluation and decision
 
 - Status: blocked
-- Blocked reason: The one-shot evaluation ran at 2026-07-28T08:58:44.684+00:00 and its focused suite passed 54 tests, but the supervisor discarded the worktree after a post-run validation/import failure before the six outputs were merged. The blind seal is already opened, so this task must not be retried. Recover the completed outputs from the checkpoint and Grok session receipts under `/var/tmp/hssl-srt-plateau-holdout-v2/state/semantic-roundtrip-plateau-holdout-remeasure/state/` and `~/.grok/sessions/` before marking it completed.
+- Blocked reason: One-shot evaluation ran at 2026-07-28T08:58:44.684+00:00 (54 tests passed); supervisor discarded the worktree before merge. Blind seal opened — do not retry or re-run the holdout. Operator recovery (2026-07-28): landed `holdout_evaluation.py` + tests on `benchmark/semantic-roundtrip-20260726` (commit 65bc28928; suite re-verified 54 passed). Present on tree: evaluation module, tests, remeasure JSON, results MD, promotion decision JSON. Intentionally not reconstructed: `workspace/benchmarks/semantic-roundtrip-compositions/plateau2_holdout_access_ledger.json` (one-shot access ledger). Keep blocked until operator accepts 5/6 outputs without ledger (or recovers a genuine ledger receipt without re-opening blind data); then mark completed.
 - Completion: auto
 - Priority: P0
 - Track: remeasure
