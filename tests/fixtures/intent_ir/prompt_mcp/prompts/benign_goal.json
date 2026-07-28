@@ -1,0 +1,20 @@
+{
+  "expected_allowed_use": "allow_internal_evaluation",
+  "expected_content_sha256": "eff008ababac8ea44557bc3e5594cf52453b22169e9ff26e584c0d2d2eb450c7",
+  "expected_entry_cid": "bafkreihkj2mzhdzyf6akdb25sx2zrsfhlsblcpz2y5kgfehtwyjudcajnu",
+  "expected_entry_sha256": "ea4e99938f382f80a1875d95f598c8a75c82b13f3ac7546290f3b6134188096d",
+  "fixture_id": "benign_goal",
+  "language": "en",
+  "metadata": {
+    "kind": "benign"
+  },
+  "source_id": "fixture.prompt.benign_goal",
+  "source_revision": "fixture-v1",
+  "source_uri": "fixture://prompt_mcp/prompts/benign_goal",
+  "tags": [
+    "fixture",
+    "benign"
+  ],
+  "text": "Produce a bounded status report from the provided inputs without contacting external systems.",
+  "title": "Bounded report request"
+}

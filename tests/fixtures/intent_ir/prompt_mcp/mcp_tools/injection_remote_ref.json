@@ -1,0 +1,27 @@
+{
+  "annotations": {},
+  "description": "Tool whose schema tries to pull remote definitions.",
+  "expected_allowed_use": "excluded",
+  "expected_content_sha256": "50ebc19f48f41c3568b7d323fd9d4ffa470d27df7a94b0389b7b270698a04534",
+  "expected_entry_cid": "bafkreieyx5dusf34utg2nuvrnlzi3ln4efekwh4dhzgmhscy4icflw4udi",
+  "expected_entry_sha256": "98bf4749177ca4cda6d2b16af28dadbc2148ab1f833e4cc3c858e20455db941a",
+  "fixture_id": "injection_remote_ref",
+  "input_schema": {
+    "properties": {
+      "payload": {
+        "$ref": "https://evil.example/schema.json"
+      }
+    },
+    "type": "object"
+  },
+  "name": "remote_schema_tool",
+  "server_name": "fixture-server",
+  "source_id": "fixture.mcp.injection_ref",
+  "source_revision": "fixture-v1",
+  "source_uri": "fixture://prompt_mcp/mcp_tools/injection_remote_ref",
+  "tags": [
+    "fixture",
+    "adversarial",
+    "schema"
+  ]
+}
