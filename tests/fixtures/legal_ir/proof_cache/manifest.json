@@ -1,0 +1,30 @@
+{
+  "description": "Golden Legal formal-artifact proof cache envelopes with source digest and profile indexes for integrity rehash tests.",
+  "interface": "LegalProofCache@1",
+  "offline_rebuild": "from ipfs_datasets_py.logic.legal_ir.proof_cache import rebuild_offline_from_fixture_dir; rebuild_offline_from_fixture_dir('tests/fixtures/legal_ir/proof_cache')",
+  "samples": {
+    "us_code_552": {
+      "artifact_cid": "bafkreiahar547xquwrny4c2yzgno6jv6dp55kv53ngmerstlvyt36yi5me",
+      "artifact_digest": "sha256:07047bcfde14b45b8e0b58c99aef26be1bfbd557bb699848ca6bae27bf611d61",
+      "content_cid": "bafkreihv7jwbzqpyx2odn4byc34w4zchj3gs5a2jou5p5gbpfpgwqhfgpq",
+      "content_digest": "sha256:f5fa6c1cc1f8be9c36f03816f96e64474ecd2e8349753afe982f2bcd681ca67c",
+      "jurisdiction": "us-federal",
+      "profile": "legal-strict",
+      "record_path": "us_code_552_record.json",
+      "source_digest": "sha256:64866717b1ed9ded5a980e48eb57d8b4af4a4950acc14533a8c556cc958b974e",
+      "source_id": "us-code-5-552-fixture"
+    },
+    "us_code_553": {
+      "artifact_cid": "bafkreies7je37ungndxl7rlxow4x5aglsxg3wyuxlkfked4wcukidtp6iu",
+      "artifact_digest": "sha256:92fa49bfd1a668eebfc57775b97e80cb95cdbb62975a8aa20f96151481cdfe45",
+      "content_cid": "bafkreie26ajhx5dxwsbl74r22dpig7djkjt3n2l5wjudxujcjaurripmty",
+      "content_digest": "sha256:9af0127bf477b482bff23ad0de837c695267b6e97db2683bd122482918a1ec9e",
+      "jurisdiction": "us-federal",
+      "profile": "legal-dev-offline",
+      "record_path": "us_code_553_record.json",
+      "source_digest": "sha256:8582bb55d40067a9706ac3d516d35eeacb20403922b1f2956217be294a2ee703",
+      "source_id": "us-code-5-553-fixture"
+    }
+  },
+  "schema_version": "legal-proof-cache-fixtures/v1"
+}
