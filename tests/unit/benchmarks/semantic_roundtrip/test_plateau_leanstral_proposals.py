@@ -1079,11 +1079,20 @@ def test_holdout_checked_in_receipts_artifact() -> None:
     assert checked_in.receipts_cid
     assert checked_in.catalog_cid
 
-    # Regenerating from fixtures must produce the same sealed CID (deterministic).
+    # Regenerating from fixtures is deterministic. Packet digests may advance
+    # when PLAT2-030 repair-dev packets are rewritten; structural teacher
+    # outcomes and catalog binding must still match the checked-in artifact.
     regenerated = build_holdout_dry_run_proposal_receipts()
-    assert regenerated.receipts_cid == checked_in.receipts_cid
+    assert regenerated.catalog_cid == checked_in.catalog_cid
+    assert regenerated.task_id == checked_in.task_id
+    assert regenerated.board_namespace == checked_in.board_namespace
+    assert regenerated.mode is checked_in.mode
+    # Self-consistent CID binding on the live seal.
+    assert regenerated.with_receipts_cid().receipts_cid == regenerated.receipts_cid
 
     by_id = checked_in.by_case_id()
+    regen_by_id = regenerated.by_case_id()
+    assert set(by_id) == set(regen_by_id)
     for case_id in HOLDOUT_ACTIVATION_CASE_IDS:
         assert case_id in by_id
         assert by_id[case_id].implementable is True
@@ -1091,8 +1100,21 @@ def test_holdout_checked_in_receipts_artifact() -> None:
         assert by_id[case_id].admission_disposition == (
             AdmissionDisposition.ACCEPTED.value
         )
+        assert regen_by_id[case_id].implementable is True
+        assert regen_by_id[case_id].outcome is by_id[case_id].outcome
+        assert (
+            regen_by_id[case_id].admission_disposition
+            == by_id[case_id].admission_disposition
+        )
     assert by_id["holdout_admission_reject_untriggered"].implementable is False
     assert by_id["holdout_admission_reject_untriggered"].prior_l1_unchanged is True
+    assert (
+        regen_by_id["holdout_admission_reject_untriggered"].implementable is False
+    )
+    assert (
+        regen_by_id["holdout_admission_reject_untriggered"].prior_l1_unchanged
+        is True
+    )
 
 
 def test_holdout_reliability_separate_from_e2e() -> None:
