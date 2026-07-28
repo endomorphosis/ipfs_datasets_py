@@ -153,6 +153,41 @@ test = [
     "pytest-mock>=3.12.0",
     "hypothesis>=6.0.0",
 ]
+# Multi-chain wallet processors (WALPROC-G050 / WALPROC-010).
+# Shared kernel and chain ingestion use raw REST/JSON-RPC via the package
+# transport layer. Chain SDKs (web3, solana-py, xrpl-py, etc.) are not
+# selected: convenience alone does not justify a mandatory dependency.
+# See docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md.
+wallets = [
+    # Shared processor kernel: stdlib + base package only (no extra pins).
+]
+wallets-worldcoin = [
+    # Keccak backend for eth-hash; preferred over direct Crypto.Hash usage.
+    "eth-hash[pycryptodome]>=0.3.2,<1.0.0",
+    # secp256k1 RP signing; pure-Python backend matches golden vectors without
+    # requiring coincurve (native optional only if an operator opts in later).
+    "eth-keys>=0.5.0,<1.0.0",
+]
+wallets-ethereum = [
+    # Raw JSON-RPC only; web3.py is not required for ledger ingestion.
+]
+wallets-xrpl = [
+    # Raw REST/JSON-RPC only; xrpl-py is not required.
+]
+wallets-xaman = [
+    # Composes XRPL ledger paths; Xaman payload lifecycle over raw HTTP.
+    # No xumm-sdk / mobile / Firebase runtime dependency.
+]
+wallets-bitcoin = [
+    # Raw REST/JSON-RPC only; python-bitcoinlib / bitcoinlib not required.
+]
+wallets-solana = [
+    # Raw JSON-RPC only; solana / solders SDKs are not required.
+]
+wallets-all = [
+    "eth-hash[pycryptodome]>=0.3.2,<1.0.0",
+    "eth-keys>=0.5.0,<1.0.0",
+]
 all = [
     "spacy>=3.0.0",
     "networkx>=2.8.0",
