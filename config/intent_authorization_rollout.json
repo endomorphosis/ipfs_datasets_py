@@ -1,0 +1,29 @@
+{
+  "schema": "intent-authorization-rollout/v1",
+  "interface": "AuthorizationRolloutPolicy@1",
+  "schema_version": "authorization-rollout-policy/v1",
+  "stage": "off",
+  "offline_stage": "audit",
+  "receipt_consumption_enabled": false,
+  "require_approvals": true,
+  "require_adjacent_transitions": true,
+  "require_reversible_effects": true,
+  "preserve_evidence_on_rollback": true,
+  "effect_allowlist": [],
+  "approvals": [],
+  "canary_scope": null,
+  "stage_ladder": [
+    "off",
+    "audit",
+    "shadow",
+    "deny-canary",
+    "allow-token-canary",
+    "enforce"
+  ],
+  "notes": {
+    "default_posture": "Production default is off; offline evaluations use audit. Shadow is the first live-observation stage and never consumes receipts.",
+    "transitions": "Promotions must move one adjacent step; skipped transitions are rejected. Live stages require human approvals.",
+    "allow_token": "allow-token-canary and enforce require an allowlist of reversible effects before receipt consumption may be enabled.",
+    "rollback": "Immediate disable turns receipt consumption off first, preserves redacted evidence, and may demote toward audit/shadow."
+  }
+}
