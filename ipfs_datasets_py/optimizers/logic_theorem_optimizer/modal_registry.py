@@ -16747,11 +16747,39 @@ COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+)
+
 COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
     _ordered_unique_adaptive_ambiguity_family_pairs(
         (
             *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS,
         )
     )
 )
@@ -16761,6 +16789,7 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
         (
             *COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS,
         )
     )
 )
@@ -16770,6 +16799,7 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
         (
             *SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS,
         )
     )
 )
@@ -16779,6 +16809,7 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
         (
             *PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
             *COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS,
+            *COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS,
         )
     )
 )
@@ -17038,6 +17069,7 @@ __all__ = [
     "COMPILER_AMBIGUITY_PACKET_001446_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001449_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_PACKET_001357_FAMILY_PAIRS",
+    "COMPILER_AMBIGUITY_PACKET_001452_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000358_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000542_FAMILY_PAIRS",
     "COMPILER_REFINED_PACKET_000541_FAMILY_PAIRS",
