@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/wallet-export-manifest-v1.schema.json",
+  "title": "Wallet Export Manifest v1",
+  "description": "A deterministic, bounded export receipt for one genesis-bound chain.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "chain_namespace",
+    "network",
+    "chain_id",
+    "genesis_hash",
+    "observed_at",
+    "source",
+    "status",
+    "raw_payload_policy",
+    "partitions",
+    "record_count",
+    "warning_count",
+    "finality_counts",
+    "started_at",
+    "completed_at",
+    "checkpoint_before",
+    "checkpoint_after",
+    "warnings",
+    "extensions"
+  ],
+  "properties": {
+    "schema_version": {"const": "wallet-export-manifest-v1"},
+    "manifest_id": {"$ref": "#/$defs/walletId"},
+    "chain_namespace": {"$ref": "#/$defs/nonEmptyString"},
+    "network": {"$ref": "#/$defs/nonEmptyString"},
+    "chain_id": {"$ref": "#/$defs/nonEmptyString"},
+    "genesis_hash": {"$ref": "#/$defs/nonEmptyString"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source": {"$ref": "#/$defs/source"},
+    "status": {"enum": ["complete", "partial", "cancelled", "failed"]},
+    "raw_payload_policy": {
+      "enum": ["omitted", "referenced", "separately_encrypted"]
+    },
+    "partitions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/partition"}
+    },
+    "record_count": {"type": "integer", "minimum": 0},
+    "warning_count": {"type": "integer", "minimum": 0},
+    "finality_counts": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "unknown",
+          "observed",
+          "pending",
+          "confirmed",
+          "safe",
+          "finalized",
+          "orphaned",
+          "reverted",
+          "failed"
+        ]
+      },
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "checkpoint_before": {
+      "oneOf": [{"$ref": "#/$defs/cursor"}, {"type": "null"}]
+    },
+    "checkpoint_after": {
+      "oneOf": [{"$ref": "#/$defs/cursor"}, {"type": "null"}]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "extensions": {"$ref": "#/$defs/extensions"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "walletId": {
+      "type": "string",
+      "pattern": "^urn:wallet:[a-z][a-z0-9_-]*:sha256:[0-9a-f]{64}$"
+    },
+    "chainRef": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "chain_ref_id",
+        "chain_namespace",
+        "network",
+        "chain_id",
+        "genesis_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "wallet-chain-ref-v1"},
+        "chain_ref_id": {"$ref": "#/$defs/walletId"},
+        "chain_namespace": {"$ref": "#/$defs/nonEmptyString"},
+        "network": {"$ref": "#/$defs/nonEmptyString"},
+        "chain_id": {"$ref": "#/$defs/nonEmptyString"},
+        "genesis_hash": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "ledgerPosition": {
+      "type": "object",
+      "required": ["sequence", "hash", "transaction_index", "event_index"],
+      "properties": {
+        "sequence": {"type": ["integer", "null"], "minimum": 0},
+        "hash": {"type": ["string", "null"], "minLength": 1},
+        "transaction_index": {"type": ["integer", "null"], "minimum": 0},
+        "event_index": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "rawPayloadRef": {
+      "type": "object",
+      "required": ["media_type"],
+      "properties": {
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*:[A-Za-z0-9_-]+$"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7][a-z2-7]+)$"
+        },
+        "media_type": {"$ref": "#/$defs/nonEmptyString"},
+        "byte_length": {"type": "integer", "minimum": 0}
+      },
+      "anyOf": [
+        {"required": ["digest"]},
+        {"required": ["cid"]}
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["provider", "provider_kind", "request_id", "scope"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/nonEmptyString"},
+        "provider_kind": {"$ref": "#/$defs/nonEmptyString"},
+        "request_id": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/nonEmptyString"},
+        "raw_payload": {"$ref": "#/$defs/rawPayloadRef"}
+      },
+      "additionalProperties": false
+    },
+    "extension": {
+      "type": "object",
+      "required": ["schema_version", "data"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/nonEmptyString"},
+        "data": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/extension"}
+    },
+    "cursor": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "cursor_id",
+        "chain",
+        "provider",
+        "scope",
+        "normalized_schema_major",
+        "normalizer_version",
+        "position",
+        "revision"
+      ],
+      "properties": {
+        "schema_version": {"const": "wallet-ledger-cursor-v1"},
+        "cursor_id": {"$ref": "#/$defs/walletId"},
+        "chain": {"$ref": "#/$defs/chainRef"},
+        "provider": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/nonEmptyString"},
+        "normalized_schema_major": {"type": "integer", "minimum": 1},
+        "normalizer_version": {"$ref": "#/$defs/nonEmptyString"},
+        "position": {"$ref": "#/$defs/ledgerPosition"},
+        "revision": {"$ref": "#/$defs/nonEmptyString"},
+        "continuation_token": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "partition": {
+      "type": "object",
+      "required": [
+        "path",
+        "format",
+        "record_count",
+        "byte_count",
+        "record_types",
+        "min_position",
+        "max_position"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonEmptyString"},
+        "format": {"$ref": "#/$defs/nonEmptyString"},
+        "record_count": {"type": "integer", "minimum": 0},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*:[A-Za-z0-9_-]+$"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7][a-z2-7]+)$"
+        },
+        "record_types": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "min_position": {"type": ["integer", "null"], "minimum": 0},
+        "max_position": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "anyOf": [
+        {"required": ["digest"]},
+        {"required": ["cid"]}
+      ],
+      "additionalProperties": false
+    }
+  }
+}
