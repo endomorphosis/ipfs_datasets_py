@@ -108,7 +108,7 @@ SYMAI_REALIZATION_SCHEMA_NAME: Final = (
 )
 
 AUTOENCODER_STATE_RELATIVE_PATH: Final = Path(
-    "workspace/todo-queues/"
+    "archive/workspace/todo-queues/"
     "legal-ir-daemon-restart12-20260608T075001Z-"
     "best-8h-autoencoder.state.json"
 )
