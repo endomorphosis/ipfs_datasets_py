@@ -472,7 +472,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-017 Supervisor admissibility bridge
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
