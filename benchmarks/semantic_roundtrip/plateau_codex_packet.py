@@ -17,12 +17,17 @@ Fail-closed rules (normative):
 * packets are content-addressed via a stable SHA-256 digest of the
   canonical JSON payload (excluding the digest field itself).
 
-Supervisor consumption (PLAT-070 materializer):
+Supervisor consumption (PLAT-070 materializer / PLAT2-030 holdout):
 
 * ``implementable=true`` → lease a task with ``predicted_files`` limited to
   deterministic compiler/realizer/tests and run ``validation_commands``;
 * ``implementable=false`` → emit obligation-only notes from
   ``proof_obligation_ids``; never silent-merge.
+
+Holdout population (PLAT2): use :func:`build_holdout_codex_packet` /
+:func:`residual_refs_from_catalog` so packets bind post-pilot baseline e2e
+0.0 and holdout validation commands while preserving the same fail-closed
+implementable contract.
 """
 
 from __future__ import annotations
@@ -117,6 +122,18 @@ DEFAULT_VALIDATION_COMMANDS: Final = (
     "tests/unit/benchmarks/semantic_roundtrip/test_structural_admission.py -q",
     "PYTHONPATH=. python -m pytest "
     "tests/unit/benchmarks/semantic_roundtrip/test_plateau_codex_packet.py -q",
+)
+
+# Post-pilot holdout baseline (PLAT2): det. production mean e2e is 0.0 on pilots.
+HOLDOUT_BASELINE_E2E: Final = 0.0
+HOLDOUT_POPULATION_KIND: Final = "holdout"
+DEFAULT_HOLDOUT_VALIDATION_COMMANDS: Final = (
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_structural_admission.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_plateau_codex_packet.py -q",
+    "PYTHONPATH=. python -m pytest "
+    "tests/unit/benchmarks/semantic_roundtrip/test_holdout_cases.py -q",
 )
 
 _OBLIGATION_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
@@ -362,6 +379,206 @@ class ResidualRef:
             catalog_digest=value.get("catalog_digest"),  # type: ignore[arg-type]
             detail=value.get("detail"),  # type: ignore[arg-type]
         )
+
+
+def stable_residual_id(
+    case_id: str,
+    field_path: str,
+    *,
+    residual_kind: str | None = None,
+    index: int | None = None,
+) -> str:
+    """Build a stable residual_id from case × field (catalog facet identity)."""
+
+    case = _nonblank(case_id, "case_id")
+    path = _nonblank(field_path, "field_path")
+    kind = (
+        _optional_nonblank(residual_kind, "residual_kind")
+        if residual_kind is not None
+        else None
+    )
+    raw = f"resid-{case}-{path}"
+    if kind:
+        raw = f"{raw}-{kind}"
+    if index is not None:
+        raw = f"{raw}-{int(index)}"
+    # Collapse path punctuation to residual_id charset.
+    sanitized = re.sub(r"[^A-Za-z0-9_.:-]", "-", raw)
+    sanitized = re.sub(r"-{2,}", "-", sanitized).strip("-")
+    if not sanitized or not _PACKET_ID_RE.match(sanitized):
+        raise PlateauCodexPacketError(
+            f"could not form residual_id from case={case!r} path={path!r}"
+        )
+    return sanitized[:128]
+
+
+def residual_ref_from_catalog_facet(
+    facet: Mapping[str, object] | object,
+    *,
+    catalog_digest: str | None = None,
+    residual_id: str | None = None,
+    index: int | None = None,
+) -> ResidualRef:
+    """Project one residual-catalog facet into a :class:`ResidualRef`.
+
+    Accepts a :class:`~benchmarks.semantic_roundtrip.residual_catalog.ResidualFacet`
+    (or its ``to_dict()`` mapping).  Holdout and pilot catalogs share the same
+    facet shape, so this is population-agnostic.
+    """
+
+    if hasattr(facet, "to_dict") and not isinstance(facet, Mapping):
+        try:
+            data = facet.to_dict()  # type: ignore[operator]
+        except Exception as exc:  # pragma: no cover - defensive
+            raise PlateauCodexPacketError(
+                f"catalog facet to_dict failed: {exc}"
+            ) from exc
+        if not isinstance(data, Mapping):
+            raise PlateauCodexPacketError(
+                "catalog facet to_dict must return a mapping"
+            )
+    elif isinstance(facet, Mapping):
+        data = facet
+    else:
+        raise PlateauCodexPacketError(
+            "catalog facet must be a mapping or ResidualFacet-like object"
+        )
+
+    case_id = _nonblank(data.get("case_id"), "case_id")
+    field_path = _nonblank(data.get("field_path"), "field_path")
+    residual_kind = data.get("residual_kind")
+    kind_str = (
+        _optional_nonblank(residual_kind, "residual_kind")
+        if residual_kind is not None
+        else None
+    )
+    rid = (
+        _nonblank(residual_id, "residual_id")
+        if residual_id is not None
+        else stable_residual_id(
+            case_id,
+            field_path,
+            residual_kind=kind_str,
+            index=index,
+        )
+    )
+    contribution = data.get("loss_contribution")
+    facet_label = data.get("canonical_field") or kind_str
+    detail_parts = [
+        f"residual_kind={kind_str}" if kind_str else None,
+        (
+            f"trigger={data.get('suggested_trigger_kind')}"
+            if data.get("suggested_trigger_kind")
+            else None
+        ),
+    ]
+    detail = "; ".join(part for part in detail_parts if part) or None
+    catalog = catalog_digest
+    if catalog is None:
+        catalog = None
+    return ResidualRef(
+        residual_id=rid,
+        case_id=case_id,
+        field_paths=(field_path,),
+        facet=(
+            _optional_nonblank(facet_label, "facet")
+            if facet_label is not None
+            else None
+        ),
+        estimated_forward_contribution=(
+            float(contribution) if contribution is not None else None
+        ),
+        catalog_digest=(
+            _optional_nonblank(catalog, "catalog_digest")
+            if catalog is not None
+            else None
+        ),
+        detail=detail,
+    )
+
+
+def residual_refs_from_catalog(
+    catalog: Mapping[str, object],
+    *,
+    case_ids: Sequence[str] | None = None,
+    nonzero_only: bool = True,
+    require_nonempty: bool = False,
+) -> tuple[ResidualRef, ...]:
+    """Build residual refs from a plateau residual catalog payload.
+
+    Works for pilot, holdout, and custom populations.  When *nonzero_only* is
+    true (default), only facets with positive ``loss_contribution`` are kept
+    (flat ``residuals`` already excludes zero-loss rows in sealed catalogs).
+    """
+
+    if not isinstance(catalog, Mapping):
+        raise PlateauCodexPacketError("catalog must be an object")
+    digest = catalog.get("catalog_cid") or catalog.get("catalog_digest")
+    catalog_digest = (
+        _optional_nonblank(digest, "catalog_cid")
+        if digest is not None
+        else None
+    )
+
+    allowed: set[str] | None
+    if case_ids is not None:
+        allowed = {_nonblank(item, "case_ids item") for item in case_ids}
+    else:
+        allowed = None
+
+    raw_residuals = catalog.get("residuals")
+    facets: list[Mapping[str, object]] = []
+    if isinstance(raw_residuals, Sequence) and not isinstance(
+        raw_residuals, (str, bytes, bytearray)
+    ):
+        for item in raw_residuals:
+            if isinstance(item, Mapping):
+                facets.append(item)
+    else:
+        # Nested case residual layout.
+        cases = catalog.get("cases")
+        if isinstance(cases, Sequence) and not isinstance(
+            cases, (str, bytes, bytearray)
+        ):
+            for case in cases:
+                if not isinstance(case, Mapping):
+                    continue
+                nested = case.get("residuals") or ()
+                if not isinstance(nested, Sequence) or isinstance(
+                    nested, (str, bytes, bytearray)
+                ):
+                    continue
+                for item in nested:
+                    if isinstance(item, Mapping):
+                        facets.append(item)
+
+    refs: list[ResidualRef] = []
+    for index, facet in enumerate(facets):
+        case_id = facet.get("case_id")
+        if not isinstance(case_id, str) or not case_id.strip():
+            continue
+        if allowed is not None and case_id.strip() not in allowed:
+            continue
+        loss = facet.get("loss_contribution")
+        if nonzero_only:
+            try:
+                if loss is None or float(loss) <= 0.0:
+                    continue
+            except (TypeError, ValueError):
+                continue
+        refs.append(
+            residual_ref_from_catalog_facet(
+                facet,
+                catalog_digest=catalog_digest,
+                index=index,
+            )
+        )
+
+    if require_nonempty and not refs:
+        raise PlateauCodexPacketError(
+            "catalog produced no residual refs for the requested filter"
+        )
+    return tuple(refs)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1725,12 +1942,228 @@ def build_packet_from_proposal_admission(
     )
 
 
+def build_holdout_codex_packet(
+    *,
+    packet_id: str,
+    baseline_l1: CanonicalRuleIR,
+    residual_refs: Sequence[ResidualRef],
+    proposals: Sequence[TeacherProposal],
+    admission_results: Sequence[
+        StructuralAdmissionResult | PlateauAdmissionReceipt
+    ],
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    baseline_arm_id: str = DEFAULT_BASELINE_ARM_ID,
+    case_id: str | None = None,
+    detail: str | None = None,
+    baseline_e2e: float | None = HOLDOUT_BASELINE_E2E,
+    proposal_ids_for_admissions: Sequence[str | None] | None = None,
+) -> PlateauCodexPacket:
+    """Build a sealed PlateauCodexPacket@1 for a **holdout** residual.
+
+    Same fail-closed implementable rules as :func:`build_plateau_codex_packet`:
+    reject / timeout / error / not_applicable never grant edit authority.
+    Defaults use the post-pilot holdout baseline (e2e mean 0.0) and holdout
+    validation commands (structural admit + packet + holdout fixture tests).
+    Predicted files default to the det. compiler/realizer/tests surface.
+    """
+
+    if not residual_refs:
+        raise PlateauCodexPacketError(
+            "holdout packet requires at least one residual_ref"
+        )
+    files = (
+        tuple(predicted_files)
+        if predicted_files is not None
+        else DEFAULT_PREDICTED_FILES
+    )
+    commands = (
+        tuple(validation_commands)
+        if validation_commands is not None
+        else DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+    )
+    resolved_case = case_id
+    if resolved_case is None and len({ref.case_id for ref in residual_refs}) == 1:
+        resolved_case = residual_refs[0].case_id
+    holdout_detail = detail
+    if holdout_detail is None:
+        holdout_detail = (
+            f"holdout residual packet ({HOLDOUT_POPULATION_KIND})"
+        )
+    elif HOLDOUT_POPULATION_KIND not in holdout_detail.lower():
+        holdout_detail = f"{holdout_detail} [holdout]"
+
+    return build_plateau_codex_packet(
+        packet_id=packet_id,
+        baseline_l1=baseline_l1,
+        residual_refs=residual_refs,
+        proposals=proposals,
+        admission_results=admission_results,
+        predicted_files=files,
+        validation_commands=commands,
+        baseline_arm_id=baseline_arm_id,
+        case_id=resolved_case,
+        detail=holdout_detail,
+        baseline_e2e=baseline_e2e,
+        proposal_ids_for_admissions=proposal_ids_for_admissions,
+    )
+
+
+def build_holdout_packet_from_proposal_admission(
+    *,
+    packet_id: str,
+    baseline_l1: CanonicalRuleIR,
+    residual_ref: ResidualRef,
+    proposal: TeacherProposal,
+    admission: StructuralAdmissionResult,
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    case_id: str | None = None,
+    detail: str | None = None,
+    baseline_e2e: float | None = HOLDOUT_BASELINE_E2E,
+) -> PlateauCodexPacket:
+    """Holdout convenience builder for the single-proposal admission path.
+
+    Reject / timeout / error admissions produce ``implementable=false`` packets
+    with minted proof obligations (same fail-closed contract as pilot).
+    """
+
+    # Reuse the pilot convenience path for field-change alignment, then rebuild
+    # with holdout defaults so baseline_e2e / validation_commands stick.
+    intermediate = build_packet_from_proposal_admission(
+        packet_id=packet_id,
+        baseline_l1=baseline_l1,
+        residual_ref=residual_ref,
+        proposal=proposal,
+        admission=admission,
+        predicted_files=predicted_files,
+        validation_commands=validation_commands
+        if validation_commands is not None
+        else DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
+        case_id=case_id,
+        detail=detail,
+    )
+    # Rebuild to force holdout baseline_e2e when the intermediate used pilot
+    # DEFAULT_BASELINE_E2E via build_plateau_codex_packet defaults.
+    return build_holdout_codex_packet(
+        packet_id=intermediate.packet_id,
+        baseline_l1=intermediate.baseline_l1,
+        residual_refs=intermediate.residual_refs,
+        proposals=intermediate.proposals,
+        admission_results=intermediate.admission_receipts,
+        predicted_files=intermediate.predicted_files,
+        validation_commands=intermediate.validation_commands,
+        baseline_arm_id=intermediate.baseline_arm_id,
+        case_id=intermediate.case_id,
+        detail=intermediate.detail,
+        baseline_e2e=baseline_e2e,
+        proposal_ids_for_admissions=tuple(
+            item.proposal_id for item in intermediate.admission_receipts
+        ),
+    )
+
+
+def build_holdout_packets_from_residual_catalog(
+    catalog: Mapping[str, object],
+    *,
+    baseline_l1_by_case: Mapping[str, CanonicalRuleIR],
+    proposals_by_case: Mapping[str, TeacherProposal | Sequence[TeacherProposal]],
+    admissions_by_case: Mapping[
+        str,
+        StructuralAdmissionResult
+        | PlateauAdmissionReceipt
+        | Sequence[StructuralAdmissionResult | PlateauAdmissionReceipt],
+    ],
+    case_ids: Sequence[str] | None = None,
+    predicted_files: Sequence[str] | None = None,
+    validation_commands: Sequence[str] | None = None,
+    packet_id_prefix: str = "holdout-pkt",
+) -> tuple[PlateauCodexPacket, ...]:
+    """Build one holdout packet per case that has residual refs + admissions.
+
+    Cases without residuals, proposals, or admissions are skipped (not
+    implementable work).  Each packet uses det.-only predicted files and
+    holdout validation commands by default.
+    """
+
+    refs = residual_refs_from_catalog(
+        catalog, case_ids=case_ids, nonzero_only=True
+    )
+    by_case: dict[str, list[ResidualRef]] = {}
+    for ref in refs:
+        by_case.setdefault(ref.case_id, []).append(ref)
+
+    packets: list[PlateauCodexPacket] = []
+    for case_id, case_refs in by_case.items():
+        if case_id not in baseline_l1_by_case:
+            raise PlateauCodexPacketError(
+                f"missing baseline_l1 for holdout case {case_id!r}"
+            )
+        if case_id not in proposals_by_case:
+            continue
+        if case_id not in admissions_by_case:
+            continue
+        baseline = baseline_l1_by_case[case_id]
+        raw_proposals = proposals_by_case[case_id]
+        if isinstance(raw_proposals, TeacherProposal):
+            proposal_seq: tuple[TeacherProposal, ...] = (raw_proposals,)
+        else:
+            proposal_seq = tuple(raw_proposals)
+        raw_admissions = admissions_by_case[case_id]
+        if isinstance(
+            raw_admissions, (StructuralAdmissionResult, PlateauAdmissionReceipt)
+        ):
+            admission_seq: tuple[
+                StructuralAdmissionResult | PlateauAdmissionReceipt, ...
+            ] = (raw_admissions,)
+        else:
+            admission_seq = tuple(raw_admissions)
+        if not proposal_seq or not admission_seq:
+            continue
+        # Align proposal residual_ref_ids to this case's refs when empty.
+        aligned: list[TeacherProposal] = []
+        for proposal in proposal_seq:
+            if proposal.residual_ref_ids:
+                aligned.append(proposal)
+            else:
+                aligned.append(
+                    TeacherProposal(
+                        proposal_id=proposal.proposal_id,
+                        teacher=proposal.teacher,
+                        residual_ref_ids=tuple(
+                            ref.residual_id for ref in case_refs
+                        ),
+                        allowed_field_paths=proposal.allowed_field_paths,
+                        candidate_l1=proposal.candidate_l1,
+                        field_changes=proposal.field_changes,
+                        detail=proposal.detail,
+                        semantic_authority=False,
+                    )
+                )
+        packet = build_holdout_codex_packet(
+            packet_id=f"{packet_id_prefix}-{case_id}",
+            baseline_l1=baseline,
+            residual_refs=tuple(case_refs),
+            proposals=tuple(aligned),
+            admission_results=admission_seq,
+            predicted_files=predicted_files,
+            validation_commands=validation_commands,
+            case_id=case_id,
+            detail=f"holdout residual packet for {case_id}",
+        )
+        packets.append(packet)
+    return tuple(packets)
+
+
 __all__ = [
     "ALLOWED_PREDICTED_FILE_PREFIXES",
     "DEFAULT_BASELINE_ARM_ID",
     "DEFAULT_BASELINE_E2E",
+    "DEFAULT_HOLDOUT_VALIDATION_COMMANDS",
     "DEFAULT_PREDICTED_FILES",
     "DEFAULT_VALIDATION_COMMANDS",
+    "HOLDOUT_BASELINE_E2E",
+    "HOLDOUT_POPULATION_KIND",
     "KNOWN_TEACHERS",
     "NON_IMPLEMENTABLE_DISPOSITIONS",
     "PLATEAU_ADMISSION_RECEIPT_INTERFACE",
@@ -1749,10 +2182,16 @@ __all__ = [
     "TeacherKind",
     "TeacherProposal",
     "baseline_l1_digest",
+    "build_holdout_codex_packet",
+    "build_holdout_packet_from_proposal_admission",
+    "build_holdout_packets_from_residual_catalog",
     "build_packet_from_proposal_admission",
     "build_plateau_codex_packet",
     "disposition_is_implementable",
     "field_change_from_dict",
     "field_change_path",
     "mint_proof_obligations",
+    "residual_ref_from_catalog_facet",
+    "residual_refs_from_catalog",
+    "stable_residual_id",
 ]

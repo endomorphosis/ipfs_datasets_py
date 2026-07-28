@@ -12,17 +12,26 @@ from benchmarks.semantic_roundtrip.contracts import (
     CanonicalRuleIR,
 )
 from benchmarks.semantic_roundtrip.plateau_codex_packet import (
+    DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
+    HOLDOUT_BASELINE_E2E,
+    build_holdout_packet_from_proposal_admission,
     build_packet_from_proposal_admission,
     build_plateau_codex_packet,
 )
 from benchmarks.semantic_roundtrip.plateau_supervisor_materialize import (
     BUNDLE_SUPERVISOR_MODULE,
     CASE_TO_EDIT_WAVE_TASK,
+    DEFAULT_BOARD_NAMESPACE,
     DEFAULT_MATERIALIZER_PREDICTED_FILES,
     DEFAULT_MAX_LANES,
     DEFAULT_MERGE_TARGET_BRANCH,
     DEFAULT_TASK_PREFIX,
+    HOLDOUT_BOARD_NAMESPACE,
+    HOLDOUT_BUNDLE,
+    HOLDOUT_CASE_TO_EDIT_WAVE_TASK,
+    HOLDOUT_MAX_LANES,
+    HOLDOUT_TASK_PREFIX,
     MATERIALIZER_PREDICTED_FILE_PREFIXES,
     PLATEAU_SUPERVISOR_MATERIALIZER_EVIDENCE,
     PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE,
@@ -34,9 +43,12 @@ from benchmarks.semantic_roundtrip.plateau_supervisor_materialize import (
     coerce_packet,
     default_launch_spec,
     filter_supervisor_predicted_files,
+    holdout_launch_spec,
+    is_holdout_case,
     is_materializer_allowed_path,
     load_packets_from_json_path,
     main,
+    materialize_holdout_packets,
     materialize_packet,
     materialize_packets,
     render_launch_markdown,
@@ -630,3 +642,249 @@ def test_launch_doc_exists_and_lists_required_launch_fields() -> None:
     assert BUNDLE_SUPERVISOR_MODULE in text or "bundle_supervisor" in text
     assert "implementable" in text.lower()
     assert "obligation" in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Holdout population materializer (PLAT2-030)
+# ---------------------------------------------------------------------------
+
+HOLDOUT_CONDITIONS_PATH = "rules[0].conditions"
+HOLDOUT_PRIOR = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=("if_requested",),
+        ),
+    )
+)
+HOLDOUT_CANDIDATE = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=(),
+        ),
+    )
+)
+
+
+def _holdout_residual(
+    residual_id: str = "resid-holdout-conditions",
+    case_id: str = "low_confidence_object",
+) -> ResidualRef:
+    return ResidualRef(
+        residual_id=residual_id,
+        case_id=case_id,
+        field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        facet="conditions",
+        estimated_forward_contribution=0.1,
+        catalog_digest="c" * 64,
+        detail="holdout residual for materializer tests",
+    )
+
+
+def _holdout_proposal(
+    residual_id: str = "resid-holdout-conditions",
+) -> TeacherProposal:
+    return TeacherProposal(
+        proposal_id="prop-holdout-mat-1",
+        teacher="leanstral",
+        residual_ref_ids=(residual_id,),
+        allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        candidate_l1=HOLDOUT_CANDIDATE,
+        detail="holdout proposal for materializer",
+        semantic_authority=False,
+    )
+
+
+def _holdout_accepted_packet(
+    *,
+    packet_id: str = "holdout-pkt-mat-accept",
+    case_id: str = "low_confidence_object",
+) -> object:
+    residual = _holdout_residual(
+        residual_id=f"resid-{case_id}",
+        case_id=case_id,
+    )
+    return build_holdout_packet_from_proposal_admission(
+        packet_id=packet_id,
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=residual,
+        proposal=_holdout_proposal(residual_id=residual.residual_id),
+        admission=admit_hybrid_repair(
+            HOLDOUT_PRIOR,
+            HOLDOUT_CANDIDATE,
+            gate=_accept_gate(),
+            allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        ),
+        case_id=case_id,
+    )
+
+
+def _holdout_rejected_packet(
+    gate_factory,
+    *,
+    packet_id: str = "holdout-pkt-mat-reject",
+    case_id: str = "low_confidence_object",
+):
+    residual = _holdout_residual(
+        residual_id=f"resid-{case_id}-rej",
+        case_id=case_id,
+    )
+    return build_holdout_packet_from_proposal_admission(
+        packet_id=packet_id,
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=residual,
+        proposal=_holdout_proposal(residual_id=residual.residual_id),
+        admission=admit_hybrid_repair(
+            HOLDOUT_PRIOR,
+            HOLDOUT_CANDIDATE,
+            gate=gate_factory(),
+            allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+        ),
+        case_id=case_id,
+    )
+
+
+def test_holdout_launch_spec_and_constants() -> None:
+    assert HOLDOUT_BOARD_NAMESPACE == "semantic-roundtrip-plateau-holdout-v1"
+    assert HOLDOUT_TASK_PREFIX == "## PLAT2-"
+    assert HOLDOUT_BUNDLE.endswith("plateau-holdout/packets")
+    assert HOLDOUT_MAX_LANES == 2
+    assert is_holdout_case("low_confidence_object")
+    assert is_holdout_case("contradictory_modality")
+    assert is_holdout_case("missing_temporal")
+    assert not is_holdout_case("legal_doc_1")
+
+    spec = holdout_launch_spec()
+    assert spec.task_prefix == HOLDOUT_TASK_PREFIX
+    assert spec.board_namespace == HOLDOUT_BOARD_NAMESPACE
+    assert spec.max_lanes == HOLDOUT_MAX_LANES
+    flags = spec.flags()
+    assert flags["task_prefix"] == "## PLAT2-"
+    assert "plateau_holdout" in flags["scheduler_config_path"]
+    md = render_launch_markdown(spec)
+    assert HOLDOUT_TASK_PREFIX in md
+    assert HOLDOUT_BOARD_NAMESPACE in md
+
+
+def test_holdout_implementable_packet_emits_det_only_task() -> None:
+    packet = _holdout_accepted_packet()
+    assert packet.implementable is True
+    assert packet.baseline_e2e == pytest.approx(HOLDOUT_BASELINE_E2E)
+
+    item = materialize_packet(packet)
+    assert item.kind is MaterializedKind.IMPLEMENTABLE
+    assert item.implementable is True
+    assert item.population_kind == "holdout"
+    assert item.board_namespace == HOLDOUT_BOARD_NAMESPACE
+    assert item.bundle == HOLDOUT_BUNDLE
+    assert item.edit_wave_task_id == HOLDOUT_CASE_TO_EDIT_WAVE_TASK[
+        "low_confidence_object"
+    ]
+    assert item.predicted_files
+    for path in item.predicted_files:
+        assert is_materializer_allowed_path(path)
+    # Det. surface only: typed_deontic / realizer / tests.
+    assert not any(path.startswith("docs/") for path in item.predicted_files)
+    assert item.validation_commands
+    assert any("pytest" in cmd for cmd in item.validation_commands)
+    # Holdout packets carry holdout validation defaults when built via helpers.
+    assert item.validation_commands == DEFAULT_HOLDOUT_VALIDATION_COMMANDS or all(
+        isinstance(cmd, str) and cmd.strip() for cmd in item.validation_commands
+    )
+    assert item.authorize_merge is False
+    assert item.semantic_authority is False
+    payload = item.to_dict()
+    assert payload["population_kind"] == "holdout"
+    assert payload["predicted_files"]
+    assert payload["validation_commands"]
+    md = item.to_markdown()
+    assert "Predicted files:" in md
+    assert "Validation:" in md
+    assert HOLDOUT_BOARD_NAMESPACE in md
+    assert "Holdout case" in item.body
+
+
+@pytest.mark.parametrize(
+    "gate_factory,expected_disposition",
+    [
+        (_reject_gate, AdmissionDisposition.VALIDATOR_REJECT),
+        (_timeout_gate, AdmissionDisposition.TIMEOUT),
+        (_error_gate, AdmissionDisposition.ERROR),
+    ],
+)
+def test_holdout_non_implementable_becomes_obligation_only(
+    gate_factory, expected_disposition: AdmissionDisposition
+) -> None:
+    packet = _holdout_rejected_packet(
+        gate_factory,
+        packet_id=f"holdout-pkt-{expected_disposition.value}",
+    )
+    assert packet.implementable is False
+    item = materialize_packet(packet)
+    assert item.kind is MaterializedKind.OBLIGATION_ONLY
+    assert item.implementable is False
+    assert item.predicted_files == ()
+    assert item.validation_commands == ()
+    assert item.authorize_merge is False
+    assert item.population_kind == "holdout"
+    assert item.board_namespace == HOLDOUT_BOARD_NAMESPACE
+    assert item.primary_disposition == expected_disposition.value
+
+
+def test_materialize_holdout_packets_one_task_per_implementable() -> None:
+    accepted_a = _holdout_accepted_packet(
+        packet_id="holdout-pkt-batch-a",
+        case_id="low_confidence_object",
+    )
+    accepted_b = _holdout_accepted_packet(
+        packet_id="holdout-pkt-batch-b",
+        case_id="contradictory_modality",
+    )
+    rejected = _holdout_rejected_packet(
+        _reject_gate, packet_id="holdout-pkt-batch-rej"
+    )
+
+    receipt = materialize_holdout_packets([accepted_a, accepted_b, rejected])
+    assert receipt.implementable_count == 2
+    assert receipt.obligation_only_count == 1
+    assert len(receipt.items) == 3
+    assert len(receipt.implementable_items()) == 2
+
+    for item in receipt.implementable_items():
+        assert item.kind is MaterializedKind.IMPLEMENTABLE
+        assert item.predicted_files
+        for path in item.predicted_files:
+            assert is_materializer_allowed_path(path)
+        assert item.validation_commands
+        assert item.board_namespace == HOLDOUT_BOARD_NAMESPACE
+        assert item.bundle == HOLDOUT_BUNDLE
+        assert item.population_kind == "holdout"
+
+    obligation = receipt.obligation_only_items()[0]
+    assert obligation.predicted_files == ()
+    assert obligation.implementable is False
+
+    # Pilot materialize path remains on pilot board namespace.
+    pilot = _accepted_packet(packet_id="pkt-pilot-ns-check")
+    pilot_item = materialize_packet(pilot)
+    assert pilot_item.board_namespace == DEFAULT_BOARD_NAMESPACE
+    assert pilot_item.population_kind is None
+
+
+def test_holdout_edit_wave_mapping_for_registered_cases() -> None:
+    for case_id, wave in HOLDOUT_CASE_TO_EDIT_WAVE_TASK.items():
+        packet = _holdout_accepted_packet(
+            case_id=case_id,
+            packet_id=f"holdout-pkt-{case_id.replace('_', '-')}",
+        )
+        item = materialize_packet(packet)
+        assert item.edit_wave_task_id == wave
+        assert item.case_id == case_id
+        assert item.population_kind == "holdout"

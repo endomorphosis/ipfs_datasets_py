@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -14,8 +15,11 @@ from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     ALLOWED_PREDICTED_FILE_PREFIXES,
     DEFAULT_BASELINE_ARM_ID,
     DEFAULT_BASELINE_E2E,
+    DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
     DEFAULT_VALIDATION_COMMANDS,
+    HOLDOUT_BASELINE_E2E,
+    HOLDOUT_POPULATION_KIND,
     NON_IMPLEMENTABLE_DISPOSITIONS,
     PLATEAU_CODEX_PACKET_EVIDENCE,
     PLATEAU_CODEX_PACKET_INTERFACE,
@@ -28,10 +32,16 @@ from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     ResidualRef,
     TeacherProposal,
     baseline_l1_digest,
+    build_holdout_codex_packet,
+    build_holdout_packet_from_proposal_admission,
+    build_holdout_packets_from_residual_catalog,
     build_packet_from_proposal_admission,
     build_plateau_codex_packet,
     disposition_is_implementable,
     mint_proof_obligations,
+    residual_ref_from_catalog_facet,
+    residual_refs_from_catalog,
+    stable_residual_id,
 )
 from benchmarks.semantic_roundtrip.selective_repair import (
     DECLARED_STRUCTURAL_CONSTRAINTS,
@@ -571,3 +581,264 @@ def test_proposal_unknown_residual_is_rejected() -> None:
             admission_results=(admission,),
             proposal_ids_for_admissions=("prop-x",),
         )
+
+
+# ---------------------------------------------------------------------------
+# Holdout population (PLAT2-030)
+# ---------------------------------------------------------------------------
+
+ROOT = Path(__file__).resolve().parents[4]
+HOLDOUT_CATALOG_PATH = (
+    ROOT
+    / "workspace"
+    / "benchmarks"
+    / "semantic-roundtrip-compositions"
+    / "holdout_residual_catalog.json"
+)
+
+# Selective-repair activation holdout cases use conditions / extra-rule facets.
+HOLDOUT_CONDITIONS_PATH = "rules[0].conditions"
+HOLDOUT_PRIOR = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=("if_requested",),
+        ),
+    )
+)
+HOLDOUT_CANDIDATE = CanonicalRuleIR(
+    (
+        CanonicalRule(
+            modality="O",
+            actor="controller",
+            action="delete",
+            object="records",
+            conditions=(),
+        ),
+    )
+)
+
+
+def _holdout_residual(
+    residual_id: str = "resid-low-confidence-conditions",
+    case_id: str = "low_confidence_object",
+    field_path: str = HOLDOUT_CONDITIONS_PATH,
+) -> ResidualRef:
+    return ResidualRef(
+        residual_id=residual_id,
+        case_id=case_id,
+        field_paths=(field_path,),
+        facet="conditions",
+        estimated_forward_contribution=0.1,
+        catalog_digest="b" * 64,
+        detail="holdout residual facet for low_confidence_object",
+    )
+
+
+def _holdout_proposal(
+    proposal_id: str = "prop-holdout-1",
+    residual_id: str = "resid-low-confidence-conditions",
+    candidate: CanonicalRuleIR | None = HOLDOUT_CANDIDATE,
+    field_path: str = HOLDOUT_CONDITIONS_PATH,
+) -> TeacherProposal:
+    return TeacherProposal(
+        proposal_id=proposal_id,
+        teacher="leanstral",
+        residual_ref_ids=(residual_id,),
+        allowed_field_paths=(field_path,),
+        candidate_l1=candidate,
+        detail="holdout selective conditions repair proposal",
+        semantic_authority=False,
+    )
+
+
+def test_holdout_constants_and_validation_commands() -> None:
+    assert HOLDOUT_BASELINE_E2E == pytest.approx(0.0)
+    assert HOLDOUT_POPULATION_KIND == "holdout"
+    assert DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+    assert any(
+        "test_holdout_cases" in cmd for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+    )
+    assert any(
+        "test_structural_admission" in cmd
+        for cmd in DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+    )
+
+
+def test_residual_refs_from_holdout_catalog() -> None:
+    assert HOLDOUT_CATALOG_PATH.is_file(), (
+        "holdout_residual_catalog.json must exist (PLAT2-010)"
+    )
+    catalog = json.loads(HOLDOUT_CATALOG_PATH.read_text(encoding="utf-8"))
+    assert catalog.get("population_kind") == "holdout"
+
+    refs = residual_refs_from_catalog(catalog, nonzero_only=True)
+    assert refs, "holdout catalog should yield nonzero residual refs"
+    case_ids = {ref.case_id for ref in refs}
+    assert "low_confidence_object" in case_ids
+    assert "contradictory_modality" in case_ids
+    # Zero-loss missing_temporal has no residual facets in the flat list.
+    assert "missing_temporal" not in case_ids
+
+    for ref in refs:
+        assert ref.catalog_digest == catalog["catalog_cid"]
+        assert ref.field_paths
+        assert ref.residual_id
+        assert stable_residual_id(ref.case_id, ref.field_paths[0])
+
+    # Facet projection helper round-trips a catalog row.
+    facet = catalog["residuals"][0]
+    single = residual_ref_from_catalog_facet(
+        facet, catalog_digest=catalog["catalog_cid"]
+    )
+    assert single.case_id == facet["case_id"]
+    assert single.field_paths == (facet["field_path"],)
+    assert single.estimated_forward_contribution == pytest.approx(
+        float(facet["loss_contribution"])
+    )
+
+
+def test_holdout_accepted_packet_is_implementable() -> None:
+    residual = _holdout_residual()
+    admission = admit_hybrid_repair(
+        HOLDOUT_PRIOR,
+        HOLDOUT_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+    )
+    assert admission.disposition is AdmissionDisposition.ACCEPTED
+
+    packet = build_holdout_packet_from_proposal_admission(
+        packet_id="holdout-pkt-accept-1",
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=residual,
+        proposal=_holdout_proposal(),
+        admission=admission,
+    )
+    assert packet.implementable is True
+    assert packet.baseline_e2e == pytest.approx(HOLDOUT_BASELINE_E2E)
+    assert packet.case_id == "low_confidence_object"
+    assert packet.predicted_files == DEFAULT_PREDICTED_FILES
+    assert packet.validation_commands == DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+    assert packet.admitted_field_changes
+    assert "holdout" in (packet.detail or "").lower()
+    payload = packet.to_dict()
+    assert payload["implementable"] is True
+    assert payload["semantic_authority"] is False
+    assert payload["baseline_e2e"] == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "gate_factory,expected_disposition",
+    [
+        (_reject_gate, AdmissionDisposition.VALIDATOR_REJECT),
+        (_timeout_gate, AdmissionDisposition.TIMEOUT),
+        (_error_gate, AdmissionDisposition.ERROR),
+    ],
+)
+def test_holdout_reject_timeout_error_not_implementable(
+    gate_factory, expected_disposition: AdmissionDisposition
+) -> None:
+    residual = _holdout_residual()
+    admission = admit_hybrid_repair(
+        HOLDOUT_PRIOR,
+        HOLDOUT_CANDIDATE,
+        gate=gate_factory(),
+        allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+    )
+    assert admission.disposition is expected_disposition
+
+    packet = build_holdout_packet_from_proposal_admission(
+        packet_id=f"holdout-pkt-{expected_disposition.value}",
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_ref=residual,
+        proposal=_holdout_proposal(),
+        admission=admission,
+    )
+    assert packet.implementable is False
+    assert packet.admitted_field_changes == ()
+    assert packet.baseline_e2e == pytest.approx(HOLDOUT_BASELINE_E2E)
+    # Reject/timeout/error mint obligations for supervisor notes.
+    if expected_disposition is not AdmissionDisposition.ERROR:
+        assert packet.proof_obligation_ids or packet.proof_obligations is not None
+
+
+def test_holdout_cannot_force_implementable_on_reject() -> None:
+    residual = _holdout_residual()
+    admission = admit_hybrid_repair(
+        HOLDOUT_PRIOR,
+        HOLDOUT_CANDIDATE,
+        gate=_reject_gate(),
+        allowed_field_paths=(HOLDOUT_CONDITIONS_PATH,),
+    )
+    packet = build_holdout_codex_packet(
+        packet_id="holdout-pkt-force-reject",
+        baseline_l1=HOLDOUT_PRIOR,
+        residual_refs=(residual,),
+        proposals=(_holdout_proposal(),),
+        admission_results=(admission,),
+        proposal_ids_for_admissions=("prop-holdout-1",),
+    )
+    assert packet.implementable is False
+    with pytest.raises(PlateauCodexPacketError, match="implementable"):
+        PlateauCodexPacket(
+            packet_id=packet.packet_id,
+            baseline_l1=packet.baseline_l1,
+            residual_refs=packet.residual_refs,
+            proposals=packet.proposals,
+            admission_receipts=packet.admission_receipts,
+            proof_obligations=packet.proof_obligations,
+            predicted_files=packet.predicted_files,
+            validation_commands=packet.validation_commands,
+            implementable=True,
+            case_id=packet.case_id,
+            admitted_field_changes=(),
+            baseline_e2e=HOLDOUT_BASELINE_E2E,
+        )
+
+
+def test_build_holdout_packets_from_residual_catalog() -> None:
+    catalog = json.loads(HOLDOUT_CATALOG_PATH.read_text(encoding="utf-8"))
+    refs = residual_refs_from_catalog(
+        catalog, case_ids=("low_confidence_object",), nonzero_only=True
+    )
+    assert refs
+    residual = refs[0]
+    admission = admit_hybrid_repair(
+        HOLDOUT_PRIOR,
+        HOLDOUT_CANDIDATE,
+        gate=_accept_gate(),
+        allowed_field_paths=residual.field_paths,
+    )
+    proposal = TeacherProposal(
+        proposal_id="prop-from-catalog",
+        teacher="residual_catalog",
+        residual_ref_ids=(),
+        allowed_field_paths=residual.field_paths,
+        candidate_l1=HOLDOUT_CANDIDATE,
+        detail="catalog-driven holdout proposal",
+    )
+    packets = build_holdout_packets_from_residual_catalog(
+        catalog,
+        baseline_l1_by_case={"low_confidence_object": HOLDOUT_PRIOR},
+        proposals_by_case={"low_confidence_object": proposal},
+        admissions_by_case={"low_confidence_object": admission},
+        case_ids=("low_confidence_object",),
+    )
+    assert len(packets) == 1
+    packet = packets[0]
+    assert packet.implementable is True
+    assert packet.case_id == "low_confidence_object"
+    assert packet.packet_id.startswith("holdout-pkt-")
+    assert all(
+        any(
+            packet_path.startswith(prefix)
+            for prefix in ALLOWED_PREDICTED_FILE_PREFIXES
+        )
+        for packet_path in packet.predicted_files
+    )
+    assert packet.validation_commands
+    assert any("pytest" in cmd for cmd in packet.validation_commands)

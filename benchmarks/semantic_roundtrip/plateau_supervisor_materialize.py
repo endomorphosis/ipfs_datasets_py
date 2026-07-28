@@ -7,7 +7,8 @@ records into agent-supervisor work items:
 
 * ``implementable=true`` → edit tasks whose ``predicted_files`` are restricted
   to the deterministic surface (``typed_deontic`` constructor, realizers,
-  unit tests under ``tests/unit/benchmarks/semantic_roundtrip/``);
+  unit tests under ``tests/unit/benchmarks/semantic_roundtrip/``) and whose
+  ``validation_commands`` are nonempty;
 * ``implementable=false`` → obligation-only notes that list
   ``proof_obligation_ids`` and never authorize a silent merge of candidate L1.
 
@@ -17,6 +18,10 @@ Proof pass is never promotion evidence; the materializer preserves
 Launch doctrine (merge branch, max lanes, ``bundle_supervisor`` flags) lives
 in ``docs/benchmarks/semantic_roundtrip_plateau_supervisor_launch.md`` and is
 also exposed as constants / helpers here for machine consumption.
+
+Holdout (PLAT2-030): :func:`materialize_holdout_packets` and
+:func:`holdout_launch_spec` route implementable holdout residuals onto the
+``semantic-roundtrip-plateau-holdout-v1`` board with ``## PLAT2-`` tasks.
 """
 
 from __future__ import annotations
@@ -37,8 +42,11 @@ from benchmarks.semantic_roundtrip.constructors.autoencoder_guided import (
 from benchmarks.semantic_roundtrip.plateau_codex_packet import (
     DEFAULT_BASELINE_ARM_ID,
     DEFAULT_BASELINE_E2E,
+    DEFAULT_HOLDOUT_VALIDATION_COMMANDS,
     DEFAULT_PREDICTED_FILES,
     DEFAULT_VALIDATION_COMMANDS,
+    HOLDOUT_BASELINE_E2E,
+    HOLDOUT_POPULATION_KIND,
     PLATEAU_CODEX_PACKET_INTERFACE,
     PlateauCodexPacket,
     PlateauCodexPacketError,
@@ -56,10 +64,12 @@ PLATEAU_SUPERVISOR_MATERIALIZER_SCHEMA: Final = (
 PLATEAU_SUPERVISOR_TASK_INTERFACE: Final = "PlateauSupervisorTask@1"
 PLATEAU_SUPERVISOR_NOTE_INTERFACE: Final = "PlateauSupervisorObligationNote@1"
 PLATEAU_SUPERVISOR_MATERIALIZER_EVIDENCE: Final = "PLATEV070SUP"
+PLATEAU_SUPERVISOR_MATERIALIZER_HOLDOUT_EVIDENCE: Final = "PLAT2EV030PKT"
 
 # Deterministic edit surface enforced by the materializer (stricter than the
 # packet-level predicted-file allowlist, which also permits docs/ and broad
-# package modules).  Acceptance for PLAT-070: typed_deontic / realizer / tests.
+# package modules).  Acceptance for PLAT-070 / PLAT2-030: typed_deontic /
+# realizer / tests only.
 MATERIALIZER_PREDICTED_FILE_PREFIXES: Final = (
     "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
     "benchmarks/semantic_roundtrip/constructors/typed_deontic",
@@ -87,9 +97,26 @@ DEFAULT_RUNTIME_ROOT: Final = "/var/tmp/hssl-srt-plateau-break"
 DEFAULT_TASKBOARD_RELATIVE_PATH: Final = (
     "docs/implementation/plans/semantic_roundtrip_plateau_break.taskboard.todo.md"
 )
+DEFAULT_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
+    "config/semantic_roundtrip_plateau_break_scheduler.json"
+)
 BUNDLE_SUPERVISOR_MODULE: Final = (
     "ipfs_accelerate_py.agent_supervisor.bundle_supervisor"
 )
+
+# Holdout launch doctrine (PLAT2 / plateau-holdout board).
+HOLDOUT_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-holdout-v1"
+HOLDOUT_BUNDLE: Final = "semantic-roundtrip/plateau-holdout/packets"
+HOLDOUT_TASK_PREFIX: Final = "## PLAT2-"
+HOLDOUT_RUNTIME_ROOT: Final = "/var/tmp/hssl-srt-plateau-holdout"
+HOLDOUT_TASKBOARD_RELATIVE_PATH: Final = (
+    "docs/implementation/plans/semantic_roundtrip_plateau_holdout.taskboard.todo.md"
+)
+HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH: Final = (
+    "config/semantic_roundtrip_plateau_holdout_scheduler.json"
+)
+HOLDOUT_MAX_LANES: Final = 2
+HOLDOUT_MERGE_TARGET_BRANCH: Final = DEFAULT_MERGE_TARGET_BRANCH
 
 # Case id → parallel edit-wave task id (PLAT-08x).
 CASE_TO_EDIT_WAVE_TASK: Final = {
@@ -97,6 +124,13 @@ CASE_TO_EDIT_WAVE_TASK: Final = {
     "construction_contract": "PLAT-082",
     "corp_policy_1": "PLAT-083",
     "exec_order_1": "PLAT-084",
+}
+
+# Holdout case id → det. compiler edit-wave task (PLAT2-050 lane).
+HOLDOUT_CASE_TO_EDIT_WAVE_TASK: Final = {
+    "missing_temporal": "PLAT2-050",
+    "low_confidence_object": "PLAT2-050",
+    "contradictory_modality": "PLAT2-050",
 }
 
 _TASK_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
@@ -284,7 +318,32 @@ def _task_id_for_packet(packet: PlateauCodexPacket) -> str:
 def _edit_wave_hint(case_id: str | None) -> str | None:
     if not case_id:
         return None
-    return CASE_TO_EDIT_WAVE_TASK.get(case_id)
+    if case_id in CASE_TO_EDIT_WAVE_TASK:
+        return CASE_TO_EDIT_WAVE_TASK[case_id]
+    return HOLDOUT_CASE_TO_EDIT_WAVE_TASK.get(case_id)
+
+
+def is_holdout_case(case_id: str | None) -> bool:
+    """Return whether *case_id* is a preregistered holdout population case."""
+
+    if not case_id:
+        return False
+    return case_id in HOLDOUT_CASE_TO_EDIT_WAVE_TASK
+
+
+def is_holdout_packet(packet: PlateauCodexPacket) -> bool:
+    """Heuristic: holdout case id, holdout baseline e2e, or holdout detail tag."""
+
+    if is_holdout_case(packet.case_id):
+        return True
+    if packet.baseline_e2e is not None and float(packet.baseline_e2e) == float(
+        HOLDOUT_BASELINE_E2E
+    ):
+        detail = (packet.detail or "").lower()
+        if HOLDOUT_POPULATION_KIND in detail or "holdout" in detail:
+            return True
+    detail = (packet.detail or "").lower()
+    return HOLDOUT_POPULATION_KIND in detail or "holdout residual" in detail
 
 
 def _field_change_summary(
@@ -352,6 +411,9 @@ class MaterializedSupervisorItem:
     semantic_authority: bool = False
     authorize_merge: bool = False
     detail: str | None = None
+    board_namespace: str = DEFAULT_BOARD_NAMESPACE
+    bundle: str = DEFAULT_BUNDLE
+    population_kind: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -390,6 +452,21 @@ class MaterializedSupervisorItem:
                 "materialized items must not claim semantic_authority"
             )
 
+        object.__setattr__(
+            self,
+            "board_namespace",
+            _nonblank(self.board_namespace, "board_namespace"),
+        )
+        object.__setattr__(
+            self, "bundle", _nonblank(self.bundle, "bundle")
+        )
+        if self.population_kind is not None:
+            object.__setattr__(
+                self,
+                "population_kind",
+                _nonblank(self.population_kind, "population_kind"),
+            )
+
         if self.kind is MaterializedKind.IMPLEMENTABLE:
             if not self.implementable:
                 raise PlateauSupervisorMaterializeError(
@@ -401,6 +478,13 @@ class MaterializedSupervisorItem:
                 raise PlateauSupervisorMaterializeError(
                     "implementable task requires validation_commands"
                 )
+            # Det.-only surface: every predicted file must pass the allowlist.
+            for path in files:
+                if not is_materializer_allowed_path(path):
+                    raise PlateauSupervisorMaterializeError(
+                        f"implementable predicted file outside det. surface: "
+                        f"{path!r}"
+                    )
             # Edit tasks never auto-merge: daemon merges only after gates.
             object.__setattr__(self, "authorize_merge", False)
         else:
@@ -425,7 +509,9 @@ class MaterializedSupervisorItem:
             "authorize_merge": self.authorize_merge,
             "baseline_arm_id": self.baseline_arm_id,
             "baseline_e2e": self.baseline_e2e,
+            "board_namespace": self.board_namespace,
             "body": self.body,
+            "bundle": self.bundle,
             "case_id": self.case_id,
             "detail": self.detail,
             "edit_wave_task_id": self.edit_wave_task_id,
@@ -435,6 +521,7 @@ class MaterializedSupervisorItem:
             "kind": self.kind.value,
             "packet_digest": self.packet_digest,
             "packet_id": self.packet_id,
+            "population_kind": self.population_kind,
             "predicted_files": list(self.predicted_files),
             "primary_disposition": self.primary_disposition,
             "proof_obligation_ids": list(self.proof_obligation_ids),
@@ -467,6 +554,8 @@ class MaterializedSupervisorItem:
         ]
         if self.case_id:
             lines.append(f"- Case id: {self.case_id}")
+        if self.population_kind:
+            lines.append(f"- Population: {self.population_kind}")
         if self.edit_wave_task_id:
             lines.append(f"- Edit wave task: {self.edit_wave_task_id}")
         if self.primary_disposition:
@@ -496,8 +585,8 @@ class MaterializedSupervisorItem:
             )
         lines.extend(
             [
-                f"- Board namespace: {DEFAULT_BOARD_NAMESPACE}",
-                f"- Bundle: {DEFAULT_BUNDLE}",
+                f"- Board namespace: {self.board_namespace}",
+                f"- Bundle: {self.bundle}",
                 f"- Baseline arm: {self.baseline_arm_id}",
                 "",
                 "### Rationale",
@@ -550,18 +639,25 @@ def _implementable_body(packet: PlateauCodexPacket) -> str:
     residual_ids = [item.residual_id for item in packet.residual_refs]
     proposal_ids = [item.proposal_id for item in packet.proposals]
     wave = _edit_wave_hint(packet.case_id)
+    holdout = is_holdout_packet(packet)
     parts = [
         f"Materialized from sealed {PLATEAU_CODEX_PACKET_INTERFACE} "
         f"`{packet.packet_id}` (digest `{packet.packet_digest[:16]}…`).",
         "Edit authority is granted only for the deterministic compiler/"
         "realizer/tests surface listed under predicted_files.",
-        "Merge only after structural re-admission, packet validation "
-        "commands, and pilot re-score gates pass.",
+        (
+            "Merge only after structural re-admission, packet validation "
+            "commands, and holdout re-score gates pass."
+            if holdout
+            else "Merge only after structural re-admission, packet validation "
+            "commands, and pilot re-score gates pass."
+        ),
         "Proof pass alone is not promotion evidence "
         "(semantic_authority=false).",
     ]
     if packet.case_id:
-        parts.append(f"Pilot case: `{packet.case_id}`.")
+        label = "Holdout case" if holdout else "Pilot case"
+        parts.append(f"{label}: `{packet.case_id}`.")
     if wave:
         parts.append(f"Aligns with edit-wave task `{wave}`.")
     if change_paths:
@@ -627,13 +723,19 @@ def materialize_packet(
     verify_digest: bool = True,
     predicted_files_override: Sequence[str] | None = None,
     validation_commands_override: Sequence[str] | None = None,
+    board_namespace: str | None = None,
+    bundle: str | None = None,
+    force_holdout: bool = False,
 ) -> MaterializedSupervisorItem:
     """Materialize one sealed packet into a supervisor task or obligation note.
 
     * Implementable packets produce ``MaterializedKind.IMPLEMENTABLE`` tasks
-      with ``predicted_files`` filtered to typed_deontic / realizer / tests.
+      with ``predicted_files`` filtered to typed_deontic / realizer / tests
+      and nonempty ``validation_commands``.
     * Non-implementable packets produce ``MaterializedKind.OBLIGATION_ONLY``
       notes listing ``proof_obligation_ids``.
+    * Holdout packets (case id / detail / ``force_holdout``) route to the
+      PLAT2 board namespace and packet bundle.
     """
 
     sealed = coerce_packet(packet, verify_digest=verify_digest)
@@ -645,6 +747,20 @@ def materialize_packet(
     task_id = _task_id_for_packet(sealed)
     wave = _edit_wave_hint(sealed.case_id)
     disposition = sealed.primary_disposition.value
+    holdout = force_holdout or is_holdout_packet(sealed)
+    namespace = (
+        board_namespace
+        if board_namespace is not None
+        else (
+            HOLDOUT_BOARD_NAMESPACE if holdout else DEFAULT_BOARD_NAMESPACE
+        )
+    )
+    active_bundle = (
+        bundle
+        if bundle is not None
+        else (HOLDOUT_BUNDLE if holdout else DEFAULT_BUNDLE)
+    )
+    population = HOLDOUT_POPULATION_KIND if holdout else None
 
     if sealed.implementable:
         files = filter_supervisor_predicted_files(
@@ -658,7 +774,11 @@ def materialize_packet(
             else sealed.validation_commands
         )
         if not commands:
-            commands = DEFAULT_VALIDATION_COMMANDS
+            commands = (
+                DEFAULT_HOLDOUT_VALIDATION_COMMANDS
+                if holdout
+                else DEFAULT_VALIDATION_COMMANDS
+            )
         case_label = sealed.case_id or "unknown-case"
         title = (
             f"Det. compiler edit from packet {sealed.packet_id} "
@@ -687,6 +807,9 @@ def materialize_packet(
             semantic_authority=False,
             authorize_merge=False,
             detail=sealed.detail,
+            board_namespace=namespace,
+            bundle=active_bundle,
+            population_kind=population,
         )
 
     title = (
@@ -716,6 +839,9 @@ def materialize_packet(
         semantic_authority=False,
         authorize_merge=False,
         detail=sealed.detail,
+        board_namespace=namespace,
+        bundle=active_bundle,
+        population_kind=population,
     )
 
 
@@ -824,8 +950,15 @@ def materialize_packets(
     verify_digest: bool = True,
     merge_target_branch: str = DEFAULT_MERGE_TARGET_BRANCH,
     max_lanes: int = DEFAULT_MAX_LANES,
+    force_holdout: bool = False,
+    board_namespace: str | None = None,
+    bundle: str | None = None,
 ) -> MaterializerReceipt:
-    """Materialize a sequence of packets into a batch receipt."""
+    """Materialize a sequence of packets into a batch receipt.
+
+    Emits one supervisor item per packet.  Implementable items always carry
+    det.-only ``predicted_files`` and nonempty ``validation_commands``.
+    """
 
     if not isinstance(packets, Sequence) or isinstance(
         packets, (str, bytes, bytearray)
@@ -837,7 +970,13 @@ def materialize_packets(
     for index, raw in enumerate(packets):
         try:
             items.append(
-                materialize_packet(raw, verify_digest=verify_digest)
+                materialize_packet(
+                    raw,
+                    verify_digest=verify_digest,
+                    force_holdout=force_holdout,
+                    board_namespace=board_namespace,
+                    bundle=bundle,
+                )
             )
         except PlateauSupervisorMaterializeError as exc:
             raise PlateauSupervisorMaterializeError(
@@ -857,6 +996,31 @@ def materialize_packets(
             merge_target_branch, "merge_target_branch"
         ),
         max_lanes=int(max_lanes),
+    )
+
+
+def materialize_holdout_packets(
+    packets: Sequence[PlateauCodexPacket | Mapping[str, object] | str],
+    *,
+    verify_digest: bool = True,
+    merge_target_branch: str = HOLDOUT_MERGE_TARGET_BRANCH,
+    max_lanes: int = HOLDOUT_MAX_LANES,
+) -> MaterializerReceipt:
+    """Materialize holdout residual packets onto the PLAT2 board.
+
+    Forces holdout board namespace / packets bundle.  Each implementable packet
+    becomes exactly one task with det.-only predicted files and validation
+    commands; reject/timeout packets become obligation-only notes.
+    """
+
+    return materialize_packets(
+        packets,
+        verify_digest=verify_digest,
+        merge_target_branch=merge_target_branch,
+        max_lanes=max_lanes,
+        force_holdout=True,
+        board_namespace=HOLDOUT_BOARD_NAMESPACE,
+        bundle=HOLDOUT_BUNDLE,
     )
 
 
@@ -912,6 +1076,7 @@ class BundleSupervisorLaunchSpec:
     start: bool = True
     board_namespace: str = DEFAULT_BOARD_NAMESPACE
     taskboard_path: str = DEFAULT_TASKBOARD_RELATIVE_PATH
+    scheduler_config_path: str = DEFAULT_SCHEDULER_CONFIG_RELATIVE_PATH
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -921,6 +1086,11 @@ class BundleSupervisorLaunchSpec:
         )
         object.__setattr__(
             self, "task_prefix", _nonblank(self.task_prefix, "task_prefix")
+        )
+        object.__setattr__(
+            self,
+            "scheduler_config_path",
+            _nonblank(self.scheduler_config_path, "scheduler_config_path"),
         )
         if int(self.max_lanes) < 1:
             raise PlateauSupervisorMaterializeError(
@@ -955,6 +1125,7 @@ class BundleSupervisorLaunchSpec:
             "worktree_root": self.worktree_root,
             "board_namespace": self.board_namespace,
             "taskboard_path": self.taskboard_path,
+            "scheduler_config_path": self.scheduler_config_path,
             "module": BUNDLE_SUPERVISOR_MODULE,
         }
 
@@ -964,7 +1135,7 @@ class BundleSupervisorLaunchSpec:
         prepare = (
             "python -m benchmarks.semantic_roundtrip_scheduler prepare \\\n"
             f"  --repo-root {self.repo_root} \\\n"
-            "  --config-path config/semantic_roundtrip_plateau_break_scheduler.json \\\n"
+            f"  --config-path {self.scheduler_config_path} \\\n"
             f"  --runtime-root {self.runtime_root} \\\n"
             f"  --taskboard-path {self.taskboard_path}"
         )
@@ -1005,6 +1176,20 @@ def default_launch_spec() -> BundleSupervisorLaunchSpec:
     return BundleSupervisorLaunchSpec()
 
 
+def holdout_launch_spec() -> BundleSupervisorLaunchSpec:
+    """Return launch specification for the plateau-holdout (PLAT2) board."""
+
+    return BundleSupervisorLaunchSpec(
+        merge_target_branch=HOLDOUT_MERGE_TARGET_BRANCH,
+        max_lanes=HOLDOUT_MAX_LANES,
+        task_prefix=HOLDOUT_TASK_PREFIX,
+        runtime_root=HOLDOUT_RUNTIME_ROOT,
+        board_namespace=HOLDOUT_BOARD_NAMESPACE,
+        taskboard_path=HOLDOUT_TASKBOARD_RELATIVE_PATH,
+        scheduler_config_path=HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH,
+    )
+
+
 def render_launch_markdown(
     spec: BundleSupervisorLaunchSpec | None = None,
 ) -> str:
@@ -1017,6 +1202,7 @@ def render_launch_markdown(
         f"- Merge target branch: `{active.merge_target_branch}`",
         f"- Max lanes: `{active.max_lanes}`",
         f"- Task prefix: `{active.task_prefix}`",
+        f"- Board namespace: `{active.board_namespace}`",
         f"- Module: `{BUNDLE_SUPERVISOR_MODULE}`",
         "",
         "```bash",
@@ -1120,11 +1306,22 @@ __all__ = [
     "DEFAULT_PREDICTED_FILES",
     "DEFAULT_REALIZER_PREDICTED_FILE",
     "DEFAULT_RUNTIME_ROOT",
+    "DEFAULT_SCHEDULER_CONFIG_RELATIVE_PATH",
     "DEFAULT_TASK_PREFIX",
     "DEFAULT_TASKBOARD_RELATIVE_PATH",
     "DEFAULT_VALIDATION_COMMANDS",
+    "HOLDOUT_BOARD_NAMESPACE",
+    "HOLDOUT_BUNDLE",
+    "HOLDOUT_CASE_TO_EDIT_WAVE_TASK",
+    "HOLDOUT_MAX_LANES",
+    "HOLDOUT_MERGE_TARGET_BRANCH",
+    "HOLDOUT_RUNTIME_ROOT",
+    "HOLDOUT_SCHEDULER_CONFIG_RELATIVE_PATH",
+    "HOLDOUT_TASK_PREFIX",
+    "HOLDOUT_TASKBOARD_RELATIVE_PATH",
     "MATERIALIZER_PREDICTED_FILE_PREFIXES",
     "PLATEAU_SUPERVISOR_MATERIALIZER_EVIDENCE",
+    "PLATEAU_SUPERVISOR_MATERIALIZER_HOLDOUT_EVIDENCE",
     "PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE",
     "PLATEAU_SUPERVISOR_MATERIALIZER_SCHEMA",
     "PLATEAU_SUPERVISOR_NOTE_INTERFACE",
@@ -1137,9 +1334,13 @@ __all__ = [
     "coerce_packet",
     "default_launch_spec",
     "filter_supervisor_predicted_files",
+    "holdout_launch_spec",
+    "is_holdout_case",
+    "is_holdout_packet",
     "is_materializer_allowed_path",
     "load_packets_from_json_path",
     "main",
+    "materialize_holdout_packets",
     "materialize_packet",
     "materialize_packets",
     "render_launch_markdown",
