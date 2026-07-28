@@ -1,0 +1,39 @@
+{
+  "schema": "wallet_processor_migration/xaman-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "task_id": "WALPROC-003",
+  "generated_at": "2026-07-28T22:30:00Z",
+  "purpose": "Freeze Xaman assurance linkage and runtime-vs-formal boundary before XRPL/Xaman runtime processors are implemented. Formal assurance is not proof of runtime correctness.",
+  "classification": {
+    "compatibility_freeze": true,
+    "formal_assurance_is_not_runtime_correctness": true,
+    "offline_default": true
+  },
+  "target_runtime_packages": {
+    "xaman_processor": "ipfs_datasets_py/ipfs_datasets_py/processors/wallets/xaman",
+    "xrpl_processor": "ipfs_datasets_py/ipfs_datasets_py/processors/wallets/xrpl",
+    "status": "missing_pre_implementation"
+  },
+  "formal_assurance_roots": [
+    "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/xaman",
+    "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange"
+  ],
+  "coverage": {
+    "assurance_links": "assurance_links.json",
+    "runtime_projection_boundary": "runtime_projection_boundary.json",
+    "sample_ledger_records": "sample_ledger_records.json"
+  },
+  "files": [
+    "manifest.json",
+    "README.md",
+    "assurance_links.json",
+    "runtime_projection_boundary.json",
+    "sample_ledger_records.json"
+  ],
+  "acceptance_keys": [
+    "xaman_assurance_links",
+    "runtime_vs_formal_boundary",
+    "offline_sample_ledger_shapes"
+  ]
+}

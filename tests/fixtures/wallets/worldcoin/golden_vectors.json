@@ -1,0 +1,73 @@
+{
+  "schema": "wallet_processor_migration/worldcoin-golden-vectors@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "task_id": "WALPROC-003",
+  "source": "wallet_interface/world_id.py",
+  "notes": "Deterministic official-style vectors. signing_key and random_bytes are synthetic test material only.",
+  "hash_to_field": {
+    "empty_bytes": {
+      "input_hex": "",
+      "input_description": "empty byte string",
+      "field_hex": "0x00c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4",
+      "leading_byte_is_zero": true
+    },
+    "test_action": {
+      "input_utf8": "test-action",
+      "field_hex": "0x00aa0ce59768ae5b1c52f07a9387f14f09f277422c0d2f8a268c7bad0c60a46a"
+    }
+  },
+  "rp_signing": {
+    "signing_key_hex": "0xabababababababababababababababababababababababababababababababab",
+    "random_bytes_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "created_at": 1700000000,
+    "ttl_seconds": 300,
+    "expires_at": 1700000300,
+    "without_action": {
+      "nonce": "0x008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd",
+      "message_hex": "01008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd000000006553f100000000006553f22c",
+      "message_length_bytes": 49,
+      "signature": "0x14f693175773aed912852a601e9c0fd30f2afe2738d31388316232ce6f64ae9e4edbfb19d81c4229ba9c9fca78ede4b28956b7ba4415f08d957cbc1b3bdaa4021b",
+      "protocol_dict": {
+        "sig": "0x14f693175773aed912852a601e9c0fd30f2afe2738d31388316232ce6f64ae9e4edbfb19d81c4229ba9c9fca78ede4b28956b7ba4415f08d957cbc1b3bdaa4021b",
+        "nonce": "0x008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd",
+        "created_at": 1700000000,
+        "expires_at": 1700000300
+      }
+    },
+    "with_action_test_action": {
+      "action": "test-action",
+      "nonce": "0x008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd",
+      "message_length_bytes": 81,
+      "message_hex": "01008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd000000006553f100000000006553f22c00aa0ce59768ae5b1c52f07a9387f14f09f277422c0d2f8a268c7bad0c60a46a",
+      "signature": "0x05594adb6c1495768a38d523d7d6ee6356b2c31231919198794ed022ade7d08f73753f83bd167067d99c9b969d28e9222315837c66af25867b041273a6d5056f1b"
+    },
+    "rp_context_shape": {
+      "required_keys": [
+        "rp_id",
+        "sig",
+        "nonce",
+        "created_at",
+        "expires_at"
+      ],
+      "example": {
+        "rp_id": "rp_test_123",
+        "sig": "0x14f693175773aed912852a601e9c0fd30f2afe2738d31388316232ce6f64ae9e4edbfb19d81c4229ba9c9fca78ede4b28956b7ba4415f08d957cbc1b3bdaa4021b",
+        "nonce": "0x008ae1aa597fa146ebd3aa2ceddf360668dea5e526567e92b0321816a4e895bd",
+        "created_at": 1700000000,
+        "expires_at": 1700000300
+      }
+    }
+  },
+  "default_constants": {
+    "DEFAULT_WORLD_ID_ACTION": "wallet-attach-world-id-v1",
+    "DEFAULT_WORLD_ID_CREDENTIAL_POLICY": "proof_of_human",
+    "DEFAULT_WORLD_ID_VERIFY_BASE_URL": "https://developer.world.org",
+    "DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS": 300,
+    "DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS": 15.0,
+    "SUPPORTED_WORLD_ID_ENVIRONMENTS": [
+      "staging",
+      "production"
+    ]
+  }
+}

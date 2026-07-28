@@ -1,0 +1,57 @@
+{
+  "schema": "wallet_processor_migration/world-id-import-identities@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "module": "wallet_interface.world_id",
+  "module_path": "wallet_interface/world_id.py",
+  "compatibility_policy": "These public names must remain importable from the pre-move module path during the documented compatibility window. After cutover they may re-export from ipfs_datasets_py.processors.wallets.worldcoin.",
+  "public_exports": [
+    "DEFAULT_WORLD_ID_ACTION",
+    "DEFAULT_WORLD_ID_CREDENTIAL_POLICY",
+    "DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS",
+    "DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS",
+    "DEFAULT_WORLD_ID_VERIFY_BASE_URL",
+    "SUPPORTED_WORLD_ID_ENVIRONMENTS",
+    "WorldIdConfig",
+    "WorldIdConfigError",
+    "WorldIdCredentialResponse",
+    "WorldIdIdkitResult",
+    "WorldIdPayloadError",
+    "WorldIdRequestJson",
+    "WorldIdRpSignature",
+    "WorldIdSecretConfig",
+    "WorldIdSignatureError",
+    "WorldIdVerificationError",
+    "WorldIdVerificationResult",
+    "compute_rp_signature_message",
+    "eip191_digest",
+    "hash_to_field",
+    "hash_to_field_hex",
+    "load_world_id_config",
+    "normalize_idkit_response",
+    "normalize_world_id_idkit_response",
+    "normalize_world_id_verification_response",
+    "redact_world_id_payload",
+    "sign_world_id_request",
+    "sign_world_id_request_from_config",
+    "verify_world_id_proof",
+    "verify_world_id_proof_from_config",
+    "world_id_keccak256"
+  ],
+  "ast_query_symbols": [
+    "sign_world_id_request",
+    "hash_to_field",
+    "normalize_idkit_response",
+    "get_world_id_status"
+  ],
+  "application_orchestration_exports_not_in_world_id_module": {
+    "get_world_id_status": "wallet_interface.app_service.WalletInterfaceService.get_world_id_status",
+    "get_world_id_config": "wallet_interface.app_service.WalletInterfaceService.get_world_id_config",
+    "create_world_id_rp_signature": "wallet_interface.app_service.WalletInterfaceService.create_world_id_rp_signature",
+    "register_world_id_verification": "wallet_interface.app_service.WalletInterfaceService.register_world_id_verification",
+    "revoke_world_id_binding": "wallet_interface.app_service.WalletInterfaceService.revoke_world_id_binding"
+  },
+  "aliases": {
+    "normalize_world_id_idkit_response": "normalize_idkit_response"
+  }
+}

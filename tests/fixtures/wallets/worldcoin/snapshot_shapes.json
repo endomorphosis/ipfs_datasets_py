@@ -1,0 +1,82 @@
+{
+  "schema": "wallet_processor_migration/world-id-snapshot-shapes@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "purpose": "Freeze old snapshot / binding import shapes so moves cannot silently break import of wallets that already carry World ID fields.",
+  "owners": {
+    "snapshot_export_import": [
+      "DataWalletService.export_wallet_snapshot",
+      "DataWalletService.import_wallet_snapshot"
+    ],
+    "binding_model": "ipfs_datasets_py.wallet.models.WorldIdBinding",
+    "proof_receipt": "ipfs_datasets_py.wallet.models.ProofReceipt"
+  },
+  "world_id_binding_public_fields": [
+    "binding_id",
+    "wallet_id",
+    "actor_did",
+    "rp_id",
+    "action",
+    "protocol_version",
+    "environment",
+    "nullifier_ref",
+    "app_id",
+    "credential_identifiers",
+    "issuer_schema_ids",
+    "proof_receipt_id",
+    "session_id",
+    "signal_hash_ref",
+    "verification_status",
+    "status",
+    "verified_at",
+    "expires_at_min",
+    "created_at",
+    "updated_at",
+    "metadata"
+  ],
+  "old_snapshot_import_rules": {
+    "world_id_bindings_list_key": "world_id_bindings",
+    "wallets_without_world_id_fields_must_load": true,
+    "raw_nullifier_must_not_appear_in_public_binding_dict": true,
+    "nullifier_ref_prefix": "worldid-nullifier-ref:v1:",
+    "protocol_version_allowed": ["3.0", "4.0"],
+    "environment_allowed": ["staging", "production"]
+  },
+  "legacy_snapshot_example": {
+    "schema_version": 1,
+    "wallet_id": "wallet-legacy-world-id-import",
+    "world_id_bindings": [
+      {
+        "binding_id": "world-id-binding-legacy-import",
+        "wallet_id": "wallet-legacy-world-id-import",
+        "actor_did": "did:key:legacy-owner",
+        "rp_id": "rp_test_123",
+        "action": "wallet-attach-world-id-v1",
+        "protocol_version": "4.0",
+        "environment": "staging",
+        "nullifier_ref": "worldid-nullifier-ref:v1:hmac-sha256-public-commitment-example",
+        "app_id": "app_test_123",
+        "credential_identifiers": ["proof_of_human"],
+        "issuer_schema_ids": [1],
+        "proof_receipt_id": "proof-world-id-legacy-import",
+        "session_id": "",
+        "signal_hash_ref": "worldid-signal-ref:v1:example",
+        "verification_status": "verified",
+        "status": "active",
+        "verified_at": "2026-06-14T16:00:00.000Z",
+        "expires_at_min": null,
+        "created_at": "2026-06-14T16:00:00.000Z",
+        "updated_at": "2026-06-14T16:00:00.000Z",
+        "metadata": {
+          "credential_policy": "proof_of_human"
+        }
+      }
+    ]
+  },
+  "proof_receipt_labels": {
+    "proof_type": "world_id_proof_of_human",
+    "current_hardcoded_proof_system": "world_id_idkit_v4",
+    "current_hardcoded_verifier_id": "world_id_developer_portal_v4",
+    "notes": "Hardcoding v4 labels for protocol_version 3.0 bindings is a known security/labeling failure (see security-baseline.json SEC-WORLDID-V3-AS-V4), not a frozen compatibility guarantee."
+  }
+}
