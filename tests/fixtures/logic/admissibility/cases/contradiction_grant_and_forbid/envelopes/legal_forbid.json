@@ -1,0 +1,1962 @@
+{
+  "artifact": {
+    "assumptions": [],
+    "compiler_config": {
+      "compiler_id": "intent-formalization-compiler",
+      "compiler_version": "intent-formalization-compiler/v1",
+      "config_id": "intent-formalization-default",
+      "options": {
+        "graph_context_authority": "context_only",
+        "proof_backend_execution": false,
+        "retrieved_premises_are_proofs": false
+      },
+      "producer_id": "intent-formalization-compiler",
+      "schema_version": "formalization-compiler-config/v1",
+      "target_view_ids": [
+        "intent-ir-view/action-hoare/v1",
+        "intent-ir-view/facts/v1",
+        "intent-ir-view/intention-deontic/v1",
+        "intent-ir-view/invariant/v1",
+        "intent-ir-view/verification/v1",
+        "intent-ir-view/workflow-temporal/v1"
+      ],
+      "unsupported_policy": "preserve_opaque"
+    },
+    "compiler_config_identity": {
+      "cid": "bafkreicuhuxflodj2bizjdlftw5siqm27fs5izdiz2w5ayubupg44qg64a",
+      "digest": "sha256:543d2e55b869d051948d659dbb24419af965d46468ceadd06281a3cdce40dee0",
+      "domain": "formalization-compiler-config",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-compiler-config/v1"
+    },
+    "cross_view_links": [
+      {
+        "link_id": "link:intent:formula:intent:facts:action:action:report:formula:intent:action:action:action:report",
+        "metadata": {},
+        "preserved_properties": [
+          "action",
+          "actor",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:action:action:report",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:action:action:action:report"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:goal:formula:intent:modal:statement:statement:goal",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:goal",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:modal:statement:statement:goal"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:invariant:formula:intent:invariant:statement:statement:invariant",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:invariant",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:invariant:statement:statement:invariant"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:invariant:formula:intent:modal:statement:statement:invariant",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:invariant",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:modal:statement:statement:invariant"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:precondition:formula:intent:modal:statement:statement:precondition",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:precondition",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:modal:statement:statement:precondition"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:modal:statement:statement:verify",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:verify",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:modal:statement:statement:verify"
+      },
+      {
+        "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:verification:statement:statement:verify",
+        "metadata": {},
+        "preserved_properties": [
+          "intent_node",
+          "modality",
+          "source_grounding"
+        ],
+        "relation": "lowers_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "formula:intent:facts:statement:statement:verify",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "target_formula_id": "formula:intent:verification:statement:statement:verify"
+      }
+    ],
+    "declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+    "declaration_id": "intent:admissibility:benign_skill",
+    "diagnostics": {
+      "config_id": "intent-formalization-default",
+      "diagnostics": [],
+      "error_count": 0,
+      "evidence_set_id": "",
+      "metadata": {
+        "graph_context_present": false,
+        "retrieved_premise_count": 0,
+        "unsupported_formula_count": 0
+      },
+      "producer_id": "intent-formalization-compiler",
+      "provenance_id": "provenance:intent:732d06e95ba6827ab21f92101ff21777",
+      "report_id": "diagnostics:intent:cbd97477498fa81a:543d2e55b869d051:no-graph",
+      "schema_version": "ir-diagnostics/v1",
+      "valid": true,
+      "warning_count": 0
+    },
+    "domain": "legal",
+    "formulas": [
+      {
+        "assumption_ids": [],
+        "expression": {
+          "action": {
+            "action_id": "action:report",
+            "actor": "agent",
+            "effect_ids": [
+              "statement:effect"
+            ],
+            "grounding": "grounded",
+            "input_refs": [],
+            "object_refs": [
+              "status_report"
+            ],
+            "output_refs": [],
+            "precondition_ids": [
+              "statement:precondition"
+            ],
+            "source_ref_ids": [
+              "source:benign_skill"
+            ],
+            "tool_refs": [],
+            "verb": "produce_report",
+            "verification_ids": [
+              "statement:invariant",
+              "statement:verify"
+            ]
+          },
+          "effects": [
+            {
+              "arguments": [
+                "status_report"
+              ],
+              "confidence": 1.0,
+              "grounding": "grounded",
+              "kind": "effect",
+              "modality": "asserted",
+              "normalized_text": "A bounded status report is produced",
+              "predicate": "produced",
+              "review_status": "trusted_fixture",
+              "source_ref_ids": [
+                "source:benign_skill"
+              ],
+              "statement_id": "statement:effect"
+            }
+          ],
+          "kind": "hoare_action_contract",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "postcondition": [
+            {
+              "arguments": [
+                "status_report"
+              ],
+              "confidence": 1.0,
+              "grounding": "grounded",
+              "kind": "effect",
+              "modality": "asserted",
+              "normalized_text": "A bounded status report is produced",
+              "predicate": "produced",
+              "review_status": "trusted_fixture",
+              "source_ref_ids": [
+                "source:benign_skill"
+              ],
+              "statement_id": "statement:effect"
+            }
+          ],
+          "precondition": [
+            {
+              "arguments": [
+                "report_inputs"
+              ],
+              "confidence": 1.0,
+              "grounding": "grounded",
+              "kind": "precondition",
+              "modality": "required",
+              "normalized_text": "Local report inputs are available",
+              "predicate": "available",
+              "review_status": "trusted_fixture",
+              "source_ref_ids": [
+                "source:benign_skill"
+              ],
+              "statement_id": "statement:precondition"
+            }
+          ],
+          "role": "prohibition",
+          "variant": "forbid-twin",
+          "verification": [
+            {
+              "arguments": [
+                "execution"
+              ],
+              "confidence": 1.0,
+              "grounding": "grounded",
+              "kind": "invariant",
+              "modality": "required",
+              "normalized_text": "No external network contact is made",
+              "predicate": "offline_only",
+              "review_status": "trusted_fixture",
+              "source_ref_ids": [
+                "source:benign_skill"
+              ],
+              "statement_id": "statement:invariant"
+            },
+            {
+              "arguments": [
+                "status_report"
+              ],
+              "confidence": 1.0,
+              "grounding": "grounded",
+              "kind": "verification",
+              "modality": "required",
+              "normalized_text": "The report is present and non-empty",
+              "predicate": "nonempty",
+              "review_status": "trusted_fixture",
+              "source_ref_ids": [
+                "source:benign_skill"
+              ],
+              "statement_id": "statement:verify"
+            }
+          ]
+        },
+        "formula_id": "formula:intent:action:action:action:report",
+        "input_node_ids": [
+          "intent-node:action:action:report",
+          "intent-node:statement:statement:effect",
+          "intent-node:statement:statement:invariant",
+          "intent-node:statement:statement:precondition",
+          "intent-node:statement:statement:verify"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "action:report",
+            "statement:precondition",
+            "statement:effect",
+            "statement:invariant",
+            "statement:verify"
+          ],
+          "intent_node_kinds": [
+            "action",
+            "statement",
+            "statement",
+            "statement",
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:action:actor-0:action:report:agent",
+          "symbol:intent:action:object-2:action:report:status_report",
+          "symbol:intent:action:verb:action:report:produce_report"
+        ],
+        "view_id": "intent-ir-view/action-hoare/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "action": {
+            "action_id": "action:report",
+            "actor": "agent",
+            "effect_ids": [
+              "statement:effect"
+            ],
+            "grounding": "grounded",
+            "input_refs": [],
+            "object_refs": [
+              "status_report"
+            ],
+            "output_refs": [],
+            "precondition_ids": [
+              "statement:precondition"
+            ],
+            "source_ref_ids": [
+              "source:benign_skill"
+            ],
+            "tool_refs": [],
+            "verb": "produce_report",
+            "verification_ids": [
+              "statement:invariant",
+              "statement:verify"
+            ]
+          },
+          "kind": "typed_action_fact",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:action:action:report",
+        "input_node_ids": [
+          "intent-node:action:action:report"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "action:report"
+          ],
+          "intent_node_kinds": [
+            "action"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:action:actor-0:action:report:agent",
+          "symbol:intent:action:object-2:action:report:status_report",
+          "symbol:intent:action:verb:action:report:produce_report"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "arguments": [
+            "status_report"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "kind": "typed_fact",
+          "modality": "asserted",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "predicate": "produced",
+          "review_status": "trusted_fixture",
+          "role": "prohibition",
+          "statement_kind": "effect",
+          "text": "A bounded status report is produced",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:statement:statement:effect",
+        "input_node_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:effect"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:argument-0:statement:effect:status_report",
+          "symbol:intent:statement:predicate:statement:effect:produced"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "arguments": [
+            "status_report"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "kind": "typed_fact",
+          "modality": "intended",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "predicate": "produce",
+          "review_status": "trusted_fixture",
+          "role": "prohibition",
+          "statement_kind": "goal",
+          "text": "Produce a bounded offline status report",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:statement:statement:goal",
+        "input_node_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:goal"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:argument-0:statement:goal:status_report",
+          "symbol:intent:statement:predicate:statement:goal:produce"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "arguments": [
+            "execution"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "kind": "typed_fact",
+          "modality": "required",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "predicate": "offline_only",
+          "review_status": "trusted_fixture",
+          "role": "prohibition",
+          "statement_kind": "invariant",
+          "text": "No external network contact is made",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:statement:statement:invariant",
+        "input_node_ids": [
+          "intent-node:statement:statement:invariant"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:invariant"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:argument-0:statement:invariant:execution",
+          "symbol:intent:statement:predicate:statement:invariant:offline_only"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "arguments": [
+            "report_inputs"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "kind": "typed_fact",
+          "modality": "required",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "predicate": "available",
+          "review_status": "trusted_fixture",
+          "role": "prohibition",
+          "statement_kind": "precondition",
+          "text": "Local report inputs are available",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:statement:statement:precondition",
+        "input_node_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:precondition"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:argument-0:statement:precondition:report_inputs",
+          "symbol:intent:statement:predicate:statement:precondition:available"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "arguments": [
+            "status_report"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "kind": "typed_fact",
+          "modality": "required",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "predicate": "nonempty",
+          "review_status": "trusted_fixture",
+          "role": "prohibition",
+          "statement_kind": "verification",
+          "text": "The report is present and non-empty",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:facts:statement:statement:verify",
+        "input_node_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:verify"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:argument-0:statement:verify:status_report",
+          "symbol:intent:statement:predicate:statement:verify:nonempty"
+        ],
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "execution"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "required",
+            "predicate": "offline_only",
+            "review_status": "trusted_fixture",
+            "statement_kind": "invariant",
+            "text": "No external network contact is made"
+          },
+          "kind": "safety_invariant",
+          "norm_type": "prohibition",
+          "operator": "always",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:invariant:statement:statement:invariant",
+        "input_node_ids": [
+          "intent-node:statement:statement:invariant"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:invariant"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:invariant:offline_only"
+        ],
+        "view_id": "intent-ir-view/invariant/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "status_report"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "intended",
+            "predicate": "produce",
+            "review_status": "trusted_fixture",
+            "statement_kind": "goal",
+            "text": "Produce a bounded offline status report"
+          },
+          "kind": "intention_deontic_formula",
+          "norm_type": "prohibition",
+          "operator": "intended",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:modal:statement:statement:goal",
+        "input_node_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:goal"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:goal:produce"
+        ],
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "execution"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "required",
+            "predicate": "offline_only",
+            "review_status": "trusted_fixture",
+            "statement_kind": "invariant",
+            "text": "No external network contact is made"
+          },
+          "kind": "intention_deontic_formula",
+          "norm_type": "prohibition",
+          "operator": "required",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:modal:statement:statement:invariant",
+        "input_node_ids": [
+          "intent-node:statement:statement:invariant"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:invariant"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:invariant:offline_only"
+        ],
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "report_inputs"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "required",
+            "predicate": "available",
+            "review_status": "trusted_fixture",
+            "statement_kind": "precondition",
+            "text": "Local report inputs are available"
+          },
+          "kind": "intention_deontic_formula",
+          "norm_type": "prohibition",
+          "operator": "required",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:modal:statement:statement:precondition",
+        "input_node_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:precondition"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:precondition:available"
+        ],
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "status_report"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "required",
+            "predicate": "nonempty",
+            "review_status": "trusted_fixture",
+            "statement_kind": "verification",
+            "text": "The report is present and non-empty"
+          },
+          "kind": "intention_deontic_formula",
+          "norm_type": "prohibition",
+          "operator": "required",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:modal:statement:statement:verify",
+        "input_node_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:verify"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:verify:nonempty"
+        ],
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "body": {
+            "arguments": [
+              "status_report"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "modality": "required",
+            "predicate": "nonempty",
+            "review_status": "trusted_fixture",
+            "statement_kind": "verification",
+            "text": "The report is present and non-empty"
+          },
+          "kind": "verification_condition",
+          "norm_type": "prohibition",
+          "operator": "observe",
+          "polarity": "negative",
+          "role": "prohibition",
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:verification:statement:statement:verify",
+        "input_node_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "statement:verify"
+          ],
+          "intent_node_kinds": [
+            "statement"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [
+          "symbol:intent:statement:predicate:statement:verify:nonempty"
+        ],
+        "view_id": "intent-ir-view/verification/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "entry_action_ids": [
+            "action:report"
+          ],
+          "kind": "workflow_boundary",
+          "norm_type": "prohibition",
+          "polarity": "negative",
+          "role": "prohibition",
+          "terminal_action_ids": [
+            "action:report"
+          ],
+          "variant": "forbid-twin"
+        },
+        "formula_id": "formula:intent:workflow:document:intent:admissibility:benign_skill",
+        "input_node_ids": [
+          "intent-node:action:action:report",
+          "intent-node:document:intent:admissibility:benign_skill"
+        ],
+        "metadata": {
+          "intent_node_ids": [
+            "intent:admissibility:benign_skill",
+            "action:report"
+          ],
+          "intent_node_kinds": [
+            "document",
+            "action"
+          ],
+          "retains_source_semantics": true
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:benign_skill"
+        ],
+        "span_ids": [],
+        "symbol_ids": [],
+        "view_id": "intent-ir-view/workflow-temporal/v1"
+      }
+    ],
+    "metadata": {
+      "adapter_schema_version": "intent-formalization-compiler/v1",
+      "constraint_family": "legal",
+      "constraint_variant": "forbid-twin",
+      "gate_role": "prohibition",
+      "graph_context_present": false,
+      "intent_ir_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "proof_backend_executed": false,
+      "retrieved_premise_count": 0,
+      "retrieved_premises_have_proof_authority": false
+    },
+    "proof_obligations": [
+      {
+        "assumption_ids": [],
+        "logic_family": "safety",
+        "metadata": {
+          "declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+          "formula_id": "formula:intent:invariant:statement:statement:invariant",
+          "intent_node_id": "statement:invariant",
+          "retrieved_premises_excluded": true
+        },
+        "obligation_id": "obligation:intent:invariant:statement:invariant",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:benign_skill"
+        ],
+        "statement": "{\"formula_id\":\"formula:intent:invariant:statement:statement:invariant\",\"operator\":\"always\",\"statement\":{\"arguments\":[\"execution\"],\"confidence\":1.0,\"grounding\":\"grounded\",\"kind\":\"invariant\",\"modality\":\"required\",\"normalized_text\":\"No external network contact is made\",\"predicate\":\"offline_only\",\"review_status\":\"trusted_fixture\",\"source_ref_ids\":[\"source:benign_skill\"],\"statement_id\":\"statement:invariant\"}}"
+      },
+      {
+        "assumption_ids": [],
+        "logic_family": "verification_condition",
+        "metadata": {
+          "declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+          "formula_id": "formula:intent:verification:statement:statement:verify",
+          "intent_node_id": "statement:verify",
+          "retrieved_premises_excluded": true
+        },
+        "obligation_id": "obligation:intent:verification:statement:verify",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:benign_skill"
+        ],
+        "statement": "{\"formula_id\":\"formula:intent:verification:statement:statement:verify\",\"operator\":\"observe\",\"statement\":{\"arguments\":[\"status_report\"],\"confidence\":1.0,\"grounding\":\"grounded\",\"kind\":\"verification\",\"modality\":\"required\",\"normalized_text\":\"The report is present and non-empty\",\"predicate\":\"nonempty\",\"review_status\":\"trusted_fixture\",\"source_ref_ids\":[\"source:benign_skill\"],\"statement_id\":\"statement:verify\"}}"
+      }
+    ],
+    "sample_id": "sample:intent:732d06e95ba6827ab21f92101ff21777",
+    "schema_version": "formalization-artifact/v1",
+    "source_map": {
+      "bindings": [
+        {
+          "binding_id": "binding:intent:document:31188efbe3bf2c0f20babd9251490c4e",
+          "config_id": "",
+          "derived": false,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "document",
+            "intent_document_id": "intent:admissibility:benign_skill"
+          },
+          "parent_subject_ids": [],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent:admissibility:benign_skill"
+        },
+        {
+          "binding_id": "binding:intent:formula:055cc4ae4f8afb59d37c5a3f5e4b0b8d",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:statement:statement:verify"
+        },
+        {
+          "binding_id": "binding:intent:formula:06a6b801ee4fbbdcb2f242851db6a343",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:verification:statement:statement:verify"
+        },
+        {
+          "binding_id": "binding:intent:formula:3f00b86274bf2684cff5486b15b2f3f5",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:invariant"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:statement:statement:invariant"
+        },
+        {
+          "binding_id": "binding:intent:formula:689effe78800466fc1a906ed3a361e25",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report",
+            "intent-node:statement:statement:effect",
+            "intent-node:statement:statement:invariant",
+            "intent-node:statement:statement:precondition",
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:action:action:action:report"
+        },
+        {
+          "binding_id": "binding:intent:formula:6e8e6b8f8d2a58bd61236776b5299e71",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:modal:statement:statement:verify"
+        },
+        {
+          "binding_id": "binding:intent:formula:7fd76cdcf72f1eee0a9b340f2fa10b6a",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:effect"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:statement:statement:effect"
+        },
+        {
+          "binding_id": "binding:intent:formula:8012464aabdaf9a7ef5e2b8d8dc61031",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:action:action:report"
+        },
+        {
+          "binding_id": "binding:intent:formula:814879751b735240de6bf807a9dd97b5",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:goal"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:modal:statement:statement:goal"
+        },
+        {
+          "binding_id": "binding:intent:formula:8dfea8cc4e5e84a087106d85f9817e65",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report",
+            "intent-node:document:intent:admissibility:benign_skill"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:workflow:document:intent:admissibility:benign_skill"
+        },
+        {
+          "binding_id": "binding:intent:formula:c50e50d0eada95e5e3e4ed8912935c60",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:invariant"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:invariant:statement:statement:invariant"
+        },
+        {
+          "binding_id": "binding:intent:formula:d77caaa419b29108a143d8afe8eb8672",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:invariant"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:modal:statement:statement:invariant"
+        },
+        {
+          "binding_id": "binding:intent:formula:e9b0b40ac6ddc94b795c6e1e3eb369fd",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:precondition"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:statement:statement:precondition"
+        },
+        {
+          "binding_id": "binding:intent:formula:f5e666eb197450b915cf36fa9a25cab7",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:goal"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:facts:statement:statement:goal"
+        },
+        {
+          "binding_id": "binding:intent:formula:f7bd63e0044306202ddd16fc420188c1",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:precondition"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "formula:intent:modal:statement:statement:precondition"
+        },
+        {
+          "binding_id": "binding:intent:input:320146641e3c681f08c2abee678625c4",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "statement",
+            "intent_node_id": "statement:invariant",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:statement:statement:invariant"
+        },
+        {
+          "binding_id": "binding:intent:input:3d479742e68a512a4e248b086cc3ee49",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "statement",
+            "intent_node_id": "statement:precondition",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:statement:statement:precondition"
+        },
+        {
+          "binding_id": "binding:intent:input:44d7c412700803aea1bc1d3e6c6a46b4",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "statement",
+            "intent_node_id": "statement:effect",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:statement:statement:effect"
+        },
+        {
+          "binding_id": "binding:intent:input:6115ea99457b206997aad888d259cb87",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "document",
+            "intent_node_id": "intent:admissibility:benign_skill",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:document:intent:admissibility:benign_skill"
+        },
+        {
+          "binding_id": "binding:intent:input:77957a01c7a26a49b6dee2bf69f415d8",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "statement",
+            "intent_node_id": "statement:verify",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:statement:statement:verify"
+        },
+        {
+          "binding_id": "binding:intent:input:e18cc741e5a7290f33e437339ca2afdf",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "statement",
+            "intent_node_id": "statement:goal",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:statement:statement:goal"
+        },
+        {
+          "binding_id": "binding:intent:input:e93de88380dc6a49b75529d05fa38070",
+          "config_id": "",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "intent_construct": "action",
+            "intent_node_id": "action:report",
+            "node_grounding": "grounded"
+          },
+          "parent_subject_ids": [
+            "intent:admissibility:benign_skill"
+          ],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "intent-node:action:action:report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:08519daead296fcc9f98cd71825ddcd0",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:effect"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:predicate:statement:effect:produced"
+        },
+        {
+          "binding_id": "binding:intent:symbol:172a9760f39b1e6b6d82e4ce29ef1a7c",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:goal"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:argument-0:statement:goal:status_report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:280c934fd88e6f10279d1994b6e8c8b9",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:action:actor-0:action:report:agent"
+        },
+        {
+          "binding_id": "binding:intent:symbol:3e6fa2a22117953a7e59f77379dd31de",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:precondition"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:predicate:statement:precondition:available"
+        },
+        {
+          "binding_id": "binding:intent:symbol:4f407768dd8807c8b4808feb2d1423f1",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:action:verb:action:report:produce_report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:5abb1f7bfd5d64d44391ddad0cc3240d",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:precondition"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:argument-0:statement:precondition:report_inputs"
+        },
+        {
+          "binding_id": "binding:intent:symbol:7bcf9cd5d96e2d1d0893e2d16f34c4db",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:predicate:statement:verify:nonempty"
+        },
+        {
+          "binding_id": "binding:intent:symbol:852bd174c2b08e986441a9bd94671ce4",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:goal"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:predicate:statement:goal:produce"
+        },
+        {
+          "binding_id": "binding:intent:symbol:bc3a6a68e4ce0f4f581dffdd270ee9ec",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:verify"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:argument-0:statement:verify:status_report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:cd06f839e080e4aabff96b73e1b93da2",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:effect"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:argument-0:statement:effect:status_report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:d6e4320a08e53ac37562e1cafd473c5b",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:action:action:report"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:action:object-2:action:report:status_report"
+        },
+        {
+          "binding_id": "binding:intent:symbol:ee8e5b0e80a452dc604e4846a98c0423",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:invariant"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:argument-0:statement:invariant:execution"
+        },
+        {
+          "binding_id": "binding:intent:symbol:faa8a49edd8f45b6c7b022b112f58beb",
+          "config_id": "intent-formalization-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "intent-node:statement:statement:invariant"
+          ],
+          "producer_id": "intent-formalization-compiler",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "subject_id": "symbol:intent:statement:predicate:statement:invariant:offline_only"
+        }
+      ],
+      "configs": [
+        {
+          "config_id": "intent-formalization-default",
+          "content_cid": "",
+          "content_sha256": "543d2e55b869d051948d659dbb24419af965d46468ceadd06281a3cdce40dee0",
+          "metadata": {},
+          "schema_id": "formalization-compiler-config/v1"
+        }
+      ],
+      "metadata": {
+        "compiler_adapter_schema": "intent-formalization-compiler/v1",
+        "intent_ir_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53"
+      },
+      "producers": [
+        {
+          "implementation_sha256": "",
+          "metadata": {
+            "compiler_id": "intent-formalization-compiler"
+          },
+          "model_id": "",
+          "name": "Intent IR deterministic formalization compiler",
+          "producer_id": "intent-formalization-compiler",
+          "repository_revision": "",
+          "version": "intent-formalization-compiler/v1"
+        }
+      ],
+      "provenance_id": "provenance:intent:732d06e95ba6827ab21f92101ff21777",
+      "schema_version": "ir-provenance/v1",
+      "sources": [
+        {
+          "container_sha256": "a30826f2ed5d3329e3c38c1a97091b8454dbc8f84341c98fcdc23b5932ae482e",
+          "container_uri": "fixture://intent_ir/admissibility/container/benign_skill",
+          "content_cid": "",
+          "content_sha256": "2359172789ba7c6dc8ee74e37be5f8ce03601a1d9bf74c4491edeb32b519a3ba",
+          "license_expression": "CC0-1.0",
+          "metadata": {
+            "content_binding": "declared_source_bytes",
+            "intent_review_status": "trusted_fixture"
+          },
+          "ref_id": "source:benign_skill",
+          "review_status": "trusted_fixture",
+          "source_id": "fixture.skill.benign_skill",
+          "source_revision": "fixture-v1",
+          "source_uri": "fixture://intent_ir/admissibility/benign_skill"
+        }
+      ],
+      "spans": []
+    },
+    "symbol_table": {
+      "metadata": {
+        "domain": "intent"
+      },
+      "schema_version": "formal-symbol-table/v1",
+      "symbols": [
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "action:report",
+            "role": "actor-0"
+          },
+          "name": "agent",
+          "sort": "principal",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:action:actor-0:action:report:agent"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "action:report",
+            "role": "object-2"
+          },
+          "name": "status_report",
+          "sort": "resource",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:action:object-2:action:report:status_report"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "action:report",
+            "role": "verb"
+          },
+          "name": "produce_report",
+          "sort": "action",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:action:verb:action:report:produce_report"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "statement:effect",
+            "role": "argument-0"
+          },
+          "name": "status_report",
+          "sort": "term",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:argument-0:statement:effect:status_report"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "statement:goal",
+            "role": "argument-0"
+          },
+          "name": "status_report",
+          "sort": "term",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:argument-0:statement:goal:status_report"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "statement:invariant",
+            "role": "argument-0"
+          },
+          "name": "execution",
+          "sort": "term",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:argument-0:statement:invariant:execution"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "statement:precondition",
+            "role": "argument-0"
+          },
+          "name": "report_inputs",
+          "sort": "term",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:argument-0:statement:precondition:report_inputs"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "intent_node_id": "statement:verify",
+            "role": "argument-0"
+          },
+          "name": "status_report",
+          "sort": "term",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:argument-0:statement:verify:status_report"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "statement:effect",
+            "role": "predicate"
+          },
+          "name": "produced",
+          "sort": "predicate",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:predicate:statement:effect:produced"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "statement:goal",
+            "role": "predicate"
+          },
+          "name": "produce",
+          "sort": "predicate",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:predicate:statement:goal:produce"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "statement:invariant",
+            "role": "predicate"
+          },
+          "name": "offline_only",
+          "sort": "predicate",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:predicate:statement:invariant:offline_only"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "statement:precondition",
+            "role": "predicate"
+          },
+          "name": "available",
+          "sort": "predicate",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:predicate:statement:precondition:available"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "intent_node_id": "statement:verify",
+            "role": "predicate"
+          },
+          "name": "nonempty",
+          "sort": "predicate",
+          "source_ref_ids": [
+            "source:benign_skill"
+          ],
+          "span_ids": [],
+          "symbol_id": "symbol:intent:statement:predicate:statement:verify:nonempty"
+        }
+      ],
+      "table_id": "symbols:intent:intent:admissibility:benign_skill"
+    },
+    "view_registry": {
+      "registry_id": "intent-ir-formalization-views",
+      "schema_version": "formalization-view-registry/v1",
+      "views": [
+        {
+          "capabilities": [
+            "action_contracts",
+            "hoare_triples",
+            "source_grounding"
+          ],
+          "description": "Actions with preconditions, effects, and observations.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "dynamic_hoare",
+          "metadata": {
+            "intent_constructs": [
+              "action"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/action-hoare/v1"
+        },
+        {
+          "capabilities": [
+            "source_grounding",
+            "typed_symbols"
+          ],
+          "description": "Typed Intent entities, predicates, and action facts.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "typed_first_order",
+          "metadata": {
+            "intent_constructs": [
+              "statement",
+              "action"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/facts/v1"
+        },
+        {
+          "capabilities": [
+            "failure_conditions",
+            "proof_obligations",
+            "source_grounding"
+          ],
+          "description": "Explicit failure conditions and failure transitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "safety_liveness",
+          "metadata": {
+            "intent_constructs": [
+              "failure"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/failure/v1"
+        },
+        {
+          "capabilities": [
+            "deontic_modality",
+            "intention",
+            "source_grounding"
+          ],
+          "description": "Goals, intentions, requirements, permissions, and prohibitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "intention_deontic",
+          "metadata": {
+            "intent_constructs": [
+              "goal",
+              "modality"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/intention-deontic/v1"
+        },
+        {
+          "capabilities": [
+            "invariants",
+            "proof_obligations",
+            "source_grounding"
+          ],
+          "description": "State invariants represented as always obligations.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "safety",
+          "metadata": {
+            "intent_constructs": [
+              "invariant"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/invariant/v1"
+        },
+        {
+          "capabilities": [
+            "observations",
+            "proof_obligations",
+            "source_grounding"
+          ],
+          "description": "Observable criteria and evidence obligations.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "verification_condition",
+          "metadata": {
+            "intent_constructs": [
+              "verification"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/verification/v1"
+        },
+        {
+          "capabilities": [
+            "source_grounding",
+            "state_transitions",
+            "temporal_control"
+          ],
+          "description": "Entry, terminal, sequencing, branching, retry, and concurrency.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "workflow_temporal",
+          "metadata": {
+            "intent_constructs": [
+              "control_edge",
+              "workflow_boundary"
+            ]
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "intent-ir-view/workflow-temporal/v1"
+        }
+      ]
+    },
+    "view_registry_identity": {
+      "cid": "bafkreiez2oofk7tsxsfwlfwjgfrtujgwotfkytgztku4cbtd37eazwn3ia",
+      "digest": "sha256:99d39c557e72bc8b6596c931633a24d674caac4cd99aa9c10663dfc80cd9bb40",
+      "domain": "formalization-view-registry",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-view-registry/v1"
+    }
+  },
+  "artifact_cid": "bafkreibqkgraopcnw3lhvdv5vvfeazuwuvt23ajg5mdp5tnpfdzj2khbx4",
+  "artifact_digest": "sha256:3051a2073c4db6d67a8ebdad4a406696a567ad8126eb06fecdaf28f29d28e1bf",
+  "attachments": {},
+  "content_cid": "bafkreiaokajb2ljibp7rnxqe5gj3aq2bw4crd2wsn6zssxmhk5ngvleokm",
+  "content_digest": "sha256:0e50121d2d280bff16de04e993b04341b70511ead26fb3295d87575a6aac8e53",
+  "family": "legal",
+  "jurisdiction": "",
+  "producer_id": "fixture-legal-forbid",
+  "profile": "legal-strict",
+  "review_state": "reviewed",
+  "schema_version": "proof-corpus-envelope/v1",
+  "source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+  "source_id": "intent:admissibility:benign_skill"
+}

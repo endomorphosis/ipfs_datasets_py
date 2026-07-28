@@ -1,0 +1,150 @@
+{
+  "actions": [
+    {
+      "action_id": "action:read_vault",
+      "actor": "agent",
+      "effect_ids": [
+        "statement:effect"
+      ],
+      "grounding": "grounded",
+      "input_refs": [
+        "vault_credentials"
+      ],
+      "object_refs": [
+        "secret_vault"
+      ],
+      "output_refs": [
+        "secret_material"
+      ],
+      "precondition_ids": [
+        "statement:precondition"
+      ],
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "tool_refs": [
+        "filesystem.read",
+        "secret_store.export"
+      ],
+      "verb": "read_secret_vault",
+      "verification_ids": [
+        "statement:verify"
+      ]
+    }
+  ],
+  "control_edges": [],
+  "document_id": "intent:admissibility:security_sensitive_resource",
+  "entry_action_ids": [
+    "action:read_vault"
+  ],
+  "intent_kind": "procedure",
+  "schema_version": "intent-ir/v1",
+  "sources": [
+    {
+      "container_sha256": "d1da7260270ed29377ad5dd9efdc0fa60972c8456f55efc9b2c6d2db2a3dbd10",
+      "container_uri": "fixture://intent_ir/admissibility/container/security_sensitive_resource",
+      "content_cid": "",
+      "content_sha256": "2a17d3995028b7723723fbe0691475279c0a5651478858234cb4a62be3e737b0",
+      "license_expression": "CC0-1.0",
+      "ref_id": "source:security_sensitive_resource",
+      "review_status": "trusted_fixture",
+      "source_id": "fixture.skill.security_sensitive_resource",
+      "source_revision": "fixture-v1",
+      "source_uri": "fixture://intent_ir/admissibility/security_sensitive_resource",
+      "span": null
+    }
+  ],
+  "statements": [
+    {
+      "arguments": [
+        "secret_material",
+        "world_readable_storage"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "effect",
+      "modality": "asserted",
+      "normalized_text": "Secret vault material is written to world-readable storage",
+      "predicate": "write",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "statement_id": "statement:effect"
+    },
+    {
+      "arguments": [
+        "secret_vault"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "failure",
+      "modality": "prohibited",
+      "normalized_text": "Access is denied by the security policy",
+      "predicate": "access_denied",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "statement_id": "statement:failure"
+    },
+    {
+      "arguments": [
+        "secret_vault"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "goal",
+      "modality": "intended",
+      "normalized_text": "Read privileged secret vault material",
+      "predicate": "read",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "statement_id": "statement:goal"
+    },
+    {
+      "arguments": [
+        "vault_credentials"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "precondition",
+      "modality": "required",
+      "normalized_text": "Secret vault credentials are present in the runtime",
+      "predicate": "present",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "statement_id": "statement:precondition"
+    },
+    {
+      "arguments": [
+        "secret_material"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "verification",
+      "modality": "required",
+      "normalized_text": "Secret material is observable in world-readable storage",
+      "predicate": "observable",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "statement_id": "statement:verify"
+    }
+  ],
+  "tags": [
+    "admissibility",
+    "fixture",
+    "resource",
+    "security"
+  ],
+  "terminal_action_ids": [
+    "action:read_vault"
+  ],
+  "title": "Security-sensitive secret vault access"
+}

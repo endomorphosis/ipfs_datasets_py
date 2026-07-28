@@ -1,0 +1,2086 @@
+{
+  "assumptions": [],
+  "compiler_config": {
+    "compiler_id": "intent-formalization-compiler",
+    "compiler_version": "intent-formalization-compiler/v1",
+    "config_id": "intent-formalization-default",
+    "options": {
+      "graph_context_authority": "context_only",
+      "proof_backend_execution": false,
+      "retrieved_premises_are_proofs": false
+    },
+    "producer_id": "intent-formalization-compiler",
+    "schema_version": "formalization-compiler-config/v1",
+    "target_view_ids": [
+      "intent-ir-view/action-hoare/v1",
+      "intent-ir-view/facts/v1",
+      "intent-ir-view/failure/v1",
+      "intent-ir-view/intention-deontic/v1",
+      "intent-ir-view/verification/v1",
+      "intent-ir-view/workflow-temporal/v1"
+    ],
+    "unsupported_policy": "preserve_opaque"
+  },
+  "compiler_config_identity": {
+    "cid": "bafkreidmhsl2crwp3ssqellg6x6aaccggwpcfkxj4dmpv3yt77oumoossa",
+    "digest": "sha256:6c3c97a146cfdca5022d66f5fc000846359e22aae9e0d8faef13ffdd4639d290",
+    "domain": "formalization-compiler-config",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-compiler-config/v1"
+  },
+  "cross_view_links": [
+    {
+      "link_id": "link:intent:formula:intent:facts:action:action:read_vault:formula:intent:action:action:action:read_vault",
+      "metadata": {},
+      "preserved_properties": [
+        "action",
+        "actor",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:action:action:read_vault",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:action:action:action:read_vault"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:failure:formula:intent:failure:statement:statement:failure",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:failure",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:failure:statement:statement:failure"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:failure:formula:intent:modal:statement:statement:failure",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:failure",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:failure"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:goal:formula:intent:modal:statement:statement:goal",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:goal",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:goal"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:precondition:formula:intent:modal:statement:statement:precondition",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:precondition",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:precondition"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:modal:statement:statement:verify",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:verify",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:verify"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:verification:statement:statement:verify",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:verify",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:verification:statement:statement:verify"
+    }
+  ],
+  "declaration_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+  "declaration_id": "intent:admissibility:security_sensitive_resource",
+  "diagnostics": {
+    "config_id": "intent-formalization-default",
+    "diagnostics": [],
+    "error_count": 0,
+    "evidence_set_id": "",
+    "metadata": {
+      "graph_context_present": false,
+      "retrieved_premise_count": 0,
+      "unsupported_formula_count": 0
+    },
+    "producer_id": "intent-formalization-compiler",
+    "provenance_id": "provenance:intent:de170636a075301097903ba938ec178b",
+    "report_id": "diagnostics:intent:363abed17c6329d3:6c3c97a146cfdca5:no-graph",
+    "schema_version": "ir-diagnostics/v1",
+    "valid": true,
+    "warning_count": 0
+  },
+  "domain": "legal",
+  "formulas": [
+    {
+      "assumption_ids": [],
+      "expression": {
+        "action": {
+          "action_id": "action:read_vault",
+          "actor": "agent",
+          "effect_ids": [
+            "statement:effect"
+          ],
+          "grounding": "grounded",
+          "input_refs": [
+            "vault_credentials"
+          ],
+          "object_refs": [
+            "secret_vault"
+          ],
+          "output_refs": [
+            "secret_material"
+          ],
+          "precondition_ids": [
+            "statement:precondition"
+          ],
+          "source_ref_ids": [
+            "source:security_sensitive_resource"
+          ],
+          "tool_refs": [
+            "filesystem.read",
+            "secret_store.export"
+          ],
+          "verb": "read_secret_vault",
+          "verification_ids": [
+            "statement:verify"
+          ]
+        },
+        "effects": [
+          {
+            "arguments": [
+              "secret_material",
+              "world_readable_storage"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "effect",
+            "modality": "asserted",
+            "normalized_text": "Secret vault material is written to world-readable storage",
+            "predicate": "write",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:security_sensitive_resource"
+            ],
+            "statement_id": "statement:effect"
+          }
+        ],
+        "kind": "hoare_action_contract",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "postcondition": [
+          {
+            "arguments": [
+              "secret_material",
+              "world_readable_storage"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "effect",
+            "modality": "asserted",
+            "normalized_text": "Secret vault material is written to world-readable storage",
+            "predicate": "write",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:security_sensitive_resource"
+            ],
+            "statement_id": "statement:effect"
+          }
+        ],
+        "precondition": [
+          {
+            "arguments": [
+              "vault_credentials"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "precondition",
+            "modality": "required",
+            "normalized_text": "Secret vault credentials are present in the runtime",
+            "predicate": "present",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:security_sensitive_resource"
+            ],
+            "statement_id": "statement:precondition"
+          }
+        ],
+        "role": "grant",
+        "verification": [
+          {
+            "arguments": [
+              "secret_material"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "verification",
+            "modality": "required",
+            "normalized_text": "Secret material is observable in world-readable storage",
+            "predicate": "observable",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:security_sensitive_resource"
+            ],
+            "statement_id": "statement:verify"
+          }
+        ]
+      },
+      "formula_id": "formula:intent:action:action:action:read_vault",
+      "input_node_ids": [
+        "intent-node:action:action:read_vault",
+        "intent-node:statement:statement:effect",
+        "intent-node:statement:statement:precondition",
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "action:read_vault",
+          "statement:precondition",
+          "statement:effect",
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "action",
+          "statement",
+          "statement",
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:action:actor-0:action:read_vault:agent",
+        "symbol:intent:action:input-5:action:read_vault:vault_credentials",
+        "symbol:intent:action:object-2:action:read_vault:secret_vault",
+        "symbol:intent:action:output-6:action:read_vault:secret_material",
+        "symbol:intent:action:tool-3:action:read_vault:filesystem.read",
+        "symbol:intent:action:tool-4:action:read_vault:secret_store.export",
+        "symbol:intent:action:verb:action:read_vault:read_secret_vault"
+      ],
+      "view_id": "intent-ir-view/action-hoare/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "action": {
+          "action_id": "action:read_vault",
+          "actor": "agent",
+          "effect_ids": [
+            "statement:effect"
+          ],
+          "grounding": "grounded",
+          "input_refs": [
+            "vault_credentials"
+          ],
+          "object_refs": [
+            "secret_vault"
+          ],
+          "output_refs": [
+            "secret_material"
+          ],
+          "precondition_ids": [
+            "statement:precondition"
+          ],
+          "source_ref_ids": [
+            "source:security_sensitive_resource"
+          ],
+          "tool_refs": [
+            "filesystem.read",
+            "secret_store.export"
+          ],
+          "verb": "read_secret_vault",
+          "verification_ids": [
+            "statement:verify"
+          ]
+        },
+        "kind": "typed_action_fact",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:facts:action:action:read_vault",
+      "input_node_ids": [
+        "intent-node:action:action:read_vault"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "action:read_vault"
+        ],
+        "intent_node_kinds": [
+          "action"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:action:actor-0:action:read_vault:agent",
+        "symbol:intent:action:input-5:action:read_vault:vault_credentials",
+        "symbol:intent:action:object-2:action:read_vault:secret_vault",
+        "symbol:intent:action:output-6:action:read_vault:secret_material",
+        "symbol:intent:action:tool-3:action:read_vault:filesystem.read",
+        "symbol:intent:action:tool-4:action:read_vault:secret_store.export",
+        "symbol:intent:action:verb:action:read_vault:read_secret_vault"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "secret_material",
+          "world_readable_storage"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "asserted",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "write",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "effect",
+        "text": "Secret vault material is written to world-readable storage"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:effect",
+      "input_node_ids": [
+        "intent-node:statement:statement:effect"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:effect"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:effect:secret_material",
+        "symbol:intent:statement:argument-1:statement:effect:world_readable_storage",
+        "symbol:intent:statement:predicate:statement:effect:write"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "secret_vault"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "prohibited",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "access_denied",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "failure",
+        "text": "Access is denied by the security policy"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:failure",
+      "input_node_ids": [
+        "intent-node:statement:statement:failure"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:failure"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:failure:secret_vault",
+        "symbol:intent:statement:predicate:statement:failure:access_denied"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "secret_vault"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "intended",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "read",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "goal",
+        "text": "Read privileged secret vault material"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:goal:secret_vault",
+        "symbol:intent:statement:predicate:statement:goal:read"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "vault_credentials"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "required",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "present",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "precondition",
+        "text": "Secret vault credentials are present in the runtime"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:precondition",
+      "input_node_ids": [
+        "intent-node:statement:statement:precondition"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:precondition"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:precondition:vault_credentials",
+        "symbol:intent:statement:predicate:statement:precondition:present"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "secret_material"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "required",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "observable",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "verification",
+        "text": "Secret material is observable in world-readable storage"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:verify:secret_material",
+        "symbol:intent:statement:predicate:statement:verify:observable"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "secret_vault"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "prohibited",
+          "predicate": "access_denied",
+          "review_status": "trusted_fixture",
+          "statement_kind": "failure",
+          "text": "Access is denied by the security policy"
+        },
+        "kind": "failure_condition",
+        "norm_type": "permission",
+        "operator": "avoid",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:failure:statement:statement:failure",
+      "input_node_ids": [
+        "intent-node:statement:statement:failure"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:failure"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:failure:access_denied"
+      ],
+      "view_id": "intent-ir-view/failure/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "secret_vault"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "prohibited",
+          "predicate": "access_denied",
+          "review_status": "trusted_fixture",
+          "statement_kind": "failure",
+          "text": "Access is denied by the security policy"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "prohibited",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:failure",
+      "input_node_ids": [
+        "intent-node:statement:statement:failure"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:failure"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:failure:access_denied"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "secret_vault"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "intended",
+          "predicate": "read",
+          "review_status": "trusted_fixture",
+          "statement_kind": "goal",
+          "text": "Read privileged secret vault material"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "intended",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:goal:read"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "vault_credentials"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "present",
+          "review_status": "trusted_fixture",
+          "statement_kind": "precondition",
+          "text": "Secret vault credentials are present in the runtime"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "required",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:precondition",
+      "input_node_ids": [
+        "intent-node:statement:statement:precondition"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:precondition"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:precondition:present"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "secret_material"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "observable",
+          "review_status": "trusted_fixture",
+          "statement_kind": "verification",
+          "text": "Secret material is observable in world-readable storage"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "required",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:verify:observable"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "secret_material"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "observable",
+          "review_status": "trusted_fixture",
+          "statement_kind": "verification",
+          "text": "Secret material is observable in world-readable storage"
+        },
+        "kind": "verification_condition",
+        "norm_type": "permission",
+        "operator": "observe",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:verification:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:verify:observable"
+      ],
+      "view_id": "intent-ir-view/verification/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "entry_action_ids": [
+          "action:read_vault"
+        ],
+        "kind": "workflow_boundary",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "role": "grant",
+        "terminal_action_ids": [
+          "action:read_vault"
+        ]
+      },
+      "formula_id": "formula:intent:workflow:document:intent:admissibility:security_sensitive_resource",
+      "input_node_ids": [
+        "intent-node:action:action:read_vault",
+        "intent-node:document:intent:admissibility:security_sensitive_resource"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "intent:admissibility:security_sensitive_resource",
+          "action:read_vault"
+        ],
+        "intent_node_kinds": [
+          "document",
+          "action"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:security_sensitive_resource"
+      ],
+      "span_ids": [],
+      "symbol_ids": [],
+      "view_id": "intent-ir-view/workflow-temporal/v1"
+    }
+  ],
+  "metadata": {
+    "adapter_schema_version": "intent-formalization-compiler/v1",
+    "constraint_family": "legal",
+    "gate_role": "grant",
+    "graph_context_present": false,
+    "intent_ir_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+    "proof_backend_executed": false,
+    "retrieved_premise_count": 0,
+    "retrieved_premises_have_proof_authority": false
+  },
+  "proof_obligations": [
+    {
+      "assumption_ids": [],
+      "logic_family": "safety_liveness",
+      "metadata": {
+        "declaration_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+        "formula_id": "formula:intent:failure:statement:statement:failure",
+        "intent_node_id": "statement:failure",
+        "retrieved_premises_excluded": true
+      },
+      "obligation_id": "obligation:intent:failure:statement:failure",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "source:security_sensitive_resource"
+      ],
+      "statement": "{\"formula_id\":\"formula:intent:failure:statement:statement:failure\",\"operator\":\"avoid\",\"statement\":{\"arguments\":[\"secret_vault\"],\"confidence\":1.0,\"grounding\":\"grounded\",\"kind\":\"failure\",\"modality\":\"prohibited\",\"normalized_text\":\"Access is denied by the security policy\",\"predicate\":\"access_denied\",\"review_status\":\"trusted_fixture\",\"source_ref_ids\":[\"source:security_sensitive_resource\"],\"statement_id\":\"statement:failure\"}}"
+    },
+    {
+      "assumption_ids": [],
+      "logic_family": "verification_condition",
+      "metadata": {
+        "declaration_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+        "formula_id": "formula:intent:verification:statement:statement:verify",
+        "intent_node_id": "statement:verify",
+        "retrieved_premises_excluded": true
+      },
+      "obligation_id": "obligation:intent:verification:statement:verify",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "source:security_sensitive_resource"
+      ],
+      "statement": "{\"formula_id\":\"formula:intent:verification:statement:statement:verify\",\"operator\":\"observe\",\"statement\":{\"arguments\":[\"secret_material\"],\"confidence\":1.0,\"grounding\":\"grounded\",\"kind\":\"verification\",\"modality\":\"required\",\"normalized_text\":\"Secret material is observable in world-readable storage\",\"predicate\":\"observable\",\"review_status\":\"trusted_fixture\",\"source_ref_ids\":[\"source:security_sensitive_resource\"],\"statement_id\":\"statement:verify\"}}"
+    }
+  ],
+  "sample_id": "sample:intent:de170636a075301097903ba938ec178b",
+  "schema_version": "formalization-artifact/v1",
+  "source_map": {
+    "bindings": [
+      {
+        "binding_id": "binding:intent:document:3b179b9b868dc515b99f2d32141e4e52",
+        "config_id": "",
+        "derived": false,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_document_id": "intent:admissibility:security_sensitive_resource"
+        },
+        "parent_subject_ids": [],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent:admissibility:security_sensitive_resource"
+      },
+      {
+        "binding_id": "binding:intent:formula:055cc4ae4f8afb59d37c5a3f5e4b0b8d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:06a6b801ee4fbbdcb2f242851db6a343",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:verification:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:136989493c6ae693e66a578e778b07a3",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault",
+          "intent-node:document:intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:workflow:document:intent:admissibility:security_sensitive_resource"
+      },
+      {
+        "binding_id": "binding:intent:formula:6e8e6b8f8d2a58bd61236776b5299e71",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:7fd76cdcf72f1eee0a9b340f2fa10b6a",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:effect"
+      },
+      {
+        "binding_id": "binding:intent:formula:814879751b735240de6bf807a9dd97b5",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:formula:8191eabec7108fea287c66bc463e516e",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault",
+          "intent-node:statement:statement:effect",
+          "intent-node:statement:statement:precondition",
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:action:action:action:read_vault"
+      },
+      {
+        "binding_id": "binding:intent:formula:9d60b0fadb0c51ff87f2c10d1362b623",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:action:action:read_vault"
+      },
+      {
+        "binding_id": "binding:intent:formula:9d60deff7d87c14837f1a648866cd13c",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:failure"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:failure"
+      },
+      {
+        "binding_id": "binding:intent:formula:c380112e658e990aa24e1ca97c94fc8d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:failure"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:failure"
+      },
+      {
+        "binding_id": "binding:intent:formula:e1115d8dd8f76fe096e002315d191c87",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:failure"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:failure:statement:statement:failure"
+      },
+      {
+        "binding_id": "binding:intent:formula:e9b0b40ac6ddc94b795c6e1e3eb369fd",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:formula:f5e666eb197450b915cf36fa9a25cab7",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:formula:f7bd63e0044306202ddd16fc420188c1",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:input:09497d8a8a26845586047323c3b7dfb4",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:failure",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:failure"
+      },
+      {
+        "binding_id": "binding:intent:input:3d479742e68a512a4e248b086cc3ee49",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:precondition",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:input:44d7c412700803aea1bc1d3e6c6a46b4",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:effect",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:effect"
+      },
+      {
+        "binding_id": "binding:intent:input:5c3ebfb331f766e76e817676a7439157",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_node_id": "intent:admissibility:security_sensitive_resource",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:document:intent:admissibility:security_sensitive_resource"
+      },
+      {
+        "binding_id": "binding:intent:input:77957a01c7a26a49b6dee2bf69f415d8",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:verify",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:input:ab8dab063ca9779a474d074559155695",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "action",
+          "intent_node_id": "action:read_vault",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:action:action:read_vault"
+      },
+      {
+        "binding_id": "binding:intent:input:e18cc741e5a7290f33e437339ca2afdf",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:goal",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:security_sensitive_resource"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:symbol:0719ffedcfe0ba1468dd339e518626ad",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:input-5:action:read_vault:vault_credentials"
+      },
+      {
+        "binding_id": "binding:intent:symbol:0d03dfa28947aa4ab65489279c255437",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:actor-0:action:read_vault:agent"
+      },
+      {
+        "binding_id": "binding:intent:symbol:15a902a4b04fd3f78d5e09ca42d18620",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:verify:secret_material"
+      },
+      {
+        "binding_id": "binding:intent:symbol:20f845e7e07c09047337fde33e4d4f58",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:output-6:action:read_vault:secret_material"
+      },
+      {
+        "binding_id": "binding:intent:symbol:2617c3522ed23259dda79a1bc53f463a",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:verb:action:read_vault:read_secret_vault"
+      },
+      {
+        "binding_id": "binding:intent:symbol:42378bfcc49658175ee2318282c248aa",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:goal:secret_vault"
+      },
+      {
+        "binding_id": "binding:intent:symbol:466be81fe2c8e07d5e69f1491a71f9ef",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:precondition:present"
+      },
+      {
+        "binding_id": "binding:intent:symbol:5ef3fec8ec9a8a9e1c593adf4db2dd07",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:effect:secret_material"
+      },
+      {
+        "binding_id": "binding:intent:symbol:734e2c9bc547f7e3bba569ed9f30d030",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:tool-3:action:read_vault:filesystem.read"
+      },
+      {
+        "binding_id": "binding:intent:symbol:78c75efd7037f2d86588f7afab9ac464",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-1:statement:effect:world_readable_storage"
+      },
+      {
+        "binding_id": "binding:intent:symbol:968311f5eef519d7da98d58ad8d2f389",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:object-2:action:read_vault:secret_vault"
+      },
+      {
+        "binding_id": "binding:intent:symbol:bca0f1e07b8751be2d5286f2eb841e5c",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:verify:observable"
+      },
+      {
+        "binding_id": "binding:intent:symbol:bfd6a7774b301dbc6ff93ac7529712b9",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:read_vault"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:tool-4:action:read_vault:secret_store.export"
+      },
+      {
+        "binding_id": "binding:intent:symbol:c7324ca7339d76682385c9daedc9fb9b",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:goal:read"
+      },
+      {
+        "binding_id": "binding:intent:symbol:de86c3381dbf2a918295dedfd2c32633",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:failure"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:failure:secret_vault"
+      },
+      {
+        "binding_id": "binding:intent:symbol:e092d91ac4940d84019fe2b51b77a9d3",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:failure"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:failure:access_denied"
+      },
+      {
+        "binding_id": "binding:intent:symbol:e390859527cba28e1fd1437abd2989dc",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:precondition:vault_credentials"
+      },
+      {
+        "binding_id": "binding:intent:symbol:fa08e6bf7fe23d1fc9fd0fcd33c023dd",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:effect:write"
+      }
+    ],
+    "configs": [
+      {
+        "config_id": "intent-formalization-default",
+        "content_cid": "",
+        "content_sha256": "6c3c97a146cfdca5022d66f5fc000846359e22aae9e0d8faef13ffdd4639d290",
+        "metadata": {},
+        "schema_id": "formalization-compiler-config/v1"
+      }
+    ],
+    "metadata": {
+      "compiler_adapter_schema": "intent-formalization-compiler/v1",
+      "intent_ir_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927"
+    },
+    "producers": [
+      {
+        "implementation_sha256": "",
+        "metadata": {
+          "compiler_id": "intent-formalization-compiler"
+        },
+        "model_id": "",
+        "name": "Intent IR deterministic formalization compiler",
+        "producer_id": "intent-formalization-compiler",
+        "repository_revision": "",
+        "version": "intent-formalization-compiler/v1"
+      }
+    ],
+    "provenance_id": "provenance:intent:de170636a075301097903ba938ec178b",
+    "schema_version": "ir-provenance/v1",
+    "sources": [
+      {
+        "container_sha256": "d1da7260270ed29377ad5dd9efdc0fa60972c8456f55efc9b2c6d2db2a3dbd10",
+        "container_uri": "fixture://intent_ir/admissibility/container/security_sensitive_resource",
+        "content_cid": "",
+        "content_sha256": "2a17d3995028b7723723fbe0691475279c0a5651478858234cb4a62be3e737b0",
+        "license_expression": "CC0-1.0",
+        "metadata": {
+          "content_binding": "declared_source_bytes",
+          "intent_review_status": "trusted_fixture"
+        },
+        "ref_id": "source:security_sensitive_resource",
+        "review_status": "trusted_fixture",
+        "source_id": "fixture.skill.security_sensitive_resource",
+        "source_revision": "fixture-v1",
+        "source_uri": "fixture://intent_ir/admissibility/security_sensitive_resource"
+      }
+    ],
+    "spans": []
+  },
+  "symbol_table": {
+    "metadata": {
+      "domain": "intent"
+    },
+    "schema_version": "formal-symbol-table/v1",
+    "symbols": [
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "actor-0"
+        },
+        "name": "agent",
+        "sort": "principal",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:actor-0:action:read_vault:agent"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "input-5"
+        },
+        "name": "vault_credentials",
+        "sort": "input",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:input-5:action:read_vault:vault_credentials"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "object-2"
+        },
+        "name": "secret_vault",
+        "sort": "resource",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:object-2:action:read_vault:secret_vault"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "output-6"
+        },
+        "name": "secret_material",
+        "sort": "output",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:output-6:action:read_vault:secret_material"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "tool-3"
+        },
+        "name": "filesystem.read",
+        "sort": "tool",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:tool-3:action:read_vault:filesystem.read"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "tool-4"
+        },
+        "name": "secret_store.export",
+        "sort": "tool",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:tool-4:action:read_vault:secret_store.export"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "action:read_vault",
+          "role": "verb"
+        },
+        "name": "read_secret_vault",
+        "sort": "action",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:verb:action:read_vault:read_secret_vault"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "argument-0"
+        },
+        "name": "secret_material",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:effect:secret_material"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:failure",
+          "role": "argument-0"
+        },
+        "name": "secret_vault",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:failure:secret_vault"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "argument-0"
+        },
+        "name": "secret_vault",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:goal:secret_vault"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:precondition",
+          "role": "argument-0"
+        },
+        "name": "vault_credentials",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:precondition:vault_credentials"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:verify",
+          "role": "argument-0"
+        },
+        "name": "secret_material",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:verify:secret_material"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "argument-1"
+        },
+        "name": "world_readable_storage",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-1:statement:effect:world_readable_storage"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "predicate"
+        },
+        "name": "write",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:effect:write"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:failure",
+          "role": "predicate"
+        },
+        "name": "access_denied",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:failure:access_denied"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "predicate"
+        },
+        "name": "read",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:goal:read"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:precondition",
+          "role": "predicate"
+        },
+        "name": "present",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:precondition:present"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:verify",
+          "role": "predicate"
+        },
+        "name": "observable",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:security_sensitive_resource"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:verify:observable"
+      }
+    ],
+    "table_id": "symbols:intent:intent:admissibility:security_sensitive_resource"
+  },
+  "view_registry": {
+    "registry_id": "intent-ir-formalization-views",
+    "schema_version": "formalization-view-registry/v1",
+    "views": [
+      {
+        "capabilities": [
+          "action_contracts",
+          "hoare_triples",
+          "source_grounding"
+        ],
+        "description": "Actions with preconditions, effects, and observations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "dynamic_hoare",
+        "metadata": {
+          "intent_constructs": [
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/action-hoare/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "typed_symbols"
+        ],
+        "description": "Typed Intent entities, predicates, and action facts.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "typed_first_order",
+        "metadata": {
+          "intent_constructs": [
+            "statement",
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "capabilities": [
+          "failure_conditions",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Explicit failure conditions and failure transitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety_liveness",
+        "metadata": {
+          "intent_constructs": [
+            "failure"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/failure/v1"
+      },
+      {
+        "capabilities": [
+          "deontic_modality",
+          "intention",
+          "source_grounding"
+        ],
+        "description": "Goals, intentions, requirements, permissions, and prohibitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "intention_deontic",
+        "metadata": {
+          "intent_constructs": [
+            "goal",
+            "modality"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "capabilities": [
+          "invariants",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "State invariants represented as always obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety",
+        "metadata": {
+          "intent_constructs": [
+            "invariant"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/invariant/v1"
+      },
+      {
+        "capabilities": [
+          "observations",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Observable criteria and evidence obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "verification_condition",
+        "metadata": {
+          "intent_constructs": [
+            "verification"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/verification/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "state_transitions",
+          "temporal_control"
+        ],
+        "description": "Entry, terminal, sequencing, branching, retry, and concurrency.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "workflow_temporal",
+        "metadata": {
+          "intent_constructs": [
+            "control_edge",
+            "workflow_boundary"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/workflow-temporal/v1"
+      }
+    ]
+  },
+  "view_registry_identity": {
+    "cid": "bafkreiez2oofk7tsxsfwlfwjgfrtujgwotfkytgztku4cbtd37eazwn3ia",
+    "digest": "sha256:99d39c557e72bc8b6596c931633a24d674caac4cd99aa9c10663dfc80cd9bb40",
+    "domain": "formalization-view-registry",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-view-registry/v1"
+  }
+}

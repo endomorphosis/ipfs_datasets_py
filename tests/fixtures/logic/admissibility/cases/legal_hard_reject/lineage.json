@@ -1,0 +1,36 @@
+{
+  "constraint_artifact_cids": [
+    "bafkreifxxecm5ylj6lk2mqjxw5aocl4gvozqlrgj2zgrm67aynzh73bmj4",
+    "bafkreigx3xr6et3pndff2wbrwiayklgj2ellgnfylaq7tkkcutdwk4zdum"
+  ],
+  "constraint_content_cids": [
+    "bafkreic745j5tp3eq54pioezg65ep4bfbggqjxe4xoprl2cnszluszyeqm",
+    "bafkreignokmlzraekvnfwaooviqn3xiova7lvaqbae3hez25h4dcmuz2ea"
+  ],
+  "corpus_content_cids": [
+    "bafkreic745j5tp3eq54pioezg65ep4bfbggqjxe4xoprl2cnszluszyeqm",
+    "bafkreifz2hvhsl43v6b6yusiojy7k64tx65hduqucvuoiingnp7gdeyuju",
+    "bafkreignokmlzraekvnfwaooviqn3xiova7lvaqbae3hez25h4dcmuz2ea"
+  ],
+  "intent_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+  "intent_artifact_digest": "sha256:ad079518b66f5321743c55197e770bb6ed325b9bf48d85283f2477d0bc5ffe10",
+  "intent_content_cid": "bafkreifz2hvhsl43v6b6yusiojy7k64tx65hduqucvuoiingnp7gdeyuju",
+  "intent_content_digest": "sha256:b9d1ea792f9baf83ec52487271f57b93bfba71d2141568e421a66bfe6193144d",
+  "intent_declaration_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+  "intent_formal_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+  "intent_source_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+  "intent_source_id": "intent:admissibility:legally_risky_effect",
+  "legal_artifact_cid": "bafkreifxxecm5ylj6lk2mqjxw5aocl4gvozqlrgj2zgrm67aynzh73bmj4",
+  "legal_artifact_digest": "sha256:b7b904cee169f2d5a64137b740e12f86abb305c4c9d64d167be0c3727fec2c4f",
+  "legal_content_cid": "bafkreic745j5tp3eq54pioezg65ep4bfbggqjxe4xoprl2cnszluszyeqm",
+  "legal_content_cids": [
+    "bafkreic745j5tp3eq54pioezg65ep4bfbggqjxe4xoprl2cnszluszyeqm"
+  ],
+  "security_artifact_cid": "bafkreigx3xr6et3pndff2wbrwiayklgj2ellgnfylaq7tkkcutdwk4zdum",
+  "security_artifact_digest": "sha256:d7dde3e24f6f68ca5d5831b201852cc9d116b334b85821f9a942a4c7657323a3",
+  "security_content_cid": "bafkreignokmlzraekvnfwaooviqn3xiova7lvaqbae3hez25h4dcmuz2ea",
+  "security_content_cids": [
+    "bafkreignokmlzraekvnfwaooviqn3xiova7lvaqbae3hez25h4dcmuz2ea"
+  ],
+  "store_snapshot_digest": "sha256:700530b3f07bfafbe7dbea12c5375058e6b9ba4482c471e3d1e58d8ac0d5b62f"
+}

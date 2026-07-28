@@ -1,0 +1,45 @@
+{
+  "attestation_results": [
+    {
+      "attestation_interface": "",
+      "backend": "",
+      "content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+      "family": "legal",
+      "interface": "ProofCorpusAttest@1",
+      "is_simulated": false,
+      "profile": "legal-strict",
+      "reason": "zkp_missing",
+      "schema_version": "proof-corpus-attest/v1",
+      "statement_digest": "",
+      "status": "absent"
+    },
+    {
+      "attestation_interface": "",
+      "backend": "",
+      "content_cid": "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a",
+      "family": "legal",
+      "interface": "ProofCorpusAttest@1",
+      "is_simulated": false,
+      "profile": "legal-strict",
+      "reason": "zkp_missing",
+      "schema_version": "proof-corpus-attest/v1",
+      "statement_digest": "",
+      "status": "absent"
+    }
+  ],
+  "config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+  "constraint_cids": [
+    "bafkreiddzvtexdxjqxtqekkzy5tplk4jfuguergiycxekq6o4xvkr3xjpm",
+    "bafkreiee2u3sxvbphn3ycp2k24yphygcvfwdzrz5zwane2sl7toj2lom5a"
+  ],
+  "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+  "intent_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+  "interface": "AdmissibilityDecision@1",
+  "profile_id": "zkp-required",
+  "reason_codes": [
+    "zkp_missing"
+  ],
+  "schema_version": "admissibility-decision/v1",
+  "status": "abstain",
+  "store_snapshot_digest": "sha256:f53d0a2bdbfcceb97eab3a640d5c4d5e153917e71ea8c656177a9d97fa1073c6"
+}

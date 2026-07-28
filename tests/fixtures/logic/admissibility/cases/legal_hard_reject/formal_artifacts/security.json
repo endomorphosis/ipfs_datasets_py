@@ -1,0 +1,1736 @@
+{
+  "assumptions": [],
+  "compiler_config": {
+    "compiler_id": "intent-formalization-compiler",
+    "compiler_version": "intent-formalization-compiler/v1",
+    "config_id": "intent-formalization-default",
+    "options": {
+      "graph_context_authority": "context_only",
+      "proof_backend_execution": false,
+      "retrieved_premises_are_proofs": false
+    },
+    "producer_id": "intent-formalization-compiler",
+    "schema_version": "formalization-compiler-config/v1",
+    "target_view_ids": [
+      "intent-ir-view/action-hoare/v1",
+      "intent-ir-view/facts/v1",
+      "intent-ir-view/intention-deontic/v1",
+      "intent-ir-view/verification/v1",
+      "intent-ir-view/workflow-temporal/v1"
+    ],
+    "unsupported_policy": "preserve_opaque"
+  },
+  "compiler_config_identity": {
+    "cid": "bafkreiantgec5etai27n3p6gbfkfxujbxxktalvktloiyyh6db5zogk45e",
+    "digest": "sha256:0d99882e926046beddbfc609545bd121bdd5302eaa9adc8c60fe187b97195ce9",
+    "domain": "formalization-compiler-config",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-compiler-config/v1"
+  },
+  "cross_view_links": [
+    {
+      "link_id": "link:intent:formula:intent:facts:action:action:export_pii:formula:intent:action:action:action:export_pii",
+      "metadata": {},
+      "preserved_properties": [
+        "action",
+        "actor",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:action:action:export_pii",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:action:action:action:export_pii"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:goal:formula:intent:modal:statement:statement:goal",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:goal",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:goal"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:precondition:formula:intent:modal:statement:statement:precondition",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:precondition",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:precondition"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:modal:statement:statement:verify",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:verify",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:verify"
+    },
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:verify:formula:intent:verification:statement:statement:verify",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:verify",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:verification:statement:statement:verify"
+    }
+  ],
+  "declaration_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+  "declaration_id": "intent:admissibility:legally_risky_effect",
+  "diagnostics": {
+    "config_id": "intent-formalization-default",
+    "diagnostics": [],
+    "error_count": 0,
+    "evidence_set_id": "",
+    "metadata": {
+      "graph_context_present": false,
+      "retrieved_premise_count": 0,
+      "unsupported_formula_count": 0
+    },
+    "producer_id": "intent-formalization-compiler",
+    "provenance_id": "provenance:intent:4bcc4adef46d61a702e5703a86893fc0",
+    "report_id": "diagnostics:intent:ece4006c961f06cc:0d99882e926046be:no-graph",
+    "schema_version": "ir-diagnostics/v1",
+    "valid": true,
+    "warning_count": 0
+  },
+  "domain": "security",
+  "formulas": [
+    {
+      "assumption_ids": [],
+      "expression": {
+        "action": {
+          "action_id": "action:export_pii",
+          "actor": "agent",
+          "effect_ids": [
+            "statement:effect"
+          ],
+          "grounding": "grounded",
+          "input_refs": [],
+          "object_refs": [
+            "payment_records"
+          ],
+          "output_refs": [],
+          "precondition_ids": [
+            "statement:precondition"
+          ],
+          "source_ref_ids": [
+            "source:legally_risky_effect"
+          ],
+          "tool_refs": [
+            "exfiltrate_records"
+          ],
+          "verb": "export",
+          "verification_ids": [
+            "statement:verify"
+          ]
+        },
+        "effects": [
+          {
+            "arguments": [
+              "payment_records",
+              "third_party"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "effect",
+            "modality": "asserted",
+            "normalized_text": "PII payment records are disclosed to an unapproved third party",
+            "predicate": "disclose_pii",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:legally_risky_effect"
+            ],
+            "statement_id": "statement:effect"
+          }
+        ],
+        "kind": "hoare_action_contract",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "postcondition": [
+          {
+            "arguments": [
+              "payment_records",
+              "third_party"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "effect",
+            "modality": "asserted",
+            "normalized_text": "PII payment records are disclosed to an unapproved third party",
+            "predicate": "disclose_pii",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:legally_risky_effect"
+            ],
+            "statement_id": "statement:effect"
+          }
+        ],
+        "precondition": [
+          {
+            "arguments": [
+              "payment_records"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "precondition",
+            "modality": "required",
+            "normalized_text": "Payment records containing PII are available",
+            "predicate": "available",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:legally_risky_effect"
+            ],
+            "statement_id": "statement:precondition"
+          }
+        ],
+        "role": "grant",
+        "verification": [
+          {
+            "arguments": [
+              "third_party",
+              "payment_records"
+            ],
+            "confidence": 1.0,
+            "grounding": "grounded",
+            "kind": "verification",
+            "modality": "required",
+            "normalized_text": "The third party acknowledges receipt of the records",
+            "predicate": "acknowledged",
+            "review_status": "trusted_fixture",
+            "source_ref_ids": [
+              "source:legally_risky_effect"
+            ],
+            "statement_id": "statement:verify"
+          }
+        ]
+      },
+      "formula_id": "formula:intent:action:action:action:export_pii",
+      "input_node_ids": [
+        "intent-node:action:action:export_pii",
+        "intent-node:statement:statement:effect",
+        "intent-node:statement:statement:precondition",
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "action:export_pii",
+          "statement:precondition",
+          "statement:effect",
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "action",
+          "statement",
+          "statement",
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:action:actor-0:action:export_pii:agent",
+        "symbol:intent:action:object-2:action:export_pii:payment_records",
+        "symbol:intent:action:tool-3:action:export_pii:exfiltrate_records",
+        "symbol:intent:action:verb:action:export_pii:export"
+      ],
+      "view_id": "intent-ir-view/action-hoare/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "action": {
+          "action_id": "action:export_pii",
+          "actor": "agent",
+          "effect_ids": [
+            "statement:effect"
+          ],
+          "grounding": "grounded",
+          "input_refs": [],
+          "object_refs": [
+            "payment_records"
+          ],
+          "output_refs": [],
+          "precondition_ids": [
+            "statement:precondition"
+          ],
+          "source_ref_ids": [
+            "source:legally_risky_effect"
+          ],
+          "tool_refs": [
+            "exfiltrate_records"
+          ],
+          "verb": "export",
+          "verification_ids": [
+            "statement:verify"
+          ]
+        },
+        "kind": "typed_action_fact",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:facts:action:action:export_pii",
+      "input_node_ids": [
+        "intent-node:action:action:export_pii"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "action:export_pii"
+        ],
+        "intent_node_kinds": [
+          "action"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:action:actor-0:action:export_pii:agent",
+        "symbol:intent:action:object-2:action:export_pii:payment_records",
+        "symbol:intent:action:tool-3:action:export_pii:exfiltrate_records",
+        "symbol:intent:action:verb:action:export_pii:export"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "payment_records",
+          "third_party"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "asserted",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "disclose_pii",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "effect",
+        "text": "PII payment records are disclosed to an unapproved third party"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:effect",
+      "input_node_ids": [
+        "intent-node:statement:statement:effect"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:effect"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:effect:payment_records",
+        "symbol:intent:statement:argument-1:statement:effect:third_party",
+        "symbol:intent:statement:predicate:statement:effect:disclose_pii"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "payment_records",
+          "third_party"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "intended",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "export",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "goal",
+        "text": "Export payment records containing PII to a third party"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:goal:payment_records",
+        "symbol:intent:statement:argument-1:statement:goal:third_party",
+        "symbol:intent:statement:predicate:statement:goal:export"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "payment_records"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "required",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "available",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "precondition",
+        "text": "Payment records containing PII are available"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:precondition",
+      "input_node_ids": [
+        "intent-node:statement:statement:precondition"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:precondition"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:precondition:payment_records",
+        "symbol:intent:statement:predicate:statement:precondition:available"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "arguments": [
+          "third_party",
+          "payment_records"
+        ],
+        "confidence": 1.0,
+        "grounding": "grounded",
+        "kind": "typed_fact",
+        "modality": "required",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "predicate": "acknowledged",
+        "review_status": "trusted_fixture",
+        "role": "grant",
+        "statement_kind": "verification",
+        "text": "The third party acknowledges receipt of the records"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:argument-0:statement:verify:third_party",
+        "symbol:intent:statement:argument-1:statement:verify:payment_records",
+        "symbol:intent:statement:predicate:statement:verify:acknowledged"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "payment_records",
+            "third_party"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "intended",
+          "predicate": "export",
+          "review_status": "trusted_fixture",
+          "statement_kind": "goal",
+          "text": "Export payment records containing PII to a third party"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "intended",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:goal:export"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "payment_records"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "available",
+          "review_status": "trusted_fixture",
+          "statement_kind": "precondition",
+          "text": "Payment records containing PII are available"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "required",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:precondition",
+      "input_node_ids": [
+        "intent-node:statement:statement:precondition"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:precondition"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:precondition:available"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "third_party",
+            "payment_records"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "acknowledged",
+          "review_status": "trusted_fixture",
+          "statement_kind": "verification",
+          "text": "The third party acknowledges receipt of the records"
+        },
+        "kind": "intention_deontic_formula",
+        "norm_type": "permission",
+        "operator": "required",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:verify:acknowledged"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "body": {
+          "arguments": [
+            "third_party",
+            "payment_records"
+          ],
+          "confidence": 1.0,
+          "grounding": "grounded",
+          "modality": "required",
+          "predicate": "acknowledged",
+          "review_status": "trusted_fixture",
+          "statement_kind": "verification",
+          "text": "The third party acknowledges receipt of the records"
+        },
+        "kind": "verification_condition",
+        "norm_type": "permission",
+        "operator": "observe",
+        "polarity": "positive",
+        "role": "grant"
+      },
+      "formula_id": "formula:intent:verification:statement:statement:verify",
+      "input_node_ids": [
+        "intent-node:statement:statement:verify"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:verify"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:verify:acknowledged"
+      ],
+      "view_id": "intent-ir-view/verification/v1"
+    },
+    {
+      "assumption_ids": [],
+      "expression": {
+        "entry_action_ids": [
+          "action:export_pii"
+        ],
+        "kind": "workflow_boundary",
+        "norm_type": "permission",
+        "polarity": "positive",
+        "role": "grant",
+        "terminal_action_ids": [
+          "action:export_pii"
+        ]
+      },
+      "formula_id": "formula:intent:workflow:document:intent:admissibility:legally_risky_effect",
+      "input_node_ids": [
+        "intent-node:action:action:export_pii",
+        "intent-node:document:intent:admissibility:legally_risky_effect"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "intent:admissibility:legally_risky_effect",
+          "action:export_pii"
+        ],
+        "intent_node_kinds": [
+          "document",
+          "action"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": false,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "span_ids": [],
+      "symbol_ids": [],
+      "view_id": "intent-ir-view/workflow-temporal/v1"
+    }
+  ],
+  "metadata": {
+    "adapter_schema_version": "intent-formalization-compiler/v1",
+    "constraint_family": "security",
+    "gate_role": "grant",
+    "graph_context_present": false,
+    "intent_ir_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+    "proof_backend_executed": false,
+    "retrieved_premise_count": 0,
+    "retrieved_premises_have_proof_authority": false
+  },
+  "proof_obligations": [
+    {
+      "assumption_ids": [],
+      "logic_family": "verification_condition",
+      "metadata": {
+        "declaration_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+        "formula_id": "formula:intent:verification:statement:statement:verify",
+        "intent_node_id": "statement:verify",
+        "retrieved_premises_excluded": true
+      },
+      "obligation_id": "obligation:intent:verification:statement:verify",
+      "schema_version": "ir-proof-obligation/v1",
+      "source_refs": [
+        "source:legally_risky_effect"
+      ],
+      "statement": "{\"formula_id\":\"formula:intent:verification:statement:statement:verify\",\"operator\":\"observe\",\"statement\":{\"arguments\":[\"third_party\",\"payment_records\"],\"confidence\":1.0,\"grounding\":\"grounded\",\"kind\":\"verification\",\"modality\":\"required\",\"normalized_text\":\"The third party acknowledges receipt of the records\",\"predicate\":\"acknowledged\",\"review_status\":\"trusted_fixture\",\"source_ref_ids\":[\"source:legally_risky_effect\"],\"statement_id\":\"statement:verify\"}}"
+    }
+  ],
+  "sample_id": "sample:intent:4bcc4adef46d61a702e5703a86893fc0",
+  "schema_version": "formalization-artifact/v1",
+  "source_map": {
+    "bindings": [
+      {
+        "binding_id": "binding:intent:document:dd9ae99a9743ed889a5f6bcbdd4e5b37",
+        "config_id": "",
+        "derived": false,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_document_id": "intent:admissibility:legally_risky_effect"
+        },
+        "parent_subject_ids": [],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent:admissibility:legally_risky_effect"
+      },
+      {
+        "binding_id": "binding:intent:formula:055cc4ae4f8afb59d37c5a3f5e4b0b8d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:06a6b801ee4fbbdcb2f242851db6a343",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:verification:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:26e2352135c8c86cfd29dc95b6778f6d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:action:action:export_pii"
+      },
+      {
+        "binding_id": "binding:intent:formula:28bbc61ce868d17e15299c714cd235af",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii",
+          "intent-node:document:intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:workflow:document:intent:admissibility:legally_risky_effect"
+      },
+      {
+        "binding_id": "binding:intent:formula:49982a683ec11d363f9ebfc058a8a990",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii",
+          "intent-node:statement:statement:effect",
+          "intent-node:statement:statement:precondition",
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:action:action:action:export_pii"
+      },
+      {
+        "binding_id": "binding:intent:formula:6e8e6b8f8d2a58bd61236776b5299e71",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:formula:7fd76cdcf72f1eee0a9b340f2fa10b6a",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:effect"
+      },
+      {
+        "binding_id": "binding:intent:formula:814879751b735240de6bf807a9dd97b5",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:formula:e9b0b40ac6ddc94b795c6e1e3eb369fd",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:formula:f5e666eb197450b915cf36fa9a25cab7",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:formula:f7bd63e0044306202ddd16fc420188c1",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:input:2185fa48b81e950ead2bacc18563a750",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_node_id": "intent:admissibility:legally_risky_effect",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:document:intent:admissibility:legally_risky_effect"
+      },
+      {
+        "binding_id": "binding:intent:input:3d479742e68a512a4e248b086cc3ee49",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:precondition",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:precondition"
+      },
+      {
+        "binding_id": "binding:intent:input:44d7c412700803aea1bc1d3e6c6a46b4",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:effect",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:effect"
+      },
+      {
+        "binding_id": "binding:intent:input:733870ede3c33bb4be8751cb0276095f",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "action",
+          "intent_node_id": "action:export_pii",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:action:action:export_pii"
+      },
+      {
+        "binding_id": "binding:intent:input:77957a01c7a26a49b6dee2bf69f415d8",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:verify",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:verify"
+      },
+      {
+        "binding_id": "binding:intent:input:e18cc741e5a7290f33e437339ca2afdf",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:goal",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:legally_risky_effect"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:symbol:0aa21b95723f1ece277200936bd70ce6",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:actor-0:action:export_pii:agent"
+      },
+      {
+        "binding_id": "binding:intent:symbol:0bb3980c92b897e95690e585354600e8",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:verb:action:export_pii:export"
+      },
+      {
+        "binding_id": "binding:intent:symbol:18f553a3289b630a2ae9cdbcfa2a7825",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:verify:acknowledged"
+      },
+      {
+        "binding_id": "binding:intent:symbol:1bacf3c8e87d77bf49e083c021f7c687",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-1:statement:verify:payment_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:3e6fa2a22117953a7e59f77379dd31de",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:precondition:available"
+      },
+      {
+        "binding_id": "binding:intent:symbol:91ed4d73126f2c42f89c7eebbda2108d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:goal:payment_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:a4a1923566a97b95874a042d382b5fc3",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:verify"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:verify:third_party"
+      },
+      {
+        "binding_id": "binding:intent:symbol:af8085669e52b3dc625c95c3f4db7cbf",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-1:statement:effect:third_party"
+      },
+      {
+        "binding_id": "binding:intent:symbol:d7d7f5e796f49e6f48a6c3674e1a290e",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:tool-3:action:export_pii:exfiltrate_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:d876f09a52b0e920a0c769db6777566e",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:action:action:export_pii"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:action:object-2:action:export_pii:payment_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:e6078b64560ca19d15da8d3f787e9d6d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-1:statement:goal:third_party"
+      },
+      {
+        "binding_id": "binding:intent:symbol:ead6d9b0f3f4af93a07fc469c8dc9b2d",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:goal:export"
+      },
+      {
+        "binding_id": "binding:intent:symbol:edde61b736c70a628a51012b7c6fc844",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:effect:payment_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:f934ea679f6d4ef783dfd442ae37a43e",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:precondition"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:argument-0:statement:precondition:payment_records"
+      },
+      {
+        "binding_id": "binding:intent:symbol:ff3a12af8e6a77590f21c1392a3d9817",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:effect"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:effect:disclose_pii"
+      }
+    ],
+    "configs": [
+      {
+        "config_id": "intent-formalization-default",
+        "content_cid": "",
+        "content_sha256": "0d99882e926046beddbfc609545bd121bdd5302eaa9adc8c60fe187b97195ce9",
+        "metadata": {},
+        "schema_id": "formalization-compiler-config/v1"
+      }
+    ],
+    "metadata": {
+      "compiler_adapter_schema": "intent-formalization-compiler/v1",
+      "intent_ir_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0"
+    },
+    "producers": [
+      {
+        "implementation_sha256": "",
+        "metadata": {
+          "compiler_id": "intent-formalization-compiler"
+        },
+        "model_id": "",
+        "name": "Intent IR deterministic formalization compiler",
+        "producer_id": "intent-formalization-compiler",
+        "repository_revision": "",
+        "version": "intent-formalization-compiler/v1"
+      }
+    ],
+    "provenance_id": "provenance:intent:4bcc4adef46d61a702e5703a86893fc0",
+    "schema_version": "ir-provenance/v1",
+    "sources": [
+      {
+        "container_sha256": "b22b9920853301f0c8dd32db1aa50b9812717e973cf7be390cc096aadeb2c0f5",
+        "container_uri": "fixture://intent_ir/admissibility/container/legally_risky_effect",
+        "content_cid": "",
+        "content_sha256": "f09031af25f08a5a016907363daeddeb2d8ede0a5d0b89873eb362989668e683",
+        "license_expression": "CC0-1.0",
+        "metadata": {
+          "content_binding": "declared_source_bytes",
+          "intent_review_status": "trusted_fixture"
+        },
+        "ref_id": "source:legally_risky_effect",
+        "review_status": "trusted_fixture",
+        "source_id": "fixture.skill.legally_risky_effect",
+        "source_revision": "fixture-v1",
+        "source_uri": "fixture://intent_ir/admissibility/legally_risky_effect"
+      }
+    ],
+    "spans": []
+  },
+  "symbol_table": {
+    "metadata": {
+      "domain": "intent"
+    },
+    "schema_version": "formal-symbol-table/v1",
+    "symbols": [
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:export_pii",
+          "role": "actor-0"
+        },
+        "name": "agent",
+        "sort": "principal",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:actor-0:action:export_pii:agent"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:export_pii",
+          "role": "object-2"
+        },
+        "name": "payment_records",
+        "sort": "resource",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:object-2:action:export_pii:payment_records"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "action:export_pii",
+          "role": "tool-3"
+        },
+        "name": "exfiltrate_records",
+        "sort": "tool",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:tool-3:action:export_pii:exfiltrate_records"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "action:export_pii",
+          "role": "verb"
+        },
+        "name": "export",
+        "sort": "action",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:action:verb:action:export_pii:export"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "argument-0"
+        },
+        "name": "payment_records",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:effect:payment_records"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "argument-0"
+        },
+        "name": "payment_records",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:goal:payment_records"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:precondition",
+          "role": "argument-0"
+        },
+        "name": "payment_records",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:precondition:payment_records"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:verify",
+          "role": "argument-0"
+        },
+        "name": "third_party",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-0:statement:verify:third_party"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "argument-1"
+        },
+        "name": "third_party",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-1:statement:effect:third_party"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "argument-1"
+        },
+        "name": "third_party",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-1:statement:goal:third_party"
+      },
+      {
+        "kind": "constant",
+        "metadata": {
+          "intent_node_id": "statement:verify",
+          "role": "argument-1"
+        },
+        "name": "payment_records",
+        "sort": "term",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:argument-1:statement:verify:payment_records"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:effect",
+          "role": "predicate"
+        },
+        "name": "disclose_pii",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:effect:disclose_pii"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "predicate"
+        },
+        "name": "export",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:goal:export"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:precondition",
+          "role": "predicate"
+        },
+        "name": "available",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:precondition:available"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:verify",
+          "role": "predicate"
+        },
+        "name": "acknowledged",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:legally_risky_effect"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:verify:acknowledged"
+      }
+    ],
+    "table_id": "symbols:intent:intent:admissibility:legally_risky_effect"
+  },
+  "view_registry": {
+    "registry_id": "intent-ir-formalization-views",
+    "schema_version": "formalization-view-registry/v1",
+    "views": [
+      {
+        "capabilities": [
+          "action_contracts",
+          "hoare_triples",
+          "source_grounding"
+        ],
+        "description": "Actions with preconditions, effects, and observations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "dynamic_hoare",
+        "metadata": {
+          "intent_constructs": [
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/action-hoare/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "typed_symbols"
+        ],
+        "description": "Typed Intent entities, predicates, and action facts.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "typed_first_order",
+        "metadata": {
+          "intent_constructs": [
+            "statement",
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "capabilities": [
+          "failure_conditions",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Explicit failure conditions and failure transitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety_liveness",
+        "metadata": {
+          "intent_constructs": [
+            "failure"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/failure/v1"
+      },
+      {
+        "capabilities": [
+          "deontic_modality",
+          "intention",
+          "source_grounding"
+        ],
+        "description": "Goals, intentions, requirements, permissions, and prohibitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "intention_deontic",
+        "metadata": {
+          "intent_constructs": [
+            "goal",
+            "modality"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "capabilities": [
+          "invariants",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "State invariants represented as always obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety",
+        "metadata": {
+          "intent_constructs": [
+            "invariant"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/invariant/v1"
+      },
+      {
+        "capabilities": [
+          "observations",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Observable criteria and evidence obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "verification_condition",
+        "metadata": {
+          "intent_constructs": [
+            "verification"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/verification/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "state_transitions",
+          "temporal_control"
+        ],
+        "description": "Entry, terminal, sequencing, branching, retry, and concurrency.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "workflow_temporal",
+        "metadata": {
+          "intent_constructs": [
+            "control_edge",
+            "workflow_boundary"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/workflow-temporal/v1"
+      }
+    ]
+  },
+  "view_registry_identity": {
+    "cid": "bafkreiez2oofk7tsxsfwlfwjgfrtujgwotfkytgztku4cbtd37eazwn3ia",
+    "digest": "sha256:99d39c557e72bc8b6596c931633a24d674caac4cd99aa9c10663dfc80cd9bb40",
+    "domain": "formalization-view-registry",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-view-registry/v1"
+  }
+}
