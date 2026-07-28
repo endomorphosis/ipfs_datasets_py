@@ -112,7 +112,7 @@ Wave 6  LIG-019 / LIG-020  (eval + runbook)
 
 ## LIG-003 Align Legal measured compiler with shared protocols (residual CID hygiene)
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
