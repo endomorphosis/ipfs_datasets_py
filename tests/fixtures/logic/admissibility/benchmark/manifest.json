@@ -1,0 +1,179 @@
+{
+  "case_ids": [
+    "abstain_incomplete",
+    "benign_skill",
+    "contradiction_grant_and_forbid",
+    "legal_hard_reject",
+    "security_hard_reject",
+    "zkp_required_missing_proof"
+  ],
+  "cases": [
+    {
+      "case_id": "abstain_incomplete",
+      "evaluation": true,
+      "expected_reason_codes": [
+        "missing_evidence",
+        "semantics_unsupported"
+      ],
+      "expected_status": "abstain",
+      "intent_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+      "intent_content_cid": "bafkreia5muhdbbzfpa4fhxh2oxtvj4edsyjyusdj42nms3xvewjmbh337y",
+      "intent_source_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+      "partition": "held_out_domain",
+      "profile_id": "legal-strict",
+      "recipe_path": "cases/abstain_incomplete",
+      "source_family_id": "family:incomplete_unsupported_semantics",
+      "store_snapshot_digest": "sha256:d5674820fae55691d0d6bc39e8ef6fc2edbbc18eb48020b70bb7d0ea599322f6",
+      "stratum": "abstain"
+    },
+    {
+      "case_id": "benign_skill",
+      "evaluation": true,
+      "expected_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_status": "allow",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "partition": "test",
+      "profile_id": "legal-strict",
+      "recipe_path": "cases/benign_skill",
+      "source_family_id": "family:benign_skill",
+      "store_snapshot_digest": "sha256:0f4391e8755a79311de75990bc3cdadaec9100eeef8059436fca6e7854406023",
+      "stratum": "allow"
+    },
+    {
+      "case_id": "contradiction_grant_and_forbid",
+      "evaluation": true,
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "legal_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "partition": "test",
+      "profile_id": "legal-strict",
+      "recipe_path": "cases/contradiction_grant_and_forbid",
+      "source_family_id": "family:benign_skill",
+      "store_snapshot_digest": "sha256:dc127178768925223471cf46461454dac84df0f1bbb5a6bf68e260cd4f51103c",
+      "stratum": "contradiction"
+    },
+    {
+      "case_id": "legal_hard_reject",
+      "evaluation": false,
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "legal_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+      "intent_content_cid": "bafkreifz2hvhsl43v6b6yusiojy7k64tx65hduqucvuoiingnp7gdeyuju",
+      "intent_source_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+      "partition": "train",
+      "profile_id": "legal-strict",
+      "recipe_path": "cases/legal_hard_reject",
+      "source_family_id": "family:legally_risky_effect",
+      "store_snapshot_digest": "sha256:505dd96770589a79325d455a3ed93f8d688fc2ba311bb55d3b2e5ab7d89345ab",
+      "stratum": "legal_reject"
+    },
+    {
+      "case_id": "security_hard_reject",
+      "evaluation": false,
+      "expected_reason_codes": [
+        "constraint_contradiction",
+        "security_hard_constraint"
+      ],
+      "expected_status": "reject",
+      "intent_artifact_cid": "bafkreif4anmvhr2scitiirzxpcnnrcj6ikpgvfrt6bbugskaiqo6kzefcu",
+      "intent_content_cid": "bafkreieoe433gsimyvnh5ittuqakuyrrv5hwhbvcflw3nbyzlh3p2kulea",
+      "intent_source_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+      "partition": "validation",
+      "profile_id": "legal-strict",
+      "recipe_path": "cases/security_hard_reject",
+      "source_family_id": "family:security_sensitive_resource",
+      "store_snapshot_digest": "sha256:bc8600ee48c3c071741e1997af5d5d0efed324afdb15ba5096367800594835bc",
+      "stratum": "security_reject"
+    },
+    {
+      "case_id": "zkp_required_missing_proof",
+      "evaluation": true,
+      "expected_reason_codes": [
+        "zkp_missing"
+      ],
+      "expected_status": "abstain",
+      "intent_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "intent_content_cid": "bafkreidpe7tft2ehtqsjobcm6vy7b4a54do6lvix2jzcomiyhgbedb5uo4",
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "partition": "test",
+      "profile_id": "zkp-required",
+      "recipe_path": "cases/zkp_required_missing_proof",
+      "source_family_id": "family:benign_skill",
+      "store_snapshot_digest": "sha256:0f4391e8755a79311de75990bc3cdadaec9100eeef8059436fca6e7854406023",
+      "stratum": "zkp_abstain"
+    }
+  ],
+  "corpus_snapshot_cid": "bafkrei32f253b8864bfdb6c04b133c7a58ada8040d5dca765bf2a7392d",
+  "corpus_snapshot_digest": "sha256:32f253b8864bfdb6c04b133c7a58ada8040d5dca765bf2a7392d131357c16e55",
+  "decision_interface": "AdmissibilityDecision@1",
+  "default_profile_id": "legal-strict",
+  "description": "Offline deterministic admissibility benchmark with leakage-safe splits. Evaluation cases are held-out by source family; the gate is never trained. Recipes reconstruct multi-family proof corpora from LIG-016 fixtures without network.",
+  "deterministic": true,
+  "evaluation_case_ids": [
+    "abstain_incomplete",
+    "benign_skill",
+    "contradiction_grant_and_forbid",
+    "zkp_required_missing_proof"
+  ],
+  "expected_report_file": "expected_report.json",
+  "gate_interface": "IntentAdmissibilityGate@1",
+  "goal_id": "LIG-G080",
+  "interface": "IntentAdmissibilityBenchmark@1",
+  "network_policy": "blocked",
+  "offline": true,
+  "parent_manifest": "tests/fixtures/logic/admissibility/manifest.json",
+  "parent_recipe_root": "tests/fixtures/logic/admissibility",
+  "profiles": {
+    "legal-strict": {
+      "config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+      "profile_id": "legal-strict",
+      "role": "default_production"
+    },
+    "zkp-required": {
+      "config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+      "profile_id": "zkp-required",
+      "role": "zkp_gate"
+    }
+  },
+  "required_metrics": [
+    "abstain_precision",
+    "abstain_recall",
+    "allow_precision",
+    "allow_recall",
+    "authority_violation_count",
+    "decision_accuracy",
+    "determinism_pass",
+    "false_allow_count",
+    "leakage_count",
+    "offline",
+    "promotion_eligible",
+    "reject_precision",
+    "reject_recall",
+    "status_counts"
+  ],
+  "required_strata": [
+    "abstain",
+    "allow",
+    "contradiction",
+    "legal_reject",
+    "security_reject",
+    "zkp_abstain"
+  ],
+  "schema_version": "intent-admissibility-benchmark/v1",
+  "shadow_default": true,
+  "source_intent_fixtures": "tests/fixtures/intent_ir/admissibility",
+  "splits_file": "splits.json",
+  "task_id": "LIG-019"
+}
