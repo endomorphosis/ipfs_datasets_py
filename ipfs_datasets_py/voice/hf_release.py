@@ -19,8 +19,10 @@ from dataclasses import dataclass, field
 from hashlib import sha256
 import json
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Final
 
+from ..huggingface.publisher import HuggingFaceReleasePublisher
 from ..huggingface.release import (
     DEFAULT_SHARD_ROWS,
     PARQUET_COMPRESSION,
@@ -48,6 +50,7 @@ from .evaluation_schema import (
 )
 from .graphrag import SlottedResponseIndex
 from .normalize import deterministic_split
+from .response_dag import ResponseDAGAppendCandidate
 from .schema import (
     ABBY_VOICE_AUDIO_V2,
     ABBY_VOICE_PROVENANCE_V2,
@@ -129,6 +132,85 @@ _ID_FIELD: Final[dict[str, str]] = {
 
 class AbbyVoiceHFReleaseError(HuggingFaceReleaseError):
     """Raised when an Abby voice release cannot be built or validated."""
+
+
+@dataclass(frozen=True, slots=True)
+class AbbyVoiceResponseDAGDryRunReceipt:
+    """Local-only endpoint of the cache-miss publication path."""
+
+    candidate_id: str
+    repository_id: str
+    local_root: str
+    release_manifest: Mapping[str, Any]
+    publication_plan: Mapping[str, Any]
+    publication_plan_sha256: str
+    receipt_sha256: str = ""
+
+    def __post_init__(self) -> None:
+        candidate_id = str(self.candidate_id or "").strip()
+        repository_id = str(self.repository_id or "").strip()
+        if not candidate_id:
+            raise AbbyVoiceHFReleaseError("candidate_id is required")
+        if "/" not in repository_id:
+            raise AbbyVoiceHFReleaseError(
+                "repository_id must have the form namespace/repository"
+            )
+        manifest = json.loads(canonical_json_bytes(self.release_manifest))
+        plan = json.loads(canonical_json_bytes(self.publication_plan))
+        if manifest.get("publication_status") != "local_only":
+            raise AbbyVoiceHFReleaseError(
+                "response-DAG manifest must remain local_only"
+            )
+        if manifest.get("remote_writes") is not False:
+            raise AbbyVoiceHFReleaseError(
+                "response-DAG manifest must prohibit remote writes"
+            )
+        if plan.get("dry_run") is not True:
+            raise AbbyVoiceHFReleaseError("publication plan must be a dry run")
+        if plan.get("remote_write_contacted") is not False:
+            raise AbbyVoiceHFReleaseError(
+                "dry-run receipt must not contact a remote writer"
+            )
+        plan_digest = sha256(canonical_json_bytes(plan)).hexdigest()
+        if self.publication_plan_sha256 != plan_digest:
+            raise AbbyVoiceHFReleaseError(
+                "publication_plan_sha256 does not match publication plan"
+            )
+        identity = {
+            "candidate_id": candidate_id,
+            "publication_plan_sha256": plan_digest,
+            "release_sha256": manifest.get("release_sha256"),
+            "repository_id": repository_id,
+            "schema_version": "abby_voice_response_dag_dry_run_receipt_v1",
+        }
+        computed = sha256(canonical_json_bytes(identity)).hexdigest()
+        if self.receipt_sha256 and self.receipt_sha256 != computed:
+            raise AbbyVoiceHFReleaseError(
+                "receipt_sha256 does not match local dry-run identity"
+            )
+        object.__setattr__(self, "candidate_id", candidate_id)
+        object.__setattr__(self, "repository_id", repository_id)
+        object.__setattr__(self, "local_root", str(self.local_root))
+        object.__setattr__(self, "release_manifest", MappingProxyType(manifest))
+        object.__setattr__(self, "publication_plan", MappingProxyType(plan))
+        object.__setattr__(self, "publication_plan_sha256", plan_digest)
+        object.__setattr__(self, "receipt_sha256", computed)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "candidate_id": self.candidate_id,
+            "dry_run": True,
+            "local_root": self.local_root,
+            "publication_plan": dict(self.publication_plan),
+            "publication_plan_sha256": self.publication_plan_sha256,
+            "publication_status": "local_only",
+            "receipt_sha256": self.receipt_sha256,
+            "release_manifest": dict(self.release_manifest),
+            "remote_write_contacted": False,
+            "remote_writes": False,
+            "repository_id": self.repository_id,
+            "schema_version": "abby_voice_response_dag_dry_run_receipt_v1",
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -900,6 +982,54 @@ def build_abby_voice_hf_release(
     )
 
 
+def materialize_response_dag_dry_run(
+    candidate: ResponseDAGAppendCandidate,
+    *,
+    output_dir: str | Path,
+    repository_id: str = DEFAULT_DATASET_REPO_ID,
+    existing_remote_paths: Sequence[str] = (),
+    existing_remote_digests: Mapping[str, str] | None = None,
+) -> AbbyVoiceResponseDAGDryRunReceipt:
+    """Materialize one immutable candidate and stop at a local publication plan.
+
+    No API client is accepted or constructed by this boundary. Consequently,
+    it cannot commit, promote, overwrite, or delete Hugging Face content.
+    """
+
+    if not isinstance(candidate, ResponseDAGAppendCandidate):
+        raise TypeError("candidate must be a ResponseDAGAppendCandidate")
+    requested_root = Path(output_dir).expanduser()
+    manifest = candidate.materialize(requested_root)
+    local_root = requested_root.resolve()
+    publisher = HuggingFaceReleasePublisher(repository_id=repository_id)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=local_root,
+        existing_remote_paths=existing_remote_paths,
+        existing_remote_digests=existing_remote_digests,
+    )
+    if not plan.dry_run or plan.remote_write_contacted:
+        raise AbbyVoiceHFReleaseError(
+            "response-DAG publication boundary produced a non-local plan"
+        )
+    # Local absolute paths are execution details rather than receipt identity.
+    # The manifest digests still prove the exact bytes at those paths.
+    plan_payload = plan.to_dict()
+    plan_payload.pop("plan_digest", None)
+    for operation in plan_payload.get("operations", ()):
+        if isinstance(operation, dict):
+            operation.pop("local_path", None)
+    plan_digest = sha256(canonical_json_bytes(plan_payload)).hexdigest()
+    return AbbyVoiceResponseDAGDryRunReceipt(
+        candidate_id=candidate.candidate_id,
+        repository_id=repository_id,
+        local_root=local_root.as_posix(),
+        release_manifest=manifest,
+        publication_plan=plan_payload,
+        publication_plan_sha256=plan_digest,
+    )
+
+
 def _rows_to_table(rows: Sequence[Mapping[str, Any]], *, schema: Any) -> Any:
     try:
         import pyarrow as pa
@@ -994,6 +1124,8 @@ __all__ = [
     "AbbyVoiceHFReleaseError",
     "AbbyVoiceHFReleasePolicy",
     "AbbyVoiceHFReleaseResult",
+    "AbbyVoiceResponseDAGDryRunReceipt",
     "build_abby_voice_hf_release",
+    "materialize_response_dag_dry_run",
     "validate_abby_voice_hf_release",
 ]
