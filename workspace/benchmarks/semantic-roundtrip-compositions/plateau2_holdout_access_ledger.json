@@ -1,0 +1,65 @@
+{
+  "access_ledger_authority_cid": "baguqeeraqwh65koyzjrahlazg2is7pwnvnqnxupsrmlywloyxvoinmflzplq",
+  "assumptions": [
+    "append-only single-use access",
+    "path-free public receipt export",
+    "tuning after access forbidden",
+    "no second grant on the same seal"
+  ],
+  "authorization_cid": "baguqeera6hix4s2y5duvbzmrevh7nmdign6q4njo6hyvg7o2kd3dlkzdt22a",
+  "candidate_freeze_cid": "baguqeerap2muaeecbnwuxybhu2nnrddcnqbcypa4nxojtiuads2zvxu6s2da",
+  "events": [
+    "access_granted",
+    "manifest_released"
+  ],
+  "executor_id": "plat2-060-custodian-evaluator",
+  "goal_id": "PLAT2-G060",
+  "interface": "HoldoutAccessAudit@1",
+  "ledger_cid": "baguqeeraymcdbko5peokdyicgbunpycrawxgvrscvuzq6ndxfaixrsioselq",
+  "ledger_cid_codec": "dag-json",
+  "ledger_cid_scope": "payload_without_ledger_cid",
+  "ledger_schema": "ipfs-datasets.semantic-roundtrip.holdout-access-ledger.v1",
+  "path_free": true,
+  "purpose": "evaluation",
+  "receipt_count": 2,
+  "receipts": [
+    {
+      "authorization_cid": "baguqeera6hix4s2y5duvbzmrevh7nmdign6q4njo6hyvg7o2kd3dlkzdt22a",
+      "authorization_goal_id": "PLAT2-055",
+      "event": "access_granted",
+      "executor_id": "plat2-060-custodian-evaluator",
+      "interface": "HoldoutAccessAudit@1",
+      "previous_receipt_cid": null,
+      "purpose": "evaluation",
+      "receipt_cid": "baguqeera2sk2bvdvaxum6s5h47lg7i2wo3ng53mr4c7op355lokgazszkqbq",
+      "schema": "ipfs-datasets.semantic-roundtrip.holdout-access-receipt.v1",
+      "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+      "sealed_private_bundle_cid": "baguqeerarjdlhvwseivludvriexk5vmcimsvy7ybfsotvddibaikjm57vy2a",
+      "sequence": 0,
+      "tuning_permitted": false
+    },
+    {
+      "authorization_cid": "baguqeera6hix4s2y5duvbzmrevh7nmdign6q4njo6hyvg7o2kd3dlkzdt22a",
+      "authorization_goal_id": "PLAT2-055",
+      "event": "manifest_released",
+      "executor_id": "plat2-060-custodian-evaluator",
+      "interface": "HoldoutAccessAudit@1",
+      "previous_receipt_cid": "baguqeera2sk2bvdvaxum6s5h47lg7i2wo3ng53mr4c7op355lokgazszkqbq",
+      "purpose": "evaluation",
+      "receipt_cid": "baguqeeraxg64cfgodvogjmwb5n3g2ihpovmbkvrc5gxvddlbrk45weoxozca",
+      "schema": "ipfs-datasets.semantic-roundtrip.holdout-access-receipt.v1",
+      "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+      "sealed_private_bundle_cid": "baguqeerarjdlhvwseivludvriexk5vmcimsvy7ybfsotvddibaikjm57vy2a",
+      "sequence": 1,
+      "tuning_permitted": false
+    }
+  ],
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau2-holdout-access-ledger.v1",
+  "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+  "sealed_private_bundle_cid": "baguqeerarjdlhvwseivludvriexk5vmcimsvy7ybfsotvddibaikjm57vy2a",
+  "single_use": true,
+  "successful_access": true,
+  "task_id": "PLAT2-060",
+  "title": "PLAT2-060 blind holdout access ledger",
+  "tuning_permitted": false
+}

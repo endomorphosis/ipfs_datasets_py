@@ -1,362 +1,41 @@
 {
   "acceptance": {
     "e2e_ci_high_lt_0": false,
-    "edit_waves_lineage_present": true,
-    "full_gates_pass": true,
-    "immutable_2026_07_27_replacement_promotion_report_not_rewritten": true,
-    "named_next_residuals_when_not_promoted": true,
-    "not_measured_excluded_from_rankings": true,
-    "paired_bootstrap_vs_declared_baseline": true,
-    "per_case_loss_tables_for_holdout": true,
-    "pilots_rechecked_non_regressed": true,
-    "promotion_authorized": false,
-    "promotion_true_only_if_ci_high_lt_0_and_full_gates": true
+    "full_gates_pass": false,
+    "noninferiority_holds": true,
+    "pilots_non_regressed": true,
+    "production_promotion_authorized": false
   },
-  "artifacts": {
-    "edit_wave_receipts": [
-      {
-        "case_id": "contradictory_modality",
-        "implementable": true,
-        "path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/contradictory_modality.json",
-        "receipt_cid": "baguqeerabmuaey5svgiakecagca4hkeby54llqhlxorxurs677ohlsl3qsla",
-        "task_id": "PLAT2-050"
-      },
-      {
-        "case_id": "low_confidence_object",
-        "implementable": true,
-        "path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/low_confidence_object.json",
-        "receipt_cid": "baguqeerarn76cssfcgqtumrumdydvtifziirubxamjg3g5kc3d5yqleim6uq",
-        "task_id": "PLAT2-050"
-      }
-    ],
-    "holdout_remeasure": {
-      "path": "docs/performance_snapshots/2026-07-28_semantic_roundtrip_holdout_remeasure.json",
-      "report_cid": "baguqeerau65iz4iqqla473n4n6u23yf6w6v5bfb3lsi72sofsvldgyostl5q"
-    },
-    "holdout_residual_catalog": {
-      "catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
-      "path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_residual_catalog.json"
-    },
-    "holdout_results": {
-      "path": "docs/benchmarks/semantic_roundtrip_holdout_results.md"
-    },
-    "immutable_replacement_report": {
-      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
-      "preserved": true,
-      "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
-    },
-    "pilot_promotion_decision": {
-      "note": "Historical PLAT-090 pilot promotion; not rewritten by PLAT2-060",
-      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_plateau_break_promotion_decision.json"
-    }
-  },
-  "captured_at_utc": "2026-07-28T05:10:24.861+00:00",
+  "captured_at_utc": "2026-07-28T08:58:44.684+00:00",
   "decision": {
+    "decision_outcome": "promotion_declined",
     "evidence_complete": true,
-    "parity_passed": true,
+    "improvement_claim": false,
     "production_promotion_authorized": false,
     "promotion": false,
     "reason_codes": [
-      "holdout_e2e_ci_high_not_lt_0",
-      "named_next_residuals",
-      "full_gates_pass",
+      "e2e_ci_high_not_lt_0",
+      "noninferiority_holds",
+      "full_gates_failed",
       "pilots_non_regressed"
     ],
     "selected_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
-    "status": "hold_with_residuals"
+    "status": "promotion_declined"
   },
-  "decision_cid": "baguqeeraqbln33vkic4t3oihu3myudcmk5r63cwmj53dsgz6hwpjnagpddfq",
-  "decision_cid_codec": "dag-json",
-  "decision_cid_scope": "payload_without_decision_cid",
+  "decision_cid": "baguqeeracs6gvtpumpn43ixtmi5eacit7gxuoiz5rrc4inxwd7ryjw46ks6q",
   "interface": "CanonicalCompilerDecision@1",
   "lineage": {
-    "board_namespace": "semantic-roundtrip-plateau-holdout-v1",
+    "access_ledger_cid": "baguqeeraymcdbko5peokdyicgbunpycrawxgvrscvuzq6ndxfaixrsioselq",
+    "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
     "bundle": "semantic-roundtrip/plateau-holdout/remeasure",
-    "declared_baseline_e2e": 0.0,
-    "declared_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
-    "depends_on_tasks": [
-      "PLAT2-050"
-    ],
-    "pilot_promotion_task": "PLAT-090"
-  },
-  "next_residuals": [
-    {
-      "canonical_field": null,
-      "case_end_to_end_loss": 0.3,
-      "case_forward_loss": 0.3,
-      "case_id": "legal_doc_2",
-      "field_path": "rules[2]",
-      "loss_contribution": 0.25,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "missing_rule",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": "conditions",
-      "case_end_to_end_loss": 0.3,
-      "case_forward_loss": 0.3,
-      "case_id": "legal_doc_2",
-      "field_path": "rules[3].conditions",
-      "loss_contribution": 0.025,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": "temporal",
-      "case_end_to_end_loss": 0.3,
-      "case_forward_loss": 0.3,
-      "case_id": "legal_doc_2",
-      "field_path": "rules[3].temporal",
-      "loss_contribution": 0.025,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "contradictory"
-    },
-    {
-      "canonical_field": null,
-      "case_end_to_end_loss": 0.26,
-      "case_forward_loss": 0.26,
-      "case_id": "fed_reg_1",
-      "field_path": "rules[3]",
-      "loss_contribution": 0.2,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "missing_rule",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": "object",
-      "case_end_to_end_loss": 0.26,
-      "case_forward_loss": 0.26,
-      "case_id": "fed_reg_1",
-      "field_path": "rules[2].object",
-      "loss_contribution": 0.02,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "contradictory"
-    },
-    {
-      "canonical_field": "conditions",
-      "case_end_to_end_loss": 0.26,
-      "case_forward_loss": 0.26,
-      "case_id": "fed_reg_1",
-      "field_path": "rules[4].conditions",
-      "loss_contribution": 0.02,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": "temporal",
-      "case_end_to_end_loss": 0.26,
-      "case_forward_loss": 0.26,
-      "case_id": "fed_reg_1",
-      "field_path": "rules[4].temporal",
-      "loss_contribution": 0.02,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "contradictory"
-    },
-    {
-      "canonical_field": null,
-      "case_end_to_end_loss": 0.25,
-      "case_forward_loss": 0.25,
-      "case_id": "dept_memo_1",
-      "field_path": "rules[2]",
-      "loss_contribution": 0.25,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "missing_rule",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": null,
-      "case_end_to_end_loss": 0.43,
-      "case_forward_loss": 0.42,
-      "case_id": "hr_handbook",
-      "field_path": "rules[1]",
-      "loss_contribution": 0.2,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "missing_rule",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": null,
-      "case_end_to_end_loss": 0.43,
-      "case_forward_loss": 0.42,
-      "case_id": "hr_handbook",
-      "field_path": "rules[3]",
-      "loss_contribution": 0.2,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "missing_rule",
-      "suggested_trigger_kind": "missing"
-    },
-    {
-      "canonical_field": "object",
-      "case_end_to_end_loss": 0.43,
-      "case_forward_loss": 0.42,
-      "case_id": "hr_handbook",
-      "field_path": "rules[0].object",
-      "loss_contribution": 0.02,
-      "population": "holdout",
-      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
-      "residual_kind": "field_mismatch",
-      "suggested_trigger_kind": "contradictory"
+    "holdout_remeasure_report_cid": "baguqeeraupu46elxeoebbowyzawfytlueifxzv7hywdxkg6nzas2b4pef2ja",
+    "recovery": {
+      "completion_checkpoint": "/var/tmp/hssl-srt-plateau-holdout-v2/state/semantic-roundtrip-plateau-holdout-remeasure/state/implementation_checkpoints/plat2-060-faf8aaffa5cc/completion.json",
+      "note": "Full per-case remeasure JSON was discarded with the supervisor worktree. This file is an operator recovery envelope bound to the original one-shot report_cid / decision_cid / ledger_cid from Grok session 019fa7e5-518f-7df1-8274-c56a759efb53 and completion.json (artifacts_written, 54 passed). Access ledger export was regenerable with matching ledger_cid without re-scoring. No blind re-run was performed.",
+      "session_id": "019fa7e5-518f-7df1-8274-c56a759efb53",
+      "status": "partial_public_body_recovery"
     }
-  ],
-  "next_residuals_note": "11 named facet residual(s) across 4 holdout case(s). Promotion false until CI high < 0 vs declared baseline 0.0 and full gates pass with residual clearance.",
-  "parity": {
-    "holdout_gate_smoke": "passed",
-    "note": "Holdout parity means full holdout selection gates pass on the remeasured det path and pilots remain at mean e2e 0.0",
-    "pilot_non_regression": "passed",
-    "status": "passed",
-    "within_tolerance": true
-  },
-  "promotion_gates": {
-    "beats_baseline_ci": false,
-    "e2e_ci": {
-      "high": 0.26875,
-      "low": 0.0375
-    },
-    "e2e_ci_high_lt_0": false,
-    "full_gates_pass": true,
-    "hybrid_success_authorization_cid": "baguqeeravanbdfwjf67567txfsmomvyfmzu4ibyapzdy67y6vzlfvxrxmqsq",
-    "paired_bootstrap_report_cid": "baguqeerab3auplramyh2kw6jywc7ylbe3dkdrmtmwsxuycot2rjfuqwbimra",
-    "pilots_non_regressed": true,
-    "promotion_still_requires_full_gates_flag_on_auth": true,
-    "smoke_cid": "baguqeeraezjkuul7u3pbzp7g53wnwzq57pqts5hhucybzszpj35o3ywpom3a",
-    "smoke_status": "passed"
-  },
-  "reproduction": {
-    "commands": [
-      {
-        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_hybrid_arms.py tests/unit/benchmarks/semantic_roundtrip/test_residual_catalog.py -q",
-        "purpose": "unit_validation"
-      },
-      {
-        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_holdout_edit_waves.py -q",
-        "purpose": "holdout_edit_wave_regression"
-      }
-    ]
   },
   "schema_version": "ipfs-datasets.semantic-roundtrip-holdout-promotion-decision.v1",
-  "selected_composition": {
-    "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
-    "deterministic_stages": [
-      {
-        "component": "typed_deontic",
-        "role": "constructor",
-        "stage_id": "l1_compile"
-      },
-      {
-        "component": "deterministic_realizer",
-        "role": "realizer",
-        "stage_id": "t1_decompile"
-      },
-      {
-        "component": "typed_deontic",
-        "role": "constructor",
-        "stage_id": "l2_compile"
-      }
-    ],
-    "optional_learned_stages": [],
-    "reconstruction_loss": {
-      "aggregation": "per_case_first_macro_mean",
-      "declared_baseline_mean": 0.0,
-      "mean": 0.155,
-      "mean_delta_vs_declared_baseline": 0.155,
-      "metric": "end_to_end_loss",
-      "uncertainty": {
-        "absolute_remeasured": {
-          "high": 0.26875,
-          "low": 0.0,
-          "mean": 0.155
-        },
-        "bootstrap_samples": 10000,
-        "confidence_level": 0.95,
-        "method": "seeded_percentile_case_cluster_bootstrap",
-        "paired_vs_declared_baseline": {
-          "high": 0.26875,
-          "low": 0.0375,
-          "mean_delta": 0.155
-        },
-        "resampling_unit": "case_after_within_case_repeat_aggregation"
-      }
-    },
-    "selection_basis": "plat2060_paired_bootstrap_vs_declared_post_pilot_0_0_plus_full_gates"
-  },
-  "task_id": "PLAT2-060",
-  "title": "Holdout remeasure promotion decision",
-  "tool_accounting": {
-    "requested_tool_ids": [
-      "typed_deontic",
-      "modal",
-      "spacy",
-      "deterministic_realizer",
-      "autoencoder",
-      "symai",
-      "leanstral",
-      "selective_repair",
-      "hammer",
-      "cvc5",
-      "lean",
-      "multiformats"
-    ],
-    "scored_tool_ids": [
-      "typed_deontic",
-      "deterministic_realizer"
-    ],
-    "unavailable": [],
-    "unscored": [
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "modal"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "spacy"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "autoencoder"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "symai"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "leanstral"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "selective_repair"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "hammer"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "cvc5"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "lean"
-      },
-      {
-        "reason": "not part of the selected deterministic composition",
-        "tool_id": "multiformats"
-      }
-    ]
-  }
+  "task_id": "PLAT2-060"
 }
