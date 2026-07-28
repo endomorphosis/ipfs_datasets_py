@@ -1,0 +1,983 @@
+{
+  "acceptance": {
+    "e2e_ci_high_lt_0": false,
+    "edit_waves_lineage_present": true,
+    "full_gates_pass": true,
+    "immutable_2026_07_27_replacement_promotion_report_not_rewritten": true,
+    "named_next_residuals_when_not_promoted": true,
+    "not_measured_excluded_from_rankings": true,
+    "paired_bootstrap_vs_declared_baseline": true,
+    "per_case_loss_tables_for_holdout": true,
+    "pilots_rechecked_non_regressed": true,
+    "promotion_authorized": false,
+    "promotion_true_only_if_ci_high_lt_0_and_full_gates": true
+  },
+  "artifacts": {
+    "holdout_cases_fixture": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "holdout_residual_catalog": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_residual_catalog.json",
+    "holdout_residual_catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+    "immutable_replacement_report": {
+      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
+      "preserved": true,
+      "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+    },
+    "pilot_promotion_decision": {
+      "note": "Historical pilot PLAT-090 promotion; not rewritten",
+      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_plateau_break_promotion_decision.json"
+    }
+  },
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_delta_tables": {
+    "activation_subset_vs_sealed_residual_catalog_prior": {
+      "authorization_cid": "baguqeeraopnrj256n2t4npc7zgkivngt2fdhsrbuyfgvmil6sey4xxi2yruq",
+      "beats_baseline_ci": false,
+      "case_count": 3,
+      "confidence_interval": {
+        "high": 0.0,
+        "low": -0.5,
+        "method": "seeded_percentile_case_cluster_bootstrap"
+      },
+      "mean_delta": -0.2,
+      "note": "Secondary evidence that PLAT2-050 cleared sealed activation residuals. Not the promotion gate (promotion uses declared post-pilot baseline 0.0 on the full holdout population).",
+      "paired_bootstrap_report_cid": "baguqeeran4ru75oiznfahwfqe4mtsojrxewk6dm3cittsso6aupdbpvoehfa"
+    },
+    "bootstrap_method": "seeded_percentile_case_cluster_bootstrap",
+    "bootstrap_samples": 10000,
+    "confidence_level": 0.95,
+    "declared_baseline_e2e_mean": 0.0,
+    "declared_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+    "description": "Paired case-cluster bootstrap deltas (candidate minus declared post-pilot baseline 0.0). Negative mean_delta means lower loss (better). Beats baseline only when CI high < 0.",
+    "holdout_vs_declared_baseline_0_0": [
+      {
+        "baseline_arm_id": "declared_post_pilot_baseline_e2e_0_0",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "beats_baseline_forward_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "comparison_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic__vs__declared_post_pilot_baseline_e2e_0_0",
+        "delta_direction": "candidate_minus_baseline",
+        "losses": {
+          "cycle": {
+            "baseline_mean": 0.0,
+            "candidate_mean": 0.002083333375,
+            "case_deltas": {
+              "contradictory_modality": 0.0,
+              "dept_memo_1": 0.0,
+              "fed_reg_1": 0.0,
+              "hr_handbook": 0.016666667,
+              "legal_doc_2": 0.0,
+              "low_confidence_object": 0.0,
+              "missing_temporal": 0.0,
+              "privacy_act_amendment": 0.0
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": 0.006250000125,
+              "low": 0.0,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": 0.002083333375
+          },
+          "end_to_end": {
+            "baseline_mean": 0.0,
+            "candidate_mean": 0.155,
+            "case_deltas": {
+              "contradictory_modality": 0.0,
+              "dept_memo_1": 0.25,
+              "fed_reg_1": 0.26,
+              "hr_handbook": 0.43,
+              "legal_doc_2": 0.3,
+              "low_confidence_object": 0.0,
+              "missing_temporal": 0.0,
+              "privacy_act_amendment": 0.0
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": 0.26875,
+              "low": 0.0375,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": 0.155
+          },
+          "forward": {
+            "baseline_mean": 0.0,
+            "candidate_mean": 0.15375,
+            "case_deltas": {
+              "contradictory_modality": 0.0,
+              "dept_memo_1": 0.25,
+              "fed_reg_1": 0.26,
+              "hr_handbook": 0.42,
+              "legal_doc_2": 0.3,
+              "low_confidence_object": 0.0,
+              "missing_temporal": 0.0,
+              "privacy_act_amendment": 0.0
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": 0.26875,
+              "low": 0.0375,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": 0.15375
+          }
+        }
+      }
+    ],
+    "hybrid_success_authorizations": [
+      {
+        "authorization_cid": "baguqeeravanbdfwjf67567txfsmomvyfmzu4ibyapzdy67y6vzlfvxrxmqsq",
+        "authorized": true,
+        "baseline_arm_id": "declared_post_pilot_baseline_e2e_0_0",
+        "beats_baseline_ci": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "confidence_interval": {
+          "high": 0.26875,
+          "low": 0.0375,
+          "method": "seeded_percentile_case_cluster_bootstrap"
+        },
+        "interface": "HybridRoundTripArms@1",
+        "mean_delta": 0.155,
+        "metric": "end_to_end",
+        "paired_bootstrap_required": true,
+        "promotion_still_requires_full_gates": true,
+        "schema_version": "ipfs-datasets.semantic-roundtrip-hybrid-success-claim.v1"
+      }
+    ],
+    "paired_bootstrap_report_cid": "baguqeerab3auplramyh2kw6jywc7ylbe3dkdrmtmwsxuycot2rjfuqwbimra",
+    "seed": 17291
+  },
+  "captured_at_utc": "2026-07-28T05:10:24.861+00:00",
+  "declared_baseline": {
+    "arm_id": "declared_post_pilot_baseline_e2e_0_0",
+    "description": "Post-pilot production claim: mean e2e 0.0 on sealed pilots (HOLDOUT_BASELINE_E2E_MEAN). Paired bootstrap treats this as a constant per-case baseline of 0.0 on the holdout population.",
+    "e2e_mean": 0.0,
+    "report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+    "source": "benchmarks.semantic_roundtrip.residual_catalog.HOLDOUT_BASELINE_*"
+  },
+  "edit_wave_lineage": {
+    "depends_on": [
+      "PLAT2-050"
+    ],
+    "note": "Edit-wave receipts cover sealed nonzero activation residuals (low_confidence_object, contradictory_modality). missing_temporal was already zero-residual at catalog seal.",
+    "receipts": [
+      {
+        "case_id": "contradictory_modality",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/contradictory_modality.json",
+        "receipt_cid": "baguqeerabmuaey5svgiakecagca4hkeby54llqhlxorxurs677ohlsl3qsla",
+        "task_id": "PLAT2-050"
+      },
+      {
+        "case_id": "low_confidence_object",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/low_confidence_object.json",
+        "receipt_cid": "baguqeerarn76cssfcgqtumrumdydvtifziirubxamjg3g5kc3d5yqleim6uq",
+        "task_id": "PLAT2-050"
+      }
+    ],
+    "residual_catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+    "residual_catalog_path": "workspace/benchmarks/semantic-roundtrip-compositions/holdout_residual_catalog.json"
+  },
+  "frozen_baseline_e2e_mean": 0.0,
+  "frozen_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "full_gates": {
+    "all_cases_gate_pass": true,
+    "gates_required": [
+      "full_coverage",
+      "source_copy_exclusion",
+      "polarity_preservation",
+      "nonempty_l1_t1_l2"
+    ],
+    "holdout_deterministic_smoke_status": "passed",
+    "immutable_2026_07_27_replacement_report_preserved": true,
+    "optional_runtimes_promoted": false,
+    "per_case": {
+      "contradictory_modality": {
+        "case_id": "contradictory_modality",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+        "l2_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeerarer4w7otnxhx5xtlsdeg2nntt65yqqca5ezv6ip3p76dawr3y4ua",
+        "t1_cid": "bafkreiardryseg5gladhlkcgze2qqbirkx6h4dvylwj76yyya5gtu5edxu"
+      },
+      "dept_memo_1": {
+        "case_id": "dept_memo_1",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeeraulrhcdoadi52ulndminwpgz72izh5wy7wkgowrlp75cylbfpgdja",
+        "l2_cid": "baguqeeraulrhcdoadi52ulndminwpgz72izh5wy7wkgowrlp75cylbfpgdja",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeeraw7ccxsr5gqnakk3i7vklbh366ny6m2wckio54ifffutcwde6pnwq",
+        "t1_cid": "bafkreihrt4iaencdgds25ud4grwa7zx6c7tpxidz5pfpmwxzewdbj4kyie"
+      },
+      "fed_reg_1": {
+        "case_id": "fed_reg_1",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeerale7oce44vyjw74jdp37pkms2ty3otzwjmyyf2n5kae3potsd7exq",
+        "l2_cid": "baguqeerale7oce44vyjw74jdp37pkms2ty3otzwjmyyf2n5kae3potsd7exq",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeera4zrnnzahgi2rotresodyx7qpnsdcwgfxcdcryx5nto5kk4l2pdba",
+        "t1_cid": "bafkreidgbfd5ve2inmz752ay4wfsnspxgvq6gcvvni2q3tv5b3e4d7t4ya"
+      },
+      "hr_handbook": {
+        "case_id": "hr_handbook",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeeracqtgkqbhugbmsjvzzwsjuvbs3osqguy3e6znrsfdp67ui7zx66vq",
+        "l2_cid": "baguqeeraga2yehn3rjo26cyeznrpyoe7v5dtpt4a5ugbzphg2mbmkmzgp26q",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeera4ja5sp7zkpbtvrxanybgnakriufuiw3tu37bomyyxjpkxwjdqp2a",
+        "t1_cid": "bafkreibokw44ciync27xqvujrqwvpdebrttlyzome4lcqmjdae2flphud4"
+      },
+      "legal_doc_2": {
+        "case_id": "legal_doc_2",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeerappeojkk7fj3mvq5kdcpvx6bk23ofnzkstjgwiapn5aazlaarjtia",
+        "l2_cid": "baguqeerappeojkk7fj3mvq5kdcpvx6bk23ofnzkstjgwiapn5aazlaarjtia",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeerawkxyrvitkfpjuldztk6takcymi3mtiboyscyndic3zdlvxo6tnoq",
+        "t1_cid": "bafkreiavxybgwphruoqdti6fy2r4gho3ldaywvyh4esgcgzoag7xlxpmta"
+      },
+      "low_confidence_object": {
+        "case_id": "low_confidence_object",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+        "l2_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeera66jybdt6p42occmclfssvt2uovzkw42refyp5gtsbdznu2a5graa",
+        "t1_cid": "bafkreifgr5jpnek5kt245usw6p7wqy6cb4tijpwpxilgmbnuy4akobks6i"
+      },
+      "missing_temporal": {
+        "case_id": "missing_temporal",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+        "l2_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeerasjfpcccaba2c3cjbwzkl6yrmasbhd4wkxytstkuuyud55lqxnlbq",
+        "t1_cid": "bafkreib2mu6xyzoonxex3tpgyo7tvhucwjwgam4clsmz2dnfg2knpv2lbu"
+      },
+      "privacy_act_amendment": {
+        "case_id": "privacy_act_amendment",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "l1_cid": "baguqeeraoeqjcapcjzvoiqkvxsxldvvuiehkdw3wu7lgllpbhd7lwrh5ibfa",
+        "l2_cid": "baguqeeraoeqjcapcjzvoiqkvxsxldvvuiehkdw3wu7lgllpbhd7lwrh5ibfa",
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeeraqhrhesmtrmhpx4uaphx7mkmsbkkxpsskzxfk4tyqvgtetl26enna",
+        "t1_cid": "bafkreiemknc6ruhgyebxl5jhxdbjju644osslclqro34gygyttfbqqsuzm"
+      }
+    },
+    "pilots_non_regressed": true,
+    "smoke_cid": "baguqeeraezjkuul7u3pbzp7g53wnwzq57pqts5hhucybzszpj35o3ywpom3a",
+    "smoke_interface": "HoldoutDeterministicSmoke@1",
+    "structural_admission_role": "repair_admission_gate_only"
+  },
+  "holdout_remeasure": {
+    "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "case_count": 8,
+    "case_ids": [
+      "missing_temporal",
+      "low_confidence_object",
+      "contradictory_modality",
+      "legal_doc_2",
+      "privacy_act_amendment",
+      "fed_reg_1",
+      "dept_memo_1",
+      "hr_handbook"
+    ],
+    "case_rows": [
+      {
+        "case_cid": "baguqeerammwsvjiat7ak6f4affngc4fa4xu7u3uhuzczi27hrw7bqslqfdza",
+        "case_id": "missing_temporal",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.0,
+        "delta_end_to_end_vs_sealed_prior": 0.0,
+        "delta_forward_vs_declared_baseline": 0.0,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "gold_rule_count": 1,
+          "l1_rule_count": 1,
+          "l2_rule_count": 1,
+          "repair_status": "not_applicable",
+          "residual_count": 0,
+          "residuals": []
+        },
+        "sealed_residual_catalog_prior": {
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "residual_count": 0
+        }
+      },
+      {
+        "case_cid": "baguqeera63mvsjj6zprb7rw7xtxan6iwdnuf7yodjqkxy5jrolqpsda3msmq",
+        "case_id": "low_confidence_object",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.0,
+        "delta_end_to_end_vs_sealed_prior": -0.1,
+        "delta_forward_vs_declared_baseline": 0.0,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "gold_rule_count": 1,
+          "l1_rule_count": 1,
+          "l2_rule_count": 1,
+          "repair_status": "not_applicable",
+          "residual_count": 0,
+          "residuals": []
+        },
+        "sealed_residual_catalog_prior": {
+          "end_to_end_loss": 0.1,
+          "forward_loss": 0.1,
+          "residual_count": 1
+        }
+      },
+      {
+        "case_cid": "baguqeeralsetrr6dgmk325hsjrz5ihcap2zqsiwbrojpw6karzntvj3kjftq",
+        "case_id": "contradictory_modality",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.0,
+        "delta_end_to_end_vs_sealed_prior": -0.5,
+        "delta_forward_vs_declared_baseline": 0.0,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "gold_rule_count": 1,
+          "l1_rule_count": 1,
+          "l2_rule_count": 1,
+          "repair_status": "not_applicable",
+          "residual_count": 0,
+          "residuals": []
+        },
+        "sealed_residual_catalog_prior": {
+          "end_to_end_loss": 0.5,
+          "forward_loss": 0.5,
+          "residual_count": 1
+        }
+      },
+      {
+        "case_cid": "baguqeerafzhepffelzoxidjwy3ps2cvincjwrlw4xlsjhootyxkrywivwcza",
+        "case_id": "legal_doc_2",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.3,
+        "delta_end_to_end_vs_sealed_prior": null,
+        "delta_forward_vs_declared_baseline": 0.3,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.3,
+          "forward_loss": 0.3,
+          "gold_rule_count": 4,
+          "l1_rule_count": 3,
+          "l2_rule_count": 3,
+          "repair_status": "not_applicable",
+          "residual_count": 3,
+          "residuals": [
+            {
+              "canonical_field": null,
+              "field_path": "rules[2]",
+              "loss_contribution": 0.25,
+              "residual_kind": "missing_rule",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": "conditions",
+              "field_path": "rules[3].conditions",
+              "loss_contribution": 0.025,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": "temporal",
+              "field_path": "rules[3].temporal",
+              "loss_contribution": 0.025,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "contradictory"
+            }
+          ]
+        },
+        "sealed_residual_catalog_prior": null
+      },
+      {
+        "case_cid": "baguqeeram2xzjr6smksszeit6ipel5bqa6kyivya3pkgniosuozxjrimybcq",
+        "case_id": "privacy_act_amendment",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.0,
+        "delta_end_to_end_vs_sealed_prior": null,
+        "delta_forward_vs_declared_baseline": 0.0,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "gold_rule_count": 2,
+          "l1_rule_count": 2,
+          "l2_rule_count": 2,
+          "repair_status": "not_applicable",
+          "residual_count": 0,
+          "residuals": []
+        },
+        "sealed_residual_catalog_prior": null
+      },
+      {
+        "case_cid": "baguqeeraoist6assmpg2k5zl4anhs5jble5rmtofvcnjuc36dxndlnsdfl4a",
+        "case_id": "fed_reg_1",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.26,
+        "delta_end_to_end_vs_sealed_prior": null,
+        "delta_forward_vs_declared_baseline": 0.26,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.26,
+          "forward_loss": 0.26,
+          "gold_rule_count": 5,
+          "l1_rule_count": 4,
+          "l2_rule_count": 4,
+          "repair_status": "not_applicable",
+          "residual_count": 4,
+          "residuals": [
+            {
+              "canonical_field": null,
+              "field_path": "rules[3]",
+              "loss_contribution": 0.2,
+              "residual_kind": "missing_rule",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": "object",
+              "field_path": "rules[2].object",
+              "loss_contribution": 0.02,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "contradictory"
+            },
+            {
+              "canonical_field": "conditions",
+              "field_path": "rules[4].conditions",
+              "loss_contribution": 0.02,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": "temporal",
+              "field_path": "rules[4].temporal",
+              "loss_contribution": 0.02,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "contradictory"
+            }
+          ]
+        },
+        "sealed_residual_catalog_prior": null
+      },
+      {
+        "case_cid": "baguqeerajkylucikrti6kxannxneqkex5vpzzdatu3mnbu3jzjbieiwqzdma",
+        "case_id": "dept_memo_1",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.25,
+        "delta_end_to_end_vs_sealed_prior": null,
+        "delta_forward_vs_declared_baseline": 0.25,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.25,
+          "forward_loss": 0.25,
+          "gold_rule_count": 4,
+          "l1_rule_count": 3,
+          "l2_rule_count": 3,
+          "repair_status": "not_applicable",
+          "residual_count": 1,
+          "residuals": [
+            {
+              "canonical_field": null,
+              "field_path": "rules[2]",
+              "loss_contribution": 0.25,
+              "residual_kind": "missing_rule",
+              "suggested_trigger_kind": "missing"
+            }
+          ]
+        },
+        "sealed_residual_catalog_prior": null
+      },
+      {
+        "case_cid": "baguqeera7qnnv7hd7tkej2cy2z2q4qyogf3cphlpdcf3hosvxfuqukrd5dja",
+        "case_id": "hr_handbook",
+        "declared_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "note": "post-pilot production claim (HOLDOUT_BASELINE_E2E_MEAN=0.0)"
+        },
+        "delta_end_to_end_vs_declared_baseline": 0.43,
+        "delta_end_to_end_vs_sealed_prior": null,
+        "delta_forward_vs_declared_baseline": 0.42,
+        "evaluation_status": "semantic_scored",
+        "remeasured_det_path": {
+          "cycle_loss": 0.016666667,
+          "end_to_end_loss": 0.43,
+          "forward_loss": 0.42,
+          "gold_rule_count": 5,
+          "l1_rule_count": 3,
+          "l2_rule_count": 3,
+          "repair_status": "not_applicable",
+          "residual_count": 3,
+          "residuals": [
+            {
+              "canonical_field": null,
+              "field_path": "rules[1]",
+              "loss_contribution": 0.2,
+              "residual_kind": "missing_rule",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": null,
+              "field_path": "rules[3]",
+              "loss_contribution": 0.2,
+              "residual_kind": "missing_rule",
+              "suggested_trigger_kind": "missing"
+            },
+            {
+              "canonical_field": "object",
+              "field_path": "rules[0].object",
+              "loss_contribution": 0.02,
+              "residual_kind": "field_mismatch",
+              "suggested_trigger_kind": "contradictory"
+            }
+          ]
+        },
+        "sealed_residual_catalog_prior": null
+      }
+    ],
+    "evaluation_status": "semantic_scored",
+    "mean_cycle": 0.002083333,
+    "mean_end_to_end": 0.155,
+    "mean_forward": 0.15375,
+    "not_measured_count": 0,
+    "population": "holdout",
+    "runtime_failed_count": 0,
+    "semantic_scored_count": 8
+  },
+  "interface": "EvalRepairMatrixReport@1",
+  "next_residuals": [
+    {
+      "canonical_field": null,
+      "case_end_to_end_loss": 0.3,
+      "case_forward_loss": 0.3,
+      "case_id": "legal_doc_2",
+      "field_path": "rules[2]",
+      "loss_contribution": 0.25,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "missing_rule",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": "conditions",
+      "case_end_to_end_loss": 0.3,
+      "case_forward_loss": 0.3,
+      "case_id": "legal_doc_2",
+      "field_path": "rules[3].conditions",
+      "loss_contribution": 0.025,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": "temporal",
+      "case_end_to_end_loss": 0.3,
+      "case_forward_loss": 0.3,
+      "case_id": "legal_doc_2",
+      "field_path": "rules[3].temporal",
+      "loss_contribution": 0.025,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "canonical_field": null,
+      "case_end_to_end_loss": 0.26,
+      "case_forward_loss": 0.26,
+      "case_id": "fed_reg_1",
+      "field_path": "rules[3]",
+      "loss_contribution": 0.2,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "missing_rule",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": "object",
+      "case_end_to_end_loss": 0.26,
+      "case_forward_loss": 0.26,
+      "case_id": "fed_reg_1",
+      "field_path": "rules[2].object",
+      "loss_contribution": 0.02,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "canonical_field": "conditions",
+      "case_end_to_end_loss": 0.26,
+      "case_forward_loss": 0.26,
+      "case_id": "fed_reg_1",
+      "field_path": "rules[4].conditions",
+      "loss_contribution": 0.02,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": "temporal",
+      "case_end_to_end_loss": 0.26,
+      "case_forward_loss": 0.26,
+      "case_id": "fed_reg_1",
+      "field_path": "rules[4].temporal",
+      "loss_contribution": 0.02,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "canonical_field": null,
+      "case_end_to_end_loss": 0.25,
+      "case_forward_loss": 0.25,
+      "case_id": "dept_memo_1",
+      "field_path": "rules[2]",
+      "loss_contribution": 0.25,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "missing_rule",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": null,
+      "case_end_to_end_loss": 0.43,
+      "case_forward_loss": 0.42,
+      "case_id": "hr_handbook",
+      "field_path": "rules[1]",
+      "loss_contribution": 0.2,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "missing_rule",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": null,
+      "case_end_to_end_loss": 0.43,
+      "case_forward_loss": 0.42,
+      "case_id": "hr_handbook",
+      "field_path": "rules[3]",
+      "loss_contribution": 0.2,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "missing_rule",
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "canonical_field": "object",
+      "case_end_to_end_loss": 0.43,
+      "case_forward_loss": 0.42,
+      "case_id": "hr_handbook",
+      "field_path": "rules[0].object",
+      "loss_contribution": 0.02,
+      "population": "holdout",
+      "recommended_next_wave": "PLAT2 residual \u2192 packet \u2192 det edit (or teacher if needed)",
+      "residual_kind": "field_mismatch",
+      "suggested_trigger_kind": "contradictory"
+    }
+  ],
+  "next_residuals_note": "11 named facet residual(s) across 4 holdout case(s). Promotion false until CI high < 0 vs declared baseline 0.0 and full gates pass with residual clearance.",
+  "pilot_non_regression": {
+    "all_cases_e2e_zero": true,
+    "case_rows": [
+      {
+        "case_id": "exception_with_window",
+        "evaluation_status": "semantic_scored",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": false
+        },
+        "non_regressed_e2e_zero": true,
+        "nonempty_l1_t1_l2": true,
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "exec_order_1",
+        "evaluation_status": "semantic_scored",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "non_regressed_e2e_zero": true,
+        "nonempty_l1_t1_l2": true,
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "corp_policy_1",
+        "evaluation_status": "semantic_scored",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "non_regressed_e2e_zero": true,
+        "nonempty_l1_t1_l2": true,
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "legal_doc_1",
+        "evaluation_status": "semantic_scored",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "non_regressed_e2e_zero": true,
+        "nonempty_l1_t1_l2": true,
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "construction_contract",
+        "evaluation_status": "semantic_scored",
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "non_regressed_e2e_zero": true,
+        "nonempty_l1_t1_l2": true,
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      }
+    ],
+    "mean_cycle": 0.0,
+    "mean_end_to_end": 0.0,
+    "mean_forward": 0.0,
+    "required_mean_e2e": 0.0,
+    "status": "passed"
+  },
+  "production_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "promotion_decision_cid": "baguqeeraqbln33vkic4t3oihu3myudcmk5r63cwmj53dsgz6hwpjnagpddfq",
+  "promotion_summary": {
+    "e2e_ci_high": 0.26875,
+    "e2e_ci_high_lt_0": false,
+    "full_gates_pass": true,
+    "pilots_non_regressed": true,
+    "promotion": false,
+    "reason": "holdout_still_above_declared_zero_baseline_with_named_residuals"
+  },
+  "report_cid": "baguqeerau65iz4iqqla473n4n6u23yf6w6v5bfb3lsi72sofsvldgyostl5q",
+  "report_cid_codec": "dag-json",
+  "report_cid_scope": "payload_without_report_cid_and_promotion_decision_cid",
+  "reproduction": {
+    "commands": [
+      {
+        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_hybrid_arms.py tests/unit/benchmarks/semantic_roundtrip/test_residual_catalog.py -q",
+        "purpose": "unit_validation"
+      },
+      {
+        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_holdout_edit_waves.py -q",
+        "purpose": "holdout_edit_wave_regression"
+      }
+    ]
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-holdout-remeasure.v1",
+  "semantic_rankings": [
+    {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "included": true,
+      "mean_cycle": 0.002083333,
+      "mean_end_to_end": 0.155,
+      "mean_forward": 0.15375,
+      "model_calls": 0,
+      "population": "holdout",
+      "rank": 1,
+      "scored_n": 8
+    }
+  ],
+  "status_taxonomy": {
+    "counts": {
+      "not_measured": 0,
+      "runtime_failed": 0,
+      "semantic_scored": 13
+    },
+    "leaderboard_policy": "Admits only semantic_scored coordinates; excludes not_measured and runtime_failed from semantic rankings."
+  },
+  "task_id": "PLAT2-060",
+  "title": "Holdout remeasure and promotion gates",
+  "tool_accounting": {
+    "requested_tool_ids": [
+      "typed_deontic",
+      "modal",
+      "spacy",
+      "deterministic_realizer",
+      "autoencoder",
+      "symai",
+      "leanstral",
+      "selective_repair",
+      "hammer",
+      "cvc5",
+      "lean",
+      "multiformats"
+    ],
+    "scored_tool_ids": [
+      "typed_deontic",
+      "deterministic_realizer"
+    ],
+    "unavailable": [],
+    "unscored": [
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "modal"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "spacy"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "autoencoder"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "symai"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "leanstral"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "selective_repair"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "hammer"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "cvc5"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "lean"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "multiformats"
+      }
+    ]
+  }
+}
