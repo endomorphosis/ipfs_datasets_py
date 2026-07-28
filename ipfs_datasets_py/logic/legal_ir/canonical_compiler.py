@@ -56,9 +56,11 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
 #
 # The replacement-gate selection identity
 # (:data:`SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID`) remains the historical
-# evidence-bound raw CID from the frozen selection report.  The on-disk adapter
-# later grew under EVAL-005 with selective-repair surface while preserving the
-# pure ``construct`` L1 path.  Production integrity therefore pins *both*:
+# evidence-bound raw CID from the frozen selection report.  The on-disk
+# research adapter later evolved under EVAL-005 and the PLAT/PLAT2
+# deterministic edit waves.  Production remains bound to the selected
+# historical behavior, while drift in the evolving research adapter stays
+# visible.  Production integrity therefore pins *both*:
 #
 # * selection lineage → ``SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID``
 # * current measured adapter bytes → ``MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID``
@@ -66,7 +68,7 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
 # Any intentional adapter edit requires a deliberate update of this constant
 # and revalidation of the frozen L1 suite.  Do not weaken the exact-CID check.
 MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID: Final = (
-    "bafkreiecmdzlnzrjjzaauabg3mmrn7dl2o6p6jsnq7tgbt25sppmjvka34"
+    "bafkreife5avbe5esju4frufsogvzlaew5x5qw5h4qlefvgx2qdbamqsyny"
 )
 """CIDv1/raw of the current measured typed-deontic adapter module bytes."""
 

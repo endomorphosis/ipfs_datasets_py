@@ -276,17 +276,7 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
     )
 
 
-def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
-    # The benchmark package and its five-case vocabularies are an oracle only
-    # in this conformance test.  The production module has no such dependency.
-    from benchmarks.semantic_roundtrip import (
-        AllowedAtomVocabulary,
-        ConstructorRequest,
-    )
-    from benchmarks.semantic_roundtrip.constructors.typed_deontic import (
-        TypedDeonticCanonicalConstructor,
-    )
-
+def test_frozen_cases_reproduce_selected_adapter_l1_identity() -> None:
     fixture_path = (
         ROOT
         / "tests"
@@ -305,10 +295,10 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
         "bafkreidngtg5cojnhkmwj4coijqpoixao25hxfwdzxjpywlusrqhk3hrm4"
     )
     # Residual LIG-003 CID hygiene: pin the *current* measured adapter module
-    # bytes.  This is a deliberate golden update after the adapter grew under
-    # EVAL-005 (selective-repair surface) while pure construct L1 stayed
-    # equivalent.  Distinct from SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID, which
-    # remains the historical replacement-gate selection identity.
+    # bytes. The research adapter evolved after selection under EVAL-005 and
+    # the PLAT/PLAT2 deterministic edit waves. Distinct from
+    # SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID, which remains the immutable
+    # replacement-gate selection identity reproduced by production.
     # Do not weaken this exact-CID integrity check.
     assert cid_for_bytes(adapter_path.read_bytes()) == (
         MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID
@@ -328,17 +318,27 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
         "corp_policy_1",
         "construction_contract",
     )
-    oracle = TypedDeonticCanonicalConstructor()
+    selected_l1_cids = {
+        "exception_with_window": (
+            "baguqeeradpjcplbnxaoxi2hjrm4q3jaalfrxuen6s5lsibhptvpxvxuz3wua"
+        ),
+        "legal_doc_1": (
+            "baguqeerau4435xy2x4m42eg6sjdren7zbwtpe3dbukdw7whptridqgls53uq"
+        ),
+        "exec_order_1": (
+            "baguqeerax3dul4t2m35wsmxajfkirpymmoy2pkcukflr3prknlmyadstc5sa"
+        ),
+        "corp_policy_1": (
+            "baguqeerazf6btpk732u3ztok3ecxmq3r7hg4p3xu7bmx5nalpj2sw62ydk4q"
+        ),
+        "construction_contract": (
+            "baguqeera73vfa6chn3tskb4k2jqk4pha3xi5vyr4nsmjgytomezidjfrs5va"
+        ),
+    }
     compiler = TypedDeonticCanonicalCompiler()
 
     for case in cases:
-        oracle_vocabulary = AllowedAtomVocabulary.from_dict(
-            case["allowed_atoms"]
-        )
         vocabulary = CanonicalAtomVocabulary.from_dict(case["allowed_atoms"])
-        expected = oracle.construct(
-            ConstructorRequest(case["source_text"], oracle_vocabulary, {})
-        )
         actual = compiler.compile(
             CompilerRequest(
                 source_text=case["source_text"],
@@ -354,12 +354,10 @@ def test_frozen_cases_reproduce_benchmark_adapter_l1_exactly() -> None:
 
         assert actual.status is OperationStatus.SUCCESS, case["id"]
         assert actual.canonical_ir is not None
-        assert expected.canonical_ir is not None
-        # Golden L1 remains stable under the deliberate adapter-byte hygiene
-        # update (pure construct semantics unchanged after EVAL-005 surface).
-        assert actual.canonical_ir.to_dict() == (
-            expected.canonical_ir.to_dict()
-        ), case["id"]
+        # Preserve the exact L1 identities from the immutable SRT-018
+        # canonical selection report even as the benchmark research adapter
+        # continues to improve independently.
+        assert actual.canonical_ir.ir_cid == selected_l1_cids[case["id"]]
         assert actual.canonical_ir.ir_cid == cid_for_dag_json(
             actual.canonical_ir.to_dict()
         )
