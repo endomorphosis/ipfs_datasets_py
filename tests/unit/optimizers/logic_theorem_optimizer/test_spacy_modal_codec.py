@@ -12357,6 +12357,27 @@ def test_spacy_compiler_adds_packet_000044_order_appeal_span_coverage() -> None:
         )
 
 
+def test_spacy_compiler_adds_compact_final_order_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        "Sec. 836a - Administrative appeals. Final orders.",
+        document_id="us-code-16-836a-final-orders-residual",
+        citation="16 U.S.C. 836a",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+    assert "Final orders." in residual_text_spans
+
+
 def test_spacy_compiler_adds_public_review_recommendation_residual_span_coverage() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

@@ -281,11 +281,21 @@ _FRAME_ONTOLOGY_SLOT_FRAME_SEMANTIC_VALUE_ALIASES = {
     ("role", "frame"): "frame",
 }
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
-_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
+_FRAME_ONTOLOGY_MODAL_CUE_FEATURE_PREFIXES: tuple[str, ...] = (
+    "modal-cue:",
+    "modal_cue:",
+)
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_BASE_PREFIXES: tuple[str, ...] = (
     "legal-ir-view:",
     "legal_ir_view:",
+)
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PROTOTYPE_PREFIXES: tuple[str, ...] = (
     "legal-ir-view-prototype:",
     "legal_ir_view_prototype:",
+)
+_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES: tuple[str, ...] = (
+    *_FRAME_ONTOLOGY_LEGAL_IR_VIEW_BASE_PREFIXES,
+    *_FRAME_ONTOLOGY_LEGAL_IR_VIEW_PROTOTYPE_PREFIXES,
 )
 _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES: tuple[str, ...] = (
     "legal-ir-view-gap:",
@@ -1619,6 +1629,18 @@ def _frame_ontology_value_from_feature(
             _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
 
+    for prefix in _FRAME_ONTOLOGY_MODAL_CUE_FEATURE_PREFIXES:
+        if lowered.startswith(prefix):
+            cue_value = feature[len(prefix) :].strip()
+            if not cue_value:
+                return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
+            return (
+                _normalized_frame_ontology_cue_value(cue_value),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
+
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
         if not cue_tail:
@@ -2142,7 +2164,10 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     if not separator:
         return ""
     lowered = str(feature_key or "").strip().lower()
-    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PREFIXES:
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_PROTOTYPE_PREFIXES:
+        if lowered.startswith(prefix):
+            return "legal_ir_view_prototype"
+    for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_BASE_PREFIXES:
         if lowered.startswith(prefix):
             return "legal_ir_view"
     for prefix in _FRAME_ONTOLOGY_LEGAL_IR_VIEW_GUIDANCE_PREFIXES:
@@ -2160,6 +2185,9 @@ def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
     for prefix in _FRAME_ONTOLOGY_SIGNATURE_FRAME_PREFIXES:
         if lowered.startswith(prefix):
             return "signature_frame"
+    for prefix in _FRAME_ONTOLOGY_MODAL_CUE_FEATURE_PREFIXES:
+        if lowered.startswith(prefix):
+            return "modal_cue"
     if _is_contextual_frame_ontology_predicate(head):
         return _normalized_frame_ontology_predicate(head)
     namespace = head.strip().lower()

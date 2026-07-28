@@ -732,3 +732,48 @@ def test_flogic_optimizer_audits_family_scoring_view_quality_features() -> None:
         "quality_symbolic_has_formula",
     ]:
         assert term in result.metadata["frame_ontology_contextualized_terms"]
+
+def test_flogic_optimizer_audits_packet_000045_modal_frame_logic_features() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "legal-ir-view:deontic.ir",
+            "legal-ir-view:modal.frame_logic",
+            "quality:bias",
+            "quality:symbolic:has-formula",
+            "legal-ir-view:modal.autoencoder",
+            "quality:frame:rank-top",
+            "modal-cue:__uscode_residual_span_fallback__",
+            "frame:administrative_notice_hearing",
+            "signature:operator:frame:frame_bm25:frame",
+        ],
+    )
+    for feature in [
+        "legal-ir-view:modal.frame_logic",
+        "modal-cue:__uscode_residual_span_fallback__",
+        "signature:operator:frame:frame_bm25:frame",
+    ]:
+        assert feature in result.metadata["frame_audit_feature_keys"]
+    for term in [
+        "administrative_notice_hearing",
+        "deontic_ir",
+        "modal_autoencoder",
+        "modal_frame_logic",
+        "rank_top",
+        "uscode_residual_span_fallback",
+    ]:
+        assert term in result.metadata["frame_ontology_terms"]
+    assert (
+        "modal_cue_uscode_residual_span_fallback"
+        in result.metadata["frame_ontology_contextualized_terms"]
+    )

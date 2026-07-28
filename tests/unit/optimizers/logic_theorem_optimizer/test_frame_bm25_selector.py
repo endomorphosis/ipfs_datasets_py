@@ -664,6 +664,30 @@ def test_frame_ontology_contextualized_terms_audit_legal_ir_view_features() -> N
     ]
 
 
+def test_frame_ontology_contextualized_terms_distinguish_prototype_views() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "legal-ir-view:modal.frame_logic",
+            "legal-ir-view-prototype:deontic.ir",
+            "legal-ir-view-prototype:TDFOL.prover",
+            "legal-ir-view-prototype:knowledge_graphs.neo4j_compat",
+            "quality:bias",
+            "quality:symbolic:has-formula",
+            "quality:frame:rank-top",
+        ],
+    )
+
+    assert terms == [
+        "legal_ir_view_modal_frame_logic",
+        "legal_ir_view_prototype_deontic_ir",
+        "legal_ir_view_prototype_tdfol_prover",
+        "legal_ir_view_prototype_knowledge_graphs_neo4j_compat",
+        "quality_bias",
+        "quality_symbolic_has_formula",
+        "quality_frame_rank_top",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_extract_predicate_argument_role_shape_and_role_pairs() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

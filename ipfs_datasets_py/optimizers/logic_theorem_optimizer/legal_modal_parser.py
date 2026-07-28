@@ -306,7 +306,8 @@ _USCODE_ADMINISTRATIVE_ORDER_APPEAL_PHRASE_RE = re.compile(
     r"appeals?\s+deadlines?|"
     r"deadlines?\s+for\s+appeals?|"
     r"findings?\s*,?\s+(?:orders?|and\s+orders?)\s*,?\s+and\s+appeals?|"
-    r"findings?\s+and\s+(?:final\s+)?orders?"
+    r"findings?\s+and\s+(?:final\s+)?orders?|"
+    r"final\s+orders?"
     r")\b",
     re.IGNORECASE,
 )
@@ -2851,7 +2852,7 @@ class LegalModalParser:
         """Recover compact administrative order/appeal-deadline frame spans."""
         token_count = len(tokens)
         if (
-            token_count < 3
+            token_count < 2
             or token_count > _USCODE_ADMINISTRATIVE_ORDER_APPEAL_RESIDUAL_MAX_TOKENS
         ):
             return False
@@ -2867,11 +2868,14 @@ class LegalModalParser:
         signal_count = len(
             token_set & _USCODE_ADMINISTRATIVE_ORDER_APPEAL_SIGNAL_TOKENS
         )
-        if signal_count < 2:
-            return False
-        return bool(
+        has_order_appeal_phrase = bool(
             _USCODE_ADMINISTRATIVE_ORDER_APPEAL_PHRASE_RE.search(lowered)
         )
+        if signal_count < 2 and not (
+            has_order_appeal_phrase and "final" in token_set and signal_count >= 1
+        ):
+            return False
+        return has_order_appeal_phrase
 
     def _is_uscode_administrative_frame_residual_candidate(
         self,
