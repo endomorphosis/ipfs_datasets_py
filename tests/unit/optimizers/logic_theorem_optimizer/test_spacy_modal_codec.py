@@ -92,6 +92,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000927_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000062_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000352_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000358_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000542_FAMILY_PAIRS,
@@ -189,6 +190,49 @@ def test_packet_003763_registry_exposes_compiler_ambiguity_policy() -> None:
             predicted_family,
             target_family,
         )
+
+
+def test_packet_000543_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.47
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("deontic", "frame")
+        >= 0.99
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("frame", "deontic")
+        >= 1.25
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("frame", "temporal")
+        >= 1.17
+    )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.47
+    )
 
 
 def test_packet_001449_registry_exposes_compiler_ambiguity_policy() -> None:
