@@ -7,6 +7,7 @@
 **Companion heaps:**  
 - Goals: [`logic_intent_legal_gate.objectives.md`](./logic_intent_legal_gate.objectives.md)  
 - Tasks: [`logic_intent_legal_gate.todo.md`](./logic_intent_legal_gate.todo.md) (**sole active** board)  
+- Deep authorization design: [`INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md`](./INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md)
 - Launch: [`scripts/ops/logic_intent_legal_gate/`](../../scripts/ops/logic_intent_legal_gate/)  
 **Predecessor:** [`IR_FAMILY_REFACTOR_AND_INTENT_IR_PLAN.md`](./IR_FAMILY_REFACTOR_AND_INTENT_IR_PLAN.md) / IRF-* board (**37/37 completed**; do not co-launch)  
 
@@ -78,9 +79,11 @@ A single query API (Python + optional MCP tool) answers:
 ### 2.4 Admissibility gate semantics
 
 ```text
-allow    iff every required Intent obligation is supported by attested Legal+Security
-           constraints under a declared policy profile, with no contradiction,
-           and all ZKP/integrity checks that the profile requires pass.
+allow    iff every required Intent action has an applicable positive grant,
+           its declared non-conflict obligation is proved, all hard Security
+           invariants and pre-dispatch obligations are discharged, corpus
+           coverage is sufficient, and all required proof/ZKP/integrity,
+           freshness, revocation, tenant, and context checks pass.
 
 reject   iff a hard constraint forbids an Intent effect/action, or integrity fails.
 
@@ -89,6 +92,10 @@ abstain  iff evidence incomplete, prover unavailable, ZKP missing when required,
 ```
 
 Profiles (examples): `dev-offline`, `security-lite`, `legal-strict`, `zkp-required`.
+The compatibility wire result remains allow/reject/abstain. Internally the
+deep design distinguishes deny, review, indeterminate, and error before all
+non-allow outcomes map to rejection at an enforcement boundary. SAT, retrieval,
+cache presence, signatures, and artifact-membership proofs are not permission.
 
 ### 2.5 Agent supervisor integration
 
@@ -114,6 +121,10 @@ Wave 0  LIG-G010 shared formalization protocols & Legal toolchain extraction
                     │
                     ├─► Wave 4a  LIG-G070 supervisor + MCP integration
                     └─► Wave 4b  LIG-G080 eval, benchmarks, rollout
+                                      │
+                                      ▼
+          Wave 5  LIG-G090..G120 authority, applicability, receipt,
+                  enforcement, adversarial hardening (LIG-022..041)
 ```
 
 Waves 1a–1c are independent file owners and should run as parallel supervisor lanes after Wave 0.
@@ -144,9 +155,11 @@ Waves 1a–1c are independent file owners and should run as parallel supervisor 
 
 1. A SkillCenter pilot skill → IntentIR → formal obligations is fully offline, content-addressed, and non-executing.  
 2. Legal and Security constraint sets for a declared profile load by CID with ZKP verify (or explicit abstain if ZKP required and missing).  
-3. Admissibility gate returns structured allow/reject/abstain for at least: one allowed intent, one legally forbidden effect, one security-denied resource, one incomplete-evidence abstain.  
-4. Supervisor/MCP can invoke the gate without importing heavy optional provers at package import time.  
-5. Parallel lanes complete without file ownership conflicts; all task `Validation:` lines pass on the current tree.
+3. Admissibility gate returns structured allow/reject/abstain for at least: one explicitly permitted intent, one legally forbidden effect, one security-denied resource, one contradictory authority, and one incomplete-evidence abstain.
+4. An allow receipt binds actor, audience, tool/arguments, effects, policy/corpus/revocation roots, environment, nonce, and expiry; every non-allow outcome rejects at dispatch.
+5. Supervisor/MCP can invoke the gate without importing heavy optional provers at package import time or executing source/tool content.
+6. Simulated ZKP is usable only for clearly labeled development/audit fixtures and cannot authorize a production dispatch.
+7. Parallel lanes complete without file ownership conflicts; all task `Validation:` lines pass on the current tree.
 
 ## 7. Relationship to IRF (merged / deduplicated)
 
@@ -163,6 +176,10 @@ freeze or ir_core design. It **consumes** IRF interfaces and adds only net-new w
 | SkillCenter intent path | Admissibility profiles + gate |
 | | Supervisor bridge + MCP tools |
 | | Benchmarks + rollout runbook |
+| | Invocation-context envelope + Legal/Security applicability |
+| | Authority-grade manifest/revocation/query/verification |
+| | Decision receipts, one-time dispatch, TOCTOU and tenant isolation |
+| | Adversarial conformance, telemetry, promotion and rollback evidence |
 
 **Anti-contention rules:**
 
@@ -201,7 +218,33 @@ python -m ipfs_accelerate_py.agent_supervisor.todo_daemon.implementation_supervi
   --implementation-protected-path docs/architecture/logic_intent_legal_gate.todo.md
 ```
 
-Initially ready after absorption (Wave 1): **LIG-003**, **LIG-005**, **LIG-009**,
-**LIG-014** (and ops already completed for LIG-001/021). LIG-007 waits on LIG-003.
-Do not run coarse objective-generated IRG/LIG refill boards concurrently with this
-reviewed board unless refill is deliberately enabled later.
+The todo board and shard task-state files are the authority for current
+readiness; the initial absorption wave has already advanced. Do not run coarse
+objective-generated IRG/LIG refill boards concurrently with this reviewed
+board unless refill is deliberately enabled later.
+
+## 9. Authority and enforcement gap continuation
+
+The base LIG tasks deliberately establish a small working store/query/gate.
+The companion
+[`INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md`](./INTENT_IR_ATTESTED_AUTHORIZATION_PLAN.md)
+records the full threat model, canonical contracts, proof and ZK semantics,
+cache identity, applicability rules, decision algebra, privacy, runtime
+enforcement, validation, and governance requirements.
+
+LIG-022–041 append this work without reopening completed foundation tasks:
+
+1. canonicalize the proposed invocation and build source-specific adapters;
+2. adapt Legal and Security formal artifacts through shared applicability
+   contracts;
+3. harden the proof corpus with exact manifests, revocation, tenant/scope
+   filters, independent native/ZK verification, and legacy quarantine;
+4. require explicit permission, proved non-conflict, Security invariants,
+   obligations, and coverage before allow;
+5. issue exact-context receipts and one-time capabilities;
+6. revalidate immediately before supervisor/MCP dispatch; and
+7. gate release on adversarial, privacy, cache, circuit/VK, replay, race,
+   chaos, promotion, and rollback evidence.
+
+Only `logic-intent-legal-gate-v1` is extended. The completed IRF task board
+remains historical and must not receive duplicate authorization tasks.
