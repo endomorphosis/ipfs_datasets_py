@@ -28,6 +28,13 @@ from ipfs_accelerate_py.voice_jobs.contracts import (
     VoiceTTSJob,
     voice_job_from_payload,
 )
+from ipfs_accelerate_py.voice_jobs.regeneration import (
+    RegenerationDispatchManifest,
+    RegenerationEndpointContract,
+    RegenerationRunnerPolicy,
+    VoiceRegenerationRunner,
+    build_regeneration_dispatch_manifest,
+)
 
 from ...voice.workset import AudioWorkItem, AudioWorkOperation, VoiceAudioWorkset
 
@@ -344,6 +351,70 @@ def jobs_from_voice_workset(
             jobs.append(job)
 
     return tuple(jobs)
+
+
+def regeneration_tts_jobs_from_voice_workset(
+    workset: VoiceAudioWorkset,
+    *,
+    config: VoiceWorksetBridgeConfig | None = None,
+) -> tuple[VoiceTTSJob, ...]:
+    """Return only the deterministic synthesis stage of a voice workset.
+
+    The complete workset still contains ASR and validation jobs.  The endpoint
+    regeneration runner is intentionally limited to synthesis: downstream
+    workers resolve its immutable artifact receipts before ASR or validation
+    can be admitted.
+    """
+
+    return tuple(
+        job
+        for job in jobs_from_voice_workset(workset, config=config)
+        if isinstance(job, VoiceTTSJob)
+    )
+
+
+def build_voice_regeneration_dispatch(
+    workset: VoiceAudioWorkset,
+    *,
+    endpoint_contract: RegenerationEndpointContract | Mapping[str, Any],
+    config: VoiceWorksetBridgeConfig | None = None,
+    policy: RegenerationRunnerPolicy | None = None,
+) -> RegenerationDispatchManifest:
+    """Project ``workset`` into a bounded, deterministic no-dispatch manifest.
+
+    This function does not construct a queue and does not call a provider.
+    Live authorization remains a separate runtime input to
+    :class:`VoiceRegenerationRunner`.
+    """
+
+    jobs = regeneration_tts_jobs_from_voice_workset(workset, config=config)
+    return build_regeneration_dispatch_manifest(
+        jobs,
+        endpoint_contract=endpoint_contract,
+        policy=policy,
+    )
+
+
+def run_voice_regeneration_workset(
+    workset: VoiceAudioWorkset,
+    *,
+    runner: VoiceRegenerationRunner,
+    endpoint_contract: RegenerationEndpointContract | Mapping[str, Any],
+    config: VoiceWorksetBridgeConfig | None = None,
+    policy: RegenerationRunnerPolicy | None = None,
+    dispatch_authorized: bool = False,
+) -> dict[str, Any]:
+    """Build and execute a resumable synthesis manifest through ``runner``."""
+
+    if not isinstance(runner, VoiceRegenerationRunner):
+        raise TypeError("runner must be a VoiceRegenerationRunner")
+    manifest = build_voice_regeneration_dispatch(
+        workset,
+        endpoint_contract=endpoint_contract,
+        config=config,
+        policy=policy,
+    )
+    return runner.run(manifest, dispatch_authorized=dispatch_authorized)
 
 
 class VoiceJobBridge:
@@ -767,6 +838,9 @@ __all__ = [
     "VoiceJobSubmission",
     "VoiceWorksetBridgeConfig",
     "VoiceWorksetSubmission",
+    "build_voice_regeneration_dispatch",
     "jobs_from_voice_workset",
+    "regeneration_tts_jobs_from_voice_workset",
+    "run_voice_regeneration_workset",
     "submit_voice_workset",
 ]
