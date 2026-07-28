@@ -344,6 +344,20 @@ _PACKET_000569_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "university_research_consortium",
     }
 )
+_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "department_business_assignment",
+        "department_expenditure_authorization",
+        "education_assistance_benefit",
+        "education_assistance_repayment",
+        "expenditure_account_estimate",
+        "federal_repayment_obligation",
+        "fund_transfer_authority",
+        "health_professional_education_assistance",
+        "treasury_payment_source",
+        "treasury_requisition_payment",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
     ("relationship of statutory provisions", "franchise_statutory_relationship"),
     ("statutory provisions", "franchise_statutory_relationship"),
@@ -14388,6 +14402,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000641_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in _PACKET_000642_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -15581,6 +15607,7 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         *_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000641_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS,
     }:
         add("CEC.native")
         add("deontic.ir")
@@ -15768,6 +15795,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("deontic")
             add("conditional_normative")
         if normalized_atom in _PACKET_000641_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+        if normalized_atom in _PACKET_000642_USCODE_RECONSTRUCTION_ATOMS:
             add("frame")
             add("deontic")
             add("conditional_normative")
@@ -17962,6 +17993,15 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_higher_education_program_surface")
     if re.search(
+        r"\b(?:health\s+professionals?\s+educational\s+assistance|"
+        r"educational\s+assistance\s+program|scholarship\s+program|"
+        r"repayment\s+(?:of\s+amounts?|amounts?)|"
+        r"amounts?\s+paid\s+under\s+this\s+subchapter|"
+        r"pay\s+to\s+the\s+united\s+states)\b",
+        lowered,
+    ):
+        add("uscode_education_assistance_repayment_surface")
+    if re.search(
         r"\b(?:education\s+sciences\s+reform|education\s+research|"
         r"education\s+statistics|research,\s+statistics,\s+evaluation,\s+"
         r"information,\s+and\s+dissemination|information\s+and\s+dissemination)\b",
@@ -18114,6 +18154,23 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_code_supplement_distribution_surface")
+    if re.search(
+        r"\b(?:transfer\s+of\s+(?:weapons\s+activities\s+)?funds|"
+        r"transfer\s+funds(?:\s+made\s+available)?|"
+        r"funds\s+made\s+available\s+for\s+weapons\s+activities|"
+        r"manager\s+of\s+each\s+field\s+office)\b",
+        lowered,
+    ):
+        add("uscode_fund_transfer_authority_surface")
+    if re.search(
+        r"\b(?:expenditures?\s+(?:of|upon)\s+(?:the\s+)?department|"
+        r"business\s+assigned\s+by\s+law\s+to\s+(?:his|her|the)\s+department|"
+        r"requisitions?\s+for\s+(?:the\s+)?advance\s+or\s+payment\s+of\s+money|"
+        r"estimates?\s+or\s+accounts?\s+for\s+expenditures?|"
+        r"out\s+of\s+the\s+treasury)\b",
+        lowered,
+    ):
+        add("uscode_department_expenditure_authorization_surface")
     if re.search(
         r"\b(?:enforcement\s+by\s+the\s+board|board\s+may\s+bring\s+a\s+civil\s+action|"
         r"enjoin\s+a\s+rail\s+carrier|rail\s+carrier\s+from\s+violating|"
@@ -19159,6 +19216,32 @@ def _typed_decompiler_predicate_classes(
             }
         ):
             add("welfare")
+    if normalized_atoms.intersection(_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS):
+        add("administration")
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "education_assistance_benefit",
+                "education_assistance_repayment",
+                "federal_repayment_obligation",
+                "health_professional_education_assistance",
+            }
+        ):
+            add("remedy")
+        if normalized_atoms.intersection(
+            {
+                "department_business_assignment",
+                "department_expenditure_authorization",
+                "expenditure_account_estimate",
+                "fund_transfer_authority",
+                "treasury_payment_source",
+                "treasury_requisition_payment",
+            }
+        ):
+            add("temporal")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",

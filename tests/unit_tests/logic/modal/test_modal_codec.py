@@ -52407,6 +52407,117 @@ def test_decompiler_reconstructs_packet_000641_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000642_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "38 U.S.C. 3324. Health professionals educational "
+                    "assistance program. The individual shall pay to the "
+                    "United States the repayment amount for amounts paid under "
+                    "this subchapter."
+                ),
+                predicate="health_professional_assistance_repayment",
+            ),
+            {
+                "education_assistance_benefit",
+                "education_assistance_repayment",
+                "federal_repayment_obligation",
+                "health_professional_education_assistance",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_education_assistance_repayment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "50 U.S.C. 2751. Transfer of weapons activities funds. "
+                    "The Secretary of Energy shall provide each field office "
+                    "manager with authority to transfer weapons activities "
+                    "funds made available for the Department of Energy."
+                ),
+                predicate="fund_transfer_authority",
+            ),
+            {"fund_transfer_authority"},
+            {"frame->frame", "frame->deontic", "frame->conditional_normative"},
+            "uscode_fund_transfer_authority_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "2 U.S.C. 2085. Expenditures of department. The Secretary "
+                    "shall make requisitions for the advance or payment of "
+                    "money out of the Treasury for expenditures upon business "
+                    "assigned by law to the department."
+                ),
+                predicate="department_expenditure_authorization",
+            ),
+            {
+                "department_business_assignment",
+                "department_expenditure_authorization",
+                "treasury_payment_source",
+                "treasury_requisition_payment",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_department_expenditure_authorization_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": [
+                        "deontic->deontic",
+                        "frame->conditional_normative",
+                        "frame->frame",
+                    ],
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "deontic.ir",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
