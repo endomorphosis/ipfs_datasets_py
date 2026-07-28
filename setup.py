@@ -432,6 +432,40 @@ setup(
             'hypothesis>=6.0.0',
         ],
 
+        # Multi-chain wallet processors (WALPROC-G050 / WALPROC-010).
+        # Shared kernel and chain ingestion use raw REST/JSON-RPC. Chain SDKs
+        # are not selected: SDK convenience is not sufficient justification
+        # for a mandatory dependency. Full rationale, license/SBOM notes, and
+        # the coincurve/pycryptodome vs eth-hash/eth-keys decision live in
+        # docs/dependencies/WALLET_PROCESSOR_DEPENDENCIES.md.
+        'wallets': [
+            # Shared processor kernel: stdlib + base package only.
+        ],
+        'wallets-worldcoin': [
+            # Keccak via eth-hash pycryptodome backend; RP signing via eth-keys.
+            'eth-hash[pycryptodome]>=0.3.2,<1.0.0',
+            'eth-keys>=0.5.0,<1.0.0',
+        ],
+        'wallets-ethereum': [
+            # Raw JSON-RPC only; web3.py not required.
+        ],
+        'wallets-xrpl': [
+            # Raw REST/JSON-RPC only; xrpl-py not required.
+        ],
+        'wallets-xaman': [
+            # Composes XRPL; Xaman payloads over raw HTTP; no xumm-sdk.
+        ],
+        'wallets-bitcoin': [
+            # Raw REST/JSON-RPC only; python-bitcoinlib / bitcoinlib not required.
+        ],
+        'wallets-solana': [
+            # Raw JSON-RPC only; solana / solders SDKs not required.
+        ],
+        'wallets-all': [
+            'eth-hash[pycryptodome]>=0.3.2,<1.0.0',
+            'eth-keys>=0.5.0,<1.0.0',
+        ],
+
         # ZKP Groth16 (Rust FFI wrapper)
         # Note: the Rust binary itself is not a Python dependency.
         'groth16': [
