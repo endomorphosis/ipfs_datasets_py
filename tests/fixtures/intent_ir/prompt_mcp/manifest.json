@@ -1,0 +1,35 @@
+{
+  "adversarial_mcp_tool_ids": [
+    "injection_prompt_in_description",
+    "injection_remote_ref",
+    "injection_shell_tool"
+  ],
+  "adversarial_prompt_ids": [
+    "injection_ignore_instructions",
+    "injection_secret",
+    "injection_tool_directive"
+  ],
+  "benign_mcp_tool_ids": [
+    "benign_echo"
+  ],
+  "benign_prompt_ids": [
+    "benign_goal"
+  ],
+  "interface": {
+    "mcp_tool": "MCPToolIntentAdapter@1",
+    "prompt": "PromptIntentAdapter@1"
+  },
+  "mcp_tools": [
+    "benign_echo",
+    "injection_prompt_in_description",
+    "injection_remote_ref",
+    "injection_shell_tool"
+  ],
+  "prompts": [
+    "benign_goal",
+    "injection_ignore_instructions",
+    "injection_secret",
+    "injection_tool_directive"
+  ],
+  "schema_version": "prompt-mcp-fixtures/v1"
+}
