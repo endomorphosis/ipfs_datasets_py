@@ -10,6 +10,8 @@ TODO_PATH="${TODO_PATH:-docs/architecture/logic_intent_legal_gate.todo.md}"
 TASK_PREFIX="${TASK_PREFIX:-LIG-}"
 SHARD_COUNT="${SHARD_COUNT:-4}"
 STATE_ROOT="${STATE_ROOT:-data/agent_supervisor/logic_intent_legal_gate}"
+# Land implementations on the program feature branch, not main, unless overridden.
+MERGE_TARGET_BRANCH="${MERGE_TARGET_BRANCH:-feature/logic-intent-legal-gate}"
 IMPLEMENT="${IMPLEMENT:-1}"
 DRY_RUN=0
 FOREGROUND=0
@@ -32,6 +34,7 @@ Env:
   IMPLEMENT     1 (default) or 0
   TODO_PATH     relative todo board path
   STATE_ROOT    relative state root under REPO_ROOT
+  MERGE_TARGET_BRANCH  default feature/logic-intent-legal-gate
 EOF
 }
 
@@ -97,6 +100,7 @@ run_shard() {
     --state-dir "$state_dir"
     --worktree-root "$worktree_root"
     --state-prefix "lig_shard_${shard}"
+    --merge-target-branch "$MERGE_TARGET_BRANCH"
     "${PROTECTED[@]}"
   )
 
@@ -122,7 +126,7 @@ run_shard() {
 
 echo "[lig] REPO_ROOT=$REPO_ROOT"
 echo "[lig] ACCELERATE_ROOT=$ACCELERATE_ROOT"
-echo "[lig] board=$TODO_PATH prefix=$TASK_PREFIX shards=$SHARD_COUNT"
+echo "[lig] board=$TODO_PATH prefix=$TASK_PREFIX shards=$SHARD_COUNT merge_target=$MERGE_TARGET_BRANCH"
 
 # Soft warning if IRF supervisors appear live (contention risk).
 # Match only the IRF todo path / state namespace — avoid false positives from other boards.
