@@ -1,0 +1,1979 @@
+{
+  "acceptance": {
+    "excludes_not_measured_from_semantic_rankings": true,
+    "fail_closed_promotion_rules_retained": true,
+    "full_670_rerank_authorized_by_plat090_promotion": true,
+    "full_670_rerank_executed_as_research_refresh": true,
+    "immutable_2026_07_27_replacement_promotion_report_not_rewritten": true,
+    "optional_methods_not_promoted_without_ci_high_lt_0": true,
+    "plat090_promotion_true_or_override_recorded": true,
+    "status_taxonomy_matches_historical_670_shell": true,
+    "status_taxonomy_present": true
+  },
+  "arm_summaries_all_statuses": [
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__no_repair__not_applicable__deterministic",
+      "coordinate_count": 5,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": false,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 5,
+      "reason_counts": {
+        "terminal_unsupported": 5
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 5
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__selective__not_applicable__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": false,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": 1.0,
+      "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+      "coordinate_count": 5,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 1,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": false,
+      "mean_cycle_scored": 0.053717949,
+      "mean_end_to_end_scored": 0.212307692,
+      "mean_forward_scored": 0.1675,
+      "model_calls_total": 0,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "success": 5
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": 0.0,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.105555556,
+      "mean_end_to_end_scored": 0.2375,
+      "mean_forward_scored": 0.176388889,
+      "model_calls_total": 35,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 10,
+        "success": 15
+      },
+      "retries_total": 10,
+      "retry_exhausted_rate": 0.4,
+      "runtime_failed_count": 10,
+      "semantic_scored_count": 15,
+      "status_counts": {
+        "runtime_failed": 10,
+        "semantic_scored": 15
+      }
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.05,
+      "mean_end_to_end_scored": 0.18125,
+      "mean_forward_scored": 0.13125,
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 15,
+        "success": 10
+      },
+      "retries_total": 15,
+      "retry_exhausted_rate": 0.6,
+      "runtime_failed_count": 15,
+      "semantic_scored_count": 10,
+      "status_counts": {
+        "runtime_failed": 15,
+        "semantic_scored": 10
+      }
+    },
+    {
+      "accept_rate": 1.0,
+      "arm_id": "modal_spacy__no_guidance__selective__not_applicable__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": false,
+      "mean_cycle_scored": 0.053717949,
+      "mean_end_to_end_scored": 0.212307692,
+      "mean_forward_scored": 0.1675,
+      "model_calls_total": 0,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "success": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": 0.0,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 25,
+      "status_counts": {
+        "semantic_scored": 25
+      }
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.105555556,
+      "mean_end_to_end_scored": 0.2375,
+      "mean_forward_scored": 0.176388889,
+      "model_calls_total": 35,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 10,
+        "success": 15
+      },
+      "retries_total": 10,
+      "retry_exhausted_rate": 0.4,
+      "runtime_failed_count": 10,
+      "semantic_scored_count": 15,
+      "status_counts": {
+        "runtime_failed": 10,
+        "semantic_scored": 15
+      }
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.05,
+      "mean_end_to_end_scored": 0.18125,
+      "mean_forward_scored": 0.13125,
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 15,
+        "success": 10
+      },
+      "retries_total": 15,
+      "retry_exhausted_rate": 0.6,
+      "runtime_failed_count": 15,
+      "semantic_scored_count": 10,
+      "status_counts": {
+        "runtime_failed": 15,
+        "semantic_scored": 10
+      }
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "model__not_applicable__always_on__direct__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 10,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.075,
+      "mean_end_to_end_scored": 0.432291667,
+      "mean_forward_scored": 0.482291667,
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 10,
+        "success": 15
+      },
+      "retries_total": 25,
+      "retry_exhausted_rate": 0.4,
+      "runtime_failed_count": 10,
+      "semantic_scored_count": 15,
+      "status_counts": {
+        "runtime_failed": 10,
+        "semantic_scored": 15
+      }
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "model__not_applicable__always_on__direct__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 10,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.2,
+      "mean_end_to_end_scored": 0.4625,
+      "mean_forward_scored": 0.325,
+      "model_calls_total": 90,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 15,
+        "success": 10
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.6,
+      "runtime_failed_count": 15,
+      "semantic_scored_count": 10,
+      "status_counts": {
+        "runtime_failed": 15,
+        "semantic_scored": 10
+      }
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__direct__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.2,
+      "mean_end_to_end_scored": 0.25,
+      "mean_forward_scored": 0.15,
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 20,
+        "success": 5
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.8,
+      "runtime_failed_count": 20,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "runtime_failed": 20,
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.8,
+      "arm_id": "model__not_applicable__always_on__symai__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 10,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.0721875,
+      "mean_end_to_end_scored": 0.50296875,
+      "mean_forward_scored": 0.51984375,
+      "model_calls_total": 65,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 5,
+        "success": 20
+      },
+      "retries_total": 15,
+      "retry_exhausted_rate": 0.2,
+      "runtime_failed_count": 5,
+      "semantic_scored_count": 20,
+      "status_counts": {
+        "runtime_failed": 5,
+        "semantic_scored": 20
+      }
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__symai__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.25,
+      "mean_end_to_end_scored": 0.45,
+      "mean_forward_scored": 0.2,
+      "model_calls_total": 80,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 20,
+        "success": 5
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.8,
+      "runtime_failed_count": 20,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "runtime_failed": 20,
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__symai__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.25,
+      "mean_end_to_end_scored": 0.45,
+      "mean_forward_scored": 0.2,
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 20,
+        "success": 5
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.8,
+      "runtime_failed_count": 20,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "runtime_failed": 20,
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__no_repair__not_applicable__deterministic",
+      "coordinate_count": 5,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": false,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 5,
+      "reason_counts": {
+        "terminal_unsupported": 5
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 5
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__selective__not_applicable__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": false,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": "all_not_measured",
+      "gate_eligible_scored_count": 0,
+      "included_in_semantic_rankings": false,
+      "is_model_arm": true,
+      "mean_cycle_scored": null,
+      "mean_end_to_end_scored": null,
+      "mean_forward_scored": null,
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "reason_counts": {
+        "terminal_unsupported": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": null,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 0,
+      "status_counts": {
+        "not_measured": 25
+      }
+    },
+    {
+      "accept_rate": 1.0,
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "coordinate_count": 5,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": false,
+      "mean_cycle_scored": 0.0,
+      "mean_end_to_end_scored": 0.0,
+      "mean_forward_scored": 0.0,
+      "model_calls_total": 0,
+      "not_measured_count": 0,
+      "post_plateau_overlay": {
+        "note": "Production det path remeasured after PLAT-081/082/083 edit waves; selective arm inherits zero-residual no-repair identity when repair does not fire",
+        "plat090_report_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq",
+        "prior_historical_mean_end_to_end": 0.088333333,
+        "source": "PLAT-090_pilot_det_path_remeasure"
+      },
+      "reason_counts": {
+        "success": 5
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": 0.0,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.1,
+      "mean_end_to_end_scored": 0.1,
+      "mean_forward_scored": 0.0,
+      "model_calls_total": 45,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 20,
+        "success": 5
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.8,
+      "runtime_failed_count": 20,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "runtime_failed": 20,
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 10,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.072727273,
+      "mean_end_to_end_scored": 0.141666666,
+      "mean_forward_scored": 0.070833333,
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 15,
+        "success": 10
+      },
+      "retries_total": 15,
+      "retry_exhausted_rate": 0.6,
+      "runtime_failed_count": 15,
+      "semantic_scored_count": 10,
+      "status_counts": {
+        "runtime_failed": 15,
+        "semantic_scored": 10
+      }
+    },
+    {
+      "accept_rate": 1.0,
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__deterministic",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 25,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": false,
+      "mean_cycle_scored": 0.0,
+      "mean_end_to_end_scored": 0.0,
+      "mean_forward_scored": 0.0,
+      "model_calls_total": 0,
+      "not_measured_count": 0,
+      "post_plateau_overlay": {
+        "note": "Production det path remeasured after PLAT-081/082/083 edit waves; selective arm inherits zero-residual no-repair identity when repair does not fire",
+        "plat090_report_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq",
+        "prior_historical_mean_end_to_end": 0.088333333,
+        "source": "PLAT-090_pilot_det_path_remeasure"
+      },
+      "reason_counts": {
+        "success": 25
+      },
+      "retries_total": 0,
+      "retry_exhausted_rate": 0.0,
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 25,
+      "status_counts": {
+        "semantic_scored": 25
+      }
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_direct",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 5,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.1,
+      "mean_end_to_end_scored": 0.1,
+      "mean_forward_scored": 0.0,
+      "model_calls_total": 45,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 20,
+        "success": 5
+      },
+      "retries_total": 20,
+      "retry_exhausted_rate": 0.8,
+      "runtime_failed_count": 20,
+      "semantic_scored_count": 5,
+      "status_counts": {
+        "runtime_failed": 20,
+        "semantic_scored": 5
+      }
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_symai",
+      "coordinate_count": 25,
+      "excluded_from_semantic_rankings_reason": null,
+      "gate_eligible_scored_count": 10,
+      "included_in_semantic_rankings": true,
+      "is_model_arm": true,
+      "mean_cycle_scored": 0.072727273,
+      "mean_end_to_end_scored": 0.141666666,
+      "mean_forward_scored": 0.070833333,
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "reason_counts": {
+        "retry_exhausted": 15,
+        "success": 10
+      },
+      "retries_total": 15,
+      "retry_exhausted_rate": 0.6,
+      "runtime_failed_count": 15,
+      "semantic_scored_count": 10,
+      "status_counts": {
+        "runtime_failed": 15,
+        "semantic_scored": 10
+      }
+    }
+  ],
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_delta_tables": {
+    "any_optional_arm_beats_post_plateau_baseline": false,
+    "description": "Paired comparisons of semantic_scored optional/research arms against the post-plateau production det path (mean e2e=0.0). Negative mean_delta means lower loss (better). Beats baseline only when CI high < 0 (fail-closed).",
+    "frozen_pre_break_baseline_e2e_mean": 0.088333333,
+    "post_plateau_baseline_e2e_mean": 0.0,
+    "post_plateau_baseline_report_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq",
+    "promotion_decision_cid": "baguqeerahsrat44dqs3ypo2jodopcj6finktd2rcvvcsaatk4yndwvsmfwka",
+    "vs_post_plateau_baseline": [
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__selective__not_applicable__deterministic",
+        "candidate_mean_end_to_end": 0.0,
+        "confidence_interval": {
+          "high": 0.0,
+          "low": 0.0,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.0,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "candidate_mean_end_to_end": 0.1,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.46,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.1,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_direct",
+        "candidate_mean_end_to_end": 0.1,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.46,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.1,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "candidate_mean_end_to_end": 0.141666666,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.2966666666,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.141666666,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_symai",
+        "candidate_mean_end_to_end": 0.141666666,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.2966666666,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.141666666,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "candidate_mean_end_to_end": 0.18125,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.3375,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.18125,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_symai",
+        "candidate_mean_end_to_end": 0.18125,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.3375,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.18125,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+        "candidate_mean_end_to_end": 0.212307692,
+        "confidence_interval": {
+          "high": 0.2575,
+          "low": 0.1775,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.212307692,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__selective__not_applicable__deterministic",
+        "candidate_mean_end_to_end": 0.212307692,
+        "confidence_interval": {
+          "high": 0.2598076924,
+          "low": 0.1798076924,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.212307692,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "candidate_mean_end_to_end": 0.2375,
+        "confidence_interval": {
+          "high": 0.87,
+          "low": 0.215,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.2375,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_direct",
+        "candidate_mean_end_to_end": 0.2375,
+        "confidence_interval": {
+          "high": 0.87,
+          "low": 0.215,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.2375,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__direct__leanstral_symai",
+        "candidate_mean_end_to_end": 0.25,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.55,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.25,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__direct__deterministic",
+        "candidate_mean_end_to_end": 0.432291667,
+        "confidence_interval": {
+          "high": 0.934375,
+          "low": 0.335,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.432291667,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__symai__leanstral_direct",
+        "candidate_mean_end_to_end": 0.45,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.67,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.45,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__symai__leanstral_symai",
+        "candidate_mean_end_to_end": 0.45,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.67,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.45,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__direct__leanstral_direct",
+        "candidate_mean_end_to_end": 0.4625,
+        "confidence_interval": {
+          "high": 1.0,
+          "low": 0.495,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.4625,
+        "promotion_still_requires_full_gates": true
+      },
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_mean_end_to_end": 0.0,
+        "baseline_role": "post_plateau_production_det_path",
+        "beats_baseline_e2e_ci_high_lt_0": false,
+        "candidate_arm_id": "model__not_applicable__always_on__symai__deterministic",
+        "candidate_mean_end_to_end": 0.50296875,
+        "confidence_interval": {
+          "high": 0.870375,
+          "low": 0.32,
+          "method": "fail_closed_from_historical_absolute_ci_vs_zero_baseline",
+          "note": "Post-plateau baseline e2e=0; optional arms use historical shell absolute CI as conservative upper bound on delta"
+        },
+        "delta_direction": "candidate_minus_baseline",
+        "mean_delta_end_to_end": 0.50296875,
+        "promotion_still_requires_full_gates": true
+      }
+    ]
+  },
+  "captured_at_utc": "2026-07-28T01:31:51.063+00:00",
+  "eligibility": {
+    "full_matrix_refresh_allowed": true,
+    "gate": "PLAT-090 production_promotion_authorized == true",
+    "operator_override": null,
+    "plat090_decision_cid": "baguqeerahsrat44dqs3ypo2jodopcj6finktd2rcvvcsaatk4yndwvsmfwka",
+    "plat090_promotion": true,
+    "reason": "PLAT-090 promotion is true; full research matrix refresh is authorized"
+  },
+  "interface": "EvalRepairMatrixReport@1",
+  "lineage": {
+    "board_namespace": "semantic-roundtrip-plateau-break-v1",
+    "bundle": "semantic-roundtrip/plateau-break/full-matrix",
+    "depends_on_tasks": [
+      "PLAT-090"
+    ],
+    "edit_wave_tasks": [
+      "PLAT-081",
+      "PLAT-082",
+      "PLAT-083"
+    ],
+    "eval009_path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_eval_repair_matrix.json",
+    "eval009_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+    "immutable_replacement_promotion_report_preserved": true,
+    "plat090_matrix_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq",
+    "plat090_matrix_path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_plateau_break_matrix.json",
+    "plat090_promotion_decision_cid": "baguqeerahsrat44dqs3ypo2jodopcj6finktd2rcvvcsaatk4yndwvsmfwka",
+    "replacement_report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga",
+    "replacement_report_path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json"
+  },
+  "model_arm_accept_rates": [
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_direct",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__no_repair__not_applicable__leanstral_symai",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_direct",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "modal_spacy__guided__selective__not_applicable__leanstral_symai",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 35,
+      "not_measured_count": 0,
+      "retries_total": 10,
+      "retry_exhausted_count": 10,
+      "retry_exhausted_rate": 0.4,
+      "success_count": 15
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "retries_total": 15,
+      "retry_exhausted_count": 15,
+      "retry_exhausted_rate": 0.6,
+      "success_count": 10
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 35,
+      "not_measured_count": 0,
+      "retries_total": 10,
+      "retry_exhausted_count": 10,
+      "retry_exhausted_rate": 0.4,
+      "success_count": 15
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "retries_total": 15,
+      "retry_exhausted_count": 15,
+      "retry_exhausted_rate": 0.6,
+      "success_count": 10
+    },
+    {
+      "accept_rate": 0.6,
+      "arm_id": "model__not_applicable__always_on__direct__deterministic",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "retries_total": 25,
+      "retry_exhausted_count": 10,
+      "retry_exhausted_rate": 0.4,
+      "success_count": 15
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "model__not_applicable__always_on__direct__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 90,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 15,
+      "retry_exhausted_rate": 0.6,
+      "success_count": 10
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__direct__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 20,
+      "retry_exhausted_rate": 0.8,
+      "success_count": 5
+    },
+    {
+      "accept_rate": 0.8,
+      "arm_id": "model__not_applicable__always_on__symai__deterministic",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 65,
+      "not_measured_count": 0,
+      "retries_total": 15,
+      "retry_exhausted_count": 5,
+      "retry_exhausted_rate": 0.2,
+      "success_count": 20
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__symai__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 80,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 20,
+      "retry_exhausted_rate": 0.8,
+      "success_count": 5
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "model__not_applicable__always_on__symai__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 75,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 20,
+      "retry_exhausted_rate": 0.8,
+      "success_count": 5
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_direct",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__no_repair__not_applicable__leanstral_symai",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_direct",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": null,
+      "arm_id": "typed_deontic__guided__selective__not_applicable__leanstral_symai",
+      "attempted_count": 0,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 0,
+      "not_measured_count": 25,
+      "retries_total": 0,
+      "retry_exhausted_count": 0,
+      "retry_exhausted_rate": null,
+      "success_count": 0
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 45,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 20,
+      "retry_exhausted_rate": 0.8,
+      "success_count": 5
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "retries_total": 15,
+      "retry_exhausted_count": 15,
+      "retry_exhausted_rate": 0.6,
+      "success_count": 10
+    },
+    {
+      "accept_rate": 0.2,
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_direct",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 45,
+      "not_measured_count": 0,
+      "retries_total": 20,
+      "retry_exhausted_count": 20,
+      "retry_exhausted_rate": 0.8,
+      "success_count": 5
+    },
+    {
+      "accept_rate": 0.4,
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_symai",
+      "attempted_count": 25,
+      "definition": "accept_rate = semantic_scored / (semantic_scored + runtime_failed); not_measured coordinates excluded from the denominator",
+      "model_calls_total": 40,
+      "not_measured_count": 0,
+      "retries_total": 15,
+      "retry_exhausted_count": 15,
+      "retry_exhausted_rate": 0.6,
+      "success_count": 10
+    }
+  ],
+  "pilot_research_modes": {
+    "constructor_only": {
+      "constructor_only__modal_spacy_candidate": {
+        "evaluation_status": "semantic_scored",
+        "included_in_semantic_rankings": true,
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.1308333332,
+        "mode": "constructor_only",
+        "note": "constructor_only ranks by forward only; not a production e2e candidate",
+        "per_case_forward": {
+          "construction_contract": 0.170833333,
+          "corp_policy_1": 0.1,
+          "exception_with_window": 0.1,
+          "exec_order_1": 0.1,
+          "legal_doc_1": 0.183333333
+        },
+        "semantic_scored_count": 5
+      },
+      "constructor_only__typed_deontic_baseline": {
+        "evaluation_status": "semantic_scored",
+        "included_in_semantic_rankings": true,
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.0,
+        "mode": "constructor_only",
+        "per_case_forward": {
+          "construction_contract": 0.0,
+          "corp_policy_1": 0.0,
+          "exception_with_window": 0.0,
+          "exec_order_1": 0.0,
+          "legal_doc_1": 0.0
+        },
+        "semantic_scored_count": 5
+      }
+    },
+    "hybrid_det_path": {
+      "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+      "mean_cycle": 0.0,
+      "mean_end_to_end": 0.0,
+      "mean_forward": 0.0,
+      "semantic_scored_count": 5,
+      "source": "PLAT-090_pilot_remeasure"
+    },
+    "modes": [
+      "full_shell_status_taxonomy",
+      "hybrid",
+      "constructor_only"
+    ],
+    "pilot_case_ids": [
+      "exception_with_window",
+      "legal_doc_1",
+      "exec_order_1",
+      "corp_policy_1",
+      "construction_contract"
+    ],
+    "production_det_path_post_plateau": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "matches_hybrid_no_repair_path": true,
+      "mean_cycle": 0.0,
+      "mean_end_to_end": 0.0,
+      "mean_forward": 0.0,
+      "semantic_scored_count": 5,
+      "source": "PLAT-090_pilot_remeasure"
+    },
+    "residuals_after_plateau_break": {
+      "construction_contract": [],
+      "corp_policy_1": [],
+      "exception_with_window": [],
+      "exec_order_1": [],
+      "legal_doc_1": []
+    },
+    "total_residual_count": 0
+  },
+  "production_composition": {
+    "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "canonical_production_path": "typed_deontic \u2192 CanonicalRuleIR \u2192 deterministic realizer (no guidance, no repair)",
+    "frozen_pre_break_mean_end_to_end": 0.088333333,
+    "guided_autoencoder_role": {
+      "earned_composition": false,
+      "reason": "guided arms remain terminal_unsupported / preflight_blocked in 670 shell",
+      "status": "not_measured"
+    },
+    "methods_earned_composition": [
+      "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
+    ],
+    "methods_evaluated_not_earned": [
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.0,
+        "method": "typed_deontic__no_guidance__selective__not_applicable__deterministic",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.1,
+        "method": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.1,
+        "method": "typed_deontic__no_guidance__selective__not_applicable__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.141666666,
+        "method": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.141666666,
+        "method": "typed_deontic__no_guidance__selective__not_applicable__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.18125,
+        "method": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.18125,
+        "method": "modal_spacy__no_guidance__selective__not_applicable__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.212307692,
+        "method": "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.212307692,
+        "method": "modal_spacy__no_guidance__selective__not_applicable__deterministic",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.2375,
+        "method": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.2375,
+        "method": "modal_spacy__no_guidance__selective__not_applicable__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.25,
+        "method": "model__not_applicable__always_on__direct__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.432291667,
+        "method": "model__not_applicable__always_on__direct__deterministic",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.45,
+        "method": "model__not_applicable__always_on__symai__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.45,
+        "method": "model__not_applicable__always_on__symai__leanstral_symai",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.4625,
+        "method": "model__not_applicable__always_on__direct__leanstral_direct",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      },
+      {
+        "beats_baseline_e2e": false,
+        "mean_delta_end_to_end": 0.50296875,
+        "method": "model__not_applicable__always_on__symai__deterministic",
+        "rationale": "did not strictly beat post-plateau typed_deontic deterministic baseline under fail-closed paired comparison (require e2e CI high < 0); optional methods remain teachers/gates only"
+      }
+    ],
+    "methods_evaluated_not_earned_count": 17,
+    "model_constructor_realizer_role": {
+      "earned_composition": false,
+      "note": "Model-backed arms remain above post-plateau baseline on semantic_scored e2e and retain material retry_exhausted mass"
+    },
+    "optional_methods_remain_teachers_only": true,
+    "post_plateau_mean_end_to_end": 0.0,
+    "production_promotion_authorized_for_optional_runtimes": false,
+    "production_promotion_authorized_for_post_edit_det_path": true,
+    "promotion_rule": "fail-closed: optional method production promotion requires e2e paired-bootstrap CI high < 0 vs post-plateau baseline AND full selection gates; not_measured excluded from rankings; proof pass is never semantic loss reduction",
+    "selection_policy": "Post-plateau research re-rank admits only semantic_scored coordinates. The post-edit typed_deontic deterministic path remains production. Optional spaCy/AE/Leanstral/SyMAI/selective-repair runtimes are not promoted.",
+    "selective_repair_role": {
+      "earned_default_production_composition": false,
+      "note": "Default production path remains no-repair deterministic; selective scores match when no residual triggers fire"
+    },
+    "structural_admission_role": {
+      "earned_role": "repair_admission_gate_only",
+      "not_earned": "semantic_loss_replacement"
+    }
+  },
+  "refresh_methodology": {
+    "kind": "post_plateau_research_matrix_refresh",
+    "live_670_model_coordinate_reexecution": false,
+    "optional_arm_score_source": "EVAL-009 semantic_scored aggregates from historical shell",
+    "production_score_source": "PLAT-090 pilot det path remeasure",
+    "rationale": "PLAT-091 re-ranks the sealed 670-cell replacement shell under EVAL-001 status taxonomy after the production det path moved (PLAT-090). Deterministic production/selective det arms are overlaid with post-edit pilot remeasure scores (e2e=0). Optional model arm losses and accept rates retain EVAL-009/historical shell evidence and are re-ranked against the new baseline under fail-closed promotion rules. Live re-execution of all 650 model-backed coordinates is not required for this research re-rank receipt; status taxonomy constants remain sealed.",
+    "status_taxonomy_source": "EVAL-009 reclassification of 2026-07-27 replacement shell"
+  },
+  "repair_activation": {
+    "activation_report_cid": "baguqeera6pubyat2ea2d5lujvdr4o4pjai6z5v5f2uc3l4rypv7lreehhosa",
+    "any_repair_triggered": true,
+    "coordinate_count": 3,
+    "coordinates": [
+      {
+        "case_id": "missing_temporal",
+        "model_calls": 1,
+        "only_triggered_fields_changed": true,
+        "repair_applied": true,
+        "repair_triggered": true,
+        "trigger_kinds": [
+          "missing"
+        ]
+      },
+      {
+        "case_id": "low_confidence_object",
+        "model_calls": 1,
+        "only_triggered_fields_changed": true,
+        "repair_applied": true,
+        "repair_triggered": true,
+        "trigger_kinds": [
+          "low_confidence"
+        ]
+      },
+      {
+        "case_id": "contradictory_modality",
+        "model_calls": 1,
+        "only_triggered_fields_changed": true,
+        "repair_applied": true,
+        "repair_triggered": true,
+        "trigger_kinds": [
+          "contradictory",
+          "missing"
+        ]
+      }
+    ],
+    "detail": null,
+    "fixture_pack_id": "selective-repair-activation-fixture-pack@1",
+    "historical_selective_deterministic_arm": {
+      "arm_id": "typed_deontic__no_guidance__selective__not_applicable__deterministic",
+      "historical_model_calls": 0,
+      "note": "Historical selective deterministic arm matched baseline loss with model_calls=0 (repair never activated on pilot cases without triggers). Activation fixture pack now proves triggers fire when present."
+    },
+    "interface": "SelectiveRepair@1",
+    "model_calls_total": 3,
+    "repair_applied_count": 3,
+    "repair_triggered_count": 3,
+    "validation_passed": true
+  },
+  "report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-post-plateau-matrix.v1",
+  "semantic_rankings": {
+    "baseline_frozen_pre_break": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "mean_end_to_end": 0.088333333,
+      "report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+      "role": "frozen_plateau_baseline_historical"
+    },
+    "baseline_post_plateau": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "mean_cycle": 0.0,
+      "mean_end_to_end": 0.0,
+      "mean_forward": 0.0,
+      "role": "post_plateau_production_baseline",
+      "source": "PLAT-090"
+    },
+    "constructor_only_research_rankings": [
+      {
+        "arm_id": "constructor_only__typed_deontic_baseline",
+        "included_because": "semantic_scored only; not_measured excluded",
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.0,
+        "mode": "constructor_only",
+        "provenance": "PLAT-090_constructor_only_remeasure",
+        "rank": 1,
+        "ranking_metric_note": "constructor_only: forward only (cycle/e2e not applicable)",
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "constructor_only__modal_spacy_candidate",
+        "included_because": "semantic_scored only; not_measured excluded",
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.1308333332,
+        "mode": "constructor_only",
+        "provenance": "PLAT-090_constructor_only_remeasure",
+        "rank": 2,
+        "ranking_metric_note": "constructor_only: forward only (cycle/e2e not applicable)",
+        "semantic_scored_count": 5
+      }
+    ],
+    "excluded_not_measured_arm_count": 12,
+    "lower_loss_is_better": true,
+    "metric": "mean_end_to_end_among_semantic_scored_coordinates",
+    "policy": "exclude_not_measured",
+    "rankings": [
+      {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_baseline_post_plateau": true,
+        "is_model_arm": false,
+        "label": "production_det_path_post_plateau",
+        "mean_cycle": 0.0,
+        "mean_end_to_end": 0.0,
+        "mean_forward": 0.0,
+        "model_calls_total": 0,
+        "provenance": "PLAT-090_pilot_det_path_remeasure",
+        "rank": 1,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "typed_deontic__no_guidance__selective__not_applicable__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 25,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": false,
+        "mean_cycle": 0.0,
+        "mean_end_to_end": 0.0,
+        "mean_forward": 0.0,
+        "model_calls_total": 0,
+        "provenance": "PLAT-090_pilot_det_path_remeasure",
+        "rank": 1,
+        "semantic_scored_count": 25
+      },
+      {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.1,
+        "mean_end_to_end": 0.1,
+        "mean_forward": 0.0,
+        "model_calls_total": 45,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 3,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.1,
+        "mean_end_to_end": 0.1,
+        "mean_forward": 0.0,
+        "model_calls_total": 45,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 3,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 10,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.072727273,
+        "mean_end_to_end": 0.141666666,
+        "mean_forward": 0.070833333,
+        "model_calls_total": 40,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 5,
+        "semantic_scored_count": 10
+      },
+      {
+        "arm_id": "typed_deontic__no_guidance__selective__not_applicable__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 10,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.072727273,
+        "mean_end_to_end": 0.141666666,
+        "mean_forward": 0.070833333,
+        "model_calls_total": 40,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 5,
+        "semantic_scored_count": 10
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.05,
+        "mean_end_to_end": 0.18125,
+        "mean_forward": 0.13125,
+        "model_calls_total": 40,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 7,
+        "semantic_scored_count": 10
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.05,
+        "mean_end_to_end": 0.18125,
+        "mean_forward": 0.13125,
+        "model_calls_total": 40,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 7,
+        "semantic_scored_count": 10
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 1,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": false,
+        "mean_cycle": 0.053717949,
+        "mean_end_to_end": 0.212307692,
+        "mean_forward": 0.1675,
+        "model_calls_total": 0,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 9,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__selective__not_applicable__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": false,
+        "mean_cycle": 0.053717949,
+        "mean_end_to_end": 0.212307692,
+        "mean_forward": 0.1675,
+        "model_calls_total": 0,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 9,
+        "semantic_scored_count": 25
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__no_repair__not_applicable__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.105555556,
+        "mean_end_to_end": 0.2375,
+        "mean_forward": 0.176388889,
+        "model_calls_total": 35,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 11,
+        "semantic_scored_count": 15
+      },
+      {
+        "arm_id": "modal_spacy__no_guidance__selective__not_applicable__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.105555556,
+        "mean_end_to_end": 0.2375,
+        "mean_forward": 0.176388889,
+        "model_calls_total": 35,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 11,
+        "semantic_scored_count": 15
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__direct__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.2,
+        "mean_end_to_end": 0.25,
+        "mean_forward": 0.15,
+        "model_calls_total": 75,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 13,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__direct__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 10,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.075,
+        "mean_end_to_end": 0.432291667,
+        "mean_forward": 0.482291667,
+        "model_calls_total": 75,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 14,
+        "semantic_scored_count": 15
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__symai__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.25,
+        "mean_end_to_end": 0.45,
+        "mean_forward": 0.2,
+        "model_calls_total": 80,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 15,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__symai__leanstral_symai",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.25,
+        "mean_end_to_end": 0.45,
+        "mean_forward": 0.2,
+        "model_calls_total": 75,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 15,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__direct__leanstral_direct",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 10,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.2,
+        "mean_end_to_end": 0.4625,
+        "mean_forward": 0.325,
+        "model_calls_total": 90,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 17,
+        "semantic_scored_count": 10
+      },
+      {
+        "arm_id": "model__not_applicable__always_on__symai__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 10,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_model_arm": true,
+        "mean_cycle": 0.0721875,
+        "mean_end_to_end": 0.50296875,
+        "mean_forward": 0.51984375,
+        "model_calls_total": 65,
+        "provenance": "EVAL-009_historical_shell_reclassified",
+        "rank": 18,
+        "semantic_scored_count": 20
+      }
+    ]
+  },
+  "source_replacement_report": {
+    "immutable_promotion_report_preserved": true,
+    "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
+    "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+  },
+  "status_taxonomy": {
+    "coordinate_counts": {
+      "not_measured": 260,
+      "runtime_failed": 210,
+      "scheduled": 670,
+      "semantic_scored": 200
+    },
+    "historical_constants_match": {
+      "not_measured": true,
+      "runtime_failed": true,
+      "scheduled": true,
+      "semantic_scored": true
+    },
+    "interface": "EvaluationStatusTaxonomy@1",
+    "leaderboard_policy": {
+      "admits": "semantic_scored",
+      "excludes_not_measured": true,
+      "excludes_runtime_failed": true,
+      "leaderboard_eligible_coordinate_count": 200,
+      "lower_loss_is_better": true
+    },
+    "note": "Historical EVAL-009 / replacement constants (670 scheduled, 260 not_measured, 210 runtime_failed, 200 semantic_scored) remain sealed. This post-plateau receipt re-ranks under that taxonomy without rewriting the immutable 2026-07-27 replacement promotion report.",
+    "reason_counts": {
+      "retry_exhausted": 210,
+      "success": 200,
+      "terminal_unsupported": 260
+    },
+    "scope": "plat091_full_research_matrix_refresh"
+  },
+  "task_id": "PLAT-091",
+  "title": "Semantic round-trip post-plateau full research matrix refresh"
+}
