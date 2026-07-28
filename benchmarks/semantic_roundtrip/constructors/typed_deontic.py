@@ -107,6 +107,14 @@ def _normalize_numeric_surface(text: str) -> str:
         cleaned,
         flags=re.IGNORECASE,
     )
+    # Permission / SLA phrasing "up to 72 hours to report" is semantically a
+    # within-duration window for closed atoms such as ``within_72_hours``.
+    cleaned = re.sub(
+        r"\bup\s+to\s+(\d+)\s+(hour|day|week|month|year)s?\b",
+        r"within \1 \2",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
     return cleaned
 
 
@@ -602,6 +610,31 @@ _TEMPORAL_QUALIFIER_RE: Final = re.compile(
     r"weeks|months|years|written_notice|deadline|time)",
     re.IGNORECASE,
 )
+# Duration units that keep a ``for_*`` atom on the temporal facet
+# (``for_five_years``) rather than purpose/scope conditions
+# (``for_marketing_purposes``, ``for_members_in_good_standing``).
+_FOR_DURATION_UNIT_RE: Final = re.compile(
+    r"(?:day|days|hour|hours|week|weeks|month|months|year|years|time|"
+    r"deadline|period)",
+    re.IGNORECASE,
+)
+# Precondition gates written as ``before_<gerund>_…``
+# (``before_making_robocalls_to_wireless_numbers``) — conditions, not pure
+# temporal process labels such as ``before_arbitration``.
+_BEFORE_GERUND_CONDITION_RE: Final = re.compile(
+    r"^before_[a-z0-9]+ing(?:_|$)",
+    re.IGNORECASE,
+)
+# Coordinating conjunctions used to split multi-action norms
+# (``maintain X and honor Y``, ``engage in X or share Y``).
+_COORD_ACTION_SPLIT_RE: Final = re.compile(r"\s+(?:and|or)\s+", re.IGNORECASE)
+# Sentence splitter for uncovered permission-sentence recovery.
+_SENTENCE_SPLIT_RE: Final = re.compile(r"(?<=[.!?])\s+|\n+")
+# Permission cues used when recovering sentences the deontic converter missed.
+_PERMISSION_SENTENCE_RE: Final = re.compile(
+    r"\b(?:may|might|are\s+allowed|is\s+allowed|be\s+allowed|permitted)\b",
+    re.IGNORECASE,
+)
 # Qualifier atoms that are conditional gates (incl. advance-notice gates and
 # domain-scope ``in_*`` atoms such as ``in_government_communications``).
 _CONDITION_QUALIFIER_RE: Final = re.compile(
@@ -666,6 +699,14 @@ def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
     Domain-scope atoms such as ``in_government_communications`` (exec_order)
     are conditions even when surface evidence uses "if in …" framing from the
     deterministic realizer.
+
+    Repair-development refinements (PLAT2-050):
+    * ``for_*`` purpose/scope atoms without duration units map to conditions
+      (``for_marketing_purposes``) while duration windows such as
+      ``for_five_years`` stay temporal.
+    * ``before_<gerund>_…`` precondition gates map to conditions
+      (``before_making_robocalls_to_wireless_numbers``) while pure process
+      labels such as ``before_arbitration`` stay temporal.
     """
 
     atom_l = str(atom or "").strip().lower()
@@ -674,6 +715,15 @@ def _classify_qualifier_facet(atom: str, evidence: str = "") -> str:
     # Order matters: advance-notice gates are conditions even when they
     # mention hours; written-notice windows with day counts stay temporal.
     if "advance_notice" in atom_l:
+        return "conditions"
+    # Purpose/scope ``for_*`` without a duration unit is a condition, not a
+    # temporal window (legal_doc_2 / dept_memo_1 repair-development residuals).
+    if atom_l.startswith("for_") and not _FOR_DURATION_UNIT_RE.search(
+        atom_l[4:]
+    ):
+        return "conditions"
+    # Precondition gerunds: before_making_… / before_using_… → conditions.
+    if _BEFORE_GERUND_CONDITION_RE.match(atom_l):
         return "conditions"
     if _EXCEPTION_QUALIFIER_RE.search(atom_l) and not atom_l.startswith(
         "upon_"
@@ -942,6 +992,265 @@ def _reclassify_exception_framed_conditions(
         else:
             kept.append(atom)
     return tuple(kept), tuple(sorted(moved))
+
+
+@dataclass(frozen=True, slots=True)
+class _DictNormView:
+    """Lightweight norm adapter for recovered / split dict records."""
+
+    data: Mapping[str, object]
+
+    def to_dict(self) -> dict[str, object]:
+        return dict(self.data)
+
+
+def _leading_closed_action(part: str, actions: Sequence[str]) -> str:
+    """Return a closed action that leads *part* (exact surface / first token)."""
+
+    text = _clean_text(part).lower().strip()
+    text = re.sub(r"^to\s+", "", text)
+    if not text or not actions:
+        return ""
+    ranked = sorted(actions, key=lambda atom: (-len(atom), atom))
+    for action in ranked:
+        surface = action.replace("_", " ")
+        if text == surface or text.startswith(surface + " "):
+            return action
+        first = text.split()[0]
+        if "_" not in action and first == action:
+            return action
+    return ""
+
+
+def _local_norm_source(
+    data: Mapping[str, object],
+    *,
+    action_verb: str,
+    action_object: str,
+) -> str:
+    """Build a segment-local evidence string (avoids cross-conjunct harvest)."""
+
+    actor = _clean_text(data.get("actor"))
+    pieces = [actor, action_verb, action_object]
+    local = " ".join(piece for piece in pieces if piece)
+    return local or _clean_text(data.get("source_text"))
+
+
+def _split_conjoined_action_norm(
+    data: Mapping[str, object],
+    vocabulary: AllowedAtomVocabulary,
+) -> list[dict[str, object]]:
+    """Split multi-action norms coordinated with *and* / *or*.
+
+    Examples (repair-development residuals):
+    * ``maintain a Do Not Call registry and honor all requests``
+    * ``engage in insider trading or share material non-public information``
+
+    Structured temporal constraints attach only to the final conjunct so a
+    trailing ``within 30 days`` does not leak onto the left-hand action.
+    Object phrases that merely coordinate nouns (``items and gifts``) are
+    left intact because secondary segments must *lead* with a closed action.
+    """
+
+    payload = dict(data)
+    verb = _clean_text(payload.get("action_verb") or "")
+    obj = _clean_text(
+        payload.get("action_object") or payload.get("action") or ""
+    )
+    if not obj:
+        return [payload]
+    parts = _COORD_ACTION_SPLIT_RE.split(obj)
+    if len(parts) < 2:
+        return [payload]
+
+    secondary: list[tuple[int, str, str]] = []
+    for index, part in enumerate(parts):
+        if index == 0:
+            continue
+        action = _leading_closed_action(part, vocabulary.actions)
+        if action and action != verb:
+            secondary.append((index, action, part))
+    if not secondary:
+        return [payload]
+
+    expanded: list[dict[str, object]] = []
+    first = dict(payload)
+    first["action_verb"] = verb
+    first["action_object"] = parts[0]
+    first["action"] = f"{verb} {parts[0]}".strip()
+    # Structured temporal belongs to the rightmost conjunct only.
+    first["temporal_constraints"] = ()
+    first["source_text"] = _local_norm_source(
+        payload, action_verb=verb, action_object=parts[0]
+    )
+    expanded.append(first)
+
+    last_secondary_index = secondary[-1][0]
+    for index, action, part in secondary:
+        remaining = part
+        surface = action.replace("_", " ")
+        remaining = re.sub(
+            rf"^(?:to\s+)?{re.escape(surface)}\b",
+            "",
+            remaining,
+            flags=re.IGNORECASE,
+        ).strip(" ,;")
+        if not remaining:
+            remaining = part
+            for token in action.split("_"):
+                remaining = re.sub(
+                    rf"\b{re.escape(token)}s?\b",
+                    " ",
+                    remaining,
+                    flags=re.IGNORECASE,
+                )
+            remaining = re.sub(r"\s+", " ", remaining).strip(" ,;")
+        segment = dict(payload)
+        segment["action_verb"] = action
+        segment["action_object"] = remaining or part
+        segment["action"] = part
+        if index != last_secondary_index:
+            segment["temporal_constraints"] = ()
+        segment["source_text"] = _local_norm_source(
+            payload,
+            action_verb=action,
+            action_object=remaining or part,
+        )
+        # Re-attach original source tail so trailing temporal windows on the
+        # rightmost conjunct still harvest (``… honor all requests within 30
+        # days``).
+        if index == last_secondary_index:
+            original_source = _clean_text(payload.get("source_text"))
+            if original_source:
+                segment["source_text"] = original_source
+        expanded.append(segment)
+    return expanded
+
+
+def _permission_sentence_already_covered(
+    sentence: str,
+    covered_tokens: set[str],
+    *,
+    coverage_threshold: float = 0.7,
+) -> bool:
+    """True when most content tokens of *sentence* already appear in norms."""
+
+    content = [token for token in _tokens(sentence) if len(token) > 3]
+    if not content:
+        return False
+    hits = sum(1 for token in content if token in covered_tokens)
+    return (hits / len(content)) >= coverage_threshold
+
+
+def _recover_missing_permission_norms(
+    source_text: str,
+    existing_norm_dicts: Sequence[Mapping[str, object]],
+    vocabulary: AllowedAtomVocabulary,
+) -> list[dict[str, object]]:
+    """Recover permission sentences the deontic converter failed to emit.
+
+    Deterministic only: closed-vocabulary actor/action/object grounding on
+    sentences with permission cues (``may``, ``are allowed``) that are not
+    already covered by converter source spans. Used for repair-development
+    missing-rule residuals such as credit-union waivers and handbook discuss
+    permissions — never consults gold IR or blind data.
+    """
+
+    if not _clean_text(source_text):
+        return []
+    covered = " ".join(
+        _clean_text(norm.get("source_text")) for norm in existing_norm_dicts
+    )
+    covered_tokens = set(_tokens(covered))
+    recovered: list[dict[str, object]] = []
+    seen_keys: set[tuple[str, str, str]] = set()
+    for raw_sentence in _SENTENCE_SPLIT_RE.split(source_text):
+        sentence = raw_sentence.strip()
+        if not sentence or not _PERMISSION_SENTENCE_RE.search(sentence):
+            continue
+        if _permission_sentence_already_covered(sentence, covered_tokens):
+            continue
+        actor, _actor_conf = _best_atom_scored(
+            sentence, vocabulary.actors, allow_empty=True
+        )
+        action, _action_conf = _best_atom_scored(
+            sentence, vocabulary.actions, allow_empty=True
+        )
+        object_atom, _object_conf = _best_atom_scored(
+            sentence, vocabulary.objects, allow_empty=True
+        )
+        if not actor or not action:
+            continue
+        key = (actor, action, object_atom or "")
+        if key in seen_keys:
+            continue
+        # Skip if an existing norm already projects the same triple.
+        duplicate = False
+        for norm in existing_norm_dicts:
+            existing_actor, _ = _best_atom_scored(
+                norm.get("actor"), vocabulary.actors, allow_empty=True
+            )
+            existing_action, _ = _best_atom_scored(
+                [norm.get("action"), norm.get("action_verb")],
+                vocabulary.actions,
+                allow_empty=True,
+            )
+            if existing_actor == actor and existing_action == action:
+                duplicate = True
+                break
+        if duplicate:
+            continue
+        seen_keys.add(key)
+        object_surface = (
+            object_atom.replace("_", " ") if object_atom else sentence
+        )
+        recovered.append(
+            {
+                "modality": "P",
+                "norm_type": "permission",
+                "actor": actor.replace("_", " "),
+                "action": action,
+                "action_verb": action,
+                "action_object": object_surface,
+                "conditions": (),
+                "exceptions": (),
+                "temporal_constraints": (),
+                "source_text": sentence,
+            }
+        )
+    return recovered
+
+
+def _expand_norms_for_projection(
+    norms: Sequence[object],
+    vocabulary: AllowedAtomVocabulary,
+    *,
+    source_text: str = "",
+) -> list[object]:
+    """Apply conjoined-action split and missing-permission recovery."""
+
+    base_dicts: list[dict[str, object]] = []
+    for norm in norms:
+        to_dict = getattr(norm, "to_dict", None)
+        if not callable(to_dict):
+            raise ContractError("typed deontic norm must provide to_dict()")
+        data = to_dict()
+        if not isinstance(data, Mapping):
+            raise ContractError(
+                "typed deontic norm to_dict() must return an object"
+            )
+        base_dicts.append(dict(data))
+
+    expanded: list[object] = []
+    for data in base_dicts:
+        for segment in _split_conjoined_action_norm(data, vocabulary):
+            expanded.append(_DictNormView(segment))
+
+    for recovered in _recover_missing_permission_norms(
+        source_text, base_dicts, vocabulary
+    ):
+        expanded.append(_DictNormView(recovered))
+    return expanded
 
 
 @dataclass(frozen=True, slots=True)
@@ -1234,11 +1543,18 @@ def project_legal_norms_with_diagnostics(
     if not isinstance(vocabulary, AllowedAtomVocabulary):
         raise ContractError("vocabulary must be AllowedAtomVocabulary")
 
+    # Repair-development (PLAT2-050): expand converter norms with
+    # conjoined-action splits and uncovered permission-sentence recovery
+    # before closed-vocabulary projection.
+    expanded_norms = _expand_norms_for_projection(
+        norms, vocabulary, source_text=source_text
+    )
+
     rules: list[CanonicalRule] = []
     confidences: dict[tuple[int, str], float | None] = {}
     modality_raw: dict[int, object] = {}
     rule_index = 0
-    for norm in norms:
+    for norm in expanded_norms:
         to_dict = getattr(norm, "to_dict", None)
         if not callable(to_dict):
             raise ContractError("typed deontic norm must provide to_dict()")

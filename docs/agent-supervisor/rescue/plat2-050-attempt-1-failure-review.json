@@ -1,0 +1,43 @@
+{
+  "accepted": false,
+  "attempt": 1,
+  "changed_paths": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip",
+    "tests/unit/benchmarks/semantic_roundtrip/test_repair_dev_edit_waves.py",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/dept_memo_1.json",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/fed_reg_1.json",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/hr_handbook.json",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/legal_doc_2.json",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/manifest.json"
+  ],
+  "completion_authoritative": false,
+  "decision": "guide_rescue",
+  "denied_paths": [],
+  "expected_outputs": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts"
+  ],
+  "failed_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20"
+  ],
+  "finding_codes": [],
+  "guidance_markdown": "# Implementation failure review\n\n- Decision: `guide_rescue`\n- Reason codes: `incomplete_expected_outputs`, `validation_command_failed`, `large_or_undeclared_refactor`\n- Finding codes: none\n\n## Follow-up guidance\n\nDo **not** widen scope casually. Stay inside the task contract.\n\n### Declared task outputs (exact edit authority)\n- `benchmarks/semantic_roundtrip/constructors/typed_deontic.py`\n- `tests/unit/benchmarks/semantic_roundtrip`\n- `workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts`\n\n### Missing or unfinished expected outputs\nImplement **every** declared output before finishing the attempt:\n- create/update `workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts`\n\n### Failed validation commands\n- `PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20`\nRe-run these commands after edits and keep them green before exit.\n\n### Refactor constraints\nLarge refactors are allowed **only inside declared output paths**. Do not extract helpers into new undeclared files; do not touch submodule gitlinks (for example `ipfs_accelerate_py/`); do not delete or weaken tests.\n\n### Next attempt checklist\n1. Touch only declared Outputs / Predicted files (plus justified companions).\n2. Deliver every listed expected output file.\n3. Keep validation commands passing.\n4. Avoid renames, submodule edits, and undeclared new modules.",
+  "justified_paths": [],
+  "missing_expected_outputs": [
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts"
+  ],
+  "next_attempt_prompt_addendum": "Prior attempt failure review (guide_rescue; reasons: incomplete_expected_outputs, validation_command_failed, large_or_undeclared_refactor). Still required outputs: workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts. Re-run and fix: PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20. Stay inside declared Outputs/Predicted files; finish all expected outputs; avoid renames, submodule edits, and undeclared new modules.",
+  "out_of_scope_paths": [],
+  "policy_version": "deterministic-failure-review-v1",
+  "proof_authoritative": false,
+  "reason_codes": [
+    "incomplete_expected_outputs",
+    "large_or_undeclared_refactor",
+    "validation_command_failed"
+  ],
+  "receipt_id": "baguqeerabo26f4wd6a4dbkeccfbo5zuesi3c7fs7qqqcfy5xjapthwx64ooq",
+  "schema": "ipfs_accelerate_py/agent-supervisor/implementation-failure-review@1",
+  "task_id": "PLAT2-050"
+}
