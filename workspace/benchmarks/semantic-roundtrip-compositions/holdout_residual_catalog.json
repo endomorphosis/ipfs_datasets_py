@@ -1,0 +1,242 @@
+{
+  "aggregates": {
+    "by_canonical_field": {
+      "conditions": {
+        "loss_contribution_sum": 0.1,
+        "residual_count": 1
+      },
+      "extra_rule": {
+        "loss_contribution_sum": 0.5,
+        "residual_count": 1
+      }
+    },
+    "by_case": {
+      "contradictory_modality": {
+        "field_paths": [
+          "l1.rules[1]"
+        ],
+        "forward_loss": 0.5,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.5,
+        "residual_count": 1,
+        "suggested_trigger_kinds": [
+          "contradictory"
+        ]
+      },
+      "low_confidence_object": {
+        "field_paths": [
+          "rules[0].conditions"
+        ],
+        "forward_loss": 0.1,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.1,
+        "residual_count": 1,
+        "suggested_trigger_kinds": [
+          "contradictory"
+        ]
+      },
+      "missing_temporal": {
+        "field_paths": [],
+        "forward_loss": 0.0,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0,
+        "residual_count": 0,
+        "suggested_trigger_kinds": []
+      }
+    },
+    "by_residual_kind": {
+      "extra_rule": 1,
+      "field_mismatch": 1
+    },
+    "by_suggested_trigger_kind": {
+      "contradictory": {
+        "loss_contribution_sum": 0.6,
+        "residual_count": 2
+      }
+    },
+    "case_count": 3,
+    "field_paths": [
+      "l1.rules[1]",
+      "rules[0].conditions"
+    ],
+    "mean_forward_loss": 0.2,
+    "nonzero_case_count": 2,
+    "nonzero_case_ids": [
+      "low_confidence_object",
+      "contradictory_modality"
+    ],
+    "sum_forward_loss": 0.6,
+    "total_residual_count": 2,
+    "zero_control_case_ids": [],
+    "zero_control_residual_count": 0
+  },
+  "baseline": {
+    "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "constructor_identity": "TypedDeonticCanonicalConstructor@1",
+    "e2e_mean": 0.0,
+    "report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q"
+  },
+  "case_ids": [
+    "missing_temporal",
+    "low_confidence_object",
+    "contradictory_modality"
+  ],
+  "cases": [
+    {
+      "case_cid": "baguqeerammwsvjiat7ak6f4affngc4fa4xu7u3uhuzczi27hrw7bqslqfdza",
+      "case_id": "missing_temporal",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [],
+      "forward_loss": 0.0,
+      "gold_ir_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+      "l1_rule_count": 1,
+      "loss_contribution_sum": 0,
+      "residual_count": 0,
+      "residuals": []
+    },
+    {
+      "case_cid": "baguqeera63mvsjj6zprb7rw7xtxan6iwdnuf7yodjqkxy5jrolqpsda3msmq",
+      "case_id": "low_confidence_object",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "rules[0].conditions"
+      ],
+      "forward_loss": 0.1,
+      "gold_ir_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerabmg6asxxvpro2px6ozpfvnbdnuesasuoelhg2bftpa4o3dvvuqua",
+      "l1_rule_count": 1,
+      "loss_contribution_sum": 0.1,
+      "residual_count": 1,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 0,
+          "candidate_value": [
+            "if_requested"
+          ],
+          "canonical_field": "conditions",
+          "case_id": "low_confidence_object",
+          "field_path": "rules[0].conditions",
+          "gold_rule_index": 0,
+          "gold_value": [],
+          "loss_contribution": 0.1,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.9,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        }
+      ]
+    },
+    {
+      "case_cid": "baguqeeralsetrr6dgmk325hsjrz5ihcap2zqsiwbrojpw6karzntvj3kjftq",
+      "case_id": "contradictory_modality",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "l1.rules[1]"
+      ],
+      "forward_loss": 0.5,
+      "gold_ir_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeeramypegwfic5fm3kete3n2e5gx7g6pnvge23y3ibbfa4f2upqczocq",
+      "l1_rule_count": 2,
+      "loss_contribution_sum": 0.5,
+      "residual_count": 1,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 1,
+          "candidate_value": {
+            "action": "disclose",
+            "actor": "processor",
+            "conditions": [],
+            "exceptions": [
+              "unless_required_by_law"
+            ],
+            "modality": "O",
+            "object": "personal_data",
+            "temporal": []
+          },
+          "canonical_field": null,
+          "case_id": "contradictory_modality",
+          "field_path": "l1.rules[1]",
+          "gold_rule_index": null,
+          "gold_value": null,
+          "loss_contribution": 0.5,
+          "residual_kind": "extra_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        }
+      ]
+    }
+  ],
+  "catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+  "catalog_cid_codec": "dag-json",
+  "catalog_cid_scope": "payload_without_catalog_cid",
+  "interface": "PlateauResidualCatalog@1",
+  "nonzero_case_ids": [
+    "low_confidence_object",
+    "contradictory_modality"
+  ],
+  "population_kind": "holdout",
+  "population_path": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+  "residuals": [
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 0,
+      "candidate_value": [
+        "if_requested"
+      ],
+      "canonical_field": "conditions",
+      "case_id": "low_confidence_object",
+      "field_path": "rules[0].conditions",
+      "gold_rule_index": 0,
+      "gold_value": [],
+      "loss_contribution": 0.1,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.9,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 1,
+      "candidate_value": {
+        "action": "disclose",
+        "actor": "processor",
+        "conditions": [],
+        "exceptions": [
+          "unless_required_by_law"
+        ],
+        "modality": "O",
+        "object": "personal_data",
+        "temporal": []
+      },
+      "canonical_field": null,
+      "case_id": "contradictory_modality",
+      "field_path": "l1.rules[1]",
+      "gold_rule_index": null,
+      "gold_value": null,
+      "loss_contribution": 0.5,
+      "residual_kind": "extra_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    }
+  ],
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-residual-catalog.v1",
+  "zero_residual_control_case_id": null
+}

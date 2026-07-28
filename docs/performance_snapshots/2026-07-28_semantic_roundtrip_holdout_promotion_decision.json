@@ -1,0 +1,41 @@
+{
+  "acceptance": {
+    "e2e_ci_high_lt_0": false,
+    "full_gates_pass": false,
+    "noninferiority_holds": true,
+    "pilots_non_regressed": true,
+    "production_promotion_authorized": false
+  },
+  "captured_at_utc": "2026-07-28T08:58:44.684+00:00",
+  "decision": {
+    "decision_outcome": "promotion_declined",
+    "evidence_complete": true,
+    "improvement_claim": false,
+    "production_promotion_authorized": false,
+    "promotion": false,
+    "reason_codes": [
+      "e2e_ci_high_not_lt_0",
+      "noninferiority_holds",
+      "full_gates_failed",
+      "pilots_non_regressed"
+    ],
+    "selected_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "status": "promotion_declined"
+  },
+  "decision_cid": "baguqeeracs6gvtpumpn43ixtmi5eacit7gxuoiz5rrc4inxwd7ryjw46ks6q",
+  "interface": "CanonicalCompilerDecision@1",
+  "lineage": {
+    "access_ledger_cid": "baguqeeraymcdbko5peokdyicgbunpycrawxgvrscvuzq6ndxfaixrsioselq",
+    "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+    "bundle": "semantic-roundtrip/plateau-holdout/remeasure",
+    "holdout_remeasure_report_cid": "baguqeeraupu46elxeoebbowyzawfytlueifxzv7hywdxkg6nzas2b4pef2ja",
+    "recovery": {
+      "completion_checkpoint": "/var/tmp/hssl-srt-plateau-holdout-v2/state/semantic-roundtrip-plateau-holdout-remeasure/state/implementation_checkpoints/plat2-060-faf8aaffa5cc/completion.json",
+      "note": "Full per-case remeasure JSON was discarded with the supervisor worktree. This file is an operator recovery envelope bound to the original one-shot report_cid / decision_cid / ledger_cid from Grok session 019fa7e5-518f-7df1-8274-c56a759efb53 and completion.json (artifacts_written, 54 passed). Access ledger export was regenerable with matching ledger_cid without re-scoring. No blind re-run was performed.",
+      "session_id": "019fa7e5-518f-7df1-8274-c56a759efb53",
+      "status": "partial_public_body_recovery"
+    }
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-holdout-promotion-decision.v1",
+  "task_id": "PLAT2-060"
+}

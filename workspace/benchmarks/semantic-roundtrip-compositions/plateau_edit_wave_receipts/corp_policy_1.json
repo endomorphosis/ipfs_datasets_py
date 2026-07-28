@@ -1,0 +1,123 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.088333333,
+  "baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+  "board_namespace": "semantic-roundtrip-plateau-break-v1",
+  "case_id": "corp_policy_1",
+  "deterministic_changes": [
+    {
+      "id": "ly_adverb_frequency_stem_variants",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[2].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Expand closed-vocabulary stem variants for -ly frequency adverbs so evidence 'annual' grounds the atom 'annually' (and monthly/weekly) without LLM assistance."
+    },
+    {
+      "id": "norm_local_qualifier_harvest",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions",
+        "rules[1].temporal",
+        "rules[2].temporal",
+        "rules[3].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Harvest conditions/temporal from per-norm evidence against the closed qualifier vocabulary (precision 1.0 token grounding); with ly-stems, annually joins gift_value_over_25 / within_10_days_of_discovery / at_all_times."
+    },
+    {
+      "id": "temporal_cue_annual_frequency",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[2].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Treat annual/annually (and monthly/weekly/daily) as temporal diagnostic cues so missing-frequency slots surface under the same missing-trigger path as day-count windows."
+    }
+  ],
+  "doctrine": {
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic → IR → deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT-083",
+  "evidence_subset": "edit-wave corp_policy_1",
+  "implementable": true,
+  "improvement": {
+    "corp_policy_1_cleared": true,
+    "corp_policy_1_forward_delta": -0.1,
+    "mean_pilot_forward_delta": -0.0716666666
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "notes": "PLAT-083 applies residual-driven deterministic projection fixes in typed_deontic only for corp_policy_1. Optional methods remain teachers/gates and are not promoted into the production composition.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "packet_cids": [
+    "baguqeeray3zpzrhkxi2ki4xrkj6hjqgn2ggtkjeexxjrivtjqx6tkeymheka"
+  ],
+  "packet_digests": [
+    "c6f2fcc4eaba34a472f1527c74c0cdd18d352484bdd314566985fd35130c3914"
+  ],
+  "packet_ids": [
+    "plat-083-corp-policy-1-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat-det-corp-policy",
+  "post_scores": {
+    "corp_policy_1_end_to_end_loss": 0.0,
+    "corp_policy_1_forward_loss": 0.0,
+    "corp_policy_1_l1_rule_count": 4,
+    "corp_policy_1_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0133333334,
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.066666667
+    }
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/corp_policy_1.json"
+  ],
+  "prior_scores": {
+    "corp_policy_1_end_to_end_loss": 0.1,
+    "corp_policy_1_forward_loss": 0.1,
+    "corp_policy_1_l1_rule_count": 4,
+    "corp_policy_1_residual_count": 4,
+    "mean_pilot_forward_loss": 0.085,
+    "sealed_plateau_mean_e2e": 0.088333333
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "receipt_cid": "baguqeeraxo3kidzq7lazgdmof7nf2qawebub2bftvyrztny5kk7slu475nwq",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeerar435zxtsbiiilmv6bvtmqbiz7vlvhz4kq64rekbavz7zvuaf4mhq",
+  "residual_field_paths": [
+    "rules[0].conditions",
+    "rules[1].temporal",
+    "rules[2].temporal",
+    "rules[3].temporal"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "track": "det-compiler",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=15"
+  ]
+}

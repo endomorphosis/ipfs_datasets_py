@@ -1,0 +1,108 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.0,
+  "baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v1",
+  "case_id": "low_confidence_object",
+  "deterministic_changes": [
+    {
+      "id": "structured_condition_full_grounding",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Map structured condition clauses with content-only match text and precision-1.0 full grounding so bare \"requested\" cannot promote if_requested via clause_type key leakage."
+    },
+    {
+      "id": "skip_condition_harvest_when_structured",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "When the deontic converter already emitted structured condition clauses, treat those slots as authoritative and do not re-harvest conditions from free text (avoids reintroducing soft request hedges)."
+    }
+  ],
+  "doctrine": {
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT2-050",
+  "evidence_subset": "holdout edit-wave low_confidence_object",
+  "implementable": true,
+  "improvement": {
+    "low_confidence_object_cleared": true,
+    "low_confidence_object_forward_delta": -0.1,
+    "mean_pilot_forward_delta": 0.0
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "notes": "PLAT2-050 applies residual-driven deterministic projection fixes in typed_deontic for holdout case low_confidence_object. Optional methods remain teachers/gates and are not promoted into the production composition. Pilot mean e2e remains 0.0.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "packet_cids": [
+    "baguqeeraz67rxfty5x6xauwdhorww2wf7a4bxbauvhwfpmskzdnrpzc6jtnq"
+  ],
+  "packet_digests": [
+    "d5cbf29b77deccca470b4ef48a05083cf4295232585a848fb8866f9818a123f7"
+  ],
+  "packet_ids": [
+    "plat2-050-low-confidence-object-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat2-det-edits",
+  "post_scores": {
+    "low_confidence_object_end_to_end_loss": 0.0,
+    "low_confidence_object_forward_loss": 0.0,
+    "low_confidence_object_l1_rule_count": 1,
+    "low_confidence_object_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0,
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.0
+    }
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/low_confidence_object.json"
+  ],
+  "prior_scores": {
+    "low_confidence_object_end_to_end_loss": 0.1,
+    "low_confidence_object_forward_loss": 0.1,
+    "low_confidence_object_l1_rule_count": 1,
+    "low_confidence_object_residual_count": 1,
+    "mean_pilot_forward_loss": 0.0,
+    "sealed_holdout_mean_forward": 0.2
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "receipt_cid": "baguqeerarn76cssfcgqtumrumdydvtifziirubxamjg3g5kc3d5yqleim6uq",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+  "residual_field_paths": [
+    "rules[0].conditions"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "track": "det-compiler",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20"
+  ]
+}

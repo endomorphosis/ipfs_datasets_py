@@ -1,0 +1,883 @@
+{
+  "aggregates": {
+    "by_canonical_field": {
+      "conditions": {
+        "loss_contribution_sum": 0.045,
+        "residual_count": 2
+      },
+      "missing_rule": {
+        "loss_contribution_sum": 1.1,
+        "residual_count": 5
+      },
+      "object": {
+        "loss_contribution_sum": 0.04,
+        "residual_count": 2
+      },
+      "temporal": {
+        "loss_contribution_sum": 0.045,
+        "residual_count": 2
+      }
+    },
+    "by_case": {
+      "contradictory_modality": {
+        "field_paths": [],
+        "forward_loss": 0.0,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0,
+        "residual_count": 0,
+        "suggested_trigger_kinds": []
+      },
+      "dept_memo_1": {
+        "field_paths": [
+          "rules[2]"
+        ],
+        "forward_loss": 0.25,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.25,
+        "residual_count": 1,
+        "suggested_trigger_kinds": [
+          "missing"
+        ]
+      },
+      "fed_reg_1": {
+        "field_paths": [
+          "rules[3]",
+          "rules[2].object",
+          "rules[4].conditions",
+          "rules[4].temporal"
+        ],
+        "forward_loss": 0.26,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.26,
+        "residual_count": 4,
+        "suggested_trigger_kinds": [
+          "contradictory",
+          "missing"
+        ]
+      },
+      "hr_handbook": {
+        "field_paths": [
+          "rules[1]",
+          "rules[3]",
+          "rules[0].object"
+        ],
+        "forward_loss": 0.42,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.42,
+        "residual_count": 3,
+        "suggested_trigger_kinds": [
+          "contradictory",
+          "missing"
+        ]
+      },
+      "legal_doc_2": {
+        "field_paths": [
+          "rules[2]",
+          "rules[3].conditions",
+          "rules[3].temporal"
+        ],
+        "forward_loss": 0.3,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0.3,
+        "residual_count": 3,
+        "suggested_trigger_kinds": [
+          "contradictory",
+          "missing"
+        ]
+      },
+      "low_confidence_object": {
+        "field_paths": [],
+        "forward_loss": 0.0,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0,
+        "residual_count": 0,
+        "suggested_trigger_kinds": []
+      },
+      "missing_temporal": {
+        "field_paths": [],
+        "forward_loss": 0.0,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0,
+        "residual_count": 0,
+        "suggested_trigger_kinds": []
+      },
+      "privacy_act_amendment": {
+        "field_paths": [],
+        "forward_loss": 0.0,
+        "is_zero_residual_control": false,
+        "loss_contribution_sum": 0,
+        "residual_count": 0,
+        "suggested_trigger_kinds": []
+      }
+    },
+    "by_evaluation_status": {
+      "semantic_scored": 8
+    },
+    "by_residual_kind": {
+      "field_mismatch": 6,
+      "missing_rule": 5
+    },
+    "by_suggested_trigger_kind": {
+      "contradictory": {
+        "loss_contribution_sum": 0.085,
+        "residual_count": 4
+      },
+      "missing": {
+        "loss_contribution_sum": 1.145,
+        "residual_count": 7
+      }
+    },
+    "case_count": 8,
+    "field_paths": [
+      "rules[0].object",
+      "rules[1]",
+      "rules[2]",
+      "rules[2].object",
+      "rules[3]",
+      "rules[3].conditions",
+      "rules[3].temporal",
+      "rules[4].conditions",
+      "rules[4].temporal"
+    ],
+    "mean_forward_loss": 0.15375,
+    "nonzero_case_count": 4,
+    "nonzero_case_ids": [
+      "legal_doc_2",
+      "fed_reg_1",
+      "dept_memo_1",
+      "hr_handbook"
+    ],
+    "semantic_scored_case_count": 8,
+    "sum_forward_loss": 1.23,
+    "total_residual_count": 11,
+    "zero_control_case_ids": [],
+    "zero_control_residual_count": 0
+  },
+  "assumptions": [
+    "production remains typed_deontic → IR → deterministic realizer",
+    "residuals are structural gold vs baseline L1 field-path forensics only",
+    "unsupported/not_measured/runtime_failed never enter semantic score aggregates",
+    "blind sources/gold/residuals inaccessible without post-freeze evaluator authorization",
+    "Hammer/cvc5/Lean have semantic_authority false"
+  ],
+  "baseline": {
+    "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "constructor_identity": "TypedDeonticCanonicalConstructor@1",
+    "e2e_mean": 0.0,
+    "report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q"
+  },
+  "case_ids": [
+    "missing_temporal",
+    "low_confidence_object",
+    "contradictory_modality",
+    "legal_doc_2",
+    "privacy_act_amendment",
+    "fed_reg_1",
+    "dept_memo_1",
+    "hr_handbook"
+  ],
+  "cases": [
+    {
+      "case_cid": "baguqeerammwsvjiat7ak6f4affngc4fa4xu7u3uhuzczi27hrw7bqslqfdza",
+      "case_id": "missing_temporal",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [],
+      "forward_loss": 0.0,
+      "gold_ir_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerarzjnbz4cilrcimevj2zuv6vmznsqtkq6eita2nlocnfdce7k67da",
+      "l1_rule_count": 1,
+      "loss_contribution_sum": 0,
+      "residual_count": 0,
+      "residuals": []
+    },
+    {
+      "case_cid": "baguqeera63mvsjj6zprb7rw7xtxan6iwdnuf7yodjqkxy5jrolqpsda3msmq",
+      "case_id": "low_confidence_object",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [],
+      "forward_loss": 0.0,
+      "gold_ir_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeeravksx4cz6lvmq5ye6cudb5623up4sdgxmwzoceglkurgr33u7u6ma",
+      "l1_rule_count": 1,
+      "loss_contribution_sum": 0,
+      "residual_count": 0,
+      "residuals": []
+    },
+    {
+      "case_cid": "baguqeeralsetrr6dgmk325hsjrz5ihcap2zqsiwbrojpw6karzntvj3kjftq",
+      "case_id": "contradictory_modality",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [],
+      "forward_loss": 0.0,
+      "gold_ir_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+      "gold_rule_count": 1,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerawnmliribikhekysmwppx7idkdwyddvtj2nwti6sj32vocm2cl5fa",
+      "l1_rule_count": 1,
+      "loss_contribution_sum": 0,
+      "residual_count": 0,
+      "residuals": []
+    },
+    {
+      "case_cid": "baguqeerafzhepffelzoxidjwy3ps2cvincjwrlw4xlsjhootyxkrywivwcza",
+      "case_id": "legal_doc_2",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "rules[2]",
+        "rules[3].conditions",
+        "rules[3].temporal"
+      ],
+      "forward_loss": 0.3,
+      "gold_ir_cid": "baguqeeravkmv3rr5tcd73nnzm7vlgxjdjmx2s27pfqarfcrdkpthe4jqseiq",
+      "gold_rule_count": 4,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerappeojkk7fj3mvq5kdcpvx6bk23ofnzkstjgwiapn5aazlaarjtia",
+      "l1_rule_count": 3,
+      "loss_contribution_sum": 0.3,
+      "residual_count": 3,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": null,
+          "candidate_value": null,
+          "canonical_field": null,
+          "case_id": "legal_doc_2",
+          "field_path": "rules[2]",
+          "gold_rule_index": 2,
+          "gold_value": {
+            "action": "waive",
+            "actor": "credit_unions",
+            "conditions": [
+              "for_members_in_good_standing"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "transaction_fees",
+            "temporal": []
+          },
+          "loss_contribution": 0.25,
+          "residual_kind": "missing_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 2,
+          "candidate_value": [],
+          "canonical_field": "conditions",
+          "case_id": "legal_doc_2",
+          "field_path": "rules[3].conditions",
+          "gold_rule_index": 3,
+          "gold_value": [
+            "for_marketing_purposes"
+          ],
+          "loss_contribution": 0.025,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.8,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 2,
+          "candidate_value": [
+            "for_marketing_purposes"
+          ],
+          "canonical_field": "temporal",
+          "case_id": "legal_doc_2",
+          "field_path": "rules[3].temporal",
+          "gold_rule_index": 3,
+          "gold_value": [],
+          "loss_contribution": 0.025,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.8,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        }
+      ]
+    },
+    {
+      "case_cid": "baguqeeram2xzjr6smksszeit6ipel5bqa6kyivya3pkgniosuozxjrimybcq",
+      "case_id": "privacy_act_amendment",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [],
+      "forward_loss": 0.0,
+      "gold_ir_cid": "baguqeeraoeqjcapcjzvoiqkvxsxldvvuiehkdw3wu7lgllpbhd7lwrh5ibfa",
+      "gold_rule_count": 2,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeeraoeqjcapcjzvoiqkvxsxldvvuiehkdw3wu7lgllpbhd7lwrh5ibfa",
+      "l1_rule_count": 2,
+      "loss_contribution_sum": 0,
+      "residual_count": 0,
+      "residuals": []
+    },
+    {
+      "case_cid": "baguqeeraoist6assmpg2k5zl4anhs5jble5rmtofvcnjuc36dxndlnsdfl4a",
+      "case_id": "fed_reg_1",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "rules[3]",
+        "rules[2].object",
+        "rules[4].conditions",
+        "rules[4].temporal"
+      ],
+      "forward_loss": 0.26,
+      "gold_ir_cid": "baguqeeraxadtk2qw6ut5dvsxjymzjcurwnlt3r2z5qbiqpehtzbysblhrn4a",
+      "gold_rule_count": 5,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeerale7oce44vyjw74jdp37pkms2ty3otzwjmyyf2n5kae3potsd7exq",
+      "l1_rule_count": 4,
+      "loss_contribution_sum": 0.26,
+      "residual_count": 4,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": null,
+          "candidate_value": null,
+          "canonical_field": null,
+          "case_id": "fed_reg_1",
+          "field_path": "rules[3]",
+          "gold_rule_index": 3,
+          "gold_value": {
+            "action": "maintain",
+            "actor": "companies",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "do_not_call_registry",
+            "temporal": []
+          },
+          "loss_contribution": 0.2,
+          "residual_kind": "missing_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 2,
+          "candidate_value": "do_not_call_registry",
+          "canonical_field": "object",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[2].object",
+          "gold_rule_index": 2,
+          "gold_value": "all_requests",
+          "loss_contribution": 0.02,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.9,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 3,
+          "candidate_value": [],
+          "canonical_field": "conditions",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[4].conditions",
+          "gold_rule_index": 4,
+          "gold_value": [
+            "before_making_robocalls_to_wireless_numbers"
+          ],
+          "loss_contribution": 0.02,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.8,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 3,
+          "candidate_value": [
+            "before_making_robocalls_to_wireless_numbers"
+          ],
+          "canonical_field": "temporal",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[4].temporal",
+          "gold_rule_index": 4,
+          "gold_value": [],
+          "loss_contribution": 0.02,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.8,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        }
+      ]
+    },
+    {
+      "case_cid": "baguqeerajkylucikrti6kxannxneqkex5vpzzdatu3mnbu3jzjbieiwqzdma",
+      "case_id": "dept_memo_1",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "rules[2]"
+      ],
+      "forward_loss": 0.25,
+      "gold_ir_cid": "baguqeeraamv2jpv5hmdrqbugtgaxnjr4n5f6vy3tsiw7bxsaoh7ssszuy7pa",
+      "gold_rule_count": 4,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeeraulrhcdoadi52ulndminwpgz72izh5wy7wkgowrlp75cylbfpgdja",
+      "l1_rule_count": 3,
+      "loss_contribution_sum": 0.25,
+      "residual_count": 1,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": null,
+          "candidate_value": null,
+          "canonical_field": null,
+          "case_id": "dept_memo_1",
+          "field_path": "rules[2]",
+          "gold_rule_index": 2,
+          "gold_value": {
+            "action": "report",
+            "actor": "contractors",
+            "conditions": [
+              "for_classified_projects"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "security_incidents",
+            "temporal": [
+              "within_72_hours"
+            ]
+          },
+          "loss_contribution": 0.25,
+          "residual_kind": "missing_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        }
+      ]
+    },
+    {
+      "case_cid": "baguqeera7qnnv7hd7tkej2cy2z2q4qyogf3cphlpdcf3hosvxfuqukrd5dja",
+      "case_id": "hr_handbook",
+      "cycle_loss": null,
+      "end_to_end_loss": null,
+      "field_paths": [
+        "rules[1]",
+        "rules[3]",
+        "rules[0].object"
+      ],
+      "forward_loss": 0.42,
+      "gold_ir_cid": "baguqeeravum42fp4mbvlh7tcliwjqlcob6t2dbcaw7y55zyfvjw6v4vjkl2q",
+      "gold_rule_count": 5,
+      "is_zero_residual_control": false,
+      "l1_cid": "baguqeeracqtgkqbhugbmsjvzzwsjuvbs3osqguy3e6znrsfdp67ui7zx66vq",
+      "l1_rule_count": 3,
+      "loss_contribution_sum": 0.42,
+      "residual_count": 3,
+      "residuals": [
+        {
+          "ae_cue": null,
+          "candidate_rule_index": null,
+          "candidate_value": null,
+          "canonical_field": null,
+          "case_id": "hr_handbook",
+          "field_path": "rules[1]",
+          "gold_rule_index": 1,
+          "gold_value": {
+            "action": "share",
+            "actor": "workers",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "material_non_public_information",
+            "temporal": []
+          },
+          "loss_contribution": 0.2,
+          "residual_kind": "missing_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": null,
+          "candidate_value": null,
+          "canonical_field": null,
+          "case_id": "hr_handbook",
+          "field_path": "rules[3]",
+          "gold_rule_index": 3,
+          "gold_value": {
+            "action": "discuss",
+            "actor": "employees",
+            "conditions": [
+              "with_industry_colleagues"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "general_business_practices",
+            "temporal": []
+          },
+          "loss_contribution": 0.2,
+          "residual_kind": "missing_rule",
+          "rule_match_score": null,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "missing"
+        },
+        {
+          "ae_cue": null,
+          "candidate_rule_index": 0,
+          "candidate_value": "material_non_public_information",
+          "canonical_field": "object",
+          "case_id": "hr_handbook",
+          "field_path": "rules[0].object",
+          "gold_rule_index": 0,
+          "gold_value": "insider_trading",
+          "loss_contribution": 0.02,
+          "residual_kind": "field_mismatch",
+          "rule_match_score": 0.9,
+          "similarity": 0.0,
+          "spacy_cue": null,
+          "suggested_trigger_kind": "contradictory"
+        }
+      ]
+    }
+  ],
+  "catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+  "catalog_cid_codec": "dag-json",
+  "catalog_cid_scope": "payload_without_catalog_cid",
+  "interface": "PlateauResidualCatalog@1",
+  "nonzero_case_ids": [
+    "legal_doc_2",
+    "fed_reg_1",
+    "dept_memo_1",
+    "hr_handbook"
+  ],
+  "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+  "population_kind": "repair_development",
+  "population_path": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+  "provenance": {
+    "access_mode": "supervisor",
+    "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "builder": "benchmarks.semantic_roundtrip.residual_catalog.build_plateau_residual_catalog",
+    "constructor_identity": "TypedDeonticCanonicalConstructor@1",
+    "interface": "PlateauResidualCatalog@1",
+    "l1_source": "typed_deontic_baseline_construct",
+    "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+    "population_kind": "repair_development",
+    "population_path": "tests/fixtures/semantic_roundtrip/holdout_cases.json",
+    "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-residual-catalog.v1",
+    "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va"
+  },
+  "residuals": [
+    {
+      "ae_cue": null,
+      "candidate_rule_index": null,
+      "candidate_value": null,
+      "canonical_field": null,
+      "case_id": "legal_doc_2",
+      "field_path": "rules[2]",
+      "gold_rule_index": 2,
+      "gold_value": {
+        "action": "waive",
+        "actor": "credit_unions",
+        "conditions": [
+          "for_members_in_good_standing"
+        ],
+        "exceptions": [],
+        "modality": "P",
+        "object": "transaction_fees",
+        "temporal": []
+      },
+      "loss_contribution": 0.25,
+      "residual_kind": "missing_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 2,
+      "candidate_value": [],
+      "canonical_field": "conditions",
+      "case_id": "legal_doc_2",
+      "field_path": "rules[3].conditions",
+      "gold_rule_index": 3,
+      "gold_value": [
+        "for_marketing_purposes"
+      ],
+      "loss_contribution": 0.025,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.8,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 2,
+      "candidate_value": [
+        "for_marketing_purposes"
+      ],
+      "canonical_field": "temporal",
+      "case_id": "legal_doc_2",
+      "field_path": "rules[3].temporal",
+      "gold_rule_index": 3,
+      "gold_value": [],
+      "loss_contribution": 0.025,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.8,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": null,
+      "candidate_value": null,
+      "canonical_field": null,
+      "case_id": "fed_reg_1",
+      "field_path": "rules[3]",
+      "gold_rule_index": 3,
+      "gold_value": {
+        "action": "maintain",
+        "actor": "companies",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "O",
+        "object": "do_not_call_registry",
+        "temporal": []
+      },
+      "loss_contribution": 0.2,
+      "residual_kind": "missing_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 2,
+      "candidate_value": "do_not_call_registry",
+      "canonical_field": "object",
+      "case_id": "fed_reg_1",
+      "field_path": "rules[2].object",
+      "gold_rule_index": 2,
+      "gold_value": "all_requests",
+      "loss_contribution": 0.02,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.9,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 3,
+      "candidate_value": [],
+      "canonical_field": "conditions",
+      "case_id": "fed_reg_1",
+      "field_path": "rules[4].conditions",
+      "gold_rule_index": 4,
+      "gold_value": [
+        "before_making_robocalls_to_wireless_numbers"
+      ],
+      "loss_contribution": 0.02,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.8,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 3,
+      "candidate_value": [
+        "before_making_robocalls_to_wireless_numbers"
+      ],
+      "canonical_field": "temporal",
+      "case_id": "fed_reg_1",
+      "field_path": "rules[4].temporal",
+      "gold_rule_index": 4,
+      "gold_value": [],
+      "loss_contribution": 0.02,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.8,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": null,
+      "candidate_value": null,
+      "canonical_field": null,
+      "case_id": "dept_memo_1",
+      "field_path": "rules[2]",
+      "gold_rule_index": 2,
+      "gold_value": {
+        "action": "report",
+        "actor": "contractors",
+        "conditions": [
+          "for_classified_projects"
+        ],
+        "exceptions": [],
+        "modality": "P",
+        "object": "security_incidents",
+        "temporal": [
+          "within_72_hours"
+        ]
+      },
+      "loss_contribution": 0.25,
+      "residual_kind": "missing_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": null,
+      "candidate_value": null,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "field_path": "rules[1]",
+      "gold_rule_index": 1,
+      "gold_value": {
+        "action": "share",
+        "actor": "workers",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "F",
+        "object": "material_non_public_information",
+        "temporal": []
+      },
+      "loss_contribution": 0.2,
+      "residual_kind": "missing_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": null,
+      "candidate_value": null,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "field_path": "rules[3]",
+      "gold_rule_index": 3,
+      "gold_value": {
+        "action": "discuss",
+        "actor": "employees",
+        "conditions": [
+          "with_industry_colleagues"
+        ],
+        "exceptions": [],
+        "modality": "P",
+        "object": "general_business_practices",
+        "temporal": []
+      },
+      "loss_contribution": 0.2,
+      "residual_kind": "missing_rule",
+      "rule_match_score": null,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "ae_cue": null,
+      "candidate_rule_index": 0,
+      "candidate_value": "material_non_public_information",
+      "canonical_field": "object",
+      "case_id": "hr_handbook",
+      "field_path": "rules[0].object",
+      "gold_rule_index": 0,
+      "gold_value": "insider_trading",
+      "loss_contribution": 0.02,
+      "residual_kind": "field_mismatch",
+      "rule_match_score": 0.9,
+      "similarity": 0.0,
+      "spacy_cue": null,
+      "suggested_trigger_kind": "contradictory"
+    }
+  ],
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-residual-catalog.v1",
+  "status": {
+    "by_case": {
+      "contradictory_modality": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "dept_memo_1": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "fed_reg_1": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "hr_handbook": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "legal_doc_2": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "low_confidence_object": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "missing_temporal": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      },
+      "privacy_act_amendment": {
+        "evaluation_status": "semantic_scored",
+        "reason": "success",
+        "semantic_score_eligible": true
+      }
+    },
+    "catalog_evaluation_mode": "case_facet_residuals",
+    "counts": {
+      "not_measured": 0,
+      "runtime_failed": 0,
+      "semantic_scored": 8,
+      "unsupported": 0
+    },
+    "non_semantic_excluded_from_score_aggregates": true,
+    "non_semantic_statuses": [
+      "not_measured",
+      "runtime_failed",
+      "unsupported"
+    ],
+    "semantic_score_statuses": [
+      "semantic_scored"
+    ]
+  },
+  "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va",
+  "zero_residual_control_case_id": null
+}

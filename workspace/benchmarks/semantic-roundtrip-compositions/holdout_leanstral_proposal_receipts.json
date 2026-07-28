@@ -1,0 +1,446 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v1",
+  "cases": [
+    {
+      "admission_disposition": "accepted",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "after_30_days"
+            ]
+          }
+        ]
+      },
+      "admitted_l1_digest": "8e52d0e78242e22430954eb34afaaccb6509aa1e22260d356e134a3113eaf7c6",
+      "allowed_field_paths": [
+        "rules[0].temporal"
+      ],
+      "baseline_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "after_30_days"
+            ]
+          }
+        ]
+      },
+      "case_id": "missing_temporal",
+      "detail": "holdout dry-run selective proposal for missing_temporal",
+      "field_changes": [
+        {
+          "after": [
+            "after_30_days"
+          ],
+          "baseline_rule_index": 0,
+          "before": [],
+          "canonical_field": "temporal",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].temporal"
+        }
+      ],
+      "implementable": true,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "accepted",
+      "packet_digest": "451f015790969e76ce8dc780d2b4149ac0d0bd737791981ebc2624dbc9a78456",
+      "packet_id": "pkt-leanstral-missing_temporal",
+      "prior_l1_unchanged": false,
+      "proposal_id": "prop-leanstral-missing_temporal",
+      "residual_ref_id": "resid-missing_temporal-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "temporal",
+          "confidence": null,
+          "evidence": "activation fixture forces empty temporal despite after_30_days source cue",
+          "kind": "missing",
+          "path": "rules[0].temporal",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "accepted",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "admitted_l1_digest": "aaa57e0b3e5d590ee09e15061efb5ba3f9219aecb65c22196aa44d1dee9fa798",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "case_id": "low_confidence_object",
+      "detail": "holdout dry-run selective proposal for low_confidence_object",
+      "field_changes": [
+        {
+          "after": "records",
+          "baseline_rule_index": 0,
+          "before": "personal_data",
+          "canonical_field": "object",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].object"
+        }
+      ],
+      "implementable": true,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "accepted",
+      "packet_digest": "7a7215b4973e200037ce5c459813010e692f4c1a73de61a61b5f5a1b6a83ab2e",
+      "packet_id": "pkt-leanstral-low_confidence_object",
+      "prior_l1_unchanged": false,
+      "proposal_id": "prop-leanstral-low_confidence_object",
+      "residual_ref_id": "resid-low_confidence_object-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": 0.2,
+          "evidence": "activation fixture forces low-confidence object attachment",
+          "kind": "low_confidence",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "accepted",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "processor",
+            "conditions": [],
+            "exceptions": [
+              "unless_required_by_law"
+            ],
+            "modality": "F",
+            "object": "personal_data",
+            "temporal": []
+          }
+        ]
+      },
+      "admitted_l1_digest": "b358b44501428e45624cb3df7fa06a1db031d669d36d347a49deaae133425f4a",
+      "allowed_field_paths": [
+        "rules[0].modality",
+        "rules[0].exceptions"
+      ],
+      "baseline_l1_digest": "58cff40b6023112840ee9c0edce00ba6af1f286750c2225a7ba8ae8da7328699",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "disclose",
+            "actor": "processor",
+            "conditions": [],
+            "exceptions": [
+              "unless_required_by_law"
+            ],
+            "modality": "F",
+            "object": "personal_data",
+            "temporal": []
+          }
+        ]
+      },
+      "case_id": "contradictory_modality",
+      "detail": "holdout dry-run selective proposal for contradictory_modality",
+      "field_changes": [
+        {
+          "after": "F",
+          "baseline_rule_index": 0,
+          "before": "O",
+          "canonical_field": "modality",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].modality"
+        },
+        {
+          "after": [
+            "unless_required_by_law"
+          ],
+          "baseline_rule_index": 0,
+          "before": [],
+          "canonical_field": "exceptions",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].exceptions"
+        }
+      ],
+      "implementable": true,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "accepted",
+      "packet_digest": "63bc8054f620111148e2575686de3d22c757f9c76fa57531afd087a67623d191",
+      "packet_id": "pkt-leanstral-contradictory_modality",
+      "prior_l1_unchanged": false,
+      "proposal_id": "prop-leanstral-contradictory_modality",
+      "residual_ref_id": "resid-contradictory_modality-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "modality",
+          "confidence": null,
+          "evidence": "activation fixture forces obligation/prohibition contradiction",
+          "kind": "contradictory",
+          "path": "rules[0].modality",
+          "rule_index": 0
+        },
+        {
+          "canonical_field": "exceptions",
+          "confidence": null,
+          "evidence": "activation fixture forces missing exception slot for unless_required_by_law",
+          "kind": "missing",
+          "path": "rules[0].exceptions",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "validator_reject",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "personal_data",
+            "temporal": []
+          }
+        ]
+      },
+      "admitted_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "case_id": "holdout_admission_reject_untriggered",
+      "detail": "holdout dry-run candidate changes untriggered field; gate retains prior L1",
+      "field_changes": [
+        {
+          "after": "processor",
+          "baseline_rule_index": 0,
+          "before": "controller",
+          "canonical_field": "actor",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].actor"
+        },
+        {
+          "after": "records",
+          "baseline_rule_index": 0,
+          "before": "personal_data",
+          "canonical_field": "object",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].object"
+        }
+      ],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": false,
+      "outcome": "admission_rejected",
+      "packet_digest": "ef02ccdeb3aa98ac51ef7970e421c773f5c9ab0d6c2698a512f9e58ddfc10473",
+      "packet_id": "pkt-leanstral-holdout_admission_reject_untriggered",
+      "prior_l1_unchanged": true,
+      "proposal_id": "prop-leanstral-holdout_admission_reject_untriggered",
+      "residual_ref_id": "resid-holdout_admission_reject_untriggered-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": 0.2,
+          "evidence": "activation fixture forces low-confidence object attachment",
+          "kind": "low_confidence",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": null,
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "personal_data",
+            "temporal": []
+          }
+        ]
+      },
+      "admitted_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+      "candidate_l1": null,
+      "case_id": "holdout_retry_exhausted",
+      "detail": "holdout dry-run live-path analogue: all model calls failed",
+      "field_changes": [],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "retry_exhausted",
+      "packet_digest": null,
+      "packet_id": null,
+      "prior_l1_unchanged": true,
+      "proposal_id": null,
+      "residual_ref_id": "resid-holdout_retry_exhausted-leanstral",
+      "retry_exhausted": true,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": 0.2,
+          "evidence": "activation fixture forces low-confidence object attachment",
+          "kind": "low_confidence",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "not_applicable",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          }
+        ]
+      },
+      "admitted_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+      "allowed_field_paths": [],
+      "baseline_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+      "candidate_l1": null,
+      "case_id": "holdout_not_triggered",
+      "detail": "holdout dry-run control: empty triggers emit no proposal",
+      "field_changes": [],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "not_triggered",
+      "packet_digest": null,
+      "packet_id": null,
+      "prior_l1_unchanged": true,
+      "proposal_id": null,
+      "residual_ref_id": "resid-holdout_not_triggered-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": []
+    }
+  ],
+  "catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+  "doctrine": {
+    "accept_rate_separate_from_e2e": true,
+    "leanstral_default_realizer": false,
+    "only_triggered_fields_change": true,
+    "production_runtime_unchanged": true,
+    "rejects_retain_prior_l1": true,
+    "retry_exhausted_separate_from_accept_rate": true,
+    "structural_admission_before_implementable": true,
+    "teacher_only": true
+  },
+  "evidence": "PLAT2EV040TCH",
+  "fixture_pack_id": "holdout-leanstral-proposal-dry-run-fixtures@1",
+  "interface": "PlateauLeanstralProposalReceipts@1",
+  "leanstral_is_default_realizer": false,
+  "mode": "dry_run",
+  "production_realizer": "deterministic",
+  "production_runtime_unchanged": true,
+  "provider_id": "leanstral-local",
+  "receipts_cid": "baguqeeraqor726vjodkh3c6aguhvmmkxnr34v3irximet2pykroa25zbi22q",
+  "receipts_cid_codec": "dag-json",
+  "receipts_cid_scope": "payload_without_receipts_cid",
+  "reliability": {
+    "accept_rate": 0.6,
+    "accept_rate_definition": "accept_rate = accepted_proposals / proposal_attempts (triggered cases only; not end-to-end semantic loss)",
+    "accepted_proposals": 3,
+    "admission_rejected_proposals": 1,
+    "end_to_end_loss": null,
+    "failed_proposals": 0,
+    "model_calls": 0,
+    "model_rejected_proposals": 0,
+    "not_triggered": 1,
+    "proposal_attempts": 5,
+    "retry_exhausted_proposals": 1,
+    "retry_exhausted_rate": 0.2,
+    "retry_exhausted_rate_definition": "retry_exhausted_rate = retry_exhausted_proposals / proposal_attempts (triggered cases only; recorded separately from accept_rate and e2e)",
+    "separate_from_end_to_end_loss": true
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-leanstral-proposal-receipts.v1",
+  "structural_admission_required": true,
+  "task_id": "PLAT2-040",
+  "teacher": "leanstral"
+}

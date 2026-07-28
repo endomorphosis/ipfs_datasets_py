@@ -422,7 +422,7 @@ python -m benchmarks.semantic_roundtrip_scheduler prepare \
   --runtime-root /var/tmp/hssl-srt-plateau-break \
   --taskboard-path docs/implementation/plans/semantic_roundtrip_plateau_break.taskboard.todo.md
 
-python -m ipfs_accelerate_py.agent_supervisor.bundle_supervisor \
+python -m ipfs_accelerate_py.agent_supervisor.objectives.bundle_supervisor \
   --bundle-index-path /var/tmp/hssl-srt-plateau-break/bundles/index.json \
   --repo-root "$REPO" \
   --state-root /var/tmp/hssl-srt-plateau-break/state \
