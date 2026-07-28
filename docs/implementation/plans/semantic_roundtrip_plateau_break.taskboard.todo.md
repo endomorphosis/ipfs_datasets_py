@@ -139,7 +139,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-040 Leanstral selective proposal teacher
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: leanstral-teacher
@@ -164,7 +164,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-050 spaCy residual diagnostics teacher
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: spacy-teacher
@@ -256,7 +256,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-081 Det. compiler edit wave: legal_doc_1
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: det-compiler
@@ -302,7 +302,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-083 Det. compiler edit wave: corp_policy_1
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: det-compiler
@@ -325,7 +325,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-084 Det. compiler edit wave: exec_order_1
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P1
 - Track: det-compiler
@@ -348,7 +348,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-090 Plateau re-measure and promotion decision
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P0
 - Track: remeasure
@@ -371,7 +371,7 @@ Do **not** treat proof pass as semantic loss reduction.
 
 ## PLAT-091 Optional: full research matrix refresh (post-break only)
 
-- Status: todo
+- Status: completed
 - Completion: auto
 - Priority: P3
 - Track: remeasure
