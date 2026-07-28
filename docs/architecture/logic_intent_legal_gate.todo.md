@@ -868,7 +868,7 @@ Wave 11 LIG-036 / LIG-037 / LIG-038 → LIG-041
 
 ## LIG-032 Independently verify proof evidence and quarantine legacy caches
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
