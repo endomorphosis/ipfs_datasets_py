@@ -124,7 +124,7 @@ tuned for foundation + case-parallel edit waves.
 | **Task prefix** | `## PLAT-` |
 | **Board namespace** | `semantic-roundtrip-plateau-break-v1` |
 | **Runtime root** | `/var/tmp/hssl-srt-plateau-break` |
-| **Module** | `ipfs_accelerate_py.agent_supervisor.bundle_supervisor` |
+| **Module** | `ipfs_accelerate_py.agent_supervisor.objectives.bundle_supervisor` |
 
 ### Required / primary flags
 
@@ -160,7 +160,7 @@ python -m benchmarks.semantic_roundtrip_scheduler prepare \
   --taskboard-path docs/implementation/plans/semantic_roundtrip_plateau_break.taskboard.todo.md
 
 # Launch dynamic lanes against the plateau-break board
-python -m ipfs_accelerate_py.agent_supervisor.bundle_supervisor \
+python -m ipfs_accelerate_py.agent_supervisor.objectives.bundle_supervisor \
   --bundle-index-path /var/tmp/hssl-srt-plateau-break/bundles/index.json \
   --repo-root "$REPO" \
   --state-root /var/tmp/hssl-srt-plateau-break/state \

@@ -334,7 +334,7 @@ python -m benchmarks.semantic_roundtrip_scheduler prepare \
   --runtime-root "$RUNTIME" \
   --taskboard-path "$REPO/docs/implementation/plans/semantic_roundtrip_plateau_holdout.taskboard.todo.md"
 
-python -m ipfs_accelerate_py.agent_supervisor.bundle_supervisor \
+python -m ipfs_accelerate_py.agent_supervisor.objectives.bundle_supervisor \
   --bundle-index-path "$RUNTIME/bundles/index.json" \
   --repo-root "$REPO" --state-root "$RUNTIME/state" \
   --worktree-root "$RUNTIME/worktrees" --log-dir "$RUNTIME/logs" \
