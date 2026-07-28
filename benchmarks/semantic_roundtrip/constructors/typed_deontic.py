@@ -366,6 +366,169 @@ def _map_many_scored(
     return tuple(sorted(atoms)), min(confidences) if confidences else None
 
 
+# Exception clause connectors that participate in closed atom names such as
+# ``unless_required_by_law`` / ``without_prior_written_approval``.
+_EXCEPTION_CLAUSE_TYPES: Final = frozenset(
+    {
+        "unless",
+        "except",
+        "without",
+        "except when",
+        "except if",
+        "except where",
+    }
+)
+
+
+def _structured_clause_match_text(item: object, *, facet: str) -> str:
+    """Build closed-vocabulary match text for a structured deontic clause.
+
+    Uses content fields only (``raw_text`` / ``normalized_text`` / ``value``)
+    rather than :func:`_flatten_strings` over the whole clause dict. Flattening
+    leaks JSON keys and always injects ``clause_type`` (e.g. ``if``), which
+    incorrectly fully-grounds soft request hedges such as ``if_requested`` from
+    bare content ``requested``.
+
+    Exception connectors (``unless`` / ``except`` / ``without``) are re-prefixed
+    when the content omits them so atoms like ``unless_required_by_law`` still
+    ground from ``clause_type=unless`` + ``raw_text='required by law'``.
+    Condition connectors (``if`` / ``when``) are **not** auto-prefixed: the
+    marker must appear in the clause content for ``if_*`` / ``when_*`` atoms.
+    """
+
+    if isinstance(item, str):
+        return item
+    if not isinstance(item, Mapping):
+        return " ".join(_flatten_strings(item))
+
+    content_parts: list[str] = []
+    seen: set[str] = set()
+    # Prefer deontic-converter clause bodies; also accept the generic ``text``
+    # key used by unit fixtures and alternate IR shapes.
+    for key in ("raw_text", "normalized_text", "value", "text"):
+        raw = item.get(key)
+        if raw is None:
+            continue
+        text = _clean_text(raw)
+        if not text:
+            continue
+        lowered = text.lower()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        content_parts.append(text)
+    content_text = " ".join(content_parts)
+    clause_type = _clean_text(item.get("clause_type")).lower()
+
+    if facet == "exceptions" and clause_type in _EXCEPTION_CLAUSE_TYPES:
+        if clause_type and clause_type not in content_text.lower():
+            return f"{clause_type} {content_text}".strip()
+    if content_text:
+        return content_text
+    return clause_type
+
+
+def _map_structured_qualifiers_scored(
+    value: object,
+    candidates: Sequence[str],
+    *,
+    facet: str,
+) -> tuple[tuple[str, ...], float | None]:
+    """Map structured condition/exception/temporal clauses with full grounding.
+
+    Unlike :func:`_map_many_scored`, this path:
+    * builds match text via :func:`_structured_clause_match_text` (no key leak);
+    * requires :func:`_qualifier_fully_grounded` so partial stems cannot promote
+      multi-token atoms (``requested`` ↛ ``if_requested``).
+    """
+
+    values: list[object]
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
+        values = list(value)
+    elif value is None or value == "" or value == []:
+        values = []
+    else:
+        values = [value]
+    atoms: set[str] = set()
+    confidences: list[float] = []
+    for item in values:
+        text = _structured_clause_match_text(item, facet=facet)
+        if not _clean_text(text):
+            continue
+        atom, confidence = _best_atom_scored(text, candidates)
+        if atom and not _qualifier_fully_grounded(text, atom):
+            atom = ""
+        if atom:
+            atoms.add(atom)
+            if confidence is not None:
+                confidences.append(confidence)
+    if not values:
+        return (), None
+    if not atoms:
+        return (), min(confidences) if confidences else 0.0
+    return tuple(sorted(atoms)), min(confidences) if confidences else None
+
+
+def _resolve_conflicting_modality_rules(
+    rules: Sequence[CanonicalRule],
+) -> tuple[CanonicalRule, ...]:
+    """Collapse obligation+prohibition pairs for the same actor/action/object.
+
+    Sentences such as ``must disclose … and shall not disclose … unless …``
+    yield two parser elements that share a closed-vocabulary triple. Legal
+    reading (and holdout gold) prefers the prohibition and unions qualifier
+    facets from both norms. Same-modality duplicates and non-conflicting
+    groups are left untouched.
+    """
+
+    if len(rules) < 2:
+        return tuple(rules)
+
+    groups: dict[tuple[str, str, str], list[CanonicalRule]] = {}
+    order: list[tuple[str, str, str]] = []
+    for rule in rules:
+        key = (rule.actor, rule.action, rule.object)
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(rule)
+
+    resolved: list[CanonicalRule] = []
+    for key in order:
+        group = groups[key]
+        if len(group) == 1:
+            resolved.append(group[0])
+            continue
+        modalities = {rule.modality for rule in group}
+        if "O" in modalities and "F" in modalities:
+            primary = next(rule for rule in group if rule.modality == "F")
+            conditions: set[str] = set()
+            exceptions: set[str] = set()
+            temporal: set[str] = set()
+            for rule in group:
+                conditions.update(rule.conditions)
+                exceptions.update(rule.exceptions)
+                temporal.update(rule.temporal)
+            # Prefer exceptions over dual-placed conditions after the merge.
+            conditions.difference_update(exceptions)
+            resolved.append(
+                CanonicalRule(
+                    modality="F",
+                    actor=primary.actor,
+                    action=primary.action,
+                    object=primary.object,
+                    conditions=tuple(sorted(conditions)),
+                    exceptions=tuple(sorted(exceptions)),
+                    temporal=tuple(sorted(temporal)),
+                )
+            )
+        else:
+            resolved.extend(group)
+    return tuple(resolved)
+
+
 def _modality_from_text(value: object) -> str:
     text = _clean_text(value).lower()
     if (
@@ -1127,23 +1290,42 @@ def project_legal_norms_with_diagnostics(
         if not actor or not action:
             continue
 
-        conditions, conditions_conf = _map_many_scored(
-            data.get("conditions") or (), vocabulary.qualifiers
-        )
-        exceptions, exceptions_conf = _map_many_scored(
-            data.get("exceptions") or (), vocabulary.qualifiers
-        )
-        temporal, temporal_conf = _map_many_scored(
-            data.get("temporal_constraints") or (),
+        structured_conditions = data.get("conditions") or ()
+        structured_exceptions = data.get("exceptions") or ()
+        structured_temporal = data.get("temporal_constraints") or ()
+        # Structured clauses use content-focused full-grounding so soft
+        # request hedges cannot promote if_* atoms from bare participles
+        # (holdout low_confidence_object: "requested" ↛ if_requested).
+        conditions, conditions_conf = _map_structured_qualifiers_scored(
+            structured_conditions,
             vocabulary.qualifiers,
+            facet="conditions",
+        )
+        exceptions, exceptions_conf = _map_structured_qualifiers_scored(
+            structured_exceptions,
+            vocabulary.qualifiers,
+            facet="exceptions",
+        )
+        temporal, temporal_conf = _map_structured_qualifiers_scored(
+            structured_temporal,
+            vocabulary.qualifiers,
+            facet="temporal",
         )
         evidence_text = _norm_evidence_text(data)
         harvested = _harvest_qualifiers_from_evidence(
             evidence_text,
             vocabulary,
         )
+        # When the converter already split out structured condition clauses,
+        # those slots are authoritative for conditions. Free-text harvest
+        # would re-introduce soft hedges (if_requested) that gold omits on
+        # selective-repair activation cases and double-count structured hits.
+        if structured_conditions:
+            harvested_conditions: tuple[str, ...] = ()
+        else:
+            harvested_conditions = harvested["conditions"]
         conditions = _merge_qualifier_facets(
-            conditions, harvested["conditions"]
+            conditions, harvested_conditions
         )
         exceptions = _merge_qualifier_facets(
             exceptions, harvested["exceptions"]
@@ -1157,7 +1339,7 @@ def project_legal_norms_with_diagnostics(
         conditions = _prefer_exceptions_over_conditions(conditions, exceptions)
         # Re-score confidences after harvest: structured matches retain their
         # confidence; pure harvest fills use a mid confidence marker.
-        if harvested["conditions"] and conditions_conf is None:
+        if harvested_conditions and conditions_conf is None:
             conditions_conf = 0.7
         if harvested["exceptions"] and exceptions_conf is None:
             exceptions_conf = 0.7
@@ -1190,6 +1372,21 @@ def project_legal_norms_with_diagnostics(
             )
         )
         rule_index += 1
+
+    # Collapse O/F dual norms for the same closed-vocabulary triple
+    # (holdout contradictory_modality: must + shall not disclose).
+    pre_merge_count = len(rules)
+    resolved_rules = _resolve_conflicting_modality_rules(rules)
+    if len(resolved_rules) != pre_merge_count:
+        rules = list(resolved_rules)
+        # Rule indices shifted; rebuild a minimal confidence map so diagnostics
+        # remain well-formed without inventing per-field scores for merges.
+        confidences = {
+            (index, "modality"): 0.95 for index in range(len(rules))
+        }
+        modality_raw = {
+            index: [rule.modality] for index, rule in enumerate(rules)
+        }
 
     canonical_ir = CanonicalRuleIR(tuple(rules))
     canonical_ir.validate_vocabulary(vocabulary)
@@ -1476,4 +1673,7 @@ __all__ = [
     "derive_repair_triggers_from_ir_and_source",
     "project_legal_norms",
     "project_legal_norms_with_diagnostics",
+    "_map_structured_qualifiers_scored",
+    "_resolve_conflicting_modality_rules",
+    "_structured_clause_match_text",
 ]

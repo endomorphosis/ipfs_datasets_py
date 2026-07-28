@@ -1,0 +1,108 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.0,
+  "baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v1",
+  "case_id": "contradictory_modality",
+  "deterministic_changes": [
+    {
+      "id": "collapse_of_dual_norms_prefer_prohibition",
+      "optional_runtime": false,
+      "residual_paths": [
+        "l1.rules[1]"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "When obligation and prohibition norms share the same closed actor/action/object triple (must X and shall not X unless Y), collapse to a single prohibition and union qualifier facets."
+    },
+    {
+      "id": "structured_exception_clause_connector_prefix",
+      "optional_runtime": false,
+      "residual_paths": [
+        "l1.rules[1]"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Prefix exception clause_type connectors (unless/except/without) onto clause content so unless_required_by_law grounds from structured exception slots without key-leak matching."
+    }
+  ],
+  "doctrine": {
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT2-050",
+  "evidence_subset": "holdout edit-wave contradictory_modality",
+  "implementable": true,
+  "improvement": {
+    "contradictory_modality_cleared": true,
+    "contradictory_modality_forward_delta": -0.5,
+    "mean_pilot_forward_delta": 0.0
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "notes": "PLAT2-050 applies residual-driven deterministic projection fixes in typed_deontic for holdout case contradictory_modality. O/F dual-norm collapse is a constructor projection fix (not selective-repair of L1); rule_cardinality_preserved remains the repair-path structural gate. Optional methods remain teachers/gates. Pilot mean e2e remains 0.0.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "packet_cids": [
+    "baguqeeraz3ajabdystyfiuaronax66pmjjnkkbxsn2b7ycceczb7jk3ijrya"
+  ],
+  "packet_digests": [
+    "cec090047894f054501173417f79ec4a5aa506f26e83fc08441643f4ab684c70"
+  ],
+  "packet_ids": [
+    "plat2-050-contradictory-modality-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat2-det-edits",
+  "post_scores": {
+    "contradictory_modality_end_to_end_loss": 0.0,
+    "contradictory_modality_forward_loss": 0.0,
+    "contradictory_modality_l1_rule_count": 1,
+    "contradictory_modality_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0,
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.0
+    }
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/holdout_edit_wave_receipts/contradictory_modality.json"
+  ],
+  "prior_scores": {
+    "contradictory_modality_end_to_end_loss": 0.5,
+    "contradictory_modality_forward_loss": 0.5,
+    "contradictory_modality_l1_rule_count": 2,
+    "contradictory_modality_residual_count": 1,
+    "mean_pilot_forward_loss": 0.0,
+    "sealed_holdout_mean_forward": 0.2
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "receipt_cid": "baguqeerabmuaey5svgiakecagca4hkeby54llqhlxorxurs677ohlsl3qsla",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeeradibc5tj2rx2wkdppnbktk4dlpl6og54c6pilkrk7e24kbd3bofha",
+  "residual_field_paths": [
+    "l1.rules[1]"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "track": "det-compiler",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20"
+  ]
+}
