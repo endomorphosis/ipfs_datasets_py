@@ -41,6 +41,15 @@ Environment:
 | `REPO_ROOT` | script-resolved | datasets repo root |
 | `ACCELERATE_ROOT` | `../ipfs_accelerate_py` | for `PYTHONPATH` |
 | `IMPLEMENT` | `1` | set `0` for dry-run equivalent |
+| `MERGE_TARGET_BRANCH` | `feature/logic-intent-legal-gate` | merge train target (not main) |
+| `MERGE_QUEUE_DIR` | auto by target | optional shared queue for all shards |
+
+### Merge vs board completion
+
+Validated work is **queued** into a target-scoped merge train. The durable board
+stays incomplete (`merge-queued` in daemon projection) until the train integrates
+into `MERGE_TARGET_BRANCH`. Do not treat todo `Status: completed` alone as
+“landed on the feature branch” unless merge receipts confirm integration.
 
 Protected paths (implementation agents cannot claim as Outputs): the four
 architecture files listed above.

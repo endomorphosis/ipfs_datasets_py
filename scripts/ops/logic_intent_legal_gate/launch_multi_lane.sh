@@ -12,6 +12,8 @@ SHARD_COUNT="${SHARD_COUNT:-4}"
 STATE_ROOT="${STATE_ROOT:-data/agent_supervisor/logic_intent_legal_gate}"
 # Land implementations on the program feature branch, not main, unless overridden.
 MERGE_TARGET_BRANCH="${MERGE_TARGET_BRANCH:-feature/logic-intent-legal-gate}"
+# Shared merge train for all shards (must match merge_target_queue_dir binding).
+MERGE_QUEUE_DIR="${MERGE_QUEUE_DIR:-}"
 IMPLEMENT="${IMPLEMENT:-1}"
 DRY_RUN=0
 FOREGROUND=0
@@ -35,6 +37,7 @@ Env:
   TODO_PATH     relative todo board path
   STATE_ROOT    relative state root under REPO_ROOT
   MERGE_TARGET_BRANCH  default feature/logic-intent-legal-gate
+  MERGE_QUEUE_DIR      optional shared merge train dir (default: auto by target)
 EOF
 }
 
@@ -103,6 +106,9 @@ run_shard() {
     --merge-target-branch "$MERGE_TARGET_BRANCH"
     "${PROTECTED[@]}"
   )
+  if [[ -n "$MERGE_QUEUE_DIR" ]]; then
+    cmd+=(--merge-queue-dir "$MERGE_QUEUE_DIR")
+  fi
 
   if [[ "$IMPLEMENT" == "1" && "$DRY_RUN" == "0" ]]; then
     cmd+=(--implement)
