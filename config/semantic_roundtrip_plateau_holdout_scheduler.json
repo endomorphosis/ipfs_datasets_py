@@ -2,6 +2,7 @@
   "schema": "ipfs_datasets_py.benchmarks.semantic_roundtrip.scheduler_config@1",
   "taskboard_path": "docs/implementation/plans/semantic_roundtrip_plateau_holdout.taskboard.todo.md",
   "task_prefix": "## PLAT2-",
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
   "max_lanes": 2,
   "poll_interval_seconds": 5,
   "daemon_interval_seconds": 300,
@@ -13,6 +14,15 @@
   "worktree_submodule_paths": [
     "ipfs_accelerate_py"
   ],
+  "holdout_policy": {
+    "mode": "custodian_blind_single_use",
+    "allow_tuning_worktree_access": false,
+    "allow_access_before_candidate_freeze": false,
+    "require_access_audit": true,
+    "allow_post_access_tuning": false,
+    "allow_reuse_after_outcome_inspection": false,
+    "allow_zk_attestation": false
+  },
   "provider": {
     "provider_id": "leanstral-local",
     "base_url": "http://127.0.0.1:8080",
