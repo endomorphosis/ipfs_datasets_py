@@ -1,0 +1,131 @@
+{
+  "actions": [
+    {
+      "action_id": "action:export_pii",
+      "actor": "agent",
+      "effect_ids": [
+        "statement:effect"
+      ],
+      "grounding": "grounded",
+      "input_refs": [],
+      "object_refs": [
+        "payment_records"
+      ],
+      "output_refs": [],
+      "precondition_ids": [
+        "statement:precondition"
+      ],
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "tool_refs": [
+        "exfiltrate_records"
+      ],
+      "verb": "export",
+      "verification_ids": [
+        "statement:verify"
+      ]
+    }
+  ],
+  "control_edges": [],
+  "document_id": "intent:admissibility:legally_risky_effect",
+  "entry_action_ids": [
+    "action:export_pii"
+  ],
+  "intent_kind": "procedure",
+  "schema_version": "intent-ir/v1",
+  "sources": [
+    {
+      "container_sha256": "b22b9920853301f0c8dd32db1aa50b9812717e973cf7be390cc096aadeb2c0f5",
+      "container_uri": "fixture://intent_ir/admissibility/container/legally_risky_effect",
+      "content_cid": "",
+      "content_sha256": "f09031af25f08a5a016907363daeddeb2d8ede0a5d0b89873eb362989668e683",
+      "license_expression": "CC0-1.0",
+      "ref_id": "source:legally_risky_effect",
+      "review_status": "trusted_fixture",
+      "source_id": "fixture.skill.legally_risky_effect",
+      "source_revision": "fixture-v1",
+      "source_uri": "fixture://intent_ir/admissibility/legally_risky_effect",
+      "span": null
+    }
+  ],
+  "statements": [
+    {
+      "arguments": [
+        "payment_records",
+        "third_party"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "effect",
+      "modality": "asserted",
+      "normalized_text": "PII payment records are disclosed to an unapproved third party",
+      "predicate": "disclose_pii",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "statement_id": "statement:effect"
+    },
+    {
+      "arguments": [
+        "payment_records",
+        "third_party"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "goal",
+      "modality": "intended",
+      "normalized_text": "Export payment records containing PII to a third party",
+      "predicate": "export",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "statement_id": "statement:goal"
+    },
+    {
+      "arguments": [
+        "payment_records"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "precondition",
+      "modality": "required",
+      "normalized_text": "Payment records containing PII are available",
+      "predicate": "available",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "statement_id": "statement:precondition"
+    },
+    {
+      "arguments": [
+        "third_party",
+        "payment_records"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "verification",
+      "modality": "required",
+      "normalized_text": "The third party acknowledges receipt of the records",
+      "predicate": "acknowledged",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:legally_risky_effect"
+      ],
+      "statement_id": "statement:verify"
+    }
+  ],
+  "tags": [
+    "admissibility",
+    "fixture",
+    "legal",
+    "risk"
+  ],
+  "terminal_action_ids": [
+    "action:export_pii"
+  ],
+  "title": "Legally risky PII export effect"
+}

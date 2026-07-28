@@ -1,0 +1,696 @@
+{
+  "assumptions": [
+    {
+      "assumption_id": "assumption:intent:statement:statement:assumption",
+      "metadata": {
+        "intent_node_id": "statement:assumption",
+        "intent_node_ref": "intent-node:statement:statement:assumption",
+        "kind": "assumption",
+        "node_grounding": "inferred",
+        "stated_confidence": 0.2,
+        "uncertain": true
+      },
+      "schema_version": "ir-assumption/v1",
+      "source_refs": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "statement": "Relevant inputs may or may not be present"
+    },
+    {
+      "assumption_id": "assumption:intent:statement:statement:goal",
+      "metadata": {
+        "intent_node_id": "statement:goal",
+        "intent_node_ref": "intent-node:statement:statement:goal",
+        "kind": "goal",
+        "node_grounding": "inferred",
+        "stated_confidence": 0.25,
+        "uncertain": true
+      },
+      "schema_version": "ir-assumption/v1",
+      "source_refs": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "statement": "Do something useful with whatever is available"
+    }
+  ],
+  "compiler_config": {
+    "compiler_id": "intent-formalization-compiler",
+    "compiler_version": "intent-formalization-compiler/v1",
+    "config_id": "intent-formalization-default",
+    "options": {
+      "graph_context_authority": "context_only",
+      "proof_backend_execution": false,
+      "retrieved_premises_are_proofs": false
+    },
+    "producer_id": "intent-formalization-compiler",
+    "schema_version": "formalization-compiler-config/v1",
+    "target_view_ids": [
+      "intent-ir-view/facts/v1",
+      "intent-ir-view/intention-deontic/v1"
+    ],
+    "unsupported_policy": "preserve_opaque"
+  },
+  "compiler_config_identity": {
+    "cid": "bafkreids3z4dtxockq6ka2oq5wpfqx6jyfrx7t5gqgqoayfpaf4t6wm5rq",
+    "digest": "sha256:72de7839ddc2543ca069d0ed9e585fc9c1637fcfa681a0e060af01793f599d8c",
+    "domain": "formalization-compiler-config",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-compiler-config/v1"
+  },
+  "cross_view_links": [
+    {
+      "link_id": "link:intent:formula:intent:facts:statement:statement:goal:formula:intent:modal:statement:statement:goal",
+      "metadata": {},
+      "preserved_properties": [
+        "intent_node",
+        "modality",
+        "source_grounding"
+      ],
+      "relation": "lowers_to",
+      "schema_version": "formal-cross-view-link/v1",
+      "source_formula_id": "formula:intent:facts:statement:statement:goal",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "span_ids": [],
+      "target_formula_id": "formula:intent:modal:statement:statement:goal"
+    }
+  ],
+  "declaration_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+  "declaration_id": "intent:admissibility:incomplete_unsupported_semantics",
+  "diagnostics": {
+    "config_id": "intent-formalization-default",
+    "diagnostics": [
+      {
+        "code": "ir.feature.unsupported",
+        "config_id": "intent-formalization-default",
+        "diagnostic_id": "diagnostic:15eb129eb9b387fea28af4c544a38ae0",
+        "evidence_ref_ids": [],
+        "location": {
+          "field_path": "/statements/statement:goal/predicate",
+          "metadata": {},
+          "source_ref_ids": [
+            "source:incomplete_unsupported_semantics"
+          ],
+          "span_ids": [],
+          "subject_ids": [
+            "formula:intent:modal:statement:statement:goal",
+            "intent-node:statement:statement:goal"
+          ]
+        },
+        "message": "Modal statement has no typed predicate; its normalized body was retained opaquely",
+        "metadata": {
+          "opaque_formula_id": "formula:intent:modal:statement:statement:goal",
+          "retained_as_opaque": true,
+          "view_id": "intent-ir-view/intention-deontic/v1"
+        },
+        "producer_id": "intent-formalization-compiler",
+        "related_diagnostic_ids": [],
+        "remediation": "",
+        "severity": "warning"
+      },
+      {
+        "code": "ir.feature.unsupported",
+        "config_id": "intent-formalization-default",
+        "diagnostic_id": "diagnostic:33b2e61f037b6f00d18fa005589bc388",
+        "evidence_ref_ids": [],
+        "location": {
+          "field_path": "/statements/statement:assumption/predicate",
+          "metadata": {},
+          "source_ref_ids": [
+            "source:incomplete_unsupported_semantics"
+          ],
+          "span_ids": [],
+          "subject_ids": [
+            "formula:intent:facts:statement:statement:assumption",
+            "intent-node:statement:statement:assumption"
+          ]
+        },
+        "message": "Intent statement has no typed predicate; normalized text was retained as an opaque fact",
+        "metadata": {
+          "opaque_formula_id": "formula:intent:facts:statement:statement:assumption",
+          "retained_as_opaque": true,
+          "view_id": "intent-ir-view/facts/v1"
+        },
+        "producer_id": "intent-formalization-compiler",
+        "related_diagnostic_ids": [],
+        "remediation": "",
+        "severity": "warning"
+      },
+      {
+        "code": "ir.feature.unsupported",
+        "config_id": "intent-formalization-default",
+        "diagnostic_id": "diagnostic:b0e19866376cfffa4f3ae30ff28dad59",
+        "evidence_ref_ids": [],
+        "location": {
+          "field_path": "/statements/statement:goal/predicate",
+          "metadata": {},
+          "source_ref_ids": [
+            "source:incomplete_unsupported_semantics"
+          ],
+          "span_ids": [],
+          "subject_ids": [
+            "formula:intent:facts:statement:statement:goal",
+            "intent-node:statement:statement:goal"
+          ]
+        },
+        "message": "Intent statement has no typed predicate; normalized text was retained as an opaque fact",
+        "metadata": {
+          "opaque_formula_id": "formula:intent:facts:statement:statement:goal",
+          "retained_as_opaque": true,
+          "view_id": "intent-ir-view/facts/v1"
+        },
+        "producer_id": "intent-formalization-compiler",
+        "related_diagnostic_ids": [],
+        "remediation": "",
+        "severity": "warning"
+      }
+    ],
+    "error_count": 0,
+    "evidence_set_id": "",
+    "metadata": {
+      "graph_context_present": false,
+      "retrieved_premise_count": 0,
+      "unsupported_formula_count": 3
+    },
+    "producer_id": "intent-formalization-compiler",
+    "provenance_id": "provenance:intent:229dc9749cce365a15ce0cc0f9661db9",
+    "report_id": "diagnostics:intent:f435ae7ad8f51059:72de7839ddc2543c:no-graph",
+    "schema_version": "ir-diagnostics/v1",
+    "valid": true,
+    "warning_count": 3
+  },
+  "domain": "intent",
+  "formulas": [
+    {
+      "assumption_ids": [
+        "assumption:intent:statement:statement:assumption"
+      ],
+      "expression": {
+        "arguments": [],
+        "confidence": 0.2,
+        "grounding": "inferred",
+        "kind": "typed_fact",
+        "modality": "asserted",
+        "predicate": "",
+        "review_status": "machine_extracted",
+        "statement_kind": "assumption",
+        "text": "Relevant inputs may or may not be present"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:assumption",
+      "input_node_ids": [
+        "intent-node:statement:statement:assumption"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:assumption"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": true,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:assumption:statement:assumption"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [
+        "assumption:intent:statement:statement:goal"
+      ],
+      "expression": {
+        "arguments": [],
+        "confidence": 0.25,
+        "grounding": "inferred",
+        "kind": "typed_fact",
+        "modality": "intended",
+        "predicate": "",
+        "review_status": "machine_extracted",
+        "statement_kind": "goal",
+        "text": "Do something useful with whatever is available"
+      },
+      "formula_id": "formula:intent:facts:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": true,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:goal:statement:goal"
+      ],
+      "view_id": "intent-ir-view/facts/v1"
+    },
+    {
+      "assumption_ids": [
+        "assumption:intent:statement:statement:goal"
+      ],
+      "expression": {
+        "body": {
+          "arguments": [],
+          "confidence": 0.25,
+          "grounding": "inferred",
+          "modality": "intended",
+          "predicate": "",
+          "review_status": "machine_extracted",
+          "statement_kind": "goal",
+          "text": "Do something useful with whatever is available"
+        },
+        "kind": "intention_deontic_formula",
+        "operator": "intended"
+      },
+      "formula_id": "formula:intent:modal:statement:statement:goal",
+      "input_node_ids": [
+        "intent-node:statement:statement:goal"
+      ],
+      "metadata": {
+        "intent_node_ids": [
+          "statement:goal"
+        ],
+        "intent_node_kinds": [
+          "statement"
+        ],
+        "retains_source_semantics": true
+      },
+      "opaque": true,
+      "schema_version": "formal-formula/v1",
+      "source_ref_ids": [
+        "source:incomplete_unsupported_semantics"
+      ],
+      "span_ids": [],
+      "symbol_ids": [
+        "symbol:intent:statement:predicate:statement:goal:statement:goal"
+      ],
+      "view_id": "intent-ir-view/intention-deontic/v1"
+    }
+  ],
+  "metadata": {
+    "adapter_schema_version": "intent-formalization-compiler/v1",
+    "graph_context_present": false,
+    "intent_ir_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+    "proof_backend_executed": false,
+    "retrieved_premise_count": 0,
+    "retrieved_premises_have_proof_authority": false
+  },
+  "proof_obligations": [],
+  "sample_id": "sample:intent:229dc9749cce365a15ce0cc0f9661db9",
+  "schema_version": "formalization-artifact/v1",
+  "source_map": {
+    "bindings": [
+      {
+        "binding_id": "binding:intent:document:430fd777b814e1926315942e5145cfc2",
+        "config_id": "",
+        "derived": false,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_document_id": "intent:admissibility:incomplete_unsupported_semantics"
+        },
+        "parent_subject_ids": [],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "intent:admissibility:incomplete_unsupported_semantics"
+      },
+      {
+        "binding_id": "binding:intent:formula:814879751b735240de6bf807a9dd97b5",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:modal:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:formula:8576e15622877029c5f80a5f361fa971",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:assumption"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:assumption"
+      },
+      {
+        "binding_id": "binding:intent:formula:f5e666eb197450b915cf36fa9a25cab7",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "formula:intent:facts:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:input:4848a4ebea1de63345e9ab43869f3383",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "document",
+          "intent_node_id": "intent:admissibility:incomplete_unsupported_semantics",
+          "node_grounding": "grounded"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:incomplete_unsupported_semantics"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:document:intent:admissibility:incomplete_unsupported_semantics"
+      },
+      {
+        "binding_id": "binding:intent:input:e18cc741e5a7290f33e437339ca2afdf",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:goal",
+          "node_grounding": "inferred"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:incomplete_unsupported_semantics"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:input:e669aa589fa1de874b4998acf603d06d",
+        "config_id": "",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {
+          "intent_construct": "statement",
+          "intent_node_id": "statement:assumption",
+          "node_grounding": "inferred"
+        },
+        "parent_subject_ids": [
+          "intent:admissibility:incomplete_unsupported_semantics"
+        ],
+        "producer_id": "",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "intent-node:statement:statement:assumption"
+      },
+      {
+        "binding_id": "binding:intent:symbol:a6d673a4c9e256c84bccd1c6b1f4d81f",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:goal"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:goal:statement:goal"
+      },
+      {
+        "binding_id": "binding:intent:symbol:ed5e1469255987a6ee3583afb983b423",
+        "config_id": "intent-formalization-default",
+        "derived": true,
+        "evidence_ref_ids": [],
+        "metadata": {},
+        "parent_subject_ids": [
+          "intent-node:statement:statement:assumption"
+        ],
+        "producer_id": "intent-formalization-compiler",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "subject_id": "symbol:intent:statement:predicate:statement:assumption:statement:assumption"
+      }
+    ],
+    "configs": [
+      {
+        "config_id": "intent-formalization-default",
+        "content_cid": "",
+        "content_sha256": "72de7839ddc2543ca069d0ed9e585fc9c1637fcfa681a0e060af01793f599d8c",
+        "metadata": {},
+        "schema_id": "formalization-compiler-config/v1"
+      }
+    ],
+    "metadata": {
+      "compiler_adapter_schema": "intent-formalization-compiler/v1",
+      "intent_ir_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7"
+    },
+    "producers": [
+      {
+        "implementation_sha256": "",
+        "metadata": {
+          "compiler_id": "intent-formalization-compiler"
+        },
+        "model_id": "",
+        "name": "Intent IR deterministic formalization compiler",
+        "producer_id": "intent-formalization-compiler",
+        "repository_revision": "",
+        "version": "intent-formalization-compiler/v1"
+      }
+    ],
+    "provenance_id": "provenance:intent:229dc9749cce365a15ce0cc0f9661db9",
+    "schema_version": "ir-provenance/v1",
+    "sources": [
+      {
+        "container_sha256": "958e70e81d1985b9ec25ef70b7b93907806ac503bc329afa97f9dc5685f64b19",
+        "container_uri": "fixture://intent_ir/admissibility/container/incomplete_unsupported_semantics",
+        "content_cid": "",
+        "content_sha256": "911acb6eee49086f08e083d9fe392fc784084ebec90225b4b763d741c7ccdcc7",
+        "license_expression": "CC0-1.0",
+        "metadata": {
+          "content_binding": "declared_source_bytes",
+          "intent_review_status": "trusted_fixture"
+        },
+        "ref_id": "source:incomplete_unsupported_semantics",
+        "review_status": "trusted_fixture",
+        "source_id": "fixture.prompt.incomplete_unsupported_semantics",
+        "source_revision": "fixture-v1",
+        "source_uri": "fixture://intent_ir/admissibility/incomplete_unsupported_semantics"
+      }
+    ],
+    "spans": []
+  },
+  "symbol_table": {
+    "metadata": {
+      "domain": "intent"
+    },
+    "schema_version": "formal-symbol-table/v1",
+    "symbols": [
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:assumption",
+          "role": "predicate"
+        },
+        "name": "statement:assumption",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:assumption:statement:assumption"
+      },
+      {
+        "kind": "predicate",
+        "metadata": {
+          "intent_node_id": "statement:goal",
+          "role": "predicate"
+        },
+        "name": "statement:goal",
+        "sort": "predicate",
+        "source_ref_ids": [
+          "source:incomplete_unsupported_semantics"
+        ],
+        "span_ids": [],
+        "symbol_id": "symbol:intent:statement:predicate:statement:goal:statement:goal"
+      }
+    ],
+    "table_id": "symbols:intent:intent:admissibility:incomplete_unsupported_semantics"
+  },
+  "view_registry": {
+    "registry_id": "intent-ir-formalization-views",
+    "schema_version": "formalization-view-registry/v1",
+    "views": [
+      {
+        "capabilities": [
+          "action_contracts",
+          "hoare_triples",
+          "source_grounding"
+        ],
+        "description": "Actions with preconditions, effects, and observations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "dynamic_hoare",
+        "metadata": {
+          "intent_constructs": [
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/action-hoare/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "typed_symbols"
+        ],
+        "description": "Typed Intent entities, predicates, and action facts.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "typed_first_order",
+        "metadata": {
+          "intent_constructs": [
+            "statement",
+            "action"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/facts/v1"
+      },
+      {
+        "capabilities": [
+          "failure_conditions",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Explicit failure conditions and failure transitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety_liveness",
+        "metadata": {
+          "intent_constructs": [
+            "failure"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/failure/v1"
+      },
+      {
+        "capabilities": [
+          "deontic_modality",
+          "intention",
+          "source_grounding"
+        ],
+        "description": "Goals, intentions, requirements, permissions, and prohibitions.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "intention_deontic",
+        "metadata": {
+          "intent_constructs": [
+            "goal",
+            "modality"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/intention-deontic/v1"
+      },
+      {
+        "capabilities": [
+          "invariants",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "State invariants represented as always obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "safety",
+        "metadata": {
+          "intent_constructs": [
+            "invariant"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/invariant/v1"
+      },
+      {
+        "capabilities": [
+          "observations",
+          "proof_obligations",
+          "source_grounding"
+        ],
+        "description": "Observable criteria and evidence obligations.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "verification_condition",
+        "metadata": {
+          "intent_constructs": [
+            "verification"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/verification/v1"
+      },
+      {
+        "capabilities": [
+          "source_grounding",
+          "state_transitions",
+          "temporal_control"
+        ],
+        "description": "Entry, terminal, sequencing, branching, retry, and concurrency.",
+        "formula_schema": "formal-formula/v1",
+        "logic_family": "workflow_temporal",
+        "metadata": {
+          "intent_constructs": [
+            "control_edge",
+            "workflow_boundary"
+          ]
+        },
+        "schema_version": "formalization-view/v1",
+        "view_id": "intent-ir-view/workflow-temporal/v1"
+      }
+    ]
+  },
+  "view_registry_identity": {
+    "cid": "bafkreiez2oofk7tsxsfwlfwjgfrtujgwotfkytgztku4cbtd37eazwn3ia",
+    "digest": "sha256:99d39c557e72bc8b6596c931633a24d674caac4cd99aa9c10663dfc80cd9bb40",
+    "domain": "formalization-view-registry",
+    "profile": "ir-canonical-identity-v1",
+    "schema_version": "formalization-view-registry/v1"
+  }
+}
