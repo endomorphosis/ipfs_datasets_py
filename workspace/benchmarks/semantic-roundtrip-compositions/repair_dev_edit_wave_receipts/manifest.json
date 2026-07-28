@@ -1,0 +1,27 @@
+{
+  "baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "blind_data_accessed": false,
+  "case_ids": [
+    "legal_doc_2",
+    "fed_reg_1",
+    "dept_memo_1",
+    "hr_handbook"
+  ],
+  "edit_wave_task_id": "PLAT2-050",
+  "interface": "PlateauEditWaveReceiptSet@1",
+  "intervention_registry_cid": "baguqeeradonke5pbapkwgwvf6pyoebjvxthhlj26bg2okooi2mcdbvefvtga",
+  "manifest_cid": "baguqeeraueb6ohdqrgkt2oyfv276bszdueasnmnl76s5746emdxkfg5jvsnq",
+  "manifest_cid_codec": "dag-json",
+  "manifest_cid_scope": "payload_without_manifest_cid",
+  "mean_pilot_forward_loss": 0.0,
+  "optional_runtimes_promoted": [],
+  "population_kind": "repair_development",
+  "receipt_paths": [
+    "repair_dev_edit_wave_receipts/legal_doc_2.json",
+    "repair_dev_edit_wave_receipts/fed_reg_1.json",
+    "repair_dev_edit_wave_receipts/dept_memo_1.json",
+    "repair_dev_edit_wave_receipts/hr_handbook.json"
+  ],
+  "residual_catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+  "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va"
+}

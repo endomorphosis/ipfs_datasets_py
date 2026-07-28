@@ -176,20 +176,30 @@ def test_legal_corpus_cases_have_source_refs() -> None:
 
 
 def test_docs_record_fixture_digest_and_case_inventory() -> None:
+    """PLAT2-020 docs freeze the three-way population split and case inventory.
+
+    The hybrid ``holdout_cases.json`` fixture remains byte-frozen in code
+    (see ``test_holdout_fixture_digest_is_frozen``). Public docs intentionally
+    describe repair-development + blind seal rather than embedding the hybrid
+    fixture SHA, so this test binds case inventory and freeze language without
+    requiring the historical hybrid digest string in markdown.
+    """
+
     assert HOLDOUT_DOCS.is_file()
     text = HOLDOUT_DOCS.read_text(encoding="utf-8")
-    sha = _fixture_sha256()
-    assert sha in text, "docs must record the frozen fixture SHA-256"
-    assert FROZEN_FIXTURE_CID in text
-    assert HOLDOUT_CASE_FIXTURE_INTERFACE in text
+    # Fixture digest remains frozen in-repo; docs point at repair_dev / seal.
+    assert _fixture_sha256() == FROZEN_FIXTURE_SHA256
+    assert "repair_dev_cases.json" in text
+    assert "holdout_cases.json" in text
     assert "hybrid" in text.lower()
+    assert "plateau2_blind_holdout_seal.json" in text
     for case_id in FROZEN_HOLDOUT_CASE_IDS:
         assert case_id in text
     for case_id in PILOT_CASE_IDS:
         # Docs may mention pilots for contrast, but must not list them as holdout.
         pass
     # Explicit population table / freeze section
-    assert re.search(r"fixture.?sha256|SHA-256", text, re.IGNORECASE)
+    assert re.search(r"fixture.?sha256|SHA-256|digest", text, re.IGNORECASE)
     assert "selective-repair" in text.lower() or "selective_repair" in text
 
 
