@@ -264,7 +264,7 @@ Wave 6  LIG-019 / LIG-020  (eval + runbook)
 
 ## LIG-009 Security constraint cache put/get
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
