@@ -71,9 +71,41 @@ def test_shared_facades_export_exactly_reviewed_leaf_contracts() -> None:
         "ipfs_datasets_py.logic.formalization.samples",
         "ipfs_datasets_py.logic.formalization.views",
     )
-    assert set(legal_ir.__all__) == _leaf_exports(
-        "ipfs_datasets_py.logic.legal_ir.adapter",
-    )
+    # Legal IR package root re-exports the formalization adapter plus the
+    # reviewed canonical compiler/decompiler/roundtrip surface (LIG Legal
+    # measured path).  The set is curated at package root (not a full union of
+    # every leaf __all__).
+    legal_adapter = _leaf_exports("ipfs_datasets_py.logic.legal_ir.adapter")
+    assert legal_adapter <= set(legal_ir.__all__)
+    assert set(legal_ir.__all__) == {
+        *legal_adapter,
+        "CANONICAL_PARITY_POLICY_CID",
+        "CANONICAL_SEMANTIC_ROUNDTRIP_CONFIG_CID",
+        "CANONICAL_SEMANTIC_ROUNDTRIP_INTERFACE",
+        "CanonicalAtomVocabulary",
+        "CanonicalCompiler",
+        "CanonicalContractError",
+        "CanonicalDecompiler",
+        "CanonicalRoundTrip",
+        "CanonicalRoundTripIR",
+        "CanonicalRule",
+        "CanonicalSemanticRoundTrip",
+        "CanonicalSemanticRoundTripResult",
+        "CompilerRequest",
+        "CompilerResult",
+        "DecompilerRequest",
+        "DecompilerResult",
+        "OperationStatus",
+        "SourceWithheldCanonicalDecompiler",
+        "SourceWithheldCanonicalParaphraser",
+        "TYPED_DEONTIC_COMPILER_CONFIG_CID",
+        "TypedDeonticCanonicalCompiler",
+        "compiler_configuration",
+        "frozen_decompiler_config",
+        "load_parity_policy",
+        "measured_parity_compiler_request",
+        "roundtrip_configuration",
+    }
 
     assert ir_core.CanonicalizationSchema is ir_core.CollectionSchema
     assert ir_core.compute_identity is ir_core.identity_for is ir_core.canonical_identity
