@@ -269,6 +269,38 @@ class AbbyVoiceRegenerationItem:
             source_record_sha256=record_sha256(record),
         )
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "AbbyVoiceRegenerationItem":
+        """Parse the canonical serialized plan-item representation."""
+
+        if not isinstance(payload, Mapping):
+            raise AbbyVoiceRegenerationError("regeneration item must be a mapping")
+        reasons = payload.get("risk_reasons") or ()
+        if isinstance(reasons, str):
+            reasons = (reasons,)
+        if not isinstance(reasons, Sequence):
+            raise AbbyVoiceRegenerationError("risk_reasons must be a sequence")
+        parsed = cls(
+            superseded_audio_id=str(payload.get("superseded_audio_id") or ""),
+            response_id=str(payload.get("response_id") or ""),
+            selected_dataset_audio_path=str(
+                payload.get("selected_dataset_audio_path") or ""
+            ),
+            selected_text=str(payload.get("selected_text") or ""),
+            queue_repair_text=str(payload.get("queue_repair_text") or ""),
+            spoken_text=str(payload.get("spoken_text") or ""),
+            risk_reasons=tuple(str(reason) for reason in reasons),
+            recommendation=str(payload.get("recommendation") or ""),
+            source_record_sha256=str(payload.get("source_record_sha256") or ""),
+            text_sha256=str(payload.get("text_sha256") or ""),
+            regeneration_id=str(payload.get("regeneration_id") or ""),
+        )
+        if dict(payload) != parsed.to_dict():
+            raise AbbyVoiceRegenerationError(
+                "regeneration item is not its canonical serialized representation"
+            )
+        return parsed
+
     def identity_dict(self) -> dict[str, Any]:
         return {
             "queue_repair_text": self.queue_repair_text,
@@ -376,6 +408,39 @@ class AbbyVoiceRegenerationPlan:
             metadata=dict(metadata or {}),
         )
 
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "AbbyVoiceRegenerationPlan":
+        """Parse and revalidate a canonical serialized regeneration plan."""
+
+        if not isinstance(payload, Mapping):
+            raise AbbyVoiceRegenerationError("regeneration plan must be a mapping")
+        raw_items = payload.get("items")
+        if not isinstance(raw_items, Sequence) or isinstance(raw_items, str | bytes):
+            raise AbbyVoiceRegenerationError("regeneration plan items must be a sequence")
+        metadata = payload.get("metadata") or {}
+        if not isinstance(metadata, Mapping):
+            raise AbbyVoiceRegenerationError("regeneration plan metadata must be a mapping")
+        if any(not isinstance(item, Mapping) for item in raw_items):
+            raise AbbyVoiceRegenerationError(
+                "regeneration plan item must be a mapping"
+            )
+        parsed = cls(
+            items=tuple(
+                AbbyVoiceRegenerationItem.from_dict(item)
+                for item in raw_items
+            ),
+            policy_id=str(payload.get("policy_id") or ""),
+            schema_version=str(payload.get("schema_version") or ""),
+            source_manifest_id=str(payload.get("source_manifest_id") or ""),
+            plan_id=str(payload.get("plan_id") or ""),
+            metadata=dict(metadata),
+        )
+        if dict(payload) != parsed.to_dict():
+            raise AbbyVoiceRegenerationError(
+                "regeneration plan is not its canonical serialized representation"
+            )
+        return parsed
+
     def canary(self, size: int = 12) -> "AbbyVoiceRegenerationPlan":
         """Select a stable hash-distributed canary rather than queue-head rows."""
 
@@ -410,6 +475,52 @@ class AbbyVoiceRegenerationPlan:
             responses=responses,
             source_manifest_id=self.source_manifest_id,
             policy_id=self.policy_id,
+        )
+
+    def to_regeneration_dispatch_manifest(
+        self,
+        *,
+        endpoint_contract: Mapping[str, Any] | Any,
+        bridge_config: Any = None,
+        runner_policy: Any = None,
+    ) -> Any:
+        """Return the package runtime's bounded, no-dispatch TTS manifest.
+
+        The import stays local so deterministic dataset planning remains usable
+        without the optional accelerate integration.  Building this value does
+        not instantiate a queue or provider.
+        """
+
+        from ..ml.accelerate_integration.voice_jobs import (
+            build_voice_regeneration_dispatch,
+        )
+
+        return build_voice_regeneration_dispatch(
+            self.to_voice_workset(),
+            endpoint_contract=endpoint_contract,
+            config=bridge_config,
+            policy=runner_policy,
+        )
+
+    def canary_dispatch_manifest(
+        self,
+        *,
+        endpoint_contract: Mapping[str, Any] | Any,
+        size: int = 12,
+        bridge_config: Any = None,
+        runner_policy: Any = None,
+    ) -> Any:
+        """Select the stable canary and emit its bounded no-dispatch manifest."""
+
+        canary = self.canary(size)
+        if runner_policy is not None and runner_policy.max_items < len(canary.items):
+            raise AbbyVoiceRegenerationError(
+                "runner policy max_items is smaller than the selected canary"
+            )
+        return canary.to_regeneration_dispatch_manifest(
+            endpoint_contract=endpoint_contract,
+            bridge_config=bridge_config,
+            runner_policy=runner_policy,
         )
 
     @property
@@ -486,6 +597,21 @@ def read_regeneration_queue(
     )
 
 
+def read_regeneration_plan(path: str | Path) -> AbbyVoiceRegenerationPlan:
+    """Read and fully revalidate a canonical regeneration plan JSON file."""
+
+    plan_path = Path(path).expanduser().resolve()
+    try:
+        payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AbbyVoiceRegenerationError(
+            f"cannot read regeneration plan: {plan_path}"
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise AbbyVoiceRegenerationError("regeneration plan must be a JSON object")
+    return AbbyVoiceRegenerationPlan.from_dict(payload)
+
+
 __all__ = [
     "ABBY_VOICE_REGENERATION_PLAN_SCHEMA_VERSION",
     "ABBY_VOICE_REGENERATION_POLICY_ID",
@@ -494,6 +620,7 @@ __all__ = [
     "AbbyVoiceRegenerationItem",
     "AbbyVoiceRegenerationPlan",
     "normalize_regeneration_spoken_text",
+    "read_regeneration_plan",
     "read_regeneration_queue",
     "regeneration_text_risks",
 ]
