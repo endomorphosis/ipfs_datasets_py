@@ -1,0 +1,29 @@
+{
+  "schema": "wallet_processor_migration/verify-response@1",
+  "schema_version": 1,
+  "label": "verify_failure",
+  "raw_response": {
+    "success": false,
+    "results": [
+      {
+        "identifier": "orb",
+        "success": false,
+        "code": "invalid_proof",
+        "detail": "bad"
+      }
+    ],
+    "action": "wallet-attach-world-id-v1",
+    "message": "verification failed"
+  },
+  "expected_normalization": {
+    "success": false,
+    "action": "wallet-attach-world-id-v1",
+    "nullifier": "",
+    "message": "verification failed",
+    "successful_results_count": 0
+  },
+  "application_behavior": {
+    "register_world_id_verification_must_raise": true,
+    "error_type": "WorldIdVerificationError"
+  }
+}

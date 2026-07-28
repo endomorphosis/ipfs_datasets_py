@@ -1,0 +1,94 @@
+{
+  "schema": "wallet_processor_migration/xaman-sample-ledger-records@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "notes": "Synthetic offline XRPL-shaped samples for future chain fixtures. Not live network data. Amounts are base units as strings.",
+  "network": {
+    "chain": "xrpl",
+    "network": "testnet",
+    "genesis_or_network_id": "xrpl-testnet-fixture"
+  },
+  "records": [
+    {
+      "record_id": "xrpl:testnet:tx:0000000000000000000000000000000000000000000000000000000000000001",
+      "schema_version": 1,
+      "chain": "xrpl",
+      "network": "testnet",
+      "account": "rFixtureAccount1111111111111111111",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000001",
+      "ledger_index": 100001,
+      "transaction_type": "Payment",
+      "amount": {
+        "currency": "XRP",
+        "value_drops": "1000000"
+      },
+      "destination": "rFixtureDestination222222222222222",
+      "destination_tag": 211,
+      "validated": true,
+      "finality_state": "validated",
+      "provider_kind": "fixture",
+      "raw_payload_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "extensions": {
+        "memo_present": false,
+        "partial_payment": false
+      }
+    },
+    {
+      "record_id": "xrpl:testnet:tx:0000000000000000000000000000000000000000000000000000000000000002",
+      "schema_version": 1,
+      "chain": "xrpl",
+      "network": "testnet",
+      "account": "rFixtureAccount1111111111111111111",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000002",
+      "ledger_index": 100002,
+      "transaction_type": "Payment",
+      "amount": {
+        "currency": "USD",
+        "issuer": "rFixtureIssuer3333333333333333333",
+        "value": "25.50"
+      },
+      "destination": "rFixtureDestination222222222222222",
+      "destination_tag": null,
+      "validated": true,
+      "finality_state": "validated",
+      "provider_kind": "fixture",
+      "raw_payload_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "extensions": {
+        "memo_present": true,
+        "memo_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "partial_payment": true
+      }
+    },
+    {
+      "record_id": "xrpl:testnet:tx:0000000000000000000000000000000000000000000000000000000000000003",
+      "schema_version": 1,
+      "chain": "xrpl",
+      "network": "testnet",
+      "account": "rFixtureAccount1111111111111111111",
+      "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000003",
+      "ledger_index": 100003,
+      "transaction_type": "Payment",
+      "amount": {
+        "currency": "XRP",
+        "value_drops": "500000"
+      },
+      "destination": "rFixtureDestination222222222222222",
+      "validated": false,
+      "finality_state": "failed",
+      "provider_kind": "fixture",
+      "raw_payload_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "extensions": {
+        "transaction_result": "tecPATH_DRY",
+        "memo_present": false
+      }
+    }
+  ],
+  "pagination_marker_example": {
+    "ledger_index": 100000,
+    "marker": {
+      "ledger": 99999,
+      "seq": 1
+    },
+    "notes": "Markers are provider-local; stable record IDs must not depend on marker tokens."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "wallet_processor_migration/idkit-payload@1",
+  "schema_version": 1,
+  "label": "idkit_v4_session",
+  "protocol_version": "4.0",
+  "proof_type": "session",
+  "payload": {
+    "protocol_version": "4.0",
+    "nonce": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "session_id": "ses_abc123",
+    "environment": "production",
+    "user_presence_completed": true,
+    "responses": [
+      {
+        "identifier": "proof_of_human",
+        "signal_hash": "0x0",
+        "proof": ["0x1a", "0x2b", "0x3c", "0x4d", "0x5e"],
+        "session_nullifier": ["0xsession-nullifier", "0xgenerated-action"],
+        "issuer_schema_id": 1,
+        "expires_at_min": 1756166400
+      }
+    ]
+  },
+  "expected_normalization": {
+    "protocol_version": "4.0",
+    "proof_type": "session",
+    "action": "",
+    "session_id": "ses_abc123",
+    "environment": "production",
+    "credential_identifiers": ["proof_of_human"],
+    "nullifiers": ["0xsession-nullifier"],
+    "session_actions": ["0xgenerated-action"],
+    "verification_timestamps": [1756166400]
+  },
+  "sensitive_tokens_must_not_appear_in_public_dict": [
+    "0xsession-nullifier",
+    "0xgenerated-action"
+  ]
+}
