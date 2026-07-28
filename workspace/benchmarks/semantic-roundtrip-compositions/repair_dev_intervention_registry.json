@@ -1,0 +1,2850 @@
+{
+  "assumptions": [
+    "production remains typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "deterministic compiler/IR/decompiler is the sole production edit target",
+    "autoencoder is causal guidance only when reviewed adapter is scored_supported",
+    "spaCy is non-authoritative diagnostics only",
+    "SyMAI is orchestration/routing only and cannot receive proof credit",
+    "Leanstral is a proposal teacher; direct and SyMAI route identities stay distinct",
+    "Hammer/cvc5/Lean are structural gates with semantic_authority false",
+    "health-only probes cannot establish model inference",
+    "unsupported/not_measured/runtime_failed/terminal_unsupported never enter semantic score aggregates",
+    "residual \u2192 intervention mapping is preregistered and outcome-independent",
+    "full matrix reruns require an explicit evidence-backed override",
+    "blind sources/gold/residuals remain inaccessible without post-freeze evaluator authorization",
+    "no outcome-dependent selection or blind data may drive method choice"
+  ],
+  "baseline_report_cid": "baguqeeranr5glnw6amu3mqrmyi3zyt2mjb6rutijnab5skepxakktlvekeoa",
+  "blind_holdout": {
+    "access_receipt_count": 0,
+    "blind_seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+    "blind_seal_unopened": true,
+    "ledger_exists": false,
+    "private_content_absent_from_public_seal": true,
+    "status": "sealed_unopened"
+  },
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+  "catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+  "contract_cid": "baguqeeral7h5czmik2pw2cdipaxumcwbivhvfan6uuvxu5vm7ne6y5irouzq",
+  "doctrine": {
+    "autoencoder": "causal_guidance_only_when_scored_supported",
+    "deterministic_compiler_ir_decompiler": "production_edit_target",
+    "hammer_cvc5_lean": "structural_gate",
+    "leanstral": "proposal_teacher",
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "spacy": "non_authoritative_diagnostics",
+    "symai": "orchestration_routing_only"
+  },
+  "evidence_id": "PLAT2EV035INT",
+  "experiment_contract_interface": "Plateau2ExperimentContract@1",
+  "experiment_family": "semantic-roundtrip-plateau-holdout-v2",
+  "experiment_id": "baguqeera4hqyulqvbj7blyusuh77os453y2dw45wleuavngyc3pqychc5c6q",
+  "full_matrix_policy": {
+    "forbidden_without_override": [
+      "cartesian_method_matrix_rerun",
+      "outcome_dependent_arm_selection",
+      "blind_population_probe"
+    ],
+    "full_matrix_rerun_default_allowed": false,
+    "interface": "Plateau2FullMatrixOverride@1",
+    "override_validation": "override payload must be CID-bound, cite residual mappings, and must not depend on blind outcomes or post-hoc scores",
+    "required_override_fields": [
+      "override_id",
+      "evidence_cid",
+      "justification",
+      "authorizer",
+      "residual_mapping_ids_in_scope",
+      "experiment_id",
+      "registry_cid"
+    ],
+    "requires_explicit_evidence_backed_override": true,
+    "selection_rule": "smallest_preregistered_residual_intervention_not_full_matrix"
+  },
+  "goal_id": "PLAT2-G035",
+  "interface": "Plateau2InterventionRegistry@1",
+  "method_records": [
+    {
+      "capability_inventory_id": null,
+      "checks": {
+        "health_only": false,
+        "production_edit_target": true,
+        "semantic_scored_on_deterministic_path": true
+      },
+      "evidence": {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "baseline_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+        "holdout_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+        "kind": "plat_baseline",
+        "post_plat_baseline_e2e_mean": 0.0,
+        "post_plat_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q"
+      },
+      "health_only": false,
+      "identity": {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "constructor_identity": "TypedDeonticCanonicalConstructor@1",
+        "model": null,
+        "realizer_identity": "CanonicalDeterministicRealizer@1",
+        "route": "not_applicable",
+        "toolchain": "typed_deontic_compiler_ir_deterministic_realizer",
+        "version": "TypedDeonticCanonicalConstructor@1+CanonicalDeterministicRealizer@1"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": true,
+      "may_substitute_for_e2e": true,
+      "method_id": "deterministic_compiler_ir_decompiler",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "production_edit_target",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": true,
+      "status": "semantic_scored",
+      "status_reason": "post_plat_deterministic_baseline_semantic_scored"
+    },
+    {
+      "capability_inventory_id": "autoencoder_state",
+      "checks": {
+        "health_only": false,
+        "preregistered": false,
+        "reviewed_adapter_present": false,
+        "scored_supported": false
+      },
+      "evidence": {
+        "capability_status": "available",
+        "evaluation_status": "not_measured",
+        "evaluation_status_reason": "terminal_unsupported",
+        "guidance_eligible": false,
+        "kind": "plat_ae_qualification_and_capability_smoke",
+        "qualification_path": "workspace/benchmarks/semantic-roundtrip-compositions/causal_autoencoder_guidance_qualification.json",
+        "scored_supported_required_for_guidance": true
+      },
+      "health_only": false,
+      "identity": {
+        "access": "read_only",
+        "declared_architecture_version": "legacy_dense_v1",
+        "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "model": "modal_autoencoder_stable_feature_export",
+        "preregistered": false,
+        "reviewed_adapter_id": null,
+        "route": "causal_guidance_adapter",
+        "state_cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+        "state_schema_version": "modal-autoencoder-state-v1",
+        "state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "toolchain": "frozen_autoencoder_state_read_only",
+        "version": "modal-autoencoder-state-v1"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "autoencoder",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "causal_guidance_only_when_scored_supported",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "terminal_unsupported",
+      "status_reason": "terminal_unsupported"
+    },
+    {
+      "capability_inventory_id": "spacy_pipeline",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": false,
+        "schedulable_for_scored_matrix": false
+      },
+      "evidence": {
+        "capability_inventory_id": "spacy_pipeline",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "annotations_present": true,
+          "fallback_used": false,
+          "loaded_full_pipeline": true,
+          "missing_annotations": [],
+          "smoke_text_sha256": "f3368f558c0fd5a57e145dd8f6d117c5d594e2f0881731b4a30039888adc8e59"
+        },
+        "effective_identity": {
+          "distribution": "spacy",
+          "language": "en",
+          "model": "en_core_web_sm",
+          "model_version": "3.8.0",
+          "pipeline": [
+            "tok2vec",
+            "tagger",
+            "parser",
+            "attribute_ruler",
+            "lemmatizer",
+            "ner"
+          ],
+          "version": "3.8.14"
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "distribution": "spacy",
+          "fallback_allowed": false,
+          "model": "en_core_web_sm",
+          "model_distribution": "en-core-web-sm",
+          "model_version": "3.8.0",
+          "pipeline": [
+            "tok2vec",
+            "tagger",
+            "parser",
+            "attribute_ruler",
+            "lemmatizer",
+            "ner"
+          ],
+          "required_annotations": [
+            "DEP",
+            "ENT_IOB",
+            "LEMMA",
+            "POS",
+            "SENT_START",
+            "TAG"
+          ],
+          "version": "3.8.14"
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "distribution": "spacy",
+        "language": "en",
+        "model": "en_core_web_sm",
+        "model_version": "3.8.0",
+        "pipeline": [
+          "tok2vec",
+          "tagger",
+          "parser",
+          "attribute_ruler",
+          "lemmatizer",
+          "ner"
+        ],
+        "route": "modal_spacy_diagnostics",
+        "toolchain": "spacy_full_pipeline_no_blank_fallback",
+        "version": "3.8.14"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "spacy",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "non_authoritative_diagnostics",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    {
+      "capability_inventory_id": "symai_leanstral_route",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": true,
+        "schedulable_for_scored_matrix": true
+      },
+      "evidence": {
+        "capability_inventory_id": "symai_leanstral_route",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "canonical_request_contract_accepted": true,
+          "canonical_schema_exact_match": true,
+          "canonical_schema_mismatch_rejected": true,
+          "canonical_settings_exact_match": true,
+          "canonical_settings_mismatch_rejected": true,
+          "engine_present": true,
+          "health_only": false,
+          "independent_model_started": false,
+          "live_model_request_performed": true,
+          "model_alias_mismatch_rejected": true,
+          "model_inference_performed": true,
+          "realization_request_contract_accepted": true,
+          "realization_schema_exact_match": true,
+          "realization_schema_mismatch_rejected": true,
+          "realization_settings_exact_match": true,
+          "realization_settings_mismatch_rejected": true,
+          "route_binding_mismatch_rejected": true,
+          "route_contract_validation_passed": true,
+          "route_contract_validator_present": true,
+          "router_present": true,
+          "same_effective_model": true,
+          "same_effective_service": true,
+          "schedulable_for_scored_matrix": true,
+          "smoke_accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+          "smoke_receipt": {
+            "accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+            "health_only": false,
+            "max_tokens": 1536,
+            "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+            "model_identity_match": true,
+            "model_inference_performed": true,
+            "prompt_sha256": "23cfd215e052d76becb2a3dcd0ee52569117a88b0f0057184a1f3268dcf59b58",
+            "reject_reason": null,
+            "request_performed": true,
+            "response_object_keys": [
+              "text"
+            ],
+            "response_text_chars": 92,
+            "response_text_sha256": "9cde6791423fc6a3a13e3ed7fb755cdd9055f5f9172c9015be31eebb61908970",
+            "role": "realize",
+            "route": "symai",
+            "schema_name": "semantic_roundtrip_realization_v1",
+            "schema_sha256": "e0946be44aaa7ed0fa5106abc6b1670192b44926ed42c3a2fd49011f961eed21",
+            "status": "accepted"
+          },
+          "smoke_reject_reason": null,
+          "symbolicai_version_match": true
+        },
+        "effective_identity": {
+          "distribution": "symbolicai",
+          "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
+          "engine_source_identity": {
+            "module_present": true,
+            "source": "/var/tmp/hssl-srt-eval-harness-supervisor/worktrees/semantic-roundtrip-eval-live-smoke/workspace-7ea6c44a3154-b7650d849a7c/ipfs_datasets_py/utils/symai_ipfs_engine.py",
+            "source_bytes": 31520,
+            "source_sha256": "40f36aa68b7c4c5032becc234f7bc0d2fb2b763b0257cc55db8b0d140e420711"
+          },
+          "independent_model": false,
+          "model_alias": "Leanstral-119B",
+          "provider": "ipfs_accelerate_py",
+          "resolved_backend": "llama.cpp",
+          "resolved_endpoint": "http://127.0.0.1:8080/v1",
+          "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "resolved_provider": "leanstral_local",
+          "route": "symai_router",
+          "route_contract_validator": "ipfs_accelerate_py.llm_router.validate_pinned_symai_request_contract",
+          "router_module": "ipfs_datasets_py.llm_router",
+          "router_source_identity": {
+            "module_present": true,
+            "source": "/var/tmp/hssl-srt-eval-harness-supervisor/worktrees/semantic-roundtrip-eval-live-smoke/workspace-7ea6c44a3154-b7650d849a7c/ipfs_datasets_py/llm_router.py",
+            "source_bytes": 446,
+            "source_sha256": "6391921f2e80eafd77b3cdbb94115e2cb97fb09a88aa2493c177c23b8cbe6103"
+          },
+          "shared_capacity": 1,
+          "symai_config_model": "ipfs:Leanstral-119B",
+          "validated_request_contracts": {
+            "canonical": {
+              "cache_prompt": false,
+              "max_tokens": 3072,
+              "response_format": {
+                "json_schema": {
+                  "name": "semantic_roundtrip_canonical_ir_v1",
+                  "schema": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "rules": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "action": {
+                              "enum": [
+                                "capability_action_a",
+                                "capability_action_b"
+                              ],
+                              "type": "string"
+                            },
+                            "actor": {
+                              "enum": [
+                                "capability_actor_a",
+                                "capability_actor_b"
+                              ],
+                              "type": "string"
+                            },
+                            "conditions": {
+                              "items": {
+                                "enum": [
+                                  "capability_qualifier_a",
+                                  "capability_qualifier_b"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "exceptions": {
+                              "items": {
+                                "enum": [
+                                  "capability_qualifier_a",
+                                  "capability_qualifier_b"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "modality": {
+                              "enum": [
+                                "O",
+                                "P",
+                                "F"
+                              ],
+                              "type": "string"
+                            },
+                            "object": {
+                              "enum": [
+                                "",
+                                "capability_object_a",
+                                "capability_object_b"
+                              ],
+                              "type": "string"
+                            },
+                            "temporal": {
+                              "items": {
+                                "enum": [
+                                  "capability_qualifier_a",
+                                  "capability_qualifier_b"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "modality",
+                            "actor",
+                            "action",
+                            "object",
+                            "conditions",
+                            "exceptions",
+                            "temporal"
+                          ],
+                          "type": "object"
+                        },
+                        "maxItems": 16,
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "rules"
+                    ],
+                    "type": "object"
+                  },
+                  "strict": true
+                },
+                "type": "json_schema"
+              },
+              "seed": 0,
+              "stop": [
+                "<|im_end|>"
+              ],
+              "temperature": 0.0,
+              "timeout": 120.0
+            },
+            "realization": {
+              "cache_prompt": false,
+              "max_tokens": 1536,
+              "response_format": {
+                "json_schema": {
+                  "name": "semantic_roundtrip_realization_v1",
+                  "schema": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "type": "object"
+                  },
+                  "strict": true
+                },
+                "type": "json_schema"
+              },
+              "seed": 0,
+              "stop": [
+                "<|im_end|>"
+              ],
+              "temperature": 0.0,
+              "timeout": 120.0
+            }
+          },
+          "version": "1.14.0"
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "distribution": "symbolicai",
+          "engine": "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine",
+          "independent_model": false,
+          "live_smoke": {
+            "required": true,
+            "role": "construct_or_realize",
+            "schema_name": "semantic_roundtrip_realization_v1"
+          },
+          "model_alias": "Leanstral-119B",
+          "provider": "ipfs_accelerate_py",
+          "request_contracts": {
+            "cache_prompt": false,
+            "canonical": {
+              "max_tokens": 3072,
+              "schema_name": "semantic_roundtrip_canonical_ir_v1"
+            },
+            "realization": {
+              "max_tokens": 1536,
+              "schema_name": "semantic_roundtrip_realization_v1"
+            },
+            "seed": 0,
+            "stop": [
+              "<|im_end|>"
+            ],
+            "temperature": 0,
+            "timeout_seconds": 120.0
+          },
+          "resolved_backend": "llama.cpp",
+          "resolved_endpoint": "http://127.0.0.1:8080/v1",
+          "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "resolved_provider": "leanstral_local",
+          "route": "symai_router",
+          "route_contract_validator": "ipfs_accelerate_py.llm_router.validate_pinned_symai_request_contract",
+          "router_module": "ipfs_datasets_py.llm_router",
+          "shared_capacity": 1,
+          "symai_config_model": "ipfs:Leanstral-119B",
+          "version": "1.14.0"
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "distribution": "symbolicai",
+        "independent_model": false,
+        "model_alias": "Leanstral-119B",
+        "proof_credit": false,
+        "provider": "ipfs_accelerate_py",
+        "resolved_backend": "llama.cpp",
+        "resolved_endpoint": "http://127.0.0.1:8080/v1",
+        "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "resolved_provider": "leanstral_local",
+        "route": "symai_router",
+        "toolchain": "symai_router_orchestration_only",
+        "version": "1.14.0"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "symai",
+      "model_inference_established": true,
+      "model_inference_required_for_role": true,
+      "role": "orchestration_routing_only",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    {
+      "capability_inventory_id": "leanstral_direct",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": true,
+        "schedulable_for_scored_matrix": true
+      },
+      "evidence": {
+        "capability_inventory_id": "leanstral_direct",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "backend_match": true,
+          "health_get": true,
+          "health_only": false,
+          "live_model_request_performed": true,
+          "model_inference_performed": true,
+          "models_get": true,
+          "one_slot_capacity": true,
+          "props_get": true,
+          "schedulable_for_scored_matrix": true,
+          "smoke_accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+          "smoke_receipt": {
+            "accept_reason": "matrix_schema_construct_or_realize_smoke_accepted",
+            "health_only": false,
+            "max_tokens": 1536,
+            "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+            "model_identity_match": true,
+            "model_inference_performed": true,
+            "prompt_sha256": "23cfd215e052d76becb2a3dcd0ee52569117a88b0f0057184a1f3268dcf59b58",
+            "reject_reason": null,
+            "request_performed": true,
+            "response_object_keys": [
+              "text"
+            ],
+            "response_text_chars": 126,
+            "response_text_sha256": "1df47a19b7d0641752848694e11d07b3190b7a44247a68c75cb86d89040bd4c7",
+            "role": "realize",
+            "route": "direct",
+            "schema_name": "semantic_roundtrip_realization_v1",
+            "schema_sha256": "e0946be44aaa7ed0fa5106abc6b1670192b44926ed42c3a2fd49011f961eed21",
+            "status": "accepted"
+          },
+          "smoke_reject_reason": null
+        },
+        "effective_identity": {
+          "backend": "llama.cpp",
+          "backend_build": "b1-571d0d5",
+          "backend_owner": "llamacpp",
+          "capacity": {
+            "model_instances": 1,
+            "parallel_slots": 1
+          },
+          "context_size": 8192,
+          "endpoint": "http://127.0.0.1:8080/v1",
+          "health": "ok",
+          "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "model_alias": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "model_format": "NVFP4",
+          "model_metadata": {
+            "ftype": "NVFP4",
+            "n_ctx": 8192,
+            "n_ctx_train": 1048576,
+            "n_embd": 4096,
+            "n_params": 118972826624,
+            "n_vocab": 131072,
+            "size": 67126693888,
+            "vocab_type": 2
+          },
+          "model_path": "/home/barberb/.cache/huggingface/hub/models--Frosty40--Leanstral-1.5-119B-A6B-GGUF-NVFP4/snapshots/abcc5ce2528c6375148d41dac6dce20f06c339f4/Leanstral-1.5-119B-A6B-NVFP4.gguf",
+          "provider": "leanstral_local",
+          "route": "direct_openai_compatible_http",
+          "served_models": [
+            "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+          ]
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "backend": "llama.cpp",
+          "backend_owner": "llamacpp",
+          "capacity": {
+            "model_instances": 1,
+            "parallel_slots": 1
+          },
+          "endpoint": "http://127.0.0.1:8080/v1",
+          "live_smoke": {
+            "required": true,
+            "role": "construct_or_realize",
+            "schema_name": "semantic_roundtrip_realization_v1"
+          },
+          "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+          "provider": "leanstral_local",
+          "route": "direct_openai_compatible_http"
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "backend": "llama.cpp",
+        "capacity": {
+          "model_instances": 1,
+          "parallel_slots": 1
+        },
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "provider": "leanstral_local",
+        "route": "direct_openai_compatible_http",
+        "toolchain": "leanstral_local_llama_cpp",
+        "version": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "leanstral",
+      "model_inference_established": true,
+      "model_inference_required_for_role": true,
+      "role": "proposal_teacher",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    {
+      "capability_inventory_id": "hammer_cvc5",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": false,
+        "schedulable_for_scored_matrix": false
+      },
+      "evidence": {
+        "capability_inventory_id": "hammer_cvc5",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "bounded_smoke_passed": true,
+          "max_retained_output_bytes": 16384,
+          "smoke_input_sha256": "ead667d6f58f16a74ec89ded4d418141c6ba4f2f42cdffef08dcb25b80807f70",
+          "timeout_seconds": 5.0,
+          "version_requirement_met": true
+        },
+        "effective_identity": {
+          "hammer_distribution": "ipfs-datasets-py",
+          "hammer_module": "ipfs_datasets_py.logic.hammers",
+          "hammer_source_identity": {
+            "module_present": true,
+            "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/logic/hammers/__init__.py",
+            "source_bytes": 17135,
+            "source_sha256": "915318c85c85ab62c3ed1307f23598a4d837ae9abe4b714fe3d25e3f7080d9c0"
+          },
+          "hammer_version": "0.2.0",
+          "smoke": {
+            "arguments": [
+              "/home/barberb/.local/bin/cvc5",
+              "--lang=smt2",
+              "--tlimit=1000"
+            ],
+            "output": "sat",
+            "output_truncated": false,
+            "retained_output_sha256": "d9dbf94b05b8314af9ca7f2034e92685c33447917605a7243b1099c693a12e5e",
+            "return_code": 0,
+            "timed_out": false
+          },
+          "solver": "cvc5",
+          "solver_executable_sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419",
+          "solver_path": "/home/barberb/.local/bin/cvc5",
+          "solver_version": "1.3.3",
+          "version_probe": {
+            "arguments": [
+              "/home/barberb/.local/bin/cvc5",
+              "--version"
+            ],
+            "output": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD] compiled with GCC version 11.4.0 on Feb 26 2026 01:24:28 Copyright (c) 2009-2025 by the authors and their institutional affiliations listed at https://cvc5.github.io/people.html cvc5 is open-source and is covered by the BSD license (modified). THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES. USE AT YOUR OWN RISK. This version of cvc5 is linked against the following non-(L)GPL'ed third party libraries. CaDiCaL - Simplified Satisfiability Solver See https://github.com/arminbiere/cadical for copyright information. Editline Library See https://thrysoee.dk/editline for copyright information. SymFPU - The Symbolic Floating Point Unit See https://github.com/martin-cs/symfpu/tree/CVC4 for copyright information. This version of cvc5 is linked against the following third party libraries covered by the LGPLv3 license. See licenses/lgpl-3.0.txt for more information. GMP - Gnu Multi Precision Arithmetic Library See http://gmplib.org for copyright information. LibPoly polynomial library See https://github.com/SRI-CSL/libpoly for copyright and licensing information. cvc5 is statically linked against these libraries. To recompile this version of cvc5 with different versions of these libraries follow the instructions on https://github.com/cvc5/cvc5/blob/main/INSTALL.md See the file COPYING (distributed with the source code, and with all binaries) for the full cvc5 copyright, licensing, and (lack of) warranty information.",
+            "output_truncated": false,
+            "retained_output_sha256": "efdac7bdbd80631fd043b4120d4d0dfc02cd28397488a075d12d81b10703b7b6",
+            "return_code": 0,
+            "timed_out": false
+          }
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "expected_result": "sat",
+          "hammer_distribution": "ipfs-datasets-py",
+          "hammer_module": "ipfs_datasets_py.logic.hammers",
+          "smoke_logic": "QF_UF",
+          "solver": "cvc5",
+          "solver_version_requirement": ">=1.0.0,<2.0.0",
+          "timeout_seconds": 5.0
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "hammer_distribution": "ipfs-datasets-py",
+        "hammer_module": "ipfs_datasets_py.logic.hammers",
+        "hammer_version": "0.2.0",
+        "model": null,
+        "route": "structural_admission_hammer",
+        "solver": "cvc5",
+        "solver_path": "/home/barberb/.local/bin/cvc5",
+        "solver_version": "1.3.3",
+        "toolchain": "hammer_cvc5_bounded_smoke",
+        "version": "0.2.0"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "hammer",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "structural_gate",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    {
+      "capability_inventory_id": "hammer_cvc5",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": false,
+        "schedulable_for_scored_matrix": false
+      },
+      "evidence": {
+        "capability_inventory_id": "hammer_cvc5",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "bounded_smoke_passed": true,
+          "max_retained_output_bytes": 16384,
+          "smoke_input_sha256": "ead667d6f58f16a74ec89ded4d418141c6ba4f2f42cdffef08dcb25b80807f70",
+          "timeout_seconds": 5.0,
+          "version_requirement_met": true
+        },
+        "effective_identity": {
+          "hammer_distribution": "ipfs-datasets-py",
+          "hammer_module": "ipfs_datasets_py.logic.hammers",
+          "hammer_source_identity": {
+            "module_present": true,
+            "source": "/var/tmp/hssl-semantic-roundtrip-20260726/ipfs_accelerate_py/ipfs_datasets_py/ipfs_datasets_py/logic/hammers/__init__.py",
+            "source_bytes": 17135,
+            "source_sha256": "915318c85c85ab62c3ed1307f23598a4d837ae9abe4b714fe3d25e3f7080d9c0"
+          },
+          "hammer_version": "0.2.0",
+          "smoke": {
+            "arguments": [
+              "/home/barberb/.local/bin/cvc5",
+              "--lang=smt2",
+              "--tlimit=1000"
+            ],
+            "output": "sat",
+            "output_truncated": false,
+            "retained_output_sha256": "d9dbf94b05b8314af9ca7f2034e92685c33447917605a7243b1099c693a12e5e",
+            "return_code": 0,
+            "timed_out": false
+          },
+          "solver": "cvc5",
+          "solver_executable_sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419",
+          "solver_path": "/home/barberb/.local/bin/cvc5",
+          "solver_version": "1.3.3",
+          "version_probe": {
+            "arguments": [
+              "/home/barberb/.local/bin/cvc5",
+              "--version"
+            ],
+            "output": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD] compiled with GCC version 11.4.0 on Feb 26 2026 01:24:28 Copyright (c) 2009-2025 by the authors and their institutional affiliations listed at https://cvc5.github.io/people.html cvc5 is open-source and is covered by the BSD license (modified). THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES. USE AT YOUR OWN RISK. This version of cvc5 is linked against the following non-(L)GPL'ed third party libraries. CaDiCaL - Simplified Satisfiability Solver See https://github.com/arminbiere/cadical for copyright information. Editline Library See https://thrysoee.dk/editline for copyright information. SymFPU - The Symbolic Floating Point Unit See https://github.com/martin-cs/symfpu/tree/CVC4 for copyright information. This version of cvc5 is linked against the following third party libraries covered by the LGPLv3 license. See licenses/lgpl-3.0.txt for more information. GMP - Gnu Multi Precision Arithmetic Library See http://gmplib.org for copyright information. LibPoly polynomial library See https://github.com/SRI-CSL/libpoly for copyright and licensing information. cvc5 is statically linked against these libraries. To recompile this version of cvc5 with different versions of these libraries follow the instructions on https://github.com/cvc5/cvc5/blob/main/INSTALL.md See the file COPYING (distributed with the source code, and with all binaries) for the full cvc5 copyright, licensing, and (lack of) warranty information.",
+            "output_truncated": false,
+            "retained_output_sha256": "efdac7bdbd80631fd043b4120d4d0dfc02cd28397488a075d12d81b10703b7b6",
+            "return_code": 0,
+            "timed_out": false
+          }
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "expected_result": "sat",
+          "hammer_distribution": "ipfs-datasets-py",
+          "hammer_module": "ipfs_datasets_py.logic.hammers",
+          "smoke_logic": "QF_UF",
+          "solver": "cvc5",
+          "solver_version_requirement": ">=1.0.0,<2.0.0",
+          "timeout_seconds": 5.0
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "model": null,
+        "route": "structural_admission_cvc5",
+        "solver": "cvc5",
+        "solver_executable_sha256": "85827e46576d68570c520a2b2927fe1d260d0bfb2b93919f53f50ed29ee1e419",
+        "solver_path": "/home/barberb/.local/bin/cvc5",
+        "solver_version": "1.3.3",
+        "toolchain": "cvc5_bounded_smt2_smoke",
+        "version": "1.3.3"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "cvc5",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "structural_gate",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    {
+      "capability_inventory_id": "lean",
+      "checks": {
+        "bounded_smoke_passed": true,
+        "health_only": false,
+        "model_inference_performed": false,
+        "schedulable_for_scored_matrix": false
+      },
+      "evidence": {
+        "capability_inventory_id": "lean",
+        "capability_reason": null,
+        "capability_status": "available",
+        "checks": {
+          "bounded_smoke_passed": true,
+          "max_retained_output_bytes": 16384,
+          "smoke_source_sha256": "e70053adeba8d10064fb1e2dfbc664f8085f7af24c6ccd09e5a37076b653f6b6",
+          "timeout_seconds": 5.0
+        },
+        "effective_identity": {
+          "executable_sha256": "b480595a22661f4cb22b37602b0de664ab1aaf815e243c42b7e7eb51c6163b7d",
+          "path": "/home/barberb/.elan/bin/lean",
+          "smoke": {
+            "arguments": [
+              "/home/barberb/.elan/bin/lean",
+              "<temporary>/Smoke.lean"
+            ],
+            "output": "",
+            "output_truncated": false,
+            "retained_output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "return_code": 0,
+            "timed_out": false
+          },
+          "toolchain": "Lean 4",
+          "version": "4.32.1",
+          "version_probe": {
+            "arguments": [
+              "/home/barberb/.elan/bin/lean",
+              "--version"
+            ],
+            "output": "Lean (version 4.32.1, aarch64-unknown-linux-gnu, commit f054605aea4b840552cca2e725580bffd1e1b704, Release)",
+            "output_truncated": false,
+            "retained_output_sha256": "c348262328e528889d75dcd1d480d2d3e647740178765a3cf3ea61e633488f9b",
+            "return_code": 0,
+            "timed_out": false
+          }
+        },
+        "kind": "plat_capability_smoke",
+        "requested_identity": {
+          "executable": "lean",
+          "expected_result": "kernel accepted with empty output",
+          "smoke_theorem": "srt_identity",
+          "timeout_seconds": 5.0,
+          "toolchain": "Lean 4"
+        }
+      },
+      "health_only": false,
+      "identity": {
+        "executable_sha256": "b480595a22661f4cb22b37602b0de664ab1aaf815e243c42b7e7eb51c6163b7d",
+        "model": null,
+        "path": "/home/barberb/.elan/bin/lean",
+        "route": "structural_admission_lean",
+        "toolchain": "Lean 4",
+        "version": "4.32.1"
+      },
+      "interface": "SemanticRoundtripCapabilityRecord@1",
+      "is_production_edit_target": false,
+      "may_substitute_for_e2e": false,
+      "method_id": "lean",
+      "model_inference_established": false,
+      "model_inference_required_for_role": false,
+      "role": "structural_gate",
+      "schema_version": "ipfs-datasets.semantic-roundtrip-capability-record.v1",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    }
+  ],
+  "method_roles": {
+    "autoencoder": {
+      "role": "causal_guidance_only_when_scored_supported",
+      "semantic_authority": false,
+      "status": "terminal_unsupported",
+      "status_reason": "terminal_unsupported"
+    },
+    "cvc5": {
+      "role": "structural_gate",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "deterministic_compiler_ir_decompiler": {
+      "role": "production_edit_target",
+      "semantic_authority": true,
+      "status": "semantic_scored",
+      "status_reason": "post_plat_deterministic_baseline_semantic_scored"
+    },
+    "hammer": {
+      "role": "structural_gate",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "lean": {
+      "role": "structural_gate",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "leanstral": {
+      "role": "proposal_teacher",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "spacy": {
+      "role": "non_authoritative_diagnostics",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "symai": {
+      "role": "orchestration_routing_only",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    }
+  },
+  "method_statuses": [
+    "not_measured",
+    "not_selected",
+    "runtime_failed",
+    "semantic_scored",
+    "terminal_unsupported"
+  ],
+  "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+  "population_kind": "repair_development",
+  "registry_cid": "baguqeeradonke5pbapkwgwvf6pyoebjvxthhlj26bg2okooi2mcdbvefvtga",
+  "registry_cid_codec": "dag-json",
+  "registry_cid_scope": "payload_without_registry_cid",
+  "residual_mappings": [
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "dept_memo_1",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 1,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela"
+            ],
+            "unit_id": "cum_000_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [],
+            "unit_id": "cum_000_drop_current"
+          }
+        ],
+        "wave_index": 0
+      },
+      "field_path": "rules[2]",
+      "identity_key": "dept_memo_1::rules[2]::missing_rule",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.25,
+      "mapping_id": "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_missing_rule_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+            "unit_id": "wave_000_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+            "unit_id": "wave_000_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+            "unit_id": "wave_000_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_000_dept_memo_1",
+        "wave_index": 0
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_missing_rule_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": null,
+          "canonical_field": null,
+          "case_id": "dept_memo_1",
+          "field_path": "rules[2]",
+          "gold_rule_index": 2,
+          "residual_kind": "missing_rule",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "missing_rule",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "object",
+      "case_id": "fed_reg_1",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 2,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq"
+            ],
+            "unit_id": "cum_001_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela"
+            ],
+            "unit_id": "cum_001_drop_current"
+          }
+        ],
+        "wave_index": 1
+      },
+      "field_path": "rules[2].object",
+      "identity_key": "fed_reg_1::rules[2].object::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.02,
+      "mapping_id": "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_rewrite_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+            "unit_id": "wave_001_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+            "unit_id": "wave_001_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+            "unit_id": "wave_001_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_001_fed_reg_1",
+        "wave_index": 1
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_rewrite_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 2,
+          "canonical_field": "object",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[2].object",
+          "gold_rule_index": 2,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "contradictory"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "fed_reg_1",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 3,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa"
+            ],
+            "unit_id": "cum_002_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq"
+            ],
+            "unit_id": "cum_002_drop_current"
+          }
+        ],
+        "wave_index": 2
+      },
+      "field_path": "rules[3]",
+      "identity_key": "fed_reg_1::rules[3]::missing_rule",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.2,
+      "mapping_id": "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_missing_rule_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+            "unit_id": "wave_002_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+            "unit_id": "wave_002_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+            "unit_id": "wave_002_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_002_fed_reg_1",
+        "wave_index": 2
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_missing_rule_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": null,
+          "canonical_field": null,
+          "case_id": "fed_reg_1",
+          "field_path": "rules[3]",
+          "gold_rule_index": 3,
+          "residual_kind": "missing_rule",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "missing_rule",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "conditions",
+      "case_id": "fed_reg_1",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 4,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a"
+            ],
+            "unit_id": "cum_003_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa"
+            ],
+            "unit_id": "cum_003_drop_current"
+          }
+        ],
+        "wave_index": 3
+      },
+      "field_path": "rules[4].conditions",
+      "identity_key": "fed_reg_1::rules[4].conditions::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.02,
+      "mapping_id": "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_fill_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+            "unit_id": "wave_003_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+            "unit_id": "wave_003_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+            "unit_id": "wave_003_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_003_fed_reg_1",
+        "wave_index": 3
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_fill_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 3,
+          "canonical_field": "conditions",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[4].conditions",
+          "gold_rule_index": 4,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "temporal",
+      "case_id": "fed_reg_1",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 5,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq"
+            ],
+            "unit_id": "cum_004_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a"
+            ],
+            "unit_id": "cum_004_drop_current"
+          }
+        ],
+        "wave_index": 4
+      },
+      "field_path": "rules[4].temporal",
+      "identity_key": "fed_reg_1::rules[4].temporal::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.02,
+      "mapping_id": "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_rewrite_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+            "unit_id": "wave_004_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+            "unit_id": "wave_004_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+            "unit_id": "wave_004_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_004_fed_reg_1",
+        "wave_index": 4
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_rewrite_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 3,
+          "canonical_field": "temporal",
+          "case_id": "fed_reg_1",
+          "field_path": "rules[4].temporal",
+          "gold_rule_index": 4,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "contradictory"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "object",
+      "case_id": "hr_handbook",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 6,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa"
+            ],
+            "unit_id": "cum_005_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq"
+            ],
+            "unit_id": "cum_005_drop_current"
+          }
+        ],
+        "wave_index": 5
+      },
+      "field_path": "rules[0].object",
+      "identity_key": "hr_handbook::rules[0].object::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.02,
+      "mapping_id": "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_rewrite_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+            "unit_id": "wave_005_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+            "unit_id": "wave_005_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+            "unit_id": "wave_005_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_005_hr_handbook",
+        "wave_index": 5
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_rewrite_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 0,
+          "canonical_field": "object",
+          "case_id": "hr_handbook",
+          "field_path": "rules[0].object",
+          "gold_rule_index": 0,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "contradictory"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "contradictory"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 7,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+          "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq"
+            ],
+            "unit_id": "cum_006_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa"
+            ],
+            "unit_id": "cum_006_drop_current"
+          }
+        ],
+        "wave_index": 6
+      },
+      "field_path": "rules[1]",
+      "identity_key": "hr_handbook::rules[1]::missing_rule",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.2,
+      "mapping_id": "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_missing_rule_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+            "unit_id": "wave_006_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+            "unit_id": "wave_006_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+            "unit_id": "wave_006_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_006_hr_handbook",
+        "wave_index": 6
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_missing_rule_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": null,
+          "canonical_field": null,
+          "case_id": "hr_handbook",
+          "field_path": "rules[1]",
+          "gold_rule_index": 1,
+          "residual_kind": "missing_rule",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "missing_rule",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 8,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+          "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+          "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq"
+            ],
+            "unit_id": "cum_007_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq"
+            ],
+            "unit_id": "cum_007_drop_current"
+          }
+        ],
+        "wave_index": 7
+      },
+      "field_path": "rules[3]",
+      "identity_key": "hr_handbook::rules[3]::missing_rule",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.2,
+      "mapping_id": "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_missing_rule_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+            "unit_id": "wave_007_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+            "unit_id": "wave_007_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+            "unit_id": "wave_007_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_007_hr_handbook",
+        "wave_index": 7
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_missing_rule_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": null,
+          "canonical_field": null,
+          "case_id": "hr_handbook",
+          "field_path": "rules[3]",
+          "gold_rule_index": 3,
+          "residual_kind": "missing_rule",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "missing_rule",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "legal_doc_2",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 9,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+          "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+          "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+          "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+              "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a"
+            ],
+            "unit_id": "cum_008_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq"
+            ],
+            "unit_id": "cum_008_drop_current"
+          }
+        ],
+        "wave_index": 8
+      },
+      "field_path": "rules[2]",
+      "identity_key": "legal_doc_2::rules[2]::missing_rule",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.25,
+      "mapping_id": "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_missing_rule_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+            "unit_id": "wave_008_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+            "unit_id": "wave_008_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+            "unit_id": "wave_008_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_008_legal_doc_2",
+        "wave_index": 8
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_missing_rule_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": null,
+          "canonical_field": null,
+          "case_id": "legal_doc_2",
+          "field_path": "rules[2]",
+          "gold_rule_index": 2,
+          "residual_kind": "missing_rule",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "missing_rule",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "conditions",
+      "case_id": "legal_doc_2",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 10,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+          "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+          "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+          "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+          "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+              "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+              "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq"
+            ],
+            "unit_id": "cum_009_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+              "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a"
+            ],
+            "unit_id": "cum_009_drop_current"
+          }
+        ],
+        "wave_index": 9
+      },
+      "field_path": "rules[3].conditions",
+      "identity_key": "legal_doc_2::rules[3].conditions::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.025,
+      "mapping_id": "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_fill_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+            "unit_id": "wave_009_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+            "unit_id": "wave_009_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+            "unit_id": "wave_009_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_009_legal_doc_2",
+        "wave_index": 9
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_fill_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 2,
+          "canonical_field": "conditions",
+          "case_id": "legal_doc_2",
+          "field_path": "rules[3].conditions",
+          "gold_rule_index": 3,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "missing"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "missing"
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "temporal",
+      "case_id": "legal_doc_2",
+      "cumulative_ablation": {
+        "attribution": "cumulative_ablation_attributes_gain_to_current_residual_vs_priors",
+        "included_count": 11,
+        "included_mapping_ids": [
+          "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+          "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+          "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+          "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+          "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+          "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+          "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+          "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+          "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+          "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+          "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q"
+        ],
+        "units": [
+          {
+            "kind": "cumulative_treatment",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+              "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+              "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+              "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q"
+            ],
+            "unit_id": "cum_010_all_prior_plus_current"
+          },
+          {
+            "kind": "leave_one_out_control",
+            "mapping_ids": [
+              "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+              "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+              "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+              "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+              "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+              "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+              "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+              "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+              "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+              "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq"
+            ],
+            "unit_id": "cum_010_drop_current"
+          }
+        ],
+        "wave_index": 10
+      },
+      "field_path": "rules[3].temporal",
+      "identity_key": "legal_doc_2::rules[3].temporal::field_mismatch",
+      "interface": "Plateau2ResidualInterventionMapping@1",
+      "loss_contribution": 0.025,
+      "mapping_id": "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q",
+      "negative_controls": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler"
+        }
+      ],
+      "optional_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false
+        }
+      ],
+      "outcome_dependent_selection": false,
+      "per_wave_ablation": {
+        "attribution": "per_wave_isolates_single_residual_deterministic_hypothesis",
+        "units": [
+          {
+            "intervention_id": "det_compiler_field_rewrite_hypothesis",
+            "kind": "treatment",
+            "mapping_id": "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q",
+            "unit_id": "wave_010_treatment"
+          },
+          {
+            "control_id": "nc_no_edit",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q",
+            "unit_id": "wave_010_negative_control"
+          },
+          {
+            "control_id": "nc_withhold_optional_teacher",
+            "kind": "negative_control",
+            "mapping_id": "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q",
+            "unit_id": "wave_010_teacher_withheld"
+          }
+        ],
+        "wave_id": "wave_010_legal_doc_2",
+        "wave_index": 10
+      },
+      "population_kind": "repair_development",
+      "primary_intervention": {
+        "edit_target": true,
+        "intervention_id": "det_compiler_field_rewrite_hypothesis",
+        "method_id": "deterministic_compiler_ir_decompiler",
+        "outcome_dependent_selection": false,
+        "role": "production_edit_target",
+        "scope": {
+          "candidate_rule_index": 2,
+          "canonical_field": "temporal",
+          "case_id": "legal_doc_2",
+          "field_path": "rules[3].temporal",
+          "gold_rule_index": 3,
+          "residual_kind": "field_mismatch",
+          "suggested_trigger_kind": "contradictory"
+        },
+        "selection_rule": "smallest_preregistered_deterministic_hypothesis_for_residual_kind",
+        "semantic_authority": true
+      },
+      "residual_kind": "field_mismatch",
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected",
+          "status_reason": "capability_available_role_not_production_edit"
+        }
+      ],
+      "suggested_trigger_kind": "contradictory"
+    }
+  ],
+  "revision": 1,
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau2-intervention-registry.v1",
+  "selection_policy": {
+    "blind_data_permitted": false,
+    "full_matrix_requires_override": true,
+    "outcome_dependent_selection_permitted": false,
+    "primary_edit_method": "deterministic_compiler_ir_decompiler",
+    "rule": "map_each_residual_to_smallest_preregistered_deterministic_intervention_plus_negative_controls_and_ablations"
+  },
+  "task_id": "PLAT2-035",
+  "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va"
+}
