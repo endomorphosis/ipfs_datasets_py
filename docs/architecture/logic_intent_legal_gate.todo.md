@@ -390,7 +390,7 @@ Wave 6  LIG-019 / LIG-020  (eval + runbook)
 
 ## LIG-014 Admissibility profiles and reason codes
 
-- Status: pending
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
