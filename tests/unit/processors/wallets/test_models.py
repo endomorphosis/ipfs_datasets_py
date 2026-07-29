@@ -34,6 +34,7 @@ from ipfs_datasets_py.processors.wallets.models import (
     Provenance,
     RawPayloadPolicy,
     RawPayloadRef,
+    SECRET_SAFE_MAX_DEPTH,
     TokenAccountRecord,
     TransactionRecord,
     TransactionStatus,
@@ -41,6 +42,7 @@ from ipfs_datasets_py.processors.wallets.models import (
     TransferRecord,
     UTXORecord,
     VersionedExtension,
+    ensure_secret_safe,
 )
 
 
@@ -577,3 +579,98 @@ def test_export_manifest_rejects_inconsistent_accounting(
             completed_at=NOW,
             warnings=("warning",),
         )
+
+
+def test_secret_safe_policy_preserves_nested_public_chain_data() -> None:
+    first = VersionedExtension(
+        "wallet-chain-extension-v1",
+        {
+            "token": {
+                "token_id": "42",
+                "symbol": "SAFE",
+                "program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+            },
+            "transaction": {
+                "hash": "0x" + ("ab" * 32),
+                "signature": "0x" + ("cd" * 65),
+                "access_list": [{"address": "0xabc", "storage_keys": []}],
+            },
+        },
+    )
+    second = VersionedExtension(
+        "wallet-chain-extension-v1",
+        {
+            "transaction": {
+                "access_list": [{"storage_keys": [], "address": "0xabc"}],
+                "signature": "0x" + ("cd" * 65),
+                "hash": "0x" + ("ab" * 32),
+            },
+            "token": {
+                "program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                "symbol": "SAFE",
+                "token_id": "42",
+            },
+        },
+    )
+
+    assert first.to_dict() == second.to_dict()
+    assert canonical_json(first.to_dict()) == canonical_json(second.to_dict())
+    assert first.to_dict()["data"]["token"]["token_id"] == "42"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    (
+        {"nested": [{"privateKey": "correct-horse-battery-staple-wallet-secret"}]},
+        {"nested": {"note": "correct-horse-battery-staple-wallet-secret"}},
+        {"nested": {"reference": "vault://wallet/provider/main-token"}},
+        {"nested": {"authorization": "placeholder"}},
+    ),
+)
+def test_secret_safe_policy_rejects_nested_material_without_echoing_it(
+    payload: dict[str, object],
+) -> None:
+    serialized_attack = json.dumps(payload, sort_keys=True)
+    with pytest.raises(ValueError, match="wallet serialization") as caught:
+        VersionedExtension("wallet-chain-extension-v1", payload)
+
+    rendered_error = f"{caught.value!s}\n{caught.value!r}"
+    for prohibited in (
+        "correct-horse-battery-staple-wallet-secret",
+        "vault://wallet/provider/main-token",
+        serialized_attack,
+    ):
+        assert prohibited not in rendered_error
+
+
+def test_secret_safe_policy_has_a_finite_recursion_budget() -> None:
+    root: dict[str, object] = {}
+    child = root
+    for index in range(SECRET_SAFE_MAX_DEPTH + 2):
+        nested: dict[str, object] = {"height": index}
+        child["next"] = nested
+        child = nested
+
+    with pytest.raises(ValueError, match="policy limit") as caught:
+        ensure_secret_safe(root)
+    assert "height" not in str(caught.value)
+
+
+def test_cursor_rejects_concrete_secret_value_without_echoing_it(
+    chain: ChainRef,
+    position: LedgerPosition,
+) -> None:
+    sentinel = "correct-horse-battery-staple-wallet-secret"
+    with pytest.raises(ValueError, match="concrete secret") as caught:
+        LedgerCursor(
+            chain=chain,
+            provider="fixture-rpc",
+            scope="wallet:0xabc",
+            normalized_schema_major=1,
+            normalizer_version="1.0.0",
+            position=position,
+            revision="rev:1",
+            continuation_token=sentinel,
+        )
+    assert sentinel not in str(caught.value)
+    assert sentinel not in repr(caught.value)

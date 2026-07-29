@@ -12,13 +12,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from types import MappingProxyType
 from typing import Any
 from uuid import uuid4
 
-from .canonical import content_digest, deterministic_id
+from .canonical import content_digest, deterministic_id, freeze_json, thaw_json
 from .errors import CheckpointError, InvalidRequestError
-from .models import ChainRef, LedgerCursor, LedgerPosition
+from .models import ChainRef, LedgerCursor, LedgerPosition, ensure_secret_safe
 from .protocols import OperationContext
 
 
@@ -184,6 +183,7 @@ class CheckpointRecord:
                 "continuation_token",
                 _required_str(self.continuation_token, "continuation_token"),
             )
+            ensure_secret_safe(self.continuation_token)
         if self.sink_commit_id is not None:
             object.__setattr__(
                 self,
@@ -197,7 +197,12 @@ class CheckpointRecord:
         if not history or history[-1] != self.anchor:
             history = history + (self.anchor,)
         object.__setattr__(self, "history", history)
-        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+        if not isinstance(self.metadata, Mapping):
+            raise InvalidRequestError("metadata must be a mapping")
+        ensure_secret_safe(self.metadata)
+        frozen_metadata = freeze_json(self.metadata)
+        ensure_secret_safe(frozen_metadata)
+        object.__setattr__(self, "metadata", frozen_metadata)
         object.__setattr__(
             self,
             "checkpoint_id",
@@ -210,6 +215,7 @@ class CheckpointRecord:
                 },
             ),
         )
+        ensure_secret_safe(self.to_dict())
 
     def to_cursor(self) -> LedgerCursor:
         """Project this checkpoint into the shared :class:`LedgerCursor` model.
@@ -234,7 +240,7 @@ class CheckpointRecord:
             "revision": self.revision,
             "safety_depth": self.safety_depth,
             "history": [item.to_dict() for item in self.history],
-            "metadata": dict(self.metadata),
+            "metadata": thaw_json(self.metadata),
         }
         if self.continuation_token is not None:
             result["continuation_token"] = self.continuation_token

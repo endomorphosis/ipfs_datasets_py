@@ -7,7 +7,7 @@ content-addressed raw payloads referenced by :class:`RawPayloadRef`.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
@@ -35,6 +35,153 @@ _DECIMAL_INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 _DIGEST = re.compile(r"^[a-z0-9][a-z0-9._-]*:[A-Za-z0-9_-]+$")
 _CID = re.compile(r"^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7][a-z2-7]+)$")
 _URN_ID = re.compile(r"^urn:wallet:[a-z][a-z0-9_-]*:sha256:[0-9a-f]{64}$")
+
+# Free-form values cross durable and representational trust boundaries.  Keep
+# this policy deliberately smaller than a general secret scanner: strong
+# credential formats and unambiguous field names are rejected, while ordinary
+# public-ledger values such as hashes, signatures, ``token`` and ``token_id``
+# remain valid.
+SECRET_SAFE_MAX_DEPTH = 32
+SECRET_SAFE_MAX_NODES = 10_000
+SECRET_SAFE_MAX_COLLECTION_ITEMS = 2_048
+SECRET_SAFE_MAX_STRING_CHARS = 1_048_576
+
+_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+_FIELD_SEPARATOR = re.compile(r"[^a-z0-9]+")
+_SECRET_FIELD_WORDS = frozenset(
+    {
+        "authorization",
+        "bearer",
+        "mnemonic",
+        "passphrase",
+        "passwd",
+        "password",
+        "secret",
+    }
+)
+_SECRET_FIELD_NAMES = frozenset(
+    {
+        "access_key",
+        "access_token",
+        "api_key",
+        "api_secret",
+        "auth_token",
+        "client_secret",
+        "credential",
+        "credentials",
+        "private_key",
+        "provider_secret",
+        "recovery_phrase",
+        "recovery_seed",
+        "refresh_token",
+        "seed",
+        "seed_phrase",
+        "session_token",
+        "signing_key",
+        "signing_material",
+        "user_token",
+        "wallet_seed",
+    }
+)
+_SECRET_VALUE_PATTERNS = (
+    re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"),
+    re.compile(r"(?<![A-Z0-9])(?:AKIA|ASIA)[A-Z0-9]{16}(?![A-Z0-9])"),
+    re.compile(
+        r"(?<![A-Za-z0-9])(?:gh[pousr]_[A-Za-z0-9]{30,255}|"
+        r"github_pat_[A-Za-z0-9_]{40,255})(?![A-Za-z0-9])"
+    ),
+    re.compile(
+        r"(?<![A-Za-z0-9])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|"
+        r"AIza[A-Za-z0-9_-]{35})(?![A-Za-z0-9])"
+    ),
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9\-._~+/]+=*\b"),
+    re.compile(
+        r"(?i)\b(?:password|passwd|passphrase|api[_-]?key|private[_-]?key|"
+        r"secret|mnemonic|seed[_ -]?phrase)\s*[:=]\s*\S{4,}"
+    ),
+    re.compile(r"(?i)^(?:vault|keyring|secret|env|file)://"),
+    re.compile(r"(?i)^[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@"),
+    # Catches long sentinel-style tokens without treating paths or prose that
+    # merely mention a security test as concrete credentials.
+    re.compile(
+        r"(?i)^[a-z0-9][a-z0-9_-]{15,}-(?:secret|password|passwd|passphrase)$"
+    ),
+)
+
+
+def _normalized_field_name(value: str) -> str:
+    separated = _CAMEL_BOUNDARY.sub("_", value).casefold()
+    return _FIELD_SEPARATOR.sub("_", separated).strip("_")
+
+
+def _is_secret_field(value: str) -> bool:
+    normalized = _normalized_field_name(value)
+    if normalized in _SECRET_FIELD_NAMES:
+        return True
+    return bool(_SECRET_FIELD_WORDS.intersection(normalized.split("_")))
+
+
+def _is_concrete_secret(value: str) -> bool:
+    return any(pattern.search(value) for pattern in _SECRET_VALUE_PATTERNS)
+
+
+def ensure_secret_safe(value: Any) -> None:
+    """Reject secret-shaped or unbounded values before wallet serialization.
+
+    The traversal has explicit depth, node, collection, and string budgets so
+    an untrusted extension, cursor, warning, or metadata object cannot turn
+    secret inspection into an unbounded operation.  Errors intentionally omit
+    field paths and values because both are attacker-controlled and may
+    themselves contain the secret.
+    """
+
+    nodes = 0
+
+    def visit(item: Any, depth: int) -> None:
+        nonlocal nodes
+        nodes += 1
+        if depth > SECRET_SAFE_MAX_DEPTH or nodes > SECRET_SAFE_MAX_NODES:
+            raise ValueError("wallet serialization security policy limit exceeded")
+
+        if isinstance(item, str):
+            if len(item) > SECRET_SAFE_MAX_STRING_CHARS:
+                raise ValueError("wallet serialization security policy limit exceeded")
+            if _is_concrete_secret(item):
+                raise ValueError(
+                    "wallet serialization rejects concrete secret values"
+                )
+            return
+
+        if isinstance(item, Mapping):
+            if len(item) > SECRET_SAFE_MAX_COLLECTION_ITEMS:
+                raise ValueError("wallet serialization security policy limit exceeded")
+            for key, child in item.items():
+                if isinstance(key, str):
+                    if len(key) > SECRET_SAFE_MAX_STRING_CHARS:
+                        raise ValueError(
+                            "wallet serialization security policy limit exceeded"
+                        )
+                    if _is_secret_field(key) or _is_concrete_secret(key):
+                        raise ValueError(
+                            "wallet serialization rejects secret-shaped fields"
+                        )
+                visit(child, depth + 1)
+            return
+
+        if isinstance(item, Sequence) and not isinstance(
+            item, (str, bytes, bytearray, memoryview)
+        ):
+            if len(item) > SECRET_SAFE_MAX_COLLECTION_ITEMS:
+                raise ValueError("wallet serialization security policy limit exceeded")
+            for child in item:
+                visit(child, depth + 1)
+            return
+
+        to_dict = getattr(item, "to_dict", None)
+        if callable(to_dict):
+            visit(to_dict(), depth + 1)
+
+    visit(value, 0)
 
 
 def _required(value: str, name: str) -> str:
@@ -126,7 +273,11 @@ class VersionedExtension:
         _required(self.schema_version, "extension schema_version")
         if not isinstance(self.data, Mapping):
             raise ValueError("extension data must be a mapping")
+        ensure_secret_safe(
+            {"schema_version": self.schema_version, "data": self.data}
+        )
         frozen = freeze_json(self.data)
+        ensure_secret_safe(frozen)
         object.__setattr__(self, "data", frozen)
 
     def to_dict(self) -> dict[str, Any]:
@@ -144,6 +295,7 @@ def _extensions(
     result: dict[str, VersionedExtension] = {}
     for namespace, extension in value.items():
         _required(namespace, "extension namespace")
+        ensure_secret_safe({namespace: None})
         if not isinstance(extension, VersionedExtension):
             raise ValueError("extensions must contain VersionedExtension values")
         result[namespace] = extension
@@ -848,6 +1000,7 @@ class LedgerCursor:
         _required(self.revision, "revision")
         if self.continuation_token is not None:
             _required(self.continuation_token, "continuation_token")
+            ensure_secret_safe(self.continuation_token)
         object.__setattr__(
             self,
             "cursor_id",
@@ -862,6 +1015,7 @@ class LedgerCursor:
                 },
             ),
         )
+        ensure_secret_safe(self.to_dict())
 
     def to_dict(self) -> dict[str, Any]:
         result = {
@@ -978,6 +1132,7 @@ class ExportManifest:
         for warning in self.warnings:
             if not isinstance(warning, str):
                 raise ValueError("warnings must contain strings")
+        ensure_secret_safe(self.warnings)
         _non_negative(self.record_count, "record_count")
         _non_negative(self.warning_count, "warning_count")
         _aware(self.started_at, "started_at")
@@ -1012,6 +1167,7 @@ class ExportManifest:
             ),
         }
         object.__setattr__(self, "manifest_id", deterministic_id("manifest", identity))
+        ensure_secret_safe(self.to_dict())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1074,6 +1230,10 @@ __all__ = [
     "Provenance",
     "RawPayloadPolicy",
     "RawPayloadRef",
+    "SECRET_SAFE_MAX_COLLECTION_ITEMS",
+    "SECRET_SAFE_MAX_DEPTH",
+    "SECRET_SAFE_MAX_NODES",
+    "SECRET_SAFE_MAX_STRING_CHARS",
     "TokenAccountRecord",
     "TransactionRecord",
     "TransactionStatus",
@@ -1082,4 +1242,5 @@ __all__ = [
     "UTXORecord",
     "UtxoRecord",
     "VersionedExtension",
+    "ensure_secret_safe",
 ]

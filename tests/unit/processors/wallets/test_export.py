@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,7 @@ from ipfs_datasets_py.processors.wallets.models import (
     AssetRef,
     ChainRef,
     ExactAmount,
+    ExportManifest,
     ExportPartition,
     ExportStatus,
     Finality,
@@ -446,3 +448,152 @@ def test_arrow_export_round_trip_ids(
     assert receipt.formats == ("arrow",)
     assert (tmp_path / "arrow" / "records-000.arrow").is_file()
     assert receipt.manifest.record_count == 2
+
+
+def test_export_preserves_safe_nested_chain_mapping(
+    tmp_path: Path,
+) -> None:
+    record = {
+        "record_id": "urn:wallet:fixture:sha256:" + ("ab" * 32),
+        "record_type": "fixture",
+        "finality": "finalized",
+        "ledger_position": {"sequence": 1, "hash": "0xblock"},
+        "extensions": {
+            "chain": {
+                "schema_version": "chain-v1",
+                "data": {
+                    "token": {"token_id": "42", "symbol": "USDC"},
+                    "signature": "0x" + ("cd" * 65),
+                },
+            }
+        },
+    }
+    path = tmp_path / "safe.jsonl"
+
+    write_jsonl([record], path)
+
+    assert read_jsonl(path) == [record]
+    assert json.loads(path.read_text(encoding="utf-8")) == record
+
+
+def test_export_boundaries_reject_nested_secrets_before_writing(
+    tmp_path: Path,
+) -> None:
+    sentinel = "correct-horse-battery-staple-wallet-secret"
+    path = tmp_path / "unsafe.jsonl"
+    record = {
+        "record_id": "fixture-1",
+        "record_type": "fixture",
+        "finality": "finalized",
+        "extensions": {"chain": {"data": [{"apiKey": sentinel}]}},
+    }
+
+    with pytest.raises(ExportError, match="secret-shaped") as caught:
+        write_jsonl([record], path)
+
+    assert not path.exists()
+    assert sentinel not in str(caught.value)
+    assert sentinel not in repr(caught.value)
+
+
+def test_manifest_and_receipt_warnings_reject_concrete_secret_values(
+    chain: ChainRef,
+    provenance: Provenance,
+    tmp_path: Path,
+) -> None:
+    sentinel = "correct-horse-battery-staple-wallet-secret"
+    partition = ExportPartition(
+        path="part.jsonl",
+        format="jsonl",
+        record_count=0,
+        byte_count=0,
+        digest=DIGEST,
+    )
+    with pytest.raises(ValueError, match="concrete secret") as manifest_error:
+        ExportManifest(
+            chain=chain,
+            provenance=provenance,
+            status=ExportStatus.COMPLETE,
+            raw_payload_policy=RawPayloadPolicy.OMITTED,
+            partitions=(partition,),
+            record_count=0,
+            warning_count=1,
+            finality_counts={},
+            started_at=NOW,
+            completed_at=NOW,
+            warnings=(sentinel,),
+        )
+    assert sentinel not in str(manifest_error.value)
+
+    safe_manifest = ExportManifest(
+        chain=chain,
+        provenance=provenance,
+        status=ExportStatus.COMPLETE,
+        raw_payload_policy=RawPayloadPolicy.OMITTED,
+        partitions=(partition,),
+        record_count=0,
+        warning_count=0,
+        finality_counts={},
+        started_at=NOW,
+        completed_at=NOW,
+    )
+    with pytest.raises(ExportError, match="concrete secret") as receipt_error:
+        ExportReceipt(
+            manifest=safe_manifest,
+            status=ExportStatus.COMPLETE,
+            output_dir=str(tmp_path),
+            formats=("jsonl",),
+            processor_version="fixture@1",
+            normalized_schema_major=1,
+            warnings=(sentinel,),
+        )
+    assert sentinel not in str(receipt_error.value)
+    assert sentinel not in repr(receipt_error.value)
+
+
+def test_exporter_rejects_secret_warning_before_creating_output(
+    chain: ChainRef,
+    context: OperationContext,
+    tmp_path: Path,
+) -> None:
+    sentinel = "correct-horse-battery-staple-wallet-secret"
+    output_dir = tmp_path / "blocked"
+    exporter = WalletDatasetExporter(
+        chain=chain,
+        output_dir=output_dir,
+        formats=(ExportFormat.JSONL,),
+        clock=lambda: NOW,
+    )
+
+    with pytest.raises(ExportError, match="concrete secret") as caught:
+        _run(
+            exporter.export_records(
+                _records(chain),
+                context=context,
+                scope="wallet:0xabc",
+                warnings=(sentinel,),
+            )
+        )
+
+    assert output_dir.exists()
+    assert list(output_dir.iterdir()) == []
+    assert sentinel not in str(caught.value)
+
+
+def test_exporter_rejects_secret_receipt_configuration_before_mkdir(
+    chain: ChainRef,
+    tmp_path: Path,
+) -> None:
+    sentinel = "correct-horse-battery-staple-wallet-secret"
+    output_dir = tmp_path / "not-created"
+
+    with pytest.raises(ExportError, match="concrete secret") as caught:
+        WalletDatasetExporter(
+            chain=chain,
+            output_dir=output_dir,
+            provider_capabilities=(sentinel,),
+        )
+
+    assert not output_dir.exists()
+    assert sentinel not in str(caught.value)
+    assert sentinel not in repr(caught.value)
