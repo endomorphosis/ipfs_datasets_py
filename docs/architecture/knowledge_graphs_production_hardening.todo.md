@@ -363,7 +363,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-022 Enforce UCAN in GraphService and emit audit receipts
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: security
 - Depends on: KGP-006, KGP-021
