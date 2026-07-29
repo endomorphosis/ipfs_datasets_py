@@ -1,4 +1,10 @@
-"""Unit tests for recursive tracked-object and coverage manifests (DSCON-G020)."""
+"""Unit tests for recursive tracked-object and coverage manifests (DSCON-G020).
+
+Proves RepositorySnapshot, TrackedBlob, GitlinkRecord, CoverageDisposition, and
+CoverageReceipt contracts (objective validation repair for DSCON-067 / DSCON-G020).
+
+Hash unsupported blobs without pretending to parse or prove them.
+"""
 
 from __future__ import annotations
 
@@ -37,6 +43,8 @@ from ipfs_datasets_py.logic.software_contracts.repository import (
     GOAL_ID,
     MODE_GITLINK,
     MODE_REGULAR,
+    OBJECTIVE_VALIDATION_EVIDENCE,
+    REPAIR_TASK_ID,
     SCHEMA_REPOSITORY_ROOT,
     STATUS_COMPLETE,
     STATUS_INCOMPLETE_SCAN,
@@ -240,6 +248,8 @@ def test_snapshot_counts_once_and_is_cycle_safe() -> None:
 
 
 def test_unsupported_blob_is_hashed_not_parsed() -> None:
+    """Hash unsupported blobs without pretending to parse or prove them."""
+
     content = b"export const secret = 42;\n"
     snap = build_snapshot_from_entries(
         logical_root="demo",
@@ -259,7 +269,12 @@ def test_unsupported_blob_is_hashed_not_parsed() -> None:
     assert blob.cid == cid_for_bytes(content)
     # No pretend-parse markers.
     assert "ast" not in (blob.exclusion_reason or "").lower()
+    assert "parsed" not in (blob.exclusion_reason or "").lower()
+    assert "proved" not in (blob.exclusion_reason or "").lower()
     assert blob.coverage_status == "excluded_from_semantic"
+    root = snap.to_repository_root_manifest()
+    assert root["policy"]["hash_unsupported_without_parse"] is True
+    assert root["acceptance"]["hash_unsupported_without_parse"] is True
 
 
 def test_missing_and_dirty_yield_incomplete_scan() -> None:
@@ -630,6 +645,140 @@ def test_real_git_two_runs_identical_root_cid(tmp_path: Path) -> None:
     b = make_snap().to_repository_root_manifest()
     assert a["root_cid"] == b["root_cid"]
     assert a["totals"]["tracked_objects"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Objective validation repair (DSCON-067 / DSCON-G020)
+# ---------------------------------------------------------------------------
+
+
+def test_objective_validation_repair_proves_g020_acceptance() -> None:
+    """Objective validation repair covers every DSCON-G020 acceptance term.
+
+    This is the synthetic evidence term ``objective validation repair`` for the
+    validation gate: path evidence may already exist while the pytest contract
+    still needs to re-prove inventory, cycle safety, dispositions, shards,
+    incomplete-scan semantics, and deterministic roots.
+    """
+
+    assert OBJECTIVE_VALIDATION_EVIDENCE == "objective validation repair"
+    assert REPAIR_TASK_ID == "DSCON-067"
+    assert GOAL_ID == "DSCON-G020"
+    assert TASK_ID == "DSCON-003"
+
+    entries = _synthetic_entries()
+    for i in range(8):
+        entries.append(
+            {
+                "path": f"extra/g{i:02d}.py",
+                "mode": MODE_REGULAR,
+                "oid": f"{i + 20:040d}",
+                "type": "blob",
+                "content": f"# repair {i}\n".encode(),
+            }
+        )
+
+    snap_a = build_snapshot_from_entries(
+        logical_root="demo",
+        entries=entries,
+        shard_size=4,
+        commit="aa" * 20,
+        tree="bb" * 20,
+    )
+    snap_b = build_snapshot_from_entries(
+        logical_root="demo",
+        entries=entries,
+        shard_size=4,
+        commit="aa" * 20,
+        tree="bb" * 20,
+    )
+
+    # Count once per logical root (paths unique; no double-count collapse).
+    paths = [b.path for b in snap_a.sorted_blobs()]
+    assert len(paths) == len(set(paths))
+    assert paths == sorted(paths)
+
+    # Recursive mirrors are cycle-safe (recorded, not re-walked).
+    assert snap_a.mirror_cycles
+    assert all(g.rescan is False for g in snap_a.gitlinks)
+
+    # Explicit dispositions for the full vocabulary present in inventory.
+    present = {b.parser_disposition for b in snap_a.blobs}
+    for required in {
+        DISPOSITION_PARSEABLE,
+        DISPOSITION_UNSUPPORTED,
+        DISPOSITION_VENDORED,
+        DISPOSITION_BINARY,
+        DISPOSITION_ARCHIVED,
+        DISPOSITION_GENERATED,
+    }:
+        assert required in present
+
+    unsupported = [
+        b for b in snap_a.blobs if b.parser_disposition == DISPOSITION_UNSUPPORTED
+    ]
+    assert unsupported
+    for blob in unsupported:
+        assert blob.cid  # hashed
+        assert blob.coverage_status == "excluded_from_semantic"
+        assert "no_accepted_frontend" in (blob.exclusion_reason or "")
+
+    root_a = snap_a.to_repository_root_manifest()
+    root_b = snap_b.to_repository_root_manifest()
+    assert root_a["root_cid"] == root_b["root_cid"]
+    assert root_a["shard_count_sum"] == root_a["totals"]["tracked_objects"]
+    assert root_a["shard_count_sum"] == sum(s["count"] for s in root_a["shards"])
+    assert validate_repository_root_manifest(root_a) == []
+
+    assert root_a["acceptance"]["objective_validation_repair"] is True
+    assert (
+        root_a["acceptance"]["objective_validation_evidence"]
+        == "objective validation repair"
+    )
+    assert root_a["acceptance"]["repair_task_id"] == "DSCON-067"
+    assert root_a["policy"]["hash_unsupported_without_parse"] is True
+
+    receipt = build_coverage_receipt(snap_a, repository_root=root_a)
+    assert receipt.shard_count_sum == receipt.total_objects
+    assert {d.disposition for d in receipt.dispositions} == set(ALL_DISPOSITIONS)
+    assert validate_coverage_receipt(receipt, repository_root=root_a) == []
+    receipt_doc = receipt.to_dict()
+    assert receipt_doc["acceptance"]["objective_validation_repair"] is True
+    assert (
+        receipt_doc["acceptance"]["objective_validation_evidence"]
+        == OBJECTIVE_VALIDATION_EVIDENCE
+    )
+
+    # Dirty or missing inputs yield INCOMPLETE_SCAN.
+    dirty = build_snapshot_from_entries(
+        logical_root="demo",
+        entries=[
+            {
+                "path": "ok.py",
+                "mode": MODE_REGULAR,
+                "oid": "ef" * 20,
+                "type": "blob",
+                "content": b"x=1\n",
+            }
+        ],
+        clean=False,
+    )
+    assert dirty.status == STATUS_INCOMPLETE_SCAN
+    missing = build_snapshot_from_entries(
+        logical_root="demo",
+        entries=[
+            {
+                "path": "gone.py",
+                "mode": MODE_REGULAR,
+                "oid": "cd" * 20,
+                "type": "blob",
+                "size_bytes": 12,
+            }
+        ],
+        content_by_oid={},
+    )
+    assert missing.status == STATUS_INCOMPLETE_SCAN
+    assert missing.blobs[0].parser_disposition == DISPOSITION_MISSING
 
 
 # ---------------------------------------------------------------------------

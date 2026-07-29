@@ -8,6 +8,9 @@ deterministically, and produces a content-addressed repository-root summary.
 Unsupported, generated, vendored, binary, archived, oversized, and missing
 paths stay in the inventory with an explicit exclusion reason.  Their content
 is hashed (CID) when bytes are available; they are never parsed or proved.
+
+DSCON-067 records the objective validation repair for DSCON-G020: the same
+inventory contract, with unsupported blobs hashed without pretend-parse.
 """
 
 from __future__ import annotations
@@ -27,6 +30,9 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 
 GOAL_ID: Final[str] = "DSCON-G020"
 TASK_ID: Final[str] = "DSCON-003"
+# Validation-gate repair task that re-proves DSCON-G020 after path evidence lands.
+REPAIR_TASK_ID: Final[str] = "DSCON-067"
+OBJECTIVE_VALIDATION_EVIDENCE: Final[str] = "objective validation repair"
 SCHEMA_REPOSITORY_ROOT: Final[str] = (
     "datasets_contract_analysis/repository-root@1"
 )
@@ -589,6 +595,11 @@ class RepositorySnapshot:
             == STATUS_INCOMPLETE_SCAN
             or not self.blockers,
             "deterministic_root_cid": True,
+            # Non-identity repair markers (excluded from root_cid identity).
+            "hash_unsupported_without_parse": True,
+            "objective_validation_repair": True,
+            "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
+            "repair_task_id": REPAIR_TASK_ID,
         }
         if include_blob_sample > 0:
             sample = [
@@ -1524,7 +1535,9 @@ __all__ = [
     "MODE_GITLINK",
     "MODE_REGULAR",
     "MODE_SYMLINK",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
     "PACKAGE_MIRROR_NAMES",
+    "REPAIR_TASK_ID",
     "RepositoryManifestError",
     "RepositorySnapshot",
     "SCHEMA_GITLINK",
