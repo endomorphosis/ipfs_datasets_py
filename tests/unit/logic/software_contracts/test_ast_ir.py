@@ -411,6 +411,17 @@ def test_python_and_typescript_frontends_share_the_same_ast_contract(
     assert "syntax" not in record.to_dict()
 
 
+def test_source_provenance_accepts_git_paths_with_internal_spaces() -> None:
+    provenance = SourceProvenance(
+        cid_for_bytes(b"x"),
+        "src/generated module copy.py",
+        "repository:x",
+        "rev",
+    )
+    assert provenance.path == "src/generated module copy.py"
+    assert SourceProvenance.from_dict(provenance.to_dict()) == provenance
+
+
 @pytest.mark.parametrize(
     ("factory", "match"),
     [

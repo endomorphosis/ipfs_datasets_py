@@ -60,7 +60,7 @@ def test_python_frontend_emits_normalized_semantic_facts() -> None:
     assert isinstance(record, ASTRecord)
     assert record.frontend.language == "python"
     assert record.frontend.frontend_name == "cpython-ast"
-    assert record.frontend.frontend_version == "1.2.0"
+    assert record.frontend.frontend_version == "1.2.1"
     assert record.provenance.source_cid == cid_for_bytes(
         REPRESENTATIVE_SOURCE.encode()
     )
@@ -415,7 +415,7 @@ def test_compatibility_constructor_round_trip_and_golden_root() -> None:
     # the shared AST schema.  Update only with an explicit compatibility review.
     assert (
         record.cid
-        == "baguqeerabsur52uvwohvsx6bqdqqnv2tdkbha77npqgy2rwx23kqsc7rm72q"
+        == "baguqeeragsxt4uifydwte5ujqp7ndtnm65blcjqxmynhuyosto3tecnl7qcq"
     )
 
 

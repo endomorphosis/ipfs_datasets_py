@@ -43,7 +43,7 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-PYTHON_FRONTEND_VERSION: Final[str] = "1.2.0"
+PYTHON_FRONTEND_VERSION: Final[str] = "1.2.1"
 PYTHON_FRONTEND_NAME: Final[str] = "cpython-ast"
 PYTHON_SOURCE_EXTENSIONS: Final[tuple[str, ...]] = (".py", ".pyi")
 DEFAULT_MAX_SOURCE_BYTES: Final[int] = 8 * 1024 * 1024

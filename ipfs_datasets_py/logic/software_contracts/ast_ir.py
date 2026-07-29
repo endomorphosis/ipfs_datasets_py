@@ -225,7 +225,10 @@ def _choice(value: Any, field_name: str, allowed: frozenset[str]) -> str:
 
 
 def _path(value: Any, field_name: str) -> str:
-    result = _text(value, field_name, no_whitespace=True, maximum=4096)
+    # Spaces are valid in tracked Git path segments and remain unambiguous in
+    # a slash-delimited relative POSIX path.  Control characters and
+    # surrounding whitespace remain rejected by _text.
+    result = _text(value, field_name, maximum=4096)
     if (
         result.startswith("/")
         or "\\" in result
