@@ -346,7 +346,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-021 Define graph UCAN resources, abilities, and caveats
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: security
 - Depends on: KGP-003
