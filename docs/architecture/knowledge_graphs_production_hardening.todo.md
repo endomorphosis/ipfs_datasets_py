@@ -6,7 +6,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-001 Capture failing public lifecycle contracts
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: baseline
 - Depends on:
