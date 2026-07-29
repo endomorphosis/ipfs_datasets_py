@@ -327,6 +327,28 @@ def analysis_outcome_fail_closed(outcome: AnalysisOutcome | str) -> bool:
     return value in _ANALYSIS_FAIL_CLOSED
 
 
+_POLICY_FAIL_CLOSED: Final[frozenset[PolicyOutcome]] = frozenset(
+    {
+        PolicyOutcome.FAIL,
+        PolicyOutcome.REVIEW,
+        PolicyOutcome.UNKNOWN,
+        PolicyOutcome.STALE,
+        PolicyOutcome.ERROR,
+    }
+)
+
+
+def policy_outcome_fail_closed(outcome: PolicyOutcome | str) -> bool:
+    """Return True when *outcome* must fail closed for required policy checks.
+
+    Only :attr:`PolicyOutcome.PASS` is non-fail-closed.  Policy success is still
+    not transaction authorization.
+    """
+
+    value = _enum(PolicyOutcome, outcome, "outcome")
+    return value in _POLICY_FAIL_CLOSED
+
+
 def transaction_blocks_automation(outcome: TransactionVerdictOutcome | str) -> bool:
     """Return True when *outcome* must block automated sign/broadcast."""
 
@@ -407,6 +429,11 @@ class AnalysisVerdict:
             schema_version=CRYPTO_IR_KERNEL_SCHEMA_VERSION,
             domain=f"{CRYPTO_IR_VERDICT_DOMAIN}.analysis",
         )
+
+    def cannot_authorize_transaction(self) -> bool:
+        """Analysis never elevates into transaction authorization authority."""
+
+        return True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -519,6 +546,10 @@ class PolicyVerdict:
             )
 
     @property
+    def fail_closed(self) -> bool:
+        return policy_outcome_fail_closed(self.outcome)
+
+    @property
     def authority_kind(self) -> AuthorityKind:
         return AuthorityKind.RESULT
 
@@ -529,6 +560,11 @@ class PolicyVerdict:
             schema_version=CRYPTO_IR_KERNEL_SCHEMA_VERSION,
             domain=f"{CRYPTO_IR_VERDICT_DOMAIN}.policy",
         )
+
+    def cannot_authorize_transaction(self) -> bool:
+        """Policy evaluation never elevates into transaction authorization."""
+
+        return True
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -924,6 +960,7 @@ __all__ = [
     "VerdictFamily",
     "analysis_outcome_fail_closed",
     "default_result_provenance",
+    "policy_outcome_fail_closed",
     "refuse_verdict_coercion",
     "result_family_of",
     "transaction_blocks_automation",

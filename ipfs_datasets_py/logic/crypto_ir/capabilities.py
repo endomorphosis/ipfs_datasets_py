@@ -605,6 +605,65 @@ def prover_backend_capability(
     )
 
 
+def security_ir_capability(
+    *,
+    capability_id: str,
+    implementation_version: str,
+    semantic_version: str,
+    chain_namespaces: Sequence[str] = (),
+    status: CapabilityStatus = CapabilityStatus.AVAILABLE,
+) -> CapabilityDescriptor:
+    """Descriptor for Security IR → Crypto IR adapters (observation/evidence)."""
+
+    return CapabilityDescriptor(
+        capability_id=capability_id,
+        kind=CapabilityKind.SECURITY_IR,
+        implementation_version=implementation_version,
+        semantic_version=semantic_version,
+        status=status,
+        surfaces=(CapabilitySurface.OBSERVATION, CapabilitySurface.EVIDENCE),
+        chain_namespaces=tuple(chain_namespaces),
+        features=("security_ir",),
+        summary="Security IR normalization into Crypto IR",
+    )
+
+
+def software_contract_ir_capability(
+    *,
+    capability_id: str,
+    implementation_version: str,
+    semantic_version: str,
+    features: Sequence[str] = (),
+    status: CapabilityStatus = CapabilityStatus.AVAILABLE,
+) -> CapabilityDescriptor:
+    """Descriptor for software-contract IR adapters (analysis/readiness)."""
+
+    return CapabilityDescriptor(
+        capability_id=capability_id,
+        kind=CapabilityKind.SOFTWARE_CONTRACT_IR,
+        implementation_version=implementation_version,
+        semantic_version=semantic_version,
+        status=status,
+        surfaces=(
+            CapabilitySurface.OBSERVATION,
+            CapabilitySurface.EVIDENCE,
+            CapabilitySurface.ANALYSIS,
+            CapabilitySurface.READINESS,
+        ),
+        features=tuple(features) or ("software_contract_ir",),
+        summary="Software-contract IR binding into Crypto IR",
+    )
+
+
+def same_capability_identity(
+    left: CapabilityDescriptor,
+    right: CapabilityDescriptor,
+) -> bool:
+    """Return True when both descriptors bind the same id and version axes."""
+
+    return capability_identity_tuple(left) == capability_identity_tuple(right)
+
+
 __all__ = [
     "CRYPTO_IR_CAPABILITY_DOMAIN",
     "CapabilityDescriptor",
@@ -617,6 +676,9 @@ __all__ = [
     "fail_closed_for_unavailable",
     "probe_capability",
     "prover_backend_capability",
+    "same_capability_identity",
+    "security_ir_capability",
+    "software_contract_ir_capability",
     "wallet_records_capability",
     "AnalysisVerdict",
     "PolicyVerdict",

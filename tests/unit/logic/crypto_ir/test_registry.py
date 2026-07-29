@@ -61,12 +61,21 @@ from ipfs_datasets_py.logic.crypto_ir import (
 )
 from ipfs_datasets_py.logic.crypto_ir.adapters import (
     CryptoIRAdapterError,
+    adapter_capability_identity,
+    adapter_is_available,
+    conversion_elevates_authority,
     unavailable_conversion,
+)
+from ipfs_datasets_py.logic.crypto_ir.capabilities import (
+    same_capability_identity,
+    security_ir_capability,
+    software_contract_ir_capability,
 )
 from ipfs_datasets_py.logic.crypto_ir.verdicts import (
     HeuristicOutcome,
     MonitorOutcome,
     SanctionsMatchLevel,
+    policy_outcome_fail_closed,
 )
 
 
@@ -270,6 +279,8 @@ def test_analysis_and_policy_verdict_round_trip() -> None:
     assert AnalysisVerdict.from_dict(analysis.to_dict()) == analysis
     assert analysis.identity.cid.startswith("b")
     assert analysis.authority_kind is AuthorityKind.RESULT
+    assert analysis.cannot_authorize_transaction() is True
+    assert analysis.fail_closed is False
 
     policy = PolicyVerdict(
         verdict_id="pv-1",
@@ -280,6 +291,10 @@ def test_analysis_and_policy_verdict_round_trip() -> None:
     )
     assert PolicyVerdict.from_dict(policy.to_dict()) == policy
     assert result_family_of(policy) is VerdictFamily.POLICY
+    assert policy.cannot_authorize_transaction() is True
+    assert policy.fail_closed is False
+    assert policy_outcome_fail_closed(PolicyOutcome.ERROR) is True
+    assert policy_outcome_fail_closed(PolicyOutcome.PASS) is False
 
 
 def test_transaction_verdict_blocks_non_allow() -> None:
@@ -390,6 +405,12 @@ def test_unavailable_analysis_helper() -> None:
 def test_null_adapter_preserves_provenance_and_unsupported_fields() -> None:
     adapter = NullCryptoIRAdapter()
     assert isinstance(adapter, CryptoIRAdapter)
+    assert adapter_is_available(adapter) is True
+    assert adapter_capability_identity(adapter) == (
+        "crypto-ir.null",
+        "1.0.0",
+        "1.0.0",
+    )
     prov = CryptoIRProvenance(
         authority=AuthorityBinding(kind=AuthorityKind.OBSERVATION),
         producer_id="fixture",
@@ -405,6 +426,7 @@ def test_null_adapter_preserves_provenance_and_unsupported_fields() -> None:
     assert result.status is AdapterConversionStatus.UNSUPPORTED
     assert result.source_authority is AuthorityKind.OBSERVATION
     assert result.result_authority is AuthorityKind.OBSERVATION
+    assert conversion_elevates_authority(result) is False
     paths = {item.path for item in result.unsupported_fields}
     assert paths == {"nested", "raw_field"}
     assert result.preserved_provenance["producer_id"] == "fixture"
@@ -604,5 +626,67 @@ def test_authority_confusion_observation_cannot_become_authorization_via_registr
     )
     assert result.result_authority is not AuthorityKind.AUTHORIZATION
     assert result.result_authority is AuthorityKind.OBSERVATION
+    assert conversion_elevates_authority(result) is False
     with pytest.raises(CryptoIRVerdictError):
         refuse_verdict_coercion(VerdictFamily.ANALYSIS, VerdictFamily.AUTHORIZATION)
+
+
+def test_security_and_software_contract_capability_constructors() -> None:
+    security = security_ir_capability(
+        capability_id="security.evm",
+        implementation_version="1.0.0",
+        semantic_version="1.0.0",
+        chain_namespaces=("eip155",),
+    )
+    assert security.kind is CapabilityKind.SECURITY_IR
+    assert CapabilitySurface.EVIDENCE in security.surfaces
+    contract = software_contract_ir_capability(
+        capability_id="contract.abi",
+        implementation_version="2.0.0",
+        semantic_version="1.1.0",
+    )
+    assert contract.kind is CapabilityKind.SOFTWARE_CONTRACT_IR
+    assert CapabilitySurface.ANALYSIS in contract.surfaces
+    twin = security_ir_capability(
+        capability_id="security.evm",
+        implementation_version="1.0.0",
+        semantic_version="1.0.0",
+        chain_namespaces=("eip155",),
+    )
+    assert same_capability_identity(security, twin) is True
+    assert same_capability_identity(security, contract) is False
+
+
+def test_registry_list_available_and_has_available() -> None:
+    up = NullCryptoIRAdapter(
+        adapter_id="adapter.up",
+        capability=CapabilityDescriptor(
+            capability_id="cap.up",
+            kind=CapabilityKind.CHAIN_ADAPTER,
+            implementation_version="1.0.0",
+            semantic_version="1.0.0",
+            status=CapabilityStatus.AVAILABLE,
+            surfaces=(CapabilitySurface.OBSERVATION,),
+        ),
+    )
+    down = NullCryptoIRAdapter(
+        adapter_id="adapter.down",
+        capability=CapabilityDescriptor(
+            capability_id="cap.down",
+            kind=CapabilityKind.CHAIN_ADAPTER,
+            implementation_version="1.0.0",
+            semantic_version="1.0.0",
+            status=CapabilityStatus.UNAVAILABLE,
+            surfaces=(CapabilitySurface.OBSERVATION,),
+        ),
+    )
+    registry = AdapterRegistry.from_adapters([up, down])
+    available = registry.list_available()
+    assert [entry.adapter_id for entry in available] == ["adapter.up"]
+    assert registry.has_available("adapter.up") is True
+    assert registry.has_available("adapter.down") is False
+    assert registry.has_available("missing") is False
+    surface_filtered = registry.list_available(
+        required_surfaces=(CapabilitySurface.ANALYSIS,)
+    )
+    assert surface_filtered == ()

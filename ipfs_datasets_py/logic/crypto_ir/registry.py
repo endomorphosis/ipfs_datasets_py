@@ -282,6 +282,44 @@ class AdapterRegistry:
             if entry.capability.supports_chain_namespace(text)
         )
 
+    def list_available(
+        self,
+        *,
+        required_surfaces: Sequence[CapabilitySurface | str] | None = None,
+        required_features: Sequence[str] | None = None,
+    ) -> tuple[RegistryEntry, ...]:
+        """Return registered adapters whose side-effect-free probe is available.
+
+        Deterministic sorted order matches :meth:`__iter__`.  Unavailable or
+        missing-surface adapters are omitted rather than failing closed.
+        """
+
+        available: list[RegistryEntry] = []
+        for entry in self:
+            probe = probe_capability(
+                entry.capability,
+                required_surfaces=required_surfaces,
+                required_features=required_features,
+            )
+            if probe.available:
+                available.append(entry)
+        return tuple(available)
+
+    def has_available(
+        self,
+        adapter_id: str,
+        *,
+        required_surfaces: Sequence[CapabilitySurface | str] | None = None,
+        required_features: Sequence[str] | None = None,
+    ) -> bool:
+        """Return whether *adapter_id* is registered and available."""
+
+        return self.probe(
+            adapter_id,
+            required_surfaces=required_surfaces,
+            required_features=required_features,
+        ).available
+
     def convert(
         self,
         adapter_id: str,
