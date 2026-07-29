@@ -1,0 +1,100 @@
+{
+  "schema": "datasets_contract_analysis/dataset-manipulator-surface-inventory@1",
+  "goal_id": "DSCON-G300",
+  "task_id": "DSCON-005",
+  "channels": [
+    {
+      "channel_id": "direct-python-core",
+      "kind": "direct_python",
+      "symbols": ["DatasetLoader", "DatasetSaver", "DatasetConverter", "DataProcessor"],
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_loader.py",
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_saver.py",
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_converter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/data_processor.py"
+      ],
+      "status": "present_placeholder_or_partial",
+      "notes": "Loader/saver/converter exist; saver/converter are TODO placeholders."
+    },
+    {
+      "channel_id": "direct-python-legacy-manager",
+      "kind": "direct_python",
+      "symbols": ["DatasetManager", "ManagedDataset"],
+      "paths": ["ipfs_datasets_py/ipfs_datasets_py/dataset_manager.py"],
+      "status": "present_mock_success",
+      "notes": "Mock save and fallback sample load."
+    },
+    {
+      "channel_id": "mcp-tools",
+      "kind": "mcp_tool",
+      "symbols": ["load_dataset", "save_dataset", "process_dataset", "convert_dataset_format"],
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/load_dataset.py",
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py",
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/convert_dataset_format.py"
+      ],
+      "status": "present_mock_success",
+      "notes": "Documented as thin wrappers; process/convert/save still mock."
+    },
+    {
+      "channel_id": "mcp-client",
+      "kind": "mcp_client",
+      "symbols": ["IPFSDatasetsMCPClient"],
+      "paths": ["ipfs_datasets_py/ipfs_datasets_py/mcp_server/client.py"],
+      "status": "present_weak_wrapper",
+      "notes": "Client depends on optional MCP stack; not exercised as semantic authority."
+    },
+    {
+      "channel_id": "http-service",
+      "kind": "http_service",
+      "symbols": ["fastapi_service", "simple_server"],
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/fastapi_service.py",
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/simple_server.py"
+      ],
+      "status": "present_adapter",
+      "notes": "HTTP surfaces must remain thin after DSCON-G330; baseline freezes current ownership only."
+    },
+    {
+      "channel_id": "swissknife-descriptor",
+      "kind": "swissknife",
+      "symbols": [],
+      "paths": ["/home/barberb/swissknife"],
+      "status": "external_read_only",
+      "notes": "Swissknife is an external analysis root; not package authority."
+    },
+    {
+      "channel_id": "ipfs-kit-integration",
+      "kind": "ipfs_kit",
+      "symbols": ["DatasetIPFSBackend", "IPFSDatasetsManager", "DatasetManager"],
+      "paths": [
+        "ipfs_kit_py/ipfs_kit_py/ipfs_datasets_integration.py",
+        "ipfs_kit_py/ipfs_kit_py/ai_ml_integration.py",
+        "ipfs_kit_py/ipfs_kit_py/mcp/ai/dataset_manager.py",
+        "ipfs_kit_py/ipfs_kit_py/mcp/ai/dataset_management/manager.py"
+      ],
+      "status": "present_shadow_and_adapter",
+      "notes": "Kit contains shadowed DatasetManager definitions and a DatasetIPFSBackend adapter."
+    },
+    {
+      "channel_id": "planned-canonical-manipulator",
+      "kind": "direct_python",
+      "symbols": ["DatasetManipulator", "DatasetRef", "DatasetOperationPlan", "DatasetOperationReceipt"],
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_manipulator.py",
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_contracts.py"
+      ],
+      "status": "missing",
+      "notes": "DSCON-G310/G320 ownership; missing at G300 freeze."
+    }
+  ],
+  "required_channels": [
+    "direct-python-core",
+    "mcp-tools",
+    "mcp-client",
+    "http-service",
+    "swissknife-descriptor",
+    "ipfs-kit-integration"
+  ]
+}

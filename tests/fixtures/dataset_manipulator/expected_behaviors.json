@@ -1,0 +1,235 @@
+{
+  "schema": "datasets_contract_analysis/dataset-manipulator-expected-behaviors@1",
+  "goal_id": "DSCON-G300",
+  "task_id": "DSCON-005",
+  "policy": "These behaviors are frozen as expected failures / mock defects, not compatibility promises. Repair is DSCON-G310/G320.",
+  "behaviors": [
+    {
+      "behavior_id": "BEH-001",
+      "category": "pass-no-op-transformation",
+      "title": "process transform is a no-op that still reports success",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "drift_ids": ["DSCON-DRIFT-003"],
+      "observation": {
+        "status": "success",
+        "applies_real_transform": false,
+        "DataProcessor_instantiated_but_not_invoked_for_transform": true,
+        "num_records_equals_input_count_for_dict_source": true
+      },
+      "side_effects": {
+        "mutates_rows": false,
+        "writes_artifacts": false
+      }
+    },
+    {
+      "behavior_id": "BEH-002",
+      "category": "fabricated-counts",
+      "title": "filter fabricates a 0.9 record reduction instead of evaluating predicates",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "drift_ids": ["DSCON-DRIFT-003"],
+      "observation": {
+        "status": "success",
+        "filter_formula": "max(1, int(processed_records * 0.9))",
+        "example_input_records": 3,
+        "example_output_records": 2
+      },
+      "side_effects": {
+        "evaluates_predicate": false,
+        "mutates_rows": false
+      }
+    },
+    {
+      "behavior_id": "BEH-003",
+      "category": "fabricated-counts",
+      "title": "string/unknown sources default toward mock record counts",
+      "surface": "mcp process_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+      "drift_ids": ["DSCON-DRIFT-003"],
+      "observation": {
+        "default_mock_count_literal": 100,
+        "string_without_len_uses_default": true,
+        "string_with_len_uses_len": true
+      }
+    },
+    {
+      "behavior_id": "BEH-004",
+      "category": "random-hash-id-identity",
+      "title": "process and save invent process-salted hash identities",
+      "surface": "mcp process_dataset / save_dataset",
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/process_dataset.py",
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py"
+      ],
+      "drift_ids": ["DSCON-DRIFT-005", "DSCON-DRIFT-006"],
+      "observation": {
+        "process_id_pattern": "processed_{hash(str(dataset_source)) % 100000}",
+        "save_id_pattern": "mock_dataset_{hash(str(dataset_data))}",
+        "content_addressed": false,
+        "cross_process_stable": false
+      }
+    },
+    {
+      "behavior_id": "BEH-005",
+      "category": "no-write-save",
+      "title": "dict save_dataset reports success without creating destination",
+      "surface": "mcp save_dataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/save_dataset.py",
+      "drift_ids": ["DSCON-DRIFT-005"],
+      "observation": {
+        "status": "success",
+        "destination_created": false,
+        "returns_location_and_size": true
+      },
+      "side_effects": {
+        "filesystem_write": false
+      }
+    },
+    {
+      "behavior_id": "BEH-006",
+      "category": "no-write-save",
+      "title": "ManagedDataset save / save_async are mock successful saves",
+      "surface": "DatasetManager.ManagedDataset",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/dataset_manager.py",
+      "drift_ids": ["DSCON-DRIFT-001"],
+      "observation": {
+        "comments_label": "Mock successful save",
+        "destination_created": false,
+        "returns_location_size_format": true
+      },
+      "side_effects": {
+        "filesystem_write": false
+      }
+    },
+    {
+      "behavior_id": "BEH-007",
+      "category": "no-write-save",
+      "title": "DatasetSaver placeholder returns success without writing",
+      "surface": "core DatasetSaver",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_saver.py",
+      "drift_ids": ["DSCON-DRIFT-010"],
+      "observation": {
+        "status": "success",
+        "message": "Dataset saved successfully",
+        "destination_created": false,
+        "todo_placeholder": true
+      }
+    },
+    {
+      "behavior_id": "BEH-008",
+      "category": "no-conversion-convert",
+      "title": "convert_dataset_format falls back to mock conversion_method=mock",
+      "surface": "mcp convert_dataset_format",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/dataset_tools/convert_dataset_format.py",
+      "drift_ids": ["DSCON-DRIFT-004"],
+      "observation": {
+        "status": "success",
+        "conversion_method": "mock",
+        "num_records": 100,
+        "output_path_created": false
+      },
+      "side_effects": {
+        "format_conversion": false,
+        "filesystem_write": false
+      }
+    },
+    {
+      "behavior_id": "BEH-009",
+      "category": "no-conversion-convert",
+      "title": "DatasetConverter placeholder reports success without conversion",
+      "surface": "core DatasetConverter",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_converter.py",
+      "drift_ids": ["DSCON-DRIFT-010"],
+      "observation": {
+        "status": "success",
+        "message": "Dataset converted successfully",
+        "todo_placeholder": true
+      }
+    },
+    {
+      "behavior_id": "BEH-010",
+      "category": "fallback-sample-dataset",
+      "title": "DatasetManager.get_dataset falls back to in-memory sample mock",
+      "surface": "DatasetManager",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/dataset_manager.py",
+      "drift_ids": ["DSCON-DRIFT-002"],
+      "observation": {
+        "missing_id_returns_ManagedDataset": true,
+        "fallback_payload_keys": ["text", "label"],
+        "fails_closed": false
+      }
+    },
+    {
+      "behavior_id": "BEH-011",
+      "category": "duplicate-shadowed-monolith",
+      "title": "DatasetManager defined in package and three kit modules",
+      "surface": "cross-package",
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/dataset_manager.py",
+        "ipfs_kit_py/ipfs_kit_py/ai_ml_integration.py",
+        "ipfs_kit_py/ipfs_kit_py/mcp/ai/dataset_manager.py",
+        "ipfs_kit_py/ipfs_kit_py/mcp/ai/dataset_management/manager.py"
+      ],
+      "drift_ids": ["DSCON-DRIFT-008"],
+      "observation": {
+        "definition_count": 4,
+        "package_authority": "ipfs_datasets_py/ipfs_datasets_py/dataset_manager.py"
+      }
+    },
+    {
+      "behavior_id": "BEH-012",
+      "category": "missing-import",
+      "title": "DatasetManipulator and dataset_contracts modules are absent",
+      "surface": "core_operations",
+      "paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_manipulator.py",
+        "ipfs_datasets_py/ipfs_datasets_py/core_operations/dataset_contracts.py"
+      ],
+      "drift_ids": ["DSCON-DRIFT-009", "DSCON-DRIFT-010"],
+      "observation": {
+        "DatasetManipulator_importable": false,
+        "dataset_contracts_importable": false,
+        "loader_saver_converter_present": true
+      }
+    },
+    {
+      "behavior_id": "BEH-013",
+      "category": "kit-integration-failure",
+      "title": "ipfs_kit datasets integration does not export a package-level load_dataset",
+      "surface": "ipfs_kit_py.ipfs_datasets_integration",
+      "path": "ipfs_kit_py/ipfs_kit_py/ipfs_datasets_integration.py",
+      "drift_ids": ["DSCON-DRIFT-008"],
+      "observation": {
+        "module_exists": true,
+        "top_level_load_dataset_export": false,
+        "DatasetIPFSBackend_has_load_dataset": true
+      }
+    },
+    {
+      "behavior_id": "BEH-014",
+      "category": "weak-wrapper",
+      "title": "Existing dataset tool unit tests only assert dict shape",
+      "surface": "tests",
+      "path": "ipfs_datasets_py/tests/mcp/unit/test_dataset_tools.py",
+      "drift_ids": ["DSCON-DRIFT-011", "DSCON-DRIFT-012"],
+      "observation": {
+        "asserts_isinstance_dict": true,
+        "asserts_filesystem_side_effects": false,
+        "asserts_content_addressed_receipts": false
+      }
+    }
+  ],
+  "acceptance_categories": [
+    "pass-no-op-transformation",
+    "fabricated-counts",
+    "random-hash-id-identity",
+    "no-write-save",
+    "no-conversion-convert",
+    "fallback-sample-dataset",
+    "duplicate-shadowed-monolith",
+    "missing-import",
+    "kit-integration-failure",
+    "weak-wrapper"
+  ]
+}
