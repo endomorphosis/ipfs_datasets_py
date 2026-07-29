@@ -1,0 +1,79 @@
+{
+  "schema": "wallet_processor_migration/shared-malformed-payloads@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "cases": [
+    {
+      "id": "empty-batch",
+      "kind": "empty",
+      "payload": [],
+      "expect": "empty_ok_or_noop"
+    },
+    {
+      "id": "null-payload",
+      "kind": "malformed",
+      "payload": null,
+      "expect": "reject"
+    },
+    {
+      "id": "string-instead-of-object",
+      "kind": "malformed",
+      "payload": "not-a-record",
+      "expect": "reject"
+    },
+    {
+      "id": "missing-required-hash",
+      "kind": "partial",
+      "payload": {
+        "ledger_index": 100,
+        "account": "rPartial"
+      },
+      "expect": "reject_or_skip"
+    },
+    {
+      "id": "partial-amount-missing-base-units",
+      "kind": "partial",
+      "payload": {
+        "transaction_hash": "0xcccc",
+        "amount": {
+          "decimals": 18
+        }
+      },
+      "expect": "reject"
+    },
+    {
+      "id": "duplicate-native-ids",
+      "kind": "duplicate",
+      "payload": [
+        {
+          "native_id": "dup-1",
+          "sequence": 1,
+          "hash": "0x01"
+        },
+        {
+          "native_id": "dup-1",
+          "sequence": 1,
+          "hash": "0x01"
+        }
+      ],
+      "expect": "dedupe_or_idempotent"
+    },
+    {
+      "id": "out-of-order-sequences",
+      "kind": "out_of_order",
+      "payload": [
+        {
+          "native_id": "b",
+          "sequence": 12,
+          "hash": "0x0c"
+        },
+        {
+          "native_id": "a",
+          "sequence": 11,
+          "hash": "0x0b"
+        }
+      ],
+      "expect": "accept_preserve_identity"
+    }
+  ]
+}

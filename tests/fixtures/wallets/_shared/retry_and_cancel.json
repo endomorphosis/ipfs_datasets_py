@@ -1,0 +1,63 @@
+{
+  "schema": "wallet_processor_migration/shared-retry-cancel@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "retries": {
+    "max_attempts": 3,
+    "outcomes": [
+      {
+        "attempt": 1,
+        "disposition": "transient",
+        "error": "timeout"
+      },
+      {
+        "attempt": 2,
+        "disposition": "transient",
+        "error": "throttled"
+      },
+      {
+        "attempt": 3,
+        "disposition": "success",
+        "payload": {
+          "native_id": "after-retry",
+          "sequence": 42,
+          "hash": "0x2a"
+        }
+      }
+    ],
+    "expected_attempts": 3,
+    "expected_native_id": "after-retry"
+  },
+  "permanent_failure": {
+    "max_attempts": 3,
+    "outcomes": [
+      {
+        "attempt": 1,
+        "disposition": "permanent",
+        "error": "not_found"
+      }
+    ],
+    "expected_attempts": 1,
+    "expect": "fail_closed_no_retry"
+  },
+  "cancellation": {
+    "cancel_before_attempt": 2,
+    "outcomes": [
+      {
+        "attempt": 1,
+        "disposition": "transient",
+        "error": "timeout"
+      },
+      {
+        "attempt": 2,
+        "disposition": "success",
+        "payload": {
+          "native_id": "should-not-run",
+          "sequence": 2,
+          "hash": "0x02"
+        }
+      }
+    ],
+    "expect": "operation_cancelled"
+  }
+}

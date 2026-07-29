@@ -1,0 +1,30 @@
+{
+  "schema": "wallet_processor_migration/chain-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "task_id": "WALPROC-013",
+  "chain_id": "xrpl",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Scaffold for XRPL ledger golden fixtures. Sample ledger shapes also exist under xaman/ for assurance linkage.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "scaffold"
+  },
+  "source": {
+    "kind": "scaffold",
+    "description": "Directory reserved for XRP, issued currency, memo, destination tag, and validation fixtures."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "xrpl",
+    "not_live_network_data": true,
+    "extends_shared_checks": true
+  },
+  "files": [
+    "manifest.json",
+    "README.md"
+  ]
+}

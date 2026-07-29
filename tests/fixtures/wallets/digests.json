@@ -1,0 +1,66 @@
+{
+  "schema": "wallet_processor_migration/wallet-fixture-digests@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "task_id": "WALPROC-013",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "digest_algorithm": "sha256",
+  "classification": {
+    "immutable_when_digested": true,
+    "offline_default": true
+  },
+  "source": {
+    "kind": "content_addressed_lock",
+    "description": "SHA-256 digests of every tracked wallet fixture file. digests.json is excluded to avoid self-hash cycles."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "created_for": "WALPROC-G090 fixture integrity",
+    "integrity_tests": "ipfs_datasets_py/tests/contract/processors/wallets/test_fixture_integrity.py",
+    "note": "Update this file in the same change that mutates any fixture content."
+  },
+  "files": {
+    "README.md": "sha256:823032c880e46576b7eae1e9c73fa485405ffe60240808e77c4cc5344486aa7b",
+    "_shared/README.md": "sha256:43093fd4fb74ee60293c8be4a71d1dd31673c9db95cf983972d2f7dd747b00f2",
+    "_shared/amount_vectors.json": "sha256:62f53bf19a0f507b6e0471dc17fde8ace123b11decfd84242bdc2845fb20ef5b",
+    "_shared/cas_checkpoint.json": "sha256:fb4eec8a1f5aa7eb9a46db2d7cbabbc72f322d7a1ab9f39353fb9bca61b36089",
+    "_shared/deterministic_ids.json": "sha256:3a1e3806d0c146cf3388ec364c419c9216fb1e9aad0b17cb644df0323a131e5b",
+    "_shared/export_sample_records.json": "sha256:717e9f4475660855326d7433dd9b4dce44d9749fe08fcb702cdbf4aef7ad386d",
+    "_shared/identity_vectors.json": "sha256:082d0977dde9fafa4891f720b7cddfed26fffc84c62da7eaabe56dcdb3f00f57",
+    "_shared/malformed_payloads.json": "sha256:72196fec116cd802d1216a1b7d7cdcdefecd380492d14f237b007c2074c522ed",
+    "_shared/manifest.json": "sha256:0144fd8aced8db24f1d9281419b0cab1285d635e1023f697a0fe28fedfba5475",
+    "_shared/pagination_pages.json": "sha256:06f2491bb9723dd90305ee7b24861eba430ae2ef9f1de22517d23b844bb17e7a",
+    "_shared/reorg_histories.json": "sha256:8edaa2e003b4efc2ec8b11708e523e949650add95bb25754d076998f8bc58d42",
+    "_shared/retry_and_cancel.json": "sha256:56cac8eb03611660ec5c8a475c9855c05bfe66536c96415d4228e5678f617c20",
+    "_shared/secret_redaction_cases.json": "sha256:d301a57c2afe4464379cc7f867de1d913e9f8c54bf4bd091a1f6438790f954a2",
+    "bitcoin/README.md": "sha256:e7c8413ccd43bcec313dd7701e089570b4a90977c6384e21d0536183e488a5e7",
+    "bitcoin/manifest.json": "sha256:df70ccb9df05c2b3ed4b1ebb6abdfa7ae995b43c2ef04bd12b20815b24871eae",
+    "ethereum/README.md": "sha256:aff367ad65784a142fffba5024309a3c1848aec7615acda2af3b454e23b6ffdc",
+    "ethereum/manifest.json": "sha256:e47c297a94da590b7bfb466577b318e46aab5d9b6b48e7efcec3b2e5babc0d8c",
+    "manifest.json": "sha256:a1c5c804f643ae627e964f7cb8c7789fccfa8888da1aad20477f56e270b7cfbd",
+    "solana/README.md": "sha256:14fca3e5949eaaf8ab8e7a9333d71f61c70afba2569df914cfaf2198f918b6ab",
+    "solana/manifest.json": "sha256:d47d0eabd45b752cd9c8b1ce1efc447e841f6249f5ca12d558d5e449332516f0",
+    "worldcoin/README.md": "sha256:2c4d731466f6dbc1923c15dd5cfda0a11d817b2c1988c804eaff1f01ca7d62dd",
+    "worldcoin/golden_vectors.json": "sha256:9abc1f0e9d4da4e68049ef04c49aac328f5cb5a0a90649cbd8ef9a98fa517556",
+    "worldcoin/idkit_v3_legacy.json": "sha256:82018f423731e6e09195fe47bb6cdc20cdfde83980328527b8f6e13a6a7c5cc7",
+    "worldcoin/idkit_v4_session.json": "sha256:b5e39169525d128cb3645c0b40da8022d2b5e08c2fcb279e0a659a1b0f35ce1a",
+    "worldcoin/idkit_v4_uniqueness.json": "sha256:3b07e4d66e04d9b60a70279938e7af11d91b8f2e9e0f7757451f1ec8421a5034",
+    "worldcoin/import_identities.json": "sha256:10d3f46cea18a502eda3d7dda464b85939665de252c66da804815d0698fcce33",
+    "worldcoin/manifest.json": "sha256:f02f0fee43c5b93dc84de5fffbaa4815eccaecb6a1306745bd33870c3fe1adc7",
+    "worldcoin/public_projections.json": "sha256:c0a56fb224291e4c60cbf1e5e0a7bb981fbb9a8846f31e7a2e6d188abb5ba62c",
+    "worldcoin/redaction_cases.json": "sha256:c248c3e3be6fafafe836be0b10b822d6814629424d4434a781f0d25b2e848e1d",
+    "worldcoin/route_shapes.json": "sha256:0e258466436a6364ead1fa859ae0635e60444dd8f8abcf47e6c8302e9aa293f9",
+    "worldcoin/snapshot_shapes.json": "sha256:3e1c03cea49790411a450ea601bf0a5e9d920a7576f7fc0e7c6bc5ce90e28535",
+    "worldcoin/verify_failure.json": "sha256:1ef523286364fb684905bcde20bbcc0127c60027474f62862224de810e3b3b56",
+    "worldcoin/verify_success.json": "sha256:71357c6be94bf90c23d30ae60c6d6080f1cd6d8b9882c0416ae93ac88a18f530",
+    "xaman/README.md": "sha256:c58b27f43da68fc6a182906bbc24867132aba01641b5ee015610eb736fc5adc4",
+    "xaman/assurance_links.json": "sha256:afdcf87ffdf9e0810c437163fbe7664c22e866b555b488982655160eb0797124",
+    "xaman/manifest.json": "sha256:2acc922b39fd93699aecdd04d4286ce60b748d55bd11103fe6bc11f693ea9a87",
+    "xaman/runtime_projection_boundary.json": "sha256:27ad10ceb576c11739597ed68ed29706622412e3c081dc8ffa272efc83c66e3d",
+    "xaman/sample_ledger_records.json": "sha256:e5cbb8f977bd0d31530fc4c581c9caae96af5e23f6f2f03025ee60ea05a940a6",
+    "xrpl/README.md": "sha256:5242931b703c6f0eac7798cdee3380b1d4aeebf31f58ba6729eb9a0ad5c24640",
+    "xrpl/manifest.json": "sha256:a32e09297584e52a2d5c9586aabc916236db46c31368347c0a0de17179e77871"
+  }
+}

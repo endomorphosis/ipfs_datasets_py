@@ -1,0 +1,59 @@
+{
+  "schema": "wallet_processor_migration/shared-cas-checkpoint@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "identity": {
+    "chain": {
+      "namespace": "eip155",
+      "network": "ethereum-mainnet",
+      "chain_id": "1",
+      "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+    },
+    "provider": "fixture-rpc",
+    "scope": "wallet:0x1111111111111111111111111111111111111111",
+    "normalized_schema_major": 1,
+    "normalizer_version": "shared-fixture-v1"
+  },
+  "cas_conflicts": {
+    "initial": {
+      "sequence": 100,
+      "block_hash": "0x64",
+      "revision": "rev-initial"
+    },
+    "stale_write": {
+      "expected_revision": "rev-stale-missing",
+      "sequence": 101,
+      "block_hash": "0x65",
+      "expect_success": false
+    },
+    "matching_write": {
+      "use_loaded_revision": true,
+      "sequence": 101,
+      "block_hash": "0x65",
+      "expect_success": true
+    }
+  },
+  "idempotent_replay": {
+    "records": [
+      {
+        "native_id": "idem-1",
+        "sequence": 50,
+        "hash": "0x32"
+      },
+      {
+        "native_id": "idem-1",
+        "sequence": 50,
+        "hash": "0x32"
+      },
+      {
+        "native_id": "idem-2",
+        "sequence": 51,
+        "hash": "0x33"
+      }
+    ],
+    "expected_unique_native_ids": [
+      "idem-1",
+      "idem-2"
+    ]
+  }
+}
