@@ -159,7 +159,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-010 Implement the direct IPFS/IPLD GraphStore
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: storage
 - Depends on: KGP-004
