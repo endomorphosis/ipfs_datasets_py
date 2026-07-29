@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 
@@ -522,3 +523,61 @@ def test_checkpoint_to_dict_round_trip_fields(
     assert payload["continuation_token"] == "page-9"
     assert payload["identity"]["provider"] == identity.provider
     assert payload["metadata"]["request_id"] == "r1"
+
+
+def test_checkpoint_preserves_and_freezes_nested_public_metadata(
+    identity: CheckpointIdentity,
+) -> None:
+    metadata = {
+        "batch": {
+            "token": {"symbol": "USDC", "token_id": "public-42"},
+            "positions": [7, 8, 9],
+        }
+    }
+    checkpoint = build_checkpoint(
+        identity,
+        sequence=43,
+        block_hash="0x2b",
+        continuation_token="opaque-provider-token",
+        metadata=metadata,
+    )
+    metadata["batch"]["positions"].append(10)  # type: ignore[index,union-attr]
+
+    payload = checkpoint.to_dict()
+    assert payload["metadata"]["batch"]["positions"] == [7, 8, 9]
+    assert payload["metadata"]["batch"]["token"]["symbol"] == "USDC"
+    assert payload["continuation_token"] == "opaque-provider-token"
+    assert json.loads(json.dumps(payload, sort_keys=True)) == payload
+
+
+@pytest.mark.parametrize(
+    ("metadata", "continuation_token"),
+    (
+        (
+            {"outer": [{"private_key": "correct-horse-battery-staple-wallet-secret"}]},
+            "page-1",
+        ),
+        (
+            {"outer": {"safe_name": "vault://wallet/provider/main-token"}},
+            "page-1",
+        ),
+        ({}, "correct-horse-battery-staple-wallet-secret"),
+    ),
+)
+def test_checkpoint_rejects_nested_secrets_without_repr_or_error_leaks(
+    identity: CheckpointIdentity,
+    metadata: dict[str, object],
+    continuation_token: str,
+) -> None:
+    with pytest.raises(ValueError, match="wallet serialization") as caught:
+        build_checkpoint(
+            identity,
+            sequence=44,
+            block_hash="0x2c",
+            continuation_token=continuation_token,
+            metadata=metadata,
+        )
+
+    rendered = f"{caught.value!s}\n{caught.value!r}"
+    assert "correct-horse-battery-staple-wallet-secret" not in rendered
+    assert "vault://wallet/provider/main-token" not in rendered

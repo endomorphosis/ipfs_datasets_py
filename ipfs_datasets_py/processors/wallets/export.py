@@ -37,6 +37,7 @@ from .models import (
     LedgerCursor,
     Provenance,
     RawPayloadPolicy,
+    ensure_secret_safe,
 )
 from .protocols import (
     BoundedRequest,
@@ -84,6 +85,13 @@ def _positive_int(value: int, name: str) -> int:
     return value
 
 
+def _ensure_export_safe(value: object) -> None:
+    try:
+        ensure_secret_safe(value)
+    except ValueError as exc:
+        raise ExportError(str(exc)) from None
+
+
 @dataclass(frozen=True, slots=True)
 class ExportReceipt:
     """Versioned receipt returned by :class:`Exporter` implementations."""
@@ -121,6 +129,15 @@ class ExportReceipt:
             self, "provider_capabilities", tuple(self.provider_capabilities)
         )
         object.__setattr__(self, "warnings", tuple(self.warnings))
+        _ensure_export_safe(
+            {
+                "output_dir": self.output_dir,
+                "formats": self.formats,
+                "processor_version": self.processor_version,
+                "provider_capabilities": self.provider_capabilities,
+                "warnings": self.warnings,
+            }
+        )
         object.__setattr__(
             self,
             "receipt_id",
@@ -133,6 +150,7 @@ class ExportReceipt:
                 }
             ),
         )
+        _ensure_export_safe(self.to_dict())
 
     @property
     def complete(self) -> bool:
@@ -163,13 +181,12 @@ def write_jsonl(
 ) -> ExportPartition:
     """Write records as deterministic one-JSON-object-per-line UTF-8."""
 
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
     types: set[str] = set()
     sequences: list[int] = []
     for record in records:
         payload = record_as_dict(record)
+        _ensure_export_safe(payload)
         lines.append(canonical_json(payload))
         record_type = payload.get("record_type")
         if isinstance(record_type, str) and record_type:
@@ -177,6 +194,8 @@ def write_jsonl(
         sequence = record_sequence(record)
         if sequence is not None:
             sequences.append(sequence)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     body = ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_bytes(body)
@@ -223,6 +242,9 @@ def write_parquet(
     preserve exact types and IDs without Arrow schema drift across chains.
     """
 
+    payloads = [record_as_dict(record) for record in records]
+    for payload in payloads:
+        _ensure_export_safe(payload)
     try:
         import pyarrow as pa
         import pyarrow.parquet as pq
@@ -230,10 +252,8 @@ def write_parquet(
         raise UnsupportedCapabilityError(
             "parquet export requires the optional 'pyarrow' dependency"
         ) from exc
-
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    payloads = [record_as_dict(record) for record in records]
     types: set[str] = set()
     sequences: list[int] = []
     rows = {
@@ -362,6 +382,7 @@ def build_export_manifest(
 
     completed = completed_at or _utc_now()
     warning_list = tuple(warnings)
+    _ensure_export_safe(warning_list)
     counts = (
         MappingProxyType(dict(finality_counts))
         if finality_counts is not None
@@ -424,7 +445,6 @@ class WalletDatasetExporter:
             raise InvalidRequestError("chain must be a ChainRef")
         self._chain = chain
         self._output_dir = Path(output_dir)
-        self._output_dir.mkdir(parents=True, exist_ok=True)
         normalized_formats: list[ExportFormat] = []
         for fmt in formats:
             normalized_formats.append(
@@ -443,6 +463,18 @@ class WalletDatasetExporter:
         self._provider = _required_str(provider, "provider")
         self._provider_kind = _required_str(provider_kind, "provider_kind")
         self._provider_capabilities = tuple(provider_capabilities)
+        _ensure_export_safe(
+            {
+                "chain": self._chain.to_dict(),
+                "output_dir": str(self._output_dir),
+                "formats": [fmt.value for fmt in self._formats],
+                "processor_version": self._processor_version,
+                "provider": self._provider,
+                "provider_kind": self._provider_kind,
+                "provider_capabilities": self._provider_capabilities,
+            }
+        )
+        self._output_dir.mkdir(parents=True, exist_ok=True)
         self._enable_car = bool(enable_car)
         self._car_writer = car_writer
         self._clock = clock or _utc_now
@@ -493,6 +525,9 @@ class WalletDatasetExporter:
         written_formats: list[str] = []
         primary_records = list(records)
         export_warnings = list(warnings)
+        _ensure_export_safe(export_warnings)
+        for record in primary_records:
+            _ensure_export_safe(record_as_dict(record))
 
         # Multi-format exports write the same logical rows once per format.
         # Manifest accounting uses the first format's partition as the record
@@ -768,6 +803,7 @@ def load_export_manifest(path: str | Path) -> dict[str, Any]:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ExportError("export manifest must be a JSON object")
+    _ensure_export_safe(payload)
     return payload
 
 
