@@ -5,18 +5,24 @@ identity (chain ids 480/4801 + genesis), WLD asset binding, and finality
 semantics that distinguish inclusion, operational confirmation, safe, finalized,
 and optional L1 settlement.  Block depth alone is never labeled finality.
 
+Ethereum parsing, RPC observation, and base EVM normalization are reused through
+an injected :class:`EthereumWalletProcessor` (or a thin adapter around the
+``processors.wallets.ethereum`` package).  This module never reimplements
+transaction/receipt decoding.
+
 SIWE bootstrap is intentionally absent (future reviewed child objective).
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
 from ..models import AssetRef, ChainRef, Finality
 from .assets import (
+    WorldChainAssetError,
     WorldChainAssetManifest,
     assert_asset_bound_to_chain,
     asset_manifests_for_chain,
@@ -91,6 +97,15 @@ _LABEL_TO_FINALITY: Mapping[WorldChainFinalityLabel, Finality] = {
     WorldChainFinalityLabel.L1_SETTLED: Finality.FINALIZED,
 }
 
+# Labels that must never be produced from confirmation depth alone.
+_DEPTH_FORBIDDEN_LABELS = frozenset(
+    {
+        WorldChainFinalityLabel.SAFE,
+        WorldChainFinalityLabel.FINALIZED,
+        WorldChainFinalityLabel.L1_SETTLED,
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class WorldChainNetwork:
@@ -113,6 +128,7 @@ class WorldChainNetwork:
             raise WorldChainConfigError("genesis_hash must be 32-byte 0x-hex")
         if not self.settlement_layer.strip():
             raise WorldChainConfigError("settlement_layer must not be empty")
+        object.__setattr__(self, "genesis_hash", self.genesis_hash.lower())
 
     @property
     def chain_id_str(self) -> str:
@@ -123,18 +139,46 @@ class WorldChainNetwork:
             namespace=WORLD_CHAIN_NAMESPACE,
             network=self.network,
             chain_id=self.chain_id_str,
-            genesis_hash=self.genesis_hash.lower(),
+            genesis_hash=self.genesis_hash,
         )
+
+    def to_evm_network_kwargs(self) -> dict[str, object]:
+        """Return kwargs suitable for constructing an Ethereum ``EvmNetwork``.
+
+        Keeps World Chain free of a hard import of the ethereum package while
+        still producing a strict composition hand-off for ledger providers.
+        """
+
+        return {
+            "chain_id": self.chain_id,
+            "network": self.network,
+            "genesis_hash": self.genesis_hash,
+            "native_symbol": "ETH",
+            "native_decimals": 18,
+        }
+
+    def to_evm_network(self) -> Any:
+        """Build the ethereum package :class:`EvmNetwork` for this World Chain.
+
+        Lazy import preserves a lightweight worldcoin import surface and makes
+        ethereum an optional composition dependency for callers that only need
+        identity/asset helpers.
+        """
+
+        from ..ethereum.rpc import EvmNetwork
+
+        return EvmNetwork(**self.to_evm_network_kwargs())  # type: ignore[arg-type]
 
     def to_dict(self) -> dict[str, object]:
         return {
             "namespace": WORLD_CHAIN_NAMESPACE,
             "chain_id": self.chain_id,
             "network": self.network,
-            "genesis_hash": self.genesis_hash.lower(),
+            "genesis_hash": self.genesis_hash,
             "settlement_layer": self.settlement_layer,
             "eip3770_short_name": self.eip3770_short_name,
             "siwe_bootstrap_supported": SIWE_BOOTSTRAP_SUPPORTED,
+            "composes": "ethereum",
         }
 
 
@@ -186,8 +230,12 @@ def validate_world_chain_identity(
 
     expected = get_world_chain_network(chain_id)
     provided_genesis = str(genesis_hash or "").strip().lower()
-    if provided_genesis != expected.genesis_hash.lower():
-        raise WorldChainConfigError("genesis_hash does not match official World Chain network identity")
+    if not _is_bytes32_hex(provided_genesis):
+        raise WorldChainConfigError("genesis_hash must be 32-byte 0x-hex")
+    if provided_genesis != expected.genesis_hash:
+        raise WorldChainConfigError(
+            "genesis_hash does not match official World Chain network identity"
+        )
     if network is not None and str(network).strip().lower() != expected.network:
         raise WorldChainConfigError("network name does not match official World Chain identity")
     return expected
@@ -211,6 +259,7 @@ class WorldChainFinalityAssessment:
             "l1_settled": self.l1_settled,
             "source_tag": self.source_tag,
             "block_depth_alone_is_not_finality": True,
+            "depth_forbidden_for_label": self.label in _DEPTH_FORBIDDEN_LABELS,
         }
 
 
@@ -225,8 +274,15 @@ def classify_world_chain_finality(
 
     Preferred path uses explicit safe/finalized tags.  Confirmation count may
     only support ``operationally_confirmed`` / ``included`` and is never renamed
-    to finality.  L1 settlement is optional and independent.
+    to finality.  L1 settlement is optional and independent of block depth.
     """
+
+    if (
+        isinstance(min_operational_confirmations, bool)
+        or not isinstance(min_operational_confirmations, int)
+        or min_operational_confirmations < 1
+    ):
+        raise WorldChainConfigError("min_operational_confirmations must be a positive integer")
 
     tag = str(block_tag or "").strip().lower()
     if l1_settled:
@@ -252,7 +308,7 @@ def classify_world_chain_finality(
             source_tag=tag,
         )
     if confirmations is not None:
-        if isinstance(confirmations, bool) or confirmations < 0:
+        if isinstance(confirmations, bool) or not isinstance(confirmations, int) or confirmations < 0:
             raise WorldChainConfigError("confirmations must be a non-negative integer")
         if confirmations >= min_operational_confirmations:
             return WorldChainFinalityAssessment(
@@ -288,7 +344,8 @@ class EthereumWalletProcessor(Protocol):
     """Minimal EVM processor surface World Chain composes over.
 
     Concrete implementations live under ``processors.wallets.ethereum``.  This
-    protocol keeps World Chain free of a duplicate EVM parser.
+    protocol keeps World Chain free of a duplicate EVM parser while proving the
+    AST composition surface ``WorldChainProcessor`` / ``EthereumWalletProcessor``.
     """
 
     def normalize_transaction(self, raw: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -313,6 +370,7 @@ class WorldChainProcessor:
     network: WorldChainNetwork
     ethereum: EthereumWalletProcessor
     min_operational_confirmations: int = 1
+    sepolia_wld_contract: str | None = None
     _chain_ref: ChainRef = field(init=False, repr=False)
     _assets: Mapping[str, WorldChainAssetManifest] = field(init=False, repr=False)
 
@@ -323,12 +381,22 @@ class WorldChainProcessor:
             raise WorldChainConfigError("ethereum must implement EthereumWalletProcessor")
         if (
             isinstance(self.min_operational_confirmations, bool)
+            or not isinstance(self.min_operational_confirmations, int)
             or self.min_operational_confirmations < 1
         ):
             raise WorldChainConfigError("min_operational_confirmations must be a positive integer")
+        if self.sepolia_wld_contract is not None and self.network.chain_id != WORLD_CHAIN_SEPOLIA_CHAIN_ID:
+            raise WorldChainConfigError("sepolia_wld_contract is only valid for chain_id 4801")
         chain_ref = self.network.to_chain_ref()
         object.__setattr__(self, "_chain_ref", chain_ref)
-        object.__setattr__(self, "_assets", asset_manifests_for_chain(chain_ref))
+        object.__setattr__(
+            self,
+            "_assets",
+            asset_manifests_for_chain(
+                chain_ref,
+                sepolia_wld_contract=self.sepolia_wld_contract,
+            ),
+        )
 
     @property
     def chain_ref(self) -> ChainRef:
@@ -370,33 +438,62 @@ class WorldChainProcessor:
             min_operational_confirmations=self.min_operational_confirmations,
         )
 
-    def normalize_transaction(self, raw: Mapping[str, Any]) -> Mapping[str, Any]:
-        """Reuse Ethereum parsing and annotate World Chain identity."""
-
-        normalized = dict(self.ethereum.normalize_transaction(raw))
+    def _annotate(self, normalized: dict[str, Any]) -> dict[str, Any]:
         normalized["chain"] = self._chain_ref.to_dict()
         normalized["world_chain"] = {
             "chain_id": self.network.chain_id,
             "network": self.network.network,
             "settlement_layer": self.network.settlement_layer,
+            "composes": "ethereum",
+            "siwe_bootstrap_supported": SIWE_BOOTSTRAP_SUPPORTED,
         }
         return normalized
+
+    def normalize_transaction(self, raw: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Reuse Ethereum parsing and annotate World Chain identity."""
+
+        if not isinstance(raw, Mapping):
+            raise WorldChainConfigError("raw transaction must be a mapping")
+        normalized = dict(self.ethereum.normalize_transaction(raw))
+        return self._annotate(normalized)
 
     def normalize_receipt(self, raw: Mapping[str, Any]) -> Mapping[str, Any]:
         """Reuse Ethereum receipt parsing and annotate World Chain identity."""
 
+        if not isinstance(raw, Mapping):
+            raise WorldChainConfigError("raw receipt must be a mapping")
         normalized = dict(self.ethereum.normalize_receipt(raw))
-        normalized["chain"] = self._chain_ref.to_dict()
-        return normalized
+        return self._annotate(normalized)
 
-    def bind_wld_asset(self) -> AssetRef:
-        """Return the network-bound WLD asset or raise if this network has none."""
+    def bind_wld_asset(self, *, contract_address: str | None = None) -> AssetRef:
+        """Return the network-bound WLD asset or raise if this network has none.
 
-        if self.network.chain_id != WORLD_CHAIN_MAINNET_CHAIN_ID:
-            raise WorldChainConfigError("official WLD mainnet asset is only catalogued for chain_id 480")
-        manifest = build_mainnet_wld_manifest(self._chain_ref)
-        assert_asset_bound_to_chain(manifest.asset, self._chain_ref)
-        return manifest.asset
+        Mainnet uses the official catalogued contract.  Sepolia requires an
+        explicit reviewed *contract_address* (or processor-level sepolia config).
+        """
+
+        if self.network.chain_id == WORLD_CHAIN_MAINNET_CHAIN_ID:
+            manifest = build_mainnet_wld_manifest(self._chain_ref)
+            assert_asset_bound_to_chain(manifest.asset, self._chain_ref)
+            return manifest.asset
+
+        if self.network.chain_id == WORLD_CHAIN_SEPOLIA_CHAIN_ID:
+            address = contract_address or self.sepolia_wld_contract
+            if address is None:
+                raise WorldChainConfigError(
+                    "official WLD mainnet asset is only catalogued for chain_id 480; "
+                    "sepolia requires an explicit reviewed contract_address"
+                )
+            try:
+                asset = wld_asset(self._chain_ref, contract_address=address)
+            except WorldChainAssetError as exc:
+                raise WorldChainConfigError(str(exc)) from exc
+            assert_asset_bound_to_chain(asset, self._chain_ref)
+            return asset
+
+        raise WorldChainConfigError(
+            f"WLD binding is not defined for chain_id {self.network.chain_id}"
+        )
 
     def capabilities(self) -> dict[str, object]:
         return {
@@ -407,6 +504,8 @@ class WorldChainProcessor:
             "siwe_bootstrap_supported": SIWE_BOOTSTRAP_SUPPORTED,
             "finality_labels": [label.value for label in WorldChainFinalityLabel],
             "assets": sorted(self._assets.keys()),
+            "settlement_layer": self.network.settlement_layer,
+            "block_depth_alone_is_not_finality": True,
         }
 
 
@@ -415,6 +514,7 @@ def world_chain_processor_for_chain_id(
     ethereum: EthereumWalletProcessor,
     *,
     min_operational_confirmations: int = 1,
+    sepolia_wld_contract: str | None = None,
 ) -> WorldChainProcessor:
     """Factory that binds an official network descriptor to *ethereum*."""
 
@@ -422,6 +522,7 @@ def world_chain_processor_for_chain_id(
         network=get_world_chain_network(chain_id),
         ethereum=ethereum,
         min_operational_confirmations=min_operational_confirmations,
+        sepolia_wld_contract=sepolia_wld_contract,
     )
 
 
