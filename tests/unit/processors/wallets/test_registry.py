@@ -65,9 +65,24 @@ def _loaded_chain_modules() -> list[str]:
 
 @pytest.fixture(autouse=True)
 def _reset_registry() -> None:
+    # Other test modules may import chain classes during collection. Preserve
+    # that graph so lazy-loading tests cannot leave duplicate class identities.
+    chain_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if any(
+            name == prefix or name.startswith(prefix + ".")
+            for prefix in CHAIN_MODULE_PREFIXES
+        )
+    }
     reset_default_registry()
-    yield
-    reset_default_registry()
+    try:
+        yield
+    finally:
+        reset_default_registry()
+        for name in _loaded_chain_modules():
+            sys.modules.pop(name, None)
+        sys.modules.update(chain_modules)
 
 
 # ---------------------------------------------------------------------------

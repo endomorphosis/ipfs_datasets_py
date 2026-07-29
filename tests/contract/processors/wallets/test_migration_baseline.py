@@ -136,7 +136,9 @@ def test_worldcoin_manifest_covers_acceptance_keys(worldcoin_manifest: dict[str,
 
 
 def test_xaman_manifest_declares_formal_not_runtime(xaman_manifest: dict[str, Any]) -> None:
-    assert xaman_manifest["goal_id"] == "WALPROC-G020"
+    assert xaman_manifest["goal_id"] == "WALPROC-G210"
+    assurance_links = _load_json(XAMAN_FIXTURES / "assurance_links.json")
+    assert assurance_links["goal_id"] == "WALPROC-G020"
     classification = xaman_manifest["classification"]
     assert classification["formal_assurance_is_not_runtime_correctness"] is True
     assert classification["offline_default"] is True
@@ -506,7 +508,9 @@ def test_baseline_bundle_is_cohesive(
     """All four evidence outputs form one WALPROC-G020 freeze package."""
 
     assert worldcoin_manifest["goal_id"] == security_baseline["goal_id"] == "WALPROC-G020"
-    assert xaman_manifest["goal_id"] == "WALPROC-G020"
+    assert xaman_manifest["goal_id"] == "WALPROC-G210"
+    assurance_links = _load_json(XAMAN_FIXTURES / "assurance_links.json")
+    assert assurance_links["goal_id"] == "WALPROC-G020"
     assert worldcoin_manifest["task_id"] == security_baseline["task_id"] == "WALPROC-003"
     assert WORLDCOIN_FIXTURES.is_dir()
     assert XAMAN_FIXTURES.is_dir()
