@@ -294,9 +294,13 @@ for family in reg.list_families():
 
 **Import migration window:** for one documented compatibility release after
 cutover, outer-repo wrapper aliases may re-export the target package symbols.
-New application code must import from `ipfs_datasets_py.processors.wallets`
+At package **`0.2.0`**, aliases remain supported through this minor
+(inclusive). Removal is scheduled starting at package **`0.3.0`** (see outer
+`WRAPPER_ALIAS_EXPIRY_PACKAGE_VERSION` and
+`data/wallet_processor_migration/release/cutover-receipt.json`). New
+application code must import from `ipfs_datasets_py.processors.wallets`
 (or the typed thin wrapper). Dual-implementation paths are not supported after
-the alias expiry version stated in the cutover receipt.
+the alias expiry version.
 
 Expanded import tables: [MIGRATION.md](./MIGRATION.md).
 
@@ -408,13 +412,15 @@ gitlink / wrapper.
 ### 3. Compatibility aliases
 
 If the failure occurs during the one-release alias window, re-enable the prior
-wrapper aliases only at the **documented alias expiry version** boundary—never
-silently reintroduce a second full implementation.
+wrapper aliases only within the **documented alias window**
+(compatibility `0.2.0` inclusive → expiry starts at `0.3.0`)—never silently
+reintroduce a second full implementation.
 
 Detailed operator cutover steps live in the outer-repo runbook
-`docs/runbooks/WALLET_PROCESSOR_CUTOVER.md` (written by the cutover goal). This
-package document states the **package + gitlink** rollback contract required by
-WALPROC-G700.
+`docs/runbooks/WALLET_PROCESSOR_CUTOVER.md` (WALPROC-G710). The tree-bound
+receipt is `data/wallet_processor_migration/release/cutover-receipt.json`.
+This package document states the **package + gitlink** rollback contract
+required by WALPROC-G700.
 
 ---
 

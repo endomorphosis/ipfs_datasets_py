@@ -11,8 +11,9 @@ Companion to [README.md](./README.md).
 | Ledger schema major | v1 | `docs/schemas/wallet-ledger-record-v1.schema.json` |
 | Export schema major | v1 | `docs/schemas/wallet-export-manifest-v1.schema.json` |
 | Wallet extras | `wallets`, `wallets-*`, `wallets-all` | `pyproject.toml` + `setup.py` (must stay synchronized) |
-| Outer monorepo gitlink | pin to package commit at cutover | cutover receipt / operator runbook |
-| Wrapper alias expiry | one compatibility release | cutover receipt |
+| Outer monorepo gitlink | pin to package commit at cutover | outer `data/wallet_processor_migration/release/cutover-receipt.json` + `docs/runbooks/WALLET_PROCESSOR_CUTOVER.md` |
+| Wrapper alias compatibility | package `0.2.0` (inclusive) | outer `wallet_interface.world_id.WRAPPER_ALIAS_COMPATIBILITY_PACKAGE_VERSION` |
+| Wrapper alias expiry | package `0.3.0` (removal starts) | outer `wallet_interface.world_id.WRAPPER_ALIAS_EXPIRY_PACKAGE_VERSION` + cutover receipt |
 
 ## Optional dependency extras
 

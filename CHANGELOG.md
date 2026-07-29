@@ -40,11 +40,14 @@ and this project aims to follow
 
 - Ledger record schema major **v1** and export manifest schema major **v1**
   remain the supported write formats.
-- Import migration window: one compatibility release of outer wrapper aliases
-  after cutover; new code imports `ipfs_datasets_py.processors.wallets`.
+- Import migration window: outer thin-wrapper aliases remain through package
+  **`0.2.0`** (inclusive) and are scheduled for removal starting at **`0.3.0`**
+  (WALPROC-G710 cutover receipt / `WRAPPER_ALIAS_EXPIRY_PACKAGE_VERSION`).
+  New code imports `ipfs_datasets_py.processors.wallets`.
 - Rollback restores package pin/commit **and** outer gitlink +
   `wallet_interface.world_id` thin wrapper (see
-  `docs/wallet_processors/README.md#rollback-procedure`).
+  `docs/wallet_processors/README.md#rollback-procedure` and outer
+  `docs/runbooks/WALLET_PROCESSOR_CUTOVER.md`).
 
 ### Notes
 

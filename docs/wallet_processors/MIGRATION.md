@@ -25,7 +25,9 @@ Companion to [README.md](./README.md).
 2. **Cutover release:** outer gitlink pins `ipfs_datasets_py` to the released
    commit; wrapper becomes a thin re-export.
 3. **Compatibility release (one documented package minor):** wrapper aliases
-   remain for the expiry version recorded in the cutover receipt.
+   remain through package **`0.2.0`** (inclusive); expiry begins at **`0.3.0`**
+   as recorded in the outer cutover receipt and
+   `WRAPPER_ALIAS_EXPIRY_PACKAGE_VERSION`.
 4. **Post-expiry:** aliases removed; imports must use the target package (or
    the non-deprecated thin wrapper surface only).
 
