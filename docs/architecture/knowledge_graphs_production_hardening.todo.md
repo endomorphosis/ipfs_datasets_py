@@ -176,7 +176,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-011 Implement the ipfs_kit_py GraphStore adapter
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: storage
 - Depends on: KGP-010
