@@ -13,10 +13,10 @@ Covers CRYPTOIR-G030 / CRYPTOIR-004 acceptance:
 from __future__ import annotations
 
 import dataclasses
-import socket
+import subprocess
 import sys
+from pathlib import Path
 from types import MappingProxyType
-from typing import Any
 
 import pytest
 
@@ -84,32 +84,44 @@ from ipfs_datasets_py.logic.crypto_ir.verdicts import (
 # ---------------------------------------------------------------------------
 
 
-def test_import_crypto_ir_has_no_network_side_effects(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Re-importing capability/registry modules must not open sockets."""
+def test_import_crypto_ir_has_no_network_side_effects() -> None:
+    """A fresh Crypto IR import must not open sockets or mutate this interpreter."""
 
-    def _blocked(*_args: Any, **_kwargs: Any) -> None:
-        raise AssertionError("network socket use forbidden during crypto_ir import")
+    script = """
+import socket
 
-    monkeypatch.setattr(socket, "socket", _blocked)
-    monkeypatch.setattr(socket, "create_connection", _blocked)
+def _blocked(*_args, **_kwargs):
+    raise AssertionError("network socket use forbidden during crypto_ir import")
 
-    # Drop modules so import re-executes under the blocked socket.
-    for name in list(sys.modules):
-        if name.startswith("ipfs_datasets_py.logic.crypto_ir"):
-            del sys.modules[name]
+socket.socket = _blocked
+socket.create_connection = _blocked
 
-    import ipfs_datasets_py.logic.crypto_ir as crypto_ir
-    import ipfs_datasets_py.logic.crypto_ir.capabilities as capabilities
-    import ipfs_datasets_py.logic.crypto_ir.registry as registry
-    import ipfs_datasets_py.logic.crypto_ir.verdicts as verdicts
-    import ipfs_datasets_py.logic.crypto_ir.adapters as adapters
+import ipfs_datasets_py.logic.crypto_ir as crypto_ir
+import ipfs_datasets_py.logic.crypto_ir.adapters as adapters
+import ipfs_datasets_py.logic.crypto_ir.capabilities as capabilities
+import ipfs_datasets_py.logic.crypto_ir.registry as registry
+import ipfs_datasets_py.logic.crypto_ir.verdicts as verdicts
 
-    # Touch public symbols so lazy exports resolve under blocked networking.
-    assert crypto_ir.CapabilityDescriptor is capabilities.CapabilityDescriptor
-    assert crypto_ir.AdapterRegistry is registry.AdapterRegistry
-    assert crypto_ir.AnalysisVerdict is verdicts.AnalysisVerdict
-    assert crypto_ir.CryptoIRAdapter is adapters.CryptoIRAdapter
-    assert crypto_ir.NullCryptoIRAdapter is adapters.NullCryptoIRAdapter
+assert crypto_ir.CapabilityDescriptor is capabilities.CapabilityDescriptor
+assert crypto_ir.AdapterRegistry is registry.AdapterRegistry
+assert crypto_ir.AnalysisVerdict is verdicts.AnalysisVerdict
+assert crypto_ir.CryptoIRAdapter is adapters.CryptoIRAdapter
+assert crypto_ir.NullCryptoIRAdapter is adapters.NullCryptoIRAdapter
+"""
+    result = subprocess.run(
+        (sys.executable, "-c", script),
+        cwd=Path(__file__).resolve().parents[4],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert result.returncode == 0, (
+        "isolated Crypto IR import failed\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
 
 
 def test_package_exports_g030_symbols() -> None:
