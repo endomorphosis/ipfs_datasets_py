@@ -108,7 +108,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-007 Specify and implement durable MVCC and WAL
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: durability
 - Depends on: KGP-006
