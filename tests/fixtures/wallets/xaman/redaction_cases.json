@@ -1,0 +1,104 @@
+{
+  "schema": "wallet_processor_migration/xaman-redaction@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G210",
+  "task_id": "WALPROC-021",
+  "notes": "Memo/instruction content follows redaction and size policy.",
+  "cases": [
+    {
+      "id": "instruction_redacted",
+      "document": {
+        "meta": {
+          "uuid": "22222222-2222-4222-8222-222222222201",
+          "created": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1",
+            "Secret": "sEdVxxxxxxxxxxxxxxxxxxxxxxxx",
+            "SigningPubKey": "DEADBEEF"
+          },
+          "custom_instruction": "sensitive free-text payment note for client 42"
+        },
+        "response": {}
+      },
+      "privacy": {
+        "redact_instruction": true,
+        "max_instruction_bytes": 1024
+      },
+      "expect": {
+        "custom_instruction": null,
+        "custom_instruction_redacted": true,
+        "secret_keys_absent_from_summary": true
+      }
+    },
+    {
+      "id": "instruction_truncated",
+      "document": {
+        "meta": {
+          "uuid": "22222222-2222-4222-8222-222222222202",
+          "created": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1"
+          },
+          "custom_instruction": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        },
+        "response": {}
+      },
+      "privacy": {
+        "redact_instruction": false,
+        "max_instruction_bytes": 16
+      },
+      "expect": {
+        "custom_instruction_truncated": true,
+        "max_instruction_bytes": 16
+      }
+    },
+    {
+      "id": "export_redacts_instruction",
+      "document": {
+        "meta": {
+          "uuid": "22222222-2222-4222-8222-222222222203",
+          "signed": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1",
+            "Memos": [
+              {
+                "Memo": {
+                  "MemoData": "48454C4C4F"
+                }
+              }
+            ]
+          },
+          "custom_instruction": "keep private"
+        },
+        "response": {
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "txid": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+        }
+      },
+      "expect_export": {
+        "custom_instruction": null,
+        "custom_instruction_redacted": true,
+        "api_success_is_settlement": false
+      }
+    }
+  ]
+}
