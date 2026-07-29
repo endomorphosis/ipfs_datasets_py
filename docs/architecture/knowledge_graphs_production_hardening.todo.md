@@ -125,7 +125,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-008 Prove multi-process concurrency and crash recovery
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: durability
 - Depends on: KGP-007, KGP-010
