@@ -431,7 +431,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-026 Add a read-only 211-AI adapter and differential suite
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
