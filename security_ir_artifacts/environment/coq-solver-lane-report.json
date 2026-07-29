@@ -1,0 +1,66 @@
+{
+  "artifact_cid": "sha256:e59dbeaaa0a095ff7d4be3e06338cb652d95f1c71b7c4dd29bdd98b4ef93ffd3",
+  "blockers": [
+    {
+      "code": "COQC_EXECUTABLE_MISSING",
+      "message": "coqc executable is not on PATH"
+    },
+    {
+      "code": "COQ_KERNEL_ARTIFACT_MISSING",
+      "message": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v is not present"
+    }
+  ],
+  "coq": {
+    "coqc_executable": null,
+    "coqc_present": false,
+    "coqc_version": "",
+    "coqtop_executable": null,
+    "coqtop_present": false,
+    "coqtop_version": "",
+    "opam_executable": null,
+    "opam_present": false,
+    "opam_version": ""
+  },
+  "coq_kernel": {
+    "exists": false,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v",
+    "sha256": null
+  },
+  "coq_kernel_check": {
+    "command": [
+      "coqc",
+      "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.v"
+    ],
+    "returncode": null,
+    "status": "not-run",
+    "stderr": "coqc executable or Coq kernel artifact is missing",
+    "stdout": ""
+  },
+  "generated_at": "2026-07-10T07:10:32Z",
+  "install_plan": {
+    "apt": "sudo apt-get update && sudo apt-get install -y coq",
+    "opam": "opam init --disable-sandboxing && opam switch create coq-8.20 ocaml-base-compiler.5.2.0 && opam install coq",
+    "policy": "Run installation outside the proof task; rerun this probe and commit exact coqc version evidence."
+  },
+  "lean_kernel_context": {
+    "exists": true,
+    "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/XamanReceipt.lean",
+    "proof_consumer_report_exists": true,
+    "proof_consumer_report_path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+    "proof_consumer_security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS",
+    "sha256": "sha256:fee07b8aa27381d980bed198fc8139d319e33d3b32d883a1b44f676d26c60e4f"
+  },
+  "overall_status": "blocked_optional_lane",
+  "production_release_blocked_by_coq_lane": true,
+  "schema_version": "crypto-exchange-coq-solver-lane-report/v1",
+  "security_decision": "BLOCK_COQ_SOLVER_LANE_UNAVAILABLE",
+  "summary": {
+    "blocker_count": 2,
+    "coq_kernel_checked": false,
+    "coq_kernel_present": false,
+    "coqc_present": false,
+    "warning_count": 0
+  },
+  "task_id": "PORTAL-CXTP-093",
+  "warnings": []
+}

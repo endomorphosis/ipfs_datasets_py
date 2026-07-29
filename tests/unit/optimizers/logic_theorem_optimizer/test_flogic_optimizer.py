@@ -675,3 +675,60 @@ def test_flogic_optimizer_extracts_semantic_frame_fields_from_structured_feature
         "deontic",
         "frame",
     ]
+
+
+def test_flogic_optimizer_audits_family_scoring_view_quality_features() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    packet_features = [
+        "legal-ir-view:deontic.ir",
+        "legal-ir-view:CEC.native",
+        "legal-ir-view:knowledge_graphs.neo4j_compat",
+        "quality:bias",
+        "quality:symbolic:has-formula",
+        "legal-ir-view:TDFOL.prover",
+    ]
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "hint_id": "modal-synthesis-03927197e52117cd",
+                "family_features": packet_features,
+                "frame_features": packet_features,
+                "top_family_features": packet_features,
+            }
+        ],
+    )
+
+    for feature in packet_features:
+        assert feature in result.metadata["frame_audit_feature_keys"]
+
+    for term in [
+        "bias",
+        "cec_native",
+        "deontic_ir",
+        "knowledge_graphs_neo4j_compat",
+        "symbolic_has_formula",
+        "tdfol_prover",
+    ]:
+        assert term in result.metadata["frame_ontology_terms"]
+
+    for term in [
+        "legal_ir_view_cec_native",
+        "legal_ir_view_deontic_ir",
+        "legal_ir_view_knowledge_graphs_neo4j_compat",
+        "legal_ir_view_tdfol_prover",
+        "quality_bias",
+        "quality_symbolic_has_formula",
+    ]:
+        assert term in result.metadata["frame_ontology_contextualized_terms"]

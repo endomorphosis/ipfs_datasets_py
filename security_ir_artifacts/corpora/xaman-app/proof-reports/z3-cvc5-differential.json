@@ -1,0 +1,350 @@
+{
+  "agreement_failure_count": 0,
+  "agreement_failures": [],
+  "blocked_claim_count": 10,
+  "blocked_claims": [
+    "xaman-claim:software-custody-requires-vault-authentication",
+    "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+    "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+    "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+    "xaman-claim:network-binding-prevents-wrong-network-signing",
+    "xaman-claim:payment-semantics-check-amount-balance-and-trustlines",
+    "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+    "xaman-claim:backend-payload-service-is-trusted-not-proved",
+    "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+    "xaman-claim:proof-consumer-must-reject-non-proved-results"
+  ],
+  "blocking_or_high_claim_count": 10,
+  "claim_count": 10,
+  "claims": [
+    {
+      "assumptions": [
+        "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:software-custody-requires-vault-authentication",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:9e08ed6d4d0d2b0378b7834e5b734296af40b5601d0f14f56ed7142d99389b88",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-software-custody-requires-vault-authentication.smt2",
+      "solver_agreement": true,
+      "source_status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:5903b693f06e276501fc8c79bc387c546513d777ec5c660e7fd83b2aac15e995",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-signing-is-gated-by-auth-and-vault-overlay.smt2",
+      "solver_agreement": true,
+      "source_status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "high",
+      "smtlib_artifact_cid": "sha256:9281312a29b634498815af23e9573b7707492f11dac4dabe272ccc97ea6d29b6",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-payload-integrity-is-digest-checked-and-revalidated.smt2",
+      "solver_agreement": true,
+      "source_status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:1cd0cb58ce29513f5270d580a547b233ad077bcd871a4e2cb83d261d21e90e7c",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-client-replay-controls-exist-but-backend-single-use-is-blocking.smt2",
+      "solver_agreement": true,
+      "source_status": "PARTIAL_CLIENT_CONTROL_BACKEND_BLOCKING",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:xrpl-consensus-node-honesty-and-finality",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:network-binding-prevents-wrong-network-signing",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "high",
+      "smtlib_artifact_cid": "sha256:3b905f67a13f4cc4b2bf96fe321230aa221556aeca5ac24a5db4fdb1ecc43cab",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-network-binding-prevents-wrong-network-signing.smt2",
+      "solver_agreement": true,
+      "source_status": "SUPPORTED_BY_SOURCE_WITH_BLOCKING_ASSUMPTIONS",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:xrpl-consensus-node-honesty-and-finality",
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:payment-semantics-check-amount-balance-and-trustlines",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "high",
+      "smtlib_artifact_cid": "sha256:e457aac3ec6b2148fdc871455d2ac2132766b8968e5ffe246db786e8e39e5d72",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-payment-semantics-check-amount-balance-and-trustlines.smt2",
+      "solver_agreement": true,
+      "source_status": "SUPPORTED_FOR_PAYMENT_WITH_ASSUMPTIONS",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:incomplete-transaction-class-validation"
+      ],
+      "claim_id": "xaman-claim:transaction-validation-is-incomplete-for-selected-classes",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:d2f02416c74acd19e746cca9199474b6953c1c1ebdf54ea640cfa17c43025a25",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-transaction-validation-is-incomplete-for-selected-classes.smt2",
+      "solver_agreement": true,
+      "source_status": "NOT_PROVED_BLOCKING",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration"
+      ],
+      "claim_id": "xaman-claim:backend-payload-service-is-trusted-not-proved",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:9a433069dc7780b9504a093f5e5088d718b43930fa13bc6dc9760193716f048e",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-backend-payload-service-is-trusted-not-proved.smt2",
+      "solver_agreement": true,
+      "source_status": "NOT_PROVED_BLOCKING",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:deployed-runtime-equivalence"
+      ],
+      "claim_id": "xaman-claim:runtime-equivalence-is-blocked-without-device-traces",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:35259dbabe09fe4d091b6e572e70f417cc433f2eb18b780e04632ccc25660ee2",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-runtime-equivalence-is-blocked-without-device-traces.smt2",
+      "solver_agreement": true,
+      "source_status": "NOT_PROVED_BLOCKING",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    },
+    {
+      "assumptions": [
+        "xaman-assumption:proof-consumer-kernel-validation"
+      ],
+      "claim_id": "xaman-claim:proof-consumer-must-reject-non-proved-results",
+      "classification": "blocked_assumption",
+      "cvc5": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      },
+      "notes": [
+        "The SMT query only establishes that unresolved assumptions are present in the reviewed claim model.",
+        "A sat result is expected for current Xaman claims and must not be interpreted as a security proof."
+      ],
+      "production_release_blocked": true,
+      "release_policy": "block",
+      "severity": "blocking",
+      "smtlib_artifact_cid": "sha256:85fee05bfa57371086821a92de794fa7a6c37b8a662ca3f0d6681a0019534f98",
+      "smtlib_path": "security_ir_artifacts/corpora/xaman-app/smtlib/xaman-claim-proof-consumer-must-reject-non-proved-results.smt2",
+      "solver_agreement": true,
+      "source_status": "POLICY_DEFINED_NOT_YET_KERNEL_PROVED",
+      "z3": {
+        "result": "sat",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "sat\n"
+      }
+    }
+  ],
+  "classification_policy": {
+    "sat_with_assumptions": "blocked_assumption",
+    "solver_disagreement": "blocked_solver_disagreement",
+    "solver_error": "blocked_solver_error",
+    "unsat_without_assumptions": "proved_candidate_requires_review"
+  },
+  "corpus": "xaman-app",
+  "covered_claim_count": 10,
+  "generated_at": "2026-07-10T07:02:23Z",
+  "manifest_path": "security_ir_artifacts/corpora/xaman-app/smtlib/manifest.json",
+  "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+  "model_id": "xaman-app-security-model-ir",
+  "overall_status": "blocked",
+  "production_release_blocked": true,
+  "schema_version": "xaman-z3-cvc5-differential-report/v1",
+  "security_decision": "BLOCK_XAMAN_RELEASE_UNRESOLVED_ASSUMPTIONS",
+  "solver_versions": {
+    "cvc5": "This is cvc5 version 1.3.2 [git 86cecd8 on branch HEAD]",
+    "z3": "Z3 version 4.16.0 - 64 bit"
+  },
+  "task_id": "PORTAL-CXTP-069",
+  "unsupported_or_error_claims": [],
+  "unsupported_or_error_count": 0
+}

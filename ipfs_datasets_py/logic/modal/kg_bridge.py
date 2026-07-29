@@ -1289,6 +1289,8 @@ def _packet_legal_ir_view_gap_evidence(
 
     for raw_gaps in (
         metadata.get("compiler_guidance_legal_ir_view_gaps"),
+        metadata.get("compiler_guidance_legal_ir_view_family_gaps"),
+        metadata.get("legal_ir_view_family_gaps"),
         metadata.get("legal_ir_view_gaps"),
     ):
         if not isinstance(raw_gaps, Mapping):

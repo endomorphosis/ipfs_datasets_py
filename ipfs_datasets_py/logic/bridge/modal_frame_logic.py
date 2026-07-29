@@ -298,24 +298,6 @@ class ModalFrameLogicBridgeAdapter:
         return proof_gate
 
 
-def _frame_ontology_audit_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
-    """Expose modal frame-ontology audit fields on the frame-logic view."""
-
-    allowed = {
-        "frame_ontology_audit_projected",
-        "frame_ontology_high_signal_term_audit_count",
-        "frame_ontology_high_signal_term_audit_terms",
-        "frame_ontology_term_audit_count",
-        "frame_ontology_term_audit_terms",
-        "frame_ontology_terms",
-    }
-    return {
-        str(key): value
-        for key, value in dict(metadata or {}).items()
-        if str(key) in allowed
-    }
-
-
 def _citation_from_modal_ir(modal_ir: Any) -> str:
     if getattr(modal_ir, "formulas", None):
         provenance = getattr(modal_ir.formulas[0], "provenance", None)
@@ -376,6 +358,7 @@ def _frame_ontology_audit_metadata(subject: Any) -> dict[str, Any]:
         "frame_ontology_high_signal_term_audit_terms",
         "frame_ontology_term_audit_count",
         "frame_ontology_term_audit_terms",
+        "frame_ontology_terms",
     }
     return {
         str(key): value

@@ -611,6 +611,7 @@ def _should_promote_contextualized_frame_ontology_term(term: str) -> bool:
         (
             "condition_consequence_",
             "legal_ir_view_",
+            "modal_cue_",
             "quality_",
             "quality_frame_",
             "signature_frame_",

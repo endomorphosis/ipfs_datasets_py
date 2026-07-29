@@ -45,17 +45,31 @@ def _expected_schema_text() -> str:
     return _normalize_schema_text(TypeScriptSchemaEmitter().emit_schema(example_minimal_exchange_model()))
 
 
+def _typescript_compiler_command() -> list[str] | None:
+    tsc = shutil.which('tsc')
+    if tsc:
+        result = subprocess.run([tsc, '--version'], capture_output=True, text=True)
+        if result.returncode == 0 and 'Version' in result.stdout:
+            return [tsc]
+    npx = shutil.which('npx')
+    if npx:
+        result = subprocess.run([npx, '--no-install', 'tsc', '--version'], capture_output=True, text=True)
+        if result.returncode == 0 and 'Version' in result.stdout:
+            return [npx, '--no-install', 'tsc']
+    return None
+
+
 def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tuple[str, str, Path]:
     node = shutil.which('node')
-    tsc = shutil.which('tsc') or shutil.which('npx')
+    compiler_command = _typescript_compiler_command()
     require_toolchain = os.environ.get('IPFS_SECURITY_REQUIRE_NODE_TOOLCHAIN') == '1'
-    if not node or not tsc:
+    if not node or not compiler_command:
         if require_toolchain:
             pytest.fail(
-                'node and tsc/npx are required for this test; '
+                'node and the real TypeScript compiler are required for this test; '
                 'CI installs the toolchain via actions/setup-node'
             )
-        pytest.skip('node and tsc/npx are required for this test')
+        pytest.skip('node and the real TypeScript compiler are required for this test')
     if via_cli:
         assert EMITTER_SCRIPT.is_file()
     schema_path = tmp_path / 'security_schema.ts'
@@ -90,9 +104,9 @@ def _compile_typescript_schema(tmp_path: Path, *, via_cli: bool = False) -> tupl
         ),
         encoding='utf-8',
     )
-    command = [tsc, 'tsc', '--project', str(tmp_path / 'tsconfig.json')] if tsc.endswith('npx') else [tsc, '--project', str(tmp_path / 'tsconfig.json')]
+    command = [*compiler_command, '--project', str(tmp_path / 'tsconfig.json')]
     subprocess.run(command, cwd=tmp_path, check=True, capture_output=True, text=True)
-    return node, tsc, tmp_path / 'dist' / 'security_schema.js'
+    return node, compiler_command[0], tmp_path / 'dist' / 'security_schema.js'
 
 
 def test_typescript_schema_compiles_when_tsc_is_available(tmp_path: Path) -> None:

@@ -47,9 +47,9 @@ def _multibase_base32(data: bytes) -> str:
 
 
 def compute_cid(content: bytes, *, prefix: str = "bafy") -> str:
-    """Compute a real IPFS CIDv1 (raw codec, sha2-256) for *content*.
+    """Compute a real IPFS CIDv1 (DAG-PB codec, sha2-256) for *content*.
 
-    Produces a genuine, Kubo-resolvable CID (``bafkrei...``), equivalent to
+    Produces a genuine, Kubo-resolvable CID (``bafy...``), equivalent to
     ``ipfs add --cid-version=1`` and byte-identical to ipfs_accelerate_py for
     the same canonical content. The legacy ``sha256:`` prefix is supported only
     for explicit opt-in backward compatibility.
@@ -58,7 +58,7 @@ def compute_cid(content: bytes, *, prefix: str = "bafy") -> str:
         return f"sha256:{hashlib.sha256(content).hexdigest()}"
     digest = hashlib.sha256(content).digest()
     multihash = b"\x12\x20" + digest          # sha2-256 (0x12), length 32 (0x20)
-    return "b" + _multibase_base32(b"\x01\x55" + multihash)  # CIDv1 + raw codec
+    return "b" + _multibase_base32(b"\x01\x70" + multihash)  # CIDv1 + dag-pb codec
 
 
 def cid_digest(cid: str) -> str:

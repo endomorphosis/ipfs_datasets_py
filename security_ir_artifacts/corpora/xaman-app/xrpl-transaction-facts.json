@@ -1,0 +1,832 @@
+{
+  "schema_version": "xaman-xrpl-transaction-facts/v1",
+  "task_id": "PORTAL-CXTP-066",
+  "corpus": "xaman-app",
+  "source": {
+    "repo_url": "https://github.com/XRPL-Labs/Xaman-App",
+    "commit_sha": "942f43876265a7af44f233288ad2b1d00841d5fa",
+    "manifest_path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+    "manifest_schema_version": "xaman-corpus-source-manifest/v1",
+    "manifest_aggregate_sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+    "coverage_path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+    "coverage_schema_version": "xaman-source-coverage/v1"
+  },
+  "review": {
+    "review_status": "reviewed",
+    "reviewed_at": "2026-07-10",
+    "review_scope": [
+      "account and destination fields",
+      "amount and issued-currency handling",
+      "fee, sequence, last-ledger, and network binding",
+      "memo encoding and decoding",
+      "trustline validation",
+      "multisign signer-list shape",
+      "transaction-type dispatch and validation dispatch",
+      "balance mutation display semantics",
+      "submit request and preliminary response boundary"
+    ],
+    "model_boundary": "Source-backed Xaman client transaction semantics at the pinned Xaman-App commit. This artifact models representative client-side XRPL transaction fields, signing guards, validation dispatch, Payment validation, memo and amount parsing, balance mutation presentation, and raw signed-blob submission. It does not prove XRPL consensus, complete amendment coverage, LedgerService or NetworkService honesty, deployed binary equivalence, or TODO validation classes."
+  },
+  "source_inputs": [
+    {
+      "path": "src/common/libs/ledger/factory/transaction.ts",
+      "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+      "size_bytes": 5199,
+      "categories": [
+        "transaction_type_dispatch",
+        "validation_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/factory/types.ts",
+      "sha256": "8cdf20b2159b6038b6be2397966f36700d53b0e97ae2bb1b537b64169b1715b6",
+      "size_bytes": 4721,
+      "categories": [
+        "transaction_type_dispatch",
+        "balance_mutation"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/factory/validation.ts",
+      "sha256": "b8a17fd95ab06f5d06ff149aa0cad1449c69827ce295c811c046f0510a7e9690",
+      "size_bytes": 2020,
+      "categories": [
+        "validation_dispatch",
+        "transaction_type_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+      "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+      "size_bytes": 16501,
+      "categories": [
+        "fee_sequence_network",
+        "broadcast_submit",
+        "multisign_semantics",
+        "transaction_type_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/mixin/Mutations.mixin.ts",
+      "sha256": "38c810c15715ede936f0d8bc0202b47754ca7842957d274f50188f8b9c37e33d",
+      "size_bytes": 11687,
+      "categories": [
+        "balance_mutation",
+        "fee_sequence_network"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/common.ts",
+      "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+      "size_bytes": 4097,
+      "categories": [
+        "account_field",
+        "fee_sequence_network",
+        "memo_semantics",
+        "multisign_semantics",
+        "transaction_type_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+      "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb",
+      "size_bytes": 3056,
+      "categories": [
+        "amount_semantics",
+        "destination_field",
+        "issued_currency_trustline"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+      "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+      "size_bytes": 7568,
+      "categories": [
+        "amount_semantics",
+        "destination_field",
+        "issued_currency_trustline",
+        "validation_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.class.ts",
+      "sha256": "76b8777ecc79019ca4200a38745b9863574acec900048fc58c21f2485c8763b9",
+      "size_bytes": 1734,
+      "categories": [
+        "issued_currency_trustline",
+        "amount_semantics"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.validation.ts",
+      "sha256": "76bdc38f0f636475f1aa2b2ecfb1749014492209d8915b025884132e258eab6a",
+      "size_bytes": 568,
+      "categories": [
+        "issued_currency_trustline",
+        "validation_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.class.ts",
+      "sha256": "eeb13cd930f4dd1084c71c3c5206f5fb7ba80af776a5d26cd88b7e29ad2da110",
+      "size_bytes": 4248,
+      "categories": [
+        "amount_semantics",
+        "transaction_type_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.validation.ts",
+      "sha256": "84cd3b4828f8987c0c3aabdf551eddfeabf8b9af0071a547905ae1524a3fab05",
+      "size_bytes": 583,
+      "categories": [
+        "amount_semantics",
+        "validation_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.class.ts",
+      "sha256": "f3bb21b149f905e7c73b3f0223c428ed807c69a05b11b4e626524743c9b94e88",
+      "size_bytes": 1420,
+      "categories": [
+        "multisign_semantics"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.validation.ts",
+      "sha256": "86ddb07ac40ebd179f03a4282b20f4a2c7b91aecc134bd9f659925edcc330d99",
+      "size_bytes": 593,
+      "categories": [
+        "multisign_semantics",
+        "validation_dispatch"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/common/amount.ts",
+      "sha256": "e2e37ffc8aff7251346d11ac98ea28d737e2915f737df2a9cf2def6f30531233",
+      "size_bytes": 1916,
+      "categories": [
+        "amount_semantics"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/parser/common/memo.ts",
+      "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+      "size_bytes": 3031,
+      "categories": [
+        "memo_semantics"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    },
+    {
+      "path": "src/common/libs/ledger/types/methods/submit.ts",
+      "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+      "size_bytes": 3180,
+      "categories": [
+        "broadcast_submit"
+      ],
+      "coverage_parse_status": "content_unavailable"
+    }
+  ],
+  "modeled_facts": [
+    {
+      "id": "xaman-xrpl-transaction:fact:common-fields-require-account-sequence-last-ledger",
+      "status": "MODELED",
+      "category": "account_field",
+      "summary": "The common transaction base declares TransactionType, Account, Sequence, and LastLedgerSequence as required fields, while Fee, Memos, Signers, and NetworkID are optional common XRPL fields.",
+      "normalized_fact": {
+        "required_fields": [
+          "hash",
+          "TransactionType",
+          "Account",
+          "Sequence",
+          "LastLedgerSequence"
+        ],
+        "optional_fields": [
+          "SourceTag",
+          "Memos",
+          "Flags",
+          "Signers",
+          "Fee",
+          "TicketSequence",
+          "NetworkID",
+          "FirstLedgerSequence",
+          "OperationLimit",
+          "SigningPubKey",
+          "TxnSignature"
+        ],
+        "account_field_type": "AccountID",
+        "sequence_field_type": "UInt32",
+        "last_ledger_sequence_field_type": "UInt32"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/common.ts",
+          "sha256": "c12cbb86b12c144312111e5f24b86d491eb34bf9cd6776f86d849051015f76f2",
+          "line_start": 22,
+          "line_end": 44,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:transaction-factory-dispatches-by-type-with-fallback",
+      "status": "MODELED",
+      "category": "transaction_type_dispatch",
+      "summary": "TransactionFactory reads TransactionType, rejects missing values, dispatches to a matching genuine transaction class when present, and otherwise uses FallbackTransaction.",
+      "normalized_fact": {
+        "requires_transaction_type": true,
+        "dispatch_source": "TransactionTypes enum and genuine transaction exports",
+        "fallback_class": "FallbackTransaction",
+        "sign_mixin_can_be_applied": true,
+        "ledger_transactions_cannot_receive_sign_mixin": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/transaction.ts",
+          "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+          "line_start": 69,
+          "line_end": 90,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/transaction.ts",
+          "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+          "line_start": 101,
+          "line_end": 123,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:validation-factory-dispatches-class-specific-validation",
+      "status": "MODELED",
+      "category": "validation_dispatch",
+      "summary": "ValidationFactory selects a transaction-specific validation function by constructing the `${Type}Validation` export name and fails if no validation function is present.",
+      "normalized_fact": {
+        "validation_name_template": "${Type}Validation",
+        "supports_genuine_transactions": true,
+        "supports_pseudo_transactions": true,
+        "fallback_validation_for_fallback_transaction": true,
+        "missing_validation_rejected": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/validation.ts",
+          "sha256": "b8a17fd95ab06f5d06ff149aa0cad1449c69827ce295c811c046f0510a7e9690",
+          "line_start": 18,
+          "line_end": 47,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signing-requires-fee-sequence-network-and-supported-type",
+      "status": "MODELED",
+      "category": "fee_sequence_network",
+      "summary": "Signing requires an account, rejects already signed transactions and unsupported network transaction types, requires Fee before prepare, sets Sequence when missing, populates LastLedgerSequence, and writes NetworkID only for non-legacy networks.",
+      "normalized_fact": {
+        "requires_account_parameter": true,
+        "requires_fee_before_signing": true,
+        "sets_sequence_when_missing": true,
+        "default_last_ledger_offset": 20,
+        "sets_last_ledger_sequence_when_missing": true,
+        "network_id_written_only_when_current_network_gt_1024": true,
+        "rejects_unsupported_transaction_type": true,
+        "rejects_already_signed_transaction": true,
+        "rejects_aborted_transaction": true,
+        "multisign_skips_prepare": true,
+        "requires_signed_transaction_signer_pubkey_and_sign_method": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 95,
+          "line_end": 176,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 184,
+          "line_end": 242,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 253,
+          "line_end": 288,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-fields-bind-amount-destination-paths-and-delivered-amount",
+      "status": "MODELED",
+      "category": "destination_field",
+      "summary": "The Payment class requires Amount and Destination, supports SendMax, DeliverMin, Paths, DestinationTag, and CredentialIDs, and derives delivered amount from metadata with native drops converted to the network native asset.",
+      "normalized_fact": {
+        "transaction_type": "Payment",
+        "required_fields": [
+          "Amount",
+          "Destination"
+        ],
+        "optional_fields": [
+          "DestinationTag",
+          "InvoiceID",
+          "SendMax",
+          "DeliverMin",
+          "Paths",
+          "CredentialIDs"
+        ],
+        "delivered_amount_fallback_to_amount": true,
+        "native_delivered_amount_converts_drops": true,
+        "issued_delivered_amount_preserves_currency_value_issuer": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.class.ts",
+          "sha256": "0f72817b039a682a5b9d61f14c056f905634eb52d50d12275463603a6b7a8ceb",
+          "line_start": 20,
+          "line_end": 73,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:payment-validation-blocks-zero-native-overspend-and-trustline-failures",
+      "status": "MODELED",
+      "category": "issued_currency_trustline",
+      "summary": "Payment validation rejects missing or zero Amount, checks native spend against fresh account available balance, checks issued-currency destination trustlines, issuer freezes, sender IOU balances, and issuer obligation limits.",
+      "normalized_fact": {
+        "rejects_missing_or_zero_amount": true,
+        "paths_skip_validation": true,
+        "checks_native_amount_against_available_balance": true,
+        "checks_destination_trustline_for_issued_currency": true,
+        "checks_issuer_freeze": true,
+        "checks_sender_iou_balance": true,
+        "checks_issuer_obligation_limit": true,
+        "sendmax_has_priority_for_spend_amount": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 20,
+          "line_end": 79,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 81,
+          "line_end": 167,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:trustset-models-limit-currency-and-issuer",
+      "status": "MODELED",
+      "category": "issued_currency_trustline",
+      "summary": "TrustSet requires LimitAmount and exposes currency, issuer, and numeric limit from LimitAmount; its validation function is present but resolves without checks.",
+      "normalized_fact": {
+        "transaction_type": "TrustSet",
+        "required_fields": [
+          "LimitAmount"
+        ],
+        "derived_properties": [
+          "Currency",
+          "Issuer",
+          "Limit"
+        ],
+        "validation_status": "TODO_RESOLVES_WITHOUT_CHECKS"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.class.ts",
+          "sha256": "76b8777ecc79019ca4200a38745b9863574acec900048fc58c21f2485c8763b9",
+          "line_start": 16,
+          "line_end": 43,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.validation.ts",
+          "sha256": "76bdc38f0f636475f1aa2b2ecfb1749014492209d8915b025884132e258eab6a",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:offercreate-models-taker-amounts-rate-and-expiration",
+      "status": "MODELED",
+      "category": "amount_semantics",
+      "summary": "OfferCreate requires TakerPays and TakerGets, optionally models Expiration and OfferID, computes rate from taker amounts, and infers offer status from metadata; validation currently resolves without checks.",
+      "normalized_fact": {
+        "transaction_type": "OfferCreate",
+        "required_fields": [
+          "TakerPays",
+          "TakerGets"
+        ],
+        "optional_fields": [
+          "Expiration",
+          "OfferID"
+        ],
+        "rate_uses_taker_gets_divided_by_taker_pays": true,
+        "native_asset_rate_is_inverted": true,
+        "offer_sequence_prefers_offer_sequence_then_sequence": true,
+        "validation_status": "TODO_RESOLVES_WITHOUT_CHECKS"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.class.ts",
+          "sha256": "eeb13cd930f4dd1084c71c3c5206f5fb7ba80af776a5d26cd88b7e29ad2da110",
+          "line_start": 24,
+          "line_end": 52,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.class.ts",
+          "sha256": "eeb13cd930f4dd1084c71c3c5206f5fb7ba80af776a5d26cd88b7e29ad2da110",
+          "line_start": 55,
+          "line_end": 104,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.validation.ts",
+          "sha256": "84cd3b4828f8987c0c3aabdf551eddfeabf8b9af0071a547905ae1524a3fab05",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:signerlistset-models-quorum-and-signer-entries",
+      "status": "MODELED",
+      "category": "multisign_semantics",
+      "summary": "SignerListSet models SignerQuorum and SignerEntries with the SignerEntries codec; validation currently resolves without checks.",
+      "normalized_fact": {
+        "transaction_type": "SignerListSet",
+        "fields": [
+          "SignerQuorum",
+          "SignerEntries"
+        ],
+        "signer_entries_codec": "SignerEntries",
+        "validation_status": "TODO_RESOLVES_WITHOUT_CHECKS"
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.class.ts",
+          "sha256": "f3bb21b149f905e7c73b3f0223c428ed807c69a05b11b4e626524743c9b94e88",
+          "line_start": 16,
+          "line_end": 28,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.validation.ts",
+          "sha256": "86ddb07ac40ebd179f03a4282b20f4a2c7b91aecc134bd9f659925edcc330d99",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:memo-parser-encodes-text-and-binary-memos",
+      "status": "MODELED",
+      "category": "memo_semantics",
+      "summary": "MemoParser treats long hex-like memo data as application/x-binary references and otherwise hex-encodes text/plain Description memos; decode returns binary data without UTF-8 conversion.",
+      "normalized_fact": {
+        "binary_regex_accepts_optional_0x_prefix": true,
+        "binary_memo_min_hex_chars": 20,
+        "text_format": "text/plain",
+        "binary_format": "application/x-binary",
+        "binary_type": "Reference",
+        "text_type": "Description",
+        "binary_decode_preserves_memo_data": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/memo.ts",
+          "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+          "line_start": 17,
+          "line_end": 39,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/memo.ts",
+          "sha256": "2d3600dde2b488094a2657a225bba77f48c13fce7af1d09c62f48f18b1118825",
+          "line_start": 44,
+          "line_end": 88,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:amount-parser-normalizes-drops-and-native-values",
+      "status": "MODELED",
+      "category": "amount_semantics",
+      "summary": "AmountParser normalizes numeric strings through BigNumber, rejects fractional drops, converts drops to native by dividing by 1,000,000, and converts native to drops by multiplying by 1,000,000 and rounding to whole drops.",
+      "normalized_fact": {
+        "uses_bignumber": true,
+        "drops_must_be_whole_units": true,
+        "drops_to_native_divisor": 1000000,
+        "native_to_drops_multiplier": 1000000,
+        "native_to_drops_decimal_places": 0,
+        "string_output_base": 10
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/amount.ts",
+          "sha256": "e2e37ffc8aff7251346d11ac98ea28d737e2915f737df2a9cf2def6f30531233",
+          "line_start": 7,
+          "line_end": 30,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/parser/common/amount.ts",
+          "sha256": "e2e37ffc8aff7251346d11ac98ea28d737e2915f737df2a9cf2def6f30531233",
+          "line_start": 33,
+          "line_end": 60,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:mutations-remove-fee-from-balance-changes",
+      "status": "MODELED",
+      "category": "balance_mutation",
+      "summary": "MutationsMixin parses balance changes from metadata, removes separate native fee decreases when multiple debits exist, and deducts the fee from the owner's native balance change for display.",
+      "normalized_fact": {
+        "parses_balance_changes_from_meta": true,
+        "removes_separate_fee_decrease_when_multiple_debits": true,
+        "deducts_fee_from_owner_native_balance_change": true,
+        "handles_offercreate_and_nftokenacceptoffer_native_fee_adjustments": true,
+        "memoizes_balance_changes_by_owner": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Mutations.mixin.ts",
+          "sha256": "38c810c15715ede936f0d8bc0202b47754ca7842957d274f50188f8b9c37e33d",
+          "line_start": 49,
+          "line_end": 80,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Mutations.mixin.ts",
+          "sha256": "38c810c15715ede936f0d8bc0202b47754ca7842957d274f50188f8b9c37e33d",
+          "line_start": 84,
+          "line_end": 130,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:fact:submit-boundary-is-signed-blob-preliminary-ledger-result",
+      "status": "MODELED",
+      "category": "broadcast_submit",
+      "summary": "The submit boundary requires a signed tx_blob and returns preliminary XRPL node state including accepted, applied, broadcast, kept, queued, sequence, and ledger-index fields; SignMixin prevents local duplicate submission.",
+      "normalized_fact": {
+        "request_command": "submit",
+        "requires_tx_blob": true,
+        "supports_fail_hard": true,
+        "preliminary_result_flags": [
+          "accepted",
+          "applied",
+          "broadcast",
+          "kept",
+          "queued"
+        ],
+        "response_includes_account_sequence_available": true,
+        "response_includes_validated_ledger_index": true,
+        "sign_mixin_requires_signed_blob": true,
+        "sign_mixin_blocks_duplicate_submit": true,
+        "accountdelete_sets_fail_hard": true
+      },
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 10,
+          "line_end": 18,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 26,
+          "line_end": 90,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 355,
+          "line_end": 384,
+          "review_status": "reviewed"
+        }
+      ]
+    }
+  ],
+  "not_modeled_gaps": [
+    {
+      "id": "xaman-xrpl-transaction:gap:trustset-offercreate-signerlistset-validation-is-todo",
+      "status": "NOT_MODELED",
+      "category": "issued_currency_trustline",
+      "summary": "TrustSet, OfferCreate, and SignerListSet validation functions resolve without semantic checks, so their user-intent safety cannot be proved from these validators.",
+      "required_evidence_to_model": [
+        "Implemented validation functions for TrustSet, OfferCreate, and SignerListSet",
+        "Tests showing rejection of malformed limits, offer amounts, signer quorum, and signer entries",
+        "Proof obligations that classify unresolved TODO validation as blocking"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/TrustSet/TrustSet.validation.ts",
+          "sha256": "76bdc38f0f636475f1aa2b2ecfb1749014492209d8915b025884132e258eab6a",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/OfferCreate/OfferCreate.validation.ts",
+          "sha256": "84cd3b4828f8987c0c3aabdf551eddfeabf8b9af0071a547905ae1524a3fab05",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/SignerListSet/SignerListSet.validation.ts",
+          "sha256": "86ddb07ac40ebd179f03a4282b20f4a2c7b91aecc134bd9f659925edcc330d99",
+          "line_start": 7,
+          "line_end": 11,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:complete-xrpl-amendment-and-transaction-class-coverage",
+      "status": "NOT_MODELED",
+      "category": "transaction_type_dispatch",
+      "summary": "The artifact reviews representative transaction classes and dispatch mechanics, but it does not model every transaction class, pseudo transaction, parser field, or amendment-specific XRPL rule.",
+      "required_evidence_to_model": [
+        "Inventory of every transaction export reachable from TransactionFactory",
+        "Per-class source facts and validation semantics for all supported amendments",
+        "Solver obligations generated for every high-risk transaction class"
+      ],
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "line_start": 1,
+          "line_end": 1,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/factory/transaction.ts",
+          "sha256": "284e514ea6855dcf867d48744232e7499793a3e93fbec38d82509a38aa45048e",
+          "line_start": 77,
+          "line_end": 90,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:ledger-service-network-service-runtime-trust",
+      "status": "NOT_MODELED",
+      "category": "fee_sequence_network",
+      "summary": "The signing and Payment validation paths rely on LedgerService and NetworkService for sequence, last ledger, network definitions, balances, account lines, and submit behavior; this artifact does not prove those runtime services are honest or fresh.",
+      "required_evidence_to_model": [
+        "Reviewed LedgerService and NetworkService source facts",
+        "Runtime traces showing fresh ledger status, balances, trustlines, and network definitions",
+        "Assumptions or proofs for node endpoint authenticity and freshness"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/mixin/Sign.mixin.ts",
+          "sha256": "bb8f513363fb9bfbe7409812f52d190db909b560ce2a55d1cda480a80d9ec098",
+          "line_start": 103,
+          "line_end": 175,
+          "review_status": "reviewed"
+        },
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/transactions/genuine/Payment/Payment.validation.ts",
+          "sha256": "dcb4a81c50661f0364877a4fc8a014eb31386909a7de98665da4a645a7478fa5",
+          "line_start": 32,
+          "line_end": 167,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:ledger-consensus-finality-and-mempool-semantics",
+      "status": "NOT_MODELED",
+      "category": "broadcast_submit",
+      "summary": "SubmitResponse fields are preliminary node results; this artifact does not prove transaction finality, consensus inclusion, queue behavior, mempool behavior, or honest peer-server broadcast.",
+      "required_evidence_to_model": [
+        "XRPL consensus and finality assumptions",
+        "Validated-ledger verification traces after submit",
+        "A solver model that separates preliminary submit results from final ledger inclusion"
+      ],
+      "evidence": [
+        {
+          "kind": "source_code",
+          "path": "src/common/libs/ledger/types/methods/submit.ts",
+          "sha256": "c34b535338d25801db31ca66293538f152e9860f095bd52e0802e40ebacc966e",
+          "line_start": 41,
+          "line_end": 89,
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "id": "xaman-xrpl-transaction:gap:deployed-runtime-equivalence",
+      "status": "NOT_MODELED",
+      "category": "transaction_type_dispatch",
+      "summary": "The facts are bound to reviewed source at one commit, not to an installed mobile binary, runtime configuration, backend release, or production node endpoint set.",
+      "required_evidence_to_model": [
+        "Build provenance tying source commit to deployed artifacts",
+        "Runtime configuration snapshot for ledger endpoints and feature flags",
+        "Production trace evidence for representative signing and submit flows"
+      ],
+      "evidence": [
+        {
+          "kind": "source_manifest",
+          "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+          "sha256": "575de917579a82d28998ab1c6b8b0946e45926846eac1418b89afcfb2157a460",
+          "line_start": 1,
+          "line_end": 1,
+          "review_status": "reviewed"
+        }
+      ]
+    }
+  ],
+  "derived_security_boundary": {
+    "claimed": [
+      "The pinned Xaman source declares common XRPL transaction fields for account, sequence, last-ledger, fee, memo, signer, and network-id handling.",
+      "The client rejects unsupported transaction types for the active network before vault signing.",
+      "Payment validation applies client-side checks for missing amount, zero amount, native overspend, issued-currency trustlines, issuer freeze, and issuer obligation limits.",
+      "The submit boundary sends a signed blob and receives preliminary node status only."
+    ],
+    "not_claimed": [
+      "XRPL consensus, final ledger inclusion, mempool behavior, queue fairness, and peer broadcast honesty are not proved.",
+      "LedgerService and NetworkService freshness, endpoint authenticity, and runtime configuration are not proved.",
+      "Complete amendment and transaction-class coverage is not claimed from this representative model.",
+      "TrustSet, OfferCreate, and SignerListSet user-intent validation is not proved because their validation functions are TODO pass-throughs.",
+      "Deployed runtime equivalence to the reviewed source commit is not proved."
+    ],
+    "security_decision": "TRANSACTION_SEMANTICS_MODELED_WITH_BLOCKING_GAPS"
+  }
+}

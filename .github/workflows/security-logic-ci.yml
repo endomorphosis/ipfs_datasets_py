@@ -156,6 +156,35 @@ jobs:
             args+=(--fail-on unknown-critical)
           fi
           python -m ipfs_datasets_py.logic.security_models.crypto_exchange.prove_all "${args[@]}"
+      - name: Run built-in assurance baseline
+        id: assurance_baseline
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/run_security_ir_assurance_baseline.py \
+            --example \
+            --out-dir security_ir_artifacts/ci-assurance-run \
+            --fuzz-rounds 8 \
+            --seed 7 \
+            --min-modeled-blocking-claims 3 \
+            --min-proved-blocking-claims 3
+      - name: Run disproof suite with counterexample vectors
+        id: disproof_counterexample_vectors
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+          IPFS_DATASETS_AUTO_INSTALL: '0'
+          IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+        run: |
+          python scripts/ops/security_verification/run_security_ir_disproof_suite.py \
+            --example \
+            --out disproof_report.json \
+            --fuzz-rounds 8 \
+            --seed 7 \
+            --emit-counterexamples-dir disproof_counterexample_vectors
       - name: Emit TypeScript proof-consumer schema artifact
         id: emit_typescript_schema
         env:
@@ -200,9 +229,12 @@ jobs:
             emitted_security_schema.ts
             hidden_unicode_report.json
             counterexamples
+            disproof_counterexample_vectors
+            disproof_report.json
             proof_report.json
             proof_report_reviewed.json
             proof_report_strict.json
+            security_ir_artifacts/ci-assurance-run
       - name: Emit merge readiness summary
         id: merge_readiness_summary
         if: always()
@@ -219,6 +251,8 @@ jobs:
               "proof_cli_strict_passed": "${{ steps.proof_cli_strict.outcome }}",
               "proof_cli_reviewed_evidence_passed": "${{ steps.proof_cli_reviewed.outcome }}",
               "proof_cli_fail_closed_passed": "${{ steps.proof_cli_fail_closed.outcome }}",
+              "assurance_baseline_passed": "${{ steps.assurance_baseline.outcome }}",
+              "disproof_counterexample_vectors_passed": "${{ steps.disproof_counterexample_vectors.outcome }}",
               "typescript_compile_passed": "${{ steps.typescript_compile.outcome }}",
               "typescript_runtime_verifier_passed": "${{ steps.typescript_runtime.outcome }}",
               "proof_reports_uploaded": "${{ steps.upload_security_logic_artifacts.outcome }}",

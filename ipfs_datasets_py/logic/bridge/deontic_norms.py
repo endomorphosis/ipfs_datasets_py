@@ -922,7 +922,7 @@ def _parser_row_from_deontic_guidance_ir(
         "field_spans": _copy_slot_value(promoted_ir.get("field_spans") or {}),
         "formal_terms": _copy_slot_value(promoted_ir.get("formal_terms") or {}),
         "promotable_to_theorem": True,
-        "export_readiness": {"blockers": []},
+        "export_readiness": _deontic_guidance_export_readiness(evidence),
     }
     legal_frame = {
         key: _copy_slot_value(value)
@@ -946,6 +946,7 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "deontic_ir",
         "deontic_norms",
         "repair_deontic_bridge_quality_gate",
+        "repair_deontic_prover_bridge",
     }
     for key in (
         "route",
@@ -957,7 +958,10 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         "source_id",
     ):
         token = str(guidance.get(key) or "").strip().lower()
-        if token in route_tokens or "repair_deontic_bridge_quality_gate" in token:
+        if token in route_tokens or _compiler_guidance_token_is_deontic(
+            token,
+            route_tokens,
+        ):
             return True
 
     for key in ("compiler_guidance_todo_routes", "todo_routes", "routes", "samples"):
@@ -981,6 +985,8 @@ def _compiler_guidance_has_deontic_route(guidance: Mapping[str, Any]) -> bool:
         bundle = _mapping(guidance.get(key))
         if bundle and _compiler_guidance_has_deontic_route(bundle):
             return True
+    if _deontic_guidance_has_passing_gap_evidence(guidance):
+        return True
     return False
 
 
@@ -991,7 +997,7 @@ def _compiler_guidance_token_is_deontic(
     token = str(value or "").strip().lower()
     if not token:
         return False
-    return token in route_tokens or "repair_deontic_bridge_quality_gate" in token
+    return token in route_tokens or any(route in token for route in route_tokens)
 
 
 def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
@@ -1017,7 +1023,24 @@ def _deontic_guidance_route(guidance: Mapping[str, Any]) -> str:
             route = _deontic_guidance_route(bundle)
             if route:
                 return route
+    if _deontic_guidance_has_passing_gap_evidence(guidance):
+        return "repair_deontic_bridge_quality_gate"
     return "repair_deontic_bridge_quality_gate"
+
+
+def _deontic_guidance_has_passing_gap_evidence(guidance: Mapping[str, Any]) -> bool:
+    """Infer the deontic repair route from pass-gated view-gap evidence."""
+
+    if not isinstance(guidance, Mapping):
+        return False
+    for gap_key, gap_value in _deontic_guidance_component_gaps(guidance).items():
+        canonical_gap = _canonical_deontic_gap_key(gap_key)
+        component = canonical_gap.split(":", 1)[0]
+        if component != "deontic.ir":
+            continue
+        if _guidance_gap_quality_gate_passes(gap_value):
+            return True
+    return False
 
 
 def _deontic_bridge_evidence_from_compiler_guidance(
@@ -1098,13 +1121,24 @@ def _deontic_bridge_evidence_from_guidance_row(
             [_canonical_deontic_target_view(item) for item in normalized_underrepresented]
         )
     if isinstance(component_gaps, Mapping):
-        evidence["compiler_guidance_legal_ir_component_gaps"] = {
-            _canonical_deontic_gap_key(key): value
-            for key, value in dict(component_gaps).items()
-        }
+        evidence["compiler_guidance_legal_ir_component_gaps"] = (
+            _canonical_deontic_component_gap_map(component_gaps)
+        )
     if promoted_ir:
         evidence["compiler_guidance_legal_norm_ir"] = promoted_ir
     return evidence
+
+
+def _canonical_deontic_component_gap_map(
+    component_gaps: Mapping[str, Any],
+) -> dict[str, Any]:
+    gaps: dict[str, Any] = {}
+    for key, value in dict(component_gaps).items():
+        canonical_key = _canonical_deontic_gap_key(key)
+        if not canonical_key:
+            continue
+        gaps.setdefault(canonical_key, value)
+    return gaps
 
 
 def _deontic_guidance_legal_norm_ir_slots(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -1217,6 +1251,71 @@ def _fill_deontic_row_from_compiler_guidance_ir(
         "formal_terms",
     ):
         _fill_empty_field(row, promoted_ir, key)
+    if _promoted_deontic_guidance_ir_is_complete(promoted_ir):
+        export_readiness = dict(row.get("export_readiness") or {})
+        export_readiness.setdefault("formula_proof_ready", True)
+        export_readiness.setdefault("formula_requires_validation", False)
+        export_readiness.setdefault("formula_repair_required", False)
+        export_readiness.setdefault("metric_requires_validation", False)
+        export_readiness.setdefault(
+            "deterministic_resolution",
+            _deontic_guidance_deterministic_resolution(bridge_guidance),
+        )
+        row["export_readiness"] = export_readiness
+
+
+def _deontic_guidance_export_readiness(
+    bridge_guidance: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "blockers": [],
+        "formula_proof_ready": True,
+        "formula_requires_validation": False,
+        "formula_repair_required": False,
+        "metric_requires_validation": False,
+        "deterministic_resolution": _deontic_guidance_deterministic_resolution(
+            bridge_guidance
+        ),
+    }
+
+
+def _deontic_guidance_deterministic_resolution(
+    bridge_guidance: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "type": "compiler_guidance_deontic_ir_reconstruction",
+        "route": str(
+            bridge_guidance.get("compiler_guidance_source")
+            or "repair_deontic_bridge_quality_gate"
+        ),
+        "evidence_source": str(
+            bridge_guidance.get("compiler_guidance_evidence_source")
+            or "compiler_guidance"
+        ),
+        "target_view": str(
+            bridge_guidance.get("compiler_guidance_target_view") or "deontic.ir"
+        ),
+        "quality_gate": str(
+            bridge_guidance.get("compiler_guidance_quality_gate") or "pass"
+        ),
+    }
+
+
+def _promoted_deontic_guidance_ir_is_complete(
+    promoted_ir: Mapping[str, Any],
+) -> bool:
+    actor = _first_present_mapping_value(promoted_ir, ("actor", "subject"))
+    action = promoted_ir.get("action")
+    modality = _first_present_mapping_value(
+        promoted_ir,
+        ("modality", "deontic_operator"),
+    )
+    norm_type = promoted_ir.get("norm_type")
+    return bool(
+        _value_is_present(actor)
+        and _value_is_present(action)
+        and (_value_is_present(modality) or _value_is_present(norm_type))
+    )
 
 
 def _deontic_guidance_target_view(row: Mapping[str, Any]) -> str:
@@ -1270,12 +1369,22 @@ def _deontic_guidance_component_gaps(row: Mapping[str, Any]) -> dict[str, Any]:
 
     attribution = row.get("compiler_guidance_attribution")
     if isinstance(attribution, Mapping):
+        failed_gap_keys: set[str] = set()
         for key in ("legal_ir_view_gaps", "legal_ir_view_family_gaps"):
             value = attribution.get(key)
             if isinstance(value, Mapping):
                 for gap_key, gap_value in value.items():
+                    canonical_gap_key = _canonical_deontic_gap_key(gap_key)
                     if _guidance_gap_quality_gate_passes(gap_value):
                         gaps.setdefault(str(gap_key), gap_value)
+                    else:
+                        failed_gap_keys.add(canonical_gap_key)
+        if failed_gap_keys:
+            gaps = {
+                gap_key: gap_value
+                for gap_key, gap_value in gaps.items()
+                if _canonical_deontic_gap_key(gap_key) not in failed_gap_keys
+            }
     return gaps
 
 
@@ -2450,15 +2559,21 @@ def _coverage_summary_from_record(record: Mapping[str, Any]) -> dict[str, Any]:
             failed_targets: list[str] = []
             missing_targets: list[str] = []
             for target in required_targets:
-                status = str(status_by_target.get(target) or "").strip().lower()
-                if status in {"passed", "pass", "valid", "ok"}:
+                status_value = status_by_target.get(target)
+                status = str(status_value or "").strip().lower()
+                if status_value is True or status in {"passed", "pass", "valid", "ok"}:
                     passed_targets.append(target)
                 elif status in {"missing", "absent"}:
                     missing_targets.append(target)
                 elif status in {"skipped", "skip", "unavailable"}:
                     # Skipped targets stay non-blocking for proof compilation.
                     continue
-                elif status in {"failed", "failure", "invalid", "error"}:
+                elif status_value is False or status in {
+                    "failed",
+                    "failure",
+                    "invalid",
+                    "error",
+                }:
                     failed_targets.append(target)
                 else:
                     failed_targets.append(target)

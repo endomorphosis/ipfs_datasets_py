@@ -1551,7 +1551,13 @@ def _compiler_guidance_bundle_mapping(
     compiler_guidance: Mapping[str, Any],
 ) -> Mapping[str, Any]:
     """Return compact bundle metadata from parsed or JSON-string guidance."""
-    for key in ("bundle", "semantic_bundle", "vector_bundle"):
+    for key in (
+        "bundle",
+        "semantic_bundle",
+        "semantic_bundle_key",
+        "compiler_guidance_bundle",
+        "vector_bundle",
+    ):
         raw_bundle = compiler_guidance.get(key)
         if isinstance(raw_bundle, Mapping):
             return raw_bundle
@@ -11562,7 +11568,10 @@ def _append_statutory_scope_triples(
     text: str,
     emitted: set[tuple[str, str]],
 ) -> None:
-    for predicate, value in _statutory_scope_entries(text):
+    for predicate, value in (
+        *_statutory_scope_entries(text),
+        *_statutory_condition_grounding_entries(text),
+    ):
         marker = (predicate, value)
         if marker in emitted:
             continue
@@ -11661,6 +11670,106 @@ def _statutory_scope_entries(text: str) -> List[tuple[str, str]]:
             seen.add(entry)
             entries.append(entry)
     return entries
+
+
+def _statutory_condition_grounding_entries(text: str) -> List[tuple[str, str]]:
+    scope_entries = _statutory_scope_entries(text)
+    if not scope_entries:
+        return []
+
+    entry_map: Dict[str, List[str]] = {}
+    for predicate, value in scope_entries:
+        entry_map.setdefault(predicate, []).append(value)
+
+    references = entry_map.get("statutory_scope_reference", [])
+    connectors = entry_map.get("statutory_scope_connector", [])
+    units = entry_map.get("statutory_scope_unit", [])
+    targets = entry_map.get("statutory_scope_target", [])
+    if not references:
+        return []
+
+    entries: List[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def append(predicate: str, value: str) -> None:
+        cleaned_predicate = _clean_non_empty_string(predicate)
+        cleaned_value = _clean_non_empty_string(value)
+        if not cleaned_predicate or not cleaned_value:
+            return
+        entry = (cleaned_predicate, cleaned_value)
+        if entry in seen:
+            return
+        seen.add(entry)
+        entries.append(entry)
+
+    for index, reference in enumerate(references):
+        connector = connectors[index] if index < len(connectors) else ""
+        unit = units[index] if index < len(units) else ""
+        target = targets[index] if index < len(targets) else ""
+        if not unit:
+            continue
+        cue = _statutory_condition_cue_for_connector(connector)
+        reference_key = _slot_safe_family_pair_key(reference)
+        unit_key = _slot_safe_family_pair_key(unit)
+        target_key = _slot_safe_family_pair_key(target) if target else "implicit"
+        cue_key = _slot_safe_family_pair_key(cue)
+        append("statutory_condition_reference", reference)
+        append("statutory_condition_cue", cue)
+        append("statutory_condition_unit", unit)
+        append("statutory_condition_grounding", f"{cue_key}:{unit_key}:{target_key}")
+        append(
+            "constraint-grounding",
+            f"cross-reference-grounding:direct:{unit_key}:{target_key}:conditioned",
+        )
+        append(
+            "quantifier-scope",
+            f"operator-quantifier:deontic:clause:universal:conditioned:{unit_key}",
+        )
+        append(
+            "semantic_slot_legal_ir_view_prototype",
+            (
+                "slot:statutory-condition-grounding:"
+                f"{cue_key}:{unit_key}:{target_key}||deontic.ir"
+            ),
+        )
+        append(
+            "semantic_slot_legal_ir_view_prototype",
+            (
+                "slot:statutory-condition-grounding:"
+                f"{cue_key}:{unit_key}:{target_key}||TDFOL.prover"
+            ),
+        )
+        if reference_key:
+            append("statutory_condition_reference_key", reference_key)
+            append(
+                "semantic_slot_legal_ir_view_prototype",
+                f"slot:statutory-condition-reference:{reference_key}||CEC.native",
+            )
+        if connector:
+            append("statutory_condition_connector", connector)
+        if target:
+            append("statutory_condition_target", target)
+    return entries
+
+
+def _statutory_condition_cue_for_connector(connector: str) -> str:
+    normalized = _clean_non_empty_string(connector).lower()
+    if normalized.startswith("except"):
+        return "exception"
+    if normalized in {
+        "as otherwise provided in",
+        "as provided in",
+        "as set forth in",
+        "in accordance with",
+        "pursuant to",
+        "subject to",
+        "under",
+        "within",
+    }:
+        return "condition"
+    if normalized in {"as described in", "as defined in", "referred to in"}:
+        return "definition_reference"
+    return "reference"
 
 
 def _canonical_statutory_scope_unit(unit: str) -> str:
@@ -11773,9 +11882,20 @@ def _is_semantic_support_slot(slot: str) -> bool:
         "editorial_status_clause",
         "status_keyword",
         "semantic_ir_reconstruction_anchor",
+        "typed_ir_clause_role_support",
         "typed_ir_reconstruction",
+        "typed_ir_family_pair_reconstruction_support",
+        "typed_ir_family_pair_semantic_bridge",
+        "typed_ir_family_pair_semantic_reconstruction",
+        "typed_ir_legal_view_support",
+        "typed_ir_policy_view_semantic_reconstruction",
+        "typed_ir_semantic_bridge_reconstruction",
+        "typed_ir_semantic_bridge_signature",
+        "typed_ir_semantic_reconstruction_clause",
         "typed_ir_semantic_support",
         "typed_ir_semantic_summary",
+        "typed_ir_semantic_surface_reconstruction",
+        "typed_ir_source_semantic_sentence",
         "typed_ir_cross_family_semantic_support",
         "role",
     }:
@@ -11838,9 +11958,18 @@ def _semantic_support_token_count(decoded: DecodedModalText) -> int:
         "editorial_status_catchline",
         "editorial_status_clause",
         "typed_ir_semantic_support",
+        "typed_ir_semantic_surface_reconstruction",
+        "typed_ir_source_semantic_sentence",
+        "typed_ir_semantic_reconstruction_clause",
+        "typed_ir_clause_role_support",
         "typed_ir_compact_semantic_support",
+        "typed_ir_family_pair_reconstruction_support",
+        "typed_ir_family_pair_semantic_bridge",
         "typed_ir_family_pair_semantic_reconstruction",
+        "typed_ir_policy_view_semantic_reconstruction",
+        "typed_ir_semantic_bridge_reconstruction",
         "typed_ir_semantic_summary",
+        "typed_ir_legal_view_support",
         "typed_ir_cross_family_semantic_support",
         "source_subject_anchor",
         "source_action_anchor",
@@ -12051,11 +12180,13 @@ def _structural_decoded_text(
     )
     typed_ir_values = [
         *slot_text_map.get("typed_ir_reconstruction", ()),
+        *slot_text_map.get("typed_ir_semantic_reconstruction_clause", ()),
         *slot_text_map.get("typed_ir_source_semantic_sentence", ()),
         *slot_text_map.get("typed_ir_clause_role_support", ()),
         *slot_text_map.get("typed_ir_semantic_support", ()),
         *slot_text_map.get("typed_ir_compact_semantic_support", ()),
         *slot_text_map.get("typed_ir_family_pair_semantic_reconstruction", ()),
+        *slot_text_map.get("typed_ir_policy_view_semantic_reconstruction", ()),
         *slot_text_map.get("typed_ir_semantic_summary", ()),
         *slot_text_map.get("typed_ir_legal_view_support", ()),
         *slot_text_map.get("typed_ir_cross_family_semantic_support", ()),

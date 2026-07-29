@@ -4486,6 +4486,29 @@ def test_ir_formula_deduplicates_multiple_actor_aliases():
     assert formula.count("Commissioner(x)") == 1
 
 
+def test_ir_recovers_passive_fee_deposit_actor_from_received_by_clause():
+    text = (
+        "Amounts received by the Chief Administrative Officer as fees under the "
+        "preceding sentence shall be deposited in the Treasury for credit to the "
+        "account of the Office of the Chief Administrative Officer."
+    )
+    element = extract_normative_elements(text)[0]
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.actor == "Chief Administrative Officer"
+    assert norm.field_spans["subject"] == [24, 52]
+    assert text[norm.field_spans["subject"][0] : norm.field_spans["subject"][1]] == (
+        "Chief Administrative Officer"
+    )
+    assert norm.action == (
+        "be deposited in the Treasury for credit to the account of the Office "
+        "of the Chief Administrative Officer"
+    )
+    assert formula.startswith("O(∀x (ChiefAdministrativeOfficer(x)")
+    assert "ByChiefAdministrativeOfficer" not in formula
+
+
 def test_ir_preserves_legacy_slot_lists_when_detail_records_are_absent():
     element = extract_normative_elements(
         "The Director shall issue a permit if all requirements are met within 10 days after application "

@@ -1889,6 +1889,9 @@ class DeterministicModalCompiler:
             }
         elif predicted_family == ModalLogicFamily.DOXASTIC.value:
             target_signal_by_family = {
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
                 ModalLogicFamily.EPISTEMIC.value: bool(
                     signals.get("has_epistemic_scope")
                     or signals.get("has_epistemic_cue")
@@ -3002,7 +3005,20 @@ class DeterministicModalCompiler:
                 predicted_family,
                 target_family,
             )
-            if not has_signal and target_share <= 0.0:
+            supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
+                predicted_family,
+                target_family,
+            )
+            signal_free_pair_policy_applied = bool(
+                not has_signal
+                and target_share <= 0.0
+                and supports_signal_free_pair_policy
+            )
+            if (
+                not has_signal
+                and target_share <= 0.0
+                and not supports_signal_free_pair_policy
+            ):
                 continue
             family_margin = target_share - predicted_share
             if family_margin >= outvote_margin_threshold:
@@ -3033,7 +3049,9 @@ class DeterministicModalCompiler:
                         "outvote_margin_threshold": outvote_margin_threshold,
                         "predicted_family": predicted_family,
                         "predicted_share": round(predicted_share, 6),
-                        "signal_free_pair_policy_applied": False,
+                        "signal_free_pair_policy_applied": (
+                            signal_free_pair_policy_applied
+                        ),
                         "target_family": target_family,
                         "target_share": round(target_share, 6),
                     },
@@ -3331,6 +3349,10 @@ class DeterministicModalCompiler:
         family_margin = target_share - predicted_share
         if family_margin >= self.config.modal_dynamic_target_family_outvote_margin:
             return []
+        is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            target_family,
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="dynamic_scope_family_outvoted",
@@ -3343,6 +3365,19 @@ class DeterministicModalCompiler:
                 metadata={
                     "family_margin": round(family_margin, 6),
                     "family_ranking": list(ranking),
+                    "is_compiler_ambiguity_bundle_pair": (
+                        is_compiler_ambiguity_bundle_pair
+                    ),
+                    "ambiguity_policy_bundle": (
+                        "compiler_ambiguity"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
+                    "compiler_ambiguity_policy_pair": (
+                        f"{predicted_family}->{target_family}"
+                        if is_compiler_ambiguity_bundle_pair
+                        else None
+                    ),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_dynamic_target_family_outvote_margin,
                     "predicted_family": predicted_family,

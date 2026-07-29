@@ -1,0 +1,105 @@
+{
+  "artifact_cid": "sha256:196cddfa5a7f760b641e7332c006c5a26637cf683b24079d658a6c97c5968f1b",
+  "blockers": [
+    {
+      "code": "TAMARIN_EXECUTABLE_MISSING",
+      "message": "tamarin-prover executable is not on PATH"
+    },
+    {
+      "code": "PROVERIF_EXECUTABLE_MISSING",
+      "message": "proverif executable is not on PATH"
+    },
+    {
+      "code": "PROVERIF_MODEL_MISSING",
+      "message": "security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.pv is missing"
+    }
+  ],
+  "checks": {
+    "proverif": {
+      "command": [
+        "proverif",
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.pv"
+      ],
+      "returncode": null,
+      "status": "not-run",
+      "stderr": "ProVerif check not run because solver/model is unavailable or run_protocol_checks is false",
+      "stdout": ""
+    },
+    "tamarin": {
+      "command": [
+        "tamarin-prover",
+        "--prove",
+        "/home/barberb/barberb/copilot-worktrees/lift_coding/hallucinate-llc-psychic-adventure/external/ipfs_datasets/security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy"
+      ],
+      "returncode": null,
+      "status": "not-run",
+      "stderr": "Tamarin check not run because solver is unavailable or run_protocol_checks is false",
+      "stdout": ""
+    }
+  },
+  "generated_at": "2026-07-10T07:24:20Z",
+  "install_plan": {
+    "policy": "Install protocol solvers outside this probe, add a reviewed ProVerif model, rerun with --run-protocol-checks, and commit exact version/output evidence.",
+    "proverif": [
+      "opam install proverif",
+      "nix profile install nixpkgs#proverif"
+    ],
+    "tamarin": [
+      "nix profile install nixpkgs#tamarin-prover",
+      "stack install tamarin-prover"
+    ]
+  },
+  "models": {
+    "proverif": {
+      "exists": false,
+      "path": "security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.pv",
+      "sha256": null
+    },
+    "tamarin": {
+      "exists": true,
+      "path": "security_ir_artifacts/corpora/xaman-app/protocol/xaman_payload_protocol.spthy",
+      "sha256": "sha256:b84080bf792f13a5ede8eaab5c7e7beb226121bb59be67f9e391c2ac66c0b9de"
+    }
+  },
+  "overall_status": "blocked_optional_lane",
+  "production_release_blocked_by_protocol_solvers": true,
+  "protocol_report": {
+    "covered_claim_ids": [
+      "xaman-claim:signing-is-gated-by-auth-and-vault-overlay",
+      "xaman-claim:payload-integrity-is-digest-checked-and-revalidated",
+      "xaman-claim:client-replay-controls-exist-but-backend-single-use-is-blocking",
+      "xaman-claim:backend-payload-service-is-trusted-not-proved"
+    ],
+    "exists": true,
+    "overall_status": "blocked_optional_lane",
+    "path": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
+    "security_decision": "BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE",
+    "sha256": "sha256:6e757e999787a6fce907ee24beadc9bbb9a28c53ee9c61637fc7420b9d8a1a63"
+  },
+  "schema_version": "crypto-exchange-protocol-solver-lane-report/v1",
+  "security_decision": "BLOCK_PROTOCOL_SOLVER_LANES_UNAVAILABLE",
+  "solvers": {
+    "proverif": {
+      "executable": null,
+      "present": false,
+      "version": ""
+    },
+    "tamarin": {
+      "executable": null,
+      "present": false,
+      "version": ""
+    }
+  },
+  "summary": {
+    "blocker_count": 3,
+    "proverif_check_passed": false,
+    "proverif_model_present": false,
+    "proverif_present": false,
+    "tamarin_check_passed": false,
+    "tamarin_model_present": true,
+    "tamarin_present": false,
+    "warning_count": 0
+  },
+  "task_id": "PORTAL-CXTP-092",
+  "warnings": []
+}

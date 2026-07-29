@@ -790,6 +790,10 @@ def _procedure_event_records_from_norm(
     if not records:
         records.extend(_exported_procedure_event_records_from_norm(norm))
 
+    records.extend(
+        _slot_procedure_event_records_from_norm(norm, source_id=source_id)
+    )
+
     normalized: list[dict[str, Any]] = []
     seen: set[tuple[str, str, int, str]] = set()
     for index, record in enumerate(records, start=1):
@@ -862,6 +866,69 @@ def _procedure_event_records_from_norm(
             }
         )
     return normalized
+
+
+def _slot_procedure_event_records_from_norm(
+    norm: Mapping[str, Any],
+    *,
+    source_id: str,
+) -> list[dict[str, Any]]:
+    """Promote explicit condition/exception IR slots into CEC procedure events."""
+
+    records: list[dict[str, Any]] = []
+    seen_symbols: set[str] = set()
+    for relation, key in (
+        ("condition_precedent", "condition"),
+        ("condition_precedent", "conditions"),
+        ("condition_precedent", "condition_text"),
+        ("condition_precedent", "preconditions"),
+        ("condition_precedent", "prerequisites"),
+        ("exception", "exception"),
+        ("exception", "exceptions"),
+        ("exception", "exception_details"),
+    ):
+        for condition_text in _condition_slot_texts(norm.get(key)):
+            cleaned = _clean_operational_slot(condition_text)
+            if not cleaned:
+                continue
+            event_symbol = _symbol(cleaned, fallback="condition")
+            if event_symbol in seen_symbols:
+                continue
+            seen_symbols.add(event_symbol)
+            records.append(
+                _condition_procedure_event_record(
+                    cleaned,
+                    source_id=source_id,
+                    relation=relation,
+                )
+            )
+    return records
+
+
+def _condition_slot_texts(value: Any) -> list[str]:
+    texts: list[str] = []
+    if isinstance(value, Mapping):
+        direct = _first_text_value(
+            value.get("condition"),
+            value.get("exception"),
+            value.get("value"),
+            value.get("text"),
+            value.get("raw_text"),
+            value.get("description"),
+            value.get("clause"),
+            value.get("expression"),
+        )
+        if direct:
+            texts.append(direct)
+        for nested_key in ("conditions", "exceptions", "items", "clauses"):
+            texts.extend(_condition_slot_texts(value.get(nested_key)))
+        return texts
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            texts.extend(_condition_slot_texts(item))
+        return texts
+    text = str(value or "").strip()
+    return [text] if text else []
 
 
 def _procedure_event_records_from_procedure(
@@ -1669,6 +1736,7 @@ def _compiler_guidance_top_level_supports_cec_materialization(
         guidance.get("bundle")
         or guidance.get("compiler_guidance_bundle")
         or guidance.get("semantic_bundle")
+        or guidance.get("semantic_bundle_key")
     )
     scope = str(
         guidance.get("program_synthesis_scope")
@@ -2277,7 +2345,28 @@ def _canonicalize_event_formula_text(text: str) -> str:
         normalized = normalized.replace(token, replacement)
     normalized = _normalize_event_formula_brackets(normalized)
     normalized = _canonicalize_event_formula_function_names(normalized)
+    normalized = _canonicalize_function_style_event_connectors(normalized)
     return " ".join(normalized.split())
+
+
+def _canonicalize_function_style_event_connectors(text: str) -> str:
+    """Normalize common prefix connector exports into event-calculus infix rules."""
+
+    value = str(text or "").strip()
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*\(", value)
+    if not match:
+        return value
+    connector = str(match.group(1) or "").strip().lower()
+    if connector not in {"implies", "imply", "ifthen", "if_then"}:
+        return value
+    open_index = value.find("(", match.start())
+    close_index = _matching_close_paren_index(value, open_index)
+    if close_index != len(value) - 1:
+        return value
+    arguments = _split_top_level_arguments(value[open_index + 1:close_index])
+    if len(arguments) != 2 or not arguments[0] or not arguments[1]:
+        return value
+    return f"{arguments[0]} => {arguments[1]}"
 
 
 def _canonicalize_event_formula_function_names(text: str) -> str:
@@ -2695,6 +2784,7 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
         "bundle",
         "compiler_guidance_bundle",
         "semantic_bundle",
+        "semantic_bundle_key",
         "vector_bundle",
     ):
         bundle = _mapping(guidance.get(key))
@@ -2709,6 +2799,16 @@ def _compiler_guidance_has_cec_bridge_route(guidance: Mapping[str, Any]) -> bool
             token = str(bundle.get(bundle_key) or "").strip().lower()
             if token in _CEC_GUIDANCE_ROUTE_TOKENS:
                 return True
+    for key in (
+        "sample_id",
+        "sample_ids",
+        "samples",
+    ):
+        if any(
+            _cec_guidance_token_targets_cec(item)
+            for item in _sequence_values(guidance.get(key))
+        ):
+            return True
     if _cec_guidance_record_targets_cec(guidance):
         return True
     for _, row in _compiler_guidance_evidence_rows(guidance):
@@ -2733,6 +2833,7 @@ def _cec_compiler_guidance_signal(
         guidance.get("bundle")
         or guidance.get("compiler_guidance_bundle")
         or guidance.get("semantic_bundle")
+        or guidance.get("semantic_bundle_key")
     )
     routes: list[str] = []
     for value in (
@@ -2930,10 +3031,14 @@ def _cec_guidance_token_targets_cec(value: Any) -> bool:
     token = str(value or "").strip().lower()
     if not token:
         return False
+    prefixed_route = token.rsplit(":", 1)[-1]
     normalized = token.replace("_", ".")
+    normalized_prefixed_route = prefixed_route.replace("_", ".")
     return (
         token in _CEC_GUIDANCE_ROUTE_TOKENS
+        or prefixed_route in _CEC_GUIDANCE_ROUTE_TOKENS
         or normalized in _CEC_GUIDANCE_ROUTE_TOKENS
+        or normalized_prefixed_route in _CEC_GUIDANCE_ROUTE_TOKENS
     )
 
 
@@ -3247,6 +3352,29 @@ def _section_operational_norm_from_text(text: str) -> Optional[dict[str, Any]]:
             "norm_type": "permitted",
             "source_id": f"dcec:section:{digest}",
             "support_text": nato_contribution_limit_match.group(0)[:500],
+            "extraction_method": "cec_dcec_section_operational_v1",
+        }
+    passive_governance_match = re.search(
+        r"\b(?P<object>this\s+(?:chapter|subchapter|section|part|title|act)|"
+        r"the\s+(?:chapter|subchapter|section|part|title|act))\s+shall\s+be\s+"
+        r"(?P<verb>administered(?:\s+and\s+enforced)?|enforced|carried\s+out)\s+"
+        r"by\s+(?P<actor>(?:the\s+)?[a-z][^.;]{1,160})",
+        operative_text.lower(),
+    )
+    if passive_governance_match:
+        digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+        object_text = _clean_operational_slot(passive_governance_match.group("object"))
+        object_text = re.sub(r"^(?:this|the)\s+", "", object_text, flags=re.IGNORECASE)
+        action_verb = _clean_operational_slot(passive_governance_match.group("verb"))
+        return {
+            "actor": _clean_operational_actor_slot(
+                passive_governance_match.group("actor")
+            ),
+            "action": _clean_operational_slot(f"{action_verb} {object_text}"),
+            "modality": "obligated",
+            "norm_type": "obligated",
+            "source_id": f"dcec:section:{digest}",
+            "support_text": passive_governance_match.group(0)[:500],
             "extraction_method": "cec_dcec_section_operational_v1",
         }
     passive_administration_match = re.search(

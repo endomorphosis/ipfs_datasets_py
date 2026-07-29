@@ -1,0 +1,262 @@
+{
+  "artifact_cid": "sha256:e6b499f1171052a3a8d7438808aed5f6af5480dbb9b87b9a7337a367b3c20eee",
+  "blocker_count": 8,
+  "blockers": [
+    {
+      "code": "UNRESOLVED_XAMAN_ASSUMPTIONS",
+      "count": 16,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+      "unique_assumptions": [
+        "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+        "xaman-assumption:deployed-runtime-equivalence",
+        "xaman-assumption:incomplete-transaction-class-validation",
+        "xaman-assumption:native-vault-crypto-and-biometric-security",
+        "xaman-assumption:proof-consumer-kernel-validation",
+        "xaman-assumption:xrpl-consensus-node-honesty-and-finality"
+      ]
+    },
+    {
+      "code": "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+      "count": 10,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/proof-reports/z3-cvc5-differential.json"
+    },
+    {
+      "code": "COUNTEREXAMPLES_FOUND",
+      "count": 7,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/counterexample-report.json"
+    },
+    {
+      "code": "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+      "count": 2,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/counterexample-report.json"
+    },
+    {
+      "code": "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+      "count": 2,
+      "severity": "blocking",
+      "source": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json"
+    },
+    {
+      "code": "APALACHE_NOT_RUN",
+      "severity": "high",
+      "source": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
+      "status": "blocked_optional_lane"
+    },
+    {
+      "code": "PROTOCOL_SOLVERS_NOT_RUN",
+      "severity": "high",
+      "source": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
+      "status": "blocked_optional_lane"
+    },
+    {
+      "code": "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED",
+      "severity": "high",
+      "source": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+      "status": "ready_lean_checked_coq_unavailable"
+    }
+  ],
+  "claim_summary": {
+    "blocked_claim_count": 10,
+    "blocking_or_high_claim_count": 10,
+    "claim_count": 10,
+    "proved_claim_count": 0,
+    "unique_assumption_count": 6,
+    "unique_assumptions": [
+      "xaman-assumption:backend-payload-api-auth-single-use-and-expiration",
+      "xaman-assumption:deployed-runtime-equivalence",
+      "xaman-assumption:incomplete-transaction-class-validation",
+      "xaman-assumption:native-vault-crypto-and-biometric-security",
+      "xaman-assumption:proof-consumer-kernel-validation",
+      "xaman-assumption:xrpl-consensus-node-honesty-and-finality"
+    ]
+  },
+  "corpus": "xaman-app",
+  "evidence_artifacts": [
+    {
+      "kind": "source_manifest",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/source-manifest.json",
+      "schema_version": "xaman-corpus-source-manifest/v1",
+      "security_decision": null,
+      "sha256": "sha256:a269b91c526132771a8c931dfe94ef57a78c0cf2f0acf4c9a439437ce8795ec3",
+      "task_id": null
+    },
+    {
+      "kind": "source_coverage",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/source-coverage.json",
+      "schema_version": "xaman-source-coverage/v1",
+      "security_decision": null,
+      "sha256": "sha256:a3e7cc820d831e26e03a77504de7713d85b83e9bc04f94af848b6fc6897da5c2",
+      "task_id": null
+    },
+    {
+      "kind": "wallet_auth_facts",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/wallet-auth-facts.json",
+      "schema_version": "xaman-wallet-auth-facts/v1",
+      "security_decision": null,
+      "sha256": "sha256:5f378a7a5f9d8496c977a8304042ccf48a9ca30d9a4c16ad1dc057ee58466292",
+      "task_id": "PORTAL-CXTP-041"
+    },
+    {
+      "kind": "payload_lifecycle_facts",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/payload-lifecycle-facts.json",
+      "schema_version": "xaman-payload-lifecycle-facts/v1",
+      "security_decision": null,
+      "sha256": "sha256:e73f508e3c9ce2f22c5bae658a9ec7fe05bfbfb47639faf45acb40d9b24ee5f7",
+      "task_id": "PORTAL-CXTP-042"
+    },
+    {
+      "kind": "xrpl_transaction_facts",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/xrpl-transaction-facts.json",
+      "schema_version": "xaman-xrpl-transaction-facts/v1",
+      "security_decision": null,
+      "sha256": "sha256:0cba66467013d9250b3f3f85b0ba0d2e2c0c85596b663e886be5c6da89e6f85b",
+      "task_id": "PORTAL-CXTP-066"
+    },
+    {
+      "kind": "security_claims",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/security-claims.json",
+      "schema_version": "xaman-security-claims/v1",
+      "security_decision": "BLOCK_SECURITY_CLAIMS_PENDING_PROOFS_AND_ASSUMPTIONS",
+      "sha256": "sha256:648754c032573ed113f251b4e819e8056d6ffe55ac32bf80d8ca6acfbd6753e7",
+      "task_id": "PORTAL-CXTP-067"
+    },
+    {
+      "kind": "security_model_ir",
+      "overall_status": null,
+      "path": "security_ir_artifacts/corpora/xaman-app/security-model-ir.json",
+      "schema_version": "security-model-ir/xaman/v1",
+      "security_decision": null,
+      "sha256": "sha256:e7576d02405b554f9ff322bd60282d2dc3fa259fad9be673d954ca025afdee68",
+      "task_id": null
+    },
+    {
+      "kind": "smt_differential",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/proof-reports/z3-cvc5-differential.json",
+      "schema_version": "xaman-z3-cvc5-differential-report/v1",
+      "security_decision": "BLOCK_XAMAN_RELEASE_UNRESOLVED_ASSUMPTIONS",
+      "sha256": "sha256:0cb327ad4c1464902c930f86081aa8f1801a4d5ba46b4e36c09a21b4dfc85627",
+      "task_id": "PORTAL-CXTP-069"
+    },
+    {
+      "kind": "disproof_counterexamples",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/counterexample-report.json",
+      "schema_version": "xaman-counterexample-report/v1",
+      "security_decision": "BLOCK_COUNTEREXAMPLES_AND_MISSING_EVIDENCE",
+      "sha256": "sha256:3e1ede3a7942fbd3058b85c1b527b85fd1eb358d9f0450d1c2945b186d8e43e4",
+      "task_id": "PORTAL-CXTP-070"
+    },
+    {
+      "kind": "tla_apalache_projection",
+      "overall_status": "blocked_optional_lane",
+      "path": "security_ir_artifacts/corpora/xaman-app/tla/apalache-report.json",
+      "schema_version": "xaman-tla-apalache-report/v1",
+      "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER",
+      "sha256": "sha256:792bb1deda05857e0cbaae04bb77cd914a111569b6c7df8c8ec46530f5e15977",
+      "task_id": "PORTAL-CXTP-071"
+    },
+    {
+      "kind": "protocol_projection",
+      "overall_status": "blocked_optional_lane",
+      "path": "security_ir_artifacts/corpora/xaman-app/protocol/protocol-report.json",
+      "schema_version": "xaman-protocol-projection-report/v1",
+      "security_decision": "BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE",
+      "sha256": "sha256:6e757e999787a6fce907ee24beadc9bbb9a28c53ee9c61637fc7420b9d8a1a63",
+      "task_id": "PORTAL-CXTP-072"
+    },
+    {
+      "kind": "runtime_trace_report",
+      "overall_status": "blocked",
+      "path": "security_ir_artifacts/corpora/xaman-app/runtime-trace-report.json",
+      "schema_version": "xaman-runtime-trace-report/v1",
+      "security_decision": "BLOCK_RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+      "sha256": "sha256:d63ce5376265e6de3e068a5d1dbbbaea0c1bd4f3b77c58086218f6e3fd2fd46c",
+      "task_id": "PORTAL-CXTP-074"
+    },
+    {
+      "kind": "proof_consumer_kernel",
+      "overall_status": "ready_lean_checked_coq_unavailable",
+      "path": "security_ir_artifacts/corpora/xaman-app/proof-kernel/proof-consumer-report.json",
+      "schema_version": "xaman-proof-consumer-report/v1",
+      "security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS",
+      "sha256": "sha256:3fd62d8c0b7c209877cf499c9ad7523d4ccdc044a3fdff79fd1b773c87b01b77",
+      "task_id": "PORTAL-CXTP-073"
+    }
+  ],
+  "generated_at": "2026-07-10T07:17:07Z",
+  "model_cid": "sha256:316ead1268fb192641ece96ef255e92922b93623d6f4b1057dc56a2cec711c8d",
+  "next_required_evidence": [
+    "Provide reviewed production environment profile and source inventory for PORTAL-CXTP-077 and PORTAL-CXTP-078.",
+    "Provide real-device runtime trace bundle covering payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast outcomes.",
+    "Install or explicitly scope out Apalache, Tamarin, ProVerif, and Coq before claiming those solver lanes.",
+    "Integrate the Lean proof-consumer kernel into the production release consumer and clear the proof-consumer-kernel assumption."
+  ],
+  "overall_status": "blocked",
+  "production_release_blocked": true,
+  "proof_lane_summary": {
+    "disproof": {
+      "blocked_count": 2,
+      "counterexample_found_count": 7,
+      "release_acceptable_count": 0,
+      "vector_count": 9
+    },
+    "proof_consumer": {
+      "overall_status": "ready_lean_checked_coq_unavailable",
+      "security_decision": "LEAN_PROOF_CONSUMER_KERNEL_CHECKED_RELEASE_STILL_BLOCKED_BY_INTEGRATION_AND_ASSUMPTIONS"
+    },
+    "protocol": {
+      "overall_status": "blocked_optional_lane",
+      "security_decision": "BLOCK_PROTOCOL_SOLVERS_UNAVAILABLE"
+    },
+    "runtime": {
+      "blocking_gaps": [
+        {
+          "code": "REAL_DEVICE_TRACE_BUNDLE_MISSING",
+          "path": null,
+          "required_categories": [
+            "payload_intake",
+            "review",
+            "auth",
+            "signing",
+            "rejection",
+            "expiration",
+            "network_binding",
+            "broadcast",
+            "runtime_equivalence"
+          ]
+        },
+        {
+          "code": "RUNTIME_EQUIVALENCE_NOT_PROVED",
+          "reason": "Source and e2e feature facts are monitor specifications, not deployed-device execution evidence."
+        }
+      ],
+      "overall_status": "blocked",
+      "security_decision": "BLOCK_RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES"
+    },
+    "smt_z3_cvc5": {
+      "agreement_failure_count": 0,
+      "blocked_claim_count": 10,
+      "overall_status": "blocked",
+      "unsupported_or_error_count": 0
+    },
+    "tla_apalache": {
+      "overall_status": "blocked_optional_lane",
+      "security_decision": "BLOCK_TLA_APALACHE_MISSING_SOLVER"
+    }
+  },
+  "release_decision": "reject_release",
+  "schema_version": "xaman-assurance-packet/v1",
+  "security_decision": "BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET",
+  "task_id": "PORTAL-CXTP-075"
+}

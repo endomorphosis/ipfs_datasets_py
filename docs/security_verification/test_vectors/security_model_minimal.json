@@ -32,43 +32,153 @@
   "assumptions": [
     {
       "description": "cryptographic primitives are unbroken",
-      "id": "A1"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A1.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A1",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "security-architecture"
     },
     {
       "description": "private keys are generated with sufficient entropy",
-      "id": "A2"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A2.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A2",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "wallet-key-management"
     },
     {
       "description": "signing code signs only approved canonical transaction bytes",
-      "id": "A3"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A3.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A3",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "wallet-transaction-signing"
     },
     {
       "description": "database commits are serializable",
-      "id": "A4"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A4.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A4",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "exchange-ledger-database"
     },
     {
       "description": "nonce reservation is atomic",
-      "id": "A5"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A5.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A5",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "withdrawal-nonce-service"
     },
     {
       "description": "blockchain finality threshold k is sufficient",
-      "id": "A6"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A6.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A6",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "chain-risk-management"
     },
     {
       "description": "admin identities are not all compromised",
-      "id": "A7"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A7.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A7",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "security-governance"
     },
     {
       "description": "HSM/key manager obeys its interface contract",
-      "id": "A8"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A8.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A8",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "custody-platform"
     },
     {
       "description": "external RPC providers may lie/delay/censor within modeled bounds",
-      "id": "A9"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A9.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A9",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "blockchain-infrastructure"
     },
     {
       "description": "audit logs are append-only or tamper-evident",
-      "id": "A10"
+      "evidence_expires_at": "2027-01-01T00:00:00Z",
+      "evidence_refs": [
+        {
+          "kind": "manual_review",
+          "notes": "Built-in fixture evidence for bounded assumption A10.",
+          "path": "docs/security_verification/threat_model.md",
+          "review_status": "trusted_fixture"
+        }
+      ],
+      "id": "A10",
+      "last_reviewed_at": "2026-07-07T00:00:00Z",
+      "owner": "audit-compliance"
     }
   ],
   "capabilities": [

@@ -1,0 +1,251 @@
+{
+  "schema_version": "crypto-exchange-assumption-evidence/v1",
+  "profile_id": "production-wallet-exchange/env-profile/v0",
+  "profile_status": "blocked_missing_production_evidence",
+  "release_gate_effect": "fail_closed",
+  "generated_at": "2026-07-08T00:01:23Z",
+  "source_plan": "docs/security_verification/crypto_exchange_theorem_prover_security_plan.todo.md",
+  "environment_profile": "docs/security_verification/production_environment_profile.md",
+  "local_verifier_environment": {
+    "workspace_root_revision": "8fa7cf1f643a3fdf6af7441462ac51f265ed13bd",
+    "ipfs_datasets_revision": "16f346d05778b3efea043c12a6b5a955bb359f32",
+    "python_executable": "/home/barberb/miniforge3/bin/python",
+    "python_version": "3.12.12",
+    "z3_python_bindings": "4.16.0",
+    "production_deployment_evidence": "not_recorded"
+  },
+  "ir_assumption_entries": [
+    {
+      "id": "A1",
+      "description": "cryptographic primitives are unbroken",
+      "owner": "security-architecture",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A2",
+      "description": "private keys are generated with sufficient entropy",
+      "owner": "wallet-key-management",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A3",
+      "description": "signing code signs only approved canonical transaction bytes",
+      "owner": "wallet-transaction-signing",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A4",
+      "description": "database commits are serializable",
+      "owner": "exchange-ledger-database",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A5",
+      "description": "nonce reservation is atomic",
+      "owner": "withdrawal-nonce-service",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A6",
+      "description": "blockchain finality threshold k is sufficient",
+      "owner": "chain-risk-management",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A7",
+      "description": "admin identities are not all compromised",
+      "owner": "security-governance",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A8",
+      "description": "HSM/key manager obeys its interface contract",
+      "owner": "custody-platform",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A9",
+      "description": "external RPC providers may lie/delay/censor within modeled bounds",
+      "owner": "blockchain-infrastructure",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "A10",
+      "description": "audit logs are append-only or tamper-evident",
+      "owner": "audit-compliance",
+      "evidence_refs": [],
+      "last_reviewed_at": "2026-01-01T00:00:00Z",
+      "evidence_expires_at": "2026-01-02T00:00:00Z"
+    }
+  ],
+  "assumption_evidence_requirements": [
+    {
+      "assumption_id": "A1",
+      "required_evidence": [
+        "cryptographic primitive inventory",
+        "library and dependency versions",
+        "algorithm allowlist and denylist",
+        "cryptographic review record"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A2",
+      "required_evidence": [
+        "key generation implementation",
+        "entropy source documentation",
+        "key lifecycle controls",
+        "key-generation audit trail"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A3",
+      "required_evidence": [
+        "deployed signing source digest",
+        "canonical transaction byte construction",
+        "approval-to-signing binding",
+        "policy checks before signing"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A4",
+      "required_evidence": [
+        "database engine and isolation level",
+        "ledger transaction boundaries",
+        "retry and conflict policy",
+        "reservation consistency tests"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A5",
+      "required_evidence": [
+        "nonce reservation source digest",
+        "unique constraint or consensus mechanism",
+        "idempotency behavior",
+        "mempool replacement handling"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A6",
+      "required_evidence": [
+        "finality thresholds per chain and asset",
+        "risk owner approval",
+        "reorg rollback procedure",
+        "release-window chain policy"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A7",
+      "required_evidence": [
+        "admin identity model",
+        "quorum configuration",
+        "privileged action boundaries",
+        "break-glass and incident procedure"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A8",
+      "required_evidence": [
+        "HSM or key-manager interface contract",
+        "attestation evidence",
+        "policy enforcement configuration",
+        "failure and refusal behavior"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A9",
+      "required_evidence": [
+        "RPC provider inventory",
+        "provider quorum or fallback policy",
+        "stale data threshold",
+        "lying delay and censorship bounds"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    },
+    {
+      "assumption_id": "A10",
+      "required_evidence": [
+        "audit storage backend",
+        "append-only or tamper-evidence mechanism",
+        "critical event coverage query",
+        "retention and retrieval procedure"
+      ],
+      "current_state": "missing_production_evidence",
+      "accepted": false,
+      "current": false,
+      "release_gate_effect": "fail_closed"
+    }
+  ],
+  "required_domains": [
+    "withdrawals",
+    "deposits",
+    "ledger",
+    "capabilities",
+    "hsm",
+    "audit"
+  ],
+  "next_required_inputs": [
+    "deployed wallet and exchange source revision",
+    "database isolation and ledger transaction evidence",
+    "nonce reservation evidence",
+    "chain and asset finality policy",
+    "HSM or key-manager interface and attestation evidence",
+    "admin identity and quorum policy",
+    "RPC provider trust and failure bounds",
+    "audit-log tamper-evidence proof",
+    "runtime event stream mapping",
+    "proof receipt consumer deployment evidence"
+  ]
+}

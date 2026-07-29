@@ -143,22 +143,32 @@ def _guidance_route_names(mapping: Mapping[str, Any]) -> set[str]:
         "sample_ids",
         "samples",
     )
+    feature_route_keys = (
+        "feature",
+        "features",
+        "compiler_guidance_feature",
+        "compiler_guidance_features",
+        "ranked_guidance_features",
+    )
 
     def add_route(value: Any) -> None:
         route = _guidance_route_name(value)
         if route:
             routes.add(route)
 
-    def collect(value: Any) -> None:
+    def collect(value: Any, *, include_mapping_keys: bool = True) -> None:
         if isinstance(value, Mapping):
-            for key in value.keys():
-                add_route(key)
+            if include_mapping_keys:
+                for key in value.keys():
+                    add_route(key)
             for nested_key in route_keys + sample_route_keys:
                 add_route(value.get(nested_key))
+            for nested_key in feature_route_keys:
+                collect(value.get(nested_key), include_mapping_keys=False)
             return
         if isinstance(value, (list, tuple)):
             for item in value:
-                collect(item)
+                collect(item, include_mapping_keys=include_mapping_keys)
             return
         add_route(value)
 
@@ -172,6 +182,13 @@ def _guidance_route_names(mapping: Mapping[str, Any]) -> set[str]:
         "todo_routes",
     ):
         collect(mapping.get(key))
+    for key in (
+        "ranked_guidance_features",
+        "compiler_guidance_ranked_features",
+        "compiler_guidance_features",
+        "features",
+    ):
+        collect(mapping.get(key), include_mapping_keys=False)
     return routes
 
 
@@ -181,10 +198,18 @@ def _guidance_route_name(value: Any) -> str:
         return ""
     route = route.replace("-", "_").replace(" ", "_")
     for prefix in (
+        "compiler_guidance_route:",
+        "compiler_guidance_route_",
+        "compiler-guidance-route:",
+        "compiler-guidance-route_",
         "compiler_guidance_activation:",
         "compiler_guidance_activation_",
+        "compiler-guidance-activation:",
+        "compiler-guidance-activation_",
         "compiler_guidance:",
         "compiler_guidance_",
+        "compiler-guidance:",
+        "compiler-guidance_",
     ):
         if route.startswith(prefix):
             route = route[len(prefix) :]

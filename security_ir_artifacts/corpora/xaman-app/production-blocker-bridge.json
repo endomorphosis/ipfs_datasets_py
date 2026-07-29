@@ -1,0 +1,230 @@
+{
+  "artifact_cid": "sha256:ce76d6b651018c8a264b807ab4010df154011e3c067f93752bbf12da489042bb",
+  "blocked_task_count": 8,
+  "blocked_tasks": [
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_environment_profile.md",
+        "security_ir_artifacts/production/environment-profile.json"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "required_evidence": [
+        "deployment target identifiers, versions, chain/network targets, and build provenance",
+        "wallet vault/native runtime configuration and trust boundaries",
+        "backend payload API, signing, and broadcast service endpoints with owners",
+        "proof-consumer deployment mode and trust-anchor or canonical-CID policy"
+      ],
+      "task_id": "PORTAL-CXTP-077",
+      "title": "Collect production environment evidence",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_source_inventory.md",
+        "security_ir_artifacts/production/source-inventory.json"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "required_evidence": [
+        "reviewed production repositories, commits, packages, and generated artifacts",
+        "wallet, exchange, API, policy, HSM/vault, and runtime monitor source ownership",
+        "line-level mappings from source to each blocking/high production claim",
+        "explicit out-of-scope rationale for any Xaman-only artifact not deployed in production"
+      ],
+      "task_id": "PORTAL-CXTP-078",
+      "title": "Inventory deployed wallet, exchange, API, and policy sources",
+      "unblocks": [
+        "PORTAL-CXTP-079",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/security-model-ir.json",
+        "security_ir_artifacts/production/security-model-ir.cid",
+        "docs/security_verification/production_security_model_ir.md"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND"
+      ],
+      "required_evidence": [
+        "production environment profile from PORTAL-CXTP-077",
+        "production source inventory from PORTAL-CXTP-078",
+        "reviewed assumption registry with owner, evidence, expiry, and acceptance status",
+        "production claim set mapped into SecurityModelIR domains and proof obligations"
+      ],
+      "task_id": "PORTAL-CXTP-079",
+      "title": "Generate reviewed production SecurityModelIR candidate",
+      "unblocks": [
+        "PORTAL-CXTP-080",
+        "PORTAL-CXTP-083",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_claim_gate.md",
+        "security_ir_artifacts/production/claim-gate-report.json"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "required_evidence": [
+        "minimum required wallet, custody, payload, ledger, runtime, and proof-consumer domains",
+        "claim completeness gate for every blocking/high production claim",
+        "fail-closed report for missing domains, missing assumptions, or unreviewed evidence"
+      ],
+      "task_id": "PORTAL-CXTP-080",
+      "title": "Enforce required production domains and claim minimums",
+      "unblocks": [
+        "PORTAL-CXTP-081",
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/proof-reports/baseline.json",
+        "docs/security_verification/production_proof_baseline.md"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "required_evidence": [
+        "Z3/CVC5 production baseline for every blocking/high claim",
+        "solver unavailability recorded as UNKNOWN or blocked, never accepted",
+        "proof-consumer policy applied to reject non-PROVED and uncleared-assumption reports"
+      ],
+      "task_id": "PORTAL-CXTP-081",
+      "title": "Run production fail-closed proof baseline",
+      "unblocks": [
+        "PORTAL-CXTP-082",
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "security_ir_artifacts/production/disproof-report.json",
+        "docs/security_verification/production_disproof_suite.md"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE"
+      ],
+      "required_evidence": [
+        "production counterexample suite for known-bad wallet, payload, ledger, runtime, and proof-consumer cases",
+        "mutation checks proving gates fail closed when source or assumptions are weakened",
+        "all expected bad cases produce DISPROVED, UNKNOWN, NOT_MODELED, or blocked as appropriate"
+      ],
+      "task_id": "PORTAL-CXTP-082",
+      "title": "Run production disproof and mutation suite",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/runtime_event_mapping.md",
+        "security_ir_artifacts/production/runtime-trace-report.json"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "UNRESOLVED_XAMAN_ASSUMPTIONS"
+      ],
+      "required_evidence": [
+        "real-device trace bundle for payload intake, review, auth, signing, rejection, expiration, network binding, and broadcast outcomes",
+        "runtime event mapping from production monitor names to SecurityModelIR events",
+        "trace review status, collection environment, device/build provenance, and expiry metadata"
+      ],
+      "task_id": "PORTAL-CXTP-083",
+      "title": "Wire production runtime trace evidence",
+      "unblocks": [
+        "PORTAL-CXTP-084"
+      ]
+    },
+    {
+      "acceptance_files": [
+        "docs/security_verification/production_security_handoff_checklist.md",
+        "security_ir_artifacts/production/release-blockers.json"
+      ],
+      "current_status": "blocked",
+      "related_xaman_blockers": [
+        "UNRESOLVED_XAMAN_ASSUMPTIONS",
+        "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+        "COUNTEREXAMPLES_FOUND",
+        "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+        "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+        "APALACHE_NOT_RUN",
+        "PROTOCOL_SOLVERS_NOT_RUN",
+        "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+      ],
+      "required_evidence": [
+        "all PORTAL-CXTP-077 through PORTAL-CXTP-083 outputs present and internally consistent",
+        "release-blockers report preserving every unresolved blocker",
+        "handoff checklist showing owner, evidence, next action, and acceptance policy for each blocker"
+      ],
+      "task_id": "PORTAL-CXTP-084",
+      "title": "Refresh production blockers and handoff checklist",
+      "unblocks": []
+    }
+  ],
+  "generated_at": "2026-07-10T07:19:04Z",
+  "overall_status": "ready_blocker_bridge_generated",
+  "production_release_blocked": true,
+  "schema_version": "xaman-production-blocker-bridge/v1",
+  "security_decision": "PRODUCTION_BLOCKERS_MAPPED_RELEASE_REMAINS_BLOCKED",
+  "supervisor_policy": "Keep PORTAL-CXTP-077 through PORTAL-CXTP-084 blocked until their listed acceptance files exist and validate.",
+  "task_id": "PORTAL-CXTP-076",
+  "task_ids": [
+    "PORTAL-CXTP-077",
+    "PORTAL-CXTP-078",
+    "PORTAL-CXTP-079",
+    "PORTAL-CXTP-080",
+    "PORTAL-CXTP-081",
+    "PORTAL-CXTP-082",
+    "PORTAL-CXTP-083",
+    "PORTAL-CXTP-084"
+  ],
+  "xaman_assurance_packet": {
+    "artifact_cid": "sha256:e6b499f1171052a3a8d7438808aed5f6af5480dbb9b87b9a7337a367b3c20eee",
+    "blocker_count": 8,
+    "path": "security_ir_artifacts/corpora/xaman-app/assurance-packet.json",
+    "release_decision": "reject_release",
+    "security_decision": "BLOCK_XAMAN_RELEASE_ASSURANCE_PACKET",
+    "sha256": "sha256:ec996614c9756b4c7e3fe4523bbb5f69c341dab60599780b3d87a9ab70f4693f"
+  },
+  "xaman_blocker_codes": [
+    "UNRESOLVED_XAMAN_ASSUMPTIONS",
+    "SMT_DIFFERENTIAL_BLOCKS_ALL_CLAIMS",
+    "COUNTEREXAMPLES_FOUND",
+    "DISPROOF_VECTORS_BLOCKED_BY_MISSING_EVIDENCE",
+    "RUNTIME_EQUIVALENCE_MISSING_REAL_DEVICE_TRACES",
+    "APALACHE_NOT_RUN",
+    "PROTOCOL_SOLVERS_NOT_RUN",
+    "PROOF_CONSUMER_NOT_PRODUCTION_INTEGRATED"
+  ]
+}

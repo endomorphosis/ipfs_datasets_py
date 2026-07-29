@@ -257,6 +257,30 @@ class TDFOLLexer:
             if self.position >= len(self.text):
                 break
             
+            char = self.current_char()
+
+            # Read full word-like tokens before matching textual operators.
+            # This keeps compiler-exported predicates such as not_approved(...)
+            # and and_condition(...) intact while still classifying standalone
+            # keywords like "not" and "forall" as operators.
+            if (
+                char
+                and (char.isalpha() or char == "_")
+                and not (
+                    char in {"O", "P", "F", "G", "X", "U", "S", "W", "R"}
+                    and not (
+                        self.peek_char()
+                        and (self.peek_char().isalnum() or self.peek_char() == "_")
+                    )
+                )
+            ):
+                identifier = self.read_identifier()
+                token_type = self.SYMBOLS.get(identifier.lower(), TokenType.IDENTIFIER)
+                self.tokens.append(
+                    Token(token_type, identifier, self.position - len(identifier))
+                )
+                continue
+
             # Try multi-character symbols first
             matched = False
             for length in [3, 2]:  # Try 3-char, then 2-char symbols
@@ -270,8 +294,6 @@ class TDFOLLexer:
             
             if matched:
                 continue
-            
-            char = self.current_char()
 
             # Single-letter modal/deontic symbols are operators only when
             # standalone. For names like O_t(...) or Obligation(...), consume
