@@ -227,7 +227,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-014 Implement v2 routing, publishing, and cross-shard traversal
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: query
 - Depends on: KGP-013
