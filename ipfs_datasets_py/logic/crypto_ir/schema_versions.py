@@ -140,10 +140,25 @@ CRYPTO_IR_COMPLETENESS_RECEIPT_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVers
     "ipfs-datasets.crypto-ir.completeness-receipt", 1, 0, 0
 )
 
+# Kernel capability / verdict / registry schemas (CRYPTOIR-G030).
+CRYPTO_IR_CAPABILITY_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVersion(
+    "ipfs-datasets.crypto-ir.capability", 1, 0, 0
+)
+CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVersion(
+    "ipfs-datasets.crypto-ir.analysis-verdict", 1, 0, 0
+)
+CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVersion(
+    "ipfs-datasets.crypto-ir.policy-verdict", 1, 0, 0
+)
+CRYPTO_IR_ADAPTER_REGISTRY_SCHEMA_VERSION: Final[SchemaVersion] = SchemaVersion(
+    "ipfs-datasets.crypto-ir.adapter-registry", 1, 0, 0
+)
+
 # Friendly aliases.
 CRYPTO_IR_MODEL_SCHEMA: Final[SchemaVersion] = CRYPTO_IR_MODEL_SCHEMA_VERSION
 CRYPTO_IR_IDENTITY_SCHEMA: Final[SchemaVersion] = CRYPTO_IR_IDENTITY_SCHEMA_VERSION
 CRYPTO_IR_PROVENANCE_SCHEMA: Final[SchemaVersion] = CRYPTO_IR_PROVENANCE_SCHEMA_VERSION
+CRYPTO_IR_CAPABILITY_SCHEMA: Final[SchemaVersion] = CRYPTO_IR_CAPABILITY_SCHEMA_VERSION
 
 # Stable string forms used in record schema_version fields.
 CRYPTO_IR_MODEL_SCHEMA_ID: Final[str] = CRYPTO_IR_MODEL_SCHEMA_VERSION.identifier
@@ -159,6 +174,10 @@ _REGISTERED: Final[tuple[SchemaVersion, ...]] = (
     CRYPTO_IR_SERIALIZED_CANDIDATE_SCHEMA_VERSION,
     CRYPTO_IR_CONTRACT_ARTIFACT_SCHEMA_VERSION,
     CRYPTO_IR_COMPLETENESS_RECEIPT_SCHEMA_VERSION,
+    CRYPTO_IR_CAPABILITY_SCHEMA_VERSION,
+    CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION,
+    CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION,
+    CRYPTO_IR_ADAPTER_REGISTRY_SCHEMA_VERSION,
 )
 if len({item.identifier for item in _REGISTERED}) != len(_REGISTERED):
     raise RuntimeError("duplicate Crypto IR schema registration")
@@ -197,6 +216,10 @@ def is_registered_schema(identifier: str) -> bool:
 
 __all__ = [
     "CRYPTO_IR_ACCOUNT_IDENTITY_SCHEMA_VERSION",
+    "CRYPTO_IR_ADAPTER_REGISTRY_SCHEMA_VERSION",
+    "CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION",
+    "CRYPTO_IR_CAPABILITY_SCHEMA",
+    "CRYPTO_IR_CAPABILITY_SCHEMA_VERSION",
     "CRYPTO_IR_CHAIN_IDENTITY_SCHEMA_VERSION",
     "CRYPTO_IR_COMPLETENESS_RECEIPT_SCHEMA_VERSION",
     "CRYPTO_IR_CONTRACT_ARTIFACT_SCHEMA_VERSION",
@@ -206,6 +229,7 @@ __all__ = [
     "CRYPTO_IR_MODEL_SCHEMA",
     "CRYPTO_IR_MODEL_SCHEMA_ID",
     "CRYPTO_IR_MODEL_SCHEMA_VERSION",
+    "CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION",
     "CRYPTO_IR_PROVENANCE_SCHEMA",
     "CRYPTO_IR_PROVENANCE_SCHEMA_VERSION",
     "CRYPTO_IR_SERIALIZED_CANDIDATE_SCHEMA_VERSION",

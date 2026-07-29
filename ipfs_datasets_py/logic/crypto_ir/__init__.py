@@ -5,7 +5,8 @@ load chain adapters, network clients, or optional dependencies.  Leaf modules
 remain the owners of the exported contracts.
 
 CRYPTOIR-G020 owns foundational records, identity, provenance, and schema
-versions.  Adapter/registry exports for CRYPTOIR-G030 are added by that task.
+versions.  CRYPTOIR-G030 owns capabilities, adapter protocols, the deterministic
+registry, and non-interchangeable verdicts.
 """
 
 from __future__ import annotations
@@ -92,6 +93,10 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
     ),
     "schema_versions": (
         "CRYPTO_IR_ACCOUNT_IDENTITY_SCHEMA_VERSION",
+        "CRYPTO_IR_ADAPTER_REGISTRY_SCHEMA_VERSION",
+        "CRYPTO_IR_ANALYSIS_VERDICT_SCHEMA_VERSION",
+        "CRYPTO_IR_CAPABILITY_SCHEMA",
+        "CRYPTO_IR_CAPABILITY_SCHEMA_VERSION",
         "CRYPTO_IR_CHAIN_IDENTITY_SCHEMA_VERSION",
         "CRYPTO_IR_COMPLETENESS_RECEIPT_SCHEMA_VERSION",
         "CRYPTO_IR_CONTRACT_ARTIFACT_SCHEMA_VERSION",
@@ -101,6 +106,7 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
         "CRYPTO_IR_MODEL_SCHEMA",
         "CRYPTO_IR_MODEL_SCHEMA_ID",
         "CRYPTO_IR_MODEL_SCHEMA_VERSION",
+        "CRYPTO_IR_POLICY_VERDICT_SCHEMA_VERSION",
         "CRYPTO_IR_PROVENANCE_SCHEMA",
         "CRYPTO_IR_PROVENANCE_SCHEMA_VERSION",
         "CRYPTO_IR_SERIALIZED_CANDIDATE_SCHEMA_VERSION",
@@ -112,6 +118,62 @@ _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
         "get_schema_version",
         "is_registered_schema",
         "schema_registry_descriptor",
+    ),
+    "capabilities": (
+        "CRYPTO_IR_CAPABILITY_DOMAIN",
+        "CapabilityDescriptor",
+        "CapabilityKind",
+        "CapabilityProbeResult",
+        "CapabilityStatus",
+        "CapabilitySurface",
+        "CryptoIRCapabilityError",
+        "capability_identity_tuple",
+        "fail_closed_for_unavailable",
+        "probe_capability",
+        "prover_backend_capability",
+        "wallet_records_capability",
+    ),
+    "verdicts": (
+        "CRYPTO_IR_VERDICT_DOMAIN",
+        "AnalysisOutcome",
+        "AnalysisVerdict",
+        "CryptoIRVerdictError",
+        "HeuristicOutcome",
+        "MonitorOutcome",
+        "PolicyOutcome",
+        "PolicyVerdict",
+        "ReadinessOutcome",
+        "SanctionsMatchLevel",
+        "SatisfiabilityOutcome",
+        "TransactionVerdict",
+        "TransactionVerdictOutcome",
+        "TypedFamilyVerdict",
+        "VerdictFamily",
+        "analysis_outcome_fail_closed",
+        "default_result_provenance",
+        "refuse_verdict_coercion",
+        "result_family_of",
+        "transaction_blocks_automation",
+        "unavailable_analysis_verdict",
+        "unavailable_policy_verdict",
+    ),
+    "registry": (
+        "CRYPTO_IR_REGISTRY_DOMAIN",
+        "AdapterRegistry",
+        "CryptoIRRegistryError",
+        "RegistryEntry",
+        "empty_registry",
+    ),
+    "adapters": (
+        "CRYPTO_IR_ADAPTER_DOMAIN",
+        "AdapterConversionResult",
+        "AdapterConversionStatus",
+        "CryptoIRAdapter",
+        "CryptoIRAdapterError",
+        "NullCryptoIRAdapter",
+        "UnsupportedField",
+        "adapter_is_available",
+        "unavailable_conversion",
     ),
 }
 
