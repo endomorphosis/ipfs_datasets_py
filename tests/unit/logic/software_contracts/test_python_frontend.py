@@ -60,7 +60,7 @@ def test_python_frontend_emits_normalized_semantic_facts() -> None:
     assert isinstance(record, ASTRecord)
     assert record.frontend.language == "python"
     assert record.frontend.frontend_name == "cpython-ast"
-    assert record.frontend.frontend_version == "1.1.0"
+    assert record.frontend.frontend_version == "1.2.0"
     assert record.provenance.source_cid == cid_for_bytes(
         REPRESENTATIVE_SOURCE.encode()
     )
@@ -297,6 +297,28 @@ def test_malformed_dynamic_and_wildcard_constructs_fail_explicitly() -> None:
     assert "python.dynamic_execution" in codes
 
 
+def test_literal_method_targets_are_normalized_without_literal_contents() -> None:
+    record = extract(
+        """\
+newline = "\\n".join(parts)
+spaced = " ".join(parts)
+binary = b"\\x00".hex()
+"""
+    )
+    assert {item.callee_name for item in record.calls} == {
+        "bytes_literal.hex",
+        "str_literal.join",
+    }
+    assert all(
+        not any(character.isspace() for character in item.name)
+        for item in record.references
+    )
+    assert all(
+        not any(not character.isprintable() for character in item.name)
+        for item in record.references
+    )
+
+
 def test_resource_and_encoding_failures_are_durable_unsupported_records() -> None:
     bounded = PythonASTExtractor(max_source_bytes=4).extract(
         "value = 1\n",
@@ -393,7 +415,7 @@ def test_compatibility_constructor_round_trip_and_golden_root() -> None:
     # the shared AST schema.  Update only with an explicit compatibility review.
     assert (
         record.cid
-        == "baguqeeraqqnuh7keo2od4wafzpc6cuvkkbzm3rcktff2e7axrsauwkinfhrq"
+        == "baguqeerabsur52uvwohvsx6bqdqqnv2tdkbha77npqgy2rwx23kqsc7rm72q"
     )
 
 

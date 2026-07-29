@@ -43,7 +43,7 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-PYTHON_FRONTEND_VERSION: Final[str] = "1.1.0"
+PYTHON_FRONTEND_VERSION: Final[str] = "1.2.0"
 PYTHON_FRONTEND_NAME: Final[str] = "cpython-ast"
 PYTHON_SOURCE_EXTENSIONS: Final[tuple[str, ...]] = (".py", ".pyi")
 DEFAULT_MAX_SOURCE_BYTES: Final[int] = 8 * 1024 * 1024
@@ -77,8 +77,13 @@ def _expression_name(node: ast.AST | None) -> str:
         return f"{parent}[]" if parent else "subscript"
     if isinstance(node, ast.Call):
         return _expression_name(node.func)
-    if isinstance(node, ast.Constant) and type(node.value) is str:
-        return node.value
+    if isinstance(node, ast.Constant):
+        # Literal contents are values, not lexical target names.  Returning a
+        # string literal verbatim made calls such as ``" ".join(...)`` emit
+        # names containing whitespace/control characters and crash the closed
+        # AST IR instead of producing a bounded dynamic-call fact.
+        literal_type = type(node.value).__name__.lower()
+        return f"{literal_type}_literal"
     return type(node).__name__
 
 
