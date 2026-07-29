@@ -693,6 +693,28 @@ class AnalysisCache:
         except (ContentIdentityError, TypeError, ValueError) as exc:
             raise CacheIntegrityError("cache index receipt CID is invalid") from exc
 
+    def _read_receipt(
+        self,
+        receipt_cid: str,
+        *,
+        verify_result: bool = True,
+    ) -> CacheReceipt:
+        """Read one immutable receipt and, by default, its bound result.
+
+        Receipt validity alone is insufficient for reuse or aggregate
+        membership: a receipt whose result was removed, truncated, poisoned,
+        or changed to a different schema must fail closed too.
+        """
+
+        raw = self.cas.get(receipt_cid, expected_schema=RECEIPT_SCHEMA)
+        receipt = CacheReceipt.from_dict(raw)
+        if verify_result:
+            self.cas.get(
+                receipt.result_cid,
+                expected_schema=receipt.result_schema,
+            )
+        return receipt
+
     def put(
         self,
         key: AnalysisCacheKey,
@@ -747,8 +769,7 @@ class AnalysisCache:
         receipt_cid = self._read_index(key.cid)
         if receipt_cid is None:
             return CacheLookup(hit=False, reason="miss")
-        raw_receipt = self.cas.get(receipt_cid, expected_schema=RECEIPT_SCHEMA)
-        receipt = CacheReceipt.from_dict(raw_receipt)
+        receipt = self._read_receipt(receipt_cid, verify_result=False)
         if receipt.key_cid != key.cid or receipt.key != key:
             raise CacheIntegrityError("cache index points to the wrong shard key")
         now = self._now()
@@ -806,17 +827,66 @@ class AnalysisCache:
 
     invalidate_dependencies = invalidate_source_closure
 
+    def rebuild_indexes(self) -> tuple[str, ...]:
+        """Rebuild replaceable exact-key indexes from immutable CAS receipts.
+
+        All structured CAS objects are integrity checked while scanning.
+        Expired leased receipts are omitted.  If multiple immutable receipts
+        exist for one key, the greatest ``(created_at, receipt_cid)`` pair wins,
+        which makes reconstruction deterministic even when timestamps tie.
+        Existing indexes that have no reconstructable receipt are removed.
+        No immutable object is changed or deleted.
+        """
+
+        candidates: dict[str, tuple[int, str]] = {}
+        now = self._now()
+        for path in sorted(self.cas.structured_root.glob("*/*")):
+            if not path.is_file():
+                raise CacheIntegrityError(
+                    f"structured CAS entry is not a regular file: {path.name}"
+                )
+            value = self.cas.get(path.name)
+            if not isinstance(value, dict) or value.get("schema") != RECEIPT_SCHEMA:
+                continue
+            receipt = CacheReceipt.from_dict(value)
+            self.cas.get(
+                receipt.result_cid,
+                expected_schema=receipt.result_schema,
+            )
+            if not receipt.is_fresh(now):
+                continue
+            candidate = (receipt.created_at, path.name)
+            if candidate > candidates.get(receipt.key_cid, (-1, "")):
+                candidates[receipt.key_cid] = candidate
+
+        with self._locked():
+            expected_paths: set[Path] = set()
+            for key_cid, (_, receipt_cid) in sorted(candidates.items()):
+                expected_paths.add(self._index_path(key_cid))
+                self._write_index(key_cid, receipt_cid)
+            for path in sorted(self.index_root.glob("*/*.json")):
+                if path not in expected_paths:
+                    path.unlink(missing_ok=True)
+        return tuple(sorted(candidates))
+
     def create_snapshot_receipt(
         self,
         repository_tree_cid: str,
         shard_receipts: Sequence[CacheReceipt | str],
     ) -> AggregateSnapshotReceipt:
+        if isinstance(shard_receipts, (str, bytes, bytearray)):
+            raise CacheIntegrityError("shard_receipts must be an array")
         receipt_cids: list[str] = []
+        key_cids: set[str] = set()
         for index, item in enumerate(shard_receipts):
             cid = item.cid if isinstance(item, CacheReceipt) else item
             cid = _structured_cid(cid, f"shard_receipts[{index}]")
-            raw = self.cas.get(cid, expected_schema=RECEIPT_SCHEMA)
-            CacheReceipt.from_dict(raw)
+            receipt = self._read_receipt(cid)
+            if receipt.key_cid in key_cids:
+                raise CacheIntegrityError(
+                    "snapshot must contain exactly one receipt per shard key"
+                )
+            key_cids.add(receipt.key_cid)
             receipt_cids.append(cid)
         snapshot = AggregateSnapshotReceipt(
             repository_tree_cid=repository_tree_cid,
@@ -843,18 +913,26 @@ class AnalysisCache:
             )
         ):
             raise CacheIntegrityError("snapshot repository-tree membership mismatch")
-        actual_keys: set[str] = set()
+        actual_keys: list[str] = []
         for receipt_cid in snapshot.shard_receipt_cids:
-            receipt = CacheReceipt.from_dict(
-                self.cas.get(receipt_cid, expected_schema=RECEIPT_SCHEMA)
+            receipt = self._read_receipt(receipt_cid)
+            actual_keys.append(receipt.key_cid)
+        if len(set(actual_keys)) != len(actual_keys):
+            raise CacheIntegrityError(
+                "snapshot contains duplicate shard-key membership"
             )
-            actual_keys.add(receipt.key_cid)
         if expected_key_cids is not None:
-            expected = {
+            if isinstance(expected_key_cids, (str, bytes, bytearray)):
+                raise CacheIntegrityError("expected_key_cids must be an array")
+            expected = tuple(
                 _structured_cid(item, f"expected_key_cids[{index}]")
                 for index, item in enumerate(expected_key_cids)
-            }
-            if actual_keys != expected:
+            )
+            if len(set(expected)) != len(expected):
+                raise CacheIntegrityError(
+                    "expected_key_cids must contain unique shard keys"
+                )
+            if tuple(sorted(actual_keys)) != tuple(sorted(expected)):
                 raise CacheIntegrityError("snapshot shard membership mismatch")
         return snapshot
 

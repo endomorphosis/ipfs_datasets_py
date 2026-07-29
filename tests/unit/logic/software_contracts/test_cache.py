@@ -293,6 +293,40 @@ def test_one_blob_mutation_invalidates_only_reverse_dependency_closure(
     assert any((tmp_path / "cas" / "structured").glob("*/*"))
 
 
+def test_replaceable_indexes_rebuild_from_verified_immutable_receipts(
+    tmp_path: Path,
+) -> None:
+    now = [100]
+    cache = AnalysisCache(tmp_path, clock=lambda: now[0])
+    first_key = key(source=b"first")
+    second_key = key(source=b"second")
+    first = cache.put(first_key, result("first"))
+    cache.put(
+        second_key,
+        result("temporary"),
+        outcome=OUTCOME_UNKNOWN,
+        lease_seconds=5,
+    )
+
+    for path in cache.index_root.glob("*/*.json"):
+        path.unlink()
+    assert not cache.lookup(first_key).hit
+
+    assert cache.rebuild_indexes() == (first.key_cid, second_key.cid)
+    assert cache.lookup(first_key).result == result("first")
+    assert cache.lookup(second_key).result == result("temporary")
+
+    now[0] = 105
+    assert cache.rebuild_indexes() == (first.key_cid,)
+    assert cache.lookup(first_key).hit
+    assert not cache.lookup(second_key).hit
+
+    # Rebuilding verifies the immutable result as well as the receipt.
+    cache.cas.path_for(first.result_cid).write_bytes(b"{")
+    with pytest.raises(CacheIntegrityError):
+        cache.rebuild_indexes()
+
+
 def test_snapshot_receipt_binds_tree_and_exact_shard_membership(
     tmp_path: Path,
 ) -> None:
@@ -323,6 +357,24 @@ def test_snapshot_receipt_binds_tree_and_exact_shard_membership(
             snapshot.cid,
             expected_key_cids=(first.key_cid,),
         )
+
+
+def test_snapshot_rejects_duplicate_keys_and_poisoned_member_results(
+    tmp_path: Path,
+) -> None:
+    cache = AnalysisCache(tmp_path, clock=lambda: 100)
+    cache_key = key()
+    first = cache.put(cache_key, result("first"))
+    second = cache.put(cache_key, result("second"))
+    tree_cid = cid_for_structured({"repository": "tree"})
+
+    with pytest.raises(CacheIntegrityError, match="one receipt per shard key"):
+        cache.create_snapshot_receipt(tree_cid, (first, second))
+
+    snapshot = cache.create_snapshot_receipt(tree_cid, (second,))
+    cache.cas.path_for(second.result_cid).write_bytes(b"{")
+    with pytest.raises(CacheIntegrityError):
+        cache.read_snapshot_receipt(snapshot.cid)
 
 
 def test_formal_cache_names_are_strict_contract_analysis_aliases(
