@@ -1,0 +1,98 @@
+{
+  "schema": "wallet_processor_migration/bitcoin-reorg-utxo@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G400",
+  "network": "bitcoin-mainnet",
+  "notes": "Shallow reorg reverses UTXO effects for orphaned block transactions.",
+  "seed_utxo": {
+    "txid": "6666666666666666666666666666666666666666666666666666666666666666",
+    "vout": 0,
+    "value": 200000,
+    "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "script_hex": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+    "height": 200
+  },
+  "orphaned_tx": {
+    "txid": "7777777777777777777777777777777777777777777777777777777777777777",
+    "vin": [
+      {
+        "txid": "6666666666666666666666666666666666666666666666666666666666666666",
+        "vout": 0,
+        "prevout": {
+          "value": 200000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        },
+        "sequence": 4294967295
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 190000,
+        "scriptpubkey": "5120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc4876cb9be242b74ada3621f",
+        "scriptpubkey_address": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
+      }
+    ],
+    "fee": 10000,
+    "status": {
+      "confirmed": true,
+      "block_height": 201,
+      "block_hash": "0000000000000000000000000000000000000000000000000000000000000c9-old",
+      "block_time": 1711000000
+    }
+  },
+  "replacement_tx": {
+    "txid": "8888888888888888888888888888888888888888888888888888888888888888",
+    "vin": [
+      {
+        "txid": "6666666666666666666666666666666666666666666666666666666666666666",
+        "vout": 0,
+        "prevout": {
+          "value": 200000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        },
+        "sequence": 4294967295
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 185000,
+        "scriptpubkey": "76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac",
+        "scriptpubkey_address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      }
+    ],
+    "fee": 15000,
+    "status": {
+      "confirmed": true,
+      "block_height": 201,
+      "block_hash": "0000000000000000000000000000000000000000000000000000000000000c9-new",
+      "block_time": 1711000500
+    }
+  },
+  "local_history": [
+    {"sequence": 200, "hash": "00000000000000000000000000000000000000000000000000000000000000c8"},
+    {"sequence": 201, "hash": "0000000000000000000000000000000000000000000000000000000000000c9-old"}
+  ],
+  "remote_history": [
+    {"sequence": 200, "hash": "00000000000000000000000000000000000000000000000000000000000000c8"},
+    {"sequence": 201, "hash": "0000000000000000000000000000000000000000000000000000000000000c9-new"},
+    {"sequence": 202, "hash": "00000000000000000000000000000000000000000000000000000000000000ca"}
+  ],
+  "expect": {
+    "after_orphan_apply": {
+      "balance_source": 0,
+      "balance_taproot": 190000
+    },
+    "after_reorg_reverse": {
+      "balance_source": 200000,
+      "balance_taproot": 0
+    },
+    "after_replacement_apply": {
+      "balance_legacy": 185000,
+      "balance_source": 0
+    }
+  }
+}

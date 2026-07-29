@@ -1,30 +1,67 @@
 {
   "schema": "wallet_processor_migration/chain-fixture-manifest@1",
   "schema_version": 1,
-  "goal_id": "WALPROC-G090",
-  "task_id": "WALPROC-013",
+  "goal_id": "WALPROC-G400",
+  "task_id": "WALPROC-019",
   "chain_id": "bitcoin",
   "generated_at": "2026-07-29T00:00:00Z",
-  "purpose": "Scaffold for Bitcoin UTXO/script golden fixtures.",
+  "purpose": "Bitcoin UTXO/script golden fixtures for WALPROC-G400 (legacy/SegWit/Taproot, coinbase, multi-io, spent/unspent, RBF, network mismatch, reorg).",
   "classification": {
     "offline_default": true,
     "immutable_when_digested": true,
-    "status": "scaffold"
+    "status": "golden"
   },
   "source": {
-    "kind": "scaffold",
-    "description": "Directory reserved for legacy/SegWit/Taproot, coinbase, and reorg fixtures."
+    "kind": "synthetic_offline",
+    "description": "Deterministic offline fixtures; not live network data. Esplora-shaped transaction payloads."
   },
   "license": {
     "spdx": "Apache-2.0"
   },
   "provenance": {
     "chain_namespace": "bip122",
+    "network": "bitcoin-mainnet",
+    "genesis_hash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
     "not_live_network_data": true,
-    "extends_shared_checks": true
+    "extends_shared_checks": true,
+    "provider_family": "esplora",
+    "utxo_model": true,
+    "ownership_clustering": false
+  },
+  "coverage": {
+    "scripts": "scripts_legacy_segwit_taproot.json",
+    "coinbase": "coinbase.json",
+    "multi_input_output": "multi_input_output.json",
+    "spent_unspent": "spent_unspent.json",
+    "replacement": "replacement_rbf.json",
+    "network_mismatch": "network_mismatch.json",
+    "reorg": "reorg_utxo.json",
+    "sample_transactions": "sample_transactions.json"
   },
   "files": [
     "manifest.json",
-    "README.md"
+    "README.md",
+    "scripts_legacy_segwit_taproot.json",
+    "coinbase.json",
+    "multi_input_output.json",
+    "spent_unspent.json",
+    "replacement_rbf.json",
+    "network_mismatch.json",
+    "reorg_utxo.json",
+    "sample_transactions.json"
+  ],
+  "acceptance_keys": [
+    "legacy_segwit_taproot",
+    "coinbase",
+    "multi_input_output",
+    "spent_unspent",
+    "replacement",
+    "network_mismatch",
+    "reorg_reverses_utxo",
+    "utxo_not_account_debits",
+    "exact_sats",
+    "no_ownership_clustering",
+    "confirmation_policy",
+    "no_psbt_sign_broadcast"
   ]
 }

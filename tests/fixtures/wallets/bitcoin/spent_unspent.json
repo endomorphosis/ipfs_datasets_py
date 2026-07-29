@@ -1,0 +1,77 @@
+{
+  "schema": "wallet_processor_migration/bitcoin-spent-unspent@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G400",
+  "network": "bitcoin-mainnet",
+  "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+  "create_tx": {
+    "txid": "1111111111111111111111111111111111111111111111111111111111111111",
+    "vin": [
+      {
+        "is_coinbase": true,
+        "scriptsig": "01",
+        "sequence": 4294967295
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 75000,
+        "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+        "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      },
+      {
+        "n": 1,
+        "value": 25000,
+        "scriptpubkey": "76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac",
+        "scriptpubkey_address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      }
+    ],
+    "fee": 0,
+    "status": {
+      "confirmed": true,
+      "block_height": 100,
+      "block_hash": "0000000000000000000000000000000000000000000000000000000000000064",
+      "block_time": 1700000000
+    }
+  },
+  "spend_tx": {
+    "txid": "2222222222222222222222222222222222222222222222222222222222222222",
+    "vin": [
+      {
+        "txid": "1111111111111111111111111111111111111111111111111111111111111111",
+        "vout": 0,
+        "prevout": {
+          "value": 75000,
+          "scriptpubkey": "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+          "scriptpubkey_address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        },
+        "sequence": 4294967295
+      }
+    ],
+    "vout": [
+      {
+        "n": 0,
+        "value": 70000,
+        "scriptpubkey": "5120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc4876cb9be242b74ada3621f",
+        "scriptpubkey_address": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
+      }
+    ],
+    "fee": 5000,
+    "status": {
+      "confirmed": true,
+      "block_height": 101,
+      "block_hash": "0000000000000000000000000000000000000000000000000000000000000065",
+      "block_time": 1700001000
+    }
+  },
+  "expect_after_create": {
+    "balance_address": 75000,
+    "unspent_count": 2
+  },
+  "expect_after_spend": {
+    "balance_address": 0,
+    "unspent_count": 2,
+    "spent_outpoint": "1111111111111111111111111111111111111111111111111111111111111111:0"
+  }
+}
