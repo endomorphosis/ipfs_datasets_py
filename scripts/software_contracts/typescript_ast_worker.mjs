@@ -430,6 +430,27 @@ function parseFacts(request) {
         "Repeated decorator order requires a TypeScript-owned syntax record.",
       );
     }
+    // Export may live on a parent VariableStatement / export assignment rather
+    // than the declaration node. Callers that already classified export/default
+    // pass those flags; still honor direct modifiers for class/function forms.
+    if (hasModifier(node, ts.SyntaxKind.ExportKeyword)) flags.push("export");
+    if (hasModifier(node, ts.SyntaxKind.DefaultKeyword)) flags.push("default");
+    // Variable declarations inherit export from their VariableStatement.
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.parent &&
+      ts.isVariableDeclarationList(node.parent) &&
+      node.parent.parent &&
+      ts.isVariableStatement(node.parent.parent)
+    ) {
+      if (hasModifier(node.parent.parent, ts.SyntaxKind.ExportKeyword)) {
+        flags.push("export");
+      }
+      if (hasModifier(node.parent.parent, ts.SyntaxKind.DefaultKeyword)) {
+        flags.push("default");
+      }
+    }
+    const normalizedFlags = [...new Set(flags)].sort();
     const value = {
       symbol_id: id("symbol", node),
       name,
@@ -441,17 +462,15 @@ function parseFacts(request) {
       signature,
       visibility: visibility(node),
       decorator_names: normalizedDecorators,
-      flags: [...new Set(flags)].sort(),
+      flags: normalizedFlags,
     };
     addFact(symbols, value);
     if (
       currentScope() === "scope:module" &&
-      (hasModifier(node, ts.SyntaxKind.ExportKeyword) ||
-        hasModifier(node, ts.SyntaxKind.DefaultKeyword))
+      (normalizedFlags.includes("export") ||
+        normalizedFlags.includes("default"))
     ) {
-      exports.add(
-        hasModifier(node, ts.SyntaxKind.DefaultKeyword) ? "default" : name,
-      );
+      exports.add(normalizedFlags.includes("default") ? "default" : name);
     }
     return value;
   }
@@ -707,15 +726,9 @@ function parseFacts(request) {
     }
     if (ts.isVariableDeclaration(node)) {
       if (ts.isIdentifier(node.name)) {
-        symbol(
-          node,
-          node.name.text,
-          "variable",
-          null,
-          hasModifier(node.parent?.parent, ts.SyntaxKind.ExportKeyword)
-            ? ["export"]
-            : [],
-        );
+        // Export classification is performed inside symbol() from the parent
+        // VariableStatement so export_names stays aligned with flags.
+        symbol(node, node.name.text, "variable");
       } else {
         unsupported(
           node,
