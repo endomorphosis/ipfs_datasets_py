@@ -210,7 +210,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-013 Define the sharded graph manifest v2
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: query
 - Depends on: KGP-004, KGP-010
