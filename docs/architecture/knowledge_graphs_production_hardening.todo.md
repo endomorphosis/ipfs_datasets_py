@@ -74,7 +74,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-005 Build a durable graph catalog with branch-head CAS
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-004
