@@ -4,103 +4,121 @@ Transaction Management Module
 This module provides ACID transaction support for the IPFS graph database,
 enabling reliable multi-operation workflows with rollback capability.
 
-Architecture:
-- Write-Ahead Logging (WAL) stored on IPLD
-- Optimistic Concurrency Control (OCC) with CID versioning
-- Four isolation levels (READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE)
-- Automatic conflict detection and retry
+Architecture (KGP-007 durable MVCC / WAL):
+- Write-Ahead Logging (WAL) with INTENT → PREPARE → PUBLISH → COMPLETE phases
+- Snapshot revisions for stable readers
+- Staged deltas invisible until head publication
+- Optimistic branch-head compare-and-swap (CAS)
+- Graph-scoped writer lease fencing
+- Idempotent phase replay and deterministic crash recovery
+- Hard bounds on WAL records and staged deltas
 
 Components:
-- TransactionManager: Coordinates transaction lifecycle
-- WriteAheadLog: Persists operations before applying
+- TransactionManager: Coordinates transaction lifecycle (legacy GraphEngine path)
+- DurableMVCC: Multi-phase durable MVCC coordinator
+- WriteAheadLog: Persists multi-phase operations with recovery matrix
 - IsolationLevel: Defines transaction isolation semantics
-- ConflictResolver: Handles write-write conflicts
 
-Isolation Levels:
-- READ_UNCOMMITTED: No isolation (fastest, not recommended)
-- READ_COMMITTED: See only committed changes
-- REPEATABLE_READ: Snapshot isolation (default)
-- SERIALIZABLE: Full serializability (slowest)
+Usage (DurableMVCC)::
 
-Usage:
+    from ipfs_datasets_py.knowledge_graphs.transactions import (
+        DurableMVCC, WriteAheadLog, IsolationLevel
+    )
+
+    wal = WriteAheadLog(storage)
+    mvcc = DurableMVCC(wal)
+    txn = mvcc.begin("tenant", "graph", branch="main")
+    mvcc.stage_mutations(txn, entities=[{"id": "e1", "type": "Person"}])
+    mvcc.prepare(txn)
+    mvcc.publish(txn)
+    mvcc.complete(txn)
+
+Usage (legacy TransactionManager)::
+
     from ipfs_datasets_py.knowledge_graphs.transactions import (
         TransactionManager, IsolationLevel
     )
-    
-    # Create transaction manager
     txn_manager = TransactionManager(storage_backend)
-    
-    # Begin transaction
     txn = txn_manager.begin(isolation_level=IsolationLevel.REPEATABLE_READ)
-    
-    try:
-        # Perform operations
-        txn.write_node(node_data)
-        txn.write_relationship(rel_data)
-        
-        # Commit changes
-        root_cid = txn_manager.commit(txn)
-        print(f"Transaction committed: {root_cid}")
-    except ConflictError:
-        # Rollback on conflict
-        txn_manager.rollback(txn)
-        raise
-
-Phase 3 Implementation Status:
-- Task 3.1: WAL structure design (COMPLETE)
-- Task 3.2: WAL implementation (COMPLETE)
-- Task 3.3: Transaction Manager (IN PROGRESS)
-- Task 3.4-3.6: Integration and testing (PLANNED)
-
-WAL Entry Format:
-    {
-        "txn_id": "uuid-string",
-        "timestamp": 1234567890,
-        "operations": [
-            {"type": "write_node", "node": {...}},
-            {"type": "write_relationship", "rel": {...}},
-            {"type": "delete_node", "node_id": "..."}
-        ],
-        "prev_wal_cid": "bafy..."  # Linked list for recovery
-    }
-
-Roadmap:
-- Phase 3 (Weeks 5-6): Full implementation with WAL and isolation levels
 """
 
-# Phase 3 implementation (Weeks 5-6)
 from .types import (
     IsolationLevel,
     TransactionState,
+    WALPhase,
+    RecoveryAction,
     OperationType,
     Operation,
     WALEntry,
     Transaction,
+    SnapshotRevision,
+    StagedDelta,
+    LeaseFence,
+    HeadCASResult,
+    RecoveryDecision,
+    RECOVERY_ACTION_MATRIX,
+    recovery_action_for_phase,
+    phase_rank,
+    txn_state_to_phase,
+    phase_to_txn_state,
     ConflictError,
     TransactionAbortedError,
-    DeadlockDetectedError
+    DeadlockDetectedError,
+    LeaseFencedError,
+    WALBoundExceededError,
+    IdempotencyConflictError,
+    MAX_WAL_OPERATIONS_PER_ENTRY,
+    MAX_WAL_ENTRY_BYTES,
+    MAX_WRITE_SET_SIZE,
+    MAX_READ_SET_SIZE,
+    MAX_STAGED_DELTA_BYTES,
+    MAX_ACTIVE_TRANSACTIONS,
 )
 from .wal import WriteAheadLog
 from .manager import TransactionManager
+from .mvcc import DurableMVCC, InMemoryBranchStore
 
 __all__ = [
     # Types
     "IsolationLevel",
     "TransactionState",
+    "WALPhase",
+    "RecoveryAction",
     "OperationType",
     "Operation",
     "WALEntry",
     "Transaction",
-    # WAL
+    "SnapshotRevision",
+    "StagedDelta",
+    "LeaseFence",
+    "HeadCASResult",
+    "RecoveryDecision",
+    "RECOVERY_ACTION_MATRIX",
+    "recovery_action_for_phase",
+    "phase_rank",
+    "txn_state_to_phase",
+    "phase_to_txn_state",
+    # Bounds
+    "MAX_WAL_OPERATIONS_PER_ENTRY",
+    "MAX_WAL_ENTRY_BYTES",
+    "MAX_WRITE_SET_SIZE",
+    "MAX_READ_SET_SIZE",
+    "MAX_STAGED_DELTA_BYTES",
+    "MAX_ACTIVE_TRANSACTIONS",
+    # WAL / MVCC
     "WriteAheadLog",
+    "DurableMVCC",
+    "InMemoryBranchStore",
     # Manager
     "TransactionManager",
     # Exceptions
     "ConflictError",
     "TransactionAbortedError",
     "DeadlockDetectedError",
+    "LeaseFencedError",
+    "WALBoundExceededError",
+    "IdempotencyConflictError",
 ]
 
-# Version info
-__version__ = "0.2.0"
-__status__ = "development"  # Phase 3 in progress
+__version__ = "0.3.0"
+__status__ = "production"  # KGP-007 durable MVCC/WAL
