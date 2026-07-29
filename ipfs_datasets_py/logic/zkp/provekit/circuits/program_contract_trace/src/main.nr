@@ -1,6 +1,10 @@
 // provekit_program_contract_trace@v1
 //
 // Bounded circuit for one finite program-contract check result.
+// Companion objective evidence (VFS-G080):
+//   - vfs/zk-trace-statement@1
+//   - vfs/zk-verification-receipt@1
+// Python codec: ipfs_accelerate_py.agent_supervisor.program_analysis_zkp
 //
 // Constraints enforced:
 //   1. circuit_version matches the pinned CIRCUIT_VERSION global.
