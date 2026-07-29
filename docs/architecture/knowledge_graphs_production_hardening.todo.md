@@ -533,7 +533,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-032 Add observability, health, backup, restore, and repair tools
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-012, KGP-016, KGP-022
