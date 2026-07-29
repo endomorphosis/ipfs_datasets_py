@@ -43,7 +43,7 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 )
 
 
-PYTHON_FRONTEND_VERSION: Final[str] = "1.0.0"
+PYTHON_FRONTEND_VERSION: Final[str] = "1.1.0"
 PYTHON_FRONTEND_NAME: Final[str] = "cpython-ast"
 PYTHON_SOURCE_EXTENSIONS: Final[tuple[str, ...]] = (".py", ".pyi")
 DEFAULT_MAX_SOURCE_BYTES: Final[int] = 8 * 1024 * 1024
@@ -264,6 +264,7 @@ class _PythonVisitor(ast.NodeVisitor):
         self._scope_qualifiers: dict[str, tuple[str, ...]] = {
             "scope:module": (),
         }
+        self._scope_kinds: dict[str, str] = {"scope:module": "module"}
         self._parent_scope: dict[str, str | None] = {"scope:module": None}
         self._defined_names: dict[str, set[str]] = defaultdict(set)
         self._definition_ordinals: dict[tuple[str, str], int] = defaultdict(int)
@@ -271,6 +272,7 @@ class _PythonVisitor(ast.NodeVisitor):
         self._parents: dict[ast.AST, ast.AST] = {}
         self._reference_context: str | None = None
         self._scope_kind_stack: list[str] = ["module"]
+        self._has_explicit_exports = False
 
     @property
     def scope_id(self) -> str:
@@ -292,6 +294,42 @@ class _PythonVisitor(ast.NodeVisitor):
 
     def _qualified(self, name: str) -> str:
         return ".".join((self.module_name, *self._qualifier_stack, name))
+
+    def _register_bound_name(self, name: str) -> None:
+        """Record a lexical binding without manufacturing a resolution fact."""
+
+        self._defined_names[self.scope_id].add(name)
+        if (
+            self.scope_id == "scope:module"
+            and not self._has_explicit_exports
+            and not name.startswith("_")
+        ):
+            self.export_names.add(name)
+
+    def _set_explicit_exports(
+        self,
+        node: ast.AST,
+        value: ast.AST | None,
+    ) -> None:
+        """Record a statically declared ``__all__`` or fail it explicitly."""
+
+        self._has_explicit_exports = True
+        if isinstance(value, (ast.List, ast.Tuple)):
+            names = [
+                item.value
+                for item in value.elts
+                if isinstance(item, ast.Constant) and type(item.value) is str
+            ]
+            if len(names) == len(value.elts):
+                self.export_names = set(names)
+                return
+        self.export_names.clear()
+        self._add_unsupported(
+            node,
+            "python.dynamic_exports",
+            "dynamic_all",
+            "__all__ is not a literal list or tuple of export names.",
+        )
 
     def _add_symbol(
         self,
@@ -341,9 +379,7 @@ class _PythonVisitor(ast.NodeVisitor):
                     span=symbol.span,
                 )
             )
-        self._defined_names[self.scope_id].add(name)
-        if self.scope_id == "scope:module" and not name.startswith("_"):
-            self.export_names.add(name)
+        self._register_bound_name(name)
         return symbol
 
     def _defined_in_parent(self, name: str, scope_id: str) -> bool:
@@ -373,6 +409,7 @@ class _PythonVisitor(ast.NodeVisitor):
         )
         self._parent_scope[scope_id] = self.scope_id
         self._scope_qualifiers[scope_id] = tuple(self._qualifier_stack)
+        self._scope_kinds[scope_id] = kind
         return scope_id
 
     def _add_reference(
@@ -507,7 +544,7 @@ class _PythonVisitor(ast.NodeVisitor):
                 node,
                 "python.repeated_decorator",
                 "repeated_decorator",
-                "Repeated decorator order requires a Python-owned syntax record.",
+                "The shared symbol IR requires unique decorator names.",
             )
         flags: list[str] = []
         if signature.is_async:
@@ -588,7 +625,7 @@ class _PythonVisitor(ast.NodeVisitor):
                 node,
                 "python.repeated_decorator",
                 "repeated_decorator",
-                "Repeated decorator order requires a Python-owned syntax record.",
+                "The shared symbol IR requires unique decorator names.",
             )
         symbol = self._add_symbol(
             node,
@@ -617,6 +654,11 @@ class _PythonVisitor(ast.NodeVisitor):
         self._scope_stack.pop()
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
+        # Defaults are evaluated in the containing scope, before the lambda's
+        # parameter scope exists.
+        for default in (*node.args.defaults, *node.args.kw_defaults):
+            if default is not None:
+                self.visit(default)
         child_scope = self._add_scope(node, "lambda")
         self._scope_stack.append(child_scope)
         self._scope_kind_stack.append("lambda")
@@ -630,11 +672,31 @@ class _PythonVisitor(ast.NodeVisitor):
         self._scope_kind_stack.pop()
         self._scope_stack.pop()
 
-    def _visit_comprehension_scope(self, node: ast.AST) -> None:
+    def _visit_comprehension_scope(
+        self,
+        node: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp,
+    ) -> None:
+        # Python evaluates the outermost iterable in the containing scope.
+        # Targets, filters, subsequent iterables, and the result expression are
+        # evaluated in the comprehension's implicit function scope.
+        generators = node.generators
+        self.visit(generators[0].iter)
         child_scope = self._add_scope(node, "comprehension")
         self._scope_stack.append(child_scope)
         self._scope_kind_stack.append("comprehension")
-        self.generic_visit(node)
+        for index, generator in enumerate(generators):
+            if index:
+                self.visit(generator.iter)
+            self.visit(generator.target)
+            if generator.is_async:
+                self._add_effect(generator.iter, "await", "await", "async_for")
+            for condition in generator.ifs:
+                self.visit(condition)
+        if isinstance(node, ast.DictComp):
+            self.visit(node.key)
+            self.visit(node.value)
+        else:
+            self.visit(node.elt)
         self._scope_kind_stack.pop()
         self._scope_stack.pop()
 
@@ -656,7 +718,7 @@ class _PythonVisitor(ast.NodeVisitor):
                     local_name=local_name,
                 )
             )
-            self._defined_names[self.scope_id].add(local_name)
+            self._register_bound_name(local_name)
             self._add_effect(node, "import", "read", alias.name)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
@@ -674,7 +736,8 @@ class _PythonVisitor(ast.NodeVisitor):
                     local_name=local_name,
                 )
             )
-            self._defined_names[self.scope_id].add(local_name)
+            if alias.name != "*":
+                self._register_bound_name(local_name)
             self._add_effect(node, "import", "read", f"{module}.{alias.name}")
             if alias.name == "*":
                 self._add_unsupported(
@@ -694,7 +757,7 @@ class _PythonVisitor(ast.NodeVisitor):
         else:
             context = "read"
         if context == "write":
-            self._defined_names[self.scope_id].add(node.id)
+            self._register_bound_name(node.id)
         self._add_reference(node, node.id, context)
 
     def visit_Attribute(self, node: ast.Attribute) -> None:
@@ -718,6 +781,11 @@ class _PythonVisitor(ast.NodeVisitor):
         self.visit(node.value)
 
     def visit_Assign(self, node: ast.Assign) -> None:
+        if any(
+            isinstance(target, ast.Name) and target.id == "__all__"
+            for target in node.targets
+        ):
+            self._set_explicit_exports(node, node.value)
         if self._scope_kind_stack[-1] in {"module", "class"}:
             for target in node.targets:
                 for name_node in _bound_names(target):
@@ -729,31 +797,13 @@ class _PythonVisitor(ast.NodeVisitor):
                             "write",
                             name_node.id,
                         )
-        if (
-            len(node.targets) == 1
-            and isinstance(node.targets[0], ast.Name)
-            and node.targets[0].id == "__all__"
-            and isinstance(node.value, (ast.List, ast.Tuple))
-        ):
-            values = [
-                item.value
-                for item in node.value.elts
-                if isinstance(item, ast.Constant) and type(item.value) is str
-            ]
-            if len(values) == len(node.value.elts):
-                self.export_names = set(values)
-            else:
-                self._add_unsupported(
-                    node,
-                    "python.dynamic_exports",
-                    "dynamic_all",
-                    "__all__ contains a non-literal export name.",
-                )
         for target in node.targets:
             self.visit(target)
         self.visit(node.value)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if isinstance(node.target, ast.Name) and node.target.id == "__all__":
+            self._set_explicit_exports(node, node.value)
         if (
             self._scope_kind_stack[-1] in {"module", "class"}
             and isinstance(node.target, ast.Name)
@@ -772,6 +822,8 @@ class _PythonVisitor(ast.NodeVisitor):
             self.visit(node.value)
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        if isinstance(node.target, ast.Name) and node.target.id == "__all__":
+            self._set_explicit_exports(node, None)
         if isinstance(node.target, ast.Name) and self._scope_kind_stack[-1] == "module":
             self._add_effect(
                 node.target,
@@ -789,8 +841,38 @@ class _PythonVisitor(ast.NodeVisitor):
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         if isinstance(node.target, ast.Name):
-            self._defined_names[self.scope_id].add(node.target.id)
+            if node.target.id == "__all__":
+                self._set_explicit_exports(node, node.value)
+            self._register_bound_name(node.target.id)
         self.generic_visit(node)
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+        if node.type is not None:
+            self.visit(node.type)
+        if node.name is not None:
+            # CPython stores the handler binding as a string rather than a
+            # Name(Store) node, so register it explicitly in this scope.
+            self._register_bound_name(node.name)
+        for statement in node.body:
+            self.visit(statement)
+
+    def visit_MatchAs(self, node: ast.MatchAs) -> None:
+        if node.pattern is not None:
+            self.visit(node.pattern)
+        if node.name is not None:
+            self._register_bound_name(node.name)
+
+    def visit_MatchStar(self, node: ast.MatchStar) -> None:
+        if node.name is not None:
+            self._register_bound_name(node.name)
+
+    def visit_MatchMapping(self, node: ast.MatchMapping) -> None:
+        for key in node.keys:
+            self.visit(key)
+        for pattern in node.patterns:
+            self.visit(pattern)
+        if node.rest is not None:
+            self._register_bound_name(node.rest)
 
     def visit_Global(self, node: ast.Global) -> None:
         self._add_unsupported(
@@ -875,7 +957,17 @@ class _PythonVisitor(ast.NodeVisitor):
             scope_id: str | None = reference.scope_id
             found = False
             while scope_id is not None:
-                if root_name in self._defined_names[scope_id]:
+                # A class body is a lexical scope for its own expressions, but
+                # it is not a closure captured by methods, comprehensions, or
+                # nested classes.
+                is_non_closure_class = (
+                    scope_id != reference.scope_id
+                    and self._scope_kinds.get(scope_id) == "class"
+                )
+                if (
+                    not is_non_closure_class
+                    and root_name in self._defined_names[scope_id]
+                ):
                     found = True
                     break
                 scope_id = self._parent_scope.get(scope_id)
@@ -950,14 +1042,19 @@ class PythonASTExtractor:
                 "calls",
                 "decorators",
                 "diagnostics",
+                "duplicate_definitions",
                 "effects",
+                "generators",
                 "imports",
                 "modules",
+                "raises",
                 "references",
                 "scopes",
                 "signatures",
+                "source_spans",
                 "state_access",
                 "symbols",
+                "undefined_reference_candidates",
                 "unsupported_constructs",
             ),
             source_extensions=PYTHON_SOURCE_EXTENSIONS,
@@ -1085,7 +1182,21 @@ class PythonASTExtractor:
                 span=error_span,
             )
 
-        node_count = sum(1 for _ in ast.walk(tree))
+        try:
+            node_count = sum(1 for _ in ast.walk(tree))
+        except MemoryError:
+            return self._failure_record(
+                source_bytes,
+                source_text,
+                path=path,
+                repository_id=repository_id,
+                revision=revision,
+                repository_tree_cid=repository_tree_cid,
+                module_name=module_name,
+                code="python.resource_limit",
+                construct="ast_node_count",
+                reason="MemoryError: AST node counting exceeded its resource budget.",
+            )
         if node_count > self.max_ast_nodes:
             return self._failure_record(
                 source_bytes,
@@ -1109,9 +1220,26 @@ class PythonASTExtractor:
                 span=source_map.whole_span(),
             )
         )
-        visitor.prepare(tree)
-        visitor.visit(tree)
-        visitor.finalize()
+        try:
+            visitor.prepare(tree)
+            visitor.visit(tree)
+            visitor.finalize()
+        except (MemoryError, RecursionError) as exc:
+            return self._failure_record(
+                source_bytes,
+                source_text,
+                path=path,
+                repository_id=repository_id,
+                revision=revision,
+                repository_tree_cid=repository_tree_cid,
+                module_name=module_name,
+                code="python.resource_limit",
+                construct="frontend_traversal",
+                reason=(
+                    f"{type(exc).__name__}: frontend traversal exceeded its "
+                    "resource budget."
+                ),
+            )
         provenance = SourceProvenance(
             source_cid=cid_for_bytes(source_bytes),
             path=path,

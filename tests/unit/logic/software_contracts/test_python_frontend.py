@@ -60,6 +60,7 @@ def test_python_frontend_emits_normalized_semantic_facts() -> None:
     assert isinstance(record, ASTRecord)
     assert record.frontend.language == "python"
     assert record.frontend.frontend_name == "cpython-ast"
+    assert record.frontend.frontend_version == "1.1.0"
     assert record.provenance.source_cid == cid_for_bytes(
         REPRESENTATIVE_SOURCE.encode()
     )
@@ -175,6 +176,107 @@ class Container:
     ]
 
 
+def test_scope_sensitive_bindings_and_lambda_defaults_are_preserved() -> None:
+    record = extract(
+        """\
+module_value = 1
+factory = lambda value=missing(): value
+values = [item for item in source if item]
+
+class Container:
+    class_value = 2
+
+    def read(self):
+        return module_value, class_value
+
+try:
+    operation()
+except Exception as error:
+    handled = error
+
+match payload:
+    case {"item": captured, **rest}:
+        result = captured, rest
+"""
+    )
+    module_scope = record.module.scope_id
+    comprehension_scope = next(
+        item.scope_id for item in record.scopes if item.kind == "comprehension"
+    )
+    lambda_scope = next(
+        item.scope_id for item in record.scopes if item.kind == "lambda"
+    )
+
+    missing_call = next(item for item in record.calls if item.callee_name == "missing")
+    source_read = next(
+        item
+        for item in record.references
+        if item.name == "source" and item.context == "read"
+    )
+    item_reads = [
+        item
+        for item in record.references
+        if item.name == "item" and item.context == "read"
+    ]
+    assert missing_call.scope_id == module_scope
+    assert source_read.scope_id == module_scope
+    assert item_reads and {item.scope_id for item in item_reads} == {
+        comprehension_scope
+    }
+    assert any(
+        item.name == "value"
+        and item.context == "read"
+        and item.scope_id == lambda_scope
+        for item in record.references
+    )
+
+    undefined_names = {
+        item.message.split(" ", 1)[0]
+        for item in record.diagnostics
+        if item.code == "python.undefined_reference_candidate"
+    }
+    assert {"missing", "source", "class_value", "operation", "payload"} <= (
+        undefined_names
+    )
+    assert {"module_value", "item", "value", "error", "captured", "rest"}.isdisjoint(
+        undefined_names
+    )
+
+
+def test_explicit_exports_import_bindings_and_decorators_are_explicit() -> None:
+    record = extract(
+        """\
+import visible_before_all
+__all__ = ["kept"]
+
+@decorate
+@decorate
+def kept():
+    return None
+
+class hidden_public_name:
+    pass
+"""
+    )
+    kept = next(item for item in record.symbols if item.name == "kept")
+    assert record.module.export_names == ("kept",)
+    assert kept.decorator_names == ("decorate",)
+    assert any(
+        item.code == "python.repeated_decorator"
+        for item in record.unsupported
+    )
+
+    implicit = extract("import public_module as imported\n_private = 1\n")
+    assert implicit.module.export_names == ("imported",)
+
+    dynamic = extract("__all__ = exported_names\npublic_name = 1\n")
+    assert dynamic.module.export_names == ()
+    assert any(
+        item.code == "python.dynamic_exports"
+        for item in dynamic.unsupported
+    )
+
+
 def test_malformed_dynamic_and_wildcard_constructs_fail_explicitly() -> None:
     malformed = extract("def broken(:\n")
     assert {item.code for item in malformed.diagnostics} == {
@@ -212,6 +314,17 @@ def test_resource_and_encoding_failures_are_durable_unsupported_records() -> Non
     assert invalid.provenance.source_cid == cid_for_bytes(b"# \xff\n")
     assert [item.code for item in invalid.unsupported] == [
         "python.invalid_encoding"
+    ]
+
+    deeply_nested = PythonASTExtractor().extract(
+        "value = " + "+".join(["1"] * 500) + "\n",
+        path="deep.py",
+    )
+    assert [item.construct for item in deeply_nested.unsupported] == [
+        "frontend_traversal"
+    ]
+    assert [item.code for item in deeply_nested.diagnostics] == [
+        "python.resource_limit"
     ]
 
 
@@ -280,7 +393,7 @@ def test_compatibility_constructor_round_trip_and_golden_root() -> None:
     # the shared AST schema.  Update only with an explicit compatibility review.
     assert (
         record.cid
-        == "baguqeeras3jxi2hksumj5ggt2dmktkaaojtsdlqkcjz3igkjabwjlkbruvta"
+        == "baguqeeraqqnuh7keo2od4wafzpc6cuvkkbzm3rcktff2e7axrsauwkinfhrq"
     )
 
 
