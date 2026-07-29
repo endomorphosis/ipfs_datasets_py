@@ -261,7 +261,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-016 Enforce query budgets, cursors, cancellation, and streaming
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: query
 - Depends on: KGP-015
