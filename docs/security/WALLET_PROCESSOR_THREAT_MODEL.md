@@ -128,6 +128,37 @@ Public ledger data is treated as **potentially personal**. Correlation, identity
 
 **Tests.** Redaction and public-export cases; threat acceptance is documented here for operator review.
 
+## Acceptance evidence matrix
+
+| WALPROC-G630 acceptance term | Enforceable evidence |
+| --- | --- |
+| No seed/private/signing material is accepted by canonical models | `test_canonical_model_schema_has_no_seed_private_or_signing_custody_fields` rejects custody-shaped schema fields; recursive construction attacks are rejected by `test_canonical_extensions_and_ensure_secret_safe_reject_nested_material` |
+| Public data is potentially personal | Mission boundary, asset classification, T5, and T8; exports keep only the public-ledger fields needed for integrity and never imply that an address identifies a person |
+| Identity clustering is absent | `test_processor_tree_has_no_public_identity_clustering_or_custody_verbs` scans every wallet processor module and requires Bitcoin's explicit `ownership_clustering=False` declaration |
+| Raw/memo/calldata/instruction storage is opt-in, bounded, and redacted | `test_free_form_memos_and_instructions_default_to_bounded_redaction`, `test_xaman_public_export_omits_tokens_secrets_and_instruction_body`, and raw-store mutation-limit tests; Ethereum calldata and Solana instruction bytes are represented by digests/references rather than embedded bodies |
+| SSRF and decompression/body/page/range abuse fail | Endpoint/DNS tests plus `test_transport_rejects_request_and_response_body_abuse`, `test_transport_rejects_page_cursor_and_range_abuse`, and `test_world_id_transport_rejects_decompression_bomb` |
+| Secrets/full endpoints are absent from serialization/log/error/receipt surfaces | Secret/reference/provider/config/result tests, recursive checkpoint/manifest/export-receipt rejection, and sanitized exception traceback assertions |
+| Signing/broadcast remain explicitly denied future capabilities | `test_processor_surfaces_deny_sign_submit_and_broadcast_capabilities` plus the complete processor-tree public-verb scan |
+
+## Critical finding disposition
+
+WALPROC-G630 is a fail-closed release gate. A critical finding stays open until
+it has a scoped repair goal, production fix, focused regression, and a passing
+G630 evidence run. The supervisor-fed repair goals already aligned with this
+review are:
+
+| Finding | Severity | Scoped repair | Disposition |
+| --- | --- | --- | --- |
+| World ID secret config exposed direct material/reference paths | Critical | WALPROC-G630-R1 / WALPROC-049 | Closed by bounded public/durable config views and direct repr/str regression |
+| Canonical extension, checkpoint, manifest, or receipt secret smuggling | Critical | WALPROC-G630-R2 / WALPROC-060 | Closed by recursive bounded rejection and serializer/receipt regressions |
+| Raw payload custody lacked hard authorization and mutation-safe caps | Critical | WALPROC-G630-R3 / WALPROC-061 | Closed by explicit custody policies, pre-mutation object/total/count limits, permissions, and encrypted-mode fail-closed tests |
+| XRPL memo and Xaman instruction retention was not fail-closed | Critical | WALPROC-G630-R4 / WALPROC-062 | Closed by default redaction, explicit bounded opt-in, and public-export regressions |
+| World ID transport could expose endpoints/nullifiers or accept unsafe/unbounded I/O | Critical | WALPROC-G630-R5 / WALPROC-063 | Closed by endpoint/DNS/redirect/body/decompression/attempt bounds and identity-safe result surfaces |
+
+There are no open critical findings in this review. Any regression in either
+evidence module reopens the corresponding repair, blocks release, and must not
+be converted to a skip, xfail, or accepted residual risk.
+
 ## Residual risks (accepted with monitoring)
 
 | Risk | Residual | Owner |
@@ -143,7 +174,10 @@ Release is blocked until:
 
 1. This threat model is present and reviews the assets, threats, and controls above.
 2. `python -m pytest -q ipfs_datasets_py/tests/security/test_wallet_processor_secrets.py ipfs_datasets_py/tests/security/test_wallet_processor_bounds.py` passes with **no failures and no expected xfails**.
-3. Critical findings discovered by the review are closed via scoped repairs (WALPROC-049 / 060–063) rather than skipped assertions.
+3. Critical findings discovered by the review are closed via scoped repairs
+   (WALPROC-G630-R1–R5 / WALPROC-049 / 060–063) rather than skipped assertions.
+4. The critical-finding table has no open disposition and every closed finding
+   retains its focused negative regression.
 
 ## Operator notes
 
