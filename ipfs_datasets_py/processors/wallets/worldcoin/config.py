@@ -37,21 +37,43 @@ class WorldIdConfigError(ValueError):
 
 @dataclass(frozen=True)
 class WorldIdSecretConfig:
-    """Backend-only secret configuration without exposing values in repr output."""
+    """Backend-only secret configuration without exposing values in repr output.
+
+    Both the raw secret *value* and the full *secret_ref* path are excluded from
+    ``repr``/``str`` surfaces.  Callers may still inspect ``configured`` and the
+    bounded source kind via ``public_dict`` / ``to_dict``.
+    """
 
     value: str = field(default="", repr=False)
-    secret_ref: str = ""
+    secret_ref: str = field(default="", repr=False)
 
     @property
     def configured(self) -> bool:
         return bool(self.value or self.secret_ref)
+
+    @property
+    def source(self) -> str:
+        """Bounded source kind: ``secret_ref``, ``direct``, or empty when unset."""
+
+        if self.secret_ref:
+            return "secret_ref"
+        if self.value:
+            return "direct"
+        return ""
+
+    def __repr__(self) -> str:
+        # Never include raw values or full secret-reference paths.
+        return f"WorldIdSecretConfig(configured={self.configured!r}, source={self.source!r})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
     def public_dict(self) -> dict[str, bool | str]:
         """Browser-safe view: configured flag and source kind only."""
 
         return {
             "configured": self.configured,
-            "source": "secret_ref" if self.secret_ref else ("direct" if self.value else ""),
+            "source": self.source,
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -59,7 +81,7 @@ class WorldIdSecretConfig:
 
         payload: dict[str, object] = {
             "configured": self.configured,
-            "source": "secret_ref" if self.secret_ref else ("direct" if self.value else ""),
+            "source": self.source,
         }
         if self.secret_ref:
             digest = hashlib.sha256(self.secret_ref.encode("utf-8")).hexdigest()[:12]

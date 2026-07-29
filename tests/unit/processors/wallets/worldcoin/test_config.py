@@ -10,6 +10,7 @@ from ipfs_datasets_py.processors.wallets.worldcoin import (
     DEFAULT_WORLD_ID_ACTION,
     DEFAULT_WORLD_ID_VERIFY_BASE_URL,
     WorldIdConfigError,
+    WorldIdSecretConfig,
     load_world_id_config,
 )
 from _helpers import enabled_env
@@ -112,6 +113,68 @@ def test_world_id_to_dict_serializes_secret_references_only() -> None:
     assert config.to_dict()["rp_signing_key"]["kind"] == "direct_secret"
     assert config.to_dict()["nullifier_hmac_key"]["kind"] == "secret_reference"
     assert "reference_id" in config.to_dict()["nullifier_hmac_key"]
+
+
+def test_world_id_secret_config_repr_str_redact_value_and_secret_ref() -> None:
+    """Direct WorldIdSecretConfig repr/str must not leak values or full refs (WALPROC-049)."""
+
+    secret_value = "super-secret-signing-key-value"
+    secret_path = "secret://wallet/world-id/rp-signing-key"
+    secret = WorldIdSecretConfig(value=secret_value, secret_ref=secret_path)
+
+    rendered_repr = repr(secret)
+    rendered_str = str(secret)
+
+    assert secret_value not in rendered_repr
+    assert secret_value not in rendered_str
+    assert secret_path not in rendered_repr
+    assert secret_path not in rendered_str
+    assert "secret://" not in rendered_repr
+    assert "secret://" not in rendered_str
+
+    # configured/source behavior is preserved and visible on safe surfaces.
+    assert secret.configured is True
+    assert secret.source == "secret_ref"
+    assert secret.public_dict() == {"configured": True, "source": "secret_ref"}
+    durable = secret.to_dict()
+    assert durable["configured"] is True
+    assert durable["source"] == "secret_ref"
+    assert durable["kind"] == "secret_reference"
+    assert durable["reference_id"] != secret_path
+    assert "secret://" not in json.dumps(durable)
+
+    # Repr may report bounded configured/source metadata only.
+    assert "configured=True" in rendered_repr
+    assert "source='secret_ref'" in rendered_repr
+    assert rendered_str == rendered_repr
+
+
+def test_world_id_secret_config_direct_source_repr_redacts_value() -> None:
+    secret_value = "super-secret-nullifier-key"
+    secret = WorldIdSecretConfig(value=secret_value, secret_ref="")
+
+    rendered_repr = repr(secret)
+    rendered_str = str(secret)
+
+    assert secret_value not in rendered_repr
+    assert secret_value not in rendered_str
+    assert secret.configured is True
+    assert secret.source == "direct"
+    assert secret.public_dict() == {"configured": True, "source": "direct"}
+    assert secret.to_dict()["kind"] == "direct_secret"
+    assert "configured=True" in rendered_repr
+    assert "source='direct'" in rendered_repr
+
+
+def test_world_id_secret_config_unset_repr_is_safe() -> None:
+    secret = WorldIdSecretConfig()
+
+    assert secret.configured is False
+    assert secret.source == ""
+    assert "secret://" not in repr(secret)
+    assert "secret://" not in str(secret)
+    assert secret.public_dict() == {"configured": False, "source": ""}
+    assert secret.to_dict()["kind"] == "unset"
 
 
 @pytest.mark.parametrize(
