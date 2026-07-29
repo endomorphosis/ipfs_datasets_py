@@ -1283,7 +1283,7 @@ def ensure_cvc5(
         pip_kwargs = {"strict": strict}
         if force:
             pip_kwargs["upgrade"] = True
-        if _pip_install("cvc5>=1.0.0,<2.0.0", **pip_kwargs) and _module_available("cvc5"):
+        if _pip_install("cvc5==1.3.3", **pip_kwargs) and _module_available("cvc5"):
             _announce(
                 "Updated cvc5 Python bindings." if force else "Installed cvc5 Python bindings.",
                 on_progress,

@@ -208,7 +208,7 @@ DEPENDENCY_SPECS: tuple[DependencySpec, ...] = (
     DependencySpec(
         "cvc5",
         "cvc5",
-        ("cvc5>=1.0.0,<2.0.0",),
+        ("cvc5==1.3.3",),
         ("cvc5", "smt_solvers"),
         system_dependencies=("cvc5",),
     ),
