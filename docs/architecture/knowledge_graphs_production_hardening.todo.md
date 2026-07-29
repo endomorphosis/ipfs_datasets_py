@@ -91,7 +91,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-006 Introduce the long-lived GraphService
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-005
