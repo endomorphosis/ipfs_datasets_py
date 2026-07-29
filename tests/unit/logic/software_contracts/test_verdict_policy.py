@@ -1,4 +1,9 @@
-"""Contract tests for the DSCON-G030 verdict and soundness policy."""
+"""Contract tests for the DSCON-G030 verdict and soundness policy.
+
+Covers the normative machine policy, human threat model, and the conceptual
+interfaces VerificationVerdict, AssuranceLevel, CompletionEvidence, and
+ProofAttestation (objective validation repair for DSCON-063 / DSCON-G030).
+"""
 
 from __future__ import annotations
 
@@ -15,6 +20,12 @@ THREAT_MODEL_PATH = (
     PACKAGE_ROOT / "docs/software_contracts/SOUNDNESS_AND_THREAT_MODEL.md"
 )
 
+CONCEPTUAL_INTERFACES = {
+    "VerificationVerdict",
+    "AssuranceLevel",
+    "CompletionEvidence",
+    "ProofAttestation",
+}
 EXPECTED_VERDICTS = {
     "PROVED_WITHIN_MODEL",
     "VIOLATED_WITH_COUNTEREXAMPLE",
@@ -31,6 +42,13 @@ FAIL_CLOSED_VERDICTS = {
     "STALE",
     "ERROR",
 }
+EXPECTED_ASSURANCE_LEVELS = {
+    "ADVISORY",
+    "EMPIRICAL",
+    "CHECKED_WITNESS",
+    "FORMAL_WITHIN_MODEL",
+    "CRYPTOGRAPHIC_INTEGRITY",
+}
 BOUNDED_EVIDENCE = {
     "GRAPHRAG_RETRIEVAL",
     "TEST_RESULT",
@@ -39,10 +57,13 @@ BOUNDED_EVIDENCE = {
     "ZK_ATTESTATION",
     "ABSENCE_OF_FINDINGS",
 }
+PROOF_ATTESTATION_KINDS = frozenset({"FORMAL_PROOF_RECEIPT", "ZK_ATTESTATION"})
 
 
 @pytest.fixture(scope="module")
 def policy() -> dict[str, Any]:
+    assert POLICY_PATH.is_file(), f"missing policy: {POLICY_PATH}"
+    assert THREAT_MODEL_PATH.is_file(), f"missing threat model: {THREAT_MODEL_PATH}"
     return json.loads(POLICY_PATH.read_text(encoding="utf-8"))
 
 
@@ -70,12 +91,7 @@ def test_policy_is_versioned_normative_json(policy: dict[str, Any]) -> None:
     assert policy["policy_version"] == "1.0.0"
     assert policy["normative"] is True
     assert policy["human_readable_companion"] == THREAT_MODEL_PATH.name
-    assert set(policy["conceptual_interfaces"]) == {
-        "VerificationVerdict",
-        "AssuranceLevel",
-        "CompletionEvidence",
-        "ProofAttestation",
-    }
+    assert set(policy["conceptual_interfaces"]) == CONCEPTUAL_INTERFACES
 
 
 def test_policy_defines_exact_terminal_verdict_vocabulary(
@@ -94,6 +110,50 @@ def test_policy_defines_exact_terminal_verdict_vocabulary(
     } == FAIL_CLOSED_VERDICTS
     assert by_id["PROVED_WITHIN_MODEL"]["fail_closed"] is False
     assert by_id["VIOLATED_WITH_COUNTEREXAMPLE"]["fail_closed"] is False
+
+
+def test_conceptual_interfaces_are_structured_and_bound(
+    policy: dict[str, Any],
+) -> None:
+    """VerificationVerdict, AssuranceLevel, CompletionEvidence, ProofAttestation."""
+
+    interfaces = policy["conceptual_interfaces"]
+    for name in CONCEPTUAL_INTERFACES:
+        definition = interfaces[name]
+        assert isinstance(definition, dict), name
+        assert definition.get("role"), name
+        assert definition.get("meaning"), name
+        assert definition.get("authority_field"), name
+        assert definition.get("required_fields"), name
+
+    verdict_iface = interfaces["VerificationVerdict"]
+    assert verdict_iface["vocabulary_ref"] == "verdicts"
+    assert set(item["id"] for item in policy["verdicts"]) == EXPECTED_VERDICTS
+
+    assurance_iface = interfaces["AssuranceLevel"]
+    assert assurance_iface["not_totally_ordered"] is True
+    level_ids = {item["id"] for item in policy["assurance_levels"]["levels"]}
+    assert level_ids == EXPECTED_ASSURANCE_LEVELS
+
+    evidence_iface = interfaces["CompletionEvidence"]
+    assert evidence_iface["vocabulary_ref"] == "evidence_authority"
+    for field in evidence_iface["required_fields"]:
+        for kind, row in policy["evidence_authority"].items():
+            assert field in row, f"{kind} missing {field}"
+
+    proof_iface = interfaces["ProofAttestation"]
+    assert set(proof_iface["allowed_evidence_kinds"]) == PROOF_ATTESTATION_KINDS
+    assert "proof_required" in proof_iface["non_escalation"]
+    for kind in PROOF_ATTESTATION_KINDS:
+        assert kind in policy["evidence_authority"]
+    assert (
+        "proof_required"
+        not in policy["evidence_authority"]["ZK_ATTESTATION"]["may_satisfy"]
+    )
+    assert policy["evidence_authority"]["FORMAL_PROOF_RECEIPT"]["may_satisfy"] == [
+        "proof_required"
+    ]
+    assert policy["evidence_authority"]["SIMULATED_PROOF"]["may_satisfy"] == []
 
 
 def test_only_formal_bound_proof_can_satisfy_proof_completion(
@@ -264,7 +324,10 @@ def test_human_threat_model_covers_normative_policy(policy: dict[str, Any]) -> N
 
     for verdict in EXPECTED_VERDICTS:
         assert f"`{verdict}`" in document
+    for interface in CONCEPTUAL_INTERFACES:
+        assert f"`{interface}`" in document
     for phrase in (
+        "Conceptual interfaces",
         "Supported semantic models",
         "Trusted computing base",
         "Contract authority",
@@ -277,8 +340,12 @@ def test_human_threat_model_covers_normative_policy(policy: dict[str, Any]) -> N
         "ZK attestation",
         "absence of findings",
         "fail closed",
+        "not totally ordered",
+        "proof_required",
     ):
         assert phrase.casefold() in document.casefold()
     assert policy["claim_rule"] in document or (
         "Narrow provable claims are preferable" in document
     )
+    assert "verdict-policy-v1.json" in document
+    assert policy["policy_version"] in document

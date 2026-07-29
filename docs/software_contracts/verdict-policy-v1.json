@@ -5,10 +5,36 @@
   "normative": true,
   "human_readable_companion": "SOUNDNESS_AND_THREAT_MODEL.md",
   "conceptual_interfaces": {
-    "VerificationVerdict": "The exact terminal vocabulary in verdicts.",
-    "AssuranceLevel": "The claim-specific, non-totally-ordered levels in assurance_levels.",
-    "CompletionEvidence": "An evidence kind evaluated only against its allowlisted completion requirement.",
-    "ProofAttestation": "A bound native or cryptographic verification artifact whose authority is limited by evidence_authority."
+    "VerificationVerdict": {
+      "role": "terminal_result",
+      "authority_field": "verdicts",
+      "meaning": "The exact terminal vocabulary for one obligation or scan result. Exactly one id from verdicts applies; fail_closed verdicts never satisfy completion.",
+      "required_fields": ["id", "terminal", "fail_closed", "meaning", "claim_limit"],
+      "vocabulary_ref": "verdicts"
+    },
+    "AssuranceLevel": {
+      "role": "claim_specific_authority",
+      "authority_field": "assurance_levels",
+      "meaning": "The claim-specific, non-totally-ordered assurance attached to an evidence kind. Levels are not a scalar trust score and do not escalate by combination.",
+      "required_fields": ["id", "meaning"],
+      "vocabulary_ref": "assurance_levels.levels",
+      "not_totally_ordered": true
+    },
+    "CompletionEvidence": {
+      "role": "evidence_kind",
+      "authority_field": "evidence_authority",
+      "meaning": "An evidence kind evaluated only against its allowlisted completion requirement. Non-substitutable: may_satisfy is the sole completion authority matrix for that kind.",
+      "required_fields": ["assurance_level", "may_satisfy", "authority_limit"],
+      "vocabulary_ref": "evidence_authority"
+    },
+    "ProofAttestation": {
+      "role": "bound_verification_artifact",
+      "authority_field": "evidence_authority",
+      "meaning": "A bound native or cryptographic verification artifact (FORMAL_PROOF_RECEIPT or ZK_ATTESTATION) whose authority is limited by evidence_authority and the matching completion_requirements entry.",
+      "allowed_evidence_kinds": ["FORMAL_PROOF_RECEIPT", "ZK_ATTESTATION"],
+      "required_fields": ["assurance_level", "may_satisfy", "authority_limit"],
+      "non_escalation": "ZK_ATTESTATION cannot satisfy proof_required; FORMAL_PROOF_RECEIPT cannot be replaced by SIMULATED_PROOF or TEST_RESULT."
+    }
   },
   "claim_rule": "Report only claims justified by the named model, bound assumptions, current inputs, complete scope disposition, and the authority of the checked evidence. Narrow claims are preferred to broader claims with unmodeled behavior.",
   "semantic_models": {

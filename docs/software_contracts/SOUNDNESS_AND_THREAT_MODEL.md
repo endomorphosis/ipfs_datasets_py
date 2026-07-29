@@ -18,6 +18,27 @@ policy version is unsupported, or a required binding cannot be verified.
 Narrow provable claims are preferable to broad claims that silently assume
 away dynamic behavior.
 
+## Conceptual interfaces
+
+The policy names four conceptual interfaces. They are vocabulary contracts,
+not runtime classes, but every receipt and completion decision must use them
+consistently:
+
+- `VerificationVerdict`: the exact terminal result for one obligation or scan
+  result. The vocabulary is fixed by the policy `verdicts` array. Fail-closed
+  verdicts never satisfy a completion criterion.
+- `AssuranceLevel`: the claim-specific authority of an evidence kind. Levels
+  are not totally ordered and are not a scalar trust score. Combining lower
+  levels never creates a higher one.
+- `CompletionEvidence`: an evidence kind drawn from `evidence_authority`,
+  evaluated only against its allowlisted `may_satisfy` completion
+  requirements. Evidence kinds are non-substitutable.
+- `ProofAttestation`: a bound native or cryptographic verification artifact
+  (`FORMAL_PROOF_RECEIPT` or `ZK_ATTESTATION`). Its authority is limited by
+  `evidence_authority` and the matching `completion_requirements` entry. A
+  simulated proof is not a `ProofAttestation`. A ZK envelope alone cannot
+  satisfy `proof_required`.
+
 ## Supported semantic models
 
 Version 1 permits only reviewed, version-bound models:
