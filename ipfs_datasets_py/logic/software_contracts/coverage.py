@@ -4,6 +4,9 @@ Validates that every tracked object has an explicit disposition, that shard
 counts sum to the root object count, and that dirty or missing inputs yield
 ``INCOMPLETE_SCAN``.  Coverage receipts bind the repository-root CID so a later
 scan cannot silently shrink inventory.
+
+DSCON-067 objective validation repair re-proves the coverage gate: unsupported
+blobs remain inventoried and content-addressed without semantic parse claims.
 """
 
 from __future__ import annotations
@@ -20,6 +23,8 @@ from ipfs_datasets_py.logic.software_contracts.content import (
 from ipfs_datasets_py.logic.software_contracts.repository import (
     ALL_DISPOSITIONS,
     GOAL_ID,
+    OBJECTIVE_VALIDATION_EVIDENCE,
+    REPAIR_TASK_ID,
     STATUS_COMPLETE,
     STATUS_INCOMPLETE_SCAN,
     TASK_ID,
@@ -133,6 +138,11 @@ class CoverageReceipt:
             == STATUS_INCOMPLETE_SCAN
             or self.complete,
             "bound_to_repository_root_cid": True,
+            # Non-identity repair markers (excluded from receipt_cid identity).
+            "hash_unsupported_without_parse": True,
+            "objective_validation_repair": True,
+            "objective_validation_evidence": OBJECTIVE_VALIDATION_EVIDENCE,
+            "repair_task_id": REPAIR_TASK_ID,
         }
         return document
 
@@ -556,6 +566,8 @@ __all__ = [
     "CoverageDisposition",
     "CoverageError",
     "CoverageReceipt",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
+    "REPAIR_TASK_ID",
     "SCHEMA_COVERAGE",
     "SCHEMA_COVERAGE_DISPOSITION",
     "SCHEMA_COVERAGE_RECEIPT",
