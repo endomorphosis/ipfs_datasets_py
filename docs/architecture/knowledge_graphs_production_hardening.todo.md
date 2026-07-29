@@ -57,7 +57,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-004 Implement immutable graph revision manifests
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: architecture
 - Depends on: KGP-003
