@@ -1,0 +1,30 @@
+{
+  "schema": "wallet_processor_migration/chain-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "task_id": "WALPROC-013",
+  "chain_id": "ethereum",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Scaffold for Ethereum/EVM golden fixtures. Shared conformance lives under _shared/; chain-native vectors land with the ethereum processor lane.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "scaffold"
+  },
+  "source": {
+    "kind": "scaffold",
+    "description": "Directory reserved for EVM legacy/EIP-1559, ERC token, reorg, and finality fixtures."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "eip155",
+    "not_live_network_data": true,
+    "extends_shared_checks": true
+  },
+  "files": [
+    "manifest.json",
+    "README.md"
+  ]
+}

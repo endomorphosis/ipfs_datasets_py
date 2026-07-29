@@ -1,0 +1,62 @@
+{
+  "schema": "wallet_processor_migration/shared-deterministic-ids@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "notes": "Identity coordinates must exclude observation metadata (provider time, pagination, finality).",
+  "chain": {
+    "namespace": "eip155",
+    "network": "ethereum-mainnet",
+    "chain_id": "1",
+    "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+  },
+  "records": [
+    {
+      "id": "tx-alice-bob-1",
+      "record_type": "transaction",
+      "identity": {
+        "transaction_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "position": {
+          "sequence": 19000000,
+          "hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "transaction_index": 3
+        }
+      },
+      "observation_noise": {
+        "observed_at": "2026-01-01T00:00:00.000000Z",
+        "provider": "fixture-rpc-a",
+        "continuation_token": "page-1"
+      }
+    },
+    {
+      "id": "tx-alice-bob-1-replay",
+      "record_type": "transaction",
+      "identity": {
+        "transaction_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "position": {
+          "sequence": 19000000,
+          "hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "transaction_index": 3
+        }
+      },
+      "observation_noise": {
+        "observed_at": "2026-06-15T12:34:56.000000Z",
+        "provider": "fixture-rpc-b",
+        "continuation_token": "page-9"
+      },
+      "must_match_id": "tx-alice-bob-1"
+    },
+    {
+      "id": "tx-different-index",
+      "record_type": "transaction",
+      "identity": {
+        "transaction_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "position": {
+          "sequence": 19000000,
+          "hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "transaction_index": 4
+        }
+      },
+      "must_differ_from": "tx-alice-bob-1"
+    }
+  ]
+}
