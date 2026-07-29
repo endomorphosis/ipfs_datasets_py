@@ -11,6 +11,7 @@ Importing this module performs no network I/O.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from hashlib import sha256
@@ -20,7 +21,7 @@ from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
 from .canonical import canonical_json_bytes, content_digest
-from .errors import DatasetSinkError, InvalidRequestError
+from .errors import DatasetSinkError, InvalidRequestError, ResourceLimitError
 from .models import (
     ExportManifest,
     ExportPartition,
@@ -35,6 +36,14 @@ from .protocols import OperationContext, RecordBatch
 SINK_RECEIPT_SCHEMA_VERSION = "wallet-sink-receipt-v1"
 RAW_PAYLOAD_SCHEMA_VERSION = "wallet-raw-payload-v1"
 
+# Conservative custody defaults: explicit retention is always bounded.
+DEFAULT_MAX_RAW_OBJECT_BYTES = 1_048_576  # 1 MiB per object
+DEFAULT_MAX_RAW_TOTAL_BYTES = 16 * 1024 * 1024  # 16 MiB per store / run
+DEFAULT_MAX_RAW_OBJECTS = 1_000
+
+_DIRECTORY_MODE = 0o700
+_FILE_MODE = 0o600
+
 
 def _required_str(value: str, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
@@ -45,6 +54,12 @@ def _required_str(value: str, name: str) -> str:
 def _non_negative_int(value: int, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise InvalidRequestError(f"{name} must be a non-negative integer")
+    return value
+
+
+def _positive_int(value: int, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise InvalidRequestError(f"{name} must be a positive integer")
     return value
 
 
@@ -244,6 +259,61 @@ def digest_bytes(body: bytes) -> str:
     return f"sha256:{sha256(bytes(body)).hexdigest()}"
 
 
+@dataclass(frozen=True, slots=True)
+class RawPayloadCustodyLimits:
+    """Positive per-object, per-run byte, and retained-object custody ceilings.
+
+    These limits are independent of transport :class:`~protocols.RequestLimits`
+    and are enforced by raw-payload stores **before** copying, hashing, or
+    durable writes so failed puts leave store state unchanged.
+    """
+
+    max_object_bytes: int = DEFAULT_MAX_RAW_OBJECT_BYTES
+    max_total_bytes: int = DEFAULT_MAX_RAW_TOTAL_BYTES
+    max_objects: int = DEFAULT_MAX_RAW_OBJECTS
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "max_object_bytes",
+            _positive_int(self.max_object_bytes, "max_object_bytes"),
+        )
+        object.__setattr__(
+            self,
+            "max_total_bytes",
+            _positive_int(self.max_total_bytes, "max_total_bytes"),
+        )
+        object.__setattr__(
+            self, "max_objects", _positive_int(self.max_objects, "max_objects")
+        )
+        if self.max_object_bytes > self.max_total_bytes:
+            raise InvalidRequestError(
+                "max_object_bytes must not exceed max_total_bytes"
+            )
+
+    def to_dict(self) -> dict[str, int]:
+        return {
+            "max_object_bytes": self.max_object_bytes,
+            "max_total_bytes": self.max_total_bytes,
+            "max_objects": self.max_objects,
+        }
+
+
+@runtime_checkable
+class RawPayloadEncryptor(Protocol):
+    """Injected encryptor for :attr:`RawPayloadPolicy.SEPARATELY_ENCRYPTED` custody."""
+
+    def encrypt(self, plaintext: bytes) -> bytes:
+        """Return ciphertext for *plaintext* without logging the input."""
+
+        ...
+
+    def decrypt(self, ciphertext: bytes) -> bytes:
+        """Return plaintext for *ciphertext* without logging the material."""
+
+        ...
+
+
 @runtime_checkable
 class RawPayloadStore(Protocol):
     """Content-addressed store for optional lossless provider payloads."""
@@ -271,11 +341,176 @@ class RawPayloadStore(Protocol):
         ...
 
 
-class InMemoryRawPayloadStore:
-    """Process-local raw payload store; suitable for tests and single-process runs."""
+def _as_body_bytes(body: object) -> bytes:
+    """Validate body type without allocating a second copy for ``bytes`` inputs."""
 
-    def __init__(self) -> None:
+    if isinstance(body, bytes):
+        return body
+    if isinstance(body, bytearray):
+        return bytes(body)
+    if isinstance(body, memoryview):
+        return body.tobytes()
+    raise InvalidRequestError("body must be bytes")
+
+
+def _enforce_object_size(
+    body: bytes,
+    *,
+    limits: RawPayloadCustodyLimits,
+    context: OperationContext,
+) -> int:
+    """Reject oversized payloads before hashing, allocation, or writes.
+
+    Returns the inspected byte length.  Uses ``len`` only so no extra buffer is
+    allocated for the size check itself.
+    """
+
+    size = len(body)
+    if size > limits.max_object_bytes:
+        raise ResourceLimitError(
+            f"raw payload exceeds max_object_bytes ({limits.max_object_bytes})"
+        )
+    # Operation-level response ceiling also bounds retained raw objects.
+    if size > context.limits.max_response_bytes:
+        raise ResourceLimitError(
+            "raw payload exceeds operation max_response_bytes"
+        )
+    return size
+
+
+def _enforce_capacity(
+    *,
+    size: int,
+    is_new: bool,
+    object_count: int,
+    total_bytes: int,
+    limits: RawPayloadCustodyLimits,
+) -> None:
+    """Reject over-count / over-total retention before mutating store state."""
+
+    if not is_new:
+        return
+    if object_count >= limits.max_objects:
+        raise ResourceLimitError(
+            f"raw payload store exceeds max_objects ({limits.max_objects})"
+        )
+    if total_bytes + size > limits.max_total_bytes:
+        raise ResourceLimitError(
+            f"raw payload store exceeds max_total_bytes ({limits.max_total_bytes})"
+        )
+
+
+def _require_encryptor_for_policy(
+    policy: RawPayloadPolicy,
+    encryptor: RawPayloadEncryptor | None,
+) -> None:
+    """Fail closed when encrypted custody is requested without an encryptor."""
+
+    if policy is RawPayloadPolicy.SEPARATELY_ENCRYPTED and encryptor is None:
+        raise InvalidRequestError(
+            "separately_encrypted raw payload policy requires an injected encryptor"
+        )
+
+
+def _restrictive_mkdir(path: Path) -> None:
+    """Create *path* (and parents) with owner-only directory permissions."""
+
+    path.mkdir(parents=True, exist_ok=True, mode=_DIRECTORY_MODE)
+    try:
+        path.chmod(_DIRECTORY_MODE)
+    except OSError:
+        # Best-effort on platforms that ignore POSIX modes (e.g. some tmpfs/mnt).
+        pass
+
+
+def _restrictive_write_bytes(path: Path, data: bytes) -> None:
+    """Atomically write *data* with owner-only file permissions."""
+
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    # Prefer exclusive owner-only create; fall back when the platform rejects mode.
+    fd = os.open(tmp, flags, _FILE_MODE)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except Exception:
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
+    os.replace(tmp, path)
+    try:
+        path.chmod(_FILE_MODE)
+    except OSError:
+        pass
+
+
+class InMemoryRawPayloadStore:
+    """Process-local raw payload store with hard custody ceilings.
+
+    Suitable for tests and single-process runs.  Bounds are enforced before
+    hashing or retaining body bytes so rejected puts leave the store unchanged.
+    """
+
+    def __init__(
+        self,
+        *,
+        limits: RawPayloadCustodyLimits | None = None,
+        max_object_bytes: int | None = None,
+        max_total_bytes: int | None = None,
+        max_objects: int | None = None,
+        policy: RawPayloadPolicy = RawPayloadPolicy.REFERENCED,
+        encryptor: RawPayloadEncryptor | None = None,
+    ) -> None:
+        if limits is not None and not isinstance(limits, RawPayloadCustodyLimits):
+            raise InvalidRequestError("limits must be a RawPayloadCustodyLimits")
+        if limits is None:
+            limits = RawPayloadCustodyLimits(
+                max_object_bytes=(
+                    DEFAULT_MAX_RAW_OBJECT_BYTES
+                    if max_object_bytes is None
+                    else max_object_bytes
+                ),
+                max_total_bytes=(
+                    DEFAULT_MAX_RAW_TOTAL_BYTES
+                    if max_total_bytes is None
+                    else max_total_bytes
+                ),
+                max_objects=(
+                    DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects
+                ),
+            )
+        elif any(v is not None for v in (max_object_bytes, max_total_bytes, max_objects)):
+            raise InvalidRequestError(
+                "pass either limits= or individual max_* kwargs, not both"
+            )
+        if not isinstance(policy, RawPayloadPolicy):
+            raise InvalidRequestError("policy must be a RawPayloadPolicy")
+        _require_encryptor_for_policy(policy, encryptor)
+        self._limits = limits
+        self._policy = policy
+        self._encryptor = encryptor
         self._entries: dict[str, StoredRawPayload] = {}
+        self._total_bytes = 0
+
+    @property
+    def limits(self) -> RawPayloadCustodyLimits:
+        return self._limits
+
+    @property
+    def policy(self) -> RawPayloadPolicy:
+        return self._policy
+
+    @property
+    def encryptor(self) -> RawPayloadEncryptor | None:
+        return self._encryptor
+
+    @property
+    def total_bytes(self) -> int:
+        return self._total_bytes
 
     def __len__(self) -> int:
         return len(self._entries)
@@ -292,20 +527,55 @@ class InMemoryRawPayloadStore:
         context: OperationContext,
     ) -> StoredRawPayload:
         context.check_active()
-        if not isinstance(body, (bytes, bytearray)):
-            raise InvalidRequestError("body must be bytes")
+        if self._policy is RawPayloadPolicy.OMITTED:
+            raise InvalidRequestError(
+                "raw payload retention is omitted by policy; enable an explicit "
+                "retention policy with positive custody limits"
+            )
+        _require_encryptor_for_policy(self._policy, self._encryptor)
+        raw = _as_body_bytes(body)
+        # Size / operation bounds before any copy, hash, encrypt, or allocation.
+        size = _enforce_object_size(raw, limits=self._limits, context=context)
+
+        digest = digest_bytes(raw)
+        existing = self._entries.get(digest)
+        if existing is not None:
+            # Content-addressed: identical digest is a no-op; never inflate totals.
+            # Defensive equality check only applies to plaintext custody (encrypted
+            # ciphertext may be non-deterministic across encrypt calls).
+            if self._encryptor is None and existing.body != raw:
+                raise DatasetSinkError(
+                    f"raw payload digest collision for {digest}"
+                )
+            return existing
+
+        _enforce_capacity(
+            size=size,
+            is_new=True,
+            object_count=len(self._entries),
+            total_bytes=self._total_bytes,
+            limits=self._limits,
+        )
+
+        stored_body = raw
+        if self._encryptor is not None:
+            try:
+                stored_body = self._encryptor.encrypt(raw)
+            except Exception as exc:
+                raise DatasetSinkError("raw payload encryption failed") from exc
+            if not isinstance(stored_body, (bytes, bytearray)):
+                raise DatasetSinkError("encryptor.encrypt must return bytes")
+            stored_body = bytes(stored_body)
+
         payload = StoredRawPayload(
-            digest=digest_bytes(body),
-            body=bytes(body),
+            digest=digest,
+            body=stored_body,
             media_type=media_type,
             cid=cid,
         )
-        existing = self._entries.get(payload.digest)
-        if existing is not None and existing.body != payload.body:
-            raise DatasetSinkError(
-                f"raw payload digest collision for {payload.digest}"
-            )
-        self._entries[payload.digest] = payload
+        # Accounting uses plaintext size so encryption overhead cannot bypass caps.
+        self._entries[digest] = payload
+        self._total_bytes += size
         return payload
 
     async def get(
@@ -316,15 +586,112 @@ class InMemoryRawPayloadStore:
     ) -> StoredRawPayload | None:
         context.check_active()
         _required_str(digest, "digest")
-        return self._entries.get(digest)
+        stored = self._entries.get(digest)
+        if stored is None:
+            return None
+        body = stored.body
+        if self._encryptor is not None:
+            body = self._encryptor.decrypt(body)
+            if not isinstance(body, (bytes, bytearray)):
+                raise DatasetSinkError("encryptor.decrypt must return bytes")
+            body = bytes(body)
+        return StoredRawPayload(
+            digest=stored.digest,
+            body=body,
+            media_type=stored.media_type,
+            cid=stored.cid,
+        )
 
 
 class DirectoryRawPayloadStore:
-    """Filesystem-backed raw payload store keyed by digest filename."""
+    """Filesystem-backed raw payload store with hard custody ceilings.
 
-    def __init__(self, root: str | Path) -> None:
+    The store directory is created with owner-only permissions (``0o700``) and
+    payload files with owner-only permissions (``0o600``).  Bounds are enforced
+    before hashing or durable writes so rejected puts leave the store unchanged.
+    """
+
+    def __init__(
+        self,
+        root: str | Path,
+        *,
+        limits: RawPayloadCustodyLimits | None = None,
+        max_object_bytes: int | None = None,
+        max_total_bytes: int | None = None,
+        max_objects: int | None = None,
+        policy: RawPayloadPolicy = RawPayloadPolicy.REFERENCED,
+        encryptor: RawPayloadEncryptor | None = None,
+    ) -> None:
+        if limits is not None and not isinstance(limits, RawPayloadCustodyLimits):
+            raise InvalidRequestError("limits must be a RawPayloadCustodyLimits")
+        if limits is None:
+            limits = RawPayloadCustodyLimits(
+                max_object_bytes=(
+                    DEFAULT_MAX_RAW_OBJECT_BYTES
+                    if max_object_bytes is None
+                    else max_object_bytes
+                ),
+                max_total_bytes=(
+                    DEFAULT_MAX_RAW_TOTAL_BYTES
+                    if max_total_bytes is None
+                    else max_total_bytes
+                ),
+                max_objects=(
+                    DEFAULT_MAX_RAW_OBJECTS if max_objects is None else max_objects
+                ),
+            )
+        elif any(v is not None for v in (max_object_bytes, max_total_bytes, max_objects)):
+            raise InvalidRequestError(
+                "pass either limits= or individual max_* kwargs, not both"
+            )
+        if not isinstance(policy, RawPayloadPolicy):
+            raise InvalidRequestError("policy must be a RawPayloadPolicy")
+        _require_encryptor_for_policy(policy, encryptor)
         self._root = Path(root)
-        self._root.mkdir(parents=True, exist_ok=True)
+        _restrictive_mkdir(self._root)
+        self._limits = limits
+        self._policy = policy
+        self._encryptor = encryptor
+        self._total_bytes = 0
+        self._object_count = 0
+        self._known_digests: set[str] = set()
+        self._hydrate_accounting()
+
+    def _hydrate_accounting(self) -> None:
+        """Initialize in-process counters from any pre-existing payload files."""
+
+        for path in self._root.glob("*.bin"):
+            try:
+                size = path.stat().st_size
+            except OSError:
+                continue
+            digest = path.stem.replace("_", ":", 1)
+            self._known_digests.add(digest)
+            self._object_count += 1
+            self._total_bytes += size
+
+    @property
+    def root(self) -> Path:
+        return self._root
+
+    @property
+    def limits(self) -> RawPayloadCustodyLimits:
+        return self._limits
+
+    @property
+    def policy(self) -> RawPayloadPolicy:
+        return self._policy
+
+    @property
+    def encryptor(self) -> RawPayloadEncryptor | None:
+        return self._encryptor
+
+    @property
+    def total_bytes(self) -> int:
+        return self._total_bytes
+
+    def __len__(self) -> int:
+        return self._object_count
 
     def _path_for(self, digest: str) -> Path:
         # Digest is "sha256:<hex>"; keep the algorithm prefix out of the name.
@@ -340,24 +707,75 @@ class DirectoryRawPayloadStore:
         context: OperationContext,
     ) -> StoredRawPayload:
         context.check_active()
+        if self._policy is RawPayloadPolicy.OMITTED:
+            raise InvalidRequestError(
+                "raw payload retention is omitted by policy; enable an explicit "
+                "retention policy with positive custody limits"
+            )
+        _require_encryptor_for_policy(self._policy, self._encryptor)
+        raw = _as_body_bytes(body)
+        size = _enforce_object_size(raw, limits=self._limits, context=context)
+
+        digest = digest_bytes(raw)
+        path = self._path_for(digest)
+        meta_path = path.with_suffix(".meta.json")
+        if path.exists():
+            # Idempotent content-addressed hit: no new capacity consumed.
+            # Encrypted ciphertext may be non-deterministic, so when an encryptor
+            # is present we trust the digest key and skip byte equality.
+            existing_body = path.read_bytes()
+            if self._encryptor is None and existing_body != raw:
+                raise DatasetSinkError(
+                    f"raw payload digest collision for {digest}"
+                )
+            return StoredRawPayload(
+                digest=digest,
+                body=existing_body if self._encryptor is not None else raw,
+                media_type=media_type,
+                cid=cid,
+            )
+
+        _enforce_capacity(
+            size=size,
+            is_new=True,
+            object_count=self._object_count,
+            total_bytes=self._total_bytes,
+            limits=self._limits,
+        )
+
+        stored_body = raw
+        if self._encryptor is not None:
+            try:
+                stored_body = self._encryptor.encrypt(raw)
+            except Exception as exc:
+                # Encryption failure must not leave partial files or counters.
+                raise DatasetSinkError("raw payload encryption failed") from exc
+            if not isinstance(stored_body, (bytes, bytearray)):
+                raise DatasetSinkError("encryptor.encrypt must return bytes")
+            stored_body = bytes(stored_body)
+
         payload = StoredRawPayload(
-            digest=digest_bytes(body),
-            body=bytes(body),
+            digest=digest,
+            body=stored_body,
             media_type=media_type,
             cid=cid,
         )
-        path = self._path_for(payload.digest)
-        meta_path = path.with_suffix(".meta.json")
-        if path.exists():
-            if path.read_bytes() != payload.body:
-                raise DatasetSinkError(
-                    f"raw payload digest collision for {payload.digest}"
-                )
-            return payload
-        tmp = path.with_suffix(".tmp")
-        tmp.write_bytes(payload.body)
-        tmp.replace(path)
-        meta_path.write_bytes(canonical_json_bytes(payload.to_dict()))
+        # Write body then meta; counters update only after both succeed.
+        _restrictive_write_bytes(path, payload.body)
+        try:
+            _restrictive_write_bytes(
+                meta_path, canonical_json_bytes(payload.to_dict())
+            )
+        except Exception:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise
+
+        self._known_digests.add(digest)
+        self._object_count += 1
+        self._total_bytes += size
         return payload
 
     async def get(
@@ -381,7 +799,17 @@ class DirectoryRawPayloadStore:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
             media_type = str(meta.get("media_type") or media_type)
             cid = meta.get("cid")
-        return StoredRawPayload(digest=digest, body=body, media_type=media_type, cid=cid)
+        if self._encryptor is not None:
+            try:
+                body = self._encryptor.decrypt(body)
+            except Exception as exc:
+                raise DatasetSinkError("raw payload decryption failed") from exc
+            if not isinstance(body, (bytes, bytearray)):
+                raise DatasetSinkError("encryptor.decrypt must return bytes")
+            body = bytes(body)
+        return StoredRawPayload(
+            digest=digest, body=body, media_type=media_type, cid=cid
+        )
 
 
 @dataclass
@@ -649,11 +1077,16 @@ def iter_record_dicts(records: Iterable[object]) -> list[dict[str, Any]]:
 
 
 __all__ = [
+    "DEFAULT_MAX_RAW_OBJECT_BYTES",
+    "DEFAULT_MAX_RAW_OBJECTS",
+    "DEFAULT_MAX_RAW_TOTAL_BYTES",
     "RAW_PAYLOAD_SCHEMA_VERSION",
     "SINK_RECEIPT_SCHEMA_VERSION",
     "BatchWriteReceipt",
     "DirectoryRawPayloadStore",
     "InMemoryRawPayloadStore",
+    "RawPayloadCustodyLimits",
+    "RawPayloadEncryptor",
     "RawPayloadStore",
     "SinkCommitReceipt",
     "StoredRawPayload",
