@@ -754,9 +754,13 @@ class TypeScriptFrontend:
 
 
 # Compatibility nouns used by the goal AST query.  They point to the shared
-# records and do not create a TypeScript-owned durable schema.
+# records and the worker's Compiler API surfaces; they do not create a
+# TypeScript-owned durable schema separate from ast_ir.
 SourceFile = ASTRecord
 Symbol = SymbolDefinition
+# The worker builds a no-resolution TypeChecker/Symbol view via the pinned
+# Compiler API.  The Python adapter never reimplements type checking.
+TypeChecker = TypeScriptASTWorker
 
 
 __all__ = [
@@ -770,6 +774,7 @@ __all__ = [
     "PINNED_TYPESCRIPT_IDENTITY",
     "SourceFile",
     "Symbol",
+    "TypeChecker",
     "TYPESCRIPT_COMPILER_VERSION",
     "TYPESCRIPT_FRONTEND_VERSION",
     "TYPESCRIPT_SOURCE_EXTENSIONS",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -10,9 +11,11 @@ import pytest
 
 from ipfs_datasets_py.logic.software_contracts.ast_ir import ASTRecord
 from ipfs_datasets_py.logic.software_contracts.typescript_frontend import (
+    PINNED_NODE_VERSION,
     TYPESCRIPT_COMPILER_VERSION,
     TYPESCRIPT_SOURCE_EXTENSIONS,
     TYPESCRIPT_WORKER_PROTOCOL,
+    TypeChecker,
     TypeScriptASTWorker,
     TypeScriptFrontend,
 )
@@ -38,11 +41,18 @@ export const view = <section>{runHelper()}</section>;
 
 
 def _worker_script(tmp_path: Path, *, mode: str = "ok") -> Path:
+    """Hermetic JSONL worker used when the reviewed compiler is not provisioned.
+
+    Node and compiler versions are fixed to the pinned values so capability
+    probes never depend on the host Node release under test.
+    """
+
     worker = tmp_path / "fake-typescript-worker.mjs"
     worker.write_text(
         f"""\
 import process from "node:process";
 const protocol = {TYPESCRIPT_WORKER_PROTOCOL!r};
+const pinnedNode = {PINNED_NODE_VERSION!r};
 let input = "";
 for await (const chunk of process.stdin) input += chunk;
 const request = JSON.parse(input);
@@ -61,7 +71,7 @@ if (request.operation === "probe") {{
     status: mode === "unsupported" ? "unsupported" : "ok",
     code: mode === "unsupported" ? "typescript.compiler_unavailable" : "",
     compiler_version: mode === "wrong-version" ? "5.5.0" : "5.6.3",
-    node_version: process.version,
+    node_version: mode === "wrong-node" ? "v16.0.0" : pinnedNode,
     reason: mode === "unsupported" ? "compiler missing" : "",
   }}) + "\\n");
   process.exit(0);
@@ -121,7 +131,7 @@ process.stdout.write(JSON.stringify({{
   status: "ok",
   code: "",
   compiler_version: mode === "wrong-version" ? "5.5.0" : "5.6.3",
-  node_version: process.version,
+  node_version: mode === "wrong-node" ? "v16.0.0" : pinnedNode,
   reason: "",
   facts,
   usage: {{source_bytes: end, ast_nodes: 20, facts: 15}},
@@ -139,6 +149,37 @@ def _frontend(tmp_path: Path, *, mode: str = "ok", timeout: float = 5) -> TypeSc
             timeout_seconds=timeout,
         )
     )
+
+
+def _provisioned_typescript_module() -> str | None:
+    """Return a path/module name for the pinned compiler when present."""
+
+    override = os.environ.get("IPFS_DATASETS_TYPESCRIPT_MODULE", "").strip()
+    if override:
+        return override
+    try:
+        completed = subprocess.run(
+            [
+                "node",
+                "-e",
+                (
+                    "const {createRequire}=require('module');"
+                    "const require=createRequire(process.cwd()+'/package.json');"
+                    "const ts=require('typescript');"
+                    "if(ts.version!=='5.6.3') process.exit(2);"
+                    "process.stdout.write(require.resolve('typescript'));"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    return completed.stdout.strip()
 
 
 def test_transport_maps_compiler_facts_to_shared_ast(tmp_path: Path) -> None:
@@ -238,6 +279,16 @@ def test_wrong_version_is_rejected_without_using_facts(tmp_path: Path) -> None:
     assert not record.symbols
 
 
+def test_wrong_node_version_is_rejected_without_using_facts(tmp_path: Path) -> None:
+    frontend = _frontend(tmp_path, mode="wrong-node")
+    assert not frontend.probe().supported
+    record = frontend.extract("export const x = 1;", path="src/x.ts")
+    assert [item.code for item in record.unsupported] == [
+        "typescript.node_version_mismatch"
+    ]
+    assert not record.symbols
+
+
 @pytest.mark.parametrize("mode", ["malformed", "extra-line"])
 def test_malformed_worker_protocol_fails_closed(
     tmp_path: Path,
@@ -298,15 +349,56 @@ def test_adapter_round_trip_and_golden_root(tmp_path: Path) -> None:
     assert record.verify_cid(record.cid) == record.cid
     assert (
         record.cid
-        == "baguqeeraumvrwfcn4quebg266xkwgscwhd2tvkj24c4eju7gu3bsnjeqkz5a"
+        == "baguqeeramrqecwub6elecohidj37shzsc3gqe3jq57pcagnlqds7vwjsgmxa"
     )
 
 
+def test_capability_records_pinned_compiler_api_without_regex_fallback(
+    tmp_path: Path,
+) -> None:
+    frontend = _frontend(tmp_path)
+    capability = frontend.capability
+    assert capability.frontend_name == "typescript-compiler-api"
+    assert "compiler_api" in capability.capabilities
+    assert "jsx" in capability.capabilities
+    assert "tsx" in capability.capabilities
+    assert "regex_fallback" not in capability.capabilities
+    assert capability.source_extensions == TYPESCRIPT_SOURCE_EXTENSIONS
+
+
+def test_worker_bounds_and_protocol_surface(tmp_path: Path) -> None:
+    worker_path = _worker_script(tmp_path, mode="ok")
+    # Direct protocol contract: exactly one JSONL record and closed keys.
+    worker = TypeScriptASTWorker(worker_path=worker_path)
+    response = worker.parse(
+        "export const x = 1;",
+        path="src/x.ts",
+        max_source_bytes=1024,
+        max_ast_nodes=1000,
+    )
+    assert response["status"] == "ok"
+    assert response["protocol"] == TYPESCRIPT_WORKER_PROTOCOL
+    with pytest.raises(ValueError):
+        TypeScriptASTWorker(worker_path=worker_path, timeout_seconds=0)
+    with pytest.raises(ValueError):
+        TypeScriptFrontend(worker=worker, max_source_bytes=0)
+    with pytest.raises(ValueError):
+        TypeScriptASTWorker(worker_path=worker_path, max_output_bytes=0)
+
+
 def test_no_execution_when_reviewed_compiler_is_available(tmp_path: Path) -> None:
-    frontend = TypeScriptFrontend()
-    capability = frontend.probe()
-    if not capability.supported:
-        pytest.skip("reviewed TypeScript 5.6.3 compiler is not provisioned")
+    module = _provisioned_typescript_module()
+    if module is None:
+        frontend = TypeScriptFrontend()
+        capability = frontend.probe()
+        if not capability.supported:
+            pytest.skip("reviewed TypeScript 5.6.3 compiler is not provisioned")
+        worker = TypeScriptASTWorker()
+    else:
+        worker = TypeScriptASTWorker(typescript_module=module)
+        if not worker.probe().supported:
+            pytest.skip("reviewed TypeScript 5.6.3 compiler is not provisioned")
+    frontend = TypeScriptFrontend(worker=worker)
     marker = tmp_path / "executed"
     record = frontend.extract(
         (
@@ -318,3 +410,42 @@ def test_no_execution_when_reviewed_compiler_is_available(tmp_path: Path) -> Non
     )
     assert not marker.exists()
     assert record.imports
+    assert not record.unsupported or all(
+        item.code != "typescript.compiler_unavailable" for item in record.unsupported
+    )
+
+
+def test_real_compiler_covers_swissknife_surface_without_regex(
+    tmp_path: Path,
+) -> None:
+    module = _provisioned_typescript_module()
+    if module is None:
+        pytest.skip("reviewed TypeScript 5.6.3 compiler is not provisioned")
+    worker = TypeScriptASTWorker(typescript_module=module)
+    capability = worker.probe()
+    if not capability.supported:
+        pytest.skip(capability.reason or "pinned compiler/node not available")
+    frontend = TypeScriptFrontend(worker=worker)
+    record = frontend.extract(
+        REPRESENTATIVE_SOURCE,
+        path="src/service.tsx",
+        repository_id="repository:swissknife",
+        revision="df11f08f",
+    )
+    assert not record.unsupported
+    assert {"Runner", "Service", "view", "shared"} <= set(record.module.export_names)
+    kinds = {item.kind for item in record.symbols}
+    assert {"interface", "class", "method", "variable"} <= kinds
+    assert any(item.kind == "re_export" for item in record.imports)
+    assert any(item.callee_name == "client.fetch" and item.is_awaited for item in record.calls)
+    assert {item.kind for item in record.effects} >= {"await", "exception", "import"}
+    # References and calls stay unresolved in the frontend (resolver owns joins).
+    for item in (*record.references, *record.calls):
+        assert {
+            "resolved_symbol_id",
+            "target_symbol_id",
+            "candidate_symbol_ids",
+            "resolution_confidence",
+        }.isdisjoint(item.to_dict())
+    assert ASTRecord.from_json(record.to_json()) == record
+    assert record.verify_cid(record.cid) == record.cid
