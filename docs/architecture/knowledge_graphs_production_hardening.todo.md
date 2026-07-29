@@ -193,7 +193,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-012 Add verified hybrid cache, reachability, pin, and GC policy
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: storage
 - Depends on: KGP-005, KGP-009, KGP-010, KGP-011
