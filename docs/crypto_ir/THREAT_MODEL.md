@@ -1,6 +1,7 @@
 # Crypto IR Threat Model
 
 Status: normative companion for CRYPTOIR-G010 / CRYPTOIR-001  
+Repair: CRYPTOIR-036 objective validation repair  
 Authority policy: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)  
 Machine policy id: `crypto-ir-authority-policy-v1` (version `1.0.0`)  
 Evidence test: `ipfs_datasets_py/tests/unit/logic/crypto_ir/test_policy_baseline.py`
@@ -286,6 +287,7 @@ Unless a later reviewed objective adds authority, Crypto IR does not:
 | Unsupported or stale critical inputs fail closed | T2, T3, freshness rules |
 | Machine-checked positive and rejection fixtures | `crypto-ir-authority-policy-v1` JSON fixtures + `test_policy_baseline.py` |
 | Interfaces `AnalysisAuthority`, `PolicyAuthority`, `TransactionVerdict`, `EvidenceFreshness` | Section 3 and companion §2 |
+| objective validation repair | CRYPTOIR-036 re-proof in `test_policy_baseline.py` (`test_objective_validation_repair_proves_g010_acceptance`) and acceptance block in companion policy JSON |
 
 ## 11. Related documents
 

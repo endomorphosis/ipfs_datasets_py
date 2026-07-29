@@ -1,6 +1,7 @@
 # Crypto IR Authority and Policy Baseline
 
 Status: normative for CRYPTOIR-G010 / CRYPTOIR-001  
+Repair: CRYPTOIR-036 objective validation repair  
 Companion: [`THREAT_MODEL.md`](THREAT_MODEL.md)  
 Machine policy: the fenced JSON block labeled `crypto-ir-authority-policy-v1` in this file  
 Evidence test: `ipfs_datasets_py/tests/unit/logic/crypto_ir/test_policy_baseline.py`
@@ -31,6 +32,7 @@ Policy identity:
 - `schema_version`: `ipfs-datasets.crypto-ir-authority-policy.v1`
 - Goal: `CRYPTOIR-G010`
 - Task: `CRYPTOIR-001`
+- Repair task: `CRYPTOIR-036` (objective validation repair)
 
 ## 2. Conceptual interfaces
 
@@ -190,6 +192,25 @@ document prose and the JSON disagree, consumers must fail closed.
   "normative": true,
   "goal_id": "CRYPTOIR-G010",
   "task_id": "CRYPTOIR-001",
+  "repair_task_id": "CRYPTOIR-036",
+  "objective_validation_evidence": "objective validation repair",
+  "acceptance": {
+    "objective_validation_repair": true,
+    "objective_validation_evidence": "objective validation repair",
+    "repair_task_id": "CRYPTOIR-036",
+    "goal_id": "CRYPTOIR-G010",
+    "task_id": "CRYPTOIR-001",
+    "terms": [
+      "documents_bind_reviewed_git_revisions",
+      "authority_kinds_distinct_non_escalating",
+      "exact_analysis_and_transaction_verdict_semantics",
+      "prohibit_unbounded_guilt_by_association",
+      "prohibit_universal_security_claims",
+      "unsupported_or_stale_critical_inputs_fail_closed",
+      "conceptual_interfaces_analysis_policy_transaction_freshness",
+      "positive_and_rejection_fixtures_without_chain_logic"
+    ]
+  },
   "human_readable_companion": "THREAT_MODEL.md",
   "pinned_baseline": {
     "tree_revision": "34b536b59bfb7fcb4c7772b7078fe04709e92fc8",
@@ -616,3 +637,18 @@ document prose and the JSON disagree, consumers must fail closed.
 CRYPTOIR-G010 freezes policy only. It does **not** implement chain parsing,
 wallet signing, SDN ingestion, or gate services. Those remain later objectives
 that must consume this authority lattice without widening it.
+
+## 10. Acceptance evidence (objective validation repair)
+
+CRYPTOIR-036 records **objective validation repair** for CRYPTOIR-G010: path
+evidence for this document and `THREAT_MODEL.md` may already exist while the
+supervisor validation gate still requires an explicit re-proof of every
+acceptance term. The machine-checked re-proof is
+`test_objective_validation_repair_proves_g010_acceptance` in
+`ipfs_datasets_py/tests/unit/logic/crypto_ir/test_policy_baseline.py`, which
+asserts the synthetic evidence term `objective validation repair` and re-runs
+pin, authority lattice, vocabulary, prohibition, freshness, and decision-fixture
+checks without implementing chain logic.
+
+Narrow evidence-bound claims remain preferable to broad claims the current models
+cannot prove.
