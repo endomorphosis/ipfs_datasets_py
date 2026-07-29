@@ -1,0 +1,1005 @@
+{
+  "schema": "ipfs_datasets_py/knowledge-graphs/corpus-registry@1",
+  "schema_version": 1,
+  "program": "KGP",
+  "task_id": "KGP-002",
+  "inventoried_at": "2026-07-29T21:30:00Z",
+  "baseline_tree_id": "6672d69242731f53b49f4f793ed3023b7ba36a0d",
+  "notes": [
+    "Read-only inventory of graph producers, artifacts, schemas, and consumers.",
+    "Nested lift_coding ipfs_datasets_py checkouts are fixture-only and must not become the implementation source of truth.",
+    "CVEfixes producer modules currently live in a nested non-canonical tree; artifacts live under lift_coding/.cvefixes-build."
+  ],
+  "mandatory_graph_kinds": [
+    "cvefixes_security_ir_graphrag",
+    "skillcenter_ir_graphrag",
+    "two11_retrieval_package",
+    "two11_browser_graphrag",
+    "supervisor_objective_graph",
+    "supervisor_ast_index",
+    "supervisor_code_evidence_graph",
+    "supervisor_conflict_graph",
+    "supervisor_semantic_dependency_graph"
+  ],
+  "repositories": [
+    {
+      "repository_id": "canonical_ipfs_datasets_py",
+      "path": "/home/barberb/ipfs_datasets_py",
+      "role": "canonical_implementation",
+      "commit": "6672d69242731f53b49f4f793ed3023b7ba36a0d",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 13,
+      "fixture_only": false,
+      "authoritative": true,
+      "notes": "Canonical owner for knowledge_graphs platform work. Worktree baseline for KGP matches this commit."
+    },
+    {
+      "repository_id": "lift_coding",
+      "path": "/home/barberb/lift_coding",
+      "role": "artifact_host_and_orchestration",
+      "commit": "51dded3b691682791be15d161d01ce94c5944fa1",
+      "branch": "codex/swissknife-parallel-supervisor-failsafe",
+      "clean": false,
+      "dirty_entry_count": 10,
+      "fixture_only": false,
+      "authoritative": true,
+      "notes": "Hosts CVEfixes build artifacts under .cvefixes-build and nested fixture checkouts."
+    },
+    {
+      "repository_id": "ipfs_accelerate_py",
+      "path": "/home/barberb/ipfs_accelerate_py",
+      "role": "supervisor_graph_owner",
+      "commit": "ff401f83b7e722e58af1696243b3aff9679a7002",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 10,
+      "fixture_only": false,
+      "authoritative": true,
+      "notes": "Authoritative producer of objective/AST/code-evidence/conflict/semantic-dependency graphs."
+    },
+    {
+      "repository_id": "two11_ai",
+      "path": "/home/barberb/211-AI",
+      "role": "service_navigation_graph_owner",
+      "commit": "31e2d2f96cad71e00789523cc81c9e16f6d4ce2f",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 2,
+      "fixture_only": false,
+      "authoritative": true,
+      "notes": "Authoritative producer of 211 retrieval package and browser GraphRAG exports."
+    },
+    {
+      "repository_id": "nested_lift_external_datasets",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "role": "stale_nested_checkout",
+      "commit": "d144be65ffe4c6423e4e1c30cd692812607343eb",
+      "branch": "HEAD",
+      "clean": false,
+      "dirty_entry_count": 7,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "STALE DIRTY nested lift checkout. Fixture-only. Do not treat as implementation source of truth."
+    },
+    {
+      "repository_id": "nested_lift_hallucinate_datasets",
+      "path": "/home/barberb/lift_coding/hallucinate_app/ipfs_datasets_py",
+      "role": "stale_nested_checkout",
+      "commit": "d144be65ffe4c6423e4e1c30cd692812607343eb",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 2,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "STALE DIRTY nested lift checkout. Fixture-only."
+    },
+    {
+      "repository_id": "nested_lift_cve_producer_tree",
+      "path": "/home/barberb/lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py",
+      "role": "non_canonical_producer_snapshot",
+      "commit": "de5697097341f630644977565238dd204ae1f8a1",
+      "branch": "main",
+      "clean": true,
+      "dirty_entry_count": 0,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "Hosts CVEfixes Security IR GraphRAG producer modules not yet present on canonical 6672d692. Fixture-only for KGP implementation; migration target is canonical tree."
+    },
+    {
+      "repository_id": "nested_unblocking_datasets",
+      "path": "/home/barberb/lift_coding/data/logic_software_verification_program/unblocking_fix/ipfs_datasets_py",
+      "role": "non_canonical_snapshot",
+      "commit": "66085f6a2ea2137dfac9f5dd275ab7ebccc4b8b7",
+      "branch": "fix/lfv-managed-submodule-concurrency",
+      "clean": true,
+      "dirty_entry_count": 0,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "Nested unblocking-fix snapshot. Fixture-only."
+    },
+    {
+      "repository_id": "nested_accelerate_datasets",
+      "path": "/home/barberb/ipfs_accelerate_py/ipfs_datasets_py",
+      "role": "vendored_mirror",
+      "commit": "6672d69242731f53b49f4f793ed3023b7ba36a0d",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 6,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "Vendored/nested mirror of datasets inside accelerate. Fixture-only; prefer canonical path."
+    },
+    {
+      "repository_id": "nested_211_datasets",
+      "path": "/home/barberb/211-AI/ipfs_datasets_py",
+      "role": "vendored_mirror",
+      "commit": "31e2d2f96cad71e00789523cc81c9e16f6d4ce2f",
+      "branch": "main",
+      "clean": false,
+      "dirty_entry_count": 2,
+      "fixture_only": true,
+      "authoritative": false,
+      "notes": "Nested datasets tree under 211-AI (shares dirty status with parent). Fixture-only for graph platform ownership."
+    }
+  ],
+  "corpora": [
+    {
+      "graph_kind": "cvefixes_security_ir_graphrag",
+      "display_name": "CVEfixes Security IR GraphRAG",
+      "mandatory": true,
+      "authoritative_owner": "lift_coding (artifacts) + nested_lift_cve_producer_tree (producer code; non-canonical)",
+      "authoritative_repository_ids": [
+        "lift_coding",
+        "nested_lift_cve_producer_tree"
+      ],
+      "fixture_only_producer": true,
+      "producer_paths": [
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/cvefixes/graph.py",
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/cvefixes/projector.py",
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/cvefixes/hf_release.py",
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/cvefixes/hf_source.py",
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/cvefixes/retrieval.py",
+        "lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py/scripts/ops/security_ir/publish_cvefixes_security_ir.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/logic/security_ir/adapter.py",
+        "ipfs_accelerate_py/agent_supervisor (plan admission / security gates)",
+        "Hugging Face dataset Publicus/cvefixes-security-ir-graphrag"
+      ],
+      "artifact_roots": [
+        "/home/barberb/lift_coding/.cvefixes-build/source",
+        "/home/barberb/lift_coding/.cvefixes-build/release-with-original-v2",
+        "/home/barberb/lift_coding/.cvefixes-build/release-with-original",
+        "/home/barberb/lift_coding/.cvefixes-build/release"
+      ],
+      "primary_artifact": "/home/barberb/lift_coding/.cvefixes-build/release-with-original-v2",
+      "schema": {
+        "release_schema": "cvefixes-huggingface-release/v1",
+        "graph_schema": "cvefixes-graphrag-graph/v1",
+        "ontology": "cvefixes-graphrag-ontology/v1",
+        "derived_schema": "cvefixes-security-ir-derived/v1",
+        "dataset_schema": "cvefixes-security-ir-dataset/v1",
+        "primary_key": "entry_cid"
+      },
+      "format": [
+        "parquet",
+        "json_manifest",
+        "bounded_adjacency_pages"
+      ],
+      "counts": {
+        "graph_nodes": 85169,
+        "graph_edges": 167364,
+        "corpus_rows": 123585,
+        "canonical_security_ir_records": 83273,
+        "original_data_rows": 12987,
+        "vector_rows": 123585,
+        "bm25_documents": 123585,
+        "graph_data_shards": 110
+      },
+      "sizes": {
+        "source_bytes_approx": 1220321238,
+        "source_human": "1.2G",
+        "release_with_original_v2_bytes_approx": 1588747641,
+        "release_with_original_v2_human": "1.5G",
+        "build_tree_human": "5.0G"
+      },
+      "provenance": {
+        "source_dataset_id": "hitoshura25/cvefixes",
+        "source_revision": "d4f5c4ea65329d9ccbb8a3b3149e5d06eda5edb2",
+        "derived_dataset_id": "Publicus/cvefixes-security-ir-graphrag",
+        "graph_root_cid": "bafkreielsquxgqxh6qzb3444bqjlicl34fxqtkyjebwa5h3vqhtaygynee",
+        "license_expression": "Apache-2.0",
+        "program": "CVESIR"
+      },
+      "migration_risk": "high",
+      "migration_risk_rationale": "Producer code is not on the canonical 6672d692 tree; lives in a fixture-only nested checkout. Large multi-GB artifacts; release profile includes original bodies. Must adapter-read before any in-place rewrite.",
+      "status": "artifact_ready_producer_non_canonical"
+    },
+    {
+      "graph_kind": "skillcenter_ir_graphrag",
+      "display_name": "SkillCenter Intent IR GraphRAG",
+      "mandatory": true,
+      "authoritative_owner": "canonical_ipfs_datasets_py (logic/intent_ir/graphrag)",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_hf_release.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_graphrag.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_cid_graph.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_corpus.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_embeddings.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_bm25.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_corpus_bm25.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/skillcenter_cid_vectors.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/ontology.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/corpus_projector.py",
+        "scripts/ops/intent_ir/build_skillcenter_graphrag.py",
+        "scripts/ops/intent_ir/build_skillcenter_cid_graph.py",
+        "scripts/ops/intent_ir/build_skillcenter_corpus.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/logic/intent_ir/graphrag/retrieval.py",
+        "ipfs_datasets_py/logic/intent_ir (formalizer / Intent IR pipeline)",
+        "Hugging Face dataset Publicus/skillcenter-ir",
+        "tests/unit/logic/intent_ir/graphrag/*"
+      ],
+      "artifact_roots": [
+        "/home/barberb/lift_coding/.cvefixes-build/skillcenter-reference",
+        "/home/barberb/.cache/huggingface/hub/datasets--Publicus--skillcenter-ir",
+        "/home/barberb/.local/share/ipfs_datasets_py/skillcenter-cache",
+        "/home/barberb/.cache/ipfs_datasets_py/skillcenter"
+      ],
+      "primary_artifact": "/home/barberb/lift_coding/.cvefixes-build/skillcenter-reference/manifest.json",
+      "schema": {
+        "release_schema": "skillcenter-huggingface-release/v3",
+        "release_schema_v2_compat": "skillcenter-huggingface-release/v2",
+        "graph_adjacency_schema": "skillcenter-hf-graph-adjacency/v1",
+        "vector_chunk_schema": "skillcenter-hf-vector-chunk/v2",
+        "bm25_posting_schema": "skillcenter-hf-bm25-posting/v1",
+        "meta_schema": "skillcenter-hf-shard-meta/v1",
+        "corpus_graph_schema": "intent-corpus-graph/v1",
+        "corpus_ontology": "intent-corpus-ontology/v1",
+        "primary_key": "entry_cid"
+      },
+      "format": [
+        "parquet",
+        "json_manifest",
+        "cid_keyed_shards",
+        "faiss_optional",
+        "bm25_postings"
+      ],
+      "counts": {
+        "graph_nodes": 434135,
+        "graph_edges": 2560637,
+        "corpus_rows": 216972,
+        "vector_rows": 216972,
+        "bm25_documents": 216972,
+        "bm25_terms": 3776520,
+        "bm25_postings": 107971682
+      },
+      "sizes": {
+        "skillcenter_reference_manifest_bytes": 6793,
+        "local_cache_human": "13M",
+        "hf_hub_snapshot_human": "1.9M (partial hub metadata/cache; full corpus remote)"
+      },
+      "provenance": {
+        "source_dataset_id": "Tommysha/skillcenter-bundles",
+        "derived_dataset_id": "Publicus/skillcenter-ir",
+        "dataset_revision": "f9dd4fec3c86d85ebf116c7408ac5ce602c418a1"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Producer is on canonical tree. Hybrid graph/vector/BM25 layout with large posting tables; needs adapter parity and v2/v3 schema compatibility before catalog migration.",
+      "status": "producer_canonical_artifacts_distributed"
+    },
+    {
+      "graph_kind": "two11_retrieval_package",
+      "display_name": "211-AI retrieval package knowledge graph",
+      "mandatory": true,
+      "authoritative_owner": "two11_ai",
+      "authoritative_repository_ids": [
+        "two11_ai"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "211-AI/scraper/build_retrieval_package.py",
+        "211-AI/scripts/build_service_portal_package.py"
+      ],
+      "consumer_paths": [
+        "211-AI/scraper/browser_graphrag_corpus.py",
+        "211-AI/scripts/build_browser_graphrag_corpus.py",
+        "211-AI/scripts/benchmark_211_retrieval.py",
+        "211-AI/scripts/audit_hf_retrieval_upload.py",
+        "211-AI/tests/test_retrieval_package.py",
+        "211-AI/wallet_interface (service portal / retrieval UI)"
+      ],
+      "artifact_roots": [
+        "/home/barberb/211-AI/data/retrieval_package"
+      ],
+      "primary_artifact": "/home/barberb/211-AI/data/retrieval_package",
+      "schema": {
+        "build_manifest": "211-AI/data/retrieval_package/manifest/build_manifest.json",
+        "build_manifest_cid": "bafkreifgjbpyynwyebcdfvc2bozwusbhza42xw6w4kutguicfscqovm67a",
+        "embedding_model": "BAAI/bge-small-en-v1.5",
+        "artifact_kinds": [
+          "parquet_documents",
+          "parquet_bm25",
+          "parquet_vectors",
+          "parquet_graph_nodes",
+          "parquet_graph_edges",
+          "parquet_communities"
+        ]
+      },
+      "format": [
+        "parquet",
+        "json_manifest"
+      ],
+      "counts": {
+        "documents": 22638,
+        "page_documents": 11787,
+        "service_documents": 10851,
+        "graph_nodes": 48851,
+        "graph_edges": 648958,
+        "graph_communities": 41,
+        "document_communities": 22638,
+        "embeddings": 22638,
+        "bm25_terms": 3191432
+      },
+      "sizes": {
+        "package_human": "184M",
+        "graph_dir_human": "72M",
+        "retrieval_dir_human": "76M",
+        "content_dir_human": "37M"
+      },
+      "provenance": {
+        "warehouse_path": "data/live/state/etl_warehouse.duckdb",
+        "build_manifest_cid": "bafkreifgjbpyynwyebcdfvc2bozwusbhza42xw6w4kutguicfscqovm67a"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Stable Parquet package with explicit CIDs. Medium risk from size and hybrid retrieval coupling; good differential-migration candidate for KGP corpus gates.",
+      "status": "artifact_ready"
+    },
+    {
+      "graph_kind": "two11_browser_graphrag",
+      "display_name": "211-AI browser GraphRAG export",
+      "mandatory": true,
+      "authoritative_owner": "two11_ai",
+      "authoritative_repository_ids": [
+        "two11_ai"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "211-AI/scraper/browser_graphrag_corpus.py",
+        "211-AI/scripts/build_browser_graphrag_corpus.py",
+        "211-AI/scripts/shard_browser_corpus_parquets.py"
+      ],
+      "consumer_paths": [
+        "211-AI/wallet_interface/ui (browser corpus under public/corpus)",
+        "211-AI/tests/test_browser_graphrag_corpus.py",
+        "211-AI/scripts/run_wallet_release_checks.py"
+      ],
+      "artifact_roots": [
+        "/home/barberb/211-AI/data/browser_graphrag_smoke",
+        "/home/barberb/211-AI/data/browser_graphrag_smoke_sharded",
+        "/home/barberb/211-AI/data/browser_graphrag_smoke_dedup",
+        "211-AI/wallet_interface/ui/public/corpus/211-info/current"
+      ],
+      "primary_artifact": "/home/barberb/211-AI/data/browser_graphrag_smoke",
+      "schema": {
+        "schema_version": 1,
+        "generated_manifest": "generated/generated-manifest.json",
+        "source_package": "data/retrieval_package",
+        "browser_embedding_model": "Xenova/bge-small-en-v1.5",
+        "python_embedding_model": "BAAI/bge-small-en-v1.5"
+      },
+      "format": [
+        "json",
+        "f32_embeddings",
+        "optional_neighborhood_shards"
+      ],
+      "counts": {
+        "smoke_documents": 25,
+        "smoke_graph_neighborhoods": 25,
+        "smoke_graph_communities": 11,
+        "smoke_sharded_neighborhood_shards": 3,
+        "source_package_graph_nodes": 48864,
+        "source_package_graph_edges": 649052
+      },
+      "sizes": {
+        "smoke_human": "296K",
+        "smoke_dedup_human": "324K",
+        "smoke_sharded_human": "348K"
+      },
+      "provenance": {
+        "derived_from": "two11_retrieval_package",
+        "source_build_manifest_cid": "bafkreifgjbpyynwyebcdfvc2bozwusbhza42xw6w4kutguicfscqovm67a"
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Small browser-facing projection of the retrieval package. SchemaVersion 1 JSON; low platform-migration risk but must stay CID-aligned with retrieval package.",
+      "status": "smoke_fixtures_ready_full_wallet_export_path_declared"
+    },
+    {
+      "graph_kind": "supervisor_objective_graph",
+      "display_name": "Agent supervisor objective graph",
+      "mandatory": true,
+      "authoritative_owner": "ipfs_accelerate_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/objective_graph.py",
+        "ipfs_accelerate_py/agent_supervisor/objective_tracker.py",
+        "ipfs_accelerate_py/agent_supervisor/objective_daemon.py"
+      ],
+      "consumer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/todo_daemon/implementation_daemon.py",
+        "ipfs_accelerate_py/agent_supervisor (bundle planner / task generation)",
+        "data/agent_supervisor/*/objective_graph.json"
+      ],
+      "artifact_roots": [
+        "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening"
+      ],
+      "primary_artifact": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/objective_graph.json",
+      "schema": {
+        "graph_schema": "ipfs_accelerate_py.agent_supervisor.objective_graph",
+        "thought_graph_schema": "ipfs_accelerate_py.agent_supervisor.objective_thought_graph",
+        "ast_dataset_record_schema_version": 2
+      },
+      "format": [
+        "json"
+      ],
+      "counts": {
+        "goal_count": 11,
+        "active_goal_count": 11,
+        "completed_goal_count": 0,
+        "graph_nodes": 11,
+        "graph_edges": 10,
+        "evidence_nodes": 19,
+        "evidence_edges": 19
+      },
+      "sizes": {
+        "objective_graph_bytes": 60999
+      },
+      "provenance": {
+        "program": "KGP",
+        "generated_under": "data/agent_supervisor/knowledge_graphs_production_hardening"
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Small durable control graph with explicit schema string. KGP platform should adapt rather than replace; supervisor remains authoritative producer.",
+      "status": "live_for_kgp_program"
+    },
+    {
+      "graph_kind": "supervisor_ast_index",
+      "display_name": "Agent supervisor analysis AST index",
+      "mandatory": true,
+      "authoritative_owner": "ipfs_accelerate_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/analysis_ast_index.py",
+        "ipfs_accelerate_py/agent_supervisor/conflict_graph.py"
+      ],
+      "consumer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/conflict_graph.py",
+        "ipfs_accelerate_py/agent_supervisor/code_evidence_graph.py",
+        "ipfs_accelerate_py/agent_supervisor (scan / impact analysis)"
+      ],
+      "artifact_roots": [
+        "/home/barberb/.local/share/ipfs_accelerate_py/analysis-offload-20260723T231831Z/ast"
+      ],
+      "primary_artifact": null,
+      "schema": {
+        "index_schema": "ipfs_accelerate_py/agent-supervisor/analysis-ast-index@1",
+        "schema_version": 1,
+        "ast_blob_record_schema_version": 1
+      },
+      "format": [
+        "json_records",
+        "content_addressed_blobs"
+      ],
+      "counts": {
+        "schema_version": 1
+      },
+      "sizes": {},
+      "provenance": {
+        "blob_schema_owner": "conflict_graph.ASTBlobRecord",
+        "index_is_path_projection_only": true
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Bounded incremental index over immutable AST blobs. Keep as supervisor-owned kind; catalog may register but should not re-encode semantics.",
+      "status": "producer_canonical_artifacts_ephemeral_per_program"
+    },
+    {
+      "graph_kind": "supervisor_code_evidence_graph",
+      "display_name": "Agent supervisor code evidence graph",
+      "mandatory": true,
+      "authoritative_owner": "ipfs_accelerate_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/code_evidence_graph.py",
+        "ipfs_accelerate_py/agent_supervisor/prover_evidence_store.py"
+      ],
+      "consumer_paths": [
+        "ipfs_accelerate_py/agent_supervisor (merge / completion gates)",
+        "ipfs_accelerate_py/agent_supervisor/objective_graph.py"
+      ],
+      "artifact_roots": [
+        "data/agent_supervisor/*/state (program-scoped receipts and graphs)"
+      ],
+      "primary_artifact": null,
+      "schema": {
+        "graph_schema": "ipfs_accelerate_py.agent_supervisor.code-evidence-graph@1",
+        "node_schema": "ipfs_accelerate_py.agent_supervisor.code-evidence-node@1",
+        "edge_schema": "ipfs_accelerate_py.agent_supervisor.code-evidence-edge@1",
+        "impact_index_schema": "ipfs_accelerate_py.agent_supervisor.code-impact-index@1"
+      },
+      "format": [
+        "json"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "authority_boundary": "Projection of trusted supervisor records only; GraphRAG annotations cannot mint proof facts."
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Explicit authority boundary and versioned schemas. Platform migration should wrap, not reinterpret proof edges.",
+      "status": "producer_canonical"
+    },
+    {
+      "graph_kind": "supervisor_conflict_graph",
+      "display_name": "Agent supervisor conflict / lane graph",
+      "mandatory": true,
+      "authoritative_owner": "ipfs_accelerate_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/conflict_graph.py",
+        "ipfs_accelerate_py/agent_supervisor/merge_conflict_repair.py"
+      ],
+      "consumer_paths": [
+        "ipfs_accelerate_py/agent_supervisor (parallel lane coloring / task planning)",
+        "ipfs_accelerate_py/agent_supervisor/todo_daemon"
+      ],
+      "artifact_roots": [
+        "data/agent_supervisor/*/state (task planning / conflict projections)"
+      ],
+      "primary_artifact": null,
+      "schema": {
+        "graph_schema": "ipfs_accelerate_py.agent_supervisor.conflict_graph@1",
+        "admission_work_contract": "ipfs_accelerate_py/agent-supervisor/task-work-contract@1",
+        "planning_work_contract": "ipfs_accelerate_py/agent-supervisor/task-planning-work-contract@1",
+        "ast_blob_record_schema_version": 1
+      },
+      "format": [
+        "json"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "inputs": [
+          "declared work surfaces",
+          "branch observations",
+          "merge-conflict receipts",
+          "AST blob records"
+        ]
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Planning graph orthogonal to domain corpora. Retain supervisor ownership; optional catalog registration only.",
+      "status": "producer_canonical"
+    },
+    {
+      "graph_kind": "supervisor_semantic_dependency_graph",
+      "display_name": "Agent supervisor semantic dependency graph",
+      "mandatory": true,
+      "authoritative_owner": "ipfs_accelerate_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_accelerate_py/agent_supervisor/semantic_dependency_graph.py"
+      ],
+      "consumer_paths": [
+        "ipfs_accelerate_py/agent_supervisor (mandatory closure / authority checks)",
+        "ipfs_accelerate_py/agent_supervisor/code_evidence_graph.py"
+      ],
+      "artifact_roots": [
+        "data/agent_supervisor/*/state (semantic dependency projections)"
+      ],
+      "primary_artifact": null,
+      "schema": {
+        "graph_schema": "ipfs_accelerate_py.agent_supervisor.semantic-dependency-graph@1",
+        "node_schema": "ipfs_accelerate_py.agent_supervisor.semantic-dependency-node@1",
+        "edge_schema": "ipfs_accelerate_py.agent_supervisor.semantic-dependency-edge@1",
+        "mandatory_closure_schema": "ipfs_accelerate_py.agent_supervisor.mandatory-closure@1"
+      },
+      "format": [
+        "json"
+      ],
+      "counts": {
+        "default_max_closure_nodes": 16384,
+        "default_max_closure_edges": 65536,
+        "default_max_closure_depth": 256
+      },
+      "sizes": {},
+      "provenance": {
+        "authority_boundary": "Cross-root edges and unsafe dependency cycles are hard errors."
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Bounded authority graph with hard closure limits. Keep as supervisor graph kind; do not fold into domain GraphRAG corpora.",
+      "status": "producer_canonical"
+    },
+    {
+      "graph_kind": "platform_graph_engine",
+      "display_name": "ipfs_datasets_py KnowledgeGraph / GraphEngine platform graphs",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/knowledge_graphs/core/graph_engine.py",
+        "ipfs_datasets_py/knowledge_graphs/extraction/graph.py",
+        "ipfs_datasets_py/knowledge_graphs/extraction/entities.py",
+        "ipfs_datasets_py/knowledge_graphs/knowledge_graph_extraction.py",
+        "ipfs_datasets_py/knowledge_graphs/query_knowledge_graph.py",
+        "ipfs_datasets_py/mcp_server/tools/graph_tools"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/ipfs_datasets_cli.py (graph commands)",
+        "ipfs_datasets_py/mcp_server/tools/graph_tools",
+        "tests/unit/knowledge_graphs/*"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "module": "ipfs_datasets_py.knowledge_graphs",
+        "note": "Public lifecycle is currently non-durable (KGP-001). No stable revision manifest yet."
+      },
+      "format": [
+        "in_memory",
+        "storage_adapters_partial"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "program_target": "KGP GraphService / catalog / manifests"
+      },
+      "migration_risk": "critical",
+      "migration_risk_rationale": "Broken create/add/query/reopen contracts and ambient manager identity. This is the platform under repair, not a stable corpus.",
+      "status": "non_production_control_plane"
+    },
+    {
+      "graph_kind": "sharded_car_v1",
+      "display_name": "Search GraphData sharded CAR backend",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/search/graph_query/sharded_car/publish.py",
+        "ipfs_datasets_py/search/graph_query/sharded_car/manifest.py",
+        "ipfs_datasets_py/search/graph_query/sharded_car/routing.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/search/graph_query/executor.py",
+        "ipfs_datasets_py/search/graph_query/backends",
+        "KGP storage / sharding workstream (v1 readable, v2 planned)"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "manifest_version_default": "v1",
+        "routing": "hash_modulo_v1"
+      },
+      "format": [
+        "car",
+        "ipld_manifest",
+        "json_manifest"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "plan_reference": "docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md storage/sharding sections"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "v1 hash-modulo manifests must remain readable while v2 virtual-shard routing is introduced. Starting point for sharded reader/publisher.",
+      "status": "library_ready_no_shared_corpus_fixture"
+    },
+    {
+      "graph_kind": "website_graphrag",
+      "display_name": "Website GraphRAG processors",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/processors/website_graphrag_processor.py",
+        "ipfs_datasets_py/processors/advanced_graphrag_website_processor.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/mcp_server",
+        "tests/unit/test_stubs_from_gherkin/test_website_graphrag_*"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "note": "Processor-local graph construction; not yet bound to KGP revision manifests."
+      },
+      "format": [
+        "in_memory",
+        "processor_outputs"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "domain": "website_scraping"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Multiple processor variants and gherkin stubs; needs identity/catalog before production multi-tenant use.",
+      "status": "producer_present_no_shared_corpus"
+    },
+    {
+      "graph_kind": "pdf_graphrag_integrator",
+      "display_name": "PDF processing GraphRAG integrator",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/pdf_processing (GraphRAGIntegrator / QueryEngine)",
+        "ipfs_datasets_py/mcp_server/tools/pdf_tools/pdf_query_knowledge_graph.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/mcp_server/tools/pdf_tools",
+        "tests/unit_tests/pdf_processing_/graphrag_integrator_"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "note": "Document-scoped graphs produced per integration run."
+      },
+      "format": [
+        "in_memory",
+        "document_graph"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "surface": "MCP pdf_query_knowledge_graph"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Useful extraction path but process-local identity; must adopt GraphTarget before durable multi-call sessions.",
+      "status": "producer_present_ephemeral"
+    },
+    {
+      "graph_kind": "finance_graphrag",
+      "display_name": "Finance GraphRAG extraction",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/knowledge_graphs/finance_graphrag.py",
+        "ipfs_datasets_py/knowledge_graphs/extraction/finance_graphrag.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/knowledge_graphs (extraction callers)"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "note": "Domain-specific extraction GraphRAG; no shared release fixture inventoried."
+      },
+      "format": [
+        "in_memory",
+        "extraction_records"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "domain": "finance"
+      },
+      "migration_risk": "low",
+      "migration_risk_rationale": "Domain extractor without multi-GB shared corpus on disk in this inventory pass.",
+      "status": "producer_present_no_shared_corpus"
+    },
+    {
+      "graph_kind": "ipld_legacy_knowledge_graph",
+      "display_name": "Legacy IPLD knowledge graph module",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/knowledge_graphs/ipld.py"
+      ],
+      "consumer_paths": [
+        "tests/unit/test_ipld_knowledge_graph_traversal.py",
+        "historical IPLD examples"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "module": "ipfs_datasets_py.knowledge_graphs.ipld",
+        "note": "Intent IR projectors prefer current IPLD storage adapters over this legacy module."
+      },
+      "format": [
+        "ipld",
+        "dag_cbor"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "compatibility_category": "deprecate_or_adapt"
+      },
+      "migration_risk": "high",
+      "migration_risk_rationale": "Legacy Entity/graph APIs conflict with modern contracts; KGP-003 maps to adopt/adapt/deprecate.",
+      "status": "legacy"
+    },
+    {
+      "graph_kind": "logic_aware_knowledge_graph",
+      "display_name": "Logic-aware search knowledge graph",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/search/logic_integration/logic_aware_knowledge_graph.py",
+        "ipfs_datasets_py/search/logic_integration/logic_aware_entity_extractor.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/search",
+        "tests/unit_tests/search/logic_integration/test_logic_aware_knowledge_graph.py"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "note": "Search-layer logic integration graph; separate from Intent IR corpus ontology."
+      },
+      "format": [
+        "in_memory",
+        "search_index_coupled"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "layer": "search_logic_integration"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Coupled to search pipeline; migration must preserve logic extraction semantics.",
+      "status": "producer_present"
+    },
+    {
+      "graph_kind": "intent_corpus_evidence_graph",
+      "display_name": "Intent IR corpus evidence graph ontology",
+      "mandatory": false,
+      "authoritative_owner": "canonical_ipfs_datasets_py",
+      "authoritative_repository_ids": [
+        "canonical_ipfs_datasets_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_datasets_py/logic/intent_ir/graphrag/ontology.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/corpus_projector.py",
+        "ipfs_datasets_py/logic/intent_ir/graphrag/semantic_projector.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py/logic/intent_ir/graphrag/retrieval.py",
+        "SkillCenter GraphRAG pilot indexes"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "corpus_graph_schema": "intent-corpus-graph/v1",
+        "corpus_ontology": "intent-corpus-ontology/v1",
+        "identity_domain": "intent-corpus-evidence-graph"
+      },
+      "format": [
+        "immutable_node_edge_records",
+        "digest_bound_properties"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "related_graph_kind": "skillcenter_ir_graphrag"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Versioned ontology already present; must remain digest-bound when moved under KGP manifests.",
+      "status": "ontology_ready"
+    },
+    {
+      "graph_kind": "ipfs_kit_ipld_knowledge_graph",
+      "display_name": "ipfs_kit_py IPLD / GraphRAG helpers",
+      "mandatory": false,
+      "authoritative_owner": "ipfs_accelerate_py (vendored ipfs_kit_py) / ipfs_kit_py",
+      "authoritative_repository_ids": [
+        "ipfs_accelerate_py"
+      ],
+      "fixture_only_producer": false,
+      "producer_paths": [
+        "ipfs_kit_py/ipfs_kit_py/ipld_knowledge_graph.py",
+        "ipfs_kit_py/ipfs_kit_py/graphrag.py",
+        "ipfs_kit_py/ipfs_kit_py/vfs_bucket_graphrag_integration.py"
+      ],
+      "consumer_paths": [
+        "ipfs_datasets_py knowledge_graphs storage adapters (planned KGP-G040)",
+        "ipfs_kit_py MCP graphrag tools"
+      ],
+      "artifact_roots": [],
+      "primary_artifact": null,
+      "schema": {
+        "note": "Capability-negotiated kit surface; not a domain corpus."
+      },
+      "format": [
+        "ipld",
+        "car",
+        "vfs_bucket"
+      ],
+      "counts": {},
+      "sizes": {},
+      "provenance": {
+        "role": "storage_and_export_helper"
+      },
+      "migration_risk": "medium",
+      "migration_risk_rationale": "Must match direct IPFS adapter semantics via capability negotiation; avoid dual-write divergence.",
+      "status": "library_ready"
+    }
+  ],
+  "fixture_only_nested_lift_checkouts": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "commit": "d144be65ffe4c6423e4e1c30cd692812607343eb",
+      "clean": false,
+      "classification": "stale_dirty_nested_lift_checkout",
+      "use": "fixture_only"
+    },
+    {
+      "path": "/home/barberb/lift_coding/hallucinate_app/ipfs_datasets_py",
+      "commit": "d144be65ffe4c6423e4e1c30cd692812607343eb",
+      "clean": false,
+      "classification": "stale_dirty_nested_lift_checkout",
+      "use": "fixture_only"
+    },
+    {
+      "path": "/home/barberb/lift_coding/data/logic_software_verification_program/repo/ipfs_datasets_py",
+      "commit": "de5697097341f630644977565238dd204ae1f8a1",
+      "clean": true,
+      "classification": "non_canonical_nested_producer_snapshot",
+      "use": "fixture_only",
+      "hosts": [
+        "cvefixes_security_ir_graphrag producer modules"
+      ]
+    },
+    {
+      "path": "/home/barberb/lift_coding/data/logic_software_verification_program/unblocking_fix/ipfs_datasets_py",
+      "commit": "66085f6a2ea2137dfac9f5dd275ab7ebccc4b8b7",
+      "clean": true,
+      "classification": "non_canonical_nested_snapshot",
+      "use": "fixture_only"
+    }
+  ]
+}
