@@ -1,4 +1,4 @@
-"""Tests for World ID configuration (WALPROC-G100)."""
+"""Tests for World ID configuration (WALPROC-G100 / WALPROC-063)."""
 
 from __future__ import annotations
 
@@ -6,12 +6,18 @@ import json
 
 import pytest
 
+from ipfs_datasets_py.processors.wallets.security import endpoint_fingerprint
 from ipfs_datasets_py.processors.wallets.worldcoin import (
     DEFAULT_WORLD_ID_ACTION,
     DEFAULT_WORLD_ID_VERIFY_BASE_URL,
     WorldIdConfigError,
     WorldIdSecretConfig,
     load_world_id_config,
+)
+from ipfs_datasets_py.processors.wallets.worldcoin.config import (
+    WORLD_ID_ENDPOINT_POLICY,
+    validate_verify_base_url,
+    validate_world_id_resolved_addresses,
 )
 from _helpers import enabled_env
 
@@ -233,3 +239,91 @@ def test_golden_default_constants(golden_vectors: dict) -> None:
     assert package.DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS == constants["DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS"]
     assert package.DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS == constants["DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS"]
     assert set(package.SUPPORTED_WORLD_ID_ENVIRONMENTS) == set(constants["SUPPORTED_WORLD_ID_ENVIRONMENTS"])
+
+
+# --- WALPROC-063: bounded safe verify endpoint policy ---
+
+
+@pytest.mark.parametrize(
+    "unsafe_url",
+    [
+        "https://169.254.169.254/latest/meta-data",
+        "http://169.254.169.254/latest/meta-data",
+        "https://metadata.google.internal/",
+        "https://127.0.0.1/verify",
+        "https://[::1]/verify",
+        "https://localhost/verify",
+        "https://evil.example/verify",
+        "http://developer.world.org/",
+        "https://developer.world.org:8443/",
+        "https://user:pass@developer.world.org/",
+        "https://developer.world.org/?api_key=plaintext",
+    ],
+)
+def test_validate_verify_base_url_rejects_metadata_private_and_non_allowlisted(
+    unsafe_url: str,
+) -> None:
+    with pytest.raises(WorldIdConfigError) as caught:
+        validate_verify_base_url(unsafe_url)
+    message = str(caught.value)
+    assert unsafe_url not in message
+    assert "169.254.169.254" not in message
+    assert "api_key" not in message
+    assert "plaintext" not in message
+    assert "user:pass" not in message
+
+
+def test_validate_verify_base_url_accepts_allowlisted_https_default() -> None:
+    assert validate_verify_base_url("https://developer.world.org/") == "https://developer.world.org"
+    assert validate_verify_base_url(DEFAULT_WORLD_ID_VERIFY_BASE_URL) == DEFAULT_WORLD_ID_VERIFY_BASE_URL
+
+
+def test_world_id_config_public_dict_exposes_endpoint_fingerprint_not_raw_url() -> None:
+    config = load_world_id_config(env=enabled_env())
+    public = config.public_dict()
+    durable = config.to_dict()
+    rendered = repr(config)
+
+    assert public["verify_endpoint_id"] == endpoint_fingerprint(config.verify_base_url)
+    assert "verify_base_url" not in public
+    assert DEFAULT_WORLD_ID_VERIFY_BASE_URL not in json.dumps(public)
+    assert DEFAULT_WORLD_ID_VERIFY_BASE_URL not in json.dumps(durable)
+    assert DEFAULT_WORLD_ID_VERIFY_BASE_URL not in rendered
+    assert "verify_endpoint_id" in rendered
+    # Runtime attribute remains available for request construction.
+    assert config.verify_base_url == DEFAULT_WORLD_ID_VERIFY_BASE_URL
+
+
+def test_world_id_config_rejects_metadata_service_verify_base_url_from_env() -> None:
+    with pytest.raises(WorldIdConfigError) as caught:
+        load_world_id_config(
+            env=enabled_env(WORLD_ID_VERIFY_BASE_URL="https://169.254.169.254/latest/meta-data")
+        )
+    assert "169.254.169.254" not in str(caught.value)
+
+
+def test_world_id_resolved_addresses_reject_dns_rebinding_and_metadata() -> None:
+    url = DEFAULT_WORLD_ID_VERIFY_BASE_URL
+    with pytest.raises(WorldIdConfigError) as private:
+        validate_world_id_resolved_addresses(url, ["1.1.1.1", "127.0.0.1"])
+    with pytest.raises(WorldIdConfigError) as metadata:
+        validate_world_id_resolved_addresses(url, ["169.254.169.254"])
+    with pytest.raises(WorldIdConfigError) as link_local:
+        validate_world_id_resolved_addresses(url, ["fe80::1"])
+
+    for exc in (private, metadata, link_local):
+        message = str(exc.value)
+        assert url not in message
+        assert "127.0.0.1" not in message
+        assert "169.254.169.254" not in message
+        assert "fe80" not in message
+        assert "endpoint:" in message
+
+    safe = validate_world_id_resolved_addresses(url, ["1.1.1.1", "8.8.8.8"])
+    assert safe == ("1.1.1.1", "8.8.8.8")
+
+
+def test_world_id_endpoint_policy_is_https_only_allowlist() -> None:
+    assert WORLD_ID_ENDPOINT_POLICY.allow_http is False
+    assert 443 in WORLD_ID_ENDPOINT_POLICY.allowed_ports
+    assert "developer.world.org" in WORLD_ID_ENDPOINT_POLICY.allowed_hosts

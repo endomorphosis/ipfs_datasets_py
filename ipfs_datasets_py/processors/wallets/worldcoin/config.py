@@ -3,6 +3,10 @@
 This module is pure configuration: no network I/O, no crypto, and no secret
 resolution at import time.  Secret *values* are never present in public
 serializations; durable serialization retains opaque secret references only.
+
+Verify-base URLs are validated through the shared :class:`EndpointPolicy` so
+configuration cannot point at private, link-local, metadata, or non-allowlisted
+hosts.  Public config views expose endpoint fingerprints, never raw URLs.
 """
 
 from __future__ import annotations
@@ -13,13 +17,32 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
+from ipfs_datasets_py.processors.wallets.errors import InvalidRequestError
+from ipfs_datasets_py.processors.wallets.security import (
+    EndpointPolicy,
+    endpoint_fingerprint,
+)
+
 
 DEFAULT_WORLD_ID_ACTION = "wallet-attach-world-id-v1"
 DEFAULT_WORLD_ID_CREDENTIAL_POLICY = "proof_of_human"
 DEFAULT_WORLD_ID_VERIFY_BASE_URL = "https://developer.world.org"
 DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS = 300
 DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS = 15.0
+DEFAULT_WORLD_ID_MAX_REQUEST_BYTES = 64 * 1024
+DEFAULT_WORLD_ID_MAX_RESPONSE_BYTES = 256 * 1024
+DEFAULT_WORLD_ID_MAX_DECOMPRESSED_BYTES = 256 * 1024
+DEFAULT_WORLD_ID_MAX_ATTEMPTS = 1
+WORLD_ID_ALLOWED_VERIFY_HOSTS = frozenset({"developer.world.org"})
 SUPPORTED_WORLD_ID_ENVIRONMENTS = frozenset({"staging", "production"})
+
+# Shared SSRF policy for Developer Portal verification endpoints (HTTPS, port 443).
+WORLD_ID_ENDPOINT_POLICY = EndpointPolicy(
+    allowed_hosts=WORLD_ID_ALLOWED_VERIFY_HOSTS,
+    allowed_ports=frozenset({443}),
+    allow_http=False,
+    max_url_length=2_048,
+)
 
 _PUBLIC_SECRET_ENV_NAMES = frozenset(
     {
@@ -114,8 +137,12 @@ class WorldIdConfig:
     allow_legacy_proofs: bool = False
     require_user_presence: bool = False
     rp_signature_ttl_seconds: int = DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS
-    verify_base_url: str = DEFAULT_WORLD_ID_VERIFY_BASE_URL
+    verify_base_url: str = field(default=DEFAULT_WORLD_ID_VERIFY_BASE_URL, repr=False)
     http_timeout_seconds: float = DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS
+    max_request_bytes: int = DEFAULT_WORLD_ID_MAX_REQUEST_BYTES
+    max_response_bytes: int = DEFAULT_WORLD_ID_MAX_RESPONSE_BYTES
+    max_decompressed_bytes: int = DEFAULT_WORLD_ID_MAX_DECOMPRESSED_BYTES
+    max_attempts: int = DEFAULT_WORLD_ID_MAX_ATTEMPTS
     rp_signing_key: WorldIdSecretConfig = field(default_factory=WorldIdSecretConfig, repr=False)
     nullifier_hmac_key: WorldIdSecretConfig = field(default_factory=WorldIdSecretConfig, repr=False)
 
@@ -123,8 +150,14 @@ class WorldIdConfig:
     def public_actions(self) -> list[str]:
         return list(self.allowed_actions)
 
+    @property
+    def verify_endpoint_id(self) -> str:
+        """Stable non-reversible label for the configured verify endpoint."""
+
+        return endpoint_fingerprint(self.verify_base_url)
+
     def public_dict(self) -> dict[str, object]:
-        """Return browser-safe configuration without backend secrets."""
+        """Return browser-safe configuration without backend secrets or raw URLs."""
 
         return {
             "enabled": self.enabled,
@@ -137,18 +170,30 @@ class WorldIdConfig:
             "allow_legacy_proofs": self.allow_legacy_proofs,
             "require_user_presence": self.require_user_presence,
             "rp_signature_ttl_seconds": self.rp_signature_ttl_seconds,
-            "verify_base_url": self.verify_base_url,
+            "verify_endpoint_id": self.verify_endpoint_id,
             "http_timeout_seconds": self.http_timeout_seconds,
+            "max_request_bytes": self.max_request_bytes,
+            "max_response_bytes": self.max_response_bytes,
+            "max_decompressed_bytes": self.max_decompressed_bytes,
+            "max_attempts": self.max_attempts,
         }
 
     def to_dict(self) -> dict[str, object]:
-        """Serialize for durable storage. Secret values are never included."""
+        """Serialize for durable storage. Secret values and raw URLs are omitted."""
 
         return {
             **self.public_dict(),
             "rp_signing_key": self.rp_signing_key.to_dict(),
             "nullifier_hmac_key": self.nullifier_hmac_key.to_dict(),
         }
+
+    def __repr__(self) -> str:
+        return (
+            f"WorldIdConfig(enabled={self.enabled!r}, environment={self.environment!r}, "
+            f"app_id={self.app_id!r}, rp_id={self.rp_id!r}, "
+            f"verify_endpoint_id={self.verify_endpoint_id!r}, "
+            f"http_timeout_seconds={self.http_timeout_seconds!r})"
+        )
 
 
 def load_world_id_config(env: Mapping[str, str] | None = None) -> WorldIdConfig:
@@ -192,6 +237,26 @@ def load_world_id_config(env: Mapping[str, str] | None = None) -> WorldIdConfig:
             "WORLD_ID_HTTP_TIMEOUT_SECONDS",
             DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS,
         ),
+        max_request_bytes=_positive_int_env(
+            env,
+            "WORLD_ID_MAX_REQUEST_BYTES",
+            DEFAULT_WORLD_ID_MAX_REQUEST_BYTES,
+        ),
+        max_response_bytes=_positive_int_env(
+            env,
+            "WORLD_ID_MAX_RESPONSE_BYTES",
+            DEFAULT_WORLD_ID_MAX_RESPONSE_BYTES,
+        ),
+        max_decompressed_bytes=_positive_int_env(
+            env,
+            "WORLD_ID_MAX_DECOMPRESSED_BYTES",
+            DEFAULT_WORLD_ID_MAX_DECOMPRESSED_BYTES,
+        ),
+        max_attempts=_positive_int_env(
+            env,
+            "WORLD_ID_MAX_ATTEMPTS",
+            DEFAULT_WORLD_ID_MAX_ATTEMPTS,
+        ),
         rp_signing_key=WorldIdSecretConfig(
             value=_secret_env(env, "WORLD_ID_RP_SIGNING_KEY"),
             secret_ref=_str_env(env, "WORLD_ID_RP_SIGNING_KEY_SECRET_REF", ""),
@@ -207,13 +272,36 @@ def load_world_id_config(env: Mapping[str, str] | None = None) -> WorldIdConfig:
 
 
 def validate_verify_base_url(value: str) -> str:
-    """Normalize and validate a Developer Portal base URL (no network I/O)."""
+    """Normalize and validate a Developer Portal base URL (no network I/O).
+
+    Reuses the shared :class:`EndpointPolicy` so private, link-local, metadata,
+    non-HTTPS, non-allowlisted, and userinfo-bearing endpoints are rejected.
+    Error messages never include the raw URL; only endpoint fingerprints appear.
+    """
 
     normalized = str(value or "").strip().rstrip("/")
+    if not normalized:
+        raise WorldIdConfigError("base URL must be an absolute http(s) URL")
     parsed = urlparse(normalized)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise WorldIdConfigError("base URL must be an absolute http(s) URL")
+    try:
+        WORLD_ID_ENDPOINT_POLICY.validate_url(normalized)
+    except InvalidRequestError as exc:
+        raise WorldIdConfigError(str(exc)) from None
     return normalized
+
+
+def validate_world_id_resolved_addresses(
+    url: str,
+    addresses: list[str] | tuple[str, ...],
+) -> tuple[str, ...]:
+    """Reject private, link-local, metadata, or empty DNS answers for *url*."""
+
+    try:
+        return WORLD_ID_ENDPOINT_POLICY.validate_resolved_addresses(url, addresses)
+    except InvalidRequestError as exc:
+        raise WorldIdConfigError(str(exc)) from None
 
 
 def _validate_enabled_config(config: WorldIdConfig) -> None:
@@ -293,7 +381,7 @@ def _positive_int_env(env: Mapping[str, str] | None, name: str, default: int) ->
     try:
         value = int(raw)
     except ValueError as exc:
-        raise WorldIdConfigError(f"{name} must be an integer") from exc
+        raise WorldIdConfigError(f"{name} must be an integer") from None
     if value <= 0:
         raise WorldIdConfigError(f"{name} must be positive")
     return value
@@ -304,7 +392,7 @@ def _positive_float_env(env: Mapping[str, str] | None, name: str, default: float
     try:
         value = float(raw)
     except ValueError as exc:
-        raise WorldIdConfigError(f"{name} must be a number") from exc
+        raise WorldIdConfigError(f"{name} must be a number") from None
     if value <= 0:
         raise WorldIdConfigError(f"{name} must be positive")
     return value
@@ -314,19 +402,29 @@ def _url_env(env: Mapping[str, str] | None, name: str, default: str) -> str:
     try:
         return validate_verify_base_url(_str_env(env, name, default))
     except WorldIdConfigError as exc:
-        raise WorldIdConfigError(f"{name} must be an absolute http(s) URL") from exc
+        message = str(exc)
+        if "base URL must be an absolute" in message:
+            raise WorldIdConfigError(f"{name} must be an absolute http(s) URL") from None
+        raise WorldIdConfigError(f"{name} is not an allowed World ID verify endpoint: {message}") from None
 
 
 __all__ = [
     "DEFAULT_WORLD_ID_ACTION",
     "DEFAULT_WORLD_ID_CREDENTIAL_POLICY",
     "DEFAULT_WORLD_ID_HTTP_TIMEOUT_SECONDS",
+    "DEFAULT_WORLD_ID_MAX_ATTEMPTS",
+    "DEFAULT_WORLD_ID_MAX_DECOMPRESSED_BYTES",
+    "DEFAULT_WORLD_ID_MAX_REQUEST_BYTES",
+    "DEFAULT_WORLD_ID_MAX_RESPONSE_BYTES",
     "DEFAULT_WORLD_ID_SIGNATURE_TTL_SECONDS",
     "DEFAULT_WORLD_ID_VERIFY_BASE_URL",
     "SUPPORTED_WORLD_ID_ENVIRONMENTS",
+    "WORLD_ID_ALLOWED_VERIFY_HOSTS",
+    "WORLD_ID_ENDPOINT_POLICY",
     "WorldIdConfig",
     "WorldIdConfigError",
     "WorldIdSecretConfig",
     "load_world_id_config",
     "validate_verify_base_url",
+    "validate_world_id_resolved_addresses",
 ]
