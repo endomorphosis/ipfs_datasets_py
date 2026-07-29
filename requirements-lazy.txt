@@ -4,6 +4,11 @@
 # file for hermetic images or offline environments that pre-provision every
 # dependency exposed by the shared dependency proxy.
 
+# Solver bindings exposed through both the shared dependency proxy and the
+# theorem-prover bridge lazy loader.
+z3-solver>=4.12.0,<5.0.0
+cvc5>=1.0.0,<2.0.0
+
 chardet>=5.0.0,<6.0.0
 llama-cpp-python
 playsound3

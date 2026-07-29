@@ -317,7 +317,7 @@ COMPONENT_MODULES: dict[str, tuple[str, ...]] = {
     "z3": ("z3",),
     "cvc5": ("cvc5",),
     "smt_solvers": ("z3", "cvc5", "pysmt"),
-    "logic": ("cv2", "symai"),
+    "logic": ("cv2", "symai", "z3", "cvc5"),
     "symbolicai": ("cv2", "symai"),
     "web": ("requests", "bs4", "newspaper", "readability"),
     "test": (
@@ -351,6 +351,8 @@ COMPONENT_MODULES: dict[str, tuple[str, ...]] = {
         "aiohttp_cache",
         "magic",
         "lxml",
+        "z3",
+        "cvc5",
     ),
 }
 

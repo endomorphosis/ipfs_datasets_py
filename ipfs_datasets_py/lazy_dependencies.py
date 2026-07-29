@@ -21,6 +21,7 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "aiohttp_cache",
     "bs4",
     "chardet",
+    "cvc5",
     "cv2",
     "docx",
     "duckdb",
@@ -65,6 +66,7 @@ DEFAULT_DEPENDENCY_MODULES: tuple[str, ...] = (
     "xformers",
     "xformers.ops",
     "yaml",
+    "z3",
 )
 
 DEFAULT_ATTRIBUTE_ALIASES: dict[str, str] = {
