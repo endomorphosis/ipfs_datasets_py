@@ -40,6 +40,8 @@ def parse_xaman_payload(
 
     if not isinstance(raw, Mapping):
         raise NormalizationError("payload must be a mapping")
+    # No policy means fail-closed redaction. Bounded content retention requires
+    # an explicit caller-supplied PayloadPrivacyPolicy.
     policy = privacy or PayloadPrivacyPolicy()
 
     meta = _as_mapping(raw.get("meta")) or _as_mapping(raw.get("Meta")) or {}
@@ -148,8 +150,11 @@ def parse_xaman_payload(
     )
     instruction_fields = policy.apply_instruction(instruction)
     request_summary = policy.summarize_request(txjson)
+    # Digest the original request content, not its policy-dependent projection.
+    # Redacted and opt-in records for the same payload therefore retain the
+    # same deterministic identity without storing the free-form body.
     content_digest = policy.content_digest(
-        uuid, instruction, request_summary, transaction_hash
+        uuid, instruction, txjson, transaction_hash
     )
     raw_meta_digest = _digest_mapping(meta or {"uuid": uuid})
 

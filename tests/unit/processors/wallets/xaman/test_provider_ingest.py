@@ -10,6 +10,7 @@ from ipfs_datasets_py.processors.wallets.protocols import (
     RequestLimits,
 )
 from ipfs_datasets_py.processors.wallets.xaman import (
+    PayloadPrivacyPolicy,
     XamanWalletProcessor,
     fixture_backend_from_payloads,
     XamanPayloadProvider,
@@ -55,3 +56,61 @@ def test_fixture_provider_fetch_and_ingest(load_xaman_fixture) -> None:
     assert signed
     assert signed[0].settlement.value == "api_success_only"
     assert signed[0].is_ledger_settled is False
+
+
+def test_provider_redacts_content_by_default_and_retains_only_with_opt_in() -> None:
+    payload_uuid = "55555555-5555-4555-8555-555555555501"
+    instruction = "Send after reviewing the private invoice"
+    raw = {
+        "meta": {
+            "uuid": payload_uuid,
+            "network": "testnet",
+            "created": True,
+        },
+        "payload": {
+            "custom_instruction": instruction,
+            "txjson": {
+                "TransactionType": "Payment",
+                "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+                "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+                "Amount": "1",
+                "InvoiceNote": "free-form request content",
+            },
+        },
+    }
+    context = OperationContext(request_id="privacy")
+
+    async def _fetch(privacy=None):
+        provider = XamanPayloadProvider(
+            network=XRPLNetwork.TESTNET,
+            backend=fixture_backend_from_payloads([raw]),
+            privacy=privacy,
+        )
+        return await provider.fetch_payload(payload_uuid, context=context)
+
+    redacted = asyncio.run(_fetch())
+    assert redacted.custom_instruction is None
+    assert redacted.custom_instruction_redacted is True
+    assert redacted.original_instruction_bytes == len(instruction.encode("utf-8"))
+    assert redacted.request_summary == {"_redacted": True, "key_count": 5}
+    assert redacted.content_digest.startswith("sha256:")
+    assert instruction not in str(redacted.to_dict())
+    assert "free-form request content" not in str(redacted.to_dict())
+
+    retained = asyncio.run(
+        _fetch(
+            PayloadPrivacyPolicy(
+                redact_instruction=False,
+                redact_request_body=False,
+                max_instruction_bytes=64,
+                max_string_field_bytes=64,
+            )
+        )
+    )
+    assert retained.custom_instruction == instruction
+    assert retained.custom_instruction_redacted is False
+    assert retained.request_summary["InvoiceNote"] == "free-form request content"
+    # Retention policy changes representation, never payload identity.
+    assert retained.content_digest == redacted.content_digest
+    assert retained.status is redacted.status
+    assert retained.settlement is redacted.settlement

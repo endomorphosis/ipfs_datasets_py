@@ -1,9 +1,11 @@
 """Memo and tag privacy policy for XRPL ledger normalization.
 
 Destination tags are numeric identifiers and are preserved by default.
-Memo *data* is size-bounded and may be redacted; type/format are retained so
-downstream systems can still reason about presence without unconstrained
-payload retention. No Xaman payload lifecycle fields are handled here.
+Memo *data* is redacted by default; callers must supply an explicit policy
+with ``redact_memo_data=False`` to retain a bounded value. Type/format and
+deterministic size/redaction metadata remain available so downstream systems
+can reason about memo presence without unconstrained payload retention. No
+Xaman payload lifecycle fields are handled here.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+from ..errors import InvalidRequestError
 from .models import MemoRecord
 
 
@@ -20,13 +23,33 @@ DEFAULT_MAX_MEMOS = 8
 
 @dataclass(frozen=True, slots=True)
 class MemoPrivacyPolicy:
-    """Bounds and redaction controls for XRPL memos."""
+    """Bounds and redaction controls for XRPL memos.
+
+    Bounded memo-data retention is opt-in: callers must explicitly construct
+    this policy with ``redact_memo_data=False``.
+    """
 
     max_memo_data_bytes: int = DEFAULT_MAX_MEMO_DATA_BYTES
     max_memos: int = DEFAULT_MAX_MEMOS
-    redact_memo_data: bool = False
+    redact_memo_data: bool = True
     preserve_destination_tags: bool = True
     preserve_source_tags: bool = True
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.max_memo_data_bytes, bool)
+            or not isinstance(self.max_memo_data_bytes, int)
+            or self.max_memo_data_bytes <= 0
+        ):
+            raise InvalidRequestError(
+                "max_memo_data_bytes must be a positive integer"
+            )
+        if (
+            isinstance(self.max_memos, bool)
+            or not isinstance(self.max_memos, int)
+            or self.max_memos <= 0
+        ):
+            raise InvalidRequestError("max_memos must be a positive integer")
 
     def apply_memos(self, raw_memos: Sequence[Mapping[str, Any]] | None) -> tuple[MemoRecord, ...]:
         if not raw_memos:
