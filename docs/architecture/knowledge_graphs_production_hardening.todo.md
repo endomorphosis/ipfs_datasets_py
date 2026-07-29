@@ -278,7 +278,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-017 Publish the stable Python package API
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-006, KGP-016
