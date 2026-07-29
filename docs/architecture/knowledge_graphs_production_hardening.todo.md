@@ -142,7 +142,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-009 Implement the versioned ParquetGraphStore
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: storage
 - Depends on: KGP-004
