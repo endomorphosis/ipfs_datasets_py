@@ -1,0 +1,34 @@
+{
+  "schema": "wallet_processor_migration/xrpl-partial-payment@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "notes": "Partial payment: Amount is max send, delivered_amount is actual settlement.",
+  "entry": {
+    "validated": true,
+    "ledger_index": 85000100,
+    "ledger_hash": "CCCC000000000000000000000000000000000000000000000000000000000100",
+    "tx": {
+      "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+      "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+      "TransactionType": "Payment",
+      "Amount": "10000000",
+      "SendMax": "10000000",
+      "Flags": 131072,
+      "Fee": "12",
+      "Sequence": 42,
+      "hash": "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+    },
+    "meta": {
+      "TransactionResult": "tesSUCCESS",
+      "TransactionIndex": 1,
+      "delivered_amount": "7500000"
+    }
+  },
+  "expect": {
+    "partial_payment": true,
+    "requested_drops": "10000000",
+    "delivered_drops": "7500000",
+    "transfer_base_units": "7500000"
+  }
+}

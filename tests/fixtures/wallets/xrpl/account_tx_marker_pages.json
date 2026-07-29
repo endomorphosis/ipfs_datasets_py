@@ -1,0 +1,100 @@
+{
+  "schema": "wallet_processor_migration/xrpl-account-tx-marker@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+  "notes": "Two pages of account_tx linked by marker. Hashes must be unique across pages; no gaps when concatenated.",
+  "ledger_head": {
+    "ledger": {
+      "ledger_index": 85000010,
+      "ledger_hash": "BBBB00000000000000000000000000000000000000000000000000000000000A",
+      "parent_hash": "BBBB000000000000000000000000000000000000000000000000000000000009"
+    },
+    "validated": true
+  },
+  "pages": [
+    {
+      "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+      "ledger_index_min": -1,
+      "ledger_index_max": -1,
+      "limit": 2,
+      "forward": false,
+      "validated": true,
+      "marker": {"ledger": 85000002, "seq": 1},
+      "transactions": [
+        {
+          "validated": true,
+          "ledger_index": 85000003,
+          "tx": {
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+            "TransactionType": "Payment",
+            "Amount": "1000000",
+            "Fee": "12",
+            "Sequence": 3,
+            "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1"
+          },
+          "meta": {
+            "TransactionResult": "tesSUCCESS",
+            "delivered_amount": "1000000"
+          }
+        },
+        {
+          "validated": true,
+          "ledger_index": 85000002,
+          "tx": {
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+            "TransactionType": "Payment",
+            "Amount": "2000000",
+            "Fee": "12",
+            "Sequence": 2,
+            "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2"
+          },
+          "meta": {
+            "TransactionResult": "tesSUCCESS",
+            "delivered_amount": "2000000"
+          }
+        }
+      ]
+    },
+    {
+      "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+      "ledger_index_min": -1,
+      "ledger_index_max": -1,
+      "limit": 2,
+      "forward": false,
+      "validated": true,
+      "marker": null,
+      "transactions": [
+        {
+          "validated": true,
+          "ledger_index": 85000001,
+          "tx": {
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+            "TransactionType": "Payment",
+            "Amount": "3000000",
+            "Fee": "12",
+            "Sequence": 1,
+            "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3"
+          },
+          "meta": {
+            "TransactionResult": "tesSUCCESS",
+            "delivered_amount": "3000000"
+          }
+        }
+      ]
+    }
+  ],
+  "expect": {
+    "page_count": 2,
+    "total_transactions": 3,
+    "hashes_in_order": [
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1",
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2",
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3"
+    ]
+  }
+}
