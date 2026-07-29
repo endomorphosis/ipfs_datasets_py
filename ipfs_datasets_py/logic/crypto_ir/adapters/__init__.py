@@ -364,6 +364,53 @@ def adapter_is_available(adapter: CryptoIRAdapter) -> bool:
     return probe.available
 
 
+def adapter_capability_identity(
+    adapter: CryptoIRAdapter,
+) -> tuple[str, str, str]:
+    """Return (capability_id, implementation_version, semantic_version).
+
+    Capability identity binds both version axes so a binary swap or silent
+    semantic drift cannot masquerade as the same adapter capability.
+    """
+
+    capability = adapter.capability
+    if not isinstance(capability, CapabilityDescriptor):
+        raise CryptoIRAdapterError("adapter.capability must be a CapabilityDescriptor")
+    return (
+        capability.capability_id,
+        capability.implementation_version,
+        capability.semantic_version,
+    )
+
+
+def conversion_elevates_authority(result: AdapterConversionResult) -> bool:
+    """Return True when *result* would elevate authority (should never happen).
+
+    :class:`AdapterConversionResult` construction already fails closed on
+    elevation; this helper is for audit/inspection of sealed receipts.
+    """
+
+    if not isinstance(result, AdapterConversionResult):
+        raise CryptoIRAdapterError("result must be an AdapterConversionResult")
+    source = result.source_authority
+    target = result.result_authority
+    if source is target:
+        return False
+    # Authorization may never be manufactured from any other kind.
+    if target is AuthorityKind.AUTHORIZATION:
+        return True
+    # Rank order mirrors provenance.assert_authority_not_elevated.
+    rank = {
+        AuthorityKind.DECLARATION: 0,
+        AuthorityKind.OBSERVATION: 1,
+        AuthorityKind.ASSUMPTION: 1,
+        AuthorityKind.EVIDENCE: 2,
+        AuthorityKind.RESULT: 3,
+        AuthorityKind.AUTHORIZATION: 4,
+    }
+    return rank[target] > rank[source]
+
+
 def unavailable_conversion(
     *,
     conversion_id: str,
@@ -474,7 +521,9 @@ __all__ = [
     "CryptoIRAdapterError",
     "NullCryptoIRAdapter",
     "UnsupportedField",
+    "adapter_capability_identity",
     "adapter_is_available",
+    "conversion_elevates_authority",
     "unavailable_conversion",
     # Re-exports useful to adapter implementers.
     "CapabilityDescriptor",
