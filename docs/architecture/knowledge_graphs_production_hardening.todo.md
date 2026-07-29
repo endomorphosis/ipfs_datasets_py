@@ -244,7 +244,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-015 Consolidate one GraphQueryBackend and executor
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: query
 - Depends on: KGP-006, KGP-009, KGP-014
