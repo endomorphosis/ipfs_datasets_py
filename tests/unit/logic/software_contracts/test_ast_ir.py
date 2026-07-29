@@ -35,11 +35,19 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     cid_for_structured,
 )
 from ipfs_datasets_py.logic.software_contracts.schema_versions import (
+    AST_IR_OBJECTIVE_VALIDATION_SCHEMA,
+    AST_IR_OWNER_GOAL_ID,
+    AST_IR_PACKET_GOAL_IDS,
+    AST_IR_REPAIR_TASK_ID,
     AST_IR_SCHEMA_VERSION,
+    AST_IR_VALIDATED_ARTIFACTS,
+    AST_IR_VALIDATION_COMMAND,
     FRONTEND_CAPABILITY_SCHEMA_VERSION,
+    OBJECTIVE_VALIDATION_EVIDENCE,
     SCHEMA_VERSIONS,
     SchemaVersion,
     SchemaVersionError,
+    ast_ir_objective_validation_contract,
     get_schema_version,
     schema_registry_descriptor,
 )
@@ -345,9 +353,10 @@ def test_shared_schema_has_no_language_specific_escape_hatch() -> None:
     descriptor = ast_ir_schema_descriptor()
     assert (
         cid_for_structured(descriptor)
-        == "baguqeerautk6bj52anwvzgbopyuxpbnai62gxl5oa3gpbgrjyzbixjzy3yta"
+        == "baguqeerarrt5ravhwjwr75appwlkgf2qxrwp5v7wrm2mya6lqrqq37k6nzkq"
     )
     assert descriptor["guarantees"]["language_specific_payloads"] is False
+    assert descriptor["guarantees"]["exact_shared_record_types"] is True
     assert descriptor["guarantees"]["parser_resolution_separated"] is True
     assert descriptor["guarantees"]["resolved_targets_in_ast"] is False
     assert descriptor["span_convention"] == {
@@ -374,6 +383,60 @@ def test_shared_schema_has_no_language_specific_escape_hatch() -> None:
                 "resolved_targets",
             }
         )
+
+
+def test_shared_schema_rejects_subclass_serialization_escape_hatches() -> None:
+    """Frontend-owned syntax cannot enter the shared schema through subclasses."""
+
+    class PythonSpecificASTRecord(ASTRecord):
+        def to_dict(self) -> dict[str, Any]:
+            return {**super().to_dict(), "python_ast": {"kind": "Module"}}
+
+    record = complete_record()
+    with pytest.raises(ASTIRValidationError, match="exact ASTRecord"):
+        PythonSpecificASTRecord(
+            **{
+                field.name: getattr(record, field.name)
+                for field in dataclasses.fields(ASTRecord)
+            }
+        )
+
+    class PythonSpecificSpan(SourceSpan):
+        def to_dict(self) -> dict[str, Any]:
+            return {**super().to_dict(), "python_ast": "Name"}
+
+    with pytest.raises(ASTIRValidationError, match="exact SourceSpan"):
+        ModuleDefinition(
+            module_id="module:x",
+            name="x",
+            scope_id="scope:x",
+            span=PythonSpecificSpan(0, 1, 1, 0, 1, 1),
+        )
+
+    class PythonSpecificSymbol(SymbolDefinition):
+        def to_dict(self) -> dict[str, Any]:
+            return {**super().to_dict(), "python_ast": "FunctionDef"}
+
+    frontend_symbol = PythonSpecificSymbol(
+        **{
+            field.name: getattr(record.symbols[0], field.name)
+            for field in dataclasses.fields(SymbolDefinition)
+        }
+    )
+    with pytest.raises(ASTIRValidationError, match="exact SymbolDefinition"):
+        dataclasses.replace(record, symbols=(frontend_symbol,))
+
+    class ExtendedSchemaVersion(SchemaVersion):
+        pass
+
+    extended_schema = ExtendedSchemaVersion(
+        AST_IR_SCHEMA_VERSION.name,
+        AST_IR_SCHEMA_VERSION.major,
+        AST_IR_SCHEMA_VERSION.minor,
+        AST_IR_SCHEMA_VERSION.patch,
+    )
+    with pytest.raises(ASTIRValidationError, match="ast_schema is invalid"):
+        dataclasses.replace(record.frontend, ast_schema=extended_schema)
 
 
 @pytest.mark.parametrize(
@@ -619,6 +682,7 @@ def test_package_exports_are_the_serialized_shared_surface() -> None:
         "CallRecord",
         "EffectRecord",
         "UnsupportedConstruct",
+        "ast_ir_objective_validation_contract",
     }
     assert required.issubset(package.__all__)
     assert package.ASTRecord is ASTRecord
@@ -629,3 +693,44 @@ def test_package_exports_are_the_serialized_shared_surface() -> None:
     assert package.CallSite is CallRecord
     assert package.Effect is EffectRecord
     assert package.Diagnostic is DiagnosticRecord
+    assert (
+        package.ast_ir_objective_validation_contract
+        is ast_ir_objective_validation_contract
+    )
+
+
+def test_objective_validation_repair_contract_covers_the_goal_packet() -> None:
+    """Objective validation repair for DSCON-074 / G105, G110, and G120."""
+
+    assert OBJECTIVE_VALIDATION_EVIDENCE == "objective validation repair"
+    assert AST_IR_OWNER_GOAL_ID == "DSCON-G105"
+    assert AST_IR_REPAIR_TASK_ID == "DSCON-074"
+    assert AST_IR_PACKET_GOAL_IDS == (
+        "DSCON-G105",
+        "DSCON-G110",
+        "DSCON-G120",
+    )
+    assert AST_IR_VALIDATION_COMMAND == (
+        "python -m pytest -q "
+        "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
+    )
+    assert AST_IR_VALIDATED_ARTIFACTS == (
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/__init__.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+        "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py",
+    )
+
+    contract = ast_ir_objective_validation_contract()
+    assert contract["schema"] == AST_IR_OBJECTIVE_VALIDATION_SCHEMA
+    assert contract["evidence_term"] == OBJECTIVE_VALIDATION_EVIDENCE
+    assert contract["owner_goal"] == AST_IR_OWNER_GOAL_ID
+    assert contract["repair_task_id"] == AST_IR_REPAIR_TASK_ID
+    assert contract["packet_goals"] == list(AST_IR_PACKET_GOAL_IDS)
+    assert contract["validation_command"] == AST_IR_VALIDATION_COMMAND
+    assert contract["validated_artifacts"] == list(AST_IR_VALIDATED_ARTIFACTS)
+    assert all(contract["acceptance"].values())
+    assert (
+        cid_for_structured(contract)
+        == "baguqeerah4svrevky46uybjnyupgdw65z2ttssdeet4pys32pk5jxff33zdq"
+    )

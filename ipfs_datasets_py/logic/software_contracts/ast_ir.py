@@ -29,6 +29,7 @@ from ipfs_datasets_py.logic.software_contracts.content import (
     validate_structured_value,
 )
 from ipfs_datasets_py.logic.software_contracts.schema_versions import (
+    AST_IR_OWNER_GOAL_ID,
     AST_IR_SCHEMA_VERSION,
     FRONTEND_CAPABILITY_SCHEMA_VERSION,
     SchemaVersion,
@@ -259,9 +260,9 @@ def _records(
         raise ASTIRValidationError(
             f"{field_name} must be an ordered sequence"
         ) from exc
-    if not all(isinstance(item, expected_type) for item in result):
+    if not all(type(item) is expected_type for item in result):
         raise ASTIRValidationError(
-            f"{field_name} may contain only {expected_type.__name__} records"
+            f"{field_name} may contain only exact {expected_type.__name__} records"
         )
     return tuple(sorted(result, key=sort_key)) if sort_key else result
 
@@ -298,8 +299,8 @@ def _strings(
 
 
 def _span(value: Any, field_name: str) -> "SourceSpan":
-    if not isinstance(value, SourceSpan):
-        raise ASTIRValidationError(f"{field_name} must be a SourceSpan")
+    if type(value) is not SourceSpan:
+        raise ASTIRValidationError(f"{field_name} must be an exact SourceSpan")
     return value
 
 
@@ -329,7 +330,7 @@ def _schema(value: Any, expected: SchemaVersion, field_name: str) -> SchemaVersi
     try:
         result = (
             value
-            if isinstance(value, SchemaVersion)
+            if type(value) is SchemaVersion
             else SchemaVersion.from_dict(value)
         )
     except (SchemaVersionError, TypeError, ValueError) as exc:
@@ -830,10 +831,13 @@ class SymbolDefinition(CanonicalASTRecord):
             "definition_ordinal",
             _integer(self.definition_ordinal, "definition_ordinal", minimum=0),
         )
-        if self.signature is not None and not isinstance(
-            self.signature, SignatureDefinition
+        if (
+            self.signature is not None
+            and type(self.signature) is not SignatureDefinition
         ):
-            raise ASTIRValidationError("signature must be a SignatureDefinition")
+            raise ASTIRValidationError(
+                "signature must be an exact SignatureDefinition"
+            )
         object.__setattr__(
             self,
             "visibility",
@@ -1332,12 +1336,16 @@ class ASTRecord(CanonicalASTRecord):
     )
 
     def __post_init__(self) -> None:
-        if not isinstance(self.provenance, SourceProvenance):
-            raise ASTIRValidationError("provenance must be SourceProvenance")
-        if not isinstance(self.frontend, FrontendCapability):
-            raise ASTIRValidationError("frontend must be FrontendCapability")
-        if not isinstance(self.module, ModuleDefinition):
-            raise ASTIRValidationError("module must be ModuleDefinition")
+        if type(self) is not ASTRecord:
+            raise ASTIRValidationError(
+                "frontend results must be exact ASTRecord instances"
+            )
+        if type(self.provenance) is not SourceProvenance:
+            raise ASTIRValidationError("provenance must be exact SourceProvenance")
+        if type(self.frontend) is not FrontendCapability:
+            raise ASTIRValidationError("frontend must be exact FrontendCapability")
+        if type(self.module) is not ModuleDefinition:
+            raise ASTIRValidationError("module must be exact ModuleDefinition")
         object.__setattr__(
             self,
             "schema_version",
@@ -1530,7 +1538,7 @@ def ast_ir_schema_descriptor() -> dict[str, Any]:
 
     return {
         "schema": AST_IR_DESCRIPTOR_SCHEMA,
-        "owner_goal": "DSCON-G105",
+        "owner_goal": AST_IR_OWNER_GOAL_ID,
         "ast_schema": AST_IR_SCHEMA_VERSION.to_dict(),
         "frontend_schema": FRONTEND_CAPABILITY_SCHEMA_VERSION.to_dict(),
         "records": [
@@ -1561,6 +1569,7 @@ def ast_ir_schema_descriptor() -> dict[str, Any]:
             "immutable": True,
             "closed_records": True,
             "canonical_values_only": True,
+            "exact_shared_record_types": True,
             "language_specific_payloads": False,
             "parser_resolution_separated": True,
             "resolved_targets_in_ast": False,

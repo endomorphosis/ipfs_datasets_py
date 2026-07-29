@@ -18,6 +18,27 @@ from typing import Any, Final, Mapping
 SCHEMA_REGISTRY_SCHEMA: Final[str] = (
     "ipfs-datasets.software-contracts.schema-registry@1"
 )
+AST_IR_OBJECTIVE_VALIDATION_SCHEMA: Final[str] = (
+    "ipfs-datasets.software-contracts.ast-ir-objective-validation@1"
+)
+AST_IR_OWNER_GOAL_ID: Final[str] = "DSCON-G105"
+AST_IR_PACKET_GOAL_IDS: Final[tuple[str, ...]] = (
+    "DSCON-G105",
+    "DSCON-G110",
+    "DSCON-G120",
+)
+AST_IR_REPAIR_TASK_ID: Final[str] = "DSCON-074"
+OBJECTIVE_VALIDATION_EVIDENCE: Final[str] = "objective validation repair"
+AST_IR_VALIDATION_COMMAND: Final[str] = (
+    "python -m pytest -q "
+    "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py"
+)
+AST_IR_VALIDATED_ARTIFACTS: Final[tuple[str, ...]] = (
+    "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/__init__.py",
+    "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+    "ipfs_datasets_py/ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+    "ipfs_datasets_py/tests/unit/logic/software_contracts/test_ast_ir.py",
+)
 _SCHEMA_NAME_RE: Final[re.Pattern[str]] = re.compile(
     r"^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
 )
@@ -151,7 +172,7 @@ def schema_registry_descriptor() -> dict[str, Any]:
 
     return {
         "schema": SCHEMA_REGISTRY_SCHEMA,
-        "owner_goal": "DSCON-G105",
+        "owner_goal": AST_IR_OWNER_GOAL_ID,
         "compatibility": "exact-version-only",
         "schemas": [
             SCHEMA_VERSIONS[key].to_dict() for key in sorted(SCHEMA_VERSIONS)
@@ -159,15 +180,50 @@ def schema_registry_descriptor() -> dict[str, Any]:
     }
 
 
+def ast_ir_objective_validation_contract() -> dict[str, Any]:
+    """Return the deterministic DSCON-074 validation-gate evidence contract.
+
+    The contract keeps the supervisor repair task aligned with the objective
+    heap without making task metadata part of AST-record content identity.
+    """
+
+    return {
+        "schema": AST_IR_OBJECTIVE_VALIDATION_SCHEMA,
+        "evidence_term": OBJECTIVE_VALIDATION_EVIDENCE,
+        "owner_goal": AST_IR_OWNER_GOAL_ID,
+        "repair_task_id": AST_IR_REPAIR_TASK_ID,
+        "packet_goals": list(AST_IR_PACKET_GOAL_IDS),
+        "validation_command": AST_IR_VALIDATION_COMMAND,
+        "validated_artifacts": list(AST_IR_VALIDATED_ARTIFACTS),
+        "acceptance": {
+            "canonical_values_fail_closed": True,
+            "exact_shared_record_types": True,
+            "frontend_identity_bound": True,
+            "language_specific_payloads_rejected": True,
+            "parser_resolution_separated": True,
+            "canonical_cid_round_trip": True,
+            "deterministic_golden_roots": True,
+        },
+    }
+
+
 __all__ = [
     "AST_IR_SCHEMA",
     "AST_IR_SCHEMA_VERSION",
+    "AST_IR_OBJECTIVE_VALIDATION_SCHEMA",
+    "AST_IR_OWNER_GOAL_ID",
+    "AST_IR_PACKET_GOAL_IDS",
+    "AST_IR_REPAIR_TASK_ID",
+    "AST_IR_VALIDATED_ARTIFACTS",
+    "AST_IR_VALIDATION_COMMAND",
     "FRONTEND_CAPABILITY_SCHEMA",
     "FRONTEND_CAPABILITY_SCHEMA_VERSION",
+    "OBJECTIVE_VALIDATION_EVIDENCE",
     "SCHEMA_REGISTRY_SCHEMA",
     "SCHEMA_VERSIONS",
     "SchemaVersion",
     "SchemaVersionError",
+    "ast_ir_objective_validation_contract",
     "get_schema_version",
     "schema_registry_descriptor",
 ]
