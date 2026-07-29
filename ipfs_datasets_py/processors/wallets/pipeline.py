@@ -66,6 +66,7 @@ from .protocols import (
 from .storage import (
     BatchWriteReceipt,
     InMemoryRawPayloadStore,
+    RawPayloadEncryptor,
     RawPayloadStore,
     SinkCommitReceipt,
     StreamingDatasetSink,
@@ -306,6 +307,7 @@ class WalletLedgerProcessor:
         normalizer: ChainNormalizer,
         checkpoint_store: InMemoryCheckpointStore | None = None,
         raw_payload_store: RawPayloadStore | None = None,
+        raw_payload_encryptor: RawPayloadEncryptor | None = None,
         provider_name: str = "wallet-ledger-processor",
         normalizer_version: str = DEFAULT_PROCESSOR_VERSION,
         normalized_schema_major: int = DEFAULT_NORMALIZED_SCHEMA_MAJOR,
@@ -330,11 +332,38 @@ class WalletLedgerProcessor:
             else InMemoryCheckpointStore()
         )
         self._coordinator = CheckpointCommitCoordinator(self._checkpoint_store)
-        self._raw_payload_store = (
-            raw_payload_store
-            if raw_payload_store is not None
-            else InMemoryRawPayloadStore()
-        )
+        if not isinstance(raw_payload_policy, RawPayloadPolicy):
+            raise InvalidRequestError("raw_payload_policy must be a RawPayloadPolicy")
+        self._raw_payload_policy = raw_payload_policy
+        self._raw_payload_encryptor = raw_payload_encryptor
+
+        # Fail closed: encrypted custody is unusable without an encryptor on the
+        # processor or an injected store that already carries one.
+        store_encryptor = getattr(raw_payload_store, "encryptor", None)
+        effective_encryptor = raw_payload_encryptor or store_encryptor
+        if (
+            raw_payload_policy is RawPayloadPolicy.SEPARATELY_ENCRYPTED
+            and effective_encryptor is None
+        ):
+            raise InvalidRequestError(
+                "separately_encrypted raw payload policy requires an injected encryptor"
+            )
+
+        if raw_payload_store is not None:
+            self._raw_payload_store = raw_payload_store
+        else:
+            # Default store is only usable for explicit retention policies; OMITTED
+            # keeps a inert REFERENCED-capable store that is never written unless
+            # the caller opts in via store_raw_payloads + non-omitted policy.
+            store_policy = (
+                RawPayloadPolicy.REFERENCED
+                if raw_payload_policy is RawPayloadPolicy.OMITTED
+                else raw_payload_policy
+            )
+            self._raw_payload_store = InMemoryRawPayloadStore(
+                policy=store_policy,
+                encryptor=effective_encryptor,
+            )
         self._provider_name = _required_str(provider_name, "provider_name")
         self._normalizer_version = _required_str(
             normalizer_version, "normalizer_version"
@@ -346,9 +375,6 @@ class WalletLedgerProcessor:
         ):
             raise InvalidRequestError("normalized_schema_major must be a positive integer")
         self._normalized_schema_major = normalized_schema_major
-        if not isinstance(raw_payload_policy, RawPayloadPolicy):
-            raise InvalidRequestError("raw_payload_policy must be a RawPayloadPolicy")
-        self._raw_payload_policy = raw_payload_policy
         self._clock = clock or _utc_now
 
         features = {Capability.DATASET_EXPORT}
@@ -517,10 +543,24 @@ class WalletLedgerProcessor:
                     raise InvalidRequestError("provider must yield RecordBatch values")
                 batch.enforce(context.limits)
 
-                # Optional raw payload capture (content-addressed only).
+                # Optional raw payload capture (content-addressed, custody-bounded).
+                # Retention is omitted by default; explicit non-omitted policy plus
+                # store_raw_payloads is required.  Store bounds raise
+                # ResourceLimitError before any store mutation.
                 if plan.store_raw_payloads and self._raw_payload_policy is not (
                     RawPayloadPolicy.OMITTED
                 ):
+                    if (
+                        self._raw_payload_policy
+                        is RawPayloadPolicy.SEPARATELY_ENCRYPTED
+                        and self._raw_payload_encryptor is None
+                        and getattr(self._raw_payload_store, "encryptor", None)
+                        is None
+                    ):
+                        raise InvalidRequestError(
+                            "separately_encrypted raw payload policy requires "
+                            "an injected encryptor"
+                        )
                     raw_body = canonical_native_batch(batch)
                     await self._raw_payload_store.put(
                         raw_body,

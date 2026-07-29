@@ -47,6 +47,7 @@ from ipfs_datasets_py.processors.wallets.protocols import (
 )
 from ipfs_datasets_py.processors.wallets.storage import (
     InMemoryRawPayloadStore,
+    RawPayloadCustodyLimits,
     StreamingDatasetSink,
 )
 
@@ -576,7 +577,14 @@ def test_raw_payload_store_content_addressed(
 ) -> None:
     pages = [[_tx(chain, tx_hash="0x99", sequence=9, block_hash="0x09")]]
     provider = FakeWalletLedgerProvider(pages)
-    raw_store = InMemoryRawPayloadStore()
+    raw_store = InMemoryRawPayloadStore(
+        policy=RawPayloadPolicy.REFERENCED,
+        limits=RawPayloadCustodyLimits(
+            max_object_bytes=64 * 1024,
+            max_total_bytes=256 * 1024,
+            max_objects=16,
+        ),
+    )
     processor = WalletLedgerProcessor(
         chain=chain,
         wallet_provider=provider,
@@ -601,6 +609,208 @@ def test_raw_payload_store_content_addressed(
     assert stored is not None
     assert stored.digest.startswith("sha256:")
     assert stored.byte_length > 0
+
+
+def test_raw_payload_oversized_raises_before_store_mutation(
+    chain: ChainRef,
+) -> None:
+    """WP-BOUNDS-002: oversized raw payloads fail closed without store writes."""
+
+    pages = [[_tx(chain, tx_hash="0xbig", sequence=1, block_hash="0x01")]]
+    provider = FakeWalletLedgerProvider(pages)
+    raw_store = InMemoryRawPayloadStore(
+        policy=RawPayloadPolicy.REFERENCED,
+        limits=RawPayloadCustodyLimits(
+            max_object_bytes=8,
+            max_total_bytes=64,
+            max_objects=4,
+        ),
+    )
+    processor = WalletLedgerProcessor(
+        chain=chain,
+        wallet_provider=provider,
+        normalizer=IdentityNormalizer(),
+        raw_payload_store=raw_store,
+        raw_payload_policy=RawPayloadPolicy.REFERENCED,
+        provider_name="fixture-rpc",
+        normalizer_version="fixture-normalizer@1",
+        clock=lambda: NOW,
+    )
+    # Operation ceiling high enough that store custody limits fire first.
+    ctx = OperationContext(
+        request_id="raw-oversize",
+        limits=RequestLimits(
+            max_items=100,
+            max_pages=10,
+            max_requests=20,
+            max_response_bytes=1024 * 1024,
+        ),
+    )
+    request = BoundedRequest(scope="wallet:0xabc", context=ctx)
+    receipt = _run(
+        processor.ingest_wallet(
+            request,
+            observed_anchor=HashAnchor(1, "0x01"),
+            store_raw_payloads=True,
+        )
+    )
+    # Pipeline converts mid-run ResourceLimitError into a failed receipt and
+    # aborts the sink; the raw store must remain empty (no partial custody).
+    assert receipt.status is RunStatus.FAILED
+    assert any("ResourceLimitError" in w for w in receipt.warnings)
+    assert len(raw_store) == 0
+    assert raw_store.total_bytes == 0
+    assert receipt.checkpoint_advanced is False
+
+
+def test_raw_payload_over_count_raises_before_additional_state_change(
+    chain: ChainRef,
+) -> None:
+    """WP-BOUNDS-002: over-count retention leaves prior objects intact."""
+
+    pages = [
+        [_tx(chain, tx_hash="0xc1", sequence=1, block_hash="0x01")],
+        [_tx(chain, tx_hash="0xc2", sequence=2, block_hash="0x02")],
+    ]
+    provider = FakeWalletLedgerProvider(pages)
+    raw_store = InMemoryRawPayloadStore(
+        policy=RawPayloadPolicy.REFERENCED,
+        limits=RawPayloadCustodyLimits(
+            max_object_bytes=64 * 1024,
+            max_total_bytes=256 * 1024,
+            max_objects=1,
+        ),
+    )
+    processor = WalletLedgerProcessor(
+        chain=chain,
+        wallet_provider=provider,
+        normalizer=IdentityNormalizer(),
+        raw_payload_store=raw_store,
+        raw_payload_policy=RawPayloadPolicy.REFERENCED,
+        provider_name="fixture-rpc",
+        normalizer_version="fixture-normalizer@1",
+        clock=lambda: NOW,
+    )
+    ctx = OperationContext(
+        request_id="raw-overcount",
+        limits=RequestLimits(max_items=100, max_pages=10, max_requests=20),
+    )
+    request = BoundedRequest(scope="wallet:0xabc", context=ctx)
+    receipt = _run(
+        processor.ingest_wallet(
+            request,
+            observed_anchor=HashAnchor(2, "0x02"),
+            store_raw_payloads=True,
+        )
+    )
+    assert receipt.status is RunStatus.FAILED
+    assert any("ResourceLimitError" in w for w in receipt.warnings)
+    # First page's payload was retained; second page must not add another object.
+    assert len(raw_store) == 1
+    assert receipt.checkpoint_advanced is False
+
+
+def test_raw_payload_encrypted_policy_fails_closed_without_encryptor(
+    chain: ChainRef,
+) -> None:
+    with pytest.raises(InvalidRequestError, match="encryptor"):
+        WalletLedgerProcessor(
+            chain=chain,
+            wallet_provider=FakeWalletLedgerProvider([]),
+            normalizer=IdentityNormalizer(),
+            raw_payload_policy=RawPayloadPolicy.SEPARATELY_ENCRYPTED,
+            provider_name="fixture-rpc",
+            normalizer_version="fixture-normalizer@1",
+        )
+
+
+def test_raw_payload_encrypted_policy_with_encryptor_is_usable(
+    chain: ChainRef,
+    context: OperationContext,
+) -> None:
+    class _Xor:
+        def encrypt(self, plaintext: bytes) -> bytes:
+            return bytes(b ^ 0x11 for b in plaintext)
+
+        def decrypt(self, ciphertext: bytes) -> bytes:
+            return bytes(b ^ 0x11 for b in ciphertext)
+
+    pages = [[_tx(chain, tx_hash="0xenc", sequence=3, block_hash="0x03")]]
+    provider = FakeWalletLedgerProvider(pages)
+    encryptor = _Xor()
+    raw_store = InMemoryRawPayloadStore(
+        policy=RawPayloadPolicy.SEPARATELY_ENCRYPTED,
+        encryptor=encryptor,
+        limits=RawPayloadCustodyLimits(
+            max_object_bytes=64 * 1024,
+            max_total_bytes=256 * 1024,
+            max_objects=8,
+        ),
+    )
+    processor = WalletLedgerProcessor(
+        chain=chain,
+        wallet_provider=provider,
+        normalizer=IdentityNormalizer(),
+        raw_payload_store=raw_store,
+        raw_payload_encryptor=encryptor,
+        raw_payload_policy=RawPayloadPolicy.SEPARATELY_ENCRYPTED,
+        provider_name="fixture-rpc",
+        normalizer_version="fixture-normalizer@1",
+        clock=lambda: NOW,
+    )
+    request = BoundedRequest(scope="wallet:0xabc", context=context)
+    receipt = _run(
+        processor.ingest_wallet(
+            request,
+            observed_anchor=HashAnchor(3, "0x03"),
+            store_raw_payloads=True,
+        )
+    )
+    assert receipt.status is RunStatus.COMPLETE
+    assert len(raw_store) == 1
+    digest = next(iter(raw_store.digests()))
+    # Ciphertext at rest differs from decrypted get().
+    at_rest = raw_store._entries[digest].body
+    loaded = _run(raw_store.get(digest, context=context))
+    assert loaded is not None
+    assert loaded.body != at_rest
+    assert at_rest == encryptor.encrypt(loaded.body)
+
+
+def test_raw_payload_default_policy_omits_retention(
+    chain: ChainRef,
+    context: OperationContext,
+) -> None:
+    pages = [[_tx(chain, tx_hash="0xom", sequence=4, block_hash="0x04")]]
+    provider = FakeWalletLedgerProvider(pages)
+    raw_store = InMemoryRawPayloadStore(
+        policy=RawPayloadPolicy.REFERENCED,
+        limits=RawPayloadCustodyLimits(
+            max_object_bytes=1024,
+            max_total_bytes=4096,
+            max_objects=4,
+        ),
+    )
+    processor = WalletLedgerProcessor(
+        chain=chain,
+        wallet_provider=provider,
+        normalizer=IdentityNormalizer(),
+        raw_payload_store=raw_store,
+        # Default OMITTED: even with store_raw_payloads, nothing is retained.
+        raw_payload_policy=RawPayloadPolicy.OMITTED,
+        provider_name="fixture-rpc",
+        normalizer_version="fixture-normalizer@1",
+        clock=lambda: NOW,
+    )
+    request = BoundedRequest(scope="wallet:0xabc", context=context)
+    _run(
+        processor.ingest_wallet(
+            request,
+            observed_anchor=HashAnchor(4, "0x04"),
+            store_raw_payloads=True,
+        )
+    )
+    assert len(raw_store) == 0
 
 
 def test_processor_satisfies_dataset_sink_protocol_surface(
