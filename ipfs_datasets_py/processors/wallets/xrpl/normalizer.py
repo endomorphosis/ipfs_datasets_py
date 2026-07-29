@@ -65,6 +65,26 @@ def _payload_digest(payload: Mapping[str, Any]) -> RawPayloadRef:
     )
 
 
+def _payload_reference(payload: Mapping[str, Any]) -> RawPayloadRef:
+    """Return a raw reference without retaining or re-hashing raw content."""
+
+    if set(payload).issubset({"digest", "media_type", "byte_length"}):
+        digest = payload.get("digest")
+        media_type = payload.get("media_type")
+        byte_length = payload.get("byte_length")
+        if (
+            isinstance(digest, str)
+            and isinstance(media_type, str)
+            and (byte_length is None or isinstance(byte_length, int))
+        ):
+            return RawPayloadRef(
+                digest=digest,
+                media_type=media_type,
+                byte_length=byte_length,
+            )
+    return _payload_digest(payload)
+
+
 def _parse_amount(raw: Any, *, field: str = "Amount") -> XRPLAmount | None:
     if raw is None:
         return None
@@ -220,8 +240,11 @@ def parse_account_tx_entry(
     if isinstance(meta, Mapping) and "TransactionIndex" in meta:
         tx_index = int(meta["TransactionIndex"])
 
+    # No policy means fail-closed redaction. Bounded content retention requires
+    # the caller to pass an explicit MemoPrivacyPolicy(redact_memo_data=False).
     policy = privacy or MemoPrivacyPolicy()
     memos = policy.apply_memos(tx_json.get("Memos"))
+    raw_payload = _payload_digest(entry)
 
     close_time = None
     # Optional ISO close time from expanded fixtures.
@@ -254,7 +277,9 @@ def parse_account_tx_entry(
         close_time_iso=close_time,
         transaction_result=result_code,
         validated=validated,
-        raw=dict(entry),
+        # Carry only deterministic reference metadata into the intermediate
+        # record; the provider response itself may contain free-form memo data.
+        raw=raw_payload.to_dict(),
     )
 
 
@@ -361,7 +386,7 @@ class XRPLNormalizer:
             hash=tx.ledger_hash,
             transaction_index=tx.transaction_index,
         )
-        raw_payload = _payload_digest(dict(tx.raw)) if tx.raw else None
+        raw_payload = _payload_reference(dict(tx.raw)) if tx.raw else None
         provenance = Provenance(
             provider=self.provider,
             provider_kind=PROVIDER_KIND,

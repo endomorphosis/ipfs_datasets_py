@@ -1,8 +1,9 @@
 """Redaction and size bounds for Xaman payload content.
 
 Mirrors XRPL memo privacy: free-form instruction text and nested request
-bodies are size-bounded and may be fully redacted. Digests remain so
-integrity can be checked without retaining unconstrained content.
+bodies are omitted by default. Callers must supply an explicit policy with
+the applicable redaction flag disabled to retain bounded content. Digests
+remain so integrity can be checked without retaining unconstrained content.
 """
 
 from __future__ import annotations
@@ -62,13 +63,17 @@ _SAFE_REQUEST_KEYS = frozenset(
 
 @dataclass(frozen=True, slots=True)
 class PayloadPrivacyPolicy:
-    """Bounds and redaction controls for Xaman payload content."""
+    """Bounds and redaction controls for Xaman payload content.
+
+    Retention is opt-in. Callers may explicitly disable either redaction flag
+    to retain only the corresponding bounded content.
+    """
 
     max_instruction_bytes: int = DEFAULT_MAX_INSTRUCTION_BYTES
     max_request_summary_keys: int = DEFAULT_MAX_REQUEST_SUMMARY_KEYS
     max_string_field_bytes: int = DEFAULT_MAX_STRING_FIELD_BYTES
-    redact_instruction: bool = False
-    redact_request_body: bool = False
+    redact_instruction: bool = True
+    redact_request_body: bool = True
     omit_secret_keys: bool = True
 
     def __post_init__(self) -> None:
@@ -85,6 +90,14 @@ class PayloadPrivacyPolicy:
         ):
             raise InvalidRequestError(
                 "max_request_summary_keys must be a positive integer"
+            )
+        if (
+            isinstance(self.max_string_field_bytes, bool)
+            or not isinstance(self.max_string_field_bytes, int)
+            or self.max_string_field_bytes <= 0
+        ):
+            raise InvalidRequestError(
+                "max_string_field_bytes must be a positive integer"
             )
 
     def apply_instruction(self, text: str | None) -> dict[str, Any]:

@@ -82,16 +82,28 @@ def test_destination_tag_and_memos(load_fixture, context) -> None:
     assert native.source_tag == data["expect"]["source_tag"]
     assert len(native.memos) == data["expect"]["memo_count"]
     assert native.memos[0].memo_type is not None
-    assert native.memos[0].memo_data is not None
+    assert native.memos[0].memo_data is None
+    assert native.memos[0].data_redacted is True
+    assert native.memos[0].original_data_bytes is not None
+    raw_text = str(dict(native.raw))
+    assert native.memos[0].memo_type not in raw_text
+    assert data["entry"]["tx"]["Memos"][0]["Memo"]["MemoData"] not in raw_text
 
-    redacted = parse_account_tx_entry(
+    retained = parse_account_tx_entry(
         data["entry"],
         network=XRPLNetwork.MAINNET,
-        privacy=MemoPrivacyPolicy(redact_memo_data=True),
+        privacy=MemoPrivacyPolicy(
+            redact_memo_data=False,
+            max_memo_data_bytes=1024,
+        ),
     )
-    assert redacted.memos[0].data_redacted is True
-    assert redacted.memos[0].memo_data is None
-    assert redacted.memos[0].memo_type is not None
+    assert retained.memos[0].data_redacted is False
+    assert retained.memos[0].memo_data is not None
+    assert retained.memos[0].memo_type is not None
+    # Privacy selection does not change the deterministic raw reference.
+    assert retained.raw == native.raw
+    assert retained.outcome is native.outcome
+    assert retained.delivered_amount == native.delivered_amount
 
 
 def test_outcomes_remain_distinct(load_fixture, context, processor) -> None:
