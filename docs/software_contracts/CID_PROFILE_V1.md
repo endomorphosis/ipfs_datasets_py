@@ -179,6 +179,34 @@ materialize_cid_vectors_fixture(Path("ipfs_datasets_py"))
 | Decode-and-recompute verifies every read | `decode_and_recompute_*` / `verify_*_read` |
 | Python and JavaScript golden vectors match | `cid_vectors_document` + fixture path + unit tests |
 
+## Cache binding (DSCON-G100)
+
+`logic/software_contracts/cache.py` is the authoritative consumer of this CID
+profile for reusable analysis caching. Its `AnalysisCacheKey` binds the source
+CID, complete transitive dependency closure, analyzer, configuration,
+semantics, policy, solver, toolchain, and result schema. It deliberately omits
+the global repository-tree CID so an unrelated tree change cannot invalidate
+every reusable shard.
+
+`ImmutableCAS` publishes canonical objects with write/fsync/link-no-replace and
+performs decode-and-recompute plus schema checks on every read. Mutable exact-key
+indexes carry no trust and may be rebuilt or discarded. `CacheReceipt` binds a
+key to its result CID; `UNKNOWN`, negative, unsupported, incomplete, stale, and
+error results require bounded leases and never satisfy completion.
+`AggregateSnapshotReceipt` separately binds verified shard-receipt CIDs to the
+global repository-tree CID and rejects wrong tree or shard membership.
+
+| DSCON-G100 acceptance criterion | Enforcement |
+| --- | --- |
+| Atomic immutable writes | `ImmutableCAS._publish` uses fsynced staging plus atomic no-replace link |
+| Recompute identity and schema on reads | `ImmutableCAS.get` / `get_bytes` |
+| Poisoning and truncation reject | canonical byte and recomputed CID checks |
+| Toolchain, policy, dependency changes miss | all are bound by `AnalysisCacheKey` |
+| Tree CID absent from reusable key | closed key schema has no tree field |
+| Tree CID present in aggregate receipt | `AggregateSnapshotReceipt.repository_tree_cid` |
+| Unknown/negative results are bounded | `CacheReceipt` lease validation |
+| Selective reverse-closure invalidation | `AnalysisCache.invalidate_source_closure` |
+
 ## Non-goals
 
 - CIDv0, base58btc presentation, or `dag-cbor` as the default structured codec
