@@ -34,7 +34,11 @@ from ipfs_datasets_py.huggingface.publisher import (
     estimate_publication_cost,
     publish_abby_voice_release,
 )
-from ipfs_datasets_py.voice.hf_release import validate_abby_voice_hf_release
+from ipfs_datasets_py.voice.hf_release import (
+    AbbyVoiceHFReleaseBuilder,
+    AbbyVoiceHFReleasePolicy,
+    validate_abby_voice_hf_release,
+)
 
 AUDITED_PARENT = "0" * 40
 
@@ -82,6 +86,18 @@ def _materialize_local(root: Path, manifest: dict) -> None:
         else:
             path.write_bytes(b"PAR1" + b"\x01" * 40 + b"PAR1")
         assert sha256(path.read_bytes()).hexdigest() == entry["sha256"]
+
+
+def _build_canonical_release(root: Path) -> tuple[Path, dict]:
+    result = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:publisher-test",
+    ).build(
+        output_dir=root,
+        release_id="canonical-publisher-fixture",
+    )
+    manifest_path = Path(result.manifest_path)
+    return manifest_path, json.loads(manifest_path.read_text(encoding="utf-8"))
 
 
 class _FakeHfApi:
@@ -216,6 +232,74 @@ def test_dry_run_binds_parent_into_digest_without_api_contact(tmp_path: Path):
     assert first.to_dict()["target_revision"] == "main"
     assert api.calls == []
     assert api.read_calls == []
+
+
+def test_canonical_plan_includes_and_binds_release_manifest_bytes(
+    tmp_path: Path,
+):
+    root = tmp_path / "canonical"
+    manifest_path, manifest = _build_canonical_release(root)
+    publisher = HuggingFaceReleasePublisher()
+
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    manifest_operations = [
+        item
+        for item in plan.operations
+        if item.relative_path == "release-manifest.json"
+    ]
+
+    assert all(
+        descriptor["relative_path"] != "release-manifest.json"
+        for descriptor in manifest["descriptors"]
+    )
+    assert len(manifest_operations) == 1
+    manifest_operation = manifest_operations[0]
+    assert manifest_operation.sha256 == sha256(
+        manifest_path.read_bytes()
+    ).hexdigest()
+    assert manifest_operation.size_bytes == manifest_path.stat().st_size
+    assert plan.release_sha256 == manifest_operation.sha256
+    assert len(plan.operations) == len(manifest["descriptors"]) + 1
+    assert plan.metadata["canonical_release_manifest_included"] is True
+    assert (
+        plan.metadata["canonical_release_manifest_sha256"]
+        == manifest_operation.sha256
+    )
+
+    receipt = publish_abby_voice_release(
+        manifest=manifest_path,
+        dry_run=True,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    receipt_operations = receipt["dry_run_diff_and_cost_receipt"]["operations"]
+    assert [
+        item["relative_path"]
+        for item in receipt_operations
+        if item["relative_path"] == "release-manifest.json"
+    ] == ["release-manifest.json"]
+
+    reviewed_copy = tmp_path / "reviewed-copy.json"
+    reviewed_copy.write_bytes(manifest_path.read_bytes())
+    with pytest.raises(
+        HuggingFacePublicationError,
+        match="canonical --manifest must be local_root/release-manifest.json",
+    ):
+        publish_abby_voice_release(
+            manifest=reviewed_copy,
+            dry_run=True,
+            local_root=root,
+        )
+
+    with pytest.raises(
+        HuggingFacePublicationError,
+        match="canonical Abby release planning requires local_root",
+    ):
+        publisher.plan_dry_run(manifest)
 
 
 def test_plan_digest_is_portable_and_serialization_has_no_host_paths(tmp_path: Path):
@@ -565,6 +649,60 @@ def test_pinned_redownload_validation(tmp_path: Path):
             plan=plan,
             cache_root=cache2,
             remote_payloads=bad_payloads,
+        )
+
+
+def test_pinned_redownload_runs_exhaustive_canonical_release_validation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    source_root = tmp_path / "canonical-source"
+    _, manifest = _build_canonical_release(source_root)
+    publisher = HuggingFaceReleasePublisher()
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=source_root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    payloads = {
+        item.remote_path: (source_root / item.relative_path).read_bytes()
+        for item in plan.operations
+    }
+
+    result = publisher.redownload_and_validate_pinned(
+        commit_sha="7" * 40,
+        plan=plan,
+        cache_root=tmp_path / "canonical-cache",
+        remote_payloads=payloads,
+    )
+    receipt = result.to_dict()
+    assert receipt["canonical_release_validation_performed"] is True
+    assert receipt["canonical_release_validation"]["valid"] is True
+    assert (
+        receipt["canonical_release_validation"]["release_id"]
+        == "canonical-publisher-fixture"
+    )
+    assert len(receipt["canonical_release_validation_sha256"]) == 64
+
+    import ipfs_datasets_py.voice.hf_release as hf_release_module
+
+    def fail_validation(_release_root: Path) -> dict:
+        raise RuntimeError("forced exhaustive validator failure")
+
+    monkeypatch.setattr(
+        hf_release_module,
+        "validate_abby_voice_hf_release",
+        fail_validation,
+    )
+    with pytest.raises(
+        HuggingFacePublicationError,
+        match="pinned canonical release failed exhaustive validation",
+    ):
+        publisher.redownload_and_validate_pinned(
+            commit_sha="7" * 40,
+            plan=plan,
+            cache_root=tmp_path / "canonical-cache-failure",
+            remote_payloads=payloads,
         )
 
 

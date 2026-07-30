@@ -79,6 +79,8 @@ DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH: Final = 0.02
 DEFAULT_TARGET_REVISION: Final = "main"
 DEFAULT_REMOTE_INFO_BATCH_SIZE: Final = 256
 DEFAULT_PINNED_DOWNLOAD_WORKERS: Final = 8
+CANONICAL_ABBY_RELEASE_SCHEMA: Final = "abby-voice-huggingface-release/v1"
+CANONICAL_RELEASE_MANIFEST_PATH: Final = "release-manifest.json"
 _COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 # Match credential-bearing keys without flagging meta flags such as
@@ -584,10 +586,48 @@ class PinnedRedownloadValidation:
     empty_cache_before_fetch: bool
     network_fetch_performed: bool
     ok: bool
+    canonical_release_validation: Mapping[str, Any] = field(default_factory=dict)
+    canonical_release_validation_sha256: str = ""
+
+    def __post_init__(self) -> None:
+        validation = json.loads(
+            canonical_json_bytes(dict(self.canonical_release_validation or {}))
+        )
+        validation_sha256 = ""
+        if validation:
+            if validation.get("valid") is not True:
+                raise HuggingFacePublicationError(
+                    "canonical release validation receipt must record valid=true"
+                )
+            validation_sha256 = sha256(canonical_json_bytes(validation)).hexdigest()
+        if (
+            self.canonical_release_validation_sha256
+            and self.canonical_release_validation_sha256 != validation_sha256
+        ):
+            raise HuggingFacePublicationError(
+                "canonical release validation receipt digest mismatch"
+            )
+        object.__setattr__(self, "canonical_release_validation", validation)
+        object.__setattr__(
+            self,
+            "canonical_release_validation_sha256",
+            validation_sha256,
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "cache_root": self.cache_root,
+            "canonical_release_validation": dict(
+                self.canonical_release_validation
+            )
+            if self.canonical_release_validation
+            else None,
+            "canonical_release_validation_performed": bool(
+                self.canonical_release_validation
+            ),
+            "canonical_release_validation_sha256": (
+                self.canonical_release_validation_sha256 or None
+            ),
             "commit_sha": self.commit_sha,
             "empty_cache_before_fetch": self.empty_cache_before_fetch,
             "network_fetch_performed": self.network_fetch_performed,
@@ -753,6 +793,68 @@ def extract_manifest_files(
     return files, release_id, release_sha256
 
 
+def _canonical_release_manifest_entry(
+    manifest: Mapping[str, Any],
+    *,
+    local_root: Path,
+) -> dict[str, Any]:
+    """Validate a canonical release tree and describe its non-self-referential manifest.
+
+    The canonical manifest seals descriptors for every other release file. It
+    cannot include a descriptor for its own bytes without creating a hash
+    cycle, so the publication plan binds those bytes as one additional
+    append-only operation.
+    """
+
+    root = local_root.expanduser().resolve()
+    if not root.is_dir() or root.is_symlink():
+        raise HuggingFacePublicationError(
+            f"canonical release local_root is not a real directory: {root}"
+        )
+    manifest_path = root / CANONICAL_RELEASE_MANIFEST_PATH
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        raise HuggingFacePublicationError(
+            "canonical release requires a regular release-manifest.json at "
+            "local_root"
+        )
+    try:
+        on_disk = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise HuggingFacePublicationError(
+            "canonical release-manifest.json is malformed"
+        ) from exc
+    if not isinstance(on_disk, Mapping) or dict(on_disk) != dict(manifest):
+        raise HuggingFacePublicationError(
+            "canonical release manifest mapping does not match local "
+            "release-manifest.json"
+        )
+
+    try:
+        # Lazy import avoids a module cycle: hf_release imports this publisher
+        # for its local response-DAG dry-run boundary.
+        from ..voice.hf_release import validate_abby_voice_hf_release
+
+        validation = validate_abby_voice_hf_release(root)
+    except Exception as exc:
+        if isinstance(exc, HuggingFacePublicationError):
+            raise
+        raise HuggingFacePublicationError(
+            f"canonical release failed exhaustive local validation: {exc}"
+        ) from exc
+    if validation.get("valid") is not True:
+        raise HuggingFacePublicationError(
+            "canonical release validation did not record valid=true"
+        )
+
+    size_bytes, digest = _file_digest(manifest_path)
+    return {
+        "content_cid": "",
+        "relative_path": CANONICAL_RELEASE_MANIFEST_PATH,
+        "sha256": digest.hex(),
+        "size_bytes": size_bytes,
+    }
+
+
 class HuggingFaceReleasePublisher:
     """Digest-aware append-only publisher with fail-closed promotion.
 
@@ -854,6 +956,28 @@ class HuggingFaceReleasePublisher:
             for path, digest in (existing_remote_digests or {}).items()
         }
         root = Path(local_root).expanduser().resolve() if local_root else None
+        canonical_manifest_entry: dict[str, Any] | None = None
+        if manifest.get("schema_version") == CANONICAL_ABBY_RELEASE_SCHEMA:
+            if root is None:
+                raise HuggingFacePublicationError(
+                    "canonical Abby release planning requires local_root so "
+                    "release-manifest.json and every descriptor can be validated"
+                )
+            canonical_manifest_entry = _canonical_release_manifest_entry(
+                manifest,
+                local_root=root,
+            )
+            if any(
+                entry["relative_path"] == CANONICAL_RELEASE_MANIFEST_PATH
+                for entry in files
+            ):
+                raise HuggingFacePublicationError(
+                    "canonical release descriptors must not self-describe "
+                    "release-manifest.json"
+                )
+            files.append(canonical_manifest_entry)
+            files.sort(key=lambda entry: entry["relative_path"])
+            release_sha256 = canonical_manifest_entry["sha256"]
 
         operations: list[PublicationFilePlan] = []
         skipped: list[str] = []
@@ -915,6 +1039,14 @@ class HuggingFaceReleasePublisher:
             dry_run=True,
             remote_write_contacted=False,
             metadata={
+                "canonical_release_manifest_included": (
+                    canonical_manifest_entry is not None
+                ),
+                "canonical_release_manifest_sha256": (
+                    canonical_manifest_entry["sha256"]
+                    if canonical_manifest_entry is not None
+                    else ""
+                ),
                 "dry_run_diff_and_cost_receipt": True,
                 "goal_id": "ABBY-VOICE-G021",
                 "never_skip_by_basename": True,
@@ -1440,6 +1572,54 @@ class HuggingFaceReleasePublisher:
                 revalidated.append(item.remote_path)
                 revalidated_bytes += size_bytes
 
+        canonical_release_validation: Mapping[str, Any] = {}
+        canonical_manifest = cache.joinpath(
+            *Path(plan.release_prefix).parts,
+            CANONICAL_RELEASE_MANIFEST_PATH,
+        )
+        if canonical_manifest.is_file() and not canonical_manifest.is_symlink():
+            try:
+                manifest_payload = json.loads(
+                    canonical_manifest.read_text(encoding="utf-8")
+                )
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                raise HuggingFacePublicationError(
+                    "pinned canonical release manifest is malformed"
+                ) from exc
+            if (
+                isinstance(manifest_payload, Mapping)
+                and manifest_payload.get("schema_version")
+                == CANONICAL_ABBY_RELEASE_SCHEMA
+            ):
+                release_root = canonical_manifest.parent
+                try:
+                    # Lazy import avoids a module cycle: the release builder
+                    # uses this publisher for its local-only DAG dry runs.
+                    from ..voice.hf_release import validate_abby_voice_hf_release
+
+                    canonical_release_validation = (
+                        validate_abby_voice_hf_release(release_root)
+                    )
+                except Exception as exc:
+                    if isinstance(exc, HuggingFacePublicationError):
+                        raise
+                    raise HuggingFacePublicationError(
+                        "pinned canonical release failed exhaustive validation: "
+                        f"{exc}"
+                    ) from exc
+                if canonical_release_validation.get("valid") is not True:
+                    raise HuggingFacePublicationError(
+                        "pinned canonical release validation did not record valid=true"
+                    )
+        if (
+            plan.metadata.get("canonical_release_manifest_included") is True
+            and not canonical_release_validation
+        ):
+            raise HuggingFacePublicationError(
+                "approved canonical release plan did not produce an exhaustive "
+                "pinned release validation receipt"
+            )
+
         return PinnedRedownloadValidation(
             commit_sha=pinned,
             repository_id=self.repository_id,
@@ -1450,6 +1630,7 @@ class HuggingFaceReleasePublisher:
             empty_cache_before_fetch=empty_before,
             network_fetch_performed=network_fetch,
             ok=True,
+            canonical_release_validation=canonical_release_validation,
         )
 
     def canary_promote_pointer(
@@ -1734,8 +1915,15 @@ def publish_abby_voice_release(
     a separate reviewed step.
     """
 
+    manifest_path: Path | None = None
     if isinstance(manifest, (str, Path)):
-        path = Path(manifest).expanduser().resolve()
+        requested_manifest_path = Path(manifest).expanduser()
+        if requested_manifest_path.is_symlink():
+            raise HuggingFacePublicationError(
+                "release manifest must not be a symlink"
+            )
+        path = requested_manifest_path.resolve()
+        manifest_path = path
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -1749,6 +1937,24 @@ def publish_abby_voice_release(
             local_root = path.parent
     else:
         manifest_obj = manifest
+
+    if (
+        manifest_path is not None
+        and manifest_obj.get("schema_version") == CANONICAL_ABBY_RELEASE_SCHEMA
+    ):
+        if local_root is None:
+            raise HuggingFacePublicationError(
+                "canonical release manifest requires local_root"
+            )
+        expected_manifest_path = (
+            Path(local_root).expanduser().resolve()
+            / CANONICAL_RELEASE_MANIFEST_PATH
+        )
+        if manifest_path != expected_manifest_path:
+            raise HuggingFacePublicationError(
+                "canonical --manifest must be local_root/release-manifest.json "
+                "so the reviewed and uploaded bytes are identical"
+            )
 
     publisher = HuggingFaceReleasePublisher(
         repository_id=repository_id,
@@ -1865,6 +2071,8 @@ def _write_receipt(path: str | Path, receipt: Mapping[str, Any]) -> Path:
 
 
 __all__ = [
+    "CANONICAL_ABBY_RELEASE_SCHEMA",
+    "CANONICAL_RELEASE_MANIFEST_PATH",
     "DEFAULT_DATASET_REPO_ID",
     "DEFAULT_PINNED_DOWNLOAD_WORKERS",
     "DEFAULT_POINTER_PATH",

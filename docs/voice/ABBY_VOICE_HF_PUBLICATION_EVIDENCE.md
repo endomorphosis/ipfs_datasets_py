@@ -23,12 +23,19 @@ Residual acceptance terms: `post-publication verification` and
   as `create_commit(parent_commit=...)` so a concurrent update fails closed.
 - Upload operations use local file paths. The publisher never assembles the
   audio corpus in memory.
+- A canonical release plan first runs the exhaustive local release validator,
+  then adds `release-manifest.json` as an explicitly hashed operation beside
+  the files sealed by its descriptors. The manifest does not self-describe,
+  avoiding a hash cycle, while its exact bytes remain part of the approved
+  plan digest.
 - The post-publication verification inventories every planned path at the returned
   commit SHA. LFS SHA-256 metadata is checked directly; regular Git objects are
   downloaded by the pinned SHA and hashed from disk.
 - The pinned redownload validation starts with an empty verified cache, downloads
-  every planned object at the returned commit SHA, and rehashes the files from
-  disk.
+  every planned object at the returned commit SHA, rehashes the files from
+  disk, and runs `validate_abby_voice_hf_release` against the reconstructed
+  canonical tree. Its validation result and digest are retained in the
+  verification receipt.
 - A failed verification gate preserves a blocked receipt containing the
   immutable commit SHA. It does not promote, delete, or overwrite the candidate.
 - Canary promotion remains a separate reviewed operation.
@@ -38,7 +45,8 @@ Residual acceptance terms: `post-publication verification` and
 The package-focused suite exercises deterministic dry runs, exact-plan approval,
 parent-race rejection, release-prefix collision rejection, path-backed upload
 operations, real pinned test downloads, post-publication digest failures,
-empty-cache enforcement, and blocked post-commit receipts:
+empty-cache enforcement, canonical manifest inclusion, exhaustive reconstructed
+release validation, and blocked post-commit receipts:
 
 ```text
 python -m pytest -q \
