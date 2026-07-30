@@ -42,7 +42,9 @@ from ipfs_datasets_py.knowledge_graphs.release_evidence import (
     policy_dict,
     render_gate_runbook,
     resolve_clean_tree,
+    sign_evidence_digest,
     text_digest,
+    verify_evidence_signature,
 )
 from ipfs_datasets_py.knowledge_graphs.release_gate import (
     GOAL_ID,
@@ -429,17 +431,63 @@ def test_refuses_unsigned_when_required() -> None:
 
 def test_accepts_signed_when_required() -> None:
     c = _collector(require_signatures=True, signing_key=SIGNING_KEY)
-    receipt = c.record_and_accept_goal(
-        goal_id="KGP-G010",
+    evidence = c.record_command(
         command="pytest -q",
         exit_status=0,
         test_counts=TestCounts(passed=3),
         artifact_digests=(ARTIFACT,),
+        goal_id="KGP-G010",
         timestamp=_ts(),
-        signature="hmac-sha256:deadbeef",
+    )
+    signature = c.sign_evidence(
+        evidence.evidence_digest,
+        subject="command:KGP-G010",
+    )
+    receipt = c.accept_command_as_goal(
+        evidence,
+        goal_id="KGP-G010",
+        signature=signature,
     )
     assert receipt.goal_id == "KGP-G010"
     assert receipt.status == "pass"
+    assert verify_evidence_signature(
+        signature,
+        payload_digest=evidence.evidence_digest,
+        subject="command:KGP-G010",
+        signing_key=SIGNING_KEY,
+    )
+
+
+def test_refuses_invalid_or_replayed_signature_when_required() -> None:
+    c = _collector(require_signatures=True, signing_key=SIGNING_KEY)
+    evidence = c.record_command(
+        command="pytest -q",
+        exit_status=0,
+        test_counts=TestCounts(passed=3),
+        artifact_digests=(ARTIFACT,),
+        goal_id="KGP-G010",
+        timestamp=_ts(),
+    )
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        c.accept_command_as_goal(
+            evidence,
+            goal_id="KGP-G010",
+            signature="hmac-sha256:deadbeef",
+        )
+    assert excinfo.value.code == RefusalCode.UNSIGNED.value
+
+    valid_for_other_subject = sign_evidence_digest(
+        evidence.evidence_digest,
+        subject="command:KGP-G020",
+        signing_key=SIGNING_KEY,
+    )
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        c.accept_command_as_goal(
+            evidence,
+            goal_id="KGP-G010",
+            signature=valid_for_other_subject,
+        )
+    assert excinfo.value.code == RefusalCode.UNSIGNED.value
 
 
 def test_refuses_task_status_substitute() -> None:
@@ -568,6 +616,19 @@ def test_ingest_unsigned_corpus_when_required() -> None:
     }
 
 
+def test_ingest_refuses_forged_corpus_signature() -> None:
+    c = _collector(require_signatures=True, signing_key=SIGNING_KEY)
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        c.ingest_corpus_signoff(
+            corpus_id="cvefixes",
+            producer_id="producer-cvefixes",
+            signer="owner-cvefixes",
+            signed_at=_ts(),
+            signature="hmac-sha256:deadbeef",
+        )
+    assert excinfo.value.code == RefusalCode.UNSIGNED.value
+
+
 # ---------------------------------------------------------------------------
 # GraphReleaseGate evaluation (fail-closed)
 # ---------------------------------------------------------------------------
@@ -588,6 +649,7 @@ def test_complete_collector_passes_and_is_production_ready() -> None:
     c = build_collector_with_passing_evidence(
         tree_id=TREE_ID,
         signing_key=SIGNING_KEY,
+        require_signatures=True,
         now=FIXED_NOW,
     )
     decision = c.evaluate(now=FIXED_NOW)
@@ -658,6 +720,7 @@ def test_dump_state_roundtrip(tmp_path: Path) -> None:
     c = build_collector_with_passing_evidence(
         tree_id=TREE_ID,
         signing_key=SIGNING_KEY,
+        require_signatures=True,
         now=FIXED_NOW,
     )
     c.evaluate(now=FIXED_NOW)
@@ -667,6 +730,16 @@ def test_dump_state_roundtrip(tmp_path: Path) -> None:
     assert TREE_ID in payload
     assert SCHEMA_VERSION in payload
     assert "goal_receipts" in payload
+    assert "evidence_signatures" in payload
+    assert "hmac-sha256:" in payload
+    assert SIGNING_KEY.decode("utf-8") not in payload
+    signature_subjects = c.state.evidence_signatures
+    assert "command:KGP-G010" in signature_subjects
+    assert "goal_receipt:KGP-G010" in signature_subjects
+    assert "dod_receipt:four_surface_parity" in signature_subjects
+    assert "corpus:cvefixes" in signature_subjects
+    assert "ucan_negative" in signature_subjects
+    assert "soak_chaos" in signature_subjects
 
 
 def test_dod_receipt_refusals() -> None:

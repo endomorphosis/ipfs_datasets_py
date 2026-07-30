@@ -22,10 +22,11 @@ Normative policy: ``kg-release-evidence/v1`` (same as KGP-035 / KGP-G100).
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import re
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
@@ -82,6 +83,7 @@ COMMAND_EVIDENCE_SCHEMA: Final = "kg-command-evidence/v1"
 TASK_ID: Final = "KGP-049"
 COLLECTOR_GOAL_ID: Final = "KGP-G100"
 CONTENT_DOMAIN: Final = "kg.release.collector"
+EVIDENCE_SIGNATURE_DOMAIN: Final = "kg.release.collector.evidence/v1"
 
 # Ten child gates: G010..G090 plus root release gate G100.
 TEN_CHILD_GATES: Final[Tuple[str, ...]] = REQUIRED_CHILD_GOALS + (GOAL_ID,)
@@ -297,6 +299,61 @@ def text_digest(text: str) -> str:
     """Return ``sha256:<hex>`` of UTF-8 *text*."""
 
     return bytes_digest(text.encode("utf-8"))
+
+
+def sign_evidence_digest(
+    payload_digest: str,
+    *,
+    subject: str,
+    signing_key: bytes | str,
+) -> str:
+    """Sign one collector evidence digest with a subject-bound HMAC.
+
+    The subject binding prevents a valid signature for one goal, DoD clause,
+    corpus, or special receipt from being replayed for another.
+    """
+
+    key = (
+        signing_key.encode("utf-8")
+        if isinstance(signing_key, str)
+        else signing_key
+    )
+    if not key:
+        raise EvidenceCollectorError(
+            "signing_key must be non-empty",
+            code="missing_signing_key",
+        )
+    digest = str(payload_digest or "").strip()
+    evidence_subject = str(subject or "").strip()
+    if not digest or not evidence_subject:
+        raise EvidenceCollectorError(
+            "payload_digest and subject are required for evidence signing",
+            code="missing_signature_payload",
+        )
+    payload = (
+        f"{EVIDENCE_SIGNATURE_DOMAIN}|{evidence_subject}|{digest}"
+    ).encode("utf-8")
+    return f"hmac-sha256:{hmac.new(key, payload, hashlib.sha256).hexdigest()}"
+
+
+def verify_evidence_signature(
+    signature: str,
+    *,
+    payload_digest: str,
+    subject: str,
+    signing_key: bytes | str,
+) -> bool:
+    """Verify a subject-bound collector evidence HMAC."""
+
+    try:
+        expected = sign_evidence_digest(
+            payload_digest,
+            subject=subject,
+            signing_key=signing_key,
+        )
+    except EvidenceCollectorError:
+        return False
+    return hmac.compare_digest(str(signature or "").strip(), expected)
 
 
 # ---------------------------------------------------------------------------
@@ -655,6 +712,7 @@ class CollectorState:
     corpus_signoffs: List[CorpusSignOff] = field(default_factory=list)
     ucan_negative: Optional[UCANNegativeProof] = None
     soak_chaos: Optional[SoakChaosEvidence] = None
+    evidence_signatures: Dict[str, Dict[str, str]] = field(default_factory=dict)
     refusals: List[Dict[str, Any]] = field(default_factory=list)
     package_version: str = ""
     notes: str = ""
@@ -667,6 +725,10 @@ class CollectorState:
             "environment": (
                 self.environment.to_dict() if self.environment else None
             ),
+            "evidence_signatures": {
+                subject: dict(record)
+                for subject, record in sorted(self.evidence_signatures.items())
+            },
             "goal_receipts": [r.to_dict() for r in self.goal_receipts],
             "notes": self.notes,
             "package_version": self.package_version,
@@ -874,6 +936,37 @@ class ReleaseEvidenceCollector:
                 subject=subject,
                 details={"payload_digest": payload_digest},
             )
+        if not payload_digest or not verify_evidence_signature(
+            signature,
+            payload_digest=payload_digest,
+            subject=subject,
+            signing_key=self.signing_key or b"",
+        ):
+            raise EvidenceRefusal(
+                f"invalid evidence signature refused for {subject}",
+                code=RefusalCode.UNSIGNED,
+                subject=subject,
+                details={"payload_digest": payload_digest},
+            )
+        self.state.evidence_signatures[subject] = {
+            "payload_digest": payload_digest,
+            "scheme": EVIDENCE_SIGNATURE_DOMAIN,
+            "signature": str(signature).strip(),
+        }
+
+    def sign_evidence(self, payload_digest: str, *, subject: str) -> str:
+        """Sign an evidence digest with this collector's configured key."""
+
+        if not self.signing_key:
+            raise EvidenceCollectorError(
+                "collector has no signing key",
+                code="missing_signing_key",
+            )
+        return sign_evidence_digest(
+            payload_digest,
+            subject=subject,
+            signing_key=self.signing_key,
+        )
 
     def _record_refusal(self, exc: EvidenceRefusal) -> None:
         self.state.refusals.append(
@@ -940,6 +1033,7 @@ class ReleaseEvidenceCollector:
         timestamp: Optional[str] = None,
         signature: str = "",
         accept: bool = False,
+        auto_sign: bool = False,
     ) -> CommandEvidence:
         """Record a validation command. Optionally refuse non-passing results.
 
@@ -1005,12 +1099,21 @@ class ReleaseEvidenceCollector:
         )
 
         subject = goal_id or clause_id or "command"
+        signature_subject = f"command:{subject}"
+        if auto_sign:
+            evidence = replace(
+                evidence,
+                signature=self.sign_evidence(
+                    evidence.evidence_digest,
+                    subject=signature_subject,
+                ),
+            )
         try:
             self._validate_command_for_acceptance(evidence, subject=subject)
             if accept:
                 self._assert_signature_if_required(
                     evidence.signature,
-                    subject=subject,
+                    subject=signature_subject,
                     payload_digest=evidence.evidence_digest,
                 )
         except EvidenceRefusal as exc:
@@ -1112,7 +1215,7 @@ class ReleaseEvidenceCollector:
         sig = signature or evidence.signature
         self._assert_signature_if_required(
             sig,
-            subject=subject,
+            subject=f"command:{subject}",
             payload_digest=evidence.evidence_digest,
         )
 
@@ -1147,6 +1250,16 @@ class ReleaseEvidenceCollector:
                 f"command_digest={evidence.evidence_digest}"
             ),
         )
+        if self.require_signatures:
+            receipt_signature = self.sign_evidence(
+                receipt.receipt_digest,
+                subject=f"goal_receipt:{gid}",
+            )
+            self._assert_signature_if_required(
+                receipt_signature,
+                subject=f"goal_receipt:{gid}",
+                payload_digest=receipt.receipt_digest,
+            )
         # Replace any prior receipt for this goal.
         self.state.goal_receipts = [
             r for r in self.state.goal_receipts if r.goal_id != gid
@@ -1168,6 +1281,7 @@ class ReleaseEvidenceCollector:
         notes: str = "",
         timestamp: Optional[str] = None,
         signature: str = "",
+        auto_sign: bool = False,
     ) -> GoalReceipt:
         """Record command evidence and promote it to a goal receipt, or refuse."""
 
@@ -1184,6 +1298,7 @@ class ReleaseEvidenceCollector:
             timestamp=timestamp,
             signature=signature,
             accept=True,
+            auto_sign=auto_sign,
         )
         return self.accept_command_as_goal(
             evidence,
@@ -1211,7 +1326,7 @@ class ReleaseEvidenceCollector:
         self._assert_fresh(receipt.collected_at, subject=subject)
         self._assert_signature_if_required(
             signature or getattr(receipt, "signature", "") or "",
-            subject=subject,
+            subject=f"goal_receipt:{subject}",
             payload_digest=receipt.receipt_digest,
         )
 
@@ -1289,7 +1404,7 @@ class ReleaseEvidenceCollector:
         self._assert_fresh(receipt.collected_at, subject=subject)
         self._assert_signature_if_required(
             signature,
-            subject=subject,
+            subject=f"dod_receipt:{subject}",
             payload_digest=receipt.receipt_digest,
         )
         if is_rejected_substitute(receipt.evidence_kind):
@@ -1350,6 +1465,7 @@ class ReleaseEvidenceCollector:
         notes: str = "",
         timestamp: Optional[str] = None,
         signature: str = "",
+        auto_sign: bool = False,
     ) -> DodClauseReceipt:
         """Record command evidence and promote it to a DoD receipt."""
 
@@ -1365,6 +1481,7 @@ class ReleaseEvidenceCollector:
             timestamp=timestamp,
             signature=signature,
             accept=True,
+            auto_sign=auto_sign,
         )
         receipt = make_dod_receipt(
             clause_id,
@@ -1379,7 +1496,13 @@ class ReleaseEvidenceCollector:
                 f"artifact_digests={list(evidence.artifact_digests)}"
             ),
         )
-        return self.accept_dod_receipt(receipt, signature=signature)
+        receipt_signature = signature
+        if self.require_signatures:
+            receipt_signature = self.sign_evidence(
+                receipt.receipt_digest,
+                subject=f"dod_receipt:{receipt.clause_id}",
+            )
+        return self.accept_dod_receipt(receipt, signature=receipt_signature)
 
     # -- ingest special evidence --------------------------------------------
 
@@ -1394,6 +1517,7 @@ class ReleaseEvidenceCollector:
         signed_at: Optional[str] = None,
         signature: str = "",
         receipt_digest: str = "",
+        auto_sign: bool = False,
     ) -> CorpusSignOff:
         """Ingest a full-mode corpus sign-off bound to the collector tree."""
 
@@ -1426,12 +1550,6 @@ class ReleaseEvidenceCollector:
                 code=RefusalCode.MISSING_FIELD,
                 subject=subject,
             )
-        # Sign-off signature: when signatures are required, signer alone is
-        # not enough — an explicit signature token must be present.
-        self._assert_signature_if_required(
-            signature or signer,
-            subject=subject,
-        )
         ts = signed_at or self._timestamp()
         self._assert_fresh(ts, subject=subject)
 
@@ -1443,6 +1561,16 @@ class ReleaseEvidenceCollector:
             mode="full",
             signed_at=ts,
             statement=statement,
+        )
+        if auto_sign:
+            signature = self.sign_evidence(
+                signoff.receipt_digest,
+                subject=subject,
+            )
+        self._assert_signature_if_required(
+            signature,
+            subject=subject,
+            payload_digest=signoff.receipt_digest,
         )
         if receipt_digest and receipt_digest != signoff.receipt_digest:
             raise EvidenceRefusal(
@@ -1465,6 +1593,7 @@ class ReleaseEvidenceCollector:
         notes: str = "",
         signature: str = "",
         receipt_digest: str = "",
+        auto_sign: bool = False,
     ) -> UCANNegativeProof:
         """Ingest UCAN deny / negative authorization proof digests."""
 
@@ -1488,13 +1617,21 @@ class ReleaseEvidenceCollector:
                     )
         ts = collected_at or self._timestamp()
         self._assert_fresh(ts, subject=subject)
-        self._assert_signature_if_required(signature, subject=subject)
-
         proof = UCANNegativeProof(
             tree_id=tree,
             deny_receipt_cids=cids,
             collected_at=ts,
             notes=notes,
+        )
+        if auto_sign:
+            signature = self.sign_evidence(
+                proof.receipt_digest,
+                subject=subject,
+            )
+        self._assert_signature_if_required(
+            signature,
+            subject=subject,
+            payload_digest=proof.receipt_digest,
         )
         if receipt_digest and receipt_digest != proof.receipt_digest:
             raise EvidenceRefusal(
@@ -1515,6 +1652,7 @@ class ReleaseEvidenceCollector:
         collected_at: Optional[str] = None,
         notes: str = "",
         signature: str = "",
+        auto_sign: bool = False,
     ) -> SoakChaosEvidence:
         """Ingest load / soak / chaos profile digests on a labelled environment."""
 
@@ -1546,8 +1684,6 @@ class ReleaseEvidenceCollector:
             )
         ts = collected_at or self._timestamp()
         self._assert_fresh(ts, subject=subject)
-        self._assert_signature_if_required(signature, subject=subject)
-
         evidence = SoakChaosEvidence(
             tree_id=tree,
             environment_id=str(env_id).strip(),
@@ -1556,6 +1692,20 @@ class ReleaseEvidenceCollector:
             collected_at=ts,
             load_receipt_digest=str(load_receipt_digest or "").strip(),
             notes=notes,
+        )
+        evidence_digest = content_address(
+            evidence.to_dict(),
+            domain=f"{CONTENT_DOMAIN}.soak_chaos",
+        )
+        if auto_sign:
+            signature = self.sign_evidence(
+                evidence_digest,
+                subject=subject,
+            )
+        self._assert_signature_if_required(
+            signature,
+            subject=subject,
+            payload_digest=evidence_digest,
         )
         self.state.soak_chaos = evidence
         return evidence
@@ -2054,7 +2204,6 @@ def build_collector_with_passing_evidence(
     collector.bind_tree(binding)
     collector.set_environment(environment_id, environment_label)
 
-    sig = signature if require_signatures else ""
     artifact = "sha256:" + "f" * 64
 
     for entry in CHILD_GATE_CATALOG:
@@ -2069,8 +2218,8 @@ def build_collector_with_passing_evidence(
                 goal_id=goal_id,
                 evidence_kind=entry["evidence_kind"],
                 timestamp=ts,
-                signature=sig,
                 accept=True,
+                auto_sign=require_signatures,
             )
             continue
         collector.record_and_accept_goal(
@@ -2081,7 +2230,7 @@ def build_collector_with_passing_evidence(
             artifact_digests=(artifact,),
             evidence_kind=entry["evidence_kind"],
             timestamp=ts,
-            signature=sig,
+            auto_sign=require_signatures,
         )
 
     kind_for_clause = {
@@ -2105,7 +2254,7 @@ def build_collector_with_passing_evidence(
                 clause.clause_id, "validation_receipt"
             ),
             timestamp=ts,
-            signature=sig,
+            auto_sign=require_signatures,
         )
 
     for corpus_id in REQUIRED_CORPORA:
@@ -2114,7 +2263,7 @@ def build_collector_with_passing_evidence(
             producer_id=f"producer-{corpus_id}",
             signer=f"owner-{corpus_id}",
             signed_at=ts,
-            signature=sig or f"owner-{corpus_id}",
+            auto_sign=require_signatures,
         )
 
     collector.ingest_ucan_deny_proof(
@@ -2123,7 +2272,7 @@ def build_collector_with_passing_evidence(
             "sha256:" + "b" * 64,
         ),
         collected_at=ts,
-        signature=sig,
+        auto_sign=require_signatures,
     )
     collector.ingest_load_soak_chaos(
         soak_receipt_digest="sha256:" + "c" * 64,
@@ -2131,7 +2280,7 @@ def build_collector_with_passing_evidence(
         load_receipt_digest="sha256:" + "e" * 64,
         environment_id=environment_id,
         collected_at=ts,
-        signature=sig,
+        auto_sign=require_signatures,
     )
     return collector
 
@@ -2143,6 +2292,7 @@ def policy_dict() -> Dict[str, Any]:
         "child_gate_catalog": [dict(e) for e in CHILD_GATE_CATALOG],
         "collector_schema_version": SCHEMA_VERSION,
         "command_evidence_schema": COMMAND_EVIDENCE_SCHEMA,
+        "evidence_signature_scheme": EVIDENCE_SIGNATURE_DOMAIN,
         "goal_id": COLLECTOR_GOAL_ID,
         "policy_id": POLICY_ID,
         "refusal_codes": sorted(c.value for c in RefusalCode),
@@ -2214,6 +2364,7 @@ __all__ = [
     "CollectorState",
     "EvidenceCollectorError",
     "EvidenceRefusal",
+    "EVIDENCE_SIGNATURE_DOMAIN",
     "POLICY_ID",
     "RefusalCode",
     "ReleaseEvidenceCollector",
@@ -2232,5 +2383,7 @@ __all__ = [
     "policy_dict",
     "render_gate_runbook",
     "resolve_clean_tree",
+    "sign_evidence_digest",
     "text_digest",
+    "verify_evidence_signature",
 ]
