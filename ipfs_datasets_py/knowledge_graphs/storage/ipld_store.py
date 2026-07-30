@@ -977,25 +977,45 @@ class KuboBlockBackend:
             path = handle.name
         try:
             try:
-                out = self._run(
-                    [
-                        "block",
-                        "put",
-                        "--cid-version",
-                        "1",
-                        "--format",
-                        codec_n,
-                        path,
-                    ]
-                )
+                # Current Kubo releases select a CIDv1 multicodec with
+                # --cid-codec.  Older releases used --format together with an
+                # explicit CID version, so retain a narrow compatibility
+                # fallback for those CLIs.
+                out = self._run(["block", "put", "--cid-codec", codec_n, path])
             except GraphStoreError as err:
-                # Older CLIs may lack flags.
-                if "unknown option" in err.message.lower() or "flag provided" in (
-                    err.details.get("backend_error") or ""
-                ).lower():
-                    out = self._run(["block", "put", "--format", codec_n, path])
-                else:
+                error_text = " ".join(
+                    (
+                        err.message,
+                        str(err.details.get("backend_error") or ""),
+                    )
+                ).lower()
+                if "unknown option" not in error_text and "flag provided" not in error_text:
                     raise
+                try:
+                    out = self._run(
+                        [
+                            "block",
+                            "put",
+                            "--cid-version",
+                            "1",
+                            "--format",
+                            codec_n,
+                            path,
+                        ]
+                    )
+                except GraphStoreError as legacy_err:
+                    legacy_error_text = " ".join(
+                        (
+                            legacy_err.message,
+                            str(legacy_err.details.get("backend_error") or ""),
+                        )
+                    ).lower()
+                    if (
+                        "unknown option" not in legacy_error_text
+                        and "flag provided" not in legacy_error_text
+                    ):
+                        raise
+                    out = self._run(["block", "put", "--format", codec_n, path])
         finally:
             try:
                 os.unlink(path)

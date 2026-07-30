@@ -366,6 +366,47 @@ def test_timeout_error_maps_to_storage_retryable() -> None:
     assert err.retryable is True
 
 
+def test_kubo_put_uses_current_cid_codec_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    backend = KuboBlockBackend()
+    payload = b"current-kubo-flags"
+    expected = compute_cid_v1(payload, codec="raw")
+    calls: List[List[str]] = []
+
+    def fake_run(args: Any, *, input_bytes: Any = None) -> bytes:
+        calls.append(list(args))
+        return f"{expected}\n".encode()
+
+    monkeypatch.setattr(backend, "_run", fake_run)
+    assert backend.put_block(payload, codec="raw") == expected
+    assert calls[0][:4] == ["block", "put", "--cid-codec", "raw"]
+    assert "--cid-version" not in calls[0]
+
+
+def test_kubo_put_falls_back_when_current_flag_is_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    backend = KuboBlockBackend()
+    payload = b"legacy-kubo-flags"
+    expected = compute_cid_v1(payload, codec="raw")
+    calls: List[List[str]] = []
+
+    def fake_run(args: Any, *, input_bytes: Any = None) -> bytes:
+        call = list(args)
+        calls.append(call)
+        if "--cid-codec" in call:
+            raise GraphStoreError(
+                "STORAGE",
+                "kubo command failed",
+                details={"backend_error": 'Error: unknown option "cid-codec"'},
+            )
+        return f"{expected}\n".encode()
+
+    monkeypatch.setattr(backend, "_run", fake_run)
+    assert backend.put_block(payload, codec="raw") == expected
+    assert "--cid-codec" in calls[0]
+    assert calls[1][2:6] == ["--cid-version", "1", "--format", "raw"]
+
+
 # ---------------------------------------------------------------------------
 # Restart / durable read (filesystem double)
 # ---------------------------------------------------------------------------
