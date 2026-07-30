@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from benchmarks.knowledge_graphs.safety import BenchmarkSafetyError
 from benchmarks.knowledge_graphs.soak.profiles import PROFILE_NAMES, get_soak_profile
 from benchmarks.knowledge_graphs.soak.runner import run_soak, write_soak_receipt
 
@@ -39,12 +40,16 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     profile = get_soak_profile(args.profile)
-    result = run_soak(
-        profile,
-        work_dir=args.work_dir,
-        require_short_first=not args.skip_short_gate,
-        short_already_passed=args.skip_short_gate,
-    )
+    try:
+        result = run_soak(
+            profile,
+            work_dir=args.work_dir,
+            require_short_first=not args.skip_short_gate,
+            short_already_passed=args.skip_short_gate,
+        )
+    except BenchmarkSafetyError as exc:
+        print(f"refusing unsafe soak: {exc}", file=sys.stderr)
+        return 2
     if args.work_dir:
         out = Path(args.work_dir) / f"soak-{profile.name}-latest.json"
         write_soak_receipt(result.receipt, out)

@@ -36,6 +36,7 @@ from .receipt import (
     capture_environment,
     write_receipt,
 )
+from .safety import ResourceGuard, synthetic_large_guard
 from .shapes import DeterministicGraph, GraphShapeSpec, generate_graph
 from .surfaces import (
     STORAGE_PROFILES,
@@ -295,7 +296,13 @@ class GraphLoadHarness:
         self._global_latency = LatencyHistogram()
         self._counters = OperationCounters()
 
-        graph = generate_graph(profile.shape_spec)
+        resource_guard: Optional[ResourceGuard] = None
+        if profile.name == "synthetic_large":
+            resource_guard = synthetic_large_guard(self.work_dir)
+        graph = generate_graph(
+            profile.shape_spec,
+            resource_check=resource_guard.check if resource_guard else None,
+        )
         run = HarnessRunResult(profile=profile, graph=graph)
         t0 = time.perf_counter()
         resources_start = sample_resources(enable_tracemalloc=self.enable_tracemalloc)

@@ -27,6 +27,7 @@ class SoakProfile:
     read_weight: float
     compact_every_ticks: int
     inject_fault_every_ticks: int
+    tick_interval_s: float
     opt_in: bool
     seed: int
     tags: Tuple[str, ...] = ()
@@ -43,6 +44,7 @@ class SoakProfile:
             "read_weight": self.read_weight,
             "compact_every_ticks": self.compact_every_ticks,
             "inject_fault_every_ticks": self.inject_fault_every_ticks,
+            "tick_interval_s": self.tick_interval_s,
             "opt_in": self.opt_in,
             "seed": self.seed,
             "tags": list(self.tags),
@@ -64,6 +66,7 @@ SHORT = SoakProfile(
     read_weight=0.45,
     compact_every_ticks=2,
     inject_fault_every_ticks=0,  # no destructive faults in short CI soak
+    tick_interval_s=0.0,
     opt_in=False,
     seed=31,
     tags=("ci", "soak", "mandatory", "short"),
@@ -81,6 +84,7 @@ MEDIUM = SoakProfile(
     read_weight=0.5,
     compact_every_ticks=5,
     inject_fault_every_ticks=0,
+    tick_interval_s=0.125,  # cap at roughly 64 operations/second
     opt_in=True,
     seed=310,
     tags=("soak", "medium", "opt-in"),
@@ -98,6 +102,7 @@ DAY = SoakProfile(
     read_weight=0.55,
     compact_every_ticks=20,
     inject_fault_every_ticks=0,
+    tick_interval_s=1.0,  # cap at 16 operations/second
     opt_in=True,
     seed=24,
     tags=("soak", "24h", "opt-in"),

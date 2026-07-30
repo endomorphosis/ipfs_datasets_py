@@ -22,6 +22,7 @@ from benchmarks.knowledge_graphs.metrics import (
     OperationCounters,
     sample_resources,
 )
+from benchmarks.knowledge_graphs.safety import ResourceGuard, day_soak_guard
 from benchmarks.knowledge_graphs.soak.growth import GrowthReport, analyze_growth
 from benchmarks.knowledge_graphs.soak.profiles import (
     SoakProfile,
@@ -172,6 +173,17 @@ def run_soak(
     if isinstance(profile, str):
         profile = get_soak_profile(profile)
     profile = resolve_duration_override(profile)
+    root = Path(work_dir) if work_dir else None
+    if root is not None:
+        root.mkdir(parents=True, exist_ok=True)
+
+    resource_guard: Optional[ResourceGuard] = None
+    is_day_run = (
+        profile.name == "day"
+        or profile.duration_s >= get_soak_profile("day").duration_s * 0.95
+    )
+    if is_day_run:
+        resource_guard = day_soak_guard(root or Path.cwd())
 
     if profile.opt_in and require_short_first and not short_already_passed:
         # Auto-run mandatory short profiles first.
@@ -183,10 +195,6 @@ def run_soak(
                     f"status={pre.status} growth={pre.growth.summary}"
                 )
         short_already_passed = True
-
-    root = Path(work_dir) if work_dir else None
-    if root is not None:
-        root.mkdir(parents=True, exist_ok=True)
 
     storage = _InMemoryJsonStorage()
     store = InMemoryBranchStore()
@@ -220,6 +228,9 @@ def run_soak(
     next_sample = t_start + float(profile.sample_interval_s)
 
     while time.time() < t_end:
+        tick_started = time.monotonic()
+        if resource_guard is not None:
+            resource_guard.check()
         ticks += 1
         for op_i in range(profile.ops_per_tick):
             gid = gids[int(_rand() * len(gids)) % len(gids)]
@@ -278,6 +289,17 @@ def run_soak(
         if now >= next_sample:
             samples.append(_sample(mvcc=mvcc, storage=storage))
             next_sample = now + float(profile.sample_interval_s)
+
+        # Long profiles are intentionally paced. Without this delay the
+        # in-memory durable history grows at CPU speed for the full duration.
+        tick_interval = max(0.0, float(profile.tick_interval_s))
+        if tick_interval:
+            remaining = min(
+                tick_interval - (time.monotonic() - tick_started),
+                max(0.0, t_end - time.time()),
+            )
+            if remaining > 0:
+                time.sleep(remaining)
 
     # Final sample + recovery probe.
     samples.append(_sample(mvcc=mvcc, storage=storage))

@@ -11,6 +11,7 @@ from pathlib import Path
 from .harness import run_profile
 from .profiles import PROFILE_NAMES, get_profile, list_profiles
 from .receipt import validate_receipt
+from .safety import BenchmarkSafetyError
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -84,14 +85,18 @@ def main(argv: list[str] | None = None) -> int:
         work_dir = Path(tempfile.mkdtemp(prefix="kg-load-"))
         print(f"work_dir={work_dir}", file=sys.stderr)
 
-    result = run_profile(
-        profile,
-        work_dir=work_dir,
-        matrix_mode=args.matrix_mode,
-        surfaces=args.surfaces,
-        storage_profiles=args.storage_profiles,
-        receipt_path=args.receipt,
-    )
+    try:
+        result = run_profile(
+            profile,
+            work_dir=work_dir,
+            matrix_mode=args.matrix_mode,
+            surfaces=args.surfaces,
+            storage_profiles=args.storage_profiles,
+            receipt_path=args.receipt,
+        )
+    except BenchmarkSafetyError as exc:
+        print(f"refusing unsafe benchmark: {exc}", file=sys.stderr)
+        return 2
     receipt = result.receipt.to_json_dict() if result.receipt else {}
     problems = validate_receipt(receipt) if receipt else ["no receipt"]
     if problems:

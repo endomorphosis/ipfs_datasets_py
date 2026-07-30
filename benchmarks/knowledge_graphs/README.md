@@ -31,6 +31,13 @@ Reproducible load harness for knowledge-graph production hardening.
 
 Long profiles stay **opt-in**. Default CI runs only `tiny`.
 
+`synthetic_large` has an additional fail-closed safety gate. It will not
+materialize a graph unless `KG_LOAD_SYNTHETIC_LARGE=1` is set and the host
+passes the available-memory, RSS, and free-disk preflight. Defaults can be
+tuned for a labelled lab with `KG_LOAD_MIN_AVAILABLE_GIB`,
+`KG_LOAD_ABORT_AVAILABLE_GIB`, `KG_LOAD_MAX_RSS_GIB`, and
+`KG_LOAD_MIN_FREE_DISK_GIB`.
+
 ## Usage
 
 ```bash
@@ -43,6 +50,24 @@ python -m benchmarks.knowledge_graphs --profile tiny --matrix-mode storage \
 
 # List profiles
 python -m benchmarks.knowledge_graphs --list-profiles
+```
+
+The 24-hour soak likewise requires `KG_SOAK_24H=1`, is rate-limited, and
+enforces `KG_SOAK_{MIN_AVAILABLE,ABORT_AVAILABLE,MAX_RSS,MIN_FREE_DISK}_GIB`
+resource limits. Run it only in a labelled, monitored environment:
+
+```bash
+KG_SOAK_24H=1 python -m benchmarks.knowledge_graphs.soak \
+  --profile day --work-dir /path/to/evidence/soak
+```
+
+Generate a structured, content-addressed receipt for the isolated chaos suite:
+
+```bash
+python -m benchmarks.knowledge_graphs.chaos \
+  --environment-id dev-host-linux-aarch64-py3.12 \
+  --work-dir /path/to/evidence/chaos \
+  --receipt /path/to/evidence/chaos/receipt.json
 ```
 
 ```python

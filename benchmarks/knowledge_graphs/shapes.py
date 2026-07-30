@@ -11,7 +11,8 @@ import hashlib
 import json
 import random
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 JSONDict = Dict[str, Any]
 
@@ -139,6 +140,7 @@ def _pair_edges(
     node_ids: Sequence[str],
     edge_count: int,
     shape: str,
+    resource_check: Optional[Callable[[], object]] = None,
 ) -> List[Tuple[str, str]]:
     """Return ordered (source, target) pairs for the requested topology."""
     n = len(node_ids)
@@ -156,6 +158,10 @@ def _pair_edges(
         seen.add(key)
         pairs.append(key)
         return True
+
+    def check_resource(index: int) -> None:
+        if resource_check is not None and index % 10_000 == 0:
+            resource_check()
 
     if shape == "path":
         for i in range(min(edge_count, n - 1)):
@@ -213,6 +219,7 @@ def _pair_edges(
         max_attempts = max(edge_count * 40, n * n)
         while len(pairs) < edge_count and attempts < max_attempts:
             attempts += 1
+            check_resource(attempts)
             a, b = pick(), pick()
             add(a, b)
     elif shape == "clustered":
@@ -240,13 +247,14 @@ def _pair_edges(
     else:  # mixed — blend path backbone with random long-range edges
         for i in range(min(edge_count // 2, max(0, n - 1))):
             add(node_ids[i], node_ids[i + 1])
-        attempts = 0
-        max_attempts = max(edge_count * 40, n * n)
-        while len(pairs) < edge_count and attempts < max_attempts:
-            attempts += 1
-            a = node_ids[rng.randrange(n)]
-            b = node_ids[rng.randrange(n)]
-            add(a, b)
+            attempts = 0
+            max_attempts = max(edge_count * 40, n * n)
+            while len(pairs) < edge_count and attempts < max_attempts:
+                attempts += 1
+                check_resource(attempts)
+                a = node_ids[rng.randrange(n)]
+                b = node_ids[rng.randrange(n)]
+                add(a, b)
 
     # Pad with deterministic random edges if topology under-produced.
     # Bound attempts so large graphs cannot hang; prefer systematic walk
@@ -268,6 +276,7 @@ def _pair_edges(
             max_attempts = min(edge_count * 40, max_digraph)
             while len(pairs) < edge_count and attempts < max_attempts:
                 attempts += 1
+                check_resource(attempts)
                 a = node_ids[rng.randrange(n)]
                 b = node_ids[rng.randrange(n)]
                 add(a, b)
@@ -275,8 +284,20 @@ def _pair_edges(
     return pairs[:edge_count]
 
 
-def generate_graph(spec: GraphShapeSpec) -> DeterministicGraph:
+def generate_graph(
+    spec: GraphShapeSpec,
+    *,
+    resource_check: Optional[Callable[[], object]] = None,
+) -> DeterministicGraph:
     """Generate a fully deterministic graph from *spec*."""
+    if (
+        resource_check is None
+        and (spec.node_count >= 1_000_000 or spec.edge_count >= 10_000_000)
+    ):
+        # Direct callers receive the same fail-closed protection as the CLI.
+        from .safety import synthetic_large_guard
+
+        resource_check = synthetic_large_guard(Path.cwd()).check
     rng = random.Random(int(spec.seed))
     # Mix seed into type selection so different seeds diversify labels
     # even when topology structure is similar.
@@ -286,6 +307,8 @@ def generate_graph(spec: GraphShapeSpec) -> DeterministicGraph:
     entities: List[JSONDict] = []
     shard_map: Dict[str, int] = {}
     for i, nid in enumerate(node_ids):
+        if resource_check is not None and i % 10_000 == 0:
+            resource_check()
         etype = ENTITY_TYPES[type_rng.randrange(len(ENTITY_TYPES))]
         shard = _shard_for(nid, spec.shard_count)
         shard_map[nid] = shard
@@ -303,9 +326,17 @@ def generate_graph(spec: GraphShapeSpec) -> DeterministicGraph:
             }
         )
 
-    pairs = _pair_edges(rng, node_ids, spec.edge_count, spec.shape)
+    pairs = _pair_edges(
+        rng,
+        node_ids,
+        spec.edge_count,
+        spec.shape,
+        resource_check=resource_check,
+    )
     relationships: List[JSONDict] = []
     for i, (src, tgt) in enumerate(pairs):
+        if resource_check is not None and i % 10_000 == 0:
+            resource_check()
         rtype = REL_TYPES[type_rng.randrange(len(REL_TYPES))]
         relationships.append(
             {
@@ -328,7 +359,9 @@ def generate_graph(spec: GraphShapeSpec) -> DeterministicGraph:
         shard_map=dict(shard_map),
         fingerprint="",
     )
-    fp = shape_fingerprint(graph)
+    if resource_check is not None:
+        resource_check()
+    fp = shape_fingerprint(graph, resource_check=resource_check)
     return DeterministicGraph(
         spec=spec,
         entities=graph.entities,
@@ -338,8 +371,14 @@ def generate_graph(spec: GraphShapeSpec) -> DeterministicGraph:
     )
 
 
-def shape_fingerprint(graph: DeterministicGraph) -> str:
+def shape_fingerprint(
+    graph: DeterministicGraph,
+    *,
+    resource_check: Optional[Callable[[], object]] = None,
+) -> str:
     """Content-addressed SHA-256 of the canonical graph payload + meta."""
+    if resource_check is not None:
+        resource_check()
     payload = {
         "seed": graph.spec.seed,
         "shape": graph.spec.shape,
@@ -360,7 +399,11 @@ def shape_fingerprint(graph: DeterministicGraph) -> str:
             for r in graph.relationships
         ],
     }
+    if resource_check is not None:
+        resource_check()
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if resource_check is not None:
+        resource_check()
     return hashlib.sha256(raw).hexdigest()
 
 

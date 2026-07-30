@@ -71,6 +71,57 @@ def _pick_op(rng: random.Random, mix: WorkloadMix) -> str:
     return "query"
 
 
+def _operation_plan(rng: random.Random, mix: WorkloadMix) -> List[str]:
+    """Build a deterministic quota-respecting operation schedule.
+
+    Independent weighted draws can omit a positive-weight operation in short
+    profiles, making correctness coverage depend on luck. Apportion slots by
+    largest remainder, repair a zero-count enabled arm when necessary, then
+    deterministically shuffle the plan.
+    """
+    normalized = mix.normalized()
+    total = max(0, int(normalized.operations))
+    weighted = (
+        ("write", normalized.write_weight),
+        ("read", normalized.read_weight),
+        ("query", normalized.query_weight),
+    )
+    active = [(name, weight) for name, weight in weighted if weight > 0]
+    counts = {name: 0 for name, _ in weighted}
+    quotas = [(name, total * weight) for name, weight in active]
+    for name, quota in quotas:
+        counts[name] += int(quota)
+    unassigned = total - sum(counts.values())
+    # Stable tie-breaker follows the declared operation order.
+    ranked = sorted(
+        enumerate(quotas),
+        key=lambda item: (-(item[1][1] - int(item[1][1])), item[0]),
+    )
+    for _, (name, _) in ranked[:unassigned]:
+        counts[name] += 1
+
+    # Largest-remainder allocation normally covers every positive category.
+    # For very skewed short mixes, repair any zero without changing total ops.
+    if total >= len(active):
+        quota_by_name = dict(quotas)
+        for missing, _ in active:
+            if counts[missing] > 0:
+                continue
+            donors = [name for name, _ in active if counts[name] > 1]
+            if not donors:
+                break
+            donor = max(
+                donors,
+                key=lambda name: counts[name] - quota_by_name[name],
+            )
+            counts[donor] -= 1
+            counts[missing] = 1
+
+    plan = [name for name, _ in weighted for _ in range(counts[name])]
+    rng.shuffle(plan)
+    return plan
+
+
 def _record(
     result: MixResult,
     counters: OperationCounters,
@@ -332,8 +383,7 @@ def execute_mix(
         do_query()
 
     t_start = time.perf_counter()
-    for i in range(mix.operations):
-        op = _pick_op(rng, mix)
+    for op in _operation_plan(rng, mix):
         # Simulated queue wait for concurrent-style accounting.
         queue_depth = 0
         queue_wait_ms = 0.0
