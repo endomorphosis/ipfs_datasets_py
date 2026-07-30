@@ -295,7 +295,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-018 Replace the graph CLI with GraphService commands
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-017
