@@ -151,6 +151,9 @@ class TestDaySoakGate:
             require_short_first=True,
             short_already_passed=False,
         )
+        receipt_path = os.environ.get("KG_SOAK_RECEIPT_PATH", "").strip()
+        if receipt_path:
+            write_soak_receipt(result.receipt, Path(receipt_path))
         assert result.status == "success", result.growth.summary
         assert result.growth.ok
         assert result.growth.data_errors == 0
