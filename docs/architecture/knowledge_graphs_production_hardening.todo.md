@@ -550,7 +550,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-033 Implement shadow, canary, and rollback controls
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: adoption
 - Depends on: KGP-023, KGP-028, KGP-031, KGP-032
