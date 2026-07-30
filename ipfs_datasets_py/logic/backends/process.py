@@ -1,11 +1,13 @@
 """Bounded, injectable lifecycle for external logic tools.
 
-This module is the common process boundary for native executables and tools
-hosted by JVM, OCaml/opam, or WASM runtimes.  It intentionally does not know
-how to install any of them.  Discovery is a side-effect-free path lookup and
-execution happens only after an explicit :meth:`BoundedToolRunner.run` call.
+This module is the common process boundary for native executables, proof-kernel
+hosts, and tools hosted by JVM, OCaml/opam, or WASM runtimes.  It intentionally
+does not know how to install any of them.  Discovery is a side-effect-free path
+lookup and execution happens only after an explicit
+:meth:`BoundedToolRunner.run` call.
 
-The boundary has four important properties:
+The boundary implements ``UniversalBoundedToolLifecycle@1`` /
+``BoundedToolRunner@1`` and has four important properties:
 
 * commands are argv sequences and are always launched with ``shell=False``;
 * every run receives a private workspace which is removed on every exit path;
@@ -15,7 +17,8 @@ The boundary has four important properties:
 
 ``BoundedToolRunner`` accepts an injected executor.  Backend adapters can
 therefore use a deterministic fake in unit tests while production uses
-``SubprocessExecutor``.
+``SubprocessExecutor``.  SMT/differential-style stdin solvers should call
+:func:`run_bounded_stdin_tool` instead of raw ``subprocess.run``.
 """
 
 from __future__ import annotations
@@ -38,8 +41,21 @@ from types import MappingProxyType
 from typing import Any, Final, Protocol
 
 BOUNDED_TOOL_RUNNER_VERSION: Final = "bounded-tool-runner/v1"
+UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION: Final = "universal-bounded-tool-lifecycle/v1"
 WORKSPACE_PLACEHOLDER: Final = "{workspace}"
 REDACTION: Final = "<redacted>"
+
+# Runtime families that must share one injected lifecycle contract.
+UNIVERSAL_TOOL_RUNTIMES: Final = frozenset(
+    {
+        "native",
+        "jvm",
+        "ocaml",
+        "opam",
+        "wasm",
+        "kernel",
+    }
+)
 
 _SENSITIVE_NAME = re.compile(
     r"(?:^|_)(?:api_?key|access_?key|authorization|credential|passwd|password|"
@@ -63,13 +79,19 @@ class ToolProcessError(ValueError):
 
 
 class ToolRuntime(StrEnum):
-    """Execution families supported by the shared lifecycle."""
+    """Execution families supported by the shared lifecycle.
+
+    ``KERNEL`` covers proof assistants (Lean, Isabelle, Rocq/Coq) that still
+    run as ordinary host processes under the same isolation contract as
+    ``NATIVE``.  Adapters may use either spelling; both share one runner.
+    """
 
     NATIVE = "native"
     JVM = "jvm"
     OCAML = "ocaml"
     OPAM = "opam"
     WASM = "wasm"
+    KERNEL = "kernel"
 
 
 @dataclass(frozen=True, slots=True)
@@ -323,6 +345,48 @@ class ProcessExecutor(Protocol):
         invocation: ProcessInvocation,
         cancellation: CancellationSignal | Any | None = None,
     ) -> RawProcessResult: ...
+
+
+class UniversalBoundedToolLifecycle(Protocol):
+    """``UniversalBoundedToolLifecycle@1`` structural surface.
+
+    Every external tool adapter (SMT/differential, ATP, protocol, kernel,
+    TLA/JVM, hyperproperties, OCaml/opam, WASM probes) must route execution
+    through an object that satisfies this contract rather than calling
+    ``subprocess`` directly.
+    """
+
+    interface_version: str
+
+    def probe(
+        self,
+        executable: str,
+        *,
+        runtime: ToolRuntime = ToolRuntime.NATIVE,
+        search_path: str | None = None,
+    ) -> ToolProbe: ...
+
+    def is_available(
+        self,
+        executable: str,
+        *,
+        runtime: ToolRuntime = ToolRuntime.NATIVE,
+        search_path: str | None = None,
+    ) -> bool: ...
+
+    def run(
+        self,
+        request: ToolRunRequest | Sequence[str],
+        *,
+        cancellation: CancellationSignal | Any | None = None,
+        runtime: ToolRuntime = ToolRuntime.NATIVE,
+        limits: ToolRunLimits | None = None,
+        stdin: bytes | str | None = None,
+        input_files: Mapping[str, bytes | str] | None = None,
+        output_paths: Sequence[str] = (),
+        environment: Mapping[str, str] | None = None,
+        secrets: Sequence[str] = (),
+    ) -> ToolRunResult: ...
 
 
 def _is_cancelled(cancellation: Any | None) -> bool:
@@ -682,8 +746,146 @@ def _workspace_size(root: Path, limit: int) -> tuple[int, bool]:
     return total, False
 
 
+def tool_limits_from_milliseconds(
+    timeout_ms: int,
+    *,
+    max_output_bytes: int = 1_048_576,
+    max_memory_bytes: int | None = None,
+    max_input_bytes: int | None = None,
+    max_workspace_bytes: int | None = None,
+    cpu_seconds: float | None = None,
+    termination_grace_seconds: float = 0.25,
+) -> ToolRunLimits:
+    """Map millisecond wall bounds (ExecutionBounds-style) onto ToolRunLimits."""
+
+    if isinstance(timeout_ms, bool) or not isinstance(timeout_ms, int) or timeout_ms <= 0:
+        raise ToolProcessError("timeout_ms must be a positive integer")
+    output_bound = max_output_bytes if max_output_bytes > 0 else 1_048_576
+    input_bound = max_input_bytes if max_input_bytes is not None else output_bound
+    workspace_bound = (
+        max_workspace_bytes
+        if max_workspace_bytes is not None
+        else max(output_bound * 2, input_bound + output_bound + 1024)
+    )
+    return ToolRunLimits(
+        timeout_seconds=max(timeout_ms / 1000.0, 0.001),
+        termination_grace_seconds=termination_grace_seconds,
+        cpu_seconds=(
+            max(timeout_ms / 1000.0, 0.001) if cpu_seconds is None else cpu_seconds
+        ),
+        memory_bytes=max_memory_bytes,
+        max_output_bytes=output_bound,
+        max_input_bytes=input_bound,
+        max_workspace_bytes=max(workspace_bound, input_bound),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class BoundedStdinObservation:
+    """Normalized observation for stdin-fed tools (SMT/differential style)."""
+
+    stdout: str = ""
+    stderr: str = ""
+    returncode: int | None = 0
+    elapsed_ms: int = 0
+    timed_out: bool = False
+    cancelled: bool = False
+    unavailable: bool = False
+    process_tree_terminated: bool = False
+    output_truncated: bool = False
+    workspace_cleaned: bool = True
+    resource_exhausted: bool = False
+    termination_reason: str = ""
+    command: tuple[str, ...] = ()
+    error: str = ""
+    interface_version: str = UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "interface_version": self.interface_version,
+            "stdout": self.stdout,
+            "stderr": self.stderr,
+            "returncode": self.returncode,
+            "elapsed_ms": self.elapsed_ms,
+            "timed_out": self.timed_out,
+            "cancelled": self.cancelled,
+            "unavailable": self.unavailable,
+            "process_tree_terminated": self.process_tree_terminated,
+            "output_truncated": self.output_truncated,
+            "workspace_cleaned": self.workspace_cleaned,
+            "resource_exhausted": self.resource_exhausted,
+            "termination_reason": self.termination_reason,
+            "command": list(self.command),
+            "error": self.error,
+        }
+
+
+def run_bounded_stdin_tool(
+    argv: Sequence[str],
+    stdin: bytes | str,
+    *,
+    runner: BoundedToolRunner | UniversalBoundedToolLifecycle | None = None,
+    runtime: ToolRuntime = ToolRuntime.NATIVE,
+    limits: ToolRunLimits | None = None,
+    cancellation: CancellationSignal | Any | None = None,
+    environment: Mapping[str, str] | None = None,
+    secrets: Sequence[str] = (),
+    timeout_ms: int | None = None,
+    max_output_bytes: int | None = None,
+    max_memory_bytes: int | None = None,
+) -> BoundedStdinObservation:
+    """Run an argv+stdin tool through the universal bounded lifecycle.
+
+    Preferred replacement for direct ``subprocess.run`` in SMT, differential,
+    and version-probe paths that feed a script on standard input.
+    """
+
+    if isinstance(argv, (str, bytes, bytearray)):
+        raise ToolProcessError("argv must be a sequence, never a shell string")
+    resolved_limits = limits
+    if resolved_limits is None:
+        resolved_limits = tool_limits_from_milliseconds(
+            timeout_ms if timeout_ms is not None else 30_000,
+            max_output_bytes=(
+                max_output_bytes if max_output_bytes is not None else 1_048_576
+            ),
+            max_memory_bytes=max_memory_bytes,
+            max_input_bytes=len(_bytes(stdin, "stdin")) + 1,
+        )
+    active_runner: BoundedToolRunner | UniversalBoundedToolLifecycle
+    if runner is None:
+        active_runner = BoundedToolRunner()
+    else:
+        active_runner = runner
+    request = ToolRunRequest(
+        argv=tuple(argv),
+        runtime=runtime,
+        limits=resolved_limits,
+        stdin=stdin,
+        environment=environment or {},
+        secrets=tuple(secrets),
+    )
+    result = active_runner.run(request, cancellation=cancellation)
+    return BoundedStdinObservation(
+        stdout=result.stdout,
+        stderr=result.stderr,
+        returncode=result.returncode,
+        elapsed_ms=max(0, int(result.elapsed_seconds * 1000)),
+        timed_out=result.timed_out,
+        cancelled=result.cancelled,
+        unavailable=result.unavailable,
+        process_tree_terminated=result.process_tree_terminated,
+        output_truncated=result.output_truncated,
+        workspace_cleaned=result.workspace_cleaned,
+        resource_exhausted=result.resource_exhausted,
+        termination_reason=result.termination_reason,
+        command=result.command,
+        error=result.error,
+    )
+
+
 class BoundedToolRunner:
-    """Reusable ``BoundedToolRunner@1`` implementation.
+    """Reusable ``BoundedToolRunner@1`` / ``UniversalBoundedToolLifecycle@1``.
 
     An injected executor is trusted only to execute the validated invocation.
     The runner still owns workspace materialization, declared-output reads,
@@ -691,6 +893,7 @@ class BoundedToolRunner:
     """
 
     interface_version: Final = BOUNDED_TOOL_RUNNER_VERSION
+    lifecycle_version: Final = UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION
 
     def __init__(
         self,
@@ -1178,7 +1381,10 @@ NativeProcessExecutor = SubprocessExecutor
 
 __all__ = [
     "BOUNDED_TOOL_RUNNER_VERSION",
+    "UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION",
+    "UNIVERSAL_TOOL_RUNTIMES",
     "WORKSPACE_PLACEHOLDER",
+    "BoundedStdinObservation",
     "BoundedToolRunner",
     "CancellationSignal",
     "CancellationToken",
@@ -1196,4 +1402,7 @@ __all__ = [
     "ToolRunRequest",
     "ToolRunResult",
     "ToolRuntime",
+    "UniversalBoundedToolLifecycle",
+    "run_bounded_stdin_tool",
+    "tool_limits_from_milliseconds",
 ]
