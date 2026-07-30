@@ -4,7 +4,12 @@
 // Companion objective evidence (VFS-G080):
 //   - vfs/zk-trace-statement@1
 //   - vfs/zk-verification-receipt@1
+// Validation-gate discovery (Python surface only; never a circuit public):
+//   - objective validation repair  (VFS-059 / VFS-G080)
 // Python codec: ipfs_accelerate_py.agent_supervisor.program_analysis_zkp
+//
+// Shadow-first: this circuit attests commitment openings and supported
+// deterministic transitions only. It does not grant semantic proof authority.
 //
 // Constraints enforced:
 //   1. circuit_version matches the pinned CIRCUIT_VERSION global.
