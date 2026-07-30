@@ -516,7 +516,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-031 Prove soak, chaos, leak, and recovery behavior
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-030
