@@ -38,6 +38,7 @@ from ipfs_datasets_py.voice.hf_release import (
     AbbyVoiceHFReleaseBuilder,
     AbbyVoiceHFReleaseError,
     AbbyVoiceHFReleasePolicy,
+    AbbyVoiceReleaseSupportSource,
     validate_abby_voice_hf_release,
 )
 from ipfs_datasets_py.voice.schema import (
@@ -429,6 +430,128 @@ def test_byte_identical_rebuild_is_order_independent(tmp_path: Path):
     assert "/resolve/main/" not in encoded
     assert "/tmp/" not in encoded
     assert "/home/" not in encoded
+
+
+def test_release_embeds_exact_audio_and_retained_support_without_mutable_refs(
+    tmp_path: Path,
+):
+    fixture = _fixture_bundle()
+    source_root = tmp_path / "sources"
+    source_root.mkdir()
+    audio_source = source_root / "fixture.mp3"
+    audio_source.write_bytes(b"RIFF....WAVE")
+    support_source = source_root / "vocabulary.jsonl"
+    support_source.write_text(
+        '{"id":"vocabulary-one","text":"shelter"}\n'
+        '{"id":"vocabulary-two","text":"food"}\n',
+        encoding="utf-8",
+    )
+    support_sha256 = sha256(support_source.read_bytes()).hexdigest()
+    release_root = tmp_path / "release"
+    result = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    ).build(
+        output_dir=release_root,
+        release_id="release-embedded-assets",
+        **fixture,
+        audio_asset_sources={"audio-food": audio_source},
+        support_sources=(
+            AbbyVoiceReleaseSupportSource(
+                relative_path="metadata/vocabulary.jsonl",
+                source_path=support_source,
+                expected_sha256=support_sha256,
+                media_type="application/x-ndjson",
+                schema_type="abby_voice_vocabulary_v1",
+                row_count=2,
+                metadata={"kind": "retained_vocabulary"},
+            ),
+        ),
+    )
+
+    manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert manifest["embedded_assets"] == {
+        "audio_asset_bytes": len(b"RIFF....WAVE"),
+        "audio_asset_count": 1,
+        "audio_asset_prefix": "assets/audio",
+        "retained_support_bytes": support_source.stat().st_size,
+        "retained_support_count": 1,
+        "retained_support_paths": ["metadata/vocabulary.jsonl"],
+    }
+    audio_descriptor = next(
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "audio_asset"
+    )
+    assert audio_descriptor.relative_path == "assets/audio/audio-food.mp3"
+    assert (release_root / audio_descriptor.relative_path).read_bytes() == b"RIFF....WAVE"
+    support_descriptor = next(
+        item
+        for item in result.descriptors
+        if item.metadata.get("role") == "retained_support"
+    )
+    assert support_descriptor.row_count == 2
+    audio_rows = []
+    for descriptor in result.descriptors:
+        if descriptor.config_name == ABBY_VOICE_AUDIO_V2:
+            audio_rows.extend(
+                pq.read_table(release_root / descriptor.relative_path).to_pylist()
+            )
+    assert audio_rows[0]["uri"] == "assets/audio/audio-food.mp3"
+    receipt = validate_abby_voice_hf_release(release_root)
+    assert receipt["embedded_audio_asset_count"] == 1
+
+    all_text = b"\n".join(
+        path.read_bytes()
+        for path in release_root.rglob("*")
+        if path.is_file() and path.suffix in {".json", ".jsonl", ".md"}
+    ).lower()
+    assert b"/resolve/main/" not in all_text
+
+
+def test_embedded_release_rejects_unpinned_or_mutable_support(tmp_path: Path):
+    fixture = _fixture_bundle()
+    audio_source = tmp_path / "fixture.mp3"
+    audio_source.write_bytes(b"RIFF....WAVE")
+    support_source = tmp_path / "bad.jsonl"
+    support_source.write_text(
+        '{"uri":"https://huggingface.co/datasets/x/resolve/main/a.mp3"}\n',
+        encoding="utf-8",
+    )
+    builder = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="SHA-256 mismatch"):
+        builder.build(
+            output_dir=tmp_path / "bad-digest",
+            release_id="release-bad-digest",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256="0" * 64,
+                    row_count=1,
+                ),
+            ),
+        )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="mutable Hugging Face ref"):
+        builder.build(
+            output_dir=tmp_path / "bad-ref",
+            release_id="release-bad-ref",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256=sha256(support_source.read_bytes()).hexdigest(),
+                    row_count=1,
+                ),
+            ),
+        )
 
 
 def test_validate_rejects_tampered_parquet_bytes(tmp_path: Path):
