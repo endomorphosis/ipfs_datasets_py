@@ -1,0 +1,100 @@
+"""World Chain contract and World ID verifier package (CRYPTOIR-G260).
+
+Composes EVM semantics for World Chain and adds explicit World ID verifier,
+external-nullifier, action/domain, bridge, proxy, and upgrade semantics.
+
+Importing this package performs no network I/O, secret resolution, or package
+installation.
+"""
+
+from __future__ import annotations
+
+from .frontend import (
+    FRONTEND_ID,
+    FRONTEND_SCHEMA_VERSION,
+    FRONTEND_VERSION,
+    CompositionMode,
+    WorldcoinContractFrontend,
+    WorldcoinNormalizationResult,
+)
+from .semantics import (
+    SEMANTICS_SCHEMA_VERSION,
+    WORLD_CHAIN_MAINNET_CHAIN_ID,
+    WORLD_CHAIN_MAINNET_GENESIS_HASH,
+    WORLD_CHAIN_MAINNET_NETWORK,
+    WORLD_CHAIN_MAINNET_SETTLEMENT,
+    WORLD_CHAIN_SEPOLIA_CHAIN_ID,
+    WORLD_CHAIN_SEPOLIA_GENESIS_HASH,
+    WORLD_CHAIN_SEPOLIA_NETWORK,
+    WORLD_CHAIN_SEPOLIA_SETTLEMENT,
+    WORLD_ID_NULLIFIER_REF_PREFIX,
+    WORLD_ID_PROOF_TYPE,
+    WLD_WORLD_CHAIN_MAINNET_ADDRESS,
+    BridgeBinding,
+    BridgeDirection,
+    ExternalNullifier,
+    ProofConsumerBehavior,
+    ProofImplication,
+    ReplayDomain,
+    SemanticPassStatus,
+    TrustAssumption,
+    TrustSurface,
+    VerifierKind,
+    WorldIDVerifierBinding,
+    check_nullifier_replay,
+    check_verifier_upgrade,
+    default_bridge_trust_assumptions,
+    default_verifier_trust_assumptions,
+    domains_compatible,
+    external_nullifier_digest,
+    is_world_chain_id,
+    normalize_address,
+    nullifier_commitment_from_bytes,
+    require_stated_trust,
+    world_chain_anchor,
+)
+
+__all__ = [
+    # Frontend
+    "FRONTEND_ID",
+    "FRONTEND_SCHEMA_VERSION",
+    "FRONTEND_VERSION",
+    "CompositionMode",
+    "WorldcoinContractFrontend",
+    "WorldcoinNormalizationResult",
+    # Semantics
+    "SEMANTICS_SCHEMA_VERSION",
+    "WORLD_CHAIN_MAINNET_CHAIN_ID",
+    "WORLD_CHAIN_MAINNET_GENESIS_HASH",
+    "WORLD_CHAIN_MAINNET_NETWORK",
+    "WORLD_CHAIN_MAINNET_SETTLEMENT",
+    "WORLD_CHAIN_SEPOLIA_CHAIN_ID",
+    "WORLD_CHAIN_SEPOLIA_GENESIS_HASH",
+    "WORLD_CHAIN_SEPOLIA_NETWORK",
+    "WORLD_CHAIN_SEPOLIA_SETTLEMENT",
+    "WORLD_ID_NULLIFIER_REF_PREFIX",
+    "WORLD_ID_PROOF_TYPE",
+    "WLD_WORLD_CHAIN_MAINNET_ADDRESS",
+    "BridgeBinding",
+    "BridgeDirection",
+    "ExternalNullifier",
+    "ProofConsumerBehavior",
+    "ProofImplication",
+    "ReplayDomain",
+    "SemanticPassStatus",
+    "TrustAssumption",
+    "TrustSurface",
+    "VerifierKind",
+    "WorldIDVerifierBinding",
+    "check_nullifier_replay",
+    "check_verifier_upgrade",
+    "default_bridge_trust_assumptions",
+    "default_verifier_trust_assumptions",
+    "domains_compatible",
+    "external_nullifier_digest",
+    "is_world_chain_id",
+    "normalize_address",
+    "nullifier_commitment_from_bytes",
+    "require_stated_trust",
+    "world_chain_anchor",
+]
