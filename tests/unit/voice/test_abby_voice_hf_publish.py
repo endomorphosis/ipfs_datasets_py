@@ -10,11 +10,11 @@ Covers the G021 acceptance subset:
 from __future__ import annotations
 
 import json
+import shutil
 from hashlib import sha256
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.huggingface.publisher import (
     DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM,
     G021_AUTHORITATIVE_EVIDENCE_MAP,
@@ -22,10 +22,10 @@ from ipfs_datasets_py.huggingface.publisher import (
     G021_REQUIRED_EVIDENCE_TERMS,
     G021_RESIDUAL_SCAN_CLOSURE_AUTO_030,
     HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA,
-    HuggingFacePublicationError,
-    HuggingFaceReleasePublisher,
     PINNED_REDOWNLOAD_VALIDATION_EVIDENCE_TERM,
     POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM,
+    HuggingFacePublicationError,
+    HuggingFaceReleasePublisher,
     PublicationApproval,
     PublicationCommitReceipt,
     RuntimeReleasePointer,
@@ -33,6 +33,8 @@ from ipfs_datasets_py.huggingface.publisher import (
     publish_abby_voice_release,
 )
 from ipfs_datasets_py.voice.hf_release import validate_abby_voice_hf_release
+
+AUDITED_PARENT = "0" * 40
 
 
 def _manifest_fixture() -> dict:
@@ -81,18 +83,74 @@ def _materialize_local(root: Path, manifest: dict) -> None:
 
 
 class _FakeHfApi:
-    def __init__(self, commit_sha: str = "a" * 40) -> None:
+    def __init__(
+        self,
+        commit_sha: str = "a" * 40,
+        *,
+        parent_sha: str = AUDITED_PARENT,
+        regular_git_paths: tuple[str, ...] = (),
+    ) -> None:
         self.commit_sha = commit_sha
+        self.head_sha = parent_sha
+        self.regular_git_paths = set(regular_git_paths)
         self.calls: list[dict] = []
+        self.read_calls: list[tuple[str, str]] = []
+        self.remote_files: dict[str, Path] = {}
+
+    def repo_info(self, **kwargs):
+        self.read_calls.append(("repo_info", str(kwargs.get("revision"))))
+        return {"sha": self.head_sha}
+
+    def get_paths_info(self, **kwargs):
+        revision = str(kwargs.get("revision"))
+        self.read_calls.append(("get_paths_info", revision))
+        result = []
+        for requested in kwargs.get("paths") or []:
+            if requested in self.remote_files:
+                source = self.remote_files[requested]
+                body_sha = sha256(source.read_bytes()).hexdigest()
+                result.append(
+                    {
+                        "path": requested,
+                        "size": source.stat().st_size,
+                        "lfs": (
+                            None
+                            if requested in self.regular_git_paths
+                            else {"sha256": body_sha, "size": source.stat().st_size}
+                        ),
+                    }
+                )
+            elif any(path.startswith(f"{requested}/") for path in self.remote_files):
+                result.append({"path": requested, "tree_id": "tree"})
+        return result
+
+    def hf_hub_download(self, **kwargs):
+        remote_path = str(kwargs["filename"])
+        revision = str(kwargs["revision"])
+        self.read_calls.append(("hf_hub_download", revision))
+        assert revision == self.commit_sha
+        local_dir = Path(kwargs["local_dir"])
+        target = local_dir / remote_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(self.remote_files[remote_path], target)
+        return str(target)
 
     def create_commit(self, **kwargs):
         self.calls.append(kwargs)
+        assert kwargs["parent_commit"] == self.head_sha
+        assert kwargs["revision"] == "main"
         operations = kwargs.get("operations") or []
         assert operations, "create_commit must receive operations"
         for op in operations:
             path = getattr(op, "path_in_repo", None) or op.get("path_in_repo")
             assert path and not path.startswith("/")
             assert ".." not in path
+            source = getattr(op, "path_or_fileobj", None) or op.get(
+                "path_or_fileobj"
+            )
+            assert not isinstance(source, (bytes, bytearray))
+            self.remote_files[path] = Path(source)
+        self.head_sha = self.commit_sha
         return {"commit_sha": self.commit_sha}
 
 
@@ -132,6 +190,32 @@ def test_dry_run_diff_and_cost_receipt_is_deterministic(tmp_path: Path):
     assert receipt["dry_run_diff_and_cost_receipt"]["dry_run_diff_and_cost_receipt"] is True
 
 
+def test_dry_run_binds_parent_into_digest_without_api_contact(tmp_path: Path):
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi()
+    publisher = HuggingFaceReleasePublisher(api=api)
+
+    first = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    second = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit="1" * 40,
+    )
+
+    assert first.plan_digest != second.plan_digest
+    assert first.to_dict()["audited_parent_commit"] == AUDITED_PARENT
+    assert first.to_dict()["target_revision"] == "main"
+    assert api.calls == []
+    assert api.read_calls == []
+
+
 def test_dry_run_refuses_basename_only_skip(tmp_path: Path):
     """Uploads key by full remote path; same basename elsewhere is irrelevant."""
 
@@ -169,7 +253,11 @@ def test_publish_append_only_requires_approval_and_records_commit(tmp_path: Path
     _materialize_local(root, manifest)
     api = _FakeHfApi(commit_sha="b" * 40)
     publisher = HuggingFaceReleasePublisher(api=api)
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="release-operator@example.com",
         plan_digest=plan.plan_digest,
@@ -183,7 +271,67 @@ def test_publish_append_only_requires_approval_and_records_commit(tmp_path: Path
     assert commit.commit_sha == "b" * 40
     assert len(api.calls) == 1
     assert api.calls[0]["repo_id"] == "Publicus/211-abby-tts"
+    assert api.calls[0]["parent_commit"] == AUDITED_PARENT
+    assert api.calls[0]["revision"] == "main"
     assert len(api.calls[0]["operations"]) == len(plan.operations)
+    assert commit.parent_commit == AUDITED_PARENT
+
+
+def test_publish_refuses_parent_race_before_upload(tmp_path: Path):
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi(parent_sha="9" * 40)
+    publisher = HuggingFaceReleasePublisher(api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-parent-race",
+    )
+
+    with pytest.raises(HuggingFacePublicationError, match="advanced after audit"):
+        publisher.publish_append_only(plan, approval=approval, local_root=root)
+    assert api.calls == []
+
+
+def test_publish_refuses_any_preexisting_release_prefix(tmp_path: Path):
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi()
+    publisher = HuggingFaceReleasePublisher(api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    # A partial earlier attempt owns the immutable prefix even when this
+    # particular pathname was not part of the approved plan.
+    api.remote_files[f"{plan.release_prefix}/unexpected.partial"] = (
+        root / manifest["files"][0]["path"]
+    )
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-prefix-collision",
+    )
+
+    with pytest.raises(HuggingFacePublicationError, match="pre-existing path"):
+        publisher.publish_append_only(plan, approval=approval, local_root=root)
+    assert api.calls == []
 
 
 def test_publish_refuses_mismatched_approval(tmp_path: Path):
@@ -192,7 +340,11 @@ def test_publish_refuses_mismatched_approval(tmp_path: Path):
     root.mkdir()
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher(api=_FakeHfApi())
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="ops",
         plan_digest="c" * 64,
@@ -211,7 +363,11 @@ def test_publish_refuses_cost_bound_exceeded(tmp_path: Path):
     root.mkdir()
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher(api=_FakeHfApi())
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     # Force failure via upload bound (estimated cost alone can be near zero).
     approval = PublicationApproval(
         approver="ops",
@@ -225,6 +381,30 @@ def test_publish_refuses_cost_bound_exceeded(tmp_path: Path):
         publisher.publish_append_only(plan, approval=approval, local_root=root)
 
 
+def test_publish_refuses_approval_for_wrong_repository_scope(tmp_path: Path):
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    publisher = HuggingFaceReleasePublisher(api=_FakeHfApi())
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:someone-else/repo",
+        approval_id="approval-wrong-scope",
+    )
+
+    with pytest.raises(HuggingFacePublicationError, match="credentials_scope"):
+        publisher.publish_append_only(plan, approval=approval, local_root=root)
+
+
 def test_post_publication_verification(tmp_path: Path):
     """post-publication verification against returned commit SHA digests."""
 
@@ -233,7 +413,11 @@ def test_post_publication_verification(tmp_path: Path):
     root.mkdir()
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher(api=_FakeHfApi(commit_sha="d" * 40))
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="ops",
         plan_digest=plan.plan_digest,
@@ -283,7 +467,11 @@ def test_pinned_redownload_validation(tmp_path: Path):
     root.mkdir()
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher()
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     payloads = {
         op.remote_path: (root / op.relative_path).read_bytes() for op in plan.operations
     }
@@ -329,7 +517,11 @@ def test_canary_promote_and_rollback_retains_failed_release(tmp_path: Path):
     root.mkdir()
     _materialize_local(root, manifest)
     publisher = HuggingFaceReleasePublisher(api=_FakeHfApi(commit_sha="1" * 40))
-    plan = publisher.plan_dry_run(manifest, local_root=root)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="ops",
         plan_digest=plan.plan_digest,
@@ -402,7 +594,14 @@ def test_publish_abby_voice_release_execute_runs_verification_gates(tmp_path: Pa
     root.mkdir()
     _materialize_local(root, manifest)
     api = _FakeHfApi(commit_sha="3" * 40)
-    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    # Force one regular Git object so live post-publication verification must
+    # download and hash it; LFS objects use their pinned SHA-256 metadata.
+    api.regular_git_paths.add(plan.operations[0].remote_path)
     approval = PublicationApproval(
         approver="ops",
         plan_digest=plan.plan_digest,
@@ -418,6 +617,7 @@ def test_publish_abby_voice_release_execute_runs_verification_gates(tmp_path: Pa
         local_root=root,
         approval=approval,
         api=api,
+        audited_parent_commit=AUDITED_PARENT,
         verified_cache_root=cache,
         receipt_path=tmp_path / "publication-receipt.json",
     )
@@ -430,6 +630,15 @@ def test_publish_abby_voice_release_execute_runs_verification_gates(tmp_path: Pa
     assert receipt["pinned_redownload_validation"]["ok"] is True
     assert receipt["pinned_redownload_validation"]["empty_cache_before_fetch"] is True
     assert receipt["pinned_redownload_validation"]["commit_sha"] == "3" * 40
+    assert receipt["pinned_redownload_validation"]["network_fetch_performed"] is True
+    pinned_reads = [
+        call for call in api.read_calls if call == ("hf_hub_download", "3" * 40)
+    ]
+    assert len(pinned_reads) == len(plan.operations) + 1
+    assert all(
+        (cache / op.remote_path).is_file() and not (cache / op.remote_path).is_symlink()
+        for op in plan.operations
+    )
     assert POST_PUBLICATION_VERIFICATION_EVIDENCE_TERM in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS
     assert PINNED_REDOWNLOAD_VALIDATION_EVIDENCE_TERM in G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS
 
@@ -442,7 +651,11 @@ def test_publish_execute_post_publication_verification_fail_closed(tmp_path: Pat
     root.mkdir()
     _materialize_local(root, manifest)
     api = _FakeHfApi(commit_sha="4" * 40)
-    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="ops",
         plan_digest=plan.plan_digest,
@@ -467,6 +680,7 @@ def test_publish_execute_post_publication_verification_fail_closed(tmp_path: Pat
             local_root=root,
             approval=approval,
             api=api,
+            audited_parent_commit=AUDITED_PARENT,
             remote_objects=bad_inventory,
             run_pinned_redownload_validation=False,
         )
@@ -480,7 +694,11 @@ def test_publish_execute_pinned_redownload_validation_fail_closed(tmp_path: Path
     root.mkdir()
     _materialize_local(root, manifest)
     api = _FakeHfApi(commit_sha="5" * 40)
-    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(manifest, local_root=root)
+    plan = HuggingFaceReleasePublisher(api=api).plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
     approval = PublicationApproval(
         approver="ops",
         plan_digest=plan.plan_digest,
@@ -505,6 +723,7 @@ def test_publish_execute_pinned_redownload_validation_fail_closed(tmp_path: Path
             local_root=root,
             approval=approval,
             api=api,
+            audited_parent_commit=AUDITED_PARENT,
             remote_payloads=bad_payloads,
             verified_cache_root=tmp_path / "cache-fail",
             run_post_publication_verification=False,
