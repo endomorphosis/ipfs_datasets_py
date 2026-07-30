@@ -65,6 +65,68 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         public_symbols=("LogicConverter", "ConversionResult", "ProofCache"),
     ),
     LogicSubmoduleSpec(
+        name="verification_api",
+        module="ipfs_datasets_py.logic.verification_api",
+        description=(
+            "Stable Python software-verification facade (LogicVerificationAPI@1) for "
+            "family/provider discovery, compilation, checking, monitoring, portfolio, "
+            "counterexample, receipt, advisor, and attestation operations."
+        ),
+        roles=(
+            "public_api",
+            "software_verification",
+            "discovery",
+            "proof_contract",
+            "facade",
+        ),
+        optimizer_components=("verification_api.facade",),
+        target_files=(
+            "ipfs_datasets_py/logic/verification_api.py",
+            "ipfs_datasets_py/logic/api.py",
+            "ipfs_datasets_py/logic/backends/registry.py",
+        ),
+        ast_scope="verification_api",
+        public_symbols=(
+            "LogicVerificationAPI",
+            "VerificationResponse",
+            "list_logic_families",
+            "list_providers",
+            "check",
+            "compile_verification_artifact",
+            "get_verification_api",
+        ),
+        notes="Additive facade; preserves legacy logic.api exact exports.",
+    ),
+    LogicSubmoduleSpec(
+        name="software_verification",
+        module="ipfs_datasets_py.logic.software_verification.ir",
+        description=(
+            "Shared software-verification IR, properties, VC generation, temporal, "
+            "program, authorization, protocol, heap, concurrency, and receipt modules."
+        ),
+        roles=(
+            "software_verification",
+            "ir",
+            "proof_contract",
+            "translation",
+        ),
+        optimizer_components=("software_verification.ir",),
+        target_files=(
+            "ipfs_datasets_py/logic/software_verification/ir.py",
+            "ipfs_datasets_py/logic/software_verification/properties.py",
+            "ipfs_datasets_py/logic/software_verification/vc.py",
+            "ipfs_datasets_py/logic/software_verification/receipts.py",
+        ),
+        ast_scope="software_verification",
+        public_symbols=(
+            "SoftwareVerificationIR",
+            "PropertyKind",
+            "generate_verification_conditions",
+        ),
+        required=True,
+        notes="Leaf modules are imported by path; package has no __init__ re-export.",
+    ),
+    LogicSubmoduleSpec(
         name="types",
         module="ipfs_datasets_py.logic.types",
         description="Canonical shared logic, proof, bridge, translation, and FOL type aliases.",
