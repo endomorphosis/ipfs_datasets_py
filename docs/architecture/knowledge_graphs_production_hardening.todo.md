@@ -1327,3 +1327,14 @@ retain the acceptance and validation evidence in the resulting receipt.
 - Predicted files: ipfs_datasets_py/knowledge_graphs/release_evidence.py, tests/integration/knowledge_graphs/test_release_evidence_collector.py, docs/operations/knowledge_graphs_gate_runbook.md
 - Conflict policy: Compose the existing release_gate receipt types and benchmark receipts; never synthesize a passing receipt or treat task status, prose, coverage, skips, or expected failures as proof.
 - Acceptance: Provide an executable collector that binds evidence to an explicit clean repository tree, records command, timestamp, environment label, exit status, test counts, and artifact digests, and refuses failed, skipped, expected-failure, stale, foreign-tree, or unsigned evidence where required. It must ingest corpus sign-offs, UCAN deny proof, load/soak/chaos digests, evaluate GraphReleaseGate fail-closed, and write a human-readable runbook explaining all ten child gates and the root release decision.
+
+## KGP-050 Resolve validation retry-budget failure for KGP-047
+
+- Status: todo
+- Completion: manual
+- Priority: P1
+- Track: ops
+- Depends on: 
+- Outputs: tests/unit/search/test_sharded_car, data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery
+- Validation: test -f /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-050-kgp-047-retry-budget.md
+- Acceptance: Retry-budget guardrail filed this from repeated validation failures in KGP-047. Use evidence in /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-050-kgp-047-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release KGP-047 from strategy blocked_tasks.
