@@ -312,7 +312,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-019 Route MCP and MCP++ graph tools through a persistent service
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-017
