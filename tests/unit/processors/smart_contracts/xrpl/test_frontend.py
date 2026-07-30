@@ -54,6 +54,7 @@ from ipfs_datasets_py.processors.smart_contracts.xrpl import (
     ValidatedLedgerEpoch,
     XRPLLedgerFixture,
     XRPLLedgerFrontend,
+    XRPLNormalizationResult,
     XRPLTransactionType,
     default_object_kind_for_tx,
     is_ripple_evm_sidechain,
@@ -591,10 +592,6 @@ def test_sidechain_rejects_mainnet_delegation(frontend: XRPLLedgerFrontend) -> N
 
 def test_sidechain_result_cannot_claim_mainnet_chain_id() -> None:
     with pytest.raises(InvalidRequestError, match="mainnet"):
-        from ipfs_datasets_py.processors.smart_contracts.xrpl.frontend import (
-            XRPLNormalizationResult,
-        )
-
         XRPLNormalizationResult(
             analysis_mode=AnalysisMode.EVM_SIDECHAIN_DELEGATED,
             routing=SidechainRouting.EVM_SIDECHAIN,
