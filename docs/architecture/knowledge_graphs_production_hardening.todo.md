@@ -1330,7 +1330,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-050 Resolve validation retry-budget failure for KGP-047
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Priority: P1
 - Track: ops
