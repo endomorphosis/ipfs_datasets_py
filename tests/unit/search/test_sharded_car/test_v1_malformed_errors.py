@@ -1,4 +1,8 @@
-"""KGP-047: explicit errors for malformed or unsupported v1 sharded-CAR data."""
+"""KGP-047: explicit errors for malformed or unsupported v1 sharded-CAR data.
+
+Acceptance: fail closed on bad manifests, missing/garbage CIDs, corrupt CARs,
+unsupported versions, and bad cursors without weakening v2 integrity checks.
+"""
 
 from __future__ import annotations
 
