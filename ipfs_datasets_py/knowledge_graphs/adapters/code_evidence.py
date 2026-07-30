@@ -845,19 +845,15 @@ def normalize_semantic_node(
 
 
 def _prefixed_identity(prefix: str, value: Any) -> str:
-    """Match accelerate ``_identity(prefix, value)`` which hashes prefix+json.
+    """Mirror the canonical accelerator typed content identity.
 
-    Producers use: sha256(canonical_json({"_prefix": prefix, ...})) or
-    ``prefix + ":" + sha256``? Inspect: ``_identity(namespace, value)``.
+    Both ``analysis_ast_index._identity`` and
+    ``semantic_dependency_graph._identity`` bind the type outside the digest
+    and hash only canonical JSON: ``<prefix>:sha256:<digest>``.
     """
 
-    # From semantic_dependency_graph.py:
-    # def _identity(namespace: str, value: Any) -> str:
-    #     return hashlib.sha256(
-    #         f"{namespace}:{canonical_semantic_json(value)}".encode("utf-8")
-    #     ).hexdigest()
-    material = f"{prefix}:{canonical_json(value)}".encode("utf-8")
-    return hashlib.sha256(material).hexdigest()
+    digest = hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+    return f"{prefix}:sha256:{digest}"
 
 
 def normalize_semantic_edge(

@@ -40,8 +40,10 @@ from ipfs_datasets_py.knowledge_graphs.adapters.code_evidence import (
     build_tiny_fixture_bundle,
     classify_kind,
     discover_objective_graph_path,
+    normalize_ast_index,
     normalize_code_evidence_graph,
     normalize_code_evidence_node,
+    normalize_semantic_node,
     open_bundle_reader,
 )
 
@@ -529,6 +531,79 @@ def test_classify_kind_and_strict_mode_rejects_unknown(
 # ---------------------------------------------------------------------------
 # Fail-closed integrity
 # ---------------------------------------------------------------------------
+
+
+def test_canonical_accelerator_ast_index_identity_validates_exactly() -> None:
+    """Lock the adapter to analysis_ast_index._identity wire semantics."""
+
+    expected = (
+        "analysis-ast-index:sha256:"
+        "9b34cedfc7b53969b6f45d0f68100cfa982011dae718508e659cd7e1a8990ba6"
+    )
+    normalized = normalize_ast_index(
+        {
+            "schema": (
+                "ipfs_accelerate_py/agent-supervisor/"
+                "analysis-ast-index@1"
+            ),
+            "schema_version": 1,
+            "index_id": expected,
+            "path_records": [],
+            "invalidations": [],
+            "stats": {},
+        }
+    )
+    assert normalized["index_id"] == expected
+
+    with pytest.raises(CodeEvidenceAdapterError, match="identity"):
+        normalize_ast_index(
+            {
+                "schema": (
+                    "ipfs_accelerate_py/agent-supervisor/"
+                    "analysis-ast-index@1"
+                ),
+                "schema_version": 1,
+                "index_id": "analysis-ast-index:sha256:" + "0" * 64,
+                "path_records": [],
+            }
+        )
+
+
+def test_canonical_accelerator_semantic_node_identity_validates_exactly() -> None:
+    """Lock the adapter to semantic_dependency_graph._identity wire semantics."""
+
+    expected = (
+        "semantic-node:sha256:"
+        "41ec9ade4d97324a1c45ef6a642acb485685d691878d4efca99c0b9715a75009"
+    )
+    payload = {
+        "schema": (
+            "ipfs_accelerate_py/agent-supervisor/"
+            "semantic-dependency-node@1"
+        ),
+        "node_id": "decision:test",
+        "kind": "decision",
+        "root_id": "root:test",
+        "source_root_id": "tree:test",
+        "provenance": "decision",
+        "provenance_id": "decision:test",
+        "trust": "verified",
+        "authority": "authoritative",
+        "version": "test@1",
+        "record": {"purpose": "canonical producer identity"},
+        "content_id": expected,
+        "authoritative": True,
+    }
+    normalized = normalize_semantic_node(payload)
+    assert normalized["content_id"] == expected
+
+    with pytest.raises(CodeEvidenceAdapterError, match="identity"):
+        normalize_semantic_node(
+            {
+                **payload,
+                "content_id": "semantic-node:sha256:" + "0" * 64,
+            }
+        )
 
 
 def test_missing_artifact_fails_closed(tiny_bundle: Path) -> None:
