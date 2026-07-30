@@ -178,6 +178,15 @@ def source_constructs_fresh_manager(source: str) -> bool:
     )
 
 
+def source_uses_server_owned_graph_service(source: str) -> bool:
+    """True when a graph tool resolves and calls the shared GraphService."""
+    return (
+        "resolve_binding" in source
+        and "binding.service." in source
+        and not source_constructs_fresh_manager(source)
+    )
+
+
 # ---------------------------------------------------------------------------
 # Shared Python-API helpers
 # ---------------------------------------------------------------------------
@@ -216,10 +225,20 @@ async def _python_tx_begin() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-async def _mcp_create() -> Dict[str, Any]:
+async def _mcp_create(
+    *,
+    target: str = "kg://contract/lifecycle/branches/main",
+    catalog_path: Optional[str] = None,
+    storage_path: Optional[str] = None,
+) -> Dict[str, Any]:
     from ipfs_datasets_py.mcp_server.tools.graph_tools.graph_create import graph_create
 
-    return await graph_create(driver_url=DRIVER_URL)
+    return await graph_create(
+        target=target,
+        catalog_path=catalog_path,
+        storage_path=storage_path,
+        idempotency_key="contract-create",
+    )
 
 
 async def _mcp_add_entity(
@@ -327,7 +346,7 @@ class TestDriftInventory:
             assert hasattr(KnowledgeGraphManager, manager_method)
             assert not hasattr(KnowledgeGraphManager, missing)
 
-    def test_mcp_tools_construct_fresh_managers(self) -> None:
+    def test_mcp_tools_use_server_owned_graph_service(self) -> None:
         tool_files = [
             REPO_ROOT
             / "ipfs_datasets_py"
@@ -345,8 +364,8 @@ class TestDriftInventory:
         ]
         for path in tool_files:
             source = path.read_text(encoding="utf-8")
-            assert source_constructs_fresh_manager(source), (
-                f"{path.name} should construct a fresh KnowledgeGraphManager per call"
+            assert source_uses_server_owned_graph_service(source), (
+                f"{path.name} should resolve and call the server-owned GraphService"
             )
 
     def test_cli_create_emits_attribute_error_message(self) -> None:
@@ -598,19 +617,40 @@ class TestMCPLifecycle:
     """Independent MCP tool function calls."""
 
     @pytest.mark.asyncio
-    async def test_graph_create_returns_success_envelope(self) -> None:
-        """MCP graph_create uses initialize(); shallow success is accepted today."""
-        result = await _mcp_create()
-        assert_success_envelope(result, required_keys=("message", "driver_url"))
+    async def test_graph_create_returns_success_envelope(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        result = await _mcp_create(
+            catalog_path=str(tmp_path / "catalog.sqlite"),
+            storage_path=str(tmp_path / "store"),
+        )
+        assert_success_envelope(
+            result,
+            required_keys=("contract_version", "operation", "target", "result"),
+        )
+        assert result["operation"] == "create"
+        assert result["target"]["uri"] == "kg://contract/lifecycle/branches/main"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_NO_DURABLE_GRAPH_ID)
     @pytest.mark.asyncio
-    async def test_graph_create_returns_durable_graph_identity(self) -> None:
-        result = await _mcp_create()
+    async def test_graph_create_returns_durable_graph_identity(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        result = await _mcp_create(
+            catalog_path=str(tmp_path / "catalog.sqlite"),
+            storage_path=str(tmp_path / "store"),
+        )
         assert_success_envelope(result)
-        assert any(
-            key in result for key in ("graph_id", "graph_uri", "revision", "branch")
-        ), f"MCP create lacks durable graph identity: {result!r}"
+        identity = result["result"]
+        assert identity["graph_id"] == "lifecycle"
+        assert identity["branch"] == "main"
+        assert identity["revision"]
+        assert result["target"]["tenant"] == "contract"
+        assert identity["uri"] in {
+            "kg://contract/lifecycle",
+            "kg://contract/lifecycle/branches/main",
+        }
 
     @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     @pytest.mark.asyncio
@@ -674,10 +714,23 @@ class TestMCPPlusLifecycle:
     """MCP++ hierarchical dispatch is an independent call surface."""
 
     @pytest.mark.asyncio
-    async def test_dispatch_graph_create_returns_success_envelope(self) -> None:
-        result = await _mcp_plus_dispatch("graph_create", {})
+    async def test_dispatch_graph_create_returns_success_envelope(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        result = await _mcp_plus_dispatch(
+            "graph_create",
+            {
+                "target": "kg://contract/mcpplus/branches/main",
+                "catalog_path": str(tmp_path / "catalog.sqlite"),
+                "storage_path": str(tmp_path / "store"),
+                "idempotency_key": "contract-mcpplus-create",
+            },
+        )
         # tools_dispatch may attach request_id; status must still be success.
         assert result.get("status") == "success", result
+        assert result["result"]["graph_id"] == "mcpplus"
+        assert result["target"]["uri"] == "kg://contract/mcpplus/branches/main"
         assert _is_json_safe(result), result
 
     @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
