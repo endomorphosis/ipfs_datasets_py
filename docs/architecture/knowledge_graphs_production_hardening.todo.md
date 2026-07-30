@@ -414,7 +414,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-025 Add a read-only SkillCenter adapter and differential suite
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
