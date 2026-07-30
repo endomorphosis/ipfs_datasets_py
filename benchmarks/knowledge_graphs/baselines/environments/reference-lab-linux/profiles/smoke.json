@@ -1,0 +1,295 @@
+{
+  "baseline_id": "kg-bl-smoke-reference-lab-linux-v1",
+  "digest": "53cf3b418ceea129059a0375312dc77b662df597e4cc0f031e3ec83f20a11934",
+  "environment": {
+    "cpu_count": 20,
+    "cwd": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/worktrees/lane-00/workspace-0f6623baf341-694b9ac01563",
+    "env_labels": {
+      "CI": "true",
+      "GITHUB_ACTIONS": null,
+      "HOSTNAME": null,
+      "IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/state/implementation_checkpoints/kgp-030-b491a72fd9e4"
+    },
+    "environment_label": "reference-lab-linux",
+    "hostname": "spark-b271",
+    "machine": "aarch64",
+    "pid": 2622819,
+    "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+    "processor": "aarch64",
+    "python_executable": "/home/barberb/.local/bin/python",
+    "python_implementation": "CPython",
+    "python_version": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+    "release": "6.17.0-1014-nvidia",
+    "revision": {
+      "branch": "implementation/kgp-030-b491a72fd9e4-attempt-1-1785373224",
+      "commit": "517d86afdb52cf55bc50856d7c23ec3ca0c499ce",
+      "describe": "517d86afd",
+      "dirty": true,
+      "short": "517d86afdb52",
+      "source": "git"
+    },
+    "source_measurement_label": "ci-linux-aarch64-py3.12",
+    "system": "Linux"
+  },
+  "environment_label": "reference-lab-linux",
+  "gates": {
+    "block_unexplained_p95_regression": true,
+    "block_unexplained_throughput_regression": true,
+    "correctness_errors_max": 0,
+    "p95_regression_max_ratio": 0.1,
+    "require_zero_correctness_errors": true,
+    "require_zero_security_errors": true,
+    "security_errors_max": 0,
+    "throughput_regression_max_ratio": 0.1
+  },
+  "methodology": {
+    "concurrent_workers": 1,
+    "discard_warmup": true,
+    "graph_count": 1,
+    "k_stdev": 3.0,
+    "margin_ratio": 0.25,
+    "matrix_mode": "storage",
+    "repetitions": 3,
+    "storage_profiles": [
+      "parquet",
+      "hybrid"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "variance_model": "sample_std",
+    "warmup_operations": 4,
+    "warmup_runs": 1
+  },
+  "metrics": {
+    "elapsed_s": {
+      "bound": 5.413852866331581,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.018047224427662215,
+      "direction": "lower_is_better",
+      "max": 4.408099604072049,
+      "mean": 4.330328707738469,
+      "median": 4.331082293065265,
+      "min": 4.251804226078093,
+      "n": 3,
+      "samples": [
+        4.251804226078093,
+        4.331082293065265,
+        4.408099604072049
+      ],
+      "stdev": 0.07815041403410466
+    },
+    "heap_bytes_end": {
+      "bound": 1048576.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "n": 3,
+      "samples": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "stdev": 0.0
+    },
+    "max_rss_bytes": {
+      "bound": 53560320.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 42848256.0,
+      "mean": 42848256.0,
+      "median": 42848256.0,
+      "min": 42848256.0,
+      "n": 3,
+      "samples": [
+        42848256.0,
+        42848256.0,
+        42848256.0
+      ],
+      "stdev": 0.0
+    },
+    "open_fds_end": {
+      "bound": 6.25,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 5.0,
+      "mean": 5.0,
+      "median": 5.0,
+      "min": 5.0,
+      "n": 3,
+      "samples": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "stdev": 0.0
+    },
+    "ops_per_s": {
+      "bound": 36.365044426004545,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.018054873936227886,
+      "direction": "higher_is_better",
+      "max": 49.39079713783203,
+      "mean": 48.50569997435113,
+      "median": 48.4867259013394,
+      "min": 47.63957688388196,
+      "n": 3,
+      "samples": [
+        49.39079713783203,
+        48.4867259013394,
+        47.63957688388196
+      ],
+      "stdev": 0.8757642982254019
+    },
+    "p50_ms": {
+      "bound": 16.385532508138567,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.03527663141184685,
+      "direction": "lower_is_better",
+      "max": 13.80831003189087,
+      "mean": 13.278588963051638,
+      "median": 13.108426006510854,
+      "min": 12.919030850753188,
+      "n": 3,
+      "samples": [
+        12.919030850753188,
+        13.108426006510854,
+        13.80831003189087
+      ],
+      "stdev": 0.4684238885189903
+    },
+    "p95_ms": {
+      "bound": 60.5936162173748,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.019750376111909287,
+      "direction": "lower_is_better",
+      "max": 48.852210165932775,
+      "mean": 48.12569799833,
+      "median": 48.47489297389984,
+      "min": 47.049990855157375,
+      "n": 3,
+      "samples": [
+        47.049990855157375,
+        48.47489297389984,
+        48.852210165932775
+      ],
+      "stdev": 0.9505006361151773
+    },
+    "p99_ms": {
+      "bound": 64.82368131401017,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.006530663710849917,
+      "direction": "lower_is_better",
+      "max": 52.027140045538545,
+      "mean": 51.75404196294645,
+      "median": 51.85894505120814,
+      "min": 51.37604079209268,
+      "n": 3,
+      "samples": [
+        52.027140045538545,
+        51.37604079209268,
+        51.85894505120814
+      ],
+      "stdev": 0.3379882437372182
+    },
+    "recovery_ms_mean": {
+      "bound": 25.828984195695565,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.14240415089491118,
+      "direction": "lower_is_better",
+      "max": 19.683280028402805,
+      "mean": 17.603957016641896,
+      "median": 18.308354541659355,
+      "min": 14.820236479863524,
+      "n": 3,
+      "samples": [
+        19.683280028402805,
+        18.308354541659355,
+        14.820236479863524
+      ],
+      "stdev": 2.506876551345403
+    },
+    "rss_bytes_end": {
+      "bound": 51128320.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.001590632050740235,
+      "direction": "lower_is_better",
+      "max": 40927232.0,
+      "mean": 40878080.0,
+      "median": 40902656.0,
+      "min": 40804352.0,
+      "n": 3,
+      "samples": [
+        40804352.0,
+        40902656.0,
+        40927232.0
+      ],
+      "stdev": 65021.98422072338
+    }
+  },
+  "notes": "Plan smoke profile: 1,000 nodes / 5,000 edges; multi-sample measurement.",
+  "profile": "smoke",
+  "profile_config": {
+    "concurrent_workers": 1,
+    "corpus_id": null,
+    "description": "Plan smoke profile: 1,000 nodes / 5,000 edges.",
+    "graph_count": 1,
+    "measure_recovery": true,
+    "mix": {
+      "operations": 64,
+      "query_language": "scan",
+      "query_max_rows": 200,
+      "query_weight": 0.35000000000000003,
+      "read_weight": 0.30000000000000004,
+      "write_batch_size": 128,
+      "write_weight": 0.35000000000000003
+    },
+    "name": "smoke",
+    "opt_in": true,
+    "repetitions": 2,
+    "seed": 1000,
+    "shape": {
+      "edge_count": 5000,
+      "graph_id": "shape",
+      "id_prefix": "n",
+      "node_count": 1000,
+      "seed": 1000,
+      "shape": "power_law",
+      "shard_count": 8,
+      "tenant": "load"
+    },
+    "storage_profiles": [
+      "parquet",
+      "hybrid"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "tags": [
+      "smoke",
+      "opt-in"
+    ],
+    "warmup_operations": 4
+  },
+  "ratification_method": "multi_sample_measurement",
+  "ratified_at": 1785373722.5779984,
+  "schema": "ipfs-datasets.knowledge-graphs.load-baseline.v1",
+  "schema_version": 1,
+  "seed": 1000,
+  "shape": {
+    "edge_count": 5000,
+    "node_count": 1000,
+    "seed": 1000,
+    "shape": "power_law",
+    "shard_count": 8
+  },
+  "shape_fingerprint": "755f1fef1de8267b029973521f48202eb0d9af6d40cb78eafacb1aa04bb95153",
+  "status": "ratified",
+  "task_id": "KGP-030"
+}

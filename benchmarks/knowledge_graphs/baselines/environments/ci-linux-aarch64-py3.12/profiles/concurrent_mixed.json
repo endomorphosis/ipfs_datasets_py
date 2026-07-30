@@ -1,0 +1,296 @@
+{
+  "baseline_id": "kg-bl-concurrent_mixed-ci-linux-aarch64-py3.12-v1",
+  "digest": "42b9141c2a348fb6f496696c32071863c59867fef32189717f1be271ed6aad4e",
+  "environment": {
+    "cpu_count": 20,
+    "cwd": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/worktrees/lane-00/workspace-0f6623baf341-694b9ac01563",
+    "env_labels": {
+      "CI": "true",
+      "GITHUB_ACTIONS": null,
+      "HOSTNAME": null,
+      "IPFS_ACCELERATE_AGENT_TASK_CHECKPOINT_DIR": "/home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/state/implementation_checkpoints/kgp-030-b491a72fd9e4"
+    },
+    "environment_label": "ci-linux-aarch64-py3.12",
+    "hostname": "spark-b271",
+    "machine": "aarch64",
+    "pid": 2622819,
+    "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+    "processor": "aarch64",
+    "python_executable": "/home/barberb/.local/bin/python",
+    "python_implementation": "CPython",
+    "python_version": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]",
+    "release": "6.17.0-1014-nvidia",
+    "revision": {
+      "branch": "implementation/kgp-030-b491a72fd9e4-attempt-1-1785373224",
+      "commit": "517d86afdb52cf55bc50856d7c23ec3ca0c499ce",
+      "describe": "517d86afd",
+      "dirty": true,
+      "short": "517d86afdb52",
+      "source": "git"
+    },
+    "source_measurement_label": "ci-linux-aarch64-py3.12",
+    "system": "Linux"
+  },
+  "environment_label": "ci-linux-aarch64-py3.12",
+  "gates": {
+    "block_unexplained_p95_regression": true,
+    "block_unexplained_throughput_regression": true,
+    "correctness_errors_max": 0,
+    "p95_regression_max_ratio": 0.1,
+    "require_zero_correctness_errors": true,
+    "require_zero_security_errors": true,
+    "security_errors_max": 0,
+    "throughput_regression_max_ratio": 0.1
+  },
+  "methodology": {
+    "concurrent_workers": 4,
+    "discard_warmup": true,
+    "graph_count": 16,
+    "k_stdev": 3.0,
+    "margin_ratio": 0.25,
+    "matrix_mode": "storage",
+    "repetitions": 3,
+    "storage_profiles": [
+      "parquet",
+      "hybrid"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "variance_model": "sample_std",
+    "warmup_operations": 2,
+    "warmup_runs": 1
+  },
+  "metrics": {
+    "elapsed_s": {
+      "bound": 5.044941843952984,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.014637271000539933,
+      "direction": "lower_is_better",
+      "max": 4.0367857231758535,
+      "mean": 4.00254561045828,
+      "median": 4.035953475162387,
+      "min": 3.9348976330365986,
+      "n": 3,
+      "samples": [
+        4.035953475162387,
+        4.0367857231758535,
+        3.9348976330365986
+      ],
+      "stdev": 0.058586344792299384
+    },
+    "heap_bytes_end": {
+      "bound": 1048576.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "n": 3,
+      "samples": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "stdev": 0.0
+    },
+    "max_rss_bytes": {
+      "bound": 55070720.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0021497465651841596,
+      "direction": "lower_is_better",
+      "max": 44056576.0,
+      "mean": 44001962.666666664,
+      "median": 44056576.0,
+      "min": 43892736.0,
+      "n": 3,
+      "samples": [
+        43892736.0,
+        44056576.0,
+        44056576.0
+      ],
+      "stdev": 94593.06810402828
+    },
+    "open_fds_end": {
+      "bound": 6.25,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0,
+      "direction": "lower_is_better",
+      "max": 5.0,
+      "mean": 5.0,
+      "median": 5.0,
+      "min": 5.0,
+      "n": 3,
+      "samples": [
+        5.0,
+        5.0,
+        5.0
+      ],
+      "stdev": 0.0
+    },
+    "ops_per_s": {
+      "bound": 338.95336217793204,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.014761994528930377,
+      "direction": "higher_is_better",
+      "max": 463.5444603910576,
+      "mean": 455.7756395494466,
+      "median": 451.9378162372427,
+      "min": 451.84464202003954,
+      "n": 3,
+      "samples": [
+        451.9378162372427,
+        451.84464202003954,
+        463.5444603910576
+      ],
+      "stdev": 6.728157497448675
+    },
+    "p50_ms": {
+      "bound": 7.076208712533116,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.029277771589827504,
+      "direction": "lower_is_better",
+      "max": 5.831579212099314,
+      "mean": 5.664167770495017,
+      "median": 5.660966970026493,
+      "min": 5.499957129359245,
+      "n": 3,
+      "samples": [
+        5.831579212099314,
+        5.499957129359245,
+        5.660966970026493
+      ],
+      "stdev": 0.1658342102310156
+    },
+    "p95_ms": {
+      "bound": 24.15811235550791,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.01593181676912237,
+      "direction": "lower_is_better",
+      "max": 19.366267137229443,
+      "mean": 19.170418692131836,
+      "median": 19.326489884406328,
+      "min": 18.81849905475974,
+      "n": 3,
+      "samples": [
+        19.366267137229443,
+        19.326489884406328,
+        18.81849905475974
+      ],
+      "stdev": 0.30541959799040297
+    },
+    "p99_ms": {
+      "bound": 29.97974370373413,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.05083552794540243,
+      "direction": "lower_is_better",
+      "max": 25.14158794656396,
+      "mean": 23.944487251962226,
+      "median": 23.983794962987304,
+      "min": 22.70807884633541,
+      "n": 3,
+      "samples": [
+        25.14158794656396,
+        23.983794962987304,
+        22.70807884633541
+      ],
+      "stdev": 1.217230650835458
+    },
+    "recovery_ms_mean": {
+      "bound": 15.862520331211272,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.04095746434185929,
+      "direction": "lower_is_better",
+      "max": 13.542586530093104,
+      "mean": 12.93469761731103,
+      "median": 12.690016264969017,
+      "min": 12.57149005687097,
+      "n": 3,
+      "samples": [
+        13.542586530093104,
+        12.690016264969017,
+        12.57149005687097
+      ],
+      "stdev": 0.5297724164337488
+    },
+    "rss_bytes_end": {
+      "bound": 56581120.0,
+      "bound_policy": "median_plus_k_stdev",
+      "cv": 0.0011320014083480837,
+      "direction": "lower_is_better",
+      "max": 45277184.0,
+      "mean": 45241685.333333336,
+      "median": 45264896.0,
+      "min": 45182976.0,
+      "n": 3,
+      "samples": [
+        45182976.0,
+        45264896.0,
+        45277184.0
+      ],
+      "stdev": 51213.65151337418
+    }
+  },
+  "notes": ">=16-graph mixed concurrency profile; multi-sample measurement.",
+  "profile": "concurrent_mixed",
+  "profile_config": {
+    "concurrent_workers": 4,
+    "corpus_id": null,
+    "description": "Mixed read/write/query across at least 16 graph IDs (opt-in).",
+    "graph_count": 16,
+    "measure_recovery": true,
+    "mix": {
+      "operations": 48,
+      "query_language": "scan",
+      "query_max_rows": 100,
+      "query_weight": 0.33,
+      "read_weight": 0.33,
+      "write_batch_size": 16,
+      "write_weight": 0.34
+    },
+    "name": "concurrent_mixed",
+    "opt_in": true,
+    "repetitions": 1,
+    "seed": 16,
+    "shape": {
+      "edge_count": 128,
+      "graph_id": "g",
+      "id_prefix": "n",
+      "node_count": 64,
+      "seed": 16,
+      "shape": "ring",
+      "shard_count": 4,
+      "tenant": "load"
+    },
+    "storage_profiles": [
+      "parquet",
+      "hybrid"
+    ],
+    "surfaces": [
+      "python"
+    ],
+    "tags": [
+      "concurrency",
+      "mixed",
+      "opt-in"
+    ],
+    "warmup_operations": 2
+  },
+  "ratification_method": "multi_sample_measurement",
+  "ratified_at": 1785373722.5779984,
+  "schema": "ipfs-datasets.knowledge-graphs.load-baseline.v1",
+  "schema_version": 1,
+  "seed": 16,
+  "shape": {
+    "edge_count": 128,
+    "node_count": 64,
+    "seed": 16,
+    "shape": "ring",
+    "shard_count": 4
+  },
+  "shape_fingerprint": "c5743f0712afac45b8b2f17a6c4ab04639438d5681509dc38b566d811f015f8f",
+  "status": "ratified",
+  "task_id": "KGP-030"
+}
