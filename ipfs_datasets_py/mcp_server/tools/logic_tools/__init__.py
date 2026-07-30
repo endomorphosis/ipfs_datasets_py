@@ -31,6 +31,11 @@ logic_capabilities_tool       logic_capabilities, logic_health
 logic_graphrag_tool           logic_build_knowledge_graph, logic_verify_rag_output
 flogic_tool                   flogic_assert, flogic_query, flogic_check_consistency,
                               flogic_normalize_term
+
+Sibling module ``logic_verification`` (LogicVerificationMCP@1 / LFV-G071)
+--------------------------------------------------------------------------
+Re-exported for discoverability; implementation lives at
+``ipfs_datasets_py.mcp_server.tools.logic_verification``.
 """
 
 from .temporal_deontic_logic_tools import (
@@ -61,6 +66,25 @@ from .cec_analysis_tool import cec_analyze_formula, cec_formula_complexity
 from .logic_capabilities_tool import logic_capabilities, logic_health
 from .logic_graphrag_tool import logic_build_knowledge_graph, logic_verify_rag_output
 from .flogic_tool import flogic_assert, flogic_query, flogic_check_consistency, flogic_normalize_term
+
+# LFV-G071: stable software-verification MCP surface (sibling module).
+from ipfs_datasets_py.mcp_server.tools.logic_verification import (
+    verification_advise,
+    verification_attest_receipt,
+    verification_capabilities,
+    verification_check,
+    verification_compile,
+    verification_explain_counterexample,
+    verification_install_provider,
+    verification_list_features,
+    verification_list_logic_families,
+    verification_list_providers,
+    verification_monitor,
+    verification_portfolio,
+    verification_probe_provider,
+    verification_provider_capabilities,
+    verification_verify_receipt,
+)
 
 __all__ = [
     # temporal deontic logic
@@ -105,4 +129,20 @@ __all__ = [
     "flogic_query",
     "flogic_check_consistency",
     "flogic_normalize_term",
+    # software verification (LFV-G071 / LogicVerificationMCP@1)
+    "verification_advise",
+    "verification_attest_receipt",
+    "verification_capabilities",
+    "verification_check",
+    "verification_compile",
+    "verification_explain_counterexample",
+    "verification_install_provider",
+    "verification_list_features",
+    "verification_list_logic_families",
+    "verification_list_providers",
+    "verification_monitor",
+    "verification_portfolio",
+    "verification_probe_provider",
+    "verification_provider_capabilities",
+    "verification_verify_receipt",
 ]
