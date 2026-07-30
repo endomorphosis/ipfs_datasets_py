@@ -1,0 +1,49 @@
+{
+  "schema": "wallet_processor_migration/chain-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G500",
+  "task_id": "WALPROC-020",
+  "chain_id": "solana",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Frozen offline vectors for Solana identity, bounded signature pagination, legacy/versioned transactions, lookup tables, instructions, token balances, commitments, and skipped slots.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "active",
+    "synthetic": true
+  },
+  "source": {
+    "kind": "synthetic_solana_json_rpc_vectors",
+    "description": "Synthetic JSON-RPC response shapes derived from the Solana HTTP RPC specification."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "solana",
+    "not_live_network_data": true,
+    "extends_shared_checks": true,
+    "objective": "WALPROC-G500"
+  },
+  "coverage": [
+    "cluster_and_genesis_identity",
+    "signature_pagination_no_gaps_or_duplicates",
+    "legacy_and_versioned_transactions",
+    "address_lookup_tables",
+    "failed_transaction_visibility",
+    "outer_and_inner_instruction_coordinates",
+    "program_logs",
+    "exact_lamport_and_spl_amounts",
+    "token_accounts_and_balances",
+    "processed_confirmed_finalized_distinction",
+    "skipped_slot_fail_closed",
+    "finalized_slot_blockhash_checkpoint",
+    "read_only_surface",
+    "optional_nft_projection"
+  ],
+  "files": [
+    "manifest.json",
+    "README.md",
+    "rpc_session.json"
+  ]
+}

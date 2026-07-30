@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/wallet-ledger-record-v1.schema.json",
+  "title": "Wallet Ledger Record v1",
+  "description": "Chain-neutral normalized wallet and public-ledger records. Chain-specific fields are permitted only inside versioned extensions.",
+  "oneOf": [
+    {"$ref": "#/$defs/blockRecord"},
+    {"$ref": "#/$defs/transactionRecord"},
+    {"$ref": "#/$defs/transferRecord"},
+    {"$ref": "#/$defs/balanceRecord"},
+    {"$ref": "#/$defs/utxoRecord"},
+    {"$ref": "#/$defs/tokenAccountRecord"},
+    {"$ref": "#/$defs/contractEventRecord"}
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "walletId": {
+      "type": "string",
+      "pattern": "^urn:wallet:[a-z][a-z0-9_-]*:sha256:[0-9a-f]{64}$"
+    },
+    "chainIdentity": {
+      "type": "object",
+      "required": ["chain_namespace", "network", "chain_id", "genesis_hash"],
+      "properties": {
+        "chain_namespace": {"$ref": "#/$defs/nonEmptyString"},
+        "network": {"$ref": "#/$defs/nonEmptyString"},
+        "chain_id": {"$ref": "#/$defs/nonEmptyString"},
+        "genesis_hash": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "chainRef": {
+      "allOf": [
+        {"$ref": "#/$defs/chainIdentity"},
+        {
+          "type": "object",
+          "required": ["schema_version", "chain_ref_id"],
+          "properties": {
+            "schema_version": {"const": "wallet-chain-ref-v1"},
+            "chain_ref_id": {"$ref": "#/$defs/walletId"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "accountRef": {
+      "type": "object",
+      "required": ["schema_version", "account_id", "chain", "address", "kind"],
+      "properties": {
+        "schema_version": {"const": "wallet-account-ref-v1"},
+        "account_id": {"$ref": "#/$defs/walletId"},
+        "chain": {"$ref": "#/$defs/chainRef"},
+        "address": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {
+          "enum": [
+            "unknown",
+            "address",
+            "contract",
+            "script",
+            "token_account",
+            "protocol_subject"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "assetRef": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "asset_id",
+        "chain",
+        "asset_namespace",
+        "asset_reference",
+        "decimals",
+        "kind"
+      ],
+      "properties": {
+        "schema_version": {"const": "wallet-asset-ref-v1"},
+        "asset_id": {"$ref": "#/$defs/walletId"},
+        "chain": {"$ref": "#/$defs/chainRef"},
+        "asset_namespace": {"$ref": "#/$defs/nonEmptyString"},
+        "asset_reference": {"$ref": "#/$defs/nonEmptyString"},
+        "decimals": {"type": "integer", "minimum": 0, "maximum": 255},
+        "kind": {
+          "enum": [
+            "unknown",
+            "native",
+            "fungible_token",
+            "non_fungible_token",
+            "multi_token"
+          ]
+        },
+        "symbol": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "exactAmount": {
+      "type": "object",
+      "required": ["base_units", "decimals"],
+      "properties": {
+        "base_units": {
+          "type": "string",
+          "pattern": "^-?(?:0|[1-9][0-9]*)$"
+        },
+        "decimals": {"type": "integer", "minimum": 0, "maximum": 255}
+      },
+      "additionalProperties": false
+    },
+    "ledgerPosition": {
+      "type": "object",
+      "required": ["sequence", "hash", "transaction_index", "event_index"],
+      "properties": {
+        "sequence": {"type": ["integer", "null"], "minimum": 0},
+        "hash": {"type": ["string", "null"], "minLength": 1},
+        "transaction_index": {"type": ["integer", "null"], "minimum": 0},
+        "event_index": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "rawPayloadRef": {
+      "type": "object",
+      "required": ["media_type"],
+      "properties": {
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*:[A-Za-z0-9_-]+$"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7][a-z2-7]+)$"
+        },
+        "media_type": {"$ref": "#/$defs/nonEmptyString"},
+        "byte_length": {"type": "integer", "minimum": 0}
+      },
+      "anyOf": [
+        {"required": ["digest"]},
+        {"required": ["cid"]}
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["provider", "provider_kind", "request_id", "scope"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/nonEmptyString"},
+        "provider_kind": {"$ref": "#/$defs/nonEmptyString"},
+        "request_id": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/nonEmptyString"},
+        "raw_payload": {"$ref": "#/$defs/rawPayloadRef"}
+      },
+      "additionalProperties": false
+    },
+    "extension": {
+      "type": "object",
+      "required": ["schema_version", "data"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/nonEmptyString"},
+        "data": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/extension"}
+    },
+    "commonRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/chainIdentity"},
+        {
+          "type": "object",
+          "required": [
+            "schema_version",
+            "record_id",
+            "record_type",
+            "observed_at",
+            "source",
+            "ledger_position",
+            "finality",
+            "extensions"
+          ],
+          "properties": {
+            "schema_version": {"const": "wallet-ledger-record-v1"},
+            "record_id": {"$ref": "#/$defs/walletId"},
+            "record_type": {
+              "enum": [
+                "block",
+                "transaction",
+                "transfer",
+                "balance",
+                "utxo",
+                "token_account",
+                "contract_event"
+              ]
+            },
+            "observed_at": {"type": "string", "format": "date-time"},
+            "source": {"$ref": "#/$defs/source"},
+            "ledger_position": {"$ref": "#/$defs/ledgerPosition"},
+            "finality": {
+              "enum": [
+                "unknown",
+                "observed",
+                "pending",
+                "confirmed",
+                "safe",
+                "finalized",
+                "orphaned",
+                "reverted",
+                "failed"
+              ]
+            },
+            "extensions": {"$ref": "#/$defs/extensions"}
+          }
+        }
+      ]
+    },
+    "blockRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": [
+            "block_hash",
+            "parent_hash",
+            "transaction_count"
+          ],
+          "properties": {
+            "record_type": {"const": "block"},
+            "block_hash": {"$ref": "#/$defs/nonEmptyString"},
+            "parent_hash": {"type": ["string", "null"], "minLength": 1},
+            "block_time": {"type": "string", "format": "date-time"},
+            "transaction_count": {"type": ["integer", "null"], "minimum": 0}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "transactionRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": ["transaction_hash", "status", "participants"],
+          "properties": {
+            "record_type": {"const": "transaction"},
+            "transaction_hash": {"$ref": "#/$defs/nonEmptyString"},
+            "status": {"enum": ["unknown", "succeeded", "failed"]},
+            "participants": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/accountRef"}
+            },
+            "fee": {"$ref": "#/$defs/exactAmount"},
+            "block_time": {"type": "string", "format": "date-time"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "transferRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": [
+            "transaction_hash",
+            "transfer_index",
+            "asset",
+            "amount",
+            "transfer_kind"
+          ],
+          "properties": {
+            "record_type": {"const": "transfer"},
+            "transaction_hash": {"$ref": "#/$defs/nonEmptyString"},
+            "transfer_index": {"type": "integer", "minimum": 0},
+            "asset": {"$ref": "#/$defs/assetRef"},
+            "amount": {"$ref": "#/$defs/exactAmount"},
+            "source_account": {"$ref": "#/$defs/accountRef"},
+            "destination_account": {"$ref": "#/$defs/accountRef"},
+            "transfer_kind": {
+              "enum": ["unknown", "native", "token", "fee", "reward", "mint", "burn"]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "balanceRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": ["account", "asset", "amount"],
+          "properties": {
+            "record_type": {"const": "balance"},
+            "account": {"$ref": "#/$defs/accountRef"},
+            "asset": {"$ref": "#/$defs/assetRef"},
+            "amount": {"$ref": "#/$defs/exactAmount"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "utxoRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": ["transaction_hash", "output_index", "asset", "amount"],
+          "properties": {
+            "record_type": {"const": "utxo"},
+            "transaction_hash": {"$ref": "#/$defs/nonEmptyString"},
+            "output_index": {"type": "integer", "minimum": 0},
+            "asset": {"$ref": "#/$defs/assetRef"},
+            "amount": {"$ref": "#/$defs/exactAmount"},
+            "owner": {"$ref": "#/$defs/accountRef"},
+            "spent_by_transaction_hash": {"$ref": "#/$defs/nonEmptyString"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "tokenAccountRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": ["token_account", "asset", "amount"],
+          "properties": {
+            "record_type": {"const": "token_account"},
+            "token_account": {"$ref": "#/$defs/accountRef"},
+            "owner": {"$ref": "#/$defs/accountRef"},
+            "asset": {"$ref": "#/$defs/assetRef"},
+            "amount": {"$ref": "#/$defs/exactAmount"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "contractEventRecord": {
+      "allOf": [
+        {"$ref": "#/$defs/commonRecord"},
+        {
+          "type": "object",
+          "required": [
+            "transaction_hash",
+            "event_index",
+            "contract",
+            "topics"
+          ],
+          "properties": {
+            "record_type": {"const": "contract_event"},
+            "transaction_hash": {"$ref": "#/$defs/nonEmptyString"},
+            "event_index": {"type": "integer", "minimum": 0},
+            "contract": {"$ref": "#/$defs/accountRef"},
+            "event_signature": {"$ref": "#/$defs/nonEmptyString"},
+            "topics": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/nonEmptyString"}
+            },
+            "data_ref": {"$ref": "#/$defs/rawPayloadRef"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

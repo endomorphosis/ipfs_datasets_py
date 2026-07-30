@@ -1,0 +1,47 @@
+{
+  "schema": "datasets_contract_analysis/dataset-manipulator-fixture-manifest@1",
+  "goal_id": "DSCON-G300",
+  "task_id": "DSCON-005",
+  "goal_packet": "goal_packet/datasets_pilot/ipfs_datasets_py/c2f31d882e73",
+  "goal_packet_goals": ["DSCON-G300", "DSCON-G310", "DSCON-G320"],
+  "title": "Dataset manipulator compatibility and failure baseline fixtures",
+  "characterization_only": true,
+  "vulnerabilities_are_expected_failures": true,
+  "compatibility_promises": false,
+  "classification": {
+    "security_vulnerabilities_frozen_as_ok": false,
+    "mock_success_is_defect": true,
+    "observe_side_effects": true
+  },
+  "files": [
+    "README.md",
+    "manifest.json",
+    "sample_dataset.json",
+    "expected_behaviors.json",
+    "safe_vectors.json",
+    "surface_inventory.json",
+    "digests.json"
+  ],
+  "audit_baseline": "data/datasets_contract_analysis/audit/dataset-contract-baseline.json",
+  "contract_test": "ipfs_datasets_py/tests/contract/core_operations/test_dataset_manipulator_baseline.py",
+  "acceptance_terms": [
+    "pass-no-op-transformation",
+    "fabricated-counts",
+    "random-hash-id-identity",
+    "no-write-save",
+    "no-conversion-convert",
+    "fallback-sample-dataset",
+    "duplicate-shadowed-monolith",
+    "missing-import",
+    "kit-integration-failure",
+    "weak-wrapper",
+    "safe-vectors-preserved",
+    "vulnerabilities-not-compatibility-promises"
+  ],
+  "drift_inventory": "data/datasets_contract_analysis/audit/datasets-manipulator-drift.json",
+  "ownership_map": "data/datasets_contract_analysis/audit/ownership-map.md",
+  "notes": [
+    "Fixtures are immutable characterization inputs for DSCON-G300.",
+    "DSCON-G310 and DSCON-G320 consume this freeze; they do not rewrite mock behavior as success."
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "wallet_processor_migration/shared-amount-vectors@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "notes": "Amounts are exact base-unit decimal integer strings. Binary floats are forbidden.",
+  "valid": [
+    {
+      "id": "wei-one-eth",
+      "base_units": "1000000000000000000",
+      "decimals": 18
+    },
+    {
+      "id": "sats-one-btc",
+      "base_units": "100000000",
+      "decimals": 8
+    },
+    {
+      "id": "zero",
+      "base_units": "0",
+      "decimals": 6
+    },
+    {
+      "id": "negative-debit",
+      "base_units": "-250000",
+      "decimals": 6
+    },
+    {
+      "id": "large-u256-like",
+      "base_units": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "decimals": 0
+    }
+  ],
+  "invalid": [
+    {
+      "id": "leading-zeros",
+      "base_units": "01",
+      "decimals": 0
+    },
+    {
+      "id": "float-string",
+      "base_units": "1.5",
+      "decimals": 18
+    },
+    {
+      "id": "empty",
+      "base_units": "",
+      "decimals": 0
+    },
+    {
+      "id": "scientific",
+      "base_units": "1e18",
+      "decimals": 0
+    },
+    {
+      "id": "decimals-too-large",
+      "base_units": "1",
+      "decimals": 256
+    }
+  ]
+}

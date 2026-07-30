@@ -1,0 +1,96 @@
+{
+  "schema": "wallet_processor_migration/wallet-fixture-root-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "task_id": "WALPROC-013",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Root inventory for shared chain conformance fixtures. Digests lock immutability; chain subdirs hold golden vectors; _shared holds harness vectors every chain must pass.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "live_network_opt_in_only": true
+  },
+  "source": {
+    "kind": "synthetic_and_frozen_baseline",
+    "description": "Shared harness vectors are synthetic offline fixtures. Worldcoin/Xaman baselines were frozen under WALPROC-G020.",
+    "repository_paths": [
+      "ipfs_datasets_py/tests/fixtures/wallets"
+    ]
+  },
+  "license": {
+    "spdx": "Apache-2.0",
+    "notes": "Repository default applies to synthetic harness vectors. Upstream vectors in worldcoin/ retain their documented source-of-truth paths."
+  },
+  "provenance": {
+    "created_for": "WALPROC-G090 shared chain conformance and fixture harness",
+    "digest_algorithm": "sha256",
+    "digest_manifest": "digests.json",
+    "integrity_tests": "ipfs_datasets_py/tests/contract/processors/wallets/test_fixture_integrity.py",
+    "conformance_module": "ipfs_datasets_py/tests/contract/processors/wallets/conformance.py"
+  },
+  "chains": [
+    {
+      "id": "_shared",
+      "role": "shared_harness",
+      "path": "_shared",
+      "status": "active"
+    },
+    {
+      "id": "worldcoin",
+      "role": "chain",
+      "path": "worldcoin",
+      "status": "baseline_frozen"
+    },
+    {
+      "id": "xaman",
+      "role": "chain",
+      "path": "xaman",
+      "status": "baseline_frozen"
+    },
+    {
+      "id": "xrpl",
+      "role": "chain",
+      "path": "xrpl",
+      "status": "scaffold"
+    },
+    {
+      "id": "ethereum",
+      "role": "chain",
+      "path": "ethereum",
+      "status": "scaffold"
+    },
+    {
+      "id": "bitcoin",
+      "role": "chain",
+      "path": "bitcoin",
+      "status": "scaffold"
+    },
+    {
+      "id": "solana",
+      "role": "chain",
+      "path": "solana",
+      "status": "scaffold"
+    }
+  ],
+  "required_shared_checks": [
+    "address_network_identity",
+    "exact_amounts",
+    "deterministic_ids",
+    "malformed_empty_partial",
+    "pagination",
+    "retries",
+    "cancellation",
+    "idempotency",
+    "cas_conflicts",
+    "shallow_deep_reorg",
+    "export_round_trip",
+    "secret_leaks",
+    "optional_dependency_absence",
+    "no_network_imports"
+  ],
+  "files": [
+    "manifest.json",
+    "digests.json",
+    "README.md"
+  ]
+}

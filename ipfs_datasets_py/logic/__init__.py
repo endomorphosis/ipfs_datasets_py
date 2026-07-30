@@ -63,6 +63,7 @@ _SUBMODULE_EXPORTS = {
     "TDFOL",
     "tools",
     "types",
+    "verification_api",
     "zkp",
 }
 

@@ -1,0 +1,46 @@
+{
+  "schema": "wallet_processor_migration/xrpl-tags-memos@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "notes": "Destination tags preserved; memos retained under privacy policy (type/format/data).",
+  "entry": {
+    "validated": true,
+    "ledger_index": 85000300,
+    "tx": {
+      "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+      "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+      "DestinationTag": 211,
+      "SourceTag": 42,
+      "TransactionType": "Payment",
+      "Amount": "500000",
+      "Fee": "12",
+      "Sequence": 60,
+      "hash": "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+      "Memos": [
+        {
+          "Memo": {
+            "MemoType": "687474703A2F2F6578616D706C652E636F6D2F6D656D6F2F67656E65726963",
+            "MemoFormat": "746578742F706C61696E",
+            "MemoData": "48656C6C6F205852504C"
+          }
+        }
+      ]
+    },
+    "meta": {
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "500000"
+    }
+  },
+  "expect": {
+    "destination_tag": 211,
+    "source_tag": 42,
+    "memo_count": 1,
+    "memo_type_present": true,
+    "memo_data_present_default": true
+  },
+  "redaction_expect": {
+    "data_redacted": true,
+    "memo_type_present": true
+  }
+}

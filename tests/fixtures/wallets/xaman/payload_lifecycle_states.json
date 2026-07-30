@@ -1,0 +1,264 @@
+{
+  "schema": "wallet_processor_migration/xaman-payload-lifecycle@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G210",
+  "task_id": "WALPROC-021",
+  "notes": "Synthetic offline Xaman payload shapes covering every distinct lifecycle status. API success is never settlement.",
+  "network": "xrpl-testnet",
+  "accounts": {
+    "alice": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+    "bob": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6"
+  },
+  "required_statuses": [
+    "created",
+    "opened",
+    "signed",
+    "rejected",
+    "expired",
+    "cancelled",
+    "submitted",
+    "validated",
+    "failed",
+    "unknown"
+  ],
+  "payloads": [
+    {
+      "id": "created",
+      "expect_status": "created",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111101",
+          "created": true,
+          "resolved": false,
+          "signed": false,
+          "cancelled": false,
+          "expired": false,
+          "opened": false,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000",
+            "DestinationTag": 211
+          },
+          "custom_instruction": "pay invoice 211"
+        },
+        "response": {}
+      }
+    },
+    {
+      "id": "opened",
+      "expect_status": "opened",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111102",
+          "opened": true,
+          "app_opened": true,
+          "resolved": false,
+          "signed": false,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {}
+      }
+    },
+    {
+      "id": "signed",
+      "expect_status": "signed",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111103",
+          "signed": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "txid": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      },
+      "expect_api_success": true,
+      "expect_settlement_without_xrpl": "api_success_only"
+    },
+    {
+      "id": "rejected",
+      "expect_status": "rejected",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111104",
+          "rejected": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {}
+      }
+    },
+    {
+      "id": "expired",
+      "expect_status": "expired",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111105",
+          "expired": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {}
+      }
+    },
+    {
+      "id": "cancelled",
+      "expect_status": "cancelled",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111106",
+          "cancelled": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {}
+      }
+    },
+    {
+      "id": "submitted",
+      "expect_status": "submitted",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111107",
+          "signed": true,
+          "submitted": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "txid": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "dispatched_result": "tesSUCCESS"
+        }
+      },
+      "expect_api_success": true,
+      "expect_settlement_without_xrpl": "api_success_only"
+    },
+    {
+      "id": "validated",
+      "expect_status": "validated",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111108",
+          "signed": true,
+          "resolved": true,
+          "validated": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "txid": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        }
+      },
+      "expect_api_success": true,
+      "expect_settlement_without_xrpl": "api_success_only",
+      "notes": "API-reported validated is still not XRPL settlement without ledger evidence."
+    },
+    {
+      "id": "failed",
+      "expect_status": "failed",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111109",
+          "failed": true,
+          "resolved": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {
+          "txid": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+        }
+      }
+    },
+    {
+      "id": "unknown",
+      "expect_status": "unknown",
+      "document": {
+        "meta": {
+          "uuid": "11111111-1111-4111-8111-111111111110",
+          "status": "mystery_future_state",
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000000"
+          }
+        },
+        "response": {}
+      }
+    }
+  ]
+}

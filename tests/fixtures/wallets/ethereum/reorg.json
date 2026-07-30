@@ -1,0 +1,44 @@
+{
+  "checkpoint": {
+    "sequence": 16,
+    "block_hash": "0x1010101010101010101010101010101010101010101010101010101010101010",
+    "history": [
+      {
+        "sequence": 14,
+        "block_hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      {
+        "sequence": 15,
+        "block_hash": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "sequence": 16,
+        "block_hash": "0x1010101010101010101010101010101010101010101010101010101010101010"
+      }
+    ]
+  },
+  "replacement": {
+    "observed": {
+      "sequence": 16,
+      "block_hash": "0xabababababababababababababababababababababababababababababababab"
+    },
+    "remote_history": [
+      {
+        "sequence": 14,
+        "block_hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      {
+        "sequence": 15,
+        "block_hash": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "sequence": 16,
+        "block_hash": "0xabababababababababababababababababababababababababababababababab"
+      }
+    ],
+    "orphaned_record_ids": [
+      "urn:wallet:transaction:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "expected_rewind_sequence": 15
+  }
+}

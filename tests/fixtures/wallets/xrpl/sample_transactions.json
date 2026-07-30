@@ -1,0 +1,38 @@
+{
+  "schema": "wallet_processor_migration/xrpl-sample-txs@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+  "tip_ledger_index": 85000002,
+  "tip_ledger_hash": "AAAA000000000000000000000000000000000000000000000000000000000002",
+  "ledger_head": {
+    "ledger": {
+      "ledger_index": 85000002,
+      "ledger_hash": "AAAA000000000000000000000000000000000000000000000000000000000002",
+      "parent_hash": "AAAA000000000000000000000000000000000000000000000000000000000001"
+    },
+    "validated": true
+  },
+  "entries": [
+    {
+      "validated": true,
+      "ledger_index": 85000001,
+      "ledger_hash": "AAAA000000000000000000000000000000000000000000000000000000000001",
+      "tx": {
+        "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+        "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+        "TransactionType": "Payment",
+        "Amount": "1000000",
+        "Fee": "12",
+        "Sequence": 1,
+        "hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "meta": {
+        "TransactionResult": "tesSUCCESS",
+        "TransactionIndex": 0,
+        "delivered_amount": "1000000"
+      }
+    }
+  ]
+}

@@ -1,0 +1,737 @@
+{
+  "schema_version": "ipfs-datasets.software-contract-verdict-policy.v1",
+  "policy_id": "software-contract-verdict-policy-v1",
+  "policy_version": "1.0.0",
+  "normative": true,
+  "human_readable_companion": "SOUNDNESS_AND_THREAT_MODEL.md",
+  "conceptual_interfaces": {
+    "VerificationVerdict": {
+      "role": "terminal_result",
+      "authority_field": "verdicts",
+      "meaning": "The exact terminal vocabulary for one obligation or scan result. Exactly one id from verdicts applies; fail_closed verdicts never satisfy completion.",
+      "required_fields": ["id", "terminal", "fail_closed", "meaning", "claim_limit"],
+      "vocabulary_ref": "verdicts"
+    },
+    "AssuranceLevel": {
+      "role": "claim_specific_authority",
+      "authority_field": "assurance_levels",
+      "meaning": "The claim-specific, non-totally-ordered assurance attached to an evidence kind. Levels are not a scalar trust score and do not escalate by combination.",
+      "required_fields": ["id", "meaning"],
+      "vocabulary_ref": "assurance_levels.levels",
+      "not_totally_ordered": true
+    },
+    "CompletionEvidence": {
+      "role": "evidence_kind",
+      "authority_field": "evidence_authority",
+      "meaning": "An evidence kind evaluated only against its allowlisted completion requirement. Non-substitutable: may_satisfy is the sole completion authority matrix for that kind.",
+      "required_fields": ["assurance_level", "may_satisfy", "authority_limit"],
+      "vocabulary_ref": "evidence_authority"
+    },
+    "ProofAttestation": {
+      "role": "bound_verification_artifact",
+      "authority_field": "evidence_authority",
+      "meaning": "A bound native or cryptographic verification artifact (FORMAL_PROOF_RECEIPT or ZK_ATTESTATION) whose authority is limited by evidence_authority and the matching completion_requirements entry.",
+      "allowed_evidence_kinds": ["FORMAL_PROOF_RECEIPT", "ZK_ATTESTATION"],
+      "required_fields": ["assurance_level", "may_satisfy", "authority_limit"],
+      "non_escalation": "ZK_ATTESTATION cannot satisfy proof_required; FORMAL_PROOF_RECEIPT cannot be replaced by SIMULATED_PROOF or TEST_RESULT."
+    }
+  },
+  "claim_rule": "Report only claims justified by the named model, bound assumptions, current inputs, complete scope disposition, and the authority of the checked evidence. Narrow claims are preferred to broader claims with unmodeled behavior.",
+  "semantic_models": {
+    "supported": [
+      {
+        "id": "PYTHON_STATIC_V1",
+        "scope": "Version-bound Python AST, symbols, imports, callable contracts, and effects that the frontend resolves without runtime execution.",
+        "fallback": "UNSUPPORTED"
+      },
+      {
+        "id": "ECMASCRIPT_STATIC_V1",
+        "scope": "Version-bound JavaScript and TypeScript AST, symbols, modules, callable contracts, and effects that the frontend resolves without runtime execution.",
+        "fallback": "UNSUPPORTED"
+      },
+      {
+        "id": "SCHEMA_CONTRACT_V1",
+        "scope": "Versioned JSON-like data, schema, dataset-operation, and receipt constraints explicitly represented in the reviewed contract IR.",
+        "fallback": "UNSUPPORTED"
+      },
+      {
+        "id": "BOUNDED_LOGIC_V1",
+        "scope": "Obligations translated to reviewed decidable theories or explicitly finite temporal and resource bounds.",
+        "fallback": "UNKNOWN"
+      },
+      {
+        "id": "DETERMINISTIC_RULES_V1",
+        "scope": "Versioned syntactic, dataflow, architecture, effect, and security rules over normalized IR.",
+        "fallback": "UNSUPPORTED"
+      }
+    ],
+    "dynamic_or_external_behavior": [
+      "reflection whose targets are not statically enumerated",
+      "monkey-patching or mutable dispatch not frozen by the model",
+      "runtime code generation, exec, or eval",
+      "unresolved dynamic imports or plugin discovery",
+      "native extensions without a reviewed contract",
+      "network services or subprocesses without a reviewed deterministic model",
+      "ambient environment, credentials, clocks, randomness, or mutable external state",
+      "deserialization hooks or metaprogramming not represented in the normalized IR"
+    ],
+    "dynamic_behavior_rule": "If behavior material to an obligation is outside every named supported model, emit UNSUPPORTED for that obligation. If it is represented by a supported model but cannot be decided within the declared budget, emit UNKNOWN. Never infer PROVED_WITHIN_MODEL from non-execution, missing observations, or absent findings."
+  },
+  "trusted_computing_base": {
+    "components": [
+      "Git object and selected-root identity reader",
+      "canonical encoder, multihash, and CID implementation",
+      "language parsers and normalized AST frontends",
+      "module, symbol, call, effect, and dataflow resolvers",
+      "reviewed contract and policy registries",
+      "obligation generator and model translator",
+      "solver, deterministic rule engine, and counterexample checker",
+      "coverage sharder and completeness validator",
+      "toolchain lock, sandbox, and resource-budget enforcement",
+      "receipt serializer, signature or proof verifier, and freshness verifier"
+    ],
+    "conditional_components": [
+      "cryptographic libraries, proving backend, verification key registry, and reviewed circuit for claims involving ZK_ATTESTATION"
+    ],
+    "compromise_rule": "A compromised or incorrectly reviewed trusted component is outside the soundness guarantee. Detected identity, integrity, configuration, or execution failures produce STALE or ERROR and fail closed."
+  },
+  "contract_authority": {
+    "order_high_to_low": [
+      "reviewed_policy_or_contract_registry",
+      "versioned_public_schema_or_protocol",
+      "version_bound_documented_api_contract",
+      "declared_type_contract",
+      "implementation_inference"
+    ],
+    "observations_are_evidence_not_contract_authority": [
+      "tests",
+      "runtime traces",
+      "examples",
+      "GraphRAG retrieval",
+      "absence of findings"
+    ],
+    "conflict_rule": "A lower authority cannot weaken a higher authority. Conflicting authorities at the same rank, an unbound authority revision, or an unresolved selected runtime authority is a policy-input ERROR and cannot satisfy completion.",
+    "counterexample_rule": "A checked witness may refute a higher-authority contract; it does not rewrite that contract."
+  },
+  "scan_completeness": {
+    "scope_identity_required": [
+      "repository tree and gitlink identities",
+      "selected logical roots",
+      "policy identity",
+      "analyzer and toolchain identities",
+      "shard plan and coverage root"
+    ],
+    "complete_when_all": [
+      "Every selected tracked object is counted exactly once per logical root.",
+      "Every object has an explicit analyzed, unsupported, excluded-by-policy, generated, vendored, binary, archived, oversized, or missing disposition.",
+      "All expected shards are present and their counts and roots verify.",
+      "Recursive mirrors and gitlinks are cycle-safe and revision-bound.",
+      "No selected root is absent, dirty where a clean tree is required, or changed since evidence production."
+    ],
+    "incomplete_when_any": [
+      "A selected root, object, gitlink, shard, or disposition is missing.",
+      "A coverage count or root does not verify.",
+      "An input changes during the scan or cannot be bound to the claimed snapshot.",
+      "A configured required repository is absent or cannot be read."
+    ],
+    "unsupported_is_explicitly_counted": true,
+    "unsupported_disposition_limit": "Counting an object as unsupported can make inventory coverage complete, but it cannot establish behavioral proof or a whole-scope safety claim for obligations depending on that object.",
+    "absence_rule": "Zero emitted findings means only that no finding was emitted by the named rules over the successfully analyzed scope. It is not evidence of safety, proof, scan completeness, or exhaustion."
+  },
+  "assurance_levels": {
+    "not_totally_ordered": true,
+    "levels": [
+      {
+        "id": "ADVISORY",
+        "meaning": "Discovery or navigation evidence with no completion authority."
+      },
+      {
+        "id": "EMPIRICAL",
+        "meaning": "Observed test or runtime evidence for the exact exercised cases."
+      },
+      {
+        "id": "CHECKED_WITNESS",
+        "meaning": "A deterministic checker accepted a concrete violation witness."
+      },
+      {
+        "id": "FORMAL_WITHIN_MODEL",
+        "meaning": "A reviewed verifier established the encoded obligation within its named model and assumptions."
+      },
+      {
+        "id": "CRYPTOGRAPHIC_INTEGRITY",
+        "meaning": "A reviewed cryptographic verifier established the exact attested statement and public-input bindings."
+      }
+    ],
+    "non_escalation_rule": "Assurance is claim-specific and not a scalar trust score. CRYPTOGRAPHIC_INTEGRITY does not imply FORMAL_WITHIN_MODEL, and combining lower-authority evidence does not create higher authority."
+  },
+  "verdicts": [
+    {
+      "id": "PROVED_WITHIN_MODEL",
+      "terminal": true,
+      "fail_closed": false,
+      "meaning": "The encoded obligation is valid within the explicitly named semantics, assumptions, scope, analyzer, policy, toolchain, and bounds.",
+      "claim_limit": "Does not assert arbitrary runtime or whole-program correctness outside those bindings."
+    },
+    {
+      "id": "VIOLATED_WITH_COUNTEREXAMPLE",
+      "terminal": true,
+      "fail_closed": false,
+      "meaning": "A deterministic checker accepted a concrete witness that violates the encoded obligation under its bound inputs and model.",
+      "claim_limit": "Refutes only the bound obligation; it does not establish completeness of other findings."
+    },
+    {
+      "id": "UNKNOWN",
+      "terminal": true,
+      "fail_closed": true,
+      "meaning": "The obligation is within a supported model, but the solver or analyzer did not decide it within the declared bounds.",
+      "claim_limit": "Never a pass, proof, refutation, or repair-completion signal."
+    },
+    {
+      "id": "UNSUPPORTED",
+      "terminal": true,
+      "fail_closed": true,
+      "meaning": "Behavior material to the obligation is outside the reviewed semantic models or translations.",
+      "claim_limit": "May be counted as an explicit coverage disposition, but never as behavioral proof."
+    },
+    {
+      "id": "INCOMPLETE_SCAN",
+      "terminal": true,
+      "fail_closed": true,
+      "meaning": "Required scope, identity, object, shard, or disposition evidence is missing or unverifiable.",
+      "claim_limit": "Partial findings may remain valid at narrower scopes, but absence, exhaustion, and whole-scope safety claims are forbidden."
+    },
+    {
+      "id": "STALE",
+      "terminal": true,
+      "fail_closed": true,
+      "meaning": "Evidence does not bind the current repository, gitlinks, contracts, policy, analyzer, toolchain, or coverage roots.",
+      "claim_limit": "Historical evidence only; it cannot satisfy current completion."
+    },
+    {
+      "id": "ERROR",
+      "terminal": true,
+      "fail_closed": true,
+      "meaning": "The analyzer, verifier, policy input, trusted component, or sandbox did not complete safely and deterministically.",
+      "claim_limit": "No semantic conclusion may be inferred from the failed execution."
+    }
+  ],
+  "verdict_selection": [
+    "Emit ERROR for unsafe execution, invalid policy inputs, inconsistent equal-rank contract authorities, or integrity failures.",
+    "Emit STALE when otherwise well-formed evidence is not current for every required identity.",
+    "Emit INCOMPLETE_SCAN when required scope or disposition evidence is absent or unverifiable.",
+    "Emit UNSUPPORTED when material semantics are outside the reviewed model.",
+    "Emit VIOLATED_WITH_COUNTEREXAMPLE only after deterministic witness checking.",
+    "Emit UNKNOWN when supported analysis remains undecided or exhausts its budget.",
+    "Emit PROVED_WITHIN_MODEL only after all proof bindings and completion conditions verify."
+  ],
+  "evidence_authority": {
+    "FORMAL_PROOF_RECEIPT": {
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "may_satisfy": [
+        "proof_required"
+      ],
+      "authority_limit": "Only the encoded obligation within bound semantics, assumptions, scope, identities, and resource bounds."
+    },
+    "CHECKED_COUNTEREXAMPLE": {
+      "assurance_level": "CHECKED_WITNESS",
+      "may_satisfy": [
+        "violation_required"
+      ],
+      "authority_limit": "Only the witnessed violation of the bound obligation."
+    },
+    "COVERAGE_RECEIPT": {
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "may_satisfy": [
+        "coverage_required"
+      ],
+      "authority_limit": "Inventory and disposition completeness only; never behavioral correctness."
+    },
+    "TEST_RESULT": {
+      "assurance_level": "EMPIRICAL",
+      "may_satisfy": [
+        "test_required"
+      ],
+      "authority_limit": "Only the exact cases, environment, revision, and assertions exercised."
+    },
+    "TYPE_CHECK_RESULT": {
+      "assurance_level": "EMPIRICAL",
+      "may_satisfy": [
+        "type_check_required"
+      ],
+      "authority_limit": "Only the selected type system and checked declarations; not runtime behavior."
+    },
+    "GRAPHRAG_RETRIEVAL": {
+      "assurance_level": "ADVISORY",
+      "may_satisfy": [],
+      "authority_limit": "Navigation and candidate discovery only; ranking cannot create, suppress, prove, or refute facts."
+    },
+    "SIMULATED_PROOF": {
+      "assurance_level": "ADVISORY",
+      "may_satisfy": [],
+      "authority_limit": "Development diagnostics only; simulation is not cryptographic verification or formal proof."
+    },
+    "ZK_ATTESTATION": {
+      "assurance_level": "CRYPTOGRAPHIC_INTEGRITY",
+      "may_satisfy": [
+        "attestation_integrity_required"
+      ],
+      "authority_limit": "Only the exact reviewed circuit statement and public-input bindings. An envelope alone does not prove analyzer correctness, unmodeled behavior, coverage, or the underlying obligation."
+    },
+    "ABSENCE_OF_FINDINGS": {
+      "assurance_level": "ADVISORY",
+      "may_satisfy": [],
+      "authority_limit": "No completion authority. It records only that named rules emitted no findings over the analyzed scope."
+    }
+  },
+  "completion_non_escalation_rule": "Satisfying test_required, type_check_required, or attestation_integrity_required establishes only that expressly named evidence criterion. It does not satisfy proof_required and does not upgrade empirical or cryptographic-integrity evidence into a behavioral proof.",
+  "completion_requirements": {
+    "proof_required": {
+      "allowed_verdicts": [
+        "PROVED_WITHIN_MODEL"
+      ],
+      "allowed_evidence_kinds": [
+        "FORMAL_PROOF_RECEIPT"
+      ],
+      "allowed_assurance_levels": [
+        "FORMAL_WITHIN_MODEL"
+      ],
+      "required_conditions": [
+        "model_named",
+        "assumptions_bound",
+        "scope_bound",
+        "coverage_complete",
+        "repository_current",
+        "policy_bound",
+        "analyzer_bound",
+        "toolchain_bound",
+        "evidence_integrity_verified"
+      ]
+    },
+    "violation_required": {
+      "allowed_verdicts": [
+        "VIOLATED_WITH_COUNTEREXAMPLE"
+      ],
+      "allowed_evidence_kinds": [
+        "CHECKED_COUNTEREXAMPLE"
+      ],
+      "allowed_assurance_levels": [
+        "CHECKED_WITNESS"
+      ],
+      "required_conditions": [
+        "model_named",
+        "scope_bound",
+        "repository_current",
+        "counterexample_checked",
+        "evidence_integrity_verified"
+      ]
+    },
+    "coverage_required": {
+      "allowed_verdicts": [
+        "PROVED_WITHIN_MODEL"
+      ],
+      "allowed_evidence_kinds": [
+        "COVERAGE_RECEIPT"
+      ],
+      "allowed_assurance_levels": [
+        "FORMAL_WITHIN_MODEL"
+      ],
+      "required_conditions": [
+        "scope_bound",
+        "coverage_complete",
+        "repository_current",
+        "policy_bound",
+        "evidence_integrity_verified"
+      ]
+    },
+    "test_required": {
+      "allowed_verdicts": [
+        "PROVED_WITHIN_MODEL"
+      ],
+      "allowed_evidence_kinds": [
+        "TEST_RESULT"
+      ],
+      "allowed_assurance_levels": [
+        "EMPIRICAL"
+      ],
+      "required_conditions": [
+        "scope_bound",
+        "repository_current",
+        "evidence_integrity_verified"
+      ]
+    },
+    "type_check_required": {
+      "allowed_verdicts": [
+        "PROVED_WITHIN_MODEL"
+      ],
+      "allowed_evidence_kinds": [
+        "TYPE_CHECK_RESULT"
+      ],
+      "allowed_assurance_levels": [
+        "EMPIRICAL"
+      ],
+      "required_conditions": [
+        "scope_bound",
+        "repository_current",
+        "evidence_integrity_verified"
+      ]
+    },
+    "attestation_integrity_required": {
+      "allowed_verdicts": [
+        "PROVED_WITHIN_MODEL"
+      ],
+      "allowed_evidence_kinds": [
+        "ZK_ATTESTATION"
+      ],
+      "allowed_assurance_levels": [
+        "CRYPTOGRAPHIC_INTEGRITY"
+      ],
+      "required_conditions": [
+        "scope_bound",
+        "repository_current",
+        "policy_bound",
+        "attestation_statement_bound",
+        "cryptographic_verification_passed",
+        "evidence_integrity_verified"
+      ]
+    }
+  },
+  "decision_fixtures": [
+    {
+      "id": "accept_bound_formal_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "accept_checked_counterexample",
+      "criterion": "violation_required",
+      "verdict": "VIOLATED_WITH_COUNTEREXAMPLE",
+      "evidence_kind": "CHECKED_COUNTEREXAMPLE",
+      "assurance_level": "CHECKED_WITNESS",
+      "conditions": {
+        "model_named": true,
+        "scope_bound": true,
+        "repository_current": true,
+        "counterexample_checked": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "accept_complete_coverage_receipt",
+      "criterion": "coverage_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "COVERAGE_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "accept_test_for_test_only",
+      "criterion": "test_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "TEST_RESULT",
+      "assurance_level": "EMPIRICAL",
+      "conditions": {
+        "scope_bound": true,
+        "repository_current": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "accept_type_check_for_type_check_only",
+      "criterion": "type_check_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "TYPE_CHECK_RESULT",
+      "assurance_level": "EMPIRICAL",
+      "conditions": {
+        "scope_bound": true,
+        "repository_current": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "accept_zk_for_attestation_integrity_only",
+      "criterion": "attestation_integrity_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "ZK_ATTESTATION",
+      "assurance_level": "CRYPTOGRAPHIC_INTEGRITY",
+      "conditions": {
+        "scope_bound": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "attestation_statement_bound": true,
+        "cryptographic_verification_passed": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": true
+    },
+    {
+      "id": "reject_test_as_formal_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "TEST_RESULT",
+      "assurance_level": "EMPIRICAL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_type_check_as_behavior_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "TYPE_CHECK_RESULT",
+      "assurance_level": "EMPIRICAL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_graphrag_as_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "GRAPHRAG_RETRIEVAL",
+      "assurance_level": "ADVISORY",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_simulated_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "SIMULATED_PROOF",
+      "assurance_level": "ADVISORY",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_zk_envelope_as_underlying_proof",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "ZK_ATTESTATION",
+      "assurance_level": "CRYPTOGRAPHIC_INTEGRITY",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_absence_of_findings_as_safety",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "ABSENCE_OF_FINDINGS",
+      "assurance_level": "ADVISORY",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_unknown_as_completion",
+      "criterion": "proof_required",
+      "verdict": "UNKNOWN",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_unsupported_as_completion",
+      "criterion": "proof_required",
+      "verdict": "UNSUPPORTED",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_incomplete_scan_as_completion",
+      "criterion": "proof_required",
+      "verdict": "INCOMPLETE_SCAN",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": false,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_stale_as_completion",
+      "criterion": "proof_required",
+      "verdict": "STALE",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": false,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_error_as_completion",
+      "criterion": "proof_required",
+      "verdict": "ERROR",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": true,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    },
+    {
+      "id": "reject_unbound_assumptions",
+      "criterion": "proof_required",
+      "verdict": "PROVED_WITHIN_MODEL",
+      "evidence_kind": "FORMAL_PROOF_RECEIPT",
+      "assurance_level": "FORMAL_WITHIN_MODEL",
+      "conditions": {
+        "model_named": true,
+        "assumptions_bound": false,
+        "scope_bound": true,
+        "coverage_complete": true,
+        "repository_current": true,
+        "policy_bound": true,
+        "analyzer_bound": true,
+        "toolchain_bound": true,
+        "evidence_integrity_verified": true
+      },
+      "expected_satisfies_completion": false
+    }
+  ],
+  "threat_outcomes": {
+    "malicious_or_pathological_source": "Parse and analyze without executing source; enforce budgets; emit UNSUPPORTED, UNKNOWN, or ERROR rather than guessing.",
+    "tampered_evidence_or_cache": "Verify content identities and links; reject with ERROR.",
+    "stale_or_cross_revision_evidence": "Verify all bound roots; emit STALE.",
+    "scope_omission_or_missing_shard": "Verify disposition-complete coverage; emit INCOMPLETE_SCAN.",
+    "retrieval_poisoning_or_ranking_drift": "Keep retrieval non-authoritative; re-resolve every cited record by content identity.",
+    "forged_counterexample": "Replay with the deterministic witness checker; do not emit VIOLATED_WITH_COUNTEREXAMPLE if checking fails.",
+    "forged_or_simulated_proof": "Require the reviewed native or cryptographic verifier and exact bindings; simulation has no completion authority.",
+    "resource_exhaustion": "Apply declared bounds and emit UNKNOWN or ERROR without weakening coverage or verdict rules."
+  },
+  "non_goals": [
+    "Proving arbitrary Python, JavaScript, or TypeScript functional correctness.",
+    "Treating unsupported or unobserved runtime behavior as safe.",
+    "Treating a complete inventory as a behavioral proof.",
+    "Treating tests, types, retrieval, simulation, or cryptographic packaging as interchangeable evidence.",
+    "Guaranteeing soundness if the trusted computing base or reviewed model is wrong.",
+    "Claiming whole-repository safety from a pilot, partial scan, or absence of findings."
+  ]
+}

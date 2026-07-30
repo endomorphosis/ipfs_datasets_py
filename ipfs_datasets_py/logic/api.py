@@ -693,6 +693,39 @@ _BW133_CONFLICT_LAZY_NAMES = {
     "detect_i18n_conflicts", "I18NConflictResult",
 }
 
+# Additive software-verification facade (LFV-G070 / LogicVerificationAPI@1).
+# Symbols are exposed via __getattr__ only so the frozen exact_exports contract
+# in tests/fixtures/logic/api_v1/manifest.json remains unchanged.
+_VERIFICATION_API_EXPORT_NAMES = {
+    "LogicVerificationAPI",
+    "VerificationResponse",
+    "VerificationStatus",
+    "VerificationAuthority",
+    "get_verification_api",
+    "list_logic_families",
+    "list_providers",
+    "provider_capabilities",
+    "compile_verification_artifact",
+    "check",
+    "monitor",
+    "run_portfolio",
+    "explain_counterexample",
+    "verify_receipt",
+    "attest_receipt",
+    "advise",
+    "probe_provider",
+    "install_provider",
+    "verification_api",
+}
+
+
+def _lazy_verification_api():
+    """Import the software-verification facade on first use."""
+    from . import verification_api as _verification_api
+
+    return _verification_api
+
+
 def __getattr__(name: str) -> Any:
     """Lazily expose optional API classes without import-time side effects."""
     if name in _BW133_LAZY_NAMES:
@@ -720,4 +753,12 @@ def __getattr__(name: str) -> Any:
         raise AttributeError(
             f"{name} is not available because the NL→UCAN pipeline could not be imported"
         )
+    if name in _VERIFICATION_API_EXPORT_NAMES:
+        module = _lazy_verification_api()
+        if name == "verification_api":
+            globals()[name] = module
+            return module
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

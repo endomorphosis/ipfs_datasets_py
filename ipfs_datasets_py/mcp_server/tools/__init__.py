@@ -73,20 +73,29 @@ _TOOL_SUBMODULES: Final[set[str]] = {
     "software_engineering_tools",
 }
 
-__all__ = sorted(_TOOL_SUBMODULES)
+# Standalone tool modules (single .py files at this package level).
+# Lazy-loaded via __getattr__ the same way as tool subpackages.
+_STANDALONE_TOOL_MODULES: Final[set[str]] = {
+    "logic_verification",  # LFV-G071 LogicVerificationMCP@1
+    "logic_admissibility_tools",
+    "logic_admissibility_enforcement",
+    "logic_hammer",
+}
+
+__all__ = sorted(_TOOL_SUBMODULES | _STANDALONE_TOOL_MODULES)
 
 
 def __getattr__(name: str) -> ModuleType:
-    """Lazy-load tool subpackages.
+    """Lazy-load tool subpackages and standalone tool modules.
 
     This keeps package import cheap and avoids hard failures when optional
     dependencies for some tool categories are not installed.
     """
 
-    if name in _TOOL_SUBMODULES:
+    if name in _TOOL_SUBMODULES or name in _STANDALONE_TOOL_MODULES:
         return importlib.import_module(f"{__name__}.{name}")
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def __dir__() -> list[str]:
-    return sorted(set(globals().keys()) | _TOOL_SUBMODULES)
+    return sorted(set(globals().keys()) | _TOOL_SUBMODULES | _STANDALONE_TOOL_MODULES)

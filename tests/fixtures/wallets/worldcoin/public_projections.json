@@ -1,0 +1,89 @@
+{
+  "schema": "wallet_processor_migration/world-id-public-projections@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "projections": {
+    "WorldIdConfig.public_dict": {
+      "allowed_keys": [
+        "enabled",
+        "environment",
+        "app_id",
+        "rp_id",
+        "allowed_actions",
+        "default_action",
+        "credential_policy",
+        "allow_legacy_proofs",
+        "require_user_presence",
+        "rp_signature_ttl_seconds",
+        "verify_base_url",
+        "http_timeout_seconds"
+      ],
+      "forbidden_substrings": [
+        "signing_key",
+        "nullifier_hmac",
+        "secret://",
+        "super-secret"
+      ]
+    },
+    "WorldIdIdkitResult.public_dict": {
+      "must_expose_counts_not_raw_values": [
+        "nullifier_count",
+        "signal_hash_count"
+      ],
+      "must_not_expose": [
+        "raw nullifier values",
+        "proof bytes",
+        "integrity_bundle jwt/signature"
+      ]
+    },
+    "WorldIdVerificationResult.public_dict": {
+      "keys": [
+        "success",
+        "action",
+        "nullifier",
+        "created_at",
+        "environment",
+        "session_id",
+        "message",
+        "results"
+      ],
+      "results_must_be_redacted": true,
+      "application_layer_must_replace_nullifier_with": "[redacted]"
+    },
+    "WorldIdBinding.to_dict": {
+      "must_include_nullifier_ref": true,
+      "must_not_include_raw_nullifier": true
+    },
+    "export_proof_receipt": {
+      "public_keys": [
+        "proof_id",
+        "wallet_id",
+        "proof_type",
+        "statement",
+        "verifier_id",
+        "public_inputs",
+        "proof_hash",
+        "witness_record_ids",
+        "is_simulated",
+        "proof_system",
+        "circuit_id",
+        "verifier_digest",
+        "proof_artifact_ref",
+        "verification_status",
+        "created_at",
+        "expires_at",
+        "metadata"
+      ],
+      "private_keys_forbidden_in_public_export": [
+        "developer_portal_response",
+        "idkit_payload",
+        "nullifier",
+        "raw_nullifier",
+        "rp_signature",
+        "session_nullifier",
+        "merkle_root",
+        "jwt"
+      ]
+    }
+  }
+}

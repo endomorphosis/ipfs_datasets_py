@@ -1,0 +1,49 @@
+{
+  "schema": "wallet_processor_migration/redaction-cases@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "cases": [
+    {
+      "id": "idkit_payload_recursive_redaction",
+      "input_ref": "idkit_v3_legacy.json#payload",
+      "must_not_appear_in_redacted_json": [
+        "0xproof",
+        "0xnullifier",
+        "0xroot",
+        "0xsignal"
+      ],
+      "expected_redacted_responses_marker": "[redacted]"
+    },
+    {
+      "id": "v4_uniqueness_public_dict",
+      "input_ref": "idkit_v4_uniqueness.json#payload",
+      "public_dict_must_include": {
+        "nullifier_count": 1,
+        "signal_hash_count": 1,
+        "integrity_bundle_present": true
+      },
+      "public_dict_must_not_contain": [
+        "0xrp-scoped-nullifier",
+        "0xsignature",
+        "private.jwt.value"
+      ]
+    },
+    {
+      "id": "verify_error_message_redaction",
+      "error_message_template": "upstream failed proof=0xproof nullifier=0xnullifier",
+      "must_not_appear_in_raised_message": [
+        "0xproof",
+        "0xnullifier"
+      ],
+      "must_include": "[redacted World ID verification error]"
+    }
+  ],
+  "private_sentinel_tokens_for_ui_export": {
+    "rawNullifier": "WORLD_ID_RAW_NULLIFIER_DO_NOT_RENDER_7f3c",
+    "legacyNullifierHash": "0xWORLD_ID_LEGACY_NULLIFIER_HASH_DO_NOT_RENDER",
+    "idkitProof": "WORLD_ID_IDKIT_PROOF_DO_NOT_RENDER_9d2a",
+    "merkleRoot": "WORLD_ID_MERKLE_ROOT_DO_NOT_RENDER_4c11",
+    "rpSignature": "WORLD_ID_RP_SIGNATURE_DO_NOT_RENDER_83be",
+    "developerPortalResponse": "WORLD_ID_DEVELOPER_PORTAL_RESPONSE_DO_NOT_RENDER"
+  }
+}

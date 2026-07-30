@@ -1,0 +1,5 @@
+[package]
+name = "provekit_program_contract_trace"
+type = "bin"
+authors = ["ipfs_datasets_py"]
+compiler_version = ">=1.0.0"

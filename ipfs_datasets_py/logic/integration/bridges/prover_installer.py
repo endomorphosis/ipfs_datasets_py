@@ -545,6 +545,126 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def verify_artifact_sha256(path: Path | str, expected_sha256: str) -> str:
+    """Return the observed digest and raise on checksum mismatch.
+
+    Public security helper used by toolchain tests and install gates.  A
+    mismatched artifact is never trusted or left in place by callers that
+    delete on failure.
+    """
+
+    expected = str(expected_sha256 or "").strip().lower()
+    if len(expected) != 64 or any(ch not in "0123456789abcdef" for ch in expected):
+        raise ValueError("expected_sha256 must be a 64-character lowercase hex digest")
+    observed = _sha256(Path(path))
+    if observed != expected:
+        raise RuntimeError(
+            f"checksum mismatch for {Path(path).name}: expected {expected}, got {observed}"
+        )
+    return observed
+
+
+def require_explicit_install_consent(*, yes: bool, action: str = "install") -> None:
+    """Refuse installer mutation without an explicit ``yes=True`` consent flag."""
+
+    if not yes:
+        raise PermissionError(
+            f"refusing to {action} without explicit yes=True consent; "
+            "installers never run during import, discovery, or tests by default"
+        )
+
+
+def refuse_system_package_mutation_in_tests(
+    *,
+    test_mode: bool | None = None,
+    system_package_mutation: bool,
+    action: str = "install system packages",
+) -> None:
+    """Block apt/dnf/yum style mutation when running under the test harness."""
+
+    if test_mode is None:
+        test_mode = bool(
+            os.environ.get("PYTEST_CURRENT_TEST")
+            or os.environ.get("IPFS_DATASETS_PY_TEST_MODE")
+        )
+    if test_mode and system_package_mutation:
+        raise PermissionError(
+            f"refusing to {action} while tests are active; "
+            "system package managers must not be mutated by the test suite"
+        )
+
+
+def pinned_release_inventory() -> dict[str, dict[str, str]]:
+    """Return reviewed pin identities for managed native artifacts.
+
+    Values are best-effort summaries for discovery/tests.  Platform-specific
+    multi-arch digests remain authoritative inside the download helpers.
+    """
+
+    return {
+        "apalache": {
+            "version": APALACHE_VERSION,
+            "url": APALACHE_PORTABLE_URL,
+            "sha256": APALACHE_PORTABLE_SHA256,
+        },
+        "tamarin": {
+            "version": TAMARIN_VERSION,
+            "url": TAMARIN_LINUX_X86_64_URL,
+            "sha256": TAMARIN_LINUX_X86_64_SHA256,
+        },
+        "tamarin_source": {
+            "version": TAMARIN_VERSION,
+            "url": TAMARIN_SOURCE_URL,
+            "sha256": TAMARIN_SOURCE_SHA256,
+        },
+        "maude": {
+            "version": MAUDE_VERSION,
+            "url": MAUDE_LINUX_X86_64_URL,
+            "sha256": MAUDE_LINUX_X86_64_SHA256,
+        },
+        "proverif": {
+            "version": PROVERIF_VERSION,
+            "url": PROVERIF_SOURCE_URL,
+            "sha256": PROVERIF_SOURCE_SHA256,
+        },
+        "eprover": {
+            "version": EPROVER_VERSION,
+            "url": EPROVER_SOURCE_URL,
+            "sha256": EPROVER_SOURCE_SHA256,
+        },
+        "cvc5": {"version": CVC5_VERSION},
+        "vampire": {"version": VAMPIRE_VERSION},
+        "lean": {"version": LEAN_TOOLCHAIN},
+        "rocq": {"version": ROCQ_VERSION},
+        "isabelle": {"version": ISABELLE_VERSION},
+        "opam": {"version": OPAM_VERSION},
+        "stack": {"version": STACK_VERSION},
+    }
+
+
+def authorize_managed_install(
+    prover: str,
+    *,
+    yes: bool,
+    checksum_verified: bool | None = None,
+) -> None:
+    """Gate a managed install through the verification toolchain registry."""
+
+    require_explicit_install_consent(yes=yes, action=f"install {prover}")
+    try:
+        from ipfs_datasets_py.logic.backends.toolchains import authorize_provider_install
+    except Exception:
+        # Registry is optional at import time for legacy call sites; consent
+        # already enforced above.
+        return
+    authorize_provider_install(
+        prover,
+        yes=yes,
+        explicit_call=True,
+        checksum_verified=checksum_verified,
+    )
+
+
 def _download_release_artifact(
     url: str,
     destination: Path,
@@ -563,14 +683,10 @@ def _download_release_artifact(
                 on_progress,
             )
             urllib.request.urlretrieve(url, destination)
-        observed = _sha256(destination)
-        if observed != expected_sha256:
-            destination.unlink(missing_ok=True)
-            raise RuntimeError(
-                f"checksum mismatch for {destination.name}: expected {expected_sha256}, got {observed}"
-            )
+        verify_artifact_sha256(destination, expected_sha256)
         return True
     except Exception as exc:
+        destination.unlink(missing_ok=True)
         _announce(f"Theorem-prover download failed: {exc}", on_progress, phase="failed")
         if strict:
             raise
@@ -588,6 +704,12 @@ def _safe_extract_tar(archive: Path, destination: Path) -> None:
         bundle.extractall(destination, filter="data")
 
 
+def safe_extract_tar(archive: Path | str, destination: Path | str) -> None:
+    """Public path-traversal-safe tar extraction for managed installs and tests."""
+
+    _safe_extract_tar(Path(archive), Path(destination))
+
+
 def _safe_extract_zip(archive: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     root = destination.resolve()
@@ -597,6 +719,12 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
             if not target.is_relative_to(root):
                 raise RuntimeError(f"refusing unsafe archive member: {member.filename}")
         bundle.extractall(destination)
+
+
+def safe_extract_zip(archive: Path | str, destination: Path | str) -> None:
+    """Public path-traversal-safe zip extraction for managed installs and tests."""
+
+    _safe_extract_zip(Path(archive), Path(destination))
 
 
 def _write_launcher(
@@ -846,6 +974,10 @@ def _install_system_packages(
 ) -> bool:
     """Install system packages using the detected package manager."""
 
+    refuse_system_package_mutation_in_tests(
+        system_package_mutation=True,
+        action=f"install system packages for {reason}",
+    )
     profile = detect_platform_install_profile()
     command_plan = _platform_install_command(
         profile,
@@ -1778,6 +1910,9 @@ def ensure_apalache(
     if not yes:
         _announce("Apalache is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
         return False
+    # Managed installs require explicit consent and registry authorization.
+    # Checksums are verified later by _download_release_artifact.
+    authorize_managed_install("apalache", yes=True, checksum_verified=None)
     if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
         return _which("apalache-mc") is not None or _which("apalache") is not None
     if platform.system().lower() not in {"linux", "darwin"}:

@@ -1,0 +1,18 @@
+{
+  "schema": "datasets_contract_analysis/dataset-manipulator-digests@1",
+  "goal_id": "DSCON-G300",
+  "task_id": "DSCON-005",
+  "algorithm": "sha256",
+  "files": {
+    "manifest.json": "c2f23e38688d48125bf6aadb501be1220a93811e12b0ec92c8bcd0cd0bd5ab0e",
+    "sample_dataset.json": "b786725060660eb36cbcff5352803a437b3ad1a8ae4f6f5abe0ea845c7e1e42e",
+    "expected_behaviors.json": "899e1a8d9f50b56f1a4afb3d689e801d9610dc22de1c3f32151518ddb7efe221",
+    "safe_vectors.json": "9ed97033ffa6f22eaf8289f9ff1ac584ddefce72bfcd7a65aa48d42dc03fda32",
+    "surface_inventory.json": "8b1667b8737acf5b5fc1a14f761f3868b4cca49cbdabb5444d7be5ddf169449d",
+    "README.md": "6e0c934e300cfdeebdbc8c4c6d7826103e281c2c66e57e36e413712d0a887ae5"
+  },
+  "notes": [
+    "Digests cover sibling fixture payloads only (not digests.json itself).",
+    "Contract tests recompute digests to detect accidental fixture drift."
+  ]
+}

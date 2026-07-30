@@ -1,0 +1,14 @@
+{
+  "name": "wallet_processor_tools",
+  "display_name": "Wallet Processor Tools",
+  "description": "Bounded wallet and ledger-range ingest/export, resume, status, capabilities, and manifest verification. Non-custodial: no signing or broadcast.",
+  "version": "1.0.0",
+  "tags": [
+    "wallet",
+    "processors",
+    "ingest",
+    "export",
+    "bounded",
+    "non-custodial"
+  ]
+}

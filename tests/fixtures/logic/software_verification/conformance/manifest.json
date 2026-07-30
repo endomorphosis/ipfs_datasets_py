@@ -1,0 +1,375 @@
+{
+  "schema_version": "logic-provider-conformance/v1",
+  "interface": "LogicProviderConformance@1",
+  "description": "Cross-family and cross-provider software-verification conformance corpus. Compact recipes generate positive, negative, mutation, metamorphic, translation, disagreement, malformed-output, timeout, and authority-boundary fixtures for every reviewed adapter. Offline fake runners are mandatory; real-tool lanes are opt-in and must declare skips or unavailability.",
+  "objective": "LFV-G080",
+  "task": "LFV-039",
+  "scope": {
+    "path_root": "ipfs_datasets_py",
+    "offline_required": true,
+    "real_tools": {
+      "opt_in_env": "LFV_CONFORMANCE_REAL_TOOLS",
+      "policy": "When the opt-in environment variable is unset or empty, real-tool lanes must not run. When set, missing binaries must surface as explicit unavailable or pytest.skip, never as success."
+    },
+    "authority_policy": "Candidates and advisory surfaces never upgrade to theorem or independently-checkable authority. Cache entries cannot store evidence above the translation ceiling. Stale tree or backend identity dimensions must miss, not hit.",
+    "disagreement_policy": "Conclusive disagreement between peer authorities quarantines; no winner is selected by presentation order."
+  },
+  "required_case_kinds": [
+    "positive",
+    "negative",
+    "mutation",
+    "metamorphic",
+    "translation",
+    "disagreement",
+    "malformed_output",
+    "timeout",
+    "authority_boundary"
+  ],
+  "logic_families": [
+    "authorization",
+    "concurrency",
+    "cryptographic_protocol",
+    "datalog",
+    "first_order",
+    "higher_order",
+    "hyperproperty",
+    "program",
+    "propositional",
+    "refinement",
+    "separation_logic",
+    "temporal",
+    "transition_system"
+  ],
+  "attempt_families": [
+    "solver",
+    "atp",
+    "model_checker",
+    "monitor",
+    "policy",
+    "protocol",
+    "hyperproperty",
+    "kernel",
+    "orchestrator",
+    "advisor"
+  ],
+  "adapters": [
+    {
+      "adapter_id": "z3",
+      "attempt_family": "solver",
+      "result_authority": "satisfiability",
+      "logic_families": ["first_order", "propositional", "program"],
+      "module": "ipfs_datasets_py.logic.backends.z3.compiler",
+      "real_tool_binary": "z3",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "cvc5",
+      "attempt_family": "solver",
+      "result_authority": "satisfiability",
+      "logic_families": ["first_order", "propositional", "program"],
+      "module": "ipfs_datasets_py.logic.backends.cvc5.compiler",
+      "real_tool_binary": "cvc5",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "vampire",
+      "attempt_family": "atp",
+      "result_authority": "theorem",
+      "logic_families": ["first_order"],
+      "module": "ipfs_datasets_py.logic.backends.atp.adapters",
+      "real_tool_binary": "vampire",
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "eprover",
+      "attempt_family": "atp",
+      "result_authority": "theorem",
+      "logic_families": ["first_order"],
+      "module": "ipfs_datasets_py.logic.backends.atp.adapters",
+      "real_tool_binary": "eprover",
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "dcec",
+      "attempt_family": "atp",
+      "result_authority": "theorem",
+      "logic_families": ["first_order"],
+      "module": "ipfs_datasets_py.logic.backends.atp.adapters",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "tdfol",
+      "attempt_family": "atp",
+      "result_authority": "theorem",
+      "logic_families": ["first_order", "temporal"],
+      "module": "ipfs_datasets_py.logic.backends.atp.adapters",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "tlc",
+      "attempt_family": "model_checker",
+      "result_authority": "model_check",
+      "logic_families": ["temporal", "transition_system"],
+      "module": "ipfs_datasets_py.logic.backends.tla.runners",
+      "real_tool_binary": "tlc",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "apalache",
+      "attempt_family": "model_checker",
+      "result_authority": "model_check",
+      "logic_families": ["temporal", "transition_system"],
+      "module": "ipfs_datasets_py.logic.backends.tla.runners",
+      "real_tool_binary": "apalache-mc",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "runtime_mtl",
+      "attempt_family": "monitor",
+      "result_authority": "monitor",
+      "logic_families": ["temporal"],
+      "module": "ipfs_datasets_py.logic.software_verification.monitoring.runtime_mtl",
+      "real_tool_binary": null,
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "datalog_secpal",
+      "attempt_family": "policy",
+      "result_authority": "authorization",
+      "logic_families": ["authorization", "datalog"],
+      "module": "ipfs_datasets_py.logic.backends.datalog.adapters",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "datalog-authorization",
+      "attempt_family": "policy",
+      "result_authority": "authorization",
+      "logic_families": ["authorization", "datalog"],
+      "module": "ipfs_datasets_py.logic.backends.datalog.adapters",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "secpal-authorization",
+      "attempt_family": "policy",
+      "result_authority": "authorization",
+      "logic_families": ["authorization"],
+      "module": "ipfs_datasets_py.logic.backends.datalog.adapters",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "tamarin",
+      "attempt_family": "protocol",
+      "result_authority": "protocol",
+      "logic_families": ["cryptographic_protocol"],
+      "module": "ipfs_datasets_py.logic.backends.protocol.tamarin",
+      "real_tool_binary": "tamarin-prover",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "proverif",
+      "attempt_family": "protocol",
+      "result_authority": "protocol",
+      "logic_families": ["cryptographic_protocol"],
+      "module": "ipfs_datasets_py.logic.backends.protocol.proverif",
+      "real_tool_binary": "proverif",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "hyperltl",
+      "attempt_family": "hyperproperty",
+      "result_authority": "hyperproperty",
+      "logic_families": ["hyperproperty"],
+      "module": "ipfs_datasets_py.logic.backends.hyperproperties.adapters",
+      "real_tool_binary": "hyperltl-sat",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "autohyper",
+      "attempt_family": "hyperproperty",
+      "result_authority": "hyperproperty",
+      "logic_families": ["hyperproperty"],
+      "module": "ipfs_datasets_py.logic.backends.hyperproperties.adapters",
+      "real_tool_binary": "AutoHyper",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "mchyper",
+      "attempt_family": "hyperproperty",
+      "result_authority": "hyperproperty",
+      "logic_families": ["hyperproperty"],
+      "module": "ipfs_datasets_py.logic.backends.hyperproperties.adapters",
+      "real_tool_binary": "MCHyper",
+      "supports_counterexample": true
+    },
+    {
+      "adapter_id": "lean",
+      "attempt_family": "kernel",
+      "result_authority": "reconstruction",
+      "logic_families": ["higher_order", "first_order"],
+      "module": "ipfs_datasets_py.logic.backends.kernel.lean",
+      "real_tool_binary": "lean",
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "rocq",
+      "attempt_family": "kernel",
+      "result_authority": "reconstruction",
+      "logic_families": ["higher_order", "first_order"],
+      "module": "ipfs_datasets_py.logic.backends.kernel.rocq",
+      "real_tool_binary": "coqc",
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "isabelle",
+      "attempt_family": "kernel",
+      "result_authority": "reconstruction",
+      "logic_families": ["higher_order", "first_order"],
+      "module": "ipfs_datasets_py.logic.backends.kernel.isabelle",
+      "real_tool_binary": "isabelle",
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "leanstral",
+      "attempt_family": "advisor",
+      "result_authority": "candidate",
+      "logic_families": ["higher_order", "first_order"],
+      "module": "ipfs_datasets_py.logic.formalization.proposal_advisors",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    },
+    {
+      "adapter_id": "hammer",
+      "attempt_family": "orchestrator",
+      "result_authority": "candidate",
+      "logic_families": ["first_order", "higher_order"],
+      "module": "ipfs_datasets_py.logic.hammers.backend",
+      "real_tool_binary": null,
+      "supports_counterexample": false
+    }
+  ],
+  "recipes": {
+    "statement_seed": "forall x. P(x) -> Q(x)",
+    "positive": {
+      "description": "Well-formed obligation expected to conclude positively under the adapter authority.",
+      "statement_template": "{seed}",
+      "expected_disposition": "conclusive_positive"
+    },
+    "negative": {
+      "description": "Disproved or violated obligation with an optional counterexample witness.",
+      "statement_template": "exists x. P(x) /\\ ~Q(x)",
+      "expected_disposition": "conclusive_negative",
+      "counterexample": {
+        "binding": {"x": 0},
+        "trace": ["s0", "s1"]
+      }
+    },
+    "mutation": {
+      "description": "Semantic mutations must change the obligation digest and must not reuse positive outcomes.",
+      "base_statement": "{seed}",
+      "mutations": [
+        {
+          "mutation_id": "invert_implication",
+          "mutated_statement": "forall x. Q(x) -> P(x)",
+          "semantic_change": true
+        },
+        {
+          "mutation_id": "drop_quantifier",
+          "mutated_statement": "P(a) -> Q(a)",
+          "semantic_change": true
+        },
+        {
+          "mutation_id": "negate_goal",
+          "mutated_statement": "~(forall x. P(x) -> Q(x))",
+          "semantic_change": true
+        },
+        {
+          "mutation_id": "whitespace_only",
+          "mutated_statement": "forall  x.  P(x) -> Q(x)",
+          "semantic_change": false,
+          "normalize": "collapse_whitespace"
+        }
+      ]
+    },
+    "metamorphic": {
+      "description": "Equivalent reformulations must preserve the offline fake verdict.",
+      "pairs": [
+        {
+          "pair_id": "alpha_rename",
+          "left": "forall x. P(x) -> Q(x)",
+          "right": "forall y. P(y) -> Q(y)",
+          "expect_same_verdict": true
+        },
+        {
+          "pair_id": "commute_and",
+          "left": "P(a) /\\ Q(a)",
+          "right": "Q(a) /\\ P(a)",
+          "expect_same_verdict": true
+        },
+        {
+          "pair_id": "non_equivalent",
+          "left": "forall x. P(x) -> Q(x)",
+          "right": "forall x. Q(x) -> P(x)",
+          "expect_same_verdict": false
+        }
+      ]
+    },
+    "translation": {
+      "description": "Translation receipts bind source fragment, target fragment, and authority ceiling.",
+      "source_family": "program",
+      "target_family": "first_order",
+      "preservation": "equisatisfiable",
+      "ceiling": "bounded",
+      "source_digest_seed": "program:cfg:entry",
+      "target_digest_seed": "smt:qf_lia:vc"
+    },
+    "disagreement": {
+      "description": "Peer model-checkers that disagree must quarantine without authority selection.",
+      "property_kind": "safety",
+      "peer_backend_ids": ["tla_tlc", "apalache"],
+      "left_status": "satisfied",
+      "right_status": "violated",
+      "expected_verdict": "quarantined"
+    },
+    "malformed_output": {
+      "description": "Conflicting or unparseable tool output maps to malformed, never proved.",
+      "raw_payloads": [
+        "sat\nunsat\n",
+        "",
+        "??? not a verdict",
+        "{\"status\": null}"
+      ],
+      "expected_status": "malformed"
+    },
+    "timeout": {
+      "description": "Bounded resource exhaustion is typed as timeout and non-conclusive.",
+      "timeout_ms": 1,
+      "expected_status": "timeout"
+    },
+    "authority_boundary": {
+      "description": "Advisory and candidate surfaces cannot raise authority; cache cannot accept stale or elevated entries.",
+      "candidate_adapter_id": "leanstral",
+      "forbidden_upgrade_to": "theorem",
+      "max_evidence_authority": "advisory",
+      "stale_tree_id": "tree:stale-conformance",
+      "fresh_tree_id": "tree:fresh-conformance"
+    }
+  },
+  "acceptance": {
+    "fake_runners_cover_every_adapter_offline": true,
+    "opt_in_real_tool_lanes_declare_skips_or_unavailability": true,
+    "semantic_mutations_are_detected": true,
+    "counterexamples_replay": true,
+    "disagreements_quarantine": true,
+    "no_authority_upgrade": true,
+    "no_stale_cache_acceptance": true
+  },
+  "evidence_paths": [
+    "ipfs_datasets_py/tests/fixtures/logic/software_verification/conformance/manifest.json",
+    "ipfs_datasets_py/tests/integration/logic/test_software_verification_conformance.py"
+  ]
+}

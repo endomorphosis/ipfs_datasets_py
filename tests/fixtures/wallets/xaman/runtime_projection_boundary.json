@@ -1,0 +1,29 @@
+{
+  "schema": "wallet_processor_migration/xaman-runtime-boundary@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "boundary": {
+    "formal_import_prefixes_forbidden_in_runtime_processor": [
+      "ipfs_datasets_py.logic.security_models.crypto_exchange.reports",
+      "ipfs_datasets_py.logic.security_ir.xaman"
+    ],
+    "allowed_shared_modules_when_created": [
+      "ipfs_datasets_py.processors.wallets.xaman.models",
+      "ipfs_datasets_py.processors.wallets.xaman.assurance (projection-only adapter)",
+      "ipfs_datasets_py.processors.wallets.models",
+      "ipfs_datasets_py.processors.wallets.canonical"
+    ],
+    "custodial_operations_forbidden": [
+      "seed_phrase_handling",
+      "private_key_storage",
+      "transaction_signing",
+      "xaman_payload_approval",
+      "fund_movement"
+    ]
+  },
+  "ownership": {
+    "formal": "retain under logic/",
+    "runtime_xaman": "create under processors/wallets/xaman",
+    "runtime_xrpl": "create under processors/wallets/xrpl"
+  }
+}

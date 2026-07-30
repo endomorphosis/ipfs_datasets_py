@@ -1,0 +1,121 @@
+{
+  "schema": "wallet_processor_migration/shared-reorg-histories@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "shallow": {
+    "local_history": [
+      {
+        "sequence": 10,
+        "hash": "0x0a"
+      },
+      {
+        "sequence": 11,
+        "hash": "0x0b"
+      },
+      {
+        "sequence": 12,
+        "hash": "0x0c-old"
+      },
+      {
+        "sequence": 13,
+        "hash": "0x0d-old"
+      }
+    ],
+    "remote_history": [
+      {
+        "sequence": 10,
+        "hash": "0x0a"
+      },
+      {
+        "sequence": 11,
+        "hash": "0x0b"
+      },
+      {
+        "sequence": 12,
+        "hash": "0x0c-new"
+      },
+      {
+        "sequence": 13,
+        "hash": "0x0d-new"
+      },
+      {
+        "sequence": 14,
+        "hash": "0x0e-new"
+      }
+    ],
+    "observed_tip": {
+      "sequence": 14,
+      "hash": "0x0e-new"
+    },
+    "expected_kind": "shallow",
+    "expected_ancestor": {
+      "sequence": 11,
+      "hash": "0x0b"
+    },
+    "expected_orphaned_hashes": [
+      "0x0c-old",
+      "0x0d-old"
+    ],
+    "record_ids_by_hash": {
+      "0x0c-old": [
+        "urn:tx:c"
+      ],
+      "0x0d-old": [
+        "urn:tx:d"
+      ]
+    }
+  },
+  "deep": {
+    "max_reorg_depth": 2,
+    "local_history": [
+      {
+        "sequence": 1,
+        "hash": "0x01"
+      },
+      {
+        "sequence": 2,
+        "hash": "0x02-old"
+      },
+      {
+        "sequence": 3,
+        "hash": "0x03-old"
+      },
+      {
+        "sequence": 4,
+        "hash": "0x04-old"
+      },
+      {
+        "sequence": 5,
+        "hash": "0x05-old"
+      }
+    ],
+    "remote_history": [
+      {
+        "sequence": 1,
+        "hash": "0x01"
+      },
+      {
+        "sequence": 2,
+        "hash": "0x02-new"
+      },
+      {
+        "sequence": 3,
+        "hash": "0x03-new"
+      },
+      {
+        "sequence": 4,
+        "hash": "0x04-new"
+      },
+      {
+        "sequence": 5,
+        "hash": "0x05-new"
+      }
+    ],
+    "observed_tip": {
+      "sequence": 5,
+      "hash": "0x05-new"
+    },
+    "expected_kind": "deep",
+    "expect_review_required": true
+  }
+}

@@ -2,23 +2,26 @@
 Neural-Symbolic Reasoning Coordinator (Phase 3)
 
 This module coordinates between symbolic (TDFOL) and neural (embedding-based)
-reasoning approaches to achieve better theorem proving and formula matching.
+reasoning approaches.  Neural and embedding paths are **proposal/advisor
+signals only** (LFV-G061): similarity and confidence never establish
+``is_proved``.  Only an independent symbolic/kernel prover may set proof
+authority.
 
 Key features:
-- Hybrid reasoning: Combines symbolic rules with neural pattern matching
-- Intelligent routing: Chooses appropriate prover based on formula type
-- Confidence aggregation: Combines symbolic and neural confidence scores
-- Fallback strategies: If one approach fails, try another
+- Hybrid reasoning: symbolic proof authority plus neural proposal scores
+- Intelligent routing: chooses appropriate prover based on formula type
+- Confidence aggregation: advisory only; does not elevate to proof
+- Fallback strategies: if symbolic fails, neural scores remain candidate-only
 
 Architecture:
     User Query
         ↓
     Coordinator
-    ├──→ Symbolic Path (TDFOL/CEC provers)
-    ├──→ Neural Path (Embedding similarity)
-    └──→ Hybrid Path (Both combined)
+    ├──→ Symbolic Path (TDFOL/CEC provers)  → may set is_proved
+    ├──→ Neural Path (Embedding similarity) → proposal score only
+    └──→ Hybrid Path (symbolic proof + neural advisory confidence)
         ↓
-    Aggregated Result (with confidence)
+    Coordinated Result (proof only from symbolic validation)
 """
 
 from __future__ import annotations
@@ -51,12 +54,16 @@ class ReasoningStrategy(Enum):
 class CoordinatedResult:
     """
     Result from coordinated neural-symbolic reasoning.
-    
+
+    ``is_proved`` may only be True when an independent symbolic/kernel prover
+    validated the goal.  Neural confidence, embedding similarity, and generic
+    ``is_valid`` judgments are advisory and never set proof authority.
+
     Attributes:
-        is_proved: Whether the goal was proved
-        confidence: Overall confidence score (0.0-1.0)
+        is_proved: Whether the goal was proved by a trusted symbolic path
+        confidence: Overall advisory confidence score (0.0-1.0)
         symbolic_result: Result from symbolic prover (if used)
-        neural_confidence: Confidence from neural methods (if used)
+        neural_confidence: Advisory confidence from neural methods (if used)
         strategy_used: Which strategy was actually used
         reasoning_path: Description of how the conclusion was reached
         proof_steps: List of proof steps (if available)
@@ -70,7 +77,7 @@ class CoordinatedResult:
     reasoning_path: str = ""
     proof_steps: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Validate confidence is in [0, 1]."""
         if not 0.0 <= self.confidence <= 1.0:
@@ -257,29 +264,42 @@ class NeuralSymbolicCoordinator:
         goal: Formula,
         axioms: List[Formula]
     ) -> CoordinatedResult:
-        """Prove using only neural/embedding methods."""
-        logger.debug(f"Proving neurally: {goal}")
-        
+        """Score a goal with neural/embedding methods only.
+
+        Neural similarity is an untrusted proposal signal.  It never sets
+        ``is_proved``, even when confidence exceeds ``confidence_threshold``.
+        """
+        logger.debug(f"Scoring neurally (proposal-only): {goal}")
+
         if not self.use_embeddings or self.embedding_prover is None:
-            logger.warning("Neural proving requested but embeddings not available")
-            # Fallback to symbolic
+            logger.warning("Neural scoring requested but embeddings not available")
+            # Fallback to symbolic (the only path that may prove)
             return self._prove_symbolic(goal, axioms, 10000)
-        
-        # Use embedding-based similarity to find matching theorems
+
+        # Embedding similarity is advisory only — never proof authority.
         confidence = self.embedding_prover.compute_similarity(goal, axioms)
-        is_proved = confidence >= self.confidence_threshold
-        
+        meets_threshold = confidence >= self.confidence_threshold
+
         return CoordinatedResult(
-            is_proved=is_proved,
+            is_proved=False,
             confidence=confidence,
             symbolic_result=None,
             neural_confidence=confidence,
             strategy_used=ReasoningStrategy.NEURAL_ONLY,
-            reasoning_path="Neural pattern matching using embeddings",
-            proof_steps=[f"Embedding similarity: {confidence:.3f}"],
+            reasoning_path=(
+                "Neural pattern matching using embeddings "
+                "(proposal/advisor only; not proof)"
+            ),
+            proof_steps=[
+                f"Embedding similarity: {confidence:.3f}",
+                "authority=unverified_candidate_only",
+            ],
             metadata={
                 'threshold': self.confidence_threshold,
+                'meets_advisory_threshold': meets_threshold,
                 'axiom_count': len(axioms),
+                'authority': 'unverified_candidate_only',
+                'proof_from_neural': False,
             }
         )
     
@@ -290,48 +310,60 @@ class NeuralSymbolicCoordinator:
         timeout_ms: int
     ) -> CoordinatedResult:
         """
-        Prove using hybrid approach: try symbolic first, enhance with neural.
-        
+        Hybrid approach: symbolic proof authority plus neural advisory scores.
+
         Strategy:
-        1. Try symbolic proof
-        2. If successful with high confidence → return
-        3. If failed or low confidence → try neural
-        4. Combine both confidences for final result
+        1. Try symbolic proof (only path that may set is_proved=True)
+        2. If symbolic succeeds → return proved
+        3. If symbolic fails and neural is available → attach advisory confidence
+           without elevating is_proved from similarity or combined scores
         """
         logger.debug(f"Proving with hybrid approach: {goal}")
-        
-        # Try symbolic first
+
+        # Try symbolic first — sole source of proof authority.
         symbolic_result = self._prove_symbolic(goal, axioms, timeout_ms)
-        
-        # If symbolic proof succeeded, we're confident
+
         if symbolic_result.is_proved:
             symbolic_result.strategy_used = ReasoningStrategy.HYBRID
-            symbolic_result.reasoning_path = "Symbolic proof (validated by hybrid strategy)"
+            symbolic_result.reasoning_path = (
+                "Symbolic proof (validated by hybrid strategy)"
+            )
             return symbolic_result
-        
-        # Symbolic failed, try neural if available
+
+        # Symbolic failed: neural scores remain untrusted proposal signals.
         if self.use_embeddings and self.embedding_prover is not None:
-            neural_confidence = self.embedding_prover.compute_similarity(goal, axioms)
-            
-            # Combine confidences (weighted average)
-            # Give more weight to symbolic (0.7) vs neural (0.3)
-            combined_confidence = 0.7 * symbolic_result.confidence + 0.3 * neural_confidence
-            
-            is_proved = combined_confidence >= self.confidence_threshold
-            
+            neural_confidence = self.embedding_prover.compute_similarity(
+                goal, axioms
+            )
+
+            # Advisory combined score only — never proof authority.
+            combined_confidence = (
+                0.7 * symbolic_result.confidence + 0.3 * neural_confidence
+            )
+            meets_threshold = combined_confidence >= self.confidence_threshold
+
             return CoordinatedResult(
-                is_proved=is_proved,
+                is_proved=False,
                 confidence=combined_confidence,
                 symbolic_result=symbolic_result.symbolic_result,
                 neural_confidence=neural_confidence,
                 strategy_used=ReasoningStrategy.HYBRID,
-                reasoning_path="Hybrid: Symbolic proof attempted, enhanced with neural confidence",
-                proof_steps=symbolic_result.proof_steps + [f"Neural confidence: {neural_confidence:.3f}"],
+                reasoning_path=(
+                    "Hybrid: symbolic proof attempted; neural confidence is "
+                    "advisory only and does not establish proof"
+                ),
+                proof_steps=symbolic_result.proof_steps + [
+                    f"Neural confidence: {neural_confidence:.3f}",
+                    "authority=unverified_candidate_only",
+                ],
                 metadata={
                     'symbolic_confidence': symbolic_result.confidence,
                     'neural_confidence': neural_confidence,
                     'combined_confidence': combined_confidence,
                     'threshold': self.confidence_threshold,
+                    'meets_advisory_threshold': meets_threshold,
+                    'authority': 'unverified_candidate_only',
+                    'proof_from_neural': False,
                 }
             )
         else:
@@ -348,4 +380,6 @@ class NeuralSymbolicCoordinator:
             'confidence_threshold': self.confidence_threshold,
             'strategies_available': [s.value for s in ReasoningStrategy],
             'symbolic_rules': 127 if self.use_cec else 40,
+            'neural_proof_authority': False,
+            'neural_role': 'untrusted_proposal_provider',
         }
