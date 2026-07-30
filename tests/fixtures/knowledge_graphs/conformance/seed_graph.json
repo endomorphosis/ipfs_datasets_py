@@ -1,0 +1,70 @@
+{
+  "fixture_version": "kg-conformance-seed/v1",
+  "description": "Canonical multi-node seed graph for KGP-020 cross-surface vectors",
+  "entities": [
+    {
+      "id": "ada",
+      "type": "Person",
+      "name": "Ada",
+      "properties": {"role": "eng", "born": 1815}
+    },
+    {
+      "id": "grace",
+      "type": "Person",
+      "name": "Grace",
+      "properties": {"role": "eng"}
+    },
+    {
+      "id": "linus",
+      "type": "Person",
+      "name": "Linus",
+      "properties": {"role": "kernel"}
+    },
+    {
+      "id": "python",
+      "type": "Skill",
+      "name": "Python",
+      "properties": {}
+    },
+    {
+      "id": "c",
+      "type": "Skill",
+      "name": "C",
+      "properties": {}
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r-knows-1",
+      "type": "KNOWS",
+      "source_id": "ada",
+      "target_id": "grace"
+    },
+    {
+      "id": "r-knows-2",
+      "type": "KNOWS",
+      "source_id": "grace",
+      "target_id": "linus"
+    },
+    {
+      "id": "r-skill-1",
+      "type": "HAS_SKILL",
+      "source_id": "ada",
+      "target_id": "python"
+    },
+    {
+      "id": "r-skill-2",
+      "type": "HAS_SKILL",
+      "source_id": "linus",
+      "target_id": "c"
+    }
+  ],
+  "expected": {
+    "entity_count": 5,
+    "relationship_count": 4,
+    "person_count": 3,
+    "skill_count": 2,
+    "scan_names": ["Ada", "Grace", "Linus", "Python", "C"],
+    "scan_ids": ["ada", "grace", "linus", "python", "c"]
+  }
+}
