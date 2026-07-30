@@ -1,9 +1,10 @@
 # Knowledge Graphs — Release, Deprecation, and Cutover Operations
 
 **Status:** active  
-**Task:** `KGP-034` (runbooks); successor gate `KGP-035` (release evidence)  
-**Policy:** `kg-compatibility/v1`  
-**Code:** `ipfs_datasets_py.knowledge_graphs.compat`  
+**Tasks:** `KGP-034` (runbooks); `KGP-035` (release evidence gate)  
+**Policies:** `kg-compatibility/v1`, `kg-release-evidence/v1`  
+**Code:** `ipfs_datasets_py.knowledge_graphs.compat`,
+`ipfs_datasets_py.knowledge_graphs.release_gate`  
 **Companion ops:** `docs/operations/knowledge_graphs_runbook.md`,
 `docs/operations/knowledge_graphs_slos.md`  
 **Migration:** `docs/migration/knowledge_graphs/`
@@ -15,11 +16,14 @@ This document is the **release-facing** runbook for knowledge-graph adoption:
 - publishing and enforcing **compatibility tiers** and **deprecation windows**;
 - coordinating **producer cutover** (shadow → canary → promote);
 - **on-call** procedures during release and rollback;
-- what evidence a future release gate (`KGP-035`) must collect.
+- running the **production release evidence gate** (`KGP-035`).
 
-It does **not** claim the platform is production-ready until the release
-evidence gate passes with fresh receipts for child goals KGP-G010–G090 and
-root definition-of-done clauses.
+The platform is **not production ready** until
+`GraphReleaseGate` / `evaluate_release_evidence` emits a signed,
+content-addressed decision with `production_ready=True`. Task status,
+coverage, prose, optional-dependency skips, sample-only corpus runs, absent
+soak/chaos, missing UCAN negative proof, or unknown environments are **never**
+accepted as substitutes for exact fresh passing receipts.
 
 ## Quick links
 
@@ -219,23 +223,140 @@ Details: `docs/migration/knowledge_graphs/schema_storage_ucan.md`.
 
 ---
 
-## Evidence retained for KGP-035 (release gate)
+## Production release evidence gate (KGP-035)
 
-The next task formalizes fail-closed evidence. Operators should already retain:
+**Executable module:** `ipfs_datasets_py.knowledge_graphs.release_gate`  
+**Policy id:** `kg-release-evidence/v1`  
+**Schemas:** `kg-release-gate/v1`, `kg-release-evidence-bundle/v1`,
+`kg-release-decision/v1`  
+**Validation:**
+
+```bash
+python -m pytest -q tests/integration/knowledge_graphs/test_release_gate.py
+```
+
+### Standing rule
+
+Until the gate passes, treat the platform as **not production ready**. There is
+no partial credit: missing, stale, foreign-tree, skipped, partial, or
+contradicted evidence **fails closed**.
+
+```python
+from ipfs_datasets_py.knowledge_graphs.release_gate import (
+    GraphReleaseGate,
+    build_passing_bundle,  # test / dry-run helper only
+    evaluate_release_evidence,
+    is_production_ready,
+    policy_dict,
+)
+
+assert policy_dict()["policy_id"] == "kg-release-evidence/v1"
+assert is_production_ready(None) is False
+
+gate = GraphReleaseGate(
+    expected_tree_id="<current-tree-id>",
+    signing_key=b"<operator-hmac-key>",
+)
+decision = gate.standing_decision()
+assert decision.production_ready is False
+assert decision.decision_cid.startswith("kg-rel1-")
+assert decision.signature  # content-addressed or hmac-sha256:
+```
+
+### Required evidence (exact)
+
+| Class | Requirement |
+| --- | --- |
+| Child goals | Exact fresh **passing** receipts for `KGP-G010` … `KGP-G090` |
+| Root DoD | Every root definition-of-done clause receipt (see below) |
+| Corpus sign-off | Full-mode sign-off for `cvefixes`, `skillcenter`, `two_eleven`, `code_evidence` |
+| UCAN negative | ≥1 deny audit receipt CID bound to the current tree |
+| Soak + chaos | Non-empty soak **and** chaos receipt digests |
+| Environment | Labelled environment id (not `unknown` / empty) |
+| Tree binding | Every artifact `tree_id` equals the evaluation tree |
+
+### Root definition-of-done clauses
+
+| `clause_id` | Meaning |
+| --- | --- |
+| `concurrent_identity_durability` | ≥16 concurrent graph IDs; no identity confusion / lost updates / cross-tenant leakage |
+| `storage_profiles_contract` | Parquet, IPFS/IPLD, `ipfs_kit_py` pass shared contract + restart/crash recovery |
+| `four_surface_parity` | Python, CLI, MCP, MCP++ share operation/query/error vectors |
+| `ucan_fail_closed` | Allow, attenuation, expiry, revocation, replay, denial + fail-closed audit |
+| `sharded_integrity` | v1/v2 sharded integrity and cross-shard traversal |
+| `corpora_differential` | CVEfixes, SkillCenter, 211-AI, code/evidence differentials + workloads |
+| `load_soak_chaos_ops` | Load, soak, chaos, backup/restore, observability, resource bounds on a **labelled** environment |
+| `migration_reversible` | Runbooks, rollback, compatibility, deprecation; no legacy moved early |
+
+### Rejected substitutes (always fail)
+
+| Offered as “proof” | Gate code |
+| --- | --- |
+| Task / backlog status | `rejected_substitute` |
+| Coverage percentages | `rejected_substitute` |
+| Prose / narrative claims | `rejected_substitute` |
+| Optional-dependency skip / xfail | `skipped_receipt` / `rejected_substitute` |
+| Sample-only corpus runs | `sample_only_corpus` |
+| Absent soak or chaos | `absent_soak` / `absent_chaos` |
+| Missing UCAN deny proof | `missing_ucan_negative_proof` |
+| Unknown / unlabelled environment | `unknown_environment` |
+| Stale receipt | `stale_receipt` |
+| Foreign tree | `foreign_tree` |
+| Digest mismatch | `contradicted_evidence` |
+
+### Operator evaluation flow
+
+1. Collect real validation receipts from child-goal harnesses (not
+   `build_passing_bundle`, which is for tests/dry-runs only).
+2. Bind every receipt to the **current** repository `tree_id`.
+3. Attach full-mode corpus sign-offs, UCAN deny receipt CIDs, soak/chaos
+   digests, and a labelled environment.
+4. Evaluate:
+
+```python
+from ipfs_datasets_py.knowledge_graphs.release_gate import (
+    GraphReleaseGate,
+    ReleaseEvidenceBundle,
+    ReleaseGateFailClosed,
+)
+
+gate = GraphReleaseGate(
+    expected_tree_id=tree_id,
+    signing_key=signing_key,
+    package_version=package_version,
+)
+try:
+    decision = gate.evaluate_or_raise(bundle)
+except ReleaseGateFailClosed as exc:
+    # Platform remains not production ready.
+    decision = exc.decision
+    for blocker in decision.blockers:
+        print(blocker.code, blocker.subject, blocker.message)
+
+assert decision.production_ready  # only on full pass
+# Retain decision.decision_cid + decision.signature on the release ticket.
+```
+
+5. Publish the decision dict (`decision.to_dict()`) on the release record.
+   Prefer `decision_cid`, `bundle_digest`, and blocker codes over raw tokens
+   or query text.
+
+### Evidence retained (checklist)
 
 | Evidence class | Example artifact |
 | --- | --- |
+| Child goal receipts | `GoalReceipt` per `KGP-G010`…`KGP-G090` |
+| Root DoD receipts | `DodClauseReceipt` per clause_id |
 | Compatibility policy | CI log: `test_compatibility_policy.py` |
 | Corpus differential | Receipt bound to tree + producer_id |
+| Corpus sign-off | Full-mode `CorpusSignOff` per required corpus |
 | Shadow metrics | Snapshot path/CID + stop_reason=`none` |
 | Canary / rollback drill | Promotion + rollback result dicts |
 | Backup / restore proof | `backup_digest` + `RestoreProof.ok` |
-| UCAN negative | Audit receipt digests |
-| Load / soak / chaos | Labelled harness runs (SLOs doc) |
-| Producer sign-off | Ticket section from producers.md template |
-
-Missing, stale, foreign-tree, skipped, partial, or contradicted evidence
-**fails closed** under KGP-035.
+| UCAN negative | `UCANNegativeProof.deny_receipt_cids` |
+| Load / soak / chaos | Labelled harness digests (SLOs doc) |
+| Environment binding | Non-unknown `EnvironmentBinding` |
+| Release decision | Signed `ReleaseDecision` (`decision_cid`) |
 
 ---
 
@@ -243,6 +364,7 @@ Missing, stale, foreign-tree, skipped, partial, or contradicted evidence
 
 | Area | Module / doc |
 | --- | --- |
+| Release gate | `ipfs_datasets_py.knowledge_graphs.release_gate` |
 | Policy | `ipfs_datasets_py.knowledge_graphs.compat` |
 | Shadow | `…migration.shadow` |
 | Canary / rollback | `…migration.canary` |
