@@ -567,7 +567,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-034 Publish compatibility, migration, and deprecation runbooks
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: adoption
 - Depends on: KGP-033
