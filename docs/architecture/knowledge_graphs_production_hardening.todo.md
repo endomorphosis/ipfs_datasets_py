@@ -1338,3 +1338,19 @@ retain the acceptance and validation evidence in the resulting receipt.
 - Outputs: tests/unit/search/test_sharded_car, data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery
 - Validation: test -f /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-050-kgp-047-retry-budget.md
 - Acceptance: Retry-budget guardrail filed this from repeated validation failures in KGP-047. Use evidence in /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-050-kgp-047-retry-budget.md to fix the validation blocker, then mark this repair task completed so the supervisor can release KGP-047 from strategy blocked_tasks.
+
+## KGP-051 Resolve dirty main checkout blocking 1 worktree merges
+
+- Status: blocked
+- Completion: manual
+- Is schedulable: false
+- Review only: true
+- Blocked reason: operator_reconciliation_required
+- Priority: P1
+- Track: ops
+- Fingerprint: 083d2974964d33722cdf4a0b20e68bc380acf3b2
+- Dedupe key: reconciliation_guardrail:main_checkout_dirty
+- Depends on:
+- Outputs: data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery, docs/architecture/knowledge_graphs_production_hardening.todo.md
+- Validation: test -f /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-051-reconciliation-083d2974964d.md
+- Acceptance: Reconciliation guardrail filed this because 1 branch or worktree cleanup candidates are blocked by main_checkout_dirty. This task is intentionally operator-gated because unknown dirty checkout content must not be committed, stashed, or discarded automatically. Use evidence and the machine-readable reconciliation plan in /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/parallel/lanes/lane-00/discovery/2026-07-30-kgp-051-reconciliation-083d2974964d.md, reconcile the dirty checkout or dirty worktree group deliberately, then rerun the supervisor cleanup/reconciliation pass and confirm that the blocked candidate count decreases.
