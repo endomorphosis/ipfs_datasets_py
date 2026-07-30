@@ -1258,3 +1258,71 @@ retain the acceptance and validation evidence in the resulting receipt.
 - Candidate kind: generated_task
 - Todo vector key: d604a989b9b6b069
 - Acceptance: Objective scan filed this review gap for KGP-G050. Inspect the evidence in /home/barberb/ipfs_datasets_py/data/agent_supervisor/knowledge_graphs_production_hardening/discovery/2026-07-29-kgp-045-objective-gap-dc5190fd8946.md; either resolve the diagnostic without an implementation change or authorize precise repository-relative edit targets before changing the task status.
+
+## KGP-046 Add the shared storage restart and corruption validator
+
+- Status: completed
+- Priority: P0
+- Track: storage
+- Depends on:
+- Goal id: KGP-G040
+- Outputs: tests/integration/knowledge_graphs/test_storage_restart.py
+- Validation: python -m pytest -q tests/contract/knowledge_graphs/storage tests/integration/knowledge_graphs/test_storage_restart.py
+- Board namespace: knowledge-graphs-production-hardening-v1
+- Bundle: knowledge-graphs/storage/restart-contract
+- Parallel lane: storage-restart-contract
+- Resource class: io-medium
+- Predicted files: tests/integration/knowledge_graphs/test_storage_restart.py
+- Conflict policy: Add a black-box validator around the existing storage protocol and adapters; do not weaken adapter-specific contracts or require a live Kubo daemon for deterministic coverage.
+- Acceptance: Exercise the Parquet, direct IPFS/IPLD, and ipfs_kit_py profiles through one shared revision round-trip. Recreate the adapter and service between write and read, verify canonical manifest and object bytes after restart, and prove corrupt or truncated persisted data fails closed. Deterministic doubles must run everywhere; optional live-daemon coverage may be additive but must not replace the deterministic proof.
+
+## KGP-047 Restore executable v1 sharded-CAR compatibility coverage
+
+- Status: pending
+- Priority: P0
+- Track: query
+- Depends on:
+- Goal id: KGP-G050
+- Outputs: tests/unit/search/test_sharded_car
+- Validation: python -m pytest -q tests/unit/search/test_sharded_car tests/integration/knowledge_graphs/test_sharded_query.py tests/knowledge_graphs/contract/test_query_budgets.py
+- Board namespace: knowledge-graphs-production-hardening-v1
+- Bundle: knowledge-graphs/query-sharding/v1-compatibility
+- Parallel lane: sharded-car-v1
+- Resource class: cpu-small
+- Predicted files: tests/unit/search/test_sharded_car, ipfs_datasets_py/knowledge_graphs/storage/sharding, ipfs_datasets_py/search/graph_query
+- Conflict policy: Prefer frozen v1 fixtures and compatibility adapters around the canonical v2 reader; do not fork a second sharding implementation or weaken v2 integrity checks.
+- Acceptance: Add executable frozen v1 manifest/CAR fixtures and prove the supported reader preserves graph identity, shard membership, node/edge content, and explicit errors for malformed or unsupported v1 data. Keep the existing v2 routing, cross-shard traversal, cursor, and budget validators passing.
+
+## KGP-048 Reconcile legacy lifecycle diagnostics with the canonical service
+
+- Status: pending
+- Priority: P0
+- Track: baseline
+- Depends on:
+- Goal id: KGP-G010
+- Outputs: tests/knowledge_graphs/contract/test_public_lifecycle.py, docs/architecture/knowledge_graphs_contract_matrix.md
+- Validation: python -m pytest -q tests/knowledge_graphs/contract/test_public_lifecycle.py tests/knowledge_graphs/conformance tests/cli/test_graph_commands.py tests/mcp/test_graph_tools.py
+- Board namespace: knowledge-graphs-production-hardening-v1
+- Bundle: knowledge-graphs/baseline/lifecycle-reconciliation
+- Parallel lane: lifecycle-reconciliation
+- Resource class: cpu-medium
+- Predicted files: tests/knowledge_graphs/contract/test_public_lifecycle.py, docs/architecture/knowledge_graphs_contract_matrix.md
+- Conflict policy: Preserve evidence of genuine deprecated-manager drift, but keep it outside release-eligible conformance. Replace stale public-path assumptions with strict GraphService probes; do not delete coverage, turn strict assertions permissive, or claim the legacy manager is the canonical service.
+- Acceptance: The release-eligible lifecycle contract must exercise explicit GraphTarget create/write/query/transaction/reopen through Python, CLI, MCP, and MCP++ without skips or expected failures. Deprecated KnowledgeGraphManager diagnostics must be clearly labelled compatibility observations and must not be counted as passing release proof. Update the matrix to distinguish canonical conformance from legacy compatibility debt.
+
+## KGP-049 Implement a fail-closed release evidence collector
+
+- Status: pending
+- Priority: P0
+- Track: adoption
+- Depends on: KGP-046, KGP-047, KGP-048
+- Goal id: KGP-G100
+- Outputs: ipfs_datasets_py/knowledge_graphs/release_evidence.py, tests/integration/knowledge_graphs/test_release_evidence_collector.py, docs/operations/knowledge_graphs_gate_runbook.md
+- Validation: python -m pytest -q tests/integration/knowledge_graphs/test_release_gate.py tests/integration/knowledge_graphs/test_release_evidence_collector.py
+- Board namespace: knowledge-graphs-production-hardening-v1
+- Bundle: knowledge-graphs/adoption/evidence-collector
+- Parallel lane: release-evidence
+- Resource class: cpu-medium
+- Predicted files: ipfs_datasets_py/knowledge_graphs/release_evidence.py, tests/integration/knowledge_graphs/test_release_evidence_collector.py, docs/operations/knowledge_graphs_gate_runbook.md
+- Conflict policy: Compose the existing release_gate receipt types and benchmark receipts; never synthesize a passing receipt or treat task status, prose, coverage, skips, or expected failures as proof.
+- Acceptance: Provide an executable collector that binds evidence to an explicit clean repository tree, records command, timestamp, environment label, exit status, test counts, and artifact digests, and refuses failed, skipped, expected-failure, stale, foreign-tree, or unsigned evidence where required. It must ingest corpus sign-offs, UCAN deny proof, load/soak/chaos digests, evaluate GraphReleaseGate fail-closed, and write a human-readable runbook explaining all ten child gates and the root release decision.
