@@ -11,22 +11,25 @@ Covers the G018 acceptance subset:
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
-
 from ipfs_datasets_py.huggingface.release import (
     DEFAULT_SHARD_ROWS,
     FileDescriptor,
     HuggingFaceReleaseError,
+    canonical_json_bytes,
     describe_file,
     reject_identity_contamination,
     shard_sequence,
     validate_zstd_parquet,
     write_zstd_parquet,
 )
+from ipfs_datasets_py.logic.ir_core.artifacts import ArtifactManifest
+from ipfs_datasets_py.logic.ir_core.identity import cid_v1_from_digest
 from ipfs_datasets_py.voice.evaluation_schema import (
     ABBY_VOICE_EVALUATION_V2,
     AbbyVoiceEvaluation,
@@ -188,6 +191,15 @@ def _build(tmp_path: Path, *, shard_rows: int = 2, release_id: str = "release-te
         repository_commit="commit:test",
     )
     return builder.build(output_dir=tmp_path, release_id=release_id, **fixture)
+
+
+def _reseal_release_manifest(path: Path, manifest: dict) -> None:
+    body = dict(manifest)
+    body.pop("release_cid", None)
+    manifest["release_cid"] = cid_v1_from_digest(
+        sha256(canonical_json_bytes(body)).digest()
+    )
+    path.write_bytes(canonical_json_bytes(manifest) + b"\n")
 
 
 def test_generic_helpers_write_sharded_zstd_parquet_descriptors(tmp_path: Path):
@@ -381,6 +393,93 @@ def test_deterministic_release_construction_five_configs_and_descriptors(tmp_pat
     assert receipt["configs"] == list(FIVE_FLAT_ABBY_CONFIGS)
     assert receipt["graph_cid"] == result.graph_cid
     assert receipt["index_cid"] == result.index_cid
+
+
+def test_release_license_and_pre_artifact_identity_are_consistent(tmp_path: Path):
+    fixture = _fixture_bundle()
+    mit_fixture = {
+        name: (
+            rows
+            if name == "evaluations"
+            else tuple(replace(row, license_id="MIT") for row in rows)
+        )
+        for name, rows in fixture.items()
+    }
+    result = AbbyVoiceHFReleaseBuilder(
+        policy=AbbyVoiceHFReleasePolicy(shard_rows=2),
+        repository_commit="commit:test",
+    ).build(
+        output_dir=tmp_path,
+        release_id="release-license-mit",
+        license_id="MIT",
+        **mit_fixture,
+    )
+
+    manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert manifest["license_id"] == "MIT"
+    assert (tmp_path / "README.md").read_text(encoding="utf-8").startswith(
+        "---\nlicense: mit\n"
+    )
+    assert {
+        item["license_id"]
+        for item in manifest["descriptors"]
+        if item["license_id"]
+    } == {"MIT"}
+
+    artifact_payload = json.loads(
+        (tmp_path / "manifests" / "artifact-manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    metadata = artifact_payload["deterministic_metadata"]
+    assert "release_cid" not in metadata
+    assert metadata["pre_artifact_release_body_cid"] != manifest["release_cid"]
+    assert validate_abby_voice_hf_release(tmp_path)["valid"] is True
+
+
+def test_validate_rejects_release_license_mismatch(tmp_path: Path):
+    result = _build(tmp_path, shard_rows=2)
+    manifest_path = Path(result.manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["license_id"] = "MIT"
+    _reseal_release_manifest(manifest_path, manifest)
+
+    with pytest.raises(
+        AbbyVoiceHFReleaseError,
+        match="descriptor licenses do not match",
+    ):
+        validate_abby_voice_hf_release(tmp_path)
+
+
+def test_validate_rejects_legacy_cyclic_artifact_release_cid(tmp_path: Path):
+    result = _build(tmp_path, shard_rows=2)
+    manifest_path = Path(result.manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    artifact_path = tmp_path / "manifests" / "artifact-manifest.json"
+    artifact_payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+    metadata = artifact_payload["deterministic_metadata"]
+    metadata["release_cid"] = metadata.pop("pre_artifact_release_body_cid")
+    artifact_path.write_bytes(canonical_json_bytes(artifact_payload) + b"\n")
+
+    artifact_sha256 = sha256(artifact_path.read_bytes()).hexdigest()
+    for descriptor in manifest["descriptors"]:
+        if descriptor["relative_path"] == "manifests/artifact-manifest.json":
+            descriptor["sha256"] = artifact_sha256
+            descriptor["content_cid"] = cid_v1_from_digest(
+                bytes.fromhex(artifact_sha256)
+            )
+            descriptor["size_bytes"] = artifact_path.stat().st_size
+            break
+    manifest["artifact_manifest_id"] = ArtifactManifest.from_dict(
+        artifact_payload
+    ).manifest_id
+    _reseal_release_manifest(manifest_path, manifest)
+
+    with pytest.raises(
+        AbbyVoiceHFReleaseError,
+        match="does not bind the pre-artifact release body",
+    ):
+        validate_abby_voice_hf_release(tmp_path)
 
 
 def test_byte_identical_rebuild_is_order_independent(tmp_path: Path):

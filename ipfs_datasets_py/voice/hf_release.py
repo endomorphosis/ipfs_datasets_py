@@ -13,12 +13,13 @@ G021 responsibilities.
 
 from __future__ import annotations
 
+import json
+import os
+import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from hashlib import sha256
-import json
-import os
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final
@@ -164,10 +165,28 @@ _AUDIO_EXTENSION_BY_MEDIA_TYPE: Final[dict[str, str]] = {
     "audio/wav": ".wav",
     "audio/x-wav": ".wav",
 }
+_RELEASE_LICENSE_ID_RE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]{0,127}$")
 
 
 class AbbyVoiceHFReleaseError(HuggingFaceReleaseError):
     """Raised when an Abby voice release cannot be built or validated."""
+
+
+def _release_license_id(value: Any) -> str:
+    """Return one publication-ready license identifier safe for HF YAML."""
+
+    license_id = str(value or "")
+    if (
+        not license_id
+        or license_id != license_id.strip()
+        or not _RELEASE_LICENSE_ID_RE.fullmatch(license_id)
+        or license_id.upper() in {"NOASSERTION", "UNKNOWN"}
+    ):
+        raise AbbyVoiceHFReleaseError(
+            "release license_id must be one publication-ready SPDX-style "
+            "identifier"
+        )
+    return license_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -424,6 +443,7 @@ class AbbyVoiceHFReleaseBuilder:
         release = str(release_id or "").strip()
         if not release or "/" in release or ".." in release or "\\" in release:
             raise AbbyVoiceHFReleaseError(f"unsafe release_id: {release_id!r}")
+        selected_license_id = _release_license_id(license_id)
 
         root = Path(output_dir).expanduser().resolve()
         bundle = validate_bundle(
@@ -535,7 +555,7 @@ class AbbyVoiceHFReleaseBuilder:
                         producer_id=self.policy.producer_id,
                         config_digest=config_digest,
                         parent_ids=parents,
-                        license_id=license_id,
+                        license_id=selected_license_id,
                         consent_status=consent_status,
                         review_status="validated_local",
                         trust_decision="local_build",
@@ -566,7 +586,7 @@ class AbbyVoiceHFReleaseBuilder:
             producer_id=self.policy.producer_id,
             config_digest=config_digest,
             parent_ids=parents,
-            license_id=license_id,
+            license_id=selected_license_id,
             consent_status=consent_status,
             review_status="support_artifact",
             trust_decision="local_build",
@@ -594,7 +614,12 @@ class AbbyVoiceHFReleaseBuilder:
         )
         descriptors.append(yaml_descriptor)
 
-        readme = _release_readme(release, self.policy.dataset_repo_id, row_counts)
+        readme = _release_readme(
+            release,
+            self.policy.dataset_repo_id,
+            row_counts,
+            license_id=selected_license_id,
+        )
         readme_path = root / "README.md"
         readme_path.write_bytes(readme.encode("utf-8"))
         readme_descriptor = describe_file(
@@ -633,7 +658,7 @@ class AbbyVoiceHFReleaseBuilder:
                 producer_id=self.policy.producer_id,
                 config_digest=config_digest,
                 parent_ids=parents,
-                license_id=license_id,
+                license_id=selected_license_id,
                 consent_status=consent_status,
                 review_status="validated_local",
                 trust_decision="embedded_release_asset",
@@ -659,7 +684,7 @@ class AbbyVoiceHFReleaseBuilder:
                 producer_id=self.policy.producer_id,
                 config_digest=config_digest,
                 parent_ids=parents,
-                license_id=license_id,
+                license_id=selected_license_id,
                 consent_status=consent_status,
                 review_status="retained_validated_local",
                 trust_decision="embedded_release_support",
@@ -678,6 +703,7 @@ class AbbyVoiceHFReleaseBuilder:
             "descriptors": [item.to_dict() for item in descriptors],
             "graph_cid": index.graph_cid,
             "index_cid": index.index_cid,
+            "license_id": selected_license_id,
             "parquet": {
                 "compression": PARQUET_COMPRESSION,
                 "compression_level": PARQUET_COMPRESSION_LEVEL,
@@ -714,7 +740,7 @@ class AbbyVoiceHFReleaseBuilder:
         artifact_manifest = self._artifact_manifest(
             descriptors=descriptors,
             release_id=release,
-            release_cid=release_cid,
+            pre_artifact_release_body_cid=release_cid,
             graph_cid=index.graph_cid,
             index_cid=index.index_cid,
         )
@@ -895,7 +921,7 @@ class AbbyVoiceHFReleaseBuilder:
         *,
         descriptors: Sequence[FileDescriptor],
         release_id: str,
-        release_cid: str,
+        pre_artifact_release_body_cid: str,
         graph_cid: str,
         index_cid: str,
     ) -> ArtifactManifest:
@@ -968,7 +994,9 @@ class AbbyVoiceHFReleaseBuilder:
                 ),
                 "graph_cid": graph_cid,
                 "index_cid": index_cid,
-                "release_cid": release_cid,
+                "pre_artifact_release_body_cid": (
+                    pre_artifact_release_body_cid
+                ),
                 "release_id": release_id,
                 "sharded_zstd_parquet_descriptors": True,
             },
@@ -1273,6 +1301,20 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
         raise AbbyVoiceHFReleaseError("release descriptor paths must be unique")
     for descriptor in descriptors:
         verify_file_descriptor(root, descriptor)
+    selected_license_id = _release_license_id(manifest.get("license_id"))
+    descriptor_license_ids = {
+        item.license_id for item in descriptors if item.license_id
+    }
+    if descriptor_license_ids != {selected_license_id}:
+        raise AbbyVoiceHFReleaseError(
+            "release descriptor licenses do not match manifest license_id"
+        )
+
+    readme_path = root / "README.md"
+    if _dataset_card_license(readme_path) != selected_license_id.casefold():
+        raise AbbyVoiceHFReleaseError(
+            "README dataset-card license does not match manifest license_id"
+        )
 
     config_rows: dict[str, list[dict[str, Any]]] = {
         name: [] for name in FIVE_FLAT_ABBY_CONFIGS
@@ -1340,6 +1382,20 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             provenance=config_rows[ABBY_VOICE_PROVENANCE_V2],
             require_references=True,
         )
+        row_license_ids = {
+            str(row.get("license_id") or "")
+            for name in (
+                ABBY_VOICE_RESPONSE_V2,
+                ABBY_VOICE_TEMPLATE_V2,
+                ABBY_VOICE_AUDIO_V2,
+                ABBY_VOICE_PROVENANCE_V2,
+            )
+            for row in config_rows[name]
+        }
+        if row_license_ids != {selected_license_id}:
+            raise AbbyVoiceHFReleaseError(
+                "release row licenses do not match manifest license_id"
+            )
     if config_rows[ABBY_VOICE_EVALUATION_V2]:
         validate_evaluation_rows(config_rows[ABBY_VOICE_EVALUATION_V2], strict=True)
     _reject_mutable_hf_references(config_rows, label="release_rows")
@@ -1446,6 +1502,44 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     expected_cid = cid_v1_from_digest(sha256(canonical_json_bytes(body)).digest())
     if manifest.get("release_cid") != expected_cid:
         raise AbbyVoiceHFReleaseError("release_cid does not match sealed body")
+
+    artifact_path = root / "manifests" / "artifact-manifest.json"
+    try:
+        artifact_payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+        artifact_manifest = ArtifactManifest.from_dict(artifact_payload)
+    except Exception as exc:
+        raise AbbyVoiceHFReleaseError(
+            "artifact manifest is malformed or internally inconsistent"
+        ) from exc
+    if artifact_manifest.manifest_id != manifest.get("artifact_manifest_id"):
+        raise AbbyVoiceHFReleaseError(
+            "artifact_manifest_id does not match artifact manifest"
+        )
+    preliminary_body = dict(manifest)
+    preliminary_body.pop("release_cid", None)
+    preliminary_body.pop("artifact_manifest_id", None)
+    preliminary_body["descriptors"] = [
+        item.to_dict()
+        for item in descriptors
+        if item.relative_path != "manifests/artifact-manifest.json"
+    ]
+    preliminary_body["support_artifacts"] = [
+        path
+        for path in manifest.get("support_artifacts", ())
+        if path != "manifests/artifact-manifest.json"
+    ]
+    pre_artifact_release_body_cid = cid_v1_from_digest(
+        sha256(canonical_json_bytes(preliminary_body)).digest()
+    )
+    deterministic_metadata = artifact_manifest.deterministic_metadata
+    if (
+        "release_cid" in deterministic_metadata
+        or deterministic_metadata.get("pre_artifact_release_body_cid")
+        != pre_artifact_release_body_cid
+    ):
+        raise AbbyVoiceHFReleaseError(
+            "artifact manifest does not bind the pre-artifact release body"
+        )
 
     # No support artifacts mixed into config directories.
     for path in root.rglob("*"):
@@ -1602,14 +1696,42 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _dataset_card_license(path: Path) -> str:
+    if not path.is_file() or path.is_symlink():
+        raise AbbyVoiceHFReleaseError("release README.md is missing or unsafe")
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise AbbyVoiceHFReleaseError("release README.md is not UTF-8") from exc
+    if not lines or lines[0].strip() != "---":
+        raise AbbyVoiceHFReleaseError(
+            "release README.md lacks dataset-card frontmatter"
+        )
+    licenses: list[str] = []
+    for line in lines[1:]:
+        stripped = line.strip()
+        if stripped == "---":
+            break
+        if stripped.casefold().startswith("license:"):
+            licenses.append(stripped.partition(":")[2].strip().casefold())
+    if len(licenses) != 1 or not licenses[0]:
+        raise AbbyVoiceHFReleaseError(
+            "release README.md must declare exactly one frontmatter license"
+        )
+    return licenses[0]
+
+
 def _release_readme(
     release_id: str,
     dataset_repo_id: str,
     row_counts: Mapping[str, Mapping[str, int]],
+    *,
+    license_id: str,
 ) -> str:
+    selected_license_id = _release_license_id(license_id)
     lines = [
         "---",
-        "license: cc0-1.0",
+        f"license: {selected_license_id.casefold()}",
         f"dataset_repo_id: {dataset_repo_id}",
         f"release_id: {release_id}",
         "configs:",
