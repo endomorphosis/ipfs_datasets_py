@@ -465,7 +465,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-028 Build corpus differential and migration verification reports
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-024, KGP-025, KGP-026, KGP-027
