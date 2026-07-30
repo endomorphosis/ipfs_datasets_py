@@ -4,7 +4,7 @@
 and finite ledger-range scans.  CLI and MCP adapters are thin wrappers over the
 same typed requests and sanitized receipts.
 
-Design constraints (WALPROC-G610):
+Design constraints (WALPROC-G610 / CRYPTOIR-G600):
 
 * Typed request/result objects are shared by Python, CLI, and MCP.
 * Every scan requires finite range/item/byte/time/retry bounds.
@@ -13,6 +13,11 @@ Design constraints (WALPROC-G610):
 * Default export mode is finalized; provisional and raw modes are explicit.
 * No signing or broadcast verbs exist on this surface.
 * Status/receipts never include wallet record payloads or secret material.
+* CRYPTOIR-G600 cutover: consumers cannot bypass policy via ``approved=true``;
+  signing/broadcast remains disabled here and is only available through
+  :class:`~ipfs_datasets_py.processors.wallets.guard.service.GuardService`
+  after exact-candidate admissibility capability consumption.  Read-only
+  lookup and ingest remain usable without custody authority.
 
 Importing this module performs no network I/O and does not load chain extras.
 """
@@ -91,7 +96,26 @@ _FORBIDDEN_VERBS = frozenset(
         "sign_transaction",
         "broadcast_transaction",
         "send",
+        "send_raw_transaction",
         "transfer",
+        "approve",
+    }
+)
+# Compatibility escape hatches rejected at the read-only API boundary.
+_FORBIDDEN_ESCAPE_OPTIONS = frozenset(
+    {
+        "approved",
+        "approve",
+        "is_approved",
+        "caller_approved",
+        "force_allow",
+        "skip_guard",
+        "bypass_guard",
+        "bypass_policy",
+        "private_key",
+        "signing_key",
+        "seed",
+        "mnemonic",
     }
 )
 
@@ -1312,16 +1336,39 @@ class WalletProcessorAPI:
     def _assert_not_forbidden_options(self, options: Mapping[str, object]) -> None:
         for key in options:
             lowered = str(key).strip().lower()
-            if lowered in self.FORBIDDEN_OPERATIONS or lowered.startswith("sign_"):
+            if (
+                lowered in self.FORBIDDEN_OPERATIONS
+                or lowered in _FORBIDDEN_ESCAPE_OPTIONS
+                or lowered.startswith("sign_")
+            ):
                 raise UnsupportedCapabilityError(
                     f"operation {key!r} is not supported: "
-                    "wallet processors never sign or broadcast"
+                    "wallet processors never sign or broadcast and reject "
+                    "approved=true compatibility escape hatches "
+                    "(migrate to GuardService capability consumption)"
                 )
 
+    def guard_service(self) -> Any:
+        """Return the process GuardService for preflight / gated signing.
+
+        Read-only wallet operations do not require this.  Signing and broadcast
+        must use the guard service with a consumed admissibility capability.
+        """
+
+        from .guard.service import get_default_guard_service
+
+        return get_default_guard_service()
+
     def __getattr__(self, name: str) -> Any:
-        if name in self.FORBIDDEN_OPERATIONS or name.startswith("sign_"):
+        if (
+            name in self.FORBIDDEN_OPERATIONS
+            or name.startswith("sign_")
+            or name in _FORBIDDEN_ESCAPE_OPTIONS
+        ):
             raise UnsupportedCapabilityError(
-                f"{name!r} is not supported: wallet processors never sign or broadcast"
+                f"{name!r} is not supported: wallet processors never sign or "
+                "broadcast; use GuardService with a consumed "
+                "AdmissibilityCapability (no approved=true escape hatch)"
             )
         raise AttributeError(
             f"{type(self).__name__!r} object has no attribute {name!r}"
