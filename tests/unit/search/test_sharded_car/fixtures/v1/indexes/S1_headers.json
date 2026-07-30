@@ -1,0 +1,38 @@
+{
+  "e01": {
+    "cid": "bafkreifty7xlov4ufbgujn2rvxis2wh2a7v7usfpb32i7xcwobqjh2jwmy",
+    "name": "N1",
+    "properties": {
+      "i": 1,
+      "label": "L1"
+    },
+    "type": "Person"
+  },
+  "e04": {
+    "cid": "bafkreibfgnusexzxtzlzuw6vlwfu64cvnww4qyyf4canclylry6chhdesi",
+    "name": "N4",
+    "properties": {
+      "i": 4,
+      "label": "L4"
+    },
+    "type": "Person"
+  },
+  "e08": {
+    "cid": "bafkreihqwkc5ys75quxrglfglp67frctck4fyixh44owu3n6rbi65oswsi",
+    "name": "N8",
+    "properties": {
+      "i": 8,
+      "label": "L8"
+    },
+    "type": "Person"
+  },
+  "e09": {
+    "cid": "bafkreihsay5c3u4bcftfq2k4kicvf4dxxuafytc2dkhlzlpqdr7hsfzsqi",
+    "name": "N9",
+    "properties": {
+      "i": 9,
+      "label": "L9"
+    },
+    "type": "Org"
+  }
+}

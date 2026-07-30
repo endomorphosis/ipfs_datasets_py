@@ -1,0 +1,38 @@
+{
+  "e02": {
+    "cid": "bafkreifrtnh4iw2wltghy5xrcbpszcxkkff62p6npuhku7mt7wwmnlltei",
+    "name": "N2",
+    "properties": {
+      "i": 2,
+      "label": "L2"
+    },
+    "type": "Person"
+  },
+  "e07": {
+    "cid": "bafkreibusish2pryd5qr4t62zjyhkevbrjylyqmebpdlpgvmlmksblzkuy",
+    "name": "N7",
+    "properties": {
+      "i": 7,
+      "label": "L7"
+    },
+    "type": "Person"
+  },
+  "e10": {
+    "cid": "bafkreiajv4flvra7qa2stnxvobo2bh7prouqomr4aqyzndkp7zodjxqu6i",
+    "name": "N10",
+    "properties": {
+      "i": 10,
+      "label": "L10"
+    },
+    "type": "Person"
+  },
+  "e11": {
+    "cid": "bafkreif55kcpkqcn753awmvy637arusjowxzrivdhmh6nv7ihcixe6xl7e",
+    "name": "N11",
+    "properties": {
+      "i": 11,
+      "label": "L11"
+    },
+    "type": "Person"
+  }
+}

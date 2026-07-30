@@ -1,0 +1,328 @@
+{
+  "car_cids": {
+    "S0": "bafkreiecoasfvan76hqymoshafzkquiju2xk5vf5r3y5zpialv6efwjapy",
+    "S1": "bafkreibst6ixdx7upaifkytgybtyo4an2okfghvtvjgkeiwmhjpuk3pyza",
+    "S2": "bafkreihk642tfjvacpwh2bgxdjrromo6buwgyvy7imcvlznq6mx7nyoeyy"
+  },
+  "car_sha256": {
+    "S0": "8270245a81bff1e1863a470172a85109a6aeaed4bd8ef1dcbd005d7c42d9207e",
+    "S1": "329f9171dff47810556266c06787700dd394531eb3aa4ca222cc3a5f456df8c8",
+    "S2": "eaf73532a6a013ec7d04d71a631731de0d2c6c571f430555e5b0f32ff6e1c4c6"
+  },
+  "edge_count": 13,
+  "edges": {
+    "117d0d68-96fd-4ebc-99c9-b8aff5d96da2": {
+      "id": "117d0d68-96fd-4ebc-99c9-b8aff5d96da2",
+      "properties": {
+        "pair": "e06->e00"
+      },
+      "shard_id": "S2",
+      "source_id": "e06",
+      "target_id": "e00",
+      "type": "LINKS"
+    },
+    "152a2b21-8dd3-427d-be0e-6942cf96e185": {
+      "id": "152a2b21-8dd3-427d-be0e-6942cf96e185",
+      "properties": {
+        "pair": "e09->e01"
+      },
+      "shard_id": "S1",
+      "source_id": "e09",
+      "target_id": "e01",
+      "type": "LINKS"
+    },
+    "16dbfcfa-55f3-40c2-b90d-3d155901aa20": {
+      "id": "16dbfcfa-55f3-40c2-b90d-3d155901aa20",
+      "properties": {
+        "pair": "e05->e06"
+      },
+      "shard_id": "S2",
+      "source_id": "e05",
+      "target_id": "e06",
+      "type": "LINKS"
+    },
+    "29cf9a77-35e3-4f46-b443-ac3448bb2df6": {
+      "id": "29cf9a77-35e3-4f46-b443-ac3448bb2df6",
+      "properties": {
+        "pair": "e08->e09"
+      },
+      "shard_id": "S1",
+      "source_id": "e08",
+      "target_id": "e09",
+      "type": "LINKS"
+    },
+    "3035d147-64da-4eef-b538-1410df1d3d29": {
+      "id": "3035d147-64da-4eef-b538-1410df1d3d29",
+      "properties": {
+        "pair": "e02->e07"
+      },
+      "shard_id": "S0",
+      "source_id": "e02",
+      "target_id": "e07",
+      "type": "LINKS"
+    },
+    "4924c017-aae8-492a-b018-ddbbedc044a7": {
+      "id": "4924c017-aae8-492a-b018-ddbbedc044a7",
+      "properties": {
+        "pair": "e00->e03"
+      },
+      "shard_id": "S2",
+      "source_id": "e00",
+      "target_id": "e03",
+      "type": "LINKS"
+    },
+    "4a464817-7c02-4407-ad5f-d2cb974188e6": {
+      "id": "4a464817-7c02-4407-ad5f-d2cb974188e6",
+      "properties": {
+        "pair": "e01->e04"
+      },
+      "shard_id": "S1",
+      "source_id": "e01",
+      "target_id": "e04",
+      "type": "LINKS"
+    },
+    "5630afc2-8111-482a-929e-8216e5759d48": {
+      "id": "5630afc2-8111-482a-929e-8216e5759d48",
+      "properties": {
+        "pair": "e04->e08"
+      },
+      "shard_id": "S1",
+      "source_id": "e04",
+      "target_id": "e08",
+      "type": "LINKS"
+    },
+    "86219a92-b62a-4b57-a142-9158c9136394": {
+      "id": "86219a92-b62a-4b57-a142-9158c9136394",
+      "properties": {
+        "pair": "e10->e11"
+      },
+      "shard_id": "S0",
+      "source_id": "e10",
+      "target_id": "e11",
+      "type": "LINKS"
+    },
+    "8c72c0bd-1171-4afe-add6-c6de84e02ee2": {
+      "id": "8c72c0bd-1171-4afe-add6-c6de84e02ee2",
+      "properties": {
+        "k": 1
+      },
+      "shard_id": "S0",
+      "source_id": "e02",
+      "target_id": "e07",
+      "type": "SAME"
+    },
+    "9d476c7b-09bf-4789-9f65-aab987ebf0ba": {
+      "id": "9d476c7b-09bf-4789-9f65-aab987ebf0ba",
+      "properties": {
+        "pair": "e11->e02"
+      },
+      "shard_id": "S0",
+      "source_id": "e11",
+      "target_id": "e02",
+      "type": "LINKS"
+    },
+    "f0c1f88d-8bad-4174-9b1d-b7f4cf92f288": {
+      "id": "f0c1f88d-8bad-4174-9b1d-b7f4cf92f288",
+      "properties": {
+        "pair": "e07->e10"
+      },
+      "shard_id": "S0",
+      "source_id": "e07",
+      "target_id": "e10",
+      "type": "LINKS"
+    },
+    "f5b33771-61e6-4176-96fa-b298170018ad": {
+      "id": "f5b33771-61e6-4176-96fa-b298170018ad",
+      "properties": {
+        "pair": "e03->e05"
+      },
+      "shard_id": "S2",
+      "source_id": "e03",
+      "target_id": "e05",
+      "type": "LINKS"
+    }
+  },
+  "entities": {
+    "e00": {
+      "cid": "bafkreihdwlr72w2gmywk53bqqdjct7adzhavzsbzss3ctyyehzairnsd2a",
+      "id": "e00",
+      "name": "N0",
+      "properties": {
+        "i": 0,
+        "label": "L0"
+      },
+      "shard_id": "S2",
+      "type": "Org"
+    },
+    "e01": {
+      "cid": "bafkreifty7xlov4ufbgujn2rvxis2wh2a7v7usfpb32i7xcwobqjh2jwmy",
+      "id": "e01",
+      "name": "N1",
+      "properties": {
+        "i": 1,
+        "label": "L1"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e02": {
+      "cid": "bafkreifrtnh4iw2wltghy5xrcbpszcxkkff62p6npuhku7mt7wwmnlltei",
+      "id": "e02",
+      "name": "N2",
+      "properties": {
+        "i": 2,
+        "label": "L2"
+      },
+      "shard_id": "S0",
+      "type": "Person"
+    },
+    "e03": {
+      "cid": "bafkreifheepv5a3zqppzrx5zqh76jsn7s3w2gyaqzjaioll4vfsbr45gyi",
+      "id": "e03",
+      "name": "N3",
+      "properties": {
+        "i": 3,
+        "label": "L3"
+      },
+      "shard_id": "S2",
+      "type": "Org"
+    },
+    "e04": {
+      "cid": "bafkreibfgnusexzxtzlzuw6vlwfu64cvnww4qyyf4canclylry6chhdesi",
+      "id": "e04",
+      "name": "N4",
+      "properties": {
+        "i": 4,
+        "label": "L4"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e05": {
+      "cid": "bafkreibjrs77qsopoiiikde3hcvhlvhexra4iyt2fclnhyw5eygcfhyyny",
+      "id": "e05",
+      "name": "N5",
+      "properties": {
+        "i": 5,
+        "label": "L5"
+      },
+      "shard_id": "S2",
+      "type": "Person"
+    },
+    "e06": {
+      "cid": "bafkreidavvckqq4vgxd2umaekbbf3x6ekxgz224gglz4yfjykwzpphng3y",
+      "id": "e06",
+      "name": "N6",
+      "properties": {
+        "i": 6,
+        "label": "L6"
+      },
+      "shard_id": "S2",
+      "type": "Org"
+    },
+    "e07": {
+      "cid": "bafkreibusish2pryd5qr4t62zjyhkevbrjylyqmebpdlpgvmlmksblzkuy",
+      "id": "e07",
+      "name": "N7",
+      "properties": {
+        "i": 7,
+        "label": "L7"
+      },
+      "shard_id": "S0",
+      "type": "Person"
+    },
+    "e08": {
+      "cid": "bafkreihqwkc5ys75quxrglfglp67frctck4fyixh44owu3n6rbi65oswsi",
+      "id": "e08",
+      "name": "N8",
+      "properties": {
+        "i": 8,
+        "label": "L8"
+      },
+      "shard_id": "S1",
+      "type": "Person"
+    },
+    "e09": {
+      "cid": "bafkreihsay5c3u4bcftfq2k4kicvf4dxxuafytc2dkhlzlpqdr7hsfzsqi",
+      "id": "e09",
+      "name": "N9",
+      "properties": {
+        "i": 9,
+        "label": "L9"
+      },
+      "shard_id": "S1",
+      "type": "Org"
+    },
+    "e10": {
+      "cid": "bafkreiajv4flvra7qa2stnxvobo2bh7prouqomr4aqyzndkp7zodjxqu6i",
+      "id": "e10",
+      "name": "N10",
+      "properties": {
+        "i": 10,
+        "label": "L10"
+      },
+      "shard_id": "S0",
+      "type": "Person"
+    },
+    "e11": {
+      "cid": "bafkreif55kcpkqcn753awmvy637arusjowxzrivdhmh6nv7ihcixe6xl7e",
+      "id": "e11",
+      "name": "N11",
+      "properties": {
+        "i": 11,
+        "label": "L11"
+      },
+      "shard_id": "S0",
+      "type": "Person"
+    }
+  },
+  "entity_count": 12,
+  "fixture_id": "kgp-047-frozen-v1",
+  "graph_name": "kgp-047-frozen-v1",
+  "index_cids": {
+    "S0": {
+      "headers_cid": "bafkreibwzt6j7zgbswqqe3io6xxwiwwy2rwrhnlezupoy6mx5ov42tbbk4",
+      "type_index_cid": "bafkreicujqpexvww7mhfwak7drfzawzs6uk7da6she6tq6kzice5gaorxq"
+    },
+    "S1": {
+      "headers_cid": "bafkreiesh6gdgtnkmjti25zahb3whmjrh2bbwxvrkx2rzxdsgj6nzy2pl4",
+      "type_index_cid": "bafkreidbgnctvzl3zche57uht3cl24fbfobokjoi3jfy764qmmu3la6g7u"
+    },
+    "S2": {
+      "headers_cid": "bafkreiawszi4ryxi3bdmwbudd24ge2syxgoco4rkzbqafzbd5snt74edyq",
+      "type_index_cid": "bafkreifruqinuv4spxwtkn7hgioc6mx5zyed5f2edytkpvuip42h4wahwy"
+    }
+  },
+  "manifest_version": "v1",
+  "membership": {
+    "S0": [
+      "e02",
+      "e07",
+      "e10",
+      "e11"
+    ],
+    "S1": [
+      "e01",
+      "e04",
+      "e08",
+      "e09"
+    ],
+    "S2": [
+      "e00",
+      "e03",
+      "e05",
+      "e06"
+    ]
+  },
+  "num_shards": 3,
+  "root_cids": {
+    "S0": "bafkreic6ruqdskraueochnawihpfyt6egocqe6xax74dcbpvlimg6d5sti",
+    "S1": "bafkreibvt57yedh33c3iwvsu5ky7q6hba7fctp26a56uheduudjx7jx5ga",
+    "S2": "bafkreiflequirqtoyqgujzfajutcg3l3u3jieuxfyk6q4davvmz6cdtw4a"
+  },
+  "shard_ids_sorted": [
+    "S0",
+    "S1",
+    "S2"
+  ]
+}
