@@ -932,6 +932,52 @@ def default_backend_registry() -> ProofBackendRegistry:
     return ProofBackendRegistry((Z3Backend(), CVC5Backend()))
 
 
+def declared_backend_catalog(
+    registry: ProofBackendRegistry | None = None,
+) -> tuple[dict[str, Any], ...]:
+    """Return declarative provider/backend descriptors without probes.
+
+    Used by :mod:`ipfs_datasets_py.logic.verification_api` for side-effect-free
+    ``list_providers`` / capability discovery.  Never calls ``is_available``.
+    """
+
+    active = registry if registry is not None else default_backend_registry()
+    entries: list[dict[str, Any]] = []
+    for backend_id in active:
+        backend = active[backend_id]
+        capabilities = backend.capabilities
+        caps_dict = (
+            capabilities.to_dict()
+            if hasattr(capabilities, "to_dict")
+            else {
+                "logic_families": list(getattr(capabilities, "logic_families", ())),
+                "query_kinds": [
+                    getattr(kind, "value", str(kind))
+                    for kind in getattr(capabilities, "query_kinds", ())
+                ],
+                "deterministic": bool(getattr(capabilities, "deterministic", True)),
+            }
+        )
+        raw_kinds = caps_dict.get("query_kinds", ())
+        query_kinds = [
+            getattr(kind, "value", str(kind)) for kind in raw_kinds
+        ]
+        entries.append(
+            {
+                "availability": "declared",
+                "deterministic": bool(caps_dict.get("deterministic", True)),
+                "logic_families": list(caps_dict.get("logic_families", ())),
+                "metadata": {},
+                "provider_id": backend_id,
+                "provider_version": str(getattr(backend, "backend_version", "declared")),
+                "query_kinds": query_kinds,
+                "schema_version": "logic-verification-provider/v1",
+                "source": "backend_registry",
+            }
+        )
+    return tuple(entries)
+
+
 __all__ = [
     "BACKEND_ADAPTER_VERSION",
     "AvailabilityProbe",
@@ -947,5 +993,6 @@ __all__ = [
     "UnknownBackendError",
     "UnsupportedBackendRequest",
     "compile_smtlib_request",
+    "declared_backend_catalog",
     "default_backend_registry",
 ]
