@@ -329,7 +329,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-020 Build exact cross-surface conformance vectors
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: interfaces
 - Depends on: KGP-018, KGP-019
