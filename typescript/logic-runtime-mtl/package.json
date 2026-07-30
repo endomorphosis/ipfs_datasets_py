@@ -1,0 +1,31 @@
+{
+  "name": "@ipfs-datasets/logic-runtime-mtl",
+  "version": "1.0.0",
+  "description": "Portable RuntimeMTLMonitor@1 finite-trace MTL/LTLf evaluator with Python parity",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test dist/test/runtime_mtl.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.10",
+    "typescript": "5.6.3"
+  },
+  "license": "MIT",
+  "private": true
+}
