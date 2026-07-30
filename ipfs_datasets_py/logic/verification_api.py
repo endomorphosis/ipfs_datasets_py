@@ -34,6 +34,9 @@ LOGIC_VERIFICATION_FEATURE_SCHEMA: Final = "logic-verification-feature/v1"
 LOGIC_VERIFICATION_PROVIDER_SCHEMA: Final = "logic-verification-provider/v1"
 LOGIC_VERIFICATION_CACHE_SCHEMA: Final = "logic-verification-cache-provenance/v1"
 LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
+# FVT-G012 / ExecutableProviderMatrix@1 surface identity (lazy full matrix).
+EXECUTABLE_PROVIDER_MATRIX_INTERFACE: Final = "ExecutableProviderMatrix@1"
+FORMAL_VERIFICATION_MCP_PARITY_INTERFACE: Final = "FormalVerificationMCPParity@1"
 
 # Closed receipt/attestation dispatch surfaces (FVT-G006 / VerifiedReceiptDispatch@2).
 VERIFIED_RECEIPT_DISPATCH_INTERFACE: Final = "VerifiedReceiptDispatch@2"
@@ -668,7 +671,11 @@ class LogicVerificationAPI:
             "list_providers",
             VerificationStatus.DECLARATIVE,
             authority=VerificationAuthority.DECLARATIVE,
-            result={"providers": providers, "count": len(providers)},
+            result={
+                "providers": providers,
+                "count": len(providers),
+                "executable_provider_matrix": EXECUTABLE_PROVIDER_MATRIX_INTERFACE,
+            },
             cache=_empty_cache(source="provider_catalog"),
         )
 
@@ -1170,19 +1177,49 @@ class LogicVerificationAPI:
         capabilities: Sequence[Any] | Mapping[str, Any] | None = None,
         resource_policy: Any | None = None,
         request_id: str = "",
+        execute: bool = True,
+        outcomes: Sequence[Any] | Mapping[str, Any] | None = None,
+        probe_availability: bool = True,
     ) -> VerificationResponse:
-        """Plan a property-specific prover portfolio (pure planning)."""
+        """Plan and (by default) execute a property-specific prover portfolio.
+
+        When ``execute`` is true (default), planned runnable attempts are
+        dispatched through the backend registry.  Unavailable lanes report
+        unavailable outcomes rather than silent success.  Conflicting
+        conclusive authorities quarantine via :func:`select_portfolio`.
+
+        Pure planning is retained by setting ``execute=False``.  Callers may
+        also supply precomputed ``outcomes`` for selection-only evaluation
+        (used by tests and offline reconciliation).
+        """
 
         request_id = _text(request_id, "request_id", optional=True)
         try:
             from ipfs_datasets_py.logic.backends.portfolio import (
+                AttemptFamily,
+                CapabilityStatus,
+                PortfolioAttemptOutcome,
                 PortfolioCapability,
                 PortfolioObligation,
                 PortfolioResourcePolicy,
+                PortfolioVerdict,
                 plan_portfolio,
+                select_portfolio,
             )
+            from ipfs_datasets_py.logic.backends.results import ResultAuthority, ResultStatus
             from ipfs_datasets_py.logic.software_verification.properties import PropertyKind
             from ipfs_datasets_py.logic.families.models import EvidenceAuthority
+            from ipfs_datasets_py.logic.backends.registry import (
+                PROVIDER_MATRIX_FAMILY_AUTHORIZATION,
+                PROVIDER_MATRIX_FAMILY_ATP,
+                PROVIDER_MATRIX_FAMILY_HAMMER,
+                PROVIDER_MATRIX_FAMILY_HYPERPROPERTY,
+                PROVIDER_MATRIX_FAMILY_KERNEL,
+                PROVIDER_MATRIX_FAMILY_PROTOCOL,
+                PROVIDER_MATRIX_FAMILY_RUNTIME,
+                PROVIDER_MATRIX_FAMILY_SMT,
+                PROVIDER_MATRIX_FAMILY_STATE_MODEL,
+            )
         except Exception as error:
             return _response(
                 "run_portfolio",
@@ -1192,6 +1229,18 @@ class LogicVerificationAPI:
                 diagnostics=(f"portfolio module unavailable: {type(error).__name__}: {error}",),
                 request_id=request_id,
             )
+
+        family_map = {
+            PROVIDER_MATRIX_FAMILY_SMT: AttemptFamily.SOLVER,
+            PROVIDER_MATRIX_FAMILY_STATE_MODEL: AttemptFamily.MODEL_CHECKER,
+            PROVIDER_MATRIX_FAMILY_RUNTIME: AttemptFamily.MONITOR,
+            PROVIDER_MATRIX_FAMILY_AUTHORIZATION: AttemptFamily.POLICY,
+            PROVIDER_MATRIX_FAMILY_PROTOCOL: AttemptFamily.PROTOCOL,
+            PROVIDER_MATRIX_FAMILY_HYPERPROPERTY: AttemptFamily.HYPERPROPERTY,
+            PROVIDER_MATRIX_FAMILY_ATP: AttemptFamily.ATP,
+            PROVIDER_MATRIX_FAMILY_HAMMER: AttemptFamily.ORCHESTRATOR,
+            PROVIDER_MATRIX_FAMILY_KERNEL: AttemptFamily.KERNEL,
+        }
 
         try:
             if isinstance(obligation, PortfolioObligation):
@@ -1214,31 +1263,79 @@ class LogicVerificationAPI:
             else:
                 raise VerificationAPIError("obligation must be PortfolioObligation or mapping")
 
+            registry = self._registry()
             caps: list[Any] = []
             if capabilities is None:
-                # Derive declared portfolio capabilities from the backend registry.
-                registry = self._registry()
-                for backend_id, backend_caps in registry.capabilities.items():
-                    from ipfs_datasets_py.logic.backends.portfolio import (
-                        AttemptFamily,
-                        CapabilityStatus,
-                    )
+                # Derive portfolio capabilities from the lazy matrix registry.
+                for backend_id in registry:
+                    backend = registry[backend_id]
+                    backend_caps = backend.capabilities
+                    matrix_entry = getattr(backend, "matrix_entry", None)
+                    if matrix_entry is not None and getattr(matrix_entry, "family", ""):
+                        family = family_map.get(
+                            matrix_entry.family, AttemptFamily.SOLVER
+                        )
+                    else:
+                        families = {
+                            str(item).lower()
+                            for item in (getattr(backend_caps, "logic_families", ()) or ())
+                        }
+                        family = AttemptFamily.SOLVER
+                        if "hyperproperty" in families or "hyperltl" in families:
+                            family = AttemptFamily.HYPERPROPERTY
+                        elif "protocol" in families or "cryptographic_protocol" in families:
+                            family = AttemptFamily.PROTOCOL
+                        elif "authorization" in families or "policy" in families:
+                            family = AttemptFamily.POLICY
+                        elif "tla_plus" in families or "state_transition" in families:
+                            family = AttemptFamily.MODEL_CHECKER
+                        elif "runtime" in families:
+                            family = AttemptFamily.MONITOR
+                        elif backend_id in {"lean", "rocq", "isabelle"}:
+                            family = AttemptFamily.KERNEL
+                        elif backend_id in {"vampire", "eprover", "e"}:
+                            family = AttemptFamily.ATP
+                        elif backend_id == "hammer":
+                            family = AttemptFamily.ORCHESTRATOR
 
-                    families = set(getattr(backend_caps, "logic_families", ()) or ())
-                    family = AttemptFamily.SOLVER
-                    if "hyperproperty" in families:
-                        family = AttemptFamily.HYPERPROPERTY
+                    status = CapabilityStatus.DECLARED
+                    if execute and probe_availability:
+                        try:
+                            available = registry.is_available(backend_id)
+                        except Exception:
+                            available = False
+                        status = (
+                            CapabilityStatus.AVAILABLE
+                            if available
+                            else CapabilityStatus.UNAVAILABLE
+                        )
                     caps.append(
                         PortfolioCapability(
                             backend_id=backend_id,
                             family=family,
-                            status=CapabilityStatus.DECLARED,
+                            status=status,
+                            reconstruction_capable=(family is AttemptFamily.KERNEL),
                         )
                     )
             elif isinstance(capabilities, Mapping):
-                caps = list(capabilities.values())
+                raw_caps = list(capabilities.values())
+                caps = []
+                for item in raw_caps:
+                    if isinstance(item, PortfolioCapability):
+                        caps.append(item)
+                    elif isinstance(item, Mapping):
+                        caps.append(PortfolioCapability.from_dict(item))
+                    else:
+                        caps.append(item)
             else:
-                caps = list(capabilities)
+                caps = []
+                for item in capabilities:
+                    if isinstance(item, PortfolioCapability):
+                        caps.append(item)
+                    elif isinstance(item, Mapping):
+                        caps.append(PortfolioCapability.from_dict(item))
+                    else:
+                        caps.append(item)
 
             policy = resource_policy
             if policy is None:
@@ -1272,22 +1369,327 @@ class LogicVerificationAPI:
             else str(gap)
             for gap in gaps
         )
+
+        executed_outcomes: list[Any] = []
+        selection_dict: dict[str, Any] | None = None
+        selection_authority = VerificationAuthority.BOUNDED
+        status = VerificationStatus.SUCCEEDED if not gaps else VerificationStatus.PARTIAL
+        cache_source = "portfolio_plan"
+
+        if execute or outcomes is not None:
+            cache_source = "portfolio_execution"
+            try:
+                if outcomes is not None:
+                    recorded = outcomes
+                else:
+                    recorded = self._execute_portfolio_attempts(
+                        plan,
+                        portfolio_obligation,
+                        registry=registry,
+                    )
+                    executed_outcomes = list(recorded) if isinstance(recorded, Sequence) else []
+
+                selection = select_portfolio(plan, recorded)
+                selection_dict = (
+                    selection.to_dict() if hasattr(selection, "to_dict") else {"selection": str(selection)}
+                )
+                verdict = getattr(selection, "verdict", None)
+                if verdict is PortfolioVerdict.QUARANTINED:
+                    status = VerificationStatus.PARTIAL
+                    selection_authority = VerificationAuthority.NONE
+                elif verdict is PortfolioVerdict.PROVED:
+                    status = VerificationStatus.SUCCEEDED
+                    selection_authority = VerificationAuthority.BOUNDED
+                    # Preserve typed authority ceiling from required authority when possible.
+                    required = getattr(plan, "required_authority", None)
+                    if required is not None:
+                        mapped = _result_to_verification_authority(
+                            getattr(required, "value", required)
+                        )
+                        if mapped is not VerificationAuthority.NONE:
+                            selection_authority = mapped
+                elif verdict is PortfolioVerdict.DISPROVED:
+                    status = VerificationStatus.SUCCEEDED
+                    selection_authority = VerificationAuthority.BOUNDED
+                elif verdict is PortfolioVerdict.UNSUPPORTED:
+                    status = VerificationStatus.UNSUPPORTED
+                    selection_authority = VerificationAuthority.NONE
+                elif verdict is PortfolioVerdict.UNAVAILABLE:
+                    status = VerificationStatus.UNAVAILABLE
+                    selection_authority = VerificationAuthority.NONE
+                else:
+                    status = VerificationStatus.PARTIAL
+                    achieved = getattr(selection, "achieved_assurance", None)
+                    if achieved is not None:
+                        selection_authority = _evidence_to_verification_authority(achieved)
+                    else:
+                        selection_authority = VerificationAuthority.BOUNDED
+            except Exception as error:
+                return _response(
+                    "run_portfolio",
+                    VerificationStatus.ERROR,
+                    authority=VerificationAuthority.NONE,
+                    result={
+                        "plan": plan_dict,
+                        "capability_gaps": gaps,
+                        "attempt_count": len(getattr(plan, "attempts", ()) or ()),
+                        "executed": True,
+                    },
+                    diagnostics=(f"{type(error).__name__}: {error}",),
+                    request_id=request_id or portfolio_obligation.obligation_id,
+                    property_id=portfolio_obligation.obligation_id,
+                    cache=_empty_cache(source="portfolio_execution"),
+                )
+
+        outcome_payloads = []
+        for item in executed_outcomes:
+            if hasattr(item, "to_dict"):
+                outcome_payloads.append(item.to_dict())
+            elif isinstance(item, Mapping):
+                outcome_payloads.append(dict(item))
+            else:
+                outcome_payloads.append({"outcome": str(item)})
+
+        result: dict[str, Any] = {
+            "plan": plan_dict,
+            "capability_gaps": gaps,
+            "attempt_count": len(getattr(plan, "attempts", ()) or ()),
+            "executed": bool(execute or outcomes is not None),
+            "executable_provider_matrix": EXECUTABLE_PROVIDER_MATRIX_INTERFACE,
+        }
+        if selection_dict is not None:
+            result["selection"] = selection_dict
+            result["verdict"] = selection_dict.get("verdict", "")
+            result["quarantined_attempt_ids"] = list(
+                selection_dict.get("quarantined_attempt_ids") or ()
+            )
+            result["disagreement"] = bool(selection_dict.get("disagreement"))
+        if outcome_payloads:
+            result["outcomes"] = outcome_payloads
+
         return _response(
             "run_portfolio",
-            VerificationStatus.SUCCEEDED if not gaps else VerificationStatus.PARTIAL,
-            authority=VerificationAuthority.BOUNDED,
-            result={
-                "plan": plan_dict,
-                "capability_gaps": gaps,
-                "attempt_count": len(getattr(plan, "attempts", ()) or ()),
-            },
+            status,
+            authority=selection_authority,
+            result=result,
             assumptions=tuple(portfolio_obligation.assumption_ids),
             bounds=policy.to_dict() if hasattr(policy, "to_dict") else {},
             unsupported_features=unsupported,
             request_id=request_id or portfolio_obligation.obligation_id,
             property_id=portfolio_obligation.obligation_id,
-            cache=_empty_cache(source="portfolio_plan"),
+            cache=_empty_cache(source=cache_source),
         )
+
+    def _execute_portfolio_attempts(
+        self,
+        plan: Any,
+        portfolio_obligation: Any,
+        *,
+        registry: Any,
+    ) -> list[Any]:
+        """Dispatch each planned attempt through the registry when runnable."""
+
+        from ipfs_datasets_py.logic.backends.portfolio import (
+            PortfolioAttemptOutcome,
+            PortfolioRole,
+        )
+        from ipfs_datasets_py.logic.backends.results import ResultAuthority, ResultStatus
+        from ipfs_datasets_py.logic.families.models import EvidenceAuthority
+        from ipfs_datasets_py.logic.ir_core.claims import FrozenMap as _FrozenMap
+        from ipfs_datasets_py.logic.ir_core.protocols import (
+            BackendRequest,
+            ExecutionBounds,
+            QueryKind,
+        )
+
+        outcomes: list[Any] = []
+        bounds = getattr(getattr(plan, "resource_policy", None), "bounds", None)
+        if not isinstance(bounds, ExecutionBounds):
+            bounds = ExecutionBounds()
+        statement = str(getattr(portfolio_obligation, "statement", "") or "true")
+        claim_digest = stable_digest(
+            {
+                "claim_id": f"claim:{portfolio_obligation.obligation_id}",
+                "statement": statement,
+            }
+        )
+        obligation_digest = stable_digest(
+            {
+                "obligation_id": portfolio_obligation.obligation_id,
+                "statement": statement,
+            }
+        )
+        assumption_ids = tuple(getattr(portfolio_obligation, "assumption_ids", ()) or ())
+
+        for spec in getattr(plan, "attempts", ()) or ():
+            backend_id = str(spec.backend_id)
+            role = getattr(spec, "role", PortfolioRole.AUTHORITY)
+            authority = getattr(spec, "result_authority", ResultAuthority.SATISFIABILITY)
+            stage = int(getattr(spec, "stage", 0) or 0)
+            runnable = bool(getattr(spec, "runnable", True))
+            if not runnable:
+                outcomes.append(
+                    PortfolioAttemptOutcome(
+                        attempt_id=spec.attempt_id,
+                        backend_id=backend_id,
+                        status=ResultStatus.UNAVAILABLE,
+                        authority=authority,
+                        role=role,
+                        stage=stage,
+                        detail=getattr(spec, "gap_reason", "") or "capability gap",
+                        achieved_assurance=EvidenceAuthority.NONE,
+                    )
+                )
+                continue
+
+            registered = backend_id in set(registry)
+            if not registered:
+                outcomes.append(
+                    PortfolioAttemptOutcome(
+                        attempt_id=spec.attempt_id,
+                        backend_id=backend_id,
+                        status=ResultStatus.UNAVAILABLE,
+                        authority=authority,
+                        role=role,
+                        stage=stage,
+                        detail=f"backend {backend_id!r} is not registered",
+                        achieved_assurance=EvidenceAuthority.NONE,
+                    )
+                )
+                continue
+
+            try:
+                available = registry.is_available(backend_id)
+            except Exception:
+                available = False
+            if not available:
+                outcomes.append(
+                    PortfolioAttemptOutcome(
+                        attempt_id=spec.attempt_id,
+                        backend_id=backend_id,
+                        status=ResultStatus.UNAVAILABLE,
+                        authority=authority,
+                        role=role,
+                        stage=stage,
+                        detail=f"backend {backend_id!r} is unavailable",
+                        achieved_assurance=EvidenceAuthority.NONE,
+                    )
+                )
+                continue
+
+            # Map portfolio family to a compatible query kind for the shared protocol.
+            family = getattr(spec, "family", None)
+            family_value = getattr(family, "value", str(family or "solver"))
+            query_kind = QueryKind.SATISFIABILITY
+            logic_family = "first_order"
+            if family_value == "monitor":
+                query_kind = QueryKind.RUNTIME_MONITOR
+                logic_family = "temporal"
+            elif family_value == "policy":
+                query_kind = QueryKind.POLICY_APPROVAL
+                logic_family = "authorization"
+            elif family_value in {"atp", "kernel", "orchestrator", "hyperproperty", "protocol"}:
+                query_kind = QueryKind.THEOREM_PROOF
+                if family_value == "hyperproperty":
+                    logic_family = "hyperproperty"
+                elif family_value == "protocol":
+                    logic_family = "protocol"
+                elif family_value == "kernel":
+                    logic_family = "software_verification"
+            elif family_value == "model_checker":
+                logic_family = "state_transition"
+
+            request = BackendRequest(
+                request_id=f"req:portfolio:{spec.attempt_id}",
+                claim_id=f"claim:{portfolio_obligation.obligation_id}",
+                declaration_id=f"decl:{portfolio_obligation.obligation_id}",
+                claim_digest=claim_digest,
+                obligation_id=str(portfolio_obligation.obligation_id),
+                obligation_digest=obligation_digest,
+                assumption_ids=assumption_ids,
+                logic_family=logic_family,
+                query_kind=query_kind,
+                bounds=bounds,
+                payload=_FrozenMap(
+                    {
+                        "statement": statement,
+                        "encoding": "smtlib2",
+                        "source": f"(assert true)\n(check-sat)\n",
+                        "formula": statement,
+                        "goal": statement,
+                    }
+                ),
+                requested_backend_id=backend_id,
+            )
+
+            try:
+                attempt, result = registry.run(request, backend_id=backend_id)
+            except Exception as error:
+                outcomes.append(
+                    PortfolioAttemptOutcome(
+                        attempt_id=spec.attempt_id,
+                        backend_id=backend_id,
+                        status=ResultStatus.ERROR,
+                        authority=authority,
+                        role=role,
+                        stage=stage,
+                        detail=f"{type(error).__name__}: {error}",
+                        achieved_assurance=EvidenceAuthority.NONE,
+                    )
+                )
+                continue
+
+            raw_status = getattr(result, "status", ResultStatus.UNKNOWN)
+            status_token = getattr(raw_status, "value", raw_status)
+            try:
+                result_status = (
+                    raw_status
+                    if isinstance(raw_status, ResultStatus)
+                    else ResultStatus(str(status_token))
+                )
+            except ValueError:
+                result_status = ResultStatus.UNKNOWN
+            attempt_status = getattr(attempt, "status", None)
+            attempt_status_value = getattr(attempt_status, "value", str(attempt_status or ""))
+            if attempt_status_value == "unavailable":
+                result_status = ResultStatus.UNAVAILABLE
+
+            conclusive_counterexample = result_status in {
+                ResultStatus.SATISFIABLE,
+                ResultStatus.DISPROVED,
+                ResultStatus.VIOLATED,
+                ResultStatus.DENIED,
+                ResultStatus.ATTACK_FOUND,
+            }
+            achieved = EvidenceAuthority.BOUNDED
+            if result_status in {ResultStatus.CANDIDATE}:
+                achieved = EvidenceAuthority.ADVISORY
+            if result_status in {
+                ResultStatus.UNKNOWN,
+                ResultStatus.UNAVAILABLE,
+                ResultStatus.ERROR,
+                ResultStatus.TIMEOUT,
+                ResultStatus.UNSUPPORTED,
+                ResultStatus.MALFORMED,
+            }:
+                achieved = EvidenceAuthority.NONE
+
+            diagnostics = tuple(getattr(attempt, "diagnostics", ()) or ())
+            detail = "; ".join(diagnostics) if diagnostics else ""
+            outcomes.append(
+                PortfolioAttemptOutcome(
+                    attempt_id=spec.attempt_id,
+                    backend_id=backend_id,
+                    status=result_status,
+                    authority=authority,
+                    role=role,
+                    stage=stage,
+                    conclusive_counterexample=conclusive_counterexample,
+                    achieved_assurance=achieved,
+                    detail=detail,
+                )
+            )
+        return outcomes
 
     # ── Counterexamples ───────────────────────────────────────────────────
 
@@ -2363,6 +2765,8 @@ __all__ = [
     "ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE",
     "CLOSED_RECEIPT_SCHEMAS",
     "CacheProvenance",
+    "EXECUTABLE_PROVIDER_MATRIX_INTERFACE",
+    "FORMAL_VERIFICATION_MCP_PARITY_INTERFACE",
     "FeatureAvailability",
     "FeatureDescriptor",
     "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
