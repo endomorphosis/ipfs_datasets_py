@@ -1,4 +1,4 @@
-"""Lazy wallet processor registry and factory (WALPROC-G600).
+"""Lazy wallet processor registry and factory (WALPROC-G600 / CRYPTOIR-G600).
 
 This module is the integration-owner entry point for constructing chain
 processors.  Importing it does **not** import optional chain packages, open
@@ -7,7 +7,17 @@ network sockets, resolve secrets, or auto-install dependencies.
 Public AST surface:
 
 * :class:`WalletProcessorRegistry`
+* :class:`WalletRegistry` (cutover alias)
 * :func:`get_wallet_processor`
+
+CRYPTOIR-G600 cutover notes:
+
+* Every registered processor declares ``supports_sign=False`` and
+  ``supports_broadcast=False`` (or equivalent).
+* Transaction guards are registered as inspectable module paths only; loading
+  them never enables key storage or unguarded signing.
+* Signing/broadcast must go through :class:`GuardService` with consumed
+  admissibility capabilities — there is no ``approved=true`` escape hatch.
 """
 
 from __future__ import annotations
@@ -163,7 +173,15 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             }
         ),
         description="Bitcoin UTXO public-ledger processor (no signing/broadcast).",
-        metadata={"utxo_model": True, "supports_sign": False, "supports_broadcast": False},
+        metadata={
+            "utxo_model": True,
+            "supports_sign": False,
+            "supports_broadcast": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.bitcoin.transaction_guard"
+            ),
+            "transaction_guard_symbol": "BitcoinTransactionGuard",
+        },
     ),
     ProcessorFamilySpec(
         family="ethereum",
@@ -183,7 +201,14 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
         default_network="ethereum-mainnet",
         networks=frozenset({"ethereum-mainnet", "mainnet", "1"}),
         description="Ethereum/EVM public-ledger processor (raw JSON-RPC).",
-        metadata={"supports_sign": False, "supports_broadcast": False},
+        metadata={
+            "supports_sign": False,
+            "supports_broadcast": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.ethereum.transaction_guard"
+            ),
+            "transaction_guard_symbol": "EthereumTransactionGuard",
+        },
     ),
     ProcessorFamilySpec(
         family="solana",
@@ -196,7 +221,14 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
         default_network="mainnet-beta",
         networks=frozenset({"mainnet-beta", "mainnet", "devnet", "testnet"}),
         description="Solana account/signature public-ledger processor.",
-        metadata={"supports_sign": False, "supports_broadcast": False},
+        metadata={
+            "supports_sign": False,
+            "supports_broadcast": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.solana.transaction_guard"
+            ),
+            "transaction_guard_symbol": "SolanaTransactionGuard",
+        },
     ),
     ProcessorFamilySpec(
         family="xrpl",
@@ -218,7 +250,16 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             }
         ),
         description="XRPL classic-account public-ledger processor.",
-        metadata={"supports_sign": False, "supports_submit": False, "xaman_payloads": False},
+        metadata={
+            "supports_sign": False,
+            "supports_submit": False,
+            "supports_broadcast": False,
+            "xaman_payloads": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.xrpl.transaction_guard"
+            ),
+            "transaction_guard_symbol": "XRPLTransactionGuard",
+        },
     ),
     ProcessorFamilySpec(
         family="xaman",
@@ -251,8 +292,13 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "supports_sign": False,
             "supports_submit": False,
             "supports_approve": False,
+            "supports_broadcast": False,
             "settlement_via": "xrpl",
             "composed_xrpl": True,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.xaman.transaction_guard"
+            ),
+            "transaction_guard_symbol": "XamanTransactionGuard",
         },
     ),
     ProcessorFamilySpec(
@@ -278,6 +324,12 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "world_chain": True,
             "composes_ethereum": True,
             "siwe_bootstrap_supported": False,
+            "supports_sign": False,
+            "supports_broadcast": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.worldcoin.transaction_guard"
+            ),
+            "transaction_guard_symbol": "WorldcoinTransactionGuard",
         },
     ),
     ProcessorFamilySpec(
@@ -310,8 +362,28 @@ _FAMILY_SPECS: tuple[ProcessorFamilySpec, ...] = (
             "composes_ethereum": True,
             "siwe_bootstrap_supported": False,
             "block_depth_alone_is_not_finality": True,
+            "supports_sign": False,
+            "supports_broadcast": False,
+            "transaction_guard": (
+                "ipfs_datasets_py.processors.wallets.worldcoin.transaction_guard"
+            ),
+            "transaction_guard_symbol": "WorldcoinTransactionGuard",
         },
     ),
+)
+
+# Stable catalogue of chain transaction-guard modules for cutover inventory.
+TRANSACTION_GUARD_CATALOG: Mapping[str, Mapping[str, str]] = MappingProxyType(
+    {
+        family: MappingProxyType(
+            {
+                "module": str(spec.metadata.get("transaction_guard", "")),
+                "symbol": str(spec.metadata.get("transaction_guard_symbol", "")),
+            }
+        )
+        for family, spec in ((s.family, s) for s in _FAMILY_SPECS)
+        if spec.metadata.get("transaction_guard")
+    }
 )
 
 
@@ -859,6 +931,48 @@ class WalletProcessorRegistry:
     def required_extra(self, name: str) -> str:
         return self.get_spec(name).extra
 
+    def list_transaction_guards(self) -> Mapping[str, Mapping[str, str]]:
+        """Return registered transaction-guard module paths without loading them.
+
+        Signing remains disabled on every processor; guards only issue
+        exact-candidate admissibility evidence for an external custody system.
+        """
+
+        return MappingProxyType(
+            {
+                family: MappingProxyType(dict(entry))
+                for family, entry in TRANSACTION_GUARD_CATALOG.items()
+                if family in self._specs
+            }
+        )
+
+    def transaction_guard_module(self, name: str) -> str:
+        """Return the transaction-guard module path for *name* (no import)."""
+
+        family = self.resolve_family(name)
+        entry = TRANSACTION_GUARD_CATALOG.get(family)
+        if entry is None or not entry.get("module"):
+            raise UnsupportedCapabilityError(
+                f"family {family!r} does not declare a transaction guard"
+            )
+        return str(entry["module"])
+
+    def asserts_no_signing_authority(self, name: str | None = None) -> bool:
+        """Return True when the named family (or all families) forbids signing.
+
+        CRYPTOIR-G600 invariant: processors never gain key storage or unguarded
+        sign/broadcast authority through the registry cutover.
+        """
+
+        families = (self.resolve_family(name),) if name is not None else self.list_families()
+        for family in families:
+            meta = dict(self.get_spec(family).metadata)
+            if meta.get("supports_sign") is True or meta.get("supports_broadcast") is True:
+                return False
+            if meta.get("supports_submit") is True or meta.get("supports_approve") is True:
+                return False
+        return True
+
     # -- resolution --------------------------------------------------------
 
     def resolve_family_for_network(
@@ -1019,12 +1133,19 @@ def get_wallet_processor(
     )
 
 
+# CRYPTOIR-G600 AST alias: WalletRegistry is the cutover name for the same
+# serialized sole-owner registry surface.
+WalletRegistry = WalletProcessorRegistry
+
+
 __all__ = [
     "AmbiguousNetworkError",
     "OptionalDependencyError",
     "ProcessorFamilySpec",
+    "TRANSACTION_GUARD_CATALOG",
     "UnknownProcessorError",
     "WalletProcessorRegistry",
+    "WalletRegistry",
     "default_registry",
     "get_wallet_processor",
     "reset_default_registry",

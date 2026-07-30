@@ -52,6 +52,21 @@ from .preflight import (
     compose_requirement_outcomes,
     evaluate_transaction_preflight,
 )
+from .service import (
+    GUARD_SERVICE_INTERFACE,
+    GUARD_SERVICE_SCHEMA_VERSION,
+    BroadcastAuthorization,
+    GuardService,
+    KNOWN_SIGNING_PATHS,
+    SignAuthorization,
+    SigningPathInventory,
+    broadcast,
+    evaluate_guard_preflight,
+    get_default_guard_service,
+    reset_default_guard_service,
+    send_raw_transaction,
+    sign_transaction,
+)
 
 __all__ = [
     # errors
@@ -92,4 +107,18 @@ __all__ = [
     "TransactionPreflight",
     "compose_requirement_outcomes",
     "evaluate_transaction_preflight",
+    # service (CRYPTOIR-G600)
+    "GUARD_SERVICE_INTERFACE",
+    "GUARD_SERVICE_SCHEMA_VERSION",
+    "BroadcastAuthorization",
+    "GuardService",
+    "KNOWN_SIGNING_PATHS",
+    "SignAuthorization",
+    "SigningPathInventory",
+    "broadcast",
+    "evaluate_guard_preflight",
+    "get_default_guard_service",
+    "reset_default_guard_service",
+    "send_raw_transaction",
+    "sign_transaction",
 ]
