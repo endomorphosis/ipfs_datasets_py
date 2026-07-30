@@ -1296,8 +1296,19 @@ class LogicVerificationAPI:
         witness: Mapping[str, Any] | Any,
         *,
         request_id: str = "",
+        violated_property: str = "",
+        assumption_ids: Sequence[str] = (),
+        finite_bounds: Mapping[str, Any] | None = None,
+        bindings: Mapping[str, Any] | None = None,
+        private_store: Mapping[str, Mapping[str, Any]] | None = None,
     ) -> VerificationResponse:
-        """Normalize a counterexample / attack-trace / model witness."""
+        """Project a counterexample through the secret-safe public boundary.
+
+        Raw provider output, hidden witnesses, credentials, source blobs, and
+        private channels never appear in ``result`` or ``witnesses``.  The
+        response carries :class:`CounterexampleEnvelope@2` only; private
+        material is referenced by digest/retention metadata when present.
+        """
 
         request_id = _text(request_id, "request_id", optional=True)
         if witness is None:
@@ -1308,34 +1319,52 @@ class LogicVerificationAPI:
                 diagnostics=("witness is required",),
                 request_id=request_id,
             )
-        if hasattr(witness, "to_dict"):
-            payload = witness.to_dict()
-        elif isinstance(witness, Mapping):
-            payload = dict(witness)
-        else:
-            payload = {"value": str(witness)}
 
-        kind = str(payload.get("kind") or payload.get("witness_kind") or "model")
-        summary = str(
-            payload.get("summary")
-            or payload.get("message")
-            or payload.get("description")
-            or f"Counterexample witness of kind {kind}"
+        from ipfs_datasets_py.logic.software_verification.counterexamples.contracts import (
+            COUNTEREXAMPLE_ENVELOPE_INTERFACE,
+            PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE,
+            CounterexampleBoundaryError,
+            project_public_counterexample,
         )
-        model = payload.get("model") or payload.get("assignment") or payload.get("trace")
+
+        try:
+            envelope = project_public_counterexample(
+                witness,
+                violated_property=violated_property,
+                assumption_ids=assumption_ids,
+                finite_bounds=finite_bounds,
+                bindings=bindings,
+                private_store=private_store,
+            )
+        except CounterexampleBoundaryError as exc:
+            return _response(
+                "explain_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+
+        public = envelope.to_public_dict()
+        # Explicitly refuse residual raw channels on the API surface.
+        public.pop("raw", None)
+        public["boundary"] = PUBLIC_COUNTEREXAMPLE_BOUNDARY_INTERFACE
+        public["envelope_interface"] = COUNTEREXAMPLE_ENVELOPE_INTERFACE
+        # Kind-derived authority remains on the envelope; the stable API
+        # operation itself is a bounded public projection (never escalated).
+
         return _response(
             "explain_counterexample",
             VerificationStatus.SUCCEEDED,
             authority=VerificationAuthority.BOUNDED,
-            result={
-                "kind": kind,
-                "summary": summary,
-                "model": model,
-                "raw": payload,
-            },
-            witnesses=({"kind": kind, "payload": payload},),
+            result=public,
+            assumptions=envelope.assumptions,
+            bounds=dict(envelope.bounds),
+            witnesses=(envelope.to_witness_dict(),),
             request_id=request_id,
-            cache=_empty_cache(source="counterexample"),
+            property_id=envelope.violated_property,
+            provider_id=envelope.tool_id,
+            cache=_empty_cache(source="counterexample_public_boundary"),
         )
 
     # ── Receipts (VerifiedReceiptDispatch@2 / AttestationAuthorityBoundary@2) ─
