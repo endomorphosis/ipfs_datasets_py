@@ -1278,7 +1278,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-047 Restore executable v1 sharded-CAR compatibility coverage
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: query
 - Depends on:
@@ -1313,7 +1313,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-049 Implement a fail-closed release evidence collector
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: adoption
 - Depends on: KGP-046, KGP-047, KGP-048
