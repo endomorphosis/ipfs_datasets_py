@@ -448,7 +448,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-027 Add code, objective, AST, conflict, and evidence graph adapters
 
-- Status: pending
+- Status: completed
 - Priority: P1
 - Track: compatibility
 - Depends on: KGP-002, KGP-015
