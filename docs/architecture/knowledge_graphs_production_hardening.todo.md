@@ -1296,7 +1296,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-048 Reconcile legacy lifecycle diagnostics with the canonical service
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: baseline
 - Depends on:
