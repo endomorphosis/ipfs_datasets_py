@@ -1,0 +1,4702 @@
+{
+  "schema_version": "proof-tactician-corpus/v1",
+  "interface": "ProofTacticianCorpus@1",
+  "corpus_id": "proof-tactician-golden-v1",
+  "corpus_revision": "fvt-004-v1",
+  "goal_id": "FVT-G020",
+  "task_id": "FVT-004",
+  "description": "Compact golden corpus for the formal verification proof tactician (FVT-G020 / FVT-004). Defines solvable, mutated, impossible, ambiguous, unsupported, and unavailable recipes that measure end-goal formalization, proof-gap recovery, proof-chain authority, counterexample replay/minimization, and honest failure across the twelve required scenario families. Fixtures bind licenses, provenance, and expected authority ceilings. They never embed private witnesses, raw source/stdout, credentials, or tokens, and never label offline expected results as live verification.",
+  "objective": "FVT-G020",
+  "bundle": "formal-verification-tactician/corpus",
+  "license": {
+    "license_expression": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "source_class": "synthetic_fixture",
+    "attribution": "ipfs_datasets_py FVT-004 synthetic proof-tactician corpus"
+  },
+  "privacy": {
+    "privacy_class": "public_synthetic",
+    "contains_pii": false,
+    "contains_secrets": false,
+    "private_witnesses_allowed": false,
+    "private_data_allowed": false,
+    "raw_source_allowed": false,
+    "raw_stdout_allowed": false,
+    "credentials_allowed": false,
+    "tokens_allowed": false,
+    "hidden_channels_allowed": false,
+    "network_required": false
+  },
+  "non_execution": {
+    "live_verification": false,
+    "requires_network": false,
+    "requires_optional_solver": false,
+    "requires_paid_model": false,
+    "side_effects": false,
+    "labels_injected_results_as_live": false,
+    "installs_or_fetches_tools": false
+  },
+  "conflict_policy": "Own new corpus contracts and fixtures; do not tune production behavior to fixture strings or label injected expected results as live verification.",
+  "authority_vocabulary": [
+    "theorem",
+    "satisfiability",
+    "model_check",
+    "monitor",
+    "authorization",
+    "protocol",
+    "hyperproperty",
+    "candidate",
+    "reconstruction",
+    "attestation"
+  ],
+  "evidence_authority_vocabulary": [
+    "independently_checkable",
+    "bounded",
+    "advisory"
+  ],
+  "variant_vocabulary": [
+    "solvable",
+    "mutated",
+    "impossible",
+    "ambiguous",
+    "unsupported",
+    "unavailable"
+  ],
+  "family_vocabulary": [
+    "missing_loop_invariant",
+    "callee_contract_frame",
+    "lease_safety",
+    "fairness_ambiguity",
+    "impossible_target_core",
+    "smt_model",
+    "runtime_trace",
+    "protocol_attack",
+    "hypertrace",
+    "kernel_rejection",
+    "bridge_lemma",
+    "legal_evidence_routing"
+  ],
+  "family_catalog": [
+    {
+      "family_id": "missing_loop_invariant",
+      "title": "Missing loop invariant",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "default_authority": "satisfiability",
+      "counterexample_kind": "smt_model",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "impossible",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "callee_contract_frame",
+      "title": "Missing callee contract or frame",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "default_authority": "satisfiability",
+      "counterexample_kind": "smt_model",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "impossible",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "lease_safety",
+      "title": "Distributed lease/state-machine safety",
+      "property_kind": "safety",
+      "logic_family": "transition_system",
+      "proof_gap_kind": "missing_state_invariant",
+      "default_authority": "model_check",
+      "counterexample_kind": "state_trace",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "fairness_ambiguity",
+      "title": "Bounded liveness with fairness ambiguity",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "default_authority": "model_check",
+      "counterexample_kind": "lasso_trace",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "ambiguous",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "impossible_target_core",
+      "title": "Impossible target with minimal inconsistent core",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "inconsistent_core",
+      "default_authority": "satisfiability",
+      "counterexample_kind": "unsat_core",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "impossible"
+      ]
+    },
+    {
+      "family_id": "smt_model",
+      "title": "SMT resource invariant with projected countermodel",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "resource_invariant_violation",
+      "default_authority": "satisfiability",
+      "counterexample_kind": "smt_model",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "runtime_trace",
+      "title": "Runtime MTL violation with shortest prefix",
+      "property_kind": "runtime",
+      "logic_family": "temporal",
+      "proof_gap_kind": "runtime_property_violation",
+      "default_authority": "monitor",
+      "counterexample_kind": "trace_prefix",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "protocol_attack",
+      "title": "Protocol attack with dependency slice",
+      "property_kind": "security",
+      "logic_family": "cryptographic_protocol",
+      "proof_gap_kind": "missing_protocol_lemma",
+      "default_authority": "protocol",
+      "counterexample_kind": "attack_trace",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "hypertrace",
+      "title": "Noninterference failure with paired hypertraces",
+      "property_kind": "hyperproperty",
+      "logic_family": "hyperproperty",
+      "proof_gap_kind": "noninterference_violation",
+      "default_authority": "hyperproperty",
+      "counterexample_kind": "paired_hypertrace",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "kernel_rejection",
+      "title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "default_authority": "reconstruction",
+      "counterexample_kind": "kernel_diagnostic",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "impossible",
+        "unavailable"
+      ]
+    },
+    {
+      "family_id": "bridge_lemma",
+      "title": "Bridge lemma across logic translations",
+      "property_kind": "translation",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_bridge_lemma",
+      "default_authority": "satisfiability",
+      "counterexample_kind": "translation_gap",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "ambiguous"
+      ]
+    },
+    {
+      "family_id": "legal_evidence_routing",
+      "title": "Legal-domain premise delegated to legal tactician",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "default_authority": "authorization",
+      "counterexample_kind": "legal_evidence_gap",
+      "required_variants": [
+        "solvable",
+        "mutated",
+        "unsupported",
+        "ambiguous",
+        "unavailable"
+      ]
+    }
+  ],
+  "measurement_vocabulary": [
+    "end_goal_formalization",
+    "proof_gap_recovery",
+    "proof_chain_authority",
+    "counterexample_replay",
+    "counterexample_minimization",
+    "honest_failure"
+  ],
+  "disposition_vocabulary": [
+    "ambiguous_interpretation",
+    "impossible_inconsistent",
+    "mutation_changes_semantic_identity",
+    "solvable_with_gap_or_proof",
+    "tool_unavailable",
+    "unsupported_semantics"
+  ],
+  "outcome_class_vocabulary": [
+    "honest_ambiguity",
+    "honest_unavailable",
+    "honest_unsat_or_inconsistent_core",
+    "honest_unsupported",
+    "semantic_mutation_detected",
+    "success_or_validated_gap_plan"
+  ],
+  "minimization_guarantee_vocabulary": [
+    "none",
+    "normalized",
+    "bounded",
+    "locally_minimal",
+    "globally_minimal"
+  ],
+  "forbidden_public_fields": [
+    "hidden_witness",
+    "token",
+    "credential",
+    "raw_source",
+    "stdout",
+    "private_channel",
+    "secret",
+    "private_witness",
+    "password",
+    "api_key"
+  ],
+  "required_coverage": {
+    "families": [
+      "missing_loop_invariant",
+      "callee_contract_frame",
+      "lease_safety",
+      "fairness_ambiguity",
+      "impossible_target_core",
+      "smt_model",
+      "runtime_trace",
+      "protocol_attack",
+      "hypertrace",
+      "kernel_rejection",
+      "bridge_lemma",
+      "legal_evidence_routing"
+    ],
+    "variants": [
+      "solvable",
+      "mutated",
+      "impossible",
+      "ambiguous",
+      "unsupported",
+      "unavailable"
+    ],
+    "measurements": [
+      "end_goal_formalization",
+      "proof_gap_recovery",
+      "proof_chain_authority",
+      "counterexample_replay",
+      "counterexample_minimization",
+      "honest_failure"
+    ],
+    "per_family_minimum_variants": [
+      "solvable",
+      "mutated",
+      "unsupported"
+    ]
+  },
+  "acceptance": {
+    "covers_twelve_required_scenario_families": true,
+    "variants_include_solvable_mutated_impossible_ambiguous_unsupported_unavailable": true,
+    "measures_end_goal_formalization": true,
+    "measures_proof_gap_recovery": true,
+    "measures_proof_chain_authority": true,
+    "measures_counterexample_replay_and_minimization": true,
+    "measures_honest_failure": true,
+    "binds_licenses_and_provenance": true,
+    "binds_expected_authority": true,
+    "no_private_witnesses_embedded": true,
+    "not_labeled_as_live_verification": true
+  },
+  "case_ids": [
+    "bridge_lemma.ambiguous",
+    "bridge_lemma.mutated",
+    "bridge_lemma.solvable",
+    "bridge_lemma.unsupported",
+    "callee_contract_frame.impossible",
+    "callee_contract_frame.mutated",
+    "callee_contract_frame.solvable",
+    "callee_contract_frame.unavailable",
+    "callee_contract_frame.unsupported",
+    "fairness_ambiguity.ambiguous",
+    "fairness_ambiguity.mutated",
+    "fairness_ambiguity.solvable",
+    "fairness_ambiguity.unavailable",
+    "fairness_ambiguity.unsupported",
+    "hypertrace.mutated",
+    "hypertrace.solvable",
+    "hypertrace.unavailable",
+    "hypertrace.unsupported",
+    "impossible_target_core.impossible",
+    "impossible_target_core.mutated",
+    "impossible_target_core.solvable",
+    "impossible_target_core.unsupported",
+    "kernel_rejection.impossible",
+    "kernel_rejection.mutated",
+    "kernel_rejection.solvable",
+    "kernel_rejection.unavailable",
+    "kernel_rejection.unsupported",
+    "lease_safety.mutated",
+    "lease_safety.solvable",
+    "lease_safety.unavailable",
+    "lease_safety.unsupported",
+    "legal_evidence_routing.ambiguous",
+    "legal_evidence_routing.mutated",
+    "legal_evidence_routing.solvable",
+    "legal_evidence_routing.unavailable",
+    "legal_evidence_routing.unsupported",
+    "missing_loop_invariant.impossible",
+    "missing_loop_invariant.mutated",
+    "missing_loop_invariant.solvable",
+    "missing_loop_invariant.unavailable",
+    "missing_loop_invariant.unsupported",
+    "protocol_attack.mutated",
+    "protocol_attack.solvable",
+    "protocol_attack.unavailable",
+    "protocol_attack.unsupported",
+    "runtime_trace.mutated",
+    "runtime_trace.solvable",
+    "runtime_trace.unavailable",
+    "runtime_trace.unsupported",
+    "smt_model.mutated",
+    "smt_model.solvable",
+    "smt_model.unavailable",
+    "smt_model.unsupported"
+  ],
+  "cases": [
+    {
+      "case_id": "bridge_lemma.ambiguous",
+      "family_id": "bridge_lemma",
+      "family_title": "Bridge lemma across logic translations",
+      "variant": "ambiguous",
+      "description": "Program VC to SMT translation needs a refinement bridge lemma for heap framing. Variant=ambiguous. Multiple material interpretations exist; selection is required before proof authority.",
+      "property_kind": "translation",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_bridge_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "end_goal_formalization",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "ambiguous_interpretation",
+      "expected_outcome_class": "honest_ambiguity",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Composition of source VC and SMT obligation via an explicit bridge lemma.",
+        "source_sketch": "source: program/separation  target: qf_lia  preservation: equisatisfiable",
+        "proof_gap_kind": "missing_bridge_lemma",
+        "counterexample_kind": "translation_gap",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": {
+          "dimension": "interpretation",
+          "alternatives": [
+            "interp_a",
+            "interp_b"
+          ],
+          "requires_material_selection": true
+        },
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous",
+        "bridge_lemma",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_bridge_lemma",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "translation"
+      ]
+    },
+    {
+      "case_id": "bridge_lemma.mutated",
+      "family_id": "bridge_lemma",
+      "family_title": "Bridge lemma across logic translations",
+      "variant": "mutated",
+      "description": "Program VC to SMT translation needs a refinement bridge lemma for heap framing. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "translation",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_bridge_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Composition of source VC and SMT obligation via an explicit bridge lemma.",
+        "source_sketch": "source: program/separation  target: qf_lia  preservation: equisatisfiable",
+        "proof_gap_kind": "missing_bridge_lemma",
+        "counterexample_kind": "translation_gap",
+        "mutation": {
+          "mutation_id": "bridge_lemma.semantic_flip",
+          "description": "Semantic mutation of bridge_lemma that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "translation_gap",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "bridge_lemma",
+        "end_goal_formalization",
+        "missing_bridge_lemma",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "translation"
+      ]
+    },
+    {
+      "case_id": "bridge_lemma.solvable",
+      "family_id": "bridge_lemma",
+      "family_title": "Bridge lemma across logic translations",
+      "variant": "solvable",
+      "description": "Program VC to SMT translation needs a refinement bridge lemma for heap framing. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "translation",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_bridge_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Composition of source VC and SMT obligation via an explicit bridge lemma.",
+        "source_sketch": "source: program/separation  target: qf_lia  preservation: equisatisfiable",
+        "proof_gap_kind": "missing_bridge_lemma",
+        "counterexample_kind": "translation_gap",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "translation_gap",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "bridge_lemma",
+        "end_goal_formalization",
+        "missing_bridge_lemma",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "solvable",
+        "translation"
+      ]
+    },
+    {
+      "case_id": "bridge_lemma.unsupported",
+      "family_id": "bridge_lemma",
+      "family_title": "Bridge lemma across logic translations",
+      "variant": "unsupported",
+      "description": "Program VC to SMT translation needs a refinement bridge lemma for heap framing. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "translation",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_bridge_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "end_goal_formalization",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Composition of source VC and SMT obligation via an explicit bridge lemma.",
+        "source_sketch": "source: program/separation  target: qf_lia  preservation: equisatisfiable",
+        "proof_gap_kind": "missing_bridge_lemma",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "bridge_lemma.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "bridge_lemma",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_bridge_lemma",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "translation",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "callee_contract_frame.impossible",
+      "family_id": "callee_contract_frame",
+      "family_title": "Missing callee contract or frame",
+      "variant": "impossible",
+      "description": "Caller relies on a callee side-effect without a frame or postcondition contract. Variant=impossible. Target is inconsistent; corpus expects a minimal core, never a false proof.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "impossible_inconsistent",
+      "expected_outcome_class": "honest_unsat_or_inconsistent_core",
+      "minimization_guarantee": "locally_minimal",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove the caller restores the heap frame and callee postcondition after return.",
+        "source_sketch": "def caller(x):\n    y = helper(x)  # missing contract/frame\n    return y + 1",
+        "proof_gap_kind": "missing_callee_contract",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": {
+          "core_kind": "contradiction",
+          "must_not_prove": true
+        }
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "locally_minimal",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "callee_contract_frame",
+        "end_goal_formalization",
+        "honest_failure",
+        "impossible",
+        "missing_callee_contract",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "callee_contract_frame.mutated",
+      "family_id": "callee_contract_frame",
+      "family_title": "Missing callee contract or frame",
+      "variant": "mutated",
+      "description": "Caller relies on a callee side-effect without a frame or postcondition contract. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove the caller restores the heap frame and callee postcondition after return.",
+        "source_sketch": "def caller(x):\n    y = helper(x)  # missing contract/frame\n    return y + 1",
+        "proof_gap_kind": "missing_callee_contract",
+        "counterexample_kind": "smt_model",
+        "mutation": {
+          "mutation_id": "callee_contract_frame.semantic_flip",
+          "description": "Semantic mutation of callee_contract_frame that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "callee_contract_frame",
+        "end_goal_formalization",
+        "missing_callee_contract",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "callee_contract_frame.solvable",
+      "family_id": "callee_contract_frame",
+      "family_title": "Missing callee contract or frame",
+      "variant": "solvable",
+      "description": "Caller relies on a callee side-effect without a frame or postcondition contract. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove the caller restores the heap frame and callee postcondition after return.",
+        "source_sketch": "def caller(x):\n    y = helper(x)  # missing contract/frame\n    return y + 1",
+        "proof_gap_kind": "missing_callee_contract",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "callee_contract_frame",
+        "end_goal_formalization",
+        "missing_callee_contract",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "callee_contract_frame.unavailable",
+      "family_id": "callee_contract_frame",
+      "family_title": "Missing callee contract or frame",
+      "variant": "unavailable",
+      "description": "Caller relies on a callee side-effect without a frame or postcondition contract. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove the caller restores the heap frame and callee postcondition after return.",
+        "source_sketch": "def caller(x):\n    y = helper(x)  # missing contract/frame\n    return y + 1",
+        "proof_gap_kind": "missing_callee_contract",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "cvc5",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "callee_contract_frame",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_callee_contract",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "callee_contract_frame.unsupported",
+      "family_id": "callee_contract_frame",
+      "family_title": "Missing callee contract or frame",
+      "variant": "unsupported",
+      "description": "Caller relies on a callee side-effect without a frame or postcondition contract. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_callee_contract",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove the caller restores the heap frame and callee postcondition after return.",
+        "source_sketch": "def caller(x):\n    y = helper(x)  # missing contract/frame\n    return y + 1",
+        "proof_gap_kind": "missing_callee_contract",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "callee_contract_frame.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "callee_contract_frame",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_callee_contract",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "fairness_ambiguity.ambiguous",
+      "family_id": "fairness_ambiguity",
+      "family_title": "Bounded liveness with fairness ambiguity",
+      "variant": "ambiguous",
+      "description": "End-state reachability depends on whether weak or strong fairness is selected. Variant=ambiguous. Multiple material interpretations exist; selection is required before proof authority.",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "measures": [
+        "end_goal_formalization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "ambiguous_interpretation",
+      "expected_outcome_class": "honest_ambiguity",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Every request eventually reaches the completed end state under an explicit fairness regime.",
+        "source_sketch": "property: <>[] completed  # fairness interpretation required",
+        "proof_gap_kind": "ambiguous_fairness_assumption",
+        "counterexample_kind": "lasso_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": {
+          "dimension": "fairness",
+          "alternatives": [
+            "weak_fairness",
+            "strong_fairness"
+          ],
+          "requires_material_selection": true
+        },
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous",
+        "ambiguous_fairness_assumption",
+        "end_goal_formalization",
+        "fairness_ambiguity",
+        "honest_failure",
+        "liveness",
+        "proof_chain_authority"
+      ]
+    },
+    {
+      "case_id": "fairness_ambiguity.mutated",
+      "family_id": "fairness_ambiguity",
+      "family_title": "Bounded liveness with fairness ambiguity",
+      "variant": "mutated",
+      "description": "End-state reachability depends on whether weak or strong fairness is selected. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "measures": [
+        "end_goal_formalization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Every request eventually reaches the completed end state under an explicit fairness regime.",
+        "source_sketch": "property: <>[] completed  # fairness interpretation required",
+        "proof_gap_kind": "ambiguous_fairness_assumption",
+        "counterexample_kind": "lasso_trace",
+        "mutation": {
+          "mutation_id": "fairness_ambiguity.semantic_flip",
+          "description": "Semantic mutation of fairness_ambiguity that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "lasso_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous_fairness_assumption",
+        "end_goal_formalization",
+        "fairness_ambiguity",
+        "honest_failure",
+        "liveness",
+        "mutated",
+        "proof_chain_authority"
+      ]
+    },
+    {
+      "case_id": "fairness_ambiguity.solvable",
+      "family_id": "fairness_ambiguity",
+      "family_title": "Bounded liveness with fairness ambiguity",
+      "variant": "solvable",
+      "description": "End-state reachability depends on whether weak or strong fairness is selected. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "measures": [
+        "end_goal_formalization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Every request eventually reaches the completed end state under an explicit fairness regime.",
+        "source_sketch": "property: <>[] completed  # fairness interpretation required",
+        "proof_gap_kind": "ambiguous_fairness_assumption",
+        "counterexample_kind": "lasso_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "lasso_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous_fairness_assumption",
+        "end_goal_formalization",
+        "fairness_ambiguity",
+        "honest_failure",
+        "liveness",
+        "proof_chain_authority",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "fairness_ambiguity.unavailable",
+      "family_id": "fairness_ambiguity",
+      "family_title": "Bounded liveness with fairness ambiguity",
+      "variant": "unavailable",
+      "description": "End-state reachability depends on whether weak or strong fairness is selected. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "measures": [
+        "end_goal_formalization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Every request eventually reaches the completed end state under an explicit fairness regime.",
+        "source_sketch": "property: <>[] completed  # fairness interpretation required",
+        "proof_gap_kind": "ambiguous_fairness_assumption",
+        "counterexample_kind": "lasso_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "apalache",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous_fairness_assumption",
+        "end_goal_formalization",
+        "fairness_ambiguity",
+        "honest_failure",
+        "liveness",
+        "proof_chain_authority",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "fairness_ambiguity.unsupported",
+      "family_id": "fairness_ambiguity",
+      "family_title": "Bounded liveness with fairness ambiguity",
+      "variant": "unsupported",
+      "description": "End-state reachability depends on whether weak or strong fairness is selected. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "liveness",
+      "logic_family": "temporal",
+      "proof_gap_kind": "ambiguous_fairness_assumption",
+      "measures": [
+        "end_goal_formalization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Every request eventually reaches the completed end state under an explicit fairness regime.",
+        "source_sketch": "property: <>[] completed  # fairness interpretation required",
+        "proof_gap_kind": "ambiguous_fairness_assumption",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "fairness_ambiguity.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous_fairness_assumption",
+        "end_goal_formalization",
+        "fairness_ambiguity",
+        "honest_failure",
+        "liveness",
+        "proof_chain_authority",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "hypertrace.mutated",
+      "family_id": "hypertrace",
+      "family_title": "Noninterference failure with paired hypertraces",
+      "variant": "mutated",
+      "description": "High inputs influence low outputs; earliest divergence is observable. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "hyperproperty",
+      "logic_family": "hyperproperty",
+      "proof_gap_kind": "noninterference_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Low-equivalent inputs produce low-equivalent outputs (noninterference).",
+        "source_sketch": "out_low = secret_high XOR public_mask  # secret flows to low",
+        "proof_gap_kind": "noninterference_violation",
+        "counterexample_kind": "paired_hypertrace",
+        "mutation": {
+          "mutation_id": "hypertrace.semantic_flip",
+          "description": "Semantic mutation of hypertrace that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "paired_hypertrace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "hyperproperty",
+        "hypertrace",
+        "mutated",
+        "noninterference_violation",
+        "proof_chain_authority"
+      ]
+    },
+    {
+      "case_id": "hypertrace.solvable",
+      "family_id": "hypertrace",
+      "family_title": "Noninterference failure with paired hypertraces",
+      "variant": "solvable",
+      "description": "High inputs influence low outputs; earliest divergence is observable. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "hyperproperty",
+      "logic_family": "hyperproperty",
+      "proof_gap_kind": "noninterference_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "hyperproperty",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Low-equivalent inputs produce low-equivalent outputs (noninterference).",
+        "source_sketch": "out_low = secret_high XOR public_mask  # secret flows to low",
+        "proof_gap_kind": "noninterference_violation",
+        "counterexample_kind": "paired_hypertrace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "paired_hypertrace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "hyperproperty",
+        "hypertrace",
+        "noninterference_violation",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "hypertrace.unavailable",
+      "family_id": "hypertrace",
+      "family_title": "Noninterference failure with paired hypertraces",
+      "variant": "unavailable",
+      "description": "High inputs influence low outputs; earliest divergence is observable. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "hyperproperty",
+      "logic_family": "hyperproperty",
+      "proof_gap_kind": "noninterference_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "hyperproperty",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Low-equivalent inputs produce low-equivalent outputs (noninterference).",
+        "source_sketch": "out_low = secret_high XOR public_mask  # secret flows to low",
+        "proof_gap_kind": "noninterference_violation",
+        "counterexample_kind": "paired_hypertrace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "hyperltl_mc",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "hyperproperty",
+        "hypertrace",
+        "noninterference_violation",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "hypertrace.unsupported",
+      "family_id": "hypertrace",
+      "family_title": "Noninterference failure with paired hypertraces",
+      "variant": "unsupported",
+      "description": "High inputs influence low outputs; earliest divergence is observable. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "hyperproperty",
+      "logic_family": "hyperproperty",
+      "proof_gap_kind": "noninterference_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "hyperproperty",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Low-equivalent inputs produce low-equivalent outputs (noninterference).",
+        "source_sketch": "out_low = secret_high XOR public_mask  # secret flows to low",
+        "proof_gap_kind": "noninterference_violation",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "hypertrace.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "hyperproperty",
+        "hypertrace",
+        "noninterference_violation",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "impossible_target_core.impossible",
+      "family_id": "impossible_target_core",
+      "family_title": "Impossible target with minimal inconsistent core",
+      "variant": "impossible",
+      "description": "Target postcondition contradicts declared preconditions and library axioms. Variant=impossible. Target is inconsistent; corpus expects a minimal core, never a false proof.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "inconsistent_core",
+      "measures": [
+        "proof_gap_recovery",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "impossible_inconsistent",
+      "expected_outcome_class": "honest_unsat_or_inconsistent_core",
+      "minimization_guarantee": "locally_minimal",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove an inconsistent postcondition; expect a minimal unsat core naming the conflict.",
+        "source_sketch": "assume x > 0; assume x < 0; prove x = 0",
+        "proof_gap_kind": "inconsistent_core",
+        "counterexample_kind": "unsat_core",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": {
+          "core_kind": "minimal_unsat_core",
+          "must_not_prove": true
+        }
+      },
+      "counterexample_public_contract": {
+        "kind": "unsat_core",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "locally_minimal",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "honest_failure",
+        "impossible",
+        "impossible_target_core",
+        "inconsistent_core",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "impossible_target_core.mutated",
+      "family_id": "impossible_target_core",
+      "family_title": "Impossible target with minimal inconsistent core",
+      "variant": "mutated",
+      "description": "Target postcondition contradicts declared preconditions and library axioms. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "inconsistent_core",
+      "measures": [
+        "proof_gap_recovery",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove an inconsistent postcondition; expect a minimal unsat core naming the conflict.",
+        "source_sketch": "assume x > 0; assume x < 0; prove x = 0",
+        "proof_gap_kind": "inconsistent_core",
+        "counterexample_kind": "unsat_core",
+        "mutation": {
+          "mutation_id": "impossible_target_core.semantic_flip",
+          "description": "Semantic mutation of impossible_target_core that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "unsat_core",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "honest_failure",
+        "impossible_target_core",
+        "inconsistent_core",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "impossible_target_core.solvable",
+      "family_id": "impossible_target_core",
+      "family_title": "Impossible target with minimal inconsistent core",
+      "variant": "solvable",
+      "description": "Target postcondition contradicts declared preconditions and library axioms. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "inconsistent_core",
+      "measures": [
+        "proof_gap_recovery",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove an inconsistent postcondition; expect a minimal unsat core naming the conflict.",
+        "source_sketch": "assume x > 0; assume x < 0; prove x = 0",
+        "proof_gap_kind": "inconsistent_core",
+        "counterexample_kind": "unsat_core",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "unsat_core",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "honest_failure",
+        "impossible_target_core",
+        "inconsistent_core",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "impossible_target_core.unsupported",
+      "family_id": "impossible_target_core",
+      "family_title": "Impossible target with minimal inconsistent core",
+      "variant": "unsupported",
+      "description": "Target postcondition contradicts declared preconditions and library axioms. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "inconsistent_core",
+      "measures": [
+        "proof_gap_recovery",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove an inconsistent postcondition; expect a minimal unsat core naming the conflict.",
+        "source_sketch": "assume x > 0; assume x < 0; prove x = 0",
+        "proof_gap_kind": "inconsistent_core",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "impossible_target_core.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "honest_failure",
+        "impossible_target_core",
+        "inconsistent_core",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "kernel_rejection.impossible",
+      "family_id": "kernel_rejection",
+      "family_title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "variant": "impossible",
+      "description": "Submitted proof term fails kernel checking against the exact theorem statement. Variant=impossible. Target is inconsistent; corpus expects a minimal core, never a false proof.",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "measures": [
+        "proof_chain_authority",
+        "honest_failure",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "reconstruction",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "impossible_inconsistent",
+      "expected_outcome_class": "honest_unsat_or_inconsistent_core",
+      "minimization_guarantee": "locally_minimal",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Kernel accepts a reconstruction of Nat.add_comm with exact artifact digests.",
+        "source_sketch": "theorem add_comm : forall a b : Nat, a + b = b + a",
+        "proof_gap_kind": "kernel_rejected_step",
+        "counterexample_kind": "kernel_diagnostic",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": {
+          "core_kind": "contradiction",
+          "must_not_prove": true
+        }
+      },
+      "counterexample_public_contract": {
+        "kind": "kernel_diagnostic",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "locally_minimal",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "end_goal_formalization",
+        "honest_failure",
+        "impossible",
+        "kernel_rejected_step",
+        "kernel_rejection",
+        "proof_chain_authority",
+        "theorem"
+      ]
+    },
+    {
+      "case_id": "kernel_rejection.mutated",
+      "family_id": "kernel_rejection",
+      "family_title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "variant": "mutated",
+      "description": "Submitted proof term fails kernel checking against the exact theorem statement. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "measures": [
+        "proof_chain_authority",
+        "honest_failure",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Kernel accepts a reconstruction of Nat.add_comm with exact artifact digests.",
+        "source_sketch": "theorem add_comm : forall a b : Nat, a + b = b + a",
+        "proof_gap_kind": "kernel_rejected_step",
+        "counterexample_kind": "kernel_diagnostic",
+        "mutation": {
+          "mutation_id": "kernel_rejection.semantic_flip",
+          "description": "Semantic mutation of kernel_rejection that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "kernel_diagnostic",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "end_goal_formalization",
+        "honest_failure",
+        "kernel_rejected_step",
+        "kernel_rejection",
+        "mutated",
+        "proof_chain_authority",
+        "theorem"
+      ]
+    },
+    {
+      "case_id": "kernel_rejection.solvable",
+      "family_id": "kernel_rejection",
+      "family_title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "variant": "solvable",
+      "description": "Submitted proof term fails kernel checking against the exact theorem statement. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "measures": [
+        "proof_chain_authority",
+        "honest_failure",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "reconstruction",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Kernel accepts a reconstruction of Nat.add_comm with exact artifact digests.",
+        "source_sketch": "theorem add_comm : forall a b : Nat, a + b = b + a",
+        "proof_gap_kind": "kernel_rejected_step",
+        "counterexample_kind": "kernel_diagnostic",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "kernel_diagnostic",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "end_goal_formalization",
+        "honest_failure",
+        "kernel_rejected_step",
+        "kernel_rejection",
+        "proof_chain_authority",
+        "solvable",
+        "theorem"
+      ]
+    },
+    {
+      "case_id": "kernel_rejection.unavailable",
+      "family_id": "kernel_rejection",
+      "family_title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "variant": "unavailable",
+      "description": "Submitted proof term fails kernel checking against the exact theorem statement. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "measures": [
+        "proof_chain_authority",
+        "honest_failure",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "reconstruction",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Kernel accepts a reconstruction of Nat.add_comm with exact artifact digests.",
+        "source_sketch": "theorem add_comm : forall a b : Nat, a + b = b + a",
+        "proof_gap_kind": "kernel_rejected_step",
+        "counterexample_kind": "kernel_diagnostic",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "lean",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "end_goal_formalization",
+        "honest_failure",
+        "kernel_rejected_step",
+        "kernel_rejection",
+        "proof_chain_authority",
+        "theorem",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "kernel_rejection.unsupported",
+      "family_id": "kernel_rejection",
+      "family_title": "Proof-kernel rejection bound to exact theorem/artifact",
+      "variant": "unsupported",
+      "description": "Submitted proof term fails kernel checking against the exact theorem statement. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "theorem",
+      "logic_family": "higher_order",
+      "proof_gap_kind": "kernel_rejected_step",
+      "measures": [
+        "proof_chain_authority",
+        "honest_failure",
+        "end_goal_formalization"
+      ],
+      "expected_authority": "reconstruction",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Kernel accepts a reconstruction of Nat.add_comm with exact artifact digests.",
+        "source_sketch": "theorem add_comm : forall a b : Nat, a + b = b + a",
+        "proof_gap_kind": "kernel_rejected_step",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "kernel_rejection.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "end_goal_formalization",
+        "honest_failure",
+        "kernel_rejected_step",
+        "kernel_rejection",
+        "proof_chain_authority",
+        "theorem",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "lease_safety.mutated",
+      "family_id": "lease_safety",
+      "family_title": "Distributed lease/state-machine safety",
+      "variant": "mutated",
+      "description": "Lease holder uniqueness can be violated under concurrent renew and revoke. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "safety",
+      "logic_family": "transition_system",
+      "proof_gap_kind": "missing_state_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "At most one holder owns a live lease in every reachable state.",
+        "source_sketch": "spec Lease { invariant [] (holder = None \\/ unique(holder)) }",
+        "proof_gap_kind": "missing_state_invariant",
+        "counterexample_kind": "state_trace",
+        "mutation": {
+          "mutation_id": "lease_safety.semantic_flip",
+          "description": "Semantic mutation of lease_safety that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "state_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_replay",
+        "end_goal_formalization",
+        "lease_safety",
+        "missing_state_invariant",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "lease_safety.solvable",
+      "family_id": "lease_safety",
+      "family_title": "Distributed lease/state-machine safety",
+      "variant": "solvable",
+      "description": "Lease holder uniqueness can be violated under concurrent renew and revoke. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "safety",
+      "logic_family": "transition_system",
+      "proof_gap_kind": "missing_state_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_replay"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "At most one holder owns a live lease in every reachable state.",
+        "source_sketch": "spec Lease { invariant [] (holder = None \\/ unique(holder)) }",
+        "proof_gap_kind": "missing_state_invariant",
+        "counterexample_kind": "state_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "state_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_replay",
+        "end_goal_formalization",
+        "lease_safety",
+        "missing_state_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "lease_safety.unavailable",
+      "family_id": "lease_safety",
+      "family_title": "Distributed lease/state-machine safety",
+      "variant": "unavailable",
+      "description": "Lease holder uniqueness can be violated under concurrent renew and revoke. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "safety",
+      "logic_family": "transition_system",
+      "proof_gap_kind": "missing_state_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "honest_failure"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "At most one holder owns a live lease in every reachable state.",
+        "source_sketch": "spec Lease { invariant [] (holder = None \\/ unique(holder)) }",
+        "proof_gap_kind": "missing_state_invariant",
+        "counterexample_kind": "state_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "tlc",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_replay",
+        "end_goal_formalization",
+        "honest_failure",
+        "lease_safety",
+        "missing_state_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "lease_safety.unsupported",
+      "family_id": "lease_safety",
+      "family_title": "Distributed lease/state-machine safety",
+      "variant": "unsupported",
+      "description": "Lease holder uniqueness can be violated under concurrent renew and revoke. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "safety",
+      "logic_family": "transition_system",
+      "proof_gap_kind": "missing_state_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "honest_failure"
+      ],
+      "expected_authority": "model_check",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "At most one holder owns a live lease in every reachable state.",
+        "source_sketch": "spec Lease { invariant [] (holder = None \\/ unique(holder)) }",
+        "proof_gap_kind": "missing_state_invariant",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "lease_safety.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_replay",
+        "end_goal_formalization",
+        "honest_failure",
+        "lease_safety",
+        "missing_state_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "legal_evidence_routing.ambiguous",
+      "family_id": "legal_evidence_routing",
+      "family_title": "Legal-domain premise delegated to legal tactician",
+      "variant": "ambiguous",
+      "description": "Software obligation depends on a legal-domain premise; evidence search routes to the legal tactician without embedding private documents. Variant=ambiguous. Multiple material interpretations exist; selection is required before proof authority.",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "authorization",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "ambiguous_interpretation",
+      "expected_outcome_class": "honest_ambiguity",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Authorize the effect only when the legal tactician returns admissible public evidence identifiers.",
+        "source_sketch": "obligation: may_process_record(user, record) if legal_basis(record)",
+        "proof_gap_kind": "missing_legal_premise",
+        "counterexample_kind": "legal_evidence_gap",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": {
+          "dimension": "interpretation",
+          "alternatives": [
+            "interp_a",
+            "interp_b"
+          ],
+          "requires_material_selection": true
+        },
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "ambiguous",
+        "authorization",
+        "honest_failure",
+        "legal_evidence_routing",
+        "missing_legal_premise",
+        "proof_chain_authority",
+        "proof_gap_recovery"
+      ]
+    },
+    {
+      "case_id": "legal_evidence_routing.mutated",
+      "family_id": "legal_evidence_routing",
+      "family_title": "Legal-domain premise delegated to legal tactician",
+      "variant": "mutated",
+      "description": "Software obligation depends on a legal-domain premise; evidence search routes to the legal tactician without embedding private documents. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Authorize the effect only when the legal tactician returns admissible public evidence identifiers.",
+        "source_sketch": "obligation: may_process_record(user, record) if legal_basis(record)",
+        "proof_gap_kind": "missing_legal_premise",
+        "counterexample_kind": "legal_evidence_gap",
+        "mutation": {
+          "mutation_id": "legal_evidence_routing.semantic_flip",
+          "description": "Semantic mutation of legal_evidence_routing that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "legal_evidence_gap",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "authorization",
+        "honest_failure",
+        "legal_evidence_routing",
+        "missing_legal_premise",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery"
+      ]
+    },
+    {
+      "case_id": "legal_evidence_routing.solvable",
+      "family_id": "legal_evidence_routing",
+      "family_title": "Legal-domain premise delegated to legal tactician",
+      "variant": "solvable",
+      "description": "Software obligation depends on a legal-domain premise; evidence search routes to the legal tactician without embedding private documents. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "authorization",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Authorize the effect only when the legal tactician returns admissible public evidence identifiers.",
+        "source_sketch": "obligation: may_process_record(user, record) if legal_basis(record)",
+        "proof_gap_kind": "missing_legal_premise",
+        "counterexample_kind": "legal_evidence_gap",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "legal_evidence_gap",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "authorization",
+        "honest_failure",
+        "legal_evidence_routing",
+        "missing_legal_premise",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "legal_evidence_routing.unavailable",
+      "family_id": "legal_evidence_routing",
+      "family_title": "Legal-domain premise delegated to legal tactician",
+      "variant": "unavailable",
+      "description": "Software obligation depends on a legal-domain premise; evidence search routes to the legal tactician without embedding private documents. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "authorization",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Authorize the effect only when the legal tactician returns admissible public evidence identifiers.",
+        "source_sketch": "obligation: may_process_record(user, record) if legal_basis(record)",
+        "proof_gap_kind": "missing_legal_premise",
+        "counterexample_kind": "legal_evidence_gap",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "legal_tactician",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "authorization",
+        "honest_failure",
+        "legal_evidence_routing",
+        "missing_legal_premise",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "legal_evidence_routing.unsupported",
+      "family_id": "legal_evidence_routing",
+      "family_title": "Legal-domain premise delegated to legal tactician",
+      "variant": "unsupported",
+      "description": "Software obligation depends on a legal-domain premise; evidence search routes to the legal tactician without embedding private documents. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "proof_gap_kind": "missing_legal_premise",
+      "measures": [
+        "proof_gap_recovery",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "authorization",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Authorize the effect only when the legal tactician returns admissible public evidence identifiers.",
+        "source_sketch": "obligation: may_process_record(user, record) if legal_basis(record)",
+        "proof_gap_kind": "missing_legal_premise",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "legal_evidence_routing.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "authorization",
+        "honest_failure",
+        "legal_evidence_routing",
+        "missing_legal_premise",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "missing_loop_invariant.impossible",
+      "family_id": "missing_loop_invariant",
+      "family_title": "Missing loop invariant",
+      "variant": "impossible",
+      "description": "Integer loop accumulates a sum without an inductive invariant relating index and accumulator. Variant=impossible. Target is inconsistent; corpus expects a minimal core, never a false proof.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "impossible_inconsistent",
+      "expected_outcome_class": "honest_unsat_or_inconsistent_core",
+      "minimization_guarantee": "locally_minimal",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove that the post-loop sum equals the closed-form triangular number for n >= 0.",
+        "source_sketch": "def sum_to(n):\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s",
+        "proof_gap_kind": "missing_inductive_invariant",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": {
+          "core_kind": "contradiction",
+          "must_not_prove": true
+        }
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "locally_minimal",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "end_goal_formalization",
+        "honest_failure",
+        "impossible",
+        "missing_inductive_invariant",
+        "missing_loop_invariant",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "missing_loop_invariant.mutated",
+      "family_id": "missing_loop_invariant",
+      "family_title": "Missing loop invariant",
+      "variant": "mutated",
+      "description": "Integer loop accumulates a sum without an inductive invariant relating index and accumulator. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_minimization",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove that the post-loop sum equals the closed-form triangular number for n >= 0.",
+        "source_sketch": "def sum_to(n):\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s",
+        "proof_gap_kind": "missing_inductive_invariant",
+        "counterexample_kind": "smt_model",
+        "mutation": {
+          "mutation_id": "missing_loop_invariant.semantic_flip",
+          "description": "Semantic mutation of missing_loop_invariant that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "end_goal_formalization",
+        "missing_inductive_invariant",
+        "missing_loop_invariant",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "safety"
+      ]
+    },
+    {
+      "case_id": "missing_loop_invariant.solvable",
+      "family_id": "missing_loop_invariant",
+      "family_title": "Missing loop invariant",
+      "variant": "solvable",
+      "description": "Integer loop accumulates a sum without an inductive invariant relating index and accumulator. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_minimization"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove that the post-loop sum equals the closed-form triangular number for n >= 0.",
+        "source_sketch": "def sum_to(n):\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s",
+        "proof_gap_kind": "missing_inductive_invariant",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "end_goal_formalization",
+        "missing_inductive_invariant",
+        "missing_loop_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "missing_loop_invariant.unavailable",
+      "family_id": "missing_loop_invariant",
+      "family_title": "Missing loop invariant",
+      "variant": "unavailable",
+      "description": "Integer loop accumulates a sum without an inductive invariant relating index and accumulator. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove that the post-loop sum equals the closed-form triangular number for n >= 0.",
+        "source_sketch": "def sum_to(n):\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s",
+        "proof_gap_kind": "missing_inductive_invariant",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "z3",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_inductive_invariant",
+        "missing_loop_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "missing_loop_invariant.unsupported",
+      "family_id": "missing_loop_invariant",
+      "family_title": "Missing loop invariant",
+      "variant": "unsupported",
+      "description": "Integer loop accumulates a sum without an inductive invariant relating index and accumulator. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "safety",
+      "logic_family": "program",
+      "proof_gap_kind": "missing_inductive_invariant",
+      "measures": [
+        "end_goal_formalization",
+        "proof_gap_recovery",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Prove that the post-loop sum equals the closed-form triangular number for n >= 0.",
+        "source_sketch": "def sum_to(n):\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s",
+        "proof_gap_kind": "missing_inductive_invariant",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "missing_loop_invariant.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "end_goal_formalization",
+        "honest_failure",
+        "missing_inductive_invariant",
+        "missing_loop_invariant",
+        "proof_gap_recovery",
+        "safety",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "protocol_attack.mutated",
+      "family_id": "protocol_attack",
+      "family_title": "Protocol attack with dependency slice",
+      "variant": "mutated",
+      "description": "Authentication protocol admits a man-in-the-middle when nonces are reused. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "security",
+      "logic_family": "cryptographic_protocol",
+      "proof_gap_kind": "missing_protocol_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "counterexample_minimization",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "No attacker learns the session key under the Dolev-Yao model.",
+        "source_sketch": "A -> B: {Na, A}pk(B)\nB -> A: {Na, Nb}pk(A)  # nonce reuse mutation yields attack",
+        "proof_gap_kind": "missing_protocol_lemma",
+        "counterexample_kind": "attack_trace",
+        "mutation": {
+          "mutation_id": "protocol_attack.semantic_flip",
+          "description": "Semantic mutation of protocol_attack that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "attack_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "missing_protocol_lemma",
+        "mutated",
+        "proof_chain_authority",
+        "proof_gap_recovery",
+        "protocol_attack",
+        "security"
+      ]
+    },
+    {
+      "case_id": "protocol_attack.solvable",
+      "family_id": "protocol_attack",
+      "family_title": "Protocol attack with dependency slice",
+      "variant": "solvable",
+      "description": "Authentication protocol admits a man-in-the-middle when nonces are reused. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "security",
+      "logic_family": "cryptographic_protocol",
+      "proof_gap_kind": "missing_protocol_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "counterexample_minimization"
+      ],
+      "expected_authority": "protocol",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "No attacker learns the session key under the Dolev-Yao model.",
+        "source_sketch": "A -> B: {Na, A}pk(B)\nB -> A: {Na, Nb}pk(A)  # nonce reuse mutation yields attack",
+        "proof_gap_kind": "missing_protocol_lemma",
+        "counterexample_kind": "attack_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "attack_trace",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "missing_protocol_lemma",
+        "proof_gap_recovery",
+        "protocol_attack",
+        "security",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "protocol_attack.unavailable",
+      "family_id": "protocol_attack",
+      "family_title": "Protocol attack with dependency slice",
+      "variant": "unavailable",
+      "description": "Authentication protocol admits a man-in-the-middle when nonces are reused. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "security",
+      "logic_family": "cryptographic_protocol",
+      "proof_gap_kind": "missing_protocol_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "protocol",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "No attacker learns the session key under the Dolev-Yao model.",
+        "source_sketch": "A -> B: {Na, A}pk(B)\nB -> A: {Na, Nb}pk(A)  # nonce reuse mutation yields attack",
+        "proof_gap_kind": "missing_protocol_lemma",
+        "counterexample_kind": "attack_trace",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "proverif",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "missing_protocol_lemma",
+        "proof_gap_recovery",
+        "protocol_attack",
+        "security",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "protocol_attack.unsupported",
+      "family_id": "protocol_attack",
+      "family_title": "Protocol attack with dependency slice",
+      "variant": "unsupported",
+      "description": "Authentication protocol admits a man-in-the-middle when nonces are reused. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "security",
+      "logic_family": "cryptographic_protocol",
+      "proof_gap_kind": "missing_protocol_lemma",
+      "measures": [
+        "proof_gap_recovery",
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "protocol",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "No attacker learns the session key under the Dolev-Yao model.",
+        "source_sketch": "A -> B: {Na, A}pk(B)\nB -> A: {Na, Nb}pk(A)  # nonce reuse mutation yields attack",
+        "proof_gap_kind": "missing_protocol_lemma",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "protocol_attack.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "missing_protocol_lemma",
+        "proof_gap_recovery",
+        "protocol_attack",
+        "security",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "runtime_trace.mutated",
+      "family_id": "runtime_trace",
+      "family_title": "Runtime MTL violation with shortest prefix",
+      "variant": "mutated",
+      "description": "Metric temporal formula is violated on a finite observation stream. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "runtime",
+      "logic_family": "temporal",
+      "proof_gap_kind": "runtime_property_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Monitor reports violation with the shortest violating prefix under declared bounds.",
+        "source_sketch": "G[0,5] (request -> F[0,3] response)",
+        "proof_gap_kind": "runtime_property_violation",
+        "counterexample_kind": "trace_prefix",
+        "mutation": {
+          "mutation_id": "runtime_trace.semantic_flip",
+          "description": "Semantic mutation of runtime_trace that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "trace_prefix",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "mutated",
+        "proof_chain_authority",
+        "runtime",
+        "runtime_property_violation",
+        "runtime_trace"
+      ]
+    },
+    {
+      "case_id": "runtime_trace.solvable",
+      "family_id": "runtime_trace",
+      "family_title": "Runtime MTL violation with shortest prefix",
+      "variant": "solvable",
+      "description": "Metric temporal formula is violated on a finite observation stream. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "runtime",
+      "logic_family": "temporal",
+      "proof_gap_kind": "runtime_property_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "monitor",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Monitor reports violation with the shortest violating prefix under declared bounds.",
+        "source_sketch": "G[0,5] (request -> F[0,3] response)",
+        "proof_gap_kind": "runtime_property_violation",
+        "counterexample_kind": "trace_prefix",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "trace_prefix",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "runtime",
+        "runtime_property_violation",
+        "runtime_trace",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "runtime_trace.unavailable",
+      "family_id": "runtime_trace",
+      "family_title": "Runtime MTL violation with shortest prefix",
+      "variant": "unavailable",
+      "description": "Metric temporal formula is violated on a finite observation stream. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "runtime",
+      "logic_family": "temporal",
+      "proof_gap_kind": "runtime_property_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "monitor",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Monitor reports violation with the shortest violating prefix under declared bounds.",
+        "source_sketch": "G[0,5] (request -> F[0,3] response)",
+        "proof_gap_kind": "runtime_property_violation",
+        "counterexample_kind": "trace_prefix",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "runtime_mtl",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "runtime",
+        "runtime_property_violation",
+        "runtime_trace",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "runtime_trace.unsupported",
+      "family_id": "runtime_trace",
+      "family_title": "Runtime MTL violation with shortest prefix",
+      "variant": "unsupported",
+      "description": "Metric temporal formula is violated on a finite observation stream. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "runtime",
+      "logic_family": "temporal",
+      "proof_gap_kind": "runtime_property_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "honest_failure"
+      ],
+      "expected_authority": "monitor",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": []
+      },
+      "recipe": {
+        "end_goal_prose": "Monitor reports violation with the shortest violating prefix under declared bounds.",
+        "source_sketch": "G[0,5] (request -> F[0,3] response)",
+        "proof_gap_kind": "runtime_property_violation",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "runtime_trace.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "runtime",
+        "runtime_property_violation",
+        "runtime_trace",
+        "unsupported"
+      ]
+    },
+    {
+      "case_id": "smt_model.mutated",
+      "family_id": "smt_model",
+      "family_title": "SMT resource invariant with projected countermodel",
+      "variant": "mutated",
+      "description": "Resource balance invariant is violated; projected model assigns don't-care free variables. Variant=mutated. Semantic mutation must change content identity; results cannot be reused from the solvable twin.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "resource_invariant_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "candidate",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "mutation_changes_semantic_identity",
+      "expected_outcome_class": "semantic_mutation_detected",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Unsat of the negation of the resource invariant under QF_LIA bounds.",
+        "source_sketch": "(assert (and (>= bal 0) (< (+ bal delta) 0)))",
+        "proof_gap_kind": "resource_invariant_violation",
+        "counterexample_kind": "smt_model",
+        "mutation": {
+          "mutation_id": "smt_model.semantic_flip",
+          "description": "Semantic mutation of smt_model that must change identity digests.",
+          "semantic_change": true
+        },
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "none",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "mutated",
+        "proof_chain_authority",
+        "resource_invariant_violation",
+        "safety",
+        "smt_model"
+      ]
+    },
+    {
+      "case_id": "smt_model.solvable",
+      "family_id": "smt_model",
+      "family_title": "SMT resource invariant with projected countermodel",
+      "variant": "solvable",
+      "description": "Resource balance invariant is violated; projected model assigns don't-care free variables. Variant=solvable. Base fixture where formalization and gap recovery are well-defined offline.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "resource_invariant_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "proof_chain_authority"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "bounded",
+      "expected_disposition": "solvable_with_gap_or_proof",
+      "expected_outcome_class": "success_or_validated_gap_plan",
+      "minimization_guarantee": "bounded",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Unsat of the negation of the resource invariant under QF_LIA bounds.",
+        "source_sketch": "(assert (and (>= bal 0) (< (+ bal delta) 0)))",
+        "proof_gap_kind": "resource_invariant_violation",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": {
+        "kind": "smt_model",
+        "public_fields": [
+          "kind",
+          "property_id",
+          "source_map",
+          "tool_id",
+          "assumptions",
+          "bounds",
+          "authority",
+          "minimization_guarantee"
+        ],
+        "private_witness_embedded": false,
+        "raw_artifact_policy": "digest_reference_only",
+        "minimization_guarantee": "bounded",
+        "replay_scope": "fixture_offline"
+      },
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "proof_chain_authority",
+        "resource_invariant_violation",
+        "safety",
+        "smt_model",
+        "solvable"
+      ]
+    },
+    {
+      "case_id": "smt_model.unavailable",
+      "family_id": "smt_model",
+      "family_title": "SMT resource invariant with projected countermodel",
+      "variant": "unavailable",
+      "description": "Resource balance invariant is violated; projected model assigns don't-care free variables. Variant=unavailable. Required external tool or backend is absent; fail closed without install/network.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "resource_invariant_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "tool_unavailable",
+      "expected_outcome_class": "honest_unavailable",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Unsat of the negation of the resource invariant under QF_LIA bounds.",
+        "source_sketch": "(assert (and (>= bal 0) (< (+ bal delta) 0)))",
+        "proof_gap_kind": "resource_invariant_violation",
+        "counterexample_kind": "smt_model",
+        "mutation": null,
+        "unsupported_fragment": null,
+        "unavailable_tool": {
+          "tool_id": "z3",
+          "policy": "Absence must surface as unavailable; never install, fetch, or network."
+        },
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "proof_chain_authority",
+        "resource_invariant_violation",
+        "safety",
+        "smt_model",
+        "unavailable"
+      ]
+    },
+    {
+      "case_id": "smt_model.unsupported",
+      "family_id": "smt_model",
+      "family_title": "SMT resource invariant with projected countermodel",
+      "variant": "unsupported",
+      "description": "Resource balance invariant is violated; projected model assigns don't-care free variables. Variant=unsupported. Semantic fragment is outside declared support; must not silently succeed.",
+      "property_kind": "safety",
+      "logic_family": "first_order",
+      "proof_gap_kind": "resource_invariant_violation",
+      "measures": [
+        "counterexample_replay",
+        "counterexample_minimization",
+        "proof_chain_authority",
+        "honest_failure"
+      ],
+      "expected_authority": "satisfiability",
+      "evidence_authority_ceiling": "advisory",
+      "expected_disposition": "unsupported_semantics",
+      "expected_outcome_class": "honest_unsupported",
+      "minimization_guarantee": "none",
+      "live_verification": false,
+      "evidence_class": "synthetic_offline_fixture",
+      "private_witness_embedded": false,
+      "license_expression": "CC0-1.0",
+      "provenance": {
+        "source_class": "synthetic_fixture",
+        "origin": "FVT-G020 hand-authored compact recipe",
+        "license_expression": "CC0-1.0",
+        "attribution": "ipfs_datasets_py formal verification tactician readiness corpus",
+        "reviewed": true,
+        "derived_from": [
+          {
+            "kind": "public_style_template",
+            "note": "Synthetic sketch inspired by public SMT-LIB / protocol / HyperLTL tutorial shapes; not a verbatim third-party dump.",
+            "license_expression": "CC0-1.0"
+          }
+        ]
+      },
+      "recipe": {
+        "end_goal_prose": "Unsat of the negation of the resource invariant under QF_LIA bounds.",
+        "source_sketch": "(assert (and (>= bal 0) (< (+ bal delta) 0)))",
+        "proof_gap_kind": "resource_invariant_violation",
+        "counterexample_kind": null,
+        "mutation": null,
+        "unsupported_fragment": {
+          "fragment_id": "smt_model.unsupported",
+          "reason": "Semantic fragment intentionally outside declared production support for this fixture lane."
+        },
+        "unavailable_tool": null,
+        "ambiguity": null,
+        "inconsistency_hint": null
+      },
+      "counterexample_public_contract": null,
+      "forbidden_public_fields": [
+        "hidden_witness",
+        "token",
+        "credential",
+        "raw_source",
+        "stdout",
+        "private_channel",
+        "secret",
+        "private_witness",
+        "password",
+        "api_key"
+      ],
+      "tags": [
+        "counterexample_minimization",
+        "counterexample_replay",
+        "honest_failure",
+        "proof_chain_authority",
+        "resource_invariant_violation",
+        "safety",
+        "smt_model",
+        "unsupported"
+      ]
+    }
+  ],
+  "coverage_index": {
+    "case_count": 53,
+    "families_present": [
+      "bridge_lemma",
+      "callee_contract_frame",
+      "fairness_ambiguity",
+      "hypertrace",
+      "impossible_target_core",
+      "kernel_rejection",
+      "lease_safety",
+      "legal_evidence_routing",
+      "missing_loop_invariant",
+      "protocol_attack",
+      "runtime_trace",
+      "smt_model"
+    ],
+    "variants_present": [
+      "ambiguous",
+      "impossible",
+      "mutated",
+      "solvable",
+      "unavailable",
+      "unsupported"
+    ],
+    "measurements_present": [
+      "counterexample_minimization",
+      "counterexample_replay",
+      "end_goal_formalization",
+      "honest_failure",
+      "proof_chain_authority",
+      "proof_gap_recovery"
+    ],
+    "authorities_present": [
+      "authorization",
+      "candidate",
+      "hyperproperty",
+      "model_check",
+      "monitor",
+      "protocol",
+      "reconstruction",
+      "satisfiability"
+    ],
+    "variants_by_family": {
+      "missing_loop_invariant": [
+        "impossible",
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "callee_contract_frame": [
+        "impossible",
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "lease_safety": [
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "fairness_ambiguity": [
+        "ambiguous",
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "impossible_target_core": [
+        "impossible",
+        "mutated",
+        "solvable",
+        "unsupported"
+      ],
+      "smt_model": [
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "runtime_trace": [
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "protocol_attack": [
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "hypertrace": [
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "kernel_rejection": [
+        "impossible",
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ],
+      "bridge_lemma": [
+        "ambiguous",
+        "mutated",
+        "solvable",
+        "unsupported"
+      ],
+      "legal_evidence_routing": [
+        "ambiguous",
+        "mutated",
+        "solvable",
+        "unavailable",
+        "unsupported"
+      ]
+    }
+  },
+  "evidence_paths": [
+    "ipfs_datasets_py/tests/fixtures/logic/proof_tactician/manifest.json",
+    "test/api/test_formal_verification_tactician_corpus_contract.py"
+  ],
+  "depends_on_interfaces": [
+    "FormalVerificationReadinessBaseline@1",
+    "CounterexampleEnvelope@2",
+    "PublicCounterexampleBoundary@1"
+  ],
+  "bound_interfaces": {
+    "corpus": "ProofTacticianCorpus@1",
+    "counterexample_envelope": "CounterexampleEnvelope@2",
+    "readiness_baseline": "FormalVerificationReadinessBaseline@1"
+  }
+}
