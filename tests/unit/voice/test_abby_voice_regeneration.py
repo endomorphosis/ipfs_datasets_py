@@ -5,6 +5,8 @@ from ipfs_datasets_py.voice.regeneration import (
     AbbyVoiceRegenerationPlan,
     normalize_regeneration_spoken_text,
     regeneration_text_risks,
+    unsafe_spoken_numeric_punctuation_reasons,
+    unsafe_spoken_transformation_reasons,
 )
 
 
@@ -47,14 +49,50 @@ def test_regeneration_normalizer_removes_phone_and_address_tts_traps() -> None:
 
 def test_regeneration_normalizer_repairs_historical_direction_contraction() -> None:
     normalized = normalize_regeneration_spoken_text(
-        "That’s 503, 228, 6322. She’South 16 and it’South private."
+        "That’s 503, 228, 6322. She’South 16, Lane County’South office, "
+        "and Salem’South program are private."
     )
 
     assert "That’s" in normalized
     assert "She’s" in normalized
-    assert "it’s" in normalized
+    assert "Lane County’s" in normalized
+    assert "Salem’s" in normalized
     assert "South" not in normalized
     assert regeneration_text_risks(normalized) == ()
+
+
+def test_regeneration_normalizer_repairs_saint_organization_abbreviation() -> None:
+    normalized = normalize_regeneration_spoken_text(
+        "Call St. Vincent de Paul, St. Mary’s Catholic Church, "
+        "or St. Charles."
+    )
+
+    assert "Saint Vincent de Paul" in normalized
+    assert "Saint Mary’s Catholic Church" in normalized
+    assert "Saint Charles" in normalized
+    assert "Street." not in normalized
+    assert unsafe_spoken_transformation_reasons(normalized) == ()
+    assert unsafe_spoken_transformation_reasons(
+        "Street. Vincent de Paul and Street. Mary’s"
+    ) == ("organization_abbreviation_expansion_corruption",)
+
+
+def test_publication_numeric_punctuation_gate_covers_unicode_dashes_and_phone_parens() -> None:
+    assert unsafe_spoken_numeric_punctuation_reasons(
+        "Call five‐zero‐three or 5‑0‑3 from S-East, not negative (503)."
+    ) == (
+        "literal_negative",
+        "number_word_dash",
+        "digit_dash",
+        "directional_address_dash",
+        "parenthesized_area_code",
+    )
+    assert unsafe_spoken_numeric_punctuation_reasons(
+        "Use the trauma-informed, twenty-one-day program."
+    ) == ()
+    assert unsafe_spoken_transformation_reasons(
+        "Lane County’South office"
+    ) == ("apostrophe_direction_corruption",)
 
 
 def test_plan_and_workset_are_order_independent_and_preserve_supersession() -> None:

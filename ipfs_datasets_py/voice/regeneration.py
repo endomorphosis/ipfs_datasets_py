@@ -35,8 +35,24 @@ _DASH_RE = re.compile(r"[-\u058a\u05be\u1400\u1806\u2010-\u2015\u2e17\u2e1a\u2e3
 _PAREN_RE = re.compile(r"[()]")
 _RAW_DIGIT_RE = re.compile(r"\d")
 _NEGATIVE_RE = re.compile(r"(?i)\bnegative\b")
+_DIGIT_WORD_PATTERN = (
+    r"(?:zero|one|two|three|four|five|six|seven|eight|nine)"
+)
+_UNSAFE_JOINED_DASH_PATTERN = r"[-‐‑‒–—−]"
+_NUMBER_WORD_DASH_RE = re.compile(
+    rf"(?i)(?<!\w){_DIGIT_WORD_PATTERN}{_UNSAFE_JOINED_DASH_PATTERN}"
+    rf"{_DIGIT_WORD_PATTERN}(?!\w)"
+)
+_DIGIT_DASH_RE = re.compile(
+    rf"\d\s*{_UNSAFE_JOINED_DASH_PATTERN}\s*\d"
+)
+_DIRECTIONAL_ADDRESS_DASH_RE = re.compile(
+    rf"(?i)\b(?:n|s|e|w|north|south|east|west)"
+    rf"{_UNSAFE_JOINED_DASH_PATTERN}(?:e|w|east|west)\b"
+)
+_PHONE_PAREN_RE = re.compile(r"\([0-9]{3}\)")
 _CORRUPTED_DIRECTION_CONTRACTION_RE = re.compile(
-    r"\b(?P<stem>that|it|she|he|there|what|who)[\u2019']South\b",
+    r"\b(?P<stem>[^\W\d_][\w-]*)[\u2019'](?:South|North|East|West)\b",
     flags=re.IGNORECASE,
 )
 _DIRECTION_VARIANT_RE = re.compile(
@@ -46,6 +62,14 @@ _DIRECTION_VARIANT_RE = re.compile(
     r"(?P<se>S(?:outh)?[-\s]?(?:E|East))|"
     r"(?P<sw>S(?:outh)?[-\s]?(?:W|West))"
     r")\b"
+)
+_SAINT_ORGANIZATION_RE = re.compile(
+    r"\b(?:St|Street)\.\s+(?P<name>Vincent|Mary(?:[\u2019']s)?|Charles)\b",
+    flags=re.IGNORECASE,
+)
+_CORRUPTED_SAINT_ORGANIZATION_RE = re.compile(
+    r"\bStreet\.\s+(?:Vincent|Mary(?:[\u2019']s)?|Charles)\b",
+    flags=re.IGNORECASE,
 )
 
 _DIGIT_WORDS = {
@@ -124,6 +148,10 @@ def _expand_direction_variant(match: re.Match[str]) -> str:
     return match.group(0)
 
 
+def _repair_saint_organization(match: re.Match[str]) -> str:
+    return f"Saint {match.group('name')}"
+
+
 def normalize_regeneration_spoken_text(text: str) -> str:
     """Return a fail-closed TTS representation for one repair queue row.
 
@@ -136,6 +164,10 @@ def normalize_regeneration_spoken_text(text: str) -> str:
     """
 
     spoken = normalize_indextts_spoken_text(_required_text(text, field_name="text"))
+    spoken = _SAINT_ORGANIZATION_RE.sub(
+        _repair_saint_organization,
+        spoken,
+    )
     spoken = _CORRUPTED_DIRECTION_CONTRACTION_RE.sub(_repair_contraction, spoken)
     spoken = _DIRECTION_VARIANT_RE.sub(_expand_direction_variant, spoken)
     spoken = re.sub(r"\d+", _digits_to_words, spoken)
@@ -167,6 +199,45 @@ def regeneration_text_risks(text: str) -> tuple[str, ...]:
     if _RAW_DIGIT_RE.search(value):
         risks.append("raw_digit")
     return tuple(risks)
+
+
+def unsafe_spoken_numeric_punctuation_reasons(text: str) -> tuple[str, ...]:
+    """Return fail-closed reasons for unsafe numeric TTS punctuation.
+
+    This narrower publication gate leaves ordinary prose hyphens alone while
+    rejecting literal ``negative``, directly joined digit or digit-word
+    sequences using the approved Unicode-dash set, directional address
+    abbreviations such as ``S-East``, and exact parenthesized area codes.
+    Existing audio with any returned reason must be regenerated from
+    :func:`normalize_regeneration_spoken_text`; its text must not be silently
+    rewritten while the old audio remains active.
+    """
+
+    value = str(text or "")
+    reasons: list[str] = []
+    if _NEGATIVE_RE.search(value):
+        reasons.append("literal_negative")
+    if _NUMBER_WORD_DASH_RE.search(value):
+        reasons.append("number_word_dash")
+    if _DIGIT_DASH_RE.search(value):
+        reasons.append("digit_dash")
+    if _DIRECTIONAL_ADDRESS_DASH_RE.search(value):
+        reasons.append("directional_address_dash")
+    if _PHONE_PAREN_RE.search(value):
+        reasons.append("parenthesized_area_code")
+    return tuple(reasons)
+
+
+def unsafe_spoken_transformation_reasons(text: str) -> tuple[str, ...]:
+    """Return every known text/audio mismatch requiring regeneration."""
+
+    value = str(text or "")
+    reasons = list(unsafe_spoken_numeric_punctuation_reasons(value))
+    if _CORRUPTED_DIRECTION_CONTRACTION_RE.search(value):
+        reasons.append("apostrophe_direction_corruption")
+    if _CORRUPTED_SAINT_ORGANIZATION_RE.search(value):
+        reasons.append("organization_abbreviation_expansion_corruption")
+    return tuple(reasons)
 
 
 @dataclass(frozen=True, slots=True)
@@ -623,4 +694,6 @@ __all__ = [
     "read_regeneration_plan",
     "read_regeneration_queue",
     "regeneration_text_risks",
+    "unsafe_spoken_numeric_punctuation_reasons",
+    "unsafe_spoken_transformation_reasons",
 ]
