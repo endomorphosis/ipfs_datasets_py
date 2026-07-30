@@ -225,6 +225,12 @@
     "e09": "S1"
   },
   "num_shards": 3,
+  "packaging": {
+    "allow_binary": true,
+    "car_encoding": "binary",
+    "envelope_schema": "ipfs_accelerate_py/agent-supervisor/task-artifact-envelope@2",
+    "task_id": "KGP-047"
+  },
   "shard_ids_sorted": [
     "S0",
     "S1",

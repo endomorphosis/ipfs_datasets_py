@@ -1,1 +1,8 @@
-{"Person": ["e02"], "Document": ["e07"]}
+{
+  "Document": [
+    "e07"
+  ],
+  "Person": [
+    "e02"
+  ]
+}

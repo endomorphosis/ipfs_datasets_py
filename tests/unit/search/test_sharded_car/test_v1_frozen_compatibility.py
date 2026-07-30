@@ -5,6 +5,9 @@ Acceptance covered here:
 * shard membership (routing + entity placement)
 * node/edge content (headers index + CAR payload)
 * explicit errors for empty/missing CAR data at the supported reader surface
+
+Fixtures use binary ``.car`` payloads under the task artifact envelope
+(``allow_binary: true``) with SHA-256 digests pinned in expected_identity.json.
 """
 
 from __future__ import annotations
@@ -36,10 +39,10 @@ def test_frozen_fixture_files_present(v1_fixture_dir: Path) -> None:
         "manifest.json",
         "expected_identity.json",
         "index_blobs.json",
-        # Text-safe base64 of frozen CAR bytes (not binary .car; proposal-gate safe).
-        "S0.car.b64",
-        "S1.car.b64",
-        "S2.car.b64",
+        # Frozen binary CAR payloads (KGP-047 envelope allow_binary=true path set).
+        "S0.car",
+        "S1.car",
+        "S2.car",
         "indexes/S0_headers.json",
         "indexes/S0_type_index.json",
         "indexes/S1_headers.json",
@@ -51,11 +54,6 @@ def test_frozen_fixture_files_present(v1_fixture_dir: Path) -> None:
         path = v1_fixture_dir / rel
         assert path.is_file(), f"missing frozen fixture: {rel}"
         assert path.stat().st_size > 0
-    # Binary CAR files must not reappear under the default allow_binary=false gate.
-    for shard_id in ("S0", "S1", "S2"):
-        assert not (v1_fixture_dir / f"{shard_id}.car").exists(), (
-            f"binary {shard_id}.car must not be checked in; use {shard_id}.car.b64"
-        )
 
 
 def test_frozen_car_digests_match_identity(
@@ -295,3 +293,7 @@ def test_fixture_identity_counts(v1_expected_identity: Dict[str, Any]) -> None:
     assert v1_expected_identity["entity_count"] == len(
         v1_expected_identity["membership"]
     )
+    packaging = v1_expected_identity.get("packaging") or {}
+    assert packaging.get("car_encoding") == "binary"
+    assert packaging.get("task_id") == "KGP-047"
+    assert packaging.get("allow_binary") is True

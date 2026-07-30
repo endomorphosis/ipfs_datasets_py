@@ -1,4 +1,8 @@
-"""KGP-047: surface-level guarantees of the supported v1 sharded-CAR reader."""
+"""KGP-047: surface-level guarantees of the supported v1 sharded-CAR reader.
+
+Covers stable routing parity, shard scope allowlists, and header stats over the
+frozen v1 fixture graph.
+"""
 
 from __future__ import annotations
 

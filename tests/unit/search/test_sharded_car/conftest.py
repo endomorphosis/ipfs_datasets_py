@@ -95,16 +95,17 @@ def v1_index_blobs(v1_fixture_dir: Path) -> Dict[str, bytes]:
 def v1_car_bytes(
     v1_fixture_dir: Path, v1_expected_identity: Dict[str, Any]
 ) -> Dict[str, bytes]:
-    """Decode text-safe ``.car.b64`` fixtures; assert frozen SHA-256 digests.
+    """Load frozen binary ``.car`` fixtures; assert pinned SHA-256 digests.
 
-    Binary ``.car`` blobs are not checked into the tree (proposal gate default
-    is ``allow_binary=false``). Runtime bytes match the original frozen CARs.
+    KGP-047 declares a task-artifact-envelope@2 with ``allow_binary: true`` and
+    an exact path set that includes ``S{0,1,2}.car``. Digests must match
+    ``expected_identity.json`` so graph identity stays frozen across packaging.
     """
     out: Dict[str, bytes] = {}
     for shard_id, expected_digest in v1_expected_identity["car_sha256"].items():
-        b64_path = v1_fixture_dir / f"{shard_id}.car.b64"
-        assert b64_path.is_file(), f"missing text-safe CAR fixture: {b64_path.name}"
-        data = base64.b64decode(b64_path.read_text(encoding="ascii").strip())
+        car_path = v1_fixture_dir / f"{shard_id}.car"
+        assert car_path.is_file(), f"missing frozen CAR fixture: {car_path.name}"
+        data = car_path.read_bytes()
         digest = hashlib.sha256(data).hexdigest()
         assert digest == expected_digest, (
             f"frozen CAR {shard_id} digests drifted"
