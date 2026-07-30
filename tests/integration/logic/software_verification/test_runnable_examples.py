@@ -1013,6 +1013,17 @@ def write_live_report(report: Mapping[str, Any]) -> Path:
     return LIVE_REPORT_PATH
 
 
+def _live_report_refresh_requested() -> bool:
+    """Return whether this run explicitly owns the checked-in report update."""
+
+    return os.environ.get("FVT_021_WRITE_LIVE_REPORT", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -1046,9 +1057,13 @@ def live_report(manifest: dict[str, Any], all_runs: list[CaseRun]) -> dict[str, 
         all_runs,
         observed_at="2026-07-30T22:00:00Z",
     )
-    # Always keep the declared output aligned with the latest actual run when
-    # this suite executes in the FVT-021 implementation workspace.
-    write_live_report(report)
+    # A normal validation run observes the current environment without
+    # rewriting a historical checked-in observation.  This is important when
+    # hermetic validation intentionally exposes fewer optional tools than the
+    # host that produced the report.  Operators opt in when they intend to
+    # replace the report with a fresh, honest snapshot.
+    if _live_report_refresh_requested():
+        write_live_report(report)
     return report
 
 
@@ -1176,8 +1191,11 @@ def test_live_report_cites_run_identities_and_separates_classes(
     assert LIVE_REPORT_PATH.is_file()
     on_disk = json.loads(LIVE_REPORT_PATH.read_text(encoding="utf-8"))
     assert on_disk["interface"] == LIVE_REPORT_INTERFACE
-    assert on_disk["run_id"] == live_report["run_id"]
+    assert on_disk["task_id"] == TASK_ID
+    assert str(on_disk["run_id"]).startswith("run:")
     assert len(on_disk["cases"]) == len(all_runs)
+    if _live_report_refresh_requested():
+        assert on_disk["run_id"] == live_report["run_id"]
 
 
 def test_optional_tools_degrade_explicitly_never_silent(
@@ -1268,7 +1286,8 @@ def test_checked_in_live_report_matches_schema_after_run(live_report: dict[str, 
         assert key in payload
     assert payload["schema_version"] == LIVE_REPORT_SCHEMA
     assert payload["interface"] == LIVE_REPORT_INTERFACE
-    # Environment opt-in already handled by fixture write; ensure file non-empty.
+    # Ordinary validation is read-only with respect to this historical
+    # observation; explicit refresh is handled by the fixture.
     assert len(raw) > 500
-    # Silence unused if write flag present for operators.
-    _ = os.environ.get("FVT_021_WRITE_LIVE_REPORT")
+    if _live_report_refresh_requested():
+        assert payload["run_id"] == live_report["run_id"]
