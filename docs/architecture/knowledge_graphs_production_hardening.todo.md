@@ -499,7 +499,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-030 Establish labelled baselines and ratify SLO gates
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-028, KGP-029
