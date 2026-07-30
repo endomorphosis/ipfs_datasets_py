@@ -13,10 +13,8 @@ Two evidence tiers (do not conflate):
 
 2. **Legacy compatibility observations** (``kg_legacy_compat``)
    Deprecated ``KnowledgeGraphManager`` / root ``ipfs_datasets_cli.py``
-   drift inventory (KGP-001 baseline). Passing assertions here document
-   known debt; strict ``xfail`` markers track residual manager defects.
-   Outcomes in this tier are **not** release-eligible proof that the
-   public lifecycle is production-ready.
+   compatibility inventory (KGP-001 baseline). These calls are adapters over
+   the canonical service and remain outside release-eligible proof.
 
 See also:
     docs/architecture/knowledge_graphs_contract_matrix.md
@@ -35,61 +33,6 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import pytest
-
-# ---------------------------------------------------------------------------
-# Issue-linked xfail reasons (strict). IDs map to the contract matrix.
-# ---------------------------------------------------------------------------
-
-ISSUE_MISSING_CREATE_GRAPH = (
-    "LEGACY-COMPAT KGP-001-CREATE-GRAPH: KnowledgeGraphManager has no create_graph; "
-    "CLI calls manager.create_graph while MCP uses manager.initialize. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_ENTITY_SIGNATURE = (
-    "LEGACY-COMPAT KGP-001-ENTITY-SIG: KnowledgeGraphManager.add_entity constructs "
-    "Entity(id=…, type=…) but storage.Entity requires entity_id/entity_type/name. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_RELATIONSHIP_SIGNATURE = (
-    "LEGACY-COMPAT KGP-001-REL-SIG: KnowledgeGraphManager.add_relationship constructs "
-    "Relationship(…, type=…) but storage.Relationship requires relationship_type. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_QUERY_NON_JSON = (
-    "LEGACY-COMPAT KGP-001-QUERY-JSON: query_cypher returns neo4j_compat Result objects that "
-    "are not JSON serializable; CLI --json print_result raises TypeError. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_FRESH_MANAGER = (
-    "LEGACY-COMPAT KGP-001-FRESH-MANAGER: MCP/MCP++ graph tools construct a new "
-    "KnowledgeGraphManager per call; writes, transactions, and reopen cannot "
-    "share durable state. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_TX_MANAGER_CTOR = (
-    "LEGACY-COMPAT KGP-001-TX-CTOR: transaction_begin instantiates TransactionManager() "
-    "without required graph_engine and storage_backend; ImportError mock path "
-    "never runs. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_CLI_METHOD_DRIFT = (
-    "LEGACY-COMPAT KGP-001-CLI-METHOD-DRIFT: CLI graph search/index/constraint call "
-    "search_hybrid/create_index/add_constraint; manager exposes "
-    "hybrid_search/index_create/constraint_add. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
-
-ISSUE_NO_DURABLE_GRAPH_ID = (
-    "LEGACY-COMPAT KGP-001-NO-GRAPH-ID: create/initialize returns no durable graph identity "
-    "(tenant/graph/branch/revision); reopen cannot target a stable graph. "
-    "Plan: docs/architecture/KNOWLEDGE_GRAPHS_PRODUCTION_HARDENING_PLAN_2026_07_29.md"
-)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CLI_PATH = REPO_ROOT / "ipfs_datasets_cli.py"  # deprecated root CLI (legacy debt)
@@ -378,10 +321,10 @@ async def _mcp_plus_dispatch(
 class TestDriftInventory:
     """LEGACY-COMPAT: passing probes that lock known manager/root-CLI debt as facts (not release proof)."""
 
-    def test_manager_lacks_create_graph_method(self) -> None:
+    def test_manager_exposes_create_graph_compatibility_method(self) -> None:
         from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
-        assert not hasattr(KnowledgeGraphManager, "create_graph")
+        assert hasattr(KnowledgeGraphManager, "create_graph")
         assert hasattr(KnowledgeGraphManager, "initialize")
 
     def test_entity_rejects_manager_constructor_kwargs(self) -> None:
@@ -401,7 +344,7 @@ class TestDriftInventory:
                 properties={},
             )
 
-    def test_cli_method_names_diverge_from_manager(self) -> None:
+    def test_cli_method_names_are_available_on_manager(self) -> None:
         from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
         cli_source = CLI_PATH.read_text(encoding="utf-8")
@@ -415,7 +358,7 @@ class TestDriftInventory:
         for cli_call, manager_method, missing in divergences:
             assert cli_call in cli_source, f"expected CLI to call {cli_call}"
             assert hasattr(KnowledgeGraphManager, manager_method)
-            assert not hasattr(KnowledgeGraphManager, missing)
+            assert hasattr(KnowledgeGraphManager, missing)
 
     def test_mcp_tools_use_server_owned_graph_service(self) -> None:
         tool_files = [
@@ -439,32 +382,27 @@ class TestDriftInventory:
                 f"{path.name} should resolve and call the server-owned GraphService"
             )
 
-    def test_cli_create_emits_attribute_error_message(self) -> None:
-        """Observe create_graph AttributeError without treating exit 1 as OK."""
+    def test_cli_create_emits_success_envelope(self) -> None:
         proc = run_cli(
-            ["graph", "create", "--driver-url", DRIVER_URL],
+            ["--json", "graph", "create", "--driver-url", DRIVER_URL],
         )
-        combined = f"{proc.stdout}\n{proc.stderr}"
-        assert "create_graph" in combined
-        assert "has no attribute" in combined or "AttributeError" in combined
+        assert_success_envelope(parse_cli_json_stdout(proc), required_keys=("graph_id",))
 
     @pytest.mark.asyncio
-    async def test_python_add_entity_error_mentions_unexpected_id(self) -> None:
+    async def test_python_add_entity_uses_canonical_signature(self) -> None:
         result = await _python_add_entity()
-        assert result.get("status") == "error"
-        assert "unexpected keyword argument 'id'" in str(result.get("message", ""))
+        assert_success_envelope(result, required_keys=("entity_id", "entity_type"))
 
 
 # ===========================================================================
-# Python API — aspirational lifecycle contracts (strict xfail where broken)
+# Python API — deprecated compatibility lifecycle
 # ===========================================================================
 
 
 @pytest.mark.kg_legacy_compat
 class TestPythonLifecycle:
-    """LEGACY-COMPAT: KnowledgeGraphManager aspirational contracts (strict xfail where broken). Not release proof."""
+    """LEGACY-COMPAT: deprecated manager calls routed to GraphService. Not release proof."""
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_MISSING_CREATE_GRAPH)
     @pytest.mark.asyncio
     async def test_create_graph_returns_success_envelope(self) -> None:
         manager = _manager()
@@ -483,7 +421,6 @@ class TestPythonLifecycle:
         result = await _manager().initialize()
         assert_success_envelope(result, required_keys=("message", "driver_url"))
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     @pytest.mark.asyncio
     async def test_add_entity_returns_success_envelope(self) -> None:
         result = await _python_add_entity(
@@ -498,7 +435,6 @@ class TestPythonLifecycle:
         assert result["entity_id"] == "kgp001-person"
         assert result["entity_type"] == "Person"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_RELATIONSHIP_SIGNATURE)
     @pytest.mark.asyncio
     async def test_add_relationship_returns_success_envelope(self) -> None:
         manager = _manager()
@@ -513,13 +449,11 @@ class TestPythonLifecycle:
             required_keys=("source_id", "target_id", "relationship_type"),
         )
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_QUERY_NON_JSON)
     @pytest.mark.asyncio
     async def test_query_cypher_results_are_json_serializable(self) -> None:
         result = await _python_query(CYPHER_SMOKE)
         assert_json_serializable_query_result(result)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_TX_MANAGER_CTOR)
     @pytest.mark.asyncio
     async def test_transaction_begin_returns_transaction_id(self) -> None:
         result = await _python_tx_begin()
@@ -527,7 +461,6 @@ class TestPythonLifecycle:
         assert isinstance(result["transaction_id"], str)
         assert result["transaction_id"]
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_FRESH_MANAGER)
     @pytest.mark.asyncio
     async def test_transaction_survives_independent_manager_commit(self) -> None:
         """Independent manager instances must share durable tx state (or catalog)."""
@@ -539,7 +472,6 @@ class TestPythonLifecycle:
         assert_success_envelope(commit, required_keys=("transaction_id",))
         assert commit["transaction_id"] == tx_id
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_NO_DURABLE_GRAPH_ID)
     @pytest.mark.asyncio
     async def test_create_then_reopen_preserves_graph_identity(self) -> None:
         first = _manager()
@@ -571,7 +503,6 @@ class TestPythonLifecycle:
 class TestCLILifecycle:
     """LEGACY-COMPAT: root ``ipfs_datasets_cli.py`` process probes (debt). Not release proof."""
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_MISSING_CREATE_GRAPH)
     def test_graph_create_returns_json_success(self) -> None:
         proc = run_cli(
             ["--json", "graph", "create", "--driver-url", DRIVER_URL],
@@ -579,7 +510,6 @@ class TestCLILifecycle:
         payload = parse_cli_json_stdout(proc)
         assert_success_envelope(payload)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     def test_graph_add_entity_returns_json_success(self) -> None:
         props = json.dumps({"name": "Alice", "age": 30})
         proc = run_cli(
@@ -602,7 +532,6 @@ class TestCLILifecycle:
         )
         assert payload["entity_id"] == "cli-person1"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_QUERY_NON_JSON)
     def test_graph_query_returns_json_serializable_success(self) -> None:
         proc = run_cli(
             ["--json", "graph", "query", "--cypher", CYPHER_SMOKE],
@@ -610,13 +539,11 @@ class TestCLILifecycle:
         payload = parse_cli_json_stdout(proc)
         assert_json_serializable_query_result(payload)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_TX_MANAGER_CTOR)
     def test_graph_tx_begin_returns_json_success(self) -> None:
         proc = run_cli(["--json", "graph", "tx-begin"])
         payload = parse_cli_json_stdout(proc)
         assert_success_envelope(payload, required_keys=("transaction_id",))
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_CLI_METHOD_DRIFT)
     def test_graph_search_uses_existing_manager_method(self) -> None:
         proc = run_cli(
             [
@@ -637,7 +564,6 @@ class TestCLILifecycle:
         payload = parse_cli_json_stdout(proc)
         assert_success_envelope(payload)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_CLI_METHOD_DRIFT)
     def test_graph_index_uses_existing_manager_method(self) -> None:
         proc = run_cli(
             [
@@ -655,30 +581,12 @@ class TestCLILifecycle:
         payload = parse_cli_json_stdout(proc)
         assert_success_envelope(payload)
 
-    def test_cli_create_failure_is_not_silent_success_json(self) -> None:
-        """
-        Guard: CLI currently swallows AttributeError and may exit 0.
-
-        Strict contract forbids treating bare exit code as success without a
-        parseable success envelope.
-        """
+    def test_cli_create_is_json_success(self) -> None:
         proc = run_cli(
             ["--json", "graph", "create", "--driver-url", DRIVER_URL],
         )
-        # Either non-zero exit OR stdout is not a success envelope.
-        if proc.returncode == 0:
-            text = (proc.stdout or "").strip()
-            try:
-                payload = json.loads(text) if text else None
-            except json.JSONDecodeError:
-                payload = None
-            if isinstance(payload, dict):
-                assert payload.get("status") != "success" or "create_graph" in str(
-                    payload
-                ), "create must not report success while create_graph is missing"
-            else:
-                # Non-JSON / error text path — observed baseline.
-                assert "create_graph" in f"{proc.stdout}\n{proc.stderr}"
+        payload = parse_cli_json_stdout(proc)
+        assert_success_envelope(payload, required_keys=("graph_id", "graph_uri"))
 
 
 # ===========================================================================
@@ -726,7 +634,6 @@ class TestMCPLifecycle:
             "kg://contract/lifecycle/branches/main",
         }
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     @pytest.mark.asyncio
     async def test_graph_add_entity_returns_success_envelope(self) -> None:
         result = await _mcp_add_entity(
@@ -740,19 +647,16 @@ class TestMCPLifecycle:
         )
         assert result["entity_id"] == "mcp-person1"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_QUERY_NON_JSON)
     @pytest.mark.asyncio
     async def test_graph_query_cypher_results_are_json_serializable(self) -> None:
         result = await _mcp_query(CYPHER_SMOKE)
         assert_json_serializable_query_result(result)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_TX_MANAGER_CTOR)
     @pytest.mark.asyncio
     async def test_graph_transaction_begin_returns_transaction_id(self) -> None:
         result = await _mcp_tx_begin()
         assert_success_envelope(result, required_keys=("transaction_id",))
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_FRESH_MANAGER)
     @pytest.mark.asyncio
     async def test_transaction_begin_then_commit_across_independent_calls(self) -> None:
         begin = await _mcp_tx_begin()
@@ -761,7 +665,6 @@ class TestMCPLifecycle:
         assert_success_envelope(commit, required_keys=("transaction_id",))
         assert commit["transaction_id"] == begin["transaction_id"]
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_FRESH_MANAGER)
     @pytest.mark.asyncio
     async def test_add_then_query_across_independent_mcp_calls(self) -> None:
         add = await _mcp_add_entity(
@@ -786,7 +689,7 @@ class TestMCPLifecycle:
 
 @pytest.mark.kg_legacy_compat
 class TestMCPPlusLifecycle:
-    """LEGACY-COMPAT residual MCP++ probes (stale no-target paths xfail). Full release lifecycle is under kg_release_eligible."""
+    """LEGACY-COMPAT driver_url adapters. Full release lifecycle is under kg_release_eligible."""
 
     @pytest.mark.asyncio
     async def test_dispatch_graph_create_returns_success_envelope(
@@ -808,7 +711,6 @@ class TestMCPPlusLifecycle:
         assert result["target"]["uri"] == "kg://contract/mcpplus/branches/main"
         assert _is_json_safe(result), result
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     @pytest.mark.asyncio
     async def test_dispatch_graph_add_entity_returns_success_envelope(self) -> None:
         result = await _mcp_plus_dispatch(
@@ -822,7 +724,6 @@ class TestMCPPlusLifecycle:
         assert_success_envelope(result, required_keys=("entity_id", "entity_type"))
         assert result["entity_id"] == "mcpplus-person1"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_QUERY_NON_JSON)
     @pytest.mark.asyncio
     async def test_dispatch_graph_query_cypher_json_serializable(self) -> None:
         result = await _mcp_plus_dispatch(
@@ -836,14 +737,12 @@ class TestMCPPlusLifecycle:
         else:
             assert_json_serializable_query_result(result)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_TX_MANAGER_CTOR)
     @pytest.mark.asyncio
     async def test_dispatch_transaction_begin_returns_transaction_id(self) -> None:
         result = await _mcp_plus_dispatch("graph_transaction_begin", {})
         body = {k: v for k, v in result.items() if k != "request_id"}
         assert_success_envelope(body, required_keys=("transaction_id",))
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_FRESH_MANAGER)
     @pytest.mark.asyncio
     async def test_dispatch_tx_begin_commit_are_independent_calls(self) -> None:
         begin = await _mcp_plus_dispatch("graph_transaction_begin", {})
@@ -858,7 +757,6 @@ class TestMCPPlusLifecycle:
         assert commit.get("transaction_id") == tx_id
         assert _is_json_safe(commit)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_FRESH_MANAGER)
     @pytest.mark.asyncio
     async def test_dispatch_add_then_query_independent_calls(self) -> None:
         add = await _mcp_plus_dispatch(
@@ -893,7 +791,6 @@ class TestMCPPlusLifecycle:
 class TestCrossSurfaceParity:
     """LEGACY-COMPAT cross-surface parity on manager/stale paths. Canonical parity is under kg_release_eligible."""
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     @pytest.mark.asyncio
     async def test_add_entity_success_parity_python_mcp_mcpplus(self) -> None:
         entity_id = "parity-entity-1"
@@ -919,7 +816,6 @@ class TestCrossSurfaceParity:
             assert result["entity_id"] == entity_id
             assert result["entity_type"] == "Person"
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_QUERY_NON_JSON)
     @pytest.mark.asyncio
     async def test_query_json_parity_python_mcp_mcpplus(self) -> None:
         py = await _python_query(CYPHER_SMOKE)
@@ -939,9 +835,9 @@ class TestCrossSurfaceParity:
 
         cli_calls_create = "manager.create_graph" in CLI_PATH.read_text(encoding="utf-8")
         manager_has_create = hasattr(KnowledgeGraphManager, "create_graph")
-        # Today: CLI calls it, manager lacks it — recorded as drift.
+        # Compatibility reconciliation keeps the deprecated call site aligned.
         assert cli_calls_create is True
-        assert manager_has_create is False
+        assert manager_has_create is True
 
 
 # ===========================================================================
@@ -965,16 +861,14 @@ class TestEntityConstructionContract:
         assert entity.id == "ok-1"
         assert entity.type == "Person"
 
-    def test_manager_add_entity_source_uses_wrong_kwargs(self) -> None:
+    def test_manager_add_entity_source_uses_canonical_kwargs(self) -> None:
         from ipfs_datasets_py.core_operations import knowledge_graph_manager as kgm
 
         source = inspect.getsource(kgm.KnowledgeGraphManager.add_entity)
         assert "Entity(" in source
-        # Observed drift: keyword names ``id`` / ``type`` rather than entity_id / entity_type.
-        assert re.search(r"Entity\([\s\S]*?\bid\s*=", source)
-        assert re.search(r"Entity\([\s\S]*?\btype\s*=", source)
+        assert re.search(r"Entity\([\s\S]*?\bentity_id\s*=", source)
+        assert re.search(r"Entity\([\s\S]*?\bentity_type\s*=", source)
 
-    @pytest.mark.xfail(strict=True, reason=ISSUE_ENTITY_SIGNATURE)
     def test_manager_add_entity_source_matches_entity_signature(self) -> None:
         from ipfs_datasets_py.core_operations import knowledge_graph_manager as kgm
         from ipfs_datasets_py.knowledge_graphs.storage.types import Entity
@@ -1657,4 +1551,3 @@ class TestCanonicalCrossSurfaceParity:
             assert source_uses_server_owned_graph_service(source), (
                 f"{path.name} must resolve and call the server-owned GraphService"
             )
-

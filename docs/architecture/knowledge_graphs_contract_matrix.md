@@ -12,17 +12,16 @@ judging release readiness.
 | Tier | Pytest marker | Counts as release proof? | What it covers |
 | --- | --- | --- | --- |
 | **Canonical conformance** | `kg_release_eligible` | **Yes** | Explicit `GraphTarget` create / write / query / transaction / reopen via Python `Client`, package CLI, MCP, MCP++ |
-| **Legacy compatibility debt** | `kg_legacy_compat` | **No** | Deprecated `KnowledgeGraphManager` and root `ipfs_datasets_cli.py` observations (KGP-001 inventory + strict xfails) |
+| **Legacy compatibility adapters** | `kg_legacy_compat` | **No** | Deprecated `KnowledgeGraphManager`, root `ipfs_datasets_cli.py`, and `driver_url` MCP call shapes routed to the canonical service |
 
 Production expectations for the release-eligible path are encoded as **strict
-passing** assertions (no skips, no expected failures). Legacy diagnostics either
-lock observed debt as facts or use issue-linked
-`pytest.mark.xfail(strict=True)` markers; those outcomes document residual
-manager drift and **must not** be cited as passing release proof.
+passing** assertions (no skips, no expected failures). Legacy diagnostics also
+pass, but remain compatibility evidence and **must not** be cited as canonical
+release proof.
 
 KGP-001 baseline coverage is **preserved** under `kg_legacy_compat`. KGP-048
-**adds** release-eligible GraphService probes; it does not delete or weaken the
-legacy inventory.
+added release-eligible GraphService probes; the reconciliation now converts the
+recorded manager drift into executable compatibility contracts.
 
 ---
 
@@ -81,126 +80,51 @@ python -m pytest -q tests/knowledge_graphs/contract/test_public_lifecycle.py -m 
 
 ---
 
-## Tier B — Legacy compatibility debt (not release proof)
+## Tier B — Legacy compatibility adapters (not release proof)
 
 ### Surfaces (legacy / deprecated)
 
 | Surface | Entry point | Process model |
 | --- | --- | --- |
-| Python API | `ipfs_datasets_py.core_operations.KnowledgeGraphManager` | In-process, no durable GraphTarget catalog |
-| Root CLI | `python ipfs_datasets_cli.py graph <subcommand>` | Fresh process; still calls manager methods that do not exist or mismatch storage types |
-| Residual MCP / MCP++ no-target calls | Stale call shapes without explicit `GraphTarget` | Fail / xfail; not the canonical lifecycle path |
+| Python API | `ipfs_datasets_py.core_operations.KnowledgeGraphManager` | Maps `driver_url` to a deterministic legacy `GraphTarget` and canonical durable service |
+| Root CLI | `python ipfs_datasets_cli.py graph <subcommand>` | Fresh process using the repaired manager aliases and JSON-safe envelopes |
+| Residual MCP / MCP++ calls | Deprecated call shapes supplying `driver_url` instead of `GraphTarget` | Deterministic legacy target on the server-owned service |
 
-Passing tests in this tier are **compatibility observations**. They prove the
-debt is still visible and issue-linked; they do **not** prove release readiness.
+Passing tests in this tier prove deprecated calls remain usable. They do **not**
+replace the explicit-target lifecycle evidence in Tier A.
 
-### Observed drift inventory (manager / root CLI)
+### Reconciled KGP-001 drift inventory
 
-#### KGP-001-CREATE-GRAPH — missing `create_graph`
+| Former defect | Reconciled behavior |
+| --- | --- |
+| Missing `create_graph` | Manager and root CLI expose `create_graph`; the result includes tenant, graph ID, URI, branch, and revision. |
+| Entity / relationship signature drift | Manager constructs the current storage types with `entity_id`, `entity_type`, and `relationship_type`. |
+| Non-JSON query result | Manager, root CLI, MCP, and MCP++ return JSON-safe row lists. |
+| Fresh manager / transaction state | Independent managers for the same `driver_url` share one canonical service; MCP calls use the server registry. |
+| `TransactionManager()` constructor drift | Deprecated begin/commit/rollback delegate to `GraphService` transactions. |
+| Root CLI method-name drift | `search_hybrid`, `create_index`, and `add_constraint` compatibility aliases are present. |
+| Missing durable identity | `driver_url` deterministically maps to `kg://legacy/driver-<digest>/branches/main`. |
+| MCP no-target legacy calls | Supplying deprecated `driver_url` is an explicit compatibility signal; calls without either `target` or `driver_url` still fail closed. |
 
-| Surface | Call | Observed |
-| --- | --- | --- |
-| Python | `KnowledgeGraphManager.create_graph` | **Missing.** Manager exposes `initialize()` only. |
-| Root CLI | `graph create` → `manager.create_graph` | **AttributeError** (`'KnowledgeGraphManager' object has no attribute 'create_graph'`). CLI may still exit **0**. |
-| Canonical MCP / package CLI | GraphService `create` | **Out of scope for this tier** — covered as PASS under Tier A. |
+### Operation × surface matrix (legacy compatibility)
 
-**Root cause:** Root CLI and older docs still name `create_graph`; core manager
-never implemented it (or renamed to `initialize` without updating callers).
-
-#### KGP-001-ENTITY-SIG — `Entity` constructor mismatch
-
-| Surface | Call | Observed |
-| --- | --- | --- |
-| Manager / root CLI | `add_entity` | **Error** envelope: `Entity.__init__() got an unexpected keyword argument 'id'`. |
-
-Manager constructs `Entity(id=…, type=…)`; storage requires
-`Entity(entity_id=…, entity_type=…, name=…)`.
-
-#### KGP-001-REL-SIG — `Relationship` constructor mismatch
-
-| Surface | Call | Observed |
-| --- | --- | --- |
-| Manager | `add_relationship` | **Error** envelope: unexpected keyword argument `type`. |
-
-Manager uses `type=relationship_type`; storage type requires `relationship_type=`.
-
-#### KGP-001-QUERY-JSON — non-JSON query results
-
-| Surface | Call | Observed |
-| --- | --- | --- |
-| Manager | `query_cypher` | `status=success` but `results` is `neo4j_compat.result.Result` (**not** JSON serializable). |
-| Root CLI | `graph query --json` | `print_result` → **TypeError** on non-JSON `Result`. |
-
-#### KGP-001-FRESH-MANAGER — no shared durable service
-
-Manager instances and root CLI processes do not share a GraphTarget catalog;
-writes/transactions/reopen cannot meet the production durability contract on
-this path. (Canonical MCP tools now use server-owned GraphService — Tier A.)
-
-#### KGP-001-TX-CTOR — `TransactionManager` construction failure
-
-| Surface | Call | Observed |
-| --- | --- | --- |
-| Manager / root CLI | `transaction_begin` | **Error**: missing `graph_engine` and `storage_backend`. |
-
-#### KGP-001-CLI-METHOD-DRIFT — root CLI vs manager method names
-
-| Root CLI subcommand | CLI call | Manager method that exists |
-| --- | --- | --- |
-| `graph create` | `create_graph` | `initialize` only |
-| `graph search` | `search_hybrid` | `hybrid_search` |
-| `graph index` | `create_index` | `index_create` |
-| `graph constraint` | `add_constraint` | `constraint_add` |
-
-#### KGP-001-NO-GRAPH-ID — no durable graph identity on manager create
-
-`initialize` success envelopes carry `message` + `driver_url` only — no
-`graph_id` / branch / revision / catalog record.
-
-### Operation × surface matrix (legacy debt)
-
-Legend: **DEBT** = fails production assertion (observation or strict xfail) ·
-**OBS** = inventory observation locked as a passing fact · **N/A** = not this surface.
-
-| Operation | Manager Python | Root CLI | Notes |
+| Operation | Manager Python | Root CLI | MCP / MCP++ with `driver_url` |
 | --- | --- | --- | --- |
-| create | DEBT / OBS | DEBT / OBS | Missing `create_graph`; `initialize` SHALLOW |
-| add entity | DEBT | DEBT | Entity kwargs mismatch |
-| add relationship | DEBT | DEBT | Relationship kwargs mismatch |
-| query (JSON envelope) | DEBT | DEBT | Non-JSON `Result` |
-| reopen / write→read | DEBT | DEBT | No durable GraphTarget identity |
-| transaction begin/commit | DEBT | DEBT | TransactionManager ctor + no shared catalog |
-| search / index / constraint | method names OK on manager | DEBT | Root CLI wrong method names |
-
-### Issue IDs used in legacy probes
-
-| Issue ID | Marker reason constant | Primary defect | Release proof? |
-| --- | --- | --- | --- |
-| `KGP-001-CREATE-GRAPH` | `ISSUE_MISSING_CREATE_GRAPH` | Missing `create_graph` / root CLI call site | **No** |
-| `KGP-001-ENTITY-SIG` | `ISSUE_ENTITY_SIGNATURE` | `Entity(id=, type=)` vs storage signature | **No** |
-| `KGP-001-REL-SIG` | `ISSUE_RELATIONSHIP_SIGNATURE` | `Relationship(type=)` vs `relationship_type` | **No** |
-| `KGP-001-QUERY-JSON` | `ISSUE_QUERY_NON_JSON` | Non-JSON `Result` in manager query envelopes | **No** |
-| `KGP-001-FRESH-MANAGER` | `ISSUE_FRESH_MANAGER` | Per-instance manager; no shared durable service | **No** |
-| `KGP-001-TX-CTOR` | `ISSUE_TX_MANAGER_CTOR` | `TransactionManager()` arity / wiring | **No** |
-| `KGP-001-CLI-METHOD-DRIFT` | `ISSUE_CLI_METHOD_DRIFT` | Root CLI method names ≠ manager methods | **No** |
-| `KGP-001-NO-GRAPH-ID` | `ISSUE_NO_DURABLE_GRAPH_ID` | No durable graph identity on manager create | **No** |
-
-All issue reason strings are prefixed with `LEGACY-COMPAT` in the probe module so
-CI logs never look like release-eligible failures.
-
-When a later task fixes a manager defect, the corresponding strict xfail should
-**XPASS** and fail the suite until the marker is removed — that is intentional
-for debt tracking only.
+| create / reopen | PASS | PASS | N/A (create uses explicit target) |
+| add entity / relationship | PASS | PASS | PASS |
+| query (JSON envelope) | PASS | PASS | PASS |
+| transaction begin/commit | PASS | PASS | PASS |
+| search / index / constraint aliases | PASS | PASS | N/A |
 
 ### Legacy probe classes (KGP-001 coverage retained)
 
 | Class | Role |
 | --- | --- |
-| `TestDriftInventory` | Passing inventory facts (debt locks) |
-| `TestPythonLifecycle` | Strict xfail / shallow manager Python paths |
-| `TestCLILifecycle` | Root CLI debt probes |
-| `TestMCPLifecycle` | Residual / partial MCP inventory (not full release lifecycle) |
-| `TestMCPPlusLifecycle` | Residual MCP++ no-target paths |
+| `TestDriftInventory` | Compatibility wiring and signature inventory |
+| `TestPythonLifecycle` | Deprecated manager lifecycle |
+| `TestCLILifecycle` | Root CLI compatibility |
+| `TestMCPLifecycle` | Deprecated `driver_url` MCP calls |
+| `TestMCPPlusLifecycle` | Deprecated `driver_url` MCP++ dispatch |
 | `TestCrossSurfaceParity` | Legacy cross-surface parity vectors |
 | `TestEntityConstructionContract` | Entity/Relationship signature debt locks |
 
@@ -236,10 +160,9 @@ python -m pytest -q \
   tests/mcp/test_graph_tools.py
 ```
 
-**Expected for release proof:** every `kg_release_eligible` test **passes** with
-no skips and no expected failures. Legacy `kg_legacy_compat` tests may pass as
-observations or xfail as debt; neither outcome is counted as GraphService
-lifecycle release proof.
+**Expected:** all 133 G010 tests pass with no skips or expected failures.
+`kg_release_eligible` remains the only lifecycle release-proof tier;
+`kg_legacy_compat` demonstrates migration safety for deprecated callers.
 
 ---
 

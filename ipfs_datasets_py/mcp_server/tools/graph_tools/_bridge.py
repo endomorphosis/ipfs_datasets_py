@@ -11,9 +11,12 @@ Every public graph tool:
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
+import tempfile
 import uuid
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from ipfs_datasets_py.knowledge_graphs.service import (
@@ -334,6 +337,7 @@ def resolve_binding(
     store: Optional[str] = None,
     catalog: Optional[str] = None,
     operation: str = "open",
+    legacy_driver_url: Optional[str] = None,
 ):
     """Resolve the server-owned GraphService binding."""
     cat = catalog_path or catalog
@@ -344,6 +348,23 @@ def resolve_binding(
             storage_path=stor,
         ), None
     except RuntimeError as exc:
+        if legacy_driver_url:
+            digest = hashlib.sha256(
+                legacy_driver_url.encode("utf-8")
+            ).hexdigest()[:16]
+            root = (
+                Path(tempfile.gettempdir())
+                / "ipfs-datasets-py-legacy-mcp"
+                / digest
+            )
+            root.mkdir(parents=True, exist_ok=True)
+            try:
+                return get_graph_service_binding(
+                    catalog_path=root / "catalog.sqlite",
+                    storage_path=root / "payloads",
+                ), None
+            except Exception as fallback_exc:
+                exc = RuntimeError(str(fallback_exc))
         return None, error_envelope(
             operation,
             str(exc),
@@ -361,6 +382,36 @@ def resolve_binding(
             code="STORAGE",
             retryable=True,
         )
+
+
+def legacy_target_from_driver(driver_url: str) -> GraphTarget:
+    """Map the deprecated driver URL identity to an explicit GraphTarget.
+
+    Canonical calls never use this function; it exists only for old tool
+    signatures that supply ``driver_url`` instead of ``target``.
+    """
+    digest = hashlib.sha256(driver_url.encode("utf-8")).hexdigest()[:16]
+    return GraphTarget(
+        tenant="legacy",
+        graph_id=f"driver-{digest}",
+        branch=DEFAULT_BRANCH,
+    )
+
+
+async def ensure_legacy_graph(binding: Any, target: GraphTarget) -> Optional[Dict[str, Any]]:
+    """Idempotently create the deterministic legacy target."""
+    result = await run_in_thread(
+        binding.service.create,
+        target,
+        idempotency_key=f"legacy-create-{target.graph_id}",
+    )
+    payload = json_safe_result(result)
+    if payload.get("status") == "success":
+        return None
+    error = payload.get("error") or {}
+    if error.get("code") == "ALREADY_EXISTS":
+        return None
+    return payload
 
 
 def run_sync(fn: Callable, *args: Any, **kwargs: Any) -> Any:

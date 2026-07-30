@@ -12,6 +12,8 @@ from ._bridge import (
     declare_mcp_plus,
     error_envelope,
     json_safe_result,
+    ensure_legacy_graph,
+    legacy_target_from_driver,
     resolve_auth,
     resolve_binding,
     resolve_target,
@@ -56,6 +58,11 @@ async def graph_query_cypher(
     a ``kg-query-envelope/v1`` payload (columns, rows, revision, cursor…).
     """
     op = "query"
+    legacy_mode = bool(
+        driver_url and target is None and tenant is None and graph_id is None and graph is None
+    )
+    if legacy_mode:
+        target = legacy_target_from_driver(str(driver_url)).uri
     t, err = resolve_target(
         target=target,
         tenant=tenant,
@@ -80,11 +87,16 @@ async def graph_query_cypher(
         catalog_path=catalog_path,
         storage_path=storage_path,
         operation=op,
+        legacy_driver_url=str(driver_url) if legacy_mode else None,
     )
     if berr is not None:
         return berr
 
     assert t is not None and binding is not None
+    if legacy_mode:
+        create_error = await ensure_legacy_graph(binding, t)
+        if create_error is not None:
+            return create_error
 
     # Cooperative cancellation: if a prior stream session was cancelled.
     if cancel_token:
