@@ -482,7 +482,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-029 Build a reproducible graph load harness
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: reliability
 - Depends on: KGP-008, KGP-012, KGP-016, KGP-020
