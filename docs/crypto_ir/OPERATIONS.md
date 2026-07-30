@@ -1,8 +1,8 @@
 # Crypto IR Operations
 
-Status: normative companion for CRYPTOIR-G610 / CRYPTOIR-035  
-Release gate: [`RELEASE_AND_ROLLBACK.md`](RELEASE_AND_ROLLBACK.md)  
-Authority baseline: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)  
+Status: normative companion for CRYPTOIR-G610 / CRYPTOIR-035<br>
+Release gate: [`RELEASE_AND_ROLLBACK.md`](RELEASE_AND_ROLLBACK.md)<br>
+Authority baseline: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)<br>
 Threat model: [`THREAT_MODEL.md`](THREAT_MODEL.md)
 
 This runbook describes how operators run Crypto IR in **observation** and

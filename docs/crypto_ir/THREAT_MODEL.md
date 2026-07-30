@@ -1,9 +1,9 @@
 # Crypto IR Threat Model
 
-Status: normative companion for CRYPTOIR-G010 / CRYPTOIR-001  
-Repair: CRYPTOIR-036 objective validation repair  
-Authority policy: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)  
-Machine policy id: `crypto-ir-authority-policy-v1` (version `1.0.0`)  
+Status: normative companion for CRYPTOIR-G010 / CRYPTOIR-001<br>
+Repair: CRYPTOIR-036 objective validation repair<br>
+Authority policy: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)<br>
+Machine policy id: `crypto-ir-authority-policy-v1` (version `1.0.0`)<br>
 Evidence test: `ipfs_datasets_py/tests/unit/logic/crypto_ir/test_policy_baseline.py`
 
 This threat model freezes the trusted computing base, adversaries, assets,

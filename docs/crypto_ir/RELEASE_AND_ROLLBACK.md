@@ -1,10 +1,10 @@
 # Crypto IR Release and Rollback
 
-Status: normative for CRYPTOIR-G610 / CRYPTOIR-035  
-Companion: [`OPERATIONS.md`](OPERATIONS.md)  
-Authority baseline: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)  
-Threat model: [`THREAT_MODEL.md`](THREAT_MODEL.md)  
-Machine policy: the fenced JSON block labeled `crypto-ir-release-gate-v1` in this file  
+Status: normative for CRYPTOIR-G610 / CRYPTOIR-035<br>
+Companion: [`OPERATIONS.md`](OPERATIONS.md)<br>
+Authority baseline: [`AUTHORITY_AND_POLICY.md`](AUTHORITY_AND_POLICY.md)<br>
+Threat model: [`THREAT_MODEL.md`](THREAT_MODEL.md)<br>
+Machine policy: the fenced JSON block labeled `crypto-ir-release-gate-v1` in this file<br>
 Evidence tests:
 
 - `ipfs_datasets_py/tests/contract/logic/crypto_ir/test_multichain_conformance.py`

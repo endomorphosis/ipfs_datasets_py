@@ -1,9 +1,9 @@
 # Crypto IR Authority and Policy Baseline
 
-Status: normative for CRYPTOIR-G010 / CRYPTOIR-001  
-Repair: CRYPTOIR-036 objective validation repair  
-Companion: [`THREAT_MODEL.md`](THREAT_MODEL.md)  
-Machine policy: the fenced JSON block labeled `crypto-ir-authority-policy-v1` in this file  
+Status: normative for CRYPTOIR-G010 / CRYPTOIR-001<br>
+Repair: CRYPTOIR-036 objective validation repair<br>
+Companion: [`THREAT_MODEL.md`](THREAT_MODEL.md)<br>
+Machine policy: the fenced JSON block labeled `crypto-ir-authority-policy-v1` in this file<br>
 Evidence test: `ipfs_datasets_py/tests/unit/logic/crypto_ir/test_policy_baseline.py`
 
 This document freezes result-authority, policy, freshness, and fail-closed rules
