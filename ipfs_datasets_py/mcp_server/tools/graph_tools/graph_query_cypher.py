@@ -1,49 +1,136 @@
-"""
-MCP tool for executing Cypher queries on a knowledge graph.
+"""MCP tool: Cypher / cypher-lite query via persistent GraphService."""
 
-This is a thin wrapper around the core KnowledgeGraphManager class.
-Core implementation: ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager
-"""
+from __future__ import annotations
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Mapping, Optional, Union
+
+from ._bridge import (
+    ABILITY_QUERY,
+    DEFAULT_BRANCH,
+    EFFECT_QUERY,
+    declare_mcp_plus,
+    error_envelope,
+    json_safe_result,
+    resolve_auth,
+    resolve_binding,
+    resolve_target,
+    run_in_thread,
+)
 
 logger = logging.getLogger(__name__)
 
-from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
-
+@declare_mcp_plus(
+    ability=ABILITY_QUERY,
+    effects=[EFFECT_QUERY],
+    resource_template="kg://{tenant}/{graph_id}",
+    streaming=False,
+    cancellable=True,
+)
 async def graph_query_cypher(
-    query: str,
+    query: Optional[str] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    driver_url: Optional[str] = None
+    target: Optional[Union[str, Mapping[str, Any]]] = None,
+    *,
+    tenant: Optional[str] = None,
+    graph_id: Optional[str] = None,
+    graph: Optional[str] = None,
+    branch: Optional[str] = None,
+    revision: Optional[str] = None,
+    storage_profile: Optional[str] = None,
+    language: str = "cypher",
+    max_rows: Optional[int] = None,
+    budgets: Optional[Mapping[str, Any]] = None,
+    auth: Optional[Mapping[str, Any]] = None,
+    principal: Optional[str] = None,
+    request_id: Optional[str] = None,
+    catalog_path: Optional[str] = None,
+    storage_path: Optional[str] = None,
+    cancel_token: Optional[str] = None,
+    driver_url: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """Execute a Cypher (lite) query against an explicit graph target.
+
+    Returns a canonical JSON-safe lifecycle result whose ``result`` field is
+    a ``kg-query-envelope/v1`` payload (columns, rows, revision, cursor…).
     """
-    Execute a Cypher query on the knowledge graph.
-    
-    This is a thin wrapper around KnowledgeGraphManager.query_cypher().
-    All business logic is in ipfs_datasets_py.core_operations.knowledge_graph_manager
-    
-    Args:
-        query: Cypher query string (e.g., "MATCH (n:Person) RETURN n LIMIT 10")
-        parameters: Optional dictionary of query parameters
-        driver_url: Optional URL for the graph database driver
-    
-    Returns:
-        Dict containing:
-        - status: "success" or "error"
-        - query: The executed query
-        - results: Query results
-    """
+    op = "query"
+    t, err = resolve_target(
+        target=target,
+        tenant=tenant,
+        graph_id=graph_id,
+        graph=graph,
+        branch=branch,
+        revision=revision,
+        storage_profile=storage_profile,
+        require_graph=True,
+        default_branch=DEFAULT_BRANCH,
+        operation=op,
+    )
+    if err is not None:
+        return err
+
+    if not query:
+        return error_envelope(
+            op, "query text is required", code="INVALID_REQUEST", target=t
+        )
+
+    binding, berr = resolve_binding(
+        catalog_path=catalog_path,
+        storage_path=storage_path,
+        operation=op,
+    )
+    if berr is not None:
+        return berr
+
+    assert t is not None and binding is not None
+
+    # Cooperative cancellation: if a prior stream session was cancelled.
+    if cancel_token:
+        session = binding.streams.get(cancel_token)
+        if session is not None and session.cancelled:
+            return error_envelope(
+                op,
+                "operation cancelled",
+                code="BUDGET_EXCEEDED",
+                target=t,
+                details={"cancel_token": cancel_token},
+                request_id=request_id,
+            )
+
+    params: Dict[str, Any] = {
+        "language": language or "cypher",
+        "query": query,
+        "text": query,
+        "params": dict(parameters or {}),
+    }
+    if max_rows is not None:
+        params["max_rows"] = int(max_rows)
+
+    budget_map = dict(budgets or {})
+    if max_rows is not None and "max_rows" not in budget_map:
+        budget_map["max_rows"] = int(max_rows)
+
+    auth_map = resolve_auth(auth, principal=principal, tenant=t.tenant)
+
     try:
-        url = driver_url or "ipfs://localhost:5001"
-        manager = KnowledgeGraphManager(driver_url=url)
-        result = await manager.query_cypher(query, parameters)
-        return result
-    except Exception as e:
-        logger.error(f"Error in graph_query_cypher MCP tool: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "query": query
-        }
+        result = await run_in_thread(
+            binding.service.query,
+            t,
+            params=params,
+            auth=auth_map,
+            request_id=request_id,
+            budgets=budget_map or None,
+        )
+        payload = json_safe_result(result)
+        # Echo query for legacy callers.
+        if payload.get("status") == "success" and isinstance(payload.get("result"), dict):
+            payload["query"] = query
+            payload["results"] = payload["result"].get("rows")
+        return payload
+    except Exception as exc:
+        logger.exception("graph_query_cypher failed")
+        return error_envelope(
+            op, str(exc), code="QUERY_EXECUTION", target=t, request_id=request_id
+        )

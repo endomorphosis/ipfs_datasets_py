@@ -1,20 +1,37 @@
-"""
-MCP tool for explainable-AI explanations over a knowledge graph.
+"""MCP tool: explain — requires explicit GraphTarget."""
 
-Thin wrapper around KnowledgeGraphManager.explain_entity() and
-KnowledgeGraphManager.explain_path().
-Core implementation: ipfs_datasets_py.core_operations.knowledge_graph_manager
-"""
+from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional, Union
+
+from ._bridge import (
+    ABILITY_READ,
+    DEFAULT_BRANCH,
+    EFFECT_READ,
+    declare_mcp_plus,
+    error_envelope,
+    load_snapshot_payload,
+    resolve_target,
+    wrap_specialized_result,
+)
 
 logger = logging.getLogger(__name__)
 
-from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
-
+@declare_mcp_plus(
+    ability=ABILITY_READ,
+    effects=[EFFECT_READ],
+    resource_template="kg://{tenant}/{graph_id}",
+)
 async def graph_explain(
+    target: Optional[Union[str, Mapping[str, Any]]] = None,
+    *,
+    tenant: Optional[str] = None,
+    graph_id: Optional[str] = None,
+    graph: Optional[str] = None,
+    branch: Optional[str] = None,
+    revision: Optional[str] = None,
     explain_type: str = "entity",
     entity_id: Optional[str] = None,
     start_entity_id: Optional[str] = None,
@@ -23,67 +40,73 @@ async def graph_explain(
     depth: str = "standard",
     max_hops: int = 4,
     kg_data: Optional[Dict[str, Any]] = None,
+    catalog_path: Optional[str] = None,
+    storage_path: Optional[str] = None,
+    auth: Optional[Mapping[str, Any]] = None,
+    principal: Optional[str] = None,
+    request_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Produce a structured, human-readable explanation for a KG element.
+    """Explain an entity/path for an explicit graph target."""
+    op = "query"
+    t, err = resolve_target(
+        target=target,
+        tenant=tenant,
+        graph_id=graph_id,
+        graph=graph,
+        branch=branch,
+        revision=revision,
+        require_graph=True,
+        default_branch=DEFAULT_BRANCH,
+        operation=op,
+    )
+    if err is not None:
+        return err
 
-    Uses ``QueryExplainer`` from ``query/explanation.py`` to explain entities,
-    relationships, or shortest paths.
-
-    **Explanation types** (``explain_type`` parameter):
-
-    - ``"entity"`` — Explain a single entity (type, confidence, degree,
-      top neighbours, narrative).  Requires *entity_id*.
-    - ``"relationship"`` — Explain a single relationship (source/target names,
-      symmetry note, context chains).  Requires *relationship_id*.
-    - ``"path"`` — Explain the shortest BFS path between two entities
-      (hops, cumulative confidence, step-by-step narrative).  Requires
-      *start_entity_id* and *end_entity_id*.
-    - ``"why_connected"`` — Natural-language connectivity explanation.
-      Requires *start_entity_id* and *end_entity_id*.
-
-    **Depth** (``depth`` parameter):
-
-    - ``"surface"`` — minimal, fast
-    - ``"standard"`` — default; includes symmetry notes and clusters
-    - ``"deep"`` — full; includes alternative paths and cluster hints
-
-    Args:
-        explain_type: One of ``"entity"``, ``"relationship"``, ``"path"``,
-            ``"why_connected"``.  Default ``"entity"``.
-        entity_id: Entity to explain (required for ``"entity"`` type).
-        start_entity_id: Source entity ID (required for ``"path"`` /
-            ``"why_connected"``).
-        end_entity_id: Target entity ID (required for ``"path"`` /
-            ``"why_connected"``).
-        relationship_id: Relationship to explain (required for
-            ``"relationship"`` type).
-        depth: Verbosity level — ``"surface"``, ``"standard"``, or
-            ``"deep"``.  Default ``"standard"``.
-        max_hops: Maximum BFS depth for path explanations.  Default ``4``.
-        kg_data: Optional serialised knowledge-graph dict.
-
-    Returns:
-        Dict containing:
-
-        - ``status``: ``"success"`` or ``"error"``
-        - ``explain_type``: echoed explain_type value
-        - ``explanation``: explanation dict (fields vary by type)
-        - ``narrative``: human-readable summary string
-    """
-    try:
-        manager = KnowledgeGraphManager()
-        result = await manager.explain_entity(
-            explain_type=explain_type,
-            entity_id=entity_id,
-            start_entity_id=start_entity_id,
-            end_entity_id=end_entity_id,
-            relationship_id=relationship_id,
-            depth=depth,
-            max_hops=max_hops,
-            kg_data=kg_data,
+    data = kg_data
+    resolved = t
+    if data is None:
+        resolved, data, _ = await load_snapshot_payload(
+            target=t.to_json_dict() if t else None,
+            catalog_path=catalog_path,
+            storage_path=storage_path,
+            auth=auth,
+            principal=principal,
+            request_id=request_id,
+            operation=op,
         )
-        return result
-    except Exception as e:
-        logger.error("Error in graph_explain MCP tool: %s", e)
-        return {"status": "error", "message": str(e), "explain_type": explain_type}
+        data = data or {"entities": [], "relationships": []}
+
+    try:
+        from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+
+        manager = KnowledgeGraphManager()
+        if explain_type == "entity":
+            result = await manager.explain_entity(
+                entity_id=entity_id,
+                depth=depth,
+                kg_data=data,
+            )
+        elif explain_type in {"path", "why_connected"}:
+            result = await manager.explain_path(
+                start_entity_id=start_entity_id,
+                end_entity_id=end_entity_id,
+                max_hops=max_hops,
+                depth=depth,
+                kg_data=data,
+            )
+        else:
+            result = await manager.explain_entity(
+                entity_id=entity_id or relationship_id,
+                depth=depth,
+                kg_data=data,
+            )
+        if not isinstance(result, dict):
+            result = {"status": "success", "explanation": result}
+        return wrap_specialized_result(
+            op, target=resolved or t, payload=result, request_id=request_id
+        )
+    except Exception as exc:
+        logger.exception("graph_explain failed")
+        return error_envelope(
+            op, str(exc), code="INTERNAL", target=t, request_id=request_id
+        )

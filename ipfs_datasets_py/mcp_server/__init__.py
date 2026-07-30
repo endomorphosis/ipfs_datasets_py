@@ -67,6 +67,28 @@ try:
 except Exception:
     mcplusplus = None
 
+# KGP-019: process-shared GraphService registry for MCP graph tools
+try:
+    from .graph_service_registry import (
+        bind_graph_service,
+        get_graph_service,
+        get_graph_service_binding,
+        open_graph_service,
+        reset_graph_service_registry,
+        TenantScopeAuthorizer,
+        ENV_CATALOG as KG_ENV_CATALOG,
+        ENV_STORE as KG_ENV_STORE,
+    )
+except Exception:  # pragma: no cover - soft dependency surface
+    bind_graph_service = None  # type: ignore[assignment]
+    get_graph_service = None  # type: ignore[assignment]
+    get_graph_service_binding = None  # type: ignore[assignment]
+    open_graph_service = None  # type: ignore[assignment]
+    reset_graph_service_registry = None  # type: ignore[assignment]
+    TenantScopeAuthorizer = None  # type: ignore[assignment]
+    KG_ENV_CATALOG = "IPFS_DATASETS_KG_CATALOG"
+    KG_ENV_STORE = "IPFS_DATASETS_KG_STORE"
+
 __version__ = "0.1.0"
 __all__ = [
     "start_server",
@@ -78,4 +100,12 @@ __all__ = [
     "configs",
     "load_config_from_yaml",
     "mcplusplus",
+    "bind_graph_service",
+    "get_graph_service",
+    "get_graph_service_binding",
+    "open_graph_service",
+    "reset_graph_service_registry",
+    "TenantScopeAuthorizer",
+    "KG_ENV_CATALOG",
+    "KG_ENV_STORE",
 ]
