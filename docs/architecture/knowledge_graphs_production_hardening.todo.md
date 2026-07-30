@@ -584,7 +584,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-035 Enforce a production release evidence gate
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: adoption
 - Depends on: KGP-034
