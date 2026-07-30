@@ -35,6 +35,18 @@ LOGIC_VERIFICATION_PROVIDER_SCHEMA: Final = "logic-verification-provider/v1"
 LOGIC_VERIFICATION_CACHE_SCHEMA: Final = "logic-verification-cache-provenance/v1"
 LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
 
+# Closed receipt/attestation dispatch surfaces (FVT-G006 / VerifiedReceiptDispatch@2).
+VERIFIED_RECEIPT_DISPATCH_INTERFACE: Final = "VerifiedReceiptDispatch@2"
+ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE: Final = "AttestationAuthorityBoundary@2"
+TRUSTED_PROOF_RECEIPT_SCHEMA: Final = "trusted-proof-receipt/v1"
+LOGIC_TRANSLATION_RECEIPT_SCHEMA: Final = "logic-translation-receipt/v1"
+CLOSED_RECEIPT_SCHEMAS: Final[frozenset[str]] = frozenset(
+    {
+        TRUSTED_PROOF_RECEIPT_SCHEMA,
+        LOGIC_TRANSLATION_RECEIPT_SCHEMA,
+    }
+)
+
 # Operations advertised by the stable surface (LFV-G070 / plan § Stable logic API).
 STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "list_logic_families",
@@ -393,6 +405,197 @@ def list_stable_features() -> tuple[FeatureDescriptor, ...]:
             )
         )
     return tuple(features)
+
+
+def _evidence_to_verification_authority(value: object) -> VerificationAuthority:
+    """Map evidence ceilings onto the stable verification authority ladder.
+
+    Translation receipts never become theorem authority.  Unknown ceilings fail
+    closed to :attr:`VerificationAuthority.NONE`.
+    """
+
+    raw = str(getattr(value, "value", value) or "none").strip().lower()
+    if raw in {"none", ""}:
+        return VerificationAuthority.NONE
+    if raw in {"advisory"}:
+        return VerificationAuthority.ADVISORY
+    if raw in {"bounded", "independently_checkable", "authoritative"}:
+        return VerificationAuthority.BOUNDED
+    try:
+        return VerificationAuthority(raw)
+    except ValueError:
+        return VerificationAuthority.NONE
+
+
+def _result_to_verification_authority(value: object) -> VerificationAuthority:
+    """Map backend result authorities without silent upgrade."""
+
+    raw = str(getattr(value, "value", value) or "none").strip().lower()
+    if raw in {"", "none"}:
+        return VerificationAuthority.NONE
+    try:
+        return VerificationAuthority(raw)
+    except ValueError:
+        return VerificationAuthority.NONE
+
+
+def _normalize_string_set(values: object) -> tuple[str, ...]:
+    if values is None:
+        return ()
+    if isinstance(values, (str, bytes, bytearray)):
+        return (str(values),)
+    if not isinstance(values, Sequence):
+        raise VerificationAPIError("sequence of strings required")
+    return tuple(sorted(str(item) for item in values))
+
+
+def _normalize_bounds(value: object) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if isinstance(value, Mapping):
+        return {str(key): item for key, item in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        normalized: dict[str, Any] = {}
+        for index, item in enumerate(value):
+            if isinstance(item, Mapping):
+                bound_id = str(item.get("bound_id") or item.get("id") or index)
+                normalized[bound_id] = dict(item)
+            else:
+                normalized[str(index)] = item
+        return normalized
+    if hasattr(value, "to_dict"):
+        return _normalize_bounds(value.to_dict())
+    raise VerificationAPIError("bounds must be a mapping or sequence of bound records")
+
+
+def _receipt_payload(receipt: Any) -> dict[str, Any]:
+    if receipt is None:
+        raise VerificationAPIError("receipt is required")
+    if hasattr(receipt, "to_dict") and callable(receipt.to_dict):
+        payload = receipt.to_dict()
+        if not isinstance(payload, Mapping):
+            raise VerificationAPIError("receipt.to_dict() must return a mapping")
+        return dict(payload)
+    if isinstance(receipt, Mapping):
+        return dict(receipt)
+    raise VerificationAPIError("receipt must be a mapping or record with to_dict()")
+
+
+def _schema_version_of(payload: Mapping[str, Any], receipt: Any) -> str:
+    for candidate in (
+        payload.get("schema_version"),
+        getattr(receipt, "schema_version", None),
+        getattr(getattr(receipt, "__class__", None), "SCHEMA_VERSION", None),
+    ):
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return ""
+
+
+def _dispatch_receipt_kind(schema_version: str) -> str:
+    if schema_version == TRUSTED_PROOF_RECEIPT_SCHEMA:
+        return "trusted_proof"
+    if schema_version == LOGIC_TRANSLATION_RECEIPT_SCHEMA:
+        return "translation"
+    return ""
+
+
+def _trusted_binding_issues(
+    receipt: Any,
+    expectation: Mapping[str, Any],
+) -> list[str]:
+    """Exact binding checks for trusted-proof-receipt/v1 against an expectation."""
+
+    issues: list[str] = []
+    tree_id = expectation.get("tree_id")
+    if tree_id is not None and str(tree_id) != str(receipt.tree_id):
+        issues.append(f"wrong-tree: expected {tree_id!r}, got {receipt.tree_id!r}")
+
+    property_id = expectation.get("property_id")
+    if property_id is not None and str(property_id) != str(receipt.property_id):
+        issues.append(
+            f"wrong-property: expected {property_id!r}, got {receipt.property_id!r}"
+        )
+
+    if "assumptions" in expectation:
+        expected_assumptions = _normalize_string_set(expectation.get("assumptions"))
+        actual_assumptions = tuple(sorted(str(item) for item in receipt.assumptions))
+        if expected_assumptions != actual_assumptions:
+            issues.append(
+                "wrong-assumption: expected "
+                f"{list(expected_assumptions)!r}, got {list(actual_assumptions)!r}"
+            )
+
+    if "bounds" in expectation:
+        metadata = (
+            receipt.metadata.to_dict()
+            if hasattr(receipt.metadata, "to_dict")
+            else dict(receipt.metadata)
+        )
+        actual_bounds = _normalize_bounds(metadata.get("bounds", {}))
+        expected_bounds = _normalize_bounds(expectation.get("bounds"))
+        if expected_bounds != actual_bounds:
+            issues.append(
+                f"wrong-bound: expected {expected_bounds!r}, got {actual_bounds!r}"
+            )
+
+    tool = expectation.get("tool_id", expectation.get("backend_id"))
+    if tool is not None and str(tool) != str(receipt.backend_id):
+        issues.append(f"wrong-tool: expected {tool!r}, got {receipt.backend_id!r}")
+
+    if "authority" in expectation:
+        expected_authority = str(
+            getattr(expectation["authority"], "value", expectation["authority"])
+        ).strip().lower()
+        actual_authority = str(receipt.underlying_authority.value)
+        if expected_authority != actual_authority:
+            issues.append(
+                "cross-authority: expected "
+                f"{expected_authority!r}, got {actual_authority!r}"
+            )
+
+    if "source_result_digest" in expectation:
+        expected_digest = str(expectation["source_result_digest"])
+        if expected_digest != str(receipt.source_result_digest):
+            issues.append(
+                "stale: source_result_digest mismatch "
+                f"(expected {expected_digest!r}, got {receipt.source_result_digest!r})"
+            )
+
+    claimed_content = expectation.get("content_id")
+    if claimed_content is not None and str(claimed_content) != str(receipt.content_id):
+        issues.append(
+            "forged identity: content_id does not match trusted receipt payload"
+        )
+
+    if "receipt_id" in expectation and str(expectation["receipt_id"]) != str(
+        receipt.receipt_id
+    ):
+        issues.append(
+            f"stale: receipt_id mismatch (expected {expectation['receipt_id']!r}, "
+            f"got {receipt.receipt_id!r})"
+        )
+
+    # Freshness window when the expectation or metadata carries temporal bounds.
+    metadata = (
+        receipt.metadata.to_dict()
+        if hasattr(receipt.metadata, "to_dict")
+        else dict(receipt.metadata)
+    )
+    now = expectation.get("now") or expectation.get("as_of")
+    expires_at = expectation.get("expires_at") or metadata.get("expires_at")
+    issued_at = expectation.get("issued_at") or metadata.get("issued_at")
+    if now and expires_at:
+        if str(now) > str(expires_at):
+            issues.append(
+                f"stale: receipt expired (as_of={now!r}, expires_at={expires_at!r})"
+            )
+    if now and issued_at and str(now) < str(issued_at):
+        issues.append(
+            f"stale: receipt not yet valid (as_of={now!r}, issued_at={issued_at!r})"
+        )
+
+    return issues
 
 
 class LogicVerificationAPI:
@@ -1135,7 +1338,7 @@ class LogicVerificationAPI:
             cache=_empty_cache(source="counterexample"),
         )
 
-    # ── Receipts ──────────────────────────────────────────────────────────
+    # ── Receipts (VerifiedReceiptDispatch@2 / AttestationAuthorityBoundary@2) ─
 
     def verify_receipt(
         self,
@@ -1144,7 +1347,12 @@ class LogicVerificationAPI:
         *,
         request_id: str = "",
     ) -> VerificationResponse:
-        """Validate a translation or trusted proof receipt without upgrading authority."""
+        """Validate a typed receipt via closed schema dispatch.
+
+        Empty, unknown-schema, forged-kernel, stale, wrong-tree/property/
+        assumption/bound/tool, and cross-authority inputs are rejected.
+        Authority is never upgraded past the receipt's declared ceiling.
+        """
 
         request_id = _text(request_id, "request_id", optional=True)
         if receipt is None:
@@ -1154,100 +1362,398 @@ class LogicVerificationAPI:
                 authority=VerificationAuthority.NONE,
                 unsupported_features=("receipt",),
                 diagnostics=("receipt is required",),
+                result={
+                    "valid": False,
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "empty",
+                },
                 request_id=request_id,
             )
 
-        # Prefer translation-receipt validation when expectation is supplied.
-        if expectation is not None:
-            try:
-                from ipfs_datasets_py.logic.software_verification.receipts import (
-                    validate_translation_receipt,
-                )
-            except Exception as error:
-                return _response(
-                    "verify_receipt",
-                    VerificationStatus.UNAVAILABLE,
-                    authority=VerificationAuthority.NONE,
-                    unsupported_features=("translation_receipt",),
-                    diagnostics=(
-                        f"translation receipt module unavailable: {type(error).__name__}: {error}",
-                    ),
-                    request_id=request_id,
-                )
-            try:
-                validation = validate_translation_receipt(receipt, expectation)
-            except Exception as error:
-                return _response(
-                    "verify_receipt",
-                    VerificationStatus.INVALID,
-                    authority=VerificationAuthority.NONE,
-                    diagnostics=(f"{type(error).__name__}: {error}",),
-                    request_id=request_id,
-                )
-            validation_dict = (
-                validation.to_dict()
-                if hasattr(validation, "to_dict")
-                else {"validation": str(validation)}
-            )
-            effective = getattr(validation, "effective_authority", None)
-            authority = VerificationAuthority.NONE
-            if effective is not None:
-                try:
-                    authority = VerificationAuthority(getattr(effective, "value", str(effective)))
-                except ValueError:
-                    authority = VerificationAuthority.BOUNDED
-            ok = bool(getattr(validation, "valid", getattr(validation, "ok", False)))
+        try:
+            payload = _receipt_payload(receipt)
+        except VerificationAPIError as error:
             return _response(
                 "verify_receipt",
-                VerificationStatus.SUCCEEDED if ok else VerificationStatus.INVALID,
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(error),),
+                result={
+                    "valid": False,
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "malformed",
+                },
+                request_id=request_id,
+            )
+
+        if not payload:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("empty receipt payload is rejected",),
+                result={
+                    "valid": False,
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "empty",
+                },
+                request_id=request_id,
+            )
+
+        schema_version = _schema_version_of(payload, receipt)
+        kind = _dispatch_receipt_kind(schema_version)
+        if not kind:
+            # Reject permissive structural accept of bare authority/kernel claims.
+            forged_kernel = str(payload.get("authority", "")).lower() in {
+                "theorem",
+                "kernel",
+            } or str(payload.get("kind", "")).lower() in {
+                "kernel",
+                "kernel_receipt",
+                "forged_kernel",
+            }
+            reason = "forged-kernel" if forged_kernel else "unknown"
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    "unknown or missing receipt schema_version; "
+                    f"closed dispatch accepts only {sorted(CLOSED_RECEIPT_SCHEMAS)}",
+                ),
+                result={
+                    "valid": False,
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": reason,
+                    "schema_version": schema_version or None,
+                    "claimed_authority": payload.get("authority"),
+                },
+                request_id=request_id,
+            )
+
+        if kind == "translation":
+            return self._verify_translation_receipt(
+                receipt,
+                payload,
+                expectation,
+                request_id=request_id,
+            )
+        return self._verify_trusted_proof_receipt(
+            receipt,
+            payload,
+            expectation,
+            request_id=request_id,
+        )
+
+    def _verify_translation_receipt(
+        self,
+        receipt: Any,
+        payload: Mapping[str, Any],
+        expectation: Any | None,
+        *,
+        request_id: str,
+    ) -> VerificationResponse:
+        try:
+            from ipfs_datasets_py.logic.software_verification.receipts import (
+                LogicTranslationReceipt,
+                TranslationReceiptExpectation,
+                validate_translation_receipt,
+            )
+        except Exception as error:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                unsupported_features=("translation_receipt",),
+                diagnostics=(
+                    f"translation receipt module unavailable: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+
+        try:
+            if isinstance(receipt, LogicTranslationReceipt):
+                typed = receipt
+            else:
+                typed = LogicTranslationReceipt.from_dict(payload)
+        except Exception as error:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "valid": False,
+                    "kind": "translation_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "schema_reject",
+                },
+                request_id=request_id,
+            )
+
+        authority = _evidence_to_verification_authority(typed.authority_ceiling)
+        result_body: dict[str, Any] = {
+            "valid": True,
+            "kind": "translation_receipt",
+            "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+            "schema_version": typed.schema_version,
+            "receipt_id": typed.receipt_id,
+            "digest": typed.receipt_id,
+            "authority_ceiling": typed.authority_ceiling.value,
+            "round_trip": typed.to_dict(),
+        }
+
+        if expectation is None:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.SUCCEEDED,
                 authority=authority,
-                result={"validation": validation_dict, "kind": "translation_receipt"},
+                result=result_body,
+                assumptions=typed.assumptions,
                 request_id=request_id,
                 cache=_empty_cache(source="receipt_validation"),
             )
 
-        # Structural verification of trusted proof / attestation-ready receipts.
-        if hasattr(receipt, "to_dict"):
-            payload = receipt.to_dict()
-        elif isinstance(receipt, Mapping):
-            payload = dict(receipt)
-        else:
+        try:
+            if isinstance(expectation, TranslationReceiptExpectation):
+                typed_expectation = expectation
+            elif isinstance(expectation, Mapping):
+                typed_expectation = TranslationReceiptExpectation.from_dict(expectation)
+            else:
+                raise VerificationAPIError(
+                    "translation receipt expectation must be "
+                    "TranslationReceiptExpectation or mapping"
+                )
+            validation = validate_translation_receipt(typed, typed_expectation)
+        except Exception as error:
             return _response(
                 "verify_receipt",
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
-                diagnostics=("receipt must be a mapping or record with to_dict()",),
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "valid": False,
+                    "kind": "translation_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "expectation_reject",
+                },
                 request_id=request_id,
             )
 
-        required = ("receipt_id", "authority") if "receipt_id" in payload else ()
-        missing = [key for key in required if key not in payload]
-        digest = payload.get("digest") or payload.get("receipt_digest") or ""
-        if not digest and payload:
-            digest = stable_digest(payload)
-        if missing:
+        validation_dict = (
+            validation.to_dict()
+            if hasattr(validation, "to_dict")
+            else {"validation": str(validation)}
+        )
+        ok = bool(getattr(validation, "current", False))
+        effective = getattr(validation, "effective_authority_ceiling", None)
+        effective_authority = (
+            _evidence_to_verification_authority(effective) if ok else VerificationAuthority.NONE
+        )
+        issues = [
+            getattr(issue, "code", issue).value
+            if hasattr(getattr(issue, "code", issue), "value")
+            else str(getattr(issue, "code", issue))
+            for issue in getattr(validation, "issues", ())
+        ]
+        result_body.update(
+            {
+                "valid": ok,
+                "validation": validation_dict,
+                "issues": issues,
+                "reason": None if ok else "stale_or_mismatched_binding",
+            }
+        )
+        return _response(
+            "verify_receipt",
+            VerificationStatus.SUCCEEDED if ok else VerificationStatus.INVALID,
+            authority=effective_authority,
+            result=result_body,
+            assumptions=typed.assumptions,
+            diagnostics=tuple(issues) if issues else (),
+            request_id=request_id,
+            cache=_empty_cache(source="receipt_validation"),
+        )
+
+    def _verify_trusted_proof_receipt(
+        self,
+        receipt: Any,
+        payload: Mapping[str, Any],
+        expectation: Any | None,
+        *,
+        request_id: str,
+    ) -> VerificationResponse:
+        try:
+            from ipfs_datasets_py.logic.bridge.proof_receipt_attestation import (
+                TrustedProofReceipt,
+            )
+            from ipfs_datasets_py.logic.backends.results import ResultAuthority
+            from ipfs_datasets_py.logic.families.models import EvidenceAuthority
+        except Exception as error:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                unsupported_features=("trusted_proof_receipt",),
+                diagnostics=(
+                    f"trusted proof receipt module unavailable: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+
+        try:
+            if isinstance(receipt, TrustedProofReceipt):
+                typed = receipt
+            else:
+                typed = TrustedProofReceipt.from_dict(payload)
+        except Exception as error:
+            message = str(error)
+            reason = "schema_reject"
+            lowered = message.lower()
+            if "attestation" in lowered and "underlying" in lowered:
+                reason = "cross-authority"
+            elif "not eligible" in lowered or "not conclusive" in lowered:
+                reason = "forged-kernel"
             return _response(
                 "verify_receipt",
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
-                result={"digest": digest, "payload": payload},
-                diagnostics=tuple(f"missing field: {key}" for key in missing),
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "valid": False,
+                    "kind": "trusted_proof_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": reason,
+                },
                 request_id=request_id,
             )
-        authority_raw = payload.get("authority", VerificationAuthority.BOUNDED.value)
+
+        # Independent checker evidence is mandatory for theorem-class authority.
+        checker_ok = True
+        checker_diagnostics: list[str] = []
+        if typed.underlying_authority is ResultAuthority.THEOREM:
+            ceiling = typed.translation_ceiling
+            if ceiling is EvidenceAuthority.NONE or ceiling is EvidenceAuthority.ADVISORY:
+                checker_ok = False
+                checker_diagnostics.append(
+                    "forged-kernel: theorem authority requires independent checker "
+                    f"evidence (translation_ceiling={ceiling.value!r})"
+                )
+            if not typed.source_result_digest:
+                checker_ok = False
+                checker_diagnostics.append(
+                    "forged-kernel: theorem authority requires source_result_digest"
+                )
+
+        if not checker_ok:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=tuple(checker_diagnostics),
+                result={
+                    "valid": False,
+                    "kind": "trusted_proof_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "forged-kernel",
+                    "receipt_id": typed.receipt_id,
+                },
+                request_id=request_id,
+            )
+
+        authority = _result_to_verification_authority(typed.underlying_authority)
+        result_body: dict[str, Any] = {
+            "valid": True,
+            "kind": "trusted_proof_receipt",
+            "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+            "schema_version": typed.schema_version,
+            "receipt_id": typed.receipt_id,
+            "content_id": typed.content_id,
+            "digest": typed.content_id,
+            "underlying_authority": typed.underlying_authority.value,
+            "underlying_status": typed.underlying_status.value,
+            "tree_id": typed.tree_id,
+            "property_id": typed.property_id,
+            "backend_id": typed.backend_id,
+            "source_result_digest": typed.source_result_digest,
+            "translation_ceiling": typed.translation_ceiling.value,
+            "round_trip": typed.to_dict(),
+        }
+
+        if expectation is None:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.SUCCEEDED,
+                authority=authority,
+                result=result_body,
+                assumptions=typed.assumptions,
+                property_id=typed.property_id,
+                provider_id=typed.backend_id,
+                request_id=request_id,
+                cache=_empty_cache(source="receipt_validation"),
+            )
+
+        if not isinstance(expectation, Mapping):
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    "trusted proof receipt expectation must be a binding mapping",
+                ),
+                result={
+                    "valid": False,
+                    "kind": "trusted_proof_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "expectation_reject",
+                },
+                request_id=request_id,
+            )
+
         try:
-            authority = VerificationAuthority(str(getattr(authority_raw, "value", authority_raw)))
-        except ValueError:
-            authority = VerificationAuthority.BOUNDED
+            issues = _trusted_binding_issues(typed, dict(expectation))
+        except VerificationAPIError as error:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(error),),
+                result={
+                    "valid": False,
+                    "kind": "trusted_proof_receipt",
+                    "dispatch": VERIFIED_RECEIPT_DISPATCH_INTERFACE,
+                    "reason": "expectation_reject",
+                },
+                request_id=request_id,
+            )
+
+        if issues:
+            return _response(
+                "verify_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=tuple(issues),
+                result={
+                    **result_body,
+                    "valid": False,
+                    "issues": issues,
+                    "reason": "binding_mismatch",
+                },
+                assumptions=typed.assumptions,
+                property_id=typed.property_id,
+                provider_id=typed.backend_id,
+                request_id=request_id,
+                cache=_empty_cache(source="receipt_validation"),
+            )
+
         return _response(
             "verify_receipt",
             VerificationStatus.SUCCEEDED,
             authority=authority,
-            result={
-                "digest": digest,
-                "kind": payload.get("kind", "proof_receipt"),
-                "valid": True,
-            },
+            result=result_body,
+            assumptions=typed.assumptions,
+            property_id=typed.property_id,
+            provider_id=typed.backend_id,
             request_id=request_id,
             cache=_empty_cache(source="receipt_validation"),
         )
@@ -1263,11 +1769,12 @@ class LogicVerificationAPI:
         backend_mode: str = "disabled",
         request_id: str = "",
     ) -> VerificationResponse:
-        """Prepare or record a ZKP attestation for a trusted proof receipt.
+        """Prepare a ZKP attestation envelope for a trusted proof receipt.
 
-        Attestation never upgrades the underlying proof authority.  When the
-        attestation backend is disabled or unavailable, the response status is
-        ``unavailable`` with an explicit unsupported feature.
+        Attestation is orthogonal to theorem authority
+        (:data:`ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE`).  Prepared and
+        simulated envelopes never report proof success and never upgrade the
+        underlying semantic authority.
         """
 
         request_id = _text(request_id, "request_id", optional=True)
@@ -1276,6 +1783,7 @@ class LogicVerificationAPI:
                 AttestationBackendMode,
                 AttestationBackendPolicy,
                 PrivateWitness,
+                TrustedProofReceipt,
                 prepare_receipt_attestation,
                 create_attestation_envelope,
             )
@@ -1297,29 +1805,47 @@ class LogicVerificationAPI:
                 VerificationStatus.INVALID,
                 authority=VerificationAuthority.NONE,
                 diagnostics=("receipt is required",),
+                result={
+                    "proof_success": False,
+                    "authoritative": False,
+                    "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+                },
                 request_id=request_id,
             )
 
-        mode = backend_mode
+        mode_raw = str(getattr(backend_mode, "value", backend_mode) or "").strip().lower()
+        mode_enum: Any | None
         try:
-            mode_enum = (
-                backend_mode
-                if isinstance(backend_mode, AttestationBackendMode)
-                else AttestationBackendMode(backend_mode)
+            if isinstance(backend_mode, AttestationBackendMode):
+                mode_enum = backend_mode
+            elif mode_raw in {"disabled", "none", ""}:
+                mode_enum = None
+            else:
+                mode_enum = AttestationBackendMode(mode_raw)
+            mode = (
+                mode_enum.value
+                if mode_enum is not None
+                else (mode_raw or "disabled")
             )
-            mode = getattr(mode_enum, "value", str(mode_enum))
         except Exception:
             mode_enum = None
+            mode = mode_raw or str(backend_mode)
 
-        if mode in {"disabled", "none", ""} or (
-            mode_enum is not None
-            and getattr(mode_enum, "value", mode_enum) in {"disabled", "none"}
-        ):
+        if mode in {"disabled", "none", ""} or mode_enum is None and mode_raw in {
+            "disabled",
+            "none",
+            "",
+        }:
             return _response(
                 "attest_receipt",
                 VerificationStatus.UNAVAILABLE,
                 authority=VerificationAuthority.ATTESTATION,
-                result={"backend_mode": mode},
+                result={
+                    "backend_mode": mode or "disabled",
+                    "proof_success": False,
+                    "authoritative": False,
+                    "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+                },
                 unsupported_features=("attestation_backend",),
                 diagnostics=(
                     "attestation backend is disabled; pass an explicit non-disabled backend_mode",
@@ -1327,19 +1853,92 @@ class LogicVerificationAPI:
                 request_id=request_id,
             )
 
+        if mode_enum is None:
+            return _response(
+                "attest_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    f"backend_mode {mode!r} is not a recognized AttestationBackendMode",
+                ),
+                result={
+                    "backend_mode": mode,
+                    "proof_success": False,
+                    "authoritative": False,
+                    "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+                },
+                request_id=request_id,
+            )
+
+        if not issued_at or not expires_at:
+            return _response(
+                "attest_receipt",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("issued_at and expires_at are required for attestation",),
+                result={
+                    "proof_success": False,
+                    "authoritative": False,
+                    "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+                },
+                request_id=request_id,
+            )
+
         try:
-            policy = backend_policy or AttestationBackendPolicy()
-            private_witness = witness or PrivateWitness(payload=FrozenMap())
-            if not issued_at or not expires_at:
-                return _response(
-                    "attest_receipt",
-                    VerificationStatus.INVALID,
-                    authority=VerificationAuthority.NONE,
-                    diagnostics=("issued_at and expires_at are required for attestation",),
-                    request_id=request_id,
+            if isinstance(receipt, TrustedProofReceipt):
+                typed_receipt = receipt
+            elif isinstance(receipt, Mapping) or hasattr(receipt, "to_dict"):
+                payload = _receipt_payload(receipt)
+                typed_receipt = TrustedProofReceipt.from_dict(payload)
+            else:
+                raise VerificationAPIError(
+                    "receipt must be a TrustedProofReceipt or trusted-proof-receipt/v1 mapping"
                 )
+
+            if isinstance(backend_policy, AttestationBackendPolicy):
+                policy = backend_policy
+            elif isinstance(backend_policy, Mapping):
+                policy = AttestationBackendPolicy.from_dict(backend_policy)
+            elif backend_policy is None:
+                raise VerificationAPIError(
+                    "backend_policy is required for non-disabled attestation"
+                )
+            else:
+                policy = backend_policy
+
+            # Align policy mode with the explicit facade backend_mode.
+            if (
+                hasattr(policy, "backend_mode")
+                and policy.backend_mode is not mode_enum
+            ):
+                policy = AttestationBackendPolicy(
+                    backend_id=policy.backend_id,
+                    backend_version=policy.backend_version,
+                    circuit_id=policy.circuit_id,
+                    circuit_version=policy.circuit_version,
+                    ceremony_id=policy.ceremony_id,
+                    crs_id=policy.crs_id,
+                    proving_key_id=policy.proving_key_id,
+                    verification_key_id=policy.verification_key_id,
+                    revocation_policy_id=policy.revocation_policy_id,
+                    backend_mode=mode_enum,
+                    verification_key_expires_at=policy.verification_key_expires_at,
+                )
+
+            if isinstance(witness, PrivateWitness):
+                private_witness = witness
+            elif isinstance(witness, Mapping) and witness:
+                private_witness = PrivateWitness(witness)
+            elif witness is None:
+                # Preparation-only path: no secret material is admitted.
+                private_witness = PrivateWitness({"_prepared_placeholder": True})
+            else:
+                raise VerificationAPIError(
+                    "witness must be a PrivateWitness, mapping, or omitted"
+                )
+
             attestation_request = prepare_receipt_attestation(
-                receipt,
+                typed_receipt,
                 backend_policy=policy,
                 witness=private_witness,
                 issued_at=issued_at,
@@ -1347,27 +1946,76 @@ class LogicVerificationAPI:
             )
             envelope = create_attestation_envelope(
                 attestation_request,
-                backend_mode=mode_enum or mode,
+                backend_mode=mode_enum,
                 proof_artifact_id=f"artifact:{request_id or 'facade'}",
-                proof_digest=stable_digest({"request_id": request_id, "issued_at": issued_at}),
+                proof_digest=stable_digest(
+                    {
+                        "request_id": request_id,
+                        "issued_at": issued_at,
+                        "receipt_id": typed_receipt.receipt_id,
+                    }
+                ),
             )
         except Exception as error:
             return _response(
                 "attest_receipt",
-                VerificationStatus.ERROR,
+                VerificationStatus.ERROR
+                if not isinstance(error, VerificationAPIError)
+                else VerificationStatus.INVALID,
                 authority=VerificationAuthority.ATTESTATION,
                 diagnostics=(f"{type(error).__name__}: {error}",),
+                result={
+                    "proof_success": False,
+                    "authoritative": False,
+                    "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+                },
                 request_id=request_id,
             )
 
         envelope_dict = (
             envelope.to_dict() if hasattr(envelope, "to_dict") else {"envelope": str(envelope)}
         )
+        simulated = mode_enum is AttestationBackendMode.SIMULATED or bool(
+            getattr(envelope, "simulated", False)
+        )
+        # Envelope generation is preparation, never independent proof success.
+        proof_success = False
+        authoritative = bool(getattr(envelope, "authoritative", False))
+        status = (
+            VerificationStatus.PARTIAL if simulated else VerificationStatus.SUCCEEDED
+        )
+        diagnostics: tuple[str, ...] = ()
+        if simulated:
+            diagnostics = (
+                "simulated attestation is preparation-only and cannot report proof success",
+            )
+        elif not authoritative:
+            diagnostics = (
+                "prepared attestation envelope is not independent verification; "
+                "proof_success remains false",
+            )
+
+        underlying_authority = typed_receipt.underlying_authority.value
+        underlying_status = typed_receipt.underlying_status.value
         return _response(
             "attest_receipt",
-            VerificationStatus.SUCCEEDED,
+            status,
             authority=VerificationAuthority.ATTESTATION,
-            result={"envelope": envelope_dict, "backend_mode": mode},
+            result={
+                "envelope": envelope_dict,
+                "backend_mode": mode_enum.value,
+                "proof_success": proof_success,
+                "authoritative": authoritative,
+                "prepared": True,
+                "simulated": simulated,
+                "underlying_authority": underlying_authority,
+                "underlying_status": underlying_status,
+                "boundary": ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE,
+            },
+            assumptions=typed_receipt.assumptions,
+            property_id=typed_receipt.property_id,
+            provider_id=typed_receipt.backend_id,
+            diagnostics=diagnostics,
             request_id=request_id,
             cache=_empty_cache(source="attestation"),
         )
@@ -1683,14 +2331,19 @@ def install_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
 
 
 __all__ = [
+    "ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE",
+    "CLOSED_RECEIPT_SCHEMAS",
     "CacheProvenance",
     "FeatureAvailability",
     "FeatureDescriptor",
+    "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
     "LogicVerificationAPI",
     "ProviderDescriptor",
     "STABLE_OPERATIONS",
+    "TRUSTED_PROOF_RECEIPT_SCHEMA",
+    "VERIFIED_RECEIPT_DISPATCH_INTERFACE",
     "VerificationAPIError",
     "VerificationAuthority",
     "VerificationResponse",
