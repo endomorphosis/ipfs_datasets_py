@@ -27,6 +27,7 @@ import re
 import shutil
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from hashlib import sha256
 from pathlib import Path
@@ -48,6 +49,9 @@ G021_AUTHORITATIVE_EVIDENCE_MAP: Final = (
 G021_RESIDUAL_SCAN_CLOSURE_AUTO_030: Final = (
     "data/abby_voice/agent_supervisor/discovery/"
     "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
+)
+G021_PACKAGE_EVIDENCE_PATH: Final = (
+    "docs/voice/ABBY_VOICE_HF_PUBLICATION_EVIDENCE.md"
 )
 G021_REQUIRED_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
     "post-publication verification",
@@ -74,6 +78,7 @@ DEFAULT_TRANSFER_RATE_USD_PER_GIB: Final = 0.09
 DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH: Final = 0.02
 DEFAULT_TARGET_REVISION: Final = "main"
 DEFAULT_REMOTE_INFO_BATCH_SIZE: Final = 256
+DEFAULT_PINNED_DOWNLOAD_WORKERS: Final = 8
 _COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 # Match credential-bearing keys without flagging meta flags such as
@@ -237,7 +242,6 @@ class PublicationFilePlan:
     size_bytes: int
     sha256: str
     operation: str = "add"
-    local_path: str = ""
     content_cid: str = ""
 
     def __post_init__(self) -> None:
@@ -264,8 +268,6 @@ class PublicationFilePlan:
             "sha256": self.sha256,
             "size_bytes": self.size_bytes,
         }
-        if self.local_path:
-            payload["local_path"] = self.local_path
         if self.content_cid:
             payload["content_cid"] = self.content_cid
         return payload
@@ -771,6 +773,7 @@ class HuggingFaceReleasePublisher:
         fetch_to_path: Callable[[str, str, str, Path], str | Path | None]
         | None = None,
         remote_info_batch_size: int = DEFAULT_REMOTE_INFO_BATCH_SIZE,
+        pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     ) -> None:
         self.repository_id = _text(repository_id, label="repository_id")
         repo_type = _text(repository_type, label="repository_type").casefold()
@@ -801,6 +804,16 @@ class HuggingFaceReleasePublisher:
                 "remote_info_batch_size must be an integer in 1..1000"
             )
         self.remote_info_batch_size = remote_info_batch_size
+        if (
+            not isinstance(pinned_download_workers, int)
+            or isinstance(pinned_download_workers, bool)
+            or pinned_download_workers <= 0
+            or pinned_download_workers > 32
+        ):
+            raise HuggingFacePublicationError(
+                "pinned_download_workers must be an integer in 1..32"
+            )
+        self.pinned_download_workers = pinned_download_workers
 
     def release_prefix_for(self, release_id: str) -> str:
         safe = _safe_release_id(release_id)
@@ -848,11 +861,9 @@ class HuggingFaceReleasePublisher:
         for entry in files:
             relative = entry["relative_path"]
             remote = _normalize_relative_path(f"{prefix}/{relative}")
-            local_path = ""
             if root is not None:
                 candidate = root.joinpath(*Path(relative).parts)
                 if candidate.is_file() and not candidate.is_symlink():
-                    local_path = candidate.as_posix()
                     size_bytes, digest_bytes = _file_digest(candidate)
                     if size_bytes != entry["size_bytes"] or digest_bytes.hex() != entry["sha256"]:
                         raise HuggingFacePublicationError(
@@ -875,7 +886,6 @@ class HuggingFaceReleasePublisher:
                     remote_path=remote,
                     size_bytes=int(entry["size_bytes"]),
                     sha256=entry["sha256"],
-                    local_path=local_path,
                     content_cid=str(entry.get("content_cid") or ""),
                 )
             )
@@ -1208,6 +1218,7 @@ class HuggingFaceReleasePublisher:
         root.mkdir(parents=True, exist_ok=True)
         target = root.joinpath(*Path(remote).parts)
         target.parent.mkdir(parents=True, exist_ok=True)
+        _require_path_within(root, target, label="verified cache target")
 
         fetched: str | Path | None
         if self.fetch_to_path is not None:
@@ -1284,6 +1295,7 @@ class HuggingFaceReleasePublisher:
             raise HuggingFacePublicationError(
                 f"verified cache did not receive a regular file: {remote}"
             )
+        _require_path_within(root, target, label="verified cache target")
         return target
 
     def verify_post_publication(
@@ -1372,8 +1384,43 @@ class HuggingFaceReleasePublisher:
         revalidated_bytes = 0
         network_fetch = False
 
-        for item in plan.operations:
-            if remote_payloads is not None and item.remote_path in remote_payloads:
+        def validate_disk_item(item: PublicationFilePlan) -> tuple[str, int]:
+            target = self._download_pinned_file(
+                commit_sha=pinned,
+                remote_path=item.remote_path,
+                local_dir=cache,
+            )
+            size_bytes, digest_bytes = _file_digest(target)
+            if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
+                raise HuggingFacePublicationError(
+                    f"pinned redownload validation mismatch: {item.remote_path}"
+                )
+            return item.remote_path, size_bytes
+
+        if remote_payloads is None:
+            # HfApi downloads directly to distinct files. Bound concurrency so
+            # the ~13.8k-object release is practical while retaining only small
+            # future/path metadata in memory, never audio payload bytes.
+            with ThreadPoolExecutor(
+                max_workers=self.pinned_download_workers,
+                thread_name_prefix="abby-hf-pinned",
+            ) as executor:
+                for remote_path, size_bytes in executor.map(
+                    validate_disk_item,
+                    plan.operations,
+                ):
+                    revalidated.append(remote_path)
+                    revalidated_bytes += size_bytes
+            network_fetch = True
+        else:
+            # Explicit offline test seam. Live CLI execution never provides
+            # remote_payloads.
+            for item in plan.operations:
+                if item.remote_path not in remote_payloads:
+                    raise HuggingFacePublicationError(
+                        "pinned redownload test payload missing path: "
+                        f"{item.remote_path}"
+                    )
                 payload = remote_payloads[item.remote_path]
                 if not isinstance(payload, (bytes, bytearray)):
                     raise HuggingFacePublicationError(
@@ -1381,23 +1428,17 @@ class HuggingFaceReleasePublisher:
                     )
                 target = cache.joinpath(*Path(item.remote_path).parts)
                 target.parent.mkdir(parents=True, exist_ok=True)
+                _require_path_within(cache, target, label="verified cache target")
                 temporary = target.with_name(f".{target.name}.partial")
                 temporary.write_bytes(bytes(payload))
                 os.replace(temporary, target)
-            else:
-                target = self._download_pinned_file(
-                    commit_sha=pinned,
-                    remote_path=item.remote_path,
-                    local_dir=cache,
-                )
-                network_fetch = True
-            size_bytes, digest_bytes = _file_digest(target)
-            if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
-                raise HuggingFacePublicationError(
-                    f"pinned redownload validation mismatch: {item.remote_path}"
-                )
-            revalidated.append(item.remote_path)
-            revalidated_bytes += size_bytes
+                size_bytes, digest_bytes = _file_digest(target)
+                if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
+                    raise HuggingFacePublicationError(
+                        f"pinned redownload validation mismatch: {item.remote_path}"
+                    )
+                revalidated.append(item.remote_path)
+                revalidated_bytes += size_bytes
 
         return PinnedRedownloadValidation(
             commit_sha=pinned,
@@ -1407,7 +1448,7 @@ class HuggingFaceReleasePublisher:
             revalidated_file_count=len(revalidated),
             revalidated_bytes=revalidated_bytes,
             empty_cache_before_fetch=empty_before,
-            network_fetch_performed=network_fetch or remote_payloads is not None,
+            network_fetch_performed=network_fetch,
             ok=True,
         )
 
@@ -1576,6 +1617,17 @@ def _record_value(record: Any, key: str) -> Any:
     return getattr(record, key, None)
 
 
+def _require_path_within(root: Path, candidate: Path, *, label: str) -> None:
+    root_resolved = root.expanduser().resolve()
+    candidate_resolved = candidate.expanduser().resolve(strict=False)
+    try:
+        candidate_resolved.relative_to(root_resolved)
+    except ValueError as exc:
+        raise HuggingFacePublicationError(
+            f"{label} escapes its root: {candidate}"
+        ) from exc
+
+
 def _record_lfs_sha256(record: Any) -> str:
     lfs = _record_value(record, "lfs")
     if lfs is None:
@@ -1666,6 +1718,7 @@ def publish_abby_voice_release(
     fetch_bytes: Callable[[str, str, str], bytes] | None = None,
     fetch_to_path: Callable[[str, str, str, Path], str | Path | None]
     | None = None,
+    pinned_download_workers: int = DEFAULT_PINNED_DOWNLOAD_WORKERS,
     run_post_publication_verification: bool = True,
     run_pinned_redownload_validation: bool = True,
 ) -> dict[str, Any]:
@@ -1702,6 +1755,7 @@ def publish_abby_voice_release(
         api=api,
         fetch_bytes=fetch_bytes,
         fetch_to_path=fetch_to_path,
+        pinned_download_workers=pinned_download_workers,
     )
     plan = publisher.plan_dry_run(
         manifest_obj,
@@ -1735,36 +1789,56 @@ def publish_abby_voice_release(
     post_publication: PostPublicationVerification | None = None
     pinned_redownload: PinnedRedownloadValidation | None = None
 
-    if run_post_publication_verification:
-        # Caller-supplied inventory is an explicit test seam. Live execution
-        # inventories the returned immutable commit through the Hub API and
-        # hashes non-LFS Git objects from pinned disk downloads.
-        inventory: Mapping[str, Mapping[str, Any]] | None = remote_objects
-        if inventory is None:
-            inventory = publisher.inventory_remote_objects_at_commit(
+    try:
+        if run_post_publication_verification:
+            # Caller-supplied inventory is an explicit test seam. Live execution
+            # inventories the returned immutable commit through the Hub API and
+            # hashes non-LFS Git objects from pinned disk downloads.
+            inventory: Mapping[str, Mapping[str, Any]] | None = remote_objects
+            if inventory is None:
+                inventory = publisher.inventory_remote_objects_at_commit(
+                    commit_receipt=commit,
+                    plan=plan,
+                )
+            post_publication = publisher.verify_post_publication(
                 commit_receipt=commit,
                 plan=plan,
+                remote_objects=inventory,
             )
-        post_publication = publisher.verify_post_publication(
-            commit_receipt=commit,
-            plan=plan,
-            remote_objects=inventory,
-        )
 
-    if run_pinned_redownload_validation:
-        cache: Path
-        if verified_cache_root is not None:
-            cache = Path(verified_cache_root).expanduser().resolve()
-        else:
-            cache = Path(
-                tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")
-            ).resolve()
-        pinned_redownload = publisher.redownload_and_validate_pinned(
-            commit_sha=commit.commit_sha,
+        if run_pinned_redownload_validation:
+            cache: Path
+            if verified_cache_root is not None:
+                cache = Path(verified_cache_root).expanduser().resolve()
+            else:
+                cache = Path(
+                    tempfile.mkdtemp(prefix="abby-voice-pinned-redownload-")
+                ).resolve()
+            pinned_redownload = publisher.redownload_and_validate_pinned(
+                commit_sha=commit.commit_sha,
+                plan=plan,
+                cache_root=cache,
+                remote_payloads=remote_payloads,
+            )
+    except Exception as exc:
+        # A commit may already exist even though a verification gate failed.
+        # Persist its immutable SHA so operators never retry by overwriting the
+        # same release id and can investigate the pinned candidate safely.
+        blocked_receipt = publisher.build_publication_receipt(
             plan=plan,
-            cache_root=cache,
-            remote_payloads=remote_payloads,
+            commit_receipt=commit,
+            post_publication=post_publication,
+            pinned_redownload=pinned_redownload,
+            approval=approval,
+            status="blocked_remote_write_gate",
         )
+        if receipt_path is not None:
+            _write_receipt(receipt_path, blocked_receipt)
+        if isinstance(exc, HuggingFacePublicationError):
+            raise
+        raise HuggingFacePublicationError(
+            f"post-publication verification failed: {exc}"
+        ) from exc
 
     # Both residual gates must pass before promotion is considered; canary
     # remains a separate reviewed step (canary_promote_pointer).
@@ -1792,13 +1866,17 @@ def _write_receipt(path: str | Path, receipt: Mapping[str, Any]) -> Path:
 
 __all__ = [
     "DEFAULT_DATASET_REPO_ID",
+    "DEFAULT_PINNED_DOWNLOAD_WORKERS",
     "DEFAULT_POINTER_PATH",
+    "DEFAULT_REMOTE_INFO_BATCH_SIZE",
     "DEFAULT_RELEASE_PREFIX_TEMPLATE",
     "DEFAULT_STORAGE_RATE_USD_PER_GIB_MONTH",
+    "DEFAULT_TARGET_REVISION",
     "DEFAULT_TRANSFER_RATE_USD_PER_GIB",
     "DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM",
     "G021_AUTHORITATIVE_EVIDENCE_MAP",
     "G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS",
+    "G021_PACKAGE_EVIDENCE_PATH",
     "G021_REQUIRED_EVIDENCE_TERMS",
     "G021_RESIDUAL_SCAN_CLOSURE_AUTO_030",
     "HUGGINGFACE_PUBLICATION_PLAN_SCHEMA",

@@ -13,12 +13,14 @@ import json
 import shutil
 from hashlib import sha256
 from pathlib import Path
+from threading import Barrier, Lock
 
 import pytest
 from ipfs_datasets_py.huggingface.publisher import (
     DRY_RUN_DIFF_AND_COST_RECEIPT_EVIDENCE_TERM,
     G021_AUTHORITATIVE_EVIDENCE_MAP,
     G021_AUTO_030_RESIDUAL_EVIDENCE_TERMS,
+    G021_PACKAGE_EVIDENCE_PATH,
     G021_REQUIRED_EVIDENCE_TERMS,
     G021_RESIDUAL_SCAN_CLOSURE_AUTO_030,
     HUGGINGFACE_PUBLICATION_RECEIPT_SCHEMA,
@@ -216,6 +218,34 @@ def test_dry_run_binds_parent_into_digest_without_api_contact(tmp_path: Path):
     assert api.read_calls == []
 
 
+def test_plan_digest_is_portable_and_serialization_has_no_host_paths(tmp_path: Path):
+    manifest = _manifest_fixture()
+    first_root = tmp_path / "worktree-a"
+    second_root = tmp_path / "worktree-b"
+    first_root.mkdir()
+    second_root.mkdir()
+    _materialize_local(first_root, manifest)
+    _materialize_local(second_root, manifest)
+    publisher = HuggingFaceReleasePublisher()
+
+    first = publisher.plan_dry_run(
+        manifest,
+        local_root=first_root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    second = publisher.plan_dry_run(
+        manifest,
+        local_root=second_root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    serialized = json.dumps(first.to_dict(), sort_keys=True)
+
+    assert first.plan_digest == second.plan_digest
+    assert "local_path" not in serialized
+    assert str(tmp_path) not in serialized
+    assert all(not Path(op.relative_path).is_absolute() for op in first.operations)
+
+
 def test_dry_run_refuses_basename_only_skip(tmp_path: Path):
     """Uploads key by full remote path; same basename elsewhere is irrelevant."""
 
@@ -330,6 +360,33 @@ def test_publish_refuses_any_preexisting_release_prefix(tmp_path: Path):
     )
 
     with pytest.raises(HuggingFacePublicationError, match="pre-existing path"):
+        publisher.publish_append_only(plan, approval=approval, local_root=root)
+    assert api.calls == []
+
+
+def test_publish_revalidates_local_digest_before_upload(tmp_path: Path):
+    manifest = _manifest_fixture()
+    root = tmp_path / "release"
+    root.mkdir()
+    _materialize_local(root, manifest)
+    api = _FakeHfApi()
+    publisher = HuggingFaceReleasePublisher(api=api)
+    plan = publisher.plan_dry_run(
+        manifest,
+        local_root=root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    (root / plan.operations[0].relative_path).write_bytes(b"changed after approval")
+    approval = PublicationApproval(
+        approver="ops",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/211-abby-tts",
+        approval_id="approval-local-race",
+    )
+
+    with pytest.raises(HuggingFacePublicationError, match="digest mismatch before upload"):
         publisher.publish_append_only(plan, approval=approval, local_root=root)
     assert api.calls == []
 
@@ -511,6 +568,60 @@ def test_pinned_redownload_validation(tmp_path: Path):
         )
 
 
+def test_pinned_redownload_is_bounded_parallel_and_confined(tmp_path: Path):
+    manifest = _manifest_fixture()
+    source_root = tmp_path / "external-source"
+    source_root.mkdir()
+    _materialize_local(source_root, manifest)
+    base_publisher = HuggingFaceReleasePublisher()
+    plan = base_publisher.plan_dry_run(
+        manifest,
+        local_root=source_root,
+        audited_parent_commit=AUDITED_PARENT,
+    )
+    source_by_remote = {
+        item.remote_path: source_root / item.relative_path for item in plan.operations
+    }
+    barrier = Barrier(len(plan.operations))
+    seen_roots: list[Path] = []
+    seen_lock = Lock()
+
+    def fetch_to_path(
+        _repo_id: str,
+        revision: str,
+        remote_path: str,
+        local_dir: Path,
+    ) -> Path:
+        assert revision == "6" * 40
+        with seen_lock:
+            seen_roots.append(local_dir)
+        barrier.wait(timeout=5)
+        # Return an external source. The publisher must stream-copy it into the
+        # verified cache instead of trusting or exposing this host path.
+        return source_by_remote[remote_path]
+
+    cache = tmp_path / "verified-cache"
+    publisher = HuggingFaceReleasePublisher(
+        fetch_to_path=fetch_to_path,
+        pinned_download_workers=len(plan.operations),
+    )
+    result = publisher.redownload_and_validate_pinned(
+        commit_sha="6" * 40,
+        plan=plan,
+        cache_root=cache,
+    )
+
+    assert result.ok is True
+    assert result.network_fetch_performed is True
+    assert len(seen_roots) == len(plan.operations)
+    assert set(seen_roots) == {cache.resolve()}
+    for item in plan.operations:
+        target = (cache / item.remote_path).resolve()
+        target.relative_to(cache.resolve())
+        assert target.is_file()
+        assert not target.is_symlink()
+
+
 def test_canary_promote_and_rollback_retains_failed_release(tmp_path: Path):
     manifest = _manifest_fixture()
     root = tmp_path / "release"
@@ -673,6 +784,7 @@ def test_publish_execute_post_publication_verification_fail_closed(tmp_path: Pat
         }
         for op in plan.operations
     }
+    blocked_receipt = tmp_path / "blocked-publication-receipt.json"
     with pytest.raises(HuggingFacePublicationError, match="post-publication verification"):
         publish_abby_voice_release(
             manifest=manifest,
@@ -683,7 +795,12 @@ def test_publish_execute_post_publication_verification_fail_closed(tmp_path: Pat
             audited_parent_commit=AUDITED_PARENT,
             remote_objects=bad_inventory,
             run_pinned_redownload_validation=False,
+            receipt_path=blocked_receipt,
         )
+    blocked = json.loads(blocked_receipt.read_text(encoding="utf-8"))
+    assert blocked["status"] == "blocked_remote_write_gate"
+    assert blocked["remote_write_performed"] is True
+    assert blocked["commit_receipt"]["commit_sha"] == "4" * 40
 
 
 def test_publish_execute_pinned_redownload_validation_fail_closed(tmp_path: Path):
@@ -737,19 +854,13 @@ def test_g021_auto_030_residual_evidence_terms_are_discoverable():
 
     publisher_text = Path(publisher_mod.__file__).read_text(encoding="utf-8")
     test_text = Path(__file__).read_text(encoding="utf-8")
-    repair_path = (
-        Path.cwd()
-        / "data"
-        / "abby_voice"
-        / "agent_supervisor"
-        / "discovery"
-        / "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
-    )
+    package_root = Path(publisher_mod.__file__).resolve().parents[2]
+    repair_path = package_root / G021_PACKAGE_EVIDENCE_PATH
     assert G021_RESIDUAL_SCAN_CLOSURE_AUTO_030.endswith(
         "2026-07-26-abby-voice-auto-030-objective-validation-repair.md"
     )
     assert repair_path.is_file(), (
-        "AUTO-030 residual scan closure receipt must exist on authorized path"
+        "package-owned AUTO-030 residual scan closure evidence must exist"
     )
     repair_text = repair_path.read_text(encoding="utf-8")
     combined = "\n".join((publisher_text, test_text, repair_text))
