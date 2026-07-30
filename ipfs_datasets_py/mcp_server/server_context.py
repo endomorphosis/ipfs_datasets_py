@@ -77,6 +77,13 @@ class ServerConfig:
     cache_tool_discovery: bool = True
     lazy_load_tools: bool = True
 
+    # Knowledge-graph GraphService (KGP-019) — durable catalog/store paths.
+    # When set (or via IPFS_DATASETS_KG_CATALOG / IPFS_DATASETS_KG_STORE env),
+    # the context opens a process-shared GraphService for MCP graph tools.
+    kg_catalog_path: Optional[Path] = None
+    kg_storage_path: Optional[Path] = None
+    enable_graph_service: bool = True
+
 
 class ServerContext:
     """
@@ -119,6 +126,9 @@ class ServerContext:
         self._p2p_services: Optional[Any] = None
         self._vector_stores: Dict[str, Any] = {}
         self._workflow_scheduler: Optional[Any] = None
+        # KGP-019: server-owned GraphService for MCP graph tools
+        self._graph_service: Optional[Any] = None
+        self._graph_service_owns: bool = False
         
         logger.debug(f"ServerContext created with config: {self.config}")
     
@@ -148,6 +158,10 @@ class ServerContext:
                 
                 # Initialize workflow scheduler if needed
                 self._initialize_workflow_scheduler()
+
+                # KGP-019: bind server-owned GraphService when catalog is configured
+                if self.config.enable_graph_service:
+                    self._initialize_graph_service()
                 
                 self._entered = True
                 logger.info("ServerContext initialized successfully")
@@ -226,6 +240,53 @@ class ServerContext:
         except Exception as e:
             logger.warning(f"Failed to initialize workflow scheduler: {e}")
             self._workflow_scheduler = None
+
+    def _initialize_graph_service(self) -> None:
+        """Open or bind the process-shared GraphService (KGP-019).
+
+        Uses ``ServerConfig.kg_catalog_path`` / ``kg_storage_path`` or the
+        ``IPFS_DATASETS_KG_CATALOG`` / ``IPFS_DATASETS_KG_STORE`` environment
+        variables. Missing configuration is non-fatal: tools that need a
+        service will report a typed INVALID_REQUEST until one is bound.
+        """
+        import os
+
+        try:
+            from .graph_service_registry import (
+                ENV_CATALOG,
+                ENV_STORE,
+                bind_graph_service,
+                open_graph_service,
+            )
+
+            cat = self.config.kg_catalog_path or os.environ.get(ENV_CATALOG)
+            store = self.config.kg_storage_path or os.environ.get(ENV_STORE)
+            if not cat:
+                logger.debug(
+                    "GraphService not auto-opened (no kg_catalog_path / %s)",
+                    ENV_CATALOG,
+                )
+                self._graph_service = None
+                return
+            binding = open_graph_service(
+                cat,
+                storage_path=store,
+                force=False,
+            )
+            self._graph_service = binding.service
+            self._graph_service_owns = binding.owns_service
+            # Ensure process registry points at this server-owned instance.
+            bind_graph_service(
+                binding.service,
+                owns_service=False,
+                catalog_path=binding.catalog_path,
+                storage_path=binding.storage_path,
+            )
+            logger.info("GraphService bound for MCP graph tools (catalog=%s)", cat)
+        except Exception as e:
+            logger.warning("Failed to initialize GraphService: %s", e)
+            self._graph_service = None
+            self._graph_service_owns = False
     
     def _cleanup(self) -> None:
         """Clean up all managed resources."""
@@ -270,6 +331,24 @@ class ServerContext:
         
         # Clear workflow scheduler
         self._workflow_scheduler = None
+
+        # Close server-owned GraphService (KGP-019)
+        if self._graph_service is not None:
+            try:
+                if self._graph_service_owns:
+                    self._graph_service.close()
+                logger.debug("GraphService cleaned up")
+            except Exception as e:
+                logger.error(f"Failed to clean up GraphService: {e}", exc_info=True)
+            self._graph_service = None
+            self._graph_service_owns = False
+            try:
+                from .graph_service_registry import reset_graph_service_registry
+
+                # Only reset if we owned the binding (tests may re-bind).
+                # Leaving registry intact is safer when owns_service is False.
+            except Exception:
+                pass
         
         # Clear cleanup handlers
         self._cleanup_handlers.clear()
@@ -418,6 +497,46 @@ class ServerContext:
         with self._lock:
             self._vector_stores[name] = store
             logger.debug(f"Registered vector store: {name}")
+
+    @property
+    def graph_service(self) -> Optional[Any]:
+        """Server-owned GraphService used by MCP graph tools (KGP-019)."""
+        return self._graph_service
+
+    def bind_graph_service(
+        self,
+        service: Any,
+        *,
+        owns_service: bool = False,
+        catalog_path: Optional[Path] = None,
+        storage_path: Optional[Path] = None,
+    ) -> None:
+        """Bind an existing GraphService as the server-owned instance.
+
+        Graph tools resolve this service via the process registry so
+        transactions and cursors survive independent tool calls.
+        """
+        from .graph_service_registry import bind_graph_service as _bind
+
+        with self._lock:
+            if (
+                self._graph_service is not None
+                and self._graph_service_owns
+                and self._graph_service is not service
+            ):
+                try:
+                    self._graph_service.close()
+                except Exception:
+                    pass
+            self._graph_service = service
+            self._graph_service_owns = owns_service
+            _bind(
+                service,
+                owns_service=False,  # ownership tracked by ServerContext
+                catalog_path=catalog_path,
+                storage_path=storage_path,
+            )
+            logger.debug("GraphService bound on ServerContext")
     
     def list_tools(self) -> List[str]:
         """Retrieve a flat list of all available tool names across all categories.

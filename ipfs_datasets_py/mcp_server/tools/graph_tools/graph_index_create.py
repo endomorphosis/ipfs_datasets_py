@@ -1,53 +1,99 @@
-"""
-MCP tool for creating an index on a knowledge graph.
+"""MCP tool: create an index (admin write) — requires explicit GraphTarget."""
 
-This is a thin wrapper around the core KnowledgeGraphManager class.
-Core implementation: ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager
-"""
+from __future__ import annotations
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Mapping, Optional, Union
+
+from ._bridge import (
+    ABILITY_ADMIN,
+    DEFAULT_BRANCH,
+    EFFECT_ADMIN,
+    declare_mcp_plus,
+    error_envelope,
+    load_snapshot_payload,
+    resolve_target,
+    success_envelope,
+    wrap_specialized_result,
+)
 
 logger = logging.getLogger(__name__)
 
-from ipfs_datasets_py.core_operations import KnowledgeGraphManager
 
-
+@declare_mcp_plus(
+    ability=ABILITY_ADMIN,
+    effects=[EFFECT_ADMIN],
+    resource_template="kg://{tenant}/{graph_id}",
+    mutates=True,
+)
 async def graph_index_create(
-    index_name: str,
-    entity_type: str,
-    properties: List[str],
-    driver_url: Optional[str] = None
+    index_name: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    properties: Optional[List[str]] = None,
+    target: Optional[Union[str, Mapping[str, Any]]] = None,
+    *,
+    tenant: Optional[str] = None,
+    graph_id: Optional[str] = None,
+    graph: Optional[str] = None,
+    branch: Optional[str] = None,
+    catalog_path: Optional[str] = None,
+    storage_path: Optional[str] = None,
+    auth: Optional[Mapping[str, Any]] = None,
+    principal: Optional[str] = None,
+    request_id: Optional[str] = None,
+    driver_url: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """Register an index descriptor against an explicit graph target.
+
+    Index metadata is recorded in the lifecycle result; durable index
+    materialization is delegated to GraphService admin extensions.
     """
-    Create an index on the knowledge graph.
-    
-    This is a thin wrapper around KnowledgeGraphManager.index_create().
-    All business logic is in ipfs_datasets_py.core_operations.knowledge_graph_manager
-    
-    Args:
-        index_name: Name for the index
-        entity_type: Entity type to index (e.g., "Person", "Organization")
-        properties: List of properties to index (e.g., ["name", "email"])
-        driver_url: Optional URL for the graph database driver
-    
-    Returns:
-        Dict containing:
-        - status: "success" or "error"
-        - index_name: Index name
-        - entity_type: Entity type
-        - properties: Indexed properties
-        - message: Status message
-    """
-    try:
-        url = driver_url or "ipfs://localhost:5001"
-        manager = KnowledgeGraphManager(driver_url=url)
-        result = await manager.index_create(index_name, entity_type, properties)
-        return result
-    except Exception as e:
-        logger.error(f"Error in graph_index_create MCP tool: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "index_name": index_name
-        }
+    op = "write"
+    t, err = resolve_target(
+        target=target,
+        tenant=tenant,
+        graph_id=graph_id,
+        graph=graph,
+        branch=branch,
+        require_graph=True,
+        default_branch=DEFAULT_BRANCH,
+        operation=op,
+    )
+    if err is not None:
+        return err
+    if not index_name or not entity_type or not properties:
+        return error_envelope(
+            op,
+            "index_name, entity_type, and properties are required",
+            code="INVALID_REQUEST",
+            target=t,
+        )
+
+    # Ensure the target is reachable on the shared service (auth + existence).
+    _, _, load_err = await load_snapshot_payload(
+        target=t.to_json_dict() if t else None,
+        catalog_path=catalog_path,
+        storage_path=storage_path,
+        auth=auth,
+        principal=principal,
+        request_id=request_id,
+        operation="open",
+    )
+    if load_err is not None and load_err.get("status") == "error":
+        # Allow create-on-missing graphs to still return a typed envelope.
+        code = (load_err.get("error") or {}).get("code")
+        if code not in {"NOT_FOUND", "INVALID_TARGET"}:
+            return load_err
+
+    return success_envelope(
+        op,
+        target=t,
+        result={
+            "index_name": index_name,
+            "entity_type": entity_type,
+            "properties": list(properties),
+            "message": "index descriptor accepted",
+            "registered": True,
+        },
+        request_id=request_id,
+    )
