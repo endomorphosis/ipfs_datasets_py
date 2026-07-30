@@ -380,7 +380,7 @@ retain the acceptance and validation evidence in the resulting receipt.
 
 ## KGP-023 Prove negative authorization, revocation, and replay matrices
 
-- Status: pending
+- Status: completed
 - Priority: P0
 - Track: security
 - Depends on: KGP-019, KGP-022
