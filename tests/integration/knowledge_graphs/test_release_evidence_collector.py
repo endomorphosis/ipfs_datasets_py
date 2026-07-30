@@ -17,6 +17,8 @@ Conflict policy:
 
 from __future__ import annotations
 
+import json
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -103,10 +105,34 @@ def _collector(
         require_signatures=require_signatures,
         package_version="0.1.0-test",
         now=FIXED_NOW,
+        recheck_repository_on_evaluate=False,
     )
     c.bind_tree(_clean_binding(tree_id))
     c.set_environment("lab-kg-release-1", "labelled lab environment")
     return c
+
+
+def _init_clean_git_repo(path: Path) -> Path:
+    path.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=path, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "kg-release@example.invalid"],
+        cwd=path,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "KG Release Test"],
+        cwd=path,
+        check=True,
+    )
+    (path / "tracked.txt").write_text("clean\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=path, check=True)
+    subprocess.run(
+        ["git", "commit", "-qm", "fixture"],
+        cwd=path,
+        check=True,
+    )
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -778,6 +804,154 @@ def test_text_digest_stable() -> None:
     assert text_digest("hello") != text_digest("world")
 
 
+def test_artifact_file_api_computes_and_verifies_digest(
+    tmp_path: Path,
+) -> None:
+    artifact = tmp_path / "retained.log"
+    artifact.write_text("retained evidence\n", encoding="utf-8")
+    c = _collector()
+    expected = re.file_digest(artifact)
+    assert c.collect_artifact_files(
+        (artifact,),
+        expected_digests=(expected,),
+    ) == (expected,)
+
+    evidence = c.record_command(
+        command="pytest -q",
+        exit_status=0,
+        test_counts=TestCounts(passed=1),
+        artifact_paths=(artifact,),
+        goal_id="KGP-G010",
+        timestamp=_ts(),
+    )
+    assert evidence.artifact_digests == (expected,)
+
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        c.collect_artifact_files(
+            (artifact,),
+            expected_digests=("sha256:" + "0" * 64,),
+        )
+    assert excinfo.value.code == RefusalCode.DIGEST_MISMATCH.value
+
+
+def test_load_state_resumes_signed_clean_tree(tmp_path: Path) -> None:
+    repo = _init_clean_git_repo(tmp_path / "repo")
+    artifact = tmp_path / "G010.junit.xml"
+    artifact.write_text("<testsuite tests='1'/>\n", encoding="utf-8")
+    c = ReleaseEvidenceCollector(
+        signing_key=SIGNING_KEY,
+        require_signatures=True,
+        package_version="0.1.0-dev",
+        now=FIXED_NOW,
+    )
+    binding = c.bind_clean_repository(repo)
+    c.set_environment("dev-server", "development server")
+    c.record_and_accept_goal(
+        goal_id="KGP-G010",
+        command="pytest -q tests/knowledge_graphs/contract",
+        exit_status=0,
+        test_counts=TestCounts(passed=1),
+        artifact_paths=(artifact,),
+        timestamp=_ts(),
+        auto_sign=True,
+    )
+    state_path = c.dump_state(tmp_path / "collector.json")
+
+    resumed = ReleaseEvidenceCollector.load_state(
+        state_path,
+        signing_key=SIGNING_KEY,
+        expected_tree_id=binding.tree_id,
+        now=FIXED_NOW,
+    )
+    assert resumed.tree_id == binding.tree_id
+    assert resumed.state.tree_binding is not None
+    assert resumed.state.tree_binding.repo_root == str(repo.resolve())
+    assert resumed.state.goal_receipts[0].goal_id == "KGP-G010"
+    decision = resumed.evaluate(now=FIXED_NOW)
+    assert not decision.production_ready
+
+
+def test_load_state_refuses_schema_and_signature_tampering(
+    tmp_path: Path,
+) -> None:
+    c = build_collector_with_passing_evidence(
+        tree_id=TREE_ID,
+        signing_key=SIGNING_KEY,
+        require_signatures=True,
+        now=FIXED_NOW,
+    )
+    original = c.dump_state(tmp_path / "collector.json")
+    payload = json.loads(original.read_text(encoding="utf-8"))
+
+    payload["schema_version"] = "kg-release-evidence-collector/v0"
+    bad_schema = tmp_path / "bad-schema.json"
+    bad_schema.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(re.EvidenceCollectorError) as excinfo:
+        ReleaseEvidenceCollector.load_state(
+            bad_schema,
+            signing_key=SIGNING_KEY,
+            now=FIXED_NOW,
+            recheck_repository_on_evaluate=False,
+        )
+    assert excinfo.value.code == "invalid_state_schema"
+
+    payload = json.loads(original.read_text(encoding="utf-8"))
+    payload["collector"]["evidence_signatures"]["goal_receipt:KGP-G010"][
+        "signature"
+    ] = "hmac-sha256:" + "0" * 64
+    bad_signature = tmp_path / "bad-signature.json"
+    bad_signature.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        ReleaseEvidenceCollector.load_state(
+            bad_signature,
+            signing_key=SIGNING_KEY,
+            now=FIXED_NOW,
+            recheck_repository_on_evaluate=False,
+        )
+    assert excinfo.value.code == RefusalCode.UNSIGNED.value
+
+    with pytest.raises(re.EvidenceCollectorError) as excinfo:
+        ReleaseEvidenceCollector.load_state(
+            original,
+            signing_key=SIGNING_KEY,
+            require_signatures=False,
+            now=FIXED_NOW,
+            recheck_repository_on_evaluate=False,
+        )
+    assert excinfo.value.code == "signature_policy_downgrade"
+
+    payload = json.loads(original.read_text(encoding="utf-8"))
+    payload["collector"]["tree_binding"]["tree_id"] = FOREIGN_TREE
+    bad_tree = tmp_path / "bad-tree.json"
+    bad_tree.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        ReleaseEvidenceCollector.load_state(
+            bad_tree,
+            signing_key=SIGNING_KEY,
+            expected_tree_id=TREE_ID,
+            now=FIXED_NOW,
+            recheck_repository_on_evaluate=False,
+        )
+    assert excinfo.value.code in {
+        RefusalCode.DIGEST_MISMATCH.value,
+        RefusalCode.FOREIGN_TREE.value,
+    }
+
+
+def test_evaluate_rechecks_repository_cleanliness(tmp_path: Path) -> None:
+    repo = _init_clean_git_repo(tmp_path / "repo")
+    c = ReleaseEvidenceCollector(now=FIXED_NOW)
+    c.bind_clean_repository(repo)
+    c.set_environment("dev-server", "development server")
+    first = c.evaluate(now=FIXED_NOW)
+    assert not first.production_ready
+
+    (repo / "tracked.txt").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(EvidenceRefusal) as excinfo:
+        c.evaluate(now=FIXED_NOW)
+    assert excinfo.value.code == RefusalCode.DIRTY_TREE.value
+
+
 def test_render_runbook_with_failed_decision() -> None:
     c = _collector()
     decision = c.evaluate(now=FIXED_NOW)
@@ -796,6 +970,52 @@ def test_cli_main_write_runbook(tmp_path: Path) -> None:
     assert rc == 0
     assert out.is_file()
     assert "KGP-G100" in out.read_text(encoding="utf-8")
+
+
+def test_cli_resumes_and_evaluates_with_private_key_file(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repo = _init_clean_git_repo(tmp_path / "repo")
+    artifact = tmp_path / "G010.log"
+    artifact.write_text("1 passed\n", encoding="utf-8")
+    c = ReleaseEvidenceCollector(
+        signing_key=SIGNING_KEY,
+        require_signatures=True,
+    )
+    binding = c.bind_clean_repository(repo)
+    c.set_environment("dev-server", "development server")
+    c.record_and_accept_goal(
+        goal_id="KGP-G010",
+        command="pytest -q tests/knowledge_graphs/contract",
+        exit_status=0,
+        test_counts=TestCounts(passed=1),
+        artifact_paths=(artifact,),
+        auto_sign=True,
+    )
+    state_path = c.dump_state(tmp_path / "collector.json")
+    key_path = tmp_path / "signing.key"
+    key_path.write_bytes(SIGNING_KEY)
+    key_path.chmod(0o600)
+    output_path = tmp_path / "evaluated.json"
+
+    rc = re.main(
+        [
+            "--resume-state",
+            str(state_path),
+            "--key-file",
+            str(key_path),
+            "--expected-tree-id",
+            binding.tree_id,
+            "--output-state",
+            str(output_path),
+        ]
+    )
+    captured = capsys.readouterr().out
+    assert rc == 1
+    assert '"production_ready": false' in captured
+    assert SIGNING_KEY.decode("utf-8") not in captured
+    assert output_path.is_file()
 
 
 def test_build_bundle_tree_matches() -> None:

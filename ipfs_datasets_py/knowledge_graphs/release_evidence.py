@@ -289,6 +289,65 @@ def file_digest(path: Union[str, Path]) -> str:
     return f"sha256:{hashlib.sha256(data).hexdigest()}"
 
 
+def verified_file_digest(
+    path: Union[str, Path],
+    *,
+    expected_digest: str = "",
+) -> str:
+    """Hash a retained artifact and optionally verify its expected digest."""
+
+    artifact = Path(path)
+    if not artifact.is_file():
+        raise EvidenceRefusal(
+            f"retained artifact is not a file: {artifact}",
+            code=RefusalCode.MISSING_DIGEST,
+            subject="artifact",
+            details={"path": str(artifact)},
+        )
+    actual = file_digest(artifact)
+    expected = str(expected_digest or "").strip()
+    if expected and not hmac.compare_digest(actual, expected):
+        raise EvidenceRefusal(
+            f"retained artifact digest mismatch: {artifact}",
+            code=RefusalCode.DIGEST_MISMATCH,
+            subject="artifact",
+            details={
+                "actual_digest": actual,
+                "expected_digest": expected,
+                "path": str(artifact),
+            },
+        )
+    return actual
+
+
+def read_signing_key_file(path: Union[str, Path]) -> bytes:
+    """Read a non-empty signing key from a private operator-owned file."""
+
+    key_path = Path(path)
+    try:
+        mode = key_path.stat().st_mode
+        if mode & 0o077:
+            raise EvidenceCollectorError(
+                "signing key file must not be group/world accessible",
+                code="insecure_signing_key_file",
+                details={"path": str(key_path)},
+            )
+        key = key_path.read_bytes().strip()
+    except OSError as exc:
+        raise EvidenceCollectorError(
+            "unable to read signing key file",
+            code="missing_signing_key",
+            details={"path": str(key_path)},
+        ) from exc
+    if not key:
+        raise EvidenceCollectorError(
+            "signing key file is empty",
+            code="missing_signing_key",
+            details={"path": str(key_path)},
+        )
+    return key
+
+
 def bytes_digest(data: bytes) -> str:
     """Return ``sha256:<hex>`` of *data*."""
 
@@ -399,6 +458,21 @@ class TreeBinding:
             "repo_root": self.repo_root,
             "tree_id": self.tree_id,
         }
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "TreeBinding":
+        dirty_paths = data.get("dirty_paths") or ()
+        if isinstance(dirty_paths, str):
+            dirty_paths = (dirty_paths,)
+        return cls(
+            tree_id=str(data.get("tree_id") or ""),
+            commit=str(data.get("commit") or ""),
+            is_clean=bool(data.get("is_clean")),
+            repo_root=str(data.get("repo_root") or ""),
+            dirty_paths=tuple(str(path) for path in dirty_paths),
+            collected_at=str(data.get("collected_at") or ""),
+            binding_digest=str(data.get("binding_digest") or ""),
+        )
 
 
 def normalize_tree_id(value: str) -> str:
@@ -743,6 +817,81 @@ class CollectorState:
             ),
         }
 
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "CollectorState":
+        tree_raw = data.get("tree_binding")
+        environment_raw = data.get("environment")
+        ucan_raw = data.get("ucan_negative")
+        soak_raw = data.get("soak_chaos")
+        signatures_raw = data.get("evidence_signatures") or {}
+        if not isinstance(signatures_raw, Mapping):
+            raise EvidenceCollectorError(
+                "collector evidence_signatures must be a mapping",
+                code="invalid_state",
+            )
+        signatures: Dict[str, Dict[str, str]] = {}
+        for subject, record in signatures_raw.items():
+            if not isinstance(record, Mapping):
+                raise EvidenceCollectorError(
+                    f"signature record for {subject!r} must be a mapping",
+                    code="invalid_state",
+                )
+            signatures[str(subject)] = {
+                "payload_digest": str(record.get("payload_digest") or ""),
+                "scheme": str(record.get("scheme") or ""),
+                "signature": str(record.get("signature") or ""),
+            }
+        return cls(
+            tree_binding=(
+                TreeBinding.from_mapping(tree_raw)
+                if isinstance(tree_raw, Mapping)
+                else None
+            ),
+            environment=(
+                EnvironmentBinding.from_mapping(environment_raw)
+                if isinstance(environment_raw, Mapping)
+                else None
+            ),
+            command_evidence=[
+                CommandEvidence.from_mapping(item)
+                for item in (data.get("command_evidence") or ())
+                if isinstance(item, Mapping)
+            ],
+            goal_receipts=[
+                GoalReceipt.from_mapping(item)
+                for item in (data.get("goal_receipts") or ())
+                if isinstance(item, Mapping)
+            ],
+            dod_receipts=[
+                DodClauseReceipt.from_mapping(item)
+                for item in (data.get("dod_receipts") or ())
+                if isinstance(item, Mapping)
+            ],
+            corpus_signoffs=[
+                CorpusSignOff.from_mapping(item)
+                for item in (data.get("corpus_signoffs") or ())
+                if isinstance(item, Mapping)
+            ],
+            ucan_negative=(
+                UCANNegativeProof.from_mapping(ucan_raw)
+                if isinstance(ucan_raw, Mapping)
+                else None
+            ),
+            soak_chaos=(
+                SoakChaosEvidence.from_mapping(soak_raw)
+                if isinstance(soak_raw, Mapping)
+                else None
+            ),
+            evidence_signatures=signatures,
+            refusals=[
+                dict(item)
+                for item in (data.get("refusals") or ())
+                if isinstance(item, Mapping)
+            ],
+            package_version=str(data.get("package_version") or ""),
+            notes=str(data.get("notes") or ""),
+        )
+
 
 class ReleaseEvidenceCollector:
     """Executable fail-closed collector for knowledge-graph release evidence.
@@ -777,6 +926,7 @@ class ReleaseEvidenceCollector:
         package_version: str = "",
         now: Optional[datetime] = None,
         allow_dirty_tree: bool = False,
+        recheck_repository_on_evaluate: bool = True,
     ) -> None:
         self.expected_tree_id = (
             normalize_tree_id(expected_tree_id) if expected_tree_id else ""
@@ -787,6 +937,9 @@ class ReleaseEvidenceCollector:
         self.package_version = package_version
         self._now = now
         self.allow_dirty_tree = allow_dirty_tree
+        self.recheck_repository_on_evaluate = bool(
+            recheck_repository_on_evaluate
+        )
         self.state = CollectorState(package_version=package_version)
         self._last_decision: Optional[ReleaseDecision] = None
         if self.require_signatures and not signing_key:
@@ -859,6 +1012,34 @@ class ReleaseEvidenceCollector:
             git_runner=git_runner,
         )
         return self.bind_tree(binding)
+
+    def recheck_bound_repository(self) -> TreeBinding:
+        """Re-resolve the bound repository and require the same clean HEAD."""
+
+        binding = self.state.tree_binding
+        if binding is None or not binding.repo_root:
+            raise EvidenceRefusal(
+                "collector has no repository path to recheck",
+                code=RefusalCode.TREE_REQUIRED,
+                subject="tree",
+            )
+        refreshed = resolve_clean_tree(
+            binding.repo_root,
+            expected_tree_id=self._require_tree(),
+            allow_dirty=False,
+        )
+        if refreshed.commit != binding.commit:
+            raise EvidenceRefusal(
+                "bound repository commit changed after evidence collection",
+                code=RefusalCode.FOREIGN_TREE,
+                subject="tree",
+                details={
+                    "bound_commit": binding.commit,
+                    "current_commit": refreshed.commit,
+                },
+            )
+        self.state.tree_binding = refreshed
+        return refreshed
 
     def _require_tree(self) -> str:
         tree = self.tree_id
@@ -968,6 +1149,34 @@ class ReleaseEvidenceCollector:
             signing_key=self.signing_key,
         )
 
+    def collect_artifact_files(
+        self,
+        paths: Sequence[Union[str, Path]],
+        *,
+        expected_digests: Optional[Sequence[str]] = None,
+    ) -> Tuple[str, ...]:
+        """Hash retained files and optionally verify caller-supplied digests."""
+
+        artifacts = tuple(Path(path) for path in paths)
+        expected = tuple(str(value) for value in (expected_digests or ()))
+        if expected and len(expected) != len(artifacts):
+            raise EvidenceRefusal(
+                "artifact path and expected digest counts differ",
+                code=RefusalCode.DIGEST_MISMATCH,
+                subject="artifact",
+                details={
+                    "artifact_count": len(artifacts),
+                    "digest_count": len(expected),
+                },
+            )
+        return tuple(
+            verified_file_digest(
+                artifact,
+                expected_digest=expected[index] if expected else "",
+            )
+            for index, artifact in enumerate(artifacts)
+        )
+
     def _record_refusal(self, exc: EvidenceRefusal) -> None:
         self.state.refusals.append(
             {
@@ -1023,6 +1232,7 @@ class ReleaseEvidenceCollector:
         exit_status: int,
         test_counts: Union[TestCounts, Mapping[str, Any], None] = None,
         artifact_digests: Optional[Sequence[str]] = None,
+        artifact_paths: Optional[Sequence[Union[str, Path]]] = None,
         environment_label: str = "",
         goal_id: str = "",
         clause_id: str = "",
@@ -1058,7 +1268,16 @@ class ReleaseEvidenceCollector:
         else:
             counts = test_counts
 
-        digests = tuple(str(d) for d in (artifact_digests or ()) if str(d).strip())
+        supplied_digests = tuple(
+            str(d) for d in (artifact_digests or ()) if str(d).strip()
+        )
+        if artifact_paths:
+            digests = self.collect_artifact_files(
+                artifact_paths,
+                expected_digests=supplied_digests or None,
+            )
+        else:
+            digests = supplied_digests
         env_label = (
             environment_label
             or (
@@ -1275,6 +1494,7 @@ class ReleaseEvidenceCollector:
         exit_status: int,
         test_counts: Union[TestCounts, Mapping[str, Any], None] = None,
         artifact_digests: Optional[Sequence[str]] = None,
+        artifact_paths: Optional[Sequence[Union[str, Path]]] = None,
         environment_label: str = "",
         evidence_kind: str = "validation_receipt",
         stdout: str = "",
@@ -1290,6 +1510,7 @@ class ReleaseEvidenceCollector:
             exit_status=exit_status,
             test_counts=test_counts,
             artifact_digests=artifact_digests,
+            artifact_paths=artifact_paths,
             environment_label=environment_label,
             goal_id=goal_id,
             evidence_kind=evidence_kind,
@@ -1460,6 +1681,7 @@ class ReleaseEvidenceCollector:
         exit_status: int,
         test_counts: Union[TestCounts, Mapping[str, Any], None] = None,
         artifact_digests: Optional[Sequence[str]] = None,
+        artifact_paths: Optional[Sequence[Union[str, Path]]] = None,
         environment_label: str = "",
         evidence_kind: str = "validation_receipt",
         notes: str = "",
@@ -1474,6 +1696,7 @@ class ReleaseEvidenceCollector:
             exit_status=exit_status,
             test_counts=test_counts,
             artifact_digests=artifact_digests,
+            artifact_paths=artifact_paths,
             environment_label=environment_label,
             clause_id=clause_id,
             evidence_kind=evidence_kind,
@@ -1738,6 +1961,8 @@ class ReleaseEvidenceCollector:
         """Evaluate the collected bundle with :class:`GraphReleaseGate` fail-closed."""
 
         tree = self._require_tree()
+        if self.recheck_repository_on_evaluate:
+            self.recheck_bound_repository()
         if not self.expected_tree_id:
             self.expected_tree_id = tree
 
@@ -1797,6 +2022,307 @@ class ReleaseEvidenceCollector:
 
     # -- serialization ------------------------------------------------------
 
+    def _signature_from_state(self, subject: str, payload_digest: str) -> str:
+        record = self.state.evidence_signatures.get(subject) or {}
+        if record and (
+            record.get("scheme") != EVIDENCE_SIGNATURE_DOMAIN
+            or record.get("payload_digest") != payload_digest
+        ):
+            raise EvidenceRefusal(
+                f"persisted signature binding mismatch for {subject}",
+                code=RefusalCode.DIGEST_MISMATCH,
+                subject=subject,
+            )
+        return str(record.get("signature") or "")
+
+    def _validate_loaded_state(self) -> None:
+        binding = self.state.tree_binding
+        if binding is None:
+            raise EvidenceRefusal(
+                "persisted collector state has no tree binding",
+                code=RefusalCode.TREE_REQUIRED,
+                subject="tree",
+            )
+        if (
+            not binding.binding_digest
+            or binding.binding_digest != binding.compute_digest()
+        ):
+            raise EvidenceRefusal(
+                "persisted tree binding digest mismatch",
+                code=RefusalCode.DIGEST_MISMATCH,
+                subject="tree",
+            )
+        if normalize_tree_id(binding.commit) != binding.tree_id:
+            raise EvidenceRefusal(
+                "persisted tree binding commit/tree mismatch",
+                code=RefusalCode.FOREIGN_TREE,
+                subject="tree",
+            )
+        self.bind_tree(binding)
+
+        if self.state.environment is not None:
+            self._assert_tree_match(
+                self.state.environment.tree_id,
+                subject="environment",
+            )
+            if is_unknown_environment(self.state.environment.environment_id):
+                raise EvidenceRefusal(
+                    "persisted environment is unknown",
+                    code=RefusalCode.UNKNOWN_ENVIRONMENT,
+                    subject="environment",
+                )
+
+        for evidence in self.state.command_evidence:
+            if evidence.schema_version != COMMAND_EVIDENCE_SCHEMA:
+                raise EvidenceCollectorError(
+                    "persisted command evidence schema mismatch",
+                    code="invalid_state_schema",
+                )
+            if (
+                not evidence.evidence_digest
+                or evidence.evidence_digest != evidence.compute_digest()
+            ):
+                raise EvidenceRefusal(
+                    "persisted command evidence digest mismatch",
+                    code=RefusalCode.DIGEST_MISMATCH,
+                    subject=evidence.goal_id or evidence.clause_id or "command",
+                )
+            self._assert_tree_match(
+                evidence.tree_id,
+                subject=evidence.goal_id or evidence.clause_id or "command",
+            )
+            if evidence.signature:
+                signature_subject = (
+                    f"command:{evidence.goal_id or evidence.clause_id or 'command'}"
+                )
+                persisted = self._signature_from_state(
+                    signature_subject,
+                    evidence.evidence_digest,
+                )
+                if persisted and persisted != evidence.signature:
+                    raise EvidenceRefusal(
+                        f"persisted command signature mismatch for {signature_subject}",
+                        code=RefusalCode.UNSIGNED,
+                        subject=signature_subject,
+                    )
+                if not verify_evidence_signature(
+                    evidence.signature,
+                    payload_digest=evidence.evidence_digest,
+                    subject=signature_subject,
+                    signing_key=self.signing_key or b"",
+                ):
+                    raise EvidenceRefusal(
+                        f"invalid persisted command signature for {signature_subject}",
+                        code=RefusalCode.UNSIGNED,
+                        subject=signature_subject,
+                    )
+
+        goals = list(self.state.goal_receipts)
+        self.state.goal_receipts = []
+        for receipt in goals:
+            if receipt.schema_version != rg.RECEIPT_SCHEMA_VERSION:
+                raise EvidenceCollectorError(
+                    "persisted goal receipt schema mismatch",
+                    code="invalid_state_schema",
+                )
+            subject = f"goal_receipt:{receipt.goal_id}"
+            self.accept_goal_receipt(
+                receipt,
+                signature=self._signature_from_state(
+                    subject,
+                    receipt.receipt_digest,
+                ),
+            )
+
+        dods = list(self.state.dod_receipts)
+        self.state.dod_receipts = []
+        for receipt in dods:
+            if receipt.schema_version != rg.RECEIPT_SCHEMA_VERSION:
+                raise EvidenceCollectorError(
+                    "persisted DoD receipt schema mismatch",
+                    code="invalid_state_schema",
+                )
+            subject = f"dod_receipt:{receipt.clause_id}"
+            self.accept_dod_receipt(
+                receipt,
+                signature=self._signature_from_state(
+                    subject,
+                    receipt.receipt_digest,
+                ),
+            )
+
+        for signoff in self.state.corpus_signoffs:
+            if signoff.schema_version != "kg-corpus-signoff/v1":
+                raise EvidenceCollectorError(
+                    "persisted corpus sign-off schema mismatch",
+                    code="invalid_state_schema",
+                )
+            self._assert_tree_match(
+                signoff.tree_id,
+                subject=f"corpus:{signoff.corpus_id}",
+            )
+            self._assert_fresh(
+                signoff.signed_at,
+                subject=f"corpus:{signoff.corpus_id}",
+            )
+            if (
+                not signoff.receipt_digest
+                or signoff.receipt_digest != signoff.compute_digest()
+            ):
+                raise EvidenceRefusal(
+                    f"persisted corpus digest mismatch for {signoff.corpus_id}",
+                    code=RefusalCode.DIGEST_MISMATCH,
+                    subject=f"corpus:{signoff.corpus_id}",
+                )
+            subject = f"corpus:{signoff.corpus_id}"
+            self._assert_signature_if_required(
+                self._signature_from_state(subject, signoff.receipt_digest),
+                subject=subject,
+                payload_digest=signoff.receipt_digest,
+            )
+
+        if self.state.ucan_negative is not None:
+            proof = self.state.ucan_negative
+            self._assert_tree_match(proof.tree_id, subject="ucan_negative")
+            self._assert_fresh(proof.collected_at, subject="ucan_negative")
+            if (
+                not proof.receipt_digest
+                or proof.receipt_digest != proof.compute_digest()
+            ):
+                raise EvidenceRefusal(
+                    "persisted UCAN proof digest mismatch",
+                    code=RefusalCode.DIGEST_MISMATCH,
+                    subject="ucan_negative",
+                )
+            self._assert_signature_if_required(
+                self._signature_from_state(
+                    "ucan_negative",
+                    proof.receipt_digest,
+                ),
+                subject="ucan_negative",
+                payload_digest=proof.receipt_digest,
+            )
+
+        if self.state.soak_chaos is not None:
+            soak = self.state.soak_chaos
+            self._assert_tree_match(soak.tree_id, subject="soak_chaos")
+            self._assert_fresh(soak.collected_at, subject="soak_chaos")
+            digest = content_address(
+                soak.to_dict(),
+                domain=f"{CONTENT_DOMAIN}.soak_chaos",
+            )
+            self._assert_signature_if_required(
+                self._signature_from_state("soak_chaos", digest),
+                subject="soak_chaos",
+                payload_digest=digest,
+            )
+
+    @classmethod
+    def load_state(
+        cls,
+        path: Union[str, Path],
+        *,
+        signing_key: Optional[bytes | str] = None,
+        expected_tree_id: str = "",
+        require_signatures: Optional[bool] = None,
+        now: Optional[datetime] = None,
+        recheck_repository_on_evaluate: bool = True,
+    ) -> "ReleaseEvidenceCollector":
+        """Resume a persisted collector after schema, tree, and digest checks."""
+
+        source = Path(path)
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise EvidenceCollectorError(
+                f"unable to load collector state: {source}",
+                code="invalid_state",
+            ) from exc
+        if not isinstance(payload, Mapping):
+            raise EvidenceCollectorError(
+                "collector state root must be a mapping",
+                code="invalid_state",
+            )
+        collector_raw = payload.get("collector")
+        if (
+            payload.get("schema_version") != SCHEMA_VERSION
+            or payload.get("policy_id") != POLICY_ID
+            or payload.get("ten_child_gates") != list(TEN_CHILD_GATES)
+            or not isinstance(collector_raw, Mapping)
+            or collector_raw.get("schema_version") != SCHEMA_VERSION
+        ):
+            raise EvidenceCollectorError(
+                "collector state schema or policy mismatch",
+                code="invalid_state_schema",
+            )
+        tree_raw = collector_raw.get("tree_binding")
+        if (
+            not isinstance(tree_raw, Mapping)
+            or not str(tree_raw.get("binding_digest") or "").strip()
+            or not str(tree_raw.get("repo_root") or "").strip()
+        ):
+            raise EvidenceCollectorError(
+                "collector state requires a repository-backed tree binding",
+                code="invalid_state_schema",
+            )
+        persisted_tree = str(payload.get("expected_tree_id") or "")
+        requested_tree = (
+            normalize_tree_id(expected_tree_id) if expected_tree_id else ""
+        )
+        if requested_tree and requested_tree != persisted_tree:
+            raise EvidenceRefusal(
+                "persisted state tree does not match expected_tree_id",
+                code=RefusalCode.FOREIGN_TREE,
+                subject="tree",
+            )
+        persisted_signatures_required = bool(payload.get("require_signatures"))
+        if persisted_signatures_required and require_signatures is False:
+            raise EvidenceCollectorError(
+                "cannot downgrade persisted signature requirements",
+                code="signature_policy_downgrade",
+            )
+        signatures_required = (
+            persisted_signatures_required
+            if require_signatures is None
+            else bool(require_signatures)
+        )
+        try:
+            max_age_seconds = float(
+                payload.get("max_receipt_age_seconds")
+                or DEFAULT_MAX_RECEIPT_AGE.total_seconds()
+            )
+        except (TypeError, ValueError) as exc:
+            raise EvidenceCollectorError(
+                "persisted max receipt age is invalid",
+                code="invalid_state_schema",
+            ) from exc
+        if max_age_seconds <= 0:
+            raise EvidenceCollectorError(
+                "persisted max receipt age must be positive",
+                code="invalid_state_schema",
+            )
+        if (
+            str(collector_raw.get("package_version") or "")
+            != str(payload.get("package_version") or "")
+        ):
+            raise EvidenceCollectorError(
+                "persisted package versions do not match",
+                code="invalid_state_schema",
+            )
+        collector = cls(
+            expected_tree_id=requested_tree or persisted_tree,
+            signing_key=signing_key,
+            require_signatures=signatures_required,
+            max_receipt_age=timedelta(seconds=max_age_seconds),
+            package_version=str(payload.get("package_version") or ""),
+            now=now,
+            allow_dirty_tree=False,
+            recheck_repository_on_evaluate=recheck_repository_on_evaluate,
+        )
+        collector.state = CollectorState.from_mapping(collector_raw)
+        collector._validate_loaded_state()
+        return collector
+
     def dump_state(self, path: Union[str, Path]) -> Path:
         """Write collector state JSON to *path*."""
 
@@ -1805,8 +2331,12 @@ class ReleaseEvidenceCollector:
         payload = {
             "collector": self.state.to_dict(),
             "expected_tree_id": self.expected_tree_id,
+            "max_receipt_age_seconds": self.max_receipt_age.total_seconds(),
             "package_version": self.package_version,
             "policy_id": POLICY_ID,
+            "recheck_repository_on_evaluate": (
+                self.recheck_repository_on_evaluate
+            ),
             "require_signatures": self.require_signatures,
             "schema_version": SCHEMA_VERSION,
             "task_id": TASK_ID,
@@ -2200,6 +2730,7 @@ def build_collector_with_passing_evidence(
         require_signatures=require_signatures,
         package_version=package_version,
         now=ts_dt,
+        recheck_repository_on_evaluate=False,
     )
     collector.bind_tree(binding)
     collector.set_environment(environment_id, environment_label)
@@ -2310,7 +2841,7 @@ def policy_dict() -> Dict[str, Any]:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Minimal CLI: write the static gate runbook and print policy summary."""
+    """CLI for policy inspection and fail-closed state resume/evaluation."""
 
     import argparse
 
@@ -2334,6 +2865,26 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         metavar="PATH",
         help="Resolve and print clean tree binding for PATH",
     )
+    parser.add_argument(
+        "--resume-state",
+        metavar="PATH",
+        help="Load, validate, and evaluate persisted collector state",
+    )
+    parser.add_argument(
+        "--key-file",
+        metavar="PATH",
+        help="Private signing-key file used with --resume-state",
+    )
+    parser.add_argument(
+        "--expected-tree-id",
+        metavar="TREE",
+        help="Require resumed state and repository to match TREE",
+    )
+    parser.add_argument(
+        "--output-state",
+        metavar="PATH",
+        help="Write revalidated state and decision after --resume-state",
+    )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     if args.policy_json:
@@ -2346,10 +2897,47 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.bind_repo:
         binding = resolve_clean_tree(args.bind_repo)
         print(json.dumps(binding.to_dict(), indent=2, sort_keys=True))
-    if not (args.policy_json or args.write_runbook or args.bind_repo):
+    resume_rc = 0
+    if args.resume_state:
+        try:
+            key = read_signing_key_file(args.key_file) if args.key_file else None
+            collector = ReleaseEvidenceCollector.load_state(
+                args.resume_state,
+                signing_key=key,
+                expected_tree_id=args.expected_tree_id or "",
+                recheck_repository_on_evaluate=True,
+            )
+            decision = collector.evaluate()
+            if args.output_state:
+                collector.dump_state(args.output_state)
+            print(json.dumps(decision.to_dict(), indent=2, sort_keys=True))
+            resume_rc = 0 if decision.production_ready else 1
+        except EvidenceCollectorError as exc:
+            print(
+                json.dumps(
+                    {
+                        "code": exc.code,
+                        "error": str(exc),
+                        "production_ready": False,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 2
+    elif args.key_file or args.expected_tree_id or args.output_state:
+        parser.error(
+            "--key-file, --expected-tree-id, and --output-state require "
+            "--resume-state"
+        )
+    if not (
+        args.policy_json
+        or args.write_runbook
+        or args.bind_repo
+        or args.resume_state
+    ):
         parser.print_help()
         return 2
-    return 0
+    return resume_rc
 
 
 if __name__ == "__main__":
@@ -2381,9 +2969,11 @@ __all__ = [
     "normalize_tree_id",
     "parse_pytest_counts",
     "policy_dict",
+    "read_signing_key_file",
     "render_gate_runbook",
     "resolve_clean_tree",
     "sign_evidence_digest",
     "text_digest",
+    "verified_file_digest",
     "verify_evidence_signature",
 ]
