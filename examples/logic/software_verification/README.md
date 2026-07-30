@@ -1,7 +1,7 @@
 # Software Verification Runnable Examples
 
-**Interface:** `RunnableVerificationExamples@1`  
-**Companion report interface:** `LiveReadinessReport@1`  
+**Interface:** `RunnableVerificationExamples@1`
+**Companion report interface:** `LiveReadinessReport@1`
 **Goal:** FVT-G013 / FVT-021 — replace manifest-only examples and synthetic readiness claims.
 
 ## Purpose
@@ -108,7 +108,7 @@ or certified status.
 
 Path: `docs/architecture/formal_verification_live_example_report.json`
 
-Schema: `formal-verification-live-example-report/v1`  
+Schema: `formal-verification-live-example-report/v1`
 Interface: `LiveReadinessReport@1`
 
 Required fields (non-exhaustive):
