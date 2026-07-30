@@ -49,12 +49,13 @@ def test_regeneration_normalizer_removes_phone_and_address_tts_traps() -> None:
 
 def test_regeneration_normalizer_repairs_historical_direction_contraction() -> None:
     normalized = normalize_regeneration_spoken_text(
-        "That’s 503, 228, 6322. She’South 16, Lane County’South office, "
-        "and Salem’South program are private."
+        "That’s 503, 228, 6322. She’South 16, it’South private, "
+        "Lane County’South office, and Salem’South program are private."
     )
 
     assert "That’s" in normalized
     assert "She’s" in normalized
+    assert "it’s" in normalized
     assert "Lane County’s" in normalized
     assert "Salem’s" in normalized
     assert "South" not in normalized
