@@ -552,6 +552,27 @@ def test_embedded_release_rejects_unpinned_or_mutable_support(tmp_path: Path):
                 ),
             ),
         )
+    support_source.write_text(
+        '{"audio_path":"tmp_assets/regeneration/audio-one.mp3"}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(AbbyVoiceHFReleaseError, match="local execution path"):
+        builder.build(
+            output_dir=tmp_path / "bad-local-path",
+            release_id="release-bad-local-path",
+            **fixture,
+            audio_asset_sources={"audio-food": audio_source},
+            support_sources=(
+                AbbyVoiceReleaseSupportSource(
+                    relative_path="metadata/bad.jsonl",
+                    source_path=support_source,
+                    expected_sha256=sha256(
+                        support_source.read_bytes()
+                    ).hexdigest(),
+                    row_count=1,
+                ),
+            ),
+        )
 
 
 def test_validate_rejects_tampered_parquet_bytes(tmp_path: Path):

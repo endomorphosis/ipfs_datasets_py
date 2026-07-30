@@ -139,6 +139,13 @@ _MUTABLE_HF_REF_MARKERS: Final[tuple[str, ...]] = (
     "/blob/main/",
     "refs/heads/",
 )
+_LOCAL_SUPPORT_PATH_MARKERS: Final[tuple[str, ...]] = (
+    "/home/",
+    "/tmp/",
+    "file://",
+    "tmp_assets",
+    ".worktrees/",
+)
 _CONFIG_DIRECTORIES: Final[frozenset[str]] = frozenset(_CONFIG_DIRECTORY.values())
 _RESERVED_RELEASE_PATHS: Final[frozenset[str]] = frozenset(
     {
@@ -1186,6 +1193,11 @@ def _validate_support_file_content(
     if any(marker in lowered for marker in _MUTABLE_HF_REF_MARKERS):
         raise AbbyVoiceHFReleaseError(
             f"support file contains a mutable Hugging Face ref: "
+            f"{source.relative_path}"
+        )
+    if any(marker in lowered for marker in _LOCAL_SUPPORT_PATH_MARKERS):
+        raise AbbyVoiceHFReleaseError(
+            f"support file contains a local execution path: "
             f"{source.relative_path}"
         )
     if path.suffix.casefold() == ".json":
