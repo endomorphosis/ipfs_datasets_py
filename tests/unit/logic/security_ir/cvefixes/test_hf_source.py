@@ -311,6 +311,45 @@ def test_row_tampering_is_detected_even_with_rehashed_transport_metadata(
         load_huggingface_security_ir(root, pin)
 
 
+def test_meta_index_pointer_tampering_fails_closed(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "snapshot"
+    release, _ = _stage(root)
+    original = release.artifact("indexes/corpus_chunks.parquet")
+    table = pq.read_table(root / original.path)
+    rows = table.to_pylist()
+    assert len(rows) > 1
+    rows[0]["relative_path"] = rows[1]["relative_path"]
+    output = io.BytesIO()
+    pq.write_table(
+        pa.Table.from_pylist(rows, schema=table.schema),
+        output,
+        compression="zstd",
+    )
+    content = output.getvalue()
+    (root / original.path).write_bytes(content)
+    changed = ReleaseArtifact(
+        path=original.path,
+        media_type=original.media_type,
+        content=content,
+        config_name=original.config_name,
+        row_count=original.row_count,
+    )
+
+    def update(manifest: dict[str, object]) -> None:
+        _replace_descriptor(manifest, original.path, changed)
+        indexes = manifest["indexes"]
+        assert isinstance(indexes, dict)
+        indexes["corpus_chunks"] = changed.descriptor()
+
+    pin = _rewrite_manifest(root, update)
+    with pytest.raises(
+        HuggingFaceSourceIntegrityError, match="meta-index"
+    ):
+        load_huggingface_security_ir(root, pin)
+
+
 def test_unknown_dataset_schema_fails_closed(tmp_path: Path) -> None:
     root = tmp_path / "snapshot"
     release, _ = _stage(root)

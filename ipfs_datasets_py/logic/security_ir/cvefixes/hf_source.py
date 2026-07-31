@@ -34,6 +34,7 @@ from .adapter import (
 )
 from .hf_release import (
     DEFAULT_HF_DATASET_ID,
+    HF_META_SCHEMA_VERSION,
     HF_PARQUET_SCHEMA_VERSION,
     HF_RELEASE_SCHEMA_VERSION,
     ReleaseArtifact,
@@ -69,6 +70,23 @@ _PARQUET_COLUMNS: Final = (
     "parent_cids",
     "config_cid",
     "record_json",
+)
+_META_COLUMNS: Final = (
+    "cid",
+    "end_document_index",
+    "first_key",
+    "kind",
+    "last_key",
+    "relative_path",
+    "row_count",
+    "schema_version",
+    "sha256",
+    "shard_id",
+    "size_bytes",
+    "start_document_index",
+)
+_META_INDEX_NAMES: Final = frozenset(
+    {"corpus_chunks", "graph_edge_chunks", "graph_node_chunks"}
 )
 _MANIFEST_FIELDS: Final = frozenset(
     {
@@ -572,6 +590,82 @@ def _parquet_rows(
     return tuple(table.to_pylist())
 
 
+def _meta_rows(
+    artifact: ReleaseArtifact,
+    *,
+    limits: HuggingFaceSourceLimits,
+) -> tuple[Mapping[str, Any], ...]:
+    if len(artifact.content) > limits.max_shard_bytes:
+        raise HuggingFaceSourceLimitError(
+            f"meta-index exceeds shard byte limit: {artifact.path}"
+        )
+    try:
+        import pyarrow.parquet as pq
+
+        table = pq.read_table(io.BytesIO(artifact.content))
+    except Exception as exc:
+        raise HuggingFaceSourceIntegrityError(
+            f"cannot decode meta-index: {artifact.path}"
+        ) from exc
+    if tuple(table.schema.names) != _META_COLUMNS:
+        raise HuggingFaceSourceIntegrityError(
+            f"unknown meta-index schema in {artifact.path}"
+        )
+    metadata = table.schema.metadata or {}
+    if metadata.get(b"schema_version") != HF_META_SCHEMA_VERSION.encode("ascii"):
+        raise HuggingFaceSourceIntegrityError(
+            f"unknown meta-index schema version in {artifact.path}"
+        )
+    return tuple(table.to_pylist())
+
+
+def _verify_meta_indexes(
+    indexes: Sequence[ReleaseArtifact],
+    shards: Sequence[ReleaseArtifact],
+    *,
+    limits: HuggingFaceSourceLimits,
+) -> None:
+    if not indexes:
+        return
+    data = {item.path: item for item in shards}
+    covered: set[str] = set()
+    for index in sorted(indexes, key=lambda item: item.path):
+        rows = _meta_rows(index, limits=limits)
+        if len(rows) != index.row_count:
+            raise HuggingFaceSourceIntegrityError(
+                "meta-index row count does not match descriptor"
+            )
+        document_index = 0
+        for shard_id, row in enumerate(rows):
+            relative_path = row.get("relative_path")
+            shard = data.get(relative_path)
+            if shard is None or relative_path in covered:
+                raise HuggingFaceSourceIntegrityError(
+                    "meta-index must point to one unique data shard"
+                )
+            end_document_index = document_index + shard.row_count - 1
+            if (
+                row.get("cid") != shard.content_id
+                or row.get("sha256") != shard.sha256
+                or row.get("size_bytes") != len(shard.content)
+                or row.get("row_count") != shard.row_count
+                or row.get("kind") != shard.config_name
+                or row.get("schema_version") != HF_META_SCHEMA_VERSION
+                or row.get("shard_id") != shard_id
+                or row.get("start_document_index") != document_index
+                or row.get("end_document_index") != end_document_index
+            ):
+                raise HuggingFaceSourceIntegrityError(
+                    "meta-index shard binding mismatch"
+                )
+            covered.add(relative_path)
+            document_index = end_document_index + 1
+    if covered != set(data):
+        raise HuggingFaceSourceIntegrityError(
+            "meta-index pointers do not cover data shards exactly"
+        )
+
+
 def _verified_artifacts(
     root: Path,
     descriptors: Any,
@@ -673,7 +767,10 @@ def load_huggingface_security_ir(
     if manifest_digest != pin.manifest_sha256:
         raise HuggingFaceSourceIntegrityError("pinned manifest digest mismatch")
     manifest = _strict_json_object(manifest_content, "manifest.json")
-    if set(manifest) != _MANIFEST_FIELDS:
+    if frozenset(manifest) not in {
+        _MANIFEST_FIELDS,
+        _MANIFEST_FIELDS | {"indexes"},
+    }:
         raise HuggingFaceSourceIntegrityError(
             "manifest has unknown or missing fields"
         )
@@ -697,10 +794,18 @@ def load_huggingface_security_ir(
         raise HuggingFaceSourceIntegrityError(
             "release is missing required public artifacts"
         )
-    shards = tuple(item for item in artifacts if item.path.endswith(".parquet"))
+    all_shards = tuple(
+        item for item in artifacts if item.path.endswith(".parquet")
+    )
+    shards = tuple(
+        item for item in all_shards if item.path.startswith("data/")
+    )
+    indexes = tuple(
+        item for item in all_shards if item.path.startswith("indexes/")
+    )
     if not shards:
         raise HuggingFaceSourceIntegrityError("release has no Parquet shards")
-    if len(shards) > active_limits.max_shards:
+    if len(all_shards) > active_limits.max_shards:
         raise HuggingFaceSourceLimitError("release exceeds shard limit")
     data_root = snapshot_root / "data"
     if data_root.is_symlink() or not data_root.is_dir():
@@ -715,6 +820,32 @@ def load_huggingface_security_ir(
     if observed_shards != {item.path for item in shards}:
         raise HuggingFaceSourceIntegrityError(
             "manifest Parquet inventory does not match snapshot shards"
+        )
+    index_root = snapshot_root / "indexes"
+    observed_indexes = (
+        {
+            path.relative_to(snapshot_root).as_posix()
+            for path in index_root.glob("*.parquet")
+            if path.is_file()
+        }
+        if index_root.is_dir() and not index_root.is_symlink()
+        else set()
+    )
+    if observed_indexes != {item.path for item in indexes}:
+        raise HuggingFaceSourceIntegrityError(
+            "manifest meta-index inventory does not match snapshot indexes"
+        )
+    manifest_indexes = manifest.get("indexes", {})
+    expected_indexes = {
+        PurePosixPath(item.path).stem: item.descriptor() for item in indexes
+    }
+    if (
+        not set(expected_indexes) <= _META_INDEX_NAMES
+        or not isinstance(manifest_indexes, Mapping)
+        or dict(manifest_indexes) != expected_indexes
+    ):
+        raise HuggingFaceSourceIntegrityError(
+            "manifest meta-index descriptor binding mismatch"
         )
 
     try:
@@ -796,6 +927,7 @@ def load_huggingface_security_ir(
         raise HuggingFaceSourceIntegrityError(
             "manifest shard inventory does not match verified artifacts"
         )
+    _verify_meta_indexes(indexes, shards, limits=active_limits)
     dataset = DerivedDataset(records=tuple(records))
     if (
         dataset.cid != manifest["derived_dataset_root"]
@@ -826,7 +958,9 @@ def load_huggingface_security_ir(
         or infos.get("dataset_id") != pin.dataset_id
         or infos.get("derived_dataset_root") != dataset.cid
         or not isinstance(infos.get("configs"), Mapping)
-        or set(infos["configs"]) != {item.config_name for item in shards}
+        or set(infos["configs"]) != {
+            item.config_name for item in all_shards
+        }
     ):
         raise HuggingFaceSourceIntegrityError(
             "dataset_infos schema or identity mismatch"
@@ -839,7 +973,7 @@ def load_huggingface_security_ir(
         split = config_value.get("splits")
         train = split.get("train") if isinstance(split, Mapping) else None
         config_shards = tuple(
-            item for item in shards if item.config_name == config_name
+            item for item in all_shards if item.config_name == config_name
         )
         if (
             set(config_value) != {"features", "splits"}

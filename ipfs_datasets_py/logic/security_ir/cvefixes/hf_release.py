@@ -26,7 +26,7 @@ from types import MappingProxyType
 from typing import Any, Final
 
 from ...ir_core.canonical import canonical_json_bytes
-from ...ir_core.identity import canonical_identity
+from ...ir_core.identity import canonical_identity, cid_v1_from_digest
 from .release_policy import (
     CVEFIXES_BODY_FIELDS,
     LicenseProvenance,
@@ -46,8 +46,9 @@ from .schemas import (
 
 HF_RELEASE_SCHEMA_VERSION: Final = "cvefixes-huggingface-release/v1"
 HF_PARQUET_SCHEMA_VERSION: Final = "cvefixes-huggingface-parquet/v1"
+HF_META_SCHEMA_VERSION: Final = "cvefixes-hf-shard-meta/v1"
 HF_QUERY_SCHEMA_VERSION: Final = "cvefixes-huggingface-query/v1"
-DEFAULT_HF_DATASET_ID: Final = "sofiyapervane/cvefixes-security-ir-graphrag"
+DEFAULT_HF_DATASET_ID: Final = "Publicus/cvefixes-security-ir-graphrag"
 DEFAULT_LIMITATIONS: Final[tuple[str, ...]] = (
     "Derived examples are non-authoritative evidence and cannot grant execution.",
     "Coverage and labels inherit limitations of the pinned CVEfixes source.",
@@ -62,6 +63,27 @@ _PARQUET_COLUMNS: Final[tuple[str, ...]] = (
     "parent_cids",
     "config_cid",
     "record_json",
+)
+_META_COLUMNS: Final[tuple[str, ...]] = (
+    "cid",
+    "end_document_index",
+    "first_key",
+    "kind",
+    "last_key",
+    "relative_path",
+    "row_count",
+    "schema_version",
+    "sha256",
+    "shard_id",
+    "size_bytes",
+    "start_document_index",
+)
+_META_INDEX_CONFIGS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "corpus_chunks": "corpus_chunk_index",
+        "graph_edge_chunks": "graph_edge_chunk_index",
+        "graph_node_chunks": "graph_node_chunk_index",
+    }
 )
 _SHA256_RE = re.compile(r"[0-9a-f]{64}")
 _CID_RE = re.compile(r"b[a-z2-7]{58}")
@@ -106,6 +128,26 @@ _CACHE_PATH_PARTS: Final[frozenset[str]] = frozenset(
 )
 _ALLOWED_TOP_LEVEL_FILES: Final[frozenset[str]] = frozenset(
     {"README.md", "dataset_infos.json", "evaluation-report.json", "manifest.json"}
+)
+_RETRIEVAL_DATA_PATH_RE: Final = re.compile(
+    r"(?:"
+    r"(?:corpus|vectors)/part-\d{6}\.parquet|"
+    r"bm25/(?:documents|postings)/part-\d{6}\.parquet|"
+    r"graph/(?:nodes|edges)/part-\d{6}\.parquet|"
+    r"graph/adjacency/(?:incoming|outgoing)/part-\d{6}\.parquet"
+    r")"
+)
+_RETRIEVAL_INDEX_NAMES: Final[frozenset[str]] = frozenset(
+    {
+        "bm25_document_chunks",
+        "bm25_keyword_shards",
+        "corpus_chunks",
+        "graph_edge_chunks",
+        "graph_incoming_adjacency",
+        "graph_node_chunks",
+        "graph_outgoing_adjacency",
+        "vector_chunks",
+    }
 )
 
 
@@ -168,28 +210,35 @@ def _artifact_path(value: Any) -> str:
     if len(parsed.parts) == 1:
         if path not in _ALLOWED_TOP_LEVEL_FILES:
             raise ReleaseSafetyError(f"unexpected top-level artifact: {path!r}")
-    elif (
-        len(parsed.parts) != 3
-        or parsed.parts[0] != "data"
-        or not _RECORD_TYPE_RE.fullmatch(parsed.parts[1])
-        or not re.fullmatch(
-            r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
+    elif parsed.parts[0] == "data":
+        relative = PurePosixPath(*parsed.parts[1:]).as_posix()
+        canonical_record = (
+            len(parsed.parts) == 3
+            and _RECORD_TYPE_RE.fullmatch(parsed.parts[1]) is not None
+            and re.fullmatch(
+                r"train-\d{5}-of-\d{5}\.parquet", parsed.parts[2]
+            )
+            is not None
         )
+        if not canonical_record and _RETRIEVAL_DATA_PATH_RE.fullmatch(
+            relative
+        ) is None:
+            raise ReleaseSafetyError(
+                f"unexpected release artifact path: {path!r}"
+            )
+    elif (
+        len(parsed.parts) != 2
+        or parsed.parts[0] != "indexes"
+        or parsed.suffix != ".parquet"
+        or parsed.stem not in _RETRIEVAL_INDEX_NAMES
     ):
         raise ReleaseSafetyError(f"unexpected release artifact path: {path!r}")
     return path
 
 
 def _content_cid(content: bytes, *, media_type: str) -> str:
-    return canonical_identity(
-        {
-            "byte_length": len(content),
-            "media_type": media_type,
-            "sha256": hashlib.sha256(content).hexdigest(),
-        },
-        domain="cvefixes-security-ir/release-artifact",
-        schema_version=HF_RELEASE_SCHEMA_VERSION,
-    ).cid
+    del media_type
+    return cid_v1_from_digest(hashlib.sha256(content).digest())
 
 
 def _walk_public_value(value: Any, *, location: str = "$") -> None:
@@ -204,9 +253,20 @@ def _walk_public_value(value: Any, *, location: str = "$") -> None:
             key = raw_key.casefold()
             child = f"{location}.{raw_key}"
             if key in CVEFIXES_BODY_FIELDS:
-                raise ReleaseSafetyError(
-                    f"internal body field cannot enter public staging: {child}"
+                digest_only = (
+                    location.endswith(".body_digests")
+                    and isinstance(item, Mapping)
+                    and set(item) == {"sha256", "utf8_bytes"}
+                    and isinstance(item.get("sha256"), str)
+                    and _SHA256_RE.fullmatch(item["sha256"]) is not None
+                    and type(item.get("utf8_bytes")) is int
+                    and item["utf8_bytes"] >= 0
                 )
+                if not digest_only:
+                    raise ReleaseSafetyError(
+                        "internal body field cannot enter public staging: "
+                        f"{child}"
+                    )
             if key in _CREDENTIAL_KEYS:
                 raise ReleaseSafetyError(
                     f"credential field cannot enter staging: {child}"
@@ -403,6 +463,26 @@ class HuggingFaceRelease:
 
     @property
     def parquet_artifacts(self) -> tuple[ReleaseArtifact, ...]:
+        """Canonical record shards (meta-index Parquet is intentionally separate)."""
+
+        return tuple(
+            item
+            for item in self.artifacts
+            if item.path.startswith("data/") and item.path.endswith(".parquet")
+        )
+
+    @property
+    def index_artifacts(self) -> tuple[ReleaseArtifact, ...]:
+        """Compact SkillCenter-compatible shard indexes exposed by the Viewer."""
+
+        return tuple(
+            item
+            for item in self.artifacts
+            if item.path.startswith("indexes/") and item.path.endswith(".parquet")
+        )
+
+    @property
+    def all_parquet_artifacts(self) -> tuple[ReleaseArtifact, ...]:
         return tuple(
             item for item in self.artifacts if item.path.endswith(".parquet")
         )
@@ -531,6 +611,129 @@ def _write_parquet(rows: Sequence[Mapping[str, Any]], config: ParquetReleaseConf
     return output.getvalue()
 
 
+def _meta_parquet_schema() -> Any:
+    pa, _ = _pyarrow()
+    return pa.schema(
+        [
+            pa.field("cid", pa.string(), nullable=False),
+            pa.field("end_document_index", pa.int64(), nullable=False),
+            pa.field("first_key", pa.string(), nullable=False),
+            pa.field("kind", pa.string(), nullable=False),
+            pa.field("last_key", pa.string(), nullable=False),
+            pa.field("relative_path", pa.string(), nullable=False),
+            pa.field("row_count", pa.int64(), nullable=False),
+            pa.field("schema_version", pa.string(), nullable=False),
+            pa.field("sha256", pa.string(), nullable=False),
+            pa.field("shard_id", pa.int32(), nullable=False),
+            pa.field("size_bytes", pa.int64(), nullable=False),
+            pa.field("start_document_index", pa.int64(), nullable=False),
+        ],
+        metadata={b"schema_version": HF_META_SCHEMA_VERSION.encode("ascii")},
+    )
+
+
+def _write_meta_parquet(
+    rows: Sequence[Mapping[str, Any]], config: ParquetReleaseConfig
+) -> bytes:
+    pa, pq = _pyarrow()
+    table = pa.Table.from_pylist(list(rows), schema=_meta_parquet_schema())
+    output = io.BytesIO()
+    pq.write_table(
+        table,
+        output,
+        compression=None if config.compression == "none" else config.compression,
+        data_page_version="1.0",
+        row_group_size=config.row_group_size,
+        use_dictionary=False,
+        version="2.6",
+        write_statistics=True,
+    )
+    return output.getvalue()
+
+
+def _meta_groups(
+    artifacts: Sequence[ReleaseArtifact],
+) -> tuple[tuple[str, tuple[ReleaseArtifact, ...]], ...]:
+    """Partition record shards like the published SkillCenter release.
+
+    Canonical graph tables receive dedicated indexes. All remaining Security IR
+    record types form the remotely routable corpus index.
+    """
+
+    graph_nodes = tuple(
+        item for item in artifacts if item.config_name == "graph_node"
+    )
+    graph_edges = tuple(
+        item for item in artifacts if item.config_name == "graph_edge"
+    )
+    corpus = tuple(
+        item
+        for item in artifacts
+        if item.config_name not in {"graph_node", "graph_edge"}
+    )
+    return tuple(
+        (name, rows)
+        for name, rows in (
+            ("corpus_chunks", corpus),
+            ("graph_node_chunks", graph_nodes),
+            ("graph_edge_chunks", graph_edges),
+        )
+        if rows
+    )
+
+
+def _build_meta_index_artifacts(
+    artifacts: Sequence[ReleaseArtifact],
+    config: ParquetReleaseConfig,
+) -> tuple[ReleaseArtifact, ...]:
+    result: list[ReleaseArtifact] = []
+    for index_name, shards in _meta_groups(artifacts):
+        rows: list[dict[str, Any]] = []
+        document_index = 0
+        for shard_id, artifact in enumerate(
+            sorted(shards, key=lambda item: item.path)
+        ):
+            shard_rows = _read_parquet_rows(artifact)
+            if not shard_rows:
+                raise ReleaseIntegrityError(
+                    f"record shard is empty: {artifact.path}"
+                )
+            keys = tuple(str(row["record_id"]) for row in shard_rows)
+            end_document_index = document_index + len(shard_rows) - 1
+            rows.append(
+                {
+                    "cid": artifact.content_id,
+                    "end_document_index": end_document_index,
+                    "first_key": min(keys),
+                    "kind": artifact.config_name,
+                    "last_key": max(keys),
+                    "relative_path": artifact.path,
+                    "row_count": len(shard_rows),
+                    "schema_version": HF_META_SCHEMA_VERSION,
+                    "sha256": artifact.sha256,
+                    "shard_id": shard_id,
+                    "size_bytes": len(artifact.content),
+                    "start_document_index": document_index,
+                }
+            )
+            document_index = end_document_index + 1
+        content = _write_meta_parquet(rows, config)
+        if len(content) > config.max_shard_bytes:
+            raise ReleaseLimitError(
+                f"meta-index exceeds max_shard_bytes: {index_name}"
+            )
+        result.append(
+            ReleaseArtifact(
+                path=f"indexes/{index_name}.parquet",
+                media_type="application/vnd.apache.parquet",
+                content=content,
+                config_name=_META_INDEX_CONFIGS[index_name],
+                row_count=len(rows),
+            )
+        )
+    return tuple(result)
+
+
 def _partition_rows(
     rows: tuple[Mapping[str, Any], ...], config: ParquetReleaseConfig
 ) -> tuple[tuple[Mapping[str, Any], ...], ...]:
@@ -568,18 +771,37 @@ def _dataset_infos(
     for artifact in artifacts:
         if not artifact.config_name:
             continue
+        is_meta = artifact.path.startswith("indexes/")
+        features = (
+            {
+                "cid": {"dtype": "string"},
+                "end_document_index": {"dtype": "int64"},
+                "first_key": {"dtype": "string"},
+                "kind": {"dtype": "string"},
+                "last_key": {"dtype": "string"},
+                "relative_path": {"dtype": "string"},
+                "row_count": {"dtype": "int64"},
+                "schema_version": {"dtype": "string"},
+                "sha256": {"dtype": "string"},
+                "shard_id": {"dtype": "int32"},
+                "size_bytes": {"dtype": "int64"},
+                "start_document_index": {"dtype": "int64"},
+            }
+            if is_meta
+            else {
+                "authority": {"dtype": "string"},
+                "config_cid": {"dtype": "string"},
+                "parent_cids": {"feature": {"dtype": "string"}},
+                "record_id": {"dtype": "string"},
+                "record_json": {"dtype": "string"},
+                "record_type": {"dtype": "string"},
+                "source_cids": {"feature": {"dtype": "string"}},
+            }
+        )
         config = configs.setdefault(
             artifact.config_name,
             {
-                "features": {
-                    "authority": {"dtype": "string"},
-                    "config_cid": {"dtype": "string"},
-                    "parent_cids": {"feature": {"dtype": "string"}},
-                    "record_id": {"dtype": "string"},
-                    "record_json": {"dtype": "string"},
-                    "record_type": {"dtype": "string"},
-                    "source_cids": {"feature": {"dtype": "string"}},
-                },
+                "features": features,
                 "splits": {"train": {"num_bytes": 0, "num_examples": 0}},
             },
         )
@@ -598,7 +820,7 @@ def _dataset_card(
     dataset_id: str,
     source: LicenseProvenance,
     profile: str,
-    config_names: Sequence[str],
+    config_paths: Mapping[str, str],
     limitations: Sequence[str],
 ) -> bytes:
     safe_limitations = tuple(
@@ -607,7 +829,7 @@ def _dataset_card(
     if not safe_limitations:
         raise HuggingFaceReleaseError("dataset card requires limitations")
     card_data = {
-        "configs": [{"config_name": item} for item in sorted(config_names)],
+        "configs": [{"config_name": item} for item in sorted(config_paths)],
         "dataset_info": {"features": []},
         "license": source.license_expression,
         "pretty_name": "CVEfixes Security IR GraphRAG",
@@ -621,9 +843,15 @@ def _dataset_card(
             "configs:",
         )
     )
-    yaml_lines.extend(
-        f"- config_name: {json.dumps(item)}" for item in sorted(config_names)
-    )
+    for item, path in sorted(config_paths.items()):
+        yaml_lines.extend(
+            (
+                f"- config_name: {json.dumps(item)}",
+                "  data_files:",
+                "  - split: train",
+                f"    path: {json.dumps(path)}",
+            )
+        )
     yaml_lines.extend(
         (
             "source_datasets:",
@@ -647,7 +875,18 @@ def _dataset_card(
             "",
         )
     )
-    yaml_lines.extend(f"- `{item}`" for item in sorted(config_names))
+    yaml_lines.extend(f"- `{item}`" for item in sorted(config_paths))
+    yaml_lines.extend(
+        (
+            "",
+            "## Remote shard indexes",
+            "",
+            "The compact Parquet configs under `indexes/` use the same CID, "
+            "SHA-256, byte-size, row-range, and physical-path contract as "
+            "`Publicus/skillcenter-ir`. Thin clients can query these configs "
+            "through the Hugging Face Dataset Viewer before fetching a data shard.",
+        )
+    )
     yaml_lines.extend(("", "## Limitations", ""))
     yaml_lines.extend(f"- {item}" for item in safe_limitations)
     yaml_lines.extend(
@@ -776,12 +1015,22 @@ def build_huggingface_release(
             )
 
     parquet_artifacts = tuple(artifacts)
-    config_names = tuple(sorted(grouped))
+    index_artifacts = _build_meta_index_artifacts(parquet_artifacts, config)
+    artifacts.extend(index_artifacts)
+    config_paths = {
+        name: f"data/{name}/*.parquet" for name in sorted(grouped)
+    }
+    config_paths.update(
+        {
+            artifact.config_name: artifact.path
+            for artifact in index_artifacts
+        }
+    )
     card = _dataset_card(
         dataset_id=dataset_id,
         source=license_provenance,
         profile=PUBLIC_RELEASE_PROFILE.name,
-        config_names=config_names,
+        config_paths=config_paths,
         limitations=limitations,
     )
     artifacts.append(
@@ -803,7 +1052,9 @@ def build_huggingface_release(
         )
     )
     infos = _dataset_infos(
-        parquet_artifacts, dataset_id=dataset_id, dataset_root=dataset.cid
+        (*parquet_artifacts, *index_artifacts),
+        dataset_id=dataset_id,
+        dataset_root=dataset.cid,
     )
     artifacts.append(
         ReleaseArtifact(
@@ -842,6 +1093,10 @@ def build_huggingface_release(
         ],
         "dataset_id": dataset_id,
         "derived_dataset_root": dataset.cid,
+        "indexes": {
+            PurePosixPath(item.path).stem: item.descriptor()
+            for item in sorted(index_artifacts, key=lambda item: item.path)
+        },
         "release_manifest": manifest_record.to_dict(),
         "release_root": root,
         "schema_version": HF_RELEASE_SCHEMA_VERSION,
@@ -890,6 +1145,77 @@ def _read_parquet_rows(artifact: ReleaseArtifact) -> tuple[dict[str, Any], ...]:
     return tuple(table.to_pylist())
 
 
+def _read_meta_rows(artifact: ReleaseArtifact) -> tuple[dict[str, Any], ...]:
+    _, pq = _pyarrow()
+    try:
+        table = pq.read_table(io.BytesIO(artifact.content))
+    except Exception as exc:
+        raise ReleaseIntegrityError(
+            f"cannot read meta-index artifact {artifact.path}"
+        ) from exc
+    if tuple(table.schema.names) != _META_COLUMNS:
+        raise ReleaseIntegrityError(
+            f"unexpected meta-index schema in {artifact.path}"
+        )
+    metadata = table.schema.metadata or {}
+    if metadata.get(b"schema_version") != HF_META_SCHEMA_VERSION.encode("ascii"):
+        raise ReleaseIntegrityError(
+            f"missing meta-index schema version in {artifact.path}"
+        )
+    return tuple(table.to_pylist())
+
+
+def _validate_meta_indexes(release: HuggingFaceRelease) -> None:
+    expected_groups = dict(_meta_groups(release.parquet_artifacts))
+    actual_indexes = {
+        PurePosixPath(item.path).stem: item for item in release.index_artifacts
+    }
+    if set(actual_indexes) != set(expected_groups):
+        raise ReleaseIntegrityError("meta-index inventory mismatch")
+
+    covered_paths: set[str] = set()
+    for index_name, shards in expected_groups.items():
+        index_artifact = actual_indexes[index_name]
+        if index_artifact.config_name != _META_INDEX_CONFIGS[index_name]:
+            raise ReleaseIntegrityError("meta-index config binding mismatch")
+        rows = _read_meta_rows(index_artifact)
+        if len(rows) != index_artifact.row_count or len(rows) != len(shards):
+            raise ReleaseIntegrityError("meta-index row inventory mismatch")
+        document_index = 0
+        for shard_id, (row, shard) in enumerate(
+            zip(rows, sorted(shards, key=lambda item: item.path), strict=True)
+        ):
+            shard_rows = _read_parquet_rows(shard)
+            keys = tuple(str(item["record_id"]) for item in shard_rows)
+            end_document_index = document_index + len(shard_rows) - 1
+            expected = {
+                "cid": shard.content_id,
+                "end_document_index": end_document_index,
+                "first_key": min(keys),
+                "kind": shard.config_name,
+                "last_key": max(keys),
+                "relative_path": shard.path,
+                "row_count": len(shard_rows),
+                "schema_version": HF_META_SCHEMA_VERSION,
+                "sha256": shard.sha256,
+                "shard_id": shard_id,
+                "size_bytes": len(shard.content),
+                "start_document_index": document_index,
+            }
+            if row != expected:
+                raise ReleaseIntegrityError(
+                    f"meta-index pointer mismatch: {shard.path}"
+                )
+            if shard.path in covered_paths:
+                raise ReleaseIntegrityError("data shard is indexed more than once")
+            covered_paths.add(shard.path)
+            document_index = end_document_index + 1
+    if covered_paths != {item.path for item in release.parquet_artifacts}:
+        raise ReleaseIntegrityError(
+            "meta-index pointers do not cover data shards exactly"
+        )
+
+
 def validate_huggingface_release(
     release: HuggingFaceRelease,
 ) -> ReleaseValidation:
@@ -904,6 +1230,13 @@ def validate_huggingface_release(
         raise ReleaseIntegrityError("canonical release manifest mismatch")
     if manifest.get("source") != release.license_provenance.to_dict():
         raise ReleaseIntegrityError("manifest license provenance mismatch")
+    indexes = manifest.get("indexes")
+    expected_indexes = {
+        PurePosixPath(item.path).stem: item.descriptor()
+        for item in release.index_artifacts
+    }
+    if indexes != expected_indexes:
+        raise ReleaseIntegrityError("manifest meta-index inventory mismatch")
     described = manifest.get("artifacts")
     if not isinstance(described, list):
         raise ReleaseIntegrityError("manifest artifacts must be a list")
@@ -976,6 +1309,7 @@ def validate_huggingface_release(
         release.release_manifest.shard_cids
     ):
         raise ReleaseIntegrityError("manifest shard inventory mismatch")
+    _validate_meta_indexes(release)
     return ReleaseValidation(
         release_root=release.release_root,
         artifact_count=len(release.artifacts),
@@ -1109,6 +1443,7 @@ __all__ = [
     "BoundedReleaseQueryClient",
     "DEFAULT_HF_DATASET_ID",
     "DEFAULT_LIMITATIONS",
+    "HF_META_SCHEMA_VERSION",
     "HF_PARQUET_SCHEMA_VERSION",
     "HF_QUERY_SCHEMA_VERSION",
     "HF_RELEASE_SCHEMA_VERSION",

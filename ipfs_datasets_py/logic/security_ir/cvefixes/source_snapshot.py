@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Final, Mapping, Sequence
+from urllib.parse import urlsplit
 
 
 CVEFIXES_DATASET_ID: Final = "hitoshura25/cvefixes"
@@ -62,6 +63,9 @@ _SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CVE_ID_RE = re.compile(r"^CVE-[0-9]{4}-[0-9]{4,}$")
 _GIT_HASH_RE = re.compile(r"^[0-9a-f]{40}$")
+_REVIEWED_REPOSITORY_HOSTS: Final = frozenset(
+    {"bitbucket.org", "github.com", "gitlab.com"}
+)
 _ALLOWED_DESCRIPTION_AST_NODES: Final = (
     ast.Expression,
     ast.List,
@@ -522,11 +526,19 @@ class CVEfixesRowAdapter:
         if not _GIT_HASH_RE.fullmatch(commit_hash):
             raise CVEfixesRowError("hash must be a 40-character lowercase git hash")
         repo_url = _required_text(row["repo_url"], "repo_url", 4_096)
-        if not (
-            repo_url.startswith("https://github.com/")
-            or repo_url.startswith("http://github.com/")
+        parsed_repo = urlsplit(repo_url)
+        if (
+            parsed_repo.scheme != "https"
+            or parsed_repo.hostname not in _REVIEWED_REPOSITORY_HOSTS
+            or parsed_repo.username is not None
+            or parsed_repo.password is not None
+            or not parsed_repo.path.strip("/")
+            or parsed_repo.query
+            or parsed_repo.fragment
         ):
-            raise CVEfixesRowError("repo_url must identify a GitHub repository")
+            raise CVEfixesRowError(
+                "repo_url must identify a reviewed HTTPS source repository"
+            )
 
         metadata_fields = {
             name: _optional_text(
@@ -546,7 +558,12 @@ class CVEfixesRowAdapter:
             )
         }
         body_fields = {
-            name: _optional_text(row[name], name, self._bounds.max_body_chars)
+            name: _optional_text(
+                row[name],
+                name,
+                self._bounds.max_body_chars,
+                allow_nul=True,
+            )
             for name in ("diff_with_context", "vulnerable_code", "fixed_code")
         }
         file_paths = _bounded_string_sequence(
@@ -677,12 +694,18 @@ def _required_text(value: Any, label: str, max_chars: int) -> str:
     return value
 
 
-def _optional_text(value: Any, label: str, max_chars: int) -> str | None:
+def _optional_text(
+    value: Any,
+    label: str,
+    max_chars: int,
+    *,
+    allow_nul: bool = False,
+) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str):
         raise CVEfixesRowError(f"{label} must be text or null")
-    if "\x00" in value:
+    if not allow_nul and "\x00" in value:
         raise CVEfixesRowError(f"{label} must not contain NUL")
     if len(value) > max_chars:
         raise CVEfixesRowError(f"{label} exceeds its character bound")
