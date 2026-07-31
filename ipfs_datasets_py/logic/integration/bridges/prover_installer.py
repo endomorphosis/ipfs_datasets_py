@@ -1945,8 +1945,70 @@ def _proverif_build_environment(
         return None
 
 
-def _state_model_available(receipt: object) -> bool:
-    return str(getattr(receipt, "status", "")) in {"available", "installed"}
+def _state_model_available(
+    receipt: object,
+    *,
+    tool_id: str,
+    install_root: Path,
+    java_executable: str | Path | None,
+) -> bool:
+    """Verify the final managed bundle instead of trusting receipt flags."""
+
+    if (
+        str(getattr(receipt, "status", "")) not in {"available", "installed"}
+        or not bool(getattr(receipt, "installed", False))
+    ):
+        return False
+    from ipfs_datasets_py.logic.backends.installers import state_model
+
+    minimum_java = (
+        state_model.TLC_MIN_JAVA_MAJOR
+        if tool_id == "tlc"
+        else state_model.APALACHE_MIN_JAVA_MAJOR
+    )
+    java = state_model.probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=minimum_java,
+    )
+    if not java.usable or java.executable is None:
+        return False
+    root = state_model.expand_user_local_root(install_root)
+    if tool_id == "tlc":
+        identity = state_model.managed_tlc_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.TLC_EXECUTABLE
+        probe = state_model.probe_tlc_runtime(
+            executable=str(launcher),
+            java_executable=java.executable,
+        )
+    elif tool_id == "apalache":
+        identity = state_model.managed_apalache_identity(
+            root,
+            java_executable=java.executable,
+        )
+        launcher = root / "bin" / state_model.APALACHE_EXECUTABLE
+        probe = state_model.probe_apalache_runtime(
+            str(launcher),
+            java_executable=java.executable,
+            expected_version=state_model.APALACHE_VERSION,
+        )
+    else:
+        return False
+    receipt_executable = getattr(receipt, "executable_path", None)
+    receipt_path = (
+        Path(os.path.abspath(os.path.expanduser(str(receipt_executable))))
+        if receipt_executable
+        else None
+    )
+    return bool(
+        identity.get("usable")
+        and probe.usable
+        and receipt_path is not None
+        and not receipt_path.is_symlink()
+        and receipt_path == launcher
+    )
 
 
 def ensure_tlc(
@@ -1963,15 +2025,21 @@ def ensure_tlc(
         ensure_tlc as ensure_managed_tlc,
     )
 
+    install_root = _external_prover_root()
     receipt = ensure_managed_tlc(
         yes=yes,
         strict=strict,
         force=force,
         on_progress=on_progress,
-        install_root=_external_prover_root(),
+        install_root=install_root,
         java_executable=java_executable,
     )
-    return _state_model_available(receipt)
+    return _state_model_available(
+        receipt,
+        tool_id="tlc",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
 
 
 def ensure_apalache(
@@ -1988,15 +2056,21 @@ def ensure_apalache(
         ensure_apalache as ensure_managed_apalache,
     )
 
+    install_root = _external_prover_root()
     receipt = ensure_managed_apalache(
         yes=yes,
         strict=strict,
         force=force,
         on_progress=on_progress,
-        install_root=_external_prover_root(),
+        install_root=install_root,
         java_executable=java_executable,
     )
-    return _state_model_available(receipt)
+    return _state_model_available(
+        receipt,
+        tool_id="apalache",
+        install_root=install_root,
+        java_executable=java_executable,
+    )
 
 
 def _numeric_version(value: str) -> tuple[int, ...]:

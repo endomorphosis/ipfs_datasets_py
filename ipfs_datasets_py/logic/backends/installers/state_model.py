@@ -149,6 +149,10 @@ class StateModelInstallerError(RuntimeError):
     """Raised when a strict TLC/Apalache install policy is violated."""
 
 
+class StateModelPublicationValidationError(StateModelInstallerError):
+    """Raised after an invalid published bundle has been rolled back."""
+
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -1114,6 +1118,18 @@ def _shell_quote(value: str) -> str:
     return "'" + value.replace("'", "'\"'\"'") + "'"
 
 
+def _absolute_lexical_path(path: str | Path) -> Path:
+    """Return an absolute path without following an existing symlink.
+
+    Launchers and manifests describe the path that the publication transaction
+    will replace.  Resolving that path while the old generation is still live
+    can instead capture the old symlink target and make the staged generation
+    structurally invalid as soon as it is published.
+    """
+
+    return Path(os.path.abspath(os.path.expanduser(str(path))))
+
+
 def _launcher_body(
     target: Path,
     *,
@@ -1157,7 +1173,8 @@ def _launcher_body(
             f"{env_exports}"
             f"{java_environment_guard}"
             f"{java_guard}"
-            f"exec {java_command} -cp {_shell_quote(str(java_jar.resolve()))} "
+            f"exec {java_command} -cp "
+            f"{_shell_quote(str(_absolute_lexical_path(java_jar)))} "
             f"{_shell_quote(java_main)} \"$@\"\n"
         )
     java_path = ""
@@ -1172,7 +1189,7 @@ def _launcher_body(
         f"{env_exports}"
         f"{java_environment_guard}"
         f"{java_path}"
-        f'exec {_shell_quote(str(target.resolve()))} "$@"\n'
+        f'exec {_shell_quote(str(_absolute_lexical_path(target)))} "$@"\n'
     )
 
 
@@ -1227,7 +1244,7 @@ def _launcher_identity(
     """Validate a launcher by its complete bytes, never by substrings."""
 
     result: dict[str, Any] = {
-        "path": str(launcher.resolve()),
+        "path": str(_absolute_lexical_path(launcher)),
         "present": launcher.is_file() and not launcher.is_symlink(),
         "executable": (
             launcher.is_file()
@@ -1468,6 +1485,29 @@ def _fail_runtime_validation(
     return receipt
 
 
+def _fail_publication_validation(
+    receipt: InstallReceipt,
+    *,
+    tool_name: str,
+    strict: bool,
+) -> InstallReceipt:
+    """Return a fail-closed receipt after publication validation rolled back."""
+
+    receipt.status = "failed"
+    receipt.phase = "publication_validation"
+    receipt.installed = False
+    receipt.reason_codes.append("post_publication_identity_failed")
+    receipt.messages.append(
+        f"{tool_name} publication did not reproduce the complete managed "
+        "artifact/launcher/manifest identity and was rolled back."
+    )
+    if strict:
+        raise StateModelInstallerError(
+            f"{tool_name} post-publication managed identity validation failed"
+        )
+    return receipt
+
+
 def _dry_run_receipt(
     receipt: InstallReceipt,
     pin: ToolPin,
@@ -1523,9 +1563,9 @@ def _manifest_payload(
         "schema_version": _MANIFEST_SCHEMA,
         "tool_id": tool_id,
         "version": version,
-        "artifact_path": str(artifact_path.resolve()),
+        "artifact_path": str(_absolute_lexical_path(artifact_path)),
         "artifact_sha256": artifact_sha256,
-        "payload_path": str(payload_path.resolve()),
+        "payload_path": str(_absolute_lexical_path(payload_path)),
         "payload_sha256": payload_sha256,
         "java_executable": str(Path(java_executable).resolve()),
         "launchers": {
@@ -1735,6 +1775,7 @@ def _commit_staged_files(
     replacements: Sequence[tuple[Path, Path]],
     *,
     backup_dir: Path,
+    post_publish_validate: Callable[[], bool] | None = None,
 ) -> None:
     """Publish a locked file bundle and restore every prior file on failure.
 
@@ -1760,10 +1801,22 @@ def _commit_staged_files(
     backups: dict[Path, Path | None] = {}
     published: list[Path] = []
     for index, (_, destination) in enumerate(replacements):
-        if destination.is_file():
+        if destination.is_symlink():
+            backup = backup_dir / f"{index}-{destination.name}"
+            os.symlink(
+                os.readlink(destination),
+                backup,
+                target_is_directory=destination.is_dir(),
+            )
+            backups[destination] = backup
+        elif destination.is_file():
             backup = backup_dir / f"{index}-{destination.name}"
             shutil.copy2(destination, backup)
             backups[destination] = backup
+        elif destination.exists():
+            raise StateModelInstallerError(
+                f"publication destination is not a file or symlink: {destination}"
+            )
         else:
             backups[destination] = None
     try:
@@ -1771,6 +1824,10 @@ def _commit_staged_files(
             destination.parent.mkdir(parents=True, exist_ok=True)
             staged.replace(destination)
             published.append(destination)
+        if post_publish_validate is not None and not post_publish_validate():
+            raise StateModelPublicationValidationError(
+                "post-publication managed identity validation failed"
+            )
     except Exception:
         for destination in reversed(published):
             backup = backups[destination]
@@ -1783,7 +1840,7 @@ def _commit_staged_files(
 
 def _planned_launcher_identity(path: Path, body: str) -> dict[str, Any]:
     return {
-        "path": str(path.resolve()),
+        "path": str(_absolute_lexical_path(path)),
         "expected_sha256": content_sha256_bytes(body.encode("utf-8")),
     }
 
@@ -1994,6 +2051,7 @@ def ensure_tlc(
     managed_jar = root / "tlc" / TLC_VERSION / TLC_JAR_NAME
     jar_ok = (
         managed_jar.is_file()
+        and not managed_jar.is_symlink()
         and pin.sha256 == TLC_SHA256
         and verify_sha256(managed_jar, TLC_SHA256)
     )
@@ -2102,10 +2160,39 @@ def ensure_tlc(
                         tool_name="TLC",
                         strict=strict,
                     )
-                _commit_staged_files(
-                    (*replacements, manifest_replacement),
-                    backup_dir=temporary_root / "backups",
-                )
+                def validate_publication() -> bool:
+                    identity = managed_tlc_identity(
+                        root,
+                        java_executable=java_runtime.executable,
+                    )
+                    receipt.bindings[
+                        "post_publication_managed_identity"
+                    ] = identity
+                    if not identity["usable"]:
+                        return False
+                    public_probe = probe_tlc_runtime(
+                        executable=str(managed_launcher_path),
+                        java_executable=java_runtime.executable,
+                    )
+                    _record_tool_runtime(
+                        receipt,
+                        public_probe,
+                        binding="post_publication_runtime_probe",
+                    )
+                    return public_probe.usable
+
+                try:
+                    _commit_staged_files(
+                        (*replacements, manifest_replacement),
+                        backup_dir=temporary_root / "backups",
+                        post_publish_validate=validate_publication,
+                    )
+                except StateModelPublicationValidationError:
+                    return _fail_publication_validation(
+                        receipt,
+                        tool_name="TLC",
+                        strict=strict,
+                    )
             receipt.executable_path = str(launcher)
             receipt.jar_path = str(managed_jar)
             receipt.already_present = True
@@ -2265,14 +2352,41 @@ def ensure_tlc(
             jar_path=jar_path,
             java_executable=java_runtime.executable,
         )
-        _commit_staged_files(
-            (
-                (staged_jar, jar_path),
-                *launcher_replacements,
-                manifest_replacement,
-            ),
-            backup_dir=temporary_root / "backups",
-        )
+        def validate_publication() -> bool:
+            identity = managed_tlc_identity(
+                root,
+                java_executable=java_runtime.executable,
+            )
+            receipt.bindings["post_publication_managed_identity"] = identity
+            if not identity["usable"]:
+                return False
+            public_probe = probe_tlc_runtime(
+                executable=str(launcher),
+                java_executable=java_runtime.executable,
+            )
+            _record_tool_runtime(
+                receipt,
+                public_probe,
+                binding="post_publication_runtime_probe",
+            )
+            return public_probe.usable
+
+        try:
+            _commit_staged_files(
+                (
+                    (staged_jar, jar_path),
+                    *launcher_replacements,
+                    manifest_replacement,
+                ),
+                backup_dir=temporary_root / "backups",
+                post_publish_validate=validate_publication,
+            )
+        except StateModelPublicationValidationError:
+            return _fail_publication_validation(
+                receipt,
+                tool_name="TLC",
+                strict=strict,
+            )
 
     receipt.executable_path = str(launcher)
     receipt.jar_path = str(jar_path)
@@ -2405,6 +2519,13 @@ def ensure_apalache(
         managed_identity.get("artifact_digest_verified")
         and managed_identity.get("distribution_tree_verified")
         and managed_identity.get("payload_digest_verified")
+        and managed_identity.get("payload_executable")
+        and not Path(
+            str(managed_identity.get("artifact_path") or "")
+        ).is_symlink()
+        and not Path(
+            str(managed_identity.get("payload_path") or "")
+        ).is_symlink()
     )
     if repairable_managed and not force:
         payload = Path(str(managed_identity["payload_path"]))
@@ -2470,10 +2591,42 @@ def ensure_apalache(
                     ),
                     java_executable=java_runtime.executable,
                 )
-                _commit_staged_files(
-                    (*launcher_replacements, manifest_replacement),
-                    backup_dir=temporary_root / "backups",
-                )
+                managed_launcher = managed_bin / APALACHE_EXECUTABLE
+
+                def validate_publication() -> bool:
+                    identity = managed_apalache_identity(
+                        root,
+                        java_executable=java_runtime.executable,
+                    )
+                    receipt.bindings[
+                        "post_publication_managed_identity"
+                    ] = identity
+                    if not identity["usable"]:
+                        return False
+                    public_probe = probe_apalache_runtime(
+                        str(managed_launcher),
+                        java_executable=java_runtime.executable,
+                        expected_version=APALACHE_VERSION,
+                    )
+                    _record_tool_runtime(
+                        receipt,
+                        public_probe,
+                        binding="post_publication_runtime_probe",
+                    )
+                    return public_probe.usable
+
+                try:
+                    _commit_staged_files(
+                        (*launcher_replacements, manifest_replacement),
+                        backup_dir=temporary_root / "backups",
+                        post_publish_validate=validate_publication,
+                    )
+                except StateModelPublicationValidationError:
+                    return _fail_publication_validation(
+                        receipt,
+                        tool_name="Apalache",
+                        strict=strict,
+                    )
             receipt.executable_path = str(launcher)
             receipt.already_present = True
             receipt.install_attempted = True
@@ -2650,11 +2803,34 @@ def ensure_apalache(
         moved_previous = False
         moved_staged = False
         try:
-            if destination.exists():
+            if destination.exists() or destination.is_symlink():
                 destination.replace(previous)
                 moved_previous = True
             staged_destination.replace(destination)
             moved_staged = True
+
+            def validate_publication() -> bool:
+                identity = managed_apalache_identity(
+                    root,
+                    java_executable=java_runtime.executable,
+                )
+                receipt.bindings[
+                    "post_publication_managed_identity"
+                ] = identity
+                if not identity["usable"]:
+                    return False
+                public_probe = probe_apalache_runtime(
+                    str(launcher),
+                    java_executable=java_runtime.executable,
+                    expected_version=APALACHE_VERSION,
+                )
+                _record_tool_runtime(
+                    receipt,
+                    public_probe,
+                    binding="post_publication_runtime_probe",
+                )
+                return public_probe.usable
+
             _commit_staged_files(
                 (
                     (staged_archive, archive),
@@ -2662,11 +2838,22 @@ def ensure_apalache(
                     manifest_replacement,
                 ),
                 backup_dir=temporary_root / "launcher-backups",
+                post_publish_validate=validate_publication,
+            )
+        except StateModelPublicationValidationError:
+            if moved_staged and destination.exists():
+                destination.replace(temporary_root / "failed-installation")
+            if moved_previous and (previous.exists() or previous.is_symlink()):
+                previous.replace(destination)
+            return _fail_publication_validation(
+                receipt,
+                tool_name="Apalache",
+                strict=strict,
             )
         except Exception:
             if moved_staged and destination.exists():
                 destination.replace(temporary_root / "failed-installation")
-            if moved_previous and previous.exists():
+            if moved_previous and (previous.exists() or previous.is_symlink()):
                 previous.replace(destination)
             raise
 

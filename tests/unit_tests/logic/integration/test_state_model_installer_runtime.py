@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -580,6 +581,118 @@ def test_atomic_file_publication_restores_all_prior_files(
     assert second.read_bytes() == b"old-second"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX symlink fixture")
+@pytest.mark.parametrize("target_exists", [True, False])
+def test_atomic_file_publication_restores_live_and_broken_symlinks_exactly(
+    target_exists: bool,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / ("target" if target_exists else "missing-target")
+    if target_exists:
+        target.write_bytes(b"linked-payload")
+    first = tmp_path / "final" / "first"
+    second = tmp_path / "final" / "second"
+    first.parent.mkdir(parents=True)
+    link_text = os.path.relpath(target, first.parent)
+    first.symlink_to(link_text)
+    second.write_bytes(b"old-second")
+    staged_first = tmp_path / "staged" / "first"
+    staged_second = tmp_path / "staged" / "second"
+    staged_first.parent.mkdir(parents=True)
+    staged_first.write_bytes(b"new-first")
+    staged_second.write_bytes(b"new-second")
+    original_replace = Path.replace
+
+    def fail_second(source: Path, destination: Path):
+        if source == staged_second:
+            raise OSError("injected publication failure")
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(Path, "replace", fail_second)
+
+    with pytest.raises(OSError, match="injected"):
+        state_model._commit_staged_files(
+            ((staged_first, first), (staged_second, second)),
+            backup_dir=tmp_path / "backups",
+        )
+
+    assert first.is_symlink()
+    assert os.readlink(first) == link_text
+    assert first.exists() is target_exists
+    assert second.read_bytes() == b"old-second"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX thread-lock fixture")
+def test_concurrent_failed_publication_cannot_rollback_later_generation(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "install"
+    first = install_root / "bin" / "first"
+    second = install_root / "bin" / "second"
+    first.parent.mkdir(parents=True)
+    first.write_bytes(b"old-first")
+    second.write_bytes(b"old-second")
+    failing_validation_started = threading.Event()
+    release_failing_validation = threading.Event()
+    succeeding_lock_acquired = threading.Event()
+    failures: list[BaseException] = []
+
+    def publish(token: str, *, fail_validation: bool) -> None:
+        try:
+            staging = tmp_path / f"staging-{token}"
+            staged_first = staging / "first"
+            staged_second = staging / "second"
+            staging.mkdir(parents=True)
+            staged_first.write_text(f"{token}-first", encoding="utf-8")
+            staged_second.write_text(f"{token}-second", encoding="utf-8")
+            with state_model.installation_lock(install_root):
+                if not fail_validation:
+                    succeeding_lock_acquired.set()
+
+                def validate() -> bool:
+                    if fail_validation:
+                        failing_validation_started.set()
+                        if not release_failing_validation.wait(timeout=5):
+                            raise TimeoutError("review fixture did not release")
+                        return False
+                    return True
+
+                state_model._commit_staged_files(
+                    ((staged_first, first), (staged_second, second)),
+                    backup_dir=staging / "backups",
+                    post_publish_validate=validate,
+                )
+        except state_model.StateModelPublicationValidationError:
+            if not fail_validation:
+                failures.append(AssertionError("successful publication rolled back"))
+        except BaseException as exc:  # noqa: BLE001 - thread failure is re-raised below
+            failures.append(exc)
+
+    failing = threading.Thread(
+        target=publish,
+        kwargs={"token": "failing", "fail_validation": True},
+    )
+    succeeding = threading.Thread(
+        target=publish,
+        kwargs={"token": "success", "fail_validation": False},
+    )
+    failing.start()
+    assert failing_validation_started.wait(timeout=5)
+    succeeding.start()
+    time.sleep(0.05)
+    assert not succeeding_lock_acquired.is_set()
+    release_failing_validation.set()
+    failing.join(timeout=5)
+    succeeding.join(timeout=5)
+
+    assert not failing.is_alive()
+    assert not succeeding.is_alive()
+    assert failures == []
+    assert first.read_text(encoding="utf-8") == "success-first"
+    assert second.read_text(encoding="utf-8") == "success-second"
+
+
 def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -638,6 +751,131 @@ def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
         )["usable"]
         is False
     )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX symlink fixture")
+def test_symlinked_managed_tlc_jar_is_replaced_before_success(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(
+        tmp_path / "java17" / "java",
+        "17.0.12",
+        runtime_exit=1,
+        runtime_output=TLC_HELP_OUTPUT,
+    )
+    install_root = tmp_path / "install"
+    external_jar = tmp_path / "external" / state_model.TLC_JAR_NAME
+    external_jar.parent.mkdir(parents=True)
+    external_jar.write_bytes(b"external-reviewed-fixture")
+    managed_jar = (
+        install_root
+        / "tlc"
+        / state_model.TLC_VERSION
+        / state_model.TLC_JAR_NAME
+    )
+    managed_jar.parent.mkdir(parents=True)
+    managed_jar.symlink_to(external_jar)
+    downloads: list[Path] = []
+
+    def fake_download(url: str, destination: Path, **kwargs: object):
+        downloads.append(destination)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(b"new-reviewed-fixture")
+        return True, state_model.TLC_SHA256
+
+    monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+
+    receipt = state_model.ensure_tlc(
+        yes=True,
+        strict=False,
+        install_root=install_root,
+        java_executable=java17,
+        test_mode=True,
+    )
+
+    assert downloads
+    assert receipt.status == "installed"
+    assert receipt.installed is True
+    assert not managed_jar.is_symlink()
+    assert managed_jar.read_bytes() == b"new-reviewed-fixture"
+    identity = state_model.managed_tlc_identity(
+        install_root,
+        java_executable=java17,
+    )
+    assert identity["usable"] is True
+    assert receipt.bindings["post_publication_managed_identity"]["usable"] is True
+
+
+def test_tlc_post_publication_identity_failure_rolls_back_complete_bundle(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(
+        tmp_path / "java17" / "java",
+        "17.0.12",
+        runtime_exit=1,
+        runtime_output=TLC_HELP_OUTPUT,
+    )
+    install_root = tmp_path / "install"
+    jar = (
+        install_root
+        / "tlc"
+        / state_model.TLC_VERSION
+        / state_model.TLC_JAR_NAME
+    )
+    jar.parent.mkdir(parents=True)
+    jar.write_bytes(b"old-jar")
+    old_paths = {
+        install_root / "bin" / "tlc": b"old-tlc",
+        install_root / "bin" / "tlc2": b"old-tlc2",
+        install_root / "bin" / "tla2tools": b"old-tla2tools",
+        install_root / "manifests" / "tlc.json": b"old-manifest",
+    }
+    for path, payload in old_paths.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+
+    def fake_download(url: str, destination: Path, **kwargs: object):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(b"new-jar")
+        return True, state_model.TLC_SHA256
+
+    monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *args, **kwargs: {"usable": False},
+    )
+
+    receipt = state_model.ensure_tlc(
+        yes=True,
+        strict=False,
+        force=True,
+        install_root=install_root,
+        java_executable=java17,
+        test_mode=True,
+    )
+
+    assert receipt.status == "failed"
+    assert receipt.phase == "publication_validation"
+    assert receipt.installed is False
+    assert "post_publication_identity_failed" in receipt.reason_codes
+    assert jar.read_bytes() == b"old-jar"
+    for path, payload in old_paths.items():
+        assert path.read_bytes() == payload
 
 
 def test_legacy_tlc_launcher_requires_and_performs_atomic_rebind(
@@ -905,6 +1143,146 @@ def test_successful_apalache_install_binds_selected_java(
         )["usable"]
         is False
     )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX symlink fixture")
+@pytest.mark.parametrize("symlink_kind", ["archive", "payload"])
+def test_symlinked_apalache_archive_or_payload_is_replaced_before_success(
+    symlink_kind: str,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(tmp_path / "java17" / "java", "17.0.12")
+    install_root = tmp_path / "install"
+    archive = (
+        install_root
+        / "downloads"
+        / f"apalache-{state_model.APALACHE_VERSION}.tgz"
+    )
+    distribution = install_root / f"apalache-{state_model.APALACHE_VERSION}"
+    payload = (
+        distribution
+        / f"apalache-{state_model.APALACHE_VERSION}"
+        / "bin"
+        / state_model.APALACHE_EXECUTABLE
+    )
+    archive.parent.mkdir(parents=True)
+    payload.parent.mkdir(parents=True)
+    if symlink_kind == "archive":
+        external_archive = tmp_path / "external" / archive.name
+        external_archive.parent.mkdir(parents=True)
+        external_archive.write_bytes(b"external-archive")
+        archive.symlink_to(external_archive)
+        _write_executable(payload, 'echo "Apalache 0.58.3"')
+    else:
+        archive.write_bytes(b"reviewed-archive")
+        external_payload = _write_executable(
+            tmp_path / "external" / state_model.APALACHE_EXECUTABLE,
+            'echo "Apalache 0.58.3"',
+        )
+        payload.symlink_to(external_payload)
+    downloads: list[Path] = []
+
+    def fake_download(url: str, destination: Path, **kwargs: object):
+        downloads.append(destination)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(b"new-reviewed-archive")
+        return True, state_model.APALACHE_SHA256
+
+    def fake_extract(archive_path: Path, destination: Path) -> None:
+        _write_executable(
+            destination
+            / f"apalache-{state_model.APALACHE_VERSION}"
+            / "bin"
+            / state_model.APALACHE_EXECUTABLE,
+            'echo "Apalache 0.58.3"',
+        )
+
+    monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
+    monkeypatch.setattr(state_model, "_safe_extract_tar", fake_extract)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+
+    receipt = state_model.ensure_apalache(
+        yes=True,
+        strict=True,
+        install_root=install_root,
+        java_executable=java17,
+        test_mode=True,
+    )
+
+    assert downloads
+    assert receipt.status == "installed"
+    assert receipt.installed is True
+    identity = state_model.managed_apalache_identity(
+        install_root,
+        java_executable=java17,
+    )
+    assert identity["usable"] is True
+    assert not Path(identity["artifact_path"]).is_symlink()
+    assert not Path(identity["payload_path"]).is_symlink()
+    assert receipt.bindings["post_publication_managed_identity"]["usable"] is True
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX symlink fixture")
+def test_apalache_publication_failure_restores_broken_distribution_symlink(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(tmp_path / "java17" / "java", "17.0.12")
+    install_root = tmp_path / "install"
+    destination = install_root / f"apalache-{state_model.APALACHE_VERSION}"
+    destination.parent.mkdir(parents=True)
+    link_text = "../missing-apalache-distribution"
+    destination.symlink_to(link_text, target_is_directory=True)
+
+    def fake_download(url: str, staged: Path, **kwargs: object):
+        staged.parent.mkdir(parents=True, exist_ok=True)
+        staged.write_bytes(b"reviewed-archive")
+        return True, state_model.APALACHE_SHA256
+
+    def fake_extract(archive_path: Path, extracted: Path) -> None:
+        _write_executable(
+            extracted
+            / f"apalache-{state_model.APALACHE_VERSION}"
+            / "bin"
+            / state_model.APALACHE_EXECUTABLE,
+            'echo "Apalache 0.58.3"',
+        )
+
+    monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
+    monkeypatch.setattr(state_model, "_safe_extract_tar", fake_extract)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        state_model,
+        "_commit_staged_files",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            OSError("injected launcher publication failure")
+        ),
+    )
+
+    with pytest.raises(OSError, match="injected launcher"):
+        state_model.ensure_apalache(
+            yes=True,
+            strict=False,
+            force=True,
+            install_root=install_root,
+            java_executable=java17,
+            test_mode=True,
+        )
+
+    assert destination.is_symlink()
+    assert os.readlink(destination) == link_text
+    assert not destination.exists()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX subprocess ordering fixture")

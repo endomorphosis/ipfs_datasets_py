@@ -306,9 +306,31 @@ def test_apalache_bridge_delegates_to_reviewed_state_model_installer(
 
     def fake_ensure_apalache(**kwargs):
         calls.append(dict(kwargs))
-        return SimpleNamespace(status="installed")
+        return SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "apalache-mc"),
+        )
 
     monkeypatch.setattr(state_model, "ensure_apalache", fake_ensure_apalache)
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_apalache_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_apalache_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
 
     assert prover_installer.ensure_apalache(
         yes=True,
@@ -326,6 +348,102 @@ def test_apalache_bridge_delegates_to_reviewed_state_model_installer(
             "java_executable": selected_java,
         }
     ]
+
+
+def test_state_model_bridge_rejects_success_flag_without_final_managed_identity(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(root / "bin" / "tlc"),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": False},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
+
+
+def test_state_model_bridge_rejects_symlink_alias_in_success_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from ipfs_datasets_py.logic.backends.installers import state_model
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    root = tmp_path / "provers"
+    launcher = root / "bin" / state_model.TLC_EXECUTABLE
+    launcher.parent.mkdir(parents=True)
+    launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+    launcher.chmod(0o755)
+    alias = tmp_path / "tlc-alias"
+    alias.symlink_to(launcher)
+    selected_java = tmp_path / "jdk" / "bin" / "java"
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(root))
+    monkeypatch.setattr(
+        state_model,
+        "ensure_tlc",
+        lambda **_kwargs: SimpleNamespace(
+            status="installed",
+            installed=True,
+            executable_path=str(alias),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_java_runtime",
+        lambda **_kwargs: SimpleNamespace(
+            usable=True,
+            executable=str(selected_java),
+        ),
+    )
+    monkeypatch.setattr(
+        state_model,
+        "managed_tlc_identity",
+        lambda *_args, **_kwargs: {"usable": True},
+    )
+    monkeypatch.setattr(
+        state_model,
+        "probe_tlc_runtime",
+        lambda *_args, **_kwargs: SimpleNamespace(usable=True),
+    )
+
+    assert not prover_installer.ensure_tlc(
+        yes=True,
+        strict=True,
+        java_executable=selected_java,
+    )
 
 
 def test_opam_bootstrap_uses_official_user_local_arm_binary(
