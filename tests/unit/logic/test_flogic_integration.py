@@ -73,13 +73,24 @@ def test_prover_installer_accepts_existing_ergoai_binary(tmp_path, monkeypatch):
     from ipfs_datasets_py.logic.integration.bridges import prover_installer
 
     fake_binary = tmp_path / "runErgo.sh"
+    managed_root = tmp_path / "managed-provers"
     fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     (tmp_path / ".ergo_paths").write_text("PROLOG=/usr/bin/false\n", encoding="utf-8")
     fake_binary.chmod(0o644)
     monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
+    monkeypatch.setenv("IPFS_DATASETS_PY_EXTERNAL_PROVER_ROOT", str(managed_root))
+    # ensure_ergoai prepends its managed bin directory directly to PATH. Register
+    # PATH with monkeypatch so that change is also rolled back after this test.
+    monkeypatch.setenv("PATH", os.environ.get("PATH", ""))
 
     assert prover_installer.ensure_ergoai(yes=False, strict=True) is True
     assert os.access(fake_binary, os.X_OK)
+    launchers = [managed_root / "bin" / name for name in ("runergo", "runErgo.sh")]
+    assert all(launcher.is_file() for launcher in launchers)
+    assert all(
+        str(fake_binary.resolve()) in launcher.read_text(encoding="utf-8")
+        for launcher in launchers
+    )
 
 
 def test_prover_installer_discovers_repo_runergo(tmp_path, monkeypatch):
