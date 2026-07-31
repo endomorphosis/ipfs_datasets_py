@@ -38,6 +38,13 @@ LOGIC_VERIFICATION_REQUEST_SCHEMA: Final = "logic-verification-request/v1"
 EXECUTABLE_PROVIDER_MATRIX_INTERFACE: Final = "ExecutableProviderMatrix@1"
 FORMAL_VERIFICATION_MCP_PARITY_INTERFACE: Final = "FormalVerificationMCPParity@1"
 
+# FVT-G050 / GoalTacticianAPI@1 + GoalTacticianCLIMCP@1 (goal-directed public surface).
+GOAL_TACTICIAN_API_INTERFACE: Final = "GoalTacticianAPI@1"
+GOAL_TACTICIAN_API_VERSION: Final = "1.0.0"
+GOAL_TACTICIAN_CLI_MCP_INTERFACE: Final = "GoalTacticianCLIMCP@1"
+GOAL_TACTICIAN_REQUEST_SCHEMA: Final = "goal-tactician-request/v1"
+GOAL_TACTICIAN_RESPONSE_SCHEMA: Final = "logic-verification-response/v1"
+
 # Closed receipt/attestation dispatch surfaces (FVT-G006 / VerifiedReceiptDispatch@2).
 VERIFIED_RECEIPT_DISPATCH_INTERFACE: Final = "VerifiedReceiptDispatch@2"
 ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE: Final = "AttestationAuthorityBoundary@2"
@@ -51,6 +58,7 @@ CLOSED_RECEIPT_SCHEMAS: Final[frozenset[str]] = frozenset(
 )
 
 # Operations advertised by the stable surface (LFV-G070 / plan § Stable logic API).
+# Kept closed for legacy MCP parity; goal-tactician ops live in GOAL_TACTICIAN_OPERATIONS.
 STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "list_logic_families",
     "list_providers",
@@ -66,6 +74,70 @@ STABLE_OPERATIONS: Final[tuple[str, ...]] = (
     "probe_provider",
     "install_provider",
 )
+
+# Additive GoalTacticianAPI@1 operations (FVT-G050).  Not merged into
+# STABLE_OPERATIONS so LogicVerificationMCP@1 legacy mappings stay intact.
+GOAL_TACTICIAN_OPERATIONS: Final[tuple[str, ...]] = (
+    "formalize_goal",
+    "compare_interpretations",
+    "discover_missing_proofs",
+    "plan_proof",
+    "validate_proof_candidate",
+    "execute_proof_plan",
+    "proof_status",
+    "minimize_counterexample",
+    "explain_counterexample_causal",
+    "replay_counterexample",
+    "list_goal_tactician_operations",
+)
+
+# Supervisor-only controls that datasets public surfaces must never expose.
+_GOAL_TACTICIAN_FORBIDDEN_CONTROLS: Final[frozenset[str]] = frozenset(
+    {
+        "admit_goal",
+        "close_plan",
+        "mutate_supervisor",
+        "force_complete",
+        "lease_steal",
+        "rewrite_event_log",
+        "bypass_resource_policy",
+        "promote_proof_authority",
+        "supervisor_mutate",
+        "supervisor_only",
+    }
+)
+
+# Channel-neutral CLI / MCP descriptors for GoalTacticianCLIMCP@1.
+GOAL_TACTICIAN_TOOL_TO_OPERATION: Final[dict[str, str]] = {
+    "goal_tactician_formalize_goal": "formalize_goal",
+    "goal_tactician_compare_interpretations": "compare_interpretations",
+    "goal_tactician_discover_missing_proofs": "discover_missing_proofs",
+    "goal_tactician_plan_proof": "plan_proof",
+    "goal_tactician_validate_proof_candidate": "validate_proof_candidate",
+    "goal_tactician_execute_proof_plan": "execute_proof_plan",
+    "goal_tactician_proof_status": "proof_status",
+    "goal_tactician_minimize_counterexample": "minimize_counterexample",
+    "goal_tactician_explain_counterexample_causal": "explain_counterexample_causal",
+    "goal_tactician_replay_counterexample": "replay_counterexample",
+    "goal_tactician_list_operations": "list_goal_tactician_operations",
+}
+
+GOAL_TACTICIAN_CLI_TO_OPERATION: Final[dict[str, str]] = {
+    "goal-formalize": "formalize_goal",
+    "goal-compare-interpretations": "compare_interpretations",
+    "goal-discover-missing-proofs": "discover_missing_proofs",
+    "goal-plan-proof": "plan_proof",
+    "goal-validate-candidate": "validate_proof_candidate",
+    "goal-execute-plan": "execute_proof_plan",
+    "goal-proof-status": "proof_status",
+    "goal-minimize-counterexample": "minimize_counterexample",
+    "goal-explain-counterexample": "explain_counterexample_causal",
+    "goal-replay-counterexample": "replay_counterexample",
+    "goal-list-operations": "list_goal_tactician_operations",
+}
+
+GOAL_TACTICIAN_TOOL_NAMES: Final[tuple[str, ...]] = tuple(GOAL_TACTICIAN_TOOL_TO_OPERATION.keys())
+GOAL_TACTICIAN_CLI_COMMANDS: Final[tuple[str, ...]] = tuple(GOAL_TACTICIAN_CLI_TO_OPERATION.keys())
 
 
 class VerificationStatus(StrEnum):
@@ -407,7 +479,186 @@ def list_stable_features() -> tuple[FeatureDescriptor, ...]:
                 notes="Never invoked by discovery; requires an explicit call.",
             )
         )
+    # Additive GoalTacticianAPI@1 discovery (does not alter STABLE_OPERATIONS).
+    for feature_id in GOAL_TACTICIAN_OPERATIONS:
+        authority = (
+            VerificationAuthority.DECLARATIVE
+            if feature_id == "list_goal_tactician_operations"
+            else VerificationAuthority.BOUNDED
+        )
+        if feature_id in {
+            "formalize_goal",
+            "compare_interpretations",
+            "plan_proof",
+            "discover_missing_proofs",
+        }:
+            authority = VerificationAuthority.ADVISORY
+        features.append(
+            FeatureDescriptor(
+                feature_id=feature_id,
+                availability=FeatureAvailability.DECLARED,
+                description=f"Goal tactician operation {feature_id}",
+                authority_ceiling=authority,
+                notes=GOAL_TACTICIAN_API_INTERFACE,
+            )
+        )
     return tuple(features)
+
+
+def _is_cancelled(cancellation: object | None) -> bool:
+    """Interpret optional cancellation tokens without importing supervisor types."""
+
+    if cancellation is None:
+        return False
+    if cancellation is True:
+        return True
+    if isinstance(cancellation, Mapping):
+        if cancellation.get("cancelled") is True or cancellation.get("is_cancelled") is True:
+            return True
+        if str(cancellation.get("status") or "").strip().lower() in {
+            "cancelled",
+            "canceled",
+            "abort",
+            "aborted",
+        }:
+            return True
+        return False
+    checker = getattr(cancellation, "is_cancelled", None)
+    if callable(checker):
+        try:
+            return bool(checker())
+        except TypeError:
+            try:
+                return bool(checker)  # type: ignore[func-returns-value]
+            except Exception:
+                return False
+    if getattr(cancellation, "cancelled", False) is True:
+        return True
+    if getattr(cancellation, "is_set", None) is not None:
+        try:
+            return bool(cancellation.is_set())  # type: ignore[union-attr]
+        except Exception:
+            return False
+    return bool(cancellation)
+
+
+def _redact_public_mapping(value: object, *, label: str = "payload") -> dict[str, Any]:
+    """Drop private/secret channels from public response payloads."""
+
+    forbidden_markers = (
+        "secret",
+        "password",
+        "credential",
+        "private_key",
+        "raw_witness",
+        "hidden_witness",
+        "authorization_token",
+        "api_key",
+        "bearer",
+    )
+
+    def _walk(node: Any, *, path: str) -> Any:
+        if isinstance(node, Mapping):
+            cleaned: dict[str, Any] = {}
+            for key, item in node.items():
+                key_text = str(key)
+                lowered = key_text.lower()
+                if any(marker in lowered for marker in forbidden_markers):
+                    continue
+                if lowered in {"raw", "private", "secrets", "credentials", "stdin"}:
+                    continue
+                cleaned[key_text] = _walk(item, path=f"{path}.{key_text}")
+            return cleaned
+        if isinstance(node, (list, tuple)):
+            return [_walk(item, path=f"{path}[]") for item in node]
+        if isinstance(node, str) and len(node) > 16_384:
+            return node[:16_384] + "…[truncated]"
+        return node
+
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        return {"value": _walk(value, path=label)}
+    return _walk(value, path=label)
+
+
+def _reject_forbidden_controls(payload: Mapping[str, Any] | None, operation: str) -> str | None:
+    if not payload:
+        return None
+    keys = {str(key).strip().lower() for key in payload.keys()}
+    meta = payload.get("meta") if isinstance(payload.get("meta"), Mapping) else {}
+    keys |= {str(key).strip().lower() for key in meta.keys()}
+    controls = payload.get("controls")
+    if isinstance(controls, Mapping):
+        keys |= {str(key).strip().lower() for key in controls.keys()}
+    elif isinstance(controls, Sequence) and not isinstance(controls, (str, bytes)):
+        keys |= {str(item).strip().lower() for item in controls}
+    hit = sorted(keys & _GOAL_TACTICIAN_FORBIDDEN_CONTROLS)
+    if hit:
+        return (
+            f"{operation} refuses supervisor-only control(s): {', '.join(hit)}; "
+            "datasets GoalTacticianAPI never mutates supervisor state"
+        )
+    return None
+
+
+def goal_tactician_tool_schemas() -> dict[str, dict[str, Any]]:
+    """Closed MCP/CLI schemas for GoalTacticianCLIMCP@1 (channel-neutral)."""
+
+    schemas: dict[str, dict[str, Any]] = {}
+    for tool_name, operation in GOAL_TACTICIAN_TOOL_TO_OPERATION.items():
+        schemas[tool_name] = {
+            "name": tool_name,
+            "interface": GOAL_TACTICIAN_CLI_MCP_INTERFACE,
+            "python_operation": operation,
+            "python_interface": GOAL_TACTICIAN_API_INTERFACE,
+            "description": f"Goal tactician operation {operation}",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "request": {
+                        "type": "object",
+                        "description": "Closed goal-tactician request payload",
+                    },
+                    "request_id": {"type": "string"},
+                    "cancellation": {
+                        "type": "object",
+                        "description": "Optional cancellation token / flag",
+                    },
+                },
+            },
+            "returns": {
+                "envelope": GOAL_TACTICIAN_RESPONSE_SCHEMA,
+                "interface": LOGIC_VERIFICATION_API_INTERFACE,
+            },
+            "bounds": {
+                "redaction": "public",
+                "cancellation": True,
+                "supervisor_mutation": False,
+            },
+        }
+    return schemas
+
+
+def list_goal_tactician_cli_mcp_surface() -> dict[str, Any]:
+    """Declarative GoalTacticianCLIMCP@1 discovery document."""
+
+    return {
+        "interface": GOAL_TACTICIAN_CLI_MCP_INTERFACE,
+        "python_interface": GOAL_TACTICIAN_API_INTERFACE,
+        "python_version": GOAL_TACTICIAN_API_VERSION,
+        "response_schema": GOAL_TACTICIAN_RESPONSE_SCHEMA,
+        "request_schema": GOAL_TACTICIAN_REQUEST_SCHEMA,
+        "operations": list(GOAL_TACTICIAN_OPERATIONS),
+        "tools": list(GOAL_TACTICIAN_TOOL_NAMES),
+        "tool_to_operation": dict(GOAL_TACTICIAN_TOOL_TO_OPERATION),
+        "cli_commands": list(GOAL_TACTICIAN_CLI_COMMANDS),
+        "cli_to_operation": dict(GOAL_TACTICIAN_CLI_TO_OPERATION),
+        "schemas": goal_tactician_tool_schemas(),
+        "forbidden_controls": sorted(_GOAL_TACTICIAN_FORBIDDEN_CONTROLS),
+        "legacy_operations_preserved": list(STABLE_OPERATIONS),
+        "transport_success_implies_proof_success": False,
+    }
 
 
 def _evidence_to_verification_authority(value: object) -> VerificationAuthority:
@@ -2674,10 +2925,1282 @@ class LogicVerificationAPI:
             provider_id=provider_id,
         )
 
+    # ── GoalTacticianAPI@1 (FVT-G050) ─────────────────────────────────────
+
+    def list_goal_tactician_operations(
+        self,
+        *,
+        request_id: str = "",
+    ) -> VerificationResponse:
+        """Declarative catalog of GoalTacticianAPI@1 operations and channels."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        surface = list_goal_tactician_cli_mcp_surface()
+        return _response(
+            "list_goal_tactician_operations",
+            VerificationStatus.DECLARATIVE,
+            authority=VerificationAuthority.DECLARATIVE,
+            result=surface,
+            request_id=request_id,
+            cache=_empty_cache(source="goal_tactician_catalog"),
+        )
+
+    def formalize_goal(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Formalize a prose end goal into candidate-only end-goal structures.
+
+        Never admits a goal and never upgrades transport success to proof
+        authority.  Supervisor-only mutation controls are rejected.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "formalize_goal",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True, "admitted": False},
+                diagnostics=("cancelled before formalization",),
+                request_id=request_id,
+            )
+        if request is None:
+            return _response(
+                "formalize_goal",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request is required",),
+                request_id=request_id,
+            )
+        payload = request if isinstance(request, Mapping) else None
+        if payload is not None:
+            forbidden = _reject_forbidden_controls(payload, "formalize_goal")
+            if forbidden:
+                return _response(
+                    "formalize_goal",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=(forbidden,),
+                    unsupported_features=("supervisor_only_control",),
+                    request_id=request_id,
+                )
+        try:
+            from ipfs_datasets_py.logic.software_verification.tactician.end_goal_formalizer import (
+                END_GOAL_FORMALIZER_INTERFACE,
+                EndGoalFormalizer,
+                EndGoalFormalizerError,
+                EndGoalFormalizerRequest,
+                FormalizationStatus,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "formalize_goal",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"formalizer import failed: {type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        try:
+            if isinstance(request, EndGoalFormalizerRequest):
+                formalizer_request = request
+            elif isinstance(request, Mapping):
+                formalizer_request = EndGoalFormalizerRequest.from_dict(request)
+            else:
+                raise EndGoalFormalizerError(
+                    "request must be EndGoalFormalizerRequest or mapping"
+                )
+            result = EndGoalFormalizer().formalize(formalizer_request)
+        except EndGoalFormalizerError as exc:
+            return _response(
+                "formalize_goal",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "formalize_goal",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        status_map = {
+            FormalizationStatus.CANDIDATE: VerificationStatus.SUCCEEDED,
+            FormalizationStatus.UNDERSPECIFIED: VerificationStatus.PARTIAL,
+            FormalizationStatus.UNSUPPORTED: VerificationStatus.UNSUPPORTED,
+            FormalizationStatus.REJECTED: VerificationStatus.INVALID,
+            FormalizationStatus.ERROR: VerificationStatus.ERROR,
+        }
+        public = _redact_public_mapping(result.to_dict())
+        public["admitted"] = False
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["formalizer_interface"] = END_GOAL_FORMALIZER_INTERFACE
+        public["proof_success"] = False
+        return _response(
+            "formalize_goal",
+            status_map.get(result.status, VerificationStatus.PARTIAL),
+            authority=VerificationAuthority.ADVISORY,
+            result=public,
+            bounds=_normalize_bounds(getattr(formalizer_request, "bounds", None)),
+            request_id=request_id,
+            cache=_empty_cache(source="end_goal_formalizer"),
+        )
+
+    def compare_interpretations(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Compare goal interpretations or expose material ambiguity.
+
+        Accepts either:
+        * ``{"left": ..., "right": ...}`` for pairwise comparison; or
+        * ``{"source": end_goal|prompt, "goal_id": ...}`` for ambiguity exposure.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True},
+                diagnostics=("cancelled before interpretation comparison",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "compare_interpretations")
+        if forbidden:
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+        try:
+            from ipfs_datasets_py.logic.software_verification.tactician.ambiguity import (
+                GOAL_AMBIGUITY_GATE_INTERFACE,
+                GoalAmbiguityError,
+                compare_goal_interpretations,
+                expose_ambiguity,
+            )
+            from ipfs_datasets_py.logic.software_verification.tactician.contracts import (
+                EndGoalInterpretation,
+                EndGoalSpec,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"ambiguity import failed: {type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        try:
+            if "left" in request and "right" in request:
+                left_raw = request["left"]
+                right_raw = request["right"]
+                left = (
+                    left_raw
+                    if isinstance(left_raw, EndGoalInterpretation)
+                    else EndGoalInterpretation.from_dict(left_raw)
+                )
+                right = (
+                    right_raw
+                    if isinstance(right_raw, EndGoalInterpretation)
+                    else EndGoalInterpretation.from_dict(right_raw)
+                )
+                diff = compare_goal_interpretations(left, right)
+                public = _redact_public_mapping(diff.to_dict())
+                public["mode"] = "pairwise"
+                public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+                public["proof_success"] = False
+                return _response(
+                    "compare_interpretations",
+                    VerificationStatus.SUCCEEDED,
+                    authority=VerificationAuthority.ADVISORY,
+                    result=public,
+                    request_id=request_id,
+                    cache=_empty_cache(source="goal_ambiguity_gate"),
+                )
+
+            source = request.get("source", request.get("end_goal", request.get("prompt")))
+            if source is None:
+                return _response(
+                    "compare_interpretations",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=(
+                        "request requires left/right interpretations or source/end_goal/prompt",
+                    ),
+                    request_id=request_id,
+                )
+            goal_id = str(request.get("goal_id") or "goal:compare")
+            max_candidates = int(request.get("max_candidates") or 8)
+            if isinstance(source, Mapping) and (
+                source.get("schema") or source.get("goal_id") or source.get("caller_text")
+            ):
+                try:
+                    source = EndGoalSpec.from_dict(source)
+                except Exception:
+                    # Fall through: expose_ambiguity also accepts mappings via analyze paths
+                    # when given as EndGoalSpec-like; convert best-effort text.
+                    if "caller_text" in source:
+                        source = str(source.get("caller_text") or "")
+            report = expose_ambiguity(
+                source,
+                goal_id=goal_id,
+                max_candidates=max_candidates,
+            )
+            public = _redact_public_mapping(report.to_dict())
+            public["mode"] = "ambiguity_gate"
+            public["admitted"] = False
+            public["gate_interface"] = GOAL_AMBIGUITY_GATE_INTERFACE
+            public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+            public["proof_success"] = False
+            status = (
+                VerificationStatus.PARTIAL
+                if public.get("requires_selection")
+                else VerificationStatus.SUCCEEDED
+            )
+            return _response(
+                "compare_interpretations",
+                status,
+                authority=VerificationAuthority.ADVISORY,
+                result=public,
+                request_id=request_id,
+                cache=_empty_cache(source="goal_ambiguity_gate"),
+            )
+        except GoalAmbiguityError as exc:
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "compare_interpretations",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+    def discover_missing_proofs(
+        self,
+        surface: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        require_source_spans: bool = True,
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Emit typed proof holes for a compilation surface (missing-proof discovery)."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True},
+                diagnostics=("cancelled before missing-proof discovery",),
+                request_id=request_id,
+            )
+        if surface is None:
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("surface is required",),
+                request_id=request_id,
+            )
+        if isinstance(surface, Mapping):
+            forbidden = _reject_forbidden_controls(surface, "discover_missing_proofs")
+            if forbidden:
+                return _response(
+                    "discover_missing_proofs",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=(forbidden,),
+                    unsupported_features=("supervisor_only_control",),
+                    request_id=request_id,
+                )
+        try:
+            from ipfs_datasets_py.logic.software_verification.tactician.proof_holes import (
+                TYPED_PROOF_HOLE_EMITTER_INTERFACE,
+                CompilationSurface,
+                ProofHoleEmissionError,
+                emit_typed_proof_holes,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"proof hole import failed: {type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        try:
+            if isinstance(surface, CompilationSurface):
+                compiled = surface
+            elif isinstance(surface, Mapping):
+                compiled = CompilationSurface.from_dict(surface)
+            else:
+                raise ProofHoleEmissionError("surface must be CompilationSurface or mapping")
+            emission = emit_typed_proof_holes(
+                compiled, require_source_spans=bool(require_source_spans)
+            )
+        except ProofHoleEmissionError as exc:
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except TypeError as exc:
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "discover_missing_proofs",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(emission.to_dict())
+        public["emitter_interface"] = TYPED_PROOF_HOLE_EMITTER_INTERFACE
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["proof_success"] = False
+        public["count"] = len(public.get("holes") or ())
+        public["missing_proof_count"] = len(public.get("missing_proof_hole_ids") or ())
+        return _response(
+            "discover_missing_proofs",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.ADVISORY,
+            result=public,
+            request_id=request_id,
+            cache=_empty_cache(source="typed_proof_hole_emitter"),
+        )
+
+    def plan_proof(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Rank complete missing-proof plan alternatives (bounded, non-authoritative)."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "plan_proof",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True, "proof_success": False},
+                diagnostics=("cancelled before proof planning",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "plan_proof",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping with alternatives",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "plan_proof")
+        if forbidden:
+            return _response(
+                "plan_proof",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+        alternatives = request.get("alternatives")
+        if alternatives is None:
+            return _response(
+                "plan_proof",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("alternatives are required",),
+                request_id=request_id,
+            )
+        try:
+            from ipfs_datasets_py.logic.software_verification.tactician.proof_plan import (
+                GOAL_DIRECTED_PROOF_PLAN_RANKER_INTERFACE,
+                ProofPlanError,
+                rank_missing_proof_plans,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "plan_proof",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"proof plan import failed: {type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        try:
+            ranking = rank_missing_proof_plans(
+                alternatives,
+                policy=request.get("policy"),
+                bounds=request.get("bounds"),
+            )
+        except ProofPlanError as exc:
+            return _response(
+                "plan_proof",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "plan_proof",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(ranking.to_dict())
+        public["ranker_interface"] = GOAL_DIRECTED_PROOF_PLAN_RANKER_INTERFACE
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["proof_success"] = False
+        public["proof_claimed"] = False
+        status = (
+            VerificationStatus.SUCCEEDED
+            if ranking.selected is not None
+            else VerificationStatus.PARTIAL
+        )
+        return _response(
+            "plan_proof",
+            status,
+            authority=VerificationAuthority.ADVISORY,
+            result=public,
+            bounds=_normalize_bounds(request.get("bounds")),
+            request_id=request_id,
+            cache=_empty_cache(source="goal_directed_proof_plan_ranker"),
+        )
+
+    def validate_proof_candidate(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Independently validate a proof-gap candidate (never discharges by silence)."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True, "proof_success": False},
+                diagnostics=("cancelled before candidate validation",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "validate_proof_candidate")
+        if forbidden:
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+        candidate = request.get("candidate")
+        hole = request.get("hole")
+        binding = request.get("binding")
+        if candidate is None or hole is None or binding is None:
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("candidate, hole, and binding are required",),
+                request_id=request_id,
+            )
+        try:
+            from ipfs_datasets_py.logic.software_verification.tactician.candidate_validation import (
+                CandidateValidationError,
+                validate_candidate,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    f"candidate validation import failed: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+        try:
+            outcome = validate_candidate(
+                candidate,
+                hole,
+                binding,
+                backends=tuple(request.get("backends") or ()),
+                recipe=request.get("recipe"),
+                expected_candidate_content_id=str(
+                    request.get("expected_candidate_content_id") or ""
+                ),
+                expected_hole_content_id=str(request.get("expected_hole_content_id") or ""),
+                proposed_provider_verdicts=request.get("proposed_provider_verdicts"),
+                bounds=request.get("bounds"),
+            )
+        except CandidateValidationError as exc:
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "validate_proof_candidate",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(
+            outcome.to_dict() if hasattr(outcome, "to_dict") else dict(outcome)
+        )
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        # Transport-level success never becomes proof success.
+        public["proof_success"] = False
+        verdict = str(public.get("verdict") or public.get("status") or "").lower()
+        status = VerificationStatus.SUCCEEDED
+        if verdict in {"reject", "rejected", "invalid", "fail", "failed"}:
+            status = VerificationStatus.INVALID
+        elif verdict in {"quarantine", "partial", "inconclusive"}:
+            status = VerificationStatus.PARTIAL
+        return _response(
+            "validate_proof_candidate",
+            status,
+            authority=VerificationAuthority.BOUNDED,
+            result=public,
+            bounds=_normalize_bounds(request.get("bounds")),
+            request_id=request_id,
+            cache=_empty_cache(source="proof_candidate_validator"),
+        )
+
+    def execute_proof_plan(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Bounded local plan readiness check — never mutates supervisor state.
+
+        Datasets APIs do not expose supervisor-only mutation controls.  This
+        operation validates plan structure, cancellation, and resource bounds,
+        and returns a readiness report.  Proof success requires independent
+        fresh receipts and is never implied by transport success.
+        """
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "execute_proof_plan",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={
+                    "cancelled": True,
+                    "executed": False,
+                    "proof_success": False,
+                    "supervisor_mutated": False,
+                },
+                diagnostics=("cancelled before plan execution readiness check",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "execute_proof_plan",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "execute_proof_plan")
+        if forbidden:
+            return _response(
+                "execute_proof_plan",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+
+        plan = request.get("plan") or request.get("proof_plan") or request
+        if not isinstance(plan, Mapping):
+            return _response(
+                "execute_proof_plan",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("plan must be a mapping",),
+                request_id=request_id,
+            )
+        plan_id = str(plan.get("plan_id") or request.get("plan_id") or "").strip()
+        steps = plan.get("steps") or plan.get("candidates") or ()
+        if not isinstance(steps, Sequence) or isinstance(steps, (str, bytes)):
+            return _response(
+                "execute_proof_plan",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("plan.steps must be a sequence",),
+                request_id=request_id,
+            )
+        if not plan_id:
+            plan_id = f"plan:{stable_digest({'steps': list(steps)})[:16]}"
+
+        step_ids: list[str] = []
+        missing_fields: list[str] = []
+        for index, step in enumerate(steps):
+            if not isinstance(step, Mapping):
+                missing_fields.append(f"steps[{index}]:not_object")
+                continue
+            sid = str(step.get("step_id") or step.get("candidate_id") or f"step:{index}")
+            step_ids.append(sid)
+            if step.get("proof_claimed") is True or step.get("completion_claimed") is True:
+                missing_fields.append(f"{sid}:proof_claimed_without_receipt")
+            if not (step.get("obligation_id") or step.get("statement")):
+                missing_fields.append(f"{sid}:missing_obligation")
+
+        ready = not missing_fields and len(step_ids) > 0
+        # Explicit: transport envelope success must not mean proof success.
+        result = {
+            "plan_id": plan_id,
+            "ready": ready,
+            "executed": False,
+            "supervisor_mutated": False,
+            "proof_success": False,
+            "step_ids": step_ids,
+            "step_count": len(step_ids),
+            "blocking_issues": missing_fields,
+            "goal_tactician_interface": GOAL_TACTICIAN_API_INTERFACE,
+            "mode": "local_readiness",
+            "note": (
+                "datasets execute_proof_plan performs local readiness only; "
+                "supervisor lifecycle ownership remains out of band"
+            ),
+        }
+        status = VerificationStatus.SUCCEEDED if ready else VerificationStatus.PARTIAL
+        if not step_ids:
+            status = VerificationStatus.INVALID
+        return _response(
+            "execute_proof_plan",
+            status,
+            authority=VerificationAuthority.BOUNDED,
+            result=result,
+            bounds=_normalize_bounds(request.get("bounds") or plan.get("bounds")),
+            diagnostics=tuple(missing_fields[:32]),
+            request_id=request_id,
+            cache=_empty_cache(source="goal_tactician_local_readiness"),
+        )
+
+    def proof_status(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Report closed status identities for a plan / goal without mutation."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "proof_status",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True, "proof_success": False},
+                diagnostics=("cancelled before proof status",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "proof_status",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "proof_status")
+        if forbidden:
+            return _response(
+                "proof_status",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+
+        plan = request.get("plan") if isinstance(request.get("plan"), Mapping) else request
+        plan_id = str(plan.get("plan_id") or request.get("plan_id") or "").strip()
+        status_text = str(
+            plan.get("status")
+            or request.get("status")
+            or plan.get("plan_status")
+            or "unknown"
+        ).strip().lower()
+        receipts = plan.get("receipts") or request.get("receipts") or ()
+        receipt_count = len(receipts) if isinstance(receipts, Sequence) and not isinstance(
+            receipts, (str, bytes)
+        ) else 0
+        steps = plan.get("steps") or plan.get("candidates") or ()
+        step_count = (
+            len(steps)
+            if isinstance(steps, Sequence) and not isinstance(steps, (str, bytes))
+            else 0
+        )
+        # Never treat transport-present status alone as proof success.
+        claimed_complete = bool(
+            plan.get("complete")
+            or plan.get("proof_success")
+            or status_text in {"complete", "completed", "proved", "closed"}
+        )
+        proof_success = claimed_complete and receipt_count > 0 and step_count > 0
+        availability = "declared"
+        if status_text in {"unavailable", "missing"}:
+            availability = "unavailable"
+        result = {
+            "plan_id": plan_id or f"plan:{stable_digest(dict(plan))[:16]}",
+            "status": status_text,
+            "availability": availability,
+            "step_count": step_count,
+            "receipt_count": receipt_count,
+            "proof_success": proof_success,
+            "transport_ok": True,
+            "goal_tactician_interface": GOAL_TACTICIAN_API_INTERFACE,
+            "identity": stable_digest(
+                {
+                    "plan_id": plan_id,
+                    "status": status_text,
+                    "step_count": step_count,
+                    "receipt_count": receipt_count,
+                }
+            ),
+        }
+        api_status = VerificationStatus.SUCCEEDED
+        if not proof_success and claimed_complete:
+            api_status = VerificationStatus.PARTIAL
+            result["diagnostics_note"] = (
+                "completion claim rejected without adequate receipts"
+            )
+        elif status_text in {"unknown", ""}:
+            api_status = VerificationStatus.PARTIAL
+        return _response(
+            "proof_status",
+            api_status,
+            authority=VerificationAuthority.BOUNDED if proof_success else VerificationAuthority.NONE,
+            result=result,
+            request_id=request_id,
+            cache=_empty_cache(source="goal_tactician_status"),
+        )
+
+    def minimize_counterexample(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Oracle-preserving semantic counterexample minimization (public-safe)."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True},
+                diagnostics=("cancelled before minimization",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping with witness",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "minimize_counterexample")
+        if forbidden:
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+        witness = request.get("witness")
+        if not isinstance(witness, Mapping):
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("witness object is required",),
+                request_id=request_id,
+            )
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.minimization import (
+                MinimizationError,
+                minimize_counterexample as _minimize,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    f"minimization import failed: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+
+        oracle = request.get("oracle")
+        if callable(oracle):
+            violation_oracle = oracle
+        else:
+            # Default fail-closed oracle: preserve the original witness as violating.
+            seed = _redact_public_mapping(witness)
+
+            def violation_oracle(candidate: Mapping[str, Any]) -> bool:
+                # Preserve violation when assignment keys stay a subset of the seed.
+                if not isinstance(candidate, Mapping):
+                    return False
+                seed_assign = seed.get("assignments") or seed.get("model") or seed
+                cand_assign = candidate.get("assignments") or candidate.get("model") or candidate
+                if not isinstance(seed_assign, Mapping) or not isinstance(cand_assign, Mapping):
+                    return candidate == seed
+                return all(
+                    cand_assign.get(key) == value
+                    for key, value in seed_assign.items()
+                    if value is not None
+                ) or candidate == seed
+
+        try:
+            outcome = _minimize(
+                dict(witness),
+                violation_oracle,
+                family=request.get("family"),
+                budget=request.get("budget"),
+                oracle_id=str(request.get("oracle_id") or "oracle:public"),
+                property_snapshot_id=str(request.get("property_snapshot_id") or ""),
+                assumption_ids=request.get("assumption_ids"),
+                finite_bounds=request.get("finite_bounds") or request.get("bounds"),
+            )
+        except MinimizationError as exc:
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "minimize_counterexample",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(outcome.to_dict())
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["proof_success"] = False
+        return _response(
+            "minimize_counterexample",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.BOUNDED,
+            result=public,
+            witnesses=(public.get("witness") or {},),
+            bounds=_normalize_bounds(request.get("finite_bounds") or request.get("bounds")),
+            assumptions=tuple(request.get("assumption_ids") or ()),
+            request_id=request_id,
+            cache=_empty_cache(source="semantic_counterexample_minimizer"),
+        )
+
+    def explain_counterexample_causal(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Causal / first-divergence counterexample explanation (public-safe)."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "explain_counterexample_causal",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True},
+                diagnostics=("cancelled before causal explanation",),
+                request_id=request_id,
+            )
+        if isinstance(request, Mapping):
+            forbidden = _reject_forbidden_controls(request, "explain_counterexample_causal")
+            if forbidden:
+                return _response(
+                    "explain_counterexample_causal",
+                    VerificationStatus.INVALID,
+                    authority=VerificationAuthority.NONE,
+                    diagnostics=(forbidden,),
+                    unsupported_features=("supervisor_only_control",),
+                    request_id=request_id,
+                )
+            witness = request.get("witness", request)
+            expected = request.get("expected")
+            proof_holes = request.get("proof_holes")
+            violated_property = str(
+                request.get("violated_property") or request.get("property_id") or ""
+            )
+            assumption_ids = request.get("assumption_ids") or ()
+            finite_bounds = request.get("finite_bounds") or request.get("bounds")
+            replay_receipt = request.get("replay_receipt")
+            replay_verified = request.get("replay_verified")
+        else:
+            witness = request
+            expected = None
+            proof_holes = None
+            violated_property = ""
+            assumption_ids = ()
+            finite_bounds = None
+            replay_receipt = None
+            replay_verified = None
+        if witness is None:
+            return _response(
+                "explain_counterexample_causal",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("witness is required",),
+                request_id=request_id,
+            )
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.explanation import (
+                COUNTEREXAMPLE_EXPLANATION_INTERFACE,
+                ExplanationError,
+                explain_counterexample as _explain_causal,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "explain_counterexample_causal",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(
+                    f"explanation import failed: {type(error).__name__}: {error}",
+                ),
+                request_id=request_id,
+            )
+        try:
+            explanation = _explain_causal(
+                witness,
+                expected=expected,
+                proof_holes=proof_holes,
+                replay_receipt=replay_receipt,
+                replay_verified=replay_verified,
+                violated_property=violated_property,
+                assumption_ids=assumption_ids,
+                finite_bounds=finite_bounds,
+            )
+        except ExplanationError as exc:
+            return _response(
+                "explain_counterexample_causal",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "explain_counterexample_causal",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(explanation.to_dict())
+        public["explanation_interface"] = COUNTEREXAMPLE_EXPLANATION_INTERFACE
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["proof_success"] = False
+        return _response(
+            "explain_counterexample_causal",
+            VerificationStatus.SUCCEEDED,
+            authority=VerificationAuthority.BOUNDED,
+            result=public,
+            assumptions=tuple(assumption_ids or ()),
+            bounds=_normalize_bounds(finite_bounds),
+            request_id=request_id,
+            property_id=violated_property,
+            cache=_empty_cache(source="counterexample_explanation"),
+        )
+
+    def replay_counterexample(
+        self,
+        request: Mapping[str, Any] | Any,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+    ) -> VerificationResponse:
+        """Exact-binding counterexample replay through the public-safe recipe path."""
+
+        request_id = _text(request_id, "request_id", optional=True)
+        if _is_cancelled(cancellation):
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.PARTIAL,
+                authority=VerificationAuthority.NONE,
+                result={"cancelled": True, "reproduced": False},
+                diagnostics=("cancelled before replay",),
+                request_id=request_id,
+            )
+        if not isinstance(request, Mapping):
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=("request must be a mapping",),
+                request_id=request_id,
+            )
+        forbidden = _reject_forbidden_controls(request, "replay_counterexample")
+        if forbidden:
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(forbidden,),
+                unsupported_features=("supervisor_only_control",),
+                request_id=request_id,
+            )
+        recipe = request.get("recipe", request.get("witness", request))
+        try:
+            from ipfs_datasets_py.logic.software_verification.counterexamples.replay import (
+                COUNTEREXAMPLE_REPLAY_INTERFACE,
+                ReplayError,
+                ReplayStatus,
+                replay_counterexample as _replay,
+            )
+        except Exception as error:  # pragma: no cover
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.UNAVAILABLE,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"replay import failed: {type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+        oracle = request.get("oracle")
+        if not callable(oracle):
+            # Default oracle: treat presence of a public payload as still violating.
+            def oracle(candidate: Mapping[str, Any]) -> bool:  # type: ignore[misc]
+                return isinstance(candidate, Mapping)
+
+        try:
+            outcome = _replay(
+                recipe,
+                oracle=oracle,
+                observed_bindings=request.get("observed_bindings"),
+                tool_available=request.get("tool_available", True),
+                oracle_id=str(request.get("oracle_id") or "oracle:public"),
+            )
+        except ReplayError as exc:
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.INVALID,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(str(exc),),
+                request_id=request_id,
+            )
+        except Exception as error:
+            return _response(
+                "replay_counterexample",
+                VerificationStatus.ERROR,
+                authority=VerificationAuthority.NONE,
+                diagnostics=(f"{type(error).__name__}: {error}",),
+                request_id=request_id,
+            )
+
+        public = _redact_public_mapping(outcome.to_dict())
+        public["replay_interface"] = COUNTEREXAMPLE_REPLAY_INTERFACE
+        public["goal_tactician_interface"] = GOAL_TACTICIAN_API_INTERFACE
+        public["proof_success"] = False
+        status_value = public.get("status")
+        if status_value == getattr(ReplayStatus, "REPRODUCED", "reproduced") or status_value == "reproduced":
+            api_status = VerificationStatus.SUCCEEDED
+        elif status_value in {"unavailable", ReplayStatus.UNAVAILABLE if hasattr(ReplayStatus, "UNAVAILABLE") else "unavailable"}:
+            api_status = VerificationStatus.UNAVAILABLE
+        elif status_value in {
+            "binding_mismatch",
+            getattr(ReplayStatus, "BINDING_MISMATCH", "binding_mismatch"),
+        }:
+            api_status = VerificationStatus.PARTIAL
+        else:
+            api_status = VerificationStatus.PARTIAL
+        return _response(
+            "replay_counterexample",
+            api_status,
+            authority=VerificationAuthority.BOUNDED,
+            result=public,
+            request_id=request_id,
+            cache=_empty_cache(source="counterexample_replay"),
+        )
+
+    def invoke_goal_tactician(
+        self,
+        operation: str,
+        request: Mapping[str, Any] | None = None,
+        *,
+        request_id: str = "",
+        cancellation: object | None = None,
+        **kwargs: Any,
+    ) -> VerificationResponse:
+        """Channel-neutral dispatcher for GoalTacticianAPI@1 operations."""
+
+        operation = _text(operation, "operation")
+        if operation not in GOAL_TACTICIAN_OPERATIONS:
+            return _response(
+                operation,
+                VerificationStatus.UNSUPPORTED,
+                authority=VerificationAuthority.NONE,
+                unsupported_features=(f"goal_tactician:{operation}",),
+                diagnostics=(f"unknown goal tactician operation: {operation}",),
+                request_id=request_id,
+            )
+        payload = dict(request or {})
+        payload.update({key: value for key, value in kwargs.items() if value is not None})
+        if operation == "list_goal_tactician_operations":
+            return self.list_goal_tactician_operations(request_id=request_id)
+        if operation == "formalize_goal":
+            return self.formalize_goal(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "compare_interpretations":
+            return self.compare_interpretations(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "discover_missing_proofs":
+            surface = payload.get("surface", payload.get("request", payload))
+            return self.discover_missing_proofs(
+                surface,
+                request_id=request_id,
+                require_source_spans=bool(payload.get("require_source_spans", True)),
+                cancellation=cancellation,
+            )
+        if operation == "plan_proof":
+            return self.plan_proof(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "validate_proof_candidate":
+            return self.validate_proof_candidate(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "execute_proof_plan":
+            return self.execute_proof_plan(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "proof_status":
+            return self.proof_status(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "minimize_counterexample":
+            return self.minimize_counterexample(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "explain_counterexample_causal":
+            return self.explain_counterexample_causal(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        if operation == "replay_counterexample":
+            return self.replay_counterexample(
+                payload.get("request", payload),
+                request_id=request_id,
+                cancellation=cancellation,
+            )
+        return _response(
+            operation,
+            VerificationStatus.UNSUPPORTED,
+            authority=VerificationAuthority.NONE,
+            unsupported_features=(f"goal_tactician:{operation}",),
+            request_id=request_id,
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "interface": self.interface,
             "operations": list(STABLE_OPERATIONS),
+            "goal_tactician_interface": GOAL_TACTICIAN_API_INTERFACE,
+            "goal_tactician_operations": list(GOAL_TACTICIAN_OPERATIONS),
             "version": self.version,
         }
 
@@ -2761,6 +4284,168 @@ def install_provider(provider_id: str, **kwargs: Any) -> VerificationResponse:
     return get_verification_api().install_provider(provider_id, **kwargs)
 
 
+def list_goal_tactician_operations(**kwargs: Any) -> VerificationResponse:
+    return get_verification_api().list_goal_tactician_operations(**kwargs)
+
+
+def formalize_goal(request: Mapping[str, Any] | Any, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().formalize_goal(request, **kwargs)
+
+
+def compare_interpretations(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().compare_interpretations(request, **kwargs)
+
+
+def discover_missing_proofs(
+    surface: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().discover_missing_proofs(surface, **kwargs)
+
+
+def plan_proof(request: Mapping[str, Any] | Any, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().plan_proof(request, **kwargs)
+
+
+def validate_proof_candidate(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().validate_proof_candidate(request, **kwargs)
+
+
+def execute_proof_plan(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().execute_proof_plan(request, **kwargs)
+
+
+def proof_status(request: Mapping[str, Any] | Any, **kwargs: Any) -> VerificationResponse:
+    return get_verification_api().proof_status(request, **kwargs)
+
+
+def minimize_counterexample(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().minimize_counterexample(request, **kwargs)
+
+
+def explain_counterexample_causal(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().explain_counterexample_causal(request, **kwargs)
+
+
+def replay_counterexample(
+    request: Mapping[str, Any] | Any, **kwargs: Any
+) -> VerificationResponse:
+    return get_verification_api().replay_counterexample(request, **kwargs)
+
+
+def invoke_goal_tactician(
+    operation: str,
+    request: Mapping[str, Any] | None = None,
+    **kwargs: Any,
+) -> VerificationResponse:
+    return get_verification_api().invoke_goal_tactician(operation, request, **kwargs)
+
+
+def invoke_goal_tactician_mcp_tool(
+    tool_name: str,
+    request: Mapping[str, Any] | None = None,
+    *,
+    request_id: str = "",
+    cancellation: object | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Datasets/parent MCP adapter for GoalTacticianCLIMCP@1 tools.
+
+    Returns the shared logic-verification response envelope as a dict.  Transport
+    success is independent of proof success (see ``result.proof_success``).
+    """
+
+    operation = GOAL_TACTICIAN_TOOL_TO_OPERATION.get(tool_name)
+    if operation is None:
+        payload = _response(
+            tool_name,
+            VerificationStatus.UNSUPPORTED,
+            authority=VerificationAuthority.NONE,
+            unsupported_features=(f"mcp_tool:{tool_name}",),
+            diagnostics=(f"unknown goal tactician MCP tool: {tool_name}",),
+            request_id=request_id,
+        ).to_dict()
+        payload["success"] = False
+        payload["channel"] = "mcp"
+        payload["tool"] = tool_name
+        payload["mcp_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+        return payload
+    response = get_verification_api().invoke_goal_tactician(
+        operation,
+        request,
+        request_id=request_id,
+        cancellation=cancellation,
+        **kwargs,
+    )
+    payload = response.to_dict()
+    payload["success"] = response.status not in {
+        VerificationStatus.ERROR,
+        VerificationStatus.INVALID,
+        VerificationStatus.UNSUPPORTED,
+    }
+    payload["channel"] = "mcp"
+    payload["tool"] = tool_name
+    payload["mcp_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+    payload["cli_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+    payload["python_operation"] = operation
+    return payload
+
+
+def invoke_goal_tactician_cli(
+    command: str,
+    request: Mapping[str, Any] | None = None,
+    *,
+    request_id: str = "",
+    cancellation: object | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """CLI adapter for GoalTacticianCLIMCP@1 commands (schema-equivalent to MCP)."""
+
+    operation = GOAL_TACTICIAN_CLI_TO_OPERATION.get(command)
+    if operation is None:
+        payload = _response(
+            command,
+            VerificationStatus.UNSUPPORTED,
+            authority=VerificationAuthority.NONE,
+            unsupported_features=(f"cli_command:{command}",),
+            diagnostics=(f"unknown goal tactician CLI command: {command}",),
+            request_id=request_id,
+        ).to_dict()
+        payload["success"] = False
+        payload["channel"] = "cli"
+        payload["command"] = command
+        payload["cli_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+        return payload
+    response = get_verification_api().invoke_goal_tactician(
+        operation,
+        request,
+        request_id=request_id,
+        cancellation=cancellation,
+        **kwargs,
+    )
+    payload = response.to_dict()
+    payload["success"] = response.status not in {
+        VerificationStatus.ERROR,
+        VerificationStatus.INVALID,
+        VerificationStatus.UNSUPPORTED,
+    }
+    payload["channel"] = "cli"
+    payload["command"] = command
+    payload["cli_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+    payload["mcp_interface"] = GOAL_TACTICIAN_CLI_MCP_INTERFACE
+    payload["python_operation"] = operation
+    return payload
+
+
 __all__ = [
     "ATTESTATION_AUTHORITY_BOUNDARY_INTERFACE",
     "CLOSED_RECEIPT_SCHEMAS",
@@ -2769,6 +4454,16 @@ __all__ = [
     "FORMAL_VERIFICATION_MCP_PARITY_INTERFACE",
     "FeatureAvailability",
     "FeatureDescriptor",
+    "GOAL_TACTICIAN_API_INTERFACE",
+    "GOAL_TACTICIAN_API_VERSION",
+    "GOAL_TACTICIAN_CLI_COMMANDS",
+    "GOAL_TACTICIAN_CLI_MCP_INTERFACE",
+    "GOAL_TACTICIAN_CLI_TO_OPERATION",
+    "GOAL_TACTICIAN_OPERATIONS",
+    "GOAL_TACTICIAN_REQUEST_SCHEMA",
+    "GOAL_TACTICIAN_RESPONSE_SCHEMA",
+    "GOAL_TACTICIAN_TOOL_NAMES",
+    "GOAL_TACTICIAN_TOOL_TO_OPERATION",
     "LOGIC_TRANSLATION_RECEIPT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
@@ -2784,16 +4479,32 @@ __all__ = [
     "advise",
     "attest_receipt",
     "check",
+    "compare_interpretations",
     "compile_verification_artifact",
+    "discover_missing_proofs",
+    "execute_proof_plan",
     "explain_counterexample",
+    "explain_counterexample_causal",
+    "formalize_goal",
     "get_verification_api",
+    "goal_tactician_tool_schemas",
     "install_provider",
+    "invoke_goal_tactician",
+    "invoke_goal_tactician_cli",
+    "invoke_goal_tactician_mcp_tool",
+    "list_goal_tactician_cli_mcp_surface",
+    "list_goal_tactician_operations",
     "list_logic_families",
     "list_providers",
     "list_stable_features",
+    "minimize_counterexample",
     "monitor",
+    "plan_proof",
     "probe_provider",
+    "proof_status",
     "provider_capabilities",
+    "replay_counterexample",
     "run_portfolio",
+    "validate_proof_candidate",
     "verify_receipt",
 ]
