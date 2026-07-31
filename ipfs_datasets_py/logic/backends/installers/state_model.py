@@ -6,6 +6,8 @@
 * ``ensure_apalache`` — pinned Apalache 0.58.3 symbolic model checker
 * Java remains a **host support runtime only** (never installed by this plugin
   and never granted state-model authority by itself)
+* TLC requires Java 11+ and Apalache requires Java 17+; callers may select a
+  runtime explicitly instead of relying on the process-wide ``PATH``
 
 Fail-closed installation contract
 ---------------------------------
@@ -68,6 +70,9 @@ TLC_EXECUTABLE: Final = "tlc"
 TLC_JAR_NAME: Final = "tla2tools.jar"
 APALACHE_EXECUTABLE: Final = "apalache-mc"
 JAVA_EXECUTABLE: Final = "java"
+JAVA_EXECUTABLE_ENV: Final = "IPFS_DATASETS_PY_JAVA_EXECUTABLE"
+TLC_MIN_JAVA_MAJOR: Final = 11
+APALACHE_MIN_JAVA_MAJOR: Final = 17
 
 # Reviewed fallback pins when the lock file is unavailable (tests / offline).
 # TLC jar sha256 is bound at install when the lock pin leaves it empty.
@@ -209,6 +214,36 @@ class InstallReceipt:
         return asdict(self)
 
 
+@dataclass(frozen=True, slots=True)
+class JavaRuntimeProbe:
+    """Identity and usability evidence for one selected support JVM."""
+
+    executable: str | None
+    source: str
+    minimum_major: int
+    banner: str | None = None
+    major: int | None = None
+    usable: bool = False
+    reason_code: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeCommandProbe:
+    """Bounded subprocess evidence used before a tool becomes discoverable."""
+
+    command: tuple[str, ...]
+    returncode: int | None
+    output: str
+    usable: bool
+    reason_code: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 # ---------------------------------------------------------------------------
 # Path / platform helpers
 # ---------------------------------------------------------------------------
@@ -262,10 +297,145 @@ def which_executable(name: str, *, path_env: str | None = None) -> str | None:
     return found
 
 
-def java_is_available() -> bool:
-    """Return True when a host JVM is on PATH (support runtime only)."""
+def _java_candidate(
+    java_executable: str | Path | None = None,
+) -> tuple[str, str]:
+    """Return the requested Java candidate and its selection source.
 
-    return which_executable(JAVA_EXECUTABLE) is not None
+    An explicit function argument or environment override is authoritative:
+    an invalid override must not silently fall back to a different JVM.
+    """
+
+    if java_executable is not None:
+        return str(java_executable), "argument"
+    env_override = os.environ.get(JAVA_EXECUTABLE_ENV)
+    if env_override:
+        return env_override, "environment"
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        return str(Path(java_home) / "bin" / JAVA_EXECUTABLE), "java_home"
+    return JAVA_EXECUTABLE, "path"
+
+
+def resolve_java_executable(
+    java_executable: str | Path | None = None,
+) -> tuple[str | None, str]:
+    """Resolve the selected JVM without mutating ``PATH`` or ``JAVA_HOME``."""
+
+    candidate, source = _java_candidate(java_executable)
+    return which_executable(candidate), source
+
+
+def read_java_version_banner(
+    java_executable: str,
+    *,
+    timeout: float = 10.0,
+) -> tuple[int | None, str | None]:
+    """Return ``(exit_code, banner)`` from a bounded ``java -version`` probe."""
+
+    try:
+        completed = subprocess.run(
+            [java_executable, "-version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None, None
+    text = "\n".join(
+        part for part in (completed.stdout, completed.stderr) if part
+    ).strip()
+    return completed.returncode, text or None
+
+
+def java_major_version(banner: str | None) -> int | None:
+    """Parse Java's legacy ``1.8`` and modern ``17`` version formats."""
+
+    version = numeric_version(banner or "")
+    if not version:
+        return None
+    if version[0] == 1 and len(version) > 1:
+        return version[1]
+    return version[0]
+
+
+def probe_java_runtime(
+    *,
+    java_executable: str | Path | None = None,
+    minimum_major: int,
+    timeout: float = 10.0,
+) -> JavaRuntimeProbe:
+    """Resolve and validate one JVM against a tool-specific minimum version."""
+
+    resolved, source = resolve_java_executable(java_executable)
+    if resolved is None:
+        reason = (
+            "java_override_invalid"
+            if source in {"argument", "environment", "java_home"}
+            else "java_support_missing"
+        )
+        return JavaRuntimeProbe(
+            executable=None,
+            source=source,
+            minimum_major=minimum_major,
+            reason_code=reason,
+        )
+    returncode, banner = read_java_version_banner(resolved, timeout=timeout)
+    major = java_major_version(banner)
+    if returncode is None or returncode != 0:
+        return JavaRuntimeProbe(
+            executable=resolved,
+            source=source,
+            minimum_major=minimum_major,
+            banner=banner,
+            major=major,
+            reason_code="java_probe_failed",
+        )
+    if major is None:
+        return JavaRuntimeProbe(
+            executable=resolved,
+            source=source,
+            minimum_major=minimum_major,
+            banner=banner,
+            reason_code="java_version_unreadable",
+        )
+    if major < minimum_major:
+        return JavaRuntimeProbe(
+            executable=resolved,
+            source=source,
+            minimum_major=minimum_major,
+            banner=banner,
+            major=major,
+            reason_code="java_version_unsupported",
+        )
+    return JavaRuntimeProbe(
+        executable=resolved,
+        source=source,
+        minimum_major=minimum_major,
+        banner=banner,
+        major=major,
+        usable=True,
+    )
+
+
+def java_is_available(
+    *,
+    java_executable: str | Path | None = None,
+    minimum_major: int | None = None,
+) -> bool:
+    """Return whether a support JVM exists and, when requested, is compatible."""
+
+    resolved, _ = resolve_java_executable(java_executable)
+    if resolved is None:
+        return False
+    if minimum_major is None:
+        return True
+    return probe_java_runtime(
+        java_executable=resolved,
+        minimum_major=minimum_major,
+    ).usable
 
 
 def numeric_version(text: str) -> tuple[int, ...]:
@@ -458,6 +628,71 @@ def select_strict_pin(
 # ---------------------------------------------------------------------------
 
 
+def _runtime_environment(
+    java_executable: str | Path | None = None,
+) -> dict[str, str]:
+    env = dict(os.environ)
+    if java_executable is not None:
+        java_dir = str(Path(java_executable).resolve().parent)
+        current = env.get("PATH", "")
+        env["PATH"] = os.pathsep.join(
+            part for part in (java_dir, current) if part
+        )
+    return env
+
+
+def _run_runtime_command(
+    command: Sequence[str],
+    *,
+    timeout: float,
+    java_executable: str | Path | None = None,
+) -> RuntimeCommandProbe:
+    normalized = tuple(str(part) for part in command)
+    try:
+        completed = subprocess.run(
+            list(normalized),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            shell=False,
+            env=_runtime_environment(java_executable),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return RuntimeCommandProbe(
+            command=normalized,
+            returncode=None,
+            output="",
+            usable=False,
+            reason_code="runtime_probe_failed",
+        )
+    text = "\n".join(
+        part for part in (completed.stdout, completed.stderr) if part
+    ).strip()
+    if completed.returncode != 0:
+        return RuntimeCommandProbe(
+            command=normalized,
+            returncode=completed.returncode,
+            output=text,
+            usable=False,
+            reason_code="runtime_probe_nonzero_exit",
+        )
+    if not text:
+        return RuntimeCommandProbe(
+            command=normalized,
+            returncode=completed.returncode,
+            output="",
+            usable=False,
+            reason_code="runtime_probe_empty_output",
+        )
+    return RuntimeCommandProbe(
+        command=normalized,
+        returncode=completed.returncode,
+        output=text,
+        usable=True,
+    )
+
+
 def read_version_banner(
     executable: str,
     *,
@@ -485,6 +720,7 @@ def read_tlc_version_banner(
     executable: str | None = None,
     *,
     jar_path: str | Path | None = None,
+    java_executable: str | Path | None = None,
     timeout: float = 10.0,
 ) -> str | None:
     """Probe TLC identity via launcher or ``java -cp jar tlc2.TLC``."""
@@ -492,40 +728,36 @@ def read_tlc_version_banner(
     binary = executable or which_executable(TLC_EXECUTABLE)
     if binary:
         for args in (("--version",), ("-help",), ("-h",)):
-            banner = read_version_banner(binary, timeout=timeout, extra_args=args)
-            if banner:
-                return banner
+            probe = _run_runtime_command(
+                [binary, *args],
+                timeout=timeout,
+                java_executable=java_executable,
+            )
+            if probe.usable:
+                return probe.output
     jar = Path(jar_path) if jar_path else None
     if jar is None and binary:
         # Launcher may live next to the managed jar.
         managed = expand_user_local_root() / "tlc" / TLC_VERSION / TLC_JAR_NAME
         if managed.is_file():
             jar = managed
-    if jar is not None and jar.is_file() and java_is_available():
-        java = which_executable(JAVA_EXECUTABLE)
+    if jar is not None and jar.is_file():
+        java, _ = resolve_java_executable(java_executable)
         if java:
-            try:
-                completed = subprocess.run(
-                    [java, "-cp", str(jar), "tlc2.TLC", "-help"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout,
-                    shell=False,
-                )
-            except (OSError, subprocess.SubprocessError):
-                return None
-            text = "\n".join(
-                part for part in (completed.stdout, completed.stderr) if part
-            ).strip()
-            if text:
-                return text
+            probe = _run_runtime_command(
+                [java, "-cp", str(jar), "tlc2.TLC", "-help"],
+                timeout=timeout,
+                java_executable=java,
+            )
+            if probe.usable:
+                return probe.output
     return None
 
 
 def read_apalache_version_banner(
     executable: str | None = None,
     *,
+    java_executable: str | Path | None = None,
     timeout: float = 15.0,
 ) -> str | None:
     binary = executable or which_executable(APALACHE_EXECUTABLE)
@@ -534,9 +766,13 @@ def read_apalache_version_banner(
     if not binary:
         return None
     for args in (("version",), ("--version",), ("-V",)):
-        banner = read_version_banner(binary, timeout=timeout, extra_args=args)
-        if banner:
-            return banner
+        probe = _run_runtime_command(
+            [binary, *args],
+            timeout=timeout,
+            java_executable=java_executable,
+        )
+        if probe.usable:
+            return probe.output
     return None
 
 
@@ -548,6 +784,82 @@ def observed_version_matches_lock(banner: str | None, expected: str) -> bool:
     observed = numeric_version(banner)
     locked = numeric_version(expected)
     return bool(observed and locked and observed == locked)
+
+
+def probe_tlc_runtime(
+    *,
+    executable: str | None = None,
+    jar_path: str | Path | None = None,
+    java_executable: str | Path,
+    timeout: float = 15.0,
+) -> RuntimeCommandProbe:
+    """Prove TLC starts under the selected JVM before reporting it usable."""
+
+    jar = Path(jar_path) if jar_path is not None else None
+    if jar is not None and jar.is_file():
+        return _run_runtime_command(
+            [
+                str(java_executable),
+                "-cp",
+                str(jar),
+                "tlc2.TLC",
+                "-help",
+            ],
+            timeout=timeout,
+            java_executable=java_executable,
+        )
+    if executable:
+        return _run_runtime_command(
+            [executable, "-help"],
+            timeout=timeout,
+            java_executable=java_executable,
+        )
+    return RuntimeCommandProbe(
+        command=(),
+        returncode=None,
+        output="",
+        usable=False,
+        reason_code="runtime_executable_missing",
+    )
+
+
+def probe_apalache_runtime(
+    executable: str,
+    *,
+    java_executable: str | Path,
+    expected_version: str = APALACHE_VERSION,
+    timeout: float = 20.0,
+) -> RuntimeCommandProbe:
+    """Prove Apalache starts, exits cleanly, and reports the locked version."""
+
+    last_probe: RuntimeCommandProbe | None = None
+    for args in (("version",), ("--version",), ("-V",)):
+        probe = _run_runtime_command(
+            [executable, *args],
+            timeout=timeout,
+            java_executable=java_executable,
+        )
+        last_probe = probe
+        if not probe.usable:
+            continue
+        if observed_version_matches_lock(probe.output, expected_version):
+            return probe
+        last_probe = RuntimeCommandProbe(
+            command=probe.command,
+            returncode=probe.returncode,
+            output=probe.output,
+            usable=False,
+            reason_code="runtime_version_mismatch",
+        )
+    if last_probe is not None:
+        return last_probe
+    return RuntimeCommandProbe(
+        command=(),
+        returncode=None,
+        output="",
+        usable=False,
+        reason_code="runtime_executable_missing",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +964,7 @@ def write_launcher(
     environment: Mapping[str, str] | None = None,
     java_jar: Path | None = None,
     java_main: str | None = None,
+    java_executable: str | Path | None = None,
 ) -> Path:
     """Write a user-local launcher script under ``$root/bin/<name>``."""
 
@@ -666,23 +979,41 @@ def write_launcher(
             for key, value in environment.items()
         ]
         env_exports = "\n".join(lines) + "\n"
+    selected_java = (
+        str(Path(java_executable).resolve())
+        if java_executable is not None
+        else None
+    )
     if java_jar is not None and java_main:
+        java_command = _shell_quote(selected_java) if selected_java else "java"
+        java_guard = ""
+        if selected_java is None:
+            java_guard = (
+                "if ! command -v java >/dev/null 2>&1; then\n"
+                '  echo "java (JVM support runtime) is required for TLC" >&2\n'
+                "  exit 127\n"
+                "fi\n"
+            )
         body = (
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
             f"{env_exports}"
-            "if ! command -v java >/dev/null 2>&1; then\n"
-            '  echo "java (JVM support runtime) is required for TLC" >&2\n'
-            "  exit 127\n"
-            "fi\n"
-            f'exec java -cp {_shell_quote(str(java_jar.resolve()))} '
+            f"{java_guard}"
+            f"exec {java_command} -cp {_shell_quote(str(java_jar.resolve()))} "
             f"{_shell_quote(java_main)} \"$@\"\n"
         )
     else:
+        java_path = ""
+        if selected_java:
+            java_path = (
+                f"export PATH={_shell_quote(str(Path(selected_java).parent))}:"
+                '"${PATH:-}"\n'
+            )
         body = (
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
             f"{env_exports}"
+            f"{java_path}"
             f'exec {_shell_quote(str(target.resolve()))} "$@"\n'
         )
     launcher.write_text(body, encoding="utf-8")
@@ -768,6 +1099,82 @@ def _base_receipt(
     )
 
 
+def _record_java_runtime(
+    receipt: InstallReceipt,
+    runtime: JavaRuntimeProbe,
+) -> None:
+    receipt.bindings["java_available"] = runtime.executable is not None
+    receipt.bindings["java_usable"] = runtime.usable
+    receipt.bindings["java_runtime"] = runtime.to_dict()
+    receipt.bindings["java_executable"] = runtime.executable
+    receipt.bindings["java_major"] = runtime.major
+    receipt.bindings["minimum_java_major"] = runtime.minimum_major
+
+
+def _block_for_java_runtime(
+    receipt: InstallReceipt,
+    runtime: JavaRuntimeProbe,
+    *,
+    tool_name: str,
+) -> InstallReceipt:
+    receipt.status = "blocked"
+    receipt.phase = "java_support"
+    reason = runtime.reason_code or "java_support_unusable"
+    receipt.reason_codes.append(reason)
+    if reason == "java_version_unsupported":
+        detail = (
+            f"selected Java {runtime.major} is below the certified minimum "
+            f"Java {runtime.minimum_major}"
+        )
+    elif reason == "java_override_invalid":
+        detail = "the explicit Java override does not resolve to an executable"
+    elif reason == "java_version_unreadable":
+        detail = "the selected Java version could not be determined"
+    elif reason == "java_probe_failed":
+        detail = "the selected Java runtime failed its bounded version probe"
+    else:
+        detail = "no Java runtime was found"
+    receipt.messages.append(
+        f"{tool_name} is not runnable because {detail}. Java remains a "
+        "support-only host dependency and is never installed or promoted by "
+        "this plugin."
+    )
+    return receipt
+
+
+def _record_tool_runtime(
+    receipt: InstallReceipt,
+    probe: RuntimeCommandProbe,
+    *,
+    binding: str,
+) -> None:
+    receipt.bindings[binding] = probe.to_dict()
+
+
+def _fail_runtime_validation(
+    receipt: InstallReceipt,
+    probe: RuntimeCommandProbe,
+    *,
+    tool_name: str,
+    strict: bool,
+) -> InstallReceipt:
+    receipt.status = "failed"
+    receipt.phase = "runtime_validation"
+    receipt.installed = False
+    receipt.reason_codes.append("post_install_usability_failed")
+    if probe.reason_code:
+        receipt.reason_codes.append(probe.reason_code)
+    receipt.messages.append(
+        f"{tool_name} artifacts were prepared but the bounded runtime probe "
+        "did not succeed; no managed launcher was published."
+    )
+    if strict:
+        raise StateModelInstallerError(
+            f"{tool_name} installation failed post-install runtime validation"
+        )
+    return receipt
+
+
 # ---------------------------------------------------------------------------
 # ensure_* entry points
 # ---------------------------------------------------------------------------
@@ -785,8 +1192,9 @@ def ensure_tlc(
     dry_run: bool = False,
     test_mode: bool = False,
     require_java: bool = True,
+    java_executable: str | Path | None = None,
 ) -> InstallReceipt:
-    """Ensure the pinned TLC / TLA+ tools 1.8.0 jar is present (user-local)."""
+    """Ensure a runnable pinned TLC / TLA+ tools 1.8.0 jar is user-local."""
 
     receipt = _base_receipt(
         "tlc",
@@ -796,7 +1204,13 @@ def ensure_tlc(
     )
     root = expand_user_local_root(install_root)
     platform_name = platform_key or detect_platform_key()
-    receipt.bindings["java_available"] = java_is_available()
+    java_runtime = probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=TLC_MIN_JAVA_MAJOR,
+    )
+    _record_java_runtime(receipt, java_runtime)
+    runtime_required = require_java or not dry_run
+    receipt.bindings["runtime_validation_required"] = runtime_required
 
     try:
         pin = select_strict_pin(
@@ -820,32 +1234,59 @@ def ensure_tlc(
     receipt.bindings["platform"] = pin.platform
     receipt.bindings["identity_kind"] = pin.identity_kind
 
-    existing = which_executable(TLC_EXECUTABLE)
+    managed_bin = root / "bin"
+    path_env = os.pathsep.join(
+        part
+        for part in (str(managed_bin), os.environ.get("PATH", ""))
+        if part
+    )
+    existing = which_executable(TLC_EXECUTABLE, path_env=path_env)
     managed_jar = root / "tlc" / TLC_VERSION / TLC_JAR_NAME
     if existing and not force:
-        banner = read_tlc_version_banner(existing, jar_path=managed_jar)
+        runtime_probe = (
+            probe_tlc_runtime(
+                executable=existing,
+                jar_path=managed_jar if managed_jar.is_file() else None,
+                java_executable=java_runtime.executable,
+            )
+            if java_runtime.usable and java_runtime.executable
+            else RuntimeCommandProbe(
+                command=(),
+                returncode=None,
+                output="",
+                usable=False,
+                reason_code=java_runtime.reason_code or "java_support_unusable",
+            )
+        )
+        _record_tool_runtime(
+            receipt,
+            runtime_probe,
+            binding="existing_runtime_probe",
+        )
+        banner = runtime_probe.output
         version_ok = observed_version_matches_lock(banner, TLC_VERSION)
         # Accept managed launcher when jar pin is present even if banner is sparse.
         jar_ok = managed_jar.is_file() and (
             not pin.sha256 or verify_sha256(managed_jar, pin.sha256)
         )
-        if (version_ok or jar_ok) and (not require_java or java_is_available() or not strict):
-            if require_java and not java_is_available() and strict:
-                receipt.messages.append(
-                    "TLC launcher present but host Java (support only) is missing"
-                )
-            else:
-                receipt.executable_path = existing
-                receipt.jar_path = str(managed_jar) if managed_jar.is_file() else None
-                receipt.already_present = True
-                receipt.installed = True
-                receipt.status = "available"
-                receipt.phase = "available"
-                if managed_jar.is_file():
-                    receipt.observed_sha256 = content_sha256(managed_jar)
-                    receipt.checksum_verified = bool(receipt.observed_sha256)
-                receipt.messages.append(f"TLC already available at {existing}")
-                return receipt
+        if (version_ok or jar_ok) and runtime_probe.usable:
+            receipt.executable_path = existing
+            receipt.jar_path = str(managed_jar) if managed_jar.is_file() else None
+            receipt.already_present = True
+            receipt.installed = True
+            receipt.status = "available"
+            receipt.phase = "available"
+            if managed_jar.is_file():
+                receipt.observed_sha256 = content_sha256(managed_jar)
+                receipt.checksum_verified = bool(receipt.observed_sha256)
+            receipt.messages.append(
+                f"TLC already available and runnable at {existing}"
+            )
+            return receipt
+        receipt.messages.append(
+            "TLC is present but failed strict identity or bounded runtime "
+            "validation."
+        )
 
     if dry_run:
         receipt.status = "blocked" if not yes else "available"
@@ -856,6 +1297,9 @@ def ensure_tlc(
         )
         return receipt
 
+    if runtime_required and not java_runtime.usable:
+        return _block_for_java_runtime(receipt, java_runtime, tool_name="TLC")
+
     if not yes:
         receipt.status = "blocked"
         receipt.phase = "blocked"
@@ -863,16 +1307,6 @@ def ensure_tlc(
         receipt.messages.append(
             "TLC is missing or mismatched; re-run with yes=True to install "
             "user-locally."
-        )
-        return receipt
-
-    if require_java and not java_is_available():
-        receipt.status = "blocked"
-        receipt.phase = "java_support"
-        receipt.reason_codes.append("java_support_missing")
-        receipt.messages.append(
-            "Host Java (support only) is required to run TLC; install a JVM "
-            "separately — this plugin never installs or promotes Java."
         )
         return receipt
 
@@ -917,12 +1351,31 @@ def ensure_tlc(
     receipt.bindings["observed_sha256"] = observed
     receipt.bindings["release_tag"] = f"v{pin.version}"
 
+    assert java_runtime.executable is not None
+    runtime_probe = probe_tlc_runtime(
+        jar_path=jar_path,
+        java_executable=java_runtime.executable,
+    )
+    _record_tool_runtime(
+        receipt,
+        runtime_probe,
+        binding="post_install_runtime_probe",
+    )
+    if not runtime_probe.usable:
+        return _fail_runtime_validation(
+            receipt,
+            runtime_probe,
+            tool_name="TLC",
+            strict=strict,
+        )
+
     launcher = write_launcher(
         TLC_EXECUTABLE,
         jar_path,
         install_root=root,
         java_jar=jar_path,
         java_main="tlc2.TLC",
+        java_executable=java_runtime.executable,
         environment={"TLA2TOOLS_JAR": str(jar_path)},
     )
     # Convenience aliases used by capability matrices.
@@ -933,6 +1386,7 @@ def ensure_tlc(
             install_root=root,
             java_jar=jar_path,
             java_main="tlc2.TLC",
+            java_executable=java_runtime.executable,
             environment={"TLA2TOOLS_JAR": str(jar_path)},
         )
     receipt.executable_path = str(launcher)
@@ -957,8 +1411,9 @@ def ensure_apalache(
     dry_run: bool = False,
     test_mode: bool = False,
     require_java: bool = True,
+    java_executable: str | Path | None = None,
 ) -> InstallReceipt:
-    """Ensure the pinned Apalache 0.58.3 release is present (user-local)."""
+    """Ensure a runnable pinned Apalache 0.58.3 release is user-local."""
 
     receipt = _base_receipt(
         "apalache",
@@ -968,7 +1423,13 @@ def ensure_apalache(
     )
     root = expand_user_local_root(install_root)
     platform_name = platform_key or detect_platform_key()
-    receipt.bindings["java_available"] = java_is_available()
+    java_runtime = probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=APALACHE_MIN_JAVA_MAJOR,
+    )
+    _record_java_runtime(receipt, java_runtime)
+    runtime_required = require_java or not dry_run
+    receipt.bindings["runtime_validation_required"] = runtime_required
 
     try:
         pin = select_strict_pin(
@@ -991,26 +1452,49 @@ def ensure_apalache(
     receipt.bindings["selected_version"] = pin.version
     receipt.bindings["platform"] = pin.platform
 
-    existing = which_executable(APALACHE_EXECUTABLE) or which_executable("apalache")
+    managed_bin = root / "bin"
+    path_env = os.pathsep.join(
+        part
+        for part in (str(managed_bin), os.environ.get("PATH", ""))
+        if part
+    )
+    existing = which_executable(
+        APALACHE_EXECUTABLE,
+        path_env=path_env,
+    ) or which_executable("apalache", path_env=path_env)
     if existing and not force:
-        banner = read_apalache_version_banner(existing)
-        version_ok = observed_version_matches_lock(banner, APALACHE_VERSION)
-        if version_ok or not strict:
-            if require_java and not java_is_available() and strict:
-                receipt.messages.append(
-                    "Apalache present but host Java (support only) is missing"
-                )
-            else:
-                receipt.executable_path = existing
-                receipt.already_present = True
-                receipt.installed = True
-                receipt.status = "available"
-                receipt.phase = "available"
-                receipt.messages.append(f"Apalache already available at {existing}")
-                return receipt
+        runtime_probe = (
+            probe_apalache_runtime(
+                existing,
+                java_executable=java_runtime.executable,
+            )
+            if java_runtime.usable and java_runtime.executable
+            else RuntimeCommandProbe(
+                command=(),
+                returncode=None,
+                output="",
+                usable=False,
+                reason_code=java_runtime.reason_code or "java_support_unusable",
+            )
+        )
+        _record_tool_runtime(
+            receipt,
+            runtime_probe,
+            binding="existing_runtime_probe",
+        )
+        if runtime_probe.usable:
+            receipt.executable_path = existing
+            receipt.already_present = True
+            receipt.installed = True
+            receipt.status = "available"
+            receipt.phase = "available"
+            receipt.messages.append(
+                f"Apalache already available and runnable at {existing}"
+            )
+            return receipt
         receipt.messages.append(
-            f"Apalache at {existing} is not the locked pin "
-            f"{APALACHE_VERSION}; repairing managed runtime."
+            f"Apalache at {existing} failed locked-version or bounded runtime "
+            f"validation for {APALACHE_VERSION}; repairing managed runtime."
         )
         receipt.phase = "repairing"
 
@@ -1023,6 +1507,13 @@ def ensure_apalache(
         )
         return receipt
 
+    if runtime_required and not java_runtime.usable:
+        return _block_for_java_runtime(
+            receipt,
+            java_runtime,
+            tool_name="Apalache",
+        )
+
     if not yes:
         receipt.status = "blocked"
         receipt.phase = "blocked"
@@ -1030,16 +1521,6 @@ def ensure_apalache(
         receipt.messages.append(
             "Apalache is missing or mismatched; re-run with yes=True to install "
             "user-locally."
-        )
-        return receipt
-
-    if require_java and not java_is_available():
-        receipt.status = "blocked"
-        receipt.phase = "java_support"
-        receipt.reason_codes.append("java_support_missing")
-        receipt.messages.append(
-            "Host Java (support only) is required to run Apalache; install a JVM "
-            "separately — this plugin never installs or promotes Java."
         )
         return receipt
 
@@ -1105,9 +1586,36 @@ def ensure_apalache(
         return receipt
     binary = matches[0]
     binary.chmod(binary.stat().st_mode | 0o111)
-    launcher = write_launcher(APALACHE_EXECUTABLE, binary, install_root=root)
+    assert java_runtime.executable is not None
+    runtime_probe = probe_apalache_runtime(
+        str(binary),
+        java_executable=java_runtime.executable,
+    )
+    _record_tool_runtime(
+        receipt,
+        runtime_probe,
+        binding="post_install_runtime_probe",
+    )
+    if not runtime_probe.usable:
+        return _fail_runtime_validation(
+            receipt,
+            runtime_probe,
+            tool_name="Apalache",
+            strict=strict,
+        )
+    launcher = write_launcher(
+        APALACHE_EXECUTABLE,
+        binary,
+        install_root=root,
+        java_executable=java_runtime.executable,
+    )
     # Alias used by some capability matrices.
-    write_launcher("apalache", binary, install_root=root)
+    write_launcher(
+        "apalache",
+        binary,
+        install_root=root,
+        java_executable=java_runtime.executable,
+    )
     receipt.executable_path = str(launcher)
     receipt.installed = True
     receipt.status = "installed"
@@ -1127,6 +1635,7 @@ def ensure_state_model_portfolio(
     repo_root: Path | str | None = None,
     dry_run: bool = False,
     test_mode: bool = False,
+    java_executable: str | Path | None = None,
 ) -> dict[str, Any]:
     """Ensure both authority tools (TLC + Apalache); Java remains host support."""
 
@@ -1141,6 +1650,7 @@ def ensure_state_model_portfolio(
         dry_run=dry_run,
         test_mode=test_mode,
         require_java=False if dry_run else True,
+        java_executable=java_executable,
     )
     apalache = ensure_apalache(
         yes=yes,
@@ -1153,12 +1663,24 @@ def ensure_state_model_portfolio(
         dry_run=dry_run,
         test_mode=test_mode,
         require_java=False if dry_run else True,
+        java_executable=java_executable,
+    )
+    portfolio_java = probe_java_runtime(
+        java_executable=java_executable,
+        minimum_major=APALACHE_MIN_JAVA_MAJOR,
     )
     return {
         "family": PLUGIN_FAMILY,
         "goal_id": GOAL_ID,
         "task_id": TASK_ID,
-        "java_available": java_is_available(),
+        "java_available": portfolio_java.executable is not None,
+        "java_usable": portfolio_java.usable,
+        "java_runtime": portfolio_java.to_dict(),
+        "java_requirements": {
+            "tlc_minimum_major": TLC_MIN_JAVA_MAJOR,
+            "apalache_minimum_major": APALACHE_MIN_JAVA_MAJOR,
+            "override_environment": JAVA_EXECUTABLE_ENV,
+        },
         "java_is_support_only": True,
         "java_cannot_promote_tla_lane": True,
         "grants_theorem_authority": False,
@@ -1170,7 +1692,7 @@ def ensure_state_model_portfolio(
         ),
         "both_usable": tlc.status in {"available", "installed"}
         and apalache.status in {"available", "installed"}
-        and java_is_available(),
+        and portfolio_java.usable,
     }
 
 
@@ -1192,6 +1714,11 @@ def plugin_manifest() -> dict[str, Any]:
         "task_id": TASK_ID,
         "program": PROGRAM,
         "locked_versions": dict(LOCKED_VERSIONS),
+        "java_requirements": {
+            "tlc_minimum_major": TLC_MIN_JAVA_MAJOR,
+            "apalache_minimum_major": APALACHE_MIN_JAVA_MAJOR,
+            "override_environment": JAVA_EXECUTABLE_ENV,
+        },
         "ensure_entrypoints": {
             "tlc": "ensure_tlc",
             "apalache": "ensure_apalache",
@@ -1218,6 +1745,9 @@ def plugin_manifest() -> dict[str, Any]:
             "does_not_edit_shared_lock": True,
             "does_not_edit_central_certificate": True,
             "java_never_installed_by_plugin": True,
+            "java_version_validated_before_install": True,
+            "post_install_runtime_probe_required": True,
+            "launcher_binds_selected_java": True,
         },
     }
 
@@ -1235,13 +1765,22 @@ __all__ = [
     "PROGRAM",
     "TLC_VERSION",
     "APALACHE_VERSION",
+    "JAVA_EXECUTABLE_ENV",
+    "TLC_MIN_JAVA_MAJOR",
+    "APALACHE_MIN_JAVA_MAJOR",
     "LOCKED_VERSIONS",
     "StateModelInstallerError",
     "ToolPin",
     "InstallReceipt",
+    "JavaRuntimeProbe",
+    "RuntimeCommandProbe",
     "expand_user_local_root",
     "detect_platform_key",
     "which_executable",
+    "resolve_java_executable",
+    "read_java_version_banner",
+    "java_major_version",
+    "probe_java_runtime",
     "java_is_available",
     "numeric_version",
     "resolve_lock_path",
@@ -1253,6 +1792,8 @@ __all__ = [
     "read_tlc_version_banner",
     "read_apalache_version_banner",
     "observed_version_matches_lock",
+    "probe_tlc_runtime",
+    "probe_apalache_runtime",
     "verify_sha256",
     "download_artifact",
     "write_launcher",
