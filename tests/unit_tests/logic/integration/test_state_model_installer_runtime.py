@@ -291,7 +291,6 @@ def test_tlc_rejects_downloader_that_lies_about_observed_digest(
         "authorize_plugin_install",
         lambda *args, **kwargs: None,
     )
-
     receipt = state_model.ensure_tlc(
         yes=True,
         strict=False,
@@ -790,6 +789,13 @@ def test_symlinked_managed_tlc_jar_is_replaced_before_success(
         state_model,
         "authorize_plugin_install",
         lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        state_model,
+        "which_executable",
+        lambda name, **kwargs: (
+            None if name == state_model.TLC_EXECUTABLE else str(name)
+        ),
     )
 
     receipt = state_model.ensure_tlc(
