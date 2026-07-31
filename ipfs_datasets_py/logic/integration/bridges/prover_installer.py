@@ -84,6 +84,13 @@ APALACHE_PORTABLE_URL = (
 APALACHE_PORTABLE_SHA256 = (
     "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
 )
+TLC_VERSION = "1.8.0"
+TLC_PORTABLE_URL = (
+    "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+)
+TLC_PORTABLE_SHA256 = (
+    "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+)
 # Compatibility aliases retained for callers that imported the old names.
 APALACHE_LINUX_X86_64_URL = APALACHE_PORTABLE_URL
 APALACHE_LINUX_X86_64_SHA256 = APALACHE_PORTABLE_SHA256
@@ -252,6 +259,7 @@ ProgressCallback = Callable[[str, str], None]
 # through the installer CLI so solver evidence remains reproducible.
 MANAGED_SOLVER_VERSIONS: dict[str, str] = {
     "apalache": APALACHE_VERSION,
+    "tlc": TLC_VERSION,
     "tamarin": TAMARIN_VERSION,
     "maude": MAUDE_VERSION,
     "proverif": PROVERIF_VERSION,
@@ -283,6 +291,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
     # Native engines attached to specific LegalIR families.
     "legal_ir_specialists": (
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -302,6 +311,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -318,6 +328,7 @@ PROVER_PORTFOLIOS: dict[str, tuple[str, ...]] = {
         "vampire",
         "eprover",
         "ergoai",
+        "tlc",
         "apalache",
         "maude",
         "tamarin",
@@ -482,10 +493,33 @@ def _distribution_version(distribution: str) -> str:
         return ""
 
 
+def _managed_tlc_release(executable: str | None) -> str:
+    """Bind TLC's release to its reviewed jar digest, not a version flag."""
+
+    if executable is None:
+        return ""
+    from ipfs_datasets_py.logic.backends.installers import state_model
+
+    path = Path(executable)
+    if path.parent.name != "bin":
+        return ""
+    java = state_model.probe_java_runtime(
+        minimum_major=state_model.TLC_MIN_JAVA_MAJOR,
+    )
+    if not java.usable or java.executable is None:
+        return ""
+    identity = state_model.managed_tlc_identity(
+        path.parent.parent,
+        java_executable=java.executable,
+    )
+    return TLC_VERSION if identity.get("usable") else ""
+
+
 def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
     """Report managed-version drift without downloading or changing any solver."""
 
     specs = (
+        ("tlc", "tlc", TLC_VERSION, None),
         ("apalache", "apalache-mc", APALACHE_VERSION, None),
         ("tamarin", "tamarin-prover", TAMARIN_VERSION, None),
         ("maude", "maude", MAUDE_VERSION, None),
@@ -507,7 +541,15 @@ def managed_solver_version_status() -> list[dict[str, str | bool | None]]:
             if isinstance(executable_name, Path)
             else _which(executable_name) if isinstance(executable_name, str) else None
         )
-        observed = _distribution_version(distribution) if distribution else _read_version(executable)
+        observed = (
+            _managed_tlc_release(executable)
+            if name == "tlc"
+            else (
+                _distribution_version(distribution)
+                if distribution
+                else _read_version(executable)
+            )
+        )
         if name == "proverif" and executable and not observed:
             try:
                 launcher_contents = Path(executable).read_text(encoding="utf-8", errors="ignore")
@@ -602,6 +644,11 @@ def pinned_release_inventory() -> dict[str, dict[str, str]]:
     """
 
     return {
+        "tlc": {
+            "version": TLC_VERSION,
+            "url": TLC_PORTABLE_URL,
+            "sha256": TLC_PORTABLE_SHA256,
+        },
         "apalache": {
             "version": APALACHE_VERSION,
             "url": APALACHE_PORTABLE_URL,
@@ -1898,64 +1945,58 @@ def _proverif_build_environment(
         return None
 
 
-def ensure_apalache(
-    *, yes: bool, strict: bool, on_progress: ProgressCallback | None = None, force: bool = False
+def _state_model_available(receipt: object) -> bool:
+    return str(getattr(receipt, "status", "")) in {"available", "installed"}
+
+
+def ensure_tlc(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
 ) -> bool:
-    """Ensure the pinned JVM-based Apalache distribution is user-local."""
+    """Public compatibility bridge to the reviewed TLC state-model installer."""
 
-    existing = _which("apalache-mc") or _which("apalache")
-    if existing and not force:
-        _announce(f"Apalache is already available at {existing}", on_progress, phase="available")
-        return True
-    if not yes:
-        _announce("Apalache is missing; rerun with --yes to install it user-locally.", on_progress, phase="blocked")
-        return False
-    # Managed installs require explicit consent and registry authorization.
-    # Checksums are verified later by _download_release_artifact.
-    authorize_managed_install("apalache", yes=True, checksum_verified=None)
-    if _run_custom_solver_installer("apalache", strict=strict, on_progress=on_progress):
-        return _which("apalache-mc") is not None or _which("apalache") is not None
-    if platform.system().lower() not in {"linux", "darwin"}:
-        _announce(
-            "The portable Apalache launcher supports Linux and macOS. Set "
-            "IPFS_DATASETS_PY_APALACHE_INSTALL_COMMAND for this platform.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
-    if _which("java") is None:
-        _announce(
-            "Apalache requires a Java runtime. Install Java or set JAVA_HOME before retrying.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_tlc as ensure_managed_tlc,
+    )
 
-    root = _external_prover_root()
-    archive = root / "downloads" / f"apalache-{APALACHE_VERSION}.tgz"
-    destination = root / f"apalache-{APALACHE_VERSION}"
-    try:
-        if not _download_release_artifact(
-            APALACHE_PORTABLE_URL,
-            archive,
-            APALACHE_PORTABLE_SHA256,
-            strict=strict,
-            on_progress=on_progress,
-        ):
-            return False
-        _announce(f"Extracting Apalache {APALACHE_VERSION} into {destination}", on_progress)
-        _safe_extract_tar(archive, destination)
-        candidates = [path for path in destination.rglob("apalache-mc") if path.is_file()]
-        if len(candidates) != 1:
-            raise RuntimeError("Apalache archive did not contain exactly one apalache-mc executable")
-        _write_launcher("apalache-mc", candidates[0])
-        _announce(f"Installed Apalache {APALACHE_VERSION} user-locally.", on_progress, phase="installed")
-        return _which("apalache-mc") is not None
-    except Exception as exc:
-        _announce(f"Apalache installation failed: {exc}", on_progress, phase="failed")
-        if strict:
-            raise
-        return False
+    receipt = ensure_managed_tlc(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=_external_prover_root(),
+        java_executable=java_executable,
+    )
+    return _state_model_available(receipt)
+
+
+def ensure_apalache(
+    *,
+    yes: bool,
+    strict: bool,
+    on_progress: ProgressCallback | None = None,
+    force: bool = False,
+    java_executable: str | Path | None = None,
+) -> bool:
+    """Public compatibility bridge to the reviewed Apalache installer."""
+
+    from ipfs_datasets_py.logic.backends.installers.state_model import (
+        ensure_apalache as ensure_managed_apalache,
+    )
+
+    receipt = ensure_managed_apalache(
+        yes=yes,
+        strict=strict,
+        force=force,
+        on_progress=on_progress,
+        install_root=_external_prover_root(),
+        java_executable=java_executable,
+    )
+    return _state_model_available(receipt)
 
 
 def _numeric_version(value: str) -> tuple[int, ...]:
@@ -2943,6 +2984,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", "--rocq", action="store_true", help="Install/ensure Rocq 9.1.1 (Coq-compatible CLI)")
+    parser.add_argument("--tlc", action="store_true", help="Install/ensure TLC 1.8.0")
     parser.add_argument("--apalache", action="store_true", help="Install/ensure Apalache")
     parser.add_argument("--tamarin", action="store_true", help="Install/ensure Tamarin and Maude")
     parser.add_argument("--maude", action="store_true", help="Install/ensure the Maude runtime")
@@ -3023,6 +3065,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = bool(args.cvc5)
     want_lean = bool(args.lean)
     want_coq = bool(args.coq)
+    want_tlc = bool(args.tlc)
     want_apalache = bool(args.apalache)
     want_tamarin = bool(args.tamarin)
     want_maude = bool(args.maude)
@@ -3043,6 +3086,7 @@ def main(argv: list[str] | None = None) -> int:
     want_cvc5 = want_cvc5 or "cvc5" in portfolio_solvers
     want_lean = want_lean or "lean" in portfolio_solvers
     want_coq = want_coq or "coq" in portfolio_solvers
+    want_tlc = want_tlc or "tlc" in portfolio_solvers
     want_apalache = want_apalache or "apalache" in portfolio_solvers
     want_tamarin = want_tamarin or "tamarin" in portfolio_solvers
     want_maude = want_maude or "maude" in portfolio_solvers
@@ -3054,7 +3098,7 @@ def main(argv: list[str] | None = None) -> int:
     want_symbolicai = want_symbolicai or "symbolicai" in portfolio_solvers
     want_ergoai = want_ergoai or "ergoai" in portfolio_solvers
     if not (
-        want_z3 or want_cvc5 or want_lean or want_coq or want_apalache
+        want_z3 or want_cvc5 or want_lean or want_coq or want_tlc or want_apalache
         or want_tamarin or want_maude or want_proverif or want_cvc5_cli
         or want_vampire or want_eprover or want_isabelle
         or want_symbolicai or want_ergoai
@@ -3063,6 +3107,7 @@ def main(argv: list[str] | None = None) -> int:
         want_cvc5 = True
         want_lean = True
         want_coq = True
+        want_tlc = True
         want_apalache = True
         want_tamarin = True
         want_proverif = True
@@ -3088,6 +3133,8 @@ def main(argv: list[str] | None = None) -> int:
             allow_sudo=bool(args.allow_sudo),
             **update_kwargs,
         ) and ok
+    if want_tlc:
+        ok = ensure_tlc(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_apalache:
         ok = ensure_apalache(yes=args.yes, strict=args.strict, **update_kwargs) and ok
     if want_maude:

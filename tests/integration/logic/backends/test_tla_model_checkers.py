@@ -12,6 +12,9 @@ Covers:
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import pytest
 
 from ipfs_datasets_py.logic.backends.process import (
@@ -470,6 +473,41 @@ def test_tlc_passed_run_is_bounded_model_check_not_theorem():
     assert invocations
     # checker was invoked on the generated module path
     assert any(str(arg).endswith(".tla") for arg in invocations[0].argv)
+
+
+def test_explicit_java_is_validated_and_bound_to_tlc_process_environment(
+    tmp_path: Path,
+):
+    java = tmp_path / "selected-jdk" / "bin" / "java"
+    java.parent.mkdir(parents=True)
+    java.write_text(
+        "#!/bin/sh\n"
+        "set -eu\n"
+        "echo 'openjdk version \"17.0.12\"' >&2\n",
+        encoding="utf-8",
+    )
+    java.chmod(0o755)
+    runner, invocations = _process_runner(
+        "Model checking completed. No error has been found.\n"
+    )
+    backend = TLCBackend(
+        runner=runner,
+        which=lambda name: "/usr/bin/tlc" if name == "tlc" else None,
+        java_executable=str(java),
+        lazy_install=False,
+    )
+    artifacts = TLACompiler(bounds=TLACompileBounds(max_steps=4)).compile(
+        _counter_document(), module_name="SelectedJava"
+    )
+
+    outcome = backend.check(artifacts)
+
+    assert outcome.result.status is ResultStatus.SATISFIED
+    assert invocations
+    process_path = invocations[0].environment["PATH"].split(os.pathsep)
+    assert process_path[0] == str(java.parent.resolve())
+    for variable in ("JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"):
+        assert variable not in invocations[0].environment
 
 
 def test_apalache_does_not_claim_liveness_and_passes_on_safety_markers():

@@ -37,9 +37,12 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import threading
 import zipfile
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
+from functools import wraps
 from pathlib import Path
 from typing import Any, Final
 from urllib.request import Request, urlopen
@@ -66,6 +69,9 @@ TLC_VERSION: Final = "1.8.0"
 APALACHE_VERSION: Final = "0.58.3"
 TLC_SHA256: Final = (
     "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+)
+APALACHE_SHA256: Final = (
+    "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
 )
 
 TLC_EXECUTABLE: Final = "tlc"
@@ -107,9 +113,7 @@ _FALLBACK_PINS: Final[dict[str, tuple[dict[str, Any], ...]]] = {
                 "https://github.com/apalache-mc/apalache/releases/download/"
                 f"v{APALACHE_VERSION}/apalache-{APALACHE_VERSION}.tgz"
             ),
-            "sha256": (
-                "ba622db9538aebf942cc7a7815f942a6b2b419012707e16dfdc25a73ff95d0a5"
-            ),
+            "sha256": APALACHE_SHA256,
             "identity_kind": "release_archive",
             "is_checksummed": True,
             "requires_checksum_at_install": True,
@@ -136,6 +140,9 @@ _TLC_HELP_MARKERS: Final = (
     "SYNOPSIS",
     "DESCRIPTION",
 )
+_MANIFEST_SCHEMA: Final = "state-model-managed-runtime/v1"
+_ROOT_LOCKS: dict[str, threading.RLock] = {}
+_ROOT_LOCKS_GUARD = threading.Lock()
 
 
 class StateModelInstallerError(RuntimeError):
@@ -479,6 +486,71 @@ def content_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _root_thread_lock(root: Path) -> threading.RLock:
+    key = str(root.resolve())
+    with _ROOT_LOCKS_GUARD:
+        lock = _ROOT_LOCKS.get(key)
+        if lock is None:
+            lock = threading.RLock()
+            _ROOT_LOCKS[key] = lock
+        return lock
+
+
+@contextmanager
+def installation_lock(root: str | Path):
+    """Serialize all state-model publication for one install root.
+
+    The in-process lock closes the gap in ``flock`` semantics between threads;
+    the advisory file lock serializes independent Python processes.  The lock
+    file is intentionally outside every staged bundle so publication and
+    rollback never replace the inode carrying the lock.
+    """
+
+    resolved = expand_user_local_root(root)
+    lock = _root_thread_lock(resolved)
+    with lock:
+        lock_dir = resolved / ".locks"
+        lock_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = lock_dir / "state-model.lock"
+        with lock_path.open("a+b") as handle:
+            if os.name == "posix":
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            else:  # pragma: no cover - exercised on Windows CI only
+                import msvcrt
+
+                handle.seek(0, os.SEEK_END)
+                if handle.tell() == 0:
+                    handle.write(b"\0")
+                    handle.flush()
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+                try:
+                    yield
+                finally:
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+def _serialize_live_install(function):
+    """Apply the per-root process lock without mutating selection-only dry runs."""
+
+    @wraps(function)
+    def wrapped(*args: Any, **kwargs: Any):
+        if bool(kwargs.get("dry_run", False)):
+            return function(*args, **kwargs)
+        root = expand_user_local_root(kwargs.get("install_root"))
+        with installation_lock(root):
+            return function(*args, **kwargs)
+
+    return wrapped
+
+
 def _announce(
     message: str,
     on_progress: ProgressCallback | None,
@@ -642,12 +714,15 @@ def select_strict_pin(
         if selected is None and any_pin:
             selected = any_pin[0]
     if selected is not None:
-        if tool_id == "tlc" and (
-            not selected.is_checksummed or selected.sha256 != TLC_SHA256
-        ):
+        locked_digest = {
+            "tlc": TLC_SHA256,
+            "apalache": APALACHE_SHA256,
+        }[tool_id]
+        if not selected.is_checksummed or selected.sha256 != locked_digest:
             raise StateModelInstallerError(
-                "TLC 1.8.0 requires the reviewed immutable artifact digest "
-                f"{TLC_SHA256}; blank or alternate lock identities fail closed"
+                f"{tool_id} {expected} requires the reviewed immutable artifact "
+                f"digest {locked_digest}; blank or alternate lock identities "
+                "fail closed"
             )
         return selected
     available = sorted({f"{pin.platform}@{pin.version}" for pin in candidates})
@@ -989,22 +1064,35 @@ def download_artifact(
     except Exception as exc:  # pragma: no cover - network failures host-specific
         _announce(f"Download failed: {exc}", on_progress, phase="failed")
         return False, None
-    tmp = destination.with_suffix(destination.suffix + ".partial")
-    tmp.write_bytes(data)
-    observed = content_sha256(tmp)
-    if sha256 and observed != sha256.lower():
-        tmp.unlink(missing_ok=True)
-        _announce(
-            f"Checksum mismatch for {url}; refusing install",
-            on_progress,
-            phase="failed",
-        )
-        return False, None
-    if require_checksum and not observed:
-        tmp.unlink(missing_ok=True)
-        return False, None
-    tmp.replace(destination)
-    return True, observed
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".partial",
+            delete=False,
+        ) as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+            temporary = Path(handle.name)
+        observed = content_sha256(temporary)
+        if sha256 and observed != sha256.lower():
+            _announce(
+                f"Checksum mismatch for {url}; refusing install",
+                on_progress,
+                phase="failed",
+            )
+            return False, None
+        if require_checksum and not observed:
+            return False, None
+        temporary.replace(destination)
+        temporary = None
+        return True, observed
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def _safe_extract_tar(archive: Path, destination: Path) -> None:
@@ -1026,27 +1114,21 @@ def _shell_quote(value: str) -> str:
     return "'" + value.replace("'", "'\"'\"'") + "'"
 
 
-def write_launcher(
-    name: str,
+def _launcher_body(
     target: Path,
     *,
-    install_root: Path | None = None,
     environment: Mapping[str, str] | None = None,
     java_jar: Path | None = None,
     java_main: str | None = None,
     java_executable: str | Path | None = None,
-) -> Path:
-    """Write a user-local launcher script under ``$root/bin/<name>``."""
+) -> str:
+    """Render the complete deterministic launcher contract."""
 
-    root = expand_user_local_root(install_root)
-    bin_dir = root / "bin"
-    bin_dir.mkdir(parents=True, exist_ok=True)
-    launcher = bin_dir / name
     env_exports = ""
     if environment:
         lines = [
-            f"export {key}={_shell_quote(value)}"
-            for key, value in environment.items()
+            f"export {key}={_shell_quote(str(environment[key]))}"
+            for key in sorted(environment)
         ]
         env_exports = "\n".join(lines) + "\n"
     selected_java = (
@@ -1069,7 +1151,7 @@ def write_launcher(
                 "  exit 127\n"
                 "fi\n"
             )
-        body = (
+        return (
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
             f"{env_exports}"
@@ -1078,21 +1160,45 @@ def write_launcher(
             f"exec {java_command} -cp {_shell_quote(str(java_jar.resolve()))} "
             f"{_shell_quote(java_main)} \"$@\"\n"
         )
-    else:
-        java_path = ""
-        if selected_java:
-            java_path = (
-                f"export PATH={_shell_quote(str(Path(selected_java).parent))}:"
-                '"${PATH:-}"\n'
-            )
-        body = (
-            "#!/usr/bin/env bash\n"
-            "set -euo pipefail\n"
-            f"{env_exports}"
-            f"{java_environment_guard}"
-            f"{java_path}"
-            f'exec {_shell_quote(str(target.resolve()))} "$@"\n'
+    java_path = ""
+    if selected_java:
+        java_path = (
+            f"export PATH={_shell_quote(str(Path(selected_java).parent))}:"
+            '"${PATH:-}"\n'
         )
+    return (
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        f"{env_exports}"
+        f"{java_environment_guard}"
+        f"{java_path}"
+        f'exec {_shell_quote(str(target.resolve()))} "$@"\n'
+    )
+
+
+def write_launcher(
+    name: str,
+    target: Path,
+    *,
+    install_root: Path | None = None,
+    environment: Mapping[str, str] | None = None,
+    java_jar: Path | None = None,
+    java_main: str | None = None,
+    java_executable: str | Path | None = None,
+) -> Path:
+    """Write a user-local launcher script under ``$root/bin/<name>``."""
+
+    root = expand_user_local_root(install_root)
+    bin_dir = root / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    launcher = bin_dir / name
+    body = _launcher_body(
+        target,
+        environment=environment,
+        java_jar=java_jar,
+        java_main=java_main,
+        java_executable=java_executable,
+    )
     temporary: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -1111,6 +1217,101 @@ def write_launcher(
         if temporary is not None:
             temporary.unlink(missing_ok=True)
     return launcher
+
+
+def _launcher_identity(
+    launcher: Path,
+    *,
+    expected_body: str,
+) -> dict[str, Any]:
+    """Validate a launcher by its complete bytes, never by substrings."""
+
+    result: dict[str, Any] = {
+        "path": str(launcher.resolve()),
+        "present": launcher.is_file() and not launcher.is_symlink(),
+        "executable": (
+            launcher.is_file()
+            and not launcher.is_symlink()
+            and os.access(launcher, os.X_OK)
+        ),
+        "expected_sha256": content_sha256_bytes(expected_body.encode("utf-8")),
+        "observed_sha256": None,
+        "structural_match": False,
+    }
+    try:
+        observed = launcher.read_bytes()
+    except OSError:
+        return result
+    result["observed_sha256"] = content_sha256_bytes(observed)
+    result["structural_match"] = bool(
+        result["executable"] and observed == expected_body.encode("utf-8")
+    )
+    return result
+
+
+def content_sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(dict(payload), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _tree_digest(root: Path) -> str:
+    """Hash every file/symlink path and payload in an extracted distribution."""
+
+    records: list[dict[str, str]] = []
+    if not root.is_dir():
+        return ""
+    for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+        relative = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            records.append(
+                {
+                    "kind": "symlink",
+                    "path": relative,
+                    "target": os.readlink(path),
+                }
+            )
+        elif path.is_file():
+            records.append(
+                {
+                    "kind": "file",
+                    "path": relative,
+                    "sha256": content_sha256(path),
+                }
+            )
+    return content_sha256_bytes(
+        json.dumps(records, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
+
+
+def _find_apalache_binary(root: Path) -> Path | None:
+    preferred = sorted(
+        (
+            path
+            for path in root.rglob(APALACHE_EXECUTABLE)
+            if path.is_file() and not path.is_symlink()
+        ),
+        key=lambda path: path.as_posix(),
+    )
+    if len(preferred) == 1:
+        return preferred[0]
+    if preferred:
+        return None
+    fallback = sorted(
+        (
+            path
+            for path in root.rglob("apalache")
+            if path.is_file() and not path.is_symlink()
+        ),
+        key=lambda path: path.as_posix(),
+    )
+    return fallback[0] if len(fallback) == 1 else None
 
 
 # ---------------------------------------------------------------------------
@@ -1306,24 +1507,228 @@ def _reject_java_validation_opt_out(
     return receipt
 
 
-def _launcher_binds_java(
-    launcher: str | Path,
-    java_executable: str | Path,
+def _manifest_payload(
     *,
-    java_jar: bool,
-) -> bool:
-    path = Path(launcher)
+    tool_id: str,
+    version: str,
+    artifact_path: Path,
+    artifact_sha256: str,
+    payload_path: Path,
+    payload_sha256: str,
+    java_executable: str | Path,
+    launcher_identities: Mapping[str, Mapping[str, Any]],
+    distribution_tree_sha256: str | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "schema_version": _MANIFEST_SCHEMA,
+        "tool_id": tool_id,
+        "version": version,
+        "artifact_path": str(artifact_path.resolve()),
+        "artifact_sha256": artifact_sha256,
+        "payload_path": str(payload_path.resolve()),
+        "payload_sha256": payload_sha256,
+        "java_executable": str(Path(java_executable).resolve()),
+        "launchers": {
+            name: {
+                "path": str(identity["path"]),
+                "sha256": str(identity["expected_sha256"]),
+            }
+            for name, identity in sorted(launcher_identities.items())
+        },
+    }
+    if distribution_tree_sha256 is not None:
+        payload["distribution_tree_sha256"] = distribution_tree_sha256
+    return payload
+
+
+def _read_exact_manifest(path: Path, expected: Mapping[str, Any]) -> bool:
+    if path.is_symlink():
+        return False
     try:
-        body = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError):
+        observed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
         return False
-    java = str(Path(java_executable).resolve())
-    guard = "unset " + " ".join(JAVA_OPTION_ENV_VARS)
-    if guard not in body:
-        return False
-    if java_jar:
-        return f"exec {_shell_quote(java)} -cp " in body
-    return f"export PATH={_shell_quote(str(Path(java).parent))}:" in body
+    return observed == dict(expected)
+
+
+def managed_tlc_identity(
+    install_root: str | Path,
+    *,
+    java_executable: str | Path,
+) -> dict[str, Any]:
+    """Return structural TLC identity bound to the exact jar and JVM."""
+
+    root = expand_user_local_root(install_root)
+    jar = root / "tlc" / TLC_VERSION / TLC_JAR_NAME
+    java_path = Path(java_executable).resolve()
+    java_present = java_path.is_file() and os.access(java_path, os.X_OK)
+    artifact_ok = (
+        jar.is_file()
+        and not jar.is_symlink()
+        and verify_sha256(jar, TLC_SHA256)
+    )
+    identities: dict[str, dict[str, Any]] = {}
+    for name in (TLC_EXECUTABLE, "tlc2", "tla2tools"):
+        body = _launcher_body(
+            jar,
+            environment={"TLA2TOOLS_JAR": str(jar)},
+            java_jar=jar,
+            java_main="tlc2.TLC",
+            java_executable=java_executable,
+        )
+        identities[name] = _launcher_identity(
+            root / "bin" / name,
+            expected_body=body,
+        )
+    launchers_ok = all(
+        bool(identity["structural_match"]) for identity in identities.values()
+    )
+    expected_manifest = _manifest_payload(
+        tool_id="tlc",
+        version=TLC_VERSION,
+        artifact_path=jar,
+        artifact_sha256=TLC_SHA256,
+        payload_path=jar,
+        payload_sha256=TLC_SHA256,
+        java_executable=java_executable,
+        launcher_identities=identities,
+    )
+    manifest_path = root / "manifests" / "tlc.json"
+    manifest_ok = _read_exact_manifest(manifest_path, expected_manifest)
+    return {
+        "tool_id": "tlc",
+        "version": TLC_VERSION,
+        "artifact_path": str(jar),
+        "artifact_sha256": TLC_SHA256,
+        "artifact_digest_verified": artifact_ok,
+        "payload_path": str(jar),
+        "payload_sha256": TLC_SHA256 if artifact_ok else None,
+        "payload_digest_verified": artifact_ok,
+        "java_executable": str(java_path),
+        "java_executable_present": java_present,
+        "launchers": identities,
+        "launchers_structurally_valid": launchers_ok,
+        "manifest_path": str(manifest_path),
+        "manifest_valid": manifest_ok,
+        "usable": bool(
+            artifact_ok
+            and java_present
+            and launchers_ok
+            and manifest_ok
+        ),
+    }
+
+
+def managed_apalache_identity(
+    install_root: str | Path,
+    *,
+    java_executable: str | Path,
+) -> dict[str, Any]:
+    """Return structural Apalache archive, tree, payload, and launcher identity."""
+
+    root = expand_user_local_root(install_root)
+    archive = root / "downloads" / f"apalache-{APALACHE_VERSION}.tgz"
+    destination = root / f"apalache-{APALACHE_VERSION}"
+    java_path = Path(java_executable).resolve()
+    java_present = java_path.is_file() and os.access(java_path, os.X_OK)
+    artifact_ok = (
+        archive.is_file()
+        and not archive.is_symlink()
+        and verify_sha256(archive, APALACHE_SHA256)
+    )
+    expected_tree = ""
+    expected_relative: Path | None = None
+    if artifact_ok:
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix="apalache-identity-",
+            ) as temporary:
+                extracted = Path(temporary) / "distribution"
+                _safe_extract_tar(archive, extracted)
+                binary = _find_apalache_binary(extracted)
+                if binary is not None:
+                    expected_relative = binary.relative_to(extracted)
+                    expected_tree = _tree_digest(extracted)
+        except (OSError, tarfile.TarError):
+            expected_tree = ""
+            expected_relative = None
+    observed_tree = (
+        _tree_digest(destination)
+        if destination.is_dir() and not destination.is_symlink()
+        else ""
+    )
+    tree_ok = bool(expected_tree and observed_tree == expected_tree)
+    payload = (
+        destination / expected_relative
+        if expected_relative is not None
+        else destination / "__missing_apalache_payload__"
+    )
+    payload_sha = content_sha256(payload) if payload.is_file() else ""
+    payload_executable = bool(
+        payload.is_file()
+        and not payload.is_symlink()
+        and os.access(payload, os.X_OK)
+    )
+    identities: dict[str, dict[str, Any]] = {}
+    for name in (APALACHE_EXECUTABLE, "apalache"):
+        body = _launcher_body(
+            payload,
+            java_executable=java_executable,
+        )
+        identities[name] = _launcher_identity(
+            root / "bin" / name,
+            expected_body=body,
+        )
+    launchers_ok = all(
+        bool(identity["structural_match"]) for identity in identities.values()
+    )
+    expected_manifest = _manifest_payload(
+        tool_id="apalache",
+        version=APALACHE_VERSION,
+        artifact_path=archive,
+        artifact_sha256=APALACHE_SHA256,
+        payload_path=payload,
+        payload_sha256=payload_sha,
+        java_executable=java_executable,
+        launcher_identities=identities,
+        distribution_tree_sha256=expected_tree,
+    )
+    manifest_path = root / "manifests" / "apalache.json"
+    manifest_ok = bool(
+        payload.is_file()
+        and tree_ok
+        and _read_exact_manifest(manifest_path, expected_manifest)
+    )
+    return {
+        "tool_id": "apalache",
+        "version": APALACHE_VERSION,
+        "artifact_path": str(archive),
+        "artifact_sha256": APALACHE_SHA256,
+        "artifact_digest_verified": artifact_ok,
+        "distribution_path": str(destination),
+        "expected_distribution_tree_sha256": expected_tree or None,
+        "observed_distribution_tree_sha256": observed_tree or None,
+        "distribution_tree_verified": tree_ok,
+        "payload_path": str(payload),
+        "payload_sha256": payload_sha or None,
+        "payload_digest_verified": bool(payload_sha and tree_ok),
+        "payload_executable": payload_executable,
+        "java_executable": str(java_path),
+        "java_executable_present": java_present,
+        "launchers": identities,
+        "launchers_structurally_valid": launchers_ok,
+        "manifest_path": str(manifest_path),
+        "manifest_valid": manifest_ok,
+        "usable": bool(
+            artifact_ok
+            and tree_ok
+            and payload_sha
+            and payload_executable
+            and java_present
+            and launchers_ok
+            and manifest_ok
+        ),
+    }
 
 
 def _commit_staged_files(
@@ -1331,9 +1736,27 @@ def _commit_staged_files(
     *,
     backup_dir: Path,
 ) -> None:
-    """Atomically replace files and restore every prior file on any failure."""
+    """Publish a locked file bundle and restore every prior file on failure.
+
+    Callers hold :func:`installation_lock`, so no independent installer can
+    observe or overwrite an in-flight transaction.  Each individual rename is
+    atomic; the rollback journal preserves the previous complete generation if
+    any later rename fails.
+    """
 
     backup_dir.mkdir(parents=True, exist_ok=True)
+    destinations = [destination.resolve() for _, destination in replacements]
+    if len(destinations) != len(set(destinations)):
+        raise StateModelInstallerError("publication destinations must be unique")
+    for staged, destination in replacements:
+        if not staged.is_file():
+            raise StateModelInstallerError(
+                f"staged publication file is missing: {staged}"
+            )
+        if staged.resolve() == destination.resolve():
+            raise StateModelInstallerError(
+                f"staged and destination paths must differ: {destination}"
+            )
     backups: dict[Path, Path | None] = {}
     published: list[Path] = []
     for index, (_, destination) in enumerate(replacements):
@@ -1356,6 +1779,84 @@ def _commit_staged_files(
             else:
                 backup.replace(destination)
         raise
+
+
+def _planned_launcher_identity(path: Path, body: str) -> dict[str, Any]:
+    return {
+        "path": str(path.resolve()),
+        "expected_sha256": content_sha256_bytes(body.encode("utf-8")),
+    }
+
+
+def _stage_tlc_manifest(
+    *,
+    staging_root: Path,
+    install_root: Path,
+    jar_path: Path,
+    java_executable: str | Path,
+) -> tuple[Path, Path]:
+    identities: dict[str, dict[str, Any]] = {}
+    for name in (TLC_EXECUTABLE, "tlc2", "tla2tools"):
+        body = _launcher_body(
+            jar_path,
+            environment={"TLA2TOOLS_JAR": str(jar_path)},
+            java_jar=jar_path,
+            java_main="tlc2.TLC",
+            java_executable=java_executable,
+        )
+        identities[name] = _planned_launcher_identity(
+            install_root / "bin" / name,
+            body,
+        )
+    payload = _manifest_payload(
+        tool_id="tlc",
+        version=TLC_VERSION,
+        artifact_path=jar_path,
+        artifact_sha256=TLC_SHA256,
+        payload_path=jar_path,
+        payload_sha256=TLC_SHA256,
+        java_executable=java_executable,
+        launcher_identities=identities,
+    )
+    staged = staging_root / "tlc.json"
+    _write_json_file(staged, payload)
+    return staged, install_root / "manifests" / "tlc.json"
+
+
+def _stage_apalache_manifest(
+    *,
+    staging_root: Path,
+    install_root: Path,
+    archive_path: Path,
+    binary_path: Path,
+    payload_sha256: str,
+    distribution_tree_sha256: str,
+    java_executable: str | Path,
+) -> tuple[Path, Path]:
+    identities: dict[str, dict[str, Any]] = {}
+    for name in (APALACHE_EXECUTABLE, "apalache"):
+        body = _launcher_body(
+            binary_path,
+            java_executable=java_executable,
+        )
+        identities[name] = _planned_launcher_identity(
+            install_root / "bin" / name,
+            body,
+        )
+    payload = _manifest_payload(
+        tool_id="apalache",
+        version=APALACHE_VERSION,
+        artifact_path=archive_path,
+        artifact_sha256=APALACHE_SHA256,
+        payload_path=binary_path,
+        payload_sha256=payload_sha256,
+        java_executable=java_executable,
+        launcher_identities=identities,
+        distribution_tree_sha256=distribution_tree_sha256,
+    )
+    staged = staging_root / "apalache.json"
+    _write_json_file(staged, payload)
+    return staged, install_root / "manifests" / "apalache.json"
 
 
 def _stage_tlc_launchers(
@@ -1414,6 +1915,7 @@ def _stage_apalache_launchers(
 # ---------------------------------------------------------------------------
 
 
+@_serialize_live_install
 def ensure_tlc(
     *,
     yes: bool = False,
@@ -1490,140 +1992,146 @@ def ensure_tlc(
     )
     existing = which_executable(TLC_EXECUTABLE, path_env=path_env)
     managed_jar = root / "tlc" / TLC_VERSION / TLC_JAR_NAME
-    if existing and not force:
-        managed_launcher = Path(existing).resolve() == (
-            managed_bin / TLC_EXECUTABLE
-        ).resolve()
-        jar_ok = (
-            managed_jar.is_file()
-            and pin.sha256 == TLC_SHA256
-            and verify_sha256(managed_jar, TLC_SHA256)
+    jar_ok = (
+        managed_jar.is_file()
+        and pin.sha256 == TLC_SHA256
+        and verify_sha256(managed_jar, TLC_SHA256)
+    )
+    receipt.bindings["existing_managed_jar_identity_ok"] = jar_ok
+    if jar_ok and not force:
+        jar_probe = probe_tlc_runtime(
+            jar_path=managed_jar,
+            java_executable=java_runtime.executable,
         )
-        receipt.bindings["existing_managed_jar_identity_ok"] = jar_ok
-
-        if managed_launcher and jar_ok:
-            jar_probe = probe_tlc_runtime(
-                jar_path=managed_jar,
+        _record_tool_runtime(
+            receipt,
+            jar_probe,
+            binding="existing_artifact_runtime_probe",
+        )
+        managed_identity = managed_tlc_identity(
+            root,
+            java_executable=java_runtime.executable,
+        )
+        receipt.bindings["existing_managed_identity"] = managed_identity
+        managed_launcher_path = managed_bin / TLC_EXECUTABLE
+        if jar_probe.usable and managed_identity["usable"]:
+            public_probe = probe_tlc_runtime(
+                executable=str(managed_launcher_path),
                 java_executable=java_runtime.executable,
             )
             _record_tool_runtime(
                 receipt,
-                jar_probe,
-                binding="existing_artifact_runtime_probe",
+                public_probe,
+                binding="existing_public_launcher_probe",
             )
-            binding_ok = _launcher_binds_java(
-                existing,
-                java_runtime.executable,
-                java_jar=True,
-            )
-            receipt.bindings["existing_launcher_binds_selected_java"] = binding_ok
-            if jar_probe.usable and binding_ok:
-                public_probe = probe_tlc_runtime(executable=existing)
-                _record_tool_runtime(
-                    receipt,
-                    public_probe,
-                    binding="existing_public_launcher_probe",
-                )
-                if public_probe.usable:
-                    receipt.executable_path = existing
-                    receipt.jar_path = str(managed_jar)
-                    receipt.already_present = True
-                    receipt.installed = True
-                    receipt.status = "available"
-                    receipt.phase = "available"
-                    receipt.observed_sha256 = TLC_SHA256
-                    receipt.checksum_verified = True
-                    receipt.messages.append(
-                        f"TLC already available and runnable at {existing}"
-                    )
-                    return receipt
-            if jar_probe.usable and not binding_ok and not yes:
-                receipt.status = "blocked"
-                receipt.phase = "launcher_binding"
-                receipt.reason_codes.append("launcher_rebind_required")
-                receipt.messages.append(
-                    "The managed TLC artifact is valid, but its public launcher "
-                    "does not bind the selected JVM; re-run with yes=True to "
-                    "republish launchers atomically."
-                )
-                return receipt
-            if jar_probe.usable and not binding_ok and yes:
-                try:
-                    authorize_plugin_install(
-                        "tlc",
-                        yes=True,
-                        strict=strict,
-                        checksum_verified=True,
-                        platform_key=platform_name,
-                        test_mode=test_mode,
-                    )
-                except StateModelInstallerError as exc:
-                    receipt.status = "failed"
-                    receipt.phase = "authorization"
-                    receipt.reason_codes.append("authorization_failed")
-                    receipt.messages.append(str(exc))
-                    if strict:
-                        raise
-                    return receipt
-                staging_parent = root / ".staging"
-                staging_parent.mkdir(parents=True, exist_ok=True)
-                with tempfile.TemporaryDirectory(
-                    prefix="tlc-launchers-",
-                    dir=staging_parent,
-                ) as temporary:
-                    temporary_root = Path(temporary)
-                    launcher, replacements = _stage_tlc_launchers(
-                        staging_root=temporary_root / "launchers",
-                        install_root=root,
-                        jar_path=managed_jar,
-                        java_executable=java_runtime.executable,
-                    )
-                    staged_probe = probe_tlc_runtime(
-                        executable=str(
-                            temporary_root / "launchers" / "bin" / TLC_EXECUTABLE
-                        )
-                    )
-                    _record_tool_runtime(
-                        receipt,
-                        staged_probe,
-                        binding="rebound_launcher_runtime_probe",
-                    )
-                    if not staged_probe.usable:
-                        return _fail_runtime_validation(
-                            receipt,
-                            staged_probe,
-                            tool_name="TLC",
-                            strict=strict,
-                        )
-                    _commit_staged_files(
-                        replacements,
-                        backup_dir=temporary_root / "backups",
-                    )
-                receipt.executable_path = str(launcher)
+            if public_probe.usable:
+                receipt.executable_path = str(managed_launcher_path)
                 receipt.jar_path = str(managed_jar)
                 receipt.already_present = True
-                receipt.install_attempted = True
                 receipt.installed = True
-                receipt.status = "installed"
-                receipt.phase = "launcher_rebound"
+                receipt.status = "available"
+                receipt.phase = "available"
                 receipt.observed_sha256 = TLC_SHA256
                 receipt.checksum_verified = True
                 receipt.messages.append(
-                    "Republished TLC launchers atomically with the selected JVM"
+                    f"TLC already available and runnable at {managed_launcher_path}"
                 )
                 return receipt
+        if jar_probe.usable and not yes:
+            receipt.status = "blocked"
+            receipt.phase = "managed_identity"
+            receipt.reason_codes.append("managed_identity_repair_required")
+            receipt.messages.append(
+                "The managed TLC jar is valid, but its complete launcher/manifest "
+                "identity is missing or mismatched; re-run with yes=True to "
+                "republish the locked bundle."
+            )
+            return receipt
+        if jar_probe.usable and yes:
+            try:
+                authorize_plugin_install(
+                    "tlc",
+                    yes=True,
+                    strict=strict,
+                    checksum_verified=True,
+                    platform_key=platform_name,
+                    test_mode=test_mode,
+                )
+            except StateModelInstallerError as exc:
+                receipt.status = "failed"
+                receipt.phase = "authorization"
+                receipt.reason_codes.append("authorization_failed")
+                receipt.messages.append(str(exc))
+                if strict:
+                    raise
+                return receipt
+            staging_parent = root / ".staging"
+            staging_parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(
+                prefix="tlc-launchers-",
+                dir=staging_parent,
+            ) as temporary:
+                temporary_root = Path(temporary)
+                launcher, replacements = _stage_tlc_launchers(
+                    staging_root=temporary_root / "launchers",
+                    install_root=root,
+                    jar_path=managed_jar,
+                    java_executable=java_runtime.executable,
+                )
+                manifest_replacement = _stage_tlc_manifest(
+                    staging_root=temporary_root / "manifests",
+                    install_root=root,
+                    jar_path=managed_jar,
+                    java_executable=java_runtime.executable,
+                )
+                staged_probe = probe_tlc_runtime(
+                    executable=str(
+                        temporary_root / "launchers" / "bin" / TLC_EXECUTABLE
+                    ),
+                    java_executable=java_runtime.executable,
+                )
+                _record_tool_runtime(
+                    receipt,
+                    staged_probe,
+                    binding="rebound_launcher_runtime_probe",
+                )
+                if not staged_probe.usable:
+                    return _fail_runtime_validation(
+                        receipt,
+                        staged_probe,
+                        tool_name="TLC",
+                        strict=strict,
+                    )
+                _commit_staged_files(
+                    (*replacements, manifest_replacement),
+                    backup_dir=temporary_root / "backups",
+                )
+            receipt.executable_path = str(launcher)
+            receipt.jar_path = str(managed_jar)
+            receipt.already_present = True
+            receipt.install_attempted = True
+            receipt.installed = True
+            receipt.status = "installed"
+            receipt.phase = "managed_identity_repaired"
+            receipt.observed_sha256 = TLC_SHA256
+            receipt.checksum_verified = True
+            receipt.messages.append(
+                "Republished the complete TLC launcher/manifest bundle with "
+                "the selected JVM"
+            )
+            return receipt
 
-        public_probe = probe_tlc_runtime(executable=existing)
+    if existing and not force:
+        public_probe = probe_tlc_runtime(
+            executable=existing,
+            java_executable=java_runtime.executable,
+        )
         _record_tool_runtime(
             receipt,
             public_probe,
             binding="existing_public_launcher_probe",
         )
-        version_ok = observed_version_matches_lock(
-            public_probe.output,
-            TLC_VERSION,
-        )
-        if public_probe.usable and (version_ok or not strict):
+        if public_probe.usable and not strict:
             receipt.executable_path = existing
             receipt.jar_path = None
             receipt.already_present = True
@@ -1655,7 +2163,7 @@ def ensure_tlc(
             "tlc",
             yes=yes,
             strict=strict,
-            checksum_verified=True,
+            checksum_verified=None,
             platform_key=platform_name,
             test_mode=test_mode,
         )
@@ -1686,7 +2194,12 @@ def ensure_tlc(
             require_checksum=True,
             on_progress=on_progress,
         )
-        if not ok or observed != TLC_SHA256:
+        if (
+            not ok
+            or observed != TLC_SHA256
+            or not staged_jar.is_file()
+            or not verify_sha256(staged_jar, TLC_SHA256)
+        ):
             receipt.status = "failed"
             receipt.phase = "download"
             receipt.reason_codes.append("download_or_checksum_failed")
@@ -1723,7 +2236,10 @@ def ensure_tlc(
             java_main="tlc2.TLC",
             java_executable=java_runtime.executable,
         )
-        launcher_probe = probe_tlc_runtime(executable=str(validation_launcher))
+        launcher_probe = probe_tlc_runtime(
+            executable=str(validation_launcher),
+            java_executable=java_runtime.executable,
+        )
         _record_tool_runtime(
             receipt,
             launcher_probe,
@@ -1743,8 +2259,18 @@ def ensure_tlc(
             jar_path=jar_path,
             java_executable=java_runtime.executable,
         )
+        manifest_replacement = _stage_tlc_manifest(
+            staging_root=temporary_root / "manifests",
+            install_root=root,
+            jar_path=jar_path,
+            java_executable=java_runtime.executable,
+        )
         _commit_staged_files(
-            ((staged_jar, jar_path), *launcher_replacements),
+            (
+                (staged_jar, jar_path),
+                *launcher_replacements,
+                manifest_replacement,
+            ),
             backup_dir=temporary_root / "backups",
         )
 
@@ -1760,6 +2286,7 @@ def ensure_tlc(
     return receipt
 
 
+@_serialize_live_install
 def ensure_apalache(
     *,
     yes: bool = False,
@@ -1841,52 +2368,147 @@ def ensure_apalache(
         APALACHE_EXECUTABLE,
         path_env=path_env,
     ) or which_executable("apalache", path_env=path_env)
-    if existing and not force:
-        managed_launcher = Path(existing).resolve() == (
-            managed_bin / APALACHE_EXECUTABLE
-        ).resolve()
-        binding_ok = (
-            _launcher_binds_java(
-                existing,
-                java_runtime.executable,
-                java_jar=False,
-            )
-            if managed_launcher
-            else True
+    managed_identity = (
+        managed_apalache_identity(
+            root,
+            java_executable=java_runtime.executable,
         )
-        receipt.bindings["existing_launcher_binds_selected_java"] = binding_ok
+        if not force
+        else {}
+    )
+    receipt.bindings["existing_managed_identity"] = managed_identity
+    if managed_identity.get("usable"):
+        managed_launcher = managed_bin / APALACHE_EXECUTABLE
         runtime_probe = probe_apalache_runtime(
-            existing,
-            java_executable=None if binding_ok else java_runtime.executable,
-            expected_version=APALACHE_VERSION if strict else None,
+            str(managed_launcher),
+            java_executable=java_runtime.executable,
+            expected_version=APALACHE_VERSION,
         )
         _record_tool_runtime(
             receipt,
             runtime_probe,
             binding="existing_runtime_probe",
         )
-        if runtime_probe.usable and binding_ok:
+        if runtime_probe.usable:
+            receipt.executable_path = str(managed_launcher)
+            receipt.already_present = True
+            receipt.installed = True
+            receipt.status = "available"
+            receipt.phase = "available"
+            receipt.checksum_verified = True
+            receipt.observed_sha256 = APALACHE_SHA256
+            receipt.messages.append(
+                f"Apalache already available and runnable at {managed_launcher}"
+            )
+            return receipt
+    repairable_managed = bool(
+        managed_identity.get("artifact_digest_verified")
+        and managed_identity.get("distribution_tree_verified")
+        and managed_identity.get("payload_digest_verified")
+    )
+    if repairable_managed and not force:
+        payload = Path(str(managed_identity["payload_path"]))
+        runtime_probe = probe_apalache_runtime(
+            str(payload),
+            java_executable=java_runtime.executable,
+            expected_version=APALACHE_VERSION,
+        )
+        _record_tool_runtime(
+            receipt,
+            runtime_probe,
+            binding="existing_payload_runtime_probe",
+        )
+        if runtime_probe.usable and not yes:
+            receipt.status = "blocked"
+            receipt.phase = "managed_identity"
+            receipt.reason_codes.append("managed_identity_repair_required")
+            receipt.messages.append(
+                "The managed Apalache archive and payload are valid, but the "
+                "complete launcher/manifest identity is mismatched; re-run with "
+                "yes=True to repair it."
+            )
+            return receipt
+        if runtime_probe.usable and yes:
+            try:
+                authorize_plugin_install(
+                    "apalache",
+                    yes=True,
+                    strict=strict,
+                    checksum_verified=True,
+                    platform_key=platform_name,
+                    test_mode=test_mode,
+                )
+            except StateModelInstallerError as exc:
+                receipt.status = "failed"
+                receipt.phase = "authorization"
+                receipt.reason_codes.append("authorization_failed")
+                receipt.messages.append(str(exc))
+                if strict:
+                    raise
+                return receipt
+            staging_parent = root / ".staging"
+            staging_parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(
+                prefix="apalache-launchers-",
+                dir=staging_parent,
+            ) as temporary:
+                temporary_root = Path(temporary)
+                launcher, launcher_replacements = _stage_apalache_launchers(
+                    staging_root=temporary_root / "launchers",
+                    install_root=root,
+                    binary=payload,
+                    java_executable=java_runtime.executable,
+                )
+                manifest_replacement = _stage_apalache_manifest(
+                    staging_root=temporary_root / "manifests",
+                    install_root=root,
+                    archive_path=Path(str(managed_identity["artifact_path"])),
+                    binary_path=payload,
+                    payload_sha256=str(managed_identity["payload_sha256"]),
+                    distribution_tree_sha256=str(
+                        managed_identity["expected_distribution_tree_sha256"]
+                    ),
+                    java_executable=java_runtime.executable,
+                )
+                _commit_staged_files(
+                    (*launcher_replacements, manifest_replacement),
+                    backup_dir=temporary_root / "backups",
+                )
+            receipt.executable_path = str(launcher)
+            receipt.already_present = True
+            receipt.install_attempted = True
+            receipt.installed = True
+            receipt.status = "installed"
+            receipt.phase = "managed_identity_repaired"
+            receipt.checksum_verified = True
+            receipt.observed_sha256 = APALACHE_SHA256
+            return receipt
+
+    if existing and not force:
+        runtime_probe = probe_apalache_runtime(
+            existing,
+            java_executable=java_runtime.executable,
+            expected_version=None if not strict else APALACHE_VERSION,
+        )
+        _record_tool_runtime(
+            receipt,
+            runtime_probe,
+            binding="existing_runtime_probe",
+        )
+        if runtime_probe.usable and not strict:
             receipt.executable_path = existing
             receipt.already_present = True
             receipt.installed = True
             receipt.status = "available"
             receipt.phase = "available"
             receipt.messages.append(
-                f"Apalache already available and runnable at {existing}"
-            )
-            return receipt
-        if runtime_probe.usable and not binding_ok and not yes:
-            receipt.status = "blocked"
-            receipt.phase = "launcher_binding"
-            receipt.reason_codes.append("launcher_rebind_required")
-            receipt.messages.append(
-                "The managed Apalache launcher does not bind the selected JVM; "
-                "re-run with yes=True to repair from the reviewed archive."
+                f"Runnable non-managed Apalache accepted at {existing} "
+                "under strict=False"
             )
             return receipt
         receipt.messages.append(
-            f"Apalache at {existing} failed locked-version or bounded runtime "
-            f"validation for {APALACHE_VERSION}; repairing managed runtime."
+            f"Apalache at {existing} failed exact managed identity or bounded "
+            f"runtime validation for {APALACHE_VERSION}; repairing."
         )
         receipt.phase = "repairing"
 
@@ -1905,7 +2527,7 @@ def ensure_apalache(
             "apalache",
             yes=yes,
             strict=strict,
-            checksum_verified=True,
+            checksum_verified=None,
             platform_key=platform_name,
             test_mode=test_mode,
         )
@@ -1921,22 +2543,6 @@ def ensure_apalache(
     receipt.install_attempted = True
     archive = root / "downloads" / Path(pin.artifact_url).name
     destination = root / f"apalache-{pin.version}"
-    ok, observed = download_artifact(
-        pin.artifact_url,
-        archive,
-        sha256=pin.sha256,
-        require_checksum=True,
-        on_progress=on_progress,
-    )
-    if not ok:
-        receipt.status = "failed"
-        receipt.phase = "download"
-        receipt.reason_codes.append("download_or_checksum_failed")
-        if strict:
-            raise StateModelInstallerError("Apalache download/checksum failed")
-        return receipt
-    receipt.checksum_verified = True
-    receipt.observed_sha256 = observed
     staging_parent = root / ".staging"
     staging_parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(
@@ -1944,30 +2550,44 @@ def ensure_apalache(
         dir=staging_parent,
     ) as temporary:
         temporary_root = Path(temporary)
+        staged_archive = temporary_root / "artifact" / Path(pin.artifact_url).name
+        ok, observed = download_artifact(
+            pin.artifact_url,
+            staged_archive,
+            sha256=APALACHE_SHA256,
+            require_checksum=True,
+            on_progress=on_progress,
+        )
+        if (
+            not ok
+            or observed != APALACHE_SHA256
+            or not staged_archive.is_file()
+            or not verify_sha256(staged_archive, APALACHE_SHA256)
+        ):
+            receipt.status = "failed"
+            receipt.phase = "download"
+            receipt.reason_codes.append("download_or_checksum_failed")
+            if strict:
+                raise StateModelInstallerError("Apalache download/checksum failed")
+            return receipt
+        receipt.checksum_verified = True
+        receipt.observed_sha256 = observed
+        receipt.bindings["observed_sha256"] = observed
         staged_destination = temporary_root / "installation"
-        _safe_extract_tar(archive, staged_destination)
-        matches = [
-            path
-            for path in staged_destination.rglob(APALACHE_EXECUTABLE)
-            if path.is_file()
-        ]
-        if not matches:
-            matches = [
-                path
-                for path in staged_destination.rglob("apalache")
-                if path.is_file() and path.name in {"apalache", "apalache-mc"}
-            ]
-        if not matches:
+        _safe_extract_tar(staged_archive, staged_destination)
+        binary = _find_apalache_binary(staged_destination)
+        if binary is None:
             receipt.status = "failed"
             receipt.phase = "extract"
-            receipt.reason_codes.append("executable_missing")
+            receipt.reason_codes.append("executable_missing_or_ambiguous")
             if strict:
                 raise StateModelInstallerError(
-                    "Apalache archive did not contain apalache-mc"
+                    "Apalache archive did not contain exactly one apalache-mc"
                 )
             return receipt
-        binary = matches[0]
         binary.chmod(binary.stat().st_mode | 0o111)
+        distribution_tree_sha256 = _tree_digest(staged_destination)
+        payload_sha256 = content_sha256(binary)
         runtime_probe = probe_apalache_runtime(
             str(binary),
             java_executable=java_runtime.executable,
@@ -1993,6 +2613,7 @@ def ensure_apalache(
         )
         launcher_probe = probe_apalache_runtime(
             str(validation_launcher),
+            java_executable=java_runtime.executable,
             expected_version=APALACHE_VERSION,
         )
         _record_tool_runtime(
@@ -2016,6 +2637,15 @@ def ensure_apalache(
             binary=final_binary,
             java_executable=java_runtime.executable,
         )
+        manifest_replacement = _stage_apalache_manifest(
+            staging_root=temporary_root / "manifests",
+            install_root=root,
+            archive_path=archive,
+            binary_path=final_binary,
+            payload_sha256=payload_sha256,
+            distribution_tree_sha256=distribution_tree_sha256,
+            java_executable=java_runtime.executable,
+        )
         previous = temporary_root / "previous-installation"
         moved_previous = False
         moved_staged = False
@@ -2026,7 +2656,11 @@ def ensure_apalache(
             staged_destination.replace(destination)
             moved_staged = True
             _commit_staged_files(
-                launcher_replacements,
+                (
+                    (staged_archive, archive),
+                    *launcher_replacements,
+                    manifest_replacement,
+                ),
                 backup_dir=temporary_root / "launcher-backups",
             )
         except Exception:
@@ -2143,7 +2777,10 @@ def plugin_manifest() -> dict[str, Any]:
         "task_id": TASK_ID,
         "program": PROGRAM,
         "locked_versions": dict(LOCKED_VERSIONS),
-        "locked_artifact_digests": {"tlc": TLC_SHA256},
+        "locked_artifact_digests": {
+            "tlc": TLC_SHA256,
+            "apalache": APALACHE_SHA256,
+        },
         "java_requirements": {
             "tlc_minimum_major": TLC_MIN_JAVA_MAJOR,
             "apalache_minimum_major": APALACHE_MIN_JAVA_MAJOR,
@@ -2181,6 +2818,9 @@ def plugin_manifest() -> dict[str, Any]:
             "java_option_environment_sanitized": list(JAVA_OPTION_ENV_VARS),
             "dry_run_executes_no_host_tools": True,
             "staged_validation_before_atomic_publication": True,
+            "per_root_interprocess_publication_lock": True,
+            "complete_launcher_bytes_validated": True,
+            "payload_and_distribution_digests_validated": True,
             "require_java_false_live_mode_forbidden": True,
         },
     }
@@ -2200,6 +2840,7 @@ __all__ = [
     "TLC_VERSION",
     "APALACHE_VERSION",
     "TLC_SHA256",
+    "APALACHE_SHA256",
     "JAVA_EXECUTABLE_ENV",
     "JAVA_OPTION_ENV_VARS",
     "TLC_MIN_JAVA_MAJOR",
@@ -2237,6 +2878,9 @@ __all__ = [
     "ensure_tlc",
     "ensure_apalache",
     "ensure_state_model_portfolio",
+    "installation_lock",
+    "managed_tlc_identity",
+    "managed_apalache_identity",
     "plugin_manifest",
     "IMPORT_INSTALLS_FORBIDDEN",
 ]

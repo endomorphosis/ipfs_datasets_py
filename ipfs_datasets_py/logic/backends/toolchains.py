@@ -704,14 +704,6 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
         bound=("circuit",),
     )
 
-    tlc_gap = _gap(
-        InstallGapKind.TLC,
-        ("tlc",),
-        "TLC is not shipped as a checksummed portable artifact; operators must "
-        "provide a JVM-hosted tlc/tla2tools binary explicitly.",
-        "Return unavailable until an operator-provided TLC executable is probed; "
-        "Apalache remains the managed TLA+ pin.",
-    )
     hyper_gap = _gap(
         InstallGapKind.HYPER_TOOLS,
         ("hyperltl", "autohyper", "mchyper"),
@@ -833,11 +825,24 @@ def _build_default_descriptors() -> tuple[ToolchainDescriptor, ...]:
             executable_candidates=("tlc", "tlc2", "tla2tools"),
             resource_class=ToolchainResourceClass.JVM,
             runtime=ToolRuntimeFamily.JVM,
-            availability=InstallAvailability.DECLARED_GAP,
+            availability=InstallAvailability.MANAGED_PIN,
+            installer_entry="ensure_tlc",
+            pins=(
+                _pin(
+                    "tlc",
+                    "1.8.0",
+                    url=(
+                        "https://github.com/tlaplus/tlaplus/releases/download/"
+                        "v1.8.0/tla2tools.jar"
+                    ),
+                    sha256=(
+                        "e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5"
+                    ),
+                ),
+            ),
             dependencies=(jvm_dep,),
-            gap=tlc_gap,
             families=("tla", "state_model"),
-            notes="Declared install gap; JVM dependency is still bound.",
+            notes="Checksummed portable TLC 1.8.0 jar; JVM dependency is bound.",
         ),
         _descriptor(
             provider_id="tamarin",
@@ -1185,7 +1190,6 @@ class VerificationToolchainRegistry:
 
     def assert_required_gaps_declared(self) -> None:
         required = {
-            InstallGapKind.TLC,
             InstallGapKind.HYPER_TOOLS,
             InstallGapKind.DATALOG_SECPAL_EXTERNAL,
             InstallGapKind.RUNTIME_MTL_EXTERNAL,
@@ -1338,7 +1342,7 @@ def get_toolchain(provider_id: str) -> ToolchainDescriptor:
 
 
 def list_declared_install_gaps() -> tuple[InstallGap, ...]:
-    """Return unique declared install gaps (TLC, Hyper, Datalog, runtime-MTL, ...)."""
+    """Return unique declared install gaps (Hyper, Datalog, runtime-MTL, ...)."""
 
     return default_registry().declared_gaps()
 

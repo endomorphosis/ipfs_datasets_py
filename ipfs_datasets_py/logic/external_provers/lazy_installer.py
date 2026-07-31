@@ -73,6 +73,9 @@ _ALIASES = {
     "apalache": "apalache",
     "apalache_mc": "apalache",
     "apalache-mc": "apalache",
+    "tlc": "tlc",
+    "tlc2": "tlc",
+    "tla2tools": "tlc",
     "tamarin": "tamarin",
     "tamarin_prover": "tamarin",
     "tamarin-prover": "tamarin",
@@ -102,6 +105,7 @@ _ENV_NAMES = {
     "coq": "COQ",
     "isabelle": "ISABELLE",
     "apalache": "APALACHE",
+    "tlc": "TLC",
     "tamarin": "TAMARIN",
     "maude": "MAUDE",
     "proverif": "PROVERIF",
@@ -111,6 +115,7 @@ _ENV_NAMES = {
 
 _PROVER_EXECUTABLES: dict[str, tuple[str, ...]] = {
     "apalache": ("apalache-mc", "apalache"),
+    "tlc": ("tlc", "tlc2", "tla2tools"),
     "tamarin": ("tamarin-prover",),
     "maude": ("maude",),
     "proverif": ("proverif",),
@@ -355,6 +360,7 @@ def _lazy_install_prover_once(
     reason: str | None = None,
     progress: ProgressCallback | None = None,
     allow_automatic: bool = False,
+    java_executable: str | Path | None = None,
 ) -> bool:
     """Try to install a prover dependency once and emit visible progress.
 
@@ -424,13 +430,17 @@ def _lazy_install_prover_once(
             return False
 
         kwargs = {"yes": True, "strict": strict}
+        if force:
+            kwargs["force"] = True
+        if prover in {"tlc", "apalache"} and java_executable is not None:
+            kwargs["java_executable"] = java_executable
         if prover == "coq":
             kwargs["allow_sudo"] = _truthy(
                 os.environ.get("IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS")
             )
 
         if progress is not None and prover in {
-            "z3", "cvc5", "vampire", "eprover", "lean", "coq", "isabelle", "apalache", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
+            "z3", "cvc5", "vampire", "eprover", "lean", "coq", "isabelle", "apalache", "tlc", "tamarin", "maude", "proverif", "symbolicai", "ergoai"
         }:
             def forward_progress(phase: str, message: str) -> None:
                 normalized_phase = phase if phase in {
@@ -490,6 +500,7 @@ def lazy_install_prover(
     reason: str | None = None,
     progress: ProgressCallback | None = None,
     allow_automatic: bool = False,
+    java_executable: str | Path | None = None,
 ) -> bool:
     """Install a prover at most once per process, safely under parallel use."""
 
@@ -507,12 +518,18 @@ def lazy_install_prover(
             reason=reason,
             progress=progress,
             allow_automatic=allow_automatic,
+            java_executable=java_executable,
         )
 
     with _install_lock(prover):
-        if prover in _ATTEMPTED and not force:
-            return bool(_INSTALL_RESULTS.get(prover, False))
-        _ATTEMPTED.add(prover)
+        attempt_key = (
+            f"{prover}|java={Path(java_executable).expanduser().resolve()}"
+            if java_executable is not None and prover in {"tlc", "apalache"}
+            else prover
+        )
+        if attempt_key in _ATTEMPTED and not force:
+            return bool(_INSTALL_RESULTS.get(attempt_key, False))
+        _ATTEMPTED.add(attempt_key)
         try:
             installed = _lazy_install_prover_once(
                 prover,
@@ -521,11 +538,12 @@ def lazy_install_prover(
                 reason=reason,
                 progress=progress,
                 allow_automatic=allow_automatic,
+                java_executable=java_executable,
             )
         except Exception:
-            _INSTALL_RESULTS[prover] = False
+            _INSTALL_RESULTS[attempt_key] = False
             raise
-        _INSTALL_RESULTS[prover] = bool(installed)
+        _INSTALL_RESULTS[attempt_key] = bool(installed)
         return bool(installed)
 
 
@@ -535,6 +553,7 @@ def ensure_prover_executable(
     reason: str,
     progress: ProgressCallback | None = None,
     strict: bool | None = None,
+    java_executable: str | Path | None = None,
 ) -> str | None:
     """Return a required executable, installing it lazily when explicitly used.
 
@@ -570,6 +589,7 @@ def ensure_prover_executable(
         reason=reason,
         progress=progress,
         allow_automatic=True,
+        java_executable=java_executable,
     )
     if prover == "ergoai":
         explicit_ergoai = os.environ.get("ERGOAI_BINARY")

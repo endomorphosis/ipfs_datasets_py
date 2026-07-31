@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -227,6 +231,179 @@ def test_blank_tlc_lock_digest_fails_closed() -> None:
         state_model.select_strict_pin("tlc", lock=lock)
 
 
+@pytest.mark.parametrize(
+    ("digest", "is_checksummed"),
+    [
+        ("", False),
+        ("0" * 64, True),
+    ],
+)
+def test_blank_or_alternate_apalache_lock_digest_fails_closed(
+    digest: str,
+    is_checksummed: bool,
+) -> None:
+    lock = {
+        "managed_pin_versions": {"apalache": state_model.APALACHE_VERSION},
+        "tools": [
+            {
+                "tool_id": "apalache",
+                "pins": [
+                    {
+                        "tool_id": "apalache",
+                        "version": state_model.APALACHE_VERSION,
+                        "platform": "any",
+                        "artifact_url": (
+                            "https://example.invalid/apalache-reviewed.tgz"
+                        ),
+                        "sha256": digest,
+                        "is_checksummed": is_checksummed,
+                    }
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(state_model.StateModelInstallerError, match="digest"):
+        state_model.select_strict_pin("apalache", lock=lock)
+
+
+def test_tlc_rejects_downloader_that_lies_about_observed_digest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    java17 = _fake_java(
+        tmp_path / "java17" / "java",
+        "17.0.12",
+        runtime_exit=1,
+        runtime_output=TLC_HELP_OUTPUT,
+    )
+    install_root = tmp_path / "install"
+
+    def lying_download(url: str, destination: Path, **kwargs: object):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(b"tampered payload")
+        return True, state_model.TLC_SHA256
+
+    monkeypatch.setattr(state_model, "download_artifact", lying_download)
+    monkeypatch.setattr(
+        state_model,
+        "authorize_plugin_install",
+        lambda *args, **kwargs: None,
+    )
+
+    receipt = state_model.ensure_tlc(
+        yes=True,
+        strict=False,
+        force=True,
+        install_root=install_root,
+        java_executable=java17,
+        test_mode=True,
+    )
+
+    assert receipt.status == "failed"
+    assert receipt.phase == "download"
+    assert "download_or_checksum_failed" in receipt.reason_codes
+    assert not (
+        install_root
+        / "tlc"
+        / state_model.TLC_VERSION
+        / state_model.TLC_JAR_NAME
+    ).exists()
+    assert not (install_root / "bin" / state_model.TLC_EXECUTABLE).exists()
+
+
+def test_download_artifact_uses_unique_partial_paths_and_cleans_them(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    payload = b"reviewed artifact fixture"
+    digest = state_model.content_sha256_bytes(payload)
+    partial_paths: list[Path] = []
+    original_named_temporary_file = state_model.tempfile.NamedTemporaryFile
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self) -> bytes:
+            return payload
+
+    def recording_temporary_file(*args, **kwargs):
+        handle = original_named_temporary_file(*args, **kwargs)
+        partial_paths.append(Path(handle.name))
+        return handle
+
+    monkeypatch.setattr(state_model, "urlopen", lambda *_args, **_kwargs: Response())
+    monkeypatch.setattr(
+        state_model.tempfile,
+        "NamedTemporaryFile",
+        recording_temporary_file,
+    )
+    destination = tmp_path / "downloads" / "artifact.bin"
+
+    first = state_model.download_artifact(
+        "https://example.invalid/artifact.bin",
+        destination,
+        sha256=digest,
+    )
+    destination.unlink()
+    second = state_model.download_artifact(
+        "https://example.invalid/artifact.bin",
+        destination,
+        sha256=digest,
+    )
+
+    assert first == second == (True, digest)
+    assert len(partial_paths) == 2
+    assert partial_paths[0] != partial_paths[1]
+    assert all(not path.exists() for path in partial_paths)
+
+
+def test_launcher_identity_requires_exact_complete_bytes(tmp_path: Path) -> None:
+    target = _write_executable(tmp_path / "payload", 'echo "payload"')
+    expected = state_model._launcher_body(target)
+    launcher = tmp_path / "launcher"
+    launcher.write_text(
+        expected + "# contains every expected token but changes the program\n",
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+
+    identity = state_model._launcher_identity(
+        launcher,
+        expected_body=expected,
+    )
+
+    assert identity["executable"] is True
+    assert identity["observed_sha256"] != identity["expected_sha256"]
+    assert identity["structural_match"] is False
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlink semantics differ on Windows")
+def test_launcher_identity_rejects_symlink_even_with_exact_bytes(
+    tmp_path: Path,
+) -> None:
+    target = _write_executable(tmp_path / "payload", 'echo "payload"')
+    expected = state_model._launcher_body(target)
+    real_launcher = tmp_path / "real-launcher"
+    real_launcher.write_text(expected, encoding="utf-8")
+    real_launcher.chmod(0o755)
+    launcher = tmp_path / "launcher"
+    launcher.symlink_to(real_launcher)
+
+    identity = state_model._launcher_identity(
+        launcher,
+        expected_body=expected,
+    )
+
+    assert identity["observed_sha256"] == identity["expected_sha256"]
+    assert identity["present"] is False
+    assert identity["structural_match"] is False
+
+
 def test_dry_run_executes_no_host_tool(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -343,6 +520,7 @@ def test_tlc_post_install_probe_fails_before_launcher_publication(
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
     monkeypatch.setattr(
         state_model,
         "authorize_plugin_install",
@@ -420,6 +598,7 @@ def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
         return True, state_model.TLC_SHA256
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
     monkeypatch.setattr(
         state_model,
         "authorize_plugin_install",
@@ -442,6 +621,22 @@ def test_successful_tlc_install_accepts_real_help_exit_and_binds_java(
     assert receipt.bindings["post_install_runtime_probe"]["returncode"] == 1
     assert f"exec '{java17.resolve()}' -cp " in launcher.read_text(
         encoding="utf-8"
+    )
+    identity = state_model.managed_tlc_identity(
+        install_root,
+        java_executable=java17,
+    )
+    assert identity["usable"] is True
+    launcher.write_text(
+        launcher.read_text(encoding="utf-8") + "# tampered\n",
+        encoding="utf-8",
+    )
+    assert (
+        state_model.managed_tlc_identity(
+            install_root,
+            java_executable=java17,
+        )["usable"]
+        is False
     )
 
 
@@ -484,7 +679,7 @@ def test_legacy_tlc_launcher_requires_and_performs_atomic_rebind(
     )
 
     assert blocked.status == "blocked"
-    assert "launcher_rebind_required" in blocked.reason_codes
+    assert "managed_identity_repair_required" in blocked.reason_codes
     assert launcher.read_text(encoding="utf-8") == legacy_body
 
     repaired = state_model.ensure_tlc(
@@ -496,7 +691,7 @@ def test_legacy_tlc_launcher_requires_and_performs_atomic_rebind(
     )
 
     assert repaired.status == "installed"
-    assert repaired.phase == "launcher_rebound"
+    assert repaired.phase == "managed_identity_repaired"
     assert f"exec '{java17.resolve()}' -cp " in launcher.read_text(
         encoding="utf-8"
     )
@@ -556,7 +751,7 @@ def test_apalache_post_install_probe_fails_before_launcher_publication(
     def fake_download(url: str, destination: Path, **kwargs: object):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"not-a-real-archive")
-        return True, "b" * 64
+        return True, state_model.APALACHE_SHA256
 
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
@@ -565,6 +760,7 @@ def test_apalache_post_install_probe_fails_before_launcher_publication(
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
     monkeypatch.setattr(state_model, "_safe_extract_tar", fake_extract)
     monkeypatch.setattr(
         state_model,
@@ -603,7 +799,7 @@ def test_apalache_publication_failure_restores_previous_install(
     def fake_download(url: str, destination: Path, **kwargs: object):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"reviewed-archive")
-        return True, "b" * 64
+        return True, state_model.APALACHE_SHA256
 
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
@@ -612,6 +808,7 @@ def test_apalache_publication_failure_restores_previous_install(
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
     monkeypatch.setattr(state_model, "_safe_extract_tar", fake_extract)
     monkeypatch.setattr(
         state_model,
@@ -649,7 +846,7 @@ def test_successful_apalache_install_binds_selected_java(
     def fake_download(url: str, destination: Path, **kwargs: object):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(b"not-a-real-archive")
-        return True, "c" * 64
+        return True, state_model.APALACHE_SHA256
 
     def fake_extract(archive: Path, destination: Path) -> None:
         _write_executable(
@@ -658,6 +855,7 @@ def test_successful_apalache_install_binds_selected_java(
         )
 
     monkeypatch.setattr(state_model, "download_artifact", fake_download)
+    monkeypatch.setattr(state_model, "verify_sha256", lambda *args: True)
     monkeypatch.setattr(state_model, "_safe_extract_tar", fake_extract)
     monkeypatch.setattr(
         state_model,
@@ -681,3 +879,118 @@ def test_successful_apalache_install_binds_selected_java(
     body = launcher.read_text(encoding="utf-8")
     assert f"export PATH='{java17.parent.resolve()}':" in body
     assert receipt.bindings["post_install_runtime_probe"]["usable"] is True
+    identity = state_model.managed_apalache_identity(
+        install_root,
+        java_executable=java17,
+    )
+    assert identity["usable"] is True
+    payload = Path(identity["payload_path"])
+    payload.chmod(0o644)
+    assert (
+        state_model.managed_apalache_identity(
+            install_root,
+            java_executable=java17,
+        )["usable"]
+        is False
+    )
+    payload.chmod(0o755)
+    payload.write_text(
+        payload.read_text(encoding="utf-8") + "# tampered\n",
+        encoding="utf-8",
+    )
+    assert (
+        state_model.managed_apalache_identity(
+            install_root,
+            java_executable=java17,
+        )["usable"]
+        is False
+    )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX subprocess ordering fixture")
+def test_installation_lock_serializes_independent_processes(tmp_path: Path) -> None:
+    install_root = tmp_path / "install"
+    event_log = tmp_path / "events.log"
+    package_root = Path(state_model.__file__).resolve().parents[4]
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = os.pathsep.join(
+        part
+        for part in (
+            str(package_root),
+            environment.get("PYTHONPATH", ""),
+        )
+        if part
+    )
+    program = """\
+import os
+import sys
+import time
+from pathlib import Path
+from ipfs_datasets_py.logic.backends.installers import state_model
+
+root = Path(sys.argv[1])
+event_log = Path(sys.argv[2])
+token = sys.argv[3]
+with state_model.installation_lock(root):
+    with event_log.open("a", encoding="utf-8") as handle:
+        handle.write(f"start:{token}\\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    time.sleep(0.25)
+    with event_log.open("a", encoding="utf-8") as handle:
+        handle.write(f"end:{token}\\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+"""
+
+    first = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            program,
+            str(install_root),
+            str(event_log),
+            "first",
+        ],
+        env=environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    deadline = time.monotonic() + 5.0
+    while time.monotonic() < deadline:
+        if event_log.is_file() and "start:first" in event_log.read_text(
+            encoding="utf-8"
+        ):
+            break
+        time.sleep(0.01)
+    else:
+        first.kill()
+        stdout, stderr = first.communicate(timeout=5)
+        pytest.fail(f"first lock process did not start: {stdout}\n{stderr}")
+
+    second = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            program,
+            str(install_root),
+            str(event_log),
+            "second",
+        ],
+        env=environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    first_stdout, first_stderr = first.communicate(timeout=10)
+    second_stdout, second_stderr = second.communicate(timeout=10)
+
+    assert first.returncode == 0, f"{first_stdout}\n{first_stderr}"
+    assert second.returncode == 0, f"{second_stdout}\n{second_stderr}"
+    assert event_log.read_text(encoding="utf-8").splitlines() == [
+        "start:first",
+        "end:first",
+        "start:second",
+        "end:second",
+    ]
