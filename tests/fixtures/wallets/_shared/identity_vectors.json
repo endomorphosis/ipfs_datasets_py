@@ -1,0 +1,76 @@
+{
+  "schema": "wallet_processor_migration/shared-identity-vectors@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "notes": "Same address bytes on different networks must produce distinct chain/account identities.",
+  "vectors": [
+    {
+      "id": "eip155-mainnet-alice",
+      "chain": {
+        "namespace": "eip155",
+        "network": "ethereum-mainnet",
+        "chain_id": "1",
+        "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+      },
+      "address": "0x1111111111111111111111111111111111111111",
+      "kind": "address",
+      "expect_valid": true
+    },
+    {
+      "id": "eip155-sepolia-alice-same-address",
+      "chain": {
+        "namespace": "eip155",
+        "network": "ethereum-sepolia",
+        "chain_id": "11155111",
+        "genesis_hash": "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9"
+      },
+      "address": "0x1111111111111111111111111111111111111111",
+      "kind": "address",
+      "expect_valid": true,
+      "must_differ_from": "eip155-mainnet-alice"
+    },
+    {
+      "id": "bip122-mainnet",
+      "chain": {
+        "namespace": "bip122",
+        "network": "bitcoin-mainnet",
+        "chain_id": "000000000019d6689c085ae165831e93",
+        "genesis_hash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+      },
+      "address": "bc1qfixtureaddress0000000000000000000000",
+      "kind": "address",
+      "expect_valid": true
+    },
+    {
+      "id": "empty-address-rejected",
+      "chain": {
+        "namespace": "eip155",
+        "network": "ethereum-mainnet",
+        "chain_id": "1",
+        "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+      },
+      "address": "",
+      "kind": "address",
+      "expect_valid": false
+    },
+    {
+      "id": "network-mismatch-rejected",
+      "chain": {
+        "namespace": "eip155",
+        "network": "ethereum-mainnet",
+        "chain_id": "1",
+        "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+      },
+      "address": "0x2222222222222222222222222222222222222222",
+      "kind": "address",
+      "expect_valid": true,
+      "foreign_network": {
+        "namespace": "eip155",
+        "network": "ethereum-sepolia",
+        "chain_id": "11155111",
+        "genesis_hash": "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9"
+      },
+      "assert_chain_ids_differ": true
+    }
+  ]
+}

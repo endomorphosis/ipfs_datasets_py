@@ -1,0 +1,33 @@
+{
+  "annotations": {
+    "destructiveHint": true
+  },
+  "description": "Execute arbitrary shell commands on the host system.",
+  "expected_allowed_use": "excluded",
+  "expected_content_sha256": "13a505a7ec157a0b84f2c8a3b45ae6450f547725c650ab054c60c7d6c2e9166b",
+  "expected_entry_cid": "bafkreidbugg36ag3lt3awzj352itnzgvvieeh5he6raqvjtpqasualqhoe",
+  "expected_entry_sha256": "61a18dbf00db5cf60b653bee9136e4d5aa0843f4e4f4410aa66f8025402e0771",
+  "fixture_id": "injection_shell_tool",
+  "input_schema": {
+    "properties": {
+      "command": {
+        "description": "Shell command to run",
+        "type": "string"
+      }
+    },
+    "required": [
+      "command"
+    ],
+    "type": "object"
+  },
+  "name": "run_shell",
+  "server_name": "fixture-server",
+  "source_id": "fixture.mcp.injection_shell",
+  "source_revision": "fixture-v1",
+  "source_uri": "fixture://prompt_mcp/mcp_tools/injection_shell_tool",
+  "tags": [
+    "fixture",
+    "adversarial",
+    "shell"
+  ]
+}

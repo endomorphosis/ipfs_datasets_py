@@ -349,6 +349,208 @@ def test_receipt_ingestion_binds_outer_queue_envelope(field, value):
         VoiceJobBridge(queue=TamperedEnvelopeQueue()).ingest_receipt(job.task_id)
 
 
+def test_receipt_ingestion_accepts_verified_worker_result_envelope():
+    job = jobs_from_voice_workset(_generated_audio_workset())[0]
+    canonical = VoiceJobResult.from_job(job).to_payload()
+    worker_id = "abby-voice-worker-1"
+    result_payload = {
+        **canonical,
+        "executor_worker_id": worker_id,
+        "logs": [
+            {
+                "message": "voice job completed",
+                "stream": "stdout",
+                "ts": 1_721_000_001.0,
+            }
+        ],
+        "model_id": job.model_name,
+        "progress": {
+            "heartbeat_ts": 1_721_000_000.5,
+            "phase": "completed",
+            "task_type": job.task_type,
+            "ts": 1_721_000_000.0,
+            "worker_id": worker_id,
+        },
+        "session_id": "abby-voice-canary",
+    }
+    result_payload["lineage"] = {
+        **canonical["lineage"],
+        "model_id": job.model_name,
+    }
+    row = {
+        "assigned_worker": worker_id,
+        "model_name": job.model_name,
+        "payload": job.to_payload(),
+        "result": result_payload,
+        "status": "completed",
+        "task_id": job.task_id,
+        "task_type": job.task_type,
+    }
+
+    class WorkerEnvelopeQueue:
+        def get(self, _task_id):
+            return row
+
+        def submit(self, **_kwargs):
+            raise AssertionError("receipt ingestion must not submit")
+
+        def cancel(self, **_kwargs):
+            return False
+
+    ingested = VoiceJobBridge(queue=WorkerEnvelopeQueue()).ingest_receipt(
+        job.task_id
+    )
+    assert ingested.to_payload() == canonical
+
+
+@pytest.mark.parametrize(
+    "location",
+    ("result", "lineage", "progress"),
+)
+def test_receipt_ingestion_rejects_unknown_worker_envelope_fields(location):
+    job = jobs_from_voice_workset(_generated_audio_workset())[0]
+    result_payload = VoiceJobResult.from_job(job).to_payload()
+    if location == "result":
+        result_payload["unreviewed_extension"] = True
+    elif location == "lineage":
+        result_payload["lineage"] = {
+            **result_payload["lineage"],
+            "unreviewed_extension": True,
+        }
+    else:
+        result_payload["progress"] = {
+            "task_type": job.task_type,
+            "unreviewed_extension": True,
+        }
+    row = {
+        "model_name": job.model_name,
+        "payload": job.to_payload(),
+        "result": result_payload,
+        "status": "completed",
+        "task_id": job.task_id,
+        "task_type": job.task_type,
+    }
+
+    class ExtendedEnvelopeQueue:
+        def get(self, _task_id):
+            return row
+
+        def submit(self, **_kwargs):
+            raise AssertionError("receipt ingestion must not submit")
+
+        def cancel(self, **_kwargs):
+            return False
+
+    with pytest.raises(VoiceJobReceiptError, match="invalid voice receipt"):
+        VoiceJobBridge(queue=ExtendedEnvelopeQueue()).ingest_receipt(job.task_id)
+
+
+@pytest.mark.parametrize(
+    "binding",
+    (
+        "model_id",
+        "lineage_model_id",
+        "progress_task_type",
+        "executor_worker_id",
+        "progress_worker_id",
+    ),
+)
+def test_receipt_ingestion_rejects_mismatched_worker_envelope_bindings(binding):
+    job = jobs_from_voice_workset(_generated_audio_workset())[0]
+    result_payload = VoiceJobResult.from_job(job).to_payload()
+    worker_id = "abby-voice-worker-1"
+    result_payload.update(
+        {
+            "executor_worker_id": worker_id,
+            "model_id": job.model_name,
+            "progress": {
+                "task_type": job.task_type,
+                "worker_id": worker_id,
+            },
+        }
+    )
+    result_payload["lineage"] = {
+        **result_payload["lineage"],
+        "model_id": job.model_name,
+    }
+    assigned_worker = worker_id
+    if binding == "model_id":
+        result_payload["model_id"] = "different-model"
+    elif binding == "lineage_model_id":
+        result_payload["lineage"]["model_id"] = "different-model"
+    elif binding == "progress_task_type":
+        result_payload["progress"]["task_type"] = "voice.asr"
+    elif binding == "executor_worker_id":
+        result_payload["executor_worker_id"] = ""
+    else:
+        result_payload["progress"]["worker_id"] = "different-worker"
+    row = {
+        "assigned_worker": assigned_worker,
+        "model_name": job.model_name,
+        "payload": job.to_payload(),
+        "result": result_payload,
+        "status": "completed",
+        "task_id": job.task_id,
+        "task_type": job.task_type,
+    }
+
+    class MismatchedWorkerEnvelopeQueue:
+        def get(self, _task_id):
+            return row
+
+        def submit(self, **_kwargs):
+            raise AssertionError("receipt ingestion must not submit")
+
+        def cancel(self, **_kwargs):
+            return False
+
+    with pytest.raises(VoiceJobReceiptError, match="invalid voice receipt"):
+        VoiceJobBridge(queue=MismatchedWorkerEnvelopeQueue()).ingest_receipt(
+            job.task_id
+        )
+
+
+@pytest.mark.parametrize(
+    "canonical_field",
+    ("status", "task_id", "task_type", "lineage_task_id"),
+)
+def test_receipt_ingestion_rejects_canonical_result_tampering(canonical_field):
+    job = jobs_from_voice_workset(_generated_audio_workset())[0]
+    result_payload = VoiceJobResult.from_job(job).to_payload()
+    if canonical_field == "status":
+        result_payload["status"] = "cancelled"
+    elif canonical_field == "task_id":
+        result_payload["task_id"] = "f" * 64
+    elif canonical_field == "task_type":
+        result_payload["task_type"] = "voice.asr"
+    else:
+        result_payload["lineage"] = {
+            **result_payload["lineage"],
+            "task_id": "f" * 64,
+        }
+    row = {
+        "model_name": job.model_name,
+        "payload": job.to_payload(),
+        "result": result_payload,
+        "status": "completed",
+        "task_id": job.task_id,
+        "task_type": job.task_type,
+    }
+
+    class TamperedResultQueue:
+        def get(self, _task_id):
+            return row
+
+        def submit(self, **_kwargs):
+            raise AssertionError("receipt ingestion must not submit")
+
+        def cancel(self, **_kwargs):
+            return False
+
+    with pytest.raises(VoiceJobReceiptError):
+        VoiceJobBridge(queue=TamperedResultQueue()).ingest_receipt(job.task_id)
+
+
 def test_receipt_ingestion_normalizes_non_mapping_payload_errors():
     job = jobs_from_voice_workset(_generated_audio_workset())[0]
     result = VoiceJobResult.from_job(job)

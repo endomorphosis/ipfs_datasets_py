@@ -1,0 +1,118 @@
+{
+  "assignments": {
+    "abstain_incomplete": "held_out_domain",
+    "benign_skill": "test",
+    "contradiction_grant_and_forbid": "test",
+    "legal_hard_reject": "train",
+    "security_hard_reject": "validation",
+    "zkp_required_missing_proof": "test"
+  },
+  "development_partitions": [
+    "train",
+    "validation"
+  ],
+  "evaluation_partitions": [
+    "held_out_domain",
+    "test"
+  ],
+  "interface": "IntentAdmissibilityBenchmarkSplits@1",
+  "leakage_policy": {
+    "forbidden_crossings": [
+      {
+        "from": "train",
+        "to": [
+          "held_out_domain",
+          "test",
+          "validation"
+        ]
+      },
+      {
+        "from": "validation",
+        "to": [
+          "held_out_domain",
+          "test",
+          "train"
+        ]
+      }
+    ],
+    "mode": "source_family_partition_fence",
+    "rules": [
+      "entire_source_family_in_single_partition",
+      "evaluation_must_not_retrieve_development_case_ids",
+      "evaluation_must_not_share_intent_source_digest_with_development",
+      "held_out_sources_never_train_the_gate",
+      "no_cross_partition_source_family_members"
+    ]
+  },
+  "partition_case_ids": {
+    "held_out_domain": [
+      "abstain_incomplete"
+    ],
+    "test": [
+      "benign_skill",
+      "contradiction_grant_and_forbid",
+      "zkp_required_missing_proof"
+    ],
+    "train": [
+      "legal_hard_reject"
+    ],
+    "validation": [
+      "security_hard_reject"
+    ]
+  },
+  "partitions": [
+    "train",
+    "validation",
+    "test",
+    "held_out_domain"
+  ],
+  "schema_version": "intent-admissibility-benchmark-splits/v1",
+  "source_families": {
+    "family:benign_skill": {
+      "intent_source_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "member_case_ids": [
+        "benign_skill",
+        "contradiction_grant_and_forbid",
+        "zkp_required_missing_proof"
+      ],
+      "source_family_id": "family:benign_skill",
+      "source_formal_case_id": "benign_skill",
+      "source_ids": [
+        "fixture.skill.benign_skill"
+      ]
+    },
+    "family:incomplete_unsupported_semantics": {
+      "intent_source_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+      "member_case_ids": [
+        "abstain_incomplete"
+      ],
+      "source_family_id": "family:incomplete_unsupported_semantics",
+      "source_formal_case_id": "incomplete_unsupported_semantics",
+      "source_ids": [
+        "fixture.prompt.incomplete_unsupported_semantics"
+      ]
+    },
+    "family:legally_risky_effect": {
+      "intent_source_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+      "member_case_ids": [
+        "legal_hard_reject"
+      ],
+      "source_family_id": "family:legally_risky_effect",
+      "source_formal_case_id": "legally_risky_effect",
+      "source_ids": [
+        "fixture.skill.legally_risky_effect"
+      ]
+    },
+    "family:security_sensitive_resource": {
+      "intent_source_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+      "member_case_ids": [
+        "security_hard_reject"
+      ],
+      "source_family_id": "family:security_sensitive_resource",
+      "source_formal_case_id": "security_sensitive_resource",
+      "source_ids": [
+        "fixture.skill.security_sensitive_resource"
+      ]
+    }
+  }
+}

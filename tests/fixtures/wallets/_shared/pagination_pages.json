@@ -1,0 +1,129 @@
+{
+  "schema": "wallet_processor_migration/shared-pagination-pages@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "limits": {
+    "max_items": 2,
+    "max_pages": 3
+  },
+  "happy_path": {
+    "pages": [
+      {
+        "cursor": null,
+        "records": [
+          {
+            "native_id": "p0-r0",
+            "sequence": 10,
+            "hash": "0x0a"
+          },
+          {
+            "native_id": "p0-r1",
+            "sequence": 11,
+            "hash": "0x0b"
+          }
+        ],
+        "next_cursor": "cursor-1",
+        "response_bytes": 128
+      },
+      {
+        "cursor": "cursor-1",
+        "records": [
+          {
+            "native_id": "p1-r0",
+            "sequence": 12,
+            "hash": "0x0c"
+          }
+        ],
+        "next_cursor": null,
+        "response_bytes": 64
+      }
+    ],
+    "expected_native_ids": [
+      "p0-r0",
+      "p0-r1",
+      "p1-r0"
+    ]
+  },
+  "cursor_loop": {
+    "pages": [
+      {
+        "cursor": null,
+        "records": [
+          {
+            "native_id": "loop-0",
+            "sequence": 1,
+            "hash": "0x01"
+          }
+        ],
+        "next_cursor": "cursor-loop",
+        "response_bytes": 32
+      },
+      {
+        "cursor": "cursor-loop",
+        "records": [
+          {
+            "native_id": "loop-1",
+            "sequence": 2,
+            "hash": "0x02"
+          }
+        ],
+        "next_cursor": "cursor-loop",
+        "response_bytes": 32
+      }
+    ],
+    "expect": "detect_loop_or_page_limit"
+  },
+  "page_limit_exceeded": {
+    "pages": [
+      {
+        "cursor": null,
+        "records": [
+          {
+            "native_id": "m0",
+            "sequence": 1,
+            "hash": "0x01"
+          }
+        ],
+        "next_cursor": "c1",
+        "response_bytes": 16
+      },
+      {
+        "cursor": "c1",
+        "records": [
+          {
+            "native_id": "m1",
+            "sequence": 2,
+            "hash": "0x02"
+          }
+        ],
+        "next_cursor": "c2",
+        "response_bytes": 16
+      },
+      {
+        "cursor": "c2",
+        "records": [
+          {
+            "native_id": "m2",
+            "sequence": 3,
+            "hash": "0x03"
+          }
+        ],
+        "next_cursor": "c3",
+        "response_bytes": 16
+      },
+      {
+        "cursor": "c3",
+        "records": [
+          {
+            "native_id": "m3",
+            "sequence": 4,
+            "hash": "0x04"
+          }
+        ],
+        "next_cursor": "c4",
+        "response_bytes": 16
+      }
+    ],
+    "expect": "stop_at_max_pages"
+  }
+}

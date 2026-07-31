@@ -9,6 +9,16 @@ Architecture:
   - ProofSubmissionPipeline: Orchestrate generation → submission → verification
   - GasEstimator: Predict and optimize transaction costs
   - TransactionMonitor: Track confirmation and finality
+
+CRYPTOIR-G600 cutover
+---------------------
+Signing and broadcast helpers in this module are **disabled by default**.
+Callers must supply an exact-candidate ``AdmissibilityCapability`` plus a
+matching live preflight request so :class:`GuardService` can live-revalidate
+and atomically consume the capability immediately before any
+``sign_transaction`` / ``send_raw_transaction``.  There is no
+``approved=true`` compatibility escape hatch; legacy unguarded callers remain
+disabled until they migrate.
 """
 
 from __future__ import annotations
@@ -16,7 +26,7 @@ from __future__ import annotations
 import json
 import time
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 from dataclasses import dataclass
 from pathlib import Path
 from decimal import Decimal
@@ -35,6 +45,130 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 logger = logging.getLogger(__name__)
+
+
+class EthTransactionGuardError(RuntimeError):
+    """Raised when a signing/broadcast path is disabled or fails the guard gate.
+
+    This is intentionally not an authorization success signal.  Callers must
+    treat every raised error as a hard block on automated submission.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        reason_code: str = "eth_integration.guard",
+        details: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
+        self.details = dict(details or {})
+
+
+def _reject_approved_escape(**kwargs: Any) -> None:
+    """Fail closed on approved=true and related compatibility escape hatches."""
+
+    forbidden = {
+        "approved",
+        "approve",
+        "is_approved",
+        "caller_approved",
+        "force_allow",
+        "skip_guard",
+        "bypass_guard",
+        "bypass_policy",
+        "unguarded",
+        "enable_unguarded_signing",
+    }
+    for key, value in kwargs.items():
+        if key in forbidden or str(key).strip().lower() in forbidden:
+            raise EthTransactionGuardError(
+                f"eth_integration rejects compatibility escape hatch {key!r}; "
+                "migrate to GuardService capability consumption "
+                "(no approved=true path)",
+                reason_code="eth_integration.forbidden_approval_escape",
+                details={"field": key, "value_type": type(value).__name__},
+            )
+
+
+def require_consumed_guard_capability(
+    *,
+    admissibility_capability: Any = None,
+    live_request: Any = None,
+    guard_service: Any = None,
+    phase: str = "pre_sign",
+    now: Optional[str] = None,
+    **legacy_kwargs: Any,
+) -> Any:
+    """Require live revalidation + atomic capability consumption before signing.
+
+    Returns the :class:`PreflightConsumptionResult` from the guard service.
+    Raises :class:`EthTransactionGuardError` when the path is disabled or the
+    capability cannot be consumed.
+    """
+
+    _reject_approved_escape(**legacy_kwargs)
+    if admissibility_capability is None or live_request is None:
+        raise EthTransactionGuardError(
+            "Ethereum signing/broadcast is disabled by default under "
+            "CRYPTOIR-G600.  Pass admissibility_capability and live_request "
+            "so GuardService can consume the exact-candidate capability "
+            "immediately before signing.  Legacy callers must migrate; there "
+            "is no approved=true escape hatch.",
+            reason_code="eth_integration.signing_disabled",
+        )
+
+    if guard_service is None:
+        try:
+            from ipfs_datasets_py.processors.wallets.guard.service import (
+                GuardService,
+            )
+        except Exception as exc:  # pragma: no cover - import topology
+            raise EthTransactionGuardError(
+                f"unable to load GuardService for signing gate: {exc}",
+                reason_code="eth_integration.guard_unavailable",
+            ) from exc
+        guard_service = GuardService()
+
+    try:
+        from ipfs_datasets_py.processors.wallets.guard.models import (
+            PreflightPhase,
+        )
+    except Exception as exc:  # pragma: no cover
+        raise EthTransactionGuardError(
+            f"unable to load PreflightPhase: {exc}",
+            reason_code="eth_integration.guard_unavailable",
+        ) from exc
+
+    phase_value = (
+        PreflightPhase.PRE_SIGN
+        if str(phase).strip().lower() in {"pre_sign", "sign", "pre-sign"}
+        else PreflightPhase.PRE_BROADCAST
+    )
+
+    try:
+        consumption = guard_service.revalidate_and_consume(
+            admissibility_capability,
+            live_request,
+            phase=phase_value,
+            now=now,
+        )
+    except EthTransactionGuardError:
+        raise
+    except Exception as exc:
+        raise EthTransactionGuardError(
+            f"guard capability consumption failed: {exc}",
+            reason_code="eth_integration.capability_consumption_failed",
+            details={"error_type": type(exc).__name__},
+        ) from exc
+
+    if not getattr(consumption, "allowed", False):
+        raise EthTransactionGuardError(
+            "guard capability consumption did not allow signing/broadcast",
+            reason_code="eth_integration.not_allowed",
+        )
+    return consumption
 
 
 @dataclass
@@ -153,13 +287,30 @@ class EthereumProofClient:
         private_key: str,
         gas_price_wei: Optional[int] = None,
         gas: int = 250_000,
+        admissibility_capability: Any = None,
+        live_request: Any = None,
+        guard_service: Any = None,
+        now: Optional[str] = None,
+        **legacy_kwargs: Any,
     ) -> TxHash:
         """Register a verifying-key hash in VKHashRegistry.
 
         `circuit_id` may be a 0x-prefixed bytes32 hex string or a text
         identifier (hashed via keccak256). `vk_hash_hex` may be a 64-hex
         digest (with/without 0x) or a bytes32 hex string.
+
+        CRYPTOIR-G600: signing/broadcast is disabled without a consumed
+        admissibility capability bound to ``live_request``.
         """
+        _reject_approved_escape(**legacy_kwargs)
+        require_consumed_guard_capability(
+            admissibility_capability=admissibility_capability,
+            live_request=live_request,
+            guard_service=guard_service,
+            phase="pre_sign",
+            now=now,
+        )
+
         if self.vk_hash_registry_contract is None:
             raise ValueError("VKHashRegistry contract is not configured")
 
@@ -281,21 +432,45 @@ class EthereumProofClient:
         public_inputs_hex: List[str],
         from_account: Address,
         private_key: str,
-        gas_price_wei: Optional[int] = None
+        gas_price_wei: Optional[int] = None,
+        *,
+        admissibility_capability: Any = None,
+        live_request: Any = None,
+        guard_service: Any = None,
+        now: Optional[str] = None,
+        **legacy_kwargs: Any,
     ) -> TxHash:
         """
         Submit proof verification transaction to blockchain.
-        
+
+        CRYPTOIR-G600: disabled by default.  Requires
+        ``admissibility_capability`` + ``live_request`` so the wallet
+        :class:`GuardService` can consume the exact-candidate capability
+        immediately before ``sign_transaction`` / ``send_raw_transaction``.
+        There is no ``approved=true`` escape hatch.
+
         Args:
             proof_hex: Proof data as hex string
             public_inputs_hex: Public inputs as hex strings
             from_account: Sender address
-            private_key: Private key for signing
+            private_key: Private key for signing (held by caller, not stored)
             gas_price_wei: Gas price (if None, uses estimated)
-        
+            admissibility_capability: One-use guard capability (required)
+            live_request: Exact preflight request bound to the capability
+            guard_service: Optional shared :class:`GuardService` instance
+
         Returns:
             Transaction hash
         """
+        _reject_approved_escape(**legacy_kwargs)
+        require_consumed_guard_capability(
+            admissibility_capability=admissibility_capability,
+            live_request=live_request,
+            guard_service=guard_service,
+            phase="pre_sign",
+            now=now,
+        )
+
         proof_array, inputs_array = self.prepare_proof_for_submission(
             proof_hex,
             public_inputs_hex
@@ -312,7 +487,7 @@ class EthereumProofClient:
             'gas': 300000,  # Estimate (contract will refund unused)
         })
         
-        # Sign transaction
+        # Sign transaction (only after capability consumption)
         signed_tx = self.w3.eth.account.sign_transaction(tx, private_key)
         
         # Submit
@@ -400,20 +575,33 @@ class ProofSubmissionPipeline:
         witness_json: str,
         from_account: Address,
         private_key: str,
-        dry_run: bool = False
+        dry_run: bool = False,
+        *,
+        admissibility_capability: Any = None,
+        live_request: Any = None,
+        guard_service: Any = None,
+        now: Optional[str] = None,
+        **legacy_kwargs: Any,
     ) -> ProofVerificationResult:
         """
         Complete workflow: generate proof and verify on-chain.
+
+        CRYPTOIR-G600: on-chain submission inherits the
+        :meth:`EthereumProofClient.submit_proof_transaction` guard gate.
+        Dry-run / RPC-only paths remain available without a capability.
         
         Args:
             witness_json: Witness data as JSON string
             from_account: Account submitting proof
             private_key: Private key for signing
             dry_run: If True, skip actual blockchain submission
+            admissibility_capability: Required for non-dry-run submission
+            live_request: Exact preflight request for capability consumption
         
         Returns:
             Verification result
         """
+        _reject_approved_escape(**legacy_kwargs)
         logger.info("=== Phase 3C.6: On-Chain Proof Verification ===")
         
         # Step 1: Generate proof locally
@@ -460,13 +648,17 @@ class ProofSubmissionPipeline:
                 proof_id=0
             )
         
-        logger.info("Step 4: Submitting to blockchain")
+        logger.info("Step 4: Submitting to blockchain (guarded)")
         tx_hash = self.eth_client.submit_proof_transaction(
             proof_hex,
             public_inputs,
             from_account,
             private_key,
-            gas_price_wei=int(gas_estimate.recommended_gas_price)
+            gas_price_wei=int(gas_estimate.recommended_gas_price),
+            admissibility_capability=admissibility_capability,
+            live_request=live_request,
+            guard_service=guard_service,
+            now=now,
         )
         
         # Step 5: Wait for confirmation

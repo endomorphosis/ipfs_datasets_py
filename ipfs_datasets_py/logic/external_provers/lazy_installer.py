@@ -240,6 +240,47 @@ def find_executable(command: str) -> str | None:
     return None
 
 
+def import_time_install_forbidden() -> bool:
+    """Return True: lazy installers must never run during import."""
+
+    return True
+
+
+def declared_install_gap_providers() -> frozenset[str]:
+    """Return provider ids that are explicit install gaps in the toolchain registry.
+
+    Lazy install must refuse these rather than invent an unmanaged download.
+    """
+
+    try:
+        from ipfs_datasets_py.logic.backends.toolchains import (
+            InstallAvailability,
+            default_registry,
+        )
+    except Exception:
+        # Static fallback keeps the guard active if the registry is unavailable.
+        return frozenset(
+            {
+                "tlc",
+                "hyperltl",
+                "autohyper",
+                "mchyper",
+                "souffle",
+                "secpal",
+                "runtime-mtl-external",
+                "runtime_mtl_external",
+                "zkp-circuit",
+                "zkp_circuit",
+            }
+        )
+    gaps: set[str] = set()
+    for descriptor in default_registry().descriptors:
+        if descriptor.availability is InstallAvailability.DECLARED_GAP:
+            gaps.add(descriptor.provider_id)
+            gaps.add(descriptor.provider_id.replace("-", "_"))
+    return frozenset(gaps)
+
+
 def lazy_installs_enabled() -> bool:
     """Return True when lazy prover installs are globally enabled."""
 
@@ -324,6 +365,32 @@ def _lazy_install_prover_once(
     """
 
     prover = normalize_prover_name(prover_name)
+    if import_time_install_forbidden() and os.environ.get(
+        "IPFS_DATASETS_PY_IMPORT_CONTEXT"
+    ):
+        _emit(
+            ProverInstallEvent(
+                prover,
+                "blocked",
+                "installation is forbidden during import",
+            ),
+            progress,
+        )
+        return False
+
+    if prover in declared_install_gap_providers() or normalize_prover_name(
+        prover
+    ) in declared_install_gap_providers():
+        _emit(
+            ProverInstallEvent(
+                prover,
+                "blocked",
+                "provider is a declared install gap; refusing unmanaged lazy install",
+            ),
+            progress,
+        )
+        return False
+
     if not prover_lazy_install_enabled(prover) and not (
         allow_automatic and not _explicitly_disabled() and not minimal_imports_enabled()
     ):
@@ -536,6 +603,8 @@ __all__ = [
     "normalize_prover_name",
     "prover_lazy_install_enabled",
     "reset_lazy_install_attempts",
+    "import_time_install_forbidden",
+    "declared_install_gap_providers",
     "ProverInstallEvent",
     "ProgressCallback",
 ]

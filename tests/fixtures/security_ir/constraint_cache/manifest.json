@@ -1,0 +1,40 @@
+{
+  "description": "Golden Exchange/Xaman constraint cache envelopes and fail-closed unknown-extension vector.",
+  "interface": "SecurityConstraintCache@1",
+  "negative": {
+    "unknown_extension": {
+      "expected_exception": "UnknownSecurityExtensionError",
+      "path": "unknown_extension_declaration.json",
+      "vocabulary": "security.unknown-vendor"
+    }
+  },
+  "samples": {
+    "exchange": {
+      "content_cid": "bafkreidbsjvezpxinqku54gcc2tvffukhmwk4gwojibkvzruspkbmdmk4y",
+      "content_digest": "sha256:61926a4cbee86c154ef0c216a752968a3b2cae1ace4a02aae63493d4160d8ae6",
+      "declaration_cid": "bafkreigcslsjoutqkgpxffk4dy4zsrf5edwaw5x56mwesb7tcdn6igl3va",
+      "declaration_digest": "sha256:c292e4975270519f72955c1e399944bd20ec0b76fdf32c4907f310dbe4197ba8",
+      "declaration_id": "security-ir-v1-golden-exchange",
+      "extension_vocabularies": [
+        "security.crypto-exchange"
+      ],
+      "profile": "exchange-golden",
+      "record_path": "exchange_record.json",
+      "source_model": "../v1/exchange_model.json"
+    },
+    "xaman": {
+      "content_cid": "bafkreiatkafypp2brujjz7k6sjchk6zjynucailatrlhhm7sz4dabjmvf4",
+      "content_digest": "sha256:13500b87bf418d129cfd5e9244757b29c3682021609c5673b3f2cf0600a5952f",
+      "declaration_cid": "bafkreihfnizsolg2xx2e6ilzobipdbbviyxqdygkomu2gugn4u73ie4vly",
+      "declaration_digest": "sha256:e56a33272cdabdf44f21797050f18435462f01e0ca7329a350cde53fb413955e",
+      "declaration_id": "security-ir-v1-golden-xaman",
+      "extension_vocabularies": [
+        "security.xaman"
+      ],
+      "profile": "xaman-golden",
+      "record_path": "xaman_record.json",
+      "source_model": "../v1/xaman_model.json"
+    }
+  },
+  "schema_version": "security-constraint-cache-fixtures/v1"
+}

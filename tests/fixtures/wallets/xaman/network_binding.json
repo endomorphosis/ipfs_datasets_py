@@ -1,0 +1,69 @@
+{
+  "schema": "wallet_processor_migration/xaman-network-binding@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G210",
+  "task_id": "WALPROC-021",
+  "notes": "Network, account, and payload identity must stay bound.",
+  "cases": [
+    {
+      "id": "matching_testnet",
+      "processor_network": "xrpl-testnet",
+      "document": {
+        "meta": {
+          "uuid": "33333333-3333-4333-8333-333333333301",
+          "created": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000"
+          }
+        },
+        "response": {}
+      },
+      "expect": {
+        "network": "xrpl-testnet",
+        "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+        "payload_uuid": "33333333-3333-4333-8333-333333333301"
+      }
+    },
+    {
+      "id": "network_mismatch_raises",
+      "processor_network": "xrpl-mainnet",
+      "document": {
+        "meta": {
+          "uuid": "33333333-3333-4333-8333-333333333302",
+          "created": true,
+          "network": "testnet"
+        },
+        "payload": {
+          "txjson": {
+            "TransactionType": "Payment",
+            "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+            "Destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+            "Amount": "1000"
+          }
+        },
+        "response": {}
+      },
+      "expect_error": "NormalizationError"
+    },
+    {
+      "id": "identity_shell",
+      "processor_network": "xrpl-testnet",
+      "bind": {
+        "payload_uuid": "33333333-3333-4333-8333-333333333303",
+        "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz"
+      },
+      "expect": {
+        "network": "xrpl-testnet",
+        "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+        "payload_uuid": "33333333-3333-4333-8333-333333333303",
+        "status": "created"
+      }
+    }
+  ]
+}

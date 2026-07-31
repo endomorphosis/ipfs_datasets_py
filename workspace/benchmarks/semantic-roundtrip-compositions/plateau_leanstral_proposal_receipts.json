@@ -1,0 +1,357 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "board_namespace": "semantic-roundtrip-plateau-break-v1",
+  "cases": [
+    {
+      "admission_disposition": "accepted",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "admitted_l1_digest": "188fe7ace719983d64250733257abbd874c9e63a44c60088cce53d67e8233f3e",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "case_id": "fixture_accept_missing_object",
+      "detail": "dry-run selective object fill within trigger set",
+      "field_changes": [
+        {
+          "after": "records",
+          "baseline_rule_index": 0,
+          "before": "",
+          "canonical_field": "object",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].object"
+        }
+      ],
+      "implementable": true,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "accepted",
+      "packet_digest": "ff52a0a8ec45c690e378615f9eca1d4a42cfd019717affd7925506df8c8aada3",
+      "packet_id": "pkt-leanstral-fixture_accept_missing_object",
+      "prior_l1_unchanged": false,
+      "proposal_id": "prop-leanstral-fixture_accept_missing_object",
+      "residual_ref_id": "resid-fixture_accept_missing_object-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": null,
+          "evidence": "fixture: rules[0].object is empty on baseline L1",
+          "kind": "missing",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "validator_reject",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "admitted_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "candidate_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "controller",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "case_id": "fixture_admission_reject_untriggered",
+      "detail": "dry-run candidate changes untriggered field; gate retains prior L1",
+      "field_changes": [
+        {
+          "after": "records",
+          "baseline_rule_index": 0,
+          "before": "",
+          "canonical_field": "object",
+          "guided_rule_index": 0,
+          "path": "rules[0->0].object"
+        },
+        {
+          "after": "controller",
+          "baseline_rule_index": 1,
+          "before": "processor",
+          "canonical_field": "actor",
+          "guided_rule_index": 1,
+          "path": "rules[1->1].actor"
+        }
+      ],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": false,
+      "outcome": "admission_rejected",
+      "packet_digest": "bee9be58adf0e9670169f3aa837f0c29874ebc86cf04411ed16fb018136564a9",
+      "packet_id": "pkt-leanstral-fixture_admission_reject_untriggered",
+      "prior_l1_unchanged": true,
+      "proposal_id": "prop-leanstral-fixture_admission_reject_untriggered",
+      "residual_ref_id": "resid-fixture_admission_reject_untriggered-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": null,
+          "evidence": "fixture: rules[0].object is empty on baseline L1",
+          "kind": "missing",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": null,
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "admitted_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "allowed_field_paths": [
+        "rules[0].object"
+      ],
+      "baseline_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "candidate_l1": null,
+      "case_id": "fixture_retry_exhausted",
+      "detail": "dry-run live-path analogue: all model calls failed",
+      "field_changes": [],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "retry_exhausted",
+      "packet_digest": null,
+      "packet_id": null,
+      "prior_l1_unchanged": true,
+      "proposal_id": null,
+      "residual_ref_id": "resid-fixture_retry_exhausted-leanstral",
+      "retry_exhausted": true,
+      "semantic_authority": false,
+      "triggers": [
+        {
+          "canonical_field": "object",
+          "confidence": null,
+          "evidence": "fixture: rules[0].object is empty on baseline L1",
+          "kind": "missing",
+          "path": "rules[0].object",
+          "rule_index": 0
+        }
+      ]
+    },
+    {
+      "admission_disposition": "not_applicable",
+      "admitted_l1": {
+        "rules": [
+          {
+            "action": "delete",
+            "actor": "controller",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "",
+            "temporal": []
+          },
+          {
+            "action": "retain",
+            "actor": "processor",
+            "conditions": [
+              "active_hold"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "records",
+            "temporal": [
+              "until_released"
+            ]
+          }
+        ]
+      },
+      "admitted_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "allowed_field_paths": [],
+      "baseline_l1_digest": "bcd6212299e5e11f9b070d6eec3f3eaba42792036163af59c9cba6f8c6c6ff00",
+      "candidate_l1": null,
+      "case_id": "fixture_not_triggered",
+      "detail": "dry-run control: empty triggers emit no proposal",
+      "field_changes": [],
+      "implementable": false,
+      "interface": "PlateauLeanstralProposalCaseReceipt@1",
+      "mode": "dry_run",
+      "model_calls": 0,
+      "only_triggered_fields_changed": true,
+      "outcome": "not_triggered",
+      "packet_digest": null,
+      "packet_id": null,
+      "prior_l1_unchanged": true,
+      "proposal_id": null,
+      "residual_ref_id": "resid-fixture_not_triggered-leanstral",
+      "retry_exhausted": false,
+      "semantic_authority": false,
+      "triggers": []
+    }
+  ],
+  "catalog_cid": null,
+  "doctrine": {
+    "accept_rate_separate_from_e2e": true,
+    "leanstral_default_realizer": false,
+    "only_triggered_fields_change": true,
+    "production_runtime_unchanged": true,
+    "rejects_retain_prior_l1": true,
+    "retry_exhausted_separate_from_accept_rate": true,
+    "structural_admission_before_implementable": true,
+    "teacher_only": true
+  },
+  "evidence": "PLATEV040LLM",
+  "fixture_pack_id": "plateau-leanstral-proposal-dry-run-fixtures@1",
+  "interface": "PlateauLeanstralProposalReceipts@1",
+  "leanstral_is_default_realizer": false,
+  "mode": "dry_run",
+  "production_realizer": "deterministic",
+  "production_runtime_unchanged": true,
+  "provider_id": "leanstral-local",
+  "receipts_cid": "baguqeeraei7bhy3ww3as4ps4slwxad23gddvwpnktn575uoeur2y4tabhnva",
+  "receipts_cid_codec": "dag-json",
+  "receipts_cid_scope": "payload_without_receipts_cid",
+  "reliability": {
+    "accept_rate": 0.3333333333333333,
+    "accept_rate_definition": "accept_rate = accepted_proposals / proposal_attempts (triggered cases only; not end-to-end semantic loss)",
+    "accepted_proposals": 1,
+    "admission_rejected_proposals": 1,
+    "end_to_end_loss": null,
+    "failed_proposals": 0,
+    "model_calls": 0,
+    "model_rejected_proposals": 0,
+    "not_triggered": 1,
+    "proposal_attempts": 3,
+    "retry_exhausted_proposals": 1,
+    "retry_exhausted_rate": 0.3333333333333333,
+    "retry_exhausted_rate_definition": "retry_exhausted_rate = retry_exhausted_proposals / proposal_attempts (triggered cases only; recorded separately from accept_rate and e2e)",
+    "separate_from_end_to_end_loss": true
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-leanstral-proposal-receipts.v1",
+  "structural_admission_required": true,
+  "task_id": "PLAT-040",
+  "teacher": "leanstral"
+}

@@ -12,6 +12,7 @@ existing, byte-equivalent task is returned instead of being inserted again.
 
 from __future__ import annotations
 
+import math
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -27,10 +28,70 @@ from ipfs_accelerate_py.voice_jobs.contracts import (
     VoiceTTSJob,
     voice_job_from_payload,
 )
+from ipfs_accelerate_py.voice_jobs.regeneration import (
+    RegenerationDispatchManifest,
+    RegenerationEndpointContract,
+    RegenerationRunnerPolicy,
+    VoiceRegenerationRunner,
+    build_regeneration_dispatch_manifest,
+)
 
 from ...voice.workset import AudioWorkItem, AudioWorkOperation, VoiceAudioWorkset
 
 _TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
+_CANONICAL_RESULT_FIELDS = frozenset(
+    {
+        "artifacts",
+        "error",
+        "lineage",
+        "provider_receipt",
+        "quality_metrics",
+        "schema_version",
+        "status",
+        "task_id",
+        "task_type",
+    }
+)
+_RESULT_ENVELOPE_FIELDS = frozenset(
+    {
+        "executor_worker_id",
+        "logs",
+        "model_id",
+        "progress",
+        "session_id",
+    }
+)
+_CANONICAL_LINEAGE_FIELDS = frozenset(
+    {
+        "depends_on_task_ids",
+        "manifest_id",
+        "policy_id",
+        "publication_id",
+        "source_manifest_id",
+        "subject_id",
+        "subject_schema_version",
+        "task_id",
+        "work_item_id",
+        "workset_id",
+    }
+)
+_LINEAGE_ENVELOPE_FIELDS = frozenset({"model_id"})
+_PROGRESS_ENVELOPE_FIELDS = frozenset(
+    {
+        "cancel_reason",
+        "cancelled_at",
+        "heartbeat_ts",
+        "last_release_reason",
+        "last_release_ts",
+        "mesh",
+        "phase",
+        "release_count",
+        "task_type",
+        "ts",
+        "worker_id",
+    }
+)
+_LOG_ENVELOPE_FIELDS = frozenset({"message", "stream", "ts"})
 
 
 class VoiceJobBridgeError(RuntimeError):
@@ -66,19 +127,19 @@ class _CanonicalQueue(Protocol):
 class VoiceWorksetBridgeConfig:
     """Output-affecting provider settings used to materialize job contracts."""
 
-    tts_provider: str = "index-tts"
-    tts_model_name: str = "abby-index-tts"
+    tts_provider: str = "abby_indextts"
+    tts_model_name: str = "Publicus/IndexTTS-2-Demo"
     tts_voice: str = "abby"
     tts_provider_version: str = "1"
     tts_codec: str = "wav"
     tts_sample_rate_hz: int = 24_000
     tts_channels: int = 1
     tts_generation_settings: Mapping[str, Any] = field(default_factory=dict)
-    asr_provider: str = "whisper"
-    asr_model_name: str = "abby-whisper"
+    asr_provider: str = "huggingface"
+    asr_model_name: str = "openai/whisper-base"
     asr_provider_version: str = "1"
     asr_decoding_settings: Mapping[str, Any] = field(default_factory=dict)
-    asr_retention_policy: str = "none"
+    asr_retention_policy: str = "result"
     validation_provider: str = "local"
     validation_model_name: str = "abby-audio-validator"
     validation_policy_version: str = "1"
@@ -292,6 +353,70 @@ def jobs_from_voice_workset(
     return tuple(jobs)
 
 
+def regeneration_tts_jobs_from_voice_workset(
+    workset: VoiceAudioWorkset,
+    *,
+    config: VoiceWorksetBridgeConfig | None = None,
+) -> tuple[VoiceTTSJob, ...]:
+    """Return only the deterministic synthesis stage of a voice workset.
+
+    The complete workset still contains ASR and validation jobs.  The endpoint
+    regeneration runner is intentionally limited to synthesis: downstream
+    workers resolve its immutable artifact receipts before ASR or validation
+    can be admitted.
+    """
+
+    return tuple(
+        job
+        for job in jobs_from_voice_workset(workset, config=config)
+        if isinstance(job, VoiceTTSJob)
+    )
+
+
+def build_voice_regeneration_dispatch(
+    workset: VoiceAudioWorkset,
+    *,
+    endpoint_contract: RegenerationEndpointContract | Mapping[str, Any],
+    config: VoiceWorksetBridgeConfig | None = None,
+    policy: RegenerationRunnerPolicy | None = None,
+) -> RegenerationDispatchManifest:
+    """Project ``workset`` into a bounded, deterministic no-dispatch manifest.
+
+    This function does not construct a queue and does not call a provider.
+    Live authorization remains a separate runtime input to
+    :class:`VoiceRegenerationRunner`.
+    """
+
+    jobs = regeneration_tts_jobs_from_voice_workset(workset, config=config)
+    return build_regeneration_dispatch_manifest(
+        jobs,
+        endpoint_contract=endpoint_contract,
+        policy=policy,
+    )
+
+
+def run_voice_regeneration_workset(
+    workset: VoiceAudioWorkset,
+    *,
+    runner: VoiceRegenerationRunner,
+    endpoint_contract: RegenerationEndpointContract | Mapping[str, Any],
+    config: VoiceWorksetBridgeConfig | None = None,
+    policy: RegenerationRunnerPolicy | None = None,
+    dispatch_authorized: bool = False,
+) -> dict[str, Any]:
+    """Build and execute a resumable synthesis manifest through ``runner``."""
+
+    if not isinstance(runner, VoiceRegenerationRunner):
+        raise TypeError("runner must be a VoiceRegenerationRunner")
+    manifest = build_voice_regeneration_dispatch(
+        workset,
+        endpoint_contract=endpoint_contract,
+        config=config,
+        policy=policy,
+    )
+    return runner.run(manifest, dispatch_authorized=dispatch_authorized)
+
+
 class VoiceJobBridge:
     """Submit, observe, cancel, and ingest canonical voice jobs."""
 
@@ -462,6 +587,188 @@ class VoiceJobBridge:
         )
 
 
+def _canonical_envelope_text(value: Any, *, field_name: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value.strip() != value
+    ):
+        raise ValueError(f"{field_name} must be a non-empty canonical string")
+    return value
+
+
+def _finite_non_negative_number(value: Any, *, field_name: str) -> None:
+    valid = (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and value >= 0
+    ) or (
+        isinstance(value, float)
+        and math.isfinite(value)
+        and value >= 0
+    )
+    if not valid:
+        raise ValueError(f"{field_name} must be a finite non-negative number")
+
+
+def _extract_canonical_result_payload(
+    result_payload: Mapping[str, Any],
+    *,
+    request: VoiceJob,
+) -> dict[str, Any]:
+    """Remove only verified queue metadata from a canonical voice result.
+
+    ``TaskQueue`` intentionally merges heartbeat/log state into the final
+    result, while the generic worker stamps execution metadata and augments
+    its transport lineage.  Those fields are not part of
+    :class:`VoiceJobResult`; accepting arbitrary extensions would weaken its
+    strict contract.  This extractor therefore recognizes a closed envelope,
+    validates every available binding, and returns only canonical result
+    fields for the contract parser.
+    """
+
+    supplied_fields = set(result_payload)
+    allowed_fields = _CANONICAL_RESULT_FIELDS | _RESULT_ENVELOPE_FIELDS
+    unknown_fields = supplied_fields - allowed_fields
+    if unknown_fields:
+        names = ", ".join(sorted(repr(item) for item in unknown_fields))
+        raise ValueError(f"unknown voice result envelope fields: {names}")
+
+    model_id = result_payload.get("model_id")
+    if model_id is not None:
+        bound_model_id = _canonical_envelope_text(
+            model_id,
+            field_name="result.model_id",
+        )
+        if bound_model_id != request.model_name:
+            raise ValueError("result.model_id does not match the requested model")
+
+    executor_worker_id = result_payload.get("executor_worker_id")
+    bound_worker_id = ""
+    if executor_worker_id is not None:
+        bound_worker_id = _canonical_envelope_text(
+            executor_worker_id,
+            field_name="result.executor_worker_id",
+        )
+
+    session_id = result_payload.get("session_id")
+    if session_id is not None:
+        _canonical_envelope_text(session_id, field_name="result.session_id")
+
+    progress = result_payload.get("progress")
+    if progress is not None:
+        if not isinstance(progress, Mapping):
+            raise ValueError("result.progress must be a mapping")
+        unknown_progress = set(progress) - _PROGRESS_ENVELOPE_FIELDS
+        if unknown_progress:
+            names = ", ".join(sorted(repr(item) for item in unknown_progress))
+            raise ValueError(f"unknown voice progress envelope fields: {names}")
+        progress_task_type = progress.get("task_type")
+        if progress_task_type is not None:
+            if (
+                _canonical_envelope_text(
+                    progress_task_type,
+                    field_name="result.progress.task_type",
+                )
+                != request.task_type
+            ):
+                raise ValueError(
+                    "result.progress.task_type does not match the requested task type"
+                )
+        progress_worker = progress.get("worker_id")
+        if progress_worker is not None:
+            progress_worker_id = _canonical_envelope_text(
+                progress_worker,
+                field_name="result.progress.worker_id",
+            )
+            if bound_worker_id and progress_worker_id != bound_worker_id:
+                raise ValueError(
+                    "result.progress.worker_id does not match executor_worker_id"
+                )
+        for field_name in (
+            "cancelled_at",
+            "heartbeat_ts",
+            "last_release_ts",
+            "ts",
+        ):
+            if field_name in progress:
+                _finite_non_negative_number(
+                    progress[field_name],
+                    field_name=f"result.progress.{field_name}",
+                )
+        if "release_count" in progress and (
+            isinstance(progress["release_count"], bool)
+            or not isinstance(progress["release_count"], int)
+            or progress["release_count"] < 0
+        ):
+            raise ValueError(
+                "result.progress.release_count must be a non-negative integer"
+            )
+        if "mesh" in progress and not isinstance(progress["mesh"], bool):
+            raise ValueError("result.progress.mesh must be a boolean")
+        for field_name in (
+            "cancel_reason",
+            "last_release_reason",
+            "phase",
+        ):
+            if field_name in progress:
+                _canonical_envelope_text(
+                    progress[field_name],
+                    field_name=f"result.progress.{field_name}",
+                )
+
+    logs = result_payload.get("logs")
+    if logs is not None:
+        if not isinstance(logs, list) or len(logs) > 2_000:
+            raise ValueError("result.logs must be a bounded list")
+        for index, entry in enumerate(logs):
+            if not isinstance(entry, Mapping) or set(entry) != _LOG_ENVELOPE_FIELDS:
+                raise ValueError(
+                    f"result.logs[{index}] must match the canonical log envelope"
+                )
+            _finite_non_negative_number(
+                entry["ts"],
+                field_name=f"result.logs[{index}].ts",
+            )
+            _canonical_envelope_text(
+                entry["stream"],
+                field_name=f"result.logs[{index}].stream",
+            )
+            if not isinstance(entry["message"], str):
+                raise ValueError(f"result.logs[{index}].message must be a string")
+
+    canonical = {
+        field_name: result_payload[field_name]
+        for field_name in _CANONICAL_RESULT_FIELDS
+        if field_name in result_payload
+    }
+    lineage = canonical.get("lineage")
+    if isinstance(lineage, Mapping):
+        unknown_lineage = set(lineage) - (
+            _CANONICAL_LINEAGE_FIELDS | _LINEAGE_ENVELOPE_FIELDS
+        )
+        if unknown_lineage:
+            names = ", ".join(sorted(repr(item) for item in unknown_lineage))
+            raise ValueError(f"unknown voice lineage envelope fields: {names}")
+        lineage_model_id = lineage.get("model_id")
+        if lineage_model_id is not None and (
+            _canonical_envelope_text(
+                lineage_model_id,
+                field_name="result.lineage.model_id",
+            )
+            != request.model_name
+        ):
+            raise ValueError(
+                "result.lineage.model_id does not match the requested model"
+            )
+        canonical["lineage"] = {
+            field_name: lineage[field_name]
+            for field_name in _CANONICAL_LINEAGE_FIELDS
+            if field_name in lineage
+        }
+    return canonical
+
+
 def _parse_and_verify_receipt(
     *,
     task_id: str,
@@ -481,7 +788,11 @@ def _parse_and_verify_receipt(
         raise VoiceJobReceiptError(f"task {task_id!r} has no structured request payload")
     try:
         request = voice_job_from_payload(request_payload)
-        result = VoiceJobResult.from_payload(dict(result_payload))
+        canonical_result_payload = _extract_canonical_result_payload(
+            result_payload,
+            request=request,
+        )
+        result = VoiceJobResult.from_payload(canonical_result_payload)
     except (TypeError, ValueError) as exc:
         raise VoiceJobReceiptError(f"task {task_id!r} has an invalid voice receipt") from exc
 
@@ -527,6 +838,9 @@ __all__ = [
     "VoiceJobSubmission",
     "VoiceWorksetBridgeConfig",
     "VoiceWorksetSubmission",
+    "build_voice_regeneration_dispatch",
     "jobs_from_voice_workset",
+    "regeneration_tts_jobs_from_voice_workset",
+    "run_voice_regeneration_workset",
     "submit_voice_workset",
 ]

@@ -1,0 +1,205 @@
+{
+  "assumptions": [
+    "production remains typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "residuals are structural gold vs baseline L1 field-path forensics only",
+    "unsupported/not_measured/runtime_failed never enter semantic score aggregates",
+    "blind sources/gold/residuals inaccessible without post-freeze evaluator authorization",
+    "Hammer/cvc5/Lean have semantic_authority false",
+    "Production path remains typed_deontic \u2192 IR \u2192 deterministic realizer.",
+    "Optional spaCy/AE/Leanstral/SyMAI outputs are non-authoritative teachers only.",
+    "No blind-holdout sources, gold, residuals, or outcomes are accessed.",
+    "Shared typed_deontic hotspot edits are serialized; this wave is independently revertible."
+  ],
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.0,
+  "baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+  "case_id": "hr_handbook",
+  "changed_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/hr_handbook.json",
+    "tests/unit/benchmarks/semantic_roundtrip/test_repair_dev_edit_waves.py"
+  ],
+  "changed_symbols": [
+    "_split_conjoined_action_norm",
+    "_recover_missing_permission_norms",
+    "_expand_norms_for_projection"
+  ],
+  "context_tokens": {
+    "budget_exceeded": false,
+    "counting_method": "whitespace_split_proxy_v1",
+    "packet_token_budget": 8192,
+    "packet_token_count": 58
+  },
+  "deterministic_changes": [
+    {
+      "id": "conjoined_action_norm_split",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[1]",
+        "rules[0].object"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Split must-not-engage-or-share into engage(insider_trading) and share(material_non_public_information)."
+    },
+    {
+      "id": "missing_permission_sentence_recovery",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[3]"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Recover employees-are-allowed-to-discuss permission omitted by the converter."
+    }
+  ],
+  "deterministic_hypothesis": "Split engage-or-share prohibitions into distinct closed-vocabulary rules and recover the uncovered \"are allowed to discuss \u2026\" permission sentence.",
+  "doctrine": {
+    "blind_data_accessed": false,
+    "independently_revertible": true,
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "shared_hotspot_serialized": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT2-050",
+  "evidence_subset": "repair development edit-wave hr_handbook",
+  "experiment_id": "baguqeera4hqyulqvbj7blyusuh77os453y2dw45wleuavngyc3pqychc5c6q",
+  "implementable": true,
+  "improvement": {
+    "hr_handbook_cleared": true,
+    "hr_handbook_forward_delta": -0.42,
+    "mean_pilot_forward_delta": 0.0
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "intervention_ids": [
+    "det_compiler_field_rewrite_hypothesis",
+    "det_compiler_missing_rule_hypothesis"
+  ],
+  "intervention_mapping_ids": [
+    "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+    "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+    "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq"
+  ],
+  "intervention_registry_cid": "baguqeeradonke5pbapkwgwvf6pyoebjvxthhlj26bg2okooi2mcdbvefvtga",
+  "notes": "PLAT2-050 applies residual-driven deterministic projection fixes in typed_deontic for repair-development case hr_handbook. Optional methods remain teachers/gates and are not promoted. Pilot mean e2e remains 0.0. No blind data accessed.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "optional_teacher_evidence": {
+    "admitted_as_proposal": false,
+    "missing_does_not_block_residual_only_hypothesis": true,
+    "status": "not_required"
+  },
+  "packet_cids": [
+    "baguqeerazmgx62ha57a3kpjlhyl5q34fplsqw7zf2ozpkdqp5ggskog5zonq"
+  ],
+  "packet_digests": [
+    "519c215a66c92f5d0998f9f957c4b5a6b337db7faa375fbd0956cf3b465da4b5"
+  ],
+  "packet_ids": [
+    "plat2-050-repair-dev-hr-handbook-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat2-det-edits",
+  "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+  "population_kind": "repair_development",
+  "post_scores": {
+    "hr_handbook_end_to_end_loss": 0.0,
+    "hr_handbook_forward_loss": 0.0,
+    "hr_handbook_l1_rule_count": 5,
+    "hr_handbook_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0,
+    "per_facet_post": [],
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.0
+    },
+    "repair_dev_case_forward_loss": 0.0
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_edit_wave_receipts/hr_handbook.json"
+  ],
+  "prior_scores": {
+    "hr_handbook_end_to_end_loss": 0.42,
+    "hr_handbook_forward_loss": 0.42,
+    "hr_handbook_l1_rule_count": 3,
+    "hr_handbook_residual_count": 3,
+    "mean_pilot_forward_loss": 0.0,
+    "mean_repair_dev_forward_loss": 0.15375,
+    "per_facet_prior": [
+      {
+        "canonical_field": null,
+        "field_path": "rules[1]",
+        "loss_contribution": 0.2,
+        "residual_kind": "missing_rule"
+      },
+      {
+        "canonical_field": null,
+        "field_path": "rules[3]",
+        "loss_contribution": 0.2,
+        "residual_kind": "missing_rule"
+      },
+      {
+        "canonical_field": "object",
+        "field_path": "rules[0].object",
+        "loss_contribution": 0.02,
+        "residual_kind": "field_mismatch"
+      }
+    ]
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "provider_calls": {
+    "leanstral_calls": 0,
+    "llm_runtime_calls": 0,
+    "note": "residual-only deterministic hypothesis; optional teachers not required for admission",
+    "optional_teacher_calls": 0,
+    "symai_calls": 0
+  },
+  "receipt_cid": "baguqeeravlpf4j4ho7otghe32op52iueajzuk7cwwhwlawxrkjkhwkpvikaa",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+  "residual_cluster": "conjoined_prohibition_and_missing_permission",
+  "residual_field_paths": [
+    "rules[1]",
+    "rules[3]",
+    "rules[0].object"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "structural_receipts": {
+    "constraints_preserved": [
+      "non_vacuous_candidate",
+      "rule_cardinality_preserved",
+      "untriggered_projection_preserved"
+    ],
+    "may_substitute_for_e2e": false,
+    "semantic_authority": false,
+    "status": "declared_structural_gates_only"
+  },
+  "tests": [
+    "tests/unit/benchmarks/semantic_roundtrip/test_repair_dev_edit_waves.py",
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20"
+  ],
+  "track": "det-compiler",
+  "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=20"
+  ]
+}

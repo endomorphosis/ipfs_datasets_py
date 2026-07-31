@@ -1,0 +1,110 @@
+{
+  "schema": "wallet_processor_migration/world-id-route-shapes@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "source": "wallet_interface/routes/world_id.py",
+  "router_factory": "create_router",
+  "error_tuple": [
+    "ValueError",
+    "WorldIdConfigError",
+    "WorldIdPayloadError",
+    "WorldIdSignatureError",
+    "WorldIdVerificationError"
+  ],
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/wallets/{wallet_id}/world-id/config",
+      "handler": "get_world_id_config",
+      "request_body": null,
+      "response_shape": "WorldIdConfig.public_dict",
+      "auth": "wallet existence only; no actor_did"
+    },
+    {
+      "method": "GET",
+      "path": "/wallets/{wallet_id}/world-id/status",
+      "handler": "get_world_id_status",
+      "query_params": {
+        "actor_did": {
+          "required": false,
+          "type": "string | null",
+          "notes": "OPTIONAL authentication: when omitted, status is still returned. Marked as security failure-to-fix, not a compatibility guarantee."
+        }
+      },
+      "response_shape": {
+        "enabled": "bool",
+        "wallet": {
+          "wallet_id": "string",
+          "binding_count": "int",
+          "active_binding_count": "int",
+          "bindings": "list[WorldIdBinding.to_dict]"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/wallets/{wallet_id}/world-id/rp-signature",
+      "handler": "create_world_id_rp_signature",
+      "request_model": "WorldIdRpSignatureRequest",
+      "request_fields": {
+        "actor_did": {"type": "string", "required": true},
+        "action": {"type": "string | null", "required": false}
+      },
+      "response_keys": [
+        "rp_id",
+        "sig",
+        "nonce",
+        "created_at",
+        "expires_at",
+        "signature",
+        "action",
+        "app_id",
+        "environment",
+        "credential_policy"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/wallets/{wallet_id}/world-id/provider-staff/rp-signature",
+      "handler": "create_provider_staff_world_id_rp_signature",
+      "request_model": "ProviderStaffWorldIdRpSignatureRequest",
+      "request_fields": {
+        "actor_did": {"type": "string", "required": true},
+        "provider_id": {"type": "string", "required": true},
+        "provider_staff_id": {"type": "string", "required": true}
+      },
+      "response_extra_keys": [
+        "provider_id",
+        "provider_staff_id",
+        "signal_context"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/wallets/{wallet_id}/world-id/verifications",
+      "handler": "register_world_id_verification",
+      "request_model": "WorldIdVerificationRequest",
+      "request_fields": {
+        "actor_did": {"type": "string", "required": true},
+        "idkit_payload": {"type": "object", "required": true}
+      },
+      "response_keys": ["binding", "proof", "verification"]
+    },
+    {
+      "method": "POST",
+      "path": "/wallets/{wallet_id}/world-id/bindings/{binding_id}/revoke",
+      "handler": "revoke_world_id_binding",
+      "request_model": "WorldIdRevokeBindingRequest",
+      "request_fields": {
+        "actor_did": {"type": "string", "required": true},
+        "reason": {"type": "string | null", "required": false}
+      },
+      "response_shape": "WorldIdBinding.to_dict"
+    }
+  ],
+  "http_status_mapping": {
+    "nullifier_already_bound": 409,
+    "not_found": 404,
+    "default_client_error": 400
+  }
+}

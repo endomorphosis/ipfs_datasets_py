@@ -1,0 +1,64 @@
+{
+  "access_ledger_cid": "baguqeeraymcdbko5peokdyicgbunpycrawxgvrscvuzq6ndxfaixrsioselq",
+  "blind_holdout": {
+    "baseline_mean_e2e": 0.043055555667,
+    "candidate_mean_e2e": 0.043055555667,
+    "case_count": 12,
+    "confidence_interval": {
+      "bootstrap_samples": 10000,
+      "confidence_level": 0.95,
+      "high": 0.0,
+      "low": 0.0,
+      "method": "seeded_percentile_case_cluster_bootstrap",
+      "resampling_unit": "case_after_within_case_repeat_aggregation"
+    },
+    "e2e_beats_baseline_ci_high_lt_0": false,
+    "e2e_noninferior_ucb_lte_margin": true,
+    "mean_delta_e2e": 0.0
+  },
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+  "bundle": "semantic-roundtrip/plateau-holdout/remeasure",
+  "captured_at_utc": "2026-07-28T08:58:44.684+00:00",
+  "decision_summary": {
+    "decision_outcome": "promotion_declined",
+    "evidence_complete": true,
+    "improvement_claim": false,
+    "production_promotion_authorized": false,
+    "promotion": false,
+    "reason_codes": [
+      "e2e_ci_high_not_lt_0",
+      "noninferiority_holds",
+      "full_gates_failed",
+      "pilots_non_regressed"
+    ],
+    "selected_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "status": "promotion_declined"
+  },
+  "full_gates": {
+    "failed_case": "blind_t1_retention_window",
+    "failed_gate": "source_copy_exclusion",
+    "full_gates_pass": false
+  },
+  "immutable_replacement_report": {
+    "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
+    "preserved": true,
+    "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+  },
+  "interface": "EvalRepairMatrixReport@1",
+  "next_residuals_count": 6,
+  "pilot_non_regression": {
+    "mean_end_to_end": 0.0,
+    "non_regressed": true
+  },
+  "promotion_decision_cid": "baguqeeracs6gvtpumpn43ixtmi5eacit7gxuoiz5rrc4inxwd7ryjw46ks6q",
+  "recovery": {
+    "completion_checkpoint": "/var/tmp/hssl-srt-plateau-holdout-v2/state/semantic-roundtrip-plateau-holdout-remeasure/state/implementation_checkpoints/plat2-060-faf8aaffa5cc/completion.json",
+    "note": "Full per-case remeasure JSON was discarded with the supervisor worktree. This file is an operator recovery envelope bound to the original one-shot report_cid / decision_cid / ledger_cid from Grok session 019fa7e5-518f-7df1-8274-c56a759efb53 and completion.json (artifacts_written, 54 passed). Access ledger export was regenerable with matching ledger_cid without re-scoring. No blind re-run was performed.",
+    "session_id": "019fa7e5-518f-7df1-8274-c56a759efb53",
+    "status": "partial_public_body_recovery"
+  },
+  "report_cid": "baguqeeraupu46elxeoebbowyzawfytlueifxzv7hywdxkg6nzas2b4pef2ja",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-holdout-remeasure.v1",
+  "task_id": "PLAT2-060",
+  "title": "PLAT2-060 one-shot blind-holdout remeasure (operator recovery)"
+}

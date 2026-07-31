@@ -1,0 +1,54 @@
+{
+  "schema": "wallet_processor_migration/shared-export-sample-records@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G090",
+  "chain": {
+    "namespace": "eip155",
+    "network": "ethereum-mainnet",
+    "chain_id": "1",
+    "genesis_hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3"
+  },
+  "account": "0x1111111111111111111111111111111111111111",
+  "asset": {
+    "asset_namespace": "slip44",
+    "asset_reference": "60",
+    "decimals": 18,
+    "kind": "native",
+    "symbol": "ETH"
+  },
+  "transactions": [
+    {
+      "transaction_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "succeeded",
+      "sequence": 19000001,
+      "block_hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "transaction_index": 0,
+      "finality": "confirmed"
+    },
+    {
+      "transaction_hash": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "status": "failed",
+      "sequence": 19000002,
+      "block_hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "transaction_index": 1,
+      "finality": "confirmed"
+    }
+  ],
+  "transfers": [
+    {
+      "transaction_hash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "transfer_index": 0,
+      "kind": "native",
+      "direction": "out",
+      "base_units": "1000000000000000000",
+      "from_address": "0x1111111111111111111111111111111111111111",
+      "to_address": "0x2222222222222222222222222222222222222222",
+      "sequence": 19000001,
+      "block_hash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "transaction_index": 0,
+      "event_index": 0,
+      "finality": "confirmed"
+    }
+  ],
+  "raw_payload_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

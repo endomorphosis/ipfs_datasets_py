@@ -1,0 +1,33 @@
+{
+  "annotations": {
+    "readOnlyHint": true
+  },
+  "description": "Echo a short message back for offline evaluation.",
+  "expected_allowed_use": "allow_internal_evaluation",
+  "expected_content_sha256": "326430136604c83da58da1e30078f194c7b70f01bae8ccbc423713256f99eccd",
+  "expected_entry_cid": "bafkreiciizbg5imh2sih5yhmajuif4j3cbeitpoa6bzxpx3jncdsookgkq",
+  "expected_entry_sha256": "4846426ea187d4907ee0ec026882f13b104889bdc0f07377df69688727394654",
+  "fixture_id": "benign_echo",
+  "input_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "message": {
+        "description": "Text to echo",
+        "type": "string"
+      }
+    },
+    "required": [
+      "message"
+    ],
+    "type": "object"
+  },
+  "name": "echo_message",
+  "server_name": "fixture-server",
+  "source_id": "fixture.mcp.benign_echo",
+  "source_revision": "fixture-v1",
+  "source_uri": "fixture://prompt_mcp/mcp_tools/benign_echo",
+  "tags": [
+    "fixture",
+    "benign"
+  ]
+}

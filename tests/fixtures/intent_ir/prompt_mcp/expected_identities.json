@@ -1,0 +1,71 @@
+{
+  "mcp_tools": {
+    "benign_echo": {
+      "allowed_use": "allow_internal_evaluation",
+      "content_sha256": "326430136604c83da58da1e30078f194c7b70f01bae8ccbc423713256f99eccd",
+      "entry_cid": "bafkreiciizbg5imh2sih5yhmajuif4j3cbeitpoa6bzxpx3jncdsookgkq",
+      "entry_sha256": "4846426ea187d4907ee0ec026882f13b104889bdc0f07377df69688727394654",
+      "hostile": "clear",
+      "secret_pii": "clear"
+    },
+    "injection_prompt_in_description": {
+      "allowed_use": "excluded",
+      "content_sha256": "64a91b89611f69ee16526a2bd43ab34c9328a440dd3026ee26ac3783639aee61",
+      "entry_cid": "bafkreih7a4c5j22tgox55jrjfg6phqalxsamykxfwscqom23txrgizkrdi",
+      "entry_sha256": "ff0705d4eb5333afdea62929bcf3c00bbc80cc2ae5b48507335b9de26465511a",
+      "hostile": "quarantined",
+      "secret_pii": "clear"
+    },
+    "injection_remote_ref": {
+      "allowed_use": "excluded",
+      "content_sha256": "50ebc19f48f41c3568b7d323fd9d4ffa470d27df7a94b0389b7b270698a04534",
+      "entry_cid": "bafkreieyx5dusf34utg2nuvrnlzi3ln4efekwh4dhzgmhscy4icflw4udi",
+      "entry_sha256": "98bf4749177ca4cda6d2b16af28dadbc2148ab1f833e4cc3c858e20455db941a",
+      "hostile": "quarantined",
+      "secret_pii": "clear"
+    },
+    "injection_shell_tool": {
+      "allowed_use": "excluded",
+      "content_sha256": "13a505a7ec157a0b84f2c8a3b45ae6450f547725c650ab054c60c7d6c2e9166b",
+      "entry_cid": "bafkreidbugg36ag3lt3awzj352itnzgvvieeh5he6raqvjtpqasualqhoe",
+      "entry_sha256": "61a18dbf00db5cf60b653bee9136e4d5aa0843f4e4f4410aa66f8025402e0771",
+      "hostile": "quarantined",
+      "secret_pii": "clear"
+    }
+  },
+  "prompts": {
+    "benign_goal": {
+      "allowed_use": "allow_internal_evaluation",
+      "content_sha256": "eff008ababac8ea44557bc3e5594cf52453b22169e9ff26e584c0d2d2eb450c7",
+      "entry_cid": "bafkreihkj2mzhdzyf6akdb25sx2zrsfhlsblcpz2y5kgfehtwyjudcajnu",
+      "entry_sha256": "ea4e99938f382f80a1875d95f598c8a75c82b13f3ac7546290f3b6134188096d",
+      "hostile": "clear",
+      "secret_pii": "clear"
+    },
+    "injection_ignore_instructions": {
+      "allowed_use": "excluded",
+      "content_sha256": "2da30dabb5d58660eacf918d2338de7e361e86349e43f09a3a79eb53db247bba",
+      "entry_cid": "bafkreiges5zksm37lipgjpvghaxanxtkvxitci6y4ucqk4opnhm3x2jqde",
+      "entry_sha256": "c49772a9337f5a1e64bea6382e06de6aadd13123d8e5050571cf69d9bbe93019",
+      "hostile": "quarantined",
+      "secret_pii": "clear"
+    },
+    "injection_secret": {
+      "allowed_use": "excluded",
+      "content_sha256": "995185e4b044264238518a27bad2ee7eb4407eb314f3ec04b9374eaf922d13c9",
+      "entry_cid": "bafkreicbp422labhbyz7upkgohnewebwjcylvga6x2hs4l6i4sznmxbw3u",
+      "entry_sha256": "417f35a580270e33fa3d4671da4b103648b0ba981ebe8f2e2fc8e4b2d65c36dd",
+      "hostile": "clear",
+      "secret_pii": "quarantined"
+    },
+    "injection_tool_directive": {
+      "allowed_use": "excluded",
+      "content_sha256": "9f9cb858646e432fb4bf9bd56b38e961d90e340f041616733df147c7400f398c",
+      "entry_cid": "bafkreiaj4e3apdrbxlyuwzjl4lyawlrvfvgwn4ucdawqrnqteqmmetr4ae",
+      "entry_sha256": "09e136078e21baf14b652be2f00b2e352d4d66f282182d08b6132418c24e3c01",
+      "hostile": "quarantined",
+      "secret_pii": "clear"
+    }
+  },
+  "schema_version": "prompt-mcp-fixtures/v1"
+}

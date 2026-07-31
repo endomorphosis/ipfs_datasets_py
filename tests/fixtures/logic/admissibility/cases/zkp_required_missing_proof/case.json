@@ -1,0 +1,34 @@
+{
+  "case_id": "zkp_required_missing_proof",
+  "constraints": [
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal",
+      "role": "grant"
+    },
+    {
+      "domain": "security",
+      "family": "security",
+      "name": "security",
+      "role": "grant"
+    }
+  ],
+  "description": "Grants present but zkp-required profile has no Legal attestations \u2192 abstain.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "security"
+  ],
+  "expected_reason_codes": [
+    "zkp_missing"
+  ],
+  "expected_status": "abstain",
+  "profile_config_digest": "0a077c8e9cd07d9010106f682ca1818e847f86f701ab8ee313ead91515cae867",
+  "profile_id": "zkp-required",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/benign_skill.json",
+  "source_formal_case_id": "benign_skill",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/benign_skill.json",
+  "stratum": "zkp_abstain"
+}

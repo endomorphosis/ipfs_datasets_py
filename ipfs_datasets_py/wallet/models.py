@@ -370,6 +370,12 @@ class WorldIdBinding:
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    challenge_id: str = ""
+    signal_context: str = ""
+    credential_policy: str = "proof_of_human"
+    user_presence_verified: Optional[bool] = None
+    provider_context: Dict[str, Any] = field(default_factory=dict)
+    revoked_at: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

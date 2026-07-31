@@ -1,0 +1,768 @@
+{
+  "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "blind_holdout": {
+    "access_receipt_count": 0,
+    "blind_seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+    "blind_seal_unopened": true,
+    "ledger_exists": false,
+    "private_content_absent_from_public_seal": true,
+    "status": "sealed_unopened"
+  },
+  "contract_cid": "baguqeeral7h5czmik2pw2cdipaxumcwbivhvfan6uuvxu5vm7ne6y5irouzq",
+  "experiment_id": "baguqeera4hqyulqvbj7blyusuh77os453y2dw45wleuavngyc3pqychc5c6q",
+  "interface": "EvalRepairMatrixReport@1",
+  "kind": "plateau2_repair_dev_deterministic_baseline",
+  "populations": {
+    "pilot": {
+      "aggregates": {
+        "aggregation": "per_case_first_macro_mean",
+        "case_count": 5,
+        "gate_pass_counts": {
+          "full_coverage": 5,
+          "polarity_preservation": 5,
+          "selection_eligible": 4,
+          "source_copy_exclusion": 4
+        },
+        "means": {
+          "cycle": 0.0,
+          "end_to_end": 0.0,
+          "forward": 0.0
+        },
+        "scored_case_count": 5,
+        "status_counts": {
+          "not_measured": 0,
+          "runtime_failed": 0,
+          "semantic_scored": 5,
+          "unsupported": 0
+        }
+      },
+      "cases": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeerajknbq7ik2yudjwujema675szxxtfcqjfpwsopkggb5s4ctxlc3sq",
+          "case_id": "exception_with_window",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": false,
+            "source_copy_exclusion": false
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": true,
+            "gate_passed": false,
+            "shared_8gram_precision": 1.0
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeraqjb7stvpozbbryat3a7tmf2c2ufdgxwj53mgvcd3dsqbghszwhka",
+          "case_id": "exec_order_1",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.058823529
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeera4bkkjfgtv5z2lz67se2wl6urfayf7x7nnluckyanudkybmpzqhpa",
+          "case_id": "corp_policy_1",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.05
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeranppu267pehurjlvd4rehiqgjev35nkhxwvhbzjvmxmeiabkvrvha",
+          "case_id": "legal_doc_1",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.05
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeraxdipxvkvhygz5ikmj6jpf3ritwrgxsrxtakvf4c5n2pgtlkzf5za",
+          "case_id": "construction_contract",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.056603774
+          }
+        }
+      ],
+      "failure_clusters": {
+        "gate_source_copy_exclusion": [
+          "exception_with_window"
+        ],
+        "residual_field_mismatch": [
+          "construction_contract",
+          "corp_policy_1",
+          "exec_order_1",
+          "legal_doc_1"
+        ],
+        "residual_missing_rule": [
+          "construction_contract"
+        ]
+      },
+      "population_kind": "pilot"
+    },
+    "repair_development": {
+      "aggregates": {
+        "aggregation": "per_case_first_macro_mean",
+        "case_count": 8,
+        "gate_pass_counts": {
+          "full_coverage": 8,
+          "polarity_preservation": 8,
+          "selection_eligible": 8,
+          "source_copy_exclusion": 8
+        },
+        "means": {
+          "cycle": 0.002083333,
+          "end_to_end": 0.155,
+          "forward": 0.15375
+        },
+        "scored_case_count": 8,
+        "status_counts": {
+          "not_measured": 0,
+          "runtime_failed": 0,
+          "semantic_scored": 8,
+          "unsupported": 0
+        }
+      },
+      "cases": [
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeerammwsvjiat7ak6f4affngc4fa4xu7u3uhuzczi27hrw7bqslqfdza",
+          "case_id": "missing_temporal",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.0
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeera63mvsjj6zprb7rw7xtxan6iwdnuf7yodjqkxy5jrolqpsda3msmq",
+          "case_id": "low_confidence_object",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.0
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeralsetrr6dgmk325hsjrz5ihcap2zqsiwbrojpw6karzntvj3kjftq",
+          "case_id": "contradictory_modality",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.0
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeerafzhepffelzoxidjwy3ps2cvincjwrlw4xlsjhootyxkrywivwcza",
+          "case_id": "legal_doc_2",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 0.666666667,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 0.666666667
+            },
+            "forward": {
+              "conditions": 0.666666667,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 0.666666667
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.3,
+            "forward": 0.3
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.464285714
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeram2xzjr6smksszeit6ipel5bqa6kyivya3pkgniosuozxjrimybcq",
+          "case_id": "privacy_act_amendment",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.0,
+            "forward": 0.0
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.173913043
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeeraoist6assmpg2k5zl4anhs5jble5rmtofvcnjuc36dxndlnsdfl4a",
+          "case_id": "fed_reg_1",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 0.75,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 0.75
+            },
+            "forward": {
+              "conditions": 0.75,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 0.75
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.26,
+            "forward": 0.26
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.131578947
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeerajkylucikrti6kxannxneqkex5vpzzdatu3mnbu3jzjbieiwqzdma",
+          "case_id": "dept_memo_1",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.0,
+            "end_to_end": 0.25,
+            "forward": 0.25
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.111111111
+          }
+        },
+        {
+          "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+          "case_cid": "baguqeera7qnnv7hd7tkej2cy2z2q4qyogf3cphlpdcf3hosvxfuqukrd5dja",
+          "case_id": "hr_handbook",
+          "evaluation_status": "semantic_scored",
+          "evaluation_status_reason": "success",
+          "facets": {
+            "cycle": {
+              "conditions": 0.666666667,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "end_to_end": {
+              "conditions": 0.666666667,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            },
+            "forward": {
+              "conditions": 1.0,
+              "exceptions": 1.0,
+              "modality": 1.0,
+              "temporal": 1.0
+            }
+          },
+          "gates": {
+            "full_coverage": true,
+            "polarity_preservation": true,
+            "selection_eligible": true,
+            "source_copy_exclusion": true
+          },
+          "losses": {
+            "cycle": 0.016666667,
+            "end_to_end": 0.43,
+            "forward": 0.42
+          },
+          "polarity": {
+            "gate_passed": true,
+            "inversion_count": 0
+          },
+          "semantic_score_eligible": true,
+          "source_copy": {
+            "copy_risk": false,
+            "gate_passed": true,
+            "shared_8gram_precision": 0.333333333
+          }
+        }
+      ],
+      "failure_clusters": {
+        "facet_conditions": [
+          "fed_reg_1",
+          "hr_handbook",
+          "legal_doc_2"
+        ],
+        "facet_temporal": [
+          "fed_reg_1",
+          "legal_doc_2"
+        ],
+        "loss_cycle_nonzero": [
+          "hr_handbook"
+        ],
+        "loss_end_to_end_nonzero": [
+          "dept_memo_1",
+          "fed_reg_1",
+          "hr_handbook",
+          "legal_doc_2"
+        ],
+        "loss_forward_nonzero": [
+          "dept_memo_1",
+          "fed_reg_1",
+          "hr_handbook",
+          "legal_doc_2"
+        ],
+        "residual_field_mismatch": [
+          "fed_reg_1",
+          "hr_handbook",
+          "legal_doc_2"
+        ],
+        "residual_missing_rule": [
+          "dept_memo_1",
+          "fed_reg_1",
+          "hr_handbook",
+          "legal_doc_2"
+        ]
+      },
+      "population_kind": "repair_development"
+    }
+  },
+  "post_plat_baseline_e2e_mean": 0.0,
+  "post_plat_baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+  "promotion_gates_snapshot": {
+    "pilot_mean_e2e": 0.0,
+    "pilot_non_regressed": true,
+    "promotion_requires_full_gates": true,
+    "selection_gate_ids": [
+      "full_coverage",
+      "source_copy_exclusion",
+      "polarity_preservation"
+    ]
+  },
+  "report_cid": "baguqeeranr5glnw6amu3mqrmyi3zyt2mjb6rutijnab5skepxakktlvekeoa",
+  "report_cid_codec": "dag-json",
+  "report_cid_scope": "payload_without_report_cid",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau2-repair-dev-baseline.v1",
+  "scoped_populations": [
+    "pilot",
+    "repair_development"
+  ],
+  "task_id": "PLAT2-025",
+  "title": "PLAT2-025 repair-development deterministic baseline"
+}

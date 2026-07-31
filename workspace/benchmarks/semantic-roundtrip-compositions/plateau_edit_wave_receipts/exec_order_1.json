@@ -1,0 +1,147 @@
+{
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_e2e_mean": 0.088333333,
+  "baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+  "board_namespace": "semantic-roundtrip-plateau-break-v1",
+  "case_id": "exec_order_1",
+  "deterministic_changes": [
+    {
+      "id": "compact_hour_window_normalize",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[3].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Expand compact hour windows (24h / 24-hr / 72hrs) into '<n> hour' tokens so closed atom within_24_hours grounds with precision 1.0 without an LLM."
+    },
+    {
+      "id": "domain_scope_in_on_condition_classify",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Classify domain-scope in_*/on_* qualifier atoms (e.g. in_government_communications) as conditions, generalizing the prior in_government hardcode."
+    },
+    {
+      "id": "optional_domain_preposition_grounding",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Treat leading domain prepositions in/on as optional when grounding in_*/on_* atoms so evidence 'government communications' still recovers in_government_communications."
+    },
+    {
+      "id": "domain_condition_missing_cue",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Emit missing-conditions diagnostics when source contains domain-scope cues (in any government communications) but the conditions slot is empty \u2014 teacher/repair signal only."
+    },
+    {
+      "id": "norm_local_qualifier_harvest",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[0].conditions",
+        "rules[3].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Harvest conditions/temporal from per-norm evidence against the closed qualifier vocabulary (precision 1.0 content tokens; no full-document leak). Clears both exec_order residuals when combined with hour/domain grounding."
+    },
+    {
+      "id": "hour_window_temporal_preserve",
+      "optional_runtime": false,
+      "residual_paths": [
+        "rules[3].temporal"
+      ],
+      "runtime": "typed_deontic_projection",
+      "summary": "Keep pure hour-count windows (within_24_hours) on the temporal facet even under surrounding if/except framing from the deterministic realizer."
+    }
+  ],
+  "doctrine": {
+    "no_silent_optional_runtime_promotion": true,
+    "production_path": "typed_deontic \u2192 IR \u2192 deterministic realizer",
+    "proof_pass_is_not_end_to_end_loss": true,
+    "teachers_non_authoritative": true
+  },
+  "edit_wave_task_id": "PLAT-084",
+  "evidence_subset": "edit-wave exec_order_1",
+  "implementable": true,
+  "improvement": {
+    "exec_order_1_cleared": true,
+    "exec_order_1_e2e_delta": -0.05,
+    "exec_order_1_forward_delta": -0.05,
+    "mean_pilot_forward_delta": -0.085
+  },
+  "interface": "PlateauEditWaveReceipt@1",
+  "notes": "PLAT-084 applies residual-driven deterministic projection fixes in typed_deontic only for exec_order_1 (prior e2e 0.05). Optional methods remain teachers/gates and are not promoted into the production composition.",
+  "optional_runtimes_considered_as_teachers_only": [
+    "modal_spacy",
+    "causal_autoencoder",
+    "leanstral",
+    "symai"
+  ],
+  "optional_runtimes_promoted": [],
+  "packet_cids": [
+    "baguqeerav2xlxepu2g7den32hvcyfnunvb3jljaexyak7bhyzrg6rvvyjjca"
+  ],
+  "packet_digests": [
+    "aeaebb91f4d1be32377a3d4582b68da87695a404be00af84f8cc4de8d6b84a44"
+  ],
+  "packet_ids": [
+    "plat-084-exec-order-1-det-edit-wave-v1"
+  ],
+  "parallel_lane": "plat-det-exec-order",
+  "post_scores": {
+    "exec_order_1_end_to_end_loss": 0.0,
+    "exec_order_1_forward_loss": 0.0,
+    "exec_order_1_l1_rule_count": 4,
+    "exec_order_1_residual_count": 0,
+    "mean_pilot_forward_loss": 0.0,
+    "pilot_forward_losses": {
+      "construction_contract": 0.0,
+      "corp_policy_1": 0.0,
+      "exception_with_window": 0.0,
+      "exec_order_1": 0.0,
+      "legal_doc_1": 0.0
+    }
+  },
+  "predicted_files": [
+    "benchmarks/semantic_roundtrip/constructors/typed_deontic.py",
+    "tests/unit/benchmarks/semantic_roundtrip/",
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/exec_order_1.json"
+  ],
+  "prior_scores": {
+    "exec_order_1_end_to_end_loss": 0.05,
+    "exec_order_1_forward_loss": 0.05,
+    "exec_order_1_l1_rule_count": 4,
+    "exec_order_1_residual_count": 2,
+    "mean_pilot_forward_loss": 0.085,
+    "sealed_plateau_mean_e2e": 0.088333333
+  },
+  "production_composition": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "production_constructor_identity": "TypedDeonticCanonicalConstructor@1",
+  "production_runtime_unchanged": true,
+  "receipt_cid": "baguqeeraidi3xjgxoerhajt3j75v5d5yvuk5womxhczqtbdjerrgij5ycy4q",
+  "receipt_cid_codec": "dag-json",
+  "receipt_cid_scope": "payload_without_receipt_cid",
+  "residual_catalog_cid": "baguqeerar435zxtsbiiilmv6bvtmqbiz7vlvhz4kq64rekbavz7zvuaf4mhq",
+  "residual_field_paths": [
+    "rules[0].conditions",
+    "rules[3].temporal"
+  ],
+  "schema": "ipfs-datasets.semantic-roundtrip-plateau-edit-wave-receipt.v1",
+  "semantic_authority": false,
+  "structural_constraints_preserved": [
+    "non_vacuous_candidate",
+    "rule_cardinality_preserved",
+    "untriggered_projection_preserved"
+  ],
+  "track": "det-compiler",
+  "validation_commands": [
+    "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/ -q --maxfail=15"
+  ]
+}

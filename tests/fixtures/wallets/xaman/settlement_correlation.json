@@ -1,0 +1,91 @@
+{
+  "schema": "wallet_processor_migration/xaman-settlement-correlation@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G210",
+  "task_id": "WALPROC-021",
+  "notes": "API success never equals settlement. XRPL evidence decides settlement.",
+  "network": "xrpl-testnet",
+  "cases": [
+    {
+      "id": "signed_api_only",
+      "payload_id": "signed",
+      "xrpl_transactions": [],
+      "expect_settlement": "api_success_only",
+      "expect_ledger_settled": false
+    },
+    {
+      "id": "submitted_api_only",
+      "payload_id": "submitted",
+      "xrpl_transactions": [],
+      "expect_settlement": "api_success_only",
+      "expect_ledger_settled": false
+    },
+    {
+      "id": "xrpl_validated_success",
+      "payload_id": "submitted",
+      "xrpl_transactions": [
+        {
+          "hash": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+          "validated": true,
+          "outcome": "validated_success",
+          "ledger_index": 100042,
+          "network": "xrpl-testnet"
+        }
+      ],
+      "expect_settlement": "xrpl_validated",
+      "expect_ledger_settled": true
+    },
+    {
+      "id": "xrpl_validated_failed",
+      "payload_id": "failed",
+      "xrpl_transactions": [
+        {
+          "hash": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "destination": "r3bmF74WayREhyVYaqbu7GqLKvqZvUF3k6",
+          "validated": true,
+          "outcome": "validated_failed",
+          "transaction_result": "tecPATH_DRY",
+          "ledger_index": 100043,
+          "network": "xrpl-testnet"
+        }
+      ],
+      "expect_settlement": "xrpl_failed",
+      "expect_ledger_settled": false
+    },
+    {
+      "id": "network_mismatch",
+      "payload_id": "signed",
+      "xrpl_transactions": [
+        {
+          "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "validated": true,
+          "outcome": "validated_success",
+          "ledger_index": 9,
+          "network": "xrpl-mainnet"
+        }
+      ],
+      "expect_settlement": "network_mismatch",
+      "expect_ledger_settled": false
+    },
+    {
+      "id": "account_mismatch",
+      "payload_id": "signed",
+      "xrpl_transactions": [
+        {
+          "hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "account": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+          "validated": true,
+          "outcome": "validated_success",
+          "ledger_index": 10,
+          "network": "xrpl-testnet"
+        }
+      ],
+      "expect_settlement": "account_mismatch",
+      "expect_ledger_settled": false
+    }
+  ]
+}

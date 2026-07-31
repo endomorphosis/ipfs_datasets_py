@@ -11727,6 +11727,93 @@ def test_external_prover_router_syntactic_fallback_accepts_goal_payload_aliases(
     assert fallback_result.formula.to_string() == "O(register_notice(secretary))"
 
 
+def test_external_prover_router_accepts_serialized_prover_formula_payloads(
+    monkeypatch,
+) -> None:
+    import builtins
+    import json
+
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
+
+    real_import = builtins.__import__
+
+    def blocked_tdfol_import(name, *args, **kwargs):
+        if str(name).endswith("TDFOL.tdfol_prover"):
+            raise ImportError("tdfol unavailable for serialized payload test")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked_tdfol_import)
+
+    router = ProverRouter(
+        enable_cache=False,
+        enable_cvc5=False,
+        enable_coq=False,
+        enable_lean=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_z3=False,
+    )
+    payload = json.dumps(
+        {
+            "prover_formulas": [
+                {
+                    "source_id": "us-code-50-2823",
+                    "router_formula": "O(establish_consortium(administrator))",
+                    "source_text": (
+                        "The Administrator shall carry out a university-based "
+                        "defense nuclear policy collaboration program."
+                    ),
+                }
+            ]
+        }
+    )
+
+    result = router.route(payload, strategy="sequential")
+
+    fallback_result = result.all_results["native_syntactic"]
+    assert result.is_compiled() is True
+    assert result.prover_used == "native_syntactic"
+    assert fallback_result.is_valid is True
+    assert fallback_result.formula.to_string() == (
+        "O(establish_consortium(administrator))"
+    )
+
+
+def test_external_prover_router_bridge_resolves_serialized_router_view() -> None:
+    import json
+
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        _router_formula_resolution,
+    )
+
+    resolution = _router_formula_resolution(
+        [
+            {
+                "router_payload": json.dumps(
+                    {
+                        "prover_formulas": [
+                            {
+                                "source_id": "us-code-42-11921",
+                                "prover_formula": "O(reaffirm_principle(congress))",
+                                "source_text": (
+                                    "The purpose of this subchapter is to "
+                                    "reaffirm the principle that decent "
+                                    "affordable shelter is a basic necessity."
+                                ),
+                            }
+                        ]
+                    }
+                )
+            }
+        ]
+    )
+
+    assert resolution.resolved_count == 1
+    assert resolution.text_fallback_count == 0
+    assert resolution.unresolved_count == 0
+    assert resolution.formulas[0].to_string() == "O(reaffirm_principle(congress))"
+
+
 def test_external_prover_router_uses_syntactic_native_fallback_when_native_init_fails(
     monkeypatch,
 ) -> None:

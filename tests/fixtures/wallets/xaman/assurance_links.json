@@ -1,0 +1,89 @@
+{
+  "schema": "wallet_processor_migration/xaman-assurance-links@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G020",
+  "task_id": "WALPROC-003",
+  "policy": {
+    "formal_assurance_is_not_runtime_correctness": true,
+    "runtime_must_not_import_report_generators": true,
+    "shared_surface": "small typed projections only",
+    "future_bridge_goal": "WALPROC-G500 / WALPROC-026"
+  },
+  "formal_assets": [
+    {
+      "id": "xaman-security-ir-adapter",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/xaman/adapter.py",
+      "role": "security_ir_adapter",
+      "layer": "formal"
+    },
+    {
+      "id": "xaman-security-ir-config",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/xaman/config.py",
+      "role": "security_ir_config",
+      "layer": "formal"
+    },
+    {
+      "id": "xaman-runtime-trace-ingestor",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange/extractors/xaman_runtime_trace_ingestor.py",
+      "role": "trace_extraction",
+      "layer": "formal"
+    },
+    {
+      "id": "xaman-assurance-packet",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_assurance_packet.py",
+      "role": "release_decision_packet",
+      "layer": "formal",
+      "packet_schema": "xaman-assurance-packet/v1",
+      "notes": "Fail-closed release decision envelope; not a runtime ledger processor."
+    },
+    {
+      "id": "xaman-protocol-projection",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_protocol_projection.py",
+      "role": "protocol_projection",
+      "layer": "formal"
+    },
+    {
+      "id": "xaman-public-source-testnet-verdict",
+      "path": "ipfs_datasets_py/ipfs_datasets_py/logic/security_models/crypto_exchange/reports/xaman_public_source_testnet_assurance_verdict.py",
+      "role": "testnet_assurance_verdict",
+      "layer": "formal"
+    }
+  ],
+  "planned_runtime_projection_fields": [
+    "account",
+    "ledger_index",
+    "transaction_hash",
+    "transaction_type",
+    "validated",
+    "destination_tag",
+    "amount_drops_or_issued",
+    "delivered_amount",
+    "memo_digest_or_omitted",
+    "finality_state",
+    "provider_kind",
+    "schema_version",
+    "raw_payload_digest"
+  ],
+  "bridge_rules": [
+    {
+      "id": "BRIDGE-XAMAN-001",
+      "rule": "Runtime processors may emit typed public-ledger records consumable by assurance projections.",
+      "direction": "runtime_to_formal_projection"
+    },
+    {
+      "id": "BRIDGE-XAMAN-002",
+      "rule": "Runtime processors must not import assurance packet builders, solver portfolios, or disproof suites.",
+      "direction": "forbid_formal_into_runtime"
+    },
+    {
+      "id": "BRIDGE-XAMAN-003",
+      "rule": "Assurance packets must not be treated as evidence that an XRPL ingest path is correct.",
+      "direction": "forbid_assurance_as_runtime_proof"
+    }
+  ],
+  "related_tests_pre_move": [
+    "ipfs_datasets_py/tests/logic/security_models/crypto_exchange/test_xaman_assurance_packet.py",
+    "ipfs_datasets_py/tests/logic/security_models/crypto_exchange/test_xaman_corpus_manifest.py",
+    "ipfs_datasets_py/tests/logic/security_models/crypto_exchange/test_xaman_disproof_vectors.py"
+  ]
+}

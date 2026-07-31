@@ -1,0 +1,38 @@
+{
+  "access_ledger_authority_cid": "baguqeeraqwh65koyzjrahlazg2is7pwnvnqnxupsrmlywloyxvoinmflzplq",
+  "aggregate_commitments": {
+    "ordered_gold_manifest_cid": "baguqeera4ytwrzysqcoo3o5opxc45ydl25mpedros3qjsvkqhre3braguydq",
+    "ordered_provenance_manifest_cid": "baguqeera72x5nybyux5vfgbtilip2kv4lwzkkjefwpgj7ka2jkffxklixvba",
+    "ordered_source_manifest_cid": "baguqeerawdn7qao2azxgspl3bbrkqbewsjmogzn5ubzdlnuy2tthhmuxoedq"
+  },
+  "case_count": 12,
+  "interface": "SemanticRoundtripHoldoutSeal@1",
+  "leakage_policy_cid": "baguqeera4df7iwxgkt46dw25dygood7pcwpkky5pczpwpq3jgze5wm76h6ga",
+  "near_duplicate_jaccard_threshold": 0.8,
+  "normalization_version": "unicode-nfkc-casefold-alnum-v1",
+  "sample_size_justification": {
+    "actual_case_count": 12,
+    "alpha": 0.05,
+    "assumed_sd_paired_delta": 0.08,
+    "exploratory": false,
+    "method": "paired_case_cluster_bootstrap_precision",
+    "notes": "PLAT2-020 preregistered blind holdout. Sample size follows the paired case-cluster bootstrap precision justification (half-width=0.05, assumed_sd=0.08, alpha=0.05). Powered seals may authorize promotion only after PLAT2-055; exploratory underpowered seals cannot.",
+    "powered": true,
+    "promotion_eligible": true,
+    "required_case_count": 10,
+    "schema": "ipfs-datasets.semantic-roundtrip.sample-size-justification.v1",
+    "strata_counts": {
+      "complexity_tier_1": 4,
+      "complexity_tier_2": 8
+    },
+    "target_ci_half_width": 0.05,
+    "z_critical": 1.959963984540054
+  },
+  "schema": "ipfs-datasets.semantic-roundtrip.plateau2-blind-holdout-seal.v1",
+  "seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+  "sealed_private_bundle_cid": "baguqeerarjdlhvwseivludvriexk5vmcimsvy7ybfsotvddibaikjm57vy2a",
+  "strata_counts": {
+    "complexity_tier_1": 4,
+    "complexity_tier_2": 8
+  }
+}

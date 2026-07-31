@@ -1,0 +1,43 @@
+{
+  "case_id": "contradiction_grant_and_forbid",
+  "constraints": [
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal",
+      "role": "grant"
+    },
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal_forbid",
+      "role": "prohibition",
+      "variant": "forbid-twin"
+    },
+    {
+      "domain": "security",
+      "family": "security",
+      "name": "security",
+      "role": "grant"
+    }
+  ],
+  "description": "Same obligation has Legal grant and Legal forbid \u2192 reject contradiction.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "legal_forbid",
+    "security"
+  ],
+  "expected_reason_codes": [
+    "constraint_contradiction",
+    "legal_hard_constraint"
+  ],
+  "expected_status": "reject",
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/benign_skill.json",
+  "source_formal_case_id": "benign_skill",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/benign_skill.json",
+  "stratum": "contradiction"
+}

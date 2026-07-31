@@ -1,0 +1,701 @@
+{
+  "acceptance": {
+    "e2e_ci_high_lt_0": true,
+    "edit_waves_lineage_present": true,
+    "full_gates_pass": true,
+    "immutable_2026_07_27_replacement_promotion_report_not_rewritten": true,
+    "named_next_residuals_when_not_promoted": false,
+    "not_measured_excluded_from_rankings": true,
+    "paired_bootstrap_vs_0_088_baseline": true,
+    "pilot_det_path_rescored": true,
+    "promotion_authorized": true,
+    "promotion_true_only_if_e2e_ci_high_lt_0_and_full_gates": true
+  },
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "baseline_delta_tables": {
+    "bootstrap_method": "seeded_percentile_case_cluster_bootstrap",
+    "bootstrap_samples": 10000,
+    "confidence_level": 0.95,
+    "constructor_only_vs_typed_deontic": [
+      {
+        "baseline_arm_id": "constructor_only__typed_deontic_baseline",
+        "beats_baseline_forward": false,
+        "candidate_arm_id": "constructor_only__modal_spacy_candidate",
+        "mean_delta_forward": 0.1308333332,
+        "note": "modal_spacy still worse than typed_deontic on forward; no e2e claim"
+      }
+    ],
+    "description": "Paired case-cluster bootstrap deltas (candidate minus frozen 0.088 baseline). Negative mean_delta means lower loss (better). Beats baseline only when CI high < 0.",
+    "frozen_baseline_e2e_mean": 0.088333333,
+    "frozen_baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+    "hybrid_paired_bootstrap_report_cid": "baguqeera7jbv4cfvmomf3i2vcgfrst65sdmb6gnyxm7hyuwc65tam3gtwpiq",
+    "hybrid_success_authorizations": [
+      {
+        "authorization_cid": "baguqeeraeb3gokw6dasd3v5b5walt6vcf23riyyws46ymtnmpcnl4xwkkn4a",
+        "authorized": true,
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "beats_baseline_ci": true,
+        "candidate_arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "confidence_interval": {
+          "high": -0.04,
+          "low": -0.1366666668,
+          "method": "seeded_percentile_case_cluster_bootstrap"
+        },
+        "interface": "HybridRoundTripArms@1",
+        "mean_delta": -0.0883333334,
+        "metric": "end_to_end",
+        "paired_bootstrap_required": true,
+        "promotion_still_requires_full_gates": true,
+        "schema_version": "ipfs-datasets.semantic-roundtrip-hybrid-success-claim.v1"
+      }
+    ],
+    "hybrid_vs_frozen_0_088_baseline": [
+      {
+        "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "beats_baseline_e2e_ci_high_lt_0": true,
+        "beats_baseline_forward_ci_high_lt_0": true,
+        "candidate_arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "comparison_id": "hybrid__typed_deontic__no_repair__deterministic__vs__typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "delta_direction": "candidate_minus_baseline",
+        "losses": {
+          "cycle": {
+            "baseline_mean": 0.0033333334,
+            "candidate_mean": 0.0,
+            "case_deltas": {
+              "construction_contract": 0.0,
+              "corp_policy_1": 0.0,
+              "exception_with_window": 0.0,
+              "exec_order_1": 0.0,
+              "legal_doc_1": -0.016666667
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": 0.0,
+              "low": -0.0100000002,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": -0.0033333334
+          },
+          "end_to_end": {
+            "baseline_mean": 0.0883333334,
+            "candidate_mean": 0.0,
+            "case_deltas": {
+              "construction_contract": -0.141666667,
+              "corp_policy_1": -0.1,
+              "exception_with_window": 0.0,
+              "exec_order_1": -0.05,
+              "legal_doc_1": -0.15
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": -0.04,
+              "low": -0.1366666668,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": -0.0883333334
+          },
+          "forward": {
+            "baseline_mean": 0.0849999992,
+            "candidate_mean": 0.0,
+            "case_deltas": {
+              "construction_contract": -0.141666664,
+              "corp_policy_1": -0.1,
+              "exception_with_window": 0.0,
+              "exec_order_1": -0.05,
+              "legal_doc_1": -0.133333332
+            },
+            "confidence_interval": {
+              "bootstrap_samples": 10000,
+              "confidence_level": 0.95,
+              "high": -0.0366666664,
+              "low": -0.1299999984,
+              "method": "seeded_percentile_case_cluster_bootstrap",
+              "resampling_unit": "case_after_within_case_repeat_aggregation"
+            },
+            "mean_delta": -0.0849999992
+          }
+        }
+      }
+    ],
+    "seed": 17291
+  },
+  "captured_at_utc": "2026-07-28T01:19:14.803+00:00",
+  "edit_wave_lineage": {
+    "depends_on": [
+      "PLAT-081",
+      "PLAT-082",
+      "PLAT-083"
+    ],
+    "receipts": [
+      {
+        "case_id": "legal_doc_1",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/legal_doc_1.json",
+        "receipt_cid": "baguqeerafzaqfs26bovklw4lbhrauqkz25d2mktgnv3po64sncgusbukikwq",
+        "task_id": "PLAT-081"
+      },
+      {
+        "case_id": "construction_contract",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/construction_contract.json",
+        "receipt_cid": "baguqeera3iqbkg7rnsdtw2qqiwy2yyva4iulz5ujjec453u572vd4rrnlqza",
+        "task_id": "PLAT-082"
+      },
+      {
+        "case_id": "corp_policy_1",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/corp_policy_1.json",
+        "receipt_cid": "baguqeeraxo3kidzq7lazgdmof7nf2qawebub2bftvyrztny5kk7slu475nwq",
+        "task_id": "PLAT-083"
+      }
+    ],
+    "residual_catalog_cid": "baguqeerar435zxtsbiiilmv6bvtmqbiz7vlvhz4kq64rekbavz7zvuaf4mhq",
+    "residual_catalog_path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_residual_catalog.json"
+  },
+  "frozen_baseline_e2e_mean": 0.088333333,
+  "frozen_baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+  "full_gates": {
+    "all_cases_gate_pass": true,
+    "deterministic_pilot_smoke_status": "passed",
+    "gates_required": [
+      "full_coverage",
+      "source_copy_exclusion",
+      "polarity_preservation",
+      "nonempty_l1_t1_l2"
+    ],
+    "immutable_2026_07_27_replacement_report_preserved": true,
+    "optional_runtimes_promoted": false,
+    "per_case": {
+      "construction_contract": {
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeera5z7ekyz2vrxce5uupwb45nh7q43kdcakid2gyk5q5vq5u4ljatza"
+      },
+      "corp_policy_1": {
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeerathphkjhacpgblxlp3rshs6c7sqo7hkdv5edwiz2qi75xdo6mu2xq"
+      },
+      "exception_with_window": {
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeeraeplclmxmvkrxrtavqey3b6azfbrpgy5reinc7qynq2yf7jbn3wca"
+      },
+      "exec_order_1": {
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeeratac5vvistcxkl74f3vqzdmoqyecpyjbec6qm5m3uekiexpn3byfa"
+      },
+      "legal_doc_1": {
+        "gates": {
+          "full_coverage": true,
+          "polarity_preservation": true,
+          "source_copy_exclusion": true
+        },
+        "nonempty_l1_t1_l2": true,
+        "record_cid": "baguqeera5d7oidqwpfcr6gwvugwr7acyl2cb7ubdofgszvjdnhuyjgw65k3a"
+      }
+    },
+    "smoke_cid": "baguqeeraiy3s54wnug2vsgjyypkwi4cx3gnxwxqxqewxhs6vqqy56oelsoua",
+    "smoke_interface": "ReplacementDeterministicPilotSmoke@1",
+    "structural_admission_role": "repair_admission_gate_only"
+  },
+  "interface": "EvalRepairMatrixReport@1",
+  "next_residuals": [],
+  "pilot_remeasure": {
+    "case_rows": [
+      {
+        "case_id": "exception_with_window",
+        "delta_end_to_end": 0.0,
+        "delta_forward": 0.0,
+        "evaluation_status": "semantic_scored",
+        "frozen_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "residual_count": 0
+        },
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "legal_doc_1",
+        "delta_end_to_end": -0.15,
+        "delta_forward": -0.133333332,
+        "evaluation_status": "semantic_scored",
+        "frozen_baseline": {
+          "cycle_loss": 0.016666667,
+          "end_to_end_loss": 0.15,
+          "forward_loss": 0.133333332,
+          "residual_count": 4
+        },
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "exec_order_1",
+        "delta_end_to_end": -0.05,
+        "delta_forward": -0.05,
+        "evaluation_status": "semantic_scored",
+        "frozen_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.05,
+          "forward_loss": 0.05,
+          "residual_count": 2
+        },
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "corp_policy_1",
+        "delta_end_to_end": -0.1,
+        "delta_forward": -0.1,
+        "evaluation_status": "semantic_scored",
+        "frozen_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.1,
+          "forward_loss": 0.1,
+          "residual_count": 4
+        },
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      },
+      {
+        "case_id": "construction_contract",
+        "delta_end_to_end": -0.141666667,
+        "delta_forward": -0.141666664,
+        "evaluation_status": "semantic_scored",
+        "frozen_baseline": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.141666667,
+          "forward_loss": 0.141666664,
+          "residual_count": 8
+        },
+        "remeasured_det_path": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "repair_status": "not_applicable",
+          "residual_count": 0
+        }
+      }
+    ],
+    "constructor_only": {
+      "constructor_only__modal_spacy_candidate": {
+        "evaluation_status": "semantic_scored",
+        "included_in_semantic_rankings": true,
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.1308333332,
+        "mode": "constructor_only",
+        "note": "constructor_only ranks by forward only; not a production e2e candidate",
+        "per_case_forward": {
+          "construction_contract": 0.170833333,
+          "corp_policy_1": 0.1,
+          "exception_with_window": 0.1,
+          "exec_order_1": 0.1,
+          "legal_doc_1": 0.183333333
+        },
+        "semantic_scored_count": 5
+      },
+      "constructor_only__typed_deontic_baseline": {
+        "evaluation_status": "semantic_scored",
+        "included_in_semantic_rankings": true,
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.0,
+        "mode": "constructor_only",
+        "per_case_forward": {
+          "construction_contract": 0.0,
+          "corp_policy_1": 0.0,
+          "exception_with_window": 0.0,
+          "exec_order_1": 0.0,
+          "legal_doc_1": 0.0
+        },
+        "semantic_scored_count": 5
+      }
+    },
+    "coordinate_receipts": [
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "case_id": "exception_with_window",
+        "cycle_loss": 0.0,
+        "end_to_end_loss": 0.0,
+        "evaluation_reason": "success",
+        "evaluation_status": "semantic_scored",
+        "forward_loss": 0.0,
+        "receipt_cid": null,
+        "repair_status": "not_applicable"
+      },
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "case_id": "legal_doc_1",
+        "cycle_loss": 0.0,
+        "end_to_end_loss": 0.0,
+        "evaluation_reason": "success",
+        "evaluation_status": "semantic_scored",
+        "forward_loss": 0.0,
+        "receipt_cid": null,
+        "repair_status": "not_applicable"
+      },
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "case_id": "exec_order_1",
+        "cycle_loss": 0.0,
+        "end_to_end_loss": 0.0,
+        "evaluation_reason": "success",
+        "evaluation_status": "semantic_scored",
+        "forward_loss": 0.0,
+        "receipt_cid": null,
+        "repair_status": "not_applicable"
+      },
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "case_id": "corp_policy_1",
+        "cycle_loss": 0.0,
+        "end_to_end_loss": 0.0,
+        "evaluation_reason": "success",
+        "evaluation_status": "semantic_scored",
+        "forward_loss": 0.0,
+        "receipt_cid": null,
+        "repair_status": "not_applicable"
+      },
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "case_id": "construction_contract",
+        "cycle_loss": 0.0,
+        "end_to_end_loss": 0.0,
+        "evaluation_reason": "success",
+        "evaluation_status": "semantic_scored",
+        "forward_loss": 0.0,
+        "receipt_cid": null,
+        "repair_status": "not_applicable"
+      }
+    ],
+    "hybrid_arm": {
+      "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+      "description": "typed_deontic \u2192 deterministic realizer (research measurement of det production path)",
+      "evaluation_status_filter": "semantic_scored",
+      "included_in_semantic_rankings": true,
+      "mean_cycle": 0.0,
+      "mean_end_to_end": 0.0,
+      "mean_forward": 0.0,
+      "mode": "hybrid",
+      "not_measured_count": 0,
+      "per_case": {
+        "construction_contract": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "evaluation_status": "semantic_scored",
+          "forward_loss": 0.0
+        },
+        "corp_policy_1": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "evaluation_status": "semantic_scored",
+          "forward_loss": 0.0
+        },
+        "exception_with_window": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "evaluation_status": "semantic_scored",
+          "forward_loss": 0.0
+        },
+        "exec_order_1": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "evaluation_status": "semantic_scored",
+          "forward_loss": 0.0
+        },
+        "legal_doc_1": {
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "evaluation_status": "semantic_scored",
+          "forward_loss": 0.0
+        }
+      },
+      "runtime_failed_count": 0,
+      "semantic_scored_count": 5
+    },
+    "modes": [
+      "hybrid",
+      "constructor_only"
+    ],
+    "pilot_case_ids": [
+      "exception_with_window",
+      "legal_doc_1",
+      "exec_order_1",
+      "corp_policy_1",
+      "construction_contract"
+    ],
+    "production_det_path": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "description": "Post-edit production arm identity re-scored on pilots (code from PLAT-081/082/083 waves)",
+      "included_in_semantic_rankings": true,
+      "matches_hybrid_no_repair_path": true,
+      "mean_cycle": 0.0,
+      "mean_end_to_end": 0.0,
+      "mean_forward": 0.0,
+      "mode": "production_det_path",
+      "semantic_scored_count": 5
+    },
+    "residuals_after_remeasure": {
+      "construction_contract": [],
+      "corp_policy_1": [],
+      "exception_with_window": [],
+      "exec_order_1": [],
+      "legal_doc_1": []
+    },
+    "total_residual_count": 0
+  },
+  "plat091_eligibility": {
+    "full_matrix_refresh_allowed": true,
+    "reason": "PLAT-091 may run a full research matrix refresh only if PLAT-090 promotion is true or an explicit operator override is recorded"
+  },
+  "prior_eval_repair_report": {
+    "note": "Frozen 0.088 plateau reference; not rewritten",
+    "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_eval_repair_matrix.json",
+    "report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza"
+  },
+  "production_composition": {
+    "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "canonical_production_path": "typed_deontic \u2192 CanonicalRuleIR \u2192 deterministic realizer (no guidance, no repair)",
+    "e2e_ci_high": -0.04,
+    "e2e_ci_high_lt_0": true,
+    "frozen_baseline_mean_end_to_end": 0.088333333,
+    "full_gates_pass": true,
+    "guided_autoencoder_role": {
+      "earned_composition": false,
+      "reason": "not re-scored in PLAT-090; remains teacher/gated path",
+      "status": "not_measured"
+    },
+    "mean_delta_end_to_end": -0.0883333334,
+    "methods_earned_composition": [
+      "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
+    ],
+    "methods_evaluated_not_earned": [
+      {
+        "beats_baseline_forward": false,
+        "mean_delta_forward": 0.1308333332,
+        "method": "constructor_only__modal_spacy_candidate",
+        "mode": "constructor_only",
+        "rationale": "modal_spacy forward loss remains above typed_deontic; not eligible for production composition"
+      }
+    ],
+    "optional_methods_remain_teachers_only": true,
+    "production_promotion_authorized": true,
+    "promotion_rule": "promotion true only if e2e CI high < 0 vs frozen 0.088 baseline AND full gates pass",
+    "remeasured_mean_end_to_end": 0.0,
+    "selection_policy": "Fail-closed plateau-break promotion: pilot det path must beat frozen 0.088 under paired case-cluster bootstrap (e2e CI high < 0) and pass full selection gates. not_measured coordinates are excluded from semantic rankings. Optional methods are not promoted without their own bootstrap evidence.",
+    "selective_repair_role": {
+      "earned_default_production_composition": false,
+      "note": "Default production path remains no-repair deterministic"
+    },
+    "structural_admission_role": {
+      "earned_role": "repair_admission_gate_only",
+      "not_earned": "semantic_loss_replacement"
+    }
+  },
+  "report_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq",
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-break-matrix.v1",
+  "semantic_rankings": {
+    "baseline_frozen": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "e2e_mean": 0.088333333,
+      "mean_cycle": 0.003333333,
+      "mean_end_to_end": 0.088333333,
+      "mean_forward": 0.085,
+      "per_case": {
+        "construction_contract": {
+          "case_id": "construction_contract",
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.141666667,
+          "forward_loss": 0.141666664,
+          "residual_count": 8
+        },
+        "corp_policy_1": {
+          "case_id": "corp_policy_1",
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.1,
+          "forward_loss": 0.1,
+          "residual_count": 4
+        },
+        "exception_with_window": {
+          "case_id": "exception_with_window",
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.0,
+          "forward_loss": 0.0,
+          "residual_count": 0
+        },
+        "exec_order_1": {
+          "case_id": "exec_order_1",
+          "cycle_loss": 0.0,
+          "end_to_end_loss": 0.05,
+          "forward_loss": 0.05,
+          "residual_count": 2
+        },
+        "legal_doc_1": {
+          "case_id": "legal_doc_1",
+          "cycle_loss": 0.016666667,
+          "end_to_end_loss": 0.15,
+          "forward_loss": 0.133333332,
+          "residual_count": 4
+        }
+      },
+      "report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza",
+      "role": "frozen_plateau_baseline",
+      "source": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_residual_catalog.json + EVAL-009"
+    },
+    "baseline_remeasured": {
+      "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+      "mean_cycle_scored": 0.0,
+      "mean_end_to_end_scored": 0.0,
+      "mean_forward_scored": 0.0
+    },
+    "excluded_not_measured_or_not_remeasured": [
+      {
+        "arm_class": "guided_autoencoder",
+        "excluded_from_rankings": true,
+        "reason": "teacher_only_or_preflight_blocked; not re-scored in PLAT-090 pilot remeasure",
+        "status": "not_measured"
+      },
+      {
+        "arm_class": "optional_model_constructor_realizer_matrix",
+        "excluded_from_rankings": true,
+        "reason": "full 670-cell matrix deferred to PLAT-091 (only if promotion true or operator override)",
+        "status": "not_remeasured"
+      },
+      {
+        "arm_class": "selective_repair_hybrid",
+        "excluded_from_rankings": true,
+        "reason": "PLAT-090 scopes pilot det path remeasure; selective hybrid not required for plateau-break decision",
+        "status": "not_remeasured_this_task"
+      }
+    ],
+    "lower_loss_is_better": true,
+    "metric": "mean_end_to_end_among_semantic_scored_coordinates",
+    "policy": "exclude_not_measured",
+    "rankings": [
+      {
+        "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_baseline_remeasured": true,
+        "label": "production_det_path_post_edit",
+        "mean_cycle": 0.0,
+        "mean_end_to_end": 0.0,
+        "mean_forward": 0.0,
+        "model_calls_total": 0,
+        "rank": 1,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "hybrid__typed_deontic__no_repair__deterministic",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "is_baseline_remeasured": true,
+        "label": "hybrid_det_path_remeasure",
+        "mean_cycle": 0.0,
+        "mean_end_to_end": 0.0,
+        "mean_forward": 0.0,
+        "model_calls_total": 0,
+        "rank": 1,
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "constructor_only__typed_deontic_baseline",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "label": "constructor_only_typed_deontic",
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.0,
+        "model_calls_total": 0,
+        "rank": 3,
+        "ranking_metric_note": "constructor_only: forward only (cycle/e2e not applicable)",
+        "semantic_scored_count": 5
+      },
+      {
+        "arm_id": "constructor_only__modal_spacy_candidate",
+        "evaluation_status_filter": "semantic_scored",
+        "gate_eligible_scored_count": 5,
+        "included_because": "semantic_scored only; not_measured excluded",
+        "label": "constructor_only_modal_spacy",
+        "mean_cycle": null,
+        "mean_end_to_end": null,
+        "mean_forward": 0.1308333332,
+        "model_calls_total": 0,
+        "rank": 4,
+        "ranking_metric_note": "constructor_only: forward only; worse than typed_deontic",
+        "semantic_scored_count": 5
+      }
+    ]
+  },
+  "source_replacement_report": {
+    "immutable_promotion_report_preserved": true,
+    "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
+    "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+  },
+  "status_taxonomy": {
+    "coordinate_counts": {
+      "not_measured": 0,
+      "runtime_failed": 0,
+      "scheduled_this_task": 15,
+      "semantic_scored": 15
+    },
+    "interface": "EvaluationStatusTaxonomy@1",
+    "leaderboard_policy": {
+      "admits": "semantic_scored",
+      "excludes_not_measured": true,
+      "excludes_runtime_failed": true,
+      "lower_loss_is_better": true
+    },
+    "note": "Historical EVAL-009 constants (670/260/210/200) remain sealed; this remeasure is pilot-scoped and does not rewrite the immutable 2026-07-27 replacement promotion report.",
+    "scope": "plat090_pilot_remeasure"
+  },
+  "task_id": "PLAT-090",
+  "title": "Semantic round-trip plateau-break pilot remeasure and promotion evidence"
+}

@@ -1,0 +1,1876 @@
+{
+  "activation_case_ids": [
+    "missing_temporal",
+    "low_confidence_object",
+    "contradictory_modality"
+  ],
+  "assumptions": [
+    "production remains typed_deontic → IR → deterministic realizer",
+    "deterministic compiler/IR/decompiler is the sole production edit target",
+    "autoencoder is causal guidance only when reviewed adapter is scored_supported",
+    "spaCy is non-authoritative diagnostics only",
+    "SyMAI is orchestration/routing only and cannot receive proof credit",
+    "Leanstral is a proposal teacher; direct and SyMAI route identities stay distinct",
+    "Hammer/cvc5/Lean are structural gates with semantic_authority false",
+    "health-only probes cannot establish model inference",
+    "unsupported/not_measured/runtime_failed/terminal_unsupported never enter semantic score aggregates",
+    "residual → intervention mapping is preregistered and outcome-independent",
+    "full matrix reruns require an explicit evidence-backed override",
+    "blind sources/gold/residuals remain inaccessible without post-freeze evaluator authorization",
+    "no outcome-dependent selection or blind data may drive method choice"
+  ],
+  "autoencoder_guidance": {
+    "declared_status_preserved": true,
+    "eligible": false,
+    "executed": false,
+    "identity": {
+      "access": "read_only",
+      "declared_architecture_version": "legacy_dense_v1",
+      "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
+      "model": "modal_autoencoder_stable_feature_export",
+      "preregistered": false,
+      "reviewed_adapter_id": null,
+      "route": "causal_guidance_adapter",
+      "state_cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+      "state_schema_version": "modal-autoencoder-state-v1",
+      "state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "toolchain": "frozen_autoencoder_state_read_only",
+      "version": "modal-autoencoder-state-v1"
+    },
+    "method_id": "autoencoder",
+    "output_kind": "causal_guidance",
+    "qualification_status": "unavailable_no_reviewed_causal_l1_adapter",
+    "role": "causal_guidance_only_when_scored_supported",
+    "semantic_authority": false,
+    "status": "terminal_unsupported",
+    "status_reason": "terminal_unsupported"
+  },
+  "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+  "bindings": {
+    "assumptions_digest": "c42d02c18e7b4db77470a0e6d12b76d4c5563eb0316ee4c0d6d767f5d58b7283",
+    "baseline_report_cid": "baguqeerag7kwogvfkjciwoovp6cvpl5pueaoweucfqzjhbl4j6vhq5n5xn7q",
+    "catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+    "contract_cid": "baguqeeral7h5czmik2pw2cdipaxumcwbivhvfan6uuvxu5vm7ne6y5irouzq",
+    "experiment_id": "baguqeera4hqyulqvbj7blyusuh77os453y2dw45wleuavngyc3pqychc5c6q",
+    "intervention_registry_cid": "baguqeeradonke5pbapkwgwvf6pyoebjvxthhlj26bg2okooi2mcdbvefvtga",
+    "packet_metrics_cid": "baguqeeratk3nvuh5po2q4vgbhhgnn5tkbyd72blg4picotvafzbghqhp35wa",
+    "population_cid": "baguqeera3or3il2qlf33eo5btt2oi3oinxhr4cuoz2klcx6xozihe2ss2uua",
+    "status_cid_scope": "method_records_status_from_intervention_registry",
+    "tree_cid": "baguqeera3y3vdumwg6fbuzom72syfsu7tw3bv277moerohxqy3dvgokeu3va"
+  },
+  "blind_holdout": {
+    "access_receipt_count": 0,
+    "blind_seal_cid": "baguqeerarwc3c3b5lxffwebjnadfm6557ecy4cmv5c6xvdpivkukcwuoykyq",
+    "blind_seal_unopened": true,
+    "cache_namespaces_accessed": false,
+    "cases_accessed": false,
+    "gold_accessed": false,
+    "private_content_accessed": false,
+    "prompt_examples_accessed": false,
+    "residuals_accessed": false,
+    "sources_accessed": false,
+    "status": "sealed_unopened"
+  },
+  "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+  "case_ids": [
+    "missing_temporal",
+    "low_confidence_object",
+    "contradictory_modality",
+    "repair_dev_admission_reject_untriggered",
+    "repair_dev_retry_exhausted",
+    "repair_dev_not_triggered"
+  ],
+  "doctrine": {
+    "blind_data_accessed": false,
+    "direct_and_symai_routes_distinct": true,
+    "dry_run_and_negative_controls_always_pass": true,
+    "leanstral_not_default_realizer": true,
+    "only_registry_eligible_methods_and_residuals": true,
+    "only_triggered_fields_change": true,
+    "production_runtime_unchanged": true,
+    "semantic_authority_false_for_model_and_solver_outputs": true,
+    "spacy_ae_diagnostics_guidance_only": true,
+    "structural_admission_before_implementable": true,
+    "structural_admission_cannot_substitute_for_e2e": true,
+    "symai_no_proof_credit": true,
+    "teacher_only": true
+  },
+  "evidence": "PLAT2EV040TCH",
+  "fixture_pack_id": "repair-dev-teacher-dry-run-fixtures@1",
+  "goal_id": "PLAT2-G040",
+  "interface": "RepairDevTeacherReceipts@1",
+  "leanstral_proposals": {
+    "baseline_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "board_namespace": "semantic-roundtrip-plateau-holdout-v2",
+    "cases": [
+      {
+        "admission_disposition": "accepted",
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "delete",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": [
+                "after_30_days"
+              ]
+            }
+          ]
+        },
+        "admitted_l1_digest": "8e52d0e78242e22430954eb34afaaccb6509aa1e22260d356e134a3113eaf7c6",
+        "allowed_field_paths": [
+          "rules[0].temporal"
+        ],
+        "baseline_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+        "candidate_l1": {
+          "rules": [
+            {
+              "action": "delete",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": [
+                "after_30_days"
+              ]
+            }
+          ]
+        },
+        "case_id": "missing_temporal",
+        "detail": "repair-dev dry-run selective proposal for missing_temporal",
+        "field_changes": [
+          {
+            "after": [
+              "after_30_days"
+            ],
+            "baseline_rule_index": 0,
+            "before": [],
+            "canonical_field": "temporal",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].temporal"
+          }
+        ],
+        "implementable": true,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": true,
+        "outcome": "accepted",
+        "packet_digest": "f58007c245901921df22789255348d2e6d44d94f3120ca825dd30f0a00641ef4",
+        "packet_id": "pkt-leanstral-missing_temporal",
+        "prior_l1_unchanged": false,
+        "proposal_id": "prop-leanstral-missing_temporal",
+        "residual_ref_id": "resid-missing_temporal-leanstral",
+        "retry_exhausted": false,
+        "semantic_authority": false,
+        "triggers": [
+          {
+            "canonical_field": "temporal",
+            "confidence": null,
+            "evidence": "activation fixture forces empty temporal despite after_30_days source cue",
+            "kind": "missing",
+            "path": "rules[0].temporal",
+            "rule_index": 0
+          }
+        ]
+      },
+      {
+        "admission_disposition": "accepted",
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": []
+            }
+          ]
+        },
+        "admitted_l1_digest": "aaa57e0b3e5d590ee09e15061efb5ba3f9219aecb65c22196aa44d1dee9fa798",
+        "allowed_field_paths": [
+          "rules[0].object"
+        ],
+        "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+        "candidate_l1": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": []
+            }
+          ]
+        },
+        "case_id": "low_confidence_object",
+        "detail": "repair-dev dry-run selective proposal for low_confidence_object",
+        "field_changes": [
+          {
+            "after": "records",
+            "baseline_rule_index": 0,
+            "before": "personal_data",
+            "canonical_field": "object",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].object"
+          }
+        ],
+        "implementable": true,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": true,
+        "outcome": "accepted",
+        "packet_digest": "da3c40f9af8c9c9096d05caa22203d6d334d7dfd3b481c2c3142c596d68edcfc",
+        "packet_id": "pkt-leanstral-low_confidence_object",
+        "prior_l1_unchanged": false,
+        "proposal_id": "prop-leanstral-low_confidence_object",
+        "residual_ref_id": "resid-low_confidence_object-leanstral",
+        "retry_exhausted": false,
+        "semantic_authority": false,
+        "triggers": [
+          {
+            "canonical_field": "object",
+            "confidence": 0.2,
+            "evidence": "activation fixture forces low-confidence object attachment",
+            "kind": "low_confidence",
+            "path": "rules[0].object",
+            "rule_index": 0
+          }
+        ]
+      },
+      {
+        "admission_disposition": "accepted",
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "disclose",
+              "actor": "processor",
+              "conditions": [],
+              "exceptions": [
+                "unless_required_by_law"
+              ],
+              "modality": "F",
+              "object": "personal_data",
+              "temporal": []
+            }
+          ]
+        },
+        "admitted_l1_digest": "b358b44501428e45624cb3df7fa06a1db031d669d36d347a49deaae133425f4a",
+        "allowed_field_paths": [
+          "rules[0].modality",
+          "rules[0].exceptions"
+        ],
+        "baseline_l1_digest": "58cff40b6023112840ee9c0edce00ba6af1f286750c2225a7ba8ae8da7328699",
+        "candidate_l1": {
+          "rules": [
+            {
+              "action": "disclose",
+              "actor": "processor",
+              "conditions": [],
+              "exceptions": [
+                "unless_required_by_law"
+              ],
+              "modality": "F",
+              "object": "personal_data",
+              "temporal": []
+            }
+          ]
+        },
+        "case_id": "contradictory_modality",
+        "detail": "repair-dev dry-run selective proposal for contradictory_modality",
+        "field_changes": [
+          {
+            "after": "F",
+            "baseline_rule_index": 0,
+            "before": "O",
+            "canonical_field": "modality",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].modality"
+          },
+          {
+            "after": [
+              "unless_required_by_law"
+            ],
+            "baseline_rule_index": 0,
+            "before": [],
+            "canonical_field": "exceptions",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].exceptions"
+          }
+        ],
+        "implementable": true,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": true,
+        "outcome": "accepted",
+        "packet_digest": "13fc81871f06d3d3c53bc913c7511f652fd58ab56925c56e5de69722d852b0e0",
+        "packet_id": "pkt-leanstral-contradictory_modality",
+        "prior_l1_unchanged": false,
+        "proposal_id": "prop-leanstral-contradictory_modality",
+        "residual_ref_id": "resid-contradictory_modality-leanstral",
+        "retry_exhausted": false,
+        "semantic_authority": false,
+        "triggers": [
+          {
+            "canonical_field": "modality",
+            "confidence": null,
+            "evidence": "activation fixture forces obligation/prohibition contradiction",
+            "kind": "contradictory",
+            "path": "rules[0].modality",
+            "rule_index": 0
+          },
+          {
+            "canonical_field": "exceptions",
+            "confidence": null,
+            "evidence": "activation fixture forces missing exception slot for unless_required_by_law",
+            "kind": "missing",
+            "path": "rules[0].exceptions",
+            "rule_index": 0
+          }
+        ]
+      },
+      {
+        "admission_disposition": "validator_reject",
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "personal_data",
+              "temporal": []
+            }
+          ]
+        },
+        "admitted_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+        "allowed_field_paths": [
+          "rules[0].object"
+        ],
+        "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+        "candidate_l1": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "processor",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": []
+            }
+          ]
+        },
+        "case_id": "repair_dev_admission_reject_untriggered",
+        "detail": "repair-dev dry-run candidate changes untriggered field; gate retains prior L1",
+        "field_changes": [
+          {
+            "after": "processor",
+            "baseline_rule_index": 0,
+            "before": "controller",
+            "canonical_field": "actor",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].actor"
+          },
+          {
+            "after": "records",
+            "baseline_rule_index": 0,
+            "before": "personal_data",
+            "canonical_field": "object",
+            "guided_rule_index": 0,
+            "path": "rules[0->0].object"
+          }
+        ],
+        "implementable": false,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": false,
+        "outcome": "admission_rejected",
+        "packet_digest": "574fe1e43fef579c3e4fbfb92cffbbe0d24adf8c859e4d362a987d358cb77e98",
+        "packet_id": "pkt-leanstral-repair_dev_admission_reject_untriggered",
+        "prior_l1_unchanged": true,
+        "proposal_id": "prop-leanstral-repair_dev_admission_reject_untriggered",
+        "residual_ref_id": "resid-repair_dev_admission_reject_untriggered-leanstral",
+        "retry_exhausted": false,
+        "semantic_authority": false,
+        "triggers": [
+          {
+            "canonical_field": "object",
+            "confidence": 0.2,
+            "evidence": "activation fixture forces low-confidence object attachment",
+            "kind": "low_confidence",
+            "path": "rules[0].object",
+            "rule_index": 0
+          }
+        ]
+      },
+      {
+        "admission_disposition": null,
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "retain",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "personal_data",
+              "temporal": []
+            }
+          ]
+        },
+        "admitted_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+        "allowed_field_paths": [
+          "rules[0].object"
+        ],
+        "baseline_l1_digest": "f468fcf7737cecc5bedfc557aa954c001162d226e00aa2750153a2005f1dc914",
+        "candidate_l1": null,
+        "case_id": "repair_dev_retry_exhausted",
+        "detail": "repair-dev dry-run live-path analogue: all model calls failed",
+        "field_changes": [],
+        "implementable": false,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": true,
+        "outcome": "retry_exhausted",
+        "packet_digest": null,
+        "packet_id": null,
+        "prior_l1_unchanged": true,
+        "proposal_id": null,
+        "residual_ref_id": "resid-repair_dev_retry_exhausted-leanstral",
+        "retry_exhausted": true,
+        "semantic_authority": false,
+        "triggers": [
+          {
+            "canonical_field": "object",
+            "confidence": 0.2,
+            "evidence": "activation fixture forces low-confidence object attachment",
+            "kind": "low_confidence",
+            "path": "rules[0].object",
+            "rule_index": 0
+          }
+        ]
+      },
+      {
+        "admission_disposition": "not_applicable",
+        "admitted_l1": {
+          "rules": [
+            {
+              "action": "delete",
+              "actor": "controller",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "records",
+              "temporal": []
+            }
+          ]
+        },
+        "admitted_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+        "allowed_field_paths": [],
+        "baseline_l1_digest": "efd7bbf12f87534b038c272805c2a93cdd2acaae0610832f3babaa44fb7dfca7",
+        "candidate_l1": null,
+        "case_id": "repair_dev_not_triggered",
+        "detail": "repair-dev dry-run control: empty triggers emit no proposal",
+        "field_changes": [],
+        "implementable": false,
+        "interface": "PlateauLeanstralProposalCaseReceipt@1",
+        "mode": "dry_run",
+        "model_calls": 0,
+        "only_triggered_fields_changed": true,
+        "outcome": "not_triggered",
+        "packet_digest": null,
+        "packet_id": null,
+        "prior_l1_unchanged": true,
+        "proposal_id": null,
+        "residual_ref_id": "resid-repair_dev_not_triggered-leanstral",
+        "retry_exhausted": false,
+        "semantic_authority": false,
+        "triggers": []
+      }
+    ],
+    "catalog_cid": "baguqeeratpehxliv7o27tfvsapw2lnrddg6mxhe465htd5hdywi356shzxiq",
+    "doctrine": {
+      "accept_rate_separate_from_e2e": true,
+      "leanstral_default_realizer": false,
+      "only_triggered_fields_change": true,
+      "production_runtime_unchanged": true,
+      "rejects_retain_prior_l1": true,
+      "retry_exhausted_separate_from_accept_rate": true,
+      "structural_admission_before_implementable": true,
+      "teacher_only": true
+    },
+    "evidence": "PLAT2EV040TCH",
+    "fixture_pack_id": "repair-dev-teacher-dry-run-fixtures@1",
+    "interface": "PlateauLeanstralProposalReceipts@1",
+    "leanstral_is_default_realizer": false,
+    "mode": "dry_run",
+    "production_realizer": "deterministic",
+    "production_runtime_unchanged": true,
+    "provider_id": "leanstral-local",
+    "receipts_cid": "baguqeerapy43gwgej4xyhonxc6y6kbrcyimlx2pq7txxgwehyznlrgakxkpq",
+    "receipts_cid_codec": "dag-json",
+    "receipts_cid_scope": "payload_without_receipts_cid",
+    "reliability": {
+      "accept_rate": 0.6,
+      "accept_rate_definition": "accept_rate = accepted_proposals / proposal_attempts (triggered cases only; not end-to-end semantic loss)",
+      "accepted_proposals": 3,
+      "admission_rejected_proposals": 1,
+      "end_to_end_loss": null,
+      "failed_proposals": 0,
+      "model_calls": 0,
+      "model_rejected_proposals": 0,
+      "not_triggered": 1,
+      "proposal_attempts": 5,
+      "retry_exhausted_proposals": 1,
+      "retry_exhausted_rate": 0.2,
+      "retry_exhausted_rate_definition": "retry_exhausted_rate = retry_exhausted_proposals / proposal_attempts (triggered cases only; recorded separately from accept_rate and e2e)",
+      "separate_from_end_to_end_loss": true
+    },
+    "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-leanstral-proposal-receipts.v1",
+    "structural_admission_required": true,
+    "task_id": "PLAT2-040",
+    "teacher": "leanstral"
+  },
+  "methods": {
+    "autoencoder": {
+      "declared_status_preserved": true,
+      "eligible": false,
+      "executed": false,
+      "identity": {
+        "access": "read_only",
+        "declared_architecture_version": "legacy_dense_v1",
+        "effective_architecture_version": "proof_aware_auxiliary_heads_v2",
+        "model": "modal_autoencoder_stable_feature_export",
+        "preregistered": false,
+        "reviewed_adapter_id": null,
+        "route": "causal_guidance_adapter",
+        "state_cid": "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u",
+        "state_schema_version": "modal-autoencoder-state-v1",
+        "state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+        "toolchain": "frozen_autoencoder_state_read_only",
+        "version": "modal-autoencoder-state-v1"
+      },
+      "method_id": "autoencoder",
+      "output_kind": "causal_guidance",
+      "qualification_status": "unavailable_no_reviewed_causal_l1_adapter",
+      "role": "causal_guidance_only_when_scored_supported",
+      "semantic_authority": false,
+      "status": "terminal_unsupported",
+      "status_reason": "terminal_unsupported"
+    },
+    "leanstral": {
+      "eligible": true,
+      "executed": true,
+      "identity": {
+        "backend": "llama.cpp",
+        "capacity": {
+          "model_instances": 1,
+          "parallel_slots": 1
+        },
+        "endpoint": "http://127.0.0.1:8080/v1",
+        "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "provider": "leanstral_local",
+        "route": "direct_openai_compatible_http",
+        "toolchain": "leanstral_local_llama_cpp",
+        "version": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+      },
+      "is_default_realizer": false,
+      "method_id": "leanstral",
+      "output_kind": "proposal_candidate",
+      "provider_id": "leanstral-local",
+      "role": "proposal_teacher",
+      "route": "direct_openai_compatible_http",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "spacy": {
+      "declared_status_preserved": true,
+      "eligible_when_pipeline_available": true,
+      "identity": {
+        "distribution": "spacy",
+        "language": "en",
+        "model": "en_core_web_sm",
+        "model_version": "3.8.0",
+        "pipeline": [
+          "tok2vec",
+          "tagger",
+          "parser",
+          "attribute_ruler",
+          "lemmatizer",
+          "ner"
+        ],
+        "route": "modal_spacy_diagnostics",
+        "toolchain": "spacy_full_pipeline_no_blank_fallback",
+        "version": "3.8.14"
+      },
+      "method_id": "spacy",
+      "output_kind": "diagnostics",
+      "role": "non_authoritative_diagnostics",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    },
+    "symai": {
+      "cannot_receive_proof_credit": true,
+      "eligible": false,
+      "executed": false,
+      "identity": {
+        "distribution": "symbolicai",
+        "independent_model": false,
+        "model_alias": "Leanstral-119B",
+        "proof_credit": false,
+        "provider": "ipfs_accelerate_py",
+        "resolved_backend": "llama.cpp",
+        "resolved_endpoint": "http://127.0.0.1:8080/v1",
+        "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+        "resolved_provider": "leanstral_local",
+        "route": "symai_router",
+        "toolchain": "symai_router_orchestration_only",
+        "version": "1.14.0"
+      },
+      "method_id": "symai",
+      "proof_credit": false,
+      "role": "orchestration_routing_only",
+      "route": "symai_router",
+      "semantic_authority": false,
+      "status": "not_selected",
+      "status_reason": "capability_available_role_not_production_edit"
+    }
+  },
+  "mode": "dry_run",
+  "negative_controls": {
+    "nc_no_edit": {
+      "always_pass": true,
+      "control_id": "nc_no_edit",
+      "description": "hold residual fixed; run baseline arm without compiler edit",
+      "status": "pass"
+    },
+    "nc_withhold_optional_teacher": {
+      "always_pass": true,
+      "control_id": "nc_withhold_optional_teacher",
+      "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+      "status": "pass"
+    }
+  },
+  "population_kind": "repair_development",
+  "production_realizer": "deterministic",
+  "production_runtime_unchanged": true,
+  "provider_toolchain": {
+    "leanstral": {
+      "backend": "llama.cpp",
+      "endpoint": "http://127.0.0.1:8080/v1",
+      "model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+      "provider": "leanstral_local",
+      "provider_id": "leanstral-local",
+      "route": "direct_openai_compatible_http",
+      "toolchain": "leanstral_local_llama_cpp",
+      "version": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
+    },
+    "spacy": {
+      "distribution": "spacy",
+      "model": "en_core_web_sm",
+      "model_version": "3.8.0",
+      "route": "modal_spacy_diagnostics",
+      "toolchain": "spacy_full_pipeline_no_blank_fallback",
+      "version": "3.8.14"
+    },
+    "structural_gates": {
+      "cvc5": {
+        "method_id": "cvc5",
+        "route": "structural_admission_cvc5",
+        "semantic_authority": false,
+        "toolchain": "cvc5_bounded_smt2_smoke",
+        "version": "1.3.3"
+      },
+      "hammer": {
+        "method_id": "hammer",
+        "route": "structural_admission_hammer",
+        "semantic_authority": false,
+        "toolchain": "hammer_cvc5_bounded_smoke",
+        "version": "0.2.0"
+      },
+      "lean": {
+        "method_id": "lean",
+        "route": "structural_admission_lean",
+        "semantic_authority": false,
+        "toolchain": "Lean 4",
+        "version": "4.32.1"
+      }
+    },
+    "symai": {
+      "independent_model": false,
+      "proof_credit": false,
+      "provider": "ipfs_accelerate_py",
+      "resolved_provider": "leanstral_local",
+      "route": "symai_router",
+      "toolchain": "symai_router_orchestration_only",
+      "version": "1.14.0"
+    }
+  },
+  "receipts_cid": "baguqeera7e73etus47bhjahg7jyxe4k4higla5lzg3yroidc4lltcefpdnqa",
+  "receipts_cid_codec": "dag-json",
+  "receipts_cid_scope": "payload_without_receipts_cid",
+  "reliability": {
+    "accept_rate": 0.6,
+    "accept_rate_definition": "accept_rate = accepted_proposals / proposal_attempts (triggered cases only; not end-to-end semantic loss)",
+    "accepted_proposals": 3,
+    "admission_rejected_proposals": 1,
+    "end_to_end_loss": null,
+    "failed_proposals": 0,
+    "model_calls": 0,
+    "model_rejected_proposals": 0,
+    "not_triggered": 1,
+    "proposal_attempts": 5,
+    "retry_exhausted_proposals": 1,
+    "retry_exhausted_rate": 0.2,
+    "retry_exhausted_rate_definition": "retry_exhausted_rate = retry_exhausted_proposals / proposal_attempts (triggered cases only; recorded separately from accept_rate and e2e)",
+    "separate_from_end_to_end_loss": true
+  },
+  "residual_teacher_attempts": [
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "dept_memo_1",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[2]",
+      "identity_key": "dept_memo_1::rules[2]::missing_rule",
+      "mapping_id": "baguqeerab7cuosowpcpqx76wtpyzpxurix73o6htmxvdveqg3rd4iuxw2ela",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_missing_rule_hypothesis",
+      "residual_kind": "missing_rule",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "object",
+      "case_id": "fed_reg_1",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[2].object",
+      "identity_key": "fed_reg_1::rules[2].object::field_mismatch",
+      "mapping_id": "baguqeerazirvkket37v2petinqnzux32v42e353pib5obwvcqlk534xvdjoq",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_rewrite_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "fed_reg_1",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[3]",
+      "identity_key": "fed_reg_1::rules[3]::missing_rule",
+      "mapping_id": "baguqeerajw5si7br32rrxskx7n4kxubr5znd2cwvcovswocvilevd3re6iwa",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_missing_rule_hypothesis",
+      "residual_kind": "missing_rule",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "conditions",
+      "case_id": "fed_reg_1",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[4].conditions",
+      "identity_key": "fed_reg_1::rules[4].conditions::field_mismatch",
+      "mapping_id": "baguqeeragltlfw5dt5ngfzuolyhsyuohud6g4w6zftxcph7qqq3gzg5niy2a",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_fill_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "temporal",
+      "case_id": "fed_reg_1",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[4].temporal",
+      "identity_key": "fed_reg_1::rules[4].temporal::field_mismatch",
+      "mapping_id": "baguqeerax7qrhso5ylqdfbthsubro2ahmrze54ruw7f67khdez6eysyfjcjq",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_rewrite_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "object",
+      "case_id": "hr_handbook",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[0].object",
+      "identity_key": "hr_handbook::rules[0].object::field_mismatch",
+      "mapping_id": "baguqeerajk7nrmpkgica3yz2figbk3eziatofsoh3abgypllmcuhhfowfufa",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_rewrite_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[1]",
+      "identity_key": "hr_handbook::rules[1]::missing_rule",
+      "mapping_id": "baguqeeraqo3htftazmsvljt5ojuom5iufmfxcp7h3fpuumpu6h7yj5uj5zaq",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_missing_rule_hypothesis",
+      "residual_kind": "missing_rule",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "hr_handbook",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[3]",
+      "identity_key": "hr_handbook::rules[3]::missing_rule",
+      "mapping_id": "baguqeeragoboen27wgqcfkvh4m5y3fj47wwdg4nkn4ajewfuxkxrhwv6l3fq",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_missing_rule_hypothesis",
+      "residual_kind": "missing_rule",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": null,
+      "case_id": "legal_doc_2",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[2]",
+      "identity_key": "legal_doc_2::rules[2]::missing_rule",
+      "mapping_id": "baguqeerajo5ax2ckzp7g6qlnyvjrcr64xxvgqwxhbfgzivnzzrf5bnqbjg7a",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_missing_rule_hypothesis",
+      "residual_kind": "missing_rule",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "conditions",
+      "case_id": "legal_doc_2",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[3].conditions",
+      "identity_key": "legal_doc_2::rules[3].conditions::field_mismatch",
+      "mapping_id": "baguqeerag3i2pejj4tc6v7n4lz5wgru2xkblpnyoodf2evtezvml4hpprmsq",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_fill_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    },
+    {
+      "blind_data_used": false,
+      "canonical_field": "temporal",
+      "case_id": "legal_doc_2",
+      "executed_advisories": [
+        {
+          "advisory_id": "adv_spacy_diagnostics",
+          "eligible": true,
+          "executed": true,
+          "method_id": "spacy",
+          "reason": "non_authoritative_diagnostics_when_pipeline_available",
+          "role": "non_authoritative_diagnostics",
+          "semantic_authority": false,
+          "status": "diagnostics_only"
+        },
+        {
+          "advisory_id": "adv_leanstral_proposal",
+          "eligible": true,
+          "executed": true,
+          "method_id": "leanstral",
+          "reason": "proposal_teacher_when_inference_established",
+          "role": "proposal_teacher",
+          "semantic_authority": false,
+          "status": "proposal_candidate"
+        }
+      ],
+      "field_path": "rules[3].temporal",
+      "identity_key": "legal_doc_2::rules[3].temporal::field_mismatch",
+      "mapping_id": "baguqeeraobwlnnq5zbwq56kh5civlyucvbrp7gjglvbyqhjzsa5ewki5rh5q",
+      "negative_controls": [
+        {
+          "control_id": "nc_no_edit",
+          "description": "hold residual fixed; run baseline arm without compiler edit",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        },
+        {
+          "control_id": "nc_withhold_optional_teacher",
+          "description": "run the same deterministic hypothesis without optional spaCy/Leanstral/AE advisory inputs",
+          "method_id": "deterministic_compiler_ir_decompiler",
+          "status": "pass"
+        }
+      ],
+      "population_kind": "repair_development",
+      "primary_intervention_id": "det_compiler_field_rewrite_hypothesis",
+      "residual_kind": "field_mismatch",
+      "skipped_advisories": [
+        {
+          "advisory_id": "adv_ae_causal_guidance",
+          "eligible": false,
+          "executed": false,
+          "method_id": "autoencoder",
+          "reason": "terminal_unsupported",
+          "role": "causal_guidance_only_when_scored_supported",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        },
+        {
+          "advisory_id": "adv_symai_orchestration",
+          "eligible": false,
+          "executed": false,
+          "method_id": "symai",
+          "reason": "orchestration_routing_only_no_proof_credit",
+          "role": "orchestration_routing_only",
+          "semantic_authority": false,
+          "status": "skipped_ineligible"
+        }
+      ],
+      "structural_gates": [
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "hammer",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "cvc5",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        },
+        {
+          "may_substitute_for_e2e": false,
+          "method_id": "lean",
+          "role": "structural_gate",
+          "semantic_authority": false,
+          "status": "not_selected"
+        }
+      ]
+    }
+  ],
+  "route_identities": {
+    "direct_route": "direct_openai_compatible_http",
+    "leanstral_route": "direct_openai_compatible_http",
+    "routes_are_distinct": true,
+    "symai_cannot_receive_proof_credit": true,
+    "symai_proof_credit": false,
+    "symai_route": "symai_router"
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-repair-dev-teacher-receipts.v1",
+  "spacy_diagnostics": {
+    "declared_status_preserved": true,
+    "eligible_when_pipeline_available": true,
+    "identity": {
+      "distribution": "spacy",
+      "language": "en",
+      "model": "en_core_web_sm",
+      "model_version": "3.8.0",
+      "pipeline": [
+        "tok2vec",
+        "tagger",
+        "parser",
+        "attribute_ruler",
+        "lemmatizer",
+        "ner"
+      ],
+      "route": "modal_spacy_diagnostics",
+      "toolchain": "spacy_full_pipeline_no_blank_fallback",
+      "version": "3.8.14"
+    },
+    "method_id": "spacy",
+    "output_kind": "diagnostics",
+    "role": "non_authoritative_diagnostics",
+    "semantic_authority": false,
+    "status": "not_selected",
+    "status_reason": "capability_available_role_not_production_edit"
+  },
+  "structural_admission": {
+    "checks_declared_structural_properties_only": true,
+    "fail_closed": true,
+    "may_substitute_for_e2e_loss": false,
+    "required": true,
+    "semantic_authority": false,
+    "tools": [
+      "hammer",
+      "cvc5",
+      "lean"
+    ]
+  },
+  "symai_orchestration": {
+    "cannot_receive_proof_credit": true,
+    "eligible": false,
+    "executed": false,
+    "identity": {
+      "distribution": "symbolicai",
+      "independent_model": false,
+      "model_alias": "Leanstral-119B",
+      "proof_credit": false,
+      "provider": "ipfs_accelerate_py",
+      "resolved_backend": "llama.cpp",
+      "resolved_endpoint": "http://127.0.0.1:8080/v1",
+      "resolved_model": "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4",
+      "resolved_provider": "leanstral_local",
+      "route": "symai_router",
+      "toolchain": "symai_router_orchestration_only",
+      "version": "1.14.0"
+    },
+    "method_id": "symai",
+    "proof_credit": false,
+    "role": "orchestration_routing_only",
+    "route": "symai_router",
+    "semantic_authority": false,
+    "status": "not_selected",
+    "status_reason": "capability_available_role_not_production_edit"
+  },
+  "task_id": "PLAT2-040",
+  "typed_model_outcomes": {
+    "closed_rejection_reasons": [
+      "blank",
+      "schema",
+      "polarity",
+      "empty_rules",
+      "timeout",
+      "other"
+    ],
+    "dry_run_controls": {
+      "admission_reject_untriggered": {
+        "case_id": "repair_dev_admission_reject_untriggered",
+        "outcome": "admission_rejected",
+        "recorded": true
+      },
+      "not_triggered": {
+        "case_id": "repair_dev_not_triggered",
+        "outcome": "not_triggered",
+        "recorded": true
+      },
+      "retry_exhausted": {
+        "case_id": "repair_dev_retry_exhausted",
+        "outcome": "retry_exhausted",
+        "recorded": true
+      }
+    },
+    "live_inference": {
+      "dry_run_mode": true,
+      "health_only_cannot_establish_inference": true,
+      "model_calls_in_dry_run": 0,
+      "note": "Dry-run fixtures seal offline teacher path; live Leanstral path records blank/schema/polarity/empty_rules/timeout/retry-exhausted via ModelOutputRecovery taxonomy and SelectiveLeanstralRepair.",
+      "real_inference_occurred": false,
+      "required_for_proposal_credit": true
+    },
+    "taxonomy": [
+      "blank",
+      "empty_rules",
+      "polarity",
+      "retry_exhausted",
+      "schema",
+      "timeout"
+    ]
+  }
+}

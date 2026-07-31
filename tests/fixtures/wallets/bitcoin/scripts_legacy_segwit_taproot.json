@@ -1,0 +1,58 @@
+{
+  "schema": "wallet_processor_migration/bitcoin-script-vectors@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G400",
+  "network": "bitcoin-mainnet",
+  "notes": "Legacy, SegWit, and Taproot address/script classification. No ownership clustering.",
+  "vectors": [
+    {
+      "id": "legacy-p2pkh-genesis",
+      "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+      "expect_script_type": "p2pkh",
+      "expect_encoding": "base58check",
+      "expect_legacy": true,
+      "expect_segwit": false,
+      "expect_taproot": false
+    },
+    {
+      "id": "legacy-p2sh",
+      "address": "31nKoVLBc2BXUeKQKhnimyrt9DD12VwG6p",
+      "expect_script_type": "p2sh",
+      "expect_encoding": "base58check",
+      "expect_legacy": true,
+      "expect_segwit": false,
+      "expect_taproot": false
+    },
+    {
+      "id": "segwit-p2wpkh",
+      "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+      "expect_script_type": "p2wpkh",
+      "expect_encoding": "bech32",
+      "expect_witness_version": 0,
+      "expect_legacy": false,
+      "expect_segwit": true,
+      "expect_taproot": false,
+      "script_hex": "0014751e76e8199196d454941c45d1b3a323f1433bd6"
+    },
+    {
+      "id": "taproot-p2tr",
+      "address": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr",
+      "expect_script_type": "p2tr",
+      "expect_encoding": "bech32m",
+      "expect_witness_version": 1,
+      "expect_legacy": false,
+      "expect_segwit": true,
+      "expect_taproot": true
+    },
+    {
+      "id": "script-hex-p2pkh",
+      "script_hex": "76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac",
+      "expect_script_type": "p2pkh"
+    },
+    {
+      "id": "script-hex-p2tr",
+      "script_hex": "5120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc4876cb9be242b74ada3621f",
+      "expect_script_type": "p2tr"
+    }
+  ]
+}

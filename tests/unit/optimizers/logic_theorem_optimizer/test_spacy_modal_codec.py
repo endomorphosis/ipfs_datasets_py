@@ -92,6 +92,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_000927_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000257_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000062_FAMILY_PAIRS,
+    COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000352_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000358_FAMILY_PAIRS,
     COMPILER_REFINED_PACKET_000542_FAMILY_PAIRS,
@@ -189,6 +190,49 @@ def test_packet_003763_registry_exposes_compiler_ambiguity_policy() -> None:
             predicted_family,
             target_family,
         )
+
+
+def test_packet_000543_registry_refines_modal_family_cue_policy() -> None:
+    expected_pairs = {
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    }
+
+    assert set(COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS) == expected_pairs
+    for predicted_family, target_family in COMPILER_REFINED_PACKET_000543_FAMILY_PAIRS:
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.47
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("deontic", "frame")
+        >= 0.99
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("frame", "deontic")
+        >= 1.25
+    )
+    assert (
+        compiler_refined_modal_family_cue_margin_buffer("frame", "temporal")
+        >= 1.17
+    )
+    assert (
+        compiler_weak_typed_self_family_cue_margin_buffer("deontic", "deontic")
+        >= 0.47
+    )
 
 
 def test_packet_001449_registry_exposes_compiler_ambiguity_policy() -> None:
@@ -12355,6 +12399,27 @@ def test_spacy_compiler_adds_packet_000044_order_appeal_span_coverage() -> None:
         assert all(
             formula.provenance.citation == citation for formula in modal_ir.formulas
         )
+
+
+def test_spacy_compiler_adds_compact_final_order_residual_span_coverage() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        "Sec. 836a - Administrative appeals. Final orders.",
+        document_id="us-code-16-836a-final-orders-residual",
+        citation="16 U.S.C. 836a",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    residual_text_spans = {
+        modal_ir.normalized_text[
+            int(formula.provenance.start_char) : int(formula.provenance.end_char)
+        ].strip()
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    }
+    assert "Final orders." in residual_text_spans
 
 
 def test_spacy_compiler_adds_public_review_recommendation_residual_span_coverage() -> None:

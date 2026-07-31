@@ -330,7 +330,62 @@ _PACKET_000641_USCODE_RECONSTRUCTION_ATOMS = frozenset(
         "state_developmental_disability_program",
     }
 )
+_PACKET_000569_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "block_grant_program",
+        "defense_nuclear_policy_collaboration",
+        "franchise_fee_payment",
+        "franchise_relationship_protection",
+        "franchise_statutory_relationship",
+        "petroleum_marketing_practice",
+        "program_grant_authority",
+        "state_grant_award",
+        "university_policy_research_consortium",
+        "university_research_consortium",
+    }
+)
+_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS = frozenset(
+    {
+        "department_business_assignment",
+        "department_expenditure_authorization",
+        "education_assistance_benefit",
+        "education_assistance_repayment",
+        "expenditure_account_estimate",
+        "federal_repayment_obligation",
+        "fund_transfer_authority",
+        "health_professional_education_assistance",
+        "treasury_payment_source",
+        "treasury_requisition_payment",
+    }
+)
 _LEGAL_SEMANTIC_ATOM_PHRASES: tuple[tuple[str, str], ...] = (
+    ("relationship of statutory provisions", "franchise_statutory_relationship"),
+    ("statutory provisions", "franchise_statutory_relationship"),
+    ("petroleum marketing practices", "petroleum_marketing_practice"),
+    ("petroleum marketing", "petroleum_marketing_practice"),
+    ("franchise protection", "franchise_relationship_protection"),
+    ("franchise relationship", "franchise_relationship_protection"),
+    ("payment or fee", "franchise_fee_payment"),
+    ("payments or fees", "franchise_fee_payment"),
+    ("franchise fee", "franchise_fee_payment"),
+    ("block grant program", "block_grant_program"),
+    ("make grants to states", "state_grant_award"),
+    ("make grants", "program_grant_authority"),
+    ("authorized to make grants", "program_grant_authority"),
+    (
+        "university-based defense nuclear policy collaboration program",
+        "defense_nuclear_policy_collaboration",
+    ),
+    (
+        "defense nuclear policy collaboration program",
+        "defense_nuclear_policy_collaboration",
+    ),
+    ("policy research consortium", "university_policy_research_consortium"),
+    (
+        "research consortium of institutions of higher education",
+        "university_research_consortium",
+    ),
+    ("institutions of higher education", "university_research_consortium"),
     ("administration of this chapter", "chapter_administration"),
     ("administration and enforcement", "administration_enforcement"),
     ("monitoring and enforcement", "monitoring_enforcement"),
@@ -14347,6 +14402,18 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         add("TDFOL.prover")
         add("knowledge_graphs.neo4j_compat")
         add("modal.frame_logic")
+    if normalized_atom in _PACKET_000641_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in _PACKET_000642_USCODE_RECONSTRUCTION_ATOMS:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
     if normalized_atom in _PACKET_000819_SEMANTIC_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
@@ -15540,7 +15607,14 @@ def _legal_semantic_atom_legal_ir_views(atom: str) -> List[str]:
         *_PACKET_000633_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000638_USCODE_RECONSTRUCTION_ATOMS,
         *_PACKET_000641_USCODE_RECONSTRUCTION_ATOMS,
+        *_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS,
     }:
+        add("CEC.native")
+        add("deontic.ir")
+        add("TDFOL.prover")
+        add("knowledge_graphs.neo4j_compat")
+        add("modal.frame_logic")
+    if normalized_atom in _PACKET_000569_USCODE_RECONSTRUCTION_ATOMS:
         add("CEC.native")
         add("deontic.ir")
         add("TDFOL.prover")
@@ -15724,6 +15798,10 @@ def _typed_decompiler_semantic_atom_target_families(
             add("frame")
             add("deontic")
             add("conditional_normative")
+        if normalized_atom in _PACKET_000642_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
         if normalized_atom in {
             "congressional_member_compensation_allowance",
             "national_military_park_resource",
@@ -15737,6 +15815,11 @@ def _typed_decompiler_semantic_atom_target_families(
             "uscode_capitol_visitor_center_administration",
         }:
             add("epistemic")
+        if normalized_atom in _PACKET_000569_USCODE_RECONSTRUCTION_ATOMS:
+            add("frame")
+            add("deontic")
+            add("conditional_normative")
+            add("temporal")
         if normalized_atom in {
             "administrative_coordination_duty",
             "flood_map_certification",
@@ -17854,6 +17937,17 @@ def _typed_decompiler_target_surface_profiles(
         add("uscode_report_to_congress_surface")
     if re.search(r"\b(?:relationship\s+to\s+other\s+law|shall\s+not\s+affect|not\s+affect\s+any\s+other\s+provision)\b", lowered):
         add("uscode_law_relationship_surface")
+    if re.search(
+        r"\b(?:relationship\s+of\s+statutory\s+provisions|petroleum\s+marketing\s+practices|"
+        r"franchise\s+protection|franchise\s+relationship)\b",
+        lowered,
+    ):
+        add("uscode_petroleum_franchise_relationship_surface")
+    if re.search(
+        r"\b(?:payment\s+or\s+fee|payments?\s+or\s+fees?|franchise\s+fee)\b",
+        lowered,
+    ) and re.search(r"\b(?:franchise|petroleum\s+marketing)\b", lowered):
+        add("uscode_franchise_payment_fee_surface")
     if re.search(r"\b(?:general\s+eligibility|eligibility\s+requirements?|may\s+be\s+issued\s+under\s+this\s+chapter\s+only\s+if)\b", lowered):
         add("uscode_eligibility_condition_surface")
     if re.search(r"\b(?:eligibility\s+for\s+services|congregate\s+services|professional\s+assessment\s+committee)\b", lowered):
@@ -17898,6 +17992,15 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_higher_education_program_surface")
+    if re.search(
+        r"\b(?:health\s+professionals?\s+educational\s+assistance|"
+        r"educational\s+assistance\s+program|scholarship\s+program|"
+        r"repayment\s+(?:of\s+amounts?|amounts?)|"
+        r"amounts?\s+paid\s+under\s+this\s+subchapter|"
+        r"pay\s+to\s+the\s+united\s+states)\b",
+        lowered,
+    ):
+        add("uscode_education_assistance_repayment_surface")
     if re.search(
         r"\b(?:education\s+sciences\s+reform|education\s+research|"
         r"education\s+statistics|research,\s+statistics,\s+evaluation,\s+"
@@ -18052,6 +18155,23 @@ def _typed_decompiler_target_surface_profiles(
     ):
         add("uscode_code_supplement_distribution_surface")
     if re.search(
+        r"\b(?:transfer\s+of\s+(?:weapons\s+activities\s+)?funds|"
+        r"transfer\s+funds(?:\s+made\s+available)?|"
+        r"funds\s+made\s+available\s+for\s+weapons\s+activities|"
+        r"manager\s+of\s+each\s+field\s+office)\b",
+        lowered,
+    ):
+        add("uscode_fund_transfer_authority_surface")
+    if re.search(
+        r"\b(?:expenditures?\s+(?:of|upon)\s+(?:the\s+)?department|"
+        r"business\s+assigned\s+by\s+law\s+to\s+(?:his|her|the)\s+department|"
+        r"requisitions?\s+for\s+(?:the\s+)?advance\s+or\s+payment\s+of\s+money|"
+        r"estimates?\s+or\s+accounts?\s+for\s+expenditures?|"
+        r"out\s+of\s+the\s+treasury)\b",
+        lowered,
+    ):
+        add("uscode_department_expenditure_authorization_surface")
+    if re.search(
         r"\b(?:enforcement\s+by\s+the\s+board|board\s+may\s+bring\s+a\s+civil\s+action|"
         r"enjoin\s+a\s+rail\s+carrier|rail\s+carrier\s+from\s+violating|"
         r"regulation\s+prescribed\s+or\s+order\s+or\s+certificate\s+issued)\b",
@@ -18087,6 +18207,20 @@ def _typed_decompiler_target_surface_profiles(
         lowered,
     ):
         add("uscode_coast_guard_child_care_surface")
+    if re.search(
+        r"\b(?:block\s+grant\s+program|make\s+grants\s+to\s+states?|"
+        r"(?:may\s+|authorized\s+to\s+|is\s+authorized\s+to\s+)?make\s+grants?\s+(?:to|under)|"
+        r"secretary\s+is\s+authorized\s+to\s+make\s+grants?)\b",
+        lowered,
+    ):
+        add("uscode_block_grant_program_surface")
+    if re.search(
+        r"\b(?:university[-\s]+based\s+defense\s+nuclear\s+policy\s+collaboration|"
+        r"policy\s+research\s+consortium|institutions?\s+of\s+higher\s+education|"
+        r"research\s+consortium)\b",
+        lowered,
+    ):
+        add("uscode_university_policy_research_consortium_surface")
     if re.search(
         r"\b(?:state\s+water\s+pollution\s+control\s+revolving\s+funds?|"
         r"water\s+pollution\s+control\s+revolving\s+fund|"
@@ -19082,6 +19216,32 @@ def _typed_decompiler_predicate_classes(
             }
         ):
             add("welfare")
+    if normalized_atoms.intersection(_PACKET_000642_USCODE_RECONSTRUCTION_ATOMS):
+        add("administration")
+        add("authorization")
+        add("duty")
+        add("program")
+        add("statutory")
+        if normalized_atoms.intersection(
+            {
+                "education_assistance_benefit",
+                "education_assistance_repayment",
+                "federal_repayment_obligation",
+                "health_professional_education_assistance",
+            }
+        ):
+            add("remedy")
+        if normalized_atoms.intersection(
+            {
+                "department_business_assignment",
+                "department_expenditure_authorization",
+                "expenditure_account_estimate",
+                "fund_transfer_authority",
+                "treasury_payment_source",
+                "treasury_requisition_payment",
+            }
+        ):
+            add("temporal")
     if normalized_atoms.intersection(
         {
             "annual_assessment_report",

@@ -1,8 +1,9 @@
-"""CID-bound qualification for causal autoencoder guidance.
+"""CID-bound qualification for causal autoencoder guidance (PLAT-060).
 
 The frozen modal autoencoder exposes a global, sample-free stable-feature
-export.  That export is useful advisory evidence, but it is not itself an
-intervention on canonical L1.  This module keeps those concepts separate:
+export.  That export is useful advisory / teacher-residual evidence, but it is
+not itself an intervention on canonical L1.  This module keeps those concepts
+separate:
 
 * the state is loaded read-only and verified by its pinned CID;
 * a guidance arm is supported only when an independently reviewed,
@@ -12,6 +13,12 @@ intervention on canonical L1.  This module keeps those concepts separate:
   canonical field path; and
 * absent that contract, every historical guided arm remains explicit terminal
   unsupported evidence and is excluded from semantic scoring schedules.
+
+Plateau-break role (PLAT-060): the autoencoder is a **teacher residual** source
+only.  It is never the production default constructor.  Guided AE cells are
+either ``scored_supported`` (when a reviewed causal L1 adapter is preregistered)
+or explicitly ``not_measured`` / ``terminal_unsupported`` with
+``schedule_for_semantic_scoring=false``.
 
 The repository currently has no reviewed causal L1 adapter.  Consequently the
 checked-in qualification artifact is intentionally
@@ -76,6 +83,7 @@ REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE: Final = (
 )
 CAUSAL_CHANGE_RECEIPT_INTERFACE: Final = "CausalGuidanceChangeReceipt@1"
 CAUSAL_MATRIX_PLANNER_INTERFACE: Final = "CausalGuidanceMatrixPlanner@1"
+TEACHER_RESIDUAL_INTERFACE: Final = "CausalAutoencoderTeacherResidual@1"
 UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER: Final = (
     "unavailable_no_reviewed_causal_l1_adapter"
 )
@@ -86,6 +94,10 @@ SEMANTIC_SCHEDULE_EXCLUDED: Final = "excluded_from_semantic_schedule"
 MATRIX_SCHEDULE_POLICY: Final = (
     "exclude_guided_without_reviewed_causal_l1_adapter"
 )
+TEACHER_RESIDUAL_ROLE: Final = "teacher_residual_only"
+TEACHER_RESIDUAL_PROMOTION_REQUIRES: Final = "reviewed_causal_l1_adapter"
+PLATEAU_BREAK_TASK_ID: Final = "PLAT-060"
+PLATEAU_BREAK_BOARD_NAMESPACE: Final = "semantic-roundtrip-plateau-break-v1"
 
 STABLE_EXPORT_SCHEMA: Final = (
     "legal-ir-stable-autoencoder-feature-export-v1"
@@ -1045,6 +1057,33 @@ def guided_scored_support_from_qualification(
     return TERMINAL_UNSUPPORTED
 
 
+def teacher_residual_disposition_from_qualification(
+    qualification: Mapping[str, object] | None,
+) -> dict[str, object]:
+    """Plateau-break teacher-residual summary for guided autoencoder arms.
+
+    PLAT-060 keeps the autoencoder off the production default path.  Guided
+    cells either become ``scored_supported`` teacher residuals (reviewed causal
+    L1 adapter present) or stay ``not_measured`` / ``terminal_unsupported``
+    with semantic scoring disabled.
+    """
+
+    support = guided_scored_support_from_qualification(qualification)
+    scored = support == SCORED_SUPPORTED
+    return {
+        "evaluation_status": (
+            SCORED_SUPPORTED if scored else EVALUATION_STATUS_NOT_MEASURED
+        ),
+        "interface": TEACHER_RESIDUAL_INTERFACE,
+        "production_default": False,
+        "promotion_requires": TEACHER_RESIDUAL_PROMOTION_REQUIRES,
+        "role": TEACHER_RESIDUAL_ROLE,
+        "schedule_for_semantic_scoring": scored,
+        "scored_support": support,
+        "task_id": PLATEAU_BREAK_TASK_ID,
+    }
+
+
 def plan_guided_semantic_schedule(
     candidates: Sequence[object],
     qualification: Mapping[str, object] | None = None,
@@ -1191,15 +1230,20 @@ def build_causal_guidance_qualification(
     evidence = StableExportEvidence.from_guidance(guidance)
     srt021_cid, coordinates = _guided_coordinate_evidence(root)
     arm_ids = [str(item["arm_id"]) for item in coordinates]
+    unavailable_qualification = {
+        "status": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
+        "guided_coordinates": {"disposition": TERMINAL_UNSUPPORTED},
+        "causal_contract": {"preregistered": False},
+    }
     schedule_plan = plan_guided_semantic_schedule(
         arm_ids,
-        {
-            "status": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
-            "guided_coordinates": {"disposition": TERMINAL_UNSUPPORTED},
-            "causal_contract": {"preregistered": False},
-        },
+        unavailable_qualification,
+    )
+    teacher_residual = teacher_residual_disposition_from_qualification(
+        unavailable_qualification
     )
     payload: dict[str, object] = {
+        "board_namespace": PLATEAU_BREAK_BOARD_NAMESPACE,
         "causal_contract": {
             "advisory_diagnostics_are_causal_guidance": False,
             "missing": list(MISSING_CAUSAL_CONTRACT_FIELDS),
@@ -1271,6 +1315,8 @@ def build_causal_guidance_qualification(
             "sha256": PINNED_AUTOENCODER_STATE_SHA256,
         },
         "status": UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER,
+        "task_id": PLATEAU_BREAK_TASK_ID,
+        "teacher_residual": teacher_residual,
     }
     payload["qualification_cid"] = cid_for_dag_json(payload)
     return payload
@@ -1346,11 +1392,16 @@ __all__ = [
     "MATRIX_SCHEDULE_POLICY",
     "MISSING_CAUSAL_CONTRACT_FIELDS",
     "PINNED_SRT021_MANIFEST_CID",
+    "PLATEAU_BREAK_BOARD_NAMESPACE",
+    "PLATEAU_BREAK_TASK_ID",
     "REVIEWED_CAUSAL_L1_CONTRACT_INTERFACE",
     "SCORED_SUPPORTED",
     "SEMANTIC_SCHEDULE_EXCLUDED",
     "SOURCE_GROUNDING_RULE",
     "STABLE_EXPORT_SCHEMA",
+    "TEACHER_RESIDUAL_INTERFACE",
+    "TEACHER_RESIDUAL_PROMOTION_REQUIRES",
+    "TEACHER_RESIDUAL_ROLE",
     "TERMINAL_UNSUPPORTED",
     "UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER",
     "CausalAdapterOutput",
@@ -1369,5 +1420,6 @@ __all__ = [
     "guided_scored_support_from_qualification",
     "load_causal_guidance_qualification",
     "plan_guided_semantic_schedule",
+    "teacher_residual_disposition_from_qualification",
     "validate_causal_guidance_qualification",
 ]

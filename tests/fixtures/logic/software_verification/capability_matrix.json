@@ -1,0 +1,1880 @@
+{
+  "schema_version": "logic-capability-matrix/v1",
+  "interface": "LogicCapabilityMatrix@1",
+  "description": "Repository-relative, environment-neutral census of reviewed logic and software-verification capabilities.",
+  "scope": {
+    "objective": "LFV-G010",
+    "layers": [
+      "datasets",
+      "supervisor",
+      "cross_repository"
+    ],
+    "required_categories": [
+      "logic_family",
+      "compiler",
+      "provider",
+      "installer",
+      "probe",
+      "adapter",
+      "conformance_suite",
+      "authority_role",
+      "public_access_path"
+    ],
+    "path_root": "superproject",
+    "environment_policy": "Repository declarations and tests are durable evidence. External package, model, circuit, and executable installation is always reported by a bounded runtime probe, never inferred from source presence."
+  },
+  "state_definitions": {
+    "declared": "The capability has an explicit repository declaration in this matrix.",
+    "discoverable": "A registry, import, probe, or public route can locate the capability without installing it.",
+    "installed": "One of not_applicable, declared_only, runtime_probed, or installed; runtime_probed deliberately avoids a machine-specific snapshot.",
+    "smoke_tested": "At least one checked-in test exercises the capability surface.",
+    "translation_conformant": "Checked-in evidence exercises a typed or cross-family translation contract.",
+    "reconstruction_capable": "The surface can request an independent checker or kernel reconstruction; this does not claim that a checker is installed.",
+    "shadow": "The surface is observational or advisory and cannot affect an authoritative result.",
+    "canary": "The surface has an explicitly bounded opt-in diagnostic route and cannot claim proof success.",
+    "authoritative_for": "A closed list of claim classes for which the surface may emit direct evidence; an empty list means no authority."
+  },
+  "authority_claims": {
+    "api_compatibility": "Exact reviewed public API behavior.",
+    "attestation_binding": "Binding between an attestation and the exact statement or receipt it names, not the truth of upstream translation.",
+    "bounded_solver_outcome": "A solver outcome under the recorded formula, assumptions, tool identity, and resource bounds.",
+    "capability_health": "Availability or health metadata only.",
+    "conformance_result": "The result of the named executable conformance suite.",
+    "kernel_checked_proof": "A proof artifact accepted by the named trusted kernel under the recorded environment.",
+    "source_translation": "A deterministic, source-bound translation receipt for the supported fragment."
+  },
+  "entries": [
+    {
+      "id": "adapter.cross_logic_bridges",
+      "category": "adapter",
+      "component": "TDFOL/CEC, grammar, ShadowProver, and symbolic-FOL bridges",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/symbolic_fol_bridge.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/tdfol_cec_bridge.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/tdfol_grammar_bridge.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/tdfol_shadowprover_bridge.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "source_translation"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_bridge_layer.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_bridge_layer.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Bridge output has translation authority only for its reviewed fragment; proof-gate status remains separate."
+    },
+    {
+      "id": "adapter.domain_formalization",
+      "category": "adapter",
+      "component": "Legal, Security, and Intent IR adapters into the shared formalization contract",
+      "layer": "datasets",
+      "families": [
+        "intent_ir",
+        "legal_ir",
+        "security_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/intent_ir/formalize/compiler.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/legal_ir/adapter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/formalization_adapter.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "source_translation"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "The cross-domain suite requires immutable, source-grounded artifacts and fail-closed authority."
+    },
+    {
+      "id": "adapter.external_atp_smt",
+      "category": "adapter",
+      "component": "CEC ATP adapters and external SMT bridges",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/CEC/provers/e_prover_adapter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/CEC/provers/vampire_adapter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/CEC/provers/z3_adapter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/smt/cvc5_prover_bridge.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/smt/z3_prover_bridge.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "bounded_solver_outcome"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/CEC/provers/test_vampire_eprover.py",
+          "ipfs_datasets_py/tests/unit_tests/logic/CEC/provers/test_z3_adapter.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Source presence does not imply that E, Vampire, Z3, or CVC5 is installed."
+    },
+    {
+      "id": "adapter.itp_frontends",
+      "category": "adapter",
+      "component": "Lean, Coq/Rocq, and Isabelle goal frontends",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/frontends/coq.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/frontends/isabelle.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/frontends/lean.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_itp_frontends.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_itp_frontends.py"
+        ],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "A frontend can prepare reconstruction input but is never itself the kernel authority."
+    },
+    {
+      "id": "adapter.supervisor_ipfs_datasets",
+      "category": "adapter",
+      "component": "Supervisor adapter for the datasets Hammer and registry providers",
+      "layer": "cross_repository",
+      "families": [
+        "cec_dcec",
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/integrations/ipfs_datasets_logic_provider.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_ipfs_datasets_logic_provider.py"
+        ],
+        "translation_conformance": [
+          "test/api/test_agent_supervisor_ipfs_datasets_logic_provider.py"
+        ],
+        "reconstruction": [
+          "test/api/test_agent_supervisor_ipfs_datasets_logic_provider.py"
+        ]
+      },
+      "access": [],
+      "notes": "The adapter preserves provider evidence and cannot promote an untrusted result."
+    },
+    {
+      "id": "adapter.supervisor_program_ast",
+      "category": "adapter",
+      "component": "Supervisor program-AST and code-security fact adapters",
+      "layer": "supervisor",
+      "families": [
+        "intent_ir",
+        "security_ir"
+      ],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/code_security_facts.py",
+        "ipfs_accelerate_py/agent_supervisor/program_ast_adapters.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_code_security_facts.py",
+          "test/api/test_agent_supervisor_program_ast_adapters_mixed.py",
+          "test/api/test_agent_supervisor_program_ast_adapters_typescript.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Extracted facts remain source-scoped and do not grant proof or execution authority."
+    },
+    {
+      "id": "authority.attestation",
+      "category": "authority_role",
+      "component": "Attestation and simulated ZKP binding",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/zkp/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": false,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "attestation_binding"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Attestation authority never establishes the correctness of an upstream source translation."
+    },
+    {
+      "id": "authority.capability_health",
+      "category": "authority_role",
+      "component": "Capability and dependency health evidence",
+      "layer": "cross_repository",
+      "families": [],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_capabilities.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": false,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "capability_health"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_formal_verification_capabilities.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Availability, discovery, and health are explicitly non-proof evidence."
+    },
+    {
+      "id": "authority.kernel_reconstruction",
+      "category": "authority_role",
+      "component": "Trusted kernel reconstruction boundary",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/reconstruction.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": false,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "kernel_checked_proof"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "Authority exists only for a successful kernel check bound to exact inputs and environment."
+    },
+    {
+      "id": "authority.proposal_candidate",
+      "category": "authority_role",
+      "component": "Learned, neural, and shadow proposal output",
+      "layer": "cross_repository",
+      "families": [
+        "modal"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/advisor.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/modal/leanstral.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": false,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": true,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Candidates require deterministic validation and, where applicable, independent proof checking."
+    },
+    {
+      "id": "authority.solver_evidence",
+      "category": "authority_role",
+      "component": "Bounded solver evidence",
+      "layer": "datasets",
+      "families": [
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": false,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "bounded_solver_outcome"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/backends/test_registry.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "A solver result is bounded evidence, not an unchecked claim of kernel verification."
+    },
+    {
+      "id": "compiler.backend_smt",
+      "category": "compiler",
+      "component": "Shared requests to Z3 and CVC5 SMT-LIB",
+      "layer": "datasets",
+      "families": [
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/backends/cvc5/compiler.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/backends/z3/compiler.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "source_translation"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/backends/test_registry.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/unit/logic/backends/test_registry.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Compilation is deterministic and separate from executable availability."
+    },
+    {
+      "id": "compiler.formalization",
+      "category": "compiler",
+      "component": "Shared Legal, Security, and Intent formalization compiler protocol",
+      "layer": "datasets",
+      "families": [
+        "intent_ir",
+        "legal_ir",
+        "security_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/formalization/compiler.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "source_translation"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "The protocol preserves source maps, declaration identity, diagnostics, and unsupported semantics."
+    },
+    {
+      "id": "compiler.hammer_translation",
+      "category": "compiler",
+      "component": "Typed Hammer translation to TPTP and SMT-LIB",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/smtlib.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/tptp.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/translation.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "source_translation"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/hammers/test_translation.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/unit_tests/logic/hammers/test_translation.py"
+        ],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "Loss, unsupported constructs, and translation identity are explicit inputs to reconstruction."
+    },
+    {
+      "id": "compiler.legacy_family_converters",
+      "category": "compiler",
+      "component": "FOL, deontic, and TDFOL compatibility converters",
+      "layer": "datasets",
+      "families": [
+        "deontic",
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/TDFOL/tdfol_converter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/deontic/converter.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/fol/converter.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Compatibility coverage is not equivalent to the newer typed translation-conformance contract."
+    },
+    {
+      "id": "compiler.modal",
+      "category": "compiler",
+      "component": "Deterministic modal compiler",
+      "layer": "datasets",
+      "families": [
+        "modal"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/modal/compiler.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "The v1 test freezes its configuration and payload surface; full cross-family conformance is tracked separately."
+    },
+    {
+      "id": "conformance.api_v1",
+      "category": "conformance_suite",
+      "component": "Reviewed logic API v1 compatibility suite",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "deontic",
+        "flogic",
+        "fol",
+        "modal",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/tests/fixtures/logic/api_v1/manifest.json",
+        "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "api_compatibility",
+          "conformance_result"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Freezes public imports, canonical payloads, CLI/MCP behavior, lazy imports, and authority meanings."
+    },
+    {
+      "id": "conformance.capability_probes",
+      "category": "conformance_suite",
+      "component": "Datasets and supervisor capability-probe contracts",
+      "layer": "cross_repository",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/tests/unit/benchmarks/logic_pipeline/test_capabilities.py",
+        "ipfs_datasets_py/tests/unit_tests/logic/hammers/test_environment_probe.py",
+        "test/api/test_agent_supervisor_formal_verification_capabilities.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "conformance_result"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/benchmarks/logic_pipeline/test_capabilities.py",
+          "ipfs_datasets_py/tests/unit_tests/logic/hammers/test_environment_probe.py",
+          "test/api/test_agent_supervisor_formal_verification_capabilities.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Covers completeness, bounded discovery, explicit unavailable reasons, and non-proof health semantics."
+    },
+    {
+      "id": "conformance.hammer",
+      "category": "conformance_suite",
+      "component": "Hammer end-to-end, portfolio, and reconstruction suites",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py",
+        "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py",
+        "ipfs_datasets_py/tests/integration/logic/hammers/test_solver_portfolio.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "conformance_result"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py"
+        ],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "Tests preserve the difference between raw solver verdicts and independently reconstructed proof."
+    },
+    {
+      "id": "conformance.ir_families",
+      "category": "conformance_suite",
+      "component": "Legal, Security, and Intent IR family conformance",
+      "layer": "datasets",
+      "families": [
+        "intent_ir",
+        "legal_ir",
+        "security_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "conformance_result"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Shared contracts remain source-grounded and preserve typed authority across domains."
+    },
+    {
+      "id": "conformance.provider_protocol",
+      "category": "conformance_suite",
+      "component": "Supervisor provider protocol and isolation suite",
+      "layer": "supervisor",
+      "families": [],
+      "repository_paths": [
+        "test/api/test_agent_supervisor_formal_verification_provider.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "conformance_result"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ]
+      },
+      "access": [],
+      "notes": "Exercises capability, translate, prove, reconstruct, verify, attest, cancellation, limits, and isolation."
+    },
+    {
+      "id": "family.cec_dcec",
+      "category": "logic_family",
+      "component": "CEC and DCEC event-calculus family",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/CEC/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Includes native inference plus optional external ATP adapters."
+    },
+    {
+      "id": "family.deontic",
+      "category": "logic_family",
+      "component": "Deontic and temporal-deontic logic",
+      "layer": "datasets",
+      "families": [
+        "deontic"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/deontic/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Public converter and typed operators are frozen by LogicAPICompatibility@1."
+    },
+    {
+      "id": "family.flogic",
+      "category": "logic_family",
+      "component": "Frame Logic and ErgoAI compatibility family",
+      "layer": "datasets",
+      "families": [
+        "flogic"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/flogic/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Operation success is not automatically theorem-proof authority; simulation mode is explicit."
+    },
+    {
+      "id": "family.fol",
+      "category": "logic_family",
+      "component": "First-order logic",
+      "layer": "datasets",
+      "families": [
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/fol/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Canonical public converter family; proof authority depends on the selected backend."
+    },
+    {
+      "id": "family.intent_ir",
+      "category": "logic_family",
+      "component": "Intent IR",
+      "layer": "datasets",
+      "families": [
+        "intent_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/intent_ir/schema.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Conformance covers immutable declarations, source references, effects, and verification intent."
+    },
+    {
+      "id": "family.legal_ir",
+      "category": "logic_family",
+      "component": "Legal and modal IR",
+      "layer": "datasets",
+      "families": [
+        "legal_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/legal_ir/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Source-grounded legal declarations lower through the shared formalization contract."
+    },
+    {
+      "id": "family.modal",
+      "category": "logic_family",
+      "component": "Modal logic",
+      "layer": "datasets",
+      "families": [
+        "modal"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/modal/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Deterministic compiler and learned proposal surfaces have separate maturity and authority."
+    },
+    {
+      "id": "family.security_ir",
+      "category": "logic_family",
+      "component": "Security IR",
+      "layer": "datasets",
+      "families": [
+        "security_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/security_ir/model.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/test_ir_family_conformance.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Threat assumptions, policies, claims, and reviewed sources retain identity through formalization."
+    },
+    {
+      "id": "family.tdfol",
+      "category": "logic_family",
+      "component": "Temporal deontic first-order logic",
+      "layer": "datasets",
+      "families": [
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/TDFOL/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Native formula, parser, knowledge-base, prover, and proof-record family."
+    },
+    {
+      "id": "installer.lazy_external_provers",
+      "category": "installer",
+      "component": "Opt-in lazy external-prover installer",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/lazy_installer.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Disabled by default, opt-in, bounded to one attempt, and never invoked by census tests."
+    },
+    {
+      "id": "installer.prover_cli",
+      "category": "installer",
+      "component": "Explicit prover-installer CLI wrapper",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/prover_installer.py",
+        "ipfs_datasets_py/pyproject.toml"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Installation is an explicit operator action and is never part of discovery or import."
+    },
+    {
+      "id": "probe.hammer_environment",
+      "category": "probe",
+      "component": "Offline ITP/ATP/SMT environment probe",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/scripts/ops/logic/probe_itp_hammer_environment.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "capability_health"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/hammers/test_environment_probe.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Never installs or runs proof search; version metadata calls are bounded and optional."
+    },
+    {
+      "id": "probe.logic_pipeline",
+      "category": "probe",
+      "component": "Logic-pipeline provider capability probe",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/benchmarks/logic_pipeline/capabilities.py",
+        "ipfs_datasets_py/benchmarks/logic_pipeline/capability_reprobe.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "capability_health"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/benchmarks/logic_pipeline/test_capability_reprobe.py",
+          "ipfs_datasets_py/tests/unit/benchmarks/logic_pipeline/test_capabilities.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Records requested and effective identities, provenance, and explicit unavailable or degraded reasons."
+    },
+    {
+      "id": "probe.mcp_capabilities",
+      "category": "probe",
+      "component": "MCP logic capability and health tools",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/logic_tools/logic_capabilities_tool.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "capability_health"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Transport success remains distinct from provider availability and proof success."
+    },
+    {
+      "id": "probe.supervisor",
+      "category": "probe",
+      "component": "Bounded supervisor formal-verification capability probe and opt-in inference canary",
+      "layer": "supervisor",
+      "families": [],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_capabilities.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": true,
+        "authoritative_for": [
+          "capability_health"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_formal_verification_capabilities.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "The canary is disabled by default, independently bounded, diagnostic-only, and hard-coded not to claim proof."
+    },
+    {
+      "id": "provider.backend_registry",
+      "category": "provider",
+      "component": "Side-effect-free proof backend registry",
+      "layer": "datasets",
+      "families": [
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/backends/registry.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "bounded_solver_outcome"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/backends/test_registry.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/unit/logic/backends/test_registry.py"
+        ],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Registration and filtering are declaration-only; availability is checked explicitly before execution."
+    },
+    {
+      "id": "provider.cec_tdfol_native",
+      "category": "provider",
+      "component": "Native CEC/DCEC and TDFOL proof providers",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/CEC/native/prover_core.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/TDFOL/tdfol_prover.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "bounded_solver_outcome"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Native results retain their exact method, assumptions, and status; they are not kernel reconstruction."
+    },
+    {
+      "id": "provider.external_router",
+      "category": "provider",
+      "component": "Deterministic external-prover discovery and routing",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/deterministic_router.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/prover_router.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "Routing never installs a provider and cannot upgrade the authority of the selected result."
+    },
+    {
+      "id": "provider.flogic",
+      "category": "provider",
+      "component": "Frame Logic and optional ErgoAI provider",
+      "layer": "datasets",
+      "families": [
+        "flogic"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/flogic/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "bounded_solver_outcome"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Optional provider absence and simulation mode are explicit."
+    },
+    {
+      "id": "provider.hammer",
+      "category": "provider",
+      "component": "Typed Hammer portfolio",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/portfolio.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": true,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py"
+        ],
+        "translation_conformance": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_end_to_end_hammer.py"
+        ],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "The portfolio emits candidates and evidence; only a successful independent reconstruction may claim kernel authority."
+    },
+    {
+      "id": "provider.itp_kernels",
+      "category": "provider",
+      "component": "Lean, Coq/Rocq, and Isabelle reconstruction providers",
+      "layer": "datasets",
+      "families": [
+        "fol",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/reconstructors/coq.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/reconstructors/isabelle.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/reconstructors/lean.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "kernel_checked_proof"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "ipfs_datasets_py/tests/integration/logic/hammers/test_reconstruction.py"
+        ]
+      },
+      "access": [],
+      "notes": "Provider declaration is distinct from local kernel installation and successful reconstruction."
+    },
+    {
+      "id": "provider.knowledge_graphs",
+      "category": "provider",
+      "component": "Logic knowledge-graph projection and reasoning provider",
+      "layer": "datasets",
+      "families": [
+        "legal_ir"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/knowledge_graphs/__init__.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/knowledge_graphs/legal_roles.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Graph projections and RAG checks are supporting evidence, not theorem-proof authority."
+    },
+    {
+      "id": "provider.learned_proposals",
+      "category": "provider",
+      "component": "Leanstral, SymbolicAI, and learned Hammer proposal providers",
+      "layer": "datasets",
+      "families": [
+        "modal"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/external_provers/neural/symbolicai_prover_bridge.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/hammers/learned_selector.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/modal/leanstral.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": true,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/modal/test_leanstral_shadow_canary.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "All outputs are candidates until deterministic validation and independent checking."
+    },
+    {
+      "id": "provider.supervisor_protocol",
+      "category": "provider",
+      "component": "Versioned in-process and subprocess proof-provider protocol",
+      "layer": "supervisor",
+      "families": [],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_provider.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ]
+      },
+      "access": [],
+      "notes": "Capability discovery is non-executing; transport responses cannot self-promote authority."
+    },
+    {
+      "id": "provider.zkp_backends",
+      "category": "provider",
+      "component": "Simulated, Groth16, and ProveKit attestation backends",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/backend_protocol.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/groth16.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/provekit.py",
+        "ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/simulated.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "attestation_binding"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py",
+          "ipfs_datasets_py/tests/unit/logic/zkp/test_legal_constraint_attestation.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [],
+      "notes": "Runtime health independently checks binaries and circuit artifacts; even production attestation cannot repair an invalid source translation."
+    },
+    {
+      "id": "public.cli_logic",
+      "category": "public_access_path",
+      "component": "Logic command parser and runner",
+      "layer": "datasets",
+      "families": [
+        "deontic",
+        "fol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/cli.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [
+        {
+          "channel": "cli",
+          "target": "ipfs-datasets logic",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/cli.py",
+          "symbol": "main"
+        }
+      ],
+      "notes": "Command exit status and domain proof status remain distinct."
+    },
+    {
+      "id": "public.cli_prover_installer",
+      "category": "public_access_path",
+      "component": "Explicit external-prover installation command",
+      "layer": "datasets",
+      "families": [],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/prover_installer.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "runtime_probed",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit_tests/logic/external_provers/test_lazy_native_solver_installation.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [
+        {
+          "channel": "cli",
+          "target": "ipfs-datasets-install-provers",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/integration/bridges/prover_installer.py",
+          "symbol": "main"
+        }
+      ],
+      "notes": "This route is intentionally separate from all discovery paths."
+    },
+    {
+      "id": "public.mcp_logic",
+      "category": "public_access_path",
+      "component": "MCP logic capability, health, conversion, and proof tools",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "deontic",
+        "flogic",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/logic_tools/__init__.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [
+        {
+          "channel": "mcp",
+          "target": "ipfs_datasets_py.mcp_server.tools.logic_tools:logic_capabilities",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/logic_tools/__init__.py",
+          "symbol": "logic_capabilities"
+        }
+      ],
+      "notes": "The reviewed tool list includes capability and health operations and preserves explicit unavailability."
+    },
+    {
+      "id": "public.python_logic_api",
+      "category": "public_access_path",
+      "component": "Stable Python logic API",
+      "layer": "datasets",
+      "families": [
+        "cec_dcec",
+        "deontic",
+        "flogic",
+        "fol",
+        "modal",
+        "tdfol"
+      ],
+      "repository_paths": [
+        "ipfs_datasets_py/ipfs_datasets_py/logic/api.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": false,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": [
+          "api_compatibility"
+        ]
+      },
+      "evidence": {
+        "smoke_tests": [
+          "ipfs_datasets_py/tests/unit/logic/test_logic_api_v1_compatibility.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": []
+      },
+      "access": [
+        {
+          "channel": "python",
+          "target": "ipfs_datasets_py.logic.api:ProofResult",
+          "path": "ipfs_datasets_py/ipfs_datasets_py/logic/api.py",
+          "symbol": "ProofResult"
+        }
+      ],
+      "notes": "The import is lazy, quiet, and side-effect-free under the v1 compatibility contract."
+    },
+    {
+      "id": "public.supervisor_provider",
+      "category": "public_access_path",
+      "component": "Supervisor proof-provider protocol and registry",
+      "layer": "supervisor",
+      "families": [],
+      "repository_paths": [
+        "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_provider.py"
+      ],
+      "states": {
+        "declared": true,
+        "discoverable": true,
+        "installed": "not_applicable",
+        "smoke_tested": true,
+        "translation_conformant": false,
+        "reconstruction_capable": true,
+        "shadow": false,
+        "canary": false,
+        "authoritative_for": []
+      },
+      "evidence": {
+        "smoke_tests": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ],
+        "translation_conformance": [],
+        "reconstruction": [
+          "test/api/test_agent_supervisor_formal_verification_provider.py"
+        ]
+      },
+      "access": [
+        {
+          "channel": "provider_protocol",
+          "target": "ipfs_accelerate_py.agent_supervisor.proof.formal_verification_provider:ProofProvider",
+          "path": "ipfs_accelerate_py/agent_supervisor/proof/formal_verification_provider.py",
+          "symbol": "ProofProvider"
+        }
+      ],
+      "notes": "Entry-point discovery does not load optional providers or execute proof operations."
+    }
+  ],
+  "documentation_anchors": [
+    "## Contract and scope",
+    "## Maturity states",
+    "## Capability census",
+    "## Runtime probes and installation",
+    "## Proof authority",
+    "## Public access paths",
+    "## Keeping the census current"
+  ]
+}

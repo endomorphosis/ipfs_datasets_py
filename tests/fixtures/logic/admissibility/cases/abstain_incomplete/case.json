@@ -1,0 +1,20 @@
+{
+  "case_id": "abstain_incomplete",
+  "constraints": [],
+  "description": "Incomplete/unsupported Intent with no supporting constraints \u2192 abstain.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent"
+  ],
+  "expected_reason_codes": [
+    "missing_evidence",
+    "semantics_unsupported"
+  ],
+  "expected_status": "abstain",
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/incomplete_unsupported_semantics.json",
+  "source_formal_case_id": "incomplete_unsupported_semantics",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/incomplete_unsupported_semantics.json",
+  "stratum": "abstain"
+}

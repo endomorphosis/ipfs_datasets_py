@@ -1,0 +1,143 @@
+{
+  "actions": [
+    {
+      "action_id": "action:report",
+      "actor": "agent",
+      "effect_ids": [
+        "statement:effect"
+      ],
+      "grounding": "grounded",
+      "input_refs": [],
+      "object_refs": [
+        "status_report"
+      ],
+      "output_refs": [],
+      "precondition_ids": [
+        "statement:precondition"
+      ],
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "tool_refs": [],
+      "verb": "produce_report",
+      "verification_ids": [
+        "statement:invariant",
+        "statement:verify"
+      ]
+    }
+  ],
+  "control_edges": [],
+  "document_id": "intent:admissibility:benign_skill",
+  "entry_action_ids": [
+    "action:report"
+  ],
+  "intent_kind": "procedure",
+  "schema_version": "intent-ir/v1",
+  "sources": [
+    {
+      "container_sha256": "a30826f2ed5d3329e3c38c1a97091b8454dbc8f84341c98fcdc23b5932ae482e",
+      "container_uri": "fixture://intent_ir/admissibility/container/benign_skill",
+      "content_cid": "",
+      "content_sha256": "2359172789ba7c6dc8ee74e37be5f8ce03601a1d9bf74c4491edeb32b519a3ba",
+      "license_expression": "CC0-1.0",
+      "ref_id": "source:benign_skill",
+      "review_status": "trusted_fixture",
+      "source_id": "fixture.skill.benign_skill",
+      "source_revision": "fixture-v1",
+      "source_uri": "fixture://intent_ir/admissibility/benign_skill",
+      "span": null
+    }
+  ],
+  "statements": [
+    {
+      "arguments": [
+        "status_report"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "effect",
+      "modality": "asserted",
+      "normalized_text": "A bounded status report is produced",
+      "predicate": "produced",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "statement_id": "statement:effect"
+    },
+    {
+      "arguments": [
+        "status_report"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "goal",
+      "modality": "intended",
+      "normalized_text": "Produce a bounded offline status report",
+      "predicate": "produce",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "statement_id": "statement:goal"
+    },
+    {
+      "arguments": [
+        "execution"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "invariant",
+      "modality": "required",
+      "normalized_text": "No external network contact is made",
+      "predicate": "offline_only",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "statement_id": "statement:invariant"
+    },
+    {
+      "arguments": [
+        "report_inputs"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "precondition",
+      "modality": "required",
+      "normalized_text": "Local report inputs are available",
+      "predicate": "available",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "statement_id": "statement:precondition"
+    },
+    {
+      "arguments": [
+        "status_report"
+      ],
+      "confidence": 1.0,
+      "grounding": "grounded",
+      "kind": "verification",
+      "modality": "required",
+      "normalized_text": "The report is present and non-empty",
+      "predicate": "nonempty",
+      "review_status": "trusted_fixture",
+      "source_ref_ids": [
+        "source:benign_skill"
+      ],
+      "statement_id": "statement:verify"
+    }
+  ],
+  "tags": [
+    "admissibility",
+    "benign",
+    "fixture",
+    "skill"
+  ],
+  "terminal_action_ids": [
+    "action:report"
+  ],
+  "title": "Benign offline status report skill"
+}

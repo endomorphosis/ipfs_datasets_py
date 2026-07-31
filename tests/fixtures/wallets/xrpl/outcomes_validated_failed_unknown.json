@@ -1,0 +1,95 @@
+{
+  "schema": "wallet_processor_migration/xrpl-outcomes@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G200",
+  "network": "xrpl-mainnet",
+  "notes": "failed / unvalidated / unknown remain distinct; only validated success is final.",
+  "cases": [
+    {
+      "id": "validated_success",
+      "entry": {
+        "validated": true,
+        "ledger_index": 85000401,
+        "tx": {
+          "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+          "TransactionType": "Payment",
+          "Amount": "1000",
+          "Fee": "12",
+          "Sequence": 70,
+          "hash": "OSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO1"
+        },
+        "meta": {
+          "TransactionResult": "tesSUCCESS",
+          "delivered_amount": "1000"
+        }
+      },
+      "expect_outcome": "validated_success",
+      "expect_finality": "finalized",
+      "expect_status": "succeeded"
+    },
+    {
+      "id": "validated_failed_tec",
+      "entry": {
+        "validated": true,
+        "ledger_index": 85000402,
+        "tx": {
+          "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+          "TransactionType": "Payment",
+          "Amount": "1000",
+          "Fee": "12",
+          "Sequence": 71,
+          "hash": "OSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO2"
+        },
+        "meta": {
+          "TransactionResult": "tecUNFUNDED_PAYMENT"
+        }
+      },
+      "expect_outcome": "validated_failed",
+      "expect_finality": "failed",
+      "expect_status": "failed"
+    },
+    {
+      "id": "unvalidated",
+      "entry": {
+        "validated": false,
+        "tx": {
+          "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+          "TransactionType": "Payment",
+          "Amount": "1000",
+          "Fee": "12",
+          "Sequence": 72,
+          "hash": "OSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO3"
+        },
+        "meta": {
+          "TransactionResult": "tesSUCCESS"
+        }
+      },
+      "expect_outcome": "unvalidated",
+      "expect_finality": "pending",
+      "expect_status": "unknown"
+    },
+    {
+      "id": "unknown_missing_result",
+      "entry": {
+        "validated": true,
+        "ledger_index": 85000404,
+        "tx": {
+          "Account": "rhzFipyh5UsycxUjaPzR1RkTJZp9VybKAz",
+          "Destination": "rUFiTVw3LSgEqrHV7yPL4nZ1n6f6QgjjfU",
+          "TransactionType": "Payment",
+          "Amount": "1000",
+          "Fee": "12",
+          "Sequence": 73,
+          "hash": "OSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSOSO4"
+        },
+        "meta": {}
+      },
+      "expect_outcome": "unknown",
+      "expect_finality": "unknown",
+      "expect_status": "unknown"
+    }
+  ]
+}

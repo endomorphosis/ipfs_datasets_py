@@ -54,7 +54,7 @@ PYTHONPATH=ipfs_accelerate_py:. python -m \
 ```
 
 `launch --execute` replaces the foreground process with the supported
-`ipfs_accelerate_py.agent_supervisor.bundle_supervisor` entry point and passes
+`ipfs_accelerate_py.agent_supervisor.objectives.bundle_supervisor` entry point and passes
 `--start --implement`. Stop it with `SIGTERM` or `Ctrl-C`; the dynamic
 scheduler then stops owned children and releases their fenced leases.
 

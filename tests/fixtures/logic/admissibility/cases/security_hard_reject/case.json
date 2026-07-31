@@ -1,0 +1,35 @@
+{
+  "case_id": "security_hard_reject",
+  "constraints": [
+    {
+      "domain": "legal",
+      "family": "legal",
+      "name": "legal",
+      "role": "grant"
+    },
+    {
+      "domain": "security",
+      "family": "security",
+      "name": "security",
+      "role": "prohibition"
+    }
+  ],
+  "description": "Security prohibition on sensitive resource \u2192 hard reject.",
+  "envelope_profile_id": "legal-strict",
+  "envelopes": [
+    "intent",
+    "legal",
+    "security"
+  ],
+  "expected_reason_codes": [
+    "constraint_contradiction",
+    "security_hard_constraint"
+  ],
+  "expected_status": "reject",
+  "profile_config_digest": "93b0b9fb8844c30398d779f4502a113f1bd6ceb3bd722249f2b797b2b8d17cf5",
+  "profile_id": "legal-strict",
+  "source_formal_artifact_path": "tests/fixtures/intent_ir/admissibility/formal_artifacts/security_sensitive_resource.json",
+  "source_formal_case_id": "security_sensitive_resource",
+  "source_intent_ir_path": "tests/fixtures/intent_ir/admissibility/intents/security_sensitive_resource.json",
+  "stratum": "security_reject"
+}

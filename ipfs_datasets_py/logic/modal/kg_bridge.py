@@ -744,6 +744,7 @@ def _required_legal_projection_views(
         or predicate.startswith(_FRAME_PREDICATE_PREFIXES)
         for predicate in predicates
     )
+    has_ontology_term = any("ontology_term" in predicate for predicate in predicates)
     required: List[str] = []
     if has_source_id:
         required.append("document_scope")
@@ -757,6 +758,8 @@ def _required_legal_projection_views(
         required.append("legal_ir_view_alignment")
     if has_frame_link:
         required.append("frame_link")
+    if has_ontology_term:
+        required.append("ontology_term")
     return sorted(set(required))
 
 

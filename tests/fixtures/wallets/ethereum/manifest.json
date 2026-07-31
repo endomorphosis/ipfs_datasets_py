@@ -1,0 +1,47 @@
+{
+  "schema": "wallet_processor_migration/chain-fixture-manifest@1",
+  "schema_version": 1,
+  "goal_id": "WALPROC-G300",
+  "task_id": "WALPROC-018",
+  "chain_id": "ethereum",
+  "generated_at": "2026-07-29T00:00:00Z",
+  "purpose": "Frozen offline vectors for Ethereum identity, JSON-RPC ingestion, normalization, token logs, finality, and reorganization replay.",
+  "classification": {
+    "offline_default": true,
+    "immutable_when_digested": true,
+    "status": "active",
+    "synthetic": true
+  },
+  "source": {
+    "kind": "synthetic_eip_vectors",
+    "description": "Synthetic JSON-RPC 2.0 shapes derived from EIP-1474, EIP-1559, ERC-20, ERC-721, and ERC-1155 interfaces."
+  },
+  "license": {
+    "spdx": "Apache-2.0"
+  },
+  "provenance": {
+    "chain_namespace": "eip155",
+    "not_live_network_data": true,
+    "extends_shared_checks": true,
+    "objective": "WALPROC-G300"
+  },
+  "coverage": [
+    "chain_and_genesis_identity",
+    "account_balance_history",
+    "legacy_and_eip1559",
+    "receipts_and_reverts",
+    "native_and_contract_creation",
+    "erc20_erc721_erc1155",
+    "removed_logs",
+    "optional_traces",
+    "safe_finalized_and_confirmation_fallback",
+    "reorg_corrections",
+    "read_only_surface"
+  ],
+  "files": [
+    "manifest.json",
+    "README.md",
+    "rpc_session.json",
+    "reorg.json"
+  ]
+}

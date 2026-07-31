@@ -1,0 +1,236 @@
+{
+  "acceptance": {
+    "e2e_ci_high_lt_0": true,
+    "edit_waves_lineage_present": true,
+    "full_gates_pass": true,
+    "immutable_2026_07_27_replacement_promotion_report_not_rewritten": true,
+    "named_next_residuals_when_not_promoted": false,
+    "not_measured_excluded_from_rankings": true,
+    "paired_bootstrap_vs_0_088_baseline": true,
+    "pilot_det_path_rescored": true,
+    "promotion_authorized": true,
+    "promotion_true_only_if_e2e_ci_high_lt_0_and_full_gates": true
+  },
+  "artifacts": {
+    "edit_wave_receipts": [
+      {
+        "case_id": "legal_doc_1",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/legal_doc_1.json",
+        "receipt_cid": "baguqeerafzaqfs26bovklw4lbhrauqkz25d2mktgnv3po64sncgusbukikwq",
+        "task_id": "PLAT-081"
+      },
+      {
+        "case_id": "construction_contract",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/construction_contract.json",
+        "receipt_cid": "baguqeera3iqbkg7rnsdtw2qqiwy2yyva4iulz5ujjec453u572vd4rrnlqza",
+        "task_id": "PLAT-082"
+      },
+      {
+        "case_id": "corp_policy_1",
+        "implementable": true,
+        "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_edit_wave_receipts/corp_policy_1.json",
+        "receipt_cid": "baguqeeraxo3kidzq7lazgdmof7nf2qawebub2bftvyrztny5kk7slu475nwq",
+        "task_id": "PLAT-083"
+      }
+    ],
+    "frozen_eval_repair_matrix": {
+      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_eval_repair_matrix.json",
+      "report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza"
+    },
+    "immutable_replacement_report": {
+      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_composition_replacement.json",
+      "preserved": true,
+      "report_cid": "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+    },
+    "plateau_break_matrix": {
+      "path": "docs/performance_snapshots/2026-07-27_semantic_roundtrip_plateau_break_matrix.json",
+      "report_cid": "baguqeerazqjvhhlk7l2kiovwkmcoezbuodziikspu6564hxdoxaplazlrmpq"
+    },
+    "plateau_break_results": {
+      "path": "docs/benchmarks/semantic_roundtrip_plateau_break_results.md"
+    },
+    "prior_canonical_compiler_decision": {
+      "decision_cid": "baguqeerapxofx7azmhz3qzzplcl46fw3osraruubohvbfwrhezd66thk6u3a",
+      "note": "Historical SRT-019 decision at e2e\u22480.088; this PLAT-090 receipt supersedes the plateau claim only for pilot remeasure promotion evidence",
+      "path": "docs/performance_snapshots/semantic_roundtrip_canonical_compiler_decision.json"
+    },
+    "residual_catalog": {
+      "catalog_cid": "baguqeerar435zxtsbiiilmv6bvtmqbiz7vlvhz4kq64rekbavz7zvuaf4mhq",
+      "path": "workspace/benchmarks/semantic-roundtrip-compositions/plateau_residual_catalog.json"
+    }
+  },
+  "captured_at_utc": "2026-07-28T01:19:14.803+00:00",
+  "decision": {
+    "evidence_complete": true,
+    "parity_passed": true,
+    "production_promotion_authorized": true,
+    "promotion": true,
+    "reason_codes": [
+      "plateau_broken_e2e_ci_high_lt_0",
+      "full_gates_pass",
+      "pilot_residuals_cleared"
+    ],
+    "selected_arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "status": "selected"
+  },
+  "decision_cid": "baguqeerahsrat44dqs3ypo2jodopcj6finktd2rcvvcsaatk4yndwvsmfwka",
+  "interface": "CanonicalCompilerDecision@1",
+  "lineage": {
+    "board_namespace": "semantic-roundtrip-plateau-break-v1",
+    "bundle": "semantic-roundtrip/plateau-break/remeasure",
+    "depends_on_tasks": [
+      "PLAT-081",
+      "PLAT-082",
+      "PLAT-083"
+    ],
+    "frozen_baseline_e2e": 0.088333333,
+    "frozen_baseline_report_cid": "baguqeerak4mzpaqxrkbibk45ymkdmjcwpeoo6ze4wvtbkh5qr6blzygenfza"
+  },
+  "next_residuals": [],
+  "next_residuals_note": "Empty: all five pilot cases have zero facet residuals after PLAT-081/082/083 det edit waves. Optional PLAT-091 full matrix refresh is eligible because promotion is true.",
+  "parity": {
+    "note": "Plateau-break parity here means full pilot selection gates pass on the remeasured det path",
+    "pilot_gate_smoke": "passed",
+    "status": "passed",
+    "within_tolerance": true
+  },
+  "promotion_gates": {
+    "beats_baseline_ci": true,
+    "e2e_ci": {
+      "high": -0.04,
+      "low": -0.1366666668
+    },
+    "e2e_ci_high_lt_0": true,
+    "full_gates_pass": true,
+    "hybrid_success_authorization_cid": "baguqeeraeb3gokw6dasd3v5b5walt6vcf23riyyws46ymtnmpcnl4xwkkn4a",
+    "paired_bootstrap_report_cid": "baguqeera7jbv4cfvmomf3i2vcgfrst65sdmb6gnyxm7hyuwc65tam3gtwpiq",
+    "promotion_still_requires_full_gates_flag_on_auth": true,
+    "smoke_cid": "baguqeeraiy3s54wnug2vsgjyypkwi4cx3gnxwxqxqewxhs6vqqy56oelsoua",
+    "smoke_status": "passed"
+  },
+  "reproduction": {
+    "commands": [
+      {
+        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_hybrid_arms.py tests/unit/benchmarks/semantic_roundtrip/test_replacement_matrix.py -q",
+        "purpose": "unit_validation"
+      },
+      {
+        "command": "PYTHONPATH=. python -m pytest tests/unit/benchmarks/semantic_roundtrip/test_legal_doc_1_edit_wave.py tests/unit/benchmarks/semantic_roundtrip/test_construction_contract_edit_wave.py tests/unit/benchmarks/semantic_roundtrip/test_corp_policy_1_edit_wave.py -q",
+        "purpose": "edit_wave_regression"
+      }
+    ]
+  },
+  "schema_version": "ipfs-datasets.semantic-roundtrip-plateau-break-promotion-decision.v1",
+  "selected_composition": {
+    "arm_id": "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
+    "deterministic_stages": [
+      {
+        "component": "typed_deontic",
+        "role": "constructor",
+        "stage_id": "l1_compile"
+      },
+      {
+        "component": "deterministic_realizer",
+        "role": "realizer",
+        "stage_id": "t1_decompile"
+      },
+      {
+        "component": "typed_deontic",
+        "role": "constructor",
+        "stage_id": "l2_compile"
+      }
+    ],
+    "optional_learned_stages": [],
+    "reconstruction_loss": {
+      "aggregation": "per_case_first_macro_mean",
+      "frozen_baseline_mean": 0.088333333,
+      "mean": 0.0,
+      "mean_delta_vs_frozen_baseline": -0.0883333334,
+      "metric": "end_to_end_loss",
+      "uncertainty": {
+        "absolute_remeasured": {
+          "high": 0.0,
+          "low": 0.0,
+          "mean": 0.0
+        },
+        "bootstrap_samples": 10000,
+        "confidence_level": 0.95,
+        "method": "seeded_percentile_case_cluster_bootstrap",
+        "paired_vs_frozen_baseline": {
+          "high": -0.04,
+          "low": -0.1366666668,
+          "mean_delta": -0.0883333334
+        },
+        "resampling_unit": "case_after_within_case_repeat_aggregation"
+      }
+    },
+    "selection_basis": "plat090_paired_bootstrap_vs_frozen_0_088_plus_full_gates"
+  },
+  "task_id": "PLAT-090",
+  "title": "Plateau-break promotion decision (pilot det path remeasure)",
+  "tool_accounting": {
+    "requested_tool_ids": [
+      "typed_deontic",
+      "modal",
+      "spacy",
+      "deterministic_realizer",
+      "autoencoder",
+      "symai",
+      "leanstral",
+      "selective_repair",
+      "hammer",
+      "cvc5",
+      "lean",
+      "multiformats"
+    ],
+    "scored_tool_ids": [
+      "typed_deontic",
+      "deterministic_realizer"
+    ],
+    "unavailable": [],
+    "unscored": [
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "modal"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "spacy"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "autoencoder"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "symai"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "leanstral"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "selective_repair"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "hammer"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "cvc5"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "lean"
+      },
+      {
+        "reason": "not part of the selected deterministic composition",
+        "tool_id": "multiformats"
+      }
+    ]
+  }
+}

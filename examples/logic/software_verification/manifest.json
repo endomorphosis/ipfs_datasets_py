@@ -1,0 +1,413 @@
+{
+  "schema_version": "software-verification-examples/v1",
+  "interface": "SoftwareVerificationExamples@1",
+  "description": "Source-bound end-to-end software-verification exemplars. Seven deterministic lanes bind sources to shared IR, loss-aware translations, public-API requests, results, witnesses, receipts, and declared assurance. Offline execution is mandatory; optional external tools degrade explicitly to unavailable and never become silent success. Each lane carries at least one positive case and one negative/counterexample case.",
+  "objective": "LFV-G081",
+  "task": "LFV-040",
+  "public_api": {
+    "interface": "LogicVerificationAPI@1",
+    "module": "ipfs_datasets_py.logic.verification_api",
+    "operations": [
+      "compile_verification_artifact",
+      "check",
+      "monitor",
+      "run_portfolio",
+      "explain_counterexample",
+      "verify_receipt",
+      "list_providers"
+    ]
+  },
+  "scope": {
+    "path_root": "ipfs_datasets_py",
+    "offline_required": true,
+    "optional_tools": {
+      "policy": "Optional binaries (z3, cvc5, tamarin, proverif, tlc, hyper tools) must not be required for green offline runs. When a live check is attempted and a tool is missing, the public API response status must be unavailable, unsupported, or error with explicit unsupported_features/diagnostics—never succeeded by silence.",
+      "declared": ["z3", "cvc5", "tamarin", "proverif", "tlc", "apalache"]
+    },
+    "authority_policy": "Declared assurance is a ceiling, never an upgrade. Candidates and advisory surfaces remain advisory. Monitor authority does not become theorem authority. Authorization and protocol authorities stay in their families.",
+    "conflict_policy": "Own the example tree and integration test; do not change provider behavior to fit fixtures or commit transient live outputs."
+  },
+  "required_binding_stages": [
+    "source",
+    "ir",
+    "translations",
+    "requests",
+    "results",
+    "witnesses",
+    "receipts",
+    "assurance"
+  ],
+  "required_case_kinds": ["positive", "negative"],
+  "lanes": [
+    {
+      "lane_id": "contracts_resources",
+      "title": "Contracts and resources",
+      "goal_facet": "contracts/resources",
+      "property_kind": "contract",
+      "logic_family": "program",
+      "declared_assurance": "bounded",
+      "source_family_id": "program",
+      "target_family_id": "smt",
+      "optional_tools": ["z3", "cvc5"],
+      "binder": "source_program",
+      "source": {
+        "language": "python",
+        "path": "examples/logic/software_verification/sources/resource_counter.py",
+        "text": "def resource_counter(n, budget):\n    \"\"\"Consume one unit from budget when n is non-negative.\"\"\"\n    assert budget >= 0\n    if n < 0:\n        return budget\n    assert budget >= 1\n    return budget - 1\n"
+      },
+      "cases": [
+        {
+          "case_id": "contracts_resources.positive",
+          "kind": "positive",
+          "statement": "resource_counter preserves non-negative budget under the admitted contract.",
+          "expected_result_class": "satisfied_or_compiled",
+          "notes": "Source lowers to ProgramIR + shared IR; portfolio plans SMT attempts under bounded assurance."
+        },
+        {
+          "case_id": "contracts_resources.negative",
+          "kind": "negative",
+          "statement": "resource_counter(n=1, budget=0) violates the budget precondition.",
+          "counterexample": {
+            "kind": "model",
+            "model": {"n": "1", "budget": "0"},
+            "summary": "budget < 1 when consuming a unit"
+          },
+          "expected_result_class": "counterexample"
+        }
+      ]
+    },
+    {
+      "lane_id": "heap_ownership",
+      "title": "Heap ownership and separation",
+      "goal_facet": "heap ownership",
+      "property_kind": "heap_safety",
+      "logic_family": "separation_logic",
+      "declared_assurance": "bounded",
+      "source_family_id": "separation_logic",
+      "target_family_id": "smt",
+      "optional_tools": ["z3"],
+      "binder": "heap_separation",
+      "source": {
+        "language": "sl-json",
+        "path": "examples/logic/software_verification/sources/list_head.sl.json",
+        "text": "{\n  \"location\": \"head\",\n  \"owner\": \"owner:main\",\n  \"points_to\": \"node0\",\n  \"permission\": \"write\",\n  \"claim\": \"head |-> node0 * emp\"\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "heap_ownership.positive",
+          "kind": "positive",
+          "statement": "Owning head with write permission frames the residual emp heap.",
+          "expected_result_class": "satisfied_or_compiled"
+        },
+        {
+          "case_id": "heap_ownership.negative",
+          "kind": "negative",
+          "statement": "Double free / transfer without residual permission is a heap safety counterexample.",
+          "counterexample": {
+            "kind": "heap_fault",
+            "model": {"location": "head", "fault": "use_after_transfer"},
+            "summary": "permission fraction becomes zero after exclusive transfer"
+          },
+          "expected_result_class": "counterexample"
+        }
+      ]
+    },
+    {
+      "lane_id": "concurrent_workflows",
+      "title": "Concurrent workflows",
+      "goal_facet": "concurrent workflows",
+      "property_kind": "data_race_freedom",
+      "logic_family": "concurrency",
+      "declared_assurance": "bounded",
+      "source_family_id": "concurrency",
+      "target_family_id": "transition_system",
+      "optional_tools": ["tlc", "apalache"],
+      "binder": "concurrency",
+      "source": {
+        "language": "concurrency-json",
+        "path": "examples/logic/software_verification/sources/producer_consumer.json",
+        "text": "{\n  \"components\": [\"producer\", \"consumer\"],\n  \"shared\": [\"buffer\"],\n  \"claim\": \"producer/consumer never race on buffer under atomic regions\"\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "concurrent_workflows.positive",
+          "kind": "positive",
+          "statement": "Producer and consumer atomic regions serialize buffer updates.",
+          "expected_result_class": "satisfied_or_compiled"
+        },
+        {
+          "case_id": "concurrent_workflows.negative",
+          "kind": "negative",
+          "statement": "Interleaved non-atomic buffer writes admit a data race.",
+          "counterexample": {
+            "kind": "schedule",
+            "model": {
+              "schedule": ["prod-write", "cons-read"],
+              "race_variable": "buffer"
+            },
+            "summary": "overlapping write/read without atomic exclusion"
+          },
+          "expected_result_class": "counterexample"
+        }
+      ]
+    },
+    {
+      "lane_id": "authorization",
+      "title": "Authorization and policy decisions",
+      "goal_facet": "authorization",
+      "property_kind": "authorization",
+      "logic_family": "authorization",
+      "declared_assurance": "authorization",
+      "source_family_id": "authorization",
+      "target_family_id": "datalog",
+      "optional_tools": [],
+      "binder": "authorization",
+      "source": {
+        "language": "policy-json",
+        "path": "examples/logic/software_verification/sources/document_access.policy.json",
+        "text": "{\n  \"principals\": [\"alice\", \"bob\"],\n  \"action\": \"read\",\n  \"resource\": \"doc:42\",\n  \"rule\": \"owner may read\"\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "authorization.positive",
+          "kind": "positive",
+          "statement": "alice is authorized to read doc:42 as owner.",
+          "expected_result_class": "authorized",
+          "decision": {
+            "principal_id": "principal:alice",
+            "action": "read",
+            "resource": "doc:42",
+            "outcome": "authorized"
+          }
+        },
+        {
+          "case_id": "authorization.negative",
+          "kind": "negative",
+          "statement": "bob is denied read of doc:42 without ownership or delegation.",
+          "counterexample": {
+            "kind": "authorization_denial",
+            "model": {
+              "principal_id": "principal:bob",
+              "action": "read",
+              "resource": "doc:42",
+              "outcome": "denied"
+            },
+            "summary": "no matching allow rule for bob"
+          },
+          "expected_result_class": "counterexample"
+        }
+      ]
+    },
+    {
+      "lane_id": "cryptographic_protocols",
+      "title": "Cryptographic protocol semantics",
+      "goal_facet": "cryptographic protocols",
+      "property_kind": "secrecy",
+      "logic_family": "cryptographic_protocol",
+      "declared_assurance": "protocol",
+      "source_family_id": "cryptographic_protocol",
+      "target_family_id": "protocol",
+      "optional_tools": ["tamarin", "proverif"],
+      "binder": "protocol",
+      "source": {
+        "language": "protocol-json",
+        "path": "examples/logic/software_verification/sources/handshake.protocol.json",
+        "text": "{\n  \"roles\": [\"initiator\", \"responder\"],\n  \"claim\": \"session nonce secrecy under Dolev-Yao adversary\",\n  \"fresh\": [\"challenge\"]\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "cryptographic_protocols.positive",
+          "kind": "positive",
+          "statement": "Challenge nonce remains secret when session key is confined to honest roles.",
+          "expected_result_class": "satisfied_or_compiled"
+        },
+        {
+          "case_id": "cryptographic_protocols.negative",
+          "kind": "negative",
+          "statement": "Leaking the session key to the network adversary yields an attack trace.",
+          "counterexample": {
+            "kind": "attack_trace",
+            "model": {
+              "leak": "key:session",
+              "adversary": "network",
+              "learned": "name:challenge"
+            },
+            "summary": "session key disclosure reveals challenge nonce"
+          },
+          "expected_result_class": "counterexample"
+        }
+      ]
+    },
+    {
+      "lane_id": "noninterference",
+      "title": "Noninterference and information flow",
+      "goal_facet": "noninterference",
+      "property_kind": "noninterference",
+      "logic_family": "hyperproperty",
+      "declared_assurance": "hyperproperty",
+      "source_family_id": "hyperproperty",
+      "target_family_id": "smt",
+      "optional_tools": [],
+      "binder": "noninterference",
+      "source": {
+        "language": "hyperproperty-json",
+        "path": "examples/logic/software_verification/sources/noninterference.policy.json",
+        "text": "{\n  \"low_inputs\": [\"user_id\"],\n  \"high_inputs\": [\"secret\"],\n  \"observations\": [\"status\", \"public_token\"],\n  \"claim\": \"low outputs agree when low inputs agree\"\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "noninterference.positive",
+          "kind": "positive",
+          "statement": "Traces with equal low inputs produce equal low observations.",
+          "expected_result_class": "satisfied_or_compiled",
+          "traces": [
+            {
+              "trace_id": "trace:a",
+              "user_id": "alice",
+              "secret": "s1",
+              "status": "ok",
+              "public_token": "tok"
+            },
+            {
+              "trace_id": "trace:b",
+              "user_id": "alice",
+              "secret": "s2",
+              "status": "ok",
+              "public_token": "tok"
+            }
+          ]
+        },
+        {
+          "case_id": "noninterference.negative",
+          "kind": "negative",
+          "statement": "Divergent public tokens for equal low inputs violate noninterference.",
+          "counterexample": {
+            "kind": "relational_witness",
+            "model": {
+              "trace_a": {"user_id": "alice", "secret": "s1", "public_token": "tok-a"},
+              "trace_b": {"user_id": "alice", "secret": "s2", "public_token": "tok-b"}
+            },
+            "summary": "public_token depends on high secret"
+          },
+          "expected_result_class": "counterexample",
+          "traces": [
+            {
+              "trace_id": "trace:leak-a",
+              "user_id": "alice",
+              "secret": "s1",
+              "status": "ok",
+              "public_token": "tok-a"
+            },
+            {
+              "trace_id": "trace:leak-b",
+              "user_id": "alice",
+              "secret": "s2",
+              "status": "ok",
+              "public_token": "tok-b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "lane_id": "runtime_temporal_monitoring",
+      "title": "Runtime temporal monitoring",
+      "goal_facet": "runtime temporal monitoring",
+      "property_kind": "trace_conformance",
+      "logic_family": "temporal",
+      "declared_assurance": "monitor",
+      "source_family_id": "temporal",
+      "target_family_id": "smt",
+      "optional_tools": [],
+      "binder": "runtime_mtl",
+      "source": {
+        "language": "mtl-json",
+        "path": "examples/logic/software_verification/sources/always_safe.mtl.json",
+        "text": "{\n  \"formula\": \"G safe\",\n  \"logic\": \"ltlf\",\n  \"claim\": \"safe holds on every finite prefix\"\n}\n"
+      },
+      "cases": [
+        {
+          "case_id": "runtime_temporal_monitoring.positive",
+          "kind": "positive",
+          "statement": "Always(safe) holds on a finite trace where safe is true at every step.",
+          "expected_result_class": "monitor_true",
+          "formula": {
+            "operator": "always",
+            "logic": "ltlf",
+            "operands": [
+              {
+                "operator": "atom",
+                "logic": "ltlf",
+                "proposition": "safe"
+              }
+            ]
+          },
+          "trace": {
+            "kind": "finite",
+            "clock": {"clock_id": "clock:main"},
+            "events": [
+              {
+                "event_id": "event:0",
+                "event_type": "state",
+                "time": 0,
+                "true_propositions": ["safe"]
+              },
+              {
+                "event_id": "event:1",
+                "event_type": "state",
+                "time": 1,
+                "true_propositions": ["safe"]
+              },
+              {
+                "event_id": "event:2",
+                "event_type": "state",
+                "time": 2,
+                "true_propositions": ["safe", "done"]
+              }
+            ]
+          }
+        },
+        {
+          "case_id": "runtime_temporal_monitoring.negative",
+          "kind": "negative",
+          "statement": "Always(safe) is violated when safe becomes false.",
+          "expected_result_class": "counterexample",
+          "counterexample": {
+            "kind": "trace_violation",
+            "model": {"position": 1, "missing": "safe"},
+            "summary": "safe fails at step 1"
+          },
+          "formula": {
+            "operator": "always",
+            "logic": "ltlf",
+            "operands": [
+              {
+                "operator": "atom",
+                "logic": "ltlf",
+                "proposition": "safe"
+              }
+            ]
+          },
+          "trace": {
+            "kind": "finite",
+            "clock": {"clock_id": "clock:main"},
+            "events": [
+              {
+                "event_id": "event:0",
+                "event_type": "state",
+                "time": 0,
+                "true_propositions": ["safe"]
+              },
+              {
+                "event_id": "event:1",
+                "event_type": "state",
+                "time": 1,
+                "true_propositions": []
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "case_ids": [
+    "benign_skill",
+    "legally_risky_effect",
+    "security_sensitive_resource",
+    "incomplete_unsupported_semantics"
+  ],
+  "cases": [
+    {
+      "case_id": "benign_skill",
+      "declaration_digest": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "description": "Benign offline skill with grounded obligations.",
+      "document_id": "intent:admissibility:benign_skill",
+      "expected_gate_reason_codes": [
+        "obligations_supported"
+      ],
+      "expected_gate_status": "allow",
+      "formal_artifact_cid": "bafkreia33vf3rxvidj7uiulw2repts4ech64znjlt4yj7hi664gh2c6zse",
+      "formal_artifact_digest": "sha256:1bdd4bb8dea81a7f445176d448f9cb8411fdccb52b9f309f9d1ef70c7d0bd991",
+      "formal_artifact_file_sha256": "072ea2f3e71192fc89fc513db2cf0c305d70402fd52721997befa52d3a876263",
+      "formal_artifact_path": "formal_artifacts/benign_skill.json",
+      "formal_artifact_sha256": "1bdd4bb8dea81a7f445176d448f9cb8411fdccb52b9f309f9d1ef70c7d0bd991",
+      "formula_count": 14,
+      "intent_file_sha256": "4eebb6ed1e79f08bf3386d8ddbaf407c7185d45dedb7f0f122131a1894496f72",
+      "intent_ir_path": "intents/benign_skill.json",
+      "intent_ir_sha256": "sha256:732d06e95ba6827ab21f92101ff21777e1b36eba3f0b886b8f61aba69f1b1f53",
+      "profile_id": "legal-strict",
+      "proof_obligation_count": 2,
+      "sample_id": "sample:intent:732d06e95ba6827ab21f92101ff21777",
+      "source_kind": "skill",
+      "stratum": "benign",
+      "unsupported_diagnostic_count": 0
+    },
+    {
+      "case_id": "legally_risky_effect",
+      "declaration_digest": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+      "description": "Effect that discloses PII to an unapproved third party.",
+      "document_id": "intent:admissibility:legally_risky_effect",
+      "expected_gate_reason_codes": [
+        "legal_hard_constraint"
+      ],
+      "expected_gate_status": "reject",
+      "formal_artifact_cid": "bafkreifna6krrntpkmqxipcvdf7hoc5w5uzfxg7urwcsqpzeo7ilyx76ca",
+      "formal_artifact_digest": "sha256:ad079518b66f5321743c55197e770bb6ed325b9bf48d85283f2477d0bc5ffe10",
+      "formal_artifact_file_sha256": "ede761de65b6c720d89487a4d5e01a35f74226161b53c54ede672c0006e6403e",
+      "formal_artifact_path": "formal_artifacts/legally_risky_effect.json",
+      "formal_artifact_sha256": "ad079518b66f5321743c55197e770bb6ed325b9bf48d85283f2477d0bc5ffe10",
+      "formula_count": 11,
+      "intent_file_sha256": "70e484e579e527c44d802dbd6a9435ceb704288a52c90c5a5d40d96ca22c0539",
+      "intent_ir_path": "intents/legally_risky_effect.json",
+      "intent_ir_sha256": "sha256:4bcc4adef46d61a702e5703a86893fc0b695e54b87cb1af901668f5e9c1b60c0",
+      "profile_id": "legal-strict",
+      "proof_obligation_count": 1,
+      "sample_id": "sample:intent:4bcc4adef46d61a702e5703a86893fc0",
+      "source_kind": "skill",
+      "stratum": "legal_risk",
+      "unsupported_diagnostic_count": 0
+    },
+    {
+      "case_id": "security_sensitive_resource",
+      "declaration_digest": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+      "description": "Privileged secret vault read written to world-readable storage.",
+      "document_id": "intent:admissibility:security_sensitive_resource",
+      "expected_gate_reason_codes": [
+        "security_hard_constraint"
+      ],
+      "expected_gate_status": "reject",
+      "formal_artifact_cid": "bafkreif4anmvhr2scitiirzxpcnnrcj6ikpgvfrt6bbugskaiqo6kzefcu",
+      "formal_artifact_digest": "sha256:bc035953c7521226844737789ad8893e429e6a9633f043434940441de5648515",
+      "formal_artifact_file_sha256": "bb09ca594f28403ae9412a53b058450cada11304ecbe2fc400a0b136f9377ffd",
+      "formal_artifact_path": "formal_artifacts/security_sensitive_resource.json",
+      "formal_artifact_sha256": "bc035953c7521226844737789ad8893e429e6a9633f043434940441de5648515",
+      "formula_count": 14,
+      "intent_file_sha256": "72deca05e48726c63acae2ecfcb3cc2eaa9cf525dc3b6be43f569855c762dca9",
+      "intent_ir_path": "intents/security_sensitive_resource.json",
+      "intent_ir_sha256": "sha256:de170636a075301097903ba938ec178baf8f4bed0db38014438bfcf1a4dbc927",
+      "profile_id": "legal-strict",
+      "proof_obligation_count": 2,
+      "sample_id": "sample:intent:de170636a075301097903ba938ec178b",
+      "source_kind": "skill",
+      "stratum": "security_risk",
+      "unsupported_diagnostic_count": 0
+    },
+    {
+      "case_id": "incomplete_unsupported_semantics",
+      "declaration_digest": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+      "description": "Incomplete free-form intent with opaque unsupported semantics.",
+      "document_id": "intent:admissibility:incomplete_unsupported_semantics",
+      "expected_gate_reason_codes": [
+        "semantics_unsupported",
+        "missing_evidence"
+      ],
+      "expected_gate_status": "abstain",
+      "formal_artifact_cid": "bafkreidlwgxfcykys46ynqyrkedxmuiwd5stn2pwzr3fwhobsxizt2g454",
+      "formal_artifact_digest": "sha256:6bb1ae516158973d86c31151077651161f6536e9f6cc765b1dc195d199e8dcef",
+      "formal_artifact_file_sha256": "d028eb1973306d92b51a0e794395f44e086a57cafd0d848a07d34453974ae677",
+      "formal_artifact_path": "formal_artifacts/incomplete_unsupported_semantics.json",
+      "formal_artifact_sha256": "6bb1ae516158973d86c31151077651161f6536e9f6cc765b1dc195d199e8dcef",
+      "formula_count": 3,
+      "intent_file_sha256": "87ca2a5b3ff282afb89043edcb8e46eaf213fbf6f4cbb58a48b1a39fb298e74c",
+      "intent_ir_path": "intents/incomplete_unsupported_semantics.json",
+      "intent_ir_sha256": "sha256:229dc9749cce365a15ce0cc0f9661db9a6ee45a09e41e341731fc465e4b3c6b7",
+      "profile_id": "legal-strict",
+      "proof_obligation_count": 0,
+      "sample_id": "sample:intent:229dc9749cce365a15ce0cc0f9661db9",
+      "source_kind": "prompt",
+      "stratum": "incomplete",
+      "unsupported_diagnostic_count": 3
+    }
+  ],
+  "default_profile_id": "legal-strict",
+  "description": "Offline Intent formalization fixtures for admissibility gate inputs. Manifest binds formal artifact CIDs and expected gate outcomes; rebuild from Intent IR is deterministic.",
+  "expected_strata": [
+    "benign",
+    "legal_risk",
+    "security_risk",
+    "incomplete"
+  ],
+  "formalization_compiler": {
+    "domain": "intent",
+    "producer_id": "intent-formalization-compiler",
+    "producer_version": "intent-formalization-compiler/v1"
+  },
+  "interface": "IntentAdmissibilityFixtures@1",
+  "schema_version": "intent-admissibility-fixtures/v1"
+}

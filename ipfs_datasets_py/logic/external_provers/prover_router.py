@@ -276,6 +276,21 @@ def _guidance_json_mapping(value: str) -> Mapping[str, Any]:
     return {}
 
 
+def _router_json_formula_value(value: str) -> Any:
+    """Return JSON object/list formula payloads encoded as strings."""
+
+    text = str(value or "").strip()
+    if not text or text[0] not in "[{":
+        return None
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if isinstance(parsed, (Mapping, list, tuple)):
+        return parsed
+    return None
+
+
 def _guidance_target_key_is_router(value: Any) -> bool:
     text = (
         str(value or "")
@@ -722,6 +737,9 @@ class ProverRouter:
                 "formula_object",
                 "proof_formula_object",
                 "formula",
+                "router_formula",
+                "prover_formula",
+                "external_prover_formula",
                 "candidate_formula",
                 "formula_candidate",
                 "compiler_formula",
@@ -734,6 +752,11 @@ class ProverRouter:
                 "proof_goal",
                 "theorem",
                 "theorem_formula",
+                "router_formulas",
+                "prover_formulas",
+                "prover_obligation",
+                "prover_obligations",
+                "external_prover_formulas",
                 "claim",
                 "claims",
                 "assertion",
@@ -758,6 +781,10 @@ class ProverRouter:
                 "proof_obligations",
                 "proofs",
                 "records",
+                "router_formulas",
+                "prover_formulas",
+                "prover_obligations",
+                "external_prover_formulas",
                 "formulas",
                 "theorems",
                 "goals",
@@ -805,6 +832,14 @@ class ProverRouter:
         text = str(formula or "").strip()
         if not text:
             return None
+        json_formula = _router_json_formula_value(text)
+        if json_formula is not None:
+            coerced = ProverRouter._coerce_native_formula_inner(
+                json_formula,
+                seen=seen,
+            )
+            if coerced is not None:
+                return coerced
         try:
             from ..bridge.fol_tdfol import coerce_tdfol_formula
 
@@ -815,23 +850,108 @@ class ProverRouter:
             logger.debug("Could not coerce native formula payload", exc_info=True)
         return formula
 
-    @staticmethod
-    def _result_is_proved(result: Any) -> bool:
-        """Return True when a prover result indicates a valid proof."""
+    # Providers that may only emit untrusted proposals.  Their is_valid,
+    # confidence, or similarity scores never establish theorem proof authority
+    # (LFV-G061 / proposal-advisors track).
+    _UNTRUSTED_PROPOSAL_PROVER_IDS = frozenset(
+        {
+            "leanstral",
+            "symbolicai",
+            "symai",
+            "sym_ai",
+            "neural",
+            "embedding",
+            "embeddings",
+        }
+    )
 
-        if result is None:
+    @classmethod
+    def _is_untrusted_proposal_prover(cls, prover_name: Optional[str]) -> bool:
+        """Return True when a registered prover is proposal-only."""
+
+        if not prover_name:
             return False
+        normalized = (
+            str(prover_name)
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(".", "_")
+            .replace(" ", "_")
+        )
+        if normalized in cls._UNTRUSTED_PROPOSAL_PROVER_IDS:
+            return True
+        return any(
+            token in normalized
+            for token in (
+                "leanstral",
+                "symbolicai",
+                "symai",
+                "neural",
+                "embedding",
+            )
+        )
+
+    @classmethod
+    def _result_is_proved(
+        cls,
+        result: Any,
+        prover_name: Optional[str] = None,
+    ) -> bool:
+        """Return True when a prover result indicates a valid proof.
+
+        Untrusted proposal providers (Leanstral, SymbolicAI, embeddings) never
+        yield proof, regardless of ``is_valid``, confidence, or similarity.
+        Generic ``is_valid`` alone is also insufficient: only an explicit
+        ``is_proved`` signal from a trusted prover may elevate authority.
+        """
+
+        if result is None or isinstance(result, str):
+            return False
+
+        if cls._is_untrusted_proposal_prover(prover_name):
+            return False
+
+        # Reject neural-shaped payloads that only carry confidence/is_valid.
+        if prover_name is None:
+            provider_hint = getattr(result, "provider", None) or getattr(
+                result, "prover", None
+            ) or getattr(result, "method", None)
+            if cls._is_untrusted_proposal_prover(
+                str(provider_hint) if provider_hint is not None else None
+            ):
+                return False
+            method = str(getattr(result, "method", "") or "").lower()
+            if any(
+                token in method
+                for token in ("neural", "symbolicai", "leanstral", "embedding")
+            ):
+                return False
 
         is_proved = getattr(result, "is_proved", None)
         if callable(is_proved):
             try:
+                # Still fence untrusted classes even when they implement is_proved.
+                result_cls = type(result).__name__.lower()
+                if any(
+                    token in result_cls
+                    for token in (
+                        "neural",
+                        "symbolicai",
+                        "leanstral",
+                        "embedding",
+                    )
+                ):
+                    return False
                 return bool(is_proved())
             except Exception:
                 return False
+        if isinstance(is_proved, bool):
+            return is_proved
 
-        if hasattr(result, "is_valid"):
-            return bool(getattr(result, "is_valid"))
-
+        # Intentionally do NOT treat bare ``is_valid`` or confidence as proof.
+        # Syntactic acceptance, LLM validity judgments, and similarity scores
+        # remain compile/candidate evidence only.
         if isinstance(result, bool):
             return result
 
@@ -971,7 +1091,7 @@ class ProverRouter:
             all_results[prover_name] = result
             if first_non_error is None:
                 first_non_error = prover_name
-            if self._result_is_proved(result):
+            if self._result_is_proved(result, prover_name=prover_name):
                 proof_time = time.time() - start_time
                 return RouterProofResult(
                     is_proved=True,
@@ -1041,9 +1161,9 @@ class ProverRouter:
         
         proof_time = time.time() - start_time
         
-        # Find first successful proof
+        # Find first successful proof (untrusted proposal provers never count)
         for prover_name, result in all_results.items():
-            if self._result_is_proved(result):
+            if self._result_is_proved(result, prover_name=prover_name):
                 return RouterProofResult(
                     is_proved=True,
                     prover_used=prover_name,
@@ -1091,7 +1211,7 @@ class ProverRouter:
                 result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 all_results[prover_name] = result
                 
-                if self._result_is_proved(result):
+                if self._result_is_proved(result, prover_name=prover_name):
                     proof_time = time.time() - start_time
                     return RouterProofResult(
                         is_proved=True,
@@ -1215,7 +1335,7 @@ class ProverRouter:
             all_results[prover_name] = result
             if first_non_error is None:
                 first_non_error = prover_name
-            if self._result_is_proved(result):
+            if self._result_is_proved(result, prover_name=prover_name):
                 return RouterProofResult(
                     is_proved=True,
                     prover_used=prover_name,
@@ -1273,9 +1393,9 @@ class ProverRouter:
         if not result.all_results:
             return None
         
-        # If any proved, return first proof
+        # If any proved, return first proof (untrusted proposal provers never count)
         for prover_name, prover_result in result.all_results.items():
-            if self._result_is_proved(prover_result):
+            if self._result_is_proved(prover_result, prover_name=prover_name):
                 return prover_result
         
         # Otherwise return first result

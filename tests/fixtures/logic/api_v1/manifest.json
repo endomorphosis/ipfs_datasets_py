@@ -1,0 +1,568 @@
+{
+  "schema_version": "logic-api-compatibility-manifest/v1",
+  "interface": "LogicAPICompatibility@1",
+  "description": "Reviewed compatibility contract for the pre-software-verification public logic surface.",
+  "review_scope": {
+    "families": [
+      "fol",
+      "deontic",
+      "modal",
+      "cec_dcec",
+      "tdfol",
+      "flogic"
+    ],
+    "access_paths": [
+      "python",
+      "cli",
+      "mcp"
+    ],
+    "supporting_surfaces": [
+      "bridges",
+      "caches",
+      "zkp",
+      "lazy_imports",
+      "proof_authority"
+    ]
+  },
+  "python_api": {
+    "module": "ipfs_datasets_py.logic.api",
+    "exact_exports": [
+      "FOLConverter",
+      "convert_text_to_fol",
+      "DeonticConverter",
+      "convert_legal_text_to_deontic",
+      "LogicError",
+      "ConversionError",
+      "ValidationError",
+      "ProofError",
+      "TranslationError",
+      "BridgeError",
+      "ConfigurationError",
+      "DeonticError",
+      "ModalError",
+      "TemporalError",
+      "LogicConverter",
+      "ChainedConverter",
+      "ConversionResult",
+      "ConversionStatus",
+      "ValidationResult",
+      "UtilityMonitor",
+      "track_performance",
+      "with_caching",
+      "get_global_stats",
+      "clear_global_cache",
+      "reset_global_stats",
+      "BoundedCache",
+      "ProofCache",
+      "CachedProofResult",
+      "get_global_cache",
+      "DeonticOperator",
+      "DeonticFormula",
+      "DeonticRuleSet",
+      "LegalAgent",
+      "LegalContext",
+      "TemporalCondition",
+      "TemporalOperator",
+      "ProofStatus",
+      "ProofResult",
+      "ProofStep",
+      "LogicTranslationTarget",
+      "TranslationResult",
+      "AbstractLogicFormula",
+      "Formula",
+      "Predicate",
+      "Variable",
+      "Constant",
+      "And",
+      "Or",
+      "Not",
+      "Implies",
+      "Forall",
+      "Exists",
+      "LogicOperator",
+      "Quantifier",
+      "FormulaType",
+      "ConfidenceScore",
+      "ComplexityScore",
+      "ComplexityMetrics",
+      "Prover",
+      "Converter",
+      "BridgeCapability",
+      "BridgeMetadata",
+      "BridgeConfig",
+      "ProverRecommendation",
+      "BridgeEvaluationReport",
+      "GraphProjectionResult",
+      "LegalIRDocument",
+      "LegalIRTrainingTarget",
+      "LogicBridgeSpec",
+      "LogicIRView",
+      "MultiViewLegalIRReport",
+      "ProofGateResult",
+      "RoundTripMetrics",
+      "bridge_name_for_component",
+      "evaluate_legal_ir_multiview",
+      "load_logic_bridge_adapter",
+      "logic_bridge_manifest",
+      "logic_bridge_spec",
+      "logic_bridge_specs",
+      "FOLOutputFormat",
+      "PredicateCategory",
+      "FOLFormula",
+      "FOLConversionResult",
+      "PredicateExtraction",
+      "LogicSubmoduleSpec",
+      "logic_integration_manifest",
+      "logic_optimizer_scope_for_component",
+      "logic_optimizer_target_file_hints",
+      "logic_submodule_import_report",
+      "logic_submodule_names",
+      "logic_submodule_spec",
+      "logic_submodule_specs",
+      "compile_nl_to_policy",
+      "evaluate_nl_policy",
+      "build_signed_delegation",
+      "NLToDCECCompiler",
+      "DCECToUCANBridge",
+      "NLUCANPolicyCompiler",
+      "GrammarNLPolicyCompiler",
+      "UCANPolicyBridge",
+      "SignedPolicyResult",
+      "BridgeCompileResult",
+      "BridgeEvaluationResult",
+      "evaluate_with_manager",
+      "detect_i18n_clauses",
+      "I18NConflictReport",
+      "detect_all_languages",
+      "compile_explain_iter"
+    ],
+    "family_contracts": {
+      "fol": {
+        "module": "ipfs_datasets_py.logic.fol",
+        "symbols": [
+          "FOLConverter",
+          "convert_text_to_fol"
+        ]
+      },
+      "deontic": {
+        "module": "ipfs_datasets_py.logic.deontic",
+        "symbols": [
+          "DeonticConverter",
+          "LegalNormIR",
+          "DeonticGraph",
+          "DeonticKnowledgeBase",
+          "convert_legal_text_to_deontic"
+        ]
+      },
+      "modal": {
+        "module": "ipfs_datasets_py.logic.modal.compiler",
+        "symbols": [
+          "DeterministicModalCompiler",
+          "ModalCompilationAmbiguity",
+          "ModalCompilationResult",
+          "ModalCompilerConfig"
+        ],
+        "config_fields": [
+          "parser_backend",
+          "spacy_model_name",
+          "top_k_frames",
+          "frame_domain",
+          "frame_score_margin",
+          "modal_family_share_margin",
+          "modal_family_secondary_share_floor",
+          "modal_primary_family_margin",
+          "modal_adaptive_family_margin",
+          "modal_primary_family_outvote_margin",
+          "modal_conditional_target_family_outvote_margin",
+          "modal_deontic_target_family_outvote_margin",
+          "modal_dynamic_target_family_outvote_margin",
+          "modal_alethic_target_family_outvote_margin",
+          "modal_temporal_target_family_outvote_margin",
+          "modal_frame_target_family_outvote_margin"
+        ]
+      },
+      "cec_dcec": {
+        "module": "ipfs_datasets_py.logic.CEC",
+        "symbols": [
+          "CECFramework",
+          "DCECLibraryWrapper",
+          "DCECStatement",
+          "TalosWrapper",
+          "ProofAttempt",
+          "ProofResult",
+          "EngDCECWrapper",
+          "ConversionResult",
+          "ShadowProverWrapper",
+          "ProofTask",
+          "ProverStatus"
+        ],
+        "lazy": true
+      },
+      "tdfol": {
+        "module": "ipfs_datasets_py.logic.TDFOL",
+        "symbols": [
+          "Formula",
+          "Predicate",
+          "Variable",
+          "Constant",
+          "DeonticFormula",
+          "TemporalFormula",
+          "TDFOLKnowledgeBase",
+          "ProofStatus",
+          "ProofStep",
+          "ProofResult",
+          "TDFOLProver",
+          "parse_tdfol",
+          "parse_dcec"
+        ],
+        "lazy_optional_symbols": [
+          "TDFOLProver",
+          "parse_tdfol",
+          "parse_dcec"
+        ]
+      },
+      "flogic": {
+        "module": "ipfs_datasets_py.logic.flogic",
+        "symbols": [
+          "FLogicStatus",
+          "FLogicFrame",
+          "FLogicClass",
+          "FLogicQuery",
+          "FLogicOntology",
+          "FLogicCachedQueryResult",
+          "CachedErgoAIWrapper",
+          "FLogicProvingMethod",
+          "ZKPFLogicResult",
+          "ZKPFLogicProver"
+        ],
+        "lazy": true
+      },
+      "bridges": {
+        "module": "ipfs_datasets_py.logic.bridge",
+        "symbols": [
+          "LogicBridgeSpec",
+          "ProofGateResult",
+          "BridgeEvaluationReport",
+          "logic_bridge_manifest",
+          "logic_bridge_specs"
+        ]
+      },
+      "caches": {
+        "module": "ipfs_datasets_py.logic.common",
+        "symbols": [
+          "BoundedCache",
+          "ProofCache",
+          "CachedProofResult",
+          "get_global_cache"
+        ]
+      },
+      "zkp": {
+        "module": "ipfs_datasets_py.logic.zkp",
+        "symbols": [
+          "ZKPProof",
+          "SimulatedZKPProof",
+          "ZKPProver",
+          "SimulatedZKPProver",
+          "ZKPVerifier",
+          "SimulatedZKPVerifier",
+          "build_proof_attestation_view",
+          "proof_attestation_view_from_proof_dict"
+        ],
+        "lazy_optional_symbols": [
+          "ZKPProver",
+          "SimulatedZKPProver",
+          "ZKPVerifier",
+          "SimulatedZKPVerifier"
+        ],
+        "simulation_only": true
+      }
+    }
+  },
+  "canonical_payloads": {
+    "operator_values": {
+      "deontic": [
+        ["OBLIGATION", "O"],
+        ["PERMISSION", "P"],
+        ["PROHIBITION", "F"],
+        ["SUPEREROGATION", "S"],
+        ["RIGHT", "R"],
+        ["LIBERTY", "L"],
+        ["POWER", "POW"],
+        ["IMMUNITY", "IMM"]
+      ],
+      "temporal": [
+        ["ALWAYS", "□"],
+        ["EVENTUALLY", "◊"],
+        ["NEXT", "X"],
+        ["UNTIL", "U"],
+        ["SINCE", "S"]
+      ],
+      "proof_status": [
+        ["PROVED", "proved"],
+        ["DISPROVED", "disproved"],
+        ["UNKNOWN", "unknown"],
+        ["TIMEOUT", "timeout"],
+        ["ERROR", "error"],
+        ["UNPROVABLE", "unprovable"]
+      ],
+      "flogic_status": [
+        ["SUCCESS", "success"],
+        ["FAILURE", "failure"],
+        ["UNKNOWN", "unknown"],
+        ["ERROR", "error"]
+      ],
+      "flogic_method": [
+        ["STANDARD", "flogic_standard"],
+        ["ZKP", "flogic_zkp"],
+        ["CACHED", "flogic_cached"]
+      ]
+    },
+    "tdfol_formula": {
+      "predicate": "Authorized(alice)",
+      "negation": "¬Authorized(alice)",
+      "implication": "(→ Authorized(alice) Audited(alice))",
+      "universal": "∀x.(→ Authorized(x) Audited(x))"
+    },
+    "proof_result_unknown": {
+      "status": "unknown",
+      "proved": false,
+      "disproved": false,
+      "conclusive": false,
+      "method": "compatibility_fixture",
+      "strategy": "compatibility_fixture",
+      "time_ms": 0.0,
+      "message": "optional prover unavailable",
+      "proof_step_count": 0
+    },
+    "flogic_frame": "rex[name -> Rex, friend ->> {max}] : Dog",
+    "flogic_class": "Dog :: Animal.\nDog[name => string].",
+    "flogic_result": {
+      "goal": "?X : Dog",
+      "status": "unknown",
+      "bindings": [],
+      "method": "flogic_cached",
+      "proof_time": 0.0,
+      "from_cache": true,
+      "is_private": false,
+      "zkp_backend": null,
+      "error_message": "optional ErgoAI binary unavailable",
+      "timestamp": 0.0
+    },
+    "cached_proof_metadata": {
+      "cid": "compat-cid",
+      "prover_name": "compat-prover",
+      "formula_str": "Authorized(alice)",
+      "timestamp": 0.0,
+      "hit_count": 0
+    },
+    "zkp_proof": {
+      "proof_data": "0001",
+      "public_inputs": {
+        "theorem": "Authorized(alice)"
+      },
+      "metadata": {
+        "backend": "compatibility-fixture",
+        "proof_system": "simulated"
+      },
+      "timestamp": 0.0,
+      "size_bytes": 2
+    },
+    "bridge_unavailable_gate": {
+      "attempted_count": 1,
+      "compiles": false,
+      "details": [
+        {
+          "reason": "optional prover unavailable"
+        }
+      ],
+      "error_count": 0,
+      "failed_count": 0,
+      "failure_ratio": 1.0,
+      "unavailable_count": 1,
+      "valid_count": 0,
+      "verified_by": []
+    },
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router",
+      "zkp_attestation"
+    ]
+  },
+  "cli": {
+    "module": "ipfs_datasets_py.logic.cli",
+    "prog": "ipfs-datasets logic",
+    "global_options": [
+      "--json"
+    ],
+    "commands": {
+      "convert-fol": [
+        {"dest": "text", "required": true, "default": null, "choices": null, "type": null, "options": []}
+      ],
+      "convert-deontic": [
+        {"dest": "text", "required": true, "default": null, "choices": null, "type": null, "options": []}
+      ],
+      "analyze-normative": [
+        {"dest": "sentence", "required": true, "default": null, "choices": null, "type": null, "options": []},
+        {"dest": "document_type", "required": false, "default": "legal", "choices": null, "type": null, "options": ["--document-type"]}
+      ],
+      "add-theorem": [
+        {"dest": "operator", "required": true, "default": null, "choices": ["OBLIGATION", "PERMISSION", "PROHIBITION"], "type": null, "options": ["--operator"]},
+        {"dest": "proposition", "required": true, "default": null, "choices": null, "type": null, "options": ["--proposition"]},
+        {"dest": "agent_name", "required": false, "default": "Unspecified Party", "choices": null, "type": null, "options": ["--agent-name"]},
+        {"dest": "jurisdiction", "required": false, "default": "Federal", "choices": null, "type": null, "options": ["--jurisdiction"]},
+        {"dest": "legal_domain", "required": false, "default": "general", "choices": null, "type": null, "options": ["--legal-domain"]},
+        {"dest": "source_case", "required": false, "default": "CLI", "choices": null, "type": null, "options": ["--source-case"]},
+        {"dest": "precedent_strength", "required": false, "default": 0.8, "choices": null, "type": "float", "options": ["--precedent-strength"]},
+        {"dest": "start_date", "required": false, "default": null, "choices": null, "type": null, "options": ["--start-date"]},
+        {"dest": "end_date", "required": false, "default": null, "choices": null, "type": null, "options": ["--end-date"]}
+      ],
+      "query-theorems": [
+        {"dest": "query", "required": true, "default": null, "choices": null, "type": null, "options": []},
+        {"dest": "operator_filter", "required": false, "default": "all", "choices": null, "type": null, "options": ["--operator-filter"]},
+        {"dest": "jurisdiction", "required": false, "default": "all", "choices": null, "type": null, "options": ["--jurisdiction"]},
+        {"dest": "legal_domain", "required": false, "default": "all", "choices": null, "type": null, "options": ["--legal-domain"]},
+        {"dest": "limit", "required": false, "default": 10, "choices": null, "type": "int", "options": ["--limit"]},
+        {"dest": "min_relevance", "required": false, "default": 0.5, "choices": null, "type": "float", "options": ["--min-relevance"]}
+      ],
+      "check-document": [
+        {"dest": "document_text", "required": true, "default": null, "choices": null, "type": null, "options": []},
+        {"dest": "document_id", "required": false, "default": null, "choices": null, "type": null, "options": ["--document-id"]},
+        {"dest": "jurisdiction", "required": false, "default": "Federal", "choices": null, "type": null, "options": ["--jurisdiction"]},
+        {"dest": "legal_domain", "required": false, "default": "general", "choices": null, "type": null, "options": ["--legal-domain"]},
+        {"dest": "temporal_context", "required": false, "default": "current_time", "choices": null, "type": null, "options": ["--temporal-context"]}
+      ]
+    },
+    "error_exit_code": 2,
+    "error_envelope_keys": [
+      "error",
+      "success"
+    ]
+  },
+  "mcp": {
+    "module": "ipfs_datasets_py.mcp_server.tools.logic_tools",
+    "exact_exports": [
+      "check_document_consistency",
+      "query_theorems",
+      "bulk_process_caselaw",
+      "add_theorem",
+      "tdfol_prove",
+      "tdfol_batch_prove",
+      "tdfol_parse",
+      "tdfol_convert",
+      "tdfol_kb_add_axiom",
+      "tdfol_kb_add_theorem",
+      "tdfol_kb_query",
+      "tdfol_kb_export",
+      "tdfol_visualize",
+      "cec_list_rules",
+      "cec_apply_rule",
+      "cec_check_rule",
+      "cec_rule_info",
+      "cec_prove",
+      "cec_check_theorem",
+      "cec_parse",
+      "cec_validate_formula",
+      "cec_analyze_formula",
+      "cec_formula_complexity",
+      "logic_capabilities",
+      "logic_health",
+      "logic_build_knowledge_graph",
+      "logic_verify_rag_output",
+      "flogic_assert",
+      "flogic_query",
+      "flogic_check_consistency",
+      "flogic_normalize_term"
+    ],
+    "optional_absence_envelopes": {
+      "cec_parse": {
+        "success": false,
+        "error": "cec_parse: LogicProcessor not available."
+      },
+      "tdfol_prove": {
+        "success": false,
+        "error": "tdfol_prove: LogicProcessor not available."
+      },
+      "logic_health": {
+        "success": false,
+        "error": "logic_health: LogicProcessor not available."
+      },
+      "flogic_query": {
+        "success": false,
+        "error": "flogic_query: F-logic module not available."
+      }
+    }
+  },
+  "lazy_imports": {
+    "modules": [
+      "ipfs_datasets_py.logic",
+      "ipfs_datasets_py.logic.api"
+    ],
+    "forbidden_after_import": [
+      "ipfs_datasets_py.logic.integration",
+      "ipfs_datasets_py.logic.external_provers",
+      "ipfs_datasets_py.logic.modal",
+      "ipfs_datasets_py.logic.zkp"
+    ],
+    "observable_side_effects": {
+      "stdout": "",
+      "stderr": "",
+      "warnings": []
+    },
+    "operations_forbidden_during_import": [
+      "dependency installation",
+      "network access",
+      "process execution",
+      "environment mutation",
+      "filesystem writes"
+    ]
+  },
+  "authority_semantics": {
+    "theorem_proof": {
+      "authoritative_success_states": [
+        "proved",
+        "disproved"
+      ],
+      "non_success_states": [
+        "unknown",
+        "timeout",
+        "error",
+        "unprovable",
+        "unavailable",
+        "unsupported"
+      ]
+    },
+    "cache": {
+      "meaning": "An exact cache hit replays the cached result and never raises its authority.",
+      "authority_increase": false
+    },
+    "bridge": {
+      "meaning": "Compilation, graph projection, and proof-gate availability are separate observations.",
+      "unavailable_is_success": false
+    },
+    "flogic": {
+      "meaning": "A successful tool call reports query execution; simulation_mode and result status still determine evidentiary meaning.",
+      "simulation_is_theorem_proof": false
+    },
+    "zkp": {
+      "meaning": "The v1 ZKP module is a simulation/attestation surface and does not prove source translation or increase proof authority.",
+      "simulation_is_cryptographic_proof": false,
+      "attestation_increases_authority": false
+    },
+    "learned_or_shadow_output": {
+      "meaning": "Modal advisors, learned proposals, and shadow-prover output are candidates until independently checked.",
+      "candidate_is_proof": false
+    }
+  },
+  "documentation_anchors": [
+    "## Compatibility promise",
+    "## Frozen Python imports",
+    "## CLI contract",
+    "## MCP contract",
+    "## Result and proof-authority meanings",
+    "## Optional dependencies and lazy imports",
+    "## Changing the v1 contract"
+  ]
+}

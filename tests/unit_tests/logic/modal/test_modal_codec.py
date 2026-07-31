@@ -72,6 +72,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_PACKET_001512_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001529_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_001550_FAMILY_PAIRS,
+    COMPILER_AMBIGUITY_PACKET_000943_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000119_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000214_FAMILY_PAIRS,
     COMPILER_AMBIGUITY_PACKET_000114_FAMILY_PAIRS,
@@ -40557,6 +40558,201 @@ def test_modal_registry_packet_001449_exposes_compiler_ambiguity_pairs() -> None
         )
 
 
+def test_modal_compiler_surfaces_packet_000943_adaptive_ambiguity_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        (
+            "us-code-15-2806-dd5f5d2bbf94dce3",
+            "deontic",
+            "conditional_normative",
+            -0.149076060177,
+        ),
+        (
+            "us-code-42-11921.-efe2524cd2269a7b",
+            "deontic",
+            "frame",
+            -0.148730209325,
+        ),
+        (
+            "us-code-42-9858a.-f6881f780a8cf992",
+            "frame",
+            "deontic",
+            -0.592675477343,
+        ),
+        (
+            "us-code-50-2823.-ac4b56565a718679",
+            "frame",
+            "deontic",
+            -0.200108127975,
+        ),
+    )
+    expected_pairs = {
+        ("deontic", "conditional_normative"),
+        ("deontic", "frame"),
+        ("frame", "deontic"),
+    }
+    assert set(COMPILER_AMBIGUITY_PACKET_000943_FAMILY_PAIRS) == expected_pairs
+
+    family_operator = {
+        "deontic": ("D", "O", "obligation"),
+        "frame": ("FRAME_BM25", "Frame", "frame"),
+    }
+    for index, (
+        sample_id,
+        predicted_family,
+        target_family,
+        family_margin,
+    ) in enumerate(scenarios, start=1):
+        predicted_system, predicted_symbol, predicted_label = family_operator[
+            predicted_family
+        ]
+        predicted_share = min(0.99, abs(family_margin) + 0.05)
+        target_share = predicted_share + family_margin
+        ranking = [
+            {
+                "family": predicted_family,
+                "count": 0,
+                "share_raw": predicted_share,
+                "share": predicted_share,
+            },
+            {
+                "family": target_family,
+                "count": 0,
+                "share_raw": target_share,
+                "share": target_share,
+            },
+        ]
+        family_shares = {
+            str(candidate["family"]): float(candidate["share_raw"])
+            for candidate in ranking
+        }
+        encoding = SpaCyLegalEncoding(
+            document_id=f"packet-000943-adaptive-evidence-{index}",
+            text=f"Synthetic packet 000943 {predicted_family} ambiguity evidence.",
+            normalized_text=(
+                f"Synthetic packet 000943 {predicted_family} ambiguity evidence."
+            ),
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=predicted_system,
+                    symbol=predicted_symbol,
+                    label=predicted_label,
+                    cue=predicted_family,
+                    start_char=0,
+                    end_char=len(predicted_family),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=encoding.document_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-packet-000943-{index}",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=predicted_system,
+                        symbol=predicted_symbol,
+                        label=predicted_label,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role=predicted_label,
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=sample_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="packet-000943",
+                    ),
+                ),
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+            predicted_family_source="adaptive_logits",
+        )
+        policy_pair = f"{predicted_family}->{target_family}"
+        expected_explicit_type = (
+            f"adaptive_{predicted_family}_{target_family}_outvoted_margin_low"
+        )
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+        )
+        assert target_family in compiler_ambiguity_policy_targets(predicted_family)
+        assert target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        assert is_compiler_required_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert base_ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert base_ambiguity.metadata["is_priority_policy_pair"] is True
+        assert base_ambiguity.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
+        assert base_ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
+        assert base_ambiguity.metadata["explicit_ambiguity_type"] == expected_explicit_type
+        assert (
+            abs(float(base_ambiguity.metadata["family_margin_raw"]) - family_margin)
+            < 1e-12
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert any(
+            ambiguity.ambiguity_type == expected_explicit_type
+            and ambiguity.candidate_ids == [predicted_family, target_family]
+            and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_surfaces_packet_003171_adaptive_ambiguity_policy(
     monkeypatch,
 ) -> None:
@@ -50902,6 +51098,135 @@ def test_decompiler_reconstructs_packet_000901_adverse_action_equipment_payment_
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000569_program_franchise_consortium_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "15 U.S.C. 2806. Relationship of statutory provisions. "
+                    "Petroleum Marketing Practices. Franchise Protection. A "
+                    "franchise relationship may include payment or fee terms "
+                    "subject to this section."
+                ),
+                predicate="petroleum_franchise_relationship_payment_fee",
+                conditions=["subject to this section"],
+            ),
+            {
+                "franchise_fee_payment",
+                "franchise_relationship_protection",
+                "franchise_statutory_relationship",
+                "petroleum_marketing_practice",
+            },
+            {"deontic->conditional_normative", "deontic->frame"},
+            {
+                "uscode_petroleum_franchise_relationship_surface",
+                "uscode_franchise_payment_fee_surface",
+            },
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="P",
+                label="permission",
+                text=(
+                    "42 U.S.C. 9858a. Establishment of block grant program. "
+                    "The Secretary is authorized to make grants to States in "
+                    "accordance with the provisions of this subchapter."
+                ),
+                predicate="secretary_block_grant_program_grants_to_states",
+                conditions=["in accordance with the provisions of this subchapter"],
+            ),
+            {
+                "block_grant_program",
+                "program_grant_authority",
+                "state_grant_award",
+            },
+            {"deontic->conditional_normative", "deontic->frame"},
+            {"uscode_block_grant_program_surface"},
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "50 U.S.C. 2823. University-based defense nuclear policy "
+                    "collaboration program. The Administrator shall carry out "
+                    "a program under which the Administrator establishes a "
+                    "policy research consortium of institutions of higher "
+                    "education."
+                ),
+                predicate="administrator_defense_nuclear_policy_research_consortium",
+                conditions=[
+                    (
+                        "under which the Administrator establishes a policy "
+                        "research consortium"
+                    )
+                ],
+            ),
+            {
+                "defense_nuclear_policy_collaboration",
+                "university_policy_research_consortium",
+                "university_research_consortium",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            {"uscode_university_policy_research_consortium_surface"},
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "42 U.S.C. 11921. Independent living services. The "
+                    "Secretary may make grants under this subchapter for "
+                    "vocational rehabilitation services and centers for "
+                    "independent living."
+                ),
+                predicate="secretary_independent_living_rehabilitation_grants",
+                conditions=["under this subchapter"],
+            ),
+            {
+                "independent_living_center",
+                "independent_living_services",
+                "program_grant_authority",
+                "vocational_rehabilitation_services",
+            },
+            {"frame->deontic", "frame->conditional_normative"},
+            {
+                "uscode_rehabilitation_service_surface",
+                "uscode_block_grant_program_surface",
+            },
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surfaces in samples:
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surfaces.issubset(
+            set(slot_texts["typed-decompiler-target-surface-profile"])
+        )
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def test_decompiler_reconstructs_packet_000188_public_program_surfaces() -> None:
     samples = [
         (
@@ -52082,6 +52407,117 @@ def test_decompiler_reconstructs_packet_000641_uscode_semantic_surfaces() -> Non
         assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
 
 
+def test_decompiler_reconstructs_packet_000642_uscode_semantic_surfaces() -> None:
+    samples = [
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "38 U.S.C. 3324. Health professionals educational "
+                    "assistance program. The individual shall pay to the "
+                    "United States the repayment amount for amounts paid under "
+                    "this subchapter."
+                ),
+                predicate="health_professional_assistance_repayment",
+            ),
+            {
+                "education_assistance_benefit",
+                "education_assistance_repayment",
+                "federal_repayment_obligation",
+                "health_professional_education_assistance",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_education_assistance_repayment_surface",
+        ),
+        (
+            _single_formula_document(
+                family="frame",
+                symbol="Frame",
+                label="frame",
+                text=(
+                    "50 U.S.C. 2751. Transfer of weapons activities funds. "
+                    "The Secretary of Energy shall provide each field office "
+                    "manager with authority to transfer weapons activities "
+                    "funds made available for the Department of Energy."
+                ),
+                predicate="fund_transfer_authority",
+            ),
+            {"fund_transfer_authority"},
+            {"frame->frame", "frame->deontic", "frame->conditional_normative"},
+            "uscode_fund_transfer_authority_surface",
+        ),
+        (
+            _single_formula_document(
+                family="deontic",
+                symbol="O",
+                label="obligation",
+                text=(
+                    "2 U.S.C. 2085. Expenditures of department. The Secretary "
+                    "shall make requisitions for the advance or payment of "
+                    "money out of the Treasury for expenditures upon business "
+                    "assigned by law to the department."
+                ),
+                predicate="department_expenditure_authorization",
+            ),
+            {
+                "department_business_assignment",
+                "department_expenditure_authorization",
+                "treasury_payment_source",
+                "treasury_requisition_payment",
+            },
+            {"deontic->deontic", "deontic->conditional_normative"},
+            "uscode_department_expenditure_authorization_surface",
+        ),
+    ]
+
+    for document, expected_atoms, expected_pairs, expected_surface in samples:
+        document.metadata["hint_evidence"] = [
+            {
+                "bundle": {
+                    "action": "refine_semantic_decompiler_reconstruction",
+                    "family_pairs": [
+                        "deontic->deontic",
+                        "frame->conditional_normative",
+                        "frame->frame",
+                    ],
+                    "program_synthesis_scope": "ir_decompiler",
+                    "target_component": "modal.ir_decompiler",
+                },
+                "target_view": "CEC.native",
+                "legal_ir_underrepresented_components": [
+                    "CEC.native",
+                    "deontic.ir",
+                    "modal.frame_logic",
+                ],
+            }
+        ]
+
+        decoded = decode_modal_ir_document(document)
+        slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+        structural_text = _structural_decoded_text(
+            decoded,
+            modal_ir=document,
+            selected_frame=None,
+        )
+
+        assert expected_atoms.issubset(
+            set(slot_texts["typed-decompiler-source-semantic-atom"])
+        )
+        assert expected_pairs.issubset(
+            set(slot_texts["typed-decompiler-target-reconstruction-pair"])
+        )
+        assert expected_surface in slot_texts[
+            "typed-decompiler-target-surface-profile"
+        ]
+        assert {"CEC.native", "deontic.ir", "modal.frame_logic"}.issubset(
+            set(slot_texts["legal_ir_view_prototype"])
+        )
+        assert slot_texts["guided_typed_ir_semantic_reconstruction"]
+        assert any(atom.replace("_", " ") in structural_text for atom in expected_atoms)
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()
@@ -52094,3 +52530,21 @@ def _token_overlap_ratio(left: str, right: str) -> float:
     if not left_tokens:
         return 1.0 if not right_tokens else 0.0
     return len(left_tokens & right_tokens) / len(left_tokens)
+
+def test_flogic_graph_requires_ontology_term_projection_view() -> None:
+    graph_data = flogic_triples_to_graph_data(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "modal_frame_logic",
+            }
+        ],
+        augment_sparse_legal_projection=False,
+    )
+
+    assert "ontology_term" in graph_data.metadata["frame_logic_projection_views"]
+    assert "ontology_term" in graph_data.metadata[
+        "frame_logic_projection_legal_view_required"
+    ]
+    assert graph_data.metadata["frame_logic_projection_legal_view_coverage_complete"] is True
