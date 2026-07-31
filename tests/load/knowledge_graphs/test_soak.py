@@ -22,6 +22,7 @@ from benchmarks.knowledge_graphs.soak import (
     SOAK_RECEIPT_SCHEMA,
     analyze_growth,
     get_soak_profile,
+    resolve_duration_override,
     run_soak,
     short_profiles_required,
     synthesize_stable_samples,
@@ -48,6 +49,14 @@ class TestSoakProfiles:
     def test_aliases(self) -> None:
         assert get_soak_profile("ci").name == "short"
         assert get_soak_profile("day").name == "day"
+
+    def test_24h_opt_in_does_not_promote_short_profile(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("KG_SOAK_24H", "1")
+        assert resolve_duration_override(SHORT).name == "short"
+        assert resolve_duration_override(SHORT).duration_s == SHORT.duration_s
 
 
 class TestGrowthAnalyzer:

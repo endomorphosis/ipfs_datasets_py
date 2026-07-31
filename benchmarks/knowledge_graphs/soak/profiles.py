@@ -143,7 +143,11 @@ def resolve_duration_override(profile: SoakProfile) -> SoakProfile:
     * ``KG_SOAK_DURATION_S`` — absolute duration seconds
     * ``KG_SOAK_24H=1`` — force the day profile duration (still opt-in)
     """
-    if os.environ.get("KG_SOAK_24H", "").strip() in {"1", "true", "yes"}:
+    if (
+        profile.name == DAY.name
+        and os.environ.get("KG_SOAK_24H", "").strip()
+        in {"1", "true", "yes"}
+    ):
         profile = DAY
     raw = os.environ.get("KG_SOAK_DURATION_S", "").strip()
     if raw:
