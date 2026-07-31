@@ -1,0 +1,778 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ipfs-datasets.dev/schemas/software-contract-v1.schema.json",
+  "title": "Software Contract IR v1",
+  "description": "Versioned software-contract intermediate representation for DSCON-G200. Only constructs that can be validated and lowered soundly are admitted. Every fact carries explicit provenance (declared|extracted|witnessed|inferred) and source authority. Unbounded executable predicates and ambiguous canonical values are rejected. Contradictory contracts surface as findings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "document_id",
+    "owner_goal",
+    "registry_revision",
+    "callables",
+    "findings"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ipfs-datasets.software-contracts.software-contract@1.0.0"
+    },
+    "document_id": { "$ref": "#/$defs/recordId" },
+    "owner_goal": { "const": "DSCON-G200" },
+    "registry_revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^\\S+$"
+    },
+    "callables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/callableContract" }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contractFinding" }
+    }
+  },
+  "$defs": {
+    "recordId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#@-]{0,511}$"
+    },
+    "nonEmptyToken": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "nfcString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "canonicalScalar": {
+      "description": "Strict DAG-JSON scalar: null, bool, safe int, or string. Floats and host objects are rejected.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        { "type": "string", "maxLength": 4096 }
+      ]
+    },
+    "canonicalScalarOrList": {
+      "oneOf": [
+        { "$ref": "#/$defs/canonicalScalar" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/canonicalScalar" }
+        }
+      ]
+    },
+    "cid": {
+      "type": "string",
+      "minLength": 8,
+      "pattern": "^b[a-z2-7]+$"
+    },
+    "factKind": {
+      "type": "string",
+      "enum": ["declared", "extracted", "witnessed", "inferred"]
+    },
+    "authorityRank": {
+      "type": "string",
+      "enum": [
+        "reviewed_registry",
+        "public_schema",
+        "documented_api",
+        "type_declaration",
+        "inference"
+      ]
+    },
+    "predicateOperator": {
+      "description": "Bounded lowerable operators only. Executable and unbounded forms are intentionally absent.",
+      "type": "string",
+      "enum": [
+        "type_is",
+        "type_ref",
+        "equals",
+        "not_equals",
+        "in_set",
+        "range_int",
+        "length_range",
+        "is_null",
+        "is_not_null",
+        "schema_ref",
+        "has_field",
+        "capability_requires",
+        "effect_permits",
+        "effect_forbids",
+        "resource_bound",
+        "raises",
+        "temporal_before",
+        "temporal_after",
+        "state_transition",
+        "trust_label",
+        "determinism_class",
+        "idempotent",
+        "pure"
+      ]
+    },
+    "predicateRole": {
+      "type": "string",
+      "enum": [
+        "precondition",
+        "postcondition",
+        "invariant",
+        "assumption",
+        "effect",
+        "exception",
+        "capability",
+        "resource",
+        "temporal",
+        "determinism",
+        "schema",
+        "trust_boundary",
+        "data"
+      ]
+    },
+    "effectKind": {
+      "type": "string",
+      "enum": [
+        "filesystem",
+        "subprocess",
+        "network",
+        "environment",
+        "import",
+        "database",
+        "cache",
+        "logging",
+        "secret",
+        "global_state",
+        "object_state",
+        "io",
+        "exception",
+        "await",
+        "context_manager",
+        "unknown"
+      ]
+    },
+    "effectOperation": {
+      "type": "string",
+      "enum": [
+        "read",
+        "write",
+        "create",
+        "delete",
+        "mutate",
+        "invoke",
+        "open",
+        "close",
+        "raise",
+        "await",
+        "enter",
+        "exit",
+        "unknown"
+      ]
+    },
+    "resourceKind": {
+      "type": "string",
+      "enum": [
+        "bytes",
+        "rows",
+        "pages",
+        "recursion",
+        "retries",
+        "timeout_ms",
+        "processes",
+        "concurrency",
+        "file_handles",
+        "memory_bytes",
+        "cpu_ms"
+      ]
+    },
+    "determinismClass": {
+      "type": "string",
+      "enum": [
+        "pure",
+        "deterministic",
+        "idempotent",
+        "nondeterministic",
+        "unknown"
+      ]
+    },
+    "trustLabel": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "authenticated",
+        "secret",
+        "credential",
+        "pii",
+        "untrusted",
+        "trusted"
+      ]
+    },
+    "callableShape": {
+      "type": "string",
+      "enum": [
+        "sync_function",
+        "async_function",
+        "sync_generator",
+        "async_generator",
+        "method",
+        "async_method",
+        "constructor",
+        "property",
+        "unknown"
+      ]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "protected",
+        "private",
+        "internal",
+        "unspecified"
+      ]
+    },
+    "exceptionHandling": {
+      "type": "string",
+      "enum": [
+        "raises",
+        "propagates",
+        "swallows",
+        "converts",
+        "unknown"
+      ]
+    },
+    "findingKind": {
+      "type": "string",
+      "enum": [
+        "contradiction",
+        "authority_override",
+        "missing_authority",
+        "unbound_revision",
+        "unsupported_construct",
+        "ambiguous_value"
+      ]
+    },
+    "findingSeverity": {
+      "type": "string",
+      "enum": ["info", "warning", "error", "fatal"]
+    },
+    "parameterKind": {
+      "type": "string",
+      "enum": [
+        "positional_only",
+        "positional_or_named",
+        "named_only",
+        "variadic_positional",
+        "variadic_named",
+        "receiver",
+        "unknown"
+      ]
+    },
+    "contractAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_id",
+        "rank",
+        "owner",
+        "revision",
+        "policy_ref",
+        "source_cid"
+      ],
+      "properties": {
+        "authority_id": { "$ref": "#/$defs/recordId" },
+        "rank": { "$ref": "#/$defs/authorityRank" },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "revision": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "policy_ref": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 1024 }
+          ]
+        },
+        "source_cid": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/cid" }
+          ]
+        }
+      }
+    },
+    "contractProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fact_kind",
+        "authority",
+        "source_path",
+        "source_symbol",
+        "note"
+      ],
+      "properties": {
+        "fact_kind": { "$ref": "#/$defs/factKind" },
+        "authority": { "$ref": "#/$defs/contractAuthority" },
+        "source_path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "source_symbol": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 2048 }
+          ]
+        },
+        "note": { "type": "string", "maxLength": 4096 }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assumption_id", "statement", "provenance", "required"],
+      "properties": {
+        "assumption_id": { "$ref": "#/$defs/recordId" },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 8192 },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "boundedPredicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predicate_id",
+        "role",
+        "operator",
+        "subject",
+        "provenance",
+        "arguments",
+        "description"
+      ],
+      "properties": {
+        "predicate_id": { "$ref": "#/$defs/recordId" },
+        "role": { "$ref": "#/$defs/predicateRole" },
+        "operator": { "$ref": "#/$defs/predicateOperator" },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "arguments": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/canonicalScalarOrList" }
+        },
+        "description": { "type": "string", "maxLength": 4096 }
+      }
+    },
+    "effectContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_id",
+        "kind",
+        "operation",
+        "provenance",
+        "subject",
+        "permitted",
+        "required"
+      ],
+      "properties": {
+        "effect_id": { "$ref": "#/$defs/recordId" },
+        "kind": { "$ref": "#/$defs/effectKind" },
+        "operation": { "$ref": "#/$defs/effectOperation" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "subject": { "type": "string", "maxLength": 2048 },
+        "permitted": { "type": "boolean" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "resourceContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "kind",
+        "minimum",
+        "maximum",
+        "provenance",
+        "unit"
+      ],
+      "properties": {
+        "resource_id": { "$ref": "#/$defs/recordId" },
+        "kind": { "$ref": "#/$defs/resourceKind" },
+        "minimum": { "$ref": "#/$defs/safeInteger" },
+        "maximum": { "$ref": "#/$defs/safeInteger" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "unit": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "exceptionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exception_id",
+        "exception_type",
+        "handling",
+        "provenance",
+        "condition"
+      ],
+      "properties": {
+        "exception_id": { "$ref": "#/$defs/recordId" },
+        "exception_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "handling": { "$ref": "#/$defs/exceptionHandling" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "condition": { "type": "string", "maxLength": 2048 }
+      }
+    },
+    "capabilityContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "capability",
+        "required",
+        "provenance",
+        "optional_dependency"
+      ],
+      "properties": {
+        "capability_id": { "$ref": "#/$defs/recordId" },
+        "capability": { "$ref": "#/$defs/nonEmptyToken" },
+        "required": { "type": "boolean" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "optional_dependency": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 512 }
+          ]
+        }
+      }
+    },
+    "temporalConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "temporal_id",
+        "earlier_event",
+        "later_event",
+        "provenance",
+        "strict"
+      ],
+      "properties": {
+        "temporal_id": { "$ref": "#/$defs/recordId" },
+        "earlier_event": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "later_event": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "strict": { "type": "boolean" }
+      }
+    },
+    "determinismContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["determinism_id", "classification", "provenance"],
+      "properties": {
+        "determinism_id": { "$ref": "#/$defs/recordId" },
+        "classification": { "$ref": "#/$defs/determinismClass" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" }
+      }
+    },
+    "schemaContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_contract_id",
+        "schema_identifier",
+        "target",
+        "provenance",
+        "required"
+      ],
+      "properties": {
+        "schema_contract_id": { "$ref": "#/$defs/recordId" },
+        "schema_identifier": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 512,
+          "pattern": ".+@.+"
+        },
+        "target": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "trustBoundaryContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_id",
+        "label",
+        "site",
+        "provenance",
+        "direction"
+      ],
+      "properties": {
+        "boundary_id": { "$ref": "#/$defs/recordId" },
+        "label": { "$ref": "#/$defs/trustLabel" },
+        "site": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "direction": {
+          "type": "string",
+          "enum": ["in", "out", "both"]
+        }
+      }
+    },
+    "dataContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_id",
+        "name",
+        "type_name",
+        "provenance",
+        "nullable",
+        "predicates"
+      ],
+      "properties": {
+        "data_id": { "$ref": "#/$defs/recordId" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "type_name": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "nullable": { "type": "boolean" },
+        "predicates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/boundedPredicate" }
+        }
+      }
+    },
+    "parameterContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind", "position", "data", "default_present"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "kind": { "$ref": "#/$defs/parameterKind" },
+        "position": { "$ref": "#/$defs/safeInteger" },
+        "data": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/dataContract" }
+          ]
+        },
+        "default_present": { "type": "boolean" }
+      }
+    },
+    "contractFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "kind",
+        "severity",
+        "message",
+        "subject",
+        "left_contract_id",
+        "right_contract_id",
+        "details"
+      ],
+      "properties": {
+        "finding_id": { "$ref": "#/$defs/recordId" },
+        "kind": { "$ref": "#/$defs/findingKind" },
+        "severity": { "$ref": "#/$defs/findingSeverity" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 8192 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "left_contract_id": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/recordId" }
+          ]
+        },
+        "right_contract_id": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/recordId" }
+          ]
+        },
+        "details": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 2048 }
+        }
+      }
+    },
+    "callableContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "qualified_name",
+        "owner_module",
+        "shape",
+        "provenance",
+        "visibility",
+        "parameters",
+        "return_data",
+        "preconditions",
+        "postconditions",
+        "invariants",
+        "assumptions",
+        "effects",
+        "exceptions",
+        "capabilities",
+        "resources",
+        "temporal",
+        "determinism",
+        "schemas",
+        "trust_boundaries",
+        "symbol_id"
+      ],
+      "properties": {
+        "contract_id": { "$ref": "#/$defs/recordId" },
+        "qualified_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "owner_module": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "shape": { "$ref": "#/$defs/callableShape" },
+        "provenance": { "$ref": "#/$defs/contractProvenance" },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/parameterContract" }
+        },
+        "return_data": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/dataContract" }
+          ]
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/boundedPredicate" }
+        },
+        "postconditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/boundedPredicate" }
+        },
+        "invariants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/boundedPredicate" }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assumption" }
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effectContract" }
+        },
+        "exceptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/exceptionContract" }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capabilityContract" }
+        },
+        "resources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/resourceContract" }
+        },
+        "temporal": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/temporalConstraint" }
+        },
+        "determinism": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/determinismContract" }
+          ]
+        },
+        "schemas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/schemaContract" }
+        },
+        "trust_boundaries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/trustBoundaryContract" }
+        },
+        "symbol_id": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/recordId" }
+          ]
+        }
+      }
+    },
+    "contractRegistry": {
+      "description": "Reviewed registry projection (registry.py serialization shape).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "registry_id",
+        "revision",
+        "owner_goal",
+        "task_id",
+        "contract_schema",
+        "contracts",
+        "findings",
+        "authority_rank_order"
+      ],
+      "properties": {
+        "schema": {
+          "const": "ipfs-datasets.software-contracts.contract-registry@1"
+        },
+        "registry_id": { "$ref": "#/$defs/recordId" },
+        "revision": { "type": "string", "minLength": 1 },
+        "owner_goal": { "const": "DSCON-G200" },
+        "task_id": { "const": "DSCON-014" },
+        "contract_schema": {
+          "const": "ipfs-datasets.software-contracts.software-contract@1.0.0"
+        },
+        "contracts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/callableContract" }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contractFinding" }
+        },
+        "authority_rank_order": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [
+            { "const": "reviewed_registry" },
+            { "const": "public_schema" },
+            { "const": "documented_api" },
+            { "const": "type_declaration" },
+            { "const": "inference" }
+          ],
+          "items": false
+        }
+      }
+    }
+  }
+}
