@@ -1,0 +1,674 @@
+{
+  "schema": "ui-ux-ir/vocabulary@1",
+  "interface": "UIUXIRArchitectureContract@1",
+  "program": "UIR",
+  "board_namespace": "ipfs-datasets-ui-ux-ir-v1",
+  "wire_identifier": "ui-ux-ir/v1",
+  "status": "frozen",
+  "date": "2026-07-31",
+  "task_id": "UIR-001",
+  "goal_id": "UIR-G010",
+  "contract_path": "external/ipfs_datasets/docs/architecture/UI_UX_IR_CONTRACT.md",
+  "authority_source": "implementation_plan/docs/45-ipfs-datasets-ui-ux-ir-plan-2026-07-31.md",
+  "explicit_rejections": [
+    {
+      "id": "reject.universal_source_recovery",
+      "claim": "universal_source_recovery",
+      "status": "rejected",
+      "description": "Pixel-perfect or stylistically identical reconstruction of React, SwiftUI, Jetpack Compose, Flutter, CSS, binary UI, or arbitrary original source is out of scope. Semantic equivalence only."
+    },
+    {
+      "id": "reject.raw_emg",
+      "claim": "raw_neural_band_emg_access",
+      "status": "rejected",
+      "description": "Canonical events must not claim raw EMG, continuous neural streams, or unreviewed biometric payload authority. Only normalized Arrow/Enter-style Neural Band intent is modeled."
+    },
+    {
+      "id": "reject.ui_visibility_as_authorization",
+      "claim": "ui_visibility_as_authorization",
+      "status": "rejected",
+      "description": "Hiding, disabling, or omitting a control is never authorization."
+    },
+    {
+      "id": "reject.monitor_as_proof",
+      "claim": "monitor_as_proof",
+      "status": "rejected",
+      "description": "Bounded monitoring and schema validation are not theorem proof."
+    },
+    {
+      "id": "reject.policy_as_proof",
+      "claim": "policy_approval_as_formal_proof",
+      "status": "rejected",
+      "description": "Deontic or policy allow decisions do not prove formulas."
+    },
+    {
+      "id": "reject.synthesis_as_admitted",
+      "claim": "learned_synthesis_as_admitted_semantics",
+      "status": "rejected",
+      "description": "Model-generated candidates are candidate-only until deterministic gates admit them."
+    },
+    {
+      "id": "reject.identity_conflation",
+      "claim": "ui_ir_cid_equals_interface_cid",
+      "status": "rejected",
+      "description": "ui_ir_cid, verified interface_cid, and typed legacy aliases are never interchangeable."
+    },
+    {
+      "id": "reject.replace_landed_authorities",
+      "claim": "replace_mcp_idl_intent_orb_ir_core",
+      "status": "rejected",
+      "description": "UIIR does not replace MCP-IDL, Intent IR, Invocation IR, ORB routing, ir_core, formalization backends, or proof systems."
+    }
+  ],
+  "authority_inventory": [
+    {
+      "id": "ir_core",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/"
+      ],
+      "owns": [
+        "canonical_bytes",
+        "identity",
+        "provenance",
+        "schemas",
+        "diagnostics",
+        "claims",
+        "result_authority",
+        "manifests"
+      ],
+      "reuse": "import_directly_do_not_fork"
+    },
+    {
+      "id": "intent_ir",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/intent_ir/"
+      ],
+      "owns": [
+        "program_goals",
+        "actions",
+        "conditions",
+        "effects",
+        "verification",
+        "control_flow"
+      ],
+      "reuse": "reference_by_stable_id_or_cid"
+    },
+    {
+      "id": "invocation_ir",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/intent_ir/invocation/model.py"
+      ],
+      "owns": [
+        "governed_invocation",
+        "actor",
+        "delegation",
+        "scope",
+        "rollback",
+        "verification_envelope"
+      ],
+      "reuse": "bind_ui_actions_to_invocation_intent_envelope"
+    },
+    {
+      "id": "formalization",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/"
+      ],
+      "owns": [
+        "domain_neutral_formal_views",
+        "translation_receipts"
+      ],
+      "reuse": "extend_via_ui_ux_adapters"
+    },
+    {
+      "id": "logic_backends",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/fol/",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/TDFOL/",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/flogic/",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/CEC/native/"
+      ],
+      "owns": [
+        "fol",
+        "tdfol",
+        "frame_logic",
+        "dcec",
+        "event_calculus"
+      ],
+      "reuse": "target_through_public_compiler_contracts"
+    },
+    {
+      "id": "logic_bridges",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/bridge/",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/bridge/registry.py"
+      ],
+      "owns": [
+        "multi_view_routing",
+        "bridge_registry"
+      ],
+      "reuse": "register_ui_ux_adapter_late_UIR_070"
+    },
+    {
+      "id": "mcp_idl",
+      "paths": [
+        "swissknife/src/services/mcp/mcp-idl.ts"
+      ],
+      "owns": [
+        "callable_service_contracts",
+        "argument_result_schemas"
+      ],
+      "reuse": "service_operation_source_contract"
+    },
+    {
+      "id": "mcp_interface_identity",
+      "paths": [
+        "external/ipfs_accelerate/ipfs_accelerate_py/mcp_server/mcplusplus/idl_registry.py"
+      ],
+      "owns": [
+        "verified_interface_cid_preimage",
+        "cidv1_raw_sha2_256_base32_profile"
+      ],
+      "reuse": "interface_identity_authority_via_adapter"
+    },
+    {
+      "id": "ui_profiles",
+      "paths": [
+        "swissknife/src/services/mcp/mcp-ui-profile.ts",
+        "swissknife/src/services/mcp/mcp-schema-ui-generator.ts"
+      ],
+      "owns": [
+        "schema_driven_ui_profiles",
+        "schema_ui_generation"
+      ],
+      "reuse": "convert_via_typescript_codec"
+    },
+    {
+      "id": "orb_mediation",
+      "paths": [
+        "swissknife/src/services/mcp/mcp-deontic-interface-broker.ts",
+        "swissknife/src/services/mcp/mcp-control-surface-mediator.ts",
+        "swissknife/src/services/mcp/mcp-orb-capability-router.ts",
+        "swissknife/contracts/",
+        "hallucinate_app/python/hallucinate_app/control_surface_mediator.py"
+      ],
+      "owns": [
+        "deontic_ui_projection",
+        "orb_gate",
+        "multimodal_envelopes",
+        "runtime_authorization"
+      ],
+      "reuse": "runtime_consumer_fail_closed_integration"
+    },
+    {
+      "id": "meta_glasses",
+      "paths": [
+        "swissknife/src/services/glasses/idl-to-glasses-compiler.ts",
+        "swissknife/src/services/glasses/"
+      ],
+      "owns": [
+        "glasses_projection_baseline",
+        "dat_vs_web_app_capability_paths"
+      ],
+      "reuse": "target_adapter_and_conformance_suite"
+    }
+  ],
+  "authority_kinds": [
+    "declaration",
+    "interface",
+    "legacy_alias",
+    "projection",
+    "observation",
+    "mediation",
+    "invocation",
+    "satisfiability",
+    "monitor",
+    "proof",
+    "accessibility",
+    "policy",
+    "synthesis_candidate",
+    "conformance"
+  ],
+  "identity_domains": [
+    {
+      "name": "ui_ir_cid",
+      "domain": "ui_ux_ir_declaration",
+      "verification": "deterministic_canonicalize_plus_content_address"
+    },
+    {
+      "name": "interface_cid",
+      "domain": "mcp_interface_descriptor",
+      "verification": "cidv1_raw_sha2_256_base32_preimage"
+    },
+    {
+      "name": "legacy_alias",
+      "domain": "historical_descriptor_id",
+      "verification": "typed_alias_only_never_equated_to_verified_cid"
+    }
+  ],
+  "coverage_dispositions": [
+    "represented",
+    "approximated",
+    "unsupported",
+    "intentionally_non_formal"
+  ],
+  "adaptation_policies": [
+    "preserve",
+    "adapt",
+    "summarize",
+    "fallback",
+    "omit"
+  ],
+  "mediation_outcomes": [
+    "allow",
+    "deny",
+    "confirm",
+    "defer",
+    "rewrite",
+    "fallback",
+    "rate_limit"
+  ],
+  "formal_views": [
+    {
+      "id": "fol_flogic",
+      "meaning": "components_roles_containment_slots_values_bindings_actors_devices_capabilities"
+    },
+    {
+      "id": "event_calculus",
+      "meaning": "events_fluents_lifecycle_focus_pending_timeout_cancellation_effects_persistence"
+    },
+    {
+      "id": "tdfol",
+      "meaning": "temporal_invariants_permission_prohibition_obligation"
+    },
+    {
+      "id": "dcec",
+      "meaning": "perception_knowledge_belief_intention_communication_consent_delegation_agency"
+    },
+    {
+      "id": "accessibility_constraints",
+      "meaning": "perceivability_operability_modality_equivalence_focus_timing_feedback"
+    }
+  ],
+  "supported_semantics": {
+    "envelope": [
+      "schema_version",
+      "document_id",
+      "title",
+      "locale_defaults",
+      "tags",
+      "source_ref",
+      "producer",
+      "configuration",
+      "review",
+      "trust_bindings",
+      "components",
+      "composition_edges",
+      "layout_regions",
+      "layout_constraints",
+      "design_token_refs",
+      "state_variables",
+      "states",
+      "events",
+      "transitions",
+      "guards",
+      "effects",
+      "ux_tasks",
+      "journeys",
+      "success_failure_recovery",
+      "feedback_contracts",
+      "accessibility",
+      "localization",
+      "input_modality_requirements",
+      "output_modality_requirements",
+      "modality_alternatives",
+      "device_capability_requirements",
+      "adaptive_variants",
+      "data_bindings",
+      "content_references",
+      "program_bindings",
+      "intent_ir_bindings",
+      "invocation_bindings",
+      "mcp_idl_bindings",
+      "formal_constraint_refs",
+      "proof_obligation_refs",
+      "entry_components",
+      "initial_states",
+      "terminal_outcomes"
+    ],
+    "component_concepts": [
+      "stable_component_id",
+      "semantic_role",
+      "purpose",
+      "accessible_name_ref",
+      "accessible_description_ref",
+      "value_semantics",
+      "selection_semantics",
+      "validation_semantics",
+      "enabled_visible_semantics",
+      "parent_child_slot_relationships",
+      "label_described_by_owns_flow",
+      "action_affordances",
+      "modality_bindings",
+      "data_source_query_update_refs",
+      "feedback_channels",
+      "error_recovery_surfaces",
+      "privacy_sensitivity",
+      "presentation_classification",
+      "non_overriding_target_hints"
+    ],
+    "layout_region_kinds": [
+      "flow",
+      "grid",
+      "stack",
+      "overlay",
+      "spatial_anchor",
+      "audio_sequence"
+    ],
+    "layout_constraints": [
+      "order",
+      "containment",
+      "alignment",
+      "adjacency",
+      "priority",
+      "visibility",
+      "minimum_readable_size",
+      "resource_budgets",
+      "capability_predicate_breakpoints",
+      "safe_area",
+      "field_of_view",
+      "text_density",
+      "action_count",
+      "update_rate",
+      "latency",
+      "attention_budget",
+      "logical_reading_focus_order"
+    ],
+    "design_token_categories": [
+      "type",
+      "spacing",
+      "color_intent",
+      "emphasis",
+      "motion",
+      "haptics",
+      "audio_cues"
+    ],
+    "behavior": [
+      "typed_state_variables",
+      "derived_state",
+      "input_events",
+      "domain_events",
+      "lifecycle_events",
+      "timer_events",
+      "program_result_events",
+      "deterministic_transition_priority",
+      "guards",
+      "effects",
+      "cancel_retry_undo_rollback_compensation_timeout",
+      "parallel_regions_and_joins",
+      "focus_navigation_state",
+      "pending_confirmation_consent_state",
+      "success_failure_partial_unavailable_degraded"
+    ],
+    "program_binding_targets": [
+      "mcp_idl_interface_method_schema",
+      "intent_ir_document_action",
+      "invocation_intent_template",
+      "local_state_only_transition",
+      "versioned_composite_workflow"
+    ],
+    "input_capabilities": [
+      "pointer_mouse",
+      "keyboard",
+      "switch",
+      "touchscreen",
+      "pen",
+      "microphone_speech_intent",
+      "audio",
+      "hand_gesture",
+      "gaze",
+      "head_pose",
+      "motion_orientation",
+      "dpad_captouch",
+      "normalized_neural_band_intent",
+      "agent_proposal",
+      "delegated_autonomous_action",
+      "composite_multimodal"
+    ],
+    "output_capabilities": [
+      "display",
+      "spatial_display",
+      "audio_speech",
+      "haptic",
+      "notification",
+      "mobile_companion",
+      "agent_readable_structured_output"
+    ],
+    "projection_targets": [
+      "web_desktop",
+      "mobile",
+      "meta_glasses",
+      "voice_headless"
+    ],
+    "equivalence_layers": [
+      "canonical_identity",
+      "semantic_graph_isomorphism",
+      "bounded_state_machine_trace_equivalence",
+      "supported_formula_equivalence_or_entailment",
+      "deontic_non_weakening",
+      "accessibility_role_name_action_equivalence",
+      "modality_coverage_and_fallback_equivalence",
+      "declared_projection_reconstruction_loss_threshold"
+    ]
+  },
+  "unsupported_semantics": [
+    "arbitrary_react_swiftui_compose_flutter_css_binary_source_recovery",
+    "pixel_perfect_or_stylistic_reconstruction",
+    "executable_callbacks_in_declaration",
+    "arbitrary_expression_code_in_declaration",
+    "unsafe_html_as_declaration_content",
+    "raw_emg_or_continuous_neural_band_streams",
+    "unreviewed_biometric_as_canonical_event",
+    "pseudo_cid_as_verified_identity",
+    "mismatched_preimage_as_identity",
+    "equating_ui_ir_cid_and_interface_cid",
+    "mutable_cache_identity_as_authority",
+    "ui_visibility_as_authorization",
+    "monitor_result_as_theorem_proof",
+    "policy_approval_as_formal_proof",
+    "synthesis_candidate_as_admitted_semantics",
+    "silent_drop_of_required_action_confirmation_error_privacy_or_a11y",
+    "competing_operation_procedure_policy_identity_or_execution_system",
+    "high_risk_autonomous_ui_action_without_runtime_mediation",
+    "direct_renderer_http_bypass_of_mediation",
+    "optional_policy_on_orb_streaming_paths"
+  ],
+  "meta_capability_assumptions": {
+    "web_apps_neural_band_captouch": "arrow_enter_style_normalized_intent",
+    "dat_vs_web_app": "distinct_capability_paths_must_not_collapse",
+    "raw_emg": false,
+    "continuous_cursor": false,
+    "free_form_touchscreen": false,
+    "continuous_text_input_on_glasses": false,
+    "raw_camera_mic_as_canonical": false,
+    "mandatory_semantics_overflow": "explicit_mobile_or_audio_fallback_or_fail_with_loss",
+    "revision_policy": "revise_only_when_authoritative_capability_source_proves_more_than_normalized_intent"
+  },
+  "extension_policy": {
+    "core_validation": "closed_fail_closed",
+    "extensions": "versioned_namespaced_extension_records_only",
+    "identity_effect": "admitted_versioned_namespaced_extension_records_are_declaration_content_and_affect_canonical_bytes_and_ui_ir_cid;observations_telemetry_projections_proof_policy_and_other_derived_runtime_artifacts_are_not_extensions_and_remain_outside_declaration_identity",
+    "subset_expansion": "requires_reviewed_admission_no_speculation",
+    "migrations": "deterministic_cycle_free_with_loss_receipts",
+    "declaration_content": "every_admitted_versioned_namespaced_extension_record_is_declaration_content",
+    "not_extensions": [
+      "observations",
+      "telemetry",
+      "projections",
+      "proof_results",
+      "policy_results",
+      "other_derived_runtime_artifacts"
+    ]
+  },
+  "exclusive_owners": [
+    {
+      "concern": "architecture_contract_and_vocabulary",
+      "owner_task": "UIR-001",
+      "paths": [
+        "external/ipfs_datasets/docs/architecture/UI_UX_IR_CONTRACT.md",
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/v1/vocabulary.json"
+      ]
+    },
+    {
+      "concern": "mcp_idl_identity_interop",
+      "owner_task": "UIR-002",
+      "paths": [
+        "external/ipfs_datasets/docs/architecture/UI_UX_IR_MCP_IDL_IDENTITY.md",
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/v1/mcp_idl_identity_vectors.json",
+        "external/ipfs_datasets/tests/unit/logic/ui_ux_ir/test_mcp_idl_identity_contract.py"
+      ]
+    },
+    {
+      "concern": "schema",
+      "owner_task": "UIR-010",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/schema.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/ui_ux_ir.schema.json",
+        "external/ipfs_datasets/tests/unit/logic/ui_ux_ir/test_schema.py"
+      ]
+    },
+    {
+      "concern": "canonicalize_decode_migrations",
+      "owner_task": "UIR-011",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/canonicalize.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/decoder.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/migrations.py"
+      ]
+    },
+    {
+      "concern": "swissknife_broker_mediator_orb_router",
+      "owner_task": "UIR-033",
+      "paths": [
+        "swissknife/src/services/mcp/mcp-deontic-interface-broker.ts",
+        "swissknife/src/services/mcp/mcp-control-surface-mediator.ts",
+        "swissknife/src/services/mcp/mcp-orb-capability-router.ts"
+      ]
+    },
+    {
+      "concern": "hallucinate_python_mediator",
+      "owner_task": "UIR-034",
+      "paths": [
+        "hallucinate_app/python/hallucinate_app/control_surface_mediator.py"
+      ]
+    },
+    {
+      "concern": "legacy_dynamic_web_renderer",
+      "owner_task": "UIR-035",
+      "paths": [
+        "swissknife/web/src/orb-dynamic-app-renderer.ts"
+      ]
+    },
+    {
+      "concern": "integration_fixtures_and_golden_vectors",
+      "owner_task": "UIR-062",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/conformance.py",
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/v1/golden_vectors.json",
+        "external/ipfs_datasets/tests/unit/logic/ui_ux_ir/test_conformance.py",
+        "swissknife/test/mcp-plus-plus/ui-ux-ir-cross-language.test.ts"
+      ]
+    },
+    {
+      "concern": "internal_package_exports",
+      "owner_task": "UIR-069",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/model/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/formalize/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/source_adapters/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/projection/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/runtime/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/runtime/input/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/assurance/__init__.py"
+      ]
+    },
+    {
+      "concern": "public_exports_and_registries",
+      "owner_task": "UIR-070",
+      "paths": [
+        "external/ipfs_datasets/ipfs_datasets_py/logic/ui_ux_ir/__init__.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/api.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/submodule_registry.py",
+        "external/ipfs_datasets/ipfs_datasets_py/logic/bridge/registry.py"
+      ]
+    },
+    {
+      "concern": "responsive_form_pilot",
+      "owner_task": "UIR-071",
+      "paths": [
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/pilots/responsive_form.json",
+        "external/ipfs_datasets/tests/integration/logic/ui_ux_ir/test_responsive_form_pilot.py"
+      ]
+    },
+    {
+      "concern": "destructive_workflow_pilot",
+      "owner_task": "UIR-072",
+      "paths": [
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/pilots/destructive_workflow.json",
+        "external/ipfs_datasets/tests/integration/logic/ui_ux_ir/test_destructive_workflow_pilot.py"
+      ]
+    },
+    {
+      "concern": "meta_glasses_pilot",
+      "owner_task": "UIR-073",
+      "paths": [
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/pilots/meta_glasses.json",
+        "external/ipfs_datasets/tests/integration/logic/ui_ux_ir/test_meta_glasses_pilot.py"
+      ]
+    },
+    {
+      "concern": "agent_supervisor_program_pilot",
+      "owner_task": "UIR-074",
+      "paths": [
+        "external/ipfs_datasets/tests/fixtures/ui_ux_ir/pilots/agent_supervisor_program.json",
+        "external/ipfs_datasets/tests/integration/logic/ui_ux_ir/test_program_supervisor_pilot.py"
+      ]
+    }
+  ],
+  "late_integration_rules": [
+    "do_not_edit_shared_package_exports_or_registries_before_UIR_070",
+    "do_not_edit_swissknife_deontic_broker_or_control_surface_mediator_before_UIR_033",
+    "leaf_tasks_own_exclusive_files_only"
+  ],
+  "protected_operator_inputs": [
+    "implementation_plan/docs/45-ipfs-datasets-ui-ux-ir-plan-2026-07-31.md",
+    "implementation_plan/docs/45-ipfs-datasets-ui-ux-ir.objectives.md",
+    "implementation_plan/docs/45-ipfs-datasets-ui-ux-ir.todo.md"
+  ],
+  "derived_runtime_artifacts_excluded_from_declaration_identity": [
+    "target_specific_projection",
+    "device_capability_negotiation_result",
+    "formalization_or_reconstruction_artifact",
+    "proof_countermodel_monitor_accessibility_or_policy_results",
+    "input_observation_or_recognized_intent",
+    "mediation_decision",
+    "orb_or_program_invocation_receipt",
+    "runtime_state_snapshot_or_replay_trace",
+    "timing_device_health_confidence_calibration_or_performance_telemetry"
+  ],
+  "invariants": [
+    "canonical_declaration_identity_excludes_observations_and_derived_results",
+    "all_references_resolve_and_collection_semantics_are_declared",
+    "unsupported_import_formalization_projection_reconstruction_are_explicit",
+    "renderer_cannot_remove_required_obligations",
+    "ui_visibility_never_replaces_runtime_authorization",
+    "external_effects_pass_intent_invocation_orb_with_receipt",
+    "raw_sensor_and_biometric_data_are_adapter_local",
+    "low_confidence_high_impact_input_requires_clarification_or_confirmation",
+    "agent_actions_carry_delegation_and_cannot_broaden_capability_via_ui_binding",
+    "learned_synthesis_is_candidate_only",
+    "proof_satisfiability_monitor_policy_conformance_are_non_substitutable",
+    "migrations_and_cross_language_codecs_have_golden_vectors",
+    "identity_domains_remain_typed_and_preimage_verified_where_claimed",
+    "missing_policy_missing_streaming_input_and_transport_bypasses_fail_closed"
+  ]
+}
