@@ -85,6 +85,23 @@ state-model installer API or set
 `IPFS_DATASETS_PY_JAVA_EXECUTABLE=/path/to/java` to select a user-local JVM
 without changing the process-wide Java installation. An invalid explicit
 override fails closed and never falls back silently to another JVM.
+`JAVA_TOOL_OPTIONS`, `_JAVA_OPTIONS`, and `JDK_JAVA_OPTIONS` are removed from
+the bounded identity/runtime probe environment so injected JVM arguments
+cannot alter the certified probe.
+
+TLC's managed 1.8.0 jar must match the reviewed SHA-256 digest
+`e22f8ffb4bacdea0a871f444dd94fe5fb0d8013b3388ae39e82e26f852c735d5`.
+The real TLC help command returns status 1, so its runtime probe accepts that
+status only when the complete TLC help identity markers are present. TLC and
+Apalache repairs are extracted and validated in staging; artifacts and
+launchers replace the prior installation only after validation, with rollback
+on publication failure.
+
+`dry_run=True` performs pin selection without resolving or executing Java or a
+prover. `require_java=False` is supported only with dry-run selection; live
+ensures reject it rather than reporting an unvalidated artifact usable.
+`strict=False` continues to accept a runnable existing nonlocked tool, while
+every managed install still requires its reviewed locked artifact identity.
 
 Tamarin installation is complete only after its pinned binary accepts the
 selected Maude `3.5.1` runtime with Tamarin's `checking installation: OK`

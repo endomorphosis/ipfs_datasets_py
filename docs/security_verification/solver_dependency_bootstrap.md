@@ -160,7 +160,11 @@ apalache-mc version
 
 The state-model installer does not report either tool usable until the Java
 minimum is satisfied and a bounded post-install launch probe exits
-successfully.
+with its accepted tool-specific semantics. TLC 1.8.0 help intentionally exits
+1, so that result is accepted only with the complete TLC help markers and the
+reviewed jar digest. Java option-injection variables are removed from probes,
+and repairs are validated in staging before the previous installation is
+replaced.
 
 Missing Apalache blocks only checks that the probe marks required. If it is
 reported as optional, record the capability gap and do not claim Apalache-backed
